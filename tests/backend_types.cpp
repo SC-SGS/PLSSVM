@@ -38,11 +38,12 @@ TEST(BackendType, to_string) {
     EXPECT_CONVERSION_TO_STRING(plssvm::backend_type::hip, "hip");
     EXPECT_CONVERSION_TO_STRING(plssvm::backend_type::opencl, "opencl");
     EXPECT_CONVERSION_TO_STRING(plssvm::backend_type::sycl, "sycl");
+    EXPECT_CONVERSION_TO_STRING(plssvm::backend_type::kokkos, "kokkos");
 }
 
 TEST(BackendType, to_string_unknown) {
     // check conversions to std::string from unknown backend_type
-    EXPECT_CONVERSION_TO_STRING(static_cast<plssvm::backend_type>(7), "unknown");
+    EXPECT_CONVERSION_TO_STRING(static_cast<plssvm::backend_type>(8), "unknown");
 }
 
 // check whether the std::string -> plssvm::backend_type conversions are correct
@@ -64,6 +65,8 @@ TEST(BackendType, from_string) {
     EXPECT_CONVERSION_FROM_STRING("OpenCL", plssvm::backend_type::opencl);
     EXPECT_CONVERSION_FROM_STRING("sycl", plssvm::backend_type::sycl);
     EXPECT_CONVERSION_FROM_STRING("SYCL", plssvm::backend_type::sycl);
+    EXPECT_CONVERSION_FROM_STRING("Kokkos", plssvm::backend_type::kokkos);
+    EXPECT_CONVERSION_FROM_STRING("KOKKOS", plssvm::backend_type::kokkos);
 }
 
 TEST(BackendType, from_string_unknown) {
@@ -127,6 +130,7 @@ INSTANTIATE_TEST_SUITE_P(BackendType, BackendTypeSupportedCombination, ::testing
          supported_combination_type{ { plssvm::backend_type::hip }, { plssvm::target_platform::cpu, plssvm::target_platform::gpu_nvidia, plssvm::target_platform::gpu_amd, plssvm::target_platform::gpu_intel }, plssvm::backend_type::hip },
          supported_combination_type{ { plssvm::backend_type::opencl }, { plssvm::target_platform::cpu, plssvm::target_platform::gpu_nvidia, plssvm::target_platform::gpu_amd, plssvm::target_platform::gpu_intel }, plssvm::backend_type::opencl },
          supported_combination_type{ { plssvm::backend_type::sycl }, { plssvm::target_platform::cpu, plssvm::target_platform::gpu_nvidia, plssvm::target_platform::gpu_amd, plssvm::target_platform::gpu_intel }, plssvm::backend_type::sycl },
+         supported_combination_type{ { plssvm::backend_type::kokkos }, { plssvm::target_platform::cpu, plssvm::target_platform::gpu_nvidia, plssvm::target_platform::gpu_amd, plssvm::target_platform::gpu_intel }, plssvm::backend_type::kokkos },
          supported_combination_type{ { plssvm::backend_type::openmp, plssvm::backend_type::cuda, plssvm::backend_type::hip, plssvm::backend_type::opencl, plssvm::backend_type::sycl }, { plssvm::target_platform::cpu }, plssvm::backend_type::sycl },
          supported_combination_type{ { plssvm::backend_type::openmp, plssvm::backend_type::cuda, plssvm::backend_type::hip, plssvm::backend_type::opencl, plssvm::backend_type::sycl }, { plssvm::target_platform::gpu_nvidia }, plssvm::backend_type::cuda },
          supported_combination_type{ { plssvm::backend_type::openmp, plssvm::backend_type::cuda, plssvm::backend_type::hip, plssvm::backend_type::opencl, plssvm::backend_type::sycl }, { plssvm::target_platform::gpu_amd }, plssvm::backend_type::hip },
@@ -144,6 +148,7 @@ TEST(BackendType, csvm_to_backend_type) {
     EXPECT_EQ(plssvm::csvm_to_backend_type<volatile plssvm::sycl::csvm>::value, plssvm::backend_type::sycl);
     EXPECT_EQ(plssvm::csvm_to_backend_type<const volatile plssvm::adaptivecpp::csvm>::value, plssvm::backend_type::sycl);
     EXPECT_EQ(plssvm::csvm_to_backend_type<const volatile plssvm::dpcpp::csvm &>::value, plssvm::backend_type::sycl);
+    EXPECT_EQ(plssvm::csvm_to_backend_type<plssvm::kokkos::csvm>::value, plssvm::backend_type::kokkos);
 
     EXPECT_EQ(plssvm::csvm_to_backend_type<plssvm::adaptivecpp::csvm>::impl, plssvm::sycl::implementation_type::adaptivecpp);
     EXPECT_EQ(plssvm::csvm_to_backend_type<plssvm::dpcpp::csvm>::impl, plssvm::sycl::implementation_type::dpcpp);
@@ -159,4 +164,5 @@ TEST(BackendType, csvm_to_backend_type_v) {
     EXPECT_EQ(plssvm::csvm_to_backend_type_v<volatile plssvm::sycl::csvm>, plssvm::backend_type::sycl);
     EXPECT_EQ(plssvm::csvm_to_backend_type_v<const volatile plssvm::adaptivecpp::csvm>, plssvm::backend_type::sycl);
     EXPECT_EQ(plssvm::csvm_to_backend_type_v<const volatile plssvm::dpcpp::csvm &>, plssvm::backend_type::sycl);
+    EXPECT_EQ(plssvm::csvm_to_backend_type_v<plssvm::kokkos::csvm>, plssvm::backend_type::kokkos);
 }

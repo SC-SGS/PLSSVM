@@ -60,6 +60,9 @@ std::string GetTypeName<util::test_parameter<util::type_list<plssvm::dpcpp::csvm
 
 template <>
 std::string GetTypeName<util::test_parameter<util::type_list<plssvm::adaptivecpp::csvm>, util::value_list<>>>() { return "sycl_adaptivecpp_csvm"; }
+
+template <>
+std::string GetTypeName<util::test_parameter<util::type_list<plssvm::kokkos::csvm>, util::value_list<>>>() { return "kokkos_csvm"; }
 }  // namespace testing::internal
 
 template <typename T>
