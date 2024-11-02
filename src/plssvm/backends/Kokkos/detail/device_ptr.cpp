@@ -8,14 +8,13 @@
 
 #include "plssvm/backends/Kokkos/detail/device_ptr.hpp"
 
-#include "plssvm/backends/Kokkos/detail/device_view_wrapper.hpp"   // plssvm::kokkos::detail::{device_view_wrapper, make_device_view_wrapper}
-#include "plssvm/backends/Kokkos/detail/device_wrapper.hpp"        // plssvm::kokkos::detail::device_wrapper
-#include "plssvm/backends/Kokkos/detail/utility.hpp"               // plssvm::detail::device_synchronize
-#include "plssvm/backends/Kokkos/exceptions.hpp"                   // plssvm::kokkos::backend_exception
-#include "plssvm/backends/Kokkos/kernel/detail/memset_kernel.hpp"  // plssvm::kokkos::detail::device_fill_array
-#include "plssvm/detail/assert.hpp"                                // PLSSVM_ASSERT
-#include "plssvm/detail/type_traits.hpp"                           // plssvm::detail::remove_cvref_t
-#include "plssvm/shape.hpp"                                        // plssvm::shape
+#include "plssvm/backends/Kokkos/detail/device_view_wrapper.hpp"  // plssvm::kokkos::detail::{device_view_wrapper, make_device_view_wrapper}
+#include "plssvm/backends/Kokkos/detail/device_wrapper.hpp"       // plssvm::kokkos::detail::device_wrapper
+#include "plssvm/backends/Kokkos/detail/utility.hpp"              // plssvm::detail::device_synchronize
+#include "plssvm/backends/Kokkos/exceptions.hpp"                  // plssvm::kokkos::backend_exception
+#include "plssvm/detail/assert.hpp"                               // PLSSVM_ASSERT
+#include "plssvm/detail/type_traits.hpp"                          // plssvm::detail::remove_cvref_t
+#include "plssvm/shape.hpp"                                       // plssvm::shape
 
 #include "Kokkos_Core.hpp"  // Kokkos::View, Kokkos::HostSpace, Kokkos::MemoryUnmanaged, Kokkos::subview, Kokkos::parallel_for, Kokkos::deep_copy
 
@@ -61,21 +60,13 @@ void device_ptr<T>::memset(const int pattern, const size_type pos, const size_ty
     const size_type rnum_bytes = std::min(num_bytes, (this->size_padded() - pos) * sizeof(value_type));
 
     data_.execute([&](const auto &data) {
-        // create subview of the device data
-        auto *data_ptr = reinterpret_cast<unsigned char *>(data.data() + pos);
-        auto p = static_cast<unsigned char>(pattern);
-        // memset subview
-        // TODO: warning?
-        // TODO: if possible, use fill(0) kernel?
         queue_.execute([&](const auto &exec) {
             using kokkos_execution_space_type = ::plssvm::detail::remove_cvref_t<decltype(exec)>;
 
-            // create the execution policy
-            const Kokkos::RangePolicy<kokkos_execution_space_type> policy{ exec, size_type{ 0 }, rnum_bytes };
-            // launch the memset kernel
-            Kokkos::parallel_for("device_ptr_memset",
-                                 policy,
-                                 device_memset_kernel{ data_ptr, p });
+            // create view of the device data cast to unsigned char
+            const Kokkos::View<unsigned char *, kokkos_execution_space_type> view{ reinterpret_cast<unsigned char *>(data.data() + pos), rnum_bytes };
+            // fill the view with the pattern -> acts like a memset
+            Kokkos::deep_copy(exec, view, static_cast<unsigned char>(pattern));
         });
     });
 
