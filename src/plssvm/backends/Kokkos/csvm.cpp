@@ -546,7 +546,7 @@ auto csvm::run_w_kernel(const std::size_t device_id, const ::plssvm::detail::exe
 
         for (const auto &[partial_grid, offsets] : exec.grids) {
             // create a Kokkos TeamPolicy
-            Kokkos::TeamPolicy<kokkos_execution_space_type> team_policy{ static_cast<int>(partial_grid.total_size()), static_cast<int>(team_sizes.total_size()), Kokkos::AUTO };
+            Kokkos::TeamPolicy<kokkos_execution_space_type> team_policy{ device, static_cast<int>(partial_grid.total_size()), static_cast<int>(team_sizes.total_size()), Kokkos::AUTO };
 
             Kokkos::parallel_for("w_kernel", team_policy.set_scratch_size(0, Kokkos::PerTeam(scratch_memory_size)), detail::device_kernel_w_linear<kokkos_execution_space_type>{ w_d.get().get<space>(), alpha_d.get().get<space>(), sv_d.get().get<space>(), num_classes, num_sv, device_specific_num_sv, sv_offset, offsets.x, offsets.y, partial_grid.x });
         }
