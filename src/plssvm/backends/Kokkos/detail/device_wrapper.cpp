@@ -35,8 +35,8 @@ std::vector<device_wrapper> get_device_list(const execution_space space, [[maybe
                     // Note: it is important to pass the cudaStream_t lifetime to be managed by Kokkos
                     devices.emplace_back(Kokkos::Cuda(stream, Kokkos::Impl::ManageStream::yes));
                 }
-                return devices;
             });
+            break;
         case execution_space::hip:
             PLSSVM_KOKKOS_BACKEND_INVOKE_IF_HIP([&]() {
                 for (int device = 0; device < Kokkos::num_devices(); ++device) {
@@ -48,20 +48,20 @@ std::vector<device_wrapper> get_device_list(const execution_space space, [[maybe
                     // Note: it is important to pass the hipStream_t lifetime to be managed by Kokkos
                     devices.emplace_back(Kokkos::Hip(stream, Kokkos::Impl::ManageStream::yes));
                 }
-                return devices;
             });
+            break;
         case execution_space::sycl:
             PLSSVM_KOKKOS_BACKEND_INVOKE_IF_SYCL([&]() {
                 // TODO: use all available devices -> not that trivial
                 // TODO: handle target <- if provide queue -> managed?
                 devices.emplace_back(Kokkos::SYCL{});
-                return devices;
             });
+            break;
         case execution_space::hpx:
             PLSSVM_KOKKOS_BACKEND_INVOKE_IF_HPX([&]() {
                 devices.emplace_back(Kokkos::Hpx{});
-                return devices;
             });
+            break;
         case execution_space::openmp:
             PLSSVM_KOKKOS_BACKEND_INVOKE_IF_OPENMP([&]() {
                 // Note: if OpenMP should be used as device  must be set in order for it to work!
@@ -73,34 +73,31 @@ std::vector<device_wrapper> get_device_list(const execution_space space, [[maybe
                     omp_set_nested(1);
                 }
                 devices.emplace_back(Kokkos::OpenMP{});
-                return devices;
             });
+            break;
         case execution_space::openmp_target:
             PLSSVM_KOKKOS_BACKEND_INVOKE_IF_OPENMPTARGET([&]() {
                 // TODO: multi-GPU?
                 devices.emplace_back(Kokkos::OpenMPTarget{});
-                return devices;
             });
+            break;
         case execution_space::openacc:
             PLSSVM_KOKKOS_BACKEND_INVOKE_IF_OPENACC([&]() {
                 // TODO: multi-GPU?
                 devices.emplace_back(Kokkos::OpenACC{});
-                return devices;
             });
+            break;
         case execution_space::threads:
             PLSSVM_KOKKOS_BACKEND_INVOKE_IF_THREADS([&]() {
                 devices.emplace_back(Kokkos::Threads{});
-                return devices;
             });
         case execution_space::serial:
             PLSSVM_KOKKOS_BACKEND_INVOKE_IF_SERIAL([&]() {
                 devices.emplace_back(Kokkos::Serial{});
-                return devices;
             });
+            break;
     }
-    // all possible cases should be handled by the previous switch
-    // -> silence missing return statement compiler warnings due to throw statement
-    ::plssvm::detail::unreachable();
+    return devices;
 }
 
 }  // namespace plssvm::kokkos::detail

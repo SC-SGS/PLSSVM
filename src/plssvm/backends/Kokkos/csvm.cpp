@@ -9,7 +9,7 @@
 #include "plssvm/backends/Kokkos/csvm.hpp"
 
 #include "plssvm/backends/execution_range.hpp"                                        // plssvm::detail::{execution_range, dim_type}
-#include "plssvm/backends/Kokkos/detail/conditional_execution.hpp"                    // PLSSVM_KOKKOS_BACKEND_INVOKE_IF_*
+#include "plssvm/backends/Kokkos/detail/conditional_execution.hpp"                    // PLSSVM_KOKKOS_BACKEND_INVOKE_RETURN_IF_*, PLSSVM_KOKKOS_BACKEND_INVOKE_IF_
 #include "plssvm/backends/Kokkos/detail/device_ptr.hpp"                               // plssvm::kokkos::detail::device_ptr
 #include "plssvm/backends/Kokkos/detail/device_wrapper.hpp"                           // plssvm::kokkos::detail::{device_wrapper, get_device_list}
 #include "plssvm/backends/Kokkos/detail/utility.hpp"                                  // plssvm::kokkos::detail::get_runtime_version // TODO: docu
@@ -170,21 +170,18 @@ std::vector<::plssvm::detail::memory_size> csvm::get_device_memory() const {
                 for (std::size_t device_id = 0; device_id < this->num_available_devices(); ++device_id) {
                     res[device_id] = ::plssvm::detail::memory_size{ static_cast<unsigned long long>(devices_[device_id].get<execution_space::cuda>().cuda_device_prop().totalGlobalMem) };
                 }
-                return res;
             });
         case execution_space::hip:
             PLSSVM_KOKKOS_BACKEND_INVOKE_IF_HIP([&]() {
                 for (std::size_t device_id = 0; device_id < this->num_available_devices(); ++device_id) {
                     res[device_id] = ::plssvm::detail::memory_size{ static_cast<unsigned long long>(devices_[device_id].get<execution_space::hip>().hip_device_prop().totalGlobalMem) };
                 }
-                return res;
             });
         case execution_space::sycl:
             PLSSVM_KOKKOS_BACKEND_INVOKE_IF_SYCL([&]() {
                 for (std::size_t device_id = 0; device_id < this->num_available_devices(); ++device_id) {
                     res[device_id] = ::plssvm::detail::memory_size{ static_cast<unsigned long long>(devices_[device_id].get<execution_space::sycl>().sycl_queue().get_device().get_info<::sycl::info::device::global_mem_size>()) };
                 }
-                return res;
             });
         case execution_space::openmp:
         case execution_space::hpx:
@@ -195,12 +192,11 @@ std::vector<::plssvm::detail::memory_size> csvm::get_device_memory() const {
         case execution_space::openacc:
             throw backend_exception{ fmt::format("Currently not implemented for the execution space: {}!", space_) };
     }
-    // all possible cases should be handled by the previous switch
-    // -> silence missing return statement compiler warnings due to throw statement
-    ::plssvm::detail::unreachable();
+    return res;
 }
 
 std::vector<::plssvm::detail::memory_size> csvm::get_max_mem_alloc_size() const {
+    [[maybe_unused]] std::vector<::plssvm::detail::memory_size> res(this->num_available_devices());
     // TODO: implement for other execution spaces
     switch (space_) {
         case execution_space::cuda:
@@ -211,8 +207,8 @@ std::vector<::plssvm::detail::memory_size> csvm::get_max_mem_alloc_size() const 
                 for (std::size_t device_id = 0; device_id < this->num_available_devices(); ++device_id) {
                     res[device_id] = ::plssvm::detail::memory_size{ static_cast<unsigned long long>(devices_[device_id].get<execution_space::sycl>().sycl_queue().get_device().get_info<::sycl::info::device::max_mem_alloc_size>()) };
                 }
-                return res;
             });
+            break;
         case execution_space::openmp:
         case execution_space::hpx:
         case execution_space::threads:
@@ -222,9 +218,7 @@ std::vector<::plssvm::detail::memory_size> csvm::get_max_mem_alloc_size() const 
         case execution_space::openacc:
             throw backend_exception{ fmt::format("Currently not implemented for the execution space: {}!", space_) };
     }
-    // all possible cases should be handled by the previous switch
-    // -> silence missing return statement compiler warnings due to throw statement
-    ::plssvm::detail::unreachable();
+    return res;
 }
 
 std::size_t csvm::get_max_work_group_size(const std::size_t device_id) const {
@@ -233,15 +227,15 @@ std::size_t csvm::get_max_work_group_size(const std::size_t device_id) const {
     // TODO: implement for other execution spaces
     switch (space_) {
         case execution_space::cuda:
-            PLSSVM_KOKKOS_BACKEND_INVOKE_IF_CUDA([&]() {
+            PLSSVM_KOKKOS_BACKEND_INVOKE_RETURN_IF_CUDA([&]() {
                 return static_cast<std::size_t>(devices_[device_id].get<execution_space::cuda>().cuda_device_prop().maxThreadsPerBlock);
             });
         case execution_space::hip:
-            PLSSVM_KOKKOS_BACKEND_INVOKE_IF_HIP([&]() {
+            PLSSVM_KOKKOS_BACKEND_INVOKE_RETURN_IF_HIP([&]() {
                 return static_cast<std::size_t>(devices_[device_id].get<execution_space::hip>().hip_device_prop().maxThreadsPerBlock);
             });
         case execution_space::sycl:
-            PLSSVM_KOKKOS_BACKEND_INVOKE_IF_SYCL([&]() {
+            PLSSVM_KOKKOS_BACKEND_INVOKE_RETURN_IF_SYCL([&]() {
                 return devices_[device_id].get<execution_space::sycl>().sycl_queue().get_device().get_info<::sycl::info::device::max_work_group_size>();
             });
         case execution_space::openmp:
@@ -266,14 +260,14 @@ std::size_t csvm::get_max_work_group_size(const std::size_t device_id) const {
     // TODO: implement for other execution spaces
     switch (space_) {
         case execution_space::cuda:
-            PLSSVM_KOKKOS_BACKEND_INVOKE_IF_CUDA(([&]() -> ::plssvm::detail::dim_type {
+            PLSSVM_KOKKOS_BACKEND_INVOKE_RETURN_IF_CUDA(([&]() -> ::plssvm::detail::dim_type {
                 // TODO: Kokkos only uses maxGridSize[0]
                 const cudaDeviceProp &prop = devices_[device_id].get<execution_space::cuda>().cuda_device_prop();
                 return { static_cast<std::size_t>(prop.maxGridSize[0]), static_cast<std::size_t>(prop.maxGridSize[1]), static_cast<std::size_t>(prop.maxGridSize[2]) };
             }));
         case execution_space::hip:
             // TODO: Kokkos only uses maxGridSize[0]
-            PLSSVM_KOKKOS_BACKEND_INVOKE_IF_HIP(([&]() -> ::plssvm::detail::dim_type {
+            PLSSVM_KOKKOS_BACKEND_INVOKE_RETURN_IF_HIP(([&]() -> ::plssvm::detail::dim_type {
                 const hipDeviceProp &prop = devices_[device_id].get<execution_space::hip>().hip_device_prop();
                 return { static_cast<std::size_t>(prop.maxGridSize[0]), static_cast<std::size_t>(prop.maxGridSize[1]), static_cast<std::size_t>(prop.maxGridSize[2]) };
             }));

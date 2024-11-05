@@ -8,7 +8,7 @@
 
 #include "plssvm/backends/Kokkos/detail/utility.hpp"
 
-#include "plssvm/backends/Kokkos/detail/conditional_execution.hpp"  // PLSSVM_KOKKOS_BACKEND_INVOKE_IF_*
+#include "plssvm/backends/Kokkos/detail/conditional_execution.hpp"  // PLSSVM_KOKKOS_BACKEND_INVOKE_RETURN_IF_*
 #include "plssvm/backends/Kokkos/detail/device_wrapper.hpp"         // plssvm::kokkos::detail::device_wrapper
 #include "plssvm/backends/Kokkos/execution_space.hpp"               // plssvm::kokkos::execution_space
 #include "plssvm/detail/assert.hpp"                                 // PLSSVM_ASSERT
@@ -41,20 +41,17 @@ std::map<target_platform, std::vector<execution_space>> available_target_platfor
                 break;
             case execution_space::hip:
                 // NVIDIA or AMD GPUs possible (both simultaneously are unsupported)
-#if defined(KOKKOS_ENABLE_HIP)
-    #if defined(__HIP_PLATFORM_AMD__)
-                available_map[target_platform::gpu_amd].push_back(execution_space::hip);
-    #elif defined(__HIP_PLATFORM_NVIDIA__)
-                available_map[target_platform::gpu_nvidia].push_back(execution_space::hip);
-    #else
-        #error "Unknown HIP platform"
-    #endif
+                PLSSVM_KOKKOS_BACKEND_INVOKE_IF_HIP([&]() {
+#if defined(__HIP_PLATFORM_AMD__)
+                    available_map[target_platform::gpu_amd].push_back(execution_space::hip);
+#elif defined(__HIP_PLATFORM_NVIDIA__)
+                    available_map[target_platform::gpu_nvidia].push_back(execution_space::hip);
 #endif
+                });
                 break;
             case execution_space::sycl:
                 // list all potential target platforms currently available in SYCL
-#if defined(KOKKOS_ENABLE_SYCL)
-                {
+                PLSSVM_KOKKOS_BACKEND_INVOKE_IF_SYCL([&]() {
                     std::unordered_set<target_platform> targets{};
                     for (const auto &platform : sycl::platform::get_platforms()) {
                         for (const auto &device : platform.get_devices()) {
@@ -83,8 +80,7 @@ std::map<target_platform, std::vector<execution_space>> available_target_platfor
                     for (const target_platform target : targets) {
                         available_map[target].push_back(execution_space::sycl);
                     }
-                }
-#endif
+                });
                 break;
             case execution_space::openacc:
                 // TODO: restrict to available devices
@@ -122,15 +118,15 @@ std::map<target_platform, std::vector<execution_space>> available_target_platfor
 std::string get_device_name([[maybe_unused]] const device_wrapper &dev) {
     switch (dev.get_execution_space()) {
         case execution_space::cuda:
-            PLSSVM_KOKKOS_BACKEND_INVOKE_IF_CUDA([&]() {
+            PLSSVM_KOKKOS_BACKEND_INVOKE_RETURN_IF_CUDA([&]() {
                 return std::string{ dev.get<execution_space::cuda>().cuda_device_prop().name };
             });
         case execution_space::hip:
-            PLSSVM_KOKKOS_BACKEND_INVOKE_IF_HIP([&]() {
+            PLSSVM_KOKKOS_BACKEND_INVOKE_RETURN_IF_HIP([&]() {
                 return std::string{ dev.get<execution_space::hip>().hip_device_prop().name };
             });
         case execution_space::sycl:
-            PLSSVM_KOKKOS_BACKEND_INVOKE_IF_SYCL([&]() {
+            PLSSVM_KOKKOS_BACKEND_INVOKE_RETURN_IF_SYCL([&]() {
                 return dev.get<execution_space::sycl>().sycl_queue.get_device().get_info<sycl::info::device::name>();
             });
         case execution_space::hpx:
