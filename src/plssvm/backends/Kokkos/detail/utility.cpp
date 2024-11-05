@@ -8,6 +8,7 @@
 
 #include "plssvm/backends/Kokkos/detail/utility.hpp"
 
+#include "plssvm/backends/execution_range.hpp"                      // plssvm::detail::dim_type
 #include "plssvm/backends/Kokkos/detail/conditional_execution.hpp"  // PLSSVM_KOKKOS_BACKEND_INVOKE_RETURN_IF_*
 #include "plssvm/backends/Kokkos/detail/device_wrapper.hpp"         // plssvm::kokkos::detail::device_wrapper
 #include "plssvm/backends/Kokkos/execution_space.hpp"               // plssvm::kokkos::execution_space
@@ -27,6 +28,10 @@
 #include <vector>         // std::vector
 
 namespace plssvm::kokkos::detail {
+
+int dim_type_to_native(const ::plssvm::detail::dim_type &dims) {
+    return static_cast<int>(dims.x * dims.y * dims.z);
+}
 
 std::map<target_platform, std::vector<execution_space>> available_target_platform_to_execution_space_mapping() {
     std::map<target_platform, std::vector<execution_space>> available_map{};

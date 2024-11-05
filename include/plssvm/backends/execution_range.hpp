@@ -12,6 +12,8 @@
 #ifndef PLSSVM_BACKENDS_EXECUTION_RANGE_HPP_
 #define PLSSVM_BACKENDS_EXECUTION_RANGE_HPP_
 
+#include "plssvm/backend_types.hpp"  // plssvm::backend_type
+
 #include "fmt/base.h"     // fmt::formatter
 #include "fmt/ostream.h"  // fmt::ostream_formatter
 
@@ -75,15 +77,6 @@ struct [[nodiscard]] dim_type {
         swap_ull(x, other.x);
         swap_ull(y, other.y);
         swap_ull(z, other.z);
-    }
-
-    /**
-     * @brief Return the total number of elements in the dimensional type.
-     * @details Equal to: `x * y * z`.
-     * @return the total number of elements (`[[nodiscard]]`)
-     */
-    [[nodiscard]] constexpr unsigned long long total_size() const noexcept {
-        return x * y * z;
     }
 
     /// The dimensional size in x direction.
@@ -170,7 +163,6 @@ struct execution_range {
     /// The grids. Multiple grids are used, if the grid sizes would exceed the maximum allowed number. Also stores the offsets for the respective grids used in the kernels.
     /// Note: no default initialization due to a linker error occurring with NVIDIA's nvhpc!
     std::vector<grid_type> grids;
-
 };
 
 /**

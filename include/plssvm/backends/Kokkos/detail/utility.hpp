@@ -13,6 +13,7 @@
 #define PLSSVM_BACKENDS_KOKKOS_DETAIL_UTILITY_HPP_
 #pragma once
 
+#include "plssvm/backends/execution_range.hpp"               // plssvm::detail::dim_type
 #include "plssvm/backends/Kokkos/detail/device_wrapper.hpp"  // plssvm::kokkos::detail::device_wrapper
 #include "plssvm/backends/Kokkos/execution_space.hpp"        // plssvm::kokkos::execution_space
 #include "plssvm/detail/type_traits.hpp"                     // PLSSVM_REQUIRES
@@ -53,6 +54,13 @@ template <typename T, typename Variant>
 inline constexpr bool is_type_in_variant_v = is_type_in_variant<T, Variant>::value;
 
 }  // namespace impl
+
+/**
+ * @brief Convert a `plssvm::detail::dim_type` to a Kokkos native one-dimensional value.
+ * @param[in] dims the dimensional value to convert
+ * @return the native one-dimensional value (`[[nodiscard]]`)
+ */
+[[nodiscard]] int dim_type_to_native(const ::plssvm::detail::dim_type &dims);
 
 /**
  * @brief Return a `std::map` containing a mapping from all available target platforms to the available Kokkos::ExecutionSpace that supports said target platform.

@@ -10,6 +10,7 @@
 
 #include "plssvm/backends/Kokkos/detail/utility.hpp"
 
+#include "plssvm/backends/execution_range.hpp"               // plssvm::detail::dim_type
 #include "plssvm/backends/Kokkos/detail/device_wrapper.hpp"  // plssvm::kokkos::detail::device_wrapper
 #include "plssvm/backends/Kokkos/exceptions.hpp"             // plssvm::kokkos::backend_exception
 #include "plssvm/backends/Kokkos/execution_space.hpp"        // plssvm::kokkos::{execution_space, kokkos_type_to_execution_space_v}
@@ -41,6 +42,17 @@ TEST(KokkosUtility, is_type_in_variant) {
     EXPECT_TRUE((plssvm::kokkos::detail::impl::is_type_in_variant_v<std::string, variant_type>) );
     EXPECT_FALSE((plssvm::kokkos::detail::impl::is_type_in_variant_v<short, variant_type>) );
     EXPECT_FALSE((plssvm::kokkos::detail::impl::is_type_in_variant_v<float, variant_type>) );
+}
+
+TEST(KokkosUtility, dim_type_to_native) {
+    // create a dim_type
+    constexpr plssvm::detail::dim_type dim{ 128ull, 64ull, 32ull };
+
+    // convert it to a Kokkos one-dimensional execution range
+    const int native_dim = plssvm::kokkos::detail::dim_type_to_native(dim);
+
+    // check values for correctness
+    EXPECT_EQ(native_dim, 262'144);  // = 128 * 64 * 32
 }
 
 TEST(KokkosUtility, available_target_platform_to_execution_space_mapping) {

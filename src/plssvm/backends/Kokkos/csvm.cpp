@@ -312,16 +312,20 @@ auto csvm::run_assemble_kernel_matrix_explicit(const std::size_t device_id, cons
     const real_type cost_factor = real_type{ 1.0 } / params.cost;
     const std::size_t scratch_memory_size = static_cast<std::size_t>(2u * FEATURE_BLOCK_SIZE * THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE) * sizeof(real_type);
 
-    // save the team sizes
-    const ::plssvm::detail::dim_type team_sizes = exec.block;
+    // save the team size
+    const int team_size = detail::dim_type_to_native(exec.block);
 
     return devices_[device_id].execute_and_return([&](auto &device) {
         using kokkos_execution_space_type = ::plssvm::detail::remove_cvref_t<decltype(device)>;
         constexpr execution_space space = kokkos_type_to_execution_space_v<kokkos_execution_space_type>;
 
         for (const auto &[partial_grid, offsets] : exec.grids) {
+            // convert execution range partial_grid to Kokkos' native one-dimensional size
+            const int native_partial_grid = detail::dim_type_to_native(partial_grid);
+
             // create a Kokkos TeamPolicy
-            Kokkos::TeamPolicy<kokkos_execution_space_type> team_policy{ device, static_cast<int>(partial_grid.total_size()), static_cast<int>(team_sizes.total_size()) };
+            Kokkos::TeamPolicy<kokkos_execution_space_type> team_policy{ device, native_partial_grid, team_size };
+            // TODO: test MDRangeTeamPolicy?!
 
             switch (params.kernel_type) {
                 case kernel_function_type::linear:
@@ -383,25 +387,31 @@ void csvm::run_blas_level_3_kernel_explicit(const std::size_t device_id, const :
         // the necessary amount of scratch memory for the kernels
         const std::size_t scratch_memory_size = static_cast<std::size_t>(2u * FEATURE_BLOCK_SIZE * THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE) * sizeof(real_type);
 
-        // save the team sizes
-        const ::plssvm::detail::dim_type team_sizes = exec.block;
+        // save the team size
+        const int team_size = detail::dim_type_to_native(exec.block);
 
         for (const auto &[partial_grid, offsets] : exec.grids) {
+            // convert execution range partial_grid to Kokkos' native one-dimensional size
+            const int native_partial_grid = detail::dim_type_to_native(partial_grid);
+
             // create a Kokkos TeamPolicy
-            Kokkos::TeamPolicy<kokkos_execution_space_type> team_policy{ device, static_cast<int>(partial_grid.total_size()), static_cast<int>(team_sizes.total_size()), Kokkos::AUTO };
+            Kokkos::TeamPolicy<kokkos_execution_space_type> team_policy{ device, native_partial_grid, team_size };
 
             Kokkos::parallel_for("blas_level_3_kernel_explicit", team_policy.set_scratch_size(0, Kokkos::PerTeam(scratch_memory_size)), detail::device_kernel_symm<kokkos_execution_space_type>{ num_rows, num_rhs, device_specific_num_rows, row_offset, alpha, A_d.get().get<space>(), B_d.get().get<space>(), beta, C_d.get().get<space>(), offsets.x, offsets.y, partial_grid.x });
         }
 
-        // save the mirror team sizes
-        const ::plssvm::detail::dim_type mirror_team_sizes = mirror_exec.block;
+        // save the team size
+        const int mirror_team_size = detail::dim_type_to_native(mirror_exec.block);
 
         for (const auto &[partial_grid, offsets] : mirror_exec.grids) {
             const unsigned long long num_mirror_rows = num_rows - row_offset - device_specific_num_rows;
 
             if (num_mirror_rows > 0) {
+                // convert execution range partial_grid to Kokkos' native one-dimensional size
+                const int native_partial_grid = detail::dim_type_to_native(partial_grid);
+
                 // create a Kokkos TeamPolicy
-                Kokkos::TeamPolicy<kokkos_execution_space_type> team_policy{ device, static_cast<int>(partial_grid.total_size()), static_cast<int>(mirror_team_sizes.total_size()), Kokkos::AUTO };
+                Kokkos::TeamPolicy<kokkos_execution_space_type> team_policy{ device, native_partial_grid, mirror_team_size };
 
                 Kokkos::parallel_for("blas_level_3_kernel_explicit_mirror", team_policy.set_scratch_size(0, Kokkos::PerTeam(scratch_memory_size)), detail::device_kernel_symm_mirror<kokkos_execution_space_type>{ num_rows, num_rhs, num_mirror_rows, device_specific_num_rows, row_offset, alpha, A_d.get().get<space>(), B_d.get().get<space>(), beta, C_d.get().get<space>(), offsets.x, offsets.y, partial_grid.x });
             }
@@ -417,12 +427,15 @@ void csvm::run_inplace_matrix_addition(const std::size_t device_id, const ::plss
         using kokkos_execution_space_type = ::plssvm::detail::remove_cvref_t<decltype(device)>;
         constexpr execution_space space = kokkos_type_to_execution_space_v<kokkos_execution_space_type>;
 
-        // save the team sizes
-        const ::plssvm::detail::dim_type team_sizes = exec.block;
+        // save the team size
+        const int team_size = detail::dim_type_to_native(exec.block);
 
         for (const auto &[partial_grid, offsets] : exec.grids) {
+            // convert execution range partial_grid to Kokkos' native one-dimensional size
+            const int native_partial_grid = detail::dim_type_to_native(partial_grid);
+
             // create a Kokkos TeamPolicy
-            Kokkos::TeamPolicy<kokkos_execution_space_type> team_policy{ device, static_cast<int>(partial_grid.total_size()), static_cast<int>(team_sizes.total_size()), Kokkos::AUTO };
+            Kokkos::TeamPolicy<kokkos_execution_space_type> team_policy{ device, native_partial_grid, team_size };
 
             Kokkos::parallel_for("inplace_matrix_addition", team_policy, detail::device_kernel_inplace_matrix_add<kokkos_execution_space_type>{ num_rhs, lhs_d.get().get<space>(), rhs_d.get().get<space>(), offsets.x, offsets.y, partial_grid.x });
         }
@@ -437,12 +450,15 @@ void csvm::run_inplace_matrix_scale(const std::size_t device_id, const ::plssvm:
         using kokkos_execution_space_type = ::plssvm::detail::remove_cvref_t<decltype(device)>;
         constexpr execution_space space = kokkos_type_to_execution_space_v<kokkos_execution_space_type>;
 
-        // save the team sizes
-        const ::plssvm::detail::dim_type team_sizes = exec.block;
+        // save the team size
+        const int team_size = detail::dim_type_to_native(exec.block);
 
         for (const auto &[partial_grid, offsets] : exec.grids) {
+            // convert execution range partial_grid to Kokkos' native one-dimensional size
+            const int native_partial_grid = detail::dim_type_to_native(partial_grid);
+
             // create a Kokkos TeamPolicy
-            Kokkos::TeamPolicy<kokkos_execution_space_type> team_policy{ device, static_cast<int>(partial_grid.total_size()), static_cast<int>(team_sizes.total_size()), Kokkos::AUTO };
+            Kokkos::TeamPolicy<kokkos_execution_space_type> team_policy{ device, native_partial_grid, team_size };
 
             Kokkos::parallel_for("inplace_matrix_scale", team_policy, detail::device_kernel_inplace_matrix_scale<kokkos_execution_space_type>{ num_rhs, lhs_d.get().get<space>(), scale, offsets.x, offsets.y, partial_grid.x });
         }
@@ -467,12 +483,15 @@ void csvm::run_assemble_kernel_matrix_implicit_blas_level_3(const std::size_t de
         const real_type cost_factor = real_type{ 1.0 } / params.cost;
         const std::size_t scratch_memory_size = static_cast<std::size_t>(2u * FEATURE_BLOCK_SIZE * THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE) * sizeof(real_type);
 
-        // save the team sizes
-        const ::plssvm::detail::dim_type team_sizes = exec.block;
+        // save the team size
+        const int team_size = detail::dim_type_to_native(exec.block);
 
         for (const auto &[partial_grid, offsets] : exec.grids) {
+            // convert execution range partial_grid to Kokkos' native one-dimensional size
+            const int native_partial_grid = detail::dim_type_to_native(partial_grid);
+
             // create a Kokkos TeamPolicy
-            Kokkos::TeamPolicy<kokkos_execution_space_type> team_policy{ device, static_cast<int>(partial_grid.total_size()), static_cast<int>(team_sizes.total_size()), Kokkos::AUTO };
+            Kokkos::TeamPolicy<kokkos_execution_space_type> team_policy{ device, native_partial_grid, team_size };
 
             switch (params.kernel_type) {
                 case kernel_function_type::linear:
@@ -534,16 +553,19 @@ auto csvm::run_w_kernel(const std::size_t device_id, const ::plssvm::detail::exe
 
     const std::size_t scratch_memory_size = static_cast<std::size_t>(2u * THREAD_BLOCK_SIZE * THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE) * sizeof(real_type);
 
-    // save the team sizes
-    const ::plssvm::detail::dim_type team_sizes = exec.block;
+    // save the team size
+    const int team_size = detail::dim_type_to_native(exec.block);
 
     return devices_[device_id].execute_and_return([&](auto &device) {
         using kokkos_execution_space_type = ::plssvm::detail::remove_cvref_t<decltype(device)>;
         constexpr execution_space space = kokkos_type_to_execution_space_v<kokkos_execution_space_type>;
 
         for (const auto &[partial_grid, offsets] : exec.grids) {
+            // convert execution range partial_grid to Kokkos' native one-dimensional size
+            const int native_partial_grid = detail::dim_type_to_native(partial_grid);
+
             // create a Kokkos TeamPolicy
-            Kokkos::TeamPolicy<kokkos_execution_space_type> team_policy{ device, static_cast<int>(partial_grid.total_size()), static_cast<int>(team_sizes.total_size()), Kokkos::AUTO };
+            Kokkos::TeamPolicy<kokkos_execution_space_type> team_policy{ device, native_partial_grid, team_size };
 
             Kokkos::parallel_for("w_kernel", team_policy.set_scratch_size(0, Kokkos::PerTeam(scratch_memory_size)), detail::device_kernel_w_linear<kokkos_execution_space_type>{ w_d.get().get<space>(), alpha_d.get().get<space>(), sv_d.get().get<space>(), num_classes, num_sv, device_specific_num_sv, sv_offset, offsets.x, offsets.y, partial_grid.x });
         }
@@ -563,16 +585,19 @@ auto csvm::run_predict_kernel(const std::size_t device_id, const ::plssvm::detai
 
     const std::size_t scratch_memory_size = static_cast<std::size_t>(2u * FEATURE_BLOCK_SIZE * THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE) * sizeof(real_type);
 
-    // save the team sizes
-    const ::plssvm::detail::dim_type team_sizes = exec.block;
+    // save the team size
+    const int team_size = detail::dim_type_to_native(exec.block);
 
     return devices_[device_id].execute_and_return([&](auto &device) {
         using kokkos_execution_space_type = ::plssvm::detail::remove_cvref_t<decltype(device)>;
         constexpr execution_space space = kokkos_type_to_execution_space_v<kokkos_execution_space_type>;
 
         for (const auto &[partial_grid, offsets] : exec.grids) {
+            // convert execution range partial_grid to Kokkos' native one-dimensional size
+            const int native_partial_grid = detail::dim_type_to_native(partial_grid);
+
             // create a Kokkos TeamPolicy
-            Kokkos::TeamPolicy<kokkos_execution_space_type> team_policy{ device, static_cast<int>(partial_grid.total_size()), static_cast<int>(team_sizes.total_size()), Kokkos::AUTO };
+            Kokkos::TeamPolicy<kokkos_execution_space_type> team_policy{ device, native_partial_grid, team_size };
 
             switch (params.kernel_type) {
                 case kernel_function_type::linear:
