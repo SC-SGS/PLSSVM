@@ -171,18 +171,21 @@ std::vector<::plssvm::detail::memory_size> csvm::get_device_memory() const {
                     res[device_id] = ::plssvm::detail::memory_size{ static_cast<unsigned long long>(devices_[device_id].get<execution_space::cuda>().cuda_device_prop().totalGlobalMem) };
                 }
             });
+            break;
         case execution_space::hip:
             PLSSVM_KOKKOS_BACKEND_INVOKE_IF_HIP([&]() {
                 for (std::size_t device_id = 0; device_id < this->num_available_devices(); ++device_id) {
                     res[device_id] = ::plssvm::detail::memory_size{ static_cast<unsigned long long>(devices_[device_id].get<execution_space::hip>().hip_device_prop().totalGlobalMem) };
                 }
             });
+            break;
         case execution_space::sycl:
             PLSSVM_KOKKOS_BACKEND_INVOKE_IF_SYCL([&]() {
                 for (std::size_t device_id = 0; device_id < this->num_available_devices(); ++device_id) {
                     res[device_id] = ::plssvm::detail::memory_size{ static_cast<unsigned long long>(devices_[device_id].get<execution_space::sycl>().sycl_queue().get_device().get_info<::sycl::info::device::global_mem_size>()) };
                 }
             });
+            break;
         case execution_space::openmp:
         case execution_space::hpx:
         case execution_space::threads:
