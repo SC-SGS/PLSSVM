@@ -10,11 +10,14 @@
 
 #include "plssvm/backends/Kokkos/detail/device_view_wrapper.hpp"
 
-#include "plssvm/backends/Kokkos/execution_space.hpp"  // plssvm::kokkos::{execution_space, kokkos_type_to_execution_space_v}
+#include "plssvm/backends/Kokkos/detail/device_wrapper.hpp"  // plssvm::kokkos::detail::device_wrapper
+#include "plssvm/backends/Kokkos/execution_space.hpp"        // plssvm::kokkos::{execution_space, kokkos_type_to_execution_space_v}
 
 #include "Kokkos_Core.hpp"  // Kokkos::DefaultExecutionSpace, Kokkos::View
 
 #include "gtest/gtest.h"  // TEST, EXPECT_EQ, EXPECT_TRUE, EXPECT_FALSE
+
+#include <cstddef>  // std::size_t
 
 TEST(KokkosDeviceViewWrapper, default_construct) {
     // default construct a device view wrapper
@@ -76,4 +79,17 @@ TEST(KokkosDeviceViewWrapper, inequality) {
     EXPECT_FALSE(view1 != view2);
 }
 
-// TODO: make_device_view_wrapper
+TEST(KokkosDeviceViewWrapper, make_device_view_wrapper) {
+    // create a device wrapper for the Kokkos::DefaultExecutionSpace
+    const plssvm::kokkos::detail::device_wrapper device{ Kokkos::DefaultExecutionSpace{} };
+
+    // create device view wrapper
+    const plssvm::kokkos::detail::device_view_wrapper<double *> view = plssvm::kokkos::detail::make_device_view_wrapper<double *>(device, 42);
+
+    // check that the returned Kokkos::View has the correct type
+    constexpr plssvm::kokkos::execution_space space = plssvm::kokkos::kokkos_type_to_execution_space_v<Kokkos::DefaultExecutionSpace>;
+    ::testing::StaticAssertTypeEq<decltype(view.get<space>()), const Kokkos::View<double *, Kokkos::DefaultExecutionSpace> &>();
+
+    // check the number of elements
+    EXPECT_EQ(view.get<space>().size(), std::size_t{ 42 });
+}
