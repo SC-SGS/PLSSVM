@@ -44,7 +44,7 @@ enum class execution_space {
     openacc,
     /** Execution space representing parallel execution with std::threads. */
     threads,
-    /** Execution space representing serial execution on the CPU. Always available. */
+    /** Execution space representing serial execution on the CPU. Should always be available. */
     serial
 };
 
