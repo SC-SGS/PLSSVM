@@ -10,7 +10,7 @@
         - [plssvm.Parameter](#plssvmparameter)
         - [plssvm.DataSet](#plssvmdataset)
         - [plssvm.CSVM](#plssvmcsvm)
-        - [plssvm.openmp.CSVM, plssvm.stdpar.CSVM, plssvm.cuda.CSVM, plssvm.hip.CSVM, plssvm.opencl.CSVM, plssvm.sycl.CSVM, plssvm.dpcpp.CSVM, plssvm.adaptivecpp.CSVM](#plssvmopenmpcsvm-plssvmcudacsvm-plssvmhipcsvm-plssvmopenclcsvm-plssvmsyclcsvm-plssvmdpcppcsvm-plssvmadaptivecppcsvm)
+        - [plssvm.openmp.CSVM, plssvm.stdpar.CSVM, plssvm.cuda.CSVM, plssvm.hip.CSVM, plssvm.opencl.CSVM, plssvm.sycl.CSVM, plssvm.dpcpp.CSVM, plssvm.adaptivecpp.CSVM, plssvm.kokkos.CSVM](#plssvmopenmpcsvm-plssvmcudacsvm-plssvmhipcsvm-plssvmopenclcsvm-plssvmsyclcsvm-plssvmdpcppcsvm-plssvmadaptivecppcsvm)
         - [plssvm.Model](#plssvmmodel)
         - [plssvm.Version](#plssvmversion)
         - [plssvm.detail.tracking.PerformanceTracker](#plssvmdetailtrackingperformancetracker)
@@ -211,6 +211,12 @@ If the stdpar backend is available, an additional enumeration is available:
 |----------------------|---------------------------------------------------------------|-------------------------------------------------|
 | `ImplementationType` | `NVHPC`, `ROC_STDPAR`, `INTEL_LLVM`, `ADAPTIVECPP`, `GNU_TBB` | The different supported stdpar implementations. |
 
+If the Kokos backend is available, an additional enumeration is available:
+
+| enumeration      | values                                                                                 | description                                      |
+|------------------|----------------------------------------------------------------------------------------|--------------------------------------------------|
+| `ExecutionSpace` | `CUDA`, `HIP`, `SYCL`, `HPX`, `OPENMP`, `OPENMPTARGET`, `OPENACC`, `THREADS`, `SERIAL` | The different supported Kokkos execution spaces. |
+
 ### Classes and submodules
 
 The following tables list all PLSSVM classes exposed on the Python side:
@@ -347,7 +353,7 @@ and `sycl_kernel_invocation_type` to choose between the two different SYCL kerne
 | `score(model)`                                                                                                                               | Score the model with respect to itself returning its accuracy.                                                                                                                                                      |
 | `score(model, data_set)`                                                                                                                     | Score the model given the provided data set returning its accuracy.                                                                                                                                                 |
 
-#### `plssvm.openmp.CSVM`, `plssvm.stdpar.CSVM`, plssvm.cuda.CSVM`, `plssvm.hip.CSVM`, `plssvm.opencl.CSVM`, `plssvm.sycl.CSVM`, `plssvm.dpcpp.CSVM`, `plssvm.adaptivecpp.CSVM`
+#### `plssvm.openmp.CSVM`, `plssvm.stdpar.CSVM`, plssvm.cuda.CSVM`, `plssvm.hip.CSVM`, `plssvm.opencl.CSVM`, `plssvm.sycl.CSVM`, `plssvm.dpcpp.CSVM`, `plssvm.adaptivecpp.CSVM`, `plssvm.kokkos.CSVM`
 
 These classes represent the backend specific CSVMs.
 **Note**: they are only available if the respective backend has been enabled during PLSSVM's build step.
@@ -384,6 +390,14 @@ CSVM.
 | methods                     | description                                 |
 |-----------------------------|---------------------------------------------|
 | `get_implementation_type()` | Return the used stdpar implementation type. |
+
+In case of the Kokkos CSVM (`plssvm.kokkos.CSVM`) the following method is additional available for the backend specific 
+CSVM.
+
+
+| methods                 | description                             |
+|-------------------------|-----------------------------------------|
+| `get_execution_space()` | Return the used Kokkos execution space. |
 
 #### `plssvm.Model`
 

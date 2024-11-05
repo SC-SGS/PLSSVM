@@ -39,6 +39,7 @@ void init_cuda_csvm(py::module_ &, const py::exception<plssvm::exception> &);
 void init_hip_csvm(py::module_ &, const py::exception<plssvm::exception> &);
 void init_opencl_csvm(py::module_ &, const py::exception<plssvm::exception> &);
 void init_sycl(py::module_ &, const py::exception<plssvm::exception> &);
+void init_kokkos_csvm(py::module_ &, const py::exception<plssvm::exception> &);
 void init_sklearn(py::module_ &);
 
 PYBIND11_MODULE(plssvm, m) {
@@ -98,6 +99,9 @@ PYBIND11_MODULE(plssvm, m) {
 #endif
 #if defined(PLSSVM_HAS_SYCL_BACKEND)
     init_sycl(m, base_exception);
+#endif
+#if defined(PLSSVM_HAS_KOKKOS_BACKEND)
+    init_kokkos_csvm(m, base_exception);
 #endif
 
     init_sklearn(m);
