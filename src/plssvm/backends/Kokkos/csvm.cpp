@@ -438,7 +438,7 @@ void csvm::run_inplace_matrix_addition(const std::size_t device_id, const ::plss
             const int native_partial_grid = detail::dim_type_to_native(partial_grid);
 
             // create a Kokkos TeamPolicy
-            Kokkos::TeamPolicy<kokkos_execution_space_type> team_policy{ device, native_partial_grid, team_size };
+            const Kokkos::TeamPolicy<kokkos_execution_space_type> team_policy{ device, native_partial_grid, team_size };
 
             Kokkos::parallel_for("inplace_matrix_addition", team_policy, detail::device_kernel_inplace_matrix_add<kokkos_execution_space_type>{ num_rhs, lhs_d.get().get<space>(), rhs_d.get().get<space>(), offsets.x, offsets.y, partial_grid.x });
         }
@@ -461,7 +461,7 @@ void csvm::run_inplace_matrix_scale(const std::size_t device_id, const ::plssvm:
             const int native_partial_grid = detail::dim_type_to_native(partial_grid);
 
             // create a Kokkos TeamPolicy
-            Kokkos::TeamPolicy<kokkos_execution_space_type> team_policy{ device, native_partial_grid, team_size };
+            const Kokkos::TeamPolicy<kokkos_execution_space_type> team_policy{ device, native_partial_grid, team_size };
 
             Kokkos::parallel_for("inplace_matrix_scale", team_policy, detail::device_kernel_inplace_matrix_scale<kokkos_execution_space_type>{ num_rhs, lhs_d.get().get<space>(), scale, offsets.x, offsets.y, partial_grid.x });
         }
