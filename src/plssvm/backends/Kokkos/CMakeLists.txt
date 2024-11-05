@@ -39,11 +39,6 @@ target_link_libraries(${PLSSVM_KOKKOS_BACKEND_LIBRARY_NAME} PUBLIC Kokkos::kokko
 # link base library against Kokkos library
 target_link_libraries(${PLSSVM_KOKKOS_BACKEND_LIBRARY_NAME} PUBLIC ${PLSSVM_BASE_LIBRARY_NAME})
 
-# set whether the kernel source should be compiled with fast math enabled or not # TODO: enable fast-math
-#if (PLSSVM_ENABLE_FAST_MATH)
-#    target_compile_definitions(${PLSSVM_KOKKOS_BACKEND_LIBRARY_NAME} PRIVATE PLSSVM_ENABLE_FAST_MATH)
-#endif ()
-
 # set compile definition that the Kokkos backend is available
 target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PRIVATE PLSSVM_HAS_KOKKOS_BACKEND)
 target_compile_definitions(${PLSSVM_KOKKOS_BACKEND_LIBRARY_NAME} PUBLIC PLSSVM_HAS_KOKKOS_BACKEND)
