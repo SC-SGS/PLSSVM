@@ -38,6 +38,7 @@
 #include "fmt/core.h"    // fmt::format
 #include "fmt/format.h"  // fmt::format
 
+#include <cmath>      // std::sqrt
 #include <cstddef>    // std::size_t
 #include <exception>  // std::terminate
 #include <iostream>   // std::cout, std::endl
@@ -260,22 +261,24 @@ std::size_t csvm::get_max_work_group_size(const std::size_t device_id) const {
 ::plssvm::detail::dim_type csvm::get_max_grid_size(const std::size_t device_id) const {
     PLSSVM_ASSERT(device_id < this->num_available_devices(), "Invalid device {} requested!", device_id);
 
+    // NOTE: Kokkos only supports one-dimensional execution ranges!
+    // NOTE: we only use two-dimensional kernels!
     // TODO: implement for other execution spaces
     switch (space_) {
         case execution_space::cuda:
             PLSSVM_KOKKOS_BACKEND_INVOKE_RETURN_IF_CUDA(([&]() -> ::plssvm::detail::dim_type {
-                // TODO: Kokkos only uses maxGridSize[0]
                 const cudaDeviceProp &prop = devices_[device_id].get<execution_space::cuda>().cuda_device_prop();
-                return { static_cast<std::size_t>(prop.maxGridSize[0]), static_cast<std::size_t>(prop.maxGridSize[1]), static_cast<std::size_t>(prop.maxGridSize[2]) };
+                const auto max_grid_size = static_cast<std::size_t>(std::sqrt(prop.maxGridSize[0]));
+                return { max_grid_size, max_grid_size, std::size_t{ 1 } };
             }));
         case execution_space::hip:
-            // TODO: Kokkos only uses maxGridSize[0]
             PLSSVM_KOKKOS_BACKEND_INVOKE_RETURN_IF_HIP(([&]() -> ::plssvm::detail::dim_type {
                 const hipDeviceProp &prop = devices_[device_id].get<execution_space::hip>().hip_device_prop();
-                return { static_cast<std::size_t>(prop.maxGridSize[0]), static_cast<std::size_t>(prop.maxGridSize[1]), static_cast<std::size_t>(prop.maxGridSize[2]) };
+                const auto max_grid_size = static_cast<std::size_t>(std::sqrt(prop.maxGridSize[0]));
+                return { max_grid_size, max_grid_size, std::size_t{ 1 } };
             }));
         case execution_space::openmp:
-            return { 16, 16, 16 };  // TODO: correct values
+            return { 16, 16, 1 };  // TODO: correct values
         case execution_space::serial:
             return { 1, 1, 1 };  // TODO: correct values
         case execution_space::sycl:
