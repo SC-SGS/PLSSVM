@@ -9,6 +9,7 @@
 #include "plssvm/backends/Kokkos/detail/device_wrapper.hpp"
 
 #include "plssvm/backends/Kokkos/detail/conditional_execution.hpp"  // PLSSVM_KOKKOS_BACKEND_INVOKE_IF_*
+#include "plssvm/backends/Kokkos/exceptions.hpp"                    // plssvm::kokkos::backend_exception
 #include "plssvm/backends/Kokkos/execution_space.hpp"               // plssvm::kokkos::execution_space
 #include "plssvm/detail/logging_without_performance_tracking.hpp"   // plssvm::detail::log_untracked
 #include "plssvm/detail/string_utility.hpp"                         // plssvm::detail::as_lower_case
@@ -17,6 +18,20 @@
 #include "plssvm/verbosity_levels.hpp"                              // plssvm::verbosity_level
 
 #include "Kokkos_Core.hpp"  // Kokkos::num_devices, Kokkos::ExecutionSpace
+
+#if defined(KOKKOS_ENABLE_CUDA)
+    #define PLSSVM_CUDA_ERROR_CHECK(err)                                                                                                            \
+        if ((err) != cudaSuccess) {                                                                                                                 \
+            throw plssvm::kokkos::backend_exception{ fmt::format("Kokkos::Cuda assert '{}': {}", cudaGetErrorName(err), cudaGetErrorString(err)) }; \
+        }
+#endif
+
+#if defined(KOKKOS_ENABLE_HIP)
+    #define PLSSVM_HIP_ERROR_CHECK(err)                                                                                                  \
+        if ((err) != hipSuccess) {                                                                                                       \
+            throw plssvm::kokkos::backend_exception{ fmt::format("HIP assert '{}': {}", hipGetErrorName(err), hipGetErrorString(err)) }; \
+        }
+#endif
 
 #include <vector>  // std::vector
 
@@ -29,9 +44,9 @@ std::vector<device_wrapper> get_device_list(const execution_space space, [[maybe
             PLSSVM_KOKKOS_BACKEND_INVOKE_IF_CUDA([&]() {
                 for (int device = 0; device < Kokkos::num_devices(); ++device) {
                     // create CUDA stream using the CUDA specific functions
-                    cudaSetDevice(device);
+                    PLSSVM_CUDA_ERROR_CHECK(cudaSetDevice(device));
                     cudaStream_t stream{};
-                    cudaStreamCreate(&stream);
+                    PLSSVM_CUDA_ERROR_CHECK(cudaStreamCreate(&stream));
                     // create Kokkos execution space for the specific device
                     // Note: it is important to pass the cudaStream_t lifetime to be managed by Kokkos
                     devices.emplace_back(Kokkos::Cuda(stream, Kokkos::Impl::ManageStream::yes));
@@ -42,9 +57,9 @@ std::vector<device_wrapper> get_device_list(const execution_space space, [[maybe
             PLSSVM_KOKKOS_BACKEND_INVOKE_IF_HIP([&]() {
                 for (int device = 0; device < Kokkos::num_devices(); ++device) {
                     // HIP CUDA stream using the HIP specific functions
-                    hipSetDevice(device);
+                    PLSSVM_HIP_ERROR_CHECK(hipSetDevice(device));
                     hipStream_t stream{};
-                    hipStreamCreate(&stream);
+                    PLSSVM_HIP_ERROR_CHECK(hipStreamCreate(&stream));
                     // create Kokkos execution space for the specific device
                     // Note: it is important to pass the hipStream_t lifetime to be managed by Kokkos
                     devices.emplace_back(Kokkos::HIP(stream, Kokkos::Impl::ManageStream::yes));
