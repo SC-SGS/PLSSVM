@@ -41,7 +41,7 @@ if (Kokkos_ENABLE_SYCL)
     if (NOT ${CMAKE_CXX_COMPILER_ID} MATCHES "IntelLLVM")
         message(FATAL_ERROR "For Kokkos::SYCL to work, the compiler must be IntelLLVM, but is ${CMAKE_CXX_COMPILER}!")
     endif ()
-
+    
     # set icpx specific compiler flags based on the provided PLSSVM_TARGET_PLATFORMS
     set(PLSSVM_KOKKOS_SYCL_FSYCL_TARGETS "")
     # cpu targets
@@ -74,46 +74,40 @@ if (Kokkos_ENABLE_SYCL)
     list(JOIN PLSSVM_KOKKOS_SYCL_FSYCL_TARGETS "," PLSSVM_KOKKOS_SYCL_FSYCL_TARGETS_STRING)
     target_compile_options(${PLSSVM_KOKKOS_BACKEND_LIBRARY_NAME} PRIVATE -sycl-std=2020 -fsycl -fsycl-targets=${PLSSVM_KOKKOS_SYCL_FSYCL_TARGETS_STRING})
     target_link_options(${PLSSVM_KOKKOS_BACKEND_LIBRARY_NAME} PRIVATE -fsycl -fsycl-targets=${PLSSVM_KOKKOS_SYCL_FSYCL_TARGETS_STRING})
-endif ()
-
-# add option for IntelLLVM Ahead-of-Time (AOT) compilation
-option(PLSSVM_KOKKOS_BACKEND_INTEL_LLVM_ENABLE_AOT "Enables Ahead-of-Time compilation for the Kokkos::SYCL execution space using IntelLLVM." ON)
-if (PLSSVM_KOKKOS_BACKEND_INTEL_LLVM_ENABLE_AOT)
-    message(STATUS "Enabled Ahead-of-Time (AOT) compilation for the Kokkos::SYCL execution space using IntelLLVM.")
-    target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PRIVATE PLSSVM_KOKKOS_BACKEND_INTEL_LLVM_ENABLE_AOT)
-    target_compile_definitions(${PLSSVM_KOKKOS_BACKEND_LIBRARY_NAME} PUBLIC PLSSVM_KOKKOS_BACKEND_INTEL_LLVM_ENABLE_AOT)
-    ## set AOT compiler flags
-    # cpu targets
-    if (DEFINED PLSSVM_CPU_TARGET_ARCHS)
-        # add target specific flags for AOT
-        if (PLSSVM_NUM_CPU_TARGET_ARCHS EQUAL 1)
-            target_compile_options(${PLSSVM_KOKKOS_BACKEND_LIBRARY_NAME} PRIVATE -Xsycl-target-backend=spir64_x86_64 "-march=${PLSSVM_CPU_TARGET_ARCHS}")
-            target_link_options(${PLSSVM_KOKKOS_BACKEND_LIBRARY_NAME} PRIVATE -Xsycl-target-backend=spir64_x86_64 "-march=${PLSSVM_CPU_TARGET_ARCHS}")
+    
+    # add option for IntelLLVM Ahead-of-Time (AOT) compilation
+    option(PLSSVM_KOKKOS_BACKEND_INTEL_LLVM_ENABLE_AOT "Enables Ahead-of-Time compilation for the Kokkos::SYCL execution space using IntelLLVM." ON)
+    if (PLSSVM_KOKKOS_BACKEND_INTEL_LLVM_ENABLE_AOT)
+        message(STATUS "Enabled Ahead-of-Time (AOT) compilation for the Kokkos::SYCL execution space using IntelLLVM.")
+        target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PRIVATE PLSSVM_KOKKOS_BACKEND_INTEL_LLVM_ENABLE_AOT)
+        target_compile_definitions(${PLSSVM_KOKKOS_BACKEND_LIBRARY_NAME} PUBLIC PLSSVM_KOKKOS_BACKEND_INTEL_LLVM_ENABLE_AOT)
+        ## set AOT compiler flags
+        # cpu targets
+        if (DEFINED PLSSVM_CPU_TARGET_ARCHS)
+            # add target specific flags for AOT
+            if (PLSSVM_NUM_CPU_TARGET_ARCHS EQUAL 1)
+                target_compile_options(${PLSSVM_KOKKOS_BACKEND_LIBRARY_NAME} PRIVATE -Xsycl-target-backend=spir64_x86_64 "-march=${PLSSVM_CPU_TARGET_ARCHS}")
+                target_link_options(${PLSSVM_KOKKOS_BACKEND_LIBRARY_NAME} PRIVATE -Xsycl-target-backend=spir64_x86_64 "-march=${PLSSVM_CPU_TARGET_ARCHS}")
+            endif ()
+        endif ()
+        # nvidia targets
+        if (DEFINED PLSSVM_NVIDIA_TARGET_ARCHS)
+            # add target specific flags for AOT
+            if (NOT PLSSVM_NUM_NVIDIA_TARGET_ARCHS EQUAL 1)
+                message(SEND_ERROR "IntelLLVM currently only supports a single NVIDIA architecture specification for AOT but ${PLSSVM_NUM_NVIDIA_TARGET_ARCHS} were provided!")
+            endif ()
+            target_compile_options(${PLSSVM_KOKKOS_BACKEND_LIBRARY_NAME} PRIVATE -Xsycl-target-backend=nvptx64-nvidia-cuda --offload-arch=${PLSSVM_NVIDIA_TARGET_ARCHS})
+            target_link_options(${PLSSVM_KOKKOS_BACKEND_LIBRARY_NAME} PRIVATE -Xsycl-target-backend=nvptx64-nvidia-cuda --offload-arch=${PLSSVM_NVIDIA_TARGET_ARCHS})
+        endif ()
+        # intel targets
+        if (DEFINED PLSSVM_INTEL_TARGET_ARCHS)
+            # add target specific flags for AOT
+            list(JOIN PLSSVM_INTEL_TARGET_ARCHS "," PLSSVM_INTEL_TARGET_ARCHS_STRING)
+            target_compile_options(${PLSSVM_KOKKOS_BACKEND_LIBRARY_NAME} PRIVATE -Xsycl-target-backend=spir64_gen "-device ${PLSSVM_INTEL_TARGET_ARCHS_STRING}")
+            target_link_options(${PLSSVM_KOKKOS_BACKEND_LIBRARY_NAME} PRIVATE -Xsycl-target-backend=spir64_gen "-device ${PLSSVM_INTEL_TARGET_ARCHS_STRING}")
         endif ()
     endif ()
-    # nvidia targets
-    if (DEFINED PLSSVM_NVIDIA_TARGET_ARCHS)
-        # add target specific flags for AOT
-        if (NOT PLSSVM_NUM_NVIDIA_TARGET_ARCHS EQUAL 1)
-            message(SEND_ERROR "IntelLLVM currently only supports a single NVIDIA architecture specification for AOT but ${PLSSVM_NUM_NVIDIA_TARGET_ARCHS} were provided!")
-        endif ()
-        target_compile_options(${PLSSVM_KOKKOS_BACKEND_LIBRARY_NAME} PRIVATE -Xsycl-target-backend=nvptx64-nvidia-cuda --offload-arch=${PLSSVM_NVIDIA_TARGET_ARCHS})
-        target_link_options(${PLSSVM_KOKKOS_BACKEND_LIBRARY_NAME} PRIVATE -Xsycl-target-backend=nvptx64-nvidia-cuda --offload-arch=${PLSSVM_NVIDIA_TARGET_ARCHS})
-    endif ()
-    # intel targets
-    if (DEFINED PLSSVM_INTEL_TARGET_ARCHS)
-        # add target specific flags for AOT
-        list(JOIN PLSSVM_INTEL_TARGET_ARCHS "," PLSSVM_INTEL_TARGET_ARCHS_STRING)
-        target_compile_options(${PLSSVM_KOKKOS_BACKEND_LIBRARY_NAME} PRIVATE -Xsycl-target-backend=spir64_gen "-device ${PLSSVM_INTEL_TARGET_ARCHS_STRING}")
-        target_link_options(${PLSSVM_KOKKOS_BACKEND_LIBRARY_NAME} PRIVATE -Xsycl-target-backend=spir64_gen "-device ${PLSSVM_INTEL_TARGET_ARCHS_STRING}")
-    endif ()
 endif ()
-
-if (Kokkos_ENABLE_HWLOC)
-    message(STATUS "Kokkos was built with hwloc support.")
-else()
-    message(STATUS "Kokkos was NOT built with hwloc support.")
-endif()
 
 # link base library against Kokkos library
 target_link_libraries(${PLSSVM_KOKKOS_BACKEND_LIBRARY_NAME} PUBLIC ${PLSSVM_BASE_LIBRARY_NAME})
