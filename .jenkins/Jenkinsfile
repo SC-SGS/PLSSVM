@@ -320,6 +320,12 @@ pipeline {
 
                 agent { label onlineNodes_label_string('sgs_workstation', "${env.ARCHITECTURE.equalsIgnoreCase('AMD') ? 'sgs_amd_gpu_node' : 'sgs_nvidia_gpu_node'}") }
 
+                stage( 'Sequential Matrix' ) {
+                options {
+                    lock( 'synchronous-matrix' )
+                }
+                stages {
+
                 stages{
                     stage('Build PLSSVM'){
                         steps{
@@ -438,179 +444,179 @@ pipeline {
 
                         }
                     }
-                    stage('Ctest PLSSVM'){
-                        steps{
-                            sh ''' #!/bin/bash
-                                hostname
-                                source $SGSSCRATCH/spack/share/spack/setup-env.sh
-                                echo $hostname
+//                     stage('Ctest PLSSVM'){
+//                         steps{
+//                             sh ''' #!/bin/bash
+//                                 hostname
+//                                 source $SGSSCRATCH/spack/share/spack/setup-env.sh
+//                                 echo $hostname
 
-                                case $BACKEND in
-                                    OPENCL|ADAPTIVECPP|DPCPP|STDPAR-NVHPC|STDPAR-DPCPP|STDPAR-ADAPTIVECPP)
-                                        if [ "$ARCHITECTURE" != NVIDIA ]; then
-                                            SET_NVIDIA_GPU_NONE=1
-                                        fi
-                                        ;;
-                                    *) ;;
-                                esac
+//                                 case $BACKEND in
+//                                     OPENCL|ADAPTIVECPP|DPCPP|STDPAR-NVHPC|STDPAR-DPCPP|STDPAR-ADAPTIVECPP)
+//                                         if [ "$ARCHITECTURE" != NVIDIA ]; then
+//                                             SET_NVIDIA_GPU_NONE=1
+//                                         fi
+//                                         ;;
+//                                     *) ;;
+//                                 esac
 
-                                case $BACKEND in
-                                    OPENCL|ADAPTIVECPP|DPCPP|STDPAR-DPCPP|STDPAR-ADAPTIVECPP)
-                                        if [ "$ARCHITECTURE" != AMD ]; then
-                                            SET_AMD_GPU_NONE=1
-                                        fi
-                                    ;;
-                                    *) ;;
-                                esac
+//                                 case $BACKEND in
+//                                     OPENCL|ADAPTIVECPP|DPCPP|STDPAR-DPCPP|STDPAR-ADAPTIVECPP)
+//                                         if [ "$ARCHITECTURE" != AMD ]; then
+//                                             SET_AMD_GPU_NONE=1
+//                                         fi
+//                                     ;;
+//                                     *) ;;
+//                                 esac
 
-                                installpath=$(cat ${WORKSPACE}/plssvm/${BUILD_TYPE}-${BACKEND}-${ARCHITECTURE}.installpath)
+//                                 installpath=$(cat ${WORKSPACE}/plssvm/${BUILD_TYPE}-${BACKEND}-${ARCHITECTURE}.installpath)
 
-                                cd ${WORKSPACE}/plssvm
-                                ls -l
-                                ls -l build-$(spack arch)-$(echo ${installpath##*-}| cut -c1-7)
-                                cd build-$(spack arch)-$(echo ${installpath##*-}| cut -c1-7)/spack-build-$(echo ${installpath##*-}| cut -c1-7)
-
-
-
-                                if [[ $ARCHITECTURE == NVIDIA ]]; then
-                                    export ONEAPI_DEVICE_SELECTOR=cuda:*
-                                    export ACPP_VISIBILITY_MASK=cuda
-                                    ONEAPI_DEVICE_SELECTOR=cuda:*
-                                    ACPP_VISIBILITY_MASK=cuda
-                                    export CUDA_VISIBLE_DEVICES=0
-                                elif [[ $ARCHITECTURE == AMD ]]; then
-                                    export ONEAPI_DEVICE_SELECTOR=hip:*
-                                    export ACPP_VISIBILITY_MASK=hip
-                                    ONEAPI_DEVICE_SELECTOR=hip:*
-                                    ACPP_VISIBILITY_MASK=hip
-                                    export HIP_VISIBLE_DEVICES=0
-                                else
-                                    export ONEAPI_DEVICE_SELECTOR=*:cpu
-                                    export ACPP_VISIBILITY_MASK=omp
-                                    ONEAPI_DEVICE_SELECTOR=*:cpu
-                                    ACPP_VISIBILITY_MASK=omp
-                                fi
-
-                                export ONEAPI_DEVICE_SELECTOR=${ONEAPI_DEVICE_SELECTOR}
-                                export ACPP_VISIBILITY_MASK=${ACPP_VISIBILITY_MASK}
-                                export HIP_VISIBLE_DEVICES=0
-                                export CUDA_VISIBLE_DEVICES=0
-                                spack test-env --dirty "plssvm@develop$([[ $BACKEND == ADAPTIVECPP ]] && echo "%clang" ) \
-$([[ $BACKEND == OPENMP ]] && echo "+openmp" || echo "~openmp") \
-$([[ $BACKEND == CUDA ]] && echo "+cuda" || echo "~cuda") \
-$([[ $BACKEND == HIP ]] && echo "+hip" || echo "~hip") \
-$([[ $BACKEND == OPENCL ]] && echo "+opencl" || echo "~opencl") \
-$([[ $BACKEND == ADAPTIVECPP ]] && echo " +adaptivecpp" || echo "~adaptivecpp") \
-$([[ $BACKEND == DPCPP ]] && echo "+icpx" || echo "~icpx") \
-$([[ $BACKEND == *"STDPAR"* ]] && echo "+stdpar" || echo "~stdpar") \
-$([[ $BACKEND == STDPAR-GNU-TBB ]] && echo "stdparimplementation=gnu-tbb" ) \
-$([[ $BACKEND == STDPAR-DPCPP ]] && echo "stdparimplementation=icpx" ) \
-$([[ $BACKEND == STDPAR-NVHPC ]] && echo "stdparimplementation=nvhpc" ) \
-$([[ $BACKEND == STDPAR-ADAPTIVECPP ]] && echo "stdparimplementation=adaptivecpp" ) \
-$([[ $ARCHITECTURE == NVIDIA ]] && echo "cuda_arch=86") \
-$([[ SET_NVIDIA_GPU_NONE == 1 ]] && echo "cuda_arch=none") \
-$([[ $ARCHITECTURE == AMD ]] && [[ $(hostname) == pcsgs13 ]] && echo "amdgpu_target=gfx1101") \
-$([[ $ARCHITECTURE == AMD ]] && [[ $(hostname) == simcl1n3 ]] && echo "amdgpu_target=gfx90a") \
-$([[ $ARCHITECTURE == AMD ]] && [[ $(hostname) == pcsgs09 ]] && echo "amdgpu_target=gfx906") \
-$([[ SET_AMD_GPU_NONE == 1 ]] && "amdgpu_target=none") \
-build_type=$BUILD_TYPE \
-arch=$(spack arch)" \
-ctest -j8 --no-tests=error --output-on-failure --timeout 600 --no-compress-output -T Test \
-$([[ $BACKEND == STDPAR-DPCPP ]] && echo "-E \"Parser*/Parser*Help.parsing/h*\" ") \
-$([[ $BACKEND == STDPAR-DPCPP ]] && echo "-E \"Parser*/Parser*Help.parsing/help*\" ") \
-$([[ $BACKEND == STDPAR-DPCPP ]] && echo "-E \"Parser*/Parser*Version.parsing/v*\" ") \
-$([[ $BACKEND == STDPAR-DPCPP ]] && echo "-E \"Parser*/Parser*Version.parsing/version*\" ") \
-$([[ $BACKEND != OPENMP ]] &&  echo "-E \"Base*\"") # Exclude base tests for all backends except openmp
-                            '''
-                        }
-                    }
-                    stage('test installed PLSSVM'){
-                        steps{
-                            sh ''' #!/bin/bash
-                                hostname
-                                source $SGSSCRATCH/spack/share/spack/setup-env.sh
-
-
-                                cd ${WORKSPACE}/plssvm/tests/data/libsvm
-                                case $BACKEND in
-                                    OPENCL|ADAPTIVECPP|DPCPP|STDPAR-NVHPC|STDPAR-DPCPP|STDPAR-ADAPTIVECPP)
-                                        if [ "$ARCHITECTURE" != NVIDIA ]; then
-                                            SET_NVIDIA_GPU_NONE=1
-                                        fi
-                                        ;;
-                                    *) ;;
-                                esac
-
-                                case $BACKEND in
-                                    OPENCL|ADAPTIVECPP|DPCPP|STDPAR-DPCPP|STDPAR-ADAPTIVECPP)
-                                        if [ "$ARCHITECTURE" != AMD ]; then
-                                            SET_AMD_GPU_NONE=1
-                                        fi
-                                    ;;
-                                    *) ;;
-                                esac
-
-                                if [[ $ARCHITECTURE == NVIDIA ]]; then
-                                    export ONEAPI_DEVICE_SELECTOR=cuda:*
-                                    export ACPP_VISIBILITY_MASK=cuda
-                                    ONEAPI_DEVICE_SELECTOR=cuda:*
-                                    ACPP_VISIBILITY_MASK=cuda
-                                    export CUDA_VISIBLE_DEVICES=0
-                                elif [[ $ARCHITECTURE == AMD ]]; then
-                                    export ONEAPI_DEVICE_SELECTOR=hip:*
-                                    export ACPP_VISIBILITY_MASK=hip
-                                    ONEAPI_DEVICE_SELECTOR=hip:*
-                                    ACPP_VISIBILITY_MASK=hip
-                                    export HIP_VISIBLE_DEVICES=0
-                                else
-                                    export ONEAPI_DEVICE_SELECTOR=*:cpu
-                                    export ACPP_VISIBILITY_MASK=omp
-                                    ONEAPI_DEVICE_SELECTOR=*:cpu
-                                    ACPP_VISIBILITY_MASK=omp
-                                fi
-
-                                spack load "plssvm@develop $([[ $BACKEND == ADAPTIVECPP ]] && echo "%clang" )\
-                                        $([[ $BACKEND == OPENMP ]] && echo " +openmp" || echo "~openmp") \
-                                        $([[ $BACKEND == CUDA ]] && echo "+cuda" || echo "~cuda") \
-                                        $([[ $BACKEND == HIP ]] && echo "+hip" || echo "~hip") \
-                                        $([[ $BACKEND == OPENCL ]] && echo "+opencl" || echo "~opencl") \
-                                        $([[ $BACKEND == ADAPTIVECPP ]] && echo "+adaptivecpp" || echo "~adaptivecpp") \
-                                        $([[ $BACKEND == DPCPP ]] && echo "+icpx" || echo "~icpx") \
-                                        $([[ $BACKEND == *"STDPAR"* ]] && echo "+stdpar" || echo "~stdpar") \
-                                        $([[ $BACKEND == STDPAR-GNU-TBB ]] && echo "stdparimplementation=gnu-tbb" ) \
-                                        $([[ $BACKEND == STDPAR-DPCPP ]] && echo "stdparimplementation=icpx" ) \
-                                        $([[ $BACKEND == STDPAR-NVHPC ]] && echo "stdparimplementation=nvhpc" ) \
-                                        $([[ $BACKEND == STDPAR-ADAPTIVECPP ]] && echo "stdparimplementation=adaptivecpp" ) \
-                                        $([[ $ARCHITECTURE == NVIDIA ]] && echo "cuda_arch=86") \
-                                        $([[ SET_NVIDIA_GPU_NONE == 1 ]] && echo "cuda_arch=none") \
-                                        $([[ $ARCHITECTURE == AMD ]] && [[ $(hostname) == pcsgs13 ]] && echo "amdgpu_target=gfx1101") \
-                                        $([[ $ARCHITECTURE == AMD ]] && [[ $(hostname) == simcl1n3 ]] && echo "amdgpu_target=gfx90a") \
-                                        $([[ $ARCHITECTURE == AMD ]] && [[ $(hostname) == pcsgs09 ]] && echo "amdgpu_target=gfx906") \
-                                        $([[ SET_AMD_GPU_NONE == 1 ]] && "amdgpu_target=none") \
-                                        build_type=$BUILD_TYPE \
-                                        arch=$(spack arch)"
-
-                                if [[ $ARCHITECTURE == NVIDIA ]]; then
-                                    export ONEAPI_DEVICE_SELECTOR=cuda:*
-                                    export ACPP_VISIBILITY_MASK=cuda
-                                elif [[ $ARCHITECTURE == AMD ]]; then
-                                    export ONEAPI_DEVICE_SELECTOR=hip:*
-                                    export ACPP_VISIBILITY_MASK=hip
-                                else
-                                    export ONEAPI_DEVICE_SELECTOR=*:cpu
-                                    export ACPP_VISIBILITY_MASK=omp
-                                fi
-
-                                plssvm-scale --help
-                                plssvm-train -i 1 5x4.libsvm ${BACKEND}-${ARCHITECTURE}-${BUILD_TYPE}.model
-                                plssvm-predict 5x4.libsvm ${BACKEND}-${ARCHITECTURE}-${BUILD_TYPE}.model
-                                rm ${BACKEND}-${ARCHITECTURE}-${BUILD_TYPE}.model
+//                                 cd ${WORKSPACE}/plssvm
+//                                 ls -l
+//                                 ls -l build-$(spack arch)-$(echo ${installpath##*-}| cut -c1-7)
+//                                 cd build-$(spack arch)-$(echo ${installpath##*-}| cut -c1-7)/spack-build-$(echo ${installpath##*-}| cut -c1-7)
 
 
 
-                            '''
-                        }
-                    }
+//                                 if [[ $ARCHITECTURE == NVIDIA ]]; then
+//                                     export ONEAPI_DEVICE_SELECTOR=cuda:*
+//                                     export ACPP_VISIBILITY_MASK=cuda
+//                                     ONEAPI_DEVICE_SELECTOR=cuda:*
+//                                     ACPP_VISIBILITY_MASK=cuda
+//                                     export CUDA_VISIBLE_DEVICES=0
+//                                 elif [[ $ARCHITECTURE == AMD ]]; then
+//                                     export ONEAPI_DEVICE_SELECTOR=hip:*
+//                                     export ACPP_VISIBILITY_MASK=hip
+//                                     ONEAPI_DEVICE_SELECTOR=hip:*
+//                                     ACPP_VISIBILITY_MASK=hip
+//                                     export HIP_VISIBLE_DEVICES=0
+//                                 else
+//                                     export ONEAPI_DEVICE_SELECTOR=*:cpu
+//                                     export ACPP_VISIBILITY_MASK=omp
+//                                     ONEAPI_DEVICE_SELECTOR=*:cpu
+//                                     ACPP_VISIBILITY_MASK=omp
+//                                 fi
+
+//                                 export ONEAPI_DEVICE_SELECTOR=${ONEAPI_DEVICE_SELECTOR}
+//                                 export ACPP_VISIBILITY_MASK=${ACPP_VISIBILITY_MASK}
+//                                 export HIP_VISIBLE_DEVICES=0
+//                                 export CUDA_VISIBLE_DEVICES=0
+//                                 spack test-env --dirty "plssvm@develop$([[ $BACKEND == ADAPTIVECPP ]] && echo "%clang" ) \
+// $([[ $BACKEND == OPENMP ]] && echo "+openmp" || echo "~openmp") \
+// $([[ $BACKEND == CUDA ]] && echo "+cuda" || echo "~cuda") \
+// $([[ $BACKEND == HIP ]] && echo "+hip" || echo "~hip") \
+// $([[ $BACKEND == OPENCL ]] && echo "+opencl" || echo "~opencl") \
+// $([[ $BACKEND == ADAPTIVECPP ]] && echo " +adaptivecpp" || echo "~adaptivecpp") \
+// $([[ $BACKEND == DPCPP ]] && echo "+icpx" || echo "~icpx") \
+// $([[ $BACKEND == *"STDPAR"* ]] && echo "+stdpar" || echo "~stdpar") \
+// $([[ $BACKEND == STDPAR-GNU-TBB ]] && echo "stdparimplementation=gnu-tbb" ) \
+// $([[ $BACKEND == STDPAR-DPCPP ]] && echo "stdparimplementation=icpx" ) \
+// $([[ $BACKEND == STDPAR-NVHPC ]] && echo "stdparimplementation=nvhpc" ) \
+// $([[ $BACKEND == STDPAR-ADAPTIVECPP ]] && echo "stdparimplementation=adaptivecpp" ) \
+// $([[ $ARCHITECTURE == NVIDIA ]] && echo "cuda_arch=86") \
+// $([[ SET_NVIDIA_GPU_NONE == 1 ]] && echo "cuda_arch=none") \
+// $([[ $ARCHITECTURE == AMD ]] && [[ $(hostname) == pcsgs13 ]] && echo "amdgpu_target=gfx1101") \
+// $([[ $ARCHITECTURE == AMD ]] && [[ $(hostname) == simcl1n3 ]] && echo "amdgpu_target=gfx90a") \
+// $([[ $ARCHITECTURE == AMD ]] && [[ $(hostname) == pcsgs09 ]] && echo "amdgpu_target=gfx906") \
+// $([[ SET_AMD_GPU_NONE == 1 ]] && "amdgpu_target=none") \
+// build_type=$BUILD_TYPE \
+// arch=$(spack arch)" \
+// ctest -j8 --no-tests=error --output-on-failure --timeout 600 --no-compress-output -T Test \
+// $([[ $BACKEND == STDPAR-DPCPP ]] && echo "-E \"Parser*/Parser*Help.parsing/h*\" ") \
+// $([[ $BACKEND == STDPAR-DPCPP ]] && echo "-E \"Parser*/Parser*Help.parsing/help*\" ") \
+// $([[ $BACKEND == STDPAR-DPCPP ]] && echo "-E \"Parser*/Parser*Version.parsing/v*\" ") \
+// $([[ $BACKEND == STDPAR-DPCPP ]] && echo "-E \"Parser*/Parser*Version.parsing/version*\" ") \
+// $([[ $BACKEND != OPENMP ]] &&  echo "-E \"Base*\"") # Exclude base tests for all backends except openmp
+//                             '''
+//                         }
+//                     }
+//                     stage('test installed PLSSVM'){
+//                         steps{
+//                             sh ''' #!/bin/bash
+//                                 hostname
+//                                 source $SGSSCRATCH/spack/share/spack/setup-env.sh
+
+
+//                                 cd ${WORKSPACE}/plssvm/tests/data/libsvm
+//                                 case $BACKEND in
+//                                     OPENCL|ADAPTIVECPP|DPCPP|STDPAR-NVHPC|STDPAR-DPCPP|STDPAR-ADAPTIVECPP)
+//                                         if [ "$ARCHITECTURE" != NVIDIA ]; then
+//                                             SET_NVIDIA_GPU_NONE=1
+//                                         fi
+//                                         ;;
+//                                     *) ;;
+//                                 esac
+
+//                                 case $BACKEND in
+//                                     OPENCL|ADAPTIVECPP|DPCPP|STDPAR-DPCPP|STDPAR-ADAPTIVECPP)
+//                                         if [ "$ARCHITECTURE" != AMD ]; then
+//                                             SET_AMD_GPU_NONE=1
+//                                         fi
+//                                     ;;
+//                                     *) ;;
+//                                 esac
+
+//                                 if [[ $ARCHITECTURE == NVIDIA ]]; then
+//                                     export ONEAPI_DEVICE_SELECTOR=cuda:*
+//                                     export ACPP_VISIBILITY_MASK=cuda
+//                                     ONEAPI_DEVICE_SELECTOR=cuda:*
+//                                     ACPP_VISIBILITY_MASK=cuda
+//                                     export CUDA_VISIBLE_DEVICES=0
+//                                 elif [[ $ARCHITECTURE == AMD ]]; then
+//                                     export ONEAPI_DEVICE_SELECTOR=hip:*
+//                                     export ACPP_VISIBILITY_MASK=hip
+//                                     ONEAPI_DEVICE_SELECTOR=hip:*
+//                                     ACPP_VISIBILITY_MASK=hip
+//                                     export HIP_VISIBLE_DEVICES=0
+//                                 else
+//                                     export ONEAPI_DEVICE_SELECTOR=*:cpu
+//                                     export ACPP_VISIBILITY_MASK=omp
+//                                     ONEAPI_DEVICE_SELECTOR=*:cpu
+//                                     ACPP_VISIBILITY_MASK=omp
+//                                 fi
+
+//                                 spack load "plssvm@develop $([[ $BACKEND == ADAPTIVECPP ]] && echo "%clang" )\
+//                                         $([[ $BACKEND == OPENMP ]] && echo " +openmp" || echo "~openmp") \
+//                                         $([[ $BACKEND == CUDA ]] && echo "+cuda" || echo "~cuda") \
+//                                         $([[ $BACKEND == HIP ]] && echo "+hip" || echo "~hip") \
+//                                         $([[ $BACKEND == OPENCL ]] && echo "+opencl" || echo "~opencl") \
+//                                         $([[ $BACKEND == ADAPTIVECPP ]] && echo "+adaptivecpp" || echo "~adaptivecpp") \
+//                                         $([[ $BACKEND == DPCPP ]] && echo "+icpx" || echo "~icpx") \
+//                                         $([[ $BACKEND == *"STDPAR"* ]] && echo "+stdpar" || echo "~stdpar") \
+//                                         $([[ $BACKEND == STDPAR-GNU-TBB ]] && echo "stdparimplementation=gnu-tbb" ) \
+//                                         $([[ $BACKEND == STDPAR-DPCPP ]] && echo "stdparimplementation=icpx" ) \
+//                                         $([[ $BACKEND == STDPAR-NVHPC ]] && echo "stdparimplementation=nvhpc" ) \
+//                                         $([[ $BACKEND == STDPAR-ADAPTIVECPP ]] && echo "stdparimplementation=adaptivecpp" ) \
+//                                         $([[ $ARCHITECTURE == NVIDIA ]] && echo "cuda_arch=86") \
+//                                         $([[ SET_NVIDIA_GPU_NONE == 1 ]] && echo "cuda_arch=none") \
+//                                         $([[ $ARCHITECTURE == AMD ]] && [[ $(hostname) == pcsgs13 ]] && echo "amdgpu_target=gfx1101") \
+//                                         $([[ $ARCHITECTURE == AMD ]] && [[ $(hostname) == simcl1n3 ]] && echo "amdgpu_target=gfx90a") \
+//                                         $([[ $ARCHITECTURE == AMD ]] && [[ $(hostname) == pcsgs09 ]] && echo "amdgpu_target=gfx906") \
+//                                         $([[ SET_AMD_GPU_NONE == 1 ]] && "amdgpu_target=none") \
+//                                         build_type=$BUILD_TYPE \
+//                                         arch=$(spack arch)"
+
+//                                 if [[ $ARCHITECTURE == NVIDIA ]]; then
+//                                     export ONEAPI_DEVICE_SELECTOR=cuda:*
+//                                     export ACPP_VISIBILITY_MASK=cuda
+//                                 elif [[ $ARCHITECTURE == AMD ]]; then
+//                                     export ONEAPI_DEVICE_SELECTOR=hip:*
+//                                     export ACPP_VISIBILITY_MASK=hip
+//                                 else
+//                                     export ONEAPI_DEVICE_SELECTOR=*:cpu
+//                                     export ACPP_VISIBILITY_MASK=omp
+//                                 fi
+
+//                                 plssvm-scale --help
+//                                 plssvm-train -i 1 5x4.libsvm ${BACKEND}-${ARCHITECTURE}-${BUILD_TYPE}.model
+//                                 plssvm-predict 5x4.libsvm ${BACKEND}-${ARCHITECTURE}-${BUILD_TYPE}.model
+//                                 rm ${BACKEND}-${ARCHITECTURE}-${BUILD_TYPE}.model
+
+
+
+//                             '''
+//                         }
+//                     }
 
 
 
@@ -708,6 +714,7 @@ $([[ $BACKEND != OPENMP ]] &&  echo "-E \"Base*\"") # Exclude base tests for all
                 }
             }
         }
+            }
         // stage('Coverage Analysis') {
         //     steps {
         //         dir('plssvm') {
