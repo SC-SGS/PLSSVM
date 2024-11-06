@@ -319,12 +319,12 @@ pipeline {
 
 
                 agent { label onlineNodes_label_string('sgs_workstation', "${env.ARCHITECTURE.equalsIgnoreCase('AMD') ? 'sgs_amd_gpu_node' : 'sgs_nvidia_gpu_node'}") }
-
+stages {
                 stage( 'Sequential Matrix' ) {
                 options {
                     lock( 'synchronous-matrix' )
                 }
-                stages {
+
 
                 stages{
                     stage('Build PLSSVM'){
