@@ -70,14 +70,12 @@ std::vector<device_wrapper> get_device_list(const execution_space space, [[maybe
             PLSSVM_KOKKOS_BACKEND_INVOKE_IF_SYCL(([&]() {
                 // all user provided sycl::queues must be in-order queues
                 ::sycl::property_list props{ ::sycl::property::queue::in_order{} };
-                static ::sycl::queue q;
 
                 for (const auto &platform : ::sycl::platform::get_platforms()) {
                     for (const auto &device : platform.get_devices()) {
                         // Note: Kokkos is IntelLLVM/DPC++/icpx only
                         if (device.is_cpu() && target == target_platform::cpu) {
-                            q = ::sycl::queue{ device, props };
-                            devices.emplace_back(Kokkos::SYCL{ q });
+                            devices.emplace_back(Kokkos::SYCL{ ::sycl::queue{ device, props } });
                         } else if (device.is_gpu()) {
                             // the current device is a GPU
                             // get vendor string and convert it to all lower case
@@ -87,14 +85,11 @@ std::vector<device_wrapper> get_device_list(const execution_space space, [[maybe
 
                             // check vendor string and insert to correct target platform
                             if (::plssvm::detail::contains(vendor_string, "nvidia") && target == target_platform::gpu_nvidia) {
-                                q = ::sycl::queue{ device, props };
-                                devices.emplace_back(Kokkos::SYCL{ q });
+                                devices.emplace_back(Kokkos::SYCL{ ::sycl::queue{ device, props } });
                             } else if ((::plssvm::detail::contains(vendor_string, "amd") || ::plssvm::detail::contains(vendor_string, "advanced micro devices")) && target == target_platform::gpu_amd) {
-                                q = ::sycl::queue{ device, props };
-                                devices.emplace_back(Kokkos::SYCL{ q });
+                                devices.emplace_back(Kokkos::SYCL{ ::sycl::queue{ device, props } });
                             } else if (::plssvm::detail::contains(vendor_string, "intel") && target == target_platform::gpu_intel) {
-                                q = ::sycl::queue{ device, props };
-                                devices.emplace_back(Kokkos::SYCL{ q });
+                                devices.emplace_back(Kokkos::SYCL{ ::sycl::queue{ device, props } });
                             }
                         }
                     }
