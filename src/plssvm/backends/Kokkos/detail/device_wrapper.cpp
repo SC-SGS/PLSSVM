@@ -46,7 +46,7 @@ std::vector<device_wrapper> get_device_list(const execution_space space, [[maybe
                     hipStreamCreate(&stream);
                     // create Kokkos execution space for the specific device
                     // Note: it is important to pass the hipStream_t lifetime to be managed by Kokkos
-                    devices.emplace_back(Kokkos::Hip(stream, Kokkos::Impl::ManageStream::yes));
+                    devices.emplace_back(Kokkos::HIP(stream, Kokkos::Impl::ManageStream::yes));
                 }
             });
             break;
