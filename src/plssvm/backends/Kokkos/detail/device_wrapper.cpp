@@ -91,6 +91,7 @@ std::vector<device_wrapper> get_device_list(const execution_space space, [[maybe
             PLSSVM_KOKKOS_BACKEND_INVOKE_IF_THREADS([&]() {
                 devices.emplace_back(Kokkos::Threads{});
             });
+            break;
         case execution_space::serial:
             PLSSVM_KOKKOS_BACKEND_INVOKE_IF_SERIAL([&]() {
                 devices.emplace_back(Kokkos::Serial{});
