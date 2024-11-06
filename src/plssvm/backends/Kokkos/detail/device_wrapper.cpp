@@ -11,7 +11,8 @@
 #include "plssvm/backends/Kokkos/detail/conditional_execution.hpp"  // PLSSVM_KOKKOS_BACKEND_INVOKE_IF_*
 #include "plssvm/backends/Kokkos/execution_space.hpp"               // plssvm::kokkos::execution_space
 #include "plssvm/detail/logging_without_performance_tracking.hpp"   // plssvm::detail::log_untracked
-#include "plssvm/detail/utility.hpp"                                // plssvm::detail::unreachable
+#include "plssvm/detail/string_utility.hpp"                         // plssvm::detail::as_lower_case
+#include "plssvm/detail/utility.hpp"                                // plssvm::detail::contains
 #include "plssvm/target_platforms.hpp"                              // plssvm::target_platform
 #include "plssvm/verbosity_levels.hpp"                              // plssvm::verbosity_level
 
@@ -51,11 +52,39 @@ std::vector<device_wrapper> get_device_list(const execution_space space, [[maybe
             });
             break;
         case execution_space::sycl:
-            PLSSVM_KOKKOS_BACKEND_INVOKE_IF_SYCL([&]() {
-                // TODO: use all available devices -> not that trivial
-                // TODO: handle target <- if provide queue -> managed?
-                devices.emplace_back(Kokkos::SYCL{});
-            });
+            PLSSVM_KOKKOS_BACKEND_INVOKE_IF_SYCL(([&]() {
+                // all user provided sycl::queues must be in-order queues
+                ::sycl::property_list props{ ::sycl::property::queue::in_order{} };
+                static ::sycl::queue q;
+
+                for (const auto &platform : ::sycl::platform::get_platforms()) {
+                    for (const auto &device : platform.get_devices()) {
+                        // Note: Kokkos is IntelLLVM/DPC++/icpx only
+                        if (device.is_cpu() && target == target_platform::cpu) {
+                            q = ::sycl::queue{ device, props };
+                            devices.emplace_back(Kokkos::SYCL{ q });
+                        } else if (device.is_gpu()) {
+                            // the current device is a GPU
+                            // get vendor string and convert it to all lower case
+                            const std::string vendor_string = ::plssvm::detail::as_lower_case(device.get_info<::sycl::info::device::vendor>());
+                            // get platform name of current GPU device and convert it to all lower case
+                            const std::string platform_string = ::plssvm::detail::as_lower_case(platform.get_info<::sycl::info::platform::name>());
+
+                            // check vendor string and insert to correct target platform
+                            if (::plssvm::detail::contains(vendor_string, "nvidia") && target == target_platform::gpu_nvidia) {
+                                q = ::sycl::queue{ device, props };
+                                devices.emplace_back(Kokkos::SYCL{ q });
+                            } else if ((::plssvm::detail::contains(vendor_string, "amd") || ::plssvm::detail::contains(vendor_string, "advanced micro devices")) && target == target_platform::gpu_amd) {
+                                q = ::sycl::queue{ device, props };
+                                devices.emplace_back(Kokkos::SYCL{ q });
+                            } else if (::plssvm::detail::contains(vendor_string, "intel") && target == target_platform::gpu_intel) {
+                                q = ::sycl::queue{ device, props };
+                                devices.emplace_back(Kokkos::SYCL{ q });
+                            }
+                        }
+                    }
+                }
+            }));
             break;
         case execution_space::hpx:
             PLSSVM_KOKKOS_BACKEND_INVOKE_IF_HPX([&]() {

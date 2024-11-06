@@ -60,7 +60,7 @@ std::map<target_platform, std::vector<execution_space>> available_target_platfor
                     std::unordered_set<target_platform> targets{};
                     for (const auto &platform : ::sycl::platform::get_platforms()) {
                         for (const auto &device : platform.get_devices()) {
-                            // Note: Kokkos is Intel LLVM/DPC++/icpx only -> we can use the specific implementation defined enum values
+                            // Note: Kokkos is Intel LLVM/DPC++/icpx only
                             if (device.is_cpu()) {
                                 targets.insert(target_platform::cpu);
                             } else if (device.is_gpu()) {
