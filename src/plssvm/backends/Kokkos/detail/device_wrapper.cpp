@@ -59,7 +59,7 @@ std::vector<device_wrapper> get_device_list(const execution_space space, [[maybe
             break;
         case execution_space::hpx:
             PLSSVM_KOKKOS_BACKEND_INVOKE_IF_HPX([&]() {
-                devices.emplace_back(Kokkos::Hpx{});
+                devices.emplace_back(Kokkos::Experimental::HPX{});
             });
             break;
         case execution_space::openmp:
