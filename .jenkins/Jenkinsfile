@@ -161,7 +161,7 @@ pipeline {
 
                                     spack uninstall -a -y plssvm@develop || true
 
-                                    cd ${env.WORKSPACE}/plssvm
+                                    cd ${WORKSPACE}/plssvm
                                     rm -rf *
                                 '''
 
