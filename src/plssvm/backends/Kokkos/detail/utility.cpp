@@ -58,7 +58,7 @@ std::map<target_platform, std::vector<execution_space>> available_target_platfor
                 // list all potential target platforms currently available in SYCL
                 PLSSVM_KOKKOS_BACKEND_INVOKE_IF_SYCL([&]() {
                     std::unordered_set<target_platform> targets{};
-                    for (const auto &platform : sycl::platform::get_platforms()) {
+                    for (const auto &platform : ::sycl::platform::get_platforms()) {
                         for (const auto &device : platform.get_devices()) {
                             // Note: Kokkos is Intel LLVM/DPC++/icpx only -> we can use the specific implementation defined enum values
                             if (device.is_cpu()) {
@@ -132,7 +132,7 @@ std::string get_device_name([[maybe_unused]] const device_wrapper &dev) {
             });
         case execution_space::sycl:
             PLSSVM_KOKKOS_BACKEND_INVOKE_RETURN_IF_SYCL([&]() {
-                return dev.get<execution_space::sycl>().sycl_queue.get_device().get_info<sycl::info::device::name>();
+                return dev.get<execution_space::sycl>().sycl_queue().get_device().get_info<::sycl::info::device::name>();
             });
         case execution_space::hpx:
             return "HPX CPU host device";
