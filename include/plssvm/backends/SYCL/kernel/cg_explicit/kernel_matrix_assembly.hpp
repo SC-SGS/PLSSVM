@@ -27,7 +27,7 @@ namespace plssvm::sycl::detail {
 /**
  * @brief Create the explicit kernel matrix using the @p kernel_function.
  * @tparam kernel_function the type of the used kernel function
- * @tparam Args the types of the parameters necessary for the specific kernel function; stored in a `standard_layout_tuple`
+ * @tparam Args the types of the parameters necessary for the specific kernel function; stored in a `std::tuple`
  */
 template <kernel_function_type kernel_function, typename... Args>
 class device_kernel_assembly {
