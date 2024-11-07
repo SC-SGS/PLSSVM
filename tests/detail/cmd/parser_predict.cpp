@@ -270,7 +270,7 @@ class ParserPredictVerbosity : public ParserPredict,
 TEST_P(ParserPredictVerbosity, parsing) {
     const auto &[flag, value] = GetParam();
     // create artificial command line arguments in test fixture
-    this->CreateCMDArgs({ "./plssvm-train", flag, value, "data.libsvm", "data.libsvm.model" });
+    this->CreateCMDArgs({ "./plssvm-predict", flag, value, "data.libsvm", "data.libsvm.model" });
     // create parameter object
     const plssvm::detail::cmd::parser_predict parser{ this->get_argc(), this->get_argv() };
     // test for correctness
