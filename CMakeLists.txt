@@ -729,8 +729,8 @@ message(STATUS "Generating manpage files.")
 string(TIMESTAMP PLSSVM_CURRENT_BUILD_TIME "%d. %B %Y")
 string(REPLACE ";" "|" PLSSVM_PLATFORM_NAME_LIST "${PLSSVM_PLATFORM_NAME_LIST}")
 string(REPLACE ";" "|" PLSSVM_BACKEND_NAME_LIST "${PLSSVM_BACKEND_NAME_LIST}")
-string(REPLACE ";" "|" PLSSVM_SYCL_BACKEND_NAME_LIST "${PLSSVM_SYCL_BACKEND_NAME_LIST}")
 if (TARGET ${PLSSVM_SYCL_BACKEND_LIBRARY_NAME})
+    string(REPLACE ";" "|" PLSSVM_SYCL_BACKEND_NAME_LIST "${PLSSVM_SYCL_BACKEND_NAME_LIST}")
     set(PLSSVM_SYCL_IMPLEMENTATION_TYPE_MANPAGE_ENTRY "
 .TP
 .B --sycl_implementation_type
@@ -743,6 +743,15 @@ choose the kernel invocation type when using SYCL as backend: automatic|nd_range
 ")
 endif ()
 set(PLSSVM_SYCL_MANPAGE_ENTRY "${PLSSVM_SYCL_KERNEL_INVOCATION_TYPE_MANPAGE_ENTRY}${PLSSVM_SYCL_IMPLEMENTATION_TYPE_MANPAGE_ENTRY}")
+## assemble the Kokkos manpage entry
+if (TARGET ${PLSSVM_KOKKOS_BACKEND_LIBRARY_NAME})
+    string(REPLACE ";" "|" PLSSVM_KOKKOS_BACKEND_AVAILABLE_EXECUTION_SPACES "${PLSSVM_KOKKOS_BACKEND_AVAILABLE_EXECUTION_SPACES}")
+    set(PLSSVM_KOKKOS_MANPAGE_ENTRY "
+.TP
+.B --kokkos_execution_space
+choose the Kokkos execution space to be used in the Kokkos backend: automatic|${PLSSVM_KOKKOS_BACKEND_AVAILABLE_EXECUTION_SPACES} (default: automatic)
+")
+endif ()
 ## assemble the performance tracker manpage entry
 if (PLSSVM_ENABLE_PERFORMANCE_TRACKING)
     set(PLSSVM_PERFORMANCE_TRACKER_MANPAGE_ENTRY "
@@ -758,6 +767,7 @@ configure_file(
         ${CMAKE_CURRENT_SOURCE_DIR}/docs/plssvm-train.1
         @ONLY
 )
+# update manpage entry since plssvm-predict can't recognize the SYCL kernel invocation type
 set(PLSSVM_SYCL_MANPAGE_ENTRY "${PLSSVM_SYCL_IMPLEMENTATION_TYPE_MANPAGE_ENTRY}")
 configure_file(
         ${CMAKE_CURRENT_SOURCE_DIR}/docs/plssvm-predict.1.in
