@@ -123,7 +123,7 @@ std::vector<device_wrapper> get_device_list(const execution_space space, [[maybe
         case execution_space::openacc:
             PLSSVM_KOKKOS_BACKEND_INVOKE_IF_OPENACC([&]() {
                 // TODO: implement multi-GPU support?
-                devices.emplace_back(Kokkos::OpenACC{});
+                devices.emplace_back(Kokkos::Experimental::OpenACC{});
             });
             break;
         case execution_space::threads:

@@ -163,7 +163,7 @@ namespace plssvm::kokkos::detail {
 #endif
 
 //***************************************************//
-//                  Kokkos::OpenACC                  //
+//           Kokkos::Experimental::OpenACC           //
 //***************************************************//
 
 /**
