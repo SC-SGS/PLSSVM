@@ -40,8 +40,6 @@ pinned_memory<T>::~pinned_memory() {
     }
 }
 
-// TODO: check if implementable via Kokkos?
-
 template class pinned_memory<float>;
 template class pinned_memory<double>;
 

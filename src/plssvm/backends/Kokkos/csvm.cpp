@@ -12,9 +12,9 @@
 #include "plssvm/backends/Kokkos/detail/conditional_execution.hpp"                    // PLSSVM_KOKKOS_BACKEND_INVOKE_RETURN_IF_*, PLSSVM_KOKKOS_BACKEND_INVOKE_IF_
 #include "plssvm/backends/Kokkos/detail/device_ptr.hpp"                               // plssvm::kokkos::detail::device_ptr
 #include "plssvm/backends/Kokkos/detail/device_wrapper.hpp"                           // plssvm::kokkos::detail::{device_wrapper, get_device_list}
-#include "plssvm/backends/Kokkos/detail/utility.hpp"                                  // plssvm::kokkos::detail::get_runtime_version // TODO: docu
+#include "plssvm/backends/Kokkos/detail/utility.hpp"                                  // plssvm::kokkos::detail::{available_target_platform_to_execution_space_mapping, get_kokkos_version, dim_type_to_native, get_device_name, device_synchronize}
 #include "plssvm/backends/Kokkos/exceptions.hpp"                                      // plssvm::kokkos::backend_exception
-#include "plssvm/backends/Kokkos/execution_space.hpp"                                 // plssvm::kokkos::execution_space
+#include "plssvm/backends/Kokkos/execution_space.hpp"                                 // plssvm::kokkos::{execution_space, list_available_execution_spaces}
 #include "plssvm/backends/Kokkos/kernel/cg_explicit/blas.hpp"                         // plssvm::kokkos::detail::{device_kernel_symm, device_kernel_symm_mirror, device_kernel_inplace_matrix_add, device_kernel_inplace_matrix_scale}
 #include "plssvm/backends/Kokkos/kernel/cg_explicit/kernel_matrix_assembly.hpp"       // plssvm::kokkos::detail::device_kernel_assembly
 #include "plssvm/backends/Kokkos/kernel/cg_implicit/kernel_matrix_assembly_blas.hpp"  // plssvm::kokkos::detail::device_kernel_assembly_symm
@@ -33,7 +33,8 @@
 #include "plssvm/target_platforms.hpp"                                                // plssvm::target_platform
 #include "plssvm/verbosity_levels.hpp"                                                // plssvm::verbosity_level
 
-#include "Kokkos_Core.hpp"  // TODO: docu
+#include "Kokkos_Core.hpp"  // Kokkos::TeamPolicy, Kokkos::ParallelForTag, Kokkos::parallel_for, Kokkos::PerTeam
+                            // Kokkos::Experimental::HPX::impl_max_hardware_threads, Kokkos::OpenMP::impl_max_hardware_threads, Kokkos::Threads::impl_max_hardware_threads
 
 #include "fmt/core.h"    // fmt::format
 #include "fmt/format.h"  // fmt::format
@@ -42,10 +43,18 @@
 #include <cstddef>    // std::size_t
 #include <exception>  // std::terminate
 #include <iostream>   // std::cout, std::endl
+#include <limits>     // std::numeric_limits::max
 #include <map>        // std::map
 #include <string>     // std::string
 #include <utility>    // std::move
 #include <vector>     // std::vector
+
+// a dummy class used as functor to the team_size_max function
+template <typename ExecutionSpace>
+struct dummy {
+    KOKKOS_INLINE_FUNCTION
+    void operator()(const typename Kokkos::TeamPolicy<ExecutionSpace>::member_type &) const { }
+};
 
 namespace plssvm::kokkos {
 
@@ -109,6 +118,11 @@ void csvm::init(const target_platform target) {
         }
     }
 
+    // Kokkos::Experimental::OpenMPTarget and Kokkos::Experimental::OpenACC currently not supported!
+    if (space_ == execution_space::openmp_target || space_ == execution_space::openacc) {
+        throw backend_exception{ fmt::format("The Kokkos execution space {} is currently not supported!", space_) };
+    }
+
     plssvm::detail::log(verbosity_level::full,
                         "\nUsing Kokkos ({}) as backend with the Kokkos::ExecutionSpace \"{}\".\n",
                         plssvm::detail::tracking::tracking_entry{ "dependencies", "kokkos_version", detail::get_kokkos_version() },
@@ -163,129 +177,162 @@ csvm::~csvm() {
 }
 
 std::vector<::plssvm::detail::memory_size> csvm::get_device_memory() const {
-    // TODO: implement for other execution spaces
-    std::vector<::plssvm::detail::memory_size> res(this->num_available_devices());
+    std::vector<::plssvm::detail::memory_size> device_memory(this->num_available_devices());
     switch (space_) {
         case execution_space::cuda:
             PLSSVM_KOKKOS_BACKEND_INVOKE_IF_CUDA([&]() {
                 for (std::size_t device_id = 0; device_id < this->num_available_devices(); ++device_id) {
-                    res[device_id] = ::plssvm::detail::memory_size{ static_cast<unsigned long long>(devices_[device_id].get<execution_space::cuda>().cuda_device_prop().totalGlobalMem) };
+                    device_memory[device_id] = ::plssvm::detail::memory_size{ static_cast<unsigned long long>(devices_[device_id].get<execution_space::cuda>().cuda_device_prop().totalGlobalMem) };
                 }
             });
             break;
         case execution_space::hip:
             PLSSVM_KOKKOS_BACKEND_INVOKE_IF_HIP([&]() {
                 for (std::size_t device_id = 0; device_id < this->num_available_devices(); ++device_id) {
-                    res[device_id] = ::plssvm::detail::memory_size{ static_cast<unsigned long long>(devices_[device_id].get<execution_space::hip>().hip_device_prop().totalGlobalMem) };
+                    device_memory[device_id] = ::plssvm::detail::memory_size{ static_cast<unsigned long long>(devices_[device_id].get<execution_space::hip>().hip_device_prop().totalGlobalMem) };
                 }
             });
             break;
         case execution_space::sycl:
             PLSSVM_KOKKOS_BACKEND_INVOKE_IF_SYCL([&]() {
                 for (std::size_t device_id = 0; device_id < this->num_available_devices(); ++device_id) {
-                    res[device_id] = ::plssvm::detail::memory_size{ static_cast<unsigned long long>(devices_[device_id].get<execution_space::sycl>().sycl_queue().get_device().get_info<::sycl::info::device::global_mem_size>()) };
+                    device_memory[device_id] = ::plssvm::detail::memory_size{ static_cast<unsigned long long>(devices_[device_id].get<execution_space::sycl>().sycl_queue().get_device().get_info<::sycl::info::device::global_mem_size>()) };
                 }
             });
             break;
-        case execution_space::openmp:
         case execution_space::hpx:
+        case execution_space::openmp:
         case execution_space::threads:
         case execution_space::serial:
-            return std::vector<::plssvm::detail::memory_size>(this->num_available_devices(), ::plssvm::detail::get_system_memory());
+            // NOTE: for these execution spaces, this->num_available_devices will always return 1
+            PLSSVM_ASSERT(this->num_available_devices() == 1, "The host side Kokkos execution spaces should always only be represented using a single device!");
+            device_memory[0] = ::plssvm::detail::get_system_memory();
+            break;
+        // TODO: implement for Kokkos::Experimental::OpenMPTarget and Kokkos::Experimental::OpenACC
         case execution_space::openmp_target:
         case execution_space::openacc:
             throw backend_exception{ fmt::format("Currently not implemented for the execution space: {}!", space_) };
     }
-    return res;
+    return device_memory;
 }
 
 std::vector<::plssvm::detail::memory_size> csvm::get_max_mem_alloc_size() const {
-    [[maybe_unused]] std::vector<::plssvm::detail::memory_size> res(this->num_available_devices());
-    // TODO: implement for other execution spaces
+    std::vector<::plssvm::detail::memory_size> max_mem_alloc_size(this->num_available_devices());
     switch (space_) {
         case execution_space::cuda:
         case execution_space::hip:
-            return this->get_device_memory();
+            max_mem_alloc_size = this->get_device_memory();
+            break;
         case execution_space::sycl:
             PLSSVM_KOKKOS_BACKEND_INVOKE_IF_SYCL([&]() {
                 for (std::size_t device_id = 0; device_id < this->num_available_devices(); ++device_id) {
-                    res[device_id] = ::plssvm::detail::memory_size{ static_cast<unsigned long long>(devices_[device_id].get<execution_space::sycl>().sycl_queue().get_device().get_info<::sycl::info::device::max_mem_alloc_size>()) };
+                    max_mem_alloc_size[device_id] = ::plssvm::detail::memory_size{ static_cast<unsigned long long>(devices_[device_id].get<execution_space::sycl>().sycl_queue().get_device().get_info<::sycl::info::device::max_mem_alloc_size>()) };
                 }
             });
             break;
-        case execution_space::openmp:
         case execution_space::hpx:
+        case execution_space::openmp:
         case execution_space::threads:
         case execution_space::serial:
-            return this->get_device_memory();
+            max_mem_alloc_size = this->get_device_memory();
+            break;
+        // TODO: implement for Kokkos::Experimental::OpenMPTarget and Kokkos::Experimental::OpenACC
         case execution_space::openmp_target:
         case execution_space::openacc:
             throw backend_exception{ fmt::format("Currently not implemented for the execution space: {}!", space_) };
     }
-    return res;
+    return max_mem_alloc_size;
 }
 
 std::size_t csvm::get_max_work_group_size(const std::size_t device_id) const {
     PLSSVM_ASSERT(device_id < this->num_available_devices(), "Invalid device {} requested!", device_id);
 
-    // TODO: implement for other execution spaces
-    switch (space_) {
-        case execution_space::cuda:
-            PLSSVM_KOKKOS_BACKEND_INVOKE_RETURN_IF_CUDA([&]() {
-                return static_cast<std::size_t>(devices_[device_id].get<execution_space::cuda>().cuda_device_prop().maxThreadsPerBlock);
-            });
-        case execution_space::hip:
-            PLSSVM_KOKKOS_BACKEND_INVOKE_RETURN_IF_HIP([&]() {
-                return static_cast<std::size_t>(devices_[device_id].get<execution_space::hip>().hip_device_prop().maxThreadsPerBlock);
-            });
-        case execution_space::sycl:
-            PLSSVM_KOKKOS_BACKEND_INVOKE_RETURN_IF_SYCL([&]() {
-                return devices_[device_id].get<execution_space::sycl>().sycl_queue().get_device().get_info<::sycl::info::device::max_work_group_size>();
-            });
-        case execution_space::openmp:
-            return 16;  // TODO: most likely dependent on the number of cores in Kokkos...
-        case execution_space::serial:
-            // only one thread allowed in serial execution
-            return 1;
-        case execution_space::openmp_target:
-        case execution_space::openacc:
-        case execution_space::hpx:
-        case execution_space::threads:
-            throw backend_exception{ fmt::format("Currently not implemented for the execution space: {}!", space_) };
-    }
-    // all possible cases should be handled by the previous switch
-    // -> silence missing return statement compiler warnings due to throw statement
-    ::plssvm::detail::unreachable();
+    // NOTE: the maximum theoretical work-group size, may be additionally limited by the amount of used scratch memory
+    return devices_[device_id].execute_and_return([](const auto &device) {
+        using kokkos_execution_space_type = ::plssvm::detail::remove_cvref_t<decltype(device)>;
+        // NOTE: CUDA + HIP + SYCL: returns the maximum possible number of threads, due to no further limitations in the dummy functor (like, e.g., scratch memory)
+        // NOTE: HPX + Serial: hardcoded to 1
+        // NOTE: OpenMP: should be 1-2; most likely 1
+        // NOTE: Threads: should be equal to number of hardware threads IF hwloc is enabled; otherwise 1
+        // NOTE: OpenMPTarget: hardcoded to 256
+        // NOTE: OpenACC: hardcoded to 512
+
+        // NOTE: the functor types doesn't matter -> the dummy class
+        return Kokkos::TeamPolicy<kokkos_execution_space_type>{}.team_size_max(dummy<kokkos_execution_space_type>{}, Kokkos::ParallelForTag{});
+    });
 }
 
-::plssvm::detail::dim_type csvm::get_max_grid_size(const std::size_t device_id) const {
+::plssvm::detail::dim_type csvm::get_max_grid_size([[maybe_unused]] const std::size_t device_id) const {
     PLSSVM_ASSERT(device_id < this->num_available_devices(), "Invalid device {} requested!", device_id);
 
     // NOTE: Kokkos only supports one-dimensional execution ranges!
     // NOTE: we only use two-dimensional kernels!
-    // TODO: implement for other execution spaces
     switch (space_) {
         case execution_space::cuda:
             PLSSVM_KOKKOS_BACKEND_INVOKE_RETURN_IF_CUDA(([&]() -> ::plssvm::detail::dim_type {
                 const cudaDeviceProp &prop = devices_[device_id].get<execution_space::cuda>().cuda_device_prop();
-                const auto max_grid_size = static_cast<std::size_t>(std::sqrt(prop.maxGridSize[0]));
-                return { max_grid_size, max_grid_size, std::size_t{ 1 } };
+                const auto max_grid_size = static_cast<unsigned long long>(std::sqrt(prop.maxGridSize[0]));
+                return { max_grid_size, max_grid_size, 1ull };
             }));
         case execution_space::hip:
             PLSSVM_KOKKOS_BACKEND_INVOKE_RETURN_IF_HIP(([&]() -> ::plssvm::detail::dim_type {
-                const hipDeviceProp &prop = devices_[device_id].get<execution_space::hip>().hip_device_prop();
-                const auto max_grid_size = static_cast<std::size_t>(std::sqrt(prop.maxGridSize[0]));
-                return { max_grid_size, max_grid_size, std::size_t{ 1 } };
+                const hipDeviceProp_t &prop = devices_[device_id].get<execution_space::hip>().hip_device_prop();
+                const auto max_grid_size = static_cast<unsigned long long>(std::sqrt(prop.maxGridSize[0]));
+                return { max_grid_size, max_grid_size, 1ull };
+            }));
+        case execution_space::sycl:
+            PLSSVM_KOKKOS_BACKEND_INVOKE_RETURN_IF_SYCL(([&]() -> ::plssvm::detail::dim_type {
+            // TODO: replace with standardized function if there will be one in the future
+#if defined(SYCL_EXT_ONEAPI_MAX_WORK_GROUP_QUERY)
+                const ::sycl::id<3> native_range = devices_[device_id].get<execution_space::sycl>().sycl_queue().get_device().get_info<::sycl::ext::oneapi::experimental::info::device::max_work_groups<3>>();
+#else
+                // fallback to maximum theoretical value, may break at runtime!
+                ::sycl::id<3> native_range{};
+                const std::size_t max_int32 = std::numeric_limits<std::int32_t>::max();
+                const std::size_t max_uint16 = std::numeric_limits<std::uint16_t>::max();
+                if (target_ == target_platform::cpu) {
+                    native_range = ::sycl::id<3>{ max_int32, max_int32, max_int32 };
+                } else {
+                    native_range = ::sycl::id<3>{ max_int32, max_uint16, max_uint16 };
+                }
+#endif
+                // note: account for SYCL's different iteration range!
+                return { native_range[2], native_range[1], native_range[0] };
+            }));
+        case execution_space::hpx:
+            PLSSVM_KOKKOS_BACKEND_INVOKE_RETURN_IF_HPX(([&]() -> ::plssvm::detail::dim_type {
+                // get the total number of threads
+                const std::size_t num_threads = Kokkos::Experimental::HPX::impl_max_hardware_threads();
+                // set the maximum league size to twice the number of available hardware threads
+                // NOTE: this is just an estimate and can or should be changed depending on the performance
+                const auto league_size = static_cast<unsigned long long>(std::ceil(std::sqrt(num_threads * 2)));
+                return { league_size, league_size, 1ull };
             }));
         case execution_space::openmp:
-            return { 16, 16, 1 };  // TODO: correct values
+            PLSSVM_KOKKOS_BACKEND_INVOKE_RETURN_IF_OPENMP(([&]() -> ::plssvm::detail::dim_type {
+                // get the total number of threads
+                const std::size_t num_threads = Kokkos::OpenMP::impl_max_hardware_threads();
+                // set the maximum league size to twice the number of available hardware threads
+                // NOTE: this is just an estimate and can or should be changed depending on the performance
+                const auto league_size = static_cast<unsigned long long>(std::ceil(std::sqrt(num_threads * 2)));
+                return { league_size, league_size, 1ull };
+            }));
+        case execution_space::threads:
+            PLSSVM_KOKKOS_BACKEND_INVOKE_RETURN_IF_THREADS(([&]() -> ::plssvm::detail::dim_type {
+                // get the total number of threads
+                const std::size_t num_threads = Kokkos::Threads::impl_max_hardware_threads();
+                // set the maximum league size to twice the number of available hardware threads
+                // NOTE: this is just an estimate and can or should be changed depending on the performance
+                const auto league_size = static_cast<unsigned long long>(std::ceil(std::sqrt(num_threads * 2)));
+                return { league_size, league_size, 1ull };
+            }));
         case execution_space::serial:
-            return { 1, 1, 1 };  // TODO: correct values
-        case execution_space::sycl:
+            PLSSVM_KOKKOS_BACKEND_INVOKE_RETURN_IF_SERIAL(([&]() -> ::plssvm::detail::dim_type {
+                return { std::numeric_limits<int>::max(), std::numeric_limits<int>::max(), 1ull };
+            }));
+        // TODO: implement for Kokkos::Experimental::OpenMPTarget and Kokkos::Experimental::OpenACC
         case execution_space::openmp_target:
         case execution_space::openacc:
-        case execution_space::hpx:
-        case execution_space::threads:
             throw backend_exception{ fmt::format("Currently not implemented for the execution space: {}!", space_) };
     }
     // all possible cases should be handled by the previous switch
@@ -328,7 +375,6 @@ auto csvm::run_assemble_kernel_matrix_explicit(const std::size_t device_id, cons
 
             // create a Kokkos TeamPolicy
             Kokkos::TeamPolicy<kokkos_execution_space_type> team_policy{ device, native_partial_grid, team_size };
-            // TODO: test MDRangeTeamPolicy?!
 
             switch (params.kernel_type) {
                 case kernel_function_type::linear:

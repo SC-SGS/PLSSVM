@@ -36,7 +36,6 @@ int dim_type_to_native(const ::plssvm::detail::dim_type &dims) {
 std::map<target_platform, std::vector<execution_space>> available_target_platform_to_execution_space_mapping() {
     std::map<target_platform, std::vector<execution_space>> available_map{};
 
-    // TODO: only return really POSSIBLE target platforms?
     // iterate over all available execution spaces
     for (const execution_space space : list_available_execution_spaces()) {
         switch (space) {
@@ -139,10 +138,8 @@ std::string get_device_name([[maybe_unused]] const device_wrapper &dev) {
         case execution_space::openmp:
             return "OpenMP CPU host device";
         case execution_space::openmp_target:
-            // TODO: device name?
             return "OpenMP target device";
         case execution_space::openacc:
-            // TODO: device name?
             return "OpenACC target device";
         case execution_space::threads:
             return "std::threads CPU host device";
