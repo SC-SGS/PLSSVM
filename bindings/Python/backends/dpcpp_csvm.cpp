@@ -11,7 +11,7 @@
 #include "plssvm/backends/SYCL/kernel_invocation_types.hpp"  // plssvm::sycl::kernel_invocation_type
 #include "plssvm/csvm.hpp"                                   // plssvm::csvm
 #include "plssvm/exceptions/exceptions.hpp"                  // plssvm::exception
-#include "plssvm/parameter.hpp"                              // plssvm::parameter
+#include "plssvm/parameter.hpp"                              // plssvm::parameter, plssvm::sycl_kernel_invocation_type
 #include "plssvm/target_platforms.hpp"                       // plssvm::target_platform
 
 #include "bindings/Python/utility.hpp"  // check_kwargs_for_correctness, convert_kwargs_to_parameter, register_py_exception
