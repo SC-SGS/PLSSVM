@@ -9,6 +9,7 @@ set(PLSSVM_KOKKOS_TEST_NAME Kokkos_tests)
 
 # list all necessary sources
 set(PLSSVM_KOKKOS_TEST_SOURCES
+    ${CMAKE_CURRENT_LIST_DIR}/detail/constexpr_available_execution_spaces.cpp
     ${CMAKE_CURRENT_LIST_DIR}/detail/device_ptr.cpp
     ${CMAKE_CURRENT_LIST_DIR}/detail/device_view_wrapper.cpp
     ${CMAKE_CURRENT_LIST_DIR}/detail/device_wrapper.cpp
@@ -18,6 +19,7 @@ set(PLSSVM_KOKKOS_TEST_SOURCES
     ${CMAKE_CURRENT_LIST_DIR}/kokkos_csvm.cpp
     ${CMAKE_CURRENT_LIST_DIR}/exceptions.cpp
     ${CMAKE_CURRENT_LIST_DIR}/execution_space.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/execution_space_type_traits.cpp
 )
 
 find_package(Kokkos REQUIRED)

@@ -12,8 +12,10 @@
 #ifndef PLSSVM_BACKENDS_KOKKOS_DETAIL_DEVICE_WRAPPER_HPP_
 #define PLSSVM_BACKENDS_KOKKOS_DETAIL_DEVICE_WRAPPER_HPP_
 
-#include "plssvm/backends/Kokkos/execution_space.hpp"  // plssvm::kokkos::{execution_space, execution_space_to_kokkos_type_t}, plssvm::kokkos::detail::constexpr_available_execution_spaces
-#include "plssvm/target_platforms.hpp"                 // plssvm::target_platform
+#include "plssvm/backends/Kokkos/detail/constexpr_available_execution_spaces.hpp"  // plssvm::kokkos::detail::constexpr_available_execution_spaces
+#include "plssvm/backends/Kokkos/execution_space.hpp"                              // plssvm::kokkos::execution_space
+#include "plssvm/backends/Kokkos/execution_space_type_traits.hpp"                  // plssvm::kokkos::execution_space_to_kokkos_type_t
+#include "plssvm/target_platforms.hpp"                                             // plssvm::target_platform
 
 #include <array>       // std::array
 #include <cstddef>     // std::size_t

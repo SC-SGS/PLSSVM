@@ -8,7 +8,8 @@
 
 #include "plssvm/backends/Kokkos/execution_space.hpp"
 
-#include "plssvm/detail/string_utility.hpp"  // plssvm::detail::to_lower_case
+#include "plssvm/backends/Kokkos/detail/constexpr_available_execution_spaces.hpp"  // plssvm::kokkos::detail::constexpr_available_execution_spaces
+#include "plssvm/detail/string_utility.hpp"                                        // plssvm::detail::to_lower_case
 
 #include <array>    // std::array
 #include <ios>      // std::ios::failbit

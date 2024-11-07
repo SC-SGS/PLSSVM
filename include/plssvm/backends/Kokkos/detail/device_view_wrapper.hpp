@@ -12,9 +12,11 @@
 #ifndef PLSSVM_BACKENDS_KOKKOS_DETAIL_DEVICE_VIEW_WRAPPER_HPP_
 #define PLSSVM_BACKENDS_KOKKOS_DETAIL_DEVICE_VIEW_WRAPPER_HPP_
 
-#include "plssvm/backends/Kokkos/detail/device_wrapper.hpp"  // plssvm::kokkos::detail::device_wrapper
-#include "plssvm/backends/Kokkos/execution_space.hpp"        // plssvm::kokkos::{execution_space, execution_space_to_kokkos_type_t}, plssvm::kokkos::detail::constexpr_available_execution_spaces
-#include "plssvm/detail/type_traits.hpp"                     // plssvm::detail::remove_cvref_t
+#include "plssvm/backends/Kokkos/detail/constexpr_available_execution_spaces.hpp"  // plssvm::kokkos::detail::constexpr_available_execution_spaces
+#include "plssvm/backends/Kokkos/detail/device_wrapper.hpp"                        // plssvm::kokkos::detail::device_wrapper
+#include "plssvm/backends/Kokkos/execution_space.hpp"                              // plssvm::kokkos::execution_space
+#include "plssvm/backends/Kokkos/execution_space_type_traits.hpp"                  // plssvm::kokkos::execution_space_to_kokkos_type_t
+#include "plssvm/detail/type_traits.hpp"                                           // plssvm::detail::remove_cvref_t
 
 #include "Kokkos_Core.hpp"  // Kokkos::View, Kokkos::ExecutionSpace
 
