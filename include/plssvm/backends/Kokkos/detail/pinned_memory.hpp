@@ -6,7 +6,7 @@
  * @license This file is part of the PLSSVM project which is released under the MIT license.
  *          See the LICENSE.md file in the project root for full license information.
  *
- * @brief Small wrapper around RAII enabled TODO.
+ * @brief Small wrapper around RAII for registering memory as pinned memory.
  */
 
 #ifndef PLSSVM_BACKENDS_KOKKOS_DETAIL_PINNED_MEMORY_HPP_
