@@ -25,6 +25,8 @@ namespace plssvm::kokkos {
  * @brief Enum class for all execution spaces supported by [Kokkos](https://github.com/kokkos/kokkos).
  */
 enum class execution_space {
+    /** Automatically determine the used Kokkos execution space. Note: this does not necessarily correspond to Kokkos::DefaultExecutionSpace! */
+    automatic,
     /** Execution space representing execution on a CUDA device. */
     cuda,
     /** Execution space representing execution on a device supported by HIP. */

@@ -22,6 +22,8 @@ namespace plssvm::kokkos {
 
 std::ostream &operator<<(std::ostream &out, const execution_space space) {
     switch (space) {
+        case execution_space::automatic:
+            return out << "automatic";
         case execution_space::cuda:
             return out << "Cuda";
         case execution_space::hip:
@@ -49,7 +51,9 @@ std::istream &operator>>(std::istream &in, execution_space &space) {
     in >> str;
     ::plssvm::detail::to_lower_case(str);
 
-    if (str == "cuda") {
+    if (str == "automatic" || str == "auto") {
+        space = execution_space::automatic;
+    } else if (str == "cuda") {
         space = execution_space::cuda;
     } else if (str == "hip") {
         space = execution_space::hip;
@@ -74,8 +78,12 @@ std::istream &operator>>(std::istream &in, execution_space &space) {
 }
 
 std::vector<execution_space> list_available_execution_spaces() {
+    // always add the automatic execution space
+    std::vector<execution_space> spaces{ execution_space::automatic };
+    // add all other available execution spaces
     constexpr auto arr = detail::constexpr_available_execution_spaces();
-    return std::vector<execution_space>(arr.cbegin(), arr.cend());
+    spaces.insert(spaces.cend(), arr.begin(), arr.end());
+    return spaces;
 }
 
 }  // namespace plssvm::kokkos

@@ -11,6 +11,7 @@
 #include "plssvm/backends/Kokkos/detail/conditional_execution.hpp"  // PLSSVM_KOKKOS_BACKEND_INVOKE_IF_*
 #include "plssvm/backends/Kokkos/exceptions.hpp"                    // plssvm::kokkos::backend_exception
 #include "plssvm/backends/Kokkos/execution_space.hpp"               // plssvm::kokkos::execution_space
+#include "plssvm/detail/assert.hpp"                                 // PLSSVM_ASSERT
 #include "plssvm/detail/logging_without_performance_tracking.hpp"   // plssvm::detail::log_untracked
 #include "plssvm/detail/string_utility.hpp"                         // plssvm::detail::as_lower_case
 #include "plssvm/detail/utility.hpp"                                // plssvm::detail::contains
@@ -18,6 +19,8 @@
 #include "plssvm/verbosity_levels.hpp"                              // plssvm::verbosity_level
 
 #include "Kokkos_Core.hpp"  // Kokkos::num_devices, Kokkos::ExecutionSpace
+
+#include <vector>  // std::vector
 
 #if defined(KOKKOS_ENABLE_CUDA)
     #define PLSSVM_CUDA_ERROR_CHECK(err)                                                                                                            \
@@ -33,13 +36,15 @@
         }
 #endif
 
-#include <vector>  // std::vector
-
 namespace plssvm::kokkos::detail {
 
 std::vector<device_wrapper> get_device_list(const execution_space space, [[maybe_unused]] const target_platform target) {
+    PLSSVM_ASSERT(space != execution_space::automatic, "The automatic execution_space may not be provided to this function!");
+
     std::vector<device_wrapper> devices{};
     switch (space) {
+        case execution_space::automatic:
+            throw backend_exception{ "Unsupported execution_space::automatic provided!" };
         case execution_space::cuda:
             PLSSVM_KOKKOS_BACKEND_INVOKE_IF_CUDA([&]() {
                 for (int device = 0; device < Kokkos::num_devices(); ++device) {

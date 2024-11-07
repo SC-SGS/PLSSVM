@@ -19,6 +19,7 @@
 // check whether the plssvm::kokkos::execution_space -> std::string conversions are correct
 TEST(KokkosExecutionSpace, to_string) {
     // check conversions to std::string
+    EXPECT_CONVERSION_TO_STRING(plssvm::kokkos::execution_space::automatic, "automatic");
     EXPECT_CONVERSION_TO_STRING(plssvm::kokkos::execution_space::cuda, "Cuda");
     EXPECT_CONVERSION_TO_STRING(plssvm::kokkos::execution_space::hip, "HIP");
     EXPECT_CONVERSION_TO_STRING(plssvm::kokkos::execution_space::sycl, "SYCL");
@@ -32,12 +33,14 @@ TEST(KokkosExecutionSpace, to_string) {
 
 TEST(KokkosExecutionSpace, to_string_unknown) {
     // check conversions to std::string from unknown execution_space
-    EXPECT_CONVERSION_TO_STRING(static_cast<plssvm::kokkos::execution_space>(9), "unknown");
+    EXPECT_CONVERSION_TO_STRING(static_cast<plssvm::kokkos::execution_space>(10), "unknown");
 }
 
 // check whether the std::string -> plssvm::kokkos::execution_space conversions are correct
 TEST(KokkosExecutionSpace, from_string) {
     // check conversion from std::string
+    EXPECT_CONVERSION_FROM_STRING("Automatic", plssvm::kokkos::execution_space::automatic);
+    EXPECT_CONVERSION_FROM_STRING("AUTO", plssvm::kokkos::execution_space::automatic);
     EXPECT_CONVERSION_FROM_STRING("Cuda", plssvm::kokkos::execution_space::cuda);
     EXPECT_CONVERSION_FROM_STRING("CUDA", plssvm::kokkos::execution_space::cuda);
     EXPECT_CONVERSION_FROM_STRING("Hip", plssvm::kokkos::execution_space::hip);
@@ -68,6 +71,11 @@ TEST(KokkosExecutionSpace, from_string_unknown) {
 }
 
 TEST(KokkosExecutionSpace, list_available_execution_spaces) {
-    // at least one execution space must always be available
-    EXPECT_FALSE(plssvm::kokkos::list_available_execution_spaces().empty());
+    const std::vector<plssvm::kokkos::execution_space> execution_spaces = plssvm::kokkos::list_available_execution_spaces();
+
+    // at least one must be available (automatic)!
+    EXPECT_GE(execution_spaces.size(), 1);
+
+    // the automatic execution space must always be present
+    EXPECT_THAT(execution_spaces, ::testing::Contains(plssvm::kokkos::execution_space::automatic));
 }

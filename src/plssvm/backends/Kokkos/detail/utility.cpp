@@ -39,6 +39,9 @@ std::map<target_platform, std::vector<execution_space>> available_target_platfor
     // iterate over all available execution spaces
     for (const execution_space space : list_available_execution_spaces()) {
         switch (space) {
+            case execution_space::automatic:
+                // nothing to do here
+                break;
             case execution_space::cuda:
                 // NVIDIA GPUs only
                 available_map[target_platform::gpu_nvidia].push_back(execution_space::cuda);
@@ -121,6 +124,8 @@ std::map<target_platform, std::vector<execution_space>> available_target_platfor
 
 std::string get_device_name([[maybe_unused]] const device_wrapper &dev) {
     switch (dev.get_execution_space()) {
+        case execution_space::automatic:
+            throw backend_exception{ "Unsupported execution_space::automatic provided!" };
         case execution_space::cuda:
             PLSSVM_KOKKOS_BACKEND_INVOKE_RETURN_IF_CUDA([&]() {
                 return std::string{ dev.get<execution_space::cuda>().cuda_device_prop().name };

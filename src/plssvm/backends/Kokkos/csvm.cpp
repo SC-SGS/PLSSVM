@@ -177,8 +177,12 @@ csvm::~csvm() {
 }
 
 std::vector<::plssvm::detail::memory_size> csvm::get_device_memory() const {
+    PLSSVM_ASSERT(space_ != execution_space::automatic, "The automatic execution_space may not be provided to this function!");
+
     std::vector<::plssvm::detail::memory_size> device_memory(this->num_available_devices());
     switch (space_) {
+        case execution_space::automatic:
+            throw backend_exception{ "Unsupported execution_space::automatic provided!" };
         case execution_space::cuda:
             PLSSVM_KOKKOS_BACKEND_INVOKE_IF_CUDA([&]() {
                 for (std::size_t device_id = 0; device_id < this->num_available_devices(); ++device_id) {
@@ -217,8 +221,12 @@ std::vector<::plssvm::detail::memory_size> csvm::get_device_memory() const {
 }
 
 std::vector<::plssvm::detail::memory_size> csvm::get_max_mem_alloc_size() const {
+    PLSSVM_ASSERT(space_ != execution_space::automatic, "The automatic execution_space may not be provided to this function!");
+
     std::vector<::plssvm::detail::memory_size> max_mem_alloc_size(this->num_available_devices());
     switch (space_) {
+        case execution_space::automatic:
+            throw backend_exception{ "Unsupported execution_space::automatic provided!" };
         case execution_space::cuda:
         case execution_space::hip:
             max_mem_alloc_size = this->get_device_memory();
@@ -246,6 +254,7 @@ std::vector<::plssvm::detail::memory_size> csvm::get_max_mem_alloc_size() const 
 
 std::size_t csvm::get_max_work_group_size(const std::size_t device_id) const {
     PLSSVM_ASSERT(device_id < this->num_available_devices(), "Invalid device {} requested!", device_id);
+    PLSSVM_ASSERT(space_ != execution_space::automatic, "The automatic execution_space may not be provided to this function!");
 
     // NOTE: the maximum theoretical work-group size, may be additionally limited by the amount of used scratch memory
     return devices_[device_id].execute_and_return([](const auto &device) {
@@ -264,10 +273,13 @@ std::size_t csvm::get_max_work_group_size(const std::size_t device_id) const {
 
 ::plssvm::detail::dim_type csvm::get_max_grid_size([[maybe_unused]] const std::size_t device_id) const {
     PLSSVM_ASSERT(device_id < this->num_available_devices(), "Invalid device {} requested!", device_id);
+    PLSSVM_ASSERT(space_ != execution_space::automatic, "The automatic execution_space may not be provided to this function!");
 
     // NOTE: Kokkos only supports one-dimensional execution ranges!
     // NOTE: we only use two-dimensional kernels!
     switch (space_) {
+        case execution_space::automatic:
+            throw backend_exception{ "Unsupported execution_space::automatic provided!" };
         case execution_space::cuda:
             PLSSVM_KOKKOS_BACKEND_INVOKE_RETURN_IF_CUDA(([&]() -> ::plssvm::detail::dim_type {
                 const cudaDeviceProp &prop = devices_[device_id].get<execution_space::cuda>().cuda_device_prop();
