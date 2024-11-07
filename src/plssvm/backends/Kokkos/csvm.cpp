@@ -93,30 +93,64 @@ void csvm::init(const target_platform target) {
             break;
     }
 
+    // check whether the requested execution space is available
+    if (!::plssvm::detail::contains(list_available_execution_spaces(), space_)) {
+        throw backend_exception{ fmt::format("The provided Kokkos::ExecutionSpace {} is not available, available are: {}!", space_, fmt::join(list_available_execution_spaces(), ", ")) };
+    }
+
     // get all available target_platform <-> Kokkos::ExecutionSpace combinations
     const std::map<target_platform, std::vector<execution_space>> available_combinations = detail::available_target_platform_to_execution_space_mapping();
 
-    if (target == target_platform::automatic) {
-        // go through all combinations and choose the first execution space in order: gpu_nvidia -> gpu_amd -> gpu_intel -> cpu
-        for (const target_platform target_order : { target_platform::gpu_nvidia, target_platform::gpu_amd, target_platform::gpu_intel, target_platform::cpu }) {
-            if (::plssvm::detail::contains(available_combinations, target_order)) {
+    // check whether the provided execution space is the automatic one
+    if (space_ == execution_space::automatic) {
+        // automatically determine the execution space and potentially automatically determine the target platform
+        if (target == target_platform::automatic) {
+            // go through all combinations and choose the first execution space in order: gpu_nvidia -> gpu_amd -> gpu_intel -> cpu
+            for (const target_platform target_order : list_available_target_platforms()) {
+                if (::plssvm::detail::contains(available_combinations, target_order)) {
+                    // the target platform is supported -> choose the first execution space to use in the Kokkos backend
+                    space_ = available_combinations.at(target_order).front();
+                    target_ = target_order;
+                    break;
+                }
+            }
+        } else {
+            // check whether the provided target platform is compatible with the currently available Kokkos::ExecutionSpaces
+            if (::plssvm::detail::contains(available_combinations, target)) {
                 // the target platform is supported -> choose the first execution space to use in the Kokkos backend
-                space_ = available_combinations.at(target_order).front();
-                target_ = target_order;
-                break;
+                space_ = available_combinations.at(target).front();
+                target_ = target;
+            } else {
+                // the provided target platform is unsupported -> throw an exception
+                throw backend_exception{ fmt::format("No Kokkos::ExecutionSpace available ({}) for that requested target platform {}!", fmt::join(list_available_execution_spaces(), ", "), target) };
             }
         }
+
+        // output what we use as automatic Kokkos execution space
+        plssvm::detail::log(verbosity_level::full,
+                            "\nUsing {} as automatic Kokkos::ExecutionSpace.",
+                            space_);
     } else {
-        // check whether the provided target platform is compatible with the currently available Kokkos::ExecutionSpaces
-        if (::plssvm::detail::contains(available_combinations, target)) {
-            // the target platform is supported -> choose the first execution space to use in the Kokkos backend
-            space_ = available_combinations.at(target).front();
-            target_ = target;
+        // execution space explicitly provided and potentially automatically determine the target platform
+        if (target == target_platform::automatic) {
+            // go through all combinations (gpu_nvidia -> gpu_amd -> gpu_intel -> cpu) and check whether the requested execution space supports that target platform
+            for (const target_platform target_order : list_available_target_platforms()) {
+                if (::plssvm::detail::contains(available_combinations, target_order) && ::plssvm::detail::contains(available_combinations.at(target_order), space_)) {
+                    // the provided execution space supports the target platform
+                    target_ = target_order;
+                    break;
+                }
+            }
         } else {
-            // the provided target platform is unsupported -> throw an exception
-            throw backend_exception{ fmt::format("No Kokkos::ExecutionSpace available ({}) for that requested target platform {}!", fmt::join(list_available_execution_spaces(), ", "), target) };
+            if (!::plssvm::detail::contains(available_combinations, target) || !::plssvm::detail::contains(available_combinations.at(target), space_)) {
+                // the provided execution space and target platform combination is unsupported
+                throw backend_exception{ fmt::format("The provided Kokkos::ExecutionSpace {} does not support the requested target platform {}!", space_, target) };
+            }
         }
     }
+
+    // At this point, space_ may NEVER be execution_space::automatic!
+    PLSSVM_ASSERT(space_ != execution_space::automatic, "At this point, the Kokkos execution space must be determined and must NOT be automatic!");
 
     // Kokkos::Experimental::OpenMPTarget and Kokkos::Experimental::OpenACC currently not supported!
     if (space_ == execution_space::openmp_target || space_ == execution_space::openacc) {
@@ -124,7 +158,7 @@ void csvm::init(const target_platform target) {
     }
 
     plssvm::detail::log(verbosity_level::full,
-                        "\nUsing Kokkos ({}) as backend with the Kokkos::ExecutionSpace \"{}\".\n",
+                        "\nUsing Kokkos ({}) as backend with the Kokkos::ExecutionSpace {}.\n",
                         plssvm::detail::tracking::tracking_entry{ "dependencies", "kokkos_version", detail::get_kokkos_version() },
                         plssvm::detail::tracking::tracking_entry{ "dependencies", "kokkos_default_execution_space", space_ });
 

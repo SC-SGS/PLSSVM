@@ -37,8 +37,8 @@
 #include <fstream>     // std::ofstream
 #include <functional>  // std::mem_fn
 #include <iostream>    // std::cerr, std::endl
+#include <memory>      // std::unique_ptr, std::make_unique
 #include <utility>     // std::pair
-#include <memory>  // std::unique_ptr, std::make_unique
 #include <variant>     // std::visit
 #include <vector>      // std::vector
 
@@ -82,11 +82,10 @@ int main(int argc, char *argv[]) {
 
             // check whether SYCL is used as backend (it is either requested directly or as automatic backend)
             const bool use_sycl_as_backend{ cmd_parser.backend == plssvm::backend_type::sycl || (cmd_parser.backend == plssvm::backend_type::automatic && plssvm::determine_default_backend() == plssvm::backend_type::sycl) };
-
-#if defined(PLSSVM_HAS_KOKKOS_BACKEND)
             // check whether Kokkos is used as backend (it is either requested directly or as automatic backend)
             const bool use_kokkos_as_backend{ cmd_parser.backend == plssvm::backend_type::kokkos || (cmd_parser.backend == plssvm::backend_type::automatic && plssvm::determine_default_backend() == plssvm::backend_type::kokkos) };
 
+#if defined(PLSSVM_HAS_KOKKOS_BACKEND)
             // initialize Kokkos if necessary
             if (use_kokkos_as_backend) {
                 kokkos_guard = std::make_unique<Kokkos::ScopeGuard>(argc, argv);
@@ -95,8 +94,15 @@ int main(int argc, char *argv[]) {
 #endif
 
             // create default csvm
-            const std::unique_ptr<plssvm::csvm> svm = use_sycl_as_backend ? plssvm::make_csvm(cmd_parser.backend, cmd_parser.target, plssvm::sycl_implementation_type = cmd_parser.sycl_implementation_type)
-                                                                          : plssvm::make_csvm(cmd_parser.backend, cmd_parser.target);
+            const std::unique_ptr<plssvm::csvm> svm = [&]() {
+                if (use_sycl_as_backend) {
+                    return plssvm::make_csvm(cmd_parser.backend, cmd_parser.target, plssvm::sycl_implementation_type = cmd_parser.sycl_implementation_type);
+                } else if (use_kokkos_as_backend) {
+                    return plssvm::make_csvm(cmd_parser.backend, cmd_parser.target, plssvm::kokkos_execution_space = cmd_parser.kokkos_execution_space);
+                } else {
+                    return plssvm::make_csvm(cmd_parser.backend, cmd_parser.target);
+                }
+            }();
 
             // create model
             const plssvm::model<label_type> model{ cmd_parser.model_filename };

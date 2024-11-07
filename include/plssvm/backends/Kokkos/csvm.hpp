@@ -21,10 +21,13 @@
 #include "plssvm/backends/Kokkos/execution_space.hpp"        // plssvm::kokkos::execution_space
 #include "plssvm/constants.hpp"                              // plssvm::real_type
 #include "plssvm/csvm.hpp"                                   // plssvm::detail::csvm_backend_exists
+#include "plssvm/detail/igor_utility.hpp"                    // plssvm::detail::get_value_from_named_parameter
 #include "plssvm/detail/memory_size.hpp"                     // plssvm::detail::memory_size
 #include "plssvm/detail/type_traits.hpp"                     // PLSSVM_REQUIRES
 #include "plssvm/parameter.hpp"                              // plssvm::parameter, plssvm::detail::parameter
 #include "plssvm/target_platforms.hpp"                       // plssvm::target_platform
+
+#include "igor/igor.hpp"  // igor::parser
 
 #include <cstddef>      // std::size_t
 #include <type_traits>  // std::true_type
@@ -77,7 +80,7 @@ class csvm : public ::plssvm::detail::gpu_csvm<detail::device_ptr, detail::devic
      * @throws plssvm::kokkos::backend_exception if the requested target is not available
      * @throws plssvm::kokkos::backend_exception if no device for the requested target was found
      */
-    template <typename... Args, PLSSVM_REQUIRES(::plssvm::detail::has_only_parameter_named_args_v<Args...>)>
+    template <typename... Args, PLSSVM_REQUIRES(::plssvm::detail::has_only_kokkos_parameter_named_args_v<Args...>)>
     explicit csvm(Args &&...named_args) :
         csvm{ plssvm::target_platform::automatic, std::forward<Args>(named_args)... } { }
 
@@ -89,9 +92,17 @@ class csvm : public ::plssvm::detail::gpu_csvm<detail::device_ptr, detail::devic
      * @throws plssvm::kokkos::backend_exception if the requested target is not available
      * @throws plssvm::kokkos::backend_exception if no device for the requested target was found
      */
-    template <typename... Args, PLSSVM_REQUIRES(::plssvm::detail::has_only_parameter_named_args_v<Args...>)>
+    template <typename... Args, PLSSVM_REQUIRES(::plssvm::detail::has_only_kokkos_parameter_named_args_v<Args...>)>
     explicit csvm(const target_platform target, Args &&...named_args) :
         base_type{ std::forward<Args>(named_args)... } {
+        // check igor parameter
+        igor::parser parser{ std::forward<Args>(named_args)... };
+
+        // check whether a specific Kokkos execution space has been requested
+        if constexpr (parser.has(kokkos_execution_space)) {
+            // compile time check: the value must have the correct type
+            space_ = ::plssvm::detail::get_value_from_named_parameter<kokkos::execution_space>(parser, kokkos_execution_space);
+        }
         this->init(target);
     }
 
