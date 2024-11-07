@@ -116,6 +116,7 @@ void performance_tracker::add_tracking_entry(const tracking_entry<cmd::parser_tr
         tracking_entries_[entry.entry_category].emplace("target", std::vector<std::string>{ fmt::format("{}", entry.entry_value.target) });
         tracking_entries_[entry.entry_category].emplace("sycl_kernel_invocation_type", std::vector<std::string>{ fmt::format("{}", entry.entry_value.sycl_kernel_invocation_type) });
         tracking_entries_[entry.entry_category].emplace("sycl_implementation_type", std::vector<std::string>{ fmt::format("{}", entry.entry_value.sycl_implementation_type) });
+        tracking_entries_[entry.entry_category].emplace("kokkos_execution_space", std::vector<std::string>{ fmt::format("{}", entry.entry_value.kokkos_execution_space) });
         tracking_entries_[entry.entry_category].emplace("strings_as_labels", std::vector<std::string>{ fmt::format("{}", entry.entry_value.strings_as_labels) });
         tracking_entries_[entry.entry_category].emplace("real_type", std::vector<std::string>{ std::string{ arithmetic_type_name<real_type>() } });
         tracking_entries_[entry.entry_category].emplace("input_filename", std::vector<std::string>{ fmt::format("\"{}\"", entry.entry_value.input_filename) });
@@ -133,6 +134,7 @@ void performance_tracker::add_tracking_entry(const tracking_entry<cmd::parser_pr
         tracking_entries_[entry.entry_category].emplace("backend", std::vector<std::string>{ fmt::format("{}", entry.entry_value.backend) });
         tracking_entries_[entry.entry_category].emplace("target", std::vector<std::string>{ fmt::format("{}", entry.entry_value.target) });
         tracking_entries_[entry.entry_category].emplace("sycl_implementation_type", std::vector<std::string>{ fmt::format("{}", entry.entry_value.sycl_implementation_type) });
+        tracking_entries_[entry.entry_category].emplace("kokkos_execution_space", std::vector<std::string>{ fmt::format("{}", entry.entry_value.kokkos_execution_space) });
         tracking_entries_[entry.entry_category].emplace("strings_as_labels", std::vector<std::string>{ fmt::format("{}", entry.entry_value.strings_as_labels) });
         tracking_entries_[entry.entry_category].emplace("real_type", std::vector<std::string>{ std::string{ arithmetic_type_name<real_type>() } });
         tracking_entries_[entry.entry_category].emplace("input_filename", std::vector<std::string>{ fmt::format("\"{}\"", entry.entry_value.input_filename) });
@@ -297,6 +299,14 @@ void performance_tracker::save(std::ostream &out) {
         "  ADAPTIVECPP_with_accelerated_CPU:  {}\n",
         adaptivecpp_sscp,
         adaptivecpp_accelerated_cpu);
+#endif
+#if defined(PLSSVM_HAS_KOKKOS_BACKEND)
+    // check whether Kokkos::SYCL AOT has been enabled
+    constexpr bool kokkos_sycl_aot = PLSSVM_IS_DEFINED(PLSSVM_KOKKOS_BACKEND_INTEL_LLVM_ENABLE_AOT);
+
+    out << fmt::format(
+        "  KOKKOS_sycl_intel_llvm_with_aot:   {}\n",
+        kokkos_sycl_aot);
 #endif
     out << "\n";
 
