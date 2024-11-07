@@ -64,6 +64,7 @@ The main highlights of our SVM implementations are:
    - [HIP](https://github.com/ROCm-Developer-Tools/HIP)
    - [OpenCL](https://www.khronos.org/opencl/)
    - [SYCL](https://www.khronos.org/sycl/) (supported implementations are [DPC++](https://github.com/intel/llvm) and [AdaptiveCpp](https://github.com/AdaptiveCpp/AdaptiveCpp) (formerly known as hipSYCL); specifically the versions [sycl-nightly/20231201](https://github.com/intel/llvm/tree/sycl-nightly/20230110) and AdaptiveCpp release [v24.06.0](https://github.com/AdaptiveCpp/AdaptiveCpp/releases/tag/v23.10.0))
+   - [Kokkos](https://github.com/kokkos/kokkos) (all execution spaces supported except `OpenMPTarget` and `OpenACC`); specifically the version [d50de97](https://github.com/kokkos/kokkos/commit/d50de979b4d095dc32dba80f72a5e009f3615db1)
 3. Six different kernel functions to be able to classify a large variety of different problems:
    - linear: $\vec{u}^T$ $\cdot$ $\vec{v}$
    - polynomial: $(\gamma$ $\cdot$ $\vec{u}^T$ $\cdot$ $\vec{v}$ $+$ $coef0)^{d}$
@@ -121,6 +122,10 @@ Additional dependencies for the OpenCL backend:
 Additional dependencies for the SYCL backend:
 
 - the code must be compiled with a SYCL capable compiler; currently supported are [DPC++](https://github.com/intel/llvm) and [AdaptiveCpp](https://github.com/AdaptiveCpp/AdaptiveCpp)
+
+Additional dependencies for the Kokkos backend:
+
+- a Kokkos installation with the respective execution spaces enabled; currently all execution spaces are supported except `OpenMPTarget` and `OpenACC`
 
 Additional dependencies for the stdpar backend:
 
@@ -262,6 +267,11 @@ The `[optional_options]` can be one or multiple of:
   - `AUTO`: check for the SYCL backend but **do not** fail if not available
   - `OFF`: do not check for the SYCL backend
 
+- `PLSSVM_ENABLE_KOKKOS_BACKEND=ON|OFF|AUTO` (default: `AUTO`):
+    - `ON`: check for the Kokkos backend and fail if not available
+    - `AUTO`: check for the Kokkos backend but **do not** fail if not available
+    - `OFF`: do not check for the Kokkos backend
+
 **Attention:** at least one backend must be enabled and available!
 
 - `PLSSVM_ENABLE_FAST_MATH=ON|OFF` (default depending on `CMAKE_BUILD_TYPE`: `ON` for Release or RelWithDebInfo, `OFF` otherwise): enable `fast-math` compiler flags for all backends
@@ -337,6 +347,10 @@ If more than one SYCL implementation is available the environment variables `PLS
 
 - `PLSSVM_SYCL_BACKEND_PREFERRED_IMPLEMENTATION` (`dpcpp`|`adaptivecpp`): specify the preferred SYCL implementation if the `sycl_implementation_type` option is set to `automatic`; additional the specified SYCL implementation is used in the `plssvm::sycl` namespace, the other implementations are available in the `plssvm::dpcpp` and `plssvm::adaptivecpp` namespace respectively
 
+If the Kokkos backend is available the following additional option is available (**note**: this option takes only effect if the Kokkos SYCL execution space is available):
+
+- `PLSSVM_KOKKOS_BACKEND_INTEL_LLVM_ENABLE_AOT` (default: `ON`): enable Ahead-of-Time (AOT) compilation for the specified target platforms
+
 If the stdpar backend is available, an additional options can be set.
 
 - `PLSSVM_STDPAR_BACKEND_IMPLEMENTATION` (default: `AUTO`): explicitly specify the used stdpar implementation; must be one of: `AUTO`, `NVHPC`, `roc-stdpar`, `IntelLLVM`, `ACPP`, `GNU_TBB`.
@@ -353,24 +367,6 @@ Available configure presets:
   "openmp"                  - OpenMP backend
   "openmp_python"           - OpenMP backend + Python bindings
   "openmp_test"             - OpenMP backend tests
-  "cuda"                    - CUDA backend
-  "cuda_python"             - CUDA backend + Python bindings
-  "cuda_test"               - CUDA backend tests
-  "hip"                     - HIP backend
-  "hip_python"              - HIP backend + Python bindings
-  "hip_test"                - HIP backend tests
-  "opencl"                  - OpenCL backend
-  "opencl_python"           - OpenCL backend + Python bindings
-  "opencl_test"             - OpenCL backend tests
-  "acpp"                    - AdaptiveCpp SYCL backend
-  "acpp_python"             - AdaptiveCpp SYCL backend + Python bindings
-  "acpp_test"               - AdaptiveCpp SYCL backend tests
-  "dpcpp"                   - DPC++/icpx SYCL backend
-  "dpcpp_python"            - DPC++/icpx backend + Python bindings
-  "dpcpp_test"              - DPC++/icpx backend tests
-  "all"                     - All available backends
-  "all_python"              - All available backends + Python bindings
-  "all_test"                - All available backends tests
   "stdpar"                  - stdpar backend
   "stdpar_python"           - stdpar backend + Python bindings
   "stdpar_test"             - stdpar backend tests
@@ -389,6 +385,27 @@ Available configure presets:
   "stdpar_intelllvm"        - stdpar IntelLLVM (icpx) backend
   "stdpar_intelllvm_python" - stdpar IntelLLVM (icpx) backend + Python bindings
   "stdpar_intelllvm_test"   - stdpar IntelLLVM (icpx) backend tests
+  "cuda"                    - CUDA backend
+  "cuda_python"             - CUDA backend + Python bindings
+  "cuda_test"               - CUDA backend tests
+  "hip"                     - HIP backend
+  "hip_python"              - HIP backend + Python bindings
+  "hip_test"                - HIP backend tests
+  "opencl"                  - OpenCL backend
+  "opencl_python"           - OpenCL backend + Python bindings
+  "opencl_test"             - OpenCL backend tests
+  "acpp"                    - AdaptiveCpp SYCL backend
+  "acpp_python"             - AdaptiveCpp SYCL backend + Python bindings
+  "acpp_test"               - AdaptiveCpp SYCL backend tests
+  "dpcpp"                   - DPC++/icpx SYCL backend
+  "dpcpp_python"            - DPC++/icpx backend + Python bindings
+  "dpcpp_test"              - DPC++/icpx backend tests
+  "kokkos"                  - Kokkos backend
+  "kokkos_python"           - Kokkos backend + Python bindings
+  "kokkos_test"             - Kokkos backend tests
+  "all"                     - All available backends
+  "all_python"              - All available backends + Python bindings
+  "all_test"                - All available backends tests
 ```
 
 With these presets, building and testing, e.g., our CUDA backend is as simple as typing (in the PLSSVM root directory):
@@ -532,6 +549,8 @@ Usage:
                                 choose the kernel invocation type when using SYCL as backend: automatic|nd_range (default: automatic)
       --sycl_implementation_type arg
                                 choose the SYCL implementation to be used in the SYCL backend: automatic|dpcpp|adaptivecpp (default: automatic)
+      --kokkos_execution_space arg
+                                choose the Kokkos execution space to be used in the Kokkos backend: automatic|Cuda|OpenMP|Serial (default: automatic)
       --performance_tracking arg
                                 the output YAML file where the performance tracking results are written to; if not provided, the results are dumped to stderr
       --use_strings_as_labels   use strings as labels instead of plane numbers
@@ -567,10 +586,10 @@ Another example targeting NVIDIA GPUs using the SYCL backend looks like:
 
 The `--backend=automatic` option works as follows:
 
-- if the `gpu_nvidia` target is available, check for existing backends in order `cuda` 🠦 `hip` 🠦 `opencl` 🠦 `sycl` 🠦 `stdpar`
-- otherwise, if the `gpu_amd` target is available, check for existing backends in order `hip` 🠦 `opencl` 🠦 `sycl` 🠦 `stdpar`
-- otherwise, if the `gpu_intel` target is available, check for existing backends in order `sycl` 🠦 `opencl` 🠦 `stdpar`
-- otherwise, if the `cpu` target is available, check for existing backends in order `sycl` 🠦 `opencl` 🠦 `openmp` 🠦 `stdpar`
+- if the `gpu_nvidia` target is available, check for existing backends in order `cuda` 🠦 `hip` 🠦 `opencl` 🠦 `sycl` 🠦 `kokkos` 🠦 `stdpar`
+- otherwise, if the `gpu_amd` target is available, check for existing backends in order `hip` 🠦 `opencl` 🠦 `sycl` 🠦 `kokkos` 🠦 `stdpar`
+- otherwise, if the `gpu_intel` target is available, check for existing backends in order `sycl` 🠦 `opencl` 🠦 `kokkos` 🠦 `stdpar`
+- otherwise, if the `cpu` target is available, check for existing backends in order `sycl` 🠦 `kokkos` 🠦 `opencl` 🠦 `openmp` 🠦 `stdpar`
 
 Note that during CMake configuration it is guaranteed that at least one of the above combinations does exist.
 
@@ -581,11 +600,13 @@ The `--target_platform=automatic` option works for the different backends as fol
 - `HIP`: always selects an AMD GPU (if no AMD GPU is available, throws an exception)
 - `OpenCL`: tries to find available devices in the following order: NVIDIA GPUs 🠦 AMD GPUs 🠦 Intel GPUs 🠦 CPU
 - `SYCL`: tries to find available devices in the following order: NVIDIA GPUs 🠦 AMD GPUs 🠦 Intel GPUs 🠦 CPU
+- `Kokkos`: checks which execution spaces are available and which target platforms they support and then tries to find available devices in the following order: NVIDIA GPUs 🠦 AMD GPUs 🠦 Intel GPUs 🠦 CPU
 - `stdpar`: target device must be selected at compile time (using `PLSSVM_TARGET_PLATFORMS`) or using environment variables at runtime
 
 The `--sycl_kernel_invocation_type` and `--sycl_implementation_type` flags are only used if the `--backend` is `sycl`, otherwise a warning is emitted on `stderr`.
 If the `--sycl_kernel_invocation_type` is `automatic`, the `nd_range` invocation type is currently always used.
 If the `--sycl_implementation_type` is `automatic`, the used SYCL implementation is determined by the `PLSSVM_SYCL_BACKEND_PREFERRED_IMPLEMENTATION` CMake flag.
+If the `--kokkos_execution_space` is `automatic`, uses the best fitting execution space based on the provided and/or available target platforms.
 
 ### Predicting using `plssvm-predict`
 
@@ -604,6 +625,8 @@ Usage:
   -p, --target_platform arg     choose the target platform: automatic|cpu|gpu_nvidia|gpu_amd|gpu_intel (default: automatic)
       --sycl_implementation_type arg
                                 choose the SYCL implementation to be used in the SYCL backend: automatic|dpcpp|adaptivecpp (default: automatic)
+      --kokkos_execution_space arg
+                                choose the Kokkos execution space to be used in the Kokkos backend: automatic|Cuda|OpenMP|Serial (default: automatic)
       --performance_tracking arg
                                 the output YAML file where the performance tracking results are written to; if not provided, the results are dumped to stderr
       --use_strings_as_labels   use strings as labels instead of plane numbers
