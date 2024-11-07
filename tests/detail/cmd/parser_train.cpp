@@ -11,6 +11,7 @@
 #include "plssvm/detail/cmd/parser_train.hpp"
 
 #include "plssvm/backend_types.hpp"                          // plssvm::backend_type
+#include "plssvm/backends/Kokkos/execution_space.hpp"        // plssvm::kokkos::execution_space
 #include "plssvm/backends/SYCL/implementation_types.hpp"     // plssvm::sycl::implementation_type
 #include "plssvm/backends/SYCL/kernel_invocation_types.hpp"  // plssvm::sycl::kernel_invocation_type
 #include "plssvm/classification_types.hpp"                   // plssvm::classification_type
@@ -88,6 +89,7 @@ TEST_F(ParserTrain, minimal_output) {
         "solver: automatic\n"
         "SYCL implementation type: automatic\n"
         "SYCL kernel invocation type: automatic\n"
+        "Kokkos execution space: automatic\n"
         "classification_type: one vs. all\n"
         "label_type: int\n"
         "real_type: {}\n"
@@ -104,6 +106,10 @@ TEST_F(ParserTrain, all_arguments) {
     std::vector<std::string> cmd_args = { "./plssvm-train", "--kernel_type", "1", "--degree", "2", "--gamma", "1.5", "--coef0", "-1.5", "--cost", "2", "--epsilon", "1e-10", "--max_iter", "100", "--classification", "oao", "--solver", "cg_implicit", "--backend", "cuda", "--target_platform", "gpu_nvidia", "--use_strings_as_labels", "--verbosity", "libsvm" };
 #if defined(PLSSVM_HAS_SYCL_BACKEND)
     cmd_args.insert(cmd_args.end(), { "--sycl_kernel_invocation_type", "nd_range", "--sycl_implementation_type", "dpcpp" });
+#endif
+#if defined(PLSSVM_HAS_KOKKOS_BACKEND)
+    const plssvm::kokkos::execution_space space = plssvm::kokkos::list_available_execution_spaces()[1];  // [0] would be automatic
+    cmd_args.insert(cmd_args.end(), { "--kokkos_execution_space", fmt::format("{}", space) });
 #endif
 #if defined(PLSSVM_PERFORMANCE_TRACKER_ENABLED)
     cmd_args.insert(cmd_args.end(), { "--performance_tracking", "tracking.yaml" });
@@ -135,6 +141,11 @@ TEST_F(ParserTrain, all_arguments) {
     EXPECT_EQ(parser.sycl_kernel_invocation_type, plssvm::sycl::kernel_invocation_type::automatic);
     EXPECT_EQ(parser.sycl_implementation_type, plssvm::sycl::implementation_type::automatic);
 #endif
+#if defined(PLSSVM_HAS_KOKKOS_BACKEND)
+    EXPECT_EQ(parser.kokkos_execution_space, space);
+#else
+    EXPECT_EQ(parser.kokkos_execution_space, plssvm::kokkos::execution_space::automatic);
+#endif
     EXPECT_TRUE(parser.strings_as_labels);
     EXPECT_EQ(parser.input_filename, "data.libsvm");
     EXPECT_EQ(parser.model_filename, "data.libsvm.model");
@@ -147,9 +158,13 @@ TEST_F(ParserTrain, all_arguments) {
 
 TEST_F(ParserTrain, all_arguments_output) {
     // create artificial command line arguments in test fixture
-    std::vector<std::string> cmd_args = { "./plssvm-train", "--kernel_type", "1", "--degree", "2", "--gamma", "1.5", "--coef0", "-1.5", "--cost", "2", "--epsilon", "1e-10", "--max_iter", "100", "--classification", "oao", "--solver", "cg_implicit", "--backend", "sycl", "--target_platform", "gpu_nvidia", "--use_strings_as_labels", "--verbosity", "libsvm" };
+    std::vector<std::string> cmd_args = { "./plssvm-train", "--kernel_type", "1", "--degree", "2", "--gamma", "1.5", "--coef0", "-1.5", "--cost", "2", "--epsilon", "1e-10", "--max_iter", "100", "--classification", "oao", "--solver", "cg_implicit", "--backend", "automatic", "--target_platform", "gpu_nvidia", "--use_strings_as_labels", "--verbosity", "libsvm" };
 #if defined(PLSSVM_HAS_SYCL_BACKEND)
     cmd_args.insert(cmd_args.end(), { "--sycl_kernel_invocation_type", "nd_range", "--sycl_implementation_type", "dpcpp" });
+#endif
+#if defined(PLSSVM_HAS_KOKKOS_BACKEND)
+    const std::string space = fmt::format("{}", plssvm::kokkos::list_available_execution_spaces()[1]);  // [0] would be automatic
+    cmd_args.insert(cmd_args.end(), { "--kokkos_execution_space", space });
 #endif
 #if defined(PLSSVM_PERFORMANCE_TRACKER_ENABLED)
     cmd_args.insert(cmd_args.end(), { "--performance_tracking", "tracking.yaml" });
@@ -169,7 +184,7 @@ TEST_F(ParserTrain, all_arguments_output) {
         "cost: 2\n"
         "epsilon: 1e-10\n"
         "max_iter: 100\n"
-        "backend: sycl\n"
+        "backend: automatic\n"
         "target platform: gpu_nvidia\n"
         "solver: cg_implicit\n";
 #if defined(PLSSVM_HAS_SYCL_BACKEND)
@@ -178,6 +193,11 @@ TEST_F(ParserTrain, all_arguments_output) {
 #else
     correct += "SYCL implementation type: automatic\n"
                "SYCL kernel invocation type: automatic\n";
+#endif
+#if defined(PLSSVM_HAS_KOKKOS_BACKEND)
+    correct += fmt::format("Kokkos execution space: {}\n", space);
+#else
+    correct += "Kokkos execution space: automatic\n";
 #endif
     correct += fmt::format(
         "classification_type: one vs. one\n"
@@ -516,6 +536,32 @@ INSTANTIATE_TEST_SUITE_P(ParserTrain, ParserTrainSYCLImplementation, ::testing::
 // clang-format on
 
 #endif  // PLSSVM_HAS_SYCL_BACKEND
+
+#if defined(PLSSVM_HAS_KOKKOS_BACKEND)
+
+class ParserTrainKokkosExecutionSpace : public ParserTrain,
+                                        public ::testing::WithParamInterface<std::tuple<std::string, std::string>> { };
+
+TEST_P(ParserTrainKokkosExecutionSpace, parsing) {
+    const auto &[flag, value] = GetParam();
+    // convert string to kokkos::execution_space
+    const auto kokkos_execution_space = util::convert_from_string<plssvm::kokkos::execution_space>(value);
+    // create artificial command line arguments in test fixture
+    this->CreateCMDArgs({ "./plssvm-train", flag, value, "data.libsvm" });
+    // create parameter object
+    const plssvm::detail::cmd::parser_train parser{ this->get_argc(), this->get_argv() };
+    // test for correctness
+    EXPECT_EQ(parser.kokkos_execution_space, kokkos_execution_space);
+}
+
+// clang-format off
+INSTANTIATE_TEST_SUITE_P(ParserTrain, ParserTrainKokkosExecutionSpace, ::testing::Combine(
+                ::testing::Values("--kokkos_execution_space"),
+                ::testing::Values("automatic", "Cuda", "HIP", "SYCL", "HPX", "OpenMP", "OpenMPTarget", "OpenACC", "Threads", "Serial")),
+                naming::pretty_print_parameter_flag_and_value<ParserTrainKokkosExecutionSpace>);
+// clang-format on
+
+#endif  // PLSSVM_HAS_KOKKOS_BACKEND
 
 #if defined(PLSSVM_PERFORMANCE_TRACKER_ENABLED)
 

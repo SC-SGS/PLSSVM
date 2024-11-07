@@ -10,6 +10,7 @@
 
 #include "plssvm/parameter.hpp"
 
+#include "plssvm/backends/Kokkos/execution_space.hpp"        // plssvm::kokkos::execution_space
 #include "plssvm/backends/SYCL/implementation_types.hpp"     // plssvm::sycl::implementation_type
 #include "plssvm/backends/SYCL/kernel_invocation_types.hpp"  // plssvm::sycl::kernel_invocation_type
 #include "plssvm/constants.hpp"                              // plssvm::real_type
@@ -98,7 +99,8 @@ TEST(Parameter, construct_parameter_and_named_args) {
     const plssvm::parameter param{ param_base,
                                    plssvm::kernel_type = plssvm::kernel_function_type::rbf,
                                    plssvm::sycl_implementation_type = plssvm::sycl::implementation_type::adaptivecpp,
-                                   plssvm::sycl_kernel_invocation_type = plssvm::sycl::kernel_invocation_type::nd_range };
+                                   plssvm::sycl_kernel_invocation_type = plssvm::sycl::kernel_invocation_type::nd_range,
+                                   plssvm::kokkos_execution_space = plssvm::kokkos::execution_space::cuda };
 
     // test default values
     EXPECT_EQ(param.kernel_type, plssvm::kernel_function_type::rbf);
