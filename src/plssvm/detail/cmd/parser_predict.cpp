@@ -202,6 +202,10 @@ std::ostream &operator<<(std::ostream &out, const parser_predict &params) {
         out << fmt::format("SYCL implementation type: {}\n", params.sycl_implementation_type);
     }
 
+    if (params.backend == backend_type::kokkos || params.backend == backend_type::automatic) {
+        out << fmt::format("Kokkos execution space: {}\n", params.kokkos_execution_space);
+    }
+
     out << fmt::format(
         "label_type: {}\n"
         "real_type: {}\n"

@@ -326,6 +326,10 @@ std::ostream &operator<<(std::ostream &out, const parser_train &params) {
             params.sycl_kernel_invocation_type);
     }
 
+    if (params.backend == backend_type::kokkos || params.backend == backend_type::automatic) {
+        out << fmt::format("Kokkos execution space: {}\n", params.kokkos_execution_space);
+    }
+
     out << fmt::format(
         "classification_type: {}\n"
         "label_type: {}\n"
