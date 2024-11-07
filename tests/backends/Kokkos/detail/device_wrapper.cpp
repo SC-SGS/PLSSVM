@@ -99,7 +99,7 @@ struct device_list_test {
 
         // check the number of returned devices
         if (space == plssvm::kokkos::execution_space::cuda || space == plssvm::kokkos::execution_space::hip || space == plssvm::kokkos::execution_space::sycl) {
-            // TODO: OpenMP Target Offloading / OpenACC
+            // TODO: Change if multi-GPU support for Kokkos::Experimental::OpenMPTarget and/or Kokkos::Experimental::OpenACC is implemented
             // for the device execution spaces AT LEAST ONE device must be found
             EXPECT_GE(devices.size(), 1);
         } else {

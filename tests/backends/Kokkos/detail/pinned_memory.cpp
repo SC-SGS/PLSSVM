@@ -22,7 +22,7 @@ template <typename T>
 struct kokkos_pinned_memory_test_type {
     using pinned_memory_type = plssvm::kokkos::detail::pinned_memory<T>;
 
-    constexpr static bool can_pin = false;  // TODO: try implementing in Kokkos?
+    constexpr static bool can_pin = false;
 };
 
 using kokkos_pinned_memory_tuple = std::tuple<kokkos_pinned_memory_test_type<float>, kokkos_pinned_memory_test_type<double>>;
