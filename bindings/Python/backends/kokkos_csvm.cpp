@@ -11,7 +11,7 @@
 #include "plssvm/backends/Kokkos/execution_space.hpp"  // plssvm::kokkos::execution_space
 #include "plssvm/csvm.hpp"                             // plssvm::csvm
 #include "plssvm/exceptions/exceptions.hpp"            // plssvm::exception
-#include "plssvm/parameter.hpp"                        // plssvm::parameter
+#include "plssvm/parameter.hpp"                        // plssvm::parameter, plssvm::kokkos_execution_space
 #include "plssvm/target_platforms.hpp"                 // plssvm::target_platform
 
 #include "bindings/Python/utility.hpp"  // check_kwargs_for_correctness, convert_kwargs_to_parameter, register_py_exception
@@ -35,20 +35,24 @@ void init_kokkos_csvm(py::module_ &m, const py::exception<plssvm::exception> &ba
         .def(py::init<plssvm::target_platform, plssvm::parameter>(), "create an SVM with the provided target platform and parameter object")
         .def(py::init([](const py::kwargs &args) {
                  // check for valid keys
-                 check_kwargs_for_correctness(args, { "kernel_type", "degree", "gamma", "coef0", "cost" });
+                 check_kwargs_for_correctness(args, { "kernel_type", "degree", "gamma", "coef0", "cost", "kokkos_execution_space" });
                  // if one of the value keyword parameter is provided, set the respective value
                  const plssvm::parameter params = convert_kwargs_to_parameter(args);
+                 // set Kokkos execution space
+                 const plssvm::kokkos::execution_space space = args.contains("kokkos_execution_space") ? args["kokkos_execution_space"].cast<plssvm::kokkos::execution_space>() : plssvm::kokkos::execution_space::automatic;
                  // create CSVM with the default target platform
-                 return std::make_unique<plssvm::kokkos::csvm>(params);
+                 return std::make_unique<plssvm::kokkos::csvm>(params, plssvm::kokkos_execution_space = space);
              }),
              "create an SVM with the default target platform and keyword arguments")
         .def(py::init([](const plssvm::target_platform target, const py::kwargs &args) {
                  // check for valid keys
-                 check_kwargs_for_correctness(args, { "kernel_type", "degree", "gamma", "coef0", "cost" });
+                 check_kwargs_for_correctness(args, { "kernel_type", "degree", "gamma", "coef0", "cost", "kokkos_execution_space" });
                  // if one of the value keyword parameter is provided, set the respective value
                  const plssvm::parameter params = convert_kwargs_to_parameter(args);
+                 // set Kokkos execution space
+                 const plssvm::kokkos::execution_space space = args.contains("kokkos_execution_space") ? args["kokkos_execution_space"].cast<plssvm::kokkos::execution_space>() : plssvm::kokkos::execution_space::automatic;
                  // create CSVM with the provided target platform
-                 return std::make_unique<plssvm::kokkos::csvm>(target, params);
+                 return std::make_unique<plssvm::kokkos::csvm>(target, params, plssvm::kokkos_execution_space = space);
              }),
              "create an SVM with the provided target platform and keyword arguments")
         .def("get_execution_space", &plssvm::kokkos::csvm::get_execution_space, "get the Kokkos execution space used in this Kokkos SVM");
@@ -58,6 +62,7 @@ void init_kokkos_csvm(py::module_ &m, const py::exception<plssvm::exception> &ba
 
     // bind the execution space enum classes
     py::enum_<plssvm::kokkos::execution_space>(kokkos_module, "ExecutionSpace")
+        .value("AUTOMATIC", plssvm::kokkos::execution_space::cuda, "automatically determine the used Kokkos execution space (note: this does not necessarily correspond to Kokkos::DefaultExecutionSpace)")
         .value("CUDA", plssvm::kokkos::execution_space::cuda, "execution space representing execution on a CUDA device")
         .value("HIP", plssvm::kokkos::execution_space::hip, "execution space representing execution on a device supported by HIP")
         .value("SYCL", plssvm::kokkos::execution_space::sycl, "execution space representing execution on a device supported by SYCL")
