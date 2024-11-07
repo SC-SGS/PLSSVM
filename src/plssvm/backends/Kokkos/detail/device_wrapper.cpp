@@ -117,7 +117,7 @@ std::vector<device_wrapper> get_device_list(const execution_space space, [[maybe
         case execution_space::openmp_target:
             PLSSVM_KOKKOS_BACKEND_INVOKE_IF_OPENMPTARGET([&]() {
                 // TODO: multi-GPU?
-                devices.emplace_back(Kokkos::OpenMPTarget{});
+                devices.emplace_back(Kokkos::Experimental::OpenMPTarget{});
             });
             break;
         case execution_space::openacc:

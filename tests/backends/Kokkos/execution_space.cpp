@@ -86,7 +86,7 @@ TEST(KokkosExecutionSpace, execution_space_to_kokkos_type) {
     ::testing::StaticAssertTypeEq<plssvm::kokkos::execution_space_to_kokkos_type_t<plssvm::kokkos::execution_space::openmp>, Kokkos::OpenMP>();
 #endif
 #if defined(KOKKOS_ENABLE_OPENMPTARGET)
-    ::testing::StaticAssertTypeEq<plssvm::kokkos::execution_space_to_kokkos_type_t<plssvm::kokkos::execution_space::openmp_target>, Kokkos::OpenMPTarget>();
+    ::testing::StaticAssertTypeEq<plssvm::kokkos::execution_space_to_kokkos_type_t<plssvm::kokkos::execution_space::openmp_target>, Kokkos::Experimental::OpenMPTarget>();
 #endif
 #if defined(KOKKOS_ENABLE_OPENACC)
     ::testing::StaticAssertTypeEq<plssvm::kokkos::execution_space_to_kokkos_type_t<plssvm::kokkos::execution_space::openacc>, Kokkos::OpenACC>();
@@ -117,7 +117,7 @@ TEST(KokkosExecutionSpace, kokkos_type_to_execution_space) {
     EXPECT_EQ(plssvm::kokkos::kokkos_type_to_execution_space_v<Kokkos::OpenMP>, plssvm::kokkos::execution_space::openmp);
 #endif
 #if defined(KOKKOS_ENABLE_OPENMPTARGET)
-    EXPECT_EQ(plssvm::kokkos::kokkos_type_to_execution_space_v<Kokkos::OpenMPTarget>, plssvm::kokkos::execution_space::openmp_target);
+    EXPECT_EQ(plssvm::kokkos::kokkos_type_to_execution_space_v<Kokkos::Experimental::OpenMPTarget>, plssvm::kokkos::execution_space::openmp_target);
 #endif
 #if defined(KOKKOS_ENABLE_OPENACC)
     EXPECT_EQ(plssvm::kokkos::kokkos_type_to_execution_space_v<Kokkos::Experimental::OpenACC>, plssvm::kokkos::execution_space::openacc);

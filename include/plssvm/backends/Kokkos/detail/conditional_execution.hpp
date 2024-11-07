@@ -140,7 +140,7 @@ namespace plssvm::kokkos::detail {
 #endif
 
 //***************************************************//
-//               Kokkos::OpenMPTarget                //
+//        Kokkos::Experimental::OpenMPTarget         //
 //***************************************************//
 
 /**

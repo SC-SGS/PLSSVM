@@ -126,11 +126,11 @@ struct execution_space_to_kokkos_type<execution_space::openmp> {
 
 #if defined(KOKKOS_ENABLE_OPENMPTARGET)
 /**
- * @brief Convert an `execution_space::openmp_target` enum value to a `Kokkos::OpenMPTarget` Kokkos::ExecutionSpace type.
+ * @brief Convert an `execution_space::openmp_target` enum value to a `Kokkos::Experimental::OpenMPTarget` Kokkos::ExecutionSpace type.
  */
 template <>
 struct execution_space_to_kokkos_type<execution_space::openmp_target> {
-    using type = Kokkos::OpenMPTarget;
+    using type = Kokkos::Experimental::OpenMPTarget;
 };
 #endif
 
@@ -233,10 +233,10 @@ struct kokkos_type_to_execution_space<Kokkos::OpenMP> {
 
 #if defined(KOKKOS_ENABLE_OPENMPTARGET)
 /**
- * @brief Convert a `Kokkos::OpenMPTarget` Kokkos::ExecutionSpace type to an `execution_space::openmp_target` enum value.
+ * @brief Convert a `Kokkos::Experimental::OpenMPTarget` Kokkos::ExecutionSpace type to an `execution_space::openmp_target` enum value.
  */
 template <>
-struct kokkos_type_to_execution_space<Kokkos::OpenMPTarget> {
+struct kokkos_type_to_execution_space<Kokkos::Experimental::OpenMPTarget> {
     constexpr static execution_space value = execution_space::openmp_target;
 };
 #endif
