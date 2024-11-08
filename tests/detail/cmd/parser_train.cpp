@@ -463,7 +463,7 @@ TEST_P(ParserTrainBackend, parsing) {
 // clang-format off
 INSTANTIATE_TEST_SUITE_P(ParserTrain, ParserTrainBackend, ::testing::Combine(
                 ::testing::Values("-b", "--backend"),
-                ::testing::Values("automatic", "OpenMP", "CUDA", "HIP", "OpenCL", "SYCL")),
+                ::testing::Values("automatic", "OpenMP", "stdpar", "CUDA", "HIP", "OpenCL", "SYCL", "Kokkos")),
                 naming::pretty_print_parameter_flag_and_value<ParserTrainBackend>);
 // clang-format on
 
