@@ -406,6 +406,7 @@ pipeline {
                                             $([[ $ARCHITECTURE == AMD ]] && [[ $(hostname) == simcl1n3 ]] && echo "amdgpu_target=gfx90a") \
                                             $([[ $ARCHITECTURE == AMD ]] && [[ $(hostname) == pcsgs09 ]] && echo "amdgpu_target=gfx906") \
                                             $([[ SET_AMD_GPU_NONE == 1 ]] && "amdgpu_target=none") \
+                                            ~dpcpp \
                                             +language_bindings \
                                             +test_file \
                                             test_file_num_classes=5 \
