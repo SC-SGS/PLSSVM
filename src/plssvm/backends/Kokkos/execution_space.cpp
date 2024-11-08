@@ -8,8 +8,10 @@
 
 #include "plssvm/backends/Kokkos/execution_space.hpp"
 
-#include "plssvm/backends/Kokkos/detail/constexpr_available_execution_spaces.hpp"  // plssvm::kokkos::detail::constexpr_available_execution_spaces
-#include "plssvm/detail/string_utility.hpp"                                        // plssvm::detail::to_lower_case
+#if defined(PLSSVM_HAS_KOKKOS_BACKEND)
+    #include "plssvm/backends/Kokkos/detail/constexpr_available_execution_spaces.hpp"  // plssvm::kokkos::detail::constexpr_available_execution_spaces
+#endif
+#include "plssvm/detail/string_utility.hpp"  // plssvm::detail::to_lower_case
 
 #include <array>    // std::array
 #include <ios>      // std::ios::failbit
@@ -80,9 +82,11 @@ std::istream &operator>>(std::istream &in, execution_space &space) {
 std::vector<execution_space> list_available_execution_spaces() {
     // always add the automatic execution space
     std::vector<execution_space> spaces{ execution_space::automatic };
+#if defined(PLSSVM_HAS_KOKKOS_BACKEND)
     // add all other available execution spaces
     constexpr auto arr = detail::constexpr_available_execution_spaces();
     spaces.insert(spaces.cend(), arr.begin(), arr.end());
+#endif
     return spaces;
 }
 
