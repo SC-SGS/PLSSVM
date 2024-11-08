@@ -13,9 +13,13 @@
 #ifndef PLSSVM_BACKENDS_KOKKOS_DETAIL_CONSTEXPR_AVAILABLE_EXECUTION_SPACES_HPP_
 #define PLSSVM_BACKENDS_KOKKOS_DETAIL_CONSTEXPR_AVAILABLE_EXECUTION_SPACES_HPP_
 
-#include "plssvm/backends/Kokkos/execution_space.hpp"  // plssvm::kokkos::execution_space
+// if the variable isn't set, no Kokkos execution space is available
+// -> explicitly set it to 0!
+#if !defined(PLSSVM_KOKKOS_BACKEND_NUM_AVAILABLE_EXECUTION_SPACES)
+    #define PLSSVM_KOKKOS_BACKEND_NUM_AVAILABLE_EXECUTION_SPACES 0
+#endif
 
-#include "Kokkos_Core.hpp"  // Kokkos macros, Kokkos ExecutionSpace types
+#include "plssvm/backends/Kokkos/execution_space.hpp"  // plssvm::kokkos::execution_space
 
 #include <array>  // std::array
 
@@ -30,32 +34,32 @@ namespace plssvm::kokkos::detail {
     // Note: The execution_space::automatic value may NEVER be added here!
     // Note: the trailing comma is explicitly allowed by the standard
     // Note: the order is intentionally chosen this way -> the order of the entries determines the priority when using a backend to run our code
-    return std::array{
-#if defined(KOKKOS_ENABLE_CUDA)
+    return std::array<execution_space, PLSSVM_KOKKOS_BACKEND_NUM_AVAILABLE_EXECUTION_SPACES>{
+#if defined(PLSSVM_KOKKOS_BACKEND_ENABLE_CUDA)
         execution_space::cuda,
 #endif
-#if defined(KOKKOS_ENABLE_HIP)
+#if defined(PLSSVM_KOKKOS_BACKEND_ENABLE_HIP)
         execution_space::hip,
 #endif
-#if defined(KOKKOS_ENABLE_SYCL)
+#if defined(PLSSVM_KOKKOS_BACKEND_ENABLE_SYCL)
         execution_space::sycl,
 #endif
-#if defined(KOKKOS_ENABLE_OPENMPTARGET)
+#if defined(PLSSVM_KOKKOS_BACKEND_ENABLE_OPENMPTARGET)
         execution_space::openmp_target,
 #endif
-#if defined(KOKKOS_ENABLE_OPENACC)
+#if defined(PLSSVM_KOKKOS_BACKEND_ENABLE_OPENACC)
         execution_space::openacc,
 #endif
-#if defined(KOKKOS_ENABLE_OPENMP)
+#if defined(PLSSVM_KOKKOS_BACKEND_ENABLE_OPENMP)
         execution_space::openmp,
 #endif
-#if defined(KOKKOS_ENABLE_THREADS)
+#if defined(PLSSVM_KOKKOS_BACKEND_ENABLE_THREADS)
         execution_space::threads,
 #endif
-#if defined(KOKKOS_ENABLE_HPX)
+#if defined(PLSSVM_KOKKOS_BACKEND_ENABLE_HPX)
         execution_space::hpx,
 #endif
-#if defined(KOKKOS_ENABLE_SERIAL)
+#if defined(PLSSVM_KOKKOS_BACKEND_ENABLE_SERIAL)
         execution_space::serial,
 #endif
     };
