@@ -29,7 +29,7 @@ add_executable(${PLSSVM_KOKKOS_TEST_NAME} ${CMAKE_CURRENT_LIST_DIR}/../../main.c
 
 if (Kokkos_ENABLE_CUDA)
     # fix template limit when using Kokkos::Cuda
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Xcudafe --pending_instantiations=0")
+    target_compile_options(${PLSSVM_KOKKOS_TEST_NAME} PRIVATE -Xcudafe --pending_instantiations=0)
 endif ()
 
 # link against test library
