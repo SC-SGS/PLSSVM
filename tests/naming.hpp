@@ -153,7 +153,15 @@ template <typename T>
     } else if constexpr (std::is_base_of_v<plssvm::exception, T>) {
         return std::string{ util::exception_type_name<T>() };
     } else if constexpr (has_csvm_type_member_typedef_v<T>) {
-        return fmt::format("{}", plssvm::csvm_to_backend_type_v<typename T::csvm_type>);
+        // clang-format off
+        return fmt::format("{}{}", plssvm::csvm_to_backend_type_v<typename T::csvm_type>, std::apply([](const auto &...args) {
+                               if constexpr (sizeof...(args) == 0) {
+                                   return std::string{};
+                               } else {
+                                   return (fmt::format("_{}", args.second) + ...);
+                               }
+                           }, T::additional_arguments));
+        // clang-format on
     } else if constexpr (has_device_ptr_type_member_typedef_v<T>) {
         using device_ptr_type = typename T::device_ptr_type;
         return fmt::format("{}", plssvm::detail::arithmetic_type_name<typename device_ptr_type::value_type>());
