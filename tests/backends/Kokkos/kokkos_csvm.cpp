@@ -728,7 +728,10 @@ INSTANTIATE_TYPED_TEST_SUITE_P(KokkosCSVM, GenericCSVMKernelFunction, kokkos_ker
 INSTANTIATE_TYPED_TEST_SUITE_P(KokkosCSVM, GenericCSVMSolver, kokkos_solver_type_gtest, naming::test_parameter_to_name);
 INSTANTIATE_TYPED_TEST_SUITE_P(KokkosCSVM, GenericCSVMSolverKernelFunction, kokkos_solver_and_kernel_function_type_gtest, naming::test_parameter_to_name);
 INSTANTIATE_TYPED_TEST_SUITE_P(KokkosCSVM, GenericCSVMKernelFunctionClassification, kokkos_label_type_kernel_function_and_classification_type_gtest, naming::test_parameter_to_name);
-// INSTANTIATE_TYPED_TEST_SUITE_P(KokkosCSVM, GenericCSVMSolverKernelFunctionClassification, kokkos_label_type_solver_kernel_function_and_classification_type_gtest, naming::test_parameter_to_name);
+#if !defined(KOKKOS_ENABLE_CUDA)
+// testcase doesn't compile with Kokkos::Cuda's nvcc due to template instantiation limits
+INSTANTIATE_TYPED_TEST_SUITE_P(KokkosCSVM, GenericCSVMSolverKernelFunctionClassification, kokkos_label_type_solver_kernel_function_and_classification_type_gtest, naming::test_parameter_to_name);
+#endif
 
 // generic CSVM DeathTests
 INSTANTIATE_TYPED_TEST_SUITE_P(KokkosCSVMDeathTest, GenericCSVMDeathTest, kokkos_csvm_test_type_gtest, naming::test_parameter_to_name);
