@@ -115,6 +115,33 @@ constexpr auto test_parameter_value_at_v = std::get<I>(ValueList::values);
 
 namespace detail {
 
+/**
+ * @brief Copy all types in the @p Tuple using the indices @p Is.
+ * @tparam Tuple the tuple types to clone
+ * @tparam Is the index sequence used to clone the tuple types
+ * @param[in] tuple the tuple to clone
+ */
+template <typename Tuple, std::size_t... Is>
+[[nodiscard]] constexpr auto expand_tuple(std::index_sequence<Is...>, const Tuple &tuple) {
+    return std::tuple_cat((static_cast<void>(Is), tuple)...);
+}
+
+/**
+ * @brief Copy all types in the @p Tuple @p N times.
+ * @tparam N the time how often the types should be cloned
+ * @tparam Tuple the tuple types to clone
+ */
+template <std::size_t N, typename Tuple>
+struct clone_tuple_types {
+    using type = decltype(expand_tuple(std::make_index_sequence<N>(), std::declval<Tuple>()));
+};
+
+/**
+ * @brief Shorthand for the `typename clone_tuple_types<N, Tuple>::type` type.
+ */
+template <std::size_t N, typename Tuple>
+using clone_tuple_types_t = typename clone_tuple_types<N, Tuple>::type;
+
 // convert the types in a tuple to GoogleTests ::testing::Type
 template <typename Ts>
 struct tuple_to_gtest_types;
@@ -196,41 +223,38 @@ struct wrap_in_value_list<Array, std::index_sequence<I...>> {
 template <const auto &Array>
 using wrap_in_value_list_t = typename wrap_in_value_list<Array>::type;
 
-template <typename T, std::size_t, std::size_t, const auto &Array, typename Tuple>
-struct combine_values;
+template <typename, const auto &, typename>
+struct combine_values_impl { };
 
 /**
- * @brief Recursion termination: add the last value in the @p Array to the `value_list`s in the std::tuple.
- * @tparam T the type in the array
- * @tparam SIZE the size of the array
- * @tparam Array the array
- * @tparam Types the already existing `value_list`s
+ * @brief Iteratively add the values in @p Array at position @p IS to the `value_list`s in the std::tuple @p Tuple.
+ * @tparam Tuple the tuple types
+ * @tparam Array the array values to add
+ * @tparam Is the indices in @p Array
  */
-template <typename T, std::size_t SIZE, const std::array<T, SIZE> &Array, typename... Types>
-struct combine_values<T, SIZE, 0, Array, std::tuple<Types...>> {
-    using type = std::tuple<add_to_value_list_t<Types, std::get<0>(Array)>...>;
+template <typename Tuple, const auto &Array, std::size_t... Is>
+struct combine_values_impl<Tuple, Array, std::index_sequence<Is...>> {
+    constexpr static std::size_t N = Array.size();
+    using type = std::tuple<add_to_value_list_t<std::tuple_element_t<Is, Tuple>, std::get<Is % N>(Array)>...>;
 };
 
 /**
- * @brief Recursively add the value @p I of the @p Array to the `value_list`s in the std::tuple.
- * @tparam T the type in the array
- * @tparam SIZE the size of the array
- * @tparam I the currently investigated array element
- * @tparam Array the array
- * @tparam Types the already existing `value_list`s
+ * @brief Add the values in @p Array to the `value_list`s in the std::tuple @p Tuple.
+ * @tparam Tuple the tuple types
+ * @tparam Array the array values to add
  */
-template <typename T, std::size_t SIZE, std::size_t I, const std::array<T, SIZE> &Array, typename... Types>
-struct combine_values<T, SIZE, I, Array, std::tuple<Types...>> {
-    using type = concat_tuple_types_t<
-        std::tuple<add_to_value_list_t<Types, std::get<I>(Array)>...>,
-        typename combine_values<T, SIZE, I - 1, Array, std::tuple<Types...>>::type>;
+template <typename Tuple, const auto &Array>
+struct combine_values {
+    // clone the types in the Tuple N-times where N is the number of values in the Array
+    using cloned_tuple = clone_tuple_types_t<Array.size(), Tuple>;
+    using type = typename combine_values_impl<cloned_tuple, Array, std::make_index_sequence<std::tuple_size_v<cloned_tuple>>>::type;
 };
 
 /**
  * @brief Shorthand for `typename combine_values<...>::type`.
  */
 template <const auto &Array, typename Tuple>
-using combine_values_t = typename combine_values<typename plssvm::detail::remove_cvref_t<decltype(Array)>::value_type, Array.size(), Array.size() - 1, Array, Tuple>::type;
+using combine_values_t = typename combine_values<Tuple, Array>::type;
 
 /**
  * @brief Calculate the cartesian product of the values in @p FirstArray and @p RemainingArrays recursively.
@@ -292,37 +316,38 @@ struct wrap_in_type_list<std::tuple<Types...>> {
 template <typename Tuple>
 using wrap_in_type_list_t = typename wrap_in_type_list<Tuple>::type;
 
-template <std::size_t, typename Tuple, typename ResultTuple>
-struct combine_types;
+template <typename Tuple, typename CurrentTuple, typename>
+struct combine_types_impl { };
 
 /**
- * @brief Recursion termination: add the last type in the @p Tuple to the `type_list`s in the std::tuple.
- * @tparam Tuple the std::tuple containing the types to add
- * @tparam ResultTupleTypes the already existing `type_list`s
+ * @brief Iteratively add the types in @p CurrentTuple at position @p IS to the `type_list`s in the std::tuple @p Tuple.
+ * @tparam Tuple the tuple types
+ * @tparam CurrentTuple the types in the current tuple
+ * @tparam Is the indices in @p Array
  */
-template <typename Tuple, typename... ResultTupleTypes>
-struct combine_types<0, Tuple, std::tuple<ResultTupleTypes...>> {
-    using type = std::tuple<add_to_type_list_t<ResultTupleTypes, std::tuple_element_t<0, Tuple>>...>;
+template <typename Tuple, typename CurrentTuple, std::size_t... Is>
+struct combine_types_impl<Tuple, CurrentTuple, std::index_sequence<Is...>> {
+    constexpr static std::size_t N = std::tuple_size_v<CurrentTuple>;
+    using type = std::tuple<add_to_type_list_t<std::tuple_element_t<Is, Tuple>, std::tuple_element_t<Is % N, CurrentTuple>>...>;
 };
 
 /**
- * @brief Recursively add the type @p I of the @p Tuple to the `type_list`s in the std::tuple.
- * @tparam I the currently investigated tuple element
- * @tparam Tuple the tuple
- * @tparam ResultTupleTypes the already existing `type_list`s
+ * @brief Add the types in @p CurrentTuple to the `type_list`s in the std::tuple @p Tuple.
+ * @tparam Tuple the tuple types
+ * @tparam CurrentTuple the types in the current tuple
  */
-template <std::size_t I, typename Tuple, typename... ResultTupleTypes>
-struct combine_types<I, Tuple, std::tuple<ResultTupleTypes...>> {
-    using type = concat_tuple_types_t<
-        std::tuple<add_to_type_list_t<ResultTupleTypes, std::tuple_element_t<I, Tuple>>...>,
-        typename combine_types<I - 1, Tuple, std::tuple<ResultTupleTypes...>>::type>;
+template <typename Tuple, typename CurrentTuple>
+struct combine_types {
+    // clone the types in the Tuple N-times where N is the number of types in the CurrentTuple
+    using cloned_tuple = clone_tuple_types_t<std::tuple_size_v<CurrentTuple>, Tuple>;
+    using type = typename combine_types_impl<cloned_tuple, CurrentTuple, std::make_index_sequence<std::tuple_size_v<cloned_tuple>>>::type;
 };
 
 /**
  * @brief Shorthand for `typename combine_types<...>::type`.
  */
 template <typename Tuple, typename ResultTuple>
-using combine_types_t = typename combine_types<std::tuple_size_v<Tuple> - 1, Tuple, ResultTuple>::type;
+using combine_types_t = typename combine_types<ResultTuple, Tuple>::type;
 
 /**
  * @brief Calculate the cartesian product of the types in @p FirstTuple and @p RemainingTuples recursively.
