@@ -142,7 +142,10 @@ void csvm::init(const target_platform target) {
                 }
             }
         } else {
-            if (!::plssvm::detail::contains(available_combinations, target) || !::plssvm::detail::contains(available_combinations.at(target), space_)) {
+            if (::plssvm::detail::contains(available_combinations, target) && ::plssvm::detail::contains(available_combinations.at(target), space_)) {
+                // update target
+                target_ = target;
+            } else {
                 // the provided execution space and target platform combination is unsupported
                 throw backend_exception{ fmt::format("The provided Kokkos::ExecutionSpace {} does not support the requested target platform {}!", space_, target) };
             }
