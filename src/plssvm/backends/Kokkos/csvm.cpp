@@ -151,6 +151,7 @@ void csvm::init(const target_platform target) {
 
     // At this point, space_ may NEVER be execution_space::automatic!
     PLSSVM_ASSERT(space_ != execution_space::automatic, "At this point, the Kokkos execution space must be determined and must NOT be automatic!");
+    PLSSVM_ASSERT(target_ != target_platform::automatic, "At this point, the target platform must be determined and must NOT be automatic!");
 
     // Kokkos::Experimental::OpenMPTarget and Kokkos::Experimental::OpenACC currently not supported!
     if (space_ == execution_space::openmp_target || space_ == execution_space::openacc) {
