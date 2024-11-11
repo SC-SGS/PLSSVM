@@ -105,14 +105,20 @@ void csvm::init(const target_platform target) {
     if (space_ == execution_space::automatic) {
         // automatically determine the execution space and potentially automatically determine the target platform
         if (target == target_platform::automatic) {
+            bool found_combination{ false };
             // go through all combinations and choose the first execution space in order: gpu_nvidia -> gpu_amd -> gpu_intel -> cpu
             for (const target_platform target_order : list_available_target_platforms()) {
                 if (::plssvm::detail::contains(available_combinations, target_order)) {
                     // the target platform is supported -> choose the first execution space to use in the Kokkos backend
                     space_ = available_combinations.at(target_order).front();
                     target_ = target_order;
+                    found_combination = true;
                     break;
                 }
+            }
+            // check whether a valid combination could be found
+            if (!found_combination) {
+                throw backend_exception{ fmt::format("Couldn't find a valid Kokkos::ExecutionSpace ({}) and target_platform ({}) combination!", fmt::join(list_available_execution_spaces(), ", "), fmt::join(list_available_target_platforms(), ", ")) };
             }
         } else {
             // check whether the provided target platform is compatible with the currently available Kokkos::ExecutionSpaces
@@ -133,13 +139,19 @@ void csvm::init(const target_platform target) {
     } else {
         // execution space explicitly provided and potentially automatically determine the target platform
         if (target == target_platform::automatic) {
+            bool found_combination{ false };
             // go through all combinations (gpu_nvidia -> gpu_amd -> gpu_intel -> cpu) and check whether the requested execution space supports that target platform
             for (const target_platform target_order : list_available_target_platforms()) {
                 if (::plssvm::detail::contains(available_combinations, target_order) && ::plssvm::detail::contains(available_combinations.at(target_order), space_)) {
                     // the provided execution space supports the target platform
                     target_ = target_order;
+                    found_combination = true;
                     break;
                 }
+            }
+            // check whether a valid combination could be found
+            if (!found_combination) {
+                throw backend_exception{ fmt::format("Couldn't find a valid target_platform for the Kokkos::ExecutionSpace {}!", space_) };
             }
         } else {
             if (::plssvm::detail::contains(available_combinations, target) && ::plssvm::detail::contains(available_combinations.at(target), space_)) {
