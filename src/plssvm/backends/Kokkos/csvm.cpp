@@ -346,39 +346,13 @@ std::size_t csvm::get_max_work_group_size(const std::size_t device_id) const {
                 return { native_range[2], native_range[1], native_range[0] };
             }));
         case execution_space::hpx:
-            PLSSVM_KOKKOS_BACKEND_INVOKE_RETURN_IF_HPX(([&]() -> ::plssvm::detail::dim_type {
-                // get the total number of threads
-                const std::size_t num_threads = Kokkos::Experimental::HPX::impl_max_hardware_threads();
-                // set the maximum league size to twice the number of available hardware threads
-                // NOTE: this is just an estimate and can or should be changed depending on the performance
-                const auto league_size = static_cast<unsigned long long>(std::ceil(std::sqrt(num_threads * 2)));
-                return { league_size, league_size, 1ull };
-            }));
         case execution_space::openmp:
-            PLSSVM_KOKKOS_BACKEND_INVOKE_RETURN_IF_OPENMP(([&]() -> ::plssvm::detail::dim_type {
-                // get the total number of threads
-                const std::size_t num_threads = Kokkos::OpenMP::impl_max_hardware_threads();
-                // set the maximum league size to twice the number of available hardware threads
-                // NOTE: this is just an estimate and can or should be changed depending on the performance
-                const auto league_size = static_cast<unsigned long long>(std::ceil(std::sqrt(num_threads * 2)));
-                return { league_size, league_size, 1ull };
-            }));
         case execution_space::threads:
-            PLSSVM_KOKKOS_BACKEND_INVOKE_RETURN_IF_THREADS(([&]() -> ::plssvm::detail::dim_type {
-                // get the total number of threads
-                const std::size_t num_threads = Kokkos::Threads::impl_max_hardware_threads();
-                // set the maximum league size to twice the number of available hardware threads
-                // NOTE: this is just an estimate and can or should be changed depending on the performance
-                const auto league_size = static_cast<unsigned long long>(std::ceil(std::sqrt(num_threads * 2)));
-                return { league_size, league_size, 1ull };
-            }));
         case execution_space::serial:
-            PLSSVM_KOKKOS_BACKEND_INVOKE_RETURN_IF_SERIAL(([&]() -> ::plssvm::detail::dim_type {
-                return { std::numeric_limits<int>::max(), std::numeric_limits<int>::max(), 1ull };
-            }));
-        // TODO: implement for Kokkos::Experimental::OpenMPTarget and Kokkos::Experimental::OpenACC
+            return { std::numeric_limits<int>::max(), std::numeric_limits<int>::max(), 1ull };
         case execution_space::openmp_target:
         case execution_space::openacc:
+            // TODO: implement for Kokkos::Experimental::OpenMPTarget and Kokkos::Experimental::OpenACC
             throw backend_exception{ fmt::format("Currently not implemented for the execution space: {}!", space_) };
     }
     // all possible cases should be handled by the previous switch
