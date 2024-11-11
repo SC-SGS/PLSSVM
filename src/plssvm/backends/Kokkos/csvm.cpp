@@ -174,7 +174,7 @@ void csvm::init(const target_platform target) {
 
     // throw exception if no devices in the current execution space could be found
     if (devices_.empty()) {
-        throw backend_exception{ fmt::format("Not devices found for the Kokkos execution space {} with the target platform {}!", space_, target_) };
+        throw backend_exception{ fmt::format("No devices found for the Kokkos execution space {} with the target platform {}!", space_, target_) };
     }
 
     // print found Kokkos devices
