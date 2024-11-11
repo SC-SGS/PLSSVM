@@ -36,7 +36,7 @@ namespace plssvm::kokkos::detail {
  * @return the reduced value (`[[nodiscard]]`)
  */
 template <kernel_function_type kernel_function>
-KOKKOS_INLINE_FUNCTION real_type feature_reduce(const real_type val1, const real_type val2) {
+[[nodiscard]] KOKKOS_INLINE_FUNCTION real_type feature_reduce(const real_type val1, const real_type val2) {
     return val1 * val2;
 }
 
@@ -47,7 +47,7 @@ KOKKOS_INLINE_FUNCTION real_type feature_reduce(const real_type val1, const real
  * @return the reduced value (`[[nodiscard]]`)
  */
 template <>
-KOKKOS_INLINE_FUNCTION real_type feature_reduce<kernel_function_type::rbf>(const real_type val1, const real_type val2) {
+[[nodiscard]] KOKKOS_INLINE_FUNCTION real_type feature_reduce<kernel_function_type::rbf>(const real_type val1, const real_type val2) {
     const real_type d = val1 - val2;
     return d * d;
 }
@@ -59,8 +59,23 @@ KOKKOS_INLINE_FUNCTION real_type feature_reduce<kernel_function_type::rbf>(const
  * @return the reduced value (`[[nodiscard]]`)
  */
 template <>
-KOKKOS_INLINE_FUNCTION real_type feature_reduce<kernel_function_type::laplacian>(const real_type val1, const real_type val2) {
+[[nodiscard]] KOKKOS_INLINE_FUNCTION real_type feature_reduce<kernel_function_type::laplacian>(const real_type val1, const real_type val2) {
     return Kokkos::fabs(val1 - val2);
+}
+
+/**
+ * @brief Return the minimum possible floating point value for type @p T.
+ * @brief Function necessary such the the `if constexpr` depends on a template parameter and, therefore, no false-positive implicit conversion warnings are reported.
+ * @tparam T the type to retrieve the minimum value
+ * @return the minimum floating point value for type @p T (`[[nodiscard]]`)
+ */
+template <typename T>
+[[nodiscard]] constexpr KOKKOS_INLINE_FUNCTION T real_type_min() {
+    if constexpr (std::is_same_v<real_type, float>) {
+        return FLT_MIN;
+    } else {
+        return DBL_MIN;
+    }
 }
 
 /**
@@ -71,13 +86,9 @@ KOKKOS_INLINE_FUNCTION real_type feature_reduce<kernel_function_type::laplacian>
  * @return the reduced value (`[[nodiscard]]`)
  */
 template <>
-KOKKOS_INLINE_FUNCTION real_type feature_reduce<kernel_function_type::chi_squared>(const real_type val1, const real_type val2) {
+[[nodiscard]] KOKKOS_INLINE_FUNCTION real_type feature_reduce<kernel_function_type::chi_squared>(const real_type val1, const real_type val2) {
     const real_type d = val1 - val2;
-    if constexpr (std::is_same_v<real_type, float>) {
-        return (real_type{ 1.0 } / (val1 + val2 + FLT_MIN)) * d * d;
-    } else {
-        return (real_type{ 1.0 } / (val1 + val2 + DBL_MIN)) * d * d;
-    }
+    return (real_type{ 1.0 } / (val1 + val2 + real_type_min<real_type>())) * d * d;
 }
 
 //***************************************************//
@@ -93,7 +104,7 @@ KOKKOS_INLINE_FUNCTION real_type feature_reduce<kernel_function_type::chi_square
  * @return the result value (`[[nodiscard]]`)
  */
 template <kernel_function_type kernel_function, typename... Args>
-KOKKOS_INLINE_FUNCTION real_type apply_kernel_function(const real_type value, [[maybe_unused]] const detail::standard_layout_tuple<Args...> params) {
+[[nodiscard]] KOKKOS_INLINE_FUNCTION real_type apply_kernel_function(const real_type value, [[maybe_unused]] const detail::standard_layout_tuple<Args...> params) {
     if constexpr (kernel_function == kernel_function_type::linear) {
         return value;
     } else if constexpr (kernel_function == kernel_function_type::polynomial) {
