@@ -250,7 +250,7 @@ INSTANTIATE_TEST_SUITE_P(ParserPredict, ParserPredictSYCLImplementation, ::testi
 #if defined(PLSSVM_HAS_KOKKOS_BACKEND)
 
 class ParserPredictKokkosExecutionSpace : public ParserPredict,
-                                        public ::testing::WithParamInterface<std::tuple<std::string, std::string>> { };
+                                          public ::testing::WithParamInterface<std::tuple<std::string, std::string>> { };
 
 TEST_P(ParserPredictKokkosExecutionSpace, parsing) {
     const auto &[flag, value] = GetParam();
