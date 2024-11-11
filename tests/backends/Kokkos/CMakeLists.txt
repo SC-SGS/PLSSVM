@@ -37,6 +37,9 @@ if (Kokkos_ENABLE_CUDA)
     endif ()
 endif ()
 
+# increase recursive template instantiation limit
+target_compile_options(${PLSSVM_KOKKOS_TEST_NAME} PRIVATE $<$<COMPILE_LANGUAGE:CXX>:$<$<CXX_COMPILER_ID:GNU,Clang,IntelLLVM>:-ftemplate-depth=2048>>)
+
 # link against test library
 target_link_libraries(${PLSSVM_KOKKOS_TEST_NAME} PRIVATE ${PLSSVM_BASE_TEST_LIBRARY_NAME})
 
