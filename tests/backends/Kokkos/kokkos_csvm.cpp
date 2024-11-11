@@ -134,9 +134,19 @@ TEST_F(KokkosCSVM, construct_execution_space_and_parameter) {  // execution_spac
     // automatic should always work
     EXPECT_NO_THROW((plssvm::kokkos::csvm{ params, plssvm::kokkos_execution_space = plssvm::kokkos::execution_space::automatic }));
 
+    const auto target_is_available = [](const plssvm::target_platform target) {
+        return plssvm::detail::contains(plssvm::list_available_target_platforms(), target);
+    };
+
 #if defined(KOKKOS_ENABLE_CUDA)
     // explicitly providing the Cuda execution space should work
-    EXPECT_NO_THROW((plssvm::kokkos::csvm{ params, plssvm::kokkos_execution_space = plssvm::kokkos::execution_space::cuda }));
+    if (target_is_available(plssvm::target_platform::gpu_nvidia)) {
+        EXPECT_NO_THROW((plssvm::kokkos::csvm{ params, plssvm::kokkos_execution_space = plssvm::kokkos::execution_space::cuda }));
+    } else {
+        EXPECT_THROW_WHAT((plssvm::kokkos::csvm{ params, plssvm::kokkos_execution_space = plssvm::kokkos::execution_space::cuda }),
+                          plssvm::kokkos::backend_exception,
+                          "Couldn't find a valid target_platform for the Kokkos::ExecutionSpace Cuda!");
+    }
 #else
     EXPECT_THROW_WHAT((plssvm::kokkos::csvm{ params, plssvm::kokkos_execution_space = plssvm::kokkos::execution_space::cuda }),
                       plssvm::kokkos::backend_exception,
@@ -145,7 +155,13 @@ TEST_F(KokkosCSVM, construct_execution_space_and_parameter) {  // execution_spac
 
 #if defined(KOKKOS_ENABLE_HIP)
     // explicitly providing the HIP execution space should work
-    EXPECT_NO_THROW((plssvm::kokkos::csvm{ params, plssvm::kokkos_execution_space = plssvm::kokkos::execution_space::hip }));
+    if (target_is_available(plssvm::target_platform::gpu_nvidia) || target_is_available(plssvm::target_platform::gpu_amd)) {
+        EXPECT_NO_THROW((plssvm::kokkos::csvm{ params, plssvm::kokkos_execution_space = plssvm::kokkos::execution_space::hip }));
+    } else {
+        EXPECT_THROW_WHAT((plssvm::kokkos::csvm{ params, plssvm::kokkos_execution_space = plssvm::kokkos::execution_space::hip }),
+                          plssvm::kokkos::backend_exception,
+                          "Couldn't find a valid target_platform for the Kokkos::ExecutionSpace HIP!");
+    }
 #else
     EXPECT_THROW_WHAT((plssvm::kokkos::csvm{ params, plssvm::kokkos_execution_space = plssvm::kokkos::execution_space::hip }),
                       plssvm::kokkos::backend_exception,
@@ -163,7 +179,13 @@ TEST_F(KokkosCSVM, construct_execution_space_and_parameter) {  // execution_spac
 
 #if defined(KOKKOS_ENABLE_HPX)
     // explicitly providing the HPX execution space should work
-    EXPECT_NO_THROW((plssvm::kokkos::csvm{ params, plssvm::kokkos_execution_space = plssvm::kokkos::execution_space::hpx }));
+    if (target_is_available(plssvm::target_platform::cpu)) {
+        EXPECT_NO_THROW((plssvm::kokkos::csvm{ params, plssvm::kokkos_execution_space = plssvm::kokkos::execution_space::hpx }));
+    } else {
+        EXPECT_THROW_WHAT((plssvm::kokkos::csvm{ params, plssvm::kokkos_execution_space = plssvm::kokkos::execution_space::hpx }),
+                          plssvm::kokkos::backend_exception,
+                          "Couldn't find a valid target_platform for the Kokkos::ExecutionSpace HPX!");
+    }
 #else
     EXPECT_THROW_WHAT((plssvm::kokkos::csvm{ params, plssvm::kokkos_execution_space = plssvm::kokkos::execution_space::hpx }),
                       plssvm::kokkos::backend_exception,
@@ -172,7 +194,13 @@ TEST_F(KokkosCSVM, construct_execution_space_and_parameter) {  // execution_spac
 
 #if defined(KOKKOS_ENABLE_OPENMP)
     // explicitly providing the OpenMP execution space should work
-    EXPECT_NO_THROW((plssvm::kokkos::csvm{ params, plssvm::kokkos_execution_space = plssvm::kokkos::execution_space::openmp }));
+    if (target_is_available(plssvm::target_platform::cpu)) {
+        EXPECT_NO_THROW((plssvm::kokkos::csvm{ params, plssvm::kokkos_execution_space = plssvm::kokkos::execution_space::openmp }));
+    } else {
+        EXPECT_THROW_WHAT((plssvm::kokkos::csvm{ params, plssvm::kokkos_execution_space = plssvm::kokkos::execution_space::openmp }),
+                          plssvm::kokkos::backend_exception,
+                          "Couldn't find a valid target_platform for the Kokkos::ExecutionSpace OpenMP!");
+    }
 #else
     EXPECT_THROW_WHAT((plssvm::kokkos::csvm{ params, plssvm::kokkos_execution_space = plssvm::kokkos::execution_space::openmp }),
                       plssvm::kokkos::backend_exception,
@@ -203,7 +231,13 @@ TEST_F(KokkosCSVM, construct_execution_space_and_parameter) {  // execution_spac
 
 #if defined(KOKKOS_ENABLE_THREADS)
     // explicitly providing the Threads execution space should work
-    EXPECT_NO_THROW((plssvm::kokkos::csvm{ params, plssvm::kokkos_execution_space = plssvm::kokkos::execution_space::threads }));
+    if (target_is_available(plssvm::target_platform::cpu)) {
+        EXPECT_NO_THROW((plssvm::kokkos::csvm{ params, plssvm::kokkos_execution_space = plssvm::kokkos::execution_space::threads }));
+    } else {
+        EXPECT_THROW_WHAT((plssvm::kokkos::csvm{ params, plssvm::kokkos_execution_space = plssvm::kokkos::execution_space::threads }),
+                          plssvm::kokkos::backend_exception,
+                          "Couldn't find a valid target_platform for the Kokkos::ExecutionSpace Threads!");
+    }
 #else
     EXPECT_THROW_WHAT((plssvm::kokkos::csvm{ params, plssvm::kokkos_execution_space = plssvm::kokkos::execution_space::threads }),
                       plssvm::kokkos::backend_exception,
@@ -212,7 +246,13 @@ TEST_F(KokkosCSVM, construct_execution_space_and_parameter) {  // execution_spac
 
 #if defined(KOKKOS_ENABLE_SERIAL)
     // explicitly providing the Serial execution space should work
-    EXPECT_NO_THROW((plssvm::kokkos::csvm{ params, plssvm::kokkos_execution_space = plssvm::kokkos::execution_space::serial }));
+    if (target_is_available(plssvm::target_platform::cpu)) {
+        EXPECT_NO_THROW((plssvm::kokkos::csvm{ params, plssvm::kokkos_execution_space = plssvm::kokkos::execution_space::serial }));
+    } else {
+        EXPECT_THROW_WHAT((plssvm::kokkos::csvm{ params, plssvm::kokkos_execution_space = plssvm::kokkos::execution_space::serial }),
+                          plssvm::kokkos::backend_exception,
+                          "Couldn't find a valid target_platform for the Kokkos::ExecutionSpace Serial!");
+    }
 #else
     EXPECT_THROW_WHAT((plssvm::kokkos::csvm{ params, plssvm::kokkos_execution_space = plssvm::kokkos::execution_space::serial }),
                       plssvm::kokkos::backend_exception,
@@ -425,9 +465,19 @@ TEST_F(KokkosCSVM, construct_execution_space_and_named_args) {  // execution_spa
     // automatic should always work
     EXPECT_NO_THROW((plssvm::kokkos::csvm{ plssvm::kernel_type = plssvm::kernel_function_type::linear, plssvm::cost = 2.0, plssvm::kokkos_execution_space = plssvm::kokkos::execution_space::automatic }));
 
+    const auto target_is_available = [](const plssvm::target_platform target) {
+        return plssvm::detail::contains(plssvm::list_available_target_platforms(), target);
+    };
+
 #if defined(KOKKOS_ENABLE_CUDA)
     // explicitly providing the Cuda execution space should work
-    EXPECT_NO_THROW((plssvm::kokkos::csvm{ plssvm::kernel_type = plssvm::kernel_function_type::linear, plssvm::cost = 2.0, plssvm::kokkos_execution_space = plssvm::kokkos::execution_space::cuda }));
+    if (target_is_available(plssvm::target_platform::gpu_nvidia)) {
+        EXPECT_NO_THROW((plssvm::kokkos::csvm{ plssvm::kernel_type = plssvm::kernel_function_type::linear, plssvm::cost = 2.0, plssvm::kokkos_execution_space = plssvm::kokkos::execution_space::cuda }));
+    } else {
+        EXPECT_THROW_WHAT((plssvm::kokkos::csvm{ plssvm::kernel_type = plssvm::kernel_function_type::linear, plssvm::cost = 2.0, plssvm::kokkos_execution_space = plssvm::kokkos::execution_space::cuda }),
+                          plssvm::kokkos::backend_exception,
+                          "Couldn't find a valid target_platform for the Kokkos::ExecutionSpace Cuda!");
+    }
 #else
     EXPECT_THROW_WHAT((plssvm::kokkos::csvm{ plssvm::kernel_type = plssvm::kernel_function_type::linear, plssvm::cost = 2.0, plssvm::kokkos_execution_space = plssvm::kokkos::execution_space::cuda }),
                       plssvm::kokkos::backend_exception,
@@ -436,7 +486,13 @@ TEST_F(KokkosCSVM, construct_execution_space_and_named_args) {  // execution_spa
 
 #if defined(KOKKOS_ENABLE_HIP)
     // explicitly providing the HIP execution space should work
-    EXPECT_NO_THROW((plssvm::kokkos::csvm{ plssvm::kernel_type = plssvm::kernel_function_type::linear, plssvm::cost = 2.0, plssvm::kokkos_execution_space = plssvm::kokkos::execution_space::hip }));
+    if (target_is_available(plssvm::target_platform::gpu_nvidia) || target_is_available(plssvm::target_platform::gpu_amd)) {
+        EXPECT_NO_THROW((plssvm::kokkos::csvm{ plssvm::kernel_type = plssvm::kernel_function_type::linear, plssvm::cost = 2.0, plssvm::kokkos_execution_space = plssvm::kokkos::execution_space::hip }));
+    } else {
+        EXPECT_THROW_WHAT((plssvm::kokkos::csvm{ plssvm::kernel_type = plssvm::kernel_function_type::linear, plssvm::cost = 2.0, plssvm::kokkos_execution_space = plssvm::kokkos::execution_space::hip }),
+                          plssvm::kokkos::backend_exception,
+                          "Couldn't find a valid target_platform for the Kokkos::ExecutionSpace HIP!");
+    }
 #else
     EXPECT_THROW_WHAT((plssvm::kokkos::csvm{ plssvm::kernel_type = plssvm::kernel_function_type::linear, plssvm::cost = 2.0, plssvm::kokkos_execution_space = plssvm::kokkos::execution_space::hip }),
                       plssvm::kokkos::backend_exception,
@@ -454,7 +510,13 @@ TEST_F(KokkosCSVM, construct_execution_space_and_named_args) {  // execution_spa
 
 #if defined(KOKKOS_ENABLE_HPX)
     // explicitly providing the HPX execution space should work
-    EXPECT_NO_THROW((plssvm::kokkos::csvm{ plssvm::kernel_type = plssvm::kernel_function_type::linear, plssvm::cost = 2.0, plssvm::kokkos_execution_space = plssvm::kokkos::execution_space::hpx }));
+    if (target_is_available(plssvm::target_platform::cpu)) {
+        EXPECT_NO_THROW((plssvm::kokkos::csvm{ plssvm::kernel_type = plssvm::kernel_function_type::linear, plssvm::cost = 2.0, plssvm::kokkos_execution_space = plssvm::kokkos::execution_space::hpx }));
+    } else {
+        EXPECT_THROW_WHAT((plssvm::kokkos::csvm{ plssvm::kernel_type = plssvm::kernel_function_type::linear, plssvm::cost = 2.0, plssvm::kokkos_execution_space = plssvm::kokkos::execution_space::hpx }),
+                          plssvm::kokkos::backend_exception,
+                          "Couldn't find a valid target_platform for the Kokkos::ExecutionSpace HPX!");
+    }
 #else
     EXPECT_THROW_WHAT((plssvm::kokkos::csvm{ plssvm::kernel_type = plssvm::kernel_function_type::linear, plssvm::cost = 2.0, plssvm::kokkos_execution_space = plssvm::kokkos::execution_space::hpx }),
                       plssvm::kokkos::backend_exception,
@@ -463,7 +525,13 @@ TEST_F(KokkosCSVM, construct_execution_space_and_named_args) {  // execution_spa
 
 #if defined(KOKKOS_ENABLE_OPENMP)
     // explicitly providing the OpenMP execution space should work
-    EXPECT_NO_THROW((plssvm::kokkos::csvm{ plssvm::kernel_type = plssvm::kernel_function_type::linear, plssvm::cost = 2.0, plssvm::kokkos_execution_space = plssvm::kokkos::execution_space::openmp }));
+    if (target_is_available(plssvm::target_platform::cpu)) {
+        EXPECT_NO_THROW((plssvm::kokkos::csvm{ plssvm::kernel_type = plssvm::kernel_function_type::linear, plssvm::cost = 2.0, plssvm::kokkos_execution_space = plssvm::kokkos::execution_space::openmp }));
+    } else {
+        EXPECT_THROW_WHAT((plssvm::kokkos::csvm{ plssvm::kernel_type = plssvm::kernel_function_type::linear, plssvm::cost = 2.0, plssvm::kokkos_execution_space = plssvm::kokkos::execution_space::openmp }),
+                          plssvm::kokkos::backend_exception,
+                          "Couldn't find a valid target_platform for the Kokkos::ExecutionSpace OpenMP!");
+    }
 #else
     EXPECT_THROW_WHAT((plssvm::kokkos::csvm{ plssvm::kernel_type = plssvm::kernel_function_type::linear, plssvm::cost = 2.0, plssvm::kokkos_execution_space = plssvm::kokkos::execution_space::openmp }),
                       plssvm::kokkos::backend_exception,
@@ -494,7 +562,13 @@ TEST_F(KokkosCSVM, construct_execution_space_and_named_args) {  // execution_spa
 
 #if defined(KOKKOS_ENABLE_THREADS)
     // explicitly providing the Threads execution space should work
-    EXPECT_NO_THROW((plssvm::kokkos::csvm{ plssvm::kernel_type = plssvm::kernel_function_type::linear, plssvm::cost = 2.0, plssvm::kokkos_execution_space = plssvm::kokkos::execution_space::threads }));
+    if (target_is_available(plssvm::target_platform::cpu)) {
+        EXPECT_NO_THROW((plssvm::kokkos::csvm{ plssvm::kernel_type = plssvm::kernel_function_type::linear, plssvm::cost = 2.0, plssvm::kokkos_execution_space = plssvm::kokkos::execution_space::threads }));
+    } else {
+        EXPECT_THROW_WHAT((plssvm::kokkos::csvm{ plssvm::kernel_type = plssvm::kernel_function_type::linear, plssvm::cost = 2.0, plssvm::kokkos_execution_space = plssvm::kokkos::execution_space::threads }),
+                          plssvm::kokkos::backend_exception,
+                          "Couldn't find a valid target_platform for the Kokkos::ExecutionSpace Threads!");
+    }
 #else
     EXPECT_THROW_WHAT((plssvm::kokkos::csvm{ plssvm::kernel_type = plssvm::kernel_function_type::linear, plssvm::cost = 2.0, plssvm::kokkos_execution_space = plssvm::kokkos::execution_space::threads }),
                       plssvm::kokkos::backend_exception,
@@ -503,7 +577,13 @@ TEST_F(KokkosCSVM, construct_execution_space_and_named_args) {  // execution_spa
 
 #if defined(KOKKOS_ENABLE_SERIAL)
     // explicitly providing the Serial execution space should work
-    EXPECT_NO_THROW((plssvm::kokkos::csvm{ plssvm::kernel_type = plssvm::kernel_function_type::linear, plssvm::cost = 2.0, plssvm::kokkos_execution_space = plssvm::kokkos::execution_space::serial }));
+    if (target_is_available(plssvm::target_platform::cpu)) {
+        EXPECT_NO_THROW((plssvm::kokkos::csvm{ plssvm::kernel_type = plssvm::kernel_function_type::linear, plssvm::cost = 2.0, plssvm::kokkos_execution_space = plssvm::kokkos::execution_space::serial }));
+    } else {
+        EXPECT_THROW_WHAT((plssvm::kokkos::csvm{ plssvm::kernel_type = plssvm::kernel_function_type::linear, plssvm::cost = 2.0, plssvm::kokkos_execution_space = plssvm::kokkos::execution_space::serial }),
+                          plssvm::kokkos::backend_exception,
+                          "Couldn't find a valid target_platform for the Kokkos::ExecutionSpace Serial!");
+    }
 #else
     EXPECT_THROW_WHAT((plssvm::kokkos::csvm{ plssvm::kernel_type = plssvm::kernel_function_type::linear, plssvm::cost = 2.0, plssvm::kokkos_execution_space = plssvm::kokkos::execution_space::serial }),
                       plssvm::kokkos::backend_exception,
