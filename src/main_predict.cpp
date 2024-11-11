@@ -88,7 +88,7 @@ int main(int argc, char *argv[]) {
 #if defined(PLSSVM_HAS_KOKKOS_BACKEND)
             // initialize Kokkos if necessary
             if (use_kokkos_as_backend) {
-                kokkos_guard = std::make_unique<Kokkos::ScopeGuard>(argc, argv);
+                kokkos_guard = std::make_unique<Kokkos::ScopeGuard>();
                 PLSSVM_ASSERT(Kokkos::is_initialized(), "Something went wrong initializing the Kokkos environment!");
             }
 #endif

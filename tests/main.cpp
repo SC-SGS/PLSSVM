@@ -49,7 +49,7 @@ int main(int argc, char **argv) {
 
 #if defined(PLSSVM_HAS_KOKKOS_BACKEND)
     // initialize Kokkos using a Kokkos::ScopeGuard
-    const Kokkos::ScopeGuard guard{ argc, argv };
+    const Kokkos::ScopeGuard guard{};
 #endif
 
     // prevent problems with fork() in the presence of multiple threads
