@@ -20,10 +20,11 @@
 #include "tests/backends/generic_csvm_tests.hpp"      // generic CSVM tests to instantiate
 #include "tests/backends/generic_gpu_csvm_tests.hpp"  // generic GPU CSVM tests to instantiate
 #include "tests/backends/Kokkos/mock_kokkos_csvm.hpp"
-#include "tests/custom_test_macros.hpp"  // EXPECT_THROW_WHAT
-#include "tests/naming.hpp"              // naming::test_parameter_to_name
-#include "tests/types_to_test.hpp"       // util::{cartesian_type_product_t, combine_test_parameters_gtest_t}
-#include "tests/utility.hpp"             // util::redirect_output
+#include "tests/backends/Kokkos/utility.hpp"  // util::create_kokkos_test_tuple_impl
+#include "tests/custom_test_macros.hpp"       // EXPECT_THROW_WHAT
+#include "tests/naming.hpp"                   // naming::test_parameter_to_name
+#include "tests/types_to_test.hpp"            // util::{cartesian_type_product_t, combine_test_parameters_gtest_t}
+#include "tests/utility.hpp"                  // util::redirect_output
 
 #include "gtest/gtest.h"  // TEST_F, EXPECT_NO_THROW, INSTANTIATE_TYPED_TEST_SUITE_P, ::testing::Test
 
@@ -636,80 +637,10 @@ struct kokkos_csvm_test_type {
     inline static auto additional_arguments = std::make_tuple(std::make_pair(plssvm::kokkos_execution_space, space));
 };
 
-namespace impl {
+template <plssvm::kokkos::execution_space space>
+using kokkos_csvm_test_type_without_mock = kokkos_csvm_test_type<false, space>;
 
-/**
- * @brief Determine which execution spaces can be tested based on the available Kokkos::ExecutionSpaces and PLSSVM target platforms.
- * @return the available execution spaces for testing (`[[nodiscard]]`)
- */
-[[nodiscard]] constexpr auto constexpr_available_execution_spaces_to_test() {
-    return std::array{
-#if defined(KOKKOS_ENABLE_CUDA) && defined(PLSSVM_HAS_NVIDIA_TARGET)  // for Kokkos::Cuda, an NVIDIA target must be available
-        plssvm::kokkos::execution_space::cuda,
-#endif
-#if defined(KOKKOS_ENABLE_HIP) && (defined(PLSSVM_HAS_NVIDIA_TARGET) || defined(PLSSVM_HAS_AMD_TARGET))  // for Kokkos::HIP, an NVIDIA or AMD target must be available
-        plssvm::kokkos::execution_space::hip,
-#endif
-#if defined(KOKKOS_ENABLE_SYCL)  // for Kokkos::SYCL, any target is ok
-        plssvm::kokkos::execution_space::sycl,
-#endif
-#if defined(KOKKOS_ENABLE_HPX) && defined(PLSSVM_HAS_CPU_TARGET)  // for Kokkos::Experimental::HPX, a CPU target must be available
-        plssvm::kokkos::execution_space::hpx,
-#endif
-#if defined(KOKKOS_ENABLE_OPENMP) && defined(PLSSVM_HAS_CPU_TARGET)  // for Kokkos::OpenMP, a CPU target must be available
-        plssvm::kokkos::execution_space::openmp,
-#endif
-#if defined(KOKKOS_ENABLE_OPENMPTARGET)  // for Kokkos::Experimental::OpenMPTarget,any target is ok // TODO: implement correctly based on allowed target platforms
-        plssvm::kokkos::execution_space::openmp_target,
-#endif
-#if defined(KOKKOS_ENABLE_OPENACC)  // for Kokkos::Experimental::OpenACC,any target is ok // TODO: implement correctly based on allowed target platforms
-        plssvm::kokkos::execution_space::openacc,
-#endif
-#if defined(KOKKOS_ENABLE_THREADS) && defined(PLSSVM_HAS_CPU_TARGET)  // for Kokkos::Threads, a CPU target must be available
-        plssvm::kokkos::execution_space::threads,
-#endif
-#if defined(KOKKOS_ENABLE_SERIAL) && defined(PLSSVM_HAS_CPU_TARGET)  // for Kokkos::Serial, a CPU target must be available
-        plssvm::kokkos::execution_space::serial,
-#endif
-    };
-}
-
-/**
- * @brief Uninstantiated base type to create a `std::tuple` containing all available `kokkos_csvm_test_type` types.
- */
-template <bool, typename>
-struct create_device_tuple_type_helper;
-
-/**
- * @brief Helper struct to create a `std::tuple` containing all available `kokkos_csvm_test_type` types by iterating over the `std::array` of
- *        `plssvm::kokkos::execution_space` values as returned by `plssvm::kokkos::detail::constexpr_available_execution_spaces()`.
- * @tparam mock_grid_size whether the maximum grid size should be mocked (i.e. in fact reduced) or not
- * @tparam Is the indices to index the `std::array`
- */
-template <bool mock_grid_size, std::size_t... Is>
-struct create_device_tuple_type_helper<mock_grid_size, std::index_sequence<Is...>> {
-    /// The array containing all available execution spaces.
-    constexpr static auto array = constexpr_available_execution_spaces_to_test();
-    /// The resulting variant type.
-    using type = std::tuple<kokkos_csvm_test_type<false, array[Is]>...>;
-};
-
-/**
- * @brief Create a `std::tuple` containing all available `kokkos_csvm_test_type` types by iterating over the `std::array` of
- *        `plssvm::kokkos::execution_space` values as returned by `plssvm::kokkos::detail::constexpr_available_execution_spaces()`.
- * @tparam mock_grid_size whether the maximum grid size should be mocked (i.e. in fact reduced) or not
- */
-template <bool mock_grid_size>
-struct create_device_tuple_type {
-    /// The number of types in the final variant.
-    constexpr static std::size_t N = constexpr_available_execution_spaces_to_test().size();
-    /// The final variant type.
-    using type = typename create_device_tuple_type_helper<mock_grid_size, std::make_index_sequence<N>>::type;
-};
-
-}  // namespace impl
-
-using kokkos_csvm_test_tuple = typename impl::create_device_tuple_type<false>::type;
+using kokkos_csvm_test_tuple = util::create_kokkos_test_tuple_t<kokkos_csvm_test_type_without_mock>;
 using kokkos_csvm_test_label_type_list = util::cartesian_type_product_t<kokkos_csvm_test_tuple, plssvm::detail::supported_label_types>;
 using kokkos_csvm_test_type_list = util::cartesian_type_product_t<kokkos_csvm_test_tuple>;
 
@@ -746,7 +677,10 @@ INSTANTIATE_TYPED_TEST_SUITE_P(KokkosCSVM, GenericGPUCSVMKernelFunction, kokkos_
 // generic GPU CSVM DeathTests - correct grid sizes
 INSTANTIATE_TYPED_TEST_SUITE_P(KokkosCSVMDeathTest, GenericGPUCSVMDeathTest, kokkos_csvm_test_type_gtest, naming::test_parameter_to_name);
 
-using kokkos_mock_csvm_test_tuple = typename impl::create_device_tuple_type<true>::type;
+template <plssvm::kokkos::execution_space space>
+using kokkos_csvm_test_type_with_mock = kokkos_csvm_test_type<true, space>;
+
+using kokkos_mock_csvm_test_tuple = util::create_kokkos_test_tuple_t<kokkos_csvm_test_type_with_mock>;
 using kokkos_mock_csvm_test_type_list = util::cartesian_type_product_t<kokkos_mock_csvm_test_tuple>;
 
 using kokkos_mock_csvm_test_type_gtest = util::combine_test_parameters_gtest_t<kokkos_mock_csvm_test_type_list>;
