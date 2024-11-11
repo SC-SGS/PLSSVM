@@ -15,6 +15,8 @@
 
 #include "gtest/gtest.h"  // RUN_ALL_TESTS, ::testing::{InitGoogleTest, GTEST_FLAG},GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST definitions
 
+#include <cstdlib>  // std::atexit
+
 // silence GTest warnings/test errors
 
 // generic CSVM tests
@@ -44,12 +46,21 @@ GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(DevicePtrDeathTest);
 // exception tests
 GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(Exception);
 
+#if defined(PLSSVM_HAS_KOKKOS_BACKEND)
+void kokkos_ensure_finalization() {
+    if (!Kokkos::is_finalized()) {
+        Kokkos::finalize();
+    }
+}
+#endif
+
 int main(int argc, char **argv) {
     ::testing::InitGoogleTest(&argc, argv);
 
 #if defined(PLSSVM_HAS_KOKKOS_BACKEND)
     // initialize Kokkos using a Kokkos::ScopeGuard
     const Kokkos::ScopeGuard guard{};
+    [[maybe_unused]] const int ret = std::atexit(kokkos_ensure_finalization);
 #endif
 
     // prevent problems with fork() in the presence of multiple threads
