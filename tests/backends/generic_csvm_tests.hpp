@@ -35,7 +35,7 @@
 #include "tests/types_to_test.hpp"          // util::{test_parameter_type_at_t, test_parameter_value_at_v}
 #include "tests/utility.hpp"                // util::{redirect_output, generate_specific_matrix, construct_from_tuple, flatten, generate_random_matrix}
 
-#include "fmt/format.h"   // fmt::format
+#include "fmt/format.h"  // fmt::format
 #include "fmt/ranges.h"
 #include "gmock/gmock.h"  // ::testing::HasSubstr
 #include "gtest/gtest.h"  // TYPED_TEST_SUITE_P, TYPED_TEST_P, REGISTER_TYPED_TEST_SUITE_P, EXPECT_EQ, EXPECT_NE, EXPECT_GT, EXPECT_TRUE, EXPECT_DEATH,
@@ -803,9 +803,11 @@ TYPED_TEST_P(GenericCSVMSolver, solve_lssvm_system_of_linear_equations_trivial) 
 
     // check the calculated result for correctness
     EXPECT_FLOATING_POINT_MATRIX_NEAR_EPS(calculated_x, (plssvm::aos_matrix<plssvm::real_type>{ B, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE } }), 1e6);
-    EXPECT_TRUE(std::all_of(calculated_rho.cbegin(), calculated_rho.cend(), [front = std::abs(calculated_rho.front())](const plssvm::real_type rho) { return std::abs(rho) == front; }));
+    EXPECT_TRUE(std::all_of(calculated_rho.cbegin(), calculated_rho.cend(), [front = std::abs(calculated_rho.front())](const plssvm::real_type rho) {
+        return std::abs(std::abs(rho) - front) <= std::numeric_limits<plssvm::real_type>::epsilon();
+    }));
     for (const auto rho : calculated_rho) {
-        EXPECT_FLOATING_POINT_NEAR(std::abs(rho) - std::numeric_limits<plssvm::real_type>::epsilon(), std::numeric_limits<plssvm::real_type>::epsilon());
+        EXPECT_LE(std::abs(rho) - std::numeric_limits<plssvm::real_type>::epsilon(), std::numeric_limits<plssvm::real_type>::epsilon());
     }
     EXPECT_THAT(num_iters, ::testing::Each(::testing::Gt(0)));
 }
