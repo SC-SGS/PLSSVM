@@ -9,7 +9,7 @@ on:
     types: [opened, reopened]
 
 jobs:
-  build-documentation:
+  format:
     runs-on: ubuntu-24.04
     steps:
       # checkout repository
