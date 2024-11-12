@@ -625,6 +625,24 @@ else ()
 endif ()
 target_link_libraries(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC fmt::fmt)
 
+## install CPM
+set(PLSSVM_format_VERSION 1b43a3989de33e44e2a4f1766e9842be1744eef6)
+find_package(format QUIET)
+if (format_FOUND)
+    message(STATUS "Found package format.")
+else ()
+    message(STATUS "Couldn't find package format. Building version ${PLSSVM_format_VERSION} from source.")
+    set(FORMAT_SKIP_CMAKE ON CACHE INTERNAL "" FORCE)
+    set(FORMAT_SKIP_CLANG OFF CACHE INTERNAL "" FORCE)
+    # fetch clang-format library
+    FetchContent_Declare(format
+                         GIT_REPOSITORY https://github.com/breyerml/Format.cmake.git
+                         GIT_TAG ${PLSSVM_format_VERSION}
+                         QUIET
+    )
+    FetchContent_MakeAvailable(format)
+endif ()
+
 list(POP_BACK CMAKE_MESSAGE_INDENT)
 
 ########################################################################################################################
