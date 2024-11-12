@@ -129,17 +129,17 @@ endif ()
 target_compile_features(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC cxx_std_17)
 ## additional base library compile options
 target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC
-                       $<$<COMPILE_LANGUAGE:CXX>:$<$<CXX_COMPILER_ID:GNU,Clang>:-Wall -Wextra -Wdouble-promotion -fno-common -Wshadow -Wcast-qual
+                       $<$<COMPILE_LANGUAGE:CXX>:$<$<CXX_COMPILER_ID:GNU,Clang,IntelLLVM>:-Wall -Wextra -Wdouble-promotion -fno-common -Wshadow -Wcast-qual
                        -Wnull-dereference -Wnon-virtual-dtor -Wextra-semi -Wunreachable-code -Wuninitialized -Wno-ctor-dtor-privacy
                        -fPIC>
                        $<$<COMPILE_LANG_AND_ID:CXX,GNU>:-Wsuggest-override -Wstrict-null-sentinel -Wlogical-op -Wduplicated-branches -Wimplicit-fallthrough=5>
-                       $<$<COMPILE_LANG_AND_ID:CXX,Clang>:-Wmost>
+                       $<$<COMPILE_LANG_AND_ID:CXX,Clang,IntelLLVM>:-Wmost>
                        $<$<COMPILE_LANG_AND_ID:CXX,MSVC>:/W4 /bigobj /wd4459 /Zc:lambda>>
 )
 
 ## nvcc doesn't recognize -Werror=??? option, so only set it when using a CXX compiler
 target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC
-                       $<$<COMPILE_LANG_AND_ID:CXX,GNU,Clang>:-Werror=switch -fstrict-enums>
+                       $<$<COMPILE_LANG_AND_ID:CXX,GNU,Clang,IntelLLVM>:-Werror=switch -fstrict-enums>
                        $<$<COMPILE_LANG_AND_ID:CXX,MSVC>:/we4062 /wd4005 /wd4702 /wd4849 /wd4127>
                        # /wd4849: ignore "OpenMP 'reduction' clause ignored in 'simd' directive" -> no SIMD clause currently effective in MSVC
                        # /wd4127: ignore "conditional expression is constant" from {fmt} ranges.h header
@@ -148,7 +148,7 @@ target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC
 if (PLSSVM_ENABLE_FAST_MATH)
     message(STATUS "Enabling fast-math flags.")
     target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC
-                           $<$<COMPILE_LANG_AND_ID:CXX,GNU,Clang>:-ffast-math>
+                           $<$<COMPILE_LANG_AND_ID:CXX,GNU,Clang,IntelLLVM>:-ffast-math>
                            $<$<COMPILE_LANG_AND_ID:CXX,MSVC>:/fp:fast>
     )
     target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC PLSSVM_USE_FAST_MATH)
@@ -156,10 +156,10 @@ endif ()
 ## set march native flag based on target architecture
 if (${CMAKE_SYSTEM_PROCESSOR} MATCHES "ppc64le")
     message(STATUS "Compiling for ppc64le: setting -mcpu=native")
-    target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC $<$<AND:$<OR:$<CONFIG:RELEASE>,$<CONFIG:RELWITHDEBINFO>>,$<COMPILE_LANG_AND_ID:CXX,GNU,Clang>>:-mcpu=native>)
+    target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC $<$<AND:$<OR:$<CONFIG:RELEASE>,$<CONFIG:RELWITHDEBINFO>>,$<COMPILE_LANG_AND_ID:CXX,GNU,Clang,IntelLLVM>>:-mcpu=native>)
 elseif (${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86_64")
     message(STATUS "Compiling for x86_64: setting -march=native")
-    target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC $<$<AND:$<OR:$<CONFIG:RELEASE>,$<CONFIG:RELWITHDEBINFO>>,$<COMPILE_LANG_AND_ID:CXX,GNU,Clang>>:-march=native>)
+    target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC $<$<AND:$<OR:$<CONFIG:RELEASE>,$<CONFIG:RELWITHDEBINFO>>,$<COMPILE_LANG_AND_ID:CXX,GNU,Clang,IntelLLVM>>:-march=native>)
 endif ()
 
 target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC
@@ -437,7 +437,7 @@ if (PLSSVM_ENABLE_ASSERTS)
     # disable vectorization warning in clang in Release mode
     # -> loops can't be vectorized due to the PLSSVM_ASSERTs in the matrix::operator() member function
     # target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC
-    #         $<$<AND:$<OR:$<CONFIG:RELEASE>,$<CONFIG:RELWITHDEBINFO>>,$<COMPILE_LANG_AND_ID:CXX,Clang>>:-Wno-pass-failed>
+    #         $<$<AND:$<OR:$<CONFIG:RELEASE>,$<CONFIG:RELWITHDEBINFO>>,$<COMPILE_LANG_AND_ID:CXX,Clang,IntelLLVM>>:-Wno-pass-failed>
     # )
 endif ()
 
@@ -663,7 +663,7 @@ option(PLSSVM_ENABLE_DOCUMENTATION "Build documentation using doxygen." OFF)
 if (PLSSVM_ENABLE_DOCUMENTATION)
     add_subdirectory(docs)
     # if documentation is enabled, add documentation warning flag when compiling with clang
-    target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC $<$<COMPILE_LANG_AND_ID:CXX,Clang>:-Wdocumentation>)
+    target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC $<$<COMPILE_LANG_AND_ID:CXX,Clang,IntelLLVM>:-Wdocumentation>)
 endif ()
 
 ########################################################################################################################
