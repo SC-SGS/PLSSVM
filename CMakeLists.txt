@@ -625,7 +625,7 @@ else ()
 endif ()
 target_link_libraries(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC fmt::fmt)
 
-## install CPM
+## install library to add a clang-format target
 set(PLSSVM_format_VERSION 1b43a3989de33e44e2a4f1766e9842be1744eef6)
 find_package(format QUIET)
 if (format_FOUND)
