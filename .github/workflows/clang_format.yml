@@ -1,0 +1,33 @@
+name: Formatting via clang-format
+
+# only trigger this action on specific events
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    types: [opened, reopened]
+
+jobs:
+  build-documentation:
+    runs-on: ubuntu-24.04
+    steps:
+      # checkout repository
+      - name: Checkout PLSSVM
+        uses: actions/checkout@v4.1.1
+        with:
+          path: PLSSVM
+      # install dependencies
+      - name: Dependencies
+        run: |
+          sudo apt install libomp-dev clang-format
+      # configure project via CMake
+      - name: Configure
+        run: |
+          cd PLSSVM
+          cmake --preset all -DPLSSVM_TARGET_PLATFORMS=cpu -DPLSSVM_ENABLE_FORMATTING=ON
+      # build project
+      - name: Generate
+        run: |
+          cd PLSSVM
+          cmake --build --preset all --target check-clang-format
