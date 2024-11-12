@@ -635,6 +635,7 @@ else ()
     set(FORMAT_SKIP_CMAKE ON CACHE INTERNAL "" FORCE)
     set(FORMAT_SKIP_CLANG OFF CACHE INTERNAL "" FORCE)
     # fetch clang-format library
+    # TODO: use original library after PR (HIP support) has been merged
     FetchContent_Declare(format
                          GIT_REPOSITORY https://github.com/breyerml/Format.cmake.git
                          GIT_TAG ${PLSSVM_format_VERSION}
