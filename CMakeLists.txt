@@ -631,7 +631,7 @@ list(POP_BACK CMAKE_MESSAGE_INDENT)
 ##                                   enable automatic formatting using clang-format                                   ##
 ########################################################################################################################
 option(PLSSVM_ENABLE_FORMATTING "Enable a formatting targets using clang-format." OFF)
-if (PLSSVM_ENABLE_FORMAT)
+if (PLSSVM_ENABLE_FORMATTING)
     list(APPEND CMAKE_MESSAGE_INDENT "Formatting:  ")
     
     ## install library to add a clang-format target
