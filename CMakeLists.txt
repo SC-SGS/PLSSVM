@@ -628,6 +628,35 @@ target_link_libraries(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC fmt::fmt)
 list(POP_BACK CMAKE_MESSAGE_INDENT)
 
 ########################################################################################################################
+##                                   enable automatic formatting using clang-format                                   ##
+########################################################################################################################
+option(PLSSVM_ENABLE_FORMATTING "Enable a formatting targets using clang-format." OFF)
+if (PLSSVM_ENABLE_FORMATTING)
+    list(APPEND CMAKE_MESSAGE_INDENT "Formatting:  ")
+    
+    ## install library to add a clang-format target
+    set(PLSSVM_format_VERSION 1b43a3989de33e44e2a4f1766e9842be1744eef6)
+    find_package(format QUIET)
+    if (format_FOUND)
+        message(STATUS "Found package format.")
+    else ()
+        message(STATUS "Couldn't find package format. Building version ${PLSSVM_format_VERSION} from source.")
+        set(FORMAT_SKIP_CMAKE ON CACHE INTERNAL "" FORCE)
+        set(FORMAT_SKIP_CLANG OFF CACHE INTERNAL "" FORCE)
+        # fetch clang-format library
+        # TODO: use original library after PR (HIP support) has been merged
+        FetchContent_Declare(format
+                             GIT_REPOSITORY https://github.com/breyerml/Format.cmake.git
+                             GIT_TAG ${PLSSVM_format_VERSION}
+                             QUIET
+        )
+        FetchContent_MakeAvailable(format)
+    endif ()
+    
+    list(POP_BACK CMAKE_MESSAGE_INDENT)
+endif ()
+
+########################################################################################################################
 ##                                    enable documentation generation via doxygen                                     ##
 ########################################################################################################################
 option(PLSSVM_ENABLE_DOCUMENTATION "Build documentation using doxygen." OFF)

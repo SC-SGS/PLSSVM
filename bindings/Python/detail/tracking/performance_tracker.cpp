@@ -8,8 +8,8 @@
 
 #include "plssvm/detail/tracking/performance_tracker.hpp"  // plssvm::detail::tracking::{global_tracker, tracking_entry}
 
-#include "plssvm/detail/tracking/events.hpp"            // plssvm::detail::tracking::events
-#include "plssvm/parameter.hpp"                         // plssvm::parameter
+#include "plssvm/detail/tracking/events.hpp"  // plssvm::detail::tracking::events
+#include "plssvm/parameter.hpp"               // plssvm::parameter
 
 #include "pybind11/chrono.h"    // automatic bindings for std::chrono::milliseconds
 #include "pybind11/pybind11.h"  // py::module_
