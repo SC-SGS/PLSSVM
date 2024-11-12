@@ -106,6 +106,9 @@ void csvm::init(const target_platform target) {
     // get all available OpenCL contexts for the current target including devices with respect to the requested target platform
     std::tie(contexts_, target_) = detail::get_contexts(target);
 
+    // At this point, target_ may NEVER be target_platform::automatic!
+    PLSSVM_ASSERT(target_ != target_platform::automatic, "At this point, the target platform must be determined and must NOT be automatic!");
+
     // currently, only EXACTLY one OpenCL context is allowed
     if (contexts_.empty()) {
         throw backend_exception{ fmt::format("No OpenCL context for the target {} could be found!", target_) };

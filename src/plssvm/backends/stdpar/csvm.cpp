@@ -39,6 +39,9 @@ csvm::csvm(parameter params) :
 csvm::csvm(const target_platform target, parameter params) :
     ::plssvm::csvm{ params } {
     this->init(target);
+
+    // At this point, target_ may NEVER be target_platform::automatic!
+    PLSSVM_ASSERT(target_ != target_platform::automatic, "At this point, the target platform must be determined and must NOT be automatic!");
 }
 
 std::vector<::plssvm::detail::memory_size> csvm::get_device_memory() const {
