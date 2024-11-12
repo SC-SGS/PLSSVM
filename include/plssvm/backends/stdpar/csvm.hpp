@@ -119,7 +119,7 @@ class csvm : public ::plssvm::csvm {
      */
     [[nodiscard]] implementation_type get_implementation_type() const noexcept;
 
-    protected:
+  protected:
     /**
      * @copydoc plssvm::csvm::get_device_memory
      */

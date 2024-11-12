@@ -17,11 +17,11 @@
 #include "plssvm/parameter.hpp"                 // plssvm::parameter
 #include "plssvm/shape.hpp"                     // plssvm::shape
 
-#include <cmath>      // std::pow, std::exp, std::fma
-#include <cstddef>    // std::size_t
-#include <utility>    // std::pair, std::make_pair, std::move
-#include <variant>    // std::get
-#include <vector>     // std::vector
+#include <cmath>    // std::pow, std::exp, std::fma
+#include <cstddef>  // std::size_t
+#include <utility>  // std::pair, std::make_pair, std::move
+#include <variant>  // std::get
+#include <vector>   // std::vector
 
 namespace ground_truth {
 
@@ -115,7 +115,6 @@ real_type chi_squared_kernel(const std::vector<real_type> &x, const std::vector<
 
 template float chi_squared_kernel(const std::vector<float> &, const std::vector<float> &, const float);
 template double chi_squared_kernel(const std::vector<double> &, const std::vector<double> &, const double);
-
 
 template <typename real_type, plssvm::layout_type layout>
 real_type linear_kernel(const plssvm::matrix<real_type, layout> &X, const std::size_t i, const plssvm::matrix<real_type, layout> &Y, const std::size_t j) {
@@ -363,7 +362,6 @@ plssvm::aos_matrix<real_type> predict_values(const plssvm::parameter &params, co
 
 template plssvm::aos_matrix<float> predict_values(const plssvm::parameter &, const plssvm::soa_matrix<float> &, const plssvm::aos_matrix<float> &, const std::vector<float> &, const plssvm::soa_matrix<float> &, const plssvm::soa_matrix<float> &, const std::size_t, const std::size_t);
 template plssvm::aos_matrix<double> predict_values(const plssvm::parameter &, const plssvm::soa_matrix<double> &, const plssvm::aos_matrix<double> &, const std::vector<double> &, const plssvm::soa_matrix<double> &, const plssvm::soa_matrix<double> &, const std::size_t, const std::size_t);
-
 
 }  // namespace detail
 

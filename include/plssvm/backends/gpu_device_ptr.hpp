@@ -32,7 +32,7 @@ template <typename T, typename queue_t, typename device_pointer_t, typename deri
 class gpu_device_ptr {
     // make sure only valid template types are used
     static_assert(detail::tuple_contains_v<T, detail::supported_real_types>,
-        "Illegal real type provided! See the 'real_type_list' in the type_list.hpp header for a list of the allowed types.");
+                  "Illegal real type provided! See the 'real_type_list' in the type_list.hpp header for a list of the allowed types.");
 
   public:
     /// The type of the values used in the device_ptr.
@@ -369,7 +369,6 @@ class gpu_device_ptr {
     /// The device pointer pointing to the managed memory.
     device_pointer_type data_{};
 };
-
 
 template <typename T, typename queue_t, typename device_pointer_t, typename derived_gpu_device_ptr>
 gpu_device_ptr<T, queue_t, device_pointer_t, derived_gpu_device_ptr>::gpu_device_ptr(const size_type size, const queue_type queue) :
