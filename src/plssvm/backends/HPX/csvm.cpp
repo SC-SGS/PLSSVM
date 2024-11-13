@@ -84,6 +84,7 @@ std::vector<::plssvm::detail::move_only_any> csvm::assemble_kernel_matrix(const 
     PLSSVM_ASSERT(q_red.size() == A.num_rows() - 1, "The q_red size ({}) mismatches the number of data points after dimensional reduction ({})!", q_red.size(), A.num_rows() - 1);
 
     std::vector<::plssvm::detail::move_only_any> kernel_matrices_parts(this->num_available_devices());
+    ::hpx::future<void> wait = ::hpx::async([&](){
     const real_type cost = real_type{ 1.0 } / params.cost;
 
     switch (solver) {
@@ -125,7 +126,9 @@ std::vector<::plssvm::detail::move_only_any> csvm::assemble_kernel_matrix(const 
             }
             break;
     }
-
+    });
+    // wait until operation is completed
+    wait.get();
     return kernel_matrices_parts;
 }
 
@@ -139,6 +142,7 @@ void csvm::blas_level_3(const solver_type solver, const real_type alpha, const s
     PLSSVM_ASSERT(B.shape() == C.shape(), "The B ({}) and C ({}) matrices must have the same shape!", B.shape(), C.shape());
     PLSSVM_ASSERT(B.padding() == C.padding(), "The B ({}) and C ({}) matrices must have the same padding!", B.padding(), C.padding());
 
+    ::hpx::future<void> wait = ::hpx::async([&](){
     switch (solver) {
         case solver_type::automatic:
             // unreachable
@@ -184,6 +188,9 @@ void csvm::blas_level_3(const solver_type solver, const real_type alpha, const s
             }
             break;
     }
+    });
+    // wait until operation is completed
+    wait.get();
 }
 
 //***************************************************//
@@ -216,7 +223,8 @@ aos_matrix<real_type> csvm::predict_values(const parameter &params,
 
     // num_predict_points x num_classes
     aos_matrix<real_type> out{ plssvm::shape{ num_predict_points, num_classes }, real_type{ 0.0 }, plssvm::shape{ PADDING_SIZE, PADDING_SIZE } };
-
+    
+    ::hpx::future<void> wait = ::hpx::async([&](){
     if (params.kernel_type == kernel_function_type::linear) {
         // special optimization for the linear kernel function
         if (w.empty()) {
@@ -248,7 +256,9 @@ aos_matrix<real_type> csvm::predict_values(const parameter &params,
             detail::device_kernel_predict<kernel_function_type::chi_squared>(out, alpha, rho, support_vectors, predict_points, std::get<real_type>(params.gamma));
             break;
     }
-
+    });
+    // wait until operation is completed
+    wait.get();
     return out;
 }
 

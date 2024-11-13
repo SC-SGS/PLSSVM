@@ -6,7 +6,7 @@
  * @license This file is part of the PLSSVM project which is released under the MIT license.
  *          See the LICENSE.md file in the project root for full license information.
  */
-
+#include <hpx/runtime_distributed.hpp>
 #include "plssvm/backends/HPX/detail/utility.hpp"
 
 #include "plssvm/detail/string_utility.hpp"  // plssvm::detail::as_lower_case
@@ -27,7 +27,6 @@ std::string get_hpx_version() {
 // TODO: implement function
 int get_num_threads() {
     // get the number of used HPX threads
-    int num_hpx_threads{-1};
-    return num_hpx_threads;
+    return static_cast<int>(::hpx::get_num_worker_threads());
 }
 }  // namespace plssvm::hpx::detail
