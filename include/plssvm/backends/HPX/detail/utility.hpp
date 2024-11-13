@@ -49,9 +49,16 @@ void stop_hpx_runtime();
  */
 struct scope_guard
 {
+  /**
+   * @brief Scope Guard constructor that starts the runtime of the HPX backend.
+   */
   scope_guard(){
     start_hpx_runtime();
   }
+
+  /**
+   * @brief Scope Guard destructor that stops the runtime of the HPX backend.
+   */
   ~scope_guard()
   {
     stop_hpx_runtime();
