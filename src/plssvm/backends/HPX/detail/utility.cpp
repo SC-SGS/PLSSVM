@@ -7,7 +7,7 @@
  *          See the LICENSE.md file in the project root for full license information.
  */
 
-#include "plssvm/backends/hpx/detail/utility.hpp"
+#include "plssvm/backends/HPX/detail/utility.hpp"
 
 #include "plssvm/detail/string_utility.hpp"  // plssvm::detail::as_lower_case
 #include "plssvm/detail/utility.hpp"         // ::plssvm::detail::contains
@@ -23,4 +23,9 @@ std::string get_hpx_version() {
     return "unknown";
 }
 
+int get_num_threads() {
+    // get the number of used HPX threads
+    int num_hpx_threads{-1};
+    return num_hpx_threads;
+}
 }  // namespace plssvm::hpx::detail

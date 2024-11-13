@@ -7,7 +7,7 @@
  *          See the LICENSE.md file in the project root for full license information.
  */
 
-#include "plssvm/backends/hpx/exceptions.hpp"
+#include "plssvm/backends/HPX/exceptions.hpp"
 
 #include "plssvm/exceptions/exceptions.hpp"       // plssvm::exception
 #include "plssvm/exceptions/source_location.hpp"  // plssvm::source_location

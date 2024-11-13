@@ -23,10 +23,16 @@ namespace plssvm::hpx::detail {
 using boost::atomic_ref;
 
 /**
- * @brief Return the version of the HPX backend.
+ * @brief Return the number of used CPU threads in the HPX backend.
+ * @return the number of used CPU threads (`[[nodiscard]]`)
+ */
+[[nodiscard]] int get_num_threads();
+
+/**
+ * @brief Return the HPX version used.
  * @return the HPX version (`[[nodiscard]]`)
  */
-// [[nodiscard]] std::string get_hpx_version();
+[[nodiscard]] std::string get_hpx_version();
 
 }  // namespace plssvm::hpx::detail
 

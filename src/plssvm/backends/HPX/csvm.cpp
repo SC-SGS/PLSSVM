@@ -7,12 +7,12 @@
  *          See the LICENSE.md file in the project root for full license information.
  */
 
-#include "plssvm/backends/hpx/csvm.hpp"
+#include "plssvm/backends/HPX/csvm.hpp"
 
-#include "plssvm/backends/hpx/kernel/cg_explicit/blas.hpp"                         // plssvm::hpx::detail::device_kernel_symm
-#include "plssvm/backends/hpx/kernel/cg_explicit/kernel_matrix_assembly.hpp"       // plssvm::hpx::detail::device_kernel_assembly
-#include "plssvm/backends/hpx/kernel/cg_implicit/kernel_matrix_assembly_blas.hpp"  // plssvm::hpx::detail::device_kernel_assembly_symm
-#include "plssvm/backends/hpx/kernel/predict_kernel.hpp"                           // plssvm::hpx::detail::{device_kernel_w_linear, device_kernel_predict_linear, device_kernel_predict}
+#include "plssvm/backends/HPX/kernel/cg_explicit/blas.hpp"                         // plssvm::hpx::detail::device_kernel_symm
+#include "plssvm/backends/HPX/kernel/cg_explicit/kernel_matrix_assembly.hpp"       // plssvm::hpx::detail::device_kernel_assembly
+#include "plssvm/backends/HPX/kernel/cg_implicit/kernel_matrix_assembly_blas.hpp"  // plssvm::hpx::detail::device_kernel_assembly_symm
+#include "plssvm/backends/HPX/kernel/predict_kernel.hpp"                           // plssvm::hpx::detail::{device_kernel_w_linear, device_kernel_predict_linear, device_kernel_predict}
 #include "plssvm/constants.hpp"                                                       // plssvm::real_type
 #include "plssvm/csvm.hpp"                                                            // plssvm::csvm
 #include "plssvm/detail/assert.hpp"                                                   // PLSSVM_ASSERT
@@ -20,6 +20,7 @@
 #include "plssvm/detail/memory_size.hpp"                                              // plssvm::detail::memory_size
 #include "plssvm/detail/move_only_any.hpp"                                            // plssvm::detail::{move_only_any, move_only_any_cast}
 #include "plssvm/detail/utility.hpp"                                                  // plssvm::detail::{get_system_memory, unreachable}
+#include "plssvm/backends/HPX/exceptions.hpp"                                         // plssvm::hpx::backend_exception
 #include "plssvm/kernel_function_types.hpp"                                           // plssvm::kernel_function_type
 #include "plssvm/matrix.hpp"                                                          // plssvm::aos_matrix, plssvm::soa_matrix
 #include "plssvm/parameter.hpp"                                                       // plssvm::parameter
@@ -40,6 +41,27 @@ csvm::csvm(parameter params) :
 csvm::csvm(const target_platform target, parameter params) :
     ::plssvm::csvm{ params } {
     this->init(target);
+}
+
+void csvm::init(const target_platform target) {
+    // check if supported target platform has been selected
+    if (target != target_platform::automatic && target != target_platform::cpu) {
+        throw backend_exception{ fmt::format("Invalid target platform '{}' for the HPX backend!", target) };
+    }
+    // the CPU target must be available
+#if !defined(PLSSVM_HAS_CPU_TARGET)
+    throw backend_exception{ "Requested target platform 'cpu' that hasn't been enabled using PLSSVM_TARGET_PLATFORMS!" };
+#endif
+
+    plssvm::detail::log(verbosity_level::full,
+                        "\nUsing HPX ({}) as backend with {} thread(s).\n\n",
+                        plssvm::detail::tracking::tracking_entry{ "dependencies", "hpx_version", detail::get_hpx_version() },
+                        plssvm::detail::tracking::tracking_entry{ "backend", "num_threads", detail::get_num_threads() });
+    PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "backend", "backend", plssvm::backend_type::hpx }));
+    PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "backend", "target_platform", plssvm::target_platform::cpu }));
+
+    // update the target platform
+    target_ = plssvm::target_platform::cpu;
 }
 
 std::vector<::plssvm::detail::memory_size> csvm::get_device_memory() const {

@@ -14,7 +14,6 @@
 #define PLSSVM_BACKENDS_HPX_CSVM_HPP_
 #pragma once
 
-#include "plssvm/backends/hpx/implementation_types.hpp"  // plssvm::hpx::implementation_type
 #include "plssvm/constants.hpp"                             // plssvm::real_type
 #include "plssvm/csvm.hpp"                                  // plssvm::csvm, plssvm::detail::csvm_backend_exists
 #include "plssvm/detail/memory_size.hpp"                    // plssvm::detail::memory_size
@@ -113,12 +112,6 @@ class csvm : public ::plssvm::csvm {
     [[nodiscard]] std::size_t num_available_devices() const noexcept override {
         return 1;
     }
-
-    /**
-     * @brief Return the hpx implementation type.
-     * @return the hpx implementation type (`[[nodiscard]]`)
-     */
-    [[nodiscard]] implementation_type get_implementation_type() const noexcept;
 
     protected:
     /**
