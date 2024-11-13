@@ -9,9 +9,7 @@
  * @brief Contains the googletest main function. Sets the DeathTest to "threadsafe" execution instead of "fast".
  */
 
-#if defined(PLSSVM_HAS_KOKKOS_BACKEND)
-    #include "Kokkos_Core.hpp"  // Kokkos::ScopeGuard
-#endif
+#include "plssvm/environment.hpp"  // plssvm::environment::scope_guard
 
 #include "gtest/gtest.h"  // RUN_ALL_TESTS, ::testing::{InitGoogleTest, GTEST_FLAG},GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST definitions
 
@@ -46,22 +44,18 @@ GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(DevicePtrDeathTest);
 // exception tests
 GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(Exception);
 
-#if defined(PLSSVM_HAS_KOKKOS_BACKEND)
-void kokkos_ensure_finalization() {
-    if (!Kokkos::is_finalized()) {
-        Kokkos::finalize();
+void ensure_finalization() {
+    if (!plssvm::environment::is_finalized()) {
+        plssvm::environment::finalize();
     }
 }
-#endif
 
 int main(int argc, char **argv) {
     ::testing::InitGoogleTest(&argc, argv);
 
-#if defined(PLSSVM_HAS_KOKKOS_BACKEND)
-    // initialize Kokkos using a Kokkos::ScopeGuard
-    const Kokkos::ScopeGuard guard{};
-    [[maybe_unused]] const int ret = std::atexit(kokkos_ensure_finalization);
-#endif
+    // initialize environments
+    const plssvm::environment::scope_guard environment_guard{};
+    [[maybe_unused]] const int ret = std::atexit(ensure_finalization);
 
     // prevent problems with fork() in the presence of multiple threads
     // https://github.com/google/googletest/blob/main/docs/advanced.md#death-tests-and-threads

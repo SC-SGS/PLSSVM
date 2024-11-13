@@ -31,6 +31,7 @@ void init_parameter(py::module_ &);
 void init_model(py::module_ &);
 void init_data_set(py::module_ &);
 void init_version(py::module_ &);
+void init_environment(py::module_ &);
 void init_exceptions(py::module_ &, const py::exception<plssvm::exception> &);
 void init_csvm(py::module_ &);
 void init_openmp_csvm(py::module_ &, const py::exception<plssvm::exception> &);
@@ -78,6 +79,7 @@ PYBIND11_MODULE(plssvm, m) {
     init_model(m);
     init_data_set(m);
     init_version(m);
+    init_environment(m);
     init_exceptions(m, base_exception);
     init_csvm(m);
 

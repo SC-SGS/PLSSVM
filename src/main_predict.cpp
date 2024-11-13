@@ -18,10 +18,6 @@
 #include "plssvm/detail/assert.hpp"                        // PLSSVM_ASSERT
 #include "plssvm/detail/utility.hpp"                       // PLSSVM_IS_DEFINED
 
-#if defined(PLSSVM_HAS_KOKKOS_BACKEND)
-    #include "Kokkos_Core.hpp"  // Kokkos::initialize, Kokkos::is_initialized, Kokkos::finalize, Kokkos::is_finalized
-#endif
-
 #if defined(PLSSVM_HARDWARE_SAMPLING_ENABLED)
     #include "hws/system_hardware_sampler.hpp"  // hws::system_hardware_sampler
 #endif
@@ -45,11 +41,9 @@
 using namespace std::chrono_literals;
 
 int main(int argc, char *argv[]) {
-#if defined(PLSSVM_HAS_KOKKOS_BACKEND)
-    // create std::unique_ptr containing a Kokkos::ScopeGuard
-    // -> used to automatically handle Kokkos::finalize
-    std::unique_ptr<Kokkos::ScopeGuard> kokkos_guard{};
-#endif
+    // create std::unique_ptr containing a plssvm::scope_guard
+    // -> used to automatically handle necessary environment teardown operations
+    std::unique_ptr<plssvm::environment::scope_guard> environment_guard{};
 
     try {
         const std::chrono::steady_clock::time_point start_time = std::chrono::steady_clock::now();
@@ -85,13 +79,12 @@ int main(int argc, char *argv[]) {
             // check whether Kokkos is used as backend (it is either requested directly or as automatic backend)
             const bool use_kokkos_as_backend{ cmd_parser.backend == plssvm::backend_type::kokkos || (cmd_parser.backend == plssvm::backend_type::automatic && plssvm::determine_default_backend() == plssvm::backend_type::kokkos) };
 
-#if defined(PLSSVM_HAS_KOKKOS_BACKEND)
-            // initialize Kokkos if necessary
+            // initialize environments if necessary
+            std::vector<plssvm::backend_type> backends_to_initialize{};
             if (use_kokkos_as_backend) {
-                kokkos_guard = std::make_unique<Kokkos::ScopeGuard>();
-                PLSSVM_ASSERT(Kokkos::is_initialized(), "Something went wrong initializing the Kokkos environment!");
+                backends_to_initialize.push_back(plssvm::backend_type::kokkos);
             }
-#endif
+            environment_guard = std::make_unique<plssvm::environment::scope_guard>(backends_to_initialize);
 
             // create default csvm
             const std::unique_ptr<plssvm::csvm> svm = [&]() {

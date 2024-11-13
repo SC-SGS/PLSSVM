@@ -1,6 +1,9 @@
 import plssvm
 from sklearn.metrics import classification_report
 
+# correctly initialize and finalize environments
+environment_guard = plssvm.environment.ScopeGuard()
+
 try:
     # create a new C-SVM parameter set, explicitly overriding the default kernel function
     params = plssvm.Parameter(kernel_type=plssvm.KernelFunctionType.POLYNOMIAL)

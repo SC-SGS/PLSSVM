@@ -22,6 +22,7 @@
 #include "plssvm/csvm.hpp"                                   // the base C-SVM every backend is inheriting from
 #include "plssvm/csvm_factory.hpp"                           // a factory function to instantiate a C-SVM using a runtime backend; includes the available backend C-SVMs
 #include "plssvm/data_set.hpp"                               // a data set used for training a C-SVM
+#include "plssvm/environment.hpp"                            // environment management functions and classes
 #include "plssvm/exceptions/exceptions.hpp"                  // exception hierarchy
 #include "plssvm/file_format_types.hpp"                      // all supported file format types
 #include "plssvm/gamma.hpp"                                  // the types of the gamma parameter
