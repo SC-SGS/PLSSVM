@@ -18,7 +18,6 @@
 #include "plssvm/detail/assert.hpp"  // PLSSVM_ASSERT
 #include "plssvm/matrix.hpp"         // plssvm::soa_matrix
 #include "plssvm/shape.hpp"          // plssvm::shape
-
 #include <hpx/execution.hpp>                        // hpx::execution::par_unseq
 #include <hpx/parallel/algorithms/for_loop.hpp>     // hpx::experimental::for_loop
 #include <hpx/parallel/segmented_algorithms/for_each.hpp> // hpx::for_each
@@ -55,12 +54,12 @@ inline void device_kernel_symm(const std::size_t num_rows, const std::size_t num
 
     // calculate indices over which we parallelize
     std::vector<std::pair<std::size_t, std::size_t>> range(blocked_num_rhs * blocked_num_rows);
-    hpx::experimental::for_loop(hpx::execution::par_unseq, 0, range.size(), [&](auto i)
+    ::hpx::threads::run_as_hpx_thread([blocked_num_rows, &range](){::hpx::experimental::for_loop(::hpx::execution::par_unseq, 0, range.size(), [&](auto i)
     {
         range[i] = std::make_pair(i / blocked_num_rows, i % blocked_num_rows);
-    });
+    });});
 
-    hpx::for_each(hpx::execution::par_unseq, range.begin(), range.end(), [=, A_ptr = A.data(), B_ptr = B.data(), C_ptr = C.data()](const std::pair<std::size_t, std::size_t> idx) {
+    ::hpx::threads::run_as_hpx_thread([&](){::hpx::for_each(::hpx::execution::par_unseq, range.begin(), range.end(), [=, A_ptr = A.data(), B_ptr = B.data(), C_ptr = C.data()](const std::pair<std::size_t, std::size_t> idx) {
         // calculate the indices used in the current thread
         const auto [rhs, row] = idx;
         const std::size_t rhs_idx = rhs * INTERNAL_BLOCK_SIZE_uz;
@@ -101,7 +100,7 @@ inline void device_kernel_symm(const std::size_t num_rows, const std::size_t num
                 }
             }
         }
-    });
+    });});
 }
 
 }  // namespace plssvm::hpx::detail

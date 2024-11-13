@@ -14,8 +14,8 @@
 #define PLSSVM_BACKENDS_HPX_KERNEL_CG_IMPLICIT_KERNEL_MATRIX_ASSEMBLY_BLAS_HPP_
 #pragma once
 
-#include "plssvm/backends/hpx/detail/utility.hpp"              // plssvm::hpx::detail::atomic_ref
-#include "plssvm/backends/hpx/kernel/kernel_functions.hpp"     // plssvm::hpx::detail::{feature_reduce, apply_kernel_function}
+#include "plssvm/backends/HPX/detail/utility.hpp"              // plssvm::hpx::detail::atomic_ref
+#include "plssvm/backends/HPX/kernel/kernel_functions.hpp"     // plssvm::hpx::detail::{feature_reduce, apply_kernel_function}
 #include "plssvm/constants.hpp"                                // plssvm::real_type
 #include "plssvm/detail/assert.hpp"                            // PLSSVM_ASSERT
 #include "plssvm/detail/operators.hpp"                         // overloaded arithmetic operations for a plssvm::matrix
@@ -72,7 +72,7 @@ inline void device_kernel_assembly_symm(const real_type alpha, const std::vector
 
     // calculate indices over which we parallelize
     std::vector<std::pair<std::size_t, std::size_t>> range(blocked_dept * (blocked_dept + 1) / 2);
-    hpx::experimental::for_loop(hpx::execution::par, 0, blocked_dept * blocked_dept, [&](auto i)
+    ::hpx::threads::run_as_hpx_thread([blocked_dept, &range](){::hpx::experimental::for_loop(::hpx::execution::par_unseq, 0, blocked_dept * blocked_dept, [&](auto i)
     {
         const std::size_t row = i / blocked_dept;
         const std::size_t col = i % blocked_dept;
@@ -80,9 +80,9 @@ inline void device_kernel_assembly_symm(const real_type alpha, const std::vector
         if (row >= col) {
             range[col * blocked_dept + row - col * (col + 1) / 2] = std::make_pair(row, col);
         }
-    }
+    });});
 
-    hpx::for_each(hpx::execution::par_unseq, range.begin(), range.end(), [=, q_ptr = q.data(), data_ptr = data.data(), B_ptr = B.data(), C_ptr = C.data()](const std::pair<std::size_t, std::size_t> idx) {
+     ::hpx::threads::run_as_hpx_thread([&](){::hpx::for_each(::hpx::execution::par_unseq, range.begin(), range.end(), [=, q_ptr = q.data(), data_ptr = data.data(), B_ptr = B.data(), C_ptr = C.data()](const std::pair<std::size_t, std::size_t> idx) {
         // calculate the indices used in the current thread
         const auto [row, col] = idx;
         const std::size_t row_idx = row * INTERNAL_BLOCK_SIZE_uz;
@@ -132,7 +132,7 @@ inline void device_kernel_assembly_symm(const real_type alpha, const std::vector
                 }
             }
         }
-    });
+    });});
 }
 
 }  // namespace plssvm::hpx::detail

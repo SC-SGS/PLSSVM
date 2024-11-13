@@ -16,6 +16,10 @@
                                                            // PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_HWS_ENTRY, PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_SET_REFERENCE_TIME
 #include "plssvm/detail/utility.hpp"                       // PLSSVM_IS_DEFINED
 
+#if defined(PLSSVM_HAS_HPX_BACKEND)
+#include <hpx/hpx_start.hpp> 
+#endif
+
 #if defined(PLSSVM_HARDWARE_SAMPLING_ENABLED)
     #include "hws/system_hardware_sampler.hpp"  // hws::system_hardware_sampler
 #endif
@@ -52,6 +56,11 @@ int main(int argc, char *argv[]) {
 
         // parse SVM parameter from command line
         plssvm::detail::cmd::parser_train cmd_parser{ argc, argv };
+
+#if defined(PLSSVM_HAS_HPX_BACKEND)
+        // Initialize HPX, run hpx_main.
+        hpx::start(argc, argv);
+#endif
 
         // send warning if the build type is release and assertions are enabled
         if constexpr (std::string_view{ PLSSVM_BUILD_TYPE } == "Release" && PLSSVM_IS_DEFINED(PLSSVM_ENABLE_ASSERTS)) {
@@ -116,6 +125,10 @@ int main(int argc, char *argv[]) {
         std::cerr << e.what() << std::endl;
         return EXIT_FAILURE;
     }
-
+#if defined(PLSSVM_HAS_HPX_BACKEND)
+    // Wait for hpx::finalize being called.
+    return hpx::stop();
+#else
     return EXIT_SUCCESS;
+#endif
 }
