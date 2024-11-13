@@ -17,14 +17,13 @@
                                                            // PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_SET_REFERENCE_TIME
 #include "plssvm/detail/utility.hpp"                       // PLSSVM_IS_DEFINED
 
-#if defined(PLSSVM_HAS_HPX_BACKEND)
-#include <hpx/hpx_start.hpp> 
-#endif
-
 #if defined(PLSSVM_HARDWARE_SAMPLING_ENABLED)
     #include "hws/system_hardware_sampler.hpp"  // hws::system_hardware_sampler
 #endif
-
+#if defined(PLSSVM_HAS_HPX_BACKEND)
+    #include <hpx/hpx_start.hpp>                                    // hpx::{start, stop, finalize}
+    #include <hpx/execution.hpp>                                    // hpx::post
+#endif
 #include "fmt/format.h"  // fmt::print
 #include "fmt/os.h"      // fmt::ostream, fmt::output_file
 #include "fmt/ranges.h"  // fmt::join
@@ -60,10 +59,6 @@ int main(int argc, char *argv[]) {
         // parse SVM parameter from command line
         const plssvm::detail::cmd::parser_predict cmd_parser{ argc, argv };
 
-#if defined(PLSSVM_HAS_HPX_BACKEND)
-       // Initialize HPX, don't run hpx_main
-        hpx::start(nullptr, argc, argv); 
-#endif
         // send warning if the build type is release and assertions are enabled
         if constexpr (std::string_view{ PLSSVM_BUILD_TYPE } == "Release" && PLSSVM_IS_DEFINED(PLSSVM_ENABLE_ASSERTS)) {
             plssvm::detail::log(plssvm::verbosity_level::full | plssvm::verbosity_level::warning,
@@ -76,6 +71,14 @@ int main(int argc, char *argv[]) {
                             "\ntask: prediction\n{}\n",
                             plssvm::detail::tracking::tracking_entry{ "parameter", "", cmd_parser });
 
+#if defined(PLSSVM_HAS_HPX_BACKEND)
+        const bool use_hpx_as_backend{ cmd_parser.backend == plssvm::backend_type::hpx || (cmd_parser.backend == plssvm::backend_type::automatic && plssvm::determine_default_backend() == plssvm::backend_type::hpx) };
+        if (use_hpx_as_backend){
+            // Initialize HPX runtime, but do not run hpx_main and do not pass commandline arguments
+            // Set HPX commandline arguments with the HPX_COMMANDLINE_OPTIONS="" environment variable
+            hpx::start(nullptr, 0, nullptr);
+        }
+#endif
         // create data set
         const auto data_set_visitor = [&](auto &&data) {
             using label_type = typename std::remove_reference_t<decltype(data)>::label_type;
@@ -176,6 +179,14 @@ int main(int argc, char *argv[]) {
 
         PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_SAVE(cmd_parser.performance_tracking_filename);
 
+#if defined(PLSSVM_HAS_HPX_BACKEND)
+        if (use_hpx_as_backend){
+            // Finalize all existing HPX tasks
+            hpx::post([]{hpx::finalize();});
+            // Stop HPX runtime
+            hpx::stop();
+        }
+#endif
     } catch (const plssvm::exception &e) {
         std::cerr << e.what_with_loc() << std::endl;
         return EXIT_FAILURE;
@@ -183,11 +194,5 @@ int main(int argc, char *argv[]) {
         std::cerr << e.what() << std::endl;
         return EXIT_FAILURE;
     }
-#if defined(PLSSVM_HAS_HPX_BACKEND)
-    // TODO: hpx::finalize has to be called from the HPX runtime before hpx::stop
-    // hpx::post([]() { hpx::finalize(); });
-    return hpx::stop();
-#else
     return EXIT_SUCCESS;
-#endif
 }
