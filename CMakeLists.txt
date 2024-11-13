@@ -635,7 +635,7 @@ if (PLSSVM_ENABLE_FORMATTING)
     list(APPEND CMAKE_MESSAGE_INDENT "Formatting:  ")
     
     ## install library to add a clang-format target
-    set(PLSSVM_format_VERSION 1b43a3989de33e44e2a4f1766e9842be1744eef6)
+    set(PLSSVM_format_VERSION 7021abbf066e2e577926731c3fa4141f456c5024)
     find_package(format QUIET)
     if (format_FOUND)
         message(STATUS "Found package format.")
