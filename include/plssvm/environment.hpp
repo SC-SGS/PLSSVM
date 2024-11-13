@@ -30,6 +30,12 @@
 #include <string>   // std::string
 #include <vector>   // std::vector
 
+#if defined(PLSSVM_HAS_HPX_BACKEND)
+    #include "hpx/runtime.hpp"                  // ::hpx::{is_running, is_stopped}
+    #include <hpx/hpx_start.hpp>                // ::hpx::{start, stop, finalize}
+    #include <hpx/execution.hpp>                // ::hpx::post
+#endif
+
 namespace plssvm::environment {
 
 /**
