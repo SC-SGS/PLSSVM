@@ -19,10 +19,12 @@
 
 namespace plssvm::hpx::detail {
 
+// TODO: implement function
 std::string get_hpx_version() {
     return "unknown";
 }
 
+// TODO: implement function
 int get_num_threads() {
     // get the number of used HPX threads
     int num_hpx_threads{-1};
