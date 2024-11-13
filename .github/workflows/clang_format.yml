@@ -12,21 +12,24 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       # checkout repository
-      - name: Checkout PLSSVM
+      - name: "Checkout PLSSVM"
         uses: actions/checkout@v4.1.1
         with:
           path: PLSSVM
       # install dependencies
-      - name: Dependencies
+      - name: "Dependencies"
         run: |
           sudo apt install libomp-dev clang-format
+      # install new CMake version
+      - name: "Install cmake 3.31.0"
+        uses: lukka/get-cmake@v3.31.0
       # configure project via CMake
-      - name: Configure
+      - name: "Configure"
         run: |
           cd PLSSVM
-          cmake --preset all -DPLSSVM_TARGET_PLATFORMS=cpu -DPLSSVM_ENABLE_FORMATTING=ON
+          cmake --preset all -DPLSSVM_TARGET_PLATFORMS="cpu" -DPLSSVM_ENABLE_FORMATTING=ON
       # check formatting
-      - name: Check Formatting
+      - name: "Check Formatting"
         run: |
           set +e
           cd PLSSVM
@@ -40,7 +43,7 @@ jobs:
             echo "No formatting errors found!"
           fi
       # upload the git patch, if available
-      - name: Upload Patch
+      - name: "Upload Patch"
         if: always()
         uses: actions/upload-artifact@v4
         with:
