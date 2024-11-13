@@ -108,7 +108,7 @@ Additional dependencies for the stdpar backend:
 
 Additional dependencies for the HPX backend:
 
-- [HPX ≥ v1.9](https://hpx.stellar-group.org/)
+- [HPX ≥ v1.9.0](https://hpx.stellar-group.org/)
 
 Additional dependencies for the CUDA backend:
 
