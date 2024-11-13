@@ -20,8 +20,7 @@
     #include "hws/system_hardware_sampler.hpp"  // hws::system_hardware_sampler
 #endif
 #if defined(PLSSVM_HAS_HPX_BACKEND)
-    #include <hpx/hpx_start.hpp>                                    // hpx::{start, stop, finalize}
-    #include <hpx/execution.hpp>                                    // hpx::post
+    #include "plssvm/backends/HPX/detail/utility.hpp"   // plssvm::hpx::detail::start_hpx_runtime, plssvm::hpx::detail::stop_hpx_runtime
 #endif
 #include <algorithm>    // std::for_each
 #include <chrono>       // std::chrono::{steady_clock, duration, milliseconds}, std::chrono_literals namespace
@@ -71,9 +70,7 @@ int main(int argc, char *argv[]) {
 #if defined(PLSSVM_HAS_HPX_BACKEND)
         const bool use_hpx_as_backend{ cmd_parser.backend == plssvm::backend_type::hpx || (cmd_parser.backend == plssvm::backend_type::automatic && plssvm::determine_default_backend() == plssvm::backend_type::hpx) };
         if (use_hpx_as_backend){
-            // Initialize HPX runtime, but do not run hpx_main and do not pass commandline arguments
-            // Set HPX commandline arguments with the HPX_COMMANDLINE_OPTIONS="" environment variable
-            hpx::start(nullptr, 0, nullptr);
+            plssvm::hpx::detail::start_hpx_runtime();
         }
 #endif
         // create data set
@@ -138,10 +135,7 @@ int main(int argc, char *argv[]) {
 
 #if defined(PLSSVM_HAS_HPX_BACKEND)
         if (use_hpx_as_backend){
-            // Finalize all existing HPX tasks
-            hpx::post([]{hpx::finalize();});
-            // Stop HPX runtime
-            hpx::stop();
+            plssvm::hpx::detail::stop_hpx_runtime();
         }
 #endif
     } catch (const plssvm::exception &e) {

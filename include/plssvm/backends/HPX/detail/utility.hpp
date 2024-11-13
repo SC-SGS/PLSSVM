@@ -34,6 +34,16 @@ using boost::atomic_ref;
  */
 [[nodiscard]] std::string get_hpx_version();
 
+/**
+ * @brief Start the runtime of the HPX backend.
+ */
+void start_hpx_runtime();
+
+/**
+ * @brief Stop the runtime of the HPX backend.
+ */
+void stop_hpx_runtime();
+
 }  // namespace plssvm::hpx::detail
 
 #endif  // PLSSVM_BACKENDS_HPX_DETAIL_UTILITY_HPP_
