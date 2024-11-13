@@ -360,6 +360,9 @@ Available configure presets:
   "openmp"                  - OpenMP backend
   "openmp_python"           - OpenMP backend + Python bindings
   "openmp_test"             - OpenMP backend tests
+  "hpx"                     - HPX backend
+  "hpx_python"              - HPX backend + Python bindings
+  "hpx_test"                - HPX backend tests
   "cuda"                    - CUDA backend
   "cuda_python"             - CUDA backend + Python bindings
   "cuda_test"               - CUDA backend tests

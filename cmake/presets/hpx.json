@@ -1,0 +1,143 @@
+{
+  "version": 6,
+  "include": ["common.json"],
+  "configurePresets": [
+    {
+      "name": "hpx",
+      "displayName": "HPX backend",
+      "inherits": "build",
+      "cacheVariables": {
+        "PLSSVM_ENABLE_HPX_BACKEND": "ON",
+        "PLSSVM_TARGET_PLATFORMS": "cpu"
+      }
+    },
+    {
+      "name": "hpx_python",
+      "displayName": "HPX backend + Python bindings",
+      "inherits": "build",
+      "cacheVariables": {
+        "PLSSVM_ENABLE_HPX_BACKEND": "ON",
+        "PLSSVM_TARGET_PLATFORMS": "cpu",
+        "PLSSVM_ENABLE_LANGUAGE_BINDINGS": "ON",
+        "PLSSVM_ENABLE_PYTHON_BINDINGS": "ON"
+      }
+    },
+    {
+      "name": "hpx_test",
+      "displayName": "HPX backend tests",
+      "inherits": "test",
+      "cacheVariables": {
+        "PLSSVM_ENABLE_HPX_BACKEND": "ON",
+        "PLSSVM_TARGET_PLATFORMS": "cpu"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "hpx",
+      "displayName": "HPX backend",
+      "configurePreset": "hpx",
+      "configuration": "RelWithDebInfo",
+      "inherits": "common"
+    },
+    {
+      "name": "hpx_python",
+      "displayName": "HPX backend + Python bindings",
+      "configurePreset": "hpx_python",
+      "configuration": "RelWithDebInfo",
+      "inherits": "common"
+    },
+    {
+      "name": "hpx_test",
+      "displayName": "HPX backend tests",
+      "configurePreset": "hpx_test",
+      "configuration": "Debug",
+      "inherits": "common"
+    }
+  ],
+  "testPresets": [
+    {
+      "name": "hpx_test",
+      "displayName": "HPX backend all tests",
+      "configurePreset": "hpx_test",
+      "inherits": "common"
+    },
+    {
+      "name": "hpx_backend_test",
+      "displayName": "HPX backend specific tests",
+      "configurePreset": "hpx_test",
+      "inherits": "common",
+      "filter": {
+        "include": {
+          "name": "HPX.*"
+        }
+      }
+    }
+  ],
+  "workflowPresets": [
+    {
+      "name": "hpx",
+      "displayName": "HPX backend workflow",
+      "steps": [
+        {
+          "name": "hpx",
+          "type": "configure"
+        },
+        {
+          "name": "hpx",
+          "type": "build"
+        }
+      ]
+    },
+    {
+      "name": "hpx_python",
+      "displayName": "HPX backend + Python bindings workflow",
+      "steps": [
+        {
+          "name": "hpx_python",
+          "type": "configure"
+        },
+        {
+          "name": "hpx_python",
+          "type": "build"
+        }
+      ]
+    },
+    {
+      "name": "hpx_test",
+      "displayName": "HPX test workflow",
+      "steps": [
+        {
+          "name": "hpx_test",
+          "type": "configure"
+        },
+        {
+          "name": "hpx_test",
+          "type": "build"
+        },
+        {
+          "name": "hpx_test",
+          "type": "test"
+        }
+      ]
+    },
+    {
+      "name": "hpx_backend_test",
+      "displayName": "HPX backend test workflow",
+      "steps": [
+        {
+          "name": "hpx_test",
+          "type": "configure"
+        },
+        {
+          "name": "hpx_test",
+          "type": "build"
+        },
+        {
+          "name": "hpx_backend_test",
+          "type": "test"
+        }
+      ]
+    }
+  ]
+}

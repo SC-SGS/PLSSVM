@@ -858,6 +858,7 @@ install(FILES
         "${CMAKE_CURRENT_SOURCE_DIR}/cmake/plssvm/plssvmHIPTargets.cmake"
         "${CMAKE_CURRENT_SOURCE_DIR}/cmake/plssvm/plssvmOpenCLTargets.cmake"
         "${CMAKE_CURRENT_SOURCE_DIR}/cmake/plssvm/plssvmOpenMPTargets.cmake"
+        "${CMAKE_CURRENT_SOURCE_DIR}/cmake/plssvm/plssvmHPXTargets.cmake"
         "${CMAKE_CURRENT_SOURCE_DIR}/cmake/plssvm/plssvmAdaptiveCppTargets.cmake"
         "${CMAKE_CURRENT_SOURCE_DIR}/cmake/plssvm/plssvmDPCPPTargets.cmake"
         "${CMAKE_CURRENT_SOURCE_DIR}/cmake/plssvm/plssvmstdparTargets.cmake"
