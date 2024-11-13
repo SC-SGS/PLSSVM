@@ -22,13 +22,12 @@
 #include "plssvm/matrix.hpp"                                   // plssvm::aos_matrix, plssvm::soa_matrix
 #include "plssvm/shape.hpp"                                    // plssvm::shape
 
-#include <hpx/execution.hpp>                        // hpx::execution::par_unseq
-#include <hpx/parallel/algorithms/for_loop.hpp>     // hpx::experimental::for_loop
+#include <hpx/execution.hpp>                              // hpx::execution::par_unseq
 #include <hpx/parallel/segmented_algorithms/for_each.hpp> // hpx::for_each
 #include <array>      // std::array
 #include <cmath>      // std::fma
 #include <cstddef>    // std::size_t
-#include <utility>    // std::pair, std::make_pair
+#include <numeric>    // std::iota
 #include <vector>     // std::vector
 
 namespace plssvm::hpx::detail {
@@ -54,15 +53,15 @@ inline void device_kernel_w_linear(soa_matrix<real_type> &w, const aos_matrix<re
     const auto INTERNAL_BLOCK_SIZE_uz = static_cast<std::size_t>(INTERNAL_BLOCK_SIZE);
     const auto PADDING_SIZE_uz = static_cast<std::size_t>(PADDING_SIZE);
 
-    // calculate indices over which we parallelize
-    std::vector<std::pair<std::size_t, std::size_t>> range(blocked_num_features * blocked_num_classes);
-    ::hpx::experimental::for_loop(::hpx::execution::par_unseq, 0, range.size(), [&](auto i){
-        range[i] = std::make_pair(i / blocked_num_classes, i % blocked_num_classes);
-    });
+    // define range over which should be iterated
+    std::vector<std::size_t> range(blocked_num_features * blocked_num_classes);
+    std::iota(range.begin(), range.end(), 0);
 
-    ::hpx::for_each(::hpx::execution::par_unseq, range.begin(), range.end(), [&](const std::pair<std::size_t, std::size_t> idx) {
+    ::hpx::for_each(::hpx::execution::par_unseq, range.begin(), range.end(), [&](const std::size_t idx) {
         // calculate the indices used in the current thread
-        const auto [feature, c] = idx;
+        const std::size_t feature = idx / blocked_num_classes;
+        const std::size_t c = idx % blocked_num_classes;
+      
         const std::size_t feature_idx = feature * INTERNAL_BLOCK_SIZE_uz;
         const std::size_t class_idx = c * INTERNAL_BLOCK_SIZE_uz;
 
@@ -117,15 +116,15 @@ inline void device_kernel_predict_linear(aos_matrix<real_type> &prediction, cons
     const auto INTERNAL_BLOCK_SIZE_uz = static_cast<std::size_t>(INTERNAL_BLOCK_SIZE);
     const auto PADDING_SIZE_uz = static_cast<std::size_t>(PADDING_SIZE);
 
-    // calculate indices over which we parallelize
-    std::vector<std::pair<std::size_t, std::size_t>> range(blocked_num_predict_points * blocked_num_classes);
-    ::hpx::experimental::for_loop(::hpx::execution::par_unseq, 0, range.size(), [&](auto i){
-        range[i] = std::make_pair(i / blocked_num_classes, i % blocked_num_classes);
-    });
+    // define range over which should be iterated
+    std::vector<std::size_t> range(blocked_num_predict_points * blocked_num_classes);
+    std::iota(range.begin(), range.end(), 0);
 
-    ::hpx::for_each(::hpx::execution::par_unseq, range.begin(), range.end(), [&](const std::pair<std::size_t, std::size_t> idx) {
+    ::hpx::for_each(::hpx::execution::par_unseq, range.begin(), range.end(), [&](const std::size_t idx) {
         // calculate the indices used in the current thread
-        const auto [pp, c] = idx;
+        const std::size_t pp = idx / blocked_num_classes;
+        const std::size_t c = idx % blocked_num_classes;
+       
         const std::size_t pp_idx = pp * INTERNAL_BLOCK_SIZE_uz;
         const std::size_t class_idx = c * INTERNAL_BLOCK_SIZE_uz;
 
@@ -189,15 +188,15 @@ inline void device_kernel_predict(aos_matrix<real_type> &prediction, const aos_m
     const auto INTERNAL_BLOCK_SIZE_uz = static_cast<std::size_t>(INTERNAL_BLOCK_SIZE);
     const auto PADDING_SIZE_uz = static_cast<std::size_t>(PADDING_SIZE);
 
-    // calculate indices over which we parallelize
-    std::vector<std::pair<std::size_t, std::size_t>> range(blocked_num_predict_points * blocked_num_support_vectors);
-    ::hpx::experimental::for_loop(::hpx::execution::par_unseq, 0, range.size(), [&](auto i){
-        range[i] = std::make_pair(i / blocked_num_support_vectors, i % blocked_num_support_vectors);
-    });
+    // define range over which should be iterated
+    std::vector<std::size_t> range(blocked_num_predict_points * blocked_num_support_vectors);
+    std::iota(range.begin(), range.end(), 0);
 
-    ::hpx::for_each(::hpx::execution::par_unseq, range.begin(), range.end(), [&](const std::pair<std::size_t, std::size_t> idx) {
+    ::hpx::for_each(::hpx::execution::par_unseq, range.begin(), range.end(), [&](const std::size_t idx) {
         // calculate the indices used in the current thread
-        const auto [pp, sv] = idx;
+        const std::size_t pp = idx / blocked_num_support_vectors;
+        const std::size_t sv = idx % blocked_num_support_vectors;
+
         const std::size_t pp_idx = pp * INTERNAL_BLOCK_SIZE_uz;
         const std::size_t sv_idx = sv * INTERNAL_BLOCK_SIZE_uz;
 

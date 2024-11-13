@@ -18,13 +18,13 @@
 #include "plssvm/detail/assert.hpp"  // PLSSVM_ASSERT
 #include "plssvm/matrix.hpp"         // plssvm::soa_matrix
 #include "plssvm/shape.hpp"          // plssvm::shape
-#include <hpx/execution.hpp>                        // hpx::execution::par_unseq
-#include <hpx/parallel/algorithms/for_loop.hpp>     // hpx::experimental::for_loop
+
+#include <hpx/execution.hpp>                              // hpx::execution::par_unseq
 #include <hpx/parallel/segmented_algorithms/for_each.hpp> // hpx::for_each
 #include <array>      // std::array
 #include <cmath>      // std::ceil
 #include <cstddef>    // std::size_t
-#include <utility>    // std::pair, std::make_pair
+#include <numeric>    // std::iota
 #include <vector>     // std::vector
 
 namespace plssvm::hpx::detail {
@@ -51,17 +51,16 @@ inline void device_kernel_symm(const std::size_t num_rows, const std::size_t num
     // cast all values to 64-bit unsigned long long to prevent potential 32-bit overflows
     const auto INTERNAL_BLOCK_SIZE_uz = static_cast<std::size_t>(INTERNAL_BLOCK_SIZE);
     const auto PADDING_SIZE_uz = static_cast<std::size_t>(PADDING_SIZE);
+    
+    // define range over which should be iterated
+    std::vector<std::size_t> range(blocked_num_rhs * blocked_num_rows);   // define range over which should be iterated
+    std::iota(range.begin(), range.end(), 0);
 
-    // calculate indices over which we parallelize
-    std::vector<std::pair<std::size_t, std::size_t>> range(blocked_num_rhs * blocked_num_rows);
-    ::hpx::experimental::for_loop(::hpx::execution::par_unseq, 0, range.size(), [&](auto i)
-    {
-        range[i] = std::make_pair(i / blocked_num_rows, i % blocked_num_rows);
-    });
-
-    ::hpx::for_each(::hpx::execution::par_unseq, range.begin(), range.end(), [&](const std::pair<std::size_t, std::size_t> idx) {
+    ::hpx::for_each(::hpx::execution::par_unseq, range.begin(), range.end(), [&](const std::size_t idx) {
         // calculate the indices used in the current thread
-        const auto [rhs, row] = idx;
+        const std::size_t rhs = idx / blocked_num_rows;
+        const std::size_t row = idx % blocked_num_rows;
+
         const std::size_t rhs_idx = rhs * INTERNAL_BLOCK_SIZE_uz;
         const std::size_t row_idx = row * INTERNAL_BLOCK_SIZE_uz;
 
