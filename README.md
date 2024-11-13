@@ -57,6 +57,7 @@ The main highlights of our SVM implementations are:
 1. Drop-in replacement for LIBSVM's `svm-train`, `svm-predict`, and `svm-scale` (some features currently not implemented).
 2. Support of multiple different programming frameworks for parallelization (also called backends in our PLSSVM implementation) which allows us to target GPUs and CPUs from different vendors like NVIDIA, AMD, or Intel:
    - [OpenMP](https://www.openmp.org/)
+   - [HPX](https://hpx.stellar-group.org/)
    - [stdpar](https://en.cppreference.com/w/cpp/algorithm) (supported implementations are [nvc++](https://developer.nvidia.com/hpc-sdk) from NVIDIA's HPC SDK, [roc-stdpar](https://github.com/ROCm/roc-stdpar) as a patched LLVM, [icpx](https://www.intel.com/content/www/us/en/developer/tools/oneapi/dpc-compiler.html) as Intel's oneAPI compiler, [AdaptiveCpp](https://github.com/AdaptiveCpp/AdaptiveCpp), and [GNU GCC](https://gcc.gnu.org/) using TBB). <br>
      **Note**: due to the nature of the used USM mechanics in the `stdpar` implementations, the `stdpar` backend **can't** be enabled together with **any** other backend! <br>
      **Note**: since every translation units need to be compiled with the same flag, we currently globally set `CMAKE_CXX_FLAGS` although it's discouraged in favor of `target_compile_options`.
@@ -104,6 +105,10 @@ Additional dependencies for the OpenMP backend:
 Additional dependencies for the stdpar backend:
 
 - compiler with stdpar support
+
+Additional dependencies for the HPX backend:
+
+- [HPX ≥ v1.9](https://hpx.stellar-group.org/)
 
 Additional dependencies for the CUDA backend:
 
@@ -596,6 +601,7 @@ Note that during CMake configuration it is guaranteed that at least one of the a
 The `--target_platform=automatic` option works for the different backends as follows:
 
 - `OpenMP`: always selects a CPU
+- `HPX`: always selects a CPU
 - `CUDA`: always selects an NVIDIA GPU (if no NVIDIA GPU is available, throws an exception)
 - `HIP`: always selects an AMD GPU (if no AMD GPU is available, throws an exception)
 - `OpenCL`: tries to find available devices in the following order: NVIDIA GPUs 🠦 AMD GPUs 🠦 Intel GPUs 🠦 CPU
