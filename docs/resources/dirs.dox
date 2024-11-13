@@ -330,7 +330,7 @@
  */
 
  /**
- * @dir include/plssvm/backends/hpx
+ * @dir include/plssvm/backends/HPX
  * @author Alexander Van Craen
  * @author Marcel Breyer
  * @author Alexander strack
@@ -342,7 +342,7 @@
  */
 
 /**
- * @dir include/plssvm/backends/hpx/detail
+ * @dir include/plssvm/backends/HPX/detail
  * @author Alexander Van Craen
  * @author Marcel Breyer
  * @authir Alexander Strack
@@ -354,7 +354,7 @@
  */
 
 /**
- * @dir include/plssvm/backends/hpx/kernel
+ * @dir include/plssvm/backends/HPX/kernel
  * @author Alexander Van Craen
  * @author Marcel Breyer
  * @author Alexander Strack
@@ -366,7 +366,7 @@
  */
 
 /**
- * @dir include/plssvm/backends/hpx/kernel/cg_explicit
+ * @dir include/plssvm/backends/HPX/kernel/cg_explicit
  * @author Alexander Van Craen
  * @author Marcel Breyer
  * @author Alexander Strack
@@ -378,7 +378,7 @@
  */
 
 /**
- * @dir include/plssvm/backends/hpx/kernel/cg_implicit
+ * @dir include/plssvm/backends/HPX/kernel/cg_implicit
  * @author Alexander Van Craen
  * @author Marcel Breyer
  * @author Alexander Strack 
