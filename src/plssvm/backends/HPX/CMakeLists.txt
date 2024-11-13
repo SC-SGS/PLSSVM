@@ -9,7 +9,7 @@ list(APPEND CMAKE_MESSAGE_INDENT "HPX:  ")
 # check if HPX can be enabled
 message(CHECK_START "Checking for HPX backend")
 
-find_package(HPX)
+find_package(HPX 1.9.0)
 
 if (NOT HPX_FOUND)
     message(CHECK_FAIL "not found")

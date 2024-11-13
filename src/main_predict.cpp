@@ -20,9 +20,6 @@
 #if defined(PLSSVM_HARDWARE_SAMPLING_ENABLED)
     #include "hws/system_hardware_sampler.hpp"  // hws::system_hardware_sampler
 #endif
-#if defined(PLSSVM_HAS_HPX_BACKEND)
-    #include "plssvm/backends/HPX/detail/utility.hpp"   // plssvm::hpx::detail::scope_guard
-#endif
 #include "fmt/format.h"  // fmt::print
 #include "fmt/os.h"      // fmt::ostream, fmt::output_file
 #include "fmt/ranges.h"  // fmt::join
@@ -70,12 +67,6 @@ int main(int argc, char *argv[]) {
                             "\ntask: prediction\n{}\n",
                             plssvm::detail::tracking::tracking_entry{ "parameter", "", cmd_parser });
 
-#if defined(PLSSVM_HAS_HPX_BACKEND)
-        const bool use_hpx_as_backend{ cmd_parser.backend == plssvm::backend_type::hpx || (cmd_parser.backend == plssvm::backend_type::automatic && plssvm::determine_default_backend() == plssvm::backend_type::hpx) };
-        if (use_hpx_as_backend){
-            hpx_guard = std::make_unique<plssvm::hpx::detail::scope_guard>();
-        }
-#endif
         // create data set
         const auto data_set_visitor = [&](auto &&data) {
             using label_type = typename std::remove_reference_t<decltype(data)>::label_type;
