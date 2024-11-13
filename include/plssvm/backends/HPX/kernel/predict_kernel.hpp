@@ -60,7 +60,7 @@ inline void device_kernel_w_linear(soa_matrix<real_type> &w, const aos_matrix<re
         range[i] = std::make_pair(i / blocked_num_classes, i % blocked_num_classes);
     });
 
-    ::hpx::for_each(::hpx::execution::par_unseq, range.begin(), range.end(), [=, w_ptr = w.data(), alpha_ptr = alpha.data(), sv_ptr = support_vectors.data()](const std::pair<std::size_t, std::size_t> idx) {
+    ::hpx::for_each(::hpx::execution::par_unseq, range.begin(), range.end(), [&](const std::pair<std::size_t, std::size_t> idx) {
         // calculate the indices used in the current thread
         const auto [feature, c] = idx;
         const std::size_t feature_idx = feature * INTERNAL_BLOCK_SIZE_uz;
@@ -77,7 +77,7 @@ inline void device_kernel_w_linear(soa_matrix<real_type> &w, const aos_matrix<re
                     const std::size_t global_feature_idx = feature_idx + static_cast<std::size_t>(internal_feature);
                     const std::size_t global_class_idx = class_idx + static_cast<std::size_t>(internal_class);
 
-                    temp[internal_feature][internal_class] += alpha_ptr[global_class_idx * (num_support_vectors + PADDING_SIZE_uz) + sv] * sv_ptr[global_feature_idx * (num_support_vectors + PADDING_SIZE_uz) + sv];
+                    temp[internal_feature][internal_class] += alpha.data()[global_class_idx * (num_support_vectors + PADDING_SIZE_uz) + sv] * support_vectors.data()[global_feature_idx * (num_support_vectors + PADDING_SIZE_uz) + sv];
                 }
             }
         }
@@ -88,7 +88,7 @@ inline void device_kernel_w_linear(soa_matrix<real_type> &w, const aos_matrix<re
                 const std::size_t global_feature_idx = feature_idx + static_cast<std::size_t>(internal_feature);
                 const std::size_t global_class_idx = class_idx + static_cast<std::size_t>(internal_class);
 
-                w_ptr[global_feature_idx * (num_classes + PADDING_SIZE_uz) + global_class_idx] = temp[internal_feature][internal_class];
+                w.data()[global_feature_idx * (num_classes + PADDING_SIZE_uz) + global_class_idx] = temp[internal_feature][internal_class];
             }
         }
     });
@@ -123,7 +123,7 @@ inline void device_kernel_predict_linear(aos_matrix<real_type> &prediction, cons
         range[i] = std::make_pair(i / blocked_num_classes, i % blocked_num_classes);
     });
 
-    ::hpx::for_each(::hpx::execution::par_unseq, range.begin(), range.end(), [=, prediction_ptr = prediction.data(), w_ptr = w.data(), rho_ptr = rho.data(), pp_ptr = predict_points.data()](const std::pair<std::size_t, std::size_t> idx) {
+    ::hpx::for_each(::hpx::execution::par_unseq, range.begin(), range.end(), [&](const std::pair<std::size_t, std::size_t> idx) {
         // calculate the indices used in the current thread
         const auto [pp, c] = idx;
         const std::size_t pp_idx = pp * INTERNAL_BLOCK_SIZE_uz;
@@ -140,7 +140,7 @@ inline void device_kernel_predict_linear(aos_matrix<real_type> &prediction, cons
                     const std::size_t global_pp_idx = pp_idx + static_cast<std::size_t>(internal_pp);
                     const std::size_t global_class_idx = class_idx + static_cast<std::size_t>(internal_class);
 
-                    temp[internal_pp][internal_class] += w_ptr[dim * (num_classes + PADDING_SIZE_uz) + global_class_idx] * pp_ptr[dim * (num_predict_points + PADDING_SIZE_uz) + global_pp_idx];
+                    temp[internal_pp][internal_class] += w.data()[dim * (num_classes + PADDING_SIZE_uz) + global_class_idx] * predict_points.data()[dim * (num_predict_points + PADDING_SIZE_uz) + global_pp_idx];
                 }
             }
         }
@@ -152,7 +152,7 @@ inline void device_kernel_predict_linear(aos_matrix<real_type> &prediction, cons
                 const std::size_t global_class_idx = class_idx + static_cast<std::size_t>(internal_class);
 
                 if (global_pp_idx < num_predict_points && global_class_idx < num_classes) {
-                    prediction_ptr[global_pp_idx * (num_classes + PADDING_SIZE_uz) + global_class_idx] = temp[internal_pp][internal_class] - rho_ptr[global_class_idx];
+                    prediction.data()[global_pp_idx * (num_classes + PADDING_SIZE_uz) + global_class_idx] = temp[internal_pp][internal_class] - rho.data()[global_class_idx];
                 }
             }
         }
@@ -195,7 +195,7 @@ inline void device_kernel_predict(aos_matrix<real_type> &prediction, const aos_m
         range[i] = std::make_pair(i / blocked_num_support_vectors, i % blocked_num_support_vectors);
     });
 
-    ::hpx::for_each(::hpx::execution::par_unseq, range.begin(), range.end(), [=, prediction_ptr = prediction.data(), alpha_ptr = alpha.data(), rho_ptr = rho.data(), sv_ptr = support_vectors.data(), pp_ptr = predict_points.data()](const std::pair<std::size_t, std::size_t> idx) {
+    ::hpx::for_each(::hpx::execution::par_unseq, range.begin(), range.end(), [&](const std::pair<std::size_t, std::size_t> idx) {
         // calculate the indices used in the current thread
         const auto [pp, sv] = idx;
         const std::size_t pp_idx = pp * INTERNAL_BLOCK_SIZE_uz;
@@ -212,8 +212,8 @@ inline void device_kernel_predict(aos_matrix<real_type> &prediction, const aos_m
                     const std::size_t global_pp_idx = pp_idx + static_cast<std::size_t>(internal_pp);
                     const std::size_t global_sv_idx = sv_idx + static_cast<std::size_t>(internal_sv);
 
-                    temp[internal_pp][internal_sv] += detail::feature_reduce<kernel>(sv_ptr[dim * (num_support_vectors + PADDING_SIZE_uz) + global_sv_idx],
-                                                                                     pp_ptr[dim * (num_predict_points + PADDING_SIZE_uz) + global_pp_idx]);
+                    temp[internal_pp][internal_sv] += detail::feature_reduce<kernel>(support_vectors.data()[dim * (num_support_vectors + PADDING_SIZE_uz) + global_sv_idx],
+                                                                                     predict_points.data()[dim * (num_predict_points + PADDING_SIZE_uz) + global_pp_idx]);
                 }
             }
         }
@@ -235,10 +235,10 @@ inline void device_kernel_predict(aos_matrix<real_type> &prediction, const aos_m
                     // be sure to not perform out of bounds accesses
                     if (global_pp_idx < num_predict_points && global_sv_idx < num_support_vectors) {
                         if (global_sv_idx == 0) {
-                            atomic_ref<real_type>{ prediction_ptr[global_pp_idx * (num_classes + PADDING_SIZE_uz) + a] } += -rho_ptr[a];
+                            atomic_ref<real_type>{ prediction.data()[global_pp_idx * (num_classes + PADDING_SIZE_uz) + a] } += -rho.data()[a];
                         }
-                        atomic_ref<real_type>{ prediction_ptr[global_pp_idx * (num_classes + PADDING_SIZE_uz) + a] } +=
-                            temp[internal_pp][internal_sv] * alpha_ptr[a * (num_support_vectors + PADDING_SIZE_uz) + global_sv_idx];
+                        atomic_ref<real_type>{ prediction.data()[global_pp_idx * (num_classes + PADDING_SIZE_uz) + a] } +=
+                            temp[internal_pp][internal_sv] * alpha.data()[a * (num_support_vectors + PADDING_SIZE_uz) + global_sv_idx];
                     }
                 }
             }

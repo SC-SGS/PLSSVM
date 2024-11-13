@@ -59,7 +59,7 @@ inline void device_kernel_symm(const std::size_t num_rows, const std::size_t num
         range[i] = std::make_pair(i / blocked_num_rows, i % blocked_num_rows);
     });
 
-    ::hpx::for_each(::hpx::execution::par_unseq, range.begin(), range.end(), [=, A_ptr = A.data(), B_ptr = B.data(), C_ptr = C.data()](const std::pair<std::size_t, std::size_t> idx) {
+    ::hpx::for_each(::hpx::execution::par_unseq, range.begin(), range.end(), [&](const std::pair<std::size_t, std::size_t> idx) {
         // calculate the indices used in the current thread
         const auto [rhs, row] = idx;
         const std::size_t rhs_idx = rhs * INTERNAL_BLOCK_SIZE_uz;
@@ -79,11 +79,11 @@ inline void device_kernel_symm(const std::size_t num_rows, const std::size_t num
                     real_type A_val = 0.0;
                     // determine on which side of the diagonal we are located
                     if (dim < global_j) {
-                        A_val = A_ptr[dim * (num_rows + PADDING_SIZE_uz) + global_j - dim * (dim + std::size_t{ 1 }) / std::size_t{ 2 }];
+                        A_val = A.data()[dim * (num_rows + PADDING_SIZE_uz) + global_j - dim * (dim + std::size_t{ 1 }) / std::size_t{ 2 }];
                     } else {
-                        A_val = A_ptr[global_j * (num_rows + PADDING_SIZE_uz) + dim - global_j * (global_j + std::size_t{ 1 }) / std::size_t{ 2 }];
+                        A_val = A.data()[global_j * (num_rows + PADDING_SIZE_uz) + dim - global_j * (global_j + std::size_t{ 1 }) / std::size_t{ 2 }];
                     }
-                    temp[internal_i][internal_j] += A_val * B_ptr[dim * (num_rhs + PADDING_SIZE_uz) + global_i];
+                    temp[internal_i][internal_j] += A_val * B.data()[dim * (num_rhs + PADDING_SIZE_uz) + global_i];
                 }
             }
         }
@@ -96,7 +96,7 @@ inline void device_kernel_symm(const std::size_t num_rows, const std::size_t num
 
                 // be sure to not perform out of bounds accesses
                 if (global_i < num_rhs && global_j < num_rows) {
-                    C_ptr[global_j * (num_rhs + PADDING_SIZE_uz) + global_i] = alpha * temp[internal_i][internal_j] + beta * C_ptr[global_j * (num_rhs + PADDING_SIZE_uz) + global_i];
+                    C.data()[global_j * (num_rhs + PADDING_SIZE_uz) + global_i] = alpha * temp[internal_i][internal_j] + beta * C.data()[global_j * (num_rhs + PADDING_SIZE_uz) + global_i];
                 }
             }
         }

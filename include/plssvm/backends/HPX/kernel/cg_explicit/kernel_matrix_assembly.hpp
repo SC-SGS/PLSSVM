@@ -67,7 +67,10 @@ void device_kernel_assembly(const std::vector<real_type> &q, std::vector<real_ty
         }
     });
 
-    ::hpx::for_each(::hpx::execution::par_unseq, range.begin(), range.end(), [=, q_ptr = q.data(), data_ptr = data.data(), kernel_matrix_ptr = kernel_matrix.data()](const std::pair<std::size_t, std::size_t> idx) {
+ // ::hpx::experimental::for_loop(::hpx::execution::par, 0, range.size(), [&](const std::size_t idx){
+ //        // calculate the indices used in the current thread
+ //        const auto [row, col] = range[idx];
+ ::hpx::for_each(::hpx::execution::par_unseq, range.begin(), range.end(), [&](const std::pair<std::size_t, std::size_t> idx) {
         // calculate the indices used in the current thread
         const auto [row, col] = idx;
         const std::size_t row_idx = row * INTERNAL_BLOCK_SIZE_uz;
@@ -85,7 +88,7 @@ void device_kernel_assembly(const std::vector<real_type> &q, std::vector<real_ty
                     const std::size_t global_row = row_idx + static_cast<std::size_t>(internal_row);
                     const std::size_t global_col = col_idx + static_cast<std::size_t>(internal_col);
 
-                    temp[internal_row][internal_col] += detail::feature_reduce<kernel>(data_ptr[dim * (dept + 1 + PADDING_SIZE_uz) + global_row], data_ptr[dim * (dept + 1 + PADDING_SIZE_uz) + global_col]);
+                    temp[internal_row][internal_col] += detail::feature_reduce<kernel>(data.data()[dim * (dept + 1 + PADDING_SIZE_uz) + global_row], data.data()[dim * (dept + 1 + PADDING_SIZE_uz) + global_col]);
                 }
             }
         }
@@ -100,12 +103,12 @@ void device_kernel_assembly(const std::vector<real_type> &q, std::vector<real_ty
                 // be sure to not perform out of bounds accesses for the kernel matrix (only using the upper triangular matrix)
                 if (global_row < dept && global_col < dept && global_row >= global_col) {
                     real_type temp_ij = temp[internal_row][internal_col];
-                    temp_ij = detail::apply_kernel_function<kernel>(temp_ij, kernel_function_parameter...) + QA_cost - q_ptr[global_row] - q_ptr[global_col];
+                    temp_ij = detail::apply_kernel_function<kernel>(temp_ij, kernel_function_parameter...) + QA_cost - q[global_row] - q[global_col];
                     // apply the cost on the diagonal
                     if (global_row == global_col) {
                         temp_ij += cost;
                     }
-                    kernel_matrix_ptr[global_col * (dept + PADDING_SIZE_uz) + global_row - global_col * (global_col + std::size_t{ 1 }) / std::size_t{ 2 }] = temp_ij;
+                    kernel_matrix[global_col * (dept + PADDING_SIZE_uz) + global_row - global_col * (global_col + std::size_t{ 1 }) / std::size_t{ 2 }] = temp_ij;
                 }
             }
         }
