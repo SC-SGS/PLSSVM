@@ -58,8 +58,8 @@ int main(int argc, char *argv[]) {
         plssvm::detail::cmd::parser_train cmd_parser{ argc, argv };
 
 #if defined(PLSSVM_HAS_HPX_BACKEND)
-        // Initialize HPX, run hpx_main.
-        hpx::start(argc, argv);
+       // Initialize HPX, don't run hpx_main
+        hpx::start(nullptr, argc, argv); 
 #endif
 
         // send warning if the build type is release and assertions are enabled
@@ -126,7 +126,8 @@ int main(int argc, char *argv[]) {
         return EXIT_FAILURE;
     }
 #if defined(PLSSVM_HAS_HPX_BACKEND)
-    // Wait for hpx::finalize being called.
+    // TODO: hpx::finalize has to be called from the HPX runtime before hpx::stop
+    // hpx::post([]() { hpx::finalize(); });
     return hpx::stop();
 #else
     return EXIT_SUCCESS;
