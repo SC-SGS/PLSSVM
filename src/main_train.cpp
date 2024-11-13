@@ -117,6 +117,7 @@ int main(int argc, char *argv[]) {
                 PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_HARDWARE_SAMPLER_ENTRY(*s);
             });
 #endif
+        };
         std::visit(data_set_visitor, plssvm::detail::cmd::data_set_factory(cmd_parser));
 
         // stop CPU hardware sampler and dump results if available
