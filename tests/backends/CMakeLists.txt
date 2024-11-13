@@ -1,4 +1,4 @@
-## Authors: Alexander Van Craen, Marcel Breyer
+## Authors: Alexander Van Craen, Marcel Breyer, Alexander Strack
 ## Copyright (C): 2018-today The PLSSVM project - All Rights Reserved
 ## License: This file is part of the PLSSVM project which is released under the MIT license.
 ##          See the LICENSE.md file in the project root for full license information.
@@ -7,6 +7,11 @@
 # create OpenMP tests if the OpenMP backend is available
 if (TARGET ${PLSSVM_OPENMP_BACKEND_LIBRARY_NAME})
     add_subdirectory(OpenMP)
+endif ()
+
+# create HPX tests if the HPX backend is available
+if (TARGET ${PLSSVM_HPX_BACKEND_LIBRARY_NAME})
+    add_subdirectory(HPX)
 endif ()
 
 # create stdpar tests if the stdpar backend is available

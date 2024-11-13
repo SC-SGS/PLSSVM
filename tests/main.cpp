@@ -15,6 +15,11 @@
 
 #include <cstdlib>  // std::atexit
 
+#if defined(PLSSVM_HAS_HPX_BACKEND)
+#include <hpx/hpx_main.hpp>
+//#include <hpx/hpx_start.hpp>                                    // hpx::{start, stop, finalize}
+//#include <hpx/execution.hpp>                                    // hpx::post
+#endif
 // silence GTest warnings/test errors
 
 // generic CSVM tests
