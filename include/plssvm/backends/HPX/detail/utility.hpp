@@ -44,6 +44,19 @@ void start_hpx_runtime();
  */
 void stop_hpx_runtime();
 
+/**
+ * @brief Scope Guard that leverages RAII to start and correctly teardown the HPX runtime even in case of exceptions.
+ */
+struct scope_guard
+{
+  scope_guard(){
+    start_hpx_runtime();
+  }
+  ~scope_guard()
+  {
+    stop_hpx_runtime();
+  }
+};
 }  // namespace plssvm::hpx::detail
 
 #endif  // PLSSVM_BACKENDS_HPX_DETAIL_UTILITY_HPP_

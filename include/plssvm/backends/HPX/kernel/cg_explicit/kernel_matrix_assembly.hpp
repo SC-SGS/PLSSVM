@@ -61,9 +61,9 @@ void device_kernel_assembly(const std::vector<real_type> &q, std::vector<real_ty
 
  ::hpx::for_each(::hpx::execution::par_unseq, range.begin(), range.end(), [&](const std::size_t idx) {
         // calculate the indices used in the current thread
-        const std::size_t col = static_cast<std::size_t>(0.5 * (2 * blocked_dept + 1 - std::sqrt(4 * blocked_dept * blocked_dept + 4 * blocked_dept - 8 * idx + 1)));
-        const std::size_t row = static_cast<std::size_t>(idx - (col * blocked_dept - 0.5 * col * col - 0.5 * col));
-       
+        const std::size_t col = static_cast<std::size_t>(static_cast<double>(blocked_dept) + 0.5 - 0.5 * std::sqrt(4 * (blocked_dept * blocked_dept + blocked_dept - 2 * idx) + 1));
+        const std::size_t row = static_cast<std::size_t>(0.5 * static_cast<double>(2 * (idx - col * blocked_dept) + col * col + col));
+  
         const std::size_t row_idx = row * INTERNAL_BLOCK_SIZE_uz;
         const std::size_t col_idx = col * INTERNAL_BLOCK_SIZE_uz;
 

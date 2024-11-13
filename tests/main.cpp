@@ -16,7 +16,7 @@
 #include <cstdlib>  // std::atexit
 
 #if defined(PLSSVM_HAS_HPX_BACKEND)
-#include <hpx/hpx_main.hpp>
+    #include "plssvm/backends/HPX/detail/utility.hpp"   // plssvm::hpx::detail::scope_guard
 #endif
 // silence GTest warnings/test errors
 
@@ -66,5 +66,11 @@ int main(int argc, char **argv) {
 #if !defined(_WIN32)
     ::testing::GTEST_FLAG(death_test_style) = "threadsafe";
 #endif
+#if defined(PLSSVM_HAS_HPX_BACKEND)
+    // create std::unique_ptr containing a plssvm::hpx::detail::scope_guard
+    // -> used to automatically handle HPX runtime initialization and finalization
+    std::unique_ptr<plssvm::hpx::detail::scope_guard> hpx_guard{};
+    hpx_guard = std::make_unique<plssvm::hpx::detail::scope_guard>();
+#endif 
     return RUN_ALL_TESTS();
 }

@@ -20,7 +20,7 @@
     #include "hws/system_hardware_sampler.hpp"  // hws::system_hardware_sampler
 #endif
 #if defined(PLSSVM_HAS_HPX_BACKEND)
-    #include "plssvm/backends/HPX/detail/utility.hpp"   // plssvm::hpx::detail::start_hpx_runtime, plssvm::hpx::detail::stop_hpx_runtime
+    #include "plssvm/backends/HPX/detail/utility.hpp"   // plssvm::hpx::detail::scope_guard
 #endif
 #include <algorithm>    // std::for_each
 #include <chrono>       // std::chrono::{steady_clock, duration, milliseconds}, std::chrono_literals namespace
@@ -51,7 +51,6 @@ int main(int argc, char *argv[]) {
         hws::system_hardware_sampler sampler{ PLSSVM_HARDWARE_SAMPLING_INTERVAL };
         sampler.start_sampling();
 #endif
-
         // parse SVM parameter from command line
         plssvm::detail::cmd::parser_train cmd_parser{ argc, argv };
 
@@ -70,7 +69,7 @@ int main(int argc, char *argv[]) {
 #if defined(PLSSVM_HAS_HPX_BACKEND)
         const bool use_hpx_as_backend{ cmd_parser.backend == plssvm::backend_type::hpx || (cmd_parser.backend == plssvm::backend_type::automatic && plssvm::determine_default_backend() == plssvm::backend_type::hpx) };
         if (use_hpx_as_backend){
-            plssvm::hpx::detail::start_hpx_runtime();
+            hpx_guard = std::make_unique<plssvm::hpx::detail::scope_guard>();
         }
 #endif
         // create data set
@@ -132,12 +131,6 @@ int main(int argc, char *argv[]) {
                             plssvm::detail::tracking::tracking_entry{ "", "total_time", std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time) });
 
         PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_SAVE(cmd_parser.performance_tracking_filename);
-
-#if defined(PLSSVM_HAS_HPX_BACKEND)
-        if (use_hpx_as_backend){
-            plssvm::hpx::detail::stop_hpx_runtime();
-        }
-#endif
     } catch (const plssvm::exception &e) {
         std::cerr << e.what_with_loc() << std::endl;
         return EXIT_FAILURE;
