@@ -32,6 +32,8 @@ Prerequisites
 *.out
 *.app
 
+# Python
+venv/
 
 # CMake ================================
 bin/
