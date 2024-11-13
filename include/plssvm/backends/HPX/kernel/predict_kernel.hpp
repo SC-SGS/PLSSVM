@@ -56,11 +56,11 @@ inline void device_kernel_w_linear(soa_matrix<real_type> &w, const aos_matrix<re
 
     // calculate indices over which we parallelize
     std::vector<std::pair<std::size_t, std::size_t>> range(blocked_num_features * blocked_num_classes);
-    ::hpx::threads::run_as_hpx_thread([blocked_num_classes, &range](){::hpx::experimental::for_loop(::hpx::execution::par_unseq, 0, range.size(), [&](auto i){
+    ::hpx::experimental::for_loop(::hpx::execution::par_unseq, 0, range.size(), [&](auto i){
         range[i] = std::make_pair(i / blocked_num_classes, i % blocked_num_classes);
-    });});
+    });
 
-     ::hpx::threads::run_as_hpx_thread([&](){::hpx::for_each(::hpx::execution::par_unseq, range.begin(), range.end(), [=, w_ptr = w.data(), alpha_ptr = alpha.data(), sv_ptr = support_vectors.data()](const std::pair<std::size_t, std::size_t> idx) {
+    ::hpx::for_each(::hpx::execution::par_unseq, range.begin(), range.end(), [=, w_ptr = w.data(), alpha_ptr = alpha.data(), sv_ptr = support_vectors.data()](const std::pair<std::size_t, std::size_t> idx) {
         // calculate the indices used in the current thread
         const auto [feature, c] = idx;
         const std::size_t feature_idx = feature * INTERNAL_BLOCK_SIZE_uz;
@@ -91,7 +91,7 @@ inline void device_kernel_w_linear(soa_matrix<real_type> &w, const aos_matrix<re
                 w_ptr[global_feature_idx * (num_classes + PADDING_SIZE_uz) + global_class_idx] = temp[internal_feature][internal_class];
             }
         }
-    });});
+    });
 }
 
 /**
@@ -119,11 +119,11 @@ inline void device_kernel_predict_linear(aos_matrix<real_type> &prediction, cons
 
     // calculate indices over which we parallelize
     std::vector<std::pair<std::size_t, std::size_t>> range(blocked_num_predict_points * blocked_num_classes);
-    ::hpx::threads::run_as_hpx_thread([blocked_num_classes, &range](){::hpx::experimental::for_loop(::hpx::execution::par_unseq, 0, range.size(), [&](auto i){
+    ::hpx::experimental::for_loop(::hpx::execution::par_unseq, 0, range.size(), [&](auto i){
         range[i] = std::make_pair(i / blocked_num_classes, i % blocked_num_classes);
-    });});
+    });
 
-    ::hpx::threads::run_as_hpx_thread([&](){::hpx::for_each(::hpx::execution::par_unseq, range.begin(), range.end(), [=, prediction_ptr = prediction.data(), w_ptr = w.data(), rho_ptr = rho.data(), pp_ptr = predict_points.data()](const std::pair<std::size_t, std::size_t> idx) {
+    ::hpx::for_each(::hpx::execution::par_unseq, range.begin(), range.end(), [=, prediction_ptr = prediction.data(), w_ptr = w.data(), rho_ptr = rho.data(), pp_ptr = predict_points.data()](const std::pair<std::size_t, std::size_t> idx) {
         // calculate the indices used in the current thread
         const auto [pp, c] = idx;
         const std::size_t pp_idx = pp * INTERNAL_BLOCK_SIZE_uz;
@@ -156,7 +156,7 @@ inline void device_kernel_predict_linear(aos_matrix<real_type> &prediction, cons
                 }
             }
         }
-    });});
+    });
 }
 
 /**
@@ -191,11 +191,11 @@ inline void device_kernel_predict(aos_matrix<real_type> &prediction, const aos_m
 
     // calculate indices over which we parallelize
     std::vector<std::pair<std::size_t, std::size_t>> range(blocked_num_predict_points * blocked_num_support_vectors);
-    ::hpx::threads::run_as_hpx_thread([blocked_num_support_vectors, &range](){::hpx::experimental::for_loop(::hpx::execution::par_unseq, 0, range.size(), [&](auto i){
+    ::hpx::experimental::for_loop(::hpx::execution::par_unseq, 0, range.size(), [&](auto i){
         range[i] = std::make_pair(i / blocked_num_support_vectors, i % blocked_num_support_vectors);
-    });});
+    });
 
-    ::hpx::threads::run_as_hpx_thread([&](){::hpx::for_each(::hpx::execution::par_unseq, range.begin(), range.end(), [=, prediction_ptr = prediction.data(), alpha_ptr = alpha.data(), rho_ptr = rho.data(), sv_ptr = support_vectors.data(), pp_ptr = predict_points.data()](const std::pair<std::size_t, std::size_t> idx) {
+    ::hpx::for_each(::hpx::execution::par_unseq, range.begin(), range.end(), [=, prediction_ptr = prediction.data(), alpha_ptr = alpha.data(), rho_ptr = rho.data(), sv_ptr = support_vectors.data(), pp_ptr = predict_points.data()](const std::pair<std::size_t, std::size_t> idx) {
         // calculate the indices used in the current thread
         const auto [pp, sv] = idx;
         const std::size_t pp_idx = pp * INTERNAL_BLOCK_SIZE_uz;
@@ -243,7 +243,7 @@ inline void device_kernel_predict(aos_matrix<real_type> &prediction, const aos_m
                 }
             }
         }
-    });});
+    });
 }
 
 }  // namespace plssvm::hpx::detail
