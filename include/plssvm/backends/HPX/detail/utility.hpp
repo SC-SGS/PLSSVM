@@ -14,7 +14,7 @@
 #define PLSSVM_BACKENDS_HPX_DETAIL_UTILITY_HPP_
 #pragma once
 
-    #include "boost/atomic/atomic_ref.hpp"  // boost::atomic_ref
+#include "boost/atomic/atomic_ref.hpp"  // boost::atomic_ref
 
 #include <string>  // std::string
 

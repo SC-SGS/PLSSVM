@@ -13,11 +13,9 @@
 
 #include "gtest/gtest.h"  // TEST, EXPECT_EQ, EXPECT_NE, EXPECT_NO_THROW, EXPECT_FALSE
 
-#include <regex>   // std::regex, std::regex::extended, std::regex_match
 #include <string>  // std::string
 
 TEST(HPXUtility, get_num_threads) {
-    // Will fail but need to think about a way so set correct result
     EXPECT_GT(plssvm::hpx::detail::get_num_threads(), 0);
 }
 
