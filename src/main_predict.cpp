@@ -39,6 +39,10 @@
 using namespace std::chrono_literals;
 
 int main(int argc, char *argv[]) {
+    // create std::unique_ptr containing a plssvm::scope_guard
+    // -> used to automatically handle necessary environment teardown operations
+    std::unique_ptr<plssvm::environment::scope_guard> environment_guard{};
+
     try {
         const std::chrono::steady_clock::time_point start_time = std::chrono::steady_clock::now();
         PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_SET_REFERENCE_TIME(start_time);
@@ -70,6 +74,9 @@ int main(int argc, char *argv[]) {
 
             // check whether SYCL is used as backend (it is either requested directly or as automatic backend)
             const bool use_sycl_as_backend{ cmd_parser.backend == plssvm::backend_type::sycl || (cmd_parser.backend == plssvm::backend_type::automatic && plssvm::determine_default_backend() == plssvm::backend_type::sycl) };
+
+            // initialize environments if necessary
+            environment_guard = std::make_unique<plssvm::environment::scope_guard>();
 
             // create default csvm
             const std::unique_ptr<plssvm::csvm> svm = use_sycl_as_backend ? plssvm::make_csvm(cmd_parser.backend, cmd_parser.target, plssvm::sycl_implementation_type = cmd_parser.sycl_implementation_type)

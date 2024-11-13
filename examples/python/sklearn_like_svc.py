@@ -1,6 +1,9 @@
 from sklearn.datasets import make_classification
 import plssvm
 
+# correctly initialize and finalize environments
+environment_guard = plssvm.environment.ScopeGuard()
+
 num_samples = 2**8
 num_features = 2**6
 

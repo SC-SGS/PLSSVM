@@ -5,6 +5,9 @@
 #include <vector>
 
 int main() {
+    // correctly initialize and finalize environments
+    plssvm::environment::scope_guard environment_guard{};
+
     try {
         // create a new C-SVM parameter set, explicitly overriding the default kernel function
         const plssvm::parameter params{ plssvm::kernel_type = plssvm::kernel_function_type::polynomial };

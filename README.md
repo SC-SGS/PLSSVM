@@ -700,6 +700,9 @@ A simple C++ program (`main.cpp`) using PLSSVM as library could look like:
 #include <vector>
 
 int main() {
+    // correctly initialize and finalize environments
+    plssvm::environment::scope_guard environment_guard{};
+    
     try {
         // create a new C-SVM parameter set, explicitly overriding the default kernel function
         const plssvm::parameter params{ plssvm::kernel_type = plssvm::kernel_function_type::polynomial };
@@ -764,6 +767,9 @@ Roughly the same can be achieved using our Python bindings with the following Py
 ```python
 import plssvm
 from sklearn.metrics import classification_report
+
+# correctly initialize and finalize environments
+environment_guard = plssvm.environment.ScopeGuard()
 
 try:
     # create a new C-SVM parameter set, explicitly overriding the default kernel function
