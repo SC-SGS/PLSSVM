@@ -1,6 +1,7 @@
 /**
  * @author Alexander Van Craen
  * @author Marcel Breyer
+ * @author Alexander Strack
  * @copyright 2018-today The PLSSVM project - All Rights Reserved
  * @license This file is part of the PLSSVM project which is released under the MIT license.
  *          See the LICENSE.md file in the project root for full license information.
@@ -34,6 +35,7 @@ TEST(BackendType, to_string) {
     EXPECT_CONVERSION_TO_STRING(plssvm::backend_type::automatic, "automatic");
     EXPECT_CONVERSION_TO_STRING(plssvm::backend_type::openmp, "openmp");
     EXPECT_CONVERSION_TO_STRING(plssvm::backend_type::stdpar, "stdpar");
+    EXPECT_CONVERSION_TO_STRING(plssvm::backend_type::hpx, "hpx");
     EXPECT_CONVERSION_TO_STRING(plssvm::backend_type::cuda, "cuda");
     EXPECT_CONVERSION_TO_STRING(plssvm::backend_type::hip, "hip");
     EXPECT_CONVERSION_TO_STRING(plssvm::backend_type::opencl, "opencl");
@@ -54,6 +56,8 @@ TEST(BackendType, from_string) {
     EXPECT_CONVERSION_FROM_STRING("AUTO", plssvm::backend_type::automatic);
     EXPECT_CONVERSION_FROM_STRING("openmp", plssvm::backend_type::openmp);
     EXPECT_CONVERSION_FROM_STRING("OpenMP", plssvm::backend_type::openmp);
+    EXPECT_CONVERSION_FROM_STRING("hpx", plssvm::backend_type::hpx);
+    EXPECT_CONVERSION_FROM_STRING("HPX", plssvm::backend_type::hpx);
     EXPECT_CONVERSION_FROM_STRING("stdpar", plssvm::backend_type::stdpar);
     EXPECT_CONVERSION_FROM_STRING("STDPAR", plssvm::backend_type::stdpar);
     EXPECT_CONVERSION_FROM_STRING("cuda", plssvm::backend_type::cuda);
@@ -138,6 +142,7 @@ TEST(BackendType, csvm_to_backend_type) {
     // test the type_trait
     EXPECT_EQ(plssvm::csvm_to_backend_type<plssvm::openmp::csvm>::value, plssvm::backend_type::openmp);
     EXPECT_EQ(plssvm::csvm_to_backend_type<plssvm::stdpar::csvm>::value, plssvm::backend_type::stdpar);
+    EXPECT_EQ(plssvm::csvm_to_backend_type<plssvm::hpx::csvm>::value, plssvm::backend_type::hpx);
     EXPECT_EQ(plssvm::csvm_to_backend_type<const plssvm::cuda::csvm>::value, plssvm::backend_type::cuda);
     EXPECT_EQ(plssvm::csvm_to_backend_type<plssvm::hip::csvm &>::value, plssvm::backend_type::hip);
     EXPECT_EQ(plssvm::csvm_to_backend_type<const plssvm::opencl::csvm &>::value, plssvm::backend_type::opencl);
@@ -153,6 +158,7 @@ TEST(BackendType, csvm_to_backend_type_v) {
     // test the type_trait
     EXPECT_EQ(plssvm::csvm_to_backend_type_v<plssvm::openmp::csvm>, plssvm::backend_type::openmp);
     EXPECT_EQ(plssvm::csvm_to_backend_type_v<plssvm::stdpar::csvm>, plssvm::backend_type::stdpar);
+    EXPECT_EQ(plssvm::csvm_to_backend_type_v<plssvm::hpx::csvm>, plssvm::backend_type::hpx);
     EXPECT_EQ(plssvm::csvm_to_backend_type_v<const plssvm::cuda::csvm>, plssvm::backend_type::cuda);
     EXPECT_EQ(plssvm::csvm_to_backend_type_v<plssvm::hip::csvm &>, plssvm::backend_type::hip);
     EXPECT_EQ(plssvm::csvm_to_backend_type_v<const plssvm::opencl::csvm &>, plssvm::backend_type::opencl);
