@@ -20,6 +20,7 @@
 #if defined(PLSSVM_HARDWARE_SAMPLING_ENABLED)
     #include "hws/system_hardware_sampler.hpp"  // hws::system_hardware_sampler
 #endif
+
 #include "fmt/format.h"  // fmt::print
 #include "fmt/os.h"      // fmt::ostream, fmt::output_file
 #include "fmt/ranges.h"  // fmt::join
@@ -74,8 +75,15 @@ int main(int argc, char *argv[]) {
             // check whether SYCL is used as backend (it is either requested directly or as automatic backend)
             const bool use_sycl_as_backend{ cmd_parser.backend == plssvm::backend_type::sycl || (cmd_parser.backend == plssvm::backend_type::automatic && plssvm::determine_default_backend() == plssvm::backend_type::sycl) };
 
+            // check whether HPX is used as backend (it is either requested directly or as automatic backend)
+            const bool use_hpx_as_backend{ cmd_parser.backend == plssvm::backend_type::hpx || (cmd_parser.backend == plssvm::backend_type::automatic && plssvm::determine_default_backend() == plssvm::backend_type::hpx) };
+            
             // initialize environments if necessary
-            environment_guard = std::make_unique<plssvm::environment::scope_guard>();
+            std::vector<plssvm::backend_type> backends_to_initialize{};
+            if (use_hpx_as_backend) {
+                backends_to_initialize.push_back(plssvm::backend_type::hpx);
+            }
+            environment_guard = std::make_unique<plssvm::environment::scope_guard>(backends_to_initialize);
 
             // create default csvm
             const std::unique_ptr<plssvm::csvm> svm = use_sycl_as_backend ? plssvm::make_csvm(cmd_parser.backend, cmd_parser.target, plssvm::sycl_implementation_type = cmd_parser.sycl_implementation_type)
@@ -166,6 +174,7 @@ int main(int argc, char *argv[]) {
                             plssvm::detail::tracking::tracking_entry{ "", "total_time", std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time) });
 
         PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_SAVE(cmd_parser.performance_tracking_filename);
+    
     } catch (const plssvm::exception &e) {
         std::cerr << e.what_with_loc() << std::endl;
         return EXIT_FAILURE;
