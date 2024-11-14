@@ -337,6 +337,10 @@ If the most performant backend should be used, it is sufficient to use `plssvm.C
 `sycl_implementation_type` to choose between DPC++ and AdaptiveCpp as SYCL implementations
 and `sycl_kernel_invocation_type` to choose between the two different SYCL kernel invocation types.
 
+**Note**: if the backend type is `plssvm.BackendType.HPX` it is necessary to initialize and finalize the HPX runtime.
+The runtime can be manually managed using `plssvm.environment.initialize()` and `plssvm.environment.finalize()`.
+We recommend utilizing `plssvm.environment.ScopeGuard()` to manage the lifetime of the HPX runtime automatically.
+
 | methods                                                                                                                                      | description                                                                                                                                                                                                         |
 |----------------------------------------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `set_params(params)`                                                                                                                         | Replace the current `plssvm.Parameter` with the provided one.                                                                                                                                                       |
