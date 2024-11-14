@@ -553,7 +553,7 @@ Usage:
   -i, --max_iter arg            set the maximum number of CG iterations (default: num_features)
   -l, --solver arg              choose the solver: automatic|cg_explicit|cg_implicit (default: automatic)
   -a, --classification arg      the classification strategy to use for multi-class classification: oaa|oao (default: oaa)
-  -b, --backend arg             choose the backend: automatic|openmp|cuda|hip|opencl|sycl|stdpar (default: automatic)
+  -b, --backend arg             choose the backend: automatic|openmp|hpx|cuda|hip|opencl|sycl|stdpar (default: automatic)
   -p, --target_platform arg     choose the target platform: automatic|cpu|gpu_nvidia|gpu_amd|gpu_intel (default: automatic)
       --sycl_kernel_invocation_type arg
                                 choose the kernel invocation type when using SYCL as backend: automatic|nd_range (default: automatic)
@@ -597,7 +597,7 @@ The `--backend=automatic` option works as follows:
 - if the `gpu_nvidia` target is available, check for existing backends in order `cuda` 🠦 `hip` 🠦 `opencl` 🠦 `sycl` 🠦 `stdpar`
 - otherwise, if the `gpu_amd` target is available, check for existing backends in order `hip` 🠦 `opencl` 🠦 `sycl` 🠦 `stdpar`
 - otherwise, if the `gpu_intel` target is available, check for existing backends in order `sycl` 🠦 `opencl` 🠦 `stdpar`
-- otherwise, if the `cpu` target is available, check for existing backends in order `sycl` 🠦 `opencl` 🠦 `openmp` 🠦 `stdpar`
+- otherwise, if the `cpu` target is available, check for existing backends in order `sycl` 🠦 `opencl` 🠦 `openmp` 🠦 `hpx` 🠦 `stdpar`
 
 Note that during CMake configuration it is guaranteed that at least one of the above combinations does exist.
 

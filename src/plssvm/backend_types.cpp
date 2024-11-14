@@ -65,7 +65,7 @@ backend_type determine_default_backend(const std::vector<backend_type> &availabl
         decision_order_type{ target_platform::gpu_nvidia, { backend_type::cuda, backend_type::hip, backend_type::opencl, backend_type::sycl, backend_type::stdpar } },
         decision_order_type{ target_platform::gpu_amd, { backend_type::hip, backend_type::opencl, backend_type::sycl, backend_type::stdpar } },
         decision_order_type{ target_platform::gpu_intel, { backend_type::sycl, backend_type::opencl, backend_type::stdpar } },
-        decision_order_type{ target_platform::cpu, { backend_type::sycl, backend_type::opencl, backend_type::openmp, backend_type::stdpar, backend_type::hpx } }
+        decision_order_type{ target_platform::cpu, { backend_type::sycl, backend_type::opencl, backend_type::openmp, backend_type::hpx, backend_type::stdpar } }
     };
 
     // return the default backend based on the previously defined decision order
