@@ -77,7 +77,7 @@ int main(int argc, char *argv[]) {
 
             // check whether HPX is used as backend (it is either requested directly or as automatic backend)
             const bool use_hpx_as_backend{ cmd_parser.backend == plssvm::backend_type::hpx || (cmd_parser.backend == plssvm::backend_type::automatic && plssvm::determine_default_backend() == plssvm::backend_type::hpx) };
-            
+
             // initialize environments if necessary
             std::vector<plssvm::backend_type> backends_to_initialize{};
             if (use_hpx_as_backend) {
@@ -174,7 +174,7 @@ int main(int argc, char *argv[]) {
                             plssvm::detail::tracking::tracking_entry{ "", "total_time", std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time) });
 
         PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_SAVE(cmd_parser.performance_tracking_filename);
-    
+
     } catch (const plssvm::exception &e) {
         std::cerr << e.what_with_loc() << std::endl;
         return EXIT_FAILURE;
