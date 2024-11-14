@@ -19,6 +19,7 @@
 #if defined(PLSSVM_HARDWARE_SAMPLING_ENABLED)
     #include "hws/system_hardware_sampler.hpp"  // hws::system_hardware_sampler
 #endif
+
 #include <algorithm>    // std::for_each
 #include <chrono>       // std::chrono::{steady_clock, duration, milliseconds}, std::chrono_literals namespace
 #include <cstddef>      // std::size_t
@@ -48,6 +49,7 @@ int main(int argc, char *argv[]) {
         hws::system_hardware_sampler sampler{ PLSSVM_HARDWARE_SAMPLING_INTERVAL };
         sampler.start_sampling();
 #endif
+
         // parse SVM parameter from command line
         plssvm::detail::cmd::parser_train cmd_parser{ argc, argv };
 
@@ -77,14 +79,6 @@ int main(int argc, char *argv[]) {
             const std::unique_ptr<plssvm::csvm> svm = use_sycl_as_backend ? plssvm::make_csvm(cmd_parser.backend, cmd_parser.target, cmd_parser.csvm_params, plssvm::sycl_implementation_type = cmd_parser.sycl_implementation_type, plssvm::sycl_kernel_invocation_type = cmd_parser.sycl_kernel_invocation_type)
                                                                           : plssvm::make_csvm(cmd_parser.backend, cmd_parser.target, cmd_parser.csvm_params);
 
-#if defined(PLSSVM_HARDWARE_SAMPLING_ENABLED)
-            // initialize hardware sampling
-            std::vector<std::unique_ptr<plssvm::detail::tracking::hardware_sampler>> sampler =
-                plssvm::detail::tracking::create_hardware_sampler(svm->get_target_platform(), svm->num_available_devices(), PLSSVM_HARDWARE_SAMPLING_INTERVAL);
-            // start sampling
-            std::for_each(sampler.begin(), sampler.end(), std::mem_fn(&plssvm::detail::tracking::hardware_sampler::start_sampling));
-#endif
-
             // only specify plssvm::max_iter if it isn't its default value
             const plssvm::model<label_type> model =
                 cmd_parser.max_iter == std::size_t{ 0 }
@@ -99,15 +93,6 @@ int main(int argc, char *argv[]) {
                                plssvm::solver = cmd_parser.solver);
             // save model to file
             model.save(cmd_parser.model_filename);
-
-#if defined(PLSSVM_HARDWARE_SAMPLING_ENABLED)
-            // stop sampling
-            std::for_each(sampler.begin(), sampler.end(), std::mem_fn(&plssvm::detail::tracking::hardware_sampler::stop_sampling));
-            // write samples to yaml file
-            std::for_each(sampler.cbegin(), sampler.cend(), [&](const std::unique_ptr<plssvm::detail::tracking::hardware_sampler> &s) {
-                PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_HARDWARE_SAMPLER_ENTRY(*s);
-            });
-#endif
         };
         std::visit(data_set_visitor, plssvm::detail::cmd::data_set_factory(cmd_parser));
 
@@ -123,6 +108,7 @@ int main(int argc, char *argv[]) {
                             plssvm::detail::tracking::tracking_entry{ "", "total_time", std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time) });
 
         PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_SAVE(cmd_parser.performance_tracking_filename);
+
     } catch (const plssvm::exception &e) {
         std::cerr << e.what_with_loc() << std::endl;
         return EXIT_FAILURE;
