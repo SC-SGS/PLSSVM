@@ -34,36 +34,6 @@ using boost::atomic_ref;
  */
 [[nodiscard]] std::string get_hpx_version();
 
-/**
- * @brief Start the runtime of the HPX backend.
- */
-void start_hpx_runtime();
-
-/**
- * @brief Stop the runtime of the HPX backend.
- */
-void stop_hpx_runtime();
-
-/**
- * @brief Scope Guard that leverages RAII to start and correctly teardown the HPX runtime even in case of exceptions.
- */
-struct scope_guard
-{
-  /**
-   * @brief Scope Guard constructor that starts the runtime of the HPX backend.
-   */
-  scope_guard(){
-    start_hpx_runtime();
-  }
-
-  /**
-   * @brief Scope Guard destructor that stops the runtime of the HPX backend.
-   */
-  ~scope_guard()
-  {
-    stop_hpx_runtime();
-  }
-};
 }  // namespace plssvm::hpx::detail
 
 #endif  // PLSSVM_BACKENDS_HPX_DETAIL_UTILITY_HPP_
