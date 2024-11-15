@@ -532,5 +532,8 @@ The PLSSVM Python3 bindings define a few new exception types:
 | `UnsupportedKernelTypeError` | If an unsupported target platform has been requested.                                                                  |
 | `GPUDevicePtrError`          | If something went wrong in one of the backend's GPU device pointers. **Note**: shouldn't occur in user code.           |
 | `MatrixError`                | If something went wrong in the internal matrix class. **Note**: shouldn't occur in user code.                          |
+| `KernelLaunchResourcesError` | If something went wrong during a kernel launch due to insufficient ressources.                                         |
+| `ClassificationReportError`  | If something in the classification report went wrong. **Note**: shouldn't occur in user code.                          |
+| `EnvironmentError`           | If something during environment initialization or finalization went wrong.                                             |
 
 Depending on the available backends, additional `BackendError`s are also available (e.g., `plssvm.cuda.BackendError`).
