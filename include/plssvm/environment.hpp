@@ -14,51 +14,356 @@
 #ifndef PLSSVM_ENVIRONMENT_HPP_
 #define PLSSVM_ENVIRONMENT_HPP_
 
-#include "plssvm/backend_types.hpp"   // plssvm::backend_type, plssvm::list_available_backends
-#include "plssvm/detail/utility.hpp"  // plssvm::detail::contains
+#include "plssvm/backend_types.hpp"          // plssvm::backend_type, plssvm::list_available_backends
+#include "plssvm/detail/string_utility.hpp"  // plssvm::detail::to_lower_case
+#include "plssvm/detail/utility.hpp"         // plssvm::detail::{contains, unreachable}
+#include "plssvm/exceptions/exceptions.hpp"  // plssvm::environment_exception
 
-#include <vector>  // std::vector
+#include "fmt/base.h"     // fmt::formatter
+#include "fmt/ostream.h"  // fmt::ostream_formatter
+#include "fmt/ranges.h"   // fmt::join
+
+#include <ios>      // std::ios::failbit
+#include <istream>  // std::istream
+#include <ostream>  // std::ostream
+#include <string>   // std::string
+#include <vector>   // std::vector
 
 namespace plssvm::environment {
 
 /**
- * @brief Check, whether the environments have already been initialized correctly.
- * @return `true` if the environments are initialized correctly, `false` otherwise
+ * @brief The different possible environment status that our backends can have.
  */
-[[nodiscard]] inline bool is_initialized() {
-    return true;
+enum class status {
+    /** The backend environment hasn't been initialized or finalized yet. */
+    uninitialized,
+    /** The backend environment has been initialized but not finalized yet. */
+    initialized,
+    /** The backend environment has already been initialized and finalized. */
+    finalized,
+    /** No backend environment initialization or finalization necessary. */
+    unnecessary
+};
+
+/**
+ * @brief Output the environment status @p s to the given output-stream @p out.
+ * @param[in,out] out the output-stream to write the environment status to
+ * @param[in] s the environment status
+ * @return the output-stream
+ */
+inline std::ostream &operator<<(std::ostream &out, const status s) {
+    switch (s) {
+        case status::uninitialized:
+            return out << "uninitialized";
+        case status::initialized:
+            return out << "initialized";
+        case status::finalized:
+            return out << "finalized";
+        case status::unnecessary:
+            return out << "unnecessary";
+    }
+    return out << "unknown";
 }
 
 /**
- * @brief Check, whether the environments have been finalized correctly.
- * @return `true` if the environments are finalized correctly, `false` otherwise
+ * @brief Use the input-stream @p in to initialize the environment status @p s.
+ * @param[in,out] in input-stream to extract the environment status from
+ * @param[in] s the environment status
+ * @return the input-stream
  */
-[[nodiscard]] inline bool is_finalized() {
-    return true;
+inline std::istream &operator>>(std::istream &in, status &s) {
+    std::string str;
+    in >> str;
+    detail::to_lower_case(str);
+
+    if (str == "uninitialized") {
+        s = status::uninitialized;
+    } else if (str == "initialized") {
+        s = status::initialized;
+    } else if (str == "finalized") {
+        s = status::finalized;
+    } else if (str == "unnecessary") {
+        s = status::unnecessary;
+    } else {
+        in.setstate(std::ios::failbit);
+    }
+    return in;
+}
+
+namespace detail {
+
+/**
+ * @brief Determine the environment status based on the @p is_initialized and @p is_finalized flags.
+ * @param is_initialized `true` if the respective environment has been initialized, `false` otherwise
+ * @param is_finalized `true` if the respective environment has been finalized, `false` otherwise
+ * @return the respective environment status (`[[nodiscard]]`)
+ */
+[[nodiscard]] inline status determine_status_from_initialized_finalized_flags(const bool is_initialized, const bool is_finalized) {
+    if (!is_initialized && !is_finalized) {
+        return status::uninitialized;
+    } else if (is_initialized && !is_finalized) {
+        return status::initialized;
+    } else if (is_finalized) {
+        return status::finalized;
+    }
+}
+
+}  // namespace detail
+
+//****************************************************************************//
+//                         environment query function                         //
+//****************************************************************************//
+
+/**
+ * @brief Get the current status of the environment for the @p backend.
+ * @param[in] backend the backend to check the environment status
+ * @throws plssvm::environment_exception if @p backend is the automatic backend
+ * @return the environment status for the @p backend (`[[nodiscard]]`)
+ */
+[[nodiscard]] inline status get_backend_status(const backend_type backend) {
+    // Note: must be implemented for the backends that need environmental setup
+    switch (backend) {
+        case backend_type::automatic:
+            // it is unsupported to get the environment status for the automatic backend
+            throw environment_exception{ "Can't retrieve the environment status for the automatic backend!" };
+        case backend_type::openmp:
+        case backend_type::stdpar:
+        case backend_type::cuda:
+        case backend_type::hip:
+        case backend_type::opencl:
+        case backend_type::sycl:
+            // no environment necessary to manage these backends
+            return status::unnecessary;
+    }
+    // should never be reached!
+    ::plssvm::detail::unreachable();
+}
+
+//****************************************************************************//
+//         backend specific initialization and finalization functions         //
+//****************************************************************************//
+
+namespace detail {
+
+/**
+ * @brief Initialize the @p backend.
+ * @param[in] backend the backend to initialize
+ */
+inline void initialize_backend([[maybe_unused]] const backend_type backend) {
+    // Note: must be implemented for the backends that need environmental setup
+    // nothing to do for all available backends
 }
 
 /**
- * @brief Initialize all necessary environments in order for all PLSSVM backends to work properly.
+ * @brief Initialize the @p backend with the provided command line arguments.
+ * @param[in] backend the backend to initialize
+ * @param[in,out] argc the number of command line arguments
+ * @param[in,out] argv the command line arguments
  */
-inline void initialize([[maybe_unused]] const std::vector<backend_type> &backends_to_init = list_available_backends()) {
-    // nothing to do
+inline void initialize_backend([[maybe_unused]] const backend_type backend, [[maybe_unused]] int &argc, [[maybe_unused]] char **argv) {
+    // Note: must be implemented for the backends that need environmental setup
+    // nothing to do for all available backends
 }
 
 /**
- * @brief Initialize all necessary environments in order for all PLSSVM backends to work properly.
- * @param[in] argc the number of provided command line arguments
- * @param[in] argv the provided command line arguments
+ * @brief Finalize the @p backend.
+ * @param[in] backend  the backend to finalize
  */
-inline void initialize([[maybe_unused]] int &argc, [[maybe_unused]] char **argv, [[maybe_unused]] const std::vector<backend_type> &backends_to_init = list_available_backends()) {
-    // nothing to do
+inline void finalize_backend([[maybe_unused]] const backend_type backend) {
+    // Note: must be implemented for the backends that need environmental setup
+    // nothing to do for all available backends
 }
 
 /**
- * @brief Finalize all necessary environments in order for all PLSSVM backends to work properly.
+ * @brief Try to initialize all @p backends.
+ * @tparam Args the type of the arguments used for the initialization
+ * @param[in] backends the backends to initialize
+ * @param [in,out] args the arguments used for the initialization
+ * @throws plssvm::environment_exception if any of the provided @p backends isn't currently available
+ * @throws plssvm::environment_exception if the automatic backend is provided in @p backends
+ * @throws plssvm::environment_exception if one of the provided @p backends has already been initialized
+ * @throws plssvm::environment_exception if one of the provided @p backends has already been finalized
  */
-inline void finalize([[maybe_unused]] const std::vector<backend_type> &backends_to_init = list_available_backends()) {
-    // nothing to do
+template <typename... Args>
+inline void initialize_impl(const std::vector<backend_type> &backends, Args &...args) {
+    // check if the provided backends are currently available
+    const std::vector<backend_type> available_backends = list_available_backends();
+    for (const backend_type backend : backends) {
+        // check if the backend is available
+        if (!::plssvm::detail::contains(available_backends, backend)) {
+            throw environment_exception{ fmt::format("The provided backend {} is currently not available and, therefore, can't be initialized! Available backends are: [{}].", backend, fmt::join(available_backends, ", ")) };
+        }
+    }
+
+    // try to initialize the backend environments
+    for (const backend_type backend : backends) {
+        // the automatic backend cannot be initialized
+        if (backend == backend_type::automatic) {
+            throw environment_exception{ "The automatic backend cannot be initialized!" };
+        }
+
+        // check the status of the current backend
+        switch (get_backend_status(backend)) {
+            case status::uninitialized:
+                // currently uninitialized -> initialize backend
+                detail::initialize_backend(backend, args...);
+                break;
+            case status::initialized:
+                // backend already initialized -> throw exception
+                throw environment_exception{ fmt::format("The backend {} has already been initialized!", backend) };
+            case status::finalized:
+                // backend already finalized -> throw exception
+                throw environment_exception{ fmt::format("The backend {} has already been finalized!", backend) };
+            case status::unnecessary:
+                // no initialization or finalization necessary -> do nothing
+                break;
+        }
+    }
 }
+
+/**
+ * @brief Remove all backends from @p backends for which the `get_backend_status()` function doesn't return @p s.
+ *        Additionally, always removes the automatic backend.
+ * @param[in,out] backends the backends to filter
+ * @param[in] s the filter to use
+ */
+inline void get_filtered_backends(std::vector<backend_type> &backends, const status s) {
+    backends.erase(std::remove_if(backends.begin(), backends.end(), [&s](const backend_type backend) {
+                       if (backend == backend_type::automatic) {
+                           // always remove the automatic backend
+                           return true;
+                       } else {
+                           // remove all backends for which the filter isn't true
+                           return get_backend_status(backend) != s;
+                       }
+                   }),
+                   backends.end());
+}
+
+}  // namespace detail
+
+//****************************************************************************//
+//                 initialization and finalization functions                  //
+//****************************************************************************//
+
+/**
+ * @brief Initialize all of the provided @p backends.
+ * @param[in] backends all backends that should be initialized
+ * @throws plssvm::environment_exception if any of the provided @p backends isn't currently available
+ * @throws plssvm::environment_exception if the automatic backend is provided in @p backends
+ * @throws plssvm::environment_exception if one of the provided @p backends has already been initialized
+ * @throws plssvm::environment_exception if one of the provided @p backends has already been finalized
+ */
+inline void initialize(const std::vector<backend_type> &backends) {
+    detail::initialize_impl(backends);
+}
+
+/**
+ * @brief Initialize all **available** backends.
+ * @details Only initializes backends that are currently uninitialized.
+ * @return the initialized backends (`[[nodiscard]]`)
+ */
+inline std::vector<backend_type> initialize() {
+    // get all available backends
+    std::vector<backend_type> backends = list_available_backends();
+    // only initialize currently uninitialized backends; remove the automatic backend
+    detail::get_filtered_backends(backends, status::uninitialized);
+    // initialize the remaining backends
+    detail::initialize_impl(backends);
+    return backends;
+}
+
+/**
+ * @brief Initialize all of the provided @p backends using the command line arguments @p argc and @p argv.
+ * @param[in,out] argc the number of provided command line arguments
+ * @param[in,out] argv the provided command line arguments
+ * @param[in] backends all backends that should be initialized
+ * @throws plssvm::environment_exception if any of the provided @p backends isn't currently available
+ * @throws plssvm::environment_exception if the automatic backend is provided in @p backends
+ * @throws plssvm::environment_exception if one of the provided @p backends has already been initialized
+ * @throws plssvm::environment_exception if one of the provided @p backends has already been finalized
+ */
+inline void initialize(int &argc, char **argv, const std::vector<backend_type> &backends) {
+    detail::initialize_impl(backends, argc, argv);
+}
+
+/**
+ * @brief Initialize all **available** backends.
+ * @details Only initializes backends that are currently uninitialized.
+ * @param[in,out] argc the number of provided command line arguments
+ * @param[in,out] argv the provided command line arguments
+ * @return the initialized backends (`[[nodiscard]]`)
+ */
+inline std::vector<backend_type> initialize(int &argc, char **argv) {
+    // get all available backends
+    std::vector<backend_type> backends = list_available_backends();
+    // only initialize currently uninitialized backends; remove the automatic backend
+    detail::get_filtered_backends(backends, status::uninitialized);
+    // initialize the remaining backends
+    detail::initialize_impl(backends, argc, argv);
+    return backends;
+}
+
+/**
+ * @brief Try to finalize all @p backends.
+ * @param[in] backends the backends to finalize
+ * @throws plssvm::environment_exception if the automatic backend is provided in @p backends
+ * @throws plssvm::environment_exception if one of the provided @p backends hasn't been initialized yet
+ * @throws plssvm::environment_exception if one of the provided @p backends has already been finalized
+ */
+inline void finalize(const std::vector<backend_type> &backends) {
+    // check if the provided backends are currently available
+    const std::vector<backend_type> available_backends = list_available_backends();
+    for (const backend_type backend : backends) {
+        // check if the backend is available
+        if (!::plssvm::detail::contains(available_backends, backend)) {
+            throw environment_exception{ fmt::format("The provided backend {} is currently not available and, therefore, can't be finalized! Available backends are: [{}].", backend, fmt::join(available_backends, ", ")) };
+        }
+    }
+
+    for (const backend_type backend : backends) {
+        // the automatic backend cannot be finalized
+        if (backend == backend_type::automatic) {
+            throw environment_exception{ "The automatic backend cannot be finalized!" };
+        }
+
+        // check the status of the current backend
+        switch (get_backend_status(backend)) {
+            case status::uninitialized:
+                // currently uninitialized -> throw exception
+                throw environment_exception{ fmt::format("The backend {} has not been initialized yet!", backend) };
+            case status::initialized:
+                // backend initialized -> finalize
+                detail::finalize_backend(backend);
+                break;
+            case status::finalized:
+                // backend already finalized -> throw exception
+                throw environment_exception{ fmt::format("The backend {} has already been finalized!", backend) };
+            case status::unnecessary:
+                // no initialization or finalization necessary -> do nothing
+                break;
+        }
+    }
+}
+
+/**
+ * @brief Finalize all **available** backends.
+ * @details Only finalizes backends that are currently initialized.
+ * @return the finalized backends (`[[nodiscard]]`)
+ */
+inline std::vector<backend_type> finalize() {
+    // get all available backends
+    std::vector<backend_type> backends = list_available_backends();
+    // only finalize currently initialized backends; remove the automatic backend
+    detail::get_filtered_backends(backends, status::initialized);
+    // finalize the remaining backends
+    finalize(backends);
+    return backends;
+}
+
+//****************************************************************************//
+//                     custom scope guard implementation                      //
+//****************************************************************************//
 
 /**
  * @brief A scope guard to initialize and automatically finalize all necessary environments in order for all PLSSVM backends to work properly.
@@ -66,25 +371,33 @@ inline void finalize([[maybe_unused]] const std::vector<backend_type> &backends_
 class [[nodiscard]] scope_guard {
   public:
     /**
-     * @brief If the environments are not already initialized, initialize all necessary environments in order for all PLSSVM backends to work properly
+     * @copydoc initialize()
      */
-    explicit scope_guard(std::vector<backend_type> backends_to_init = list_available_backends()) :
-        backends_to_init_{ std::move(backends_to_init) } {
-        if (!is_initialized()) {
-            initialize(backends_to_init_);
-        }
+    scope_guard() {
+        backends_ = initialize();
     }
 
     /**
-     * @brief If the environments are not already initialized, initialize all necessary environments in order for all PLSSVM backends to work properly
-     * @param[in] argc the number of provided command line arguments
-     * @param[in] argv the provided command line arguments
+     * @copydoc initialize(const std::vector<backend_type> &)
      */
-    scope_guard(int &argc, char **argv, std::vector<backend_type> backends_to_init = list_available_backends()) :
-        backends_to_init_{ std::move(backends_to_init) } {
-        if (!is_initialized()) {
-            initialize(argc, argv, backends_to_init_);
-        }
+    explicit scope_guard(std::vector<backend_type> backends) :
+        backends_{ std::move(backends) } {
+        initialize(backends_);
+    }
+
+    /**
+     * @copydoc initialize(int &, char **)
+     */
+    scope_guard(int &argc, char **argv) {
+        backends_ = initialize(argc, argv);
+    }
+
+    /**
+     * @copydoc initialize(int &, char **, const std::vector<backend_type> &)
+     */
+    scope_guard(int &argc, char **argv, std::vector<backend_type> backends) :
+        backends_{ std::move(backends) } {
+        initialize(argc, argv, backends_);
     }
 
     /**
@@ -107,19 +420,32 @@ class [[nodiscard]] scope_guard {
     scope_guard &operator=(scope_guard &&) noexcept = default;
 
     /**
-     * @brief If the environments are not already finalized, finalize all necessary environments in order for all PLSSVM backends to work properly.
+     * @brief Return the backends that are initialized and finalized using this scope_guard.
+     * @return the initialized and finalized backends (`[[nodiscard]]`)
+     */
+    [[nodiscard]] const std::vector<backend_type> &backends() const noexcept {
+        return backends_;
+    }
+
+    /**
+     * @brief Finalize all previously initialized backends.
      */
     ~scope_guard() {
-        if (!is_finalized()) {
-            finalize(backends_to_init_);
-        }
+        finalize(backends_);
     }
 
   private:
-    /// The backends that should be initialized IF it is necessary for them.
-    std::vector<backend_type> backends_to_init_{};
+    /// The backends that should be initialized IF it is necessary for them or all available if empty.
+    std::vector<backend_type> backends_{};
 };
 
 }  // namespace plssvm::environment
+
+/// @cond Doxygen_suppress
+
+template <>
+struct fmt::formatter<plssvm::environment::status> : fmt::ostream_formatter { };
+
+/// @endcond
 
 #endif  // PLSSVM_ENVIRONMENT_HPP_

@@ -13,6 +13,7 @@
         - [plssvm.openmp.CSVM, plssvm.stdpar.CSVM, plssvm.cuda.CSVM, plssvm.hip.CSVM, plssvm.opencl.CSVM, plssvm.sycl.CSVM, plssvm.dpcpp.CSVM, plssvm.adaptivecpp.CSVM](#plssvmopenmpcsvm-plssvmcudacsvm-plssvmhipcsvm-plssvmopenclcsvm-plssvmsyclcsvm-plssvmdpcppcsvm-plssvmadaptivecppcsvm)
         - [plssvm.Model](#plssvmmodel)
         - [plssvm.Version](#plssvmversion)
+        - [plssvm.environment.ScopeGuard](#plssvmenvironmentscopeguard)
         - [plssvm.detail.tracking.PerformanceTracker](#plssvmdetailtrackingperformancetracker)
         - [plssvm.detail.tracking.Events](#plssvmdetailtrackingevent-plssvmdetailtrackingevents)
     - [Free functions](#free-functions)
@@ -197,6 +198,7 @@ The following table lists all PLSSVM enumerations exposed on the Python side:
 | `ClassificationType`   | `OAA`, `OAO`                                                         | The different supported multi-class classification strategies (default: `LIBSVM`).                                                                                                                                                                          |
 | `BackendType`          | `AUTOMATIC`, `OPENMP`, `CUDA`, `HIP`, `OPENCL`, `SYCL`               | The different supported backends (default: `AUTOMATIC`). If `AUTOMATIC` is provided, the selected backend depends on the used target platform.                                                                                                              |
 | `VerbosityLevel`       | `QUIET`, `LIBSVM`, `TIMING`, `FULL`                                  | The different supported log levels (default: `FULL`). `QUIET` means no output, `LIBSVM` output that is as conformant as possible with LIBSVM's output, `TIMING` all timing related outputs, and `FULL` everything. Can be combined via bit-wise operations. |
+| `Status`               | `UNINITIALIZED`, `INITIALIZED`, `FINALIZED`, `UNNECESSARY`           | The different environment status values. **Note**: located in the `plssvm.environment` module.                                                                                                                                                              |                                                                                                                                                                                                                   |
 
 If a SYCL implementation is available, additional enumerations are available:
 
@@ -423,6 +425,19 @@ A class encapsulating the version information of the used PLSSVM installation.
 | `minor : int`      | The minor PLSSVM version.                 |
 | `patch : int`      | The patch PLSSVM version.                 |
 
+#### `plssvm.environment.ScopeGuard`
+
+The environmental scope guard can be used to automatically finalize all necessary backend environments when it goes out of scope.
+
+| constructors                            | description                                                                                                                                                                             |
+|-----------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `ScopeGuard([backends={}])`             | Create a new scope guard initializing all available backend environments. If a list of backends is provided, only initializes these backends.                                           |
+| `ScopeGuard(argc, argv, [backends={}])` | Create a new scope guard initializing all available backend environments using the provided command line arguments. If a list of backends is provided, only initializes these backends. |
+
+| methods      | description                                                                                                                       |
+|--------------|-----------------------------------------------------------------------------------------------------------------------------------|
+| `backends()` | Return all initialized backends. All backends returned by this function will be finalized when the scope guard goes out of scope. |
+
 #### `plssvm.detail.tracking.PerformanceTracker`
 
 A submodule used to track various performance statistics like runtimes, but also the used setup and hyperparameters.
@@ -515,6 +530,15 @@ If a stdpar implementation is available, additional free functions are available
 | function                                  | description                                                                                                                                   |
 |-------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------|
 | `list_available_stdpar_implementations()` | List all available stdpar implementations (determined during PLSSVM's build step; currently always guaranteed to be only one implementation). |
+
+Additional free functions are available under `plssvm.environment.`.
+
+| function                                | description                                                                                                                                                  |
+|-----------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `get_backend_status(backend)`           | Return the current environment status of the provided backend.                                                                                               |
+| `initialize([backends={}])`             | Initialize all available backend environments. If a list of backends is provided, only initializes these backends.                                           |
+| `initialize(argc, argv, [backends={}])` | Initialize all available backend environments using the provided command line arguments. If a list of backends is provided, only initializes these backends. |
+| `finalize([backends={}])`               | Finalize all available backend environments. If a list of backends is provided, only finalizes these backends.                                               |
 
 ### Exceptions
 
