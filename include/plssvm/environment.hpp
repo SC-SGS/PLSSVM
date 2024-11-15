@@ -153,7 +153,7 @@ template <auto is_initialized_function, auto is_finalized_function>
         case backend_type::kokkos:
             {
 #if defined(PLSSVM_HAS_KOKKOS_BACKEND)
-                return determine_status_from_initialized_finalized_functions<Kokkos::is_initialized, Kokkos::is_finalized>();
+                return detail::determine_status_from_initialized_finalized_functions<Kokkos::is_initialized, Kokkos::is_finalized>();
 #else
                 return status::unnecessary;
 #endif
