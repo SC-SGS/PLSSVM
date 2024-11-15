@@ -111,6 +111,8 @@ namespace detail {
     } else if (is_finalized) {
         return status::finalized;
     }
+    // should never be reached!
+    ::plssvm::detail::unreachable();
 }
 
 /**
