@@ -89,12 +89,13 @@ The main highlights of our SVM implementations are:
 General dependencies:
 
 - a C++17 capable compiler (e.g. [`gcc`](https://gcc.gnu.org/) or [`clang`](https://clang.llvm.org/))
-- [CMake](https://cmake.org/) 3.23 or newer
+- [CMake](https://cmake.org/) 3.25 or newer
 - [cxxopts ≥ v3.2.0](https://github.com/jarro2783/cxxopts), [fast_float ≥ v6.1.3](https://github.com/fastfloat/fast_float), [{fmt} ≥ v11.0.2](https://github.com/fmtlib/fmt), and [igor](https://github.com/bluescarni/igor) (all four are automatically build during the CMake configuration if they couldn't be found using the respective `find_package` call)
 - [GoogleTest ≥ v1.15.2](https://github.com/google/googletest) if testing is enabled (automatically build during the CMake configuration if `find_package(GTest)` wasn't successful)
 - [doxygen](https://www.doxygen.nl/index.html) if documentation generation is enabled
 - [Pybind11 ≥ v2.13.3](https://github.com/pybind/pybind11) if Python bindings are enabled
 - [OpenMP](https://www.openmp.org/) 4.0 or newer (optional) to speed-up library utilities (like file parsing)
+- [Format.cmake](https://github.com/TheLartians/Format.cmake) if auto formatting via clang-format is enabled; also requires at least clang-format-18 and git
 - multiple Python modules used in the utility scripts, to install all modules use `pip install --user -r install/python_requirements.txt`
 
 Additional dependencies for the OpenMP backend:
@@ -286,6 +287,7 @@ The `[optional_options]` can be one or multiple of:
 - `PLSSVM_ENABLE_TESTING=ON|OFF` (default: `ON`): enable testing using GoogleTest and ctest
 - `PLSSVM_ENABLE_LANGUAGE_BINDINGS=ON|OFF` (default: `OFF`): enable language bindings
 - `PLSSVM_STL_DEBUG_MODE_FLAGS=ON|OFF` (default: `OFF`): enable STL debug modes (**note**: changes the resulting library's ABI!)
+- `PLSSVM_ENABLE_FORMATTING=ON|OFF` (default: `OFF`): enable automatic formatting using clang-format; adds additional targets `check-clang-format`, `clang-format`, and `fix-clang-format`
 
 If `PLSSVM_ENABLE_TESTING` is set to `ON`, the following option can also be set:
 
@@ -448,6 +450,23 @@ cmake --build . -- coverage
 ```
 
 The resulting `html` coverage report is located in the `coverage` folder in the build directory.
+
+### Automatic Source File Formatting
+
+To enable automatic formatting `PLSSVM_ENABLE_FORMATTING` must be set to `ON` and a `clang-format` and `git` executables must be available in `PATH` (minimum `clang-format` version is 18).
+
+To check whether formatting changes must be applied use: 
+
+```bash
+cmake --build . --target check-clang-format
+```
+
+To auto format all files use:
+
+```bash
+cmake --build . --target clang-format
+cmake --build . --target fix-clang-format
+```
 
 ### Creating the Documentation
 
@@ -705,7 +724,6 @@ A simple C++ program (`main.cpp`) using PLSSVM as library could look like:
 
 int main() {
     // correctly initialize and finalize environments
-    // Note: currently only really necessary if Kokkos is enabled, since only Kokkos needs special environmental setup
     plssvm::environment::scope_guard environment_guard{};
     
     try {
@@ -774,7 +792,6 @@ import plssvm
 from sklearn.metrics import classification_report
 
 # correctly initialize and finalize environments
-# Note: currently only really necessary if Kokkos is enabled, since only Kokkos needs special environmental setup
 environment_guard = plssvm.environment.ScopeGuard()
 
 try:

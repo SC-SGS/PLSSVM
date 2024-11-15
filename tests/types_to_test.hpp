@@ -487,8 +487,7 @@ using combine_test_parameters_gtest_t = typename combine_test_parameters_gtest<T
 
 /// A list of all available kernel function types.
 constexpr std::array<plssvm::kernel_function_type, 6> kernel_functions_to_test{
-    plssvm::kernel_function_type::linear, plssvm::kernel_function_type::polynomial, plssvm::kernel_function_type::rbf,
-    plssvm::kernel_function_type::sigmoid, plssvm::kernel_function_type::laplacian, plssvm::kernel_function_type::chi_squared
+    plssvm::kernel_function_type::linear, plssvm::kernel_function_type::polynomial, plssvm::kernel_function_type::rbf, plssvm::kernel_function_type::sigmoid, plssvm::kernel_function_type::laplacian, plssvm::kernel_function_type::chi_squared
 };
 /// A list of all available layout types.
 constexpr std::array<plssvm::layout_type, 2> layout_types_to_test{

@@ -86,6 +86,9 @@ int main(int argc, char *argv[]) {
             }
             environment_guard = std::make_unique<plssvm::environment::scope_guard>(backends_to_initialize);
 
+            // initialize environments if necessary
+            environment_guard = std::make_unique<plssvm::environment::scope_guard>();
+
             // create default csvm
             const std::unique_ptr<plssvm::csvm> svm = [&]() {
                 if (use_sycl_as_backend) {

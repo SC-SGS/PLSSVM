@@ -9,9 +9,9 @@ jobs:
       matrix:
         build_type: [Debug, Release]
     steps:
-      - name: "Install cmake 3.28.3"
-        uses: lukka/get-cmake@v3.28.3
-      - name: Install LLVM and Clang
+      - name: "Install cmake 3.31.0"
+        uses: lukka/get-cmake@v3.31.0
+      - name: "Install LLVM and Clang"
         uses: KyleMayes/install-llvm-action@v2
         with:
           version: "15.0"
@@ -29,22 +29,21 @@ jobs:
           path: PLSSVM
       - name: "Configure PLSSVM using CMake"
         run: |
-          mkdir PLSSVM/build
-          cd PLSSVM/build
+          cd PLSSVM
           export LDFLAGS="-L/opt/homebrew/opt/libomp/lib"
           export CPPFLAGS="-I/opt/homebrew/opt/libomp/include"
-          cmake -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DPLSSVM_TARGET_PLATFORMS="cpu" -DPLSSVM_ENABLE_ASSERTS=ON -DPLSSVM_ENABLE_LANGUAGE_BINDINGS=ON -DPLSSVM_ENABLE_PERFORMANCE_TRACKING=ON -DPLSSVM_ENABLE_TESTING=ON -DPLSSVM_GENERATE_TEST_FILE=OFF -DPLSSVM_ENABLE_LTO=OFF -DPLSSVM_ENABLE_FAST_MATH=OFF -DPLSSVM_ENABLE_OPENCL_BACKEND=OFF -DPLSSVM_TEST_WITH_REDUCED_LABEL_TYPES=ON ..
+          cmake --preset openmp_test -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DPLSSVM_TARGET_PLATFORMS="cpu" -DPLSSVM_ENABLE_LANGUAGE_BINDINGS=ON -DPLSSVM_ENABLE_PERFORMANCE_TRACKING=ON -DPLSSVM_GENERATE_TEST_FILE=OFF -DPLSSVM_ENABLE_LTO=OFF
       - name: "Build PLSSVM"
         shell: bash
         run: |
-          cd PLSSVM/build
+          cd PLSSVM
           export LDFLAGS="-L/opt/homebrew/opt/libomp/lib"
           export CPPFLAGS="-I/opt/homebrew/opt/libomp/include"
-          cmake --build . --config ${{ matrix.build_type }}
+          cmake --build --preset openmp_test --config ${{ matrix.build_type }}
           echo "${GITHUB_WORKSPACE}/PLSSVM/build" >> $GITHUB_PATH
       - name: "Run tests"
         run: |
-          cd PLSSVM/build
+          cd PLSSVM
           export LDFLAGS="-L/opt/homebrew/opt/libomp/lib"
           export CPPFLAGS="-I/opt/homebrew/opt/libomp/include"
-          ctest -j 2 -E ".*executable.*" --output-on-failure -C ${{ matrix.build_type }}
+          ctest --preset openmp_test -C ${{ matrix.build_type }} -E ".*executable.*" --parallel 2

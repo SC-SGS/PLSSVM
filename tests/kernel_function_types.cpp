@@ -10,7 +10,7 @@
 
 #include "plssvm/kernel_function_types.hpp"
 
-#include "tests/custom_test_macros.hpp"     // EXPECT_CONVERSION_TO_STRING, EXPECT_CONVERSION_FROM_STRING
+#include "tests/custom_test_macros.hpp"  // EXPECT_CONVERSION_TO_STRING, EXPECT_CONVERSION_FROM_STRING
 
 #include "gtest/gtest.h"  // TEST, EXPECT_EQ, EXPECT_TRUE
 

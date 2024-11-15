@@ -11,8 +11,8 @@ jobs:
     steps:
       - name: "Install latest MSVC compiler"
         uses: ilammy/msvc-dev-cmd@v1.13.0
-      - name: "Install cmake 3.28.3"
-        uses: lukka/get-cmake@v3.28.3
+      - name: "Install cmake 3.31.0"
+        uses: lukka/get-cmake@v3.31.0
       - name: "Clone the PLSSVM repository into PLSSVM/"
         uses: actions/checkout@v4.1.1
         with:
@@ -23,16 +23,15 @@ jobs:
           py -m pip install -r PLSSVM/install/python_requirements.txt
       - name: "Configure PLSSVM using CMake"
         run: |
-          mkdir PLSSVM/build
-          cd PLSSVM/build
-          cmake -DCMAKE_CONFIGURATION_TYPES=${{ matrix.build_type }} -DPLSSVM_TARGET_PLATFORMS="cpu" -DPLSSVM_ENABLE_ASSERTS=ON -DPLSSVM_ENABLE_LANGUAGE_BINDINGS=ON -DPLSSVM_ENABLE_PERFORMANCE_TRACKING=ON -DPLSSVM_ENABLE_TESTING=ON -DPLSSVM_TEST_FILE_NUM_DATA_POINTS=50 -DPLSSVM_TEST_FILE_NUM_FEATURES=20 -DPLSSVM_ENABLE_LTO=OFF -DPLSSVM_ENABLE_FAST_MATH=OFF ..
+          cd PLSSVM
+          cmake --preset openmp_test -DCMAKE_CONFIGURATION_TYPES=${{ matrix.build_type }} -DPLSSVM_TARGET_PLATFORMS="cpu" -DPLSSVM_ENABLE_LANGUAGE_BINDINGS=ON -DPLSSVM_ENABLE_PERFORMANCE_TRACKING=ON -DPLSSVM_TEST_FILE_NUM_DATA_POINTS=50 -DPLSSVM_TEST_FILE_NUM_FEATURES=20
       - name: "Build PLSSVM"
         shell: bash
         run: |
-          cd PLSSVM/build
-          cmake --build . --config ${{ matrix.build_type }}
+          cd PLSSVM
+          cmake --build --preset openmp_test --config ${{ matrix.build_type }}
           echo "${GITHUB_WORKSPACE}/PLSSVM/build" >> $GITHUB_PATH
       - name: "Run tests"
         run: |
-          cd PLSSVM/build
-          ctest -j 2 -E ".*executable.*" --output-on-failure -C ${{ matrix.build_type }}
+          cd PLSSVM
+          ctest --preset openmp_test -C ${{ matrix.build_type }} -E ".*executable.*" --parallel 2

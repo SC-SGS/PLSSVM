@@ -43,6 +43,12 @@ namespace plssvm { }
 /// Namespace containing versioning information.
 namespace plssvm::version { }
 
+/// Namespace containing environment setup and teardown functionality.
+namespace plssvm::environment { }
+
+/// Namespace containing environment initialization and finalization functionality specific details. **Should not** directly be used by users.
+namespace plssvm::environment::detail { }
+
 /// Namespace containing Git versioning information.
 namespace plssvm::version::git_metadata { }
 

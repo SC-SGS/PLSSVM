@@ -17,9 +17,9 @@
 #include "plssvm/detail/memory_size.hpp"         // plssvm::detail::memory_size (literals)
 #include "plssvm/detail/tracking/events.hpp"     // plssvm::detail::tracking::{events, event}
 
-#include "tests/naming.hpp"                                 // naming::test_parameter_to_name
-#include "tests/types_to_test.hpp"                          // util::{label_type_gtest, test_parameter_type_at_t}
-#include "tests/utility.hpp"                                // util::redirect_output
+#include "tests/naming.hpp"         // naming::test_parameter_to_name
+#include "tests/types_to_test.hpp"  // util::{label_type_gtest, test_parameter_type_at_t}
+#include "tests/utility.hpp"        // util::redirect_output
 
 #include "fmt/format.h"   // fmt::format
 #include "gmock/gmock.h"  // EXPECT_CALL, EXPECT_THAT, ::testing::{HasSubstr}
