@@ -81,7 +81,6 @@ constexpr bool has_only_sycl_parameter_named_args_v = !igor::has_other_than<Args
 template <typename... Args>
 constexpr bool has_only_kokkos_parameter_named_args_v = !igor::has_other_than<Args...>(plssvm::kernel_type, plssvm::gamma, plssvm::degree, plssvm::coef0, plssvm::cost, plssvm::kokkos_execution_space);
 
-
 }  // namespace detail
 
 /**

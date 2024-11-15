@@ -1,13 +1,13 @@
 /**
-* @file
-* @author Alexander Van Craen
-* @author Marcel Breyer
-* @copyright 2018-today The PLSSVM project - All Rights Reserved
-* @license This file is part of the PLSSVM project which is released under the MIT license.
-*          See the LICENSE.md file in the project root for full license information.
-*
-* @brief Determine the execution spaces available for tests with the Kokkos backend.
-*/
+ * @file
+ * @author Alexander Van Craen
+ * @author Marcel Breyer
+ * @copyright 2018-today The PLSSVM project - All Rights Reserved
+ * @license This file is part of the PLSSVM project which is released under the MIT license.
+ *          See the LICENSE.md file in the project root for full license information.
+ *
+ * @brief Determine the execution spaces available for tests with the Kokkos backend.
+ */
 
 #ifndef PLSSVM_TESTS_BACKENDS_KOKKOS_UTILITY_HPP_
 #define PLSSVM_TESTS_BACKENDS_KOKKOS_UTILITY_HPP_
@@ -90,7 +90,6 @@ struct create_kokkos_test_tuple {
 template <template <plssvm::kokkos::execution_space> typename test_type>
 using create_kokkos_test_tuple_t = typename create_kokkos_test_tuple<test_type>::type;
 
-
-}
+}  // namespace util
 
 #endif  // PLSSVM_TESTS_BACKENDS_KOKKOS_UTILITY_HPP_
