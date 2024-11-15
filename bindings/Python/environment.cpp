@@ -35,6 +35,7 @@ void init_environment(py::module_ &m) {
 
     // bind free functions
     env_module.def("get_backend_status", &plssvm::environment::get_backend_status, "get the environment status for the provided backend");
+    env_module.def("is_initialization_necessary", &plssvm::environment::is_initialization_necessary, "check if the provided backend needs a special environment initialization");
 
     env_module.def("initialize", [](const py::kwargs &args) {
         // check for valid keys

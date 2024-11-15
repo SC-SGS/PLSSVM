@@ -15,6 +15,7 @@
 #define PLSSVM_ENVIRONMENT_HPP_
 
 #include "plssvm/backend_types.hpp"          // plssvm::backend_type, plssvm::list_available_backends
+#include "plssvm/detail/assert.hpp"          // PLSSVM_ASSERT
 #include "plssvm/detail/string_utility.hpp"  // plssvm::detail::to_lower_case
 #include "plssvm/detail/utility.hpp"         // plssvm::detail::{contains, unreachable}
 #include "plssvm/exceptions/exceptions.hpp"  // plssvm::environment_exception
@@ -108,6 +109,17 @@ namespace detail {
     }
 }
 
+/**
+ * @brief Determine the environment status based on the result of the @p is_initialized_function and @p is_finalized_function functions.
+ * @tparam is_initialized_function the function to check whether a backend is initialized
+ * @tparam is_finalized_function the function to check whether a backend is finalized
+ * @return the respective environment status (`[[nodiscard]]`)
+ */
+template <auto is_initialized_function, auto is_finalized_function>
+[[nodiscard]] inline status determine_status_from_initialized_finalized_functions() {
+    return determine_status_from_initialized_finalized_flags(is_initialized_function(), is_finalized_function());
+}
+
 }  // namespace detail
 
 //****************************************************************************//
@@ -139,6 +151,17 @@ namespace detail {
     ::plssvm::detail::unreachable();
 }
 
+/**
+ * @brief Check whether the provided backend needs a special initialization.
+ * @param[in] backend the backend to check
+ * @return `true` if the backend needs a special environment initialization, `false` otherwise
+ */
+constexpr bool is_initialization_necessary([[maybe_unused]] const backend_type backend) {
+    // Note: must be implemented for the backends that need environmental setup
+    // currently false for all available backends
+    return false;
+}
+
 //****************************************************************************//
 //         backend specific initialization and finalization functions         //
 //****************************************************************************//
@@ -150,6 +173,7 @@ namespace detail {
  * @param[in] backend the backend to initialize
  */
 inline void initialize_backend([[maybe_unused]] const backend_type backend) {
+    PLSSVM_ASSERT(backend != backend_type::automatic, "The automatic backend may never be initialized!");
     // Note: must be implemented for the backends that need environmental setup
     // nothing to do for all available backends
 }
@@ -161,6 +185,7 @@ inline void initialize_backend([[maybe_unused]] const backend_type backend) {
  * @param[in,out] argv the command line arguments
  */
 inline void initialize_backend([[maybe_unused]] const backend_type backend, [[maybe_unused]] int &argc, [[maybe_unused]] char **argv) {
+    PLSSVM_ASSERT(backend != backend_type::automatic, "The automatic backend may never be initialized!");
     // Note: must be implemented for the backends that need environmental setup
     // nothing to do for all available backends
 }
@@ -170,6 +195,7 @@ inline void initialize_backend([[maybe_unused]] const backend_type backend, [[ma
  * @param[in] backend  the backend to finalize
  */
 inline void finalize_backend([[maybe_unused]] const backend_type backend) {
+    PLSSVM_ASSERT(backend != backend_type::automatic, "The automatic backend may never be finalized!");
     // Note: must be implemented for the backends that need environmental setup
     // nothing to do for all available backends
 }
