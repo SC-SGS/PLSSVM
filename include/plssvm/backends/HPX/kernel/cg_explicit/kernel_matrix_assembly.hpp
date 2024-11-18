@@ -15,18 +15,18 @@
 #pragma once
 
 #include "plssvm/backends/HPX/kernel/kernel_functions.hpp"  // plssvm::hpx::detail::{feature_reduce, apply_kernel_function}
-#include "plssvm/constants.hpp"                                // plssvm::{real_type, INTERNAL_BLOCK_SIZE, FEATURE_BLOCK_SIZE, PADDING_SIZE}
-#include "plssvm/detail/assert.hpp"                            // PLSSVM_ASSERT
-#include "plssvm/kernel_function_types.hpp"                    // plssvm::kernel_function_type
-#include "plssvm/matrix.hpp"                                   // plssvm::aos_matrix
+#include "plssvm/constants.hpp"                             // plssvm::{real_type, INTERNAL_BLOCK_SIZE, FEATURE_BLOCK_SIZE, PADDING_SIZE}
+#include "plssvm/detail/assert.hpp"                         // PLSSVM_ASSERT
+#include "plssvm/kernel_function_types.hpp"                 // plssvm::kernel_function_type
+#include "plssvm/matrix.hpp"                                // plssvm::aos_matrix
 
-#include <hpx/execution.hpp>                                // hpx::execution::par_unseq
-#include <hpx/parallel/segmented_algorithms/for_each.hpp>   // hpx::for_each
-#include <array>      // std::array
-#include <cmath>      // std::ceil, std::sqrt
-#include <cstddef>    // std::size_t
-#include <numeric>    // std::iota
-#include <vector>     // std::vector
+#include <array>                                           // std::array
+#include <cmath>                                           // std::ceil, std::sqrt
+#include <cstddef>                                         // std::size_t
+#include <hpx/execution.hpp>                               // hpx::execution::par_unseq
+#include <hpx/parallel/segmented_algorithms/for_each.hpp>  // hpx::for_each
+#include <numeric>                                         // std::iota
+#include <vector>                                          // std::vector
 
 namespace plssvm::hpx::detail {
 
@@ -59,11 +59,11 @@ void device_kernel_assembly(const std::vector<real_type> &q, std::vector<real_ty
     std::vector<std::size_t> range(blocked_dept * (blocked_dept + 1) / 2);
     std::iota(range.begin(), range.end(), 0);
 
- ::hpx::for_each(::hpx::execution::par_unseq, range.begin(), range.end(), [&](const std::size_t idx) {
+    ::hpx::for_each(::hpx::execution::par_unseq, range.begin(), range.end(), [&](const std::size_t idx) {
         // calculate the indices used in the current thread
         const std::size_t col = static_cast<std::size_t>(static_cast<double>(blocked_dept) + 0.5 - 0.5 * std::sqrt(4 * (blocked_dept * blocked_dept + blocked_dept - 2 * idx) + 1));
         const std::size_t row = static_cast<std::size_t>(0.5 * static_cast<double>(2 * (idx - col * blocked_dept) + col * col + col));
-  
+
         const std::size_t row_idx = row * INTERNAL_BLOCK_SIZE_uz;
         const std::size_t col_idx = col * INTERNAL_BLOCK_SIZE_uz;
 

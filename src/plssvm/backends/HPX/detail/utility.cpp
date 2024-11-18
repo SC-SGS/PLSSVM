@@ -7,11 +7,11 @@
  *          See the LICENSE.md file in the project root for full license information.
  */
 
-#include <hpx/runtime_distributed.hpp>       // ::hpx::get_num_worker_threads
-#include <hpx/version.hpp>                   // ::hpx::full_version_as_string
 #include "plssvm/backends/HPX/detail/utility.hpp"
 
-#include <string>  // std::string
+#include <hpx/runtime_distributed.hpp>  // ::hpx::get_num_worker_threads
+#include <hpx/version.hpp>              // ::hpx::full_version_as_string
+#include <string>                       // std::string
 
 namespace plssvm::hpx::detail {
 

@@ -227,7 +227,7 @@ inline void finalize_backend([[maybe_unused]] const backend_type backend) {
     // only have to perform special initialization steps for the HPX backend
 #if defined(PLSSVM_HAS_HPX_BACKEND)
     if (backend == backend_type::hpx) {
-        ::hpx::post( []{::hpx::finalize();} );
+        ::hpx::post([] { ::hpx::finalize(); });
     }
 #endif
 }

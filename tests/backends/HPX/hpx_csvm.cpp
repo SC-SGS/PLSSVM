@@ -9,31 +9,31 @@
  * @brief Tests for the functionality related to the HPX backend.
  */
 
-#include "plssvm/backend_types.hpp"                                                   // plssvm::csvm_to_backend_type_v
+#include "plssvm/backend_types.hpp"                                                // plssvm::csvm_to_backend_type_v
 #include "plssvm/backends/HPX/csvm.hpp"                                            // plssvm::hpx::csvm
 #include "plssvm/backends/HPX/exceptions.hpp"                                      // plssvm::hpx::backend_exception
 #include "plssvm/backends/HPX/kernel/cg_explicit/blas.hpp"                         // plssvm::hpx::device_kernel_symm
 #include "plssvm/backends/HPX/kernel/cg_explicit/kernel_matrix_assembly.hpp"       // plssvm::hpx::device_kernel_assembly
 #include "plssvm/backends/HPX/kernel/cg_implicit/kernel_matrix_assembly_blas.hpp"  // plssvm::hpx::device_kernel_assembly_symm
 #include "plssvm/backends/HPX/kernel/predict_kernel.hpp"                           // plssvm::hpx::{device_kernel_w_linear, device_kernel_predict_linear, device_kernel_predict}
-#include "plssvm/constants.hpp"                                                       // plssvm::PADDING_SIZE
-#include "plssvm/data_set.hpp"                                                        // plssvm::data_set
-#include "plssvm/detail/arithmetic_type_name.hpp"                                     // plssvm::detail::arithmetic_type_name
-#include "plssvm/detail/data_distribution.hpp"                                        // plssvm::detail::triangular_data_distribution
-#include "plssvm/detail/type_list.hpp"                                                // plssvm::detail::supported_label_types
-#include "plssvm/kernel_function_types.hpp"                                           // plssvm::kernel_function_type
-#include "plssvm/matrix.hpp"                                                          // plssvm::soa_matrix
-#include "plssvm/parameter.hpp"                                                       // plssvm::parameter, plssvm::detail::parameter, plssvm::kernel_type, plssvm::cost
-#include "plssvm/shape.hpp"                                                           // plssvm::shape
-#include "plssvm/target_platforms.hpp"                                                // plssvm::target_platform
+#include "plssvm/constants.hpp"                                                    // plssvm::PADDING_SIZE
+#include "plssvm/data_set.hpp"                                                     // plssvm::data_set
+#include "plssvm/detail/arithmetic_type_name.hpp"                                  // plssvm::detail::arithmetic_type_name
+#include "plssvm/detail/data_distribution.hpp"                                     // plssvm::detail::triangular_data_distribution
+#include "plssvm/detail/type_list.hpp"                                             // plssvm::detail::supported_label_types
+#include "plssvm/kernel_function_types.hpp"                                        // plssvm::kernel_function_type
+#include "plssvm/matrix.hpp"                                                       // plssvm::soa_matrix
+#include "plssvm/parameter.hpp"                                                    // plssvm::parameter, plssvm::detail::parameter, plssvm::kernel_type, plssvm::cost
+#include "plssvm/shape.hpp"                                                        // plssvm::shape
+#include "plssvm/target_platforms.hpp"                                             // plssvm::target_platform
 
-#include "tests/backends/generic_csvm_tests.hpp"       // generic CSVM tests to instantiate
-#include "tests/backends/ground_truth.hpp"             // ground_truth::{perform_dimensional_reduction, assemble_device_specific_kernel_matrix, assemble_full_kernel_matrix, gemm, calculate_w}
-#include "tests/backends/HPX/mock_hpx_csvm.hpp"  // mock_hpx_csvm
-#include "tests/custom_test_macros.hpp"                // EXPECT_THROW_WHAT
-#include "tests/naming.hpp"                            // naming::test_parameter_to_name
-#include "tests/types_to_test.hpp"                     // util::{cartesian_type_product_t, combine_test_parameters_gtest_t}
-#include "tests/utility.hpp"                           // util::redirect_output
+#include "tests/backends/generic_csvm_tests.hpp"  // generic CSVM tests to instantiate
+#include "tests/backends/ground_truth.hpp"        // ground_truth::{perform_dimensional_reduction, assemble_device_specific_kernel_matrix, assemble_full_kernel_matrix, gemm, calculate_w}
+#include "tests/backends/HPX/mock_hpx_csvm.hpp"   // mock_hpx_csvm
+#include "tests/custom_test_macros.hpp"           // EXPECT_THROW_WHAT
+#include "tests/naming.hpp"                       // naming::test_parameter_to_name
+#include "tests/types_to_test.hpp"                // util::{cartesian_type_product_t, combine_test_parameters_gtest_t}
+#include "tests/utility.hpp"                      // util::redirect_output
 
 #include "fmt/format.h"   // fmt::format
 #include "gtest/gtest.h"  // TEST_F, EXPECT_NO_THROW, INSTANTIATE_TYPED_TEST_SUITE_P, ::testing::Test
@@ -44,7 +44,7 @@
 #include <vector>     // std::vector
 
 class HPXCSVM : public ::testing::Test,
-                   private util::redirect_output<> { };
+                private util::redirect_output<> { };
 
 // check whether the constructor correctly fails when using an incompatible target platform
 TEST_F(HPXCSVM, construct_parameter) {

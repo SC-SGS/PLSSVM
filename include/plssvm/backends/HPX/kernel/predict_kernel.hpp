@@ -14,21 +14,21 @@
 #define PLSSVM_BACKENDS_HPX_KERNEL_PREDICT_KERNEL_HPP_
 #pragma once
 
-#include "plssvm/backends/HPX/detail/utility.hpp"              // plssvm::hpx::detail::atomic_ref
-#include "plssvm/backends/HPX/kernel/kernel_functions.hpp"     // plssvm::hpx::detail::{feature_reduce, apply_kernel_function}
-#include "plssvm/constants.hpp"                                // plssvm::{real_type, INTERNAL_BLOCK_SIZE, FEATURE_BLOCK_SIZE, PADDING_SIZE}
-#include "plssvm/detail/assert.hpp"                            // PLSSVM_ASSERT
-#include "plssvm/kernel_function_types.hpp"                    // plssvm::kernel_function_type
-#include "plssvm/matrix.hpp"                                   // plssvm::aos_matrix, plssvm::soa_matrix
-#include "plssvm/shape.hpp"                                    // plssvm::shape
+#include "plssvm/backends/HPX/detail/utility.hpp"           // plssvm::hpx::detail::atomic_ref
+#include "plssvm/backends/HPX/kernel/kernel_functions.hpp"  // plssvm::hpx::detail::{feature_reduce, apply_kernel_function}
+#include "plssvm/constants.hpp"                             // plssvm::{real_type, INTERNAL_BLOCK_SIZE, FEATURE_BLOCK_SIZE, PADDING_SIZE}
+#include "plssvm/detail/assert.hpp"                         // PLSSVM_ASSERT
+#include "plssvm/kernel_function_types.hpp"                 // plssvm::kernel_function_type
+#include "plssvm/matrix.hpp"                                // plssvm::aos_matrix, plssvm::soa_matrix
+#include "plssvm/shape.hpp"                                 // plssvm::shape
 
-#include <hpx/execution.hpp>                              // hpx::execution::par_unseq
-#include <hpx/parallel/segmented_algorithms/for_each.hpp> // hpx::for_each
-#include <array>      // std::array
-#include <cmath>      // std::fma
-#include <cstddef>    // std::size_t
-#include <numeric>    // std::iota
-#include <vector>     // std::vector
+#include <array>                                           // std::array
+#include <cmath>                                           // std::fma
+#include <cstddef>                                         // std::size_t
+#include <hpx/execution.hpp>                               // hpx::execution::par_unseq
+#include <hpx/parallel/segmented_algorithms/for_each.hpp>  // hpx::for_each
+#include <numeric>                                         // std::iota
+#include <vector>                                          // std::vector
 
 namespace plssvm::hpx::detail {
 
@@ -61,7 +61,7 @@ inline void device_kernel_w_linear(soa_matrix<real_type> &w, const aos_matrix<re
         // calculate the indices used in the current thread
         const std::size_t feature = idx / blocked_num_classes;
         const std::size_t c = idx % blocked_num_classes;
-      
+
         const std::size_t feature_idx = feature * INTERNAL_BLOCK_SIZE_uz;
         const std::size_t class_idx = c * INTERNAL_BLOCK_SIZE_uz;
 
@@ -124,7 +124,7 @@ inline void device_kernel_predict_linear(aos_matrix<real_type> &prediction, cons
         // calculate the indices used in the current thread
         const std::size_t pp = idx / blocked_num_classes;
         const std::size_t c = idx % blocked_num_classes;
-       
+
         const std::size_t pp_idx = pp * INTERNAL_BLOCK_SIZE_uz;
         const std::size_t class_idx = c * INTERNAL_BLOCK_SIZE_uz;
 

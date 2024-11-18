@@ -19,13 +19,13 @@
 #include "plssvm/matrix.hpp"         // plssvm::soa_matrix
 #include "plssvm/shape.hpp"          // plssvm::shape
 
-#include <hpx/execution.hpp>                              // hpx::execution::par_unseq
-#include <hpx/parallel/segmented_algorithms/for_each.hpp> // hpx::for_each
-#include <array>      // std::array
-#include <cmath>      // std::ceil
-#include <cstddef>    // std::size_t
-#include <numeric>    // std::iota
-#include <vector>     // std::vector
+#include <array>                                           // std::array
+#include <cmath>                                           // std::ceil
+#include <cstddef>                                         // std::size_t
+#include <hpx/execution.hpp>                               // hpx::execution::par_unseq
+#include <hpx/parallel/segmented_algorithms/for_each.hpp>  // hpx::for_each
+#include <numeric>                                         // std::iota
+#include <vector>                                          // std::vector
 
 namespace plssvm::hpx::detail {
 
@@ -51,9 +51,9 @@ inline void device_kernel_symm(const std::size_t num_rows, const std::size_t num
     // cast all values to 64-bit unsigned long long to prevent potential 32-bit overflows
     const auto INTERNAL_BLOCK_SIZE_uz = static_cast<std::size_t>(INTERNAL_BLOCK_SIZE);
     const auto PADDING_SIZE_uz = static_cast<std::size_t>(PADDING_SIZE);
-    
+
     // define range over which should be iterated
-    std::vector<std::size_t> range(blocked_num_rhs * blocked_num_rows);   // define range over which should be iterated
+    std::vector<std::size_t> range(blocked_num_rhs * blocked_num_rows);  // define range over which should be iterated
     std::iota(range.begin(), range.end(), 0);
 
     ::hpx::for_each(::hpx::execution::par_unseq, range.begin(), range.end(), [&](const std::size_t idx) {
