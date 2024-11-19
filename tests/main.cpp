@@ -45,9 +45,7 @@ GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(DevicePtrDeathTest);
 GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(Exception);
 
 void ensure_finalization() {
-    if (!plssvm::environment::is_finalized()) {
-        plssvm::environment::finalize();
-    }
+    plssvm::environment::finalize();
 }
 
 int main(int argc, char **argv) {
@@ -55,6 +53,7 @@ int main(int argc, char **argv) {
 
     // initialize environments
     const plssvm::environment::scope_guard environment_guard{};
+    // Note: necessary for Kokkos::SYCL
     [[maybe_unused]] const int ret = std::atexit(ensure_finalization);
 
     // prevent problems with fork() in the presence of multiple threads
