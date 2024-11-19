@@ -15,6 +15,12 @@
 
 #include <cstdlib>  // std::atexit
 
+#if defined(PLSSVM_HAS_HPX_BACKEND)
+    // Workaround as Scope Guard not working properly with Google Test
+    // Run the entire main function in HPX rutime
+    #include <hpx/hpx_main.hpp>
+#endif
+
 // silence GTest warnings/test errors
 
 // generic CSVM tests
