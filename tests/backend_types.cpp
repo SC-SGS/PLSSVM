@@ -109,6 +109,7 @@ TEST_P(BackendTypeUnsupportedCombination, unsupported_backend_target_platform_co
 INSTANTIATE_TEST_SUITE_P(BackendType, BackendTypeUnsupportedCombination, ::testing::Values(
          unsupported_combination_type{ { plssvm::backend_type::cuda, plssvm::backend_type::hip }, { plssvm::target_platform::cpu } },
          unsupported_combination_type{ { plssvm::backend_type::openmp }, { plssvm::target_platform::gpu_nvidia, plssvm::target_platform::gpu_amd, plssvm::target_platform::gpu_intel } },
+         unsupported_combination_type{ { plssvm::backend_type::hpx }, { plssvm::target_platform::gpu_nvidia, plssvm::target_platform::gpu_amd, plssvm::target_platform::gpu_intel } },
          unsupported_combination_type{ { plssvm::backend_type::cuda }, { plssvm::target_platform::gpu_amd, plssvm::target_platform::gpu_intel } },
          unsupported_combination_type{ { plssvm::backend_type::hip }, { plssvm::target_platform::gpu_intel } }),
          naming::pretty_print_unsupported_backend_combination<BackendTypeUnsupportedCombination>);
@@ -126,6 +127,7 @@ TEST_P(BackendTypeSupportedCombination, supported_backend_target_platform_combin
 // clang-format off
 INSTANTIATE_TEST_SUITE_P(BackendType, BackendTypeSupportedCombination, ::testing::Values(
          supported_combination_type{ { plssvm::backend_type::openmp }, { plssvm::target_platform::cpu, plssvm::target_platform::gpu_nvidia, plssvm::target_platform::gpu_amd, plssvm::target_platform::gpu_intel }, plssvm::backend_type::openmp },
+         supported_combination_type{ { plssvm::backend_type::hpx }, { plssvm::target_platform::cpu, plssvm::target_platform::gpu_nvidia, plssvm::target_platform::gpu_amd, plssvm::target_platform::gpu_intel }, plssvm::backend_type::hpx },
          supported_combination_type{ { plssvm::backend_type::stdpar }, { plssvm::target_platform::cpu, plssvm::target_platform::gpu_nvidia, plssvm::target_platform::gpu_amd, plssvm::target_platform::gpu_intel }, plssvm::backend_type::stdpar },
          supported_combination_type{ { plssvm::backend_type::cuda }, { plssvm::target_platform::cpu, plssvm::target_platform::gpu_nvidia, plssvm::target_platform::gpu_amd, plssvm::target_platform::gpu_intel }, plssvm::backend_type::cuda },
          supported_combination_type{ { plssvm::backend_type::hip }, { plssvm::target_platform::cpu, plssvm::target_platform::gpu_nvidia, plssvm::target_platform::gpu_amd, plssvm::target_platform::gpu_intel }, plssvm::backend_type::hip },
@@ -141,8 +143,8 @@ INSTANTIATE_TEST_SUITE_P(BackendType, BackendTypeSupportedCombination, ::testing
 TEST(BackendType, csvm_to_backend_type) {
     // test the type_trait
     EXPECT_EQ(plssvm::csvm_to_backend_type<plssvm::openmp::csvm>::value, plssvm::backend_type::openmp);
-    EXPECT_EQ(plssvm::csvm_to_backend_type<plssvm::stdpar::csvm>::value, plssvm::backend_type::stdpar);
     EXPECT_EQ(plssvm::csvm_to_backend_type<plssvm::hpx::csvm>::value, plssvm::backend_type::hpx);
+    EXPECT_EQ(plssvm::csvm_to_backend_type<plssvm::stdpar::csvm>::value, plssvm::backend_type::stdpar);
     EXPECT_EQ(plssvm::csvm_to_backend_type<const plssvm::cuda::csvm>::value, plssvm::backend_type::cuda);
     EXPECT_EQ(plssvm::csvm_to_backend_type<plssvm::hip::csvm &>::value, plssvm::backend_type::hip);
     EXPECT_EQ(plssvm::csvm_to_backend_type<const plssvm::opencl::csvm &>::value, plssvm::backend_type::opencl);
@@ -157,8 +159,8 @@ TEST(BackendType, csvm_to_backend_type) {
 TEST(BackendType, csvm_to_backend_type_v) {
     // test the type_trait
     EXPECT_EQ(plssvm::csvm_to_backend_type_v<plssvm::openmp::csvm>, plssvm::backend_type::openmp);
-    EXPECT_EQ(plssvm::csvm_to_backend_type_v<plssvm::stdpar::csvm>, plssvm::backend_type::stdpar);
     EXPECT_EQ(plssvm::csvm_to_backend_type_v<plssvm::hpx::csvm>, plssvm::backend_type::hpx);
+    EXPECT_EQ(plssvm::csvm_to_backend_type_v<plssvm::stdpar::csvm>, plssvm::backend_type::stdpar);
     EXPECT_EQ(plssvm::csvm_to_backend_type_v<const plssvm::cuda::csvm>, plssvm::backend_type::cuda);
     EXPECT_EQ(plssvm::csvm_to_backend_type_v<plssvm::hip::csvm &>, plssvm::backend_type::hip);
     EXPECT_EQ(plssvm::csvm_to_backend_type_v<const plssvm::opencl::csvm &>, plssvm::backend_type::opencl);
