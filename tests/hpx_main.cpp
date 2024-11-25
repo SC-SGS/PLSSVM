@@ -9,11 +9,15 @@
  * @brief Contains the googletest main function. Sets the DeathTest to "threadsafe" execution instead of "fast".
  */
 
-#include "plssvm/environment.hpp"  // plssvm::environment::{scope_guard, initialize, finalize}
+#include "plssvm/environment.hpp"  // plssvm::environment::scope_guard
 
 #include "gtest/gtest.h"  // RUN_ALL_TESTS, ::testing::{InitGoogleTest, GTEST_FLAG},GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST definitions
 
 #include <cstdlib>  // std::atexit
+
+// Workaround as HPX runtime not working properly with Google Test
+// Run the entire main function in HPX runtime
+#include <hpx/hpx_main.hpp>
 
 // silence GTest warnings/test errors
 
@@ -44,22 +48,8 @@ GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(DevicePtrDeathTest);
 // exception tests
 GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(Exception);
 
-void ensure_finalization() {
-    plssvm::environment::finalize();
-}
-
 int main(int argc, char **argv) {
     ::testing::InitGoogleTest(&argc, argv);
-
-#if defined(PLSSVM_HAS_HPX_BACKEND)
-    // initialize environments
-    plssvm::environment::initialize();
-#else
-    // initialize environments and manage lifetime with Scope Guard
-    const plssvm::environment::scope_guard environment_guard{};
-    // Note: necessary for Kokkos::SYCL
-    [[maybe_unused]] const int ret = std::atexit(ensure_finalization);
-#endif
 
     // prevent problems with fork() in the presence of multiple threads
     // https://github.com/google/googletest/blob/main/docs/advanced.md#death-tests-and-threads
