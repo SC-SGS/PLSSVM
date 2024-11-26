@@ -68,7 +68,7 @@ if (WIN32)
 endif ()
 
 ########################################################################################################################
-##                                      create and set necessary base properties                                      ##
+#                                       create and set necessary base properties                                       #
 ########################################################################################################################
 ## set base sources
 set(PLSSVM_BASE_SOURCES
@@ -170,9 +170,11 @@ target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PRIVATE
 )
 
 option(PLSSVM_ENABLE_STL_DEBUG_MODE "Enables the debug modes for the STL implementations. Note: changes the ABI!" OFF)
+# ~~~
 # GCC standard library (libstdc++): _GLIBCXX_DEBUG
 # LLVM standard library (libc++): LIBCXX_ENABLE_DEBUG_MODE
 # MSVC standard library: _ITERATOR_DEBUG_LEVEL
+# ~~~
 set(PLSSVM_STL_DEBUG_MODE_FLAGS "-D_GLIBCXX_DEBUG -DLIBCXX_ENABLE_DEBUG_MODE -D_ITERATOR_DEBUG_LEVEL")
 if (PLSSVM_ENABLE_STL_DEBUG_MODE)
     message(STATUS "Enable standard library debug modes.")
@@ -180,7 +182,7 @@ if (PLSSVM_ENABLE_STL_DEBUG_MODE)
 endif ()
 
 ########################################################################################################################
-##                                      check for OpenMP (not for the backend!)                                       ##
+#                                       check for OpenMP (not for the backend!)                                        #
 ########################################################################################################################
 find_package(OpenMP 4.0 QUIET)
 if (OpenMP_FOUND)
@@ -204,7 +206,7 @@ else ()
 endif ()
 
 ########################################################################################################################
-##                                                 create executables                                                 ##
+#                                                  create executables                                                  #
 ########################################################################################################################
 ## create train executable
 set(PLSSVM_EXECUTABLE_TRAIN_NAME plssvm-train)
@@ -220,7 +222,7 @@ add_executable(${PLSSVM_EXECUTABLE_SCALE_NAME} ${CMAKE_CURRENT_SOURCE_DIR}/src/m
 list(APPEND PLSSVM_TARGETS_TO_INSTALL ${PLSSVM_EXECUTABLE_TRAIN_NAME} ${PLSSVM_EXECUTABLE_PREDICT_NAME} ${PLSSVM_EXECUTABLE_SCALE_NAME})
 
 ########################################################################################################################
-##                                            setup code coverage analysis                                            ##
+#                                             setup code coverage analysis                                             #
 ########################################################################################################################
 ## coverage analysis only possible with the Coverage CMAKE_BUILD_TYPE
 if (uppercase_CMAKE_BUILD_TYPE MATCHES COVERAGE)
@@ -272,7 +274,7 @@ if (uppercase_CMAKE_BUILD_TYPE MATCHES COVERAGE)
 endif ()
 
 ########################################################################################################################
-##                                         parse target platform information                                          ##
+#                                          parse target platform information                                           #
 ########################################################################################################################
 ## the target platforms and architectures must either be set using the CMake command line option
 ## PLSSVM_TARGET_PLATFORMS or the environment variable with the same name
@@ -360,7 +362,7 @@ foreach (PLSSVM_PLATFORM ${PLSSVM_TARGET_PLATFORMS})
 endforeach ()
 
 ########################################################################################################################
-##                                            check for and enable backends                                           ##
+#                                             check for and enable backends                                            #
 ########################################################################################################################
 ## check for OpenMP backend
 set(PLSSVM_ENABLE_OPENMP_BACKEND AUTO CACHE STRING "Enable OpenMP Backend")
@@ -424,7 +426,7 @@ target_link_libraries(${PLSSVM_EXECUTABLE_PREDICT_NAME} ${PLSSVM_ALL_LIBRARY_NAM
 target_link_libraries(${PLSSVM_EXECUTABLE_SCALE_NAME} ${PLSSVM_ALL_LIBRARY_NAME})
 
 ########################################################################################################################
-##                                         add additional compile definitions                                         ##
+#                                          add additional compile definitions                                          #
 ########################################################################################################################
 ## the CMake build type for performance tracking
 target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC PLSSVM_BUILD_TYPE="${CMAKE_BUILD_TYPE}")
@@ -434,11 +436,13 @@ if (PLSSVM_ENABLE_ASSERTS)
     message(STATUS "Enable additional debugging assertions.")
     target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC PLSSVM_ENABLE_ASSERTS)
     
+    # ~~~
     # disable vectorization warning in clang in Release mode
     # -> loops can't be vectorized due to the PLSSVM_ASSERTs in the matrix::operator() member function
     # target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC
     #         $<$<AND:$<OR:$<CONFIG:RELEASE>,$<CONFIG:RELWITHDEBINFO>>,$<COMPILE_LANG_AND_ID:CXX,Clang,IntelLLVM>>:-Wno-pass-failed>
     # )
+    # ~~~
 endif ()
 
 ## use float as real_type if requested
@@ -487,7 +491,7 @@ if (PLSSVM_ENFORCE_MAX_MEM_ALLOC_SIZE)
 endif ()
 
 ########################################################################################################################
-##                                          check for Link Time Optimization                                          ##
+#                                           check for Link Time Optimization                                           #
 ########################################################################################################################
 ## enable Link Time Optimization (LTO)
 option(PLSSVM_ENABLE_LTO "Enable Link Time Optimizations." ON)
@@ -506,7 +510,7 @@ if (PLSSVM_ENABLE_LTO)
 endif ()
 
 ########################################################################################################################
-##                                    check for optional and necessary dependencies                                   ##
+#                                     check for optional and necessary dependencies                                    #
 ########################################################################################################################
 ## setup dependencies
 include(FetchContent)
@@ -628,7 +632,7 @@ target_link_libraries(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC fmt::fmt)
 list(POP_BACK CMAKE_MESSAGE_INDENT)
 
 ########################################################################################################################
-##                                   enable automatic formatting using clang-format                                   ##
+#                                    enable automatic formatting using clang-format                                    #
 ########################################################################################################################
 option(PLSSVM_ENABLE_FORMATTING "Enable a formatting targets using clang-format." OFF)
 if (PLSSVM_ENABLE_FORMATTING)
@@ -657,7 +661,7 @@ if (PLSSVM_ENABLE_FORMATTING)
 endif ()
 
 ########################################################################################################################
-##                                    enable documentation generation via doxygen                                     ##
+#                                     enable documentation generation via doxygen                                      #
 ########################################################################################################################
 option(PLSSVM_ENABLE_DOCUMENTATION "Build documentation using doxygen." OFF)
 if (PLSSVM_ENABLE_DOCUMENTATION)
@@ -667,7 +671,7 @@ if (PLSSVM_ENABLE_DOCUMENTATION)
 endif ()
 
 ########################################################################################################################
-##                                 enable performance tracking and hardware sampling                                  ##
+#                                  enable performance tracking and hardware sampling                                   #
 ########################################################################################################################
 option(PLSSVM_ENABLE_PERFORMANCE_TRACKING "Enable performance tracking to YAML files for the PLSSVM executables plssvm-train, plssvm-predict, and plssvm-scale." OFF)
 if (PLSSVM_ENABLE_PERFORMANCE_TRACKING)
@@ -675,7 +679,7 @@ if (PLSSVM_ENABLE_PERFORMANCE_TRACKING)
 endif ()
 
 ########################################################################################################################
-##                                           enable testing via google test                                           ##
+#                                            enable testing via google test                                            #
 ########################################################################################################################
 option(PLSSVM_ENABLE_TESTING "Build tests for all backends." ON)
 if (PLSSVM_ENABLE_TESTING)
@@ -684,7 +688,7 @@ if (PLSSVM_ENABLE_TESTING)
 endif ()
 
 ########################################################################################################################
-##                                              enable language bindings                                              ##
+#                                               enable language bindings                                               #
 ########################################################################################################################
 option(PLSSVM_ENABLE_LANGUAGE_BINDINGS "Build language bindings, e.g., for Python." OFF)
 if (PLSSVM_ENABLE_LANGUAGE_BINDINGS)
@@ -692,7 +696,7 @@ if (PLSSVM_ENABLE_LANGUAGE_BINDINGS)
 endif ()
 
 ########################################################################################################################
-##                                            print short (backend) summary                                           ##
+#                                             print short (backend) summary                                            #
 ########################################################################################################################
 message(STATUS "")
 message(STATUS "Enabled backends with respective targets:")
@@ -726,7 +730,7 @@ endif ()
 message(STATUS "")
 
 ########################################################################################################################
-##                                      configure version and git metadata files                                      ##
+#                                       configure version and git metadata files                                       #
 ########################################################################################################################
 message(STATUS "Configuring version and git metadata.")
 set(PRE_CONFIGURE_FILE "${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/version/git_metadata/git_metadata.cpp.in")
@@ -740,7 +744,7 @@ configure_file(
 )
 
 ########################################################################################################################
-##                                                 generate man pages                                                 ##
+#                                                  generate man pages                                                  #
 ########################################################################################################################
 ## assemble the SYCL manpage entry
 message(STATUS "Generating manpage files.")
@@ -789,7 +793,7 @@ configure_file(
 )
 
 ########################################################################################################################
-##                                           add support for `make install`                                           ##
+#                                            add support for `make install`                                            #
 ########################################################################################################################
 include(GNUInstallDirs)
 ## install all necessary library targets

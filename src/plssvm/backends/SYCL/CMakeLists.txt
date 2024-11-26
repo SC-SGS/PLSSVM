@@ -18,7 +18,10 @@ set(PLSSVM_SYCL_SOURCES
 # list of found SYCL implementations
 set(PLSSVM_SYCL_BACKEND_FOUND_IMPLEMENTATIONS "")
 
-# check if SYCL can be enabled
+########################################################################################################################
+#                                             check if SYCL can be enabled                                             #
+########################################################################################################################
+
 ## add AdaptiveCpp
 set(PLSSVM_ENABLE_SYCL_ADAPTIVECPP_BACKEND ${PLSSVM_ENABLE_SYCL_BACKEND} CACHE STRING "Enable AdaptiveCpp as SYCL Backend")
 set_property(CACHE PLSSVM_ENABLE_SYCL_ADAPTIVECPP_BACKEND PROPERTY STRINGS AUTO ON OFF)

@@ -52,8 +52,8 @@ endif ()
 append_local_and_parent(PLSSVM_STDPAR_SOURCES ${CMAKE_CURRENT_LIST_DIR}/csvm.cpp)
 
 # set global roc-stdpar compiler flags
-# TODO: The flag "--hipstdpar-interpose-alloc" may be necessary for older AMD GPUs
 set_local_and_parent(PLSSVM_STDPAR_BACKEND_COMPILER_FLAG -hipstdpar --hipstdpar-path=${PLSSVM_STDPAR_BACKEND_HIPSTDPAR_PATH} --offload-arch=${PLSSVM_AMD_TARGET_ARCHS})
+# TODO: The flag "--hipstdpar-interpose-alloc" may be necessary for older AMD GPUs
 
 if (PLSSVM_ENABLE_FAST_MATH)
     set_local_and_parent(PLSSVM_STDPAR_BACKEND_COMPILER_FLAG ${PLSSVM_STDPAR_BACKEND_COMPILER_FLAG} -ffast-math)

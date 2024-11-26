@@ -7,7 +7,7 @@
 list(APPEND CMAKE_MESSAGE_INDENT "Documentation:  ")
 
 ########################################################################################################################
-##                                     setup documentation generation with doxygen                                    ##
+#                                      setup documentation generation with doxygen                                     #
 ########################################################################################################################
 ## use installed doxygen
 find_package(Doxygen REQUIRED OPTIONAL_COMPONENTS dot)

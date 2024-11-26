@@ -6,8 +6,8 @@
 
 message(CHECK_START "searching for NVHPC (nvc++)")
 
+# check for NVIDIA's nvhpc compiler
 if (CMAKE_CXX_COMPILER_ID STREQUAL "NVHPC")
-    # check for NVIDIA's nvhpc compiler
     # nvhpc needs either a CPU or an NVIDIA GPU as target
     if (NOT DEFINED PLSSVM_CPU_TARGET_ARCHS AND NOT DEFINED PLSSVM_NVIDIA_TARGET_ARCHS)
         if (PLSSVM_ENABLE_STDPAR_BACKEND MATCHES "ON")
@@ -50,8 +50,7 @@ elseif (DEFINED PLSSVM_NVIDIA_TARGET_ARCHS)
     message(STATUS "NVIDIA GPU target platform provided, setting: \"-stdpar=gpu\"")
     set_local_and_parent(PLSSVM_STDPAR_BACKEND_COMPILER_FLAG -stdpar=gpu)
     
-    # TODO: if supported by the device, this may fix the performance tracking error in our tests?
-    # set_local_and_parent(PLSSVM_STDPAR_BACKEND_COMPILER_FLAG -gpu=unified)
+    # set_local_and_parent(PLSSVM_STDPAR_BACKEND_COMPILER_FLAG -gpu=unified) #< TODO: if supported by the device, this may fix the performance tracking error in our tests?
     
     if (PLSSVM_ENABLE_FAST_MATH)
         set_local_and_parent(PLSSVM_STDPAR_BACKEND_COMPILER_FLAG ${PLSSVM_STDPAR_BACKEND_COMPILER_FLAG} -gpu=fastmath)

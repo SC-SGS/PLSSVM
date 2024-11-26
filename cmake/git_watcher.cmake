@@ -4,6 +4,8 @@
 # Released under the MIT License.
 # https://raw.githubusercontent.com/andrew-hardin/cmake-git-version-tracking/master/LICENSE
 
+# cmake-format: off
+
 # This file defines a target that monitors the state of a git repo.
 # If the state changes (e.g. a commit is made), then a file gets reconfigured.
 # Here are the primary variables that control script behavior:
@@ -356,3 +358,5 @@ endfunction()
 
 # And off we go...
 Main()
+
+# cmake-format: on
