@@ -94,7 +94,7 @@ General dependencies:
 - [doxygen](https://www.doxygen.nl/index.html) if documentation generation is enabled
 - [Pybind11 ≥ v2.13.3](https://github.com/pybind/pybind11) if Python bindings are enabled
 - [OpenMP](https://www.openmp.org/) 4.0 or newer (optional) to speed-up library utilities (like file parsing)
-- [Format.cmake](https://github.com/TheLartians/Format.cmake) if auto formatting via clang-format is enabled; also requires at least clang-format-18 and git
+- [Format.cmake](https://github.com/TheLartians/Format.cmake) if auto formatting via cmake-format and clang-format is enabled; also requires at least clang-format-18 and git, additionally, needs our custom [cmake-format fork](https://github.com/vancraar/cmake_format) incorporating some patches
 - multiple Python modules used in the utility scripts, to install all modules use `pip install --user -r install/python_requirements.txt`
 
 Additional dependencies for the OpenMP backend:
@@ -277,7 +277,7 @@ The `[optional_options]` can be one or multiple of:
 - `PLSSVM_ENABLE_TESTING=ON|OFF` (default: `ON`): enable testing using GoogleTest and ctest
 - `PLSSVM_ENABLE_LANGUAGE_BINDINGS=ON|OFF` (default: `OFF`): enable language bindings
 - `PLSSVM_STL_DEBUG_MODE_FLAGS=ON|OFF` (default: `OFF`): enable STL debug modes (**note**: changes the resulting library's ABI!)
-- `PLSSVM_ENABLE_FORMATTING=ON|OFF` (default: `OFF`): enable automatic formatting using clang-format; adds additional targets `check-clang-format`, `clang-format`, and `fix-clang-format`
+- `PLSSVM_ENABLE_FORMATTING=ON|OFF` (default: `OFF`): enable automatic formatting using cmake-format and clang-format; adds additional targets `check-cmake-format`, `cmake-format`, `fix-cmake-format`, `check-clang-format`, `clang-format`, and `fix-clang-format`
 
 If `PLSSVM_ENABLE_TESTING` is set to `ON`, the following option can also be set:
 
@@ -437,17 +437,24 @@ The resulting `html` coverage report is located in the `coverage` folder in the 
 ### Automatic Source File Formatting
 
 To enable automatic formatting `PLSSVM_ENABLE_FORMATTING` must be set to `ON` and a `clang-format` and `git` executables must be available in `PATH` (minimum `clang-format` version is 18).
+Additionally, our custom [cmake-format fork](https://github.com/vancraar/cmake_format) must be used since it has incorporated some necessary patches. 
+Our `cmake-format` can be installed via:
+
+```bash
+pip install "git+https://github.com/vancraar/cmake_format@master"
+```
 
 To check whether formatting changes must be applied use: 
 
 ```bash
+cmake --build . --target check-cmake-format
 cmake --build . --target check-clang-format
 ```
 
 To auto format all files use:
 
 ```bash
-cmake --build . --target clang-format
+cmake --build . --target fix-cmake-format
 cmake --build . --target fix-clang-format
 ```
 
