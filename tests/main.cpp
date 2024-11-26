@@ -51,15 +51,10 @@ void ensure_finalization() {
 int main(int argc, char **argv) {
     ::testing::InitGoogleTest(&argc, argv);
 
-#if defined(PLSSVM_HAS_HPX_BACKEND)
-    // initialize environments
-    plssvm::environment::initialize();
-#else
     // initialize environments and manage lifetime with Scope Guard
     const plssvm::environment::scope_guard environment_guard{};
     // Note: necessary for Kokkos::SYCL
     [[maybe_unused]] const int ret = std::atexit(ensure_finalization);
-#endif
 
     // prevent problems with fork() in the presence of multiple threads
     // https://github.com/google/googletest/blob/main/docs/advanced.md#death-tests-and-threads
