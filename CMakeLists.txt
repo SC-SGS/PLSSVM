@@ -831,6 +831,11 @@ configure_package_config_file(
         "${PROJECT_BINARY_DIR}/plssvmConfig.cmake"
         INSTALL_DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/plssvm/cmake
 )
+configure_package_config_file(
+        "${CMAKE_CURRENT_SOURCE_DIR}/cmake/plssvm/plssvmHIPTargets.cmake.in"
+        "${PROJECT_BINARY_DIR}/plssvmHIPTargets.cmake"
+        INSTALL_DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/plssvm/cmake
+)
 
 ## create and copy install-targets file
 install(EXPORT plssvm_Targets
@@ -844,7 +849,7 @@ install(FILES
         "${PROJECT_BINARY_DIR}/plssvmConfig.cmake"
         "${PROJECT_BINARY_DIR}/plssvmConfigVersion.cmake"
         "${CMAKE_CURRENT_SOURCE_DIR}/cmake/plssvm/plssvmCUDATargets.cmake"
-        "${CMAKE_CURRENT_SOURCE_DIR}/cmake/plssvm/plssvmHIPTargets.cmake"
+        "${PROJECT_BINARY_DIR}/plssvmHIPTargets.cmake"
         "${CMAKE_CURRENT_SOURCE_DIR}/cmake/plssvm/plssvmOpenCLTargets.cmake"
         "${CMAKE_CURRENT_SOURCE_DIR}/cmake/plssvm/plssvmOpenMPTargets.cmake"
         "${CMAKE_CURRENT_SOURCE_DIR}/cmake/plssvm/plssvmAdaptiveCppTargets.cmake"
