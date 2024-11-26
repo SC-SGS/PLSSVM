@@ -10,7 +10,6 @@ message(CHECK_START "searching for GNU GCC + TBB")
 find_package(TBB QUIET)
 
 if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND TBB_FOUND)
-    # GNU GCC also needs TBB
     # GNU GCC + TBB needs either a CPU target
     if (NOT DEFINED PLSSVM_CPU_TARGET_ARCHS)
         if (PLSSVM_ENABLE_STDPAR_BACKEND MATCHES "ON")

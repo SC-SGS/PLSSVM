@@ -10,7 +10,6 @@ message(CHECK_START "searching for AdaptiveCpp")
 find_package(TBB QUIET)
 
 if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND TBB_FOUND)
-    # AdaptiveCpp also needs TBB
     # check for the AdaptiveCpp compiler
     include(CheckCXXCompilerFlag)
     check_cxx_compiler_flag("--acpp-stdpar" PLSSVM_HAS_ACPP_STDPAR_FLAG)
