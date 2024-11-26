@@ -1,7 +1,7 @@
-## Authors: Alexander Van Craen, Marcel Breyer
-## Copyright (C): 2018-today The PLSSVM project - All Rights Reserved
-## License: This file is part of the PLSSVM project which is released under the MIT license.
-##          See the LICENSE.md file in the project root for full license information.
+# Authors: Alexander Van Craen, Marcel Breyer
+# Copyright (C): 2018-today The PLSSVM project - All Rights Reserved
+# License: This file is part of the PLSSVM project which is released under the MIT license.
+#          See the LICENSE.md file in the project root for full license information.
 ########################################################################################################################
 
 list(APPEND CMAKE_MESSAGE_INDENT "HIP:  ")
@@ -34,7 +34,9 @@ endif ()
 # check if HIP_PLATFORM is provided as environment variable
 if (DEFINED ENV{HIP_PLATFORM})
     # check if the environment variable is correctly defined
-    if ((DEFINED PLSSVM_AMD_TARGET_ARCHS AND NOT $ENV{HIP_PLATFORM} MATCHES "amd") OR (DEFINED PLSSVM_NVIDIA_TARGET_ARCHS AND NOT $ENV{HIP_PLATFORM} MATCHES "nvidia"))
+    if ((DEFINED PLSSVM_AMD_TARGET_ARCHS AND NOT $ENV{HIP_PLATFORM} MATCHES "amd") OR (DEFINED PLSSVM_NVIDIA_TARGET_ARCHS AND NOT $ENV{HIP_PLATFORM} MATCHES
+                                                                                                                              "nvidia")
+    )
         if (PLSSVM_ENABLE_HIP_BACKEND MATCHES "ON")
             message(SEND_ERROR "Found invalid \"HIP_PLATFORM\" value ($ENV{HIP_PLATFORM}) for the requested HIP backend!")
         else ()
@@ -83,13 +85,15 @@ if (NOT HIP_FOUND)
 endif ()
 message(CHECK_PASS "found")
 
-## set necessary flags
+# set necessary flags
 set(CMAKE_HIP_STANDARD 17)
 set(CMAKE_HIP_STANDARD_REQUIRED ON)
 
 if (DEFINED PLSSVM_AMD_TARGET_ARCHS)
-    ## hipcc is used to compile the HIP code -> set flags accordingly
-    set(CMAKE_HIP_FLAGS "${CMAKE_HIP_FLAGS} -std=c++17 -Wall -Wextra -Wdouble-promotion -Wshadow -Wcast-qual -Wnull-dereference -Wextra-semi -Wunreachable-code -Wuninitialized -Wmost -Wconversion")
+    # hipcc is used to compile the HIP code -> set flags accordingly
+    set(CMAKE_HIP_FLAGS
+        "${CMAKE_HIP_FLAGS} -std=c++17 -Wall -Wextra -Wdouble-promotion -Wshadow -Wcast-qual -Wnull-dereference -Wextra-semi -Wunreachable-code -Wuninitialized -Wmost -Wconversion"
+    )
     # build type specific flags
     set(CMAKE_HIP_FLAGS_RELWITHDEBINFO "${CMAKE_HIP_FLAGS_RELWITHDEBINFO} -O2")
     set(CMAKE_HIP_FLAGS_RELEASE "${CMAKE_HIP_FLAGS_RELEASE} -O3")
@@ -98,7 +102,7 @@ if (DEFINED PLSSVM_AMD_TARGET_ARCHS)
         set(CMAKE_HIP_FLAGS "${CMAKE_HIP_FLAGS} -ffast-math")
     endif ()
 elseif (DEFINED PLSSVM_NVIDIA_TARGET_ARCHS)
-    ## nvcc is used to compile the HIP code -> set flags accordingly
+    # nvcc is used to compile the HIP code -> set flags accordingly
     set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -Xcompiler '-fPIC' -Xcudafe --diag_suppress=unsigned_compare_with_zero -lineinfo")
     # build type specific flags
     set(CMAKE_CUDA_FLAGS_DEBUG "${CMAKE_CUDA_FLAGS_DEBUG} -Xptxas=-v -Xptxas -dlcm=cg -Xcudafe --diag_suppress=unrecognized_gcc_pragma")
@@ -130,7 +134,7 @@ set_source_files_properties(${PLSSVM_HIP_SOURCES} PROPERTIES LANGUAGE ${PLSSVM_H
 set_local_and_parent(PLSSVM_HIP_BACKEND_LIBRARY_NAME plssvm-HIP)
 add_library(${PLSSVM_HIP_BACKEND_LIBRARY_NAME} SHARED ${PLSSVM_HIP_SOURCES})
 
-#set_target_properties(${PLSSVM_HIP_BACKEND_LIBRARY_NAME} PROPERTIES HIP_SEPARABLE_COMPILATION ON) #< https://gitlab.kitware.com/cmake/cmake/-/issues/23210
+# set_target_properties(${PLSSVM_HIP_BACKEND_LIBRARY_NAME} PROPERTIES HIP_SEPARABLE_COMPILATION ON) #< https://gitlab.kitware.com/cmake/cmake/-/issues/23210
 
 target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC -Wno-sign-compare)
 

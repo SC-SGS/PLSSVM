@@ -1,18 +1,14 @@
-## Authors: Alexander Van Craen, Marcel Breyer
-## Copyright (C): 2018-today The PLSSVM project - All Rights Reserved
-## License: This file is part of the PLSSVM project which is released under the MIT license.
-##          See the LICENSE.md file in the project root for full license information.
+# Authors: Alexander Van Craen, Marcel Breyer
+# Copyright (C): 2018-today The PLSSVM project - All Rights Reserved
+# License: This file is part of the PLSSVM project which is released under the MIT license.
+#          See the LICENSE.md file in the project root for full license information.
 ########################################################################################################################
 
-## create OpenMP tests
+# create OpenMP tests
 set(PLSSVM_OPENMP_TEST_NAME OpenMP_tests)
 
 # list all necessary sources
-set(PLSSVM_OPENMP_TEST_SOURCES
-    ${CMAKE_CURRENT_LIST_DIR}/detail/utility.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/exceptions.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/openmp_csvm.cpp
-)
+set(PLSSVM_OPENMP_TEST_SOURCES ${CMAKE_CURRENT_LIST_DIR}/detail/utility.cpp ${CMAKE_CURRENT_LIST_DIR}/exceptions.cpp ${CMAKE_CURRENT_LIST_DIR}/openmp_csvm.cpp)
 
 # add test executable
 add_executable(${PLSSVM_OPENMP_TEST_NAME} ${CMAKE_CURRENT_LIST_DIR}/../../main.cpp ${PLSSVM_OPENMP_TEST_SOURCES})

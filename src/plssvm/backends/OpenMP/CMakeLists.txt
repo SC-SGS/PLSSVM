@@ -1,7 +1,7 @@
-## Authors: Alexander Van Craen, Marcel Breyer
-## Copyright (C): 2018-today The PLSSVM project - All Rights Reserved
-## License: This file is part of the PLSSVM project which is released under the MIT license.
-##          See the LICENSE.md file in the project root for full license information.
+# Authors: Alexander Van Craen, Marcel Breyer
+# Copyright (C): 2018-today The PLSSVM project - All Rights Reserved
+# License: This file is part of the PLSSVM project which is released under the MIT license.
+#          See the LICENSE.md file in the project root for full license information.
 ########################################################################################################################
 
 list(APPEND CMAKE_MESSAGE_INDENT "OpenMP:  ")
@@ -31,11 +31,7 @@ endif ()
 message(CHECK_PASS "found ")
 
 # explicitly set sources
-set(PLSSVM_OPENMP_SOURCES
-    ${CMAKE_CURRENT_LIST_DIR}/detail/utility.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/csvm.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/exceptions.cpp
-)
+set(PLSSVM_OPENMP_SOURCES ${CMAKE_CURRENT_LIST_DIR}/detail/utility.cpp ${CMAKE_CURRENT_LIST_DIR}/csvm.cpp ${CMAKE_CURRENT_LIST_DIR}/exceptions.cpp)
 
 # set target properties
 set_local_and_parent(PLSSVM_OPENMP_BACKEND_LIBRARY_NAME plssvm-OpenMP)
@@ -54,12 +50,13 @@ target_compile_options(${PLSSVM_OPENMP_BACKEND_LIBRARY_NAME} PRIVATE $<$<COMPILE
 # work-around since hipcc doesn't define _OPENMP
 if (${CMAKE_CXX_COMPILER_ID} MATCHES "Clang")
     # hipcc must be clang
-    execute_process(
-            COMMAND ${CMAKE_CXX_COMPILER} --version
-            OUTPUT_VARIABLE PLSSVM_CLANG_VERSION_OUTPUT)
+    execute_process(COMMAND ${CMAKE_CXX_COMPILER} --version OUTPUT_VARIABLE PLSSVM_CLANG_VERSION_OUTPUT)
     # check if version message contains hipcc specific values
     if ("${PLSSVM_CLANG_VERSION_OUTPUT}" MATCHES ".*HIP.*" AND "${PLSSVM_CLANG_VERSION_OUTPUT}" MATCHES ".*AMD clang.*")
-        message(STATUS "Add compiler options \"-x c++\" as workaround for hipcc (https://docs.amd.com/projects/HIP/en/docs-5.2.0/user_guide/faq.html#why-openmp-is-undefined-when-compiling-with-fopenmp).")
+        message(
+            STATUS
+                "Add compiler options \"-x c++\" as workaround for hipcc (https://docs.amd.com/projects/HIP/en/docs-5.2.0/user_guide/faq.html#why-openmp-is-undefined-when-compiling-with-fopenmp)."
+        )
         target_compile_options(${PLSSVM_OPENMP_BACKEND_LIBRARY_NAME} PRIVATE -x c++)
     endif ()
 endif ()

@@ -1,7 +1,7 @@
-## Authors: Alexander Van Craen, Marcel Breyer
-## Copyright (C): 2018-today The PLSSVM project - All Rights Reserved
-## License: This file is part of the PLSSVM project which is released under the MIT license.
-##          See the LICENSE.md file in the project root for full license information.
+# Authors: Alexander Van Craen, Marcel Breyer
+# Copyright (C): 2018-today The PLSSVM project - All Rights Reserved
+# License: This file is part of the PLSSVM project which is released under the MIT license.
+#          See the LICENSE.md file in the project root for full license information.
 ########################################################################################################################
 
 include(CMakeFindDependencyMacro)
@@ -24,7 +24,9 @@ if (TARGET plssvm::plssvm-stdpar)
         if (NOT PLSSVM_HAS_HIPSTDPAR_STDPAR_FLAG)
             set(plssvm_FOUND OFF)
             set(plssvm_stdpar_FOUND OFF)
-            set(plssvm_NOT_FOUND_MESSAGE "The CMAKE_CXX_COMPILER must be set to the hipstdpar patched LLVM compiler (acpp) in user code in order to use plssvm::stdpar!")
+            set(plssvm_NOT_FOUND_MESSAGE
+                "The CMAKE_CXX_COMPILER must be set to the hipstdpar patched LLVM compiler (acpp) in user code in order to use plssvm::stdpar!"
+            )
             return()
         endif ()
     elseif (PLSSVM_STDPAR_BACKEND MATCHES "IntelLLVM")
@@ -55,7 +57,7 @@ if (TARGET plssvm::plssvm-stdpar)
             return()
         endif ()
     endif ()
-    
+
     # set alias targets
     add_library(plssvm::stdpar ALIAS plssvm::plssvm-stdpar)
     # set COMPONENT to be found

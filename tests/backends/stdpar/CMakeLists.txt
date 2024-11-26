@@ -1,7 +1,7 @@
-## Authors: Alexander Van Craen, Marcel Breyer
-## Copyright (C): 2018-today The PLSSVM project - All Rights Reserved
-## License: This file is part of the PLSSVM project which is released under the MIT license.
-##          See the LICENSE.md file in the project root for full license information.
+# Authors: Alexander Van Craen, Marcel Breyer
+# Copyright (C): 2018-today The PLSSVM project - All Rights Reserved
+# License: This file is part of the PLSSVM project which is released under the MIT license.
+#          See the LICENSE.md file in the project root for full license information.
 ########################################################################################################################
 
 # death tests are currently not supported for the stdpar implementations due to GoogleTest internal SegFaults
@@ -11,17 +11,18 @@ endif ()
 
 # performance tracker not supported with NVHPC
 if (PLSSVM_ENABLE_PERFORMANCE_TRACKING AND PLSSVM_STDPAR_BACKEND AND PLSSVM_STDPAR_BACKEND STREQUAL "NVHPC")
-    message(FATAL_ERROR "The (global) performance tracker is currently not supported with GTest and NVHPC. Please set \"PLSSVM_ENABLE_PERFORMANCE_TRACKING=OFF\" or use another stdpar implementation!")
+    message(
+        FATAL_ERROR
+            "The (global) performance tracker is currently not supported with GTest and NVHPC. Please set \"PLSSVM_ENABLE_PERFORMANCE_TRACKING=OFF\" or use another stdpar implementation!"
+    )
 endif ()
 
-## create stdpar tests
+# create stdpar tests
 set(PLSSVM_STDPAR_TEST_NAME stdpar_tests)
 
 # list all necessary sources
 set(PLSSVM_STDPAR_TEST_SOURCES
-    ${CMAKE_CURRENT_LIST_DIR}/detail/utility.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/exceptions.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/stdpar_csvm.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/detail/utility.cpp ${CMAKE_CURRENT_LIST_DIR}/exceptions.cpp ${CMAKE_CURRENT_LIST_DIR}/stdpar_csvm.cpp
     # ~~~
     # since the stdpar implementation_type enumeration is used even if no stdpar backend
     # is available this is also tested in the base library

@@ -1,7 +1,7 @@
-## Authors: Alexander Van Craen, Marcel Breyer
-## Copyright (C): 2018-today The PLSSVM project - All Rights Reserved
-## License: This file is part of the PLSSVM project which is released under the MIT license.
-##          See the LICENSE.md file in the project root for full license information.
+# Authors: Alexander Van Craen, Marcel Breyer
+# Copyright (C): 2018-today The PLSSVM project - All Rights Reserved
+# License: This file is part of the PLSSVM project which is released under the MIT license.
+#          See the LICENSE.md file in the project root for full license information.
 ########################################################################################################################
 
 message(CHECK_START "searching for NVHPC (nvc++)")
@@ -44,18 +44,19 @@ if (DEFINED PLSSVM_CPU_TARGET_ARCHS)
     message(STATUS "CPU target platform provided, setting: \"-stdpar=multicore -tp=native\"")
     set_local_and_parent(PLSSVM_STDPAR_BACKEND_COMPILER_FLAG -stdpar=multicore)
     set_local_and_parent(PLSSVM_STDPAR_BACKEND_COMPILER_FLAG ${PLSSVM_STDPAR_BACKEND_COMPILER_FLAG} -tp=native)
-    
+
     target_compile_definitions(${PLSSVM_STDPAR_BACKEND_LIBRARY_INTERFACE} INTERFACE PLSSVM_STDPAR_BACKEND_NVHPC_CPU)
 elseif (DEFINED PLSSVM_NVIDIA_TARGET_ARCHS)
     message(STATUS "NVIDIA GPU target platform provided, setting: \"-stdpar=gpu\"")
     set_local_and_parent(PLSSVM_STDPAR_BACKEND_COMPILER_FLAG -stdpar=gpu)
-    
-    # set_local_and_parent(PLSSVM_STDPAR_BACKEND_COMPILER_FLAG -gpu=unified) #< TODO: if supported by the device, this may fix the performance tracking error in our tests?
-    
+
+    # set_local_and_parent(PLSSVM_STDPAR_BACKEND_COMPILER_FLAG -gpu=unified) #< TODO: if supported by the device, this may fix the performance tracking error in
+    # our tests?
+
     if (PLSSVM_ENABLE_FAST_MATH)
         set_local_and_parent(PLSSVM_STDPAR_BACKEND_COMPILER_FLAG ${PLSSVM_STDPAR_BACKEND_COMPILER_FLAG} -gpu=fastmath)
     endif ()
-    
+
     target_compile_definitions(${PLSSVM_STDPAR_BACKEND_LIBRARY_INTERFACE} INTERFACE PLSSVM_STDPAR_BACKEND_NVHPC_GPU)
 endif ()
 separate_arguments(PLSSVM_STDPAR_BACKEND_COMPILER_FLAG UNIX_COMMAND ${PLSSVM_STDPAR_BACKEND_COMPILER_FLAG})
