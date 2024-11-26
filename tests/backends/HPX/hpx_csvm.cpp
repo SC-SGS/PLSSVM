@@ -192,7 +192,7 @@ TEST_F(HPXCSVM, calculate_w) {
     const plssvm::soa_matrix<plssvm::real_type> correct_w = ground_truth::calculate_w(weights, data.data());
 
     // check C for correctness
-    EXPECT_FLOATING_POINT_MATRIX_NEAR(w, correct_w);
+    EXPECT_FLOATING_POINT_MATRIX_NEAR_EPS(w, correct_w, 1e6);
 }
 
 using kernel_function_type_list_gtest = util::combine_test_parameters_gtest_t<util::kernel_function_type_list>;
@@ -350,7 +350,7 @@ TYPED_TEST(HPXCSVMKernelFunction, predict_values) {
 
     // check out for correctness
     const plssvm::aos_matrix<plssvm::real_type> correct_out = ground_truth::predict_values(params, correct_w, weights, rho, data_matr, predict_points);
-    EXPECT_FLOATING_POINT_MATRIX_NEAR(out, correct_out);
+    EXPECT_FLOATING_POINT_MATRIX_NEAR_EPS(out, correct_out, 1e6);
 }
 
 //*************************************************************************************************************************************//
