@@ -4,7 +4,7 @@
 ##          See the LICENSE.md file in the project root for full license information.
 ########################################################################################################################
 
-find_package(HPX 1.9.0)
+find_package(HPX 1.9.0 REQUIRED)
 
 ## create HPX tests
 set(PLSSVM_HPX_TEST_NAME HPX_tests)
