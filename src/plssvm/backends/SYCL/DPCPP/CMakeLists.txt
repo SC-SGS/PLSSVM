@@ -79,6 +79,10 @@ if (PLSSVM_SYCL_BACKEND_CHECK_FOR_DPCPP_COMPILER)
     if (DEFINED PLSSVM_NVIDIA_TARGET_ARCHS)
         # assemble -fsycl-targets
         list(APPEND PLSSVM_DPCPP_FSYCL_TARGETS "nvptx64-nvidia-cuda")
+        # add lineinfo for easier profiling
+        target_link_options(${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME} PRIVATE -Xcuda-ptxas -lineinfo)
+        # add verbose kernel compilation information to output if in Debug mode
+        target_link_options(${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME} PRIVATE $<$<CONFIG:Debug>:-Xcuda-ptxas --verbose>)
     endif ()
     # amd targets
     if (DEFINED PLSSVM_AMD_TARGET_ARCHS)
@@ -124,6 +128,7 @@ if (PLSSVM_SYCL_BACKEND_CHECK_FOR_DPCPP_COMPILER)
             endif ()
             target_compile_options(${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME} PRIVATE -Xsycl-target-backend=nvptx64-nvidia-cuda --offload-arch=${PLSSVM_NVIDIA_TARGET_ARCHS})
             target_link_options(${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME} PRIVATE -Xsycl-target-backend=nvptx64-nvidia-cuda --offload-arch=${PLSSVM_NVIDIA_TARGET_ARCHS})
+            # -Xcuda-ptxas --verbose
         endif ()
         # intel targets
         if (DEFINED PLSSVM_INTEL_TARGET_ARCHS)
