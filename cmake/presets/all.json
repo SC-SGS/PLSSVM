@@ -7,7 +7,6 @@
       "displayName": "All available backends",
       "inherits": "build",
       "cacheVariables": {
-        "CMAKE_CXX_COMPILER": "clang++",
         "PLSSVM_ENABLE_OPENMP_BACKEND": "AUTO",
         "PLSSVM_ENABLE_HPX_BACKEND": "AUTO",
         "PLSSVM_ENABLE_STDPAR_BACKEND": "OFF",
@@ -22,7 +21,6 @@
       "displayName": "All available backends + Python bindings",
       "inherits": "build",
       "cacheVariables": {
-        "CMAKE_CXX_COMPILER": "clang++",
         "PLSSVM_ENABLE_OPENMP_BACKEND": "AUTO",
         "PLSSVM_ENABLE_HPX_BACKEND": "AUTO",
         "PLSSVM_ENABLE_STDPAR_BACKEND": "OFF",
@@ -39,7 +37,6 @@
       "displayName": "All available backends tests",
       "inherits": "test",
       "cacheVariables": {
-        "CMAKE_CXX_COMPILER": "clang++",
         "PLSSVM_ENABLE_OPENMP_BACKEND": "AUTO",
         "PLSSVM_ENABLE_HPX_BACKEND": "AUTO",
         "PLSSVM_ENABLE_STDPAR_BACKEND": "OFF",
