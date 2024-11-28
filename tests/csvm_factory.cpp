@@ -237,7 +237,7 @@ TEST(CSVMFactory, factory_named_parameter) {
 }
 
 TEST(CSVMFactory, invalid_backend) {
-    EXPECT_THROW_WHAT(std::ignore = plssvm::make_csvm(static_cast<plssvm::backend_type>(8)),
+    EXPECT_THROW_WHAT(std::ignore = plssvm::make_csvm(static_cast<plssvm::backend_type>(9)),
                       plssvm::unsupported_backend_exception,
                       "Unrecognized backend provided!");
 }

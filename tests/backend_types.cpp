@@ -45,7 +45,7 @@ TEST(BackendType, to_string) {
 
 TEST(BackendType, to_string_unknown) {
     // check conversions to std::string from unknown backend_type
-    EXPECT_CONVERSION_TO_STRING(static_cast<plssvm::backend_type>(8), "unknown");
+    EXPECT_CONVERSION_TO_STRING(static_cast<plssvm::backend_type>(9), "unknown");
 }
 
 // check whether the std::string -> plssvm::backend_type conversions are correct
