@@ -57,6 +57,7 @@ The main highlights of our SVM implementations are:
 1. Drop-in replacement for LIBSVM's `svm-train`, `svm-predict`, and `svm-scale` (some features currently not implemented).
 2. Support of multiple different programming frameworks for parallelization (also called backends in our PLSSVM implementation) which allows us to target GPUs and CPUs from different vendors like NVIDIA, AMD, or Intel:
    - [OpenMP](https://www.openmp.org/)
+   - [HPX](https://hpx.stellar-group.org/)
    - [stdpar](https://en.cppreference.com/w/cpp/algorithm) (supported implementations are [nvc++](https://developer.nvidia.com/hpc-sdk) from NVIDIA's HPC SDK, [roc-stdpar](https://github.com/ROCm/roc-stdpar) as a patched LLVM, [icpx](https://www.intel.com/content/www/us/en/developer/tools/oneapi/dpc-compiler.html) as Intel's oneAPI compiler, [AdaptiveCpp](https://github.com/AdaptiveCpp/AdaptiveCpp), and [GNU GCC](https://gcc.gnu.org/) using TBB). <br>
      **Note**: due to the nature of the used USM mechanics in the `stdpar` implementations, the `stdpar` backend **can't** be enabled together with **any** other backend! <br>
      **Note**: since every translation units need to be compiled with the same flag, we currently globally set `CMAKE_CXX_FLAGS` although it's discouraged in favor of `target_compile_options`.
@@ -105,6 +106,10 @@ Additional dependencies for the OpenMP backend:
 Additional dependencies for the stdpar backend:
 
 - compiler with stdpar support
+
+Additional dependencies for the HPX backend:
+
+- [HPX ≥ v1.9.0](https://hpx.stellar-group.org/)
 
 Additional dependencies for the CUDA backend:
 
@@ -243,6 +248,11 @@ The `[optional_options]` can be one or multiple of:
   - `AUTO`: check for the OpenMP backend but **do not** fail if not available
   - `OFF`: do not check for the OpenMP backend
 
+- `PLSSVM_ENABLE_HPX_BACKEND=ON|OFF|AUTO` (default: `AUTO`):
+    - `ON`: check for the HPX backend and fail if not available
+    - `AUTO`: check for the HPX backend but **do not** fail if not available
+    - `OFF`: do not check for the HPX backend
+
 - `PLSSVM_ENABLE_STDPAR_BACKEND=ON|OFF|AUTO` (default: `AUTO`):
     - `ON`: check for the stdpar backend and fail if not available
     - `AUTO`: check for the stdpar backend but **do not** fail if not available
@@ -369,6 +379,9 @@ Available configure presets:
   "openmp"                  - OpenMP backend
   "openmp_python"           - OpenMP backend + Python bindings
   "openmp_test"             - OpenMP backend tests
+  "hpx"                     - HPX backend
+  "hpx_python"              - HPX backend + Python bindings
+  "hpx_test"                - HPX backend tests
   "stdpar"                  - stdpar backend
   "stdpar_python"           - stdpar backend + Python bindings
   "stdpar_test"             - stdpar backend tests
@@ -562,7 +575,7 @@ Usage:
   -i, --max_iter arg            set the maximum number of CG iterations (default: num_features)
   -l, --solver arg              choose the solver: automatic|cg_explicit|cg_implicit (default: automatic)
   -a, --classification arg      the classification strategy to use for multi-class classification: oaa|oao (default: oaa)
-  -b, --backend arg             choose the backend: automatic|openmp|cuda|hip|opencl|sycl|kokkos|stdpar (default: automatic)
+  -b, --backend arg             choose the backend: automatic|openmp|hpx|cuda|hip|opencl|sycl|kokkos|stdpar (default: automatic)
   -p, --target_platform arg     choose the target platform: automatic|cpu|gpu_nvidia|gpu_amd|gpu_intel (default: automatic)
       --sycl_kernel_invocation_type arg
                                 choose the kernel invocation type when using SYCL as backend: automatic|nd_range (default: automatic)
@@ -608,13 +621,14 @@ The `--backend=automatic` option works as follows:
 - if the `gpu_nvidia` target is available, check for existing backends in order `cuda` 🠦 `hip` 🠦 `opencl` 🠦 `sycl` 🠦 `kokkos` 🠦 `stdpar`
 - otherwise, if the `gpu_amd` target is available, check for existing backends in order `hip` 🠦 `opencl` 🠦 `sycl` 🠦 `kokkos` 🠦 `stdpar`
 - otherwise, if the `gpu_intel` target is available, check for existing backends in order `sycl` 🠦 `opencl` 🠦 `kokkos` 🠦 `stdpar`
-- otherwise, if the `cpu` target is available, check for existing backends in order `sycl` 🠦 `kokkos` 🠦 `opencl` 🠦 `openmp` 🠦 `stdpar`
+- otherwise, if the `cpu` target is available, check for existing backends in order `sycl` 🠦 `kokkos` 🠦 `opencl` 🠦 `openmp` 🠦 `hpx` 🠦 `stdpar`
 
 Note that during CMake configuration it is guaranteed that at least one of the above combinations does exist.
 
 The `--target_platform=automatic` option works for the different backends as follows:
 
 - `OpenMP`: always selects a CPU
+- `HPX`: always selects a CPU
 - `CUDA`: always selects an NVIDIA GPU (if no NVIDIA GPU is available, throws an exception)
 - `HIP`: always selects an AMD GPU (if no AMD GPU is available, throws an exception)
 - `OpenCL`: tries to find available devices in the following order: NVIDIA GPUs 🠦 AMD GPUs 🠦 Intel GPUs 🠦 CPU
@@ -640,7 +654,7 @@ LS-SVM with multiple (GPU-)backends
 Usage:
   ./plssvm-predict [OPTION...] test_file model_file [output_file]
 
-  -b, --backend arg             choose the backend: automatic|openmp|cuda|hip|opencl|sycl|kokkos|stdpar (default: automatic)
+  -b, --backend arg             choose the backend: automatic|openmp|hpx|cuda|hip|opencl|sycl|kokkos|stdpar (default: automatic)
   -p, --target_platform arg     choose the target platform: automatic|cpu|gpu_nvidia|gpu_amd|gpu_intel (default: automatic)
       --sycl_implementation_type arg
                                 choose the SYCL implementation to be used in the SYCL backend: automatic|dpcpp|adaptivecpp (default: automatic)

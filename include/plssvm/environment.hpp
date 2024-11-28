@@ -20,6 +20,11 @@
 #include "plssvm/detail/utility.hpp"         // plssvm::detail::{contains, unreachable}
 #include "plssvm/exceptions/exceptions.hpp"  // plssvm::environment_exception
 
+#if defined(PLSSVM_HAS_HPX_BACKEND)
+    #include <hpx/execution.hpp>  // ::hpx::post
+    #include <hpx/hpx_start.hpp>  // ::hpx::{start, stop, finalize}
+    #include <hpx/runtime.hpp>    // ::hpx::{is_running, is_stopped}
+#endif
 #if defined(PLSSVM_HAS_KOKKOS_BACKEND)
     #include "Kokkos_Core.hpp"  // Kokkos::is_initialized, Kokkos::is_finalized, Kokkos::initialize, Kokkos::finalize
 #endif
@@ -33,6 +38,8 @@
 #include <ostream>  // std::ostream
 #include <string>   // std::string
 #include <vector>   // std::vector
+
+
 
 namespace plssvm::environment {
 
@@ -104,7 +111,8 @@ namespace detail {
  * @return the respective environment status (`[[nodiscard]]`)
  */
 [[nodiscard]] inline status determine_status_from_initialized_finalized_flags(const bool is_initialized, const bool is_finalized) {
-    if (!is_initialized && !is_finalized) {
+    if (!is_initialized) {
+        // Note: ::hpx::is_stopped does return true even before calling finalize once
         return status::uninitialized;
     } else if (is_initialized && !is_finalized) {
         return status::initialized;
@@ -152,6 +160,14 @@ template <auto is_initialized_function, auto is_finalized_function>
         case backend_type::sycl:
             // no environment necessary to manage these backends
             return status::unnecessary;
+        case backend_type::hpx:
+            {
+#if defined(PLSSVM_HAS_HPX_BACKEND)
+                return detail::determine_status_from_initialized_finalized_functions<::hpx::is_running, ::hpx::is_stopped>();
+#else
+                return status::unnecessary;
+#endif
+            }
         case backend_type::kokkos:
             {
 #if defined(PLSSVM_HAS_KOKKOS_BACKEND)
@@ -189,7 +205,12 @@ namespace detail {
 inline void initialize_backend([[maybe_unused]] const backend_type backend) {
     PLSSVM_ASSERT(backend != backend_type::automatic, "The automatic backend may never be initialized!");
     // Note: must be implemented for the backends that need environmental setup
-    // only have to perform special initialization steps for the Kokkos backend
+    // only have to perform special initialization steps for the HPX backend
+#if defined(PLSSVM_HAS_HPX_BACKEND)
+    if (backend == backend_type::hpx) {
+        ::hpx::start(nullptr, 0, nullptr);
+    }
+#endif
 #if defined(PLSSVM_HAS_KOKKOS_BACKEND)
     if (backend == backend_type::kokkos) {
         Kokkos::initialize();
@@ -206,7 +227,12 @@ inline void initialize_backend([[maybe_unused]] const backend_type backend) {
 inline void initialize_backend([[maybe_unused]] const backend_type backend, [[maybe_unused]] int &argc, [[maybe_unused]] char **argv) {
     PLSSVM_ASSERT(backend != backend_type::automatic, "The automatic backend may never be initialized!");
     // Note: must be implemented for the backends that need environmental setup
-    // only have to perform special initialization steps for the Kokkos backend
+    // only have to perform special initialization steps for the HPX backend
+#if defined(PLSSVM_HAS_HPX_BACKEND)
+    if (backend == backend_type::hpx) {
+        ::hpx::start(nullptr, argc, argv);
+    }
+#endif
 #if defined(PLSSVM_HAS_KOKKOS_BACKEND)
     if (backend == backend_type::kokkos) {
         Kokkos::initialize(argc, argv);
@@ -221,7 +247,13 @@ inline void initialize_backend([[maybe_unused]] const backend_type backend, [[ma
 inline void finalize_backend([[maybe_unused]] const backend_type backend) {
     PLSSVM_ASSERT(backend != backend_type::automatic, "The automatic backend may never be finalized!");
     // Note: must be implemented for the backends that need environmental setup
-    // only have to perform special finalization steps for the Kokkos backend
+    // only have to perform special initialization steps for the HPX backend
+#if defined(PLSSVM_HAS_HPX_BACKEND)
+    if (backend == backend_type::hpx) {
+        ::hpx::post([] { ::hpx::finalize(); });
+        ::hpx::stop();
+    }
+#endif
 #if defined(PLSSVM_HAS_KOKKOS_BACKEND)
     if (backend == backend_type::kokkos) {
         Kokkos::finalize();

@@ -1,4 +1,4 @@
-## Authors: Alexander Van Craen, Marcel Breyer
+## Authors: Alexander Van Craen, Marcel Breyer, Alexander Strack
 ## Copyright (C): 2018-today The PLSSVM project - All Rights Reserved
 ## License: This file is part of the PLSSVM project which is released under the MIT license.
 ##          See the LICENSE.md file in the project root for full license information.
@@ -377,6 +377,13 @@ if (PLSSVM_ENABLE_STDPAR_BACKEND MATCHES "AUTO" OR PLSSVM_ENABLE_STDPAR_BACKEND)
     add_subdirectory(src/plssvm/backends/stdpar)
 endif ()
 
+## check for HPX backend
+set(PLSSVM_ENABLE_HPX_BACKEND AUTO CACHE STRING "Enable HPX Backend")
+set_property(CACHE PLSSVM_ENABLE_HPX_BACKEND PROPERTY STRINGS AUTO ON OFF)
+if (PLSSVM_ENABLE_HPX_BACKEND MATCHES "AUTO" OR PLSSVM_ENABLE_HPX_BACKEND)
+    add_subdirectory(src/plssvm/backends/HPX)
+endif ()
+
 ## check for CUDA backend
 set(PLSSVM_ENABLE_CUDA_BACKEND AUTO CACHE STRING "Enable CUDA Backend")
 set_property(CACHE PLSSVM_ENABLE_CUDA_BACKEND PROPERTY STRINGS AUTO ON OFF)
@@ -713,6 +720,10 @@ if (TARGET ${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME})
     message(STATUS "${PLSSVM_STDPAR_BACKEND_SUMMARY_STRING}")
     list(APPEND PLSSVM_BACKEND_NAME_LIST "stdpar")
 endif ()
+if (TARGET ${PLSSVM_HPX_BACKEND_LIBRARY_NAME})
+    message(STATUS "${PLSSVM_HPX_BACKEND_SUMMARY_STRING}")
+    list(APPEND PLSSVM_BACKEND_NAME_LIST "hpx")
+endif ()
 if (TARGET ${PLSSVM_CUDA_BACKEND_LIBRARY_NAME})
     message(STATUS "${PLSSVM_CUDA_BACKEND_SUMMARY_STRING}")
     list(APPEND PLSSVM_BACKEND_NAME_LIST "cuda")
@@ -853,6 +864,11 @@ configure_package_config_file(
         "${PROJECT_BINARY_DIR}/plssvmConfig.cmake"
         INSTALL_DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/plssvm/cmake
 )
+configure_package_config_file(
+        "${CMAKE_CURRENT_SOURCE_DIR}/cmake/plssvm/plssvmHIPTargets.cmake.in"
+        "${PROJECT_BINARY_DIR}/plssvmHIPTargets.cmake"
+        INSTALL_DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/plssvm/cmake
+)
 
 ## create and copy install-targets file
 install(EXPORT plssvm_Targets
@@ -866,9 +882,10 @@ install(FILES
         "${PROJECT_BINARY_DIR}/plssvmConfig.cmake"
         "${PROJECT_BINARY_DIR}/plssvmConfigVersion.cmake"
         "${CMAKE_CURRENT_SOURCE_DIR}/cmake/plssvm/plssvmCUDATargets.cmake"
-        "${CMAKE_CURRENT_SOURCE_DIR}/cmake/plssvm/plssvmHIPTargets.cmake"
+        "${PROJECT_BINARY_DIR}/plssvmHIPTargets.cmake"
         "${CMAKE_CURRENT_SOURCE_DIR}/cmake/plssvm/plssvmOpenCLTargets.cmake"
         "${CMAKE_CURRENT_SOURCE_DIR}/cmake/plssvm/plssvmOpenMPTargets.cmake"
+        "${CMAKE_CURRENT_SOURCE_DIR}/cmake/plssvm/plssvmHPXTargets.cmake"
         "${CMAKE_CURRENT_SOURCE_DIR}/cmake/plssvm/plssvmAdaptiveCppTargets.cmake"
         "${CMAKE_CURRENT_SOURCE_DIR}/cmake/plssvm/plssvmDPCPPTargets.cmake"
         "${CMAKE_CURRENT_SOURCE_DIR}/cmake/plssvm/plssvmKokkosTargets.cmake"

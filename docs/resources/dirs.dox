@@ -384,6 +384,66 @@
  * @brief Directory containing kernel implementations for the implicit CG algorithm using the stdpar backend.
  */
 
+ /**
+ * @dir include/plssvm/backends/HPX
+ * @author Alexander Van Craen
+ * @author Marcel Breyer
+ * @author Alexander strack
+ * @copyright 2018-today The PLSSVM project - All Rights Reserved
+ * @license This file is part of the PLSSVM project which is released under the MIT license.
+ *          See the LICENSE.md file in the project root for full license information.
+ *
+ * @brief Directory containing the implementation for the HPX backend.
+ */
+
+/**
+ * @dir include/plssvm/backends/HPX/detail
+ * @author Alexander Van Craen
+ * @author Marcel Breyer
+ * @authir Alexander Strack
+ * @copyright 2018-today The PLSSVM project - All Rights Reserved
+ * @license This file is part of the PLSSVM project which is released under the MIT license.
+ *          See the LICENSE.md file in the project root for full license information.
+ *
+ * @brief Directory containing implementation details for the HPX backend.
+ */
+
+/**
+ * @dir include/plssvm/backends/HPX/kernel
+ * @author Alexander Van Craen
+ * @author Marcel Breyer
+ * @author Alexander Strack
+ * @copyright 2018-today The PLSSVM project - All Rights Reserved
+ * @license This file is part of the PLSSVM project which is released under the MIT license.
+ *          See the LICENSE.md file in the project root for full license information.
+ *
+ * @brief Directory containing all kernels for the HPX backend.
+ */
+
+/**
+ * @dir include/plssvm/backends/HPX/kernel/cg_explicit
+ * @author Alexander Van Craen
+ * @author Marcel Breyer
+ * @author Alexander Strack
+ * @copyright 2018-today The PLSSVM project - All Rights Reserved
+ * @license This file is part of the PLSSVM project which is released under the MIT license.
+ *          See the LICENSE.md file in the project root for full license information.
+ *
+ * @brief Directory containing kernel implementations for the explicit CG algorithm using the HPX backend.
+ */
+
+/**
+ * @dir include/plssvm/backends/HPX/kernel/cg_implicit
+ * @author Alexander Van Craen
+ * @author Marcel Breyer
+ * @author Alexander Strack 
+ * @copyright 2018-today The PLSSVM project - All Rights Reserved
+ * @license This file is part of the PLSSVM project which is released under the MIT license.
+ *          See the LICENSE.md file in the project root for full license information.
+ *
+ * @brief Directory containing kernel implementations for the implicit CG algorithm using the HPX backend.
+ */
+
 /**
  * @dir include/plssvm/backends/SYCL
  * @author Alexander Van Craen

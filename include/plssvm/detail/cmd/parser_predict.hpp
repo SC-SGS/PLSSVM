@@ -38,7 +38,7 @@ struct parser_predict {
      */
     parser_predict(int argc, char **argv);
 
-    /// The used backend: automatic (depending on the specified target_platforms), OpenMP, stdpar, CUDA, HIP, OpenCL, SYCL, or Kokkos.
+    /// The used backend: automatic (depending on the specified target_platforms), OpenMP, HPX, stdpar, CUDA, HIP, OpenCL, SYCL, or Kokkos.
     backend_type backend{ backend_type::automatic };
     /// The target platform: automatic (depending on the used backend), CPUs or GPUs from NVIDIA, AMD, or Intel.
     target_platform target{ target_platform::automatic };

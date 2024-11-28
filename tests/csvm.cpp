@@ -198,6 +198,14 @@ TEST(BaseCSVM, csvm_backend_exists) {
     EXPECT_FALSE(plssvm::csvm_backend_exists<plssvm::openmp::csvm>::value);
 #endif
 
+#if defined(PLSSVM_HAS_HPX_BACKEND)
+    EXPECT_TRUE(plssvm::csvm_backend_exists_v<plssvm::hpx::csvm>);
+    EXPECT_TRUE(plssvm::csvm_backend_exists<plssvm::hpx::csvm>::value);
+#else
+    EXPECT_FALSE(plssvm::csvm_backend_exists_v<plssvm::hpx::csvm>);
+    EXPECT_FALSE(plssvm::csvm_backend_exists<plssvm::hpx::csvm>::value);
+#endif
+
 #if defined(PLSSVM_HAS_CUDA_BACKEND)
     EXPECT_TRUE(plssvm::csvm_backend_exists_v<plssvm::cuda::csvm>);
     EXPECT_TRUE(plssvm::csvm_backend_exists<plssvm::cuda::csvm>::value);

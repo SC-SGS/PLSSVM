@@ -195,7 +195,7 @@ TEST_P(ParserPredictBackend, parsing) {
 // clang-format off
 INSTANTIATE_TEST_SUITE_P(ParserPredict, ParserPredictBackend, ::testing::Combine(
                 ::testing::Values("-b", "--backend"),
-                ::testing::Values("automatic", "OpenMP", "stdpar", "CUDA", "HIP", "OpenCL", "SYCL", "Kokkos")),
+                ::testing::Values("automatic", "OpenMP", "HPX", "stdpar", "CUDA", "HIP", "OpenCL", "SYCL", "Kokkos")),
                 naming::pretty_print_parameter_flag_and_value<ParserPredictBackend>);
 // clang-format on
 

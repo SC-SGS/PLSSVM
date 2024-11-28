@@ -8,8 +8,8 @@ include(CMakeFindDependencyMacro)
 
 # check if the HIP backend is available
 if (TARGET plssvm::plssvm-HIP)
-    # enable HIP
-    enable_language(HIP)
+    # enable HIP or CUDA
+    enable_language(@PLSSVM_HIP_BACKEND_GPU_RUNTIME@)
     find_dependency(HIP REQUIRED)
     # set alias targets
     add_library(plssvm::HIP ALIAS plssvm::plssvm-HIP)

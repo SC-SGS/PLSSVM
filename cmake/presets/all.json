@@ -9,6 +9,7 @@
       "cacheVariables": {
         "CMAKE_CXX_COMPILER": "clang++",
         "PLSSVM_ENABLE_OPENMP_BACKEND": "AUTO",
+        "PLSSVM_ENABLE_HPX_BACKEND": "AUTO",
         "PLSSVM_ENABLE_STDPAR_BACKEND": "OFF",
         "PLSSVM_ENABLE_CUDA_BACKEND": "AUTO",
         "PLSSVM_ENABLE_HIP_BACKEND": "AUTO",
@@ -24,6 +25,7 @@
       "cacheVariables": {
         "CMAKE_CXX_COMPILER": "clang++",
         "PLSSVM_ENABLE_OPENMP_BACKEND": "AUTO",
+        "PLSSVM_ENABLE_HPX_BACKEND": "AUTO",
         "PLSSVM_ENABLE_STDPAR_BACKEND": "OFF",
         "PLSSVM_ENABLE_CUDA_BACKEND": "AUTO",
         "PLSSVM_ENABLE_HIP_BACKEND": "AUTO",
@@ -41,6 +43,7 @@
       "cacheVariables": {
         "CMAKE_CXX_COMPILER": "clang++",
         "PLSSVM_ENABLE_OPENMP_BACKEND": "AUTO",
+        "PLSSVM_ENABLE_HPX_BACKEND": "AUTO",
         "PLSSVM_ENABLE_STDPAR_BACKEND": "OFF",
         "PLSSVM_ENABLE_CUDA_BACKEND": "AUTO",
         "PLSSVM_ENABLE_HIP_BACKEND": "AUTO",
@@ -87,7 +90,7 @@
       "inherits": "common",
       "filter": {
         "include": {
-          "name": "OpenMP.*|CUDA.*|HIP.*|OpenCL.*|AdaptiveCpp.*|DPCPP.*|Kokkos.*"
+          "name": "OpenMP.*|HPX.*|CUDA.*|HIP.*|OpenCL.*|AdaptiveCpp.*|DPCPP.*|Kokkos.*"
         }
       }
     }
