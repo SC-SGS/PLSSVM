@@ -496,6 +496,9 @@ matrix<T, layout_>::matrix(const plssvm::shape shape, const std::vector<value_ty
 template <typename T, layout_type layout_>
 matrix<T, layout_>::matrix(const plssvm::shape shape, const_pointer data) :
     matrix{ shape } {
+    if (data == nullptr && this->size() > 0) {
+        throw matrix_exception{ "The provided data pointer may not be a nullptr if the matrix size is greater than 0!" };
+    }
     if (this->size() > 0) {
         // memcpy data to matrix
         std::memcpy(this->data(), data, this->size() * sizeof(value_type));
@@ -505,6 +508,9 @@ matrix<T, layout_>::matrix(const plssvm::shape shape, const_pointer data) :
 template <typename T, layout_type layout_>
 matrix<T, layout_>::matrix(const plssvm::shape shape, const_pointer data, const plssvm::shape padding) :
     matrix{ shape, padding } {
+    if (data == nullptr && this->size() > 0) {
+        throw matrix_exception{ "The provided data pointer may not be a nullptr if the matrix size is greater than 0!" };
+    }
     if (this->size() > 0) {
         // memcpy data row- or column-wise depending on the layout type to the matrix
         this->opt_mismatched_padding_copy(this->data(), this->shape_padded(), data, this->shape());
