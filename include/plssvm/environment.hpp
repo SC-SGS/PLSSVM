@@ -458,7 +458,8 @@ inline std::vector<backend_type> finalize() {
 class [[nodiscard]] scope_guard {
   public:
     /**
-     * @copydoc initialize()
+     * @brief Initialize all **available** backends.
+     * @details Only initializes backends that are currently uninitialized.
      */
     scope_guard() {
         backends_ = initialize();
@@ -473,7 +474,10 @@ class [[nodiscard]] scope_guard {
     }
 
     /**
-     * @copydoc initialize(int &, char **)
+     * @brief Initialize all **available** backends.
+     * @details Only initializes backends that are currently uninitialized.
+     * @param[in,out] argc the number of provided command line arguments
+     * @param[in,out] argv the provided command line arguments
      */
     scope_guard(int &argc, char **argv) {
         backends_ = initialize(argc, argv);

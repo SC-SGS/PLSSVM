@@ -13,8 +13,11 @@
 #ifndef PLSSVM_BACKENDS_KOKKOS_DETAIL_CONSTEXPR_AVAILABLE_EXECUTION_SPACES_HPP_
 #define PLSSVM_BACKENDS_KOKKOS_DETAIL_CONSTEXPR_AVAILABLE_EXECUTION_SPACES_HPP_
 
-// if the variable isn't set, no Kokkos execution space is available
-// -> explicitly set it to 0!
+/**
+ * @def PLSSVM_KOKKOS_BACKEND_NUM_AVAILABLE_EXECUTION_SPACES
+ * @brief Set the macro `PLSSVM_KOKKOS_BACKEND_NUM_AVAILABLE_EXECUTION_SPACES` to 0 if it isn't already defined, i.e., no Kokkos execution space is available.
+ *        Will normally be propagated by CMake with the number of available Kokkos execution spaces.
+ */
 #if !defined(PLSSVM_KOKKOS_BACKEND_NUM_AVAILABLE_EXECUTION_SPACES)
     #define PLSSVM_KOKKOS_BACKEND_NUM_AVAILABLE_EXECUTION_SPACES 0
 #endif
