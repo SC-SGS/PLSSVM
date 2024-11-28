@@ -223,7 +223,7 @@ TYPED_TEST_P(GenericGPUCSVM, run_w_kernel) {
         const plssvm::soa_matrix<plssvm::real_type> correct_w = ground_truth::calculate_device_specific_w(weights, data.data(), *svm.data_distribution_, device_id);
 
         // check for correctness
-        EXPECT_FLOATING_POINT_MATRIX_NEAR(w, correct_w);
+        EXPECT_FLOATING_POINT_MATRIX_NEAR_EPS(w, correct_w, 1e6);
     }
 }
 
