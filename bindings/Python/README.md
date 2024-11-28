@@ -10,7 +10,7 @@
         - [plssvm.Parameter](#plssvmparameter)
         - [plssvm.DataSet](#plssvmdataset)
         - [plssvm.CSVM](#plssvmcsvm)
-        - [plssvm.openmp.CSVM, plssvm.stdpar.CSVM, plssvm.cuda.CSVM, plssvm.hip.CSVM, plssvm.opencl.CSVM, plssvm.sycl.CSVM, plssvm.dpcpp.CSVM, plssvm.adaptivecpp.CSVM](#plssvmopenmpcsvm-plssvmcudacsvm-plssvmhipcsvm-plssvmopenclcsvm-plssvmsyclcsvm-plssvmdpcppcsvm-plssvmadaptivecppcsvm)
+        - [plssvm.openmp.CSVM, plssvm.hpx.CSVM, plssvm.stdpar.CSVM, plssvm.cuda.CSVM, plssvm.hip.CSVM, plssvm.opencl.CSVM, plssvm.sycl.CSVM, plssvm.dpcpp.CSVM, plssvm.adaptivecpp.CSVM](#plssvmopenmpcsvm-plssvmhpxcsvm-plssvmcudacsvm-plssvmhipcsvm-plssvmopenclcsvm-plssvmsyclcsvm-plssvmdpcppcsvm-plssvmadaptivecppcsvm)
         - [plssvm.Model](#plssvmmodel)
         - [plssvm.Version](#plssvmversion)
         - [plssvm.environment.ScopeGuard](#plssvmenvironmentscopeguard)
@@ -196,7 +196,7 @@ The following table lists all PLSSVM enumerations exposed on the Python side:
 | `FileFormatType`       | `LIBSVM`, `ARFF`                                                     | The different supported file format types (default: `LIBSVM`).                                                                                                                                                                                              |
 | `GammaCoefficientType` | `AUTOMATIC`, `SCALE`                                                 | The different modes for the dynamic gamma calculation (default: `AUTOMATIC`).                                                                                                                                                                               |
 | `ClassificationType`   | `OAA`, `OAO`                                                         | The different supported multi-class classification strategies (default: `LIBSVM`).                                                                                                                                                                          |
-| `BackendType`          | `AUTOMATIC`, `OPENMP`, `CUDA`, `HIP`, `OPENCL`, `SYCL`               | The different supported backends (default: `AUTOMATIC`). If `AUTOMATIC` is provided, the selected backend depends on the used target platform.                                                                                                              |
+| `BackendType`          | `AUTOMATIC`, `OPENMP`, `HPX`, `CUDA`, `HIP`, `OPENCL`, `SYCL`        | The different supported backends (default: `AUTOMATIC`). If `AUTOMATIC` is provided, the selected backend depends on the used target platform.                                                                                                              |
 | `VerbosityLevel`       | `QUIET`, `LIBSVM`, `TIMING`, `FULL`                                  | The different supported log levels (default: `FULL`). `QUIET` means no output, `LIBSVM` output that is as conformant as possible with LIBSVM's output, `TIMING` all timing related outputs, and `FULL` everything. Can be combined via bit-wise operations. |
 | `Status`               | `UNINITIALIZED`, `INITIALIZED`, `FINALIZED`, `UNNECESSARY`           | The different environment status values. **Note**: located in the `plssvm.environment` module.                                                                                                                                                              |                                                                                                                                                                                                                   |
 
@@ -337,6 +337,10 @@ If the most performant backend should be used, it is sufficient to use `plssvm.C
 `sycl_implementation_type` to choose between DPC++ and AdaptiveCpp as SYCL implementations
 and `sycl_kernel_invocation_type` to choose between the two different SYCL kernel invocation types.
 
+**Note**: if the backend type is `plssvm.BackendType.HPX` it is necessary to initialize and finalize the HPX runtime.
+The runtime can be manually managed using `plssvm.environment.initialize()` and `plssvm.environment.finalize()`.
+We recommend utilizing `plssvm.environment.ScopeGuard()` to manage the lifetime of the HPX runtime automatically.
+
 | methods                                                                                                                                      | description                                                                                                                                                                                                         |
 |----------------------------------------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `set_params(params)`                                                                                                                         | Replace the current `plssvm.Parameter` with the provided one.                                                                                                                                                       |
@@ -349,7 +353,7 @@ and `sycl_kernel_invocation_type` to choose between the two different SYCL kerne
 | `score(model)`                                                                                                                               | Score the model with respect to itself returning its accuracy.                                                                                                                                                      |
 | `score(model, data_set)`                                                                                                                     | Score the model given the provided data set returning its accuracy.                                                                                                                                                 |
 
-#### `plssvm.openmp.CSVM`, `plssvm.stdpar.CSVM`, plssvm.cuda.CSVM`, `plssvm.hip.CSVM`, `plssvm.opencl.CSVM`, `plssvm.sycl.CSVM`, `plssvm.dpcpp.CSVM`, `plssvm.adaptivecpp.CSVM`
+#### `plssvm.openmp.CSVM`, `plssvm.hpx.CSVM`, `plssvm.stdpar.CSVM`, plssvm.cuda.CSVM`, `plssvm.hip.CSVM`, `plssvm.opencl.CSVM`, `plssvm.sycl.CSVM`, `plssvm.dpcpp.CSVM`, `plssvm.adaptivecpp.CSVM`
 
 These classes represent the backend specific CSVMs.
 **Note**: they are only available if the respective backend has been enabled during PLSSVM's build step.

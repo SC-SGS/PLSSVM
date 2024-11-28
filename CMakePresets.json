@@ -2,6 +2,7 @@
   "version": 6,
   "include": [
     "cmake/presets/openmp.json",
+    "cmake/presets/hpx.json",
     "cmake/presets/stdpar.json",
     "cmake/presets/stdpar_gcc.json",
     "cmake/presets/stdpar_nvhpc.json",

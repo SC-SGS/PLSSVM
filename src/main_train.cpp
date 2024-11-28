@@ -72,8 +72,15 @@ int main(int argc, char *argv[]) {
             // check whether SYCL is used as backend (it is either requested directly or as automatic backend)
             const bool use_sycl_as_backend{ cmd_parser.backend == plssvm::backend_type::sycl || (cmd_parser.backend == plssvm::backend_type::automatic && plssvm::determine_default_backend() == plssvm::backend_type::sycl) };
 
+            // check whether HPX is used as backend (it is either requested directly or as automatic backend)
+            const bool use_hpx_as_backend{ cmd_parser.backend == plssvm::backend_type::hpx || (cmd_parser.backend == plssvm::backend_type::automatic && plssvm::determine_default_backend() == plssvm::backend_type::hpx) };
+
             // initialize environments if necessary
-            environment_guard = std::make_unique<plssvm::environment::scope_guard>();
+            std::vector<plssvm::backend_type> backends_to_initialize{};
+            if (use_hpx_as_backend) {
+                backends_to_initialize.push_back(plssvm::backend_type::hpx);
+            }
+            environment_guard = std::make_unique<plssvm::environment::scope_guard>(backends_to_initialize);
 
             // create SVM
             const std::unique_ptr<plssvm::csvm> svm = use_sycl_as_backend ? plssvm::make_csvm(cmd_parser.backend, cmd_parser.target, cmd_parser.csvm_params, plssvm::sycl_implementation_type = cmd_parser.sycl_implementation_type, plssvm::sycl_kernel_invocation_type = cmd_parser.sycl_kernel_invocation_type)
