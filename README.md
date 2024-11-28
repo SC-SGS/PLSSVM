@@ -178,11 +178,9 @@ Valid targets are:
 - `intel`: compile for Intel GPUs; **at least one** architectural specification is necessary, e.g., `intel:skl`
 
 At least one of the above targets must be present. If the option `PLSSVM_TARGET_PLATFORMS` is not present, the targets 
-are automatically determined using the Python3 `utility_scripts/plssvm_target_platforms.py` script (required Python3 dependencies:
-[`argparse`](https://docs.python.org/3/library/argparse.html), and [`pylspci`](https://pypi.org/project/pylspci/)).
+are automatically determined using the Python3 `utility_scripts/plssvm_target_platforms.py` script.
 
-Note that when using DPC++ only a single architectural specification for `cpu`, `nvidia` or `amd` is allowed and that
-automatically retrieving AMD GPU information on Windows is currently not supported due to `pyamdgpuinfo` limitations.
+Note that when using DPC++ only a single architectural specification for `cpu`, `nvidia` or `amd` is allowed.
 
 
 ```bash

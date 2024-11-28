@@ -1,8 +1,6 @@
 ### optional and required python packages
 
-## for the data set generation
-# LIBSVM
-argparse
+## for the data set generation (LIBSVM file format)
 scikit-learn
 humanize
 
@@ -17,20 +15,11 @@ pandas
 # for plotting the generated data set (only available if #features <= 3)
 matplotlib
 
-
-## for the automatic PLSSVM target platform determination
-# argparse
-pylspci
-
-
 ## for the performance tracker parser
-# argparse
 # matplotlib
 pyyaml
 pint
 
-
 ## for the performance analysis
-# argparse
 # scikit-learn
 wrapt-timeout-decorator
