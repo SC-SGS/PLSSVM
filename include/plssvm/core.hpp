@@ -22,6 +22,7 @@
 #include "plssvm/csvm.hpp"                                   // the base C-SVM every backend is inheriting from
 #include "plssvm/csvm_factory.hpp"                           // a factory function to instantiate a C-SVM using a runtime backend; includes the available backend C-SVMs
 #include "plssvm/data_set.hpp"                               // a data set used for training a C-SVM
+#include "plssvm/environment.hpp"                            // environment management functions and classes
 #include "plssvm/exceptions/exceptions.hpp"                  // exception hierarchy
 #include "plssvm/file_format_types.hpp"                      // all supported file format types
 #include "plssvm/gamma.hpp"                                  // the types of the gamma parameter
@@ -41,6 +42,12 @@ namespace plssvm { }
 
 /// Namespace containing versioning information.
 namespace plssvm::version { }
+
+/// Namespace containing environment setup and teardown functionality.
+namespace plssvm::environment { }
+
+/// Namespace containing environment initialization and finalization functionality specific details. **Should not** directly be used by users.
+namespace plssvm::environment::detail { }
 
 /// Namespace containing Git versioning information.
 namespace plssvm::version::git_metadata { }
@@ -68,6 +75,12 @@ namespace plssvm::openmp { }
 
 /// Namespace containing OpenMP backend specific implementation details. **Should not** directly be used by users.
 namespace plssvm::openmp::detail { }
+
+/// Namespace containing the C-SVM using the HPX backend.
+namespace plssvm::hpx { }
+
+/// Namespace containing HPX backend specific implementation details. **Should not** directly be used by users.
+namespace plssvm::hpx::detail { }
 
 /// Namespace containing the C-SVM using the stdpar backend.
 namespace plssvm::stdpar { }

@@ -15,30 +15,31 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       # checkout repository
-      - name: Checkout PLSSVM
+      - name: "Checkout PLSSVM"
         uses: actions/checkout@v4.1.1
         with:
           path: PLSSVM
       # install dependencies
-      - name: Dependencies
+      - name: "Dependencies"
         run: |
           sudo apt update
           sudo apt-get install -y doxygen graphviz
+      # install new CMake version
+      - name: "Install cmake 3.31.0"
+        uses: lukka/get-cmake@v3.31.0
       # configure project via CMake
-      - name: Configure
+      - name: "Configure"
         run: |
           cd PLSSVM
-          mkdir build
-          cd build
-          cmake -DPLSSVM_TARGET_PLATFORMS=cpu -DPLSSVM_ENABLE_DOCUMENTATION=ON -DPLSSVM_ENABLE_TESTING=OFF -DPLSSVM_ENABLE_CUDA_BACKEND=OFF -DPLSSVM_ENABLE_SYCL_BACKEND=OFF -DPLSSVM_ENABLE_OPENCL_BACKEND=OFF -DPLSSVM_ENABLE_SYCL_BACKEND=OFF ..
+          cmake --preset openmp -DPLSSVM_TARGET_PLATFORMS="cpu" -DPLSSVM_ENABLE_DOCUMENTATION=ON
       # build project
-      - name: Generate
+      - name: "Generate"
         run: |
-          cd PLSSVM/build
-          make doc
+          cd PLSSVM
+          cmake --build --preset openmp --target doc
       # deploy generated documentation using github.io
-      - name: Deploy
-        uses: peaceiris/actions-gh-pages@v3.9.3
+      - name: "Deploy"
+        uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./PLSSVM/docs/html

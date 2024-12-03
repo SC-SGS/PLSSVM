@@ -213,16 +213,16 @@ class platform_devices_empty : public exception {
 };
 
 /**
- * @brief Exception type thrown if something during hardware sampling goes wrong.
+ * @brief Exception type thrown if something during the environment initialization and/or finalization went wrong.
  */
-class hardware_sampling_exception : public exception {
+class environment_exception : public exception {
   public:
     /**
      * @brief Construct a new exception forwarding the exception message and source location to `plssvm::exception`.
      * @param[in] msg the exception's `what()` message
      * @param[in] loc the exception's call side information
      */
-    explicit hardware_sampling_exception(const std::string &msg, source_location loc = source_location::current());
+    explicit environment_exception(const std::string &msg, source_location loc = source_location::current());
 };
 
 }  // namespace plssvm

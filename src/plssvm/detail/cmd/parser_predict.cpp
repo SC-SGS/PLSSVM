@@ -17,8 +17,8 @@
 #include "plssvm/verbosity_levels.hpp"                             // plssvm::verbosity, plssvm::verbosity_level
 #include "plssvm/version/version.hpp"                              // plssvm::version::detail::get_version_info
 
-#include "cxxopts.hpp"    // cxxopts::{Options, value, ParseResult}
-#include "fmt/color.h"    // fmt::fg, fmt::color::orange
+#include "cxxopts.hpp"   // cxxopts::{Options, value, ParseResult}
+#include "fmt/color.h"   // fmt::fg, fmt::color::orange
 #include "fmt/format.h"  // fmt::format
 #include "fmt/ranges.h"  // fmt::join
 

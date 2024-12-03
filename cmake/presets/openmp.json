@@ -7,7 +7,8 @@
       "displayName": "OpenMP backend",
       "inherits": "build",
       "cacheVariables": {
-        "PLSSVM_ENABLE_OPENMP_BACKEND": "ON"
+        "PLSSVM_ENABLE_OPENMP_BACKEND": "ON",
+        "PLSSVM_TARGET_PLATFORMS": "cpu"
       }
     },
     {
@@ -16,6 +17,7 @@
       "inherits": "build",
       "cacheVariables": {
         "PLSSVM_ENABLE_OPENMP_BACKEND": "ON",
+        "PLSSVM_TARGET_PLATFORMS": "cpu",
         "PLSSVM_ENABLE_LANGUAGE_BINDINGS": "ON",
         "PLSSVM_ENABLE_PYTHON_BINDINGS": "ON"
       }
@@ -25,7 +27,8 @@
       "displayName": "OpenMP backend tests",
       "inherits": "test",
       "cacheVariables": {
-        "PLSSVM_ENABLE_OPENMP_BACKEND": "ON"
+        "PLSSVM_ENABLE_OPENMP_BACKEND": "ON",
+        "PLSSVM_TARGET_PLATFORMS": "cpu"
       }
     }
   ],

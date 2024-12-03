@@ -9,9 +9,9 @@ set(PLSSVM_PERFORMANCE_TRACKING_TEST_NAME performance_tracking_tests)
 
 # list all necessary sources
 set(PLSSVM_PERFORMANCE_TRACKING_TEST_SOURCES
-    ${CMAKE_CURRENT_LIST_DIR}/events.cpp;
-    ${CMAKE_CURRENT_LIST_DIR}/performance_tracker.cpp;
-    ${CMAKE_CURRENT_LIST_DIR}/utility.cpp;
+    ${CMAKE_CURRENT_LIST_DIR}/events.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/performance_tracker.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/utility.cpp
 )
 
 # add test executable

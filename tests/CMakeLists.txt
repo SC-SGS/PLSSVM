@@ -203,22 +203,10 @@ if (PLSSVM_ENABLE_ASSERTS)
     message(STATUS "Enabling GTest's death tests.")
     set(PLSSVM_ENABLE_DEATH_TESTS ON)
     target_compile_definitions(${PLSSVM_BASE_TEST_LIBRARY_NAME} PUBLIC PLSSVM_DEATH_TESTS_ENABLED)
-    
-    # death tests are currently not supported for the stdpar implementations due to GoogleTest internal SegFaults
-    if (TARGET ${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME})
-        message(FATAL_ERROR "GTest's death tests not supported with our stdpar backend. Please set \"PLSSVM_ENABLE_ASSERTS=OFF\"!")
-    endif ()
 else ()
     # assertions are disabled -> disable Google death tests
     message(STATUS "Disabling GTest's death tests.")
     set(PLSSVM_ENABLE_DEATH_TESTS OFF)
-endif ()
-
-# performance tracker not supported with NVHPC
-if (PLSSVM_ENABLE_PERFORMANCE_TRACKING)
-    if (PLSSVM_STDPAR_BACKEND AND PLSSVM_STDPAR_BACKEND STREQUAL "NVHPC")
-        message(FATAL_ERROR "The (global) performance tracker is currently not supported with GTest and NVHPC. Please set \"PLSSVM_ENABLE_PERFORMANCE_TRACKING=OFF\" or use another stdpar implementation!")
-    endif ()
 endif ()
 
 # add tests to google test

@@ -57,6 +57,7 @@ The main highlights of our SVM implementations are:
 1. Drop-in replacement for LIBSVM's `svm-train`, `svm-predict`, and `svm-scale` (some features currently not implemented).
 2. Support of multiple different programming frameworks for parallelization (also called backends in our PLSSVM implementation) which allows us to target GPUs and CPUs from different vendors like NVIDIA, AMD, or Intel:
    - [OpenMP](https://www.openmp.org/)
+   - [HPX](https://hpx.stellar-group.org/)
    - [stdpar](https://en.cppreference.com/w/cpp/algorithm) (supported implementations are [nvc++](https://developer.nvidia.com/hpc-sdk) from NVIDIA's HPC SDK, [roc-stdpar](https://github.com/ROCm/roc-stdpar) as a patched LLVM, [icpx](https://www.intel.com/content/www/us/en/developer/tools/oneapi/dpc-compiler.html) as Intel's oneAPI compiler, [AdaptiveCpp](https://github.com/AdaptiveCpp/AdaptiveCpp), and [GNU GCC](https://gcc.gnu.org/) using TBB). <br>
      **Note**: due to the nature of the used USM mechanics in the `stdpar` implementations, the `stdpar` backend **can't** be enabled together with **any** other backend! <br>
      **Note**: since every translation units need to be compiled with the same flag, we currently globally set `CMAKE_CXX_FLAGS` although it's discouraged in favor of `target_compile_options`.
@@ -88,12 +89,13 @@ The main highlights of our SVM implementations are:
 General dependencies:
 
 - a C++17 capable compiler (e.g. [`gcc`](https://gcc.gnu.org/) or [`clang`](https://clang.llvm.org/))
-- [CMake](https://cmake.org/) 3.23 or newer
+- [CMake](https://cmake.org/) 3.25 or newer
 - [cxxopts ≥ v3.2.0](https://github.com/jarro2783/cxxopts), [fast_float ≥ v6.1.3](https://github.com/fastfloat/fast_float), [{fmt} ≥ v11.0.2](https://github.com/fmtlib/fmt), and [igor](https://github.com/bluescarni/igor) (all four are automatically build during the CMake configuration if they couldn't be found using the respective `find_package` call)
 - [GoogleTest ≥ v1.15.2](https://github.com/google/googletest) if testing is enabled (automatically build during the CMake configuration if `find_package(GTest)` wasn't successful)
 - [doxygen](https://www.doxygen.nl/index.html) if documentation generation is enabled
 - [Pybind11 ≥ v2.13.3](https://github.com/pybind/pybind11) if Python bindings are enabled
 - [OpenMP](https://www.openmp.org/) 4.0 or newer (optional) to speed-up library utilities (like file parsing)
+- [Format.cmake](https://github.com/TheLartians/Format.cmake) if auto formatting via clang-format is enabled; also requires at least clang-format-18 and git
 - multiple Python modules used in the utility scripts, to install all modules use `pip install --user -r install/python_requirements.txt`
 
 Additional dependencies for the OpenMP backend:
@@ -103,6 +105,10 @@ Additional dependencies for the OpenMP backend:
 Additional dependencies for the stdpar backend:
 
 - compiler with stdpar support
+
+Additional dependencies for the HPX backend:
+
+- [HPX ≥ v1.9.0](https://hpx.stellar-group.org/)
 
 Additional dependencies for the CUDA backend:
 
@@ -276,6 +282,7 @@ The `[optional_options]` can be one or multiple of:
 - `PLSSVM_ENABLE_TESTING=ON|OFF` (default: `ON`): enable testing using GoogleTest and ctest
 - `PLSSVM_ENABLE_LANGUAGE_BINDINGS=ON|OFF` (default: `OFF`): enable language bindings
 - `PLSSVM_STL_DEBUG_MODE_FLAGS=ON|OFF` (default: `OFF`): enable STL debug modes (**note**: changes the resulting library's ABI!)
+- `PLSSVM_ENABLE_FORMATTING=ON|OFF` (default: `OFF`): enable automatic formatting using clang-format; adds additional targets `check-clang-format`, `clang-format`, and `fix-clang-format`
 
 If `PLSSVM_ENABLE_TESTING` is set to `ON`, the following option can also be set:
 
@@ -353,6 +360,9 @@ Available configure presets:
   "openmp"                  - OpenMP backend
   "openmp_python"           - OpenMP backend + Python bindings
   "openmp_test"             - OpenMP backend tests
+  "hpx"                     - HPX backend
+  "hpx_python"              - HPX backend + Python bindings
+  "hpx_test"                - HPX backend tests
   "cuda"                    - CUDA backend
   "cuda_python"             - CUDA backend + Python bindings
   "cuda_test"               - CUDA backend tests
@@ -431,6 +441,23 @@ cmake --build . -- coverage
 ```
 
 The resulting `html` coverage report is located in the `coverage` folder in the build directory.
+
+### Automatic Source File Formatting
+
+To enable automatic formatting `PLSSVM_ENABLE_FORMATTING` must be set to `ON` and a `clang-format` and `git` executables must be available in `PATH` (minimum `clang-format` version is 18).
+
+To check whether formatting changes must be applied use: 
+
+```bash
+cmake --build . --target check-clang-format
+```
+
+To auto format all files use:
+
+```bash
+cmake --build . --target clang-format
+cmake --build . --target fix-clang-format
+```
 
 ### Creating the Documentation
 
@@ -526,7 +553,7 @@ Usage:
   -i, --max_iter arg            set the maximum number of CG iterations (default: num_features)
   -l, --solver arg              choose the solver: automatic|cg_explicit|cg_implicit (default: automatic)
   -a, --classification arg      the classification strategy to use for multi-class classification: oaa|oao (default: oaa)
-  -b, --backend arg             choose the backend: automatic|openmp|cuda|hip|opencl|sycl|stdpar (default: automatic)
+  -b, --backend arg             choose the backend: automatic|openmp|hpx|cuda|hip|opencl|sycl|stdpar (default: automatic)
   -p, --target_platform arg     choose the target platform: automatic|cpu|gpu_nvidia|gpu_amd|gpu_intel (default: automatic)
       --sycl_kernel_invocation_type arg
                                 choose the kernel invocation type when using SYCL as backend: automatic|nd_range (default: automatic)
@@ -570,13 +597,14 @@ The `--backend=automatic` option works as follows:
 - if the `gpu_nvidia` target is available, check for existing backends in order `cuda` 🠦 `hip` 🠦 `opencl` 🠦 `sycl` 🠦 `stdpar`
 - otherwise, if the `gpu_amd` target is available, check for existing backends in order `hip` 🠦 `opencl` 🠦 `sycl` 🠦 `stdpar`
 - otherwise, if the `gpu_intel` target is available, check for existing backends in order `sycl` 🠦 `opencl` 🠦 `stdpar`
-- otherwise, if the `cpu` target is available, check for existing backends in order `sycl` 🠦 `opencl` 🠦 `openmp` 🠦 `stdpar`
+- otherwise, if the `cpu` target is available, check for existing backends in order `sycl` 🠦 `opencl` 🠦 `openmp` 🠦 `hpx` 🠦 `stdpar`
 
 Note that during CMake configuration it is guaranteed that at least one of the above combinations does exist.
 
 The `--target_platform=automatic` option works for the different backends as follows:
 
 - `OpenMP`: always selects a CPU
+- `HPX`: always selects a CPU
 - `CUDA`: always selects an NVIDIA GPU (if no NVIDIA GPU is available, throws an exception)
 - `HIP`: always selects an AMD GPU (if no AMD GPU is available, throws an exception)
 - `OpenCL`: tries to find available devices in the following order: NVIDIA GPUs 🠦 AMD GPUs 🠦 Intel GPUs 🠦 CPU
@@ -681,6 +709,9 @@ A simple C++ program (`main.cpp`) using PLSSVM as library could look like:
 #include <vector>
 
 int main() {
+    // correctly initialize and finalize environments
+    plssvm::environment::scope_guard environment_guard{};
+    
     try {
         // create a new C-SVM parameter set, explicitly overriding the default kernel function
         const plssvm::parameter params{ plssvm::kernel_type = plssvm::kernel_function_type::polynomial };
@@ -745,6 +776,9 @@ Roughly the same can be achieved using our Python bindings with the following Py
 ```python
 import plssvm
 from sklearn.metrics import classification_report
+
+# correctly initialize and finalize environments
+environment_guard = plssvm.environment.ScopeGuard()
 
 try:
     # create a new C-SVM parameter set, explicitly overriding the default kernel function

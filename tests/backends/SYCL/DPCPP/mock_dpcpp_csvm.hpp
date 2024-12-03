@@ -13,14 +13,13 @@
 #define PLSSVM_TESTS_BACKENDS_SYCL_DPCPP_MOCK_DPCPP_CSVM_HPP_
 #pragma once
 
-#include "plssvm/backends/SYCL/DPCPP/csvm.hpp"  // plssvm::dpcpp::csvm
 #include "plssvm/backends/execution_range.hpp"  // plssvm::detail::dim_type
+#include "plssvm/backends/SYCL/DPCPP/csvm.hpp"  // plssvm::dpcpp::csvm
 
 #include "gmock/gmock.h"  // MOCK_METHOD, ON_CALL, ::testing::Return
 
 #include <cstddef>  // std::size_t
 #include <utility>  // std::forward
-
 
 /**
  * @brief GTest mock class for the SYCL CSVM using DPC++ as SYCL implementation.

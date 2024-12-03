@@ -1,10 +1,10 @@
-## Authors: Alexander Van Craen, Marcel Breyer
+## Authors: Alexander Van Craen, Marcel Breyer, Alexander Strack
 ## Copyright (C): 2018-today The PLSSVM project - All Rights Reserved
 ## License: This file is part of the PLSSVM project which is released under the MIT license.
 ##          See the LICENSE.md file in the project root for full license information.
 ########################################################################################################################
 
-cmake_minimum_required(VERSION 3.23)
+cmake_minimum_required(VERSION 3.25)
 
 project("PLSSVM - Parallel Least Squares Support Vector Machine"
         VERSION 3.0.0
@@ -129,17 +129,17 @@ endif ()
 target_compile_features(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC cxx_std_17)
 ## additional base library compile options
 target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC
-                       $<$<COMPILE_LANGUAGE:CXX>:$<$<CXX_COMPILER_ID:GNU,Clang>:-Wall -Wextra -Wdouble-promotion -fno-common -Wshadow -Wcast-qual
+                       $<$<COMPILE_LANGUAGE:CXX>:$<$<CXX_COMPILER_ID:GNU,Clang,IntelLLVM>:-Wall -Wextra -Wdouble-promotion -fno-common -Wshadow -Wcast-qual
                        -Wnull-dereference -Wnon-virtual-dtor -Wextra-semi -Wunreachable-code -Wuninitialized -Wno-ctor-dtor-privacy
                        -fPIC>
                        $<$<COMPILE_LANG_AND_ID:CXX,GNU>:-Wsuggest-override -Wstrict-null-sentinel -Wlogical-op -Wduplicated-branches -Wimplicit-fallthrough=5>
-                       $<$<COMPILE_LANG_AND_ID:CXX,Clang>:-Wmost>
+                       $<$<COMPILE_LANG_AND_ID:CXX,Clang,IntelLLVM>:-Wmost>
                        $<$<COMPILE_LANG_AND_ID:CXX,MSVC>:/W4 /bigobj /wd4459 /Zc:lambda>>
 )
 
 ## nvcc doesn't recognize -Werror=??? option, so only set it when using a CXX compiler
 target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC
-                       $<$<COMPILE_LANG_AND_ID:CXX,GNU,Clang>:-Werror=switch -fstrict-enums>
+                       $<$<COMPILE_LANG_AND_ID:CXX,GNU,Clang,IntelLLVM>:-Werror=switch -fstrict-enums>
                        $<$<COMPILE_LANG_AND_ID:CXX,MSVC>:/we4062 /wd4005 /wd4702 /wd4849 /wd4127>
                        # /wd4849: ignore "OpenMP 'reduction' clause ignored in 'simd' directive" -> no SIMD clause currently effective in MSVC
                        # /wd4127: ignore "conditional expression is constant" from {fmt} ranges.h header
@@ -148,7 +148,7 @@ target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC
 if (PLSSVM_ENABLE_FAST_MATH)
     message(STATUS "Enabling fast-math flags.")
     target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC
-                           $<$<COMPILE_LANG_AND_ID:CXX,GNU,Clang>:-ffast-math>
+                           $<$<COMPILE_LANG_AND_ID:CXX,GNU,Clang,IntelLLVM>:-ffast-math>
                            $<$<COMPILE_LANG_AND_ID:CXX,MSVC>:/fp:fast>
     )
     target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC PLSSVM_USE_FAST_MATH)
@@ -156,10 +156,10 @@ endif ()
 ## set march native flag based on target architecture
 if (${CMAKE_SYSTEM_PROCESSOR} MATCHES "ppc64le")
     message(STATUS "Compiling for ppc64le: setting -mcpu=native")
-    target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC $<$<AND:$<OR:$<CONFIG:RELEASE>,$<CONFIG:RELWITHDEBINFO>>,$<COMPILE_LANG_AND_ID:CXX,GNU,Clang>>:-mcpu=native>)
+    target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC $<$<AND:$<OR:$<CONFIG:RELEASE>,$<CONFIG:RELWITHDEBINFO>>,$<COMPILE_LANG_AND_ID:CXX,GNU,Clang,IntelLLVM>>:-mcpu=native>)
 elseif (${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86_64")
     message(STATUS "Compiling for x86_64: setting -march=native")
-    target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC $<$<AND:$<OR:$<CONFIG:RELEASE>,$<CONFIG:RELWITHDEBINFO>>,$<COMPILE_LANG_AND_ID:CXX,GNU,Clang>>:-march=native>)
+    target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC $<$<AND:$<OR:$<CONFIG:RELEASE>,$<CONFIG:RELWITHDEBINFO>>,$<COMPILE_LANG_AND_ID:CXX,GNU,Clang,IntelLLVM>>:-march=native>)
 endif ()
 
 target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC
@@ -334,6 +334,13 @@ if (PLSSVM_ENABLE_STDPAR_BACKEND MATCHES "AUTO" OR PLSSVM_ENABLE_STDPAR_BACKEND)
     add_subdirectory(src/plssvm/backends/stdpar)
 endif ()
 
+## check for HPX backend
+set(PLSSVM_ENABLE_HPX_BACKEND AUTO CACHE STRING "Enable HPX Backend")
+set_property(CACHE PLSSVM_ENABLE_HPX_BACKEND PROPERTY STRINGS AUTO ON OFF)
+if (PLSSVM_ENABLE_HPX_BACKEND MATCHES "AUTO" OR PLSSVM_ENABLE_HPX_BACKEND)
+    add_subdirectory(src/plssvm/backends/HPX)
+endif ()
+
 ## check for CUDA backend
 set(PLSSVM_ENABLE_CUDA_BACKEND AUTO CACHE STRING "Enable CUDA Backend")
 set_property(CACHE PLSSVM_ENABLE_CUDA_BACKEND PROPERTY STRINGS AUTO ON OFF)
@@ -395,7 +402,7 @@ if (PLSSVM_ENABLE_ASSERTS)
     # disable vectorization warning in clang in Release mode
     # -> loops can't be vectorized due to the PLSSVM_ASSERTs in the matrix::operator() member function
     # target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC
-    #         $<$<AND:$<OR:$<CONFIG:RELEASE>,$<CONFIG:RELWITHDEBINFO>>,$<COMPILE_LANG_AND_ID:CXX,Clang>>:-Wno-pass-failed>
+    #         $<$<AND:$<OR:$<CONFIG:RELEASE>,$<CONFIG:RELWITHDEBINFO>>,$<COMPILE_LANG_AND_ID:CXX,Clang,IntelLLVM>>:-Wno-pass-failed>
     # )
 endif ()
 
@@ -586,13 +593,42 @@ target_link_libraries(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC fmt::fmt)
 list(POP_BACK CMAKE_MESSAGE_INDENT)
 
 ########################################################################################################################
+##                                   enable automatic formatting using clang-format                                   ##
+########################################################################################################################
+option(PLSSVM_ENABLE_FORMATTING "Enable a formatting targets using clang-format." OFF)
+if (PLSSVM_ENABLE_FORMATTING)
+    list(APPEND CMAKE_MESSAGE_INDENT "Formatting:  ")
+    
+    ## install library to add a clang-format target
+    set(PLSSVM_format_VERSION 7021abbf066e2e577926731c3fa4141f456c5024)
+    find_package(format QUIET)
+    if (format_FOUND)
+        message(STATUS "Found package format.")
+    else ()
+        message(STATUS "Couldn't find package format. Building version ${PLSSVM_format_VERSION} from source.")
+        set(FORMAT_SKIP_CMAKE ON CACHE INTERNAL "" FORCE)
+        set(FORMAT_SKIP_CLANG OFF CACHE INTERNAL "" FORCE)
+        # fetch clang-format library
+        # TODO: use original library after PR (HIP support) has been merged
+        FetchContent_Declare(format
+                             GIT_REPOSITORY https://github.com/breyerml/Format.cmake.git
+                             GIT_TAG ${PLSSVM_format_VERSION}
+                             QUIET
+        )
+        FetchContent_MakeAvailable(format)
+    endif ()
+    
+    list(POP_BACK CMAKE_MESSAGE_INDENT)
+endif ()
+
+########################################################################################################################
 ##                                    enable documentation generation via doxygen                                     ##
 ########################################################################################################################
 option(PLSSVM_ENABLE_DOCUMENTATION "Build documentation using doxygen." OFF)
 if (PLSSVM_ENABLE_DOCUMENTATION)
     add_subdirectory(docs)
     # if documentation is enabled, add documentation warning flag when compiling with clang
-    target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC $<$<COMPILE_LANG_AND_ID:CXX,Clang>:-Wdocumentation>)
+    target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC $<$<COMPILE_LANG_AND_ID:CXX,Clang,IntelLLVM>:-Wdocumentation>)
 endif ()
 
 ########################################################################################################################
@@ -633,6 +669,10 @@ endif ()
 if (TARGET ${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME})
     message(STATUS "${PLSSVM_STDPAR_BACKEND_SUMMARY_STRING}")
     list(APPEND PLSSVM_BACKEND_NAME_LIST "stdpar")
+endif ()
+if (TARGET ${PLSSVM_HPX_BACKEND_LIBRARY_NAME})
+    message(STATUS "${PLSSVM_HPX_BACKEND_SUMMARY_STRING}")
+    list(APPEND PLSSVM_BACKEND_NAME_LIST "hpx")
 endif ()
 if (TARGET ${PLSSVM_CUDA_BACKEND_LIBRARY_NAME})
     message(STATUS "${PLSSVM_CUDA_BACKEND_SUMMARY_STRING}")
@@ -760,6 +800,11 @@ configure_package_config_file(
         "${PROJECT_BINARY_DIR}/plssvmConfig.cmake"
         INSTALL_DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/plssvm/cmake
 )
+configure_package_config_file(
+        "${CMAKE_CURRENT_SOURCE_DIR}/cmake/plssvm/plssvmHIPTargets.cmake.in"
+        "${PROJECT_BINARY_DIR}/plssvmHIPTargets.cmake"
+        INSTALL_DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/plssvm/cmake
+)
 
 ## create and copy install-targets file
 install(EXPORT plssvm_Targets
@@ -773,9 +818,10 @@ install(FILES
         "${PROJECT_BINARY_DIR}/plssvmConfig.cmake"
         "${PROJECT_BINARY_DIR}/plssvmConfigVersion.cmake"
         "${CMAKE_CURRENT_SOURCE_DIR}/cmake/plssvm/plssvmCUDATargets.cmake"
-        "${CMAKE_CURRENT_SOURCE_DIR}/cmake/plssvm/plssvmHIPTargets.cmake"
+        "${PROJECT_BINARY_DIR}/plssvmHIPTargets.cmake"
         "${CMAKE_CURRENT_SOURCE_DIR}/cmake/plssvm/plssvmOpenCLTargets.cmake"
         "${CMAKE_CURRENT_SOURCE_DIR}/cmake/plssvm/plssvmOpenMPTargets.cmake"
+        "${CMAKE_CURRENT_SOURCE_DIR}/cmake/plssvm/plssvmHPXTargets.cmake"
         "${CMAKE_CURRENT_SOURCE_DIR}/cmake/plssvm/plssvmAdaptiveCppTargets.cmake"
         "${CMAKE_CURRENT_SOURCE_DIR}/cmake/plssvm/plssvmDPCPPTargets.cmake"
         "${CMAKE_CURRENT_SOURCE_DIR}/cmake/plssvm/plssvmstdparTargets.cmake"

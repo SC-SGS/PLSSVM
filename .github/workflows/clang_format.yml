@@ -1,0 +1,52 @@
+name: Formatting via clang-format
+
+# only trigger this action on specific events
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  format:
+    runs-on: ubuntu-24.04
+    steps:
+      # checkout repository
+      - name: "Checkout PLSSVM"
+        uses: actions/checkout@v4.1.1
+        with:
+          path: PLSSVM
+      # install dependencies
+      - name: "Dependencies"
+        run: |
+          sudo apt install libomp-dev clang-format
+      # install new CMake version
+      - name: "Install cmake 3.31.0"
+        uses: lukka/get-cmake@v3.31.0
+      # configure project via CMake
+      - name: "Configure"
+        run: |
+          cd PLSSVM
+          cmake --preset all -DPLSSVM_TARGET_PLATFORMS="cpu" -DPLSSVM_ENABLE_FORMATTING=ON
+      # check formatting
+      - name: "Check Formatting"
+        run: |
+          set +e
+          cd PLSSVM
+          cmake --build --preset all --target check-clang-format
+          status=$?
+          if [ $status -ne 0 ]; then
+            echo "Formatting errors found!"
+            cmake --build --preset all --target clang-format > clang-format-patch.txt 2>&1
+            exit $status
+          else
+            echo "No formatting errors found!"
+          fi
+      # upload the git patch, if available
+      - name: "Upload Patch"
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: clang-format-patch
+          path: PLSSVM/clang-format-patch.txt
+          if-no-files-found: ignore

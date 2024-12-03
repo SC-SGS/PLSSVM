@@ -1,5 +1,10 @@
 {
   "version": 6,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 25,
+    "patch": 0
+  },
   "configurePresets": [
     {
       "name": "common",
@@ -7,6 +12,7 @@
       "binaryDir": "build/${presetName}",
       "cacheVariables": {
         "PLSSVM_ENABLE_OPENMP_BACKEND": "OFF",
+        "PLSSVM_ENABLE_HPX_BACKEND": "OFF",
         "PLSSVM_ENABLE_STDPAR_BACKEND": "OFF",
         "PLSSVM_ENABLE_CUDA_BACKEND": "OFF",
         "PLSSVM_ENABLE_HIP_BACKEND": "OFF",

@@ -1,14 +1,17 @@
 import plssvm
 from sklearn.metrics import classification_report
 
+# correctly initialize and finalize environments
+environment_guard = plssvm.environment.ScopeGuard()
+
 try:
     # create a new C-SVM parameter set, explicitly overriding the default kernel function
     params = plssvm.Parameter(kernel_type=plssvm.KernelFunctionType.POLYNOMIAL)
 
     # create two data sets: one with the training data scaled to [-1, 1]
     # and one with the test data scaled like the training data
-    train_data = plssvm.DataSet("train_data.libsvm", scaling=(-1.0, 1.0))
-    test_data = plssvm.DataSet("test_data.libsvm", scaling=train_data.scaling_factors())
+    train_data = plssvm.DataSet("train_file.libsvm", scaling=(-1.0, 1.0))
+    test_data = plssvm.DataSet("test_file.libsvm", scaling=train_data.scaling_factors())
 
     # create C-SVM using the default backend and the previously defined parameter
     svm = plssvm.CSVM(params)

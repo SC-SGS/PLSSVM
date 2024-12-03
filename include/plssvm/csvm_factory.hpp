@@ -28,6 +28,9 @@
 #if defined(PLSSVM_HAS_STDPAR_BACKEND)
     #include "plssvm/backends/stdpar/csvm.hpp"  // plssvm::stdpar::csvm, plssvm::csvm_backend_exists_v
 #endif
+#if defined(PLSSVM_HAS_HPX_BACKEND)
+    #include "plssvm/backends/HPX/csvm.hpp"  // plssvm::hpx::csvm, plssvm::csvm_backend_exists_v
+#endif
 #if defined(PLSSVM_HAS_CUDA_BACKEND)
     #include "plssvm/backends/CUDA/csvm.hpp"  // plssvm::cuda::csvm, plssvm::csvm_backend_exists_v
 #endif
@@ -130,6 +133,8 @@ template <typename... Args>
             return make_csvm_default_impl<openmp::csvm>(std::forward<Args>(args)...);
         case backend_type::stdpar:
             return make_csvm_default_impl<stdpar::csvm>(std::forward<Args>(args)...);
+        case backend_type::hpx:
+            return make_csvm_default_impl<hpx::csvm>(std::forward<Args>(args)...);
         case backend_type::cuda:
             return make_csvm_default_impl<cuda::csvm>(std::forward<Args>(args)...);
         case backend_type::hip:
@@ -158,7 +163,7 @@ template <typename... Args>
  * @return the C-SVM (`[[nodiscard]]`)
  */
 template <typename... Args>
-[[nodiscard]] inline std::unique_ptr<csvm> make_csvm(const backend_type backend, Args ...args) {
+[[nodiscard]] inline std::unique_ptr<csvm> make_csvm(const backend_type backend, Args... args) {
     return detail::make_csvm_impl(backend, args...);
 }
 
@@ -170,7 +175,7 @@ template <typename... Args>
  * @return the C-SVM (`[[nodiscard]]`)
  */
 template <typename... Args>
-[[nodiscard]] inline std::unique_ptr<csvm> make_csvm(Args ...args) {
+[[nodiscard]] inline std::unique_ptr<csvm> make_csvm(Args... args) {
     return detail::make_csvm_impl(backend_type::automatic, args...);
 }
 

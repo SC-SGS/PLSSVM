@@ -4,6 +4,16 @@
 ##          See the LICENSE.md file in the project root for full license information.
 ########################################################################################################################
 
+# death tests are currently not supported for the stdpar implementations due to GoogleTest internal SegFaults
+if (PLSSVM_ENABLE_ASSERTS AND PLSSVM_STDPAR_BACKEND)
+    message(FATAL_ERROR "GTest's death tests not supported with our stdpar backend. Please set \"PLSSVM_ENABLE_ASSERTS=OFF\"!")
+endif ()
+
+# performance tracker not supported with NVHPC
+if (PLSSVM_ENABLE_PERFORMANCE_TRACKING AND PLSSVM_STDPAR_BACKEND AND PLSSVM_STDPAR_BACKEND STREQUAL "NVHPC")
+    message(FATAL_ERROR "The (global) performance tracker is currently not supported with GTest and NVHPC. Please set \"PLSSVM_ENABLE_PERFORMANCE_TRACKING=OFF\" or use another stdpar implementation!")
+endif ()
+
 ## create stdpar tests
 set(PLSSVM_STDPAR_TEST_NAME stdpar_tests)
 

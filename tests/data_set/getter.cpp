@@ -18,7 +18,7 @@
 #include "tests/types_to_test.hpp"       // util::{label_type_gtest, test_parameter_type_at_t}
 #include "tests/utility.hpp"             // util::{redirect_output, scale}
 
-#include "gtest/gtest.h"           // TYPED_TEST, TYPED_TEST_SUITE, EXPECT_TRUE, EXPECT_FALSE, EXPECT_EQ, ASSERT_TRUE, ::testing::Test
+#include "gtest/gtest.h"  // TYPED_TEST, TYPED_TEST_SUITE, EXPECT_TRUE, EXPECT_FALSE, EXPECT_EQ, ASSERT_TRUE, ::testing::Test
 
 #include <cstddef>  // std::size_t
 #include <tuple>    // std::get

@@ -1,4 +1,4 @@
-## Authors: Alexander Van Craen, Marcel Breyer
+## Authors: Alexander Van Craen, Marcel Breyer, Alexander Strack
 ## Copyright (C): 2018-today The PLSSVM project - All Rights Reserved
 ## License: This file is part of the PLSSVM project which is released under the MIT license.
 ##          See the LICENSE.md file in the project root for full license information.
@@ -41,6 +41,7 @@ set(PLSSVM_PYTHON_BINDINGS_SOURCES
     ${CMAKE_CURRENT_LIST_DIR}/classification_types.cpp
     ${CMAKE_CURRENT_LIST_DIR}/csvm.cpp
     ${CMAKE_CURRENT_LIST_DIR}/data_set.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/environment.cpp
     ${CMAKE_CURRENT_LIST_DIR}/file_format_types.cpp
     ${CMAKE_CURRENT_LIST_DIR}/gamma.cpp
     ${CMAKE_CURRENT_LIST_DIR}/kernel_function_types.cpp
@@ -66,6 +67,9 @@ endif ()
 # add backends specific source files if the respective backend is used
 if (TARGET ${PLSSVM_OPENMP_BACKEND_LIBRARY_NAME})
     list(APPEND PLSSVM_PYTHON_BINDINGS_SOURCES ${CMAKE_CURRENT_LIST_DIR}/backends/openmp_csvm.cpp)
+endif ()
+if (TARGET ${PLSSVM_HPX_BACKEND_LIBRARY_NAME})
+    list(APPEND PLSSVM_PYTHON_BINDINGS_SOURCES ${CMAKE_CURRENT_LIST_DIR}/backends/hpx_csvm.cpp)
 endif ()
 if (TARGET ${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME})
     

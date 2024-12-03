@@ -10,9 +10,10 @@
         - [plssvm.Parameter](#plssvmparameter)
         - [plssvm.DataSet](#plssvmdataset)
         - [plssvm.CSVM](#plssvmcsvm)
-        - [plssvm.openmp.CSVM, plssvm.stdpar.CSVM, plssvm.cuda.CSVM, plssvm.hip.CSVM, plssvm.opencl.CSVM, plssvm.sycl.CSVM, plssvm.dpcpp.CSVM, plssvm.adaptivecpp.CSVM](#plssvmopenmpcsvm-plssvmcudacsvm-plssvmhipcsvm-plssvmopenclcsvm-plssvmsyclcsvm-plssvmdpcppcsvm-plssvmadaptivecppcsvm)
+        - [plssvm.openmp.CSVM, plssvm.hpx.CSVM, plssvm.stdpar.CSVM, plssvm.cuda.CSVM, plssvm.hip.CSVM, plssvm.opencl.CSVM, plssvm.sycl.CSVM, plssvm.dpcpp.CSVM, plssvm.adaptivecpp.CSVM](#plssvmopenmpcsvm-plssvmhpxcsvm-plssvmcudacsvm-plssvmhipcsvm-plssvmopenclcsvm-plssvmsyclcsvm-plssvmdpcppcsvm-plssvmadaptivecppcsvm)
         - [plssvm.Model](#plssvmmodel)
         - [plssvm.Version](#plssvmversion)
+        - [plssvm.environment.ScopeGuard](#plssvmenvironmentscopeguard)
         - [plssvm.detail.tracking.PerformanceTracker](#plssvmdetailtrackingperformancetracker)
         - [plssvm.detail.tracking.Events](#plssvmdetailtrackingevent-plssvmdetailtrackingevents)
     - [Free functions](#free-functions)
@@ -195,8 +196,9 @@ The following table lists all PLSSVM enumerations exposed on the Python side:
 | `FileFormatType`       | `LIBSVM`, `ARFF`                                                     | The different supported file format types (default: `LIBSVM`).                                                                                                                                                                                              |
 | `GammaCoefficientType` | `AUTOMATIC`, `SCALE`                                                 | The different modes for the dynamic gamma calculation (default: `AUTOMATIC`).                                                                                                                                                                               |
 | `ClassificationType`   | `OAA`, `OAO`                                                         | The different supported multi-class classification strategies (default: `LIBSVM`).                                                                                                                                                                          |
-| `BackendType`          | `AUTOMATIC`, `OPENMP`, `CUDA`, `HIP`, `OPENCL`, `SYCL`               | The different supported backends (default: `AUTOMATIC`). If `AUTOMATIC` is provided, the selected backend depends on the used target platform.                                                                                                              |
+| `BackendType`          | `AUTOMATIC`, `OPENMP`, `HPX`, `CUDA`, `HIP`, `OPENCL`, `SYCL`        | The different supported backends (default: `AUTOMATIC`). If `AUTOMATIC` is provided, the selected backend depends on the used target platform.                                                                                                              |
 | `VerbosityLevel`       | `QUIET`, `LIBSVM`, `TIMING`, `FULL`                                  | The different supported log levels (default: `FULL`). `QUIET` means no output, `LIBSVM` output that is as conformant as possible with LIBSVM's output, `TIMING` all timing related outputs, and `FULL` everything. Can be combined via bit-wise operations. |
+| `Status`               | `UNINITIALIZED`, `INITIALIZED`, `FINALIZED`, `UNNECESSARY`           | The different environment status values. **Note**: located in the `plssvm.environment` module.                                                                                                                                                              |                                                                                                                                                                                                                   |
 
 If a SYCL implementation is available, additional enumerations are available:
 
@@ -335,6 +337,10 @@ If the most performant backend should be used, it is sufficient to use `plssvm.C
 `sycl_implementation_type` to choose between DPC++ and AdaptiveCpp as SYCL implementations
 and `sycl_kernel_invocation_type` to choose between the two different SYCL kernel invocation types.
 
+**Note**: if the backend type is `plssvm.BackendType.HPX` it is necessary to initialize and finalize the HPX runtime.
+The runtime can be manually managed using `plssvm.environment.initialize()` and `plssvm.environment.finalize()`.
+We recommend utilizing `plssvm.environment.ScopeGuard()` to manage the lifetime of the HPX runtime automatically.
+
 | methods                                                                                                                                      | description                                                                                                                                                                                                         |
 |----------------------------------------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `set_params(params)`                                                                                                                         | Replace the current `plssvm.Parameter` with the provided one.                                                                                                                                                       |
@@ -347,7 +353,7 @@ and `sycl_kernel_invocation_type` to choose between the two different SYCL kerne
 | `score(model)`                                                                                                                               | Score the model with respect to itself returning its accuracy.                                                                                                                                                      |
 | `score(model, data_set)`                                                                                                                     | Score the model given the provided data set returning its accuracy.                                                                                                                                                 |
 
-#### `plssvm.openmp.CSVM`, `plssvm.stdpar.CSVM`, plssvm.cuda.CSVM`, `plssvm.hip.CSVM`, `plssvm.opencl.CSVM`, `plssvm.sycl.CSVM`, `plssvm.dpcpp.CSVM`, `plssvm.adaptivecpp.CSVM`
+#### `plssvm.openmp.CSVM`, `plssvm.hpx.CSVM`, `plssvm.stdpar.CSVM`, plssvm.cuda.CSVM`, `plssvm.hip.CSVM`, `plssvm.opencl.CSVM`, `plssvm.sycl.CSVM`, `plssvm.dpcpp.CSVM`, `plssvm.adaptivecpp.CSVM`
 
 These classes represent the backend specific CSVMs.
 **Note**: they are only available if the respective backend has been enabled during PLSSVM's build step.
@@ -422,6 +428,19 @@ A class encapsulating the version information of the used PLSSVM installation.
 | `major : int`      | The major PLSSVM version.                 |
 | `minor : int`      | The minor PLSSVM version.                 |
 | `patch : int`      | The patch PLSSVM version.                 |
+
+#### `plssvm.environment.ScopeGuard`
+
+The environmental scope guard can be used to automatically finalize all necessary backend environments when it goes out of scope.
+
+| constructors                            | description                                                                                                                                                                             |
+|-----------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `ScopeGuard([backends={}])`             | Create a new scope guard initializing all available backend environments. If a list of backends is provided, only initializes these backends.                                           |
+| `ScopeGuard(argc, argv, [backends={}])` | Create a new scope guard initializing all available backend environments using the provided command line arguments. If a list of backends is provided, only initializes these backends. |
+
+| methods      | description                                                                                                                       |
+|--------------|-----------------------------------------------------------------------------------------------------------------------------------|
+| `backends()` | Return all initialized backends. All backends returned by this function will be finalized when the scope guard goes out of scope. |
 
 #### `plssvm.detail.tracking.PerformanceTracker`
 
@@ -516,6 +535,15 @@ If a stdpar implementation is available, additional free functions are available
 |-------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------|
 | `list_available_stdpar_implementations()` | List all available stdpar implementations (determined during PLSSVM's build step; currently always guaranteed to be only one implementation). |
 
+Additional free functions are available under `plssvm.environment.`.
+
+| function                                | description                                                                                                                                                  |
+|-----------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `get_backend_status(backend)`           | Return the current environment status of the provided backend.                                                                                               |
+| `initialize([backends={}])`             | Initialize all available backend environments. If a list of backends is provided, only initializes these backends.                                           |
+| `initialize(argc, argv, [backends={}])` | Initialize all available backend environments using the provided command line arguments. If a list of backends is provided, only initializes these backends. |
+| `finalize([backends={}])`               | Finalize all available backend environments. If a list of backends is provided, only finalizes these backends.                                               |
+
 ### Exceptions
 
 The PLSSVM Python3 bindings define a few new exception types:
@@ -532,5 +560,8 @@ The PLSSVM Python3 bindings define a few new exception types:
 | `UnsupportedKernelTypeError` | If an unsupported target platform has been requested.                                                                  |
 | `GPUDevicePtrError`          | If something went wrong in one of the backend's GPU device pointers. **Note**: shouldn't occur in user code.           |
 | `MatrixError`                | If something went wrong in the internal matrix class. **Note**: shouldn't occur in user code.                          |
+| `KernelLaunchResourcesError` | If something went wrong during a kernel launch due to insufficient ressources.                                         |
+| `ClassificationReportError`  | If something in the classification report went wrong. **Note**: shouldn't occur in user code.                          |
+| `EnvironmentError`           | If something during environment initialization or finalization went wrong.                                             |
 
 Depending on the available backends, additional `BackendError`s are also available (e.g., `plssvm.cuda.BackendError`).

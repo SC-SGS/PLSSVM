@@ -90,6 +90,9 @@ void csvm::init(const target_platform target) {
     // get all available devices wrt the requested target platform
     std::tie(devices_, target_) = detail::get_device_list(target);
 
+    // At this point, target_ may NEVER be target_platform::automatic!
+    PLSSVM_ASSERT(target_ != target_platform::automatic, "At this point, the target platform must be determined and must NOT be automatic!");
+
     // set correct kernel invocation type if "automatic" has been provided
     if (invocation_type_ == sycl::kernel_invocation_type::automatic) {
         // always use nd_range for AdaptiveCpp

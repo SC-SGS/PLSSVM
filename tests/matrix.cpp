@@ -533,6 +533,16 @@ TYPED_TEST(Matrix, construct_with_size_and_ptr_empty) {
     EXPECT_EQ(matr.shape_padded(), (plssvm::shape{ 0, 0 }));
 }
 
+TYPED_TEST(Matrix, construct_with_size_and_nullptr_ptr) {
+    using real_type = typename TestFixture::fixture_real_type;
+    constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
+
+    // construct a matrix with a specific size and a nullptr
+    EXPECT_THROW_WHAT((plssvm::matrix<real_type, layout>{ plssvm::shape{ 2, 3 }, nullptr }),
+                      plssvm::matrix_exception,
+                      "The provided data pointer may not be a nullptr if the matrix size is greater than 0!");
+}
+
 TYPED_TEST(Matrix, construct_with_size_and_ptr_value_zero_num_rows) {
     using real_type = typename TestFixture::fixture_real_type;
     constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
@@ -601,6 +611,16 @@ TYPED_TEST(Matrix, construct_with_size_and_ptr_empty_and_padding) {
     // only padding entries should be present
     ASSERT_EQ(matr.size_padded(), 20);
     EXPECT_TRUE(std::all_of(matr.data(), matr.data() + matr.size_padded(), [](const real_type val) { return val == real_type{ 0.0 }; }));
+}
+
+TYPED_TEST(Matrix, construct_with_size_and_nullptr_empty_and_padding) {
+    using real_type = typename TestFixture::fixture_real_type;
+    constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
+
+    // construct a matrix with a specific size, padding and a nullptr
+    EXPECT_THROW_WHAT((plssvm::matrix<real_type, layout>{ plssvm::shape{ 2, 3 }, nullptr, plssvm::shape{ 4, 5 } }),
+                      plssvm::matrix_exception,
+                      "The provided data pointer may not be a nullptr if the matrix size is greater than 0!");
 }
 
 TYPED_TEST(Matrix, construct_with_size_and_ptr_empty_and_zero_padding) {
