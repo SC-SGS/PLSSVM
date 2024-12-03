@@ -189,7 +189,7 @@ template <auto is_initialized_function, auto is_finalized_function>
 constexpr bool is_initialization_necessary([[maybe_unused]] const backend_type backend) {
     // Note: must be implemented for the backends that need environmental setup
     // currently false for all available backends
-    return false;
+    return backend == backend_type::hpx || backend == backend_type::kokkos;
 }
 
 //****************************************************************************//
