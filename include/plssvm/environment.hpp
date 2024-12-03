@@ -30,16 +30,17 @@
 #endif
 
 #include "fmt/base.h"     // fmt::formatter
+#include "fmt/format.h"   // fmt::format
 #include "fmt/ostream.h"  // fmt::ostream_formatter
 #include "fmt/ranges.h"   // fmt::join
 
-#include <ios>      // std::ios::failbit
-#include <istream>  // std::istream
-#include <ostream>  // std::ostream
-#include <string>   // std::string
-#include <vector>   // std::vector
-
-
+#include <algorithm>  // std::remove_if
+#include <ios>        // std::ios::failbit
+#include <istream>    // std::istream
+#include <ostream>    // std::ostream
+#include <string>     // std::string
+#include <utility>    // std::move
+#include <vector>     // std::vector
 
 namespace plssvm::environment {
 
