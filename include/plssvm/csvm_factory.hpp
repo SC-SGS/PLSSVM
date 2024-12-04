@@ -28,6 +28,9 @@
 #if defined(PLSSVM_HAS_STDPAR_BACKEND)
     #include "plssvm/backends/stdpar/csvm.hpp"  // plssvm::stdpar::csvm, plssvm::csvm_backend_exists_v
 #endif
+#if defined(PLSSVM_HAS_HPX_BACKEND)
+    #include "plssvm/backends/HPX/csvm.hpp"  // plssvm::hpx::csvm, plssvm::csvm_backend_exists_v
+#endif
 #if defined(PLSSVM_HAS_CUDA_BACKEND)
     #include "plssvm/backends/CUDA/csvm.hpp"  // plssvm::cuda::csvm, plssvm::csvm_backend_exists_v
 #endif
@@ -44,6 +47,9 @@
     #if defined(PLSSVM_SYCL_BACKEND_HAS_ADAPTIVECPP)
         #include "plssvm/backends/SYCL/AdaptiveCpp/csvm.hpp"  // plssvm::adaptivecpp::csvm, plssvm::csvm_backend_exists_v
     #endif
+#endif
+#if defined(PLSSVM_HAS_KOKKOS_BACKEND)
+    #include "plssvm/backends/Kokkos/csvm.hpp"  // plssvm::kokkos::csvm, plssvm::csvm_backend_exists_v
 #endif
 
 #include "fmt/format.h"   // fmt::format
@@ -130,6 +136,8 @@ template <typename... Args>
             return make_csvm_default_impl<openmp::csvm>(std::forward<Args>(args)...);
         case backend_type::stdpar:
             return make_csvm_default_impl<stdpar::csvm>(std::forward<Args>(args)...);
+        case backend_type::hpx:
+            return make_csvm_default_impl<hpx::csvm>(std::forward<Args>(args)...);
         case backend_type::cuda:
             return make_csvm_default_impl<cuda::csvm>(std::forward<Args>(args)...);
         case backend_type::hip:
@@ -138,6 +146,8 @@ template <typename... Args>
             return make_csvm_default_impl<opencl::csvm>(std::forward<Args>(args)...);
         case backend_type::sycl:
             return make_csvm_sycl_impl(std::forward<Args>(args)...);
+        case backend_type::kokkos:
+            return make_csvm_default_impl<kokkos::csvm>(std::forward<Args>(args)...);
     }
     throw unsupported_backend_exception{ "Unrecognized backend provided!" };
 }

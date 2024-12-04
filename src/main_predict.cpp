@@ -15,6 +15,7 @@
 #include "plssvm/detail/tracking/performance_tracker.hpp"  // plssvm::detail::tracking::tracking_entry, PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_SAVE,
                                                            // PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY, PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_HWS_ENTRY
                                                            // PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_SET_REFERENCE_TIME
+#include "plssvm/detail/assert.hpp"                        // PLSSVM_ASSERT
 #include "plssvm/detail/utility.hpp"                       // PLSSVM_IS_DEFINED
 
 #if defined(PLSSVM_HARDWARE_SAMPLING_ENABLED)
@@ -32,6 +33,7 @@
 #include <fstream>     // std::ofstream
 #include <functional>  // std::mem_fn
 #include <iostream>    // std::cerr, std::endl
+#include <memory>      // std::unique_ptr, std::make_unique
 #include <utility>     // std::pair
 #include <variant>     // std::visit
 #include <vector>      // std::vector
@@ -74,13 +76,31 @@ int main(int argc, char *argv[]) {
 
             // check whether SYCL is used as backend (it is either requested directly or as automatic backend)
             const bool use_sycl_as_backend{ cmd_parser.backend == plssvm::backend_type::sycl || (cmd_parser.backend == plssvm::backend_type::automatic && plssvm::determine_default_backend() == plssvm::backend_type::sycl) };
+            // check whether HPX is used as backend (it is either requested directly or as automatic backend)
+            const bool use_hpx_as_backend{ cmd_parser.backend == plssvm::backend_type::hpx || (cmd_parser.backend == plssvm::backend_type::automatic && plssvm::determine_default_backend() == plssvm::backend_type::hpx) };
+            // check whether Kokkos is used as backend (it is either requested directly or as automatic backend)
+            const bool use_kokkos_as_backend{ cmd_parser.backend == plssvm::backend_type::kokkos || (cmd_parser.backend == plssvm::backend_type::automatic && plssvm::determine_default_backend() == plssvm::backend_type::kokkos) };
 
             // initialize environments if necessary
-            environment_guard = std::make_unique<plssvm::environment::scope_guard>();
+            std::vector<plssvm::backend_type> backends_to_initialize{};
+            if (use_hpx_as_backend) {
+                backends_to_initialize.push_back(plssvm::backend_type::hpx);
+            }
+            if (use_kokkos_as_backend) {
+                backends_to_initialize.push_back(plssvm::backend_type::kokkos);
+            }
+            environment_guard = std::make_unique<plssvm::environment::scope_guard>(backends_to_initialize);
 
             // create default csvm
-            const std::unique_ptr<plssvm::csvm> svm = use_sycl_as_backend ? plssvm::make_csvm(cmd_parser.backend, cmd_parser.target, plssvm::sycl_implementation_type = cmd_parser.sycl_implementation_type)
-                                                                          : plssvm::make_csvm(cmd_parser.backend, cmd_parser.target);
+            const std::unique_ptr<plssvm::csvm> svm = [&]() {
+                if (use_sycl_as_backend) {
+                    return plssvm::make_csvm(cmd_parser.backend, cmd_parser.target, plssvm::sycl_implementation_type = cmd_parser.sycl_implementation_type);
+                } else if (use_kokkos_as_backend) {
+                    return plssvm::make_csvm(cmd_parser.backend, cmd_parser.target, plssvm::kokkos_execution_space = cmd_parser.kokkos_execution_space);
+                } else {
+                    return plssvm::make_csvm(cmd_parser.backend, cmd_parser.target);
+                }
+            }();
 
             // create model
             const plssvm::model<label_type> model{ cmd_parser.model_filename };

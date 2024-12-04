@@ -1,11 +1,13 @@
 /**
  * @author Alexander Van Craen
  * @author Marcel Breyer
+ * @author Alexander Strack
  * @copyright 2018-today The PLSSVM project - All Rights Reserved
  * @license This file is part of the PLSSVM project which is released under the MIT license.
  *          See the LICENSE.md file in the project root for full license information.
  */
 
+#include "plssvm/environment.hpp"            // plssvm::environment::{initialize, finalize}
 #include "plssvm/exceptions/exceptions.hpp"  // plssvm::exception
 
 #include "pybind11/pybind11.h"  // PYBIND11_MODULE, py::module_, py::exception, py::register_exception_translator
@@ -31,19 +33,28 @@ void init_parameter(py::module_ &);
 void init_model(py::module_ &);
 void init_data_set(py::module_ &);
 void init_version(py::module_ &);
-void init_environment(py::module_ &);
 void init_exceptions(py::module_ &, const py::exception<plssvm::exception> &);
 void init_csvm(py::module_ &);
 void init_openmp_csvm(py::module_ &, const py::exception<plssvm::exception> &);
+void init_hpx_csvm(py::module_ &, const py::exception<plssvm::exception> &);
 void init_stdpar_csvm(py::module_ &, const py::exception<plssvm::exception> &);
 void init_cuda_csvm(py::module_ &, const py::exception<plssvm::exception> &);
 void init_hip_csvm(py::module_ &, const py::exception<plssvm::exception> &);
 void init_opencl_csvm(py::module_ &, const py::exception<plssvm::exception> &);
 void init_sycl(py::module_ &, const py::exception<plssvm::exception> &);
+void init_kokkos_csvm(py::module_ &, const py::exception<plssvm::exception> &);
 void init_sklearn(py::module_ &);
 
 PYBIND11_MODULE(plssvm, m) {
     m.doc() = "Parallel Least Squares Support Vector Machine";
+
+    // automatically initialize the environments
+    plssvm::environment::initialize();
+
+    // automatically finalize the environments
+    m.add_object("_cleanup", py::capsule([]() {
+                     plssvm::environment::finalize();
+                 }));
 
     // register PLSSVM base exception
     static py::exception<plssvm::exception> base_exception(m, "PLSSVMError");
@@ -78,13 +89,15 @@ PYBIND11_MODULE(plssvm, m) {
     init_model(m);
     init_data_set(m);
     init_version(m);
-    init_environment(m);
     init_exceptions(m, base_exception);
     init_csvm(m);
 
     // init bindings for the specific backends ONLY if the backend has been enabled
 #if defined(PLSSVM_HAS_OPENMP_BACKEND)
     init_openmp_csvm(m, base_exception);
+#endif
+#if defined(PLSSVM_HAS_HPX_BACKEND)
+    init_hpx_csvm(m, base_exception);
 #endif
 #if defined(PLSSVM_HAS_STDPAR_BACKEND)
     init_stdpar_csvm(m, base_exception);
@@ -100,6 +113,9 @@ PYBIND11_MODULE(plssvm, m) {
 #endif
 #if defined(PLSSVM_HAS_SYCL_BACKEND)
     init_sycl(m, base_exception);
+#endif
+#if defined(PLSSVM_HAS_KOKKOS_BACKEND)
+    init_kokkos_csvm(m, base_exception);
 #endif
 
     init_sklearn(m);

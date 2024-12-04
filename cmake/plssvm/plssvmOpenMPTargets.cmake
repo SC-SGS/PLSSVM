@@ -6,7 +6,7 @@
 
 include(CMakeFindDependencyMacro)
 
-# check if the OpenCL backend is available
+# check if the OpenMP backend is available
 if (TARGET plssvm::plssvm-OpenMP)
     # enable OpenMP
     find_dependency(OpenMP)

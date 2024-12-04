@@ -1,6 +1,7 @@
 /**
  * @author Alexander Van Craen
  * @author Marcel Breyer
+ * @author Alexander Strack
  * @copyright 2018-today The PLSSVM project - All Rights Reserved
  * @license This file is part of the PLSSVM project which is released under the MIT license.
  *          See the LICENSE.md file in the project root for full license information.
@@ -35,6 +36,9 @@ std::vector<backend_type> list_available_backends() {
 #if defined(PLSSVM_HAS_STDPAR_BACKEND)
     available_backends.push_back(backend_type::stdpar);
 #endif
+#if defined(PLSSVM_HAS_HPX_BACKEND)
+    available_backends.push_back(backend_type::hpx);
+#endif
 #if defined(PLSSVM_HAS_CUDA_BACKEND)
     available_backends.push_back(backend_type::cuda);
 #endif
@@ -47,6 +51,9 @@ std::vector<backend_type> list_available_backends() {
 #if defined(PLSSVM_HAS_SYCL_BACKEND)
     available_backends.push_back(backend_type::sycl);
 #endif
+#if defined(PLSSVM_HAS_KOKKOS_BACKEND)
+    available_backends.push_back(backend_type::kokkos);
+#endif
 
     // automatic is ALWAYS available but AT LEAST ONE other backend must be available in addition
     PLSSVM_ASSERT(available_backends.size() > 1, "Besides \"automatic\" at least one other backend must be available!");
@@ -58,10 +65,10 @@ backend_type determine_default_backend(const std::vector<backend_type> &availabl
     // the decision order based on empiric findings
     using decision_order_type = std::pair<target_platform, std::vector<backend_type>>;
     const std::array decision_order = {
-        decision_order_type{ target_platform::gpu_nvidia, { backend_type::cuda, backend_type::hip, backend_type::opencl, backend_type::sycl, backend_type::stdpar } },
-        decision_order_type{ target_platform::gpu_amd, { backend_type::hip, backend_type::opencl, backend_type::sycl, backend_type::stdpar } },
-        decision_order_type{ target_platform::gpu_intel, { backend_type::sycl, backend_type::opencl, backend_type::stdpar } },
-        decision_order_type{ target_platform::cpu, { backend_type::sycl, backend_type::opencl, backend_type::openmp, backend_type::stdpar } }
+        decision_order_type{ target_platform::gpu_nvidia, { backend_type::cuda, backend_type::hip, backend_type::opencl, backend_type::sycl, backend_type::kokkos, backend_type::stdpar } },
+        decision_order_type{ target_platform::gpu_amd, { backend_type::hip, backend_type::opencl, backend_type::sycl, backend_type::kokkos, backend_type::stdpar } },
+        decision_order_type{ target_platform::gpu_intel, { backend_type::sycl, backend_type::opencl, backend_type::kokkos, backend_type::stdpar } },
+        decision_order_type{ target_platform::cpu, { backend_type::sycl, backend_type::kokkos, backend_type::opencl, backend_type::openmp, backend_type::hpx, backend_type::stdpar } }
     };
 
     // return the default backend based on the previously defined decision order
@@ -87,6 +94,8 @@ std::ostream &operator<<(std::ostream &out, const backend_type backend) {
             return out << "openmp";
         case backend_type::stdpar:
             return out << "stdpar";
+        case backend_type::hpx:
+            return out << "hpx";
         case backend_type::cuda:
             return out << "cuda";
         case backend_type::hip:
@@ -95,6 +104,8 @@ std::ostream &operator<<(std::ostream &out, const backend_type backend) {
             return out << "opencl";
         case backend_type::sycl:
             return out << "sycl";
+        case backend_type::kokkos:
+            return out << "kokkos";
     }
     return out << "unknown";
 }
@@ -110,6 +121,8 @@ std::istream &operator>>(std::istream &in, backend_type &backend) {
         backend = backend_type::openmp;
     } else if (str == "stdpar") {
         backend = backend_type::stdpar;
+    } else if (str == "hpx") {
+        backend = backend_type::hpx;
     } else if (str == "cuda") {
         backend = backend_type::cuda;
     } else if (str == "hip") {
@@ -118,6 +131,8 @@ std::istream &operator>>(std::istream &in, backend_type &backend) {
         backend = backend_type::opencl;
     } else if (str == "sycl") {
         backend = backend_type::sycl;
+    } else if (str == "kokkos") {
+        backend = backend_type::kokkos;
     } else {
         in.setstate(std::ios::failbit);
     }

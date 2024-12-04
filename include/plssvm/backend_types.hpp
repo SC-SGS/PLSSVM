@@ -2,6 +2,7 @@
  * @file
  * @author Alexander Van Craen
  * @author Marcel Breyer
+ * @author Alexander Strack
  * @copyright 2018-today The PLSSVM project - All Rights Reserved
  * @license This file is part of the PLSSVM project which is released under the MIT license.
  *          See the LICENSE.md file in the project root for full license information.
@@ -35,6 +36,8 @@ enum class backend_type {
     automatic,
     /** [OpenMP](https://www.openmp.org/) to target CPUs only (currently no OpenMP target offloading support). */
     openmp,
+    /** [HPX] (https://hpx.stellar-group.org/) to target CPUs only (currently no GPU support). */
+    hpx,
     /** [C++ stdpar](https://en.cppreference.com/w/cpp/algorithm#Execution_policies) to target CPUs and GPUs from different vendors using C++ standard library parallel algorithms. */
     stdpar,
     /** [CUDA](https://developer.nvidia.com/cuda-zone) to target NVIDIA GPUs only. */
@@ -44,7 +47,9 @@ enum class backend_type {
     /** [OpenCL](https://www.khronos.org/opencl/) to target CPUs and GPUs from different vendors. */
     opencl,
     /** [SYCL](https://www.khronos.org/sycl/) to target CPUs and GPUs from different vendors. Currently tested SYCL implementations are [DPC++](https://github.com/intel/llvm) and [AdaptiveCpp](https://github.com/AdaptiveCpp/AdaptiveCpp) (formerly known as hipSYCL). */
-    sycl
+    sycl,
+    /** [Kokkos](https://github.com/kokkos/kokkos) to target CPUs and GPUs from different vendors. */
+    kokkos
 };
 
 /**
@@ -84,11 +89,13 @@ std::istream &operator>>(std::istream &in, backend_type &backend);
 // Forward declare all possible C-SVMs.
 namespace openmp { class csvm; }
 namespace stdpar { class csvm; }
+namespace hpx { class csvm; }
 namespace cuda { class csvm; }
 namespace hip { class csvm; }
 namespace opencl { class csvm; }
 namespace adaptivecpp { class csvm; }
 namespace dpcpp { class csvm; }
+namespace kokkos { class csvm; }
 
 // clang-format on
 
@@ -116,6 +123,15 @@ template <>
 struct csvm_to_backend_type<stdpar::csvm> {
     /// The enum value representing the stdpar backend.
     constexpr static backend_type value = backend_type::stdpar;
+};
+
+/**
+ * @brief Sets the `value` to `plssvm::backend_type::hpx` for the HPX C-SVM.
+ */
+template <>
+struct csvm_to_backend_type<hpx::csvm> {
+    /// The enum value representing the hpx backend.
+    constexpr static backend_type value = backend_type::hpx;
 };
 
 /**
@@ -167,6 +183,15 @@ struct csvm_to_backend_type<dpcpp::csvm> {
     constexpr static backend_type value = backend_type::sycl;
     /// The enum value representing the SYCL implementation for the (DPC++) SYCL backend.
     constexpr static sycl::implementation_type impl = sycl::implementation_type::dpcpp;
+};
+
+/**
+ * @brief Sets the `value` to `plssvm::backend_type::kokkos` for the Kokkos C-SVM.
+ */
+template <>
+struct csvm_to_backend_type<kokkos::csvm> {
+    /// The enum value representing the Kokkos backend.
+    constexpr static backend_type value = backend_type::kokkos;
 };
 
 }  // namespace detail

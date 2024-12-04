@@ -20,15 +20,27 @@
 #include "plssvm/detail/utility.hpp"         // plssvm::detail::{contains, unreachable}
 #include "plssvm/exceptions/exceptions.hpp"  // plssvm::environment_exception
 
+#if defined(PLSSVM_HAS_HPX_BACKEND)
+    #include <hpx/execution.hpp>  // ::hpx::post
+    #include <hpx/hpx_start.hpp>  // ::hpx::{start, stop, finalize}
+    #include <hpx/runtime.hpp>    // ::hpx::{is_running, is_stopped}
+#endif
+#if defined(PLSSVM_HAS_KOKKOS_BACKEND)
+    #include "Kokkos_Core.hpp"  // Kokkos::is_initialized, Kokkos::is_finalized, Kokkos::initialize, Kokkos::finalize
+#endif
+
 #include "fmt/base.h"     // fmt::formatter
+#include "fmt/format.h"   // fmt::format
 #include "fmt/ostream.h"  // fmt::ostream_formatter
 #include "fmt/ranges.h"   // fmt::join
 
-#include <ios>      // std::ios::failbit
-#include <istream>  // std::istream
-#include <ostream>  // std::ostream
-#include <string>   // std::string
-#include <vector>   // std::vector
+#include <algorithm>  // std::remove_if
+#include <ios>        // std::ios::failbit
+#include <istream>    // std::istream
+#include <ostream>    // std::ostream
+#include <string>     // std::string
+#include <utility>    // std::move
+#include <vector>     // std::vector
 
 namespace plssvm::environment {
 
@@ -100,7 +112,8 @@ namespace detail {
  * @return the respective environment status (`[[nodiscard]]`)
  */
 [[nodiscard]] inline status determine_status_from_initialized_finalized_flags(const bool is_initialized, const bool is_finalized) {
-    if (!is_initialized && !is_finalized) {
+    if (!is_initialized) {
+        // Note: ::hpx::is_stopped does return true even before calling finalize once
         return status::uninitialized;
     } else if (is_initialized && !is_finalized) {
         return status::initialized;
@@ -148,6 +161,22 @@ template <auto is_initialized_function, auto is_finalized_function>
         case backend_type::sycl:
             // no environment necessary to manage these backends
             return status::unnecessary;
+        case backend_type::hpx:
+            {
+#if defined(PLSSVM_HAS_HPX_BACKEND)
+                return detail::determine_status_from_initialized_finalized_functions<::hpx::is_running, ::hpx::is_stopped>();
+#else
+                return status::unnecessary;
+#endif
+            }
+        case backend_type::kokkos:
+            {
+#if defined(PLSSVM_HAS_KOKKOS_BACKEND)
+                return detail::determine_status_from_initialized_finalized_functions<Kokkos::is_initialized, Kokkos::is_finalized>();
+#else
+                return status::unnecessary;
+#endif
+            }
     }
     // should never be reached!
     ::plssvm::detail::unreachable();
@@ -161,7 +190,7 @@ template <auto is_initialized_function, auto is_finalized_function>
 constexpr bool is_initialization_necessary([[maybe_unused]] const backend_type backend) {
     // Note: must be implemented for the backends that need environmental setup
     // currently false for all available backends
-    return false;
+    return backend == backend_type::hpx || backend == backend_type::kokkos;
 }
 
 //****************************************************************************//
@@ -177,7 +206,17 @@ namespace detail {
 inline void initialize_backend([[maybe_unused]] const backend_type backend) {
     PLSSVM_ASSERT(backend != backend_type::automatic, "The automatic backend may never be initialized!");
     // Note: must be implemented for the backends that need environmental setup
-    // nothing to do for all available backends
+    // only have to perform special initialization steps for the HPX backend
+#if defined(PLSSVM_HAS_HPX_BACKEND)
+    if (backend == backend_type::hpx) {
+        ::hpx::start(nullptr, 0, nullptr);
+    }
+#endif
+#if defined(PLSSVM_HAS_KOKKOS_BACKEND)
+    if (backend == backend_type::kokkos) {
+        Kokkos::initialize();
+    }
+#endif
 }
 
 /**
@@ -189,7 +228,17 @@ inline void initialize_backend([[maybe_unused]] const backend_type backend) {
 inline void initialize_backend([[maybe_unused]] const backend_type backend, [[maybe_unused]] int &argc, [[maybe_unused]] char **argv) {
     PLSSVM_ASSERT(backend != backend_type::automatic, "The automatic backend may never be initialized!");
     // Note: must be implemented for the backends that need environmental setup
-    // nothing to do for all available backends
+    // only have to perform special initialization steps for the HPX backend
+#if defined(PLSSVM_HAS_HPX_BACKEND)
+    if (backend == backend_type::hpx) {
+        ::hpx::start(nullptr, argc, argv);
+    }
+#endif
+#if defined(PLSSVM_HAS_KOKKOS_BACKEND)
+    if (backend == backend_type::kokkos) {
+        Kokkos::initialize(argc, argv);
+    }
+#endif
 }
 
 /**
@@ -199,7 +248,18 @@ inline void initialize_backend([[maybe_unused]] const backend_type backend, [[ma
 inline void finalize_backend([[maybe_unused]] const backend_type backend) {
     PLSSVM_ASSERT(backend != backend_type::automatic, "The automatic backend may never be finalized!");
     // Note: must be implemented for the backends that need environmental setup
-    // nothing to do for all available backends
+    // only have to perform special initialization steps for the HPX backend
+#if defined(PLSSVM_HAS_HPX_BACKEND)
+    if (backend == backend_type::hpx) {
+        ::hpx::post([] { ::hpx::finalize(); });
+        ::hpx::stop();
+    }
+#endif
+#if defined(PLSSVM_HAS_KOKKOS_BACKEND)
+    if (backend == backend_type::kokkos) {
+        Kokkos::finalize();
+    }
+#endif
 }
 
 /**
@@ -399,7 +459,8 @@ inline std::vector<backend_type> finalize() {
 class [[nodiscard]] scope_guard {
   public:
     /**
-     * @copydoc initialize()
+     * @brief Initialize all **available** backends.
+     * @details Only initializes backends that are currently uninitialized.
      */
     scope_guard() {
         backends_ = initialize();
@@ -414,7 +475,10 @@ class [[nodiscard]] scope_guard {
     }
 
     /**
-     * @copydoc initialize(int &, char **)
+     * @brief Initialize all **available** backends.
+     * @details Only initializes backends that are currently uninitialized.
+     * @param[in,out] argc the number of provided command line arguments
+     * @param[in,out] argv the provided command line arguments
      */
     scope_guard(int &argc, char **argv) {
         backends_ = initialize(argc, argv);

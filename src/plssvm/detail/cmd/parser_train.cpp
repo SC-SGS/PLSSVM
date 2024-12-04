@@ -9,6 +9,7 @@
 #include "plssvm/detail/cmd/parser_train.hpp"
 
 #include "plssvm/backend_types.hpp"                                // plssvm::list_available_backends, plssvm::determine_default_backend
+#include "plssvm/backends/Kokkos/execution_space.hpp"              // plssvm::kokkos::{list_available_execution_spaces, execution_space}
 #include "plssvm/backends/SYCL/implementation_types.hpp"           // plssvm::sycl::{list_available_sycl_implementations, implementation_type}
 #include "plssvm/backends/SYCL/kernel_invocation_types.hpp"        // plssvm::sycl::kernel_invocation_type
 #include "plssvm/classification_types.hpp"                         // plssvm::classification_type, plssvm::classification_type_to_full_string
@@ -76,6 +77,9 @@ parser_train::parser_train(int argc, char **argv) {
 #if defined(PLSSVM_HAS_SYCL_BACKEND)
            ("sycl_kernel_invocation_type", "choose the kernel invocation type when using SYCL as backend: automatic|nd_range", cxxopts::value<decltype(sycl_kernel_invocation_type)>()->default_value(fmt::format("{}", sycl_kernel_invocation_type)))
            ("sycl_implementation_type", fmt::format("choose the SYCL implementation to be used in the SYCL backend: {}", fmt::join(sycl::list_available_sycl_implementations(), "|")), cxxopts::value<decltype(sycl_implementation_type)>()->default_value(fmt::format("{}", sycl_implementation_type)))
+#endif
+#if defined(PLSSVM_HAS_KOKKOS_BACKEND)
+            ("kokkos_execution_space", fmt::format("choose the Kokkos execution space to be used in the Kokkos backend: {}", fmt::join(kokkos::list_available_execution_spaces(), "|")), cxxopts::value<decltype(kokkos_execution_space)>()->default_value(fmt::format("{}", kokkos_execution_space)))
 #endif
 #if defined(PLSSVM_PERFORMANCE_TRACKER_ENABLED)
            ("performance_tracking", "the output YAML file where the performance tracking results are written to; if not provided, the results are dumped to stderr", cxxopts::value<decltype(performance_tracking_filename)>())
@@ -185,28 +189,48 @@ parser_train::parser_train(int argc, char **argv) {
     solver = result["solver"].as<decltype(solver)>();
 
 #if defined(PLSSVM_HAS_SYCL_BACKEND)
-    // parse kernel invocation type when using SYCL as backend
-    sycl_kernel_invocation_type = result["sycl_kernel_invocation_type"].as<decltype(sycl_kernel_invocation_type)>();
+    {
+        // parse kernel invocation type when using SYCL as backend
+        sycl_kernel_invocation_type = result["sycl_kernel_invocation_type"].as<decltype(sycl_kernel_invocation_type)>();
 
-    // assembly warning condition
-    const std::vector<plssvm::target_platform> target_platforms = { target == target_platform::automatic ? determine_default_target_platform() : target };
-    const bool sycl_backend_is_used = backend == backend_type::sycl || (backend == backend_type::automatic && determine_default_backend(list_available_backends(), target_platforms) == backend_type::sycl);
+        // assemble warning condition
+        const std::vector<plssvm::target_platform> target_platforms = { target == target_platform::automatic ? determine_default_target_platform() : target };
+        const bool sycl_backend_is_used = backend == backend_type::sycl || (backend == backend_type::automatic && determine_default_backend(list_available_backends(), target_platforms) == backend_type::sycl);
 
-    // warn if kernel invocation type is explicitly set but SYCL isn't the current (automatic) backend
-    if (!sycl_backend_is_used && sycl_kernel_invocation_type != sycl::kernel_invocation_type::automatic) {
-        detail::log_untracked(verbosity_level::full | verbosity_level::warning,
-                              "WARNING: explicitly set a SYCL kernel invocation type but the current backend isn't SYCL; ignoring --sycl_kernel_invocation_type={}\n",
-                              sycl_kernel_invocation_type);
+        // warn if kernel invocation type is explicitly set but SYCL isn't the current (automatic) backend
+        if (!sycl_backend_is_used && sycl_kernel_invocation_type != sycl::kernel_invocation_type::automatic) {
+            detail::log_untracked(verbosity_level::full | verbosity_level::warning,
+                                  "WARNING: explicitly set a SYCL kernel invocation type but the current backend isn't SYCL; ignoring --sycl_kernel_invocation_type={}\n",
+                                  sycl_kernel_invocation_type);
+        }
+
+        // parse SYCL implementation used in the SYCL backend
+        sycl_implementation_type = result["sycl_implementation_type"].as<decltype(sycl_implementation_type)>();
+
+        // warn if a SYCL implementation type is explicitly set but SYCL isn't the current (automatic) backend
+        if (!sycl_backend_is_used && sycl_implementation_type != sycl::implementation_type::automatic) {
+            detail::log_untracked(verbosity_level::full | verbosity_level::warning,
+                                  "WARNING: explicitly set a SYCL implementation type but the current backend isn't SYCL; ignoring --sycl_implementation_type={}\n",
+                                  sycl_implementation_type);
+        }
     }
+#endif
 
-    // parse SYCL implementation used in the SYCL backend
-    sycl_implementation_type = result["sycl_implementation_type"].as<decltype(sycl_implementation_type)>();
+#if defined(PLSSVM_HAS_KOKKOS_BACKEND)
+    {
+        // parse execution space when using Kokkos as backend
+        kokkos_execution_space = result["kokkos_execution_space"].as<decltype(kokkos_execution_space)>();
 
-    // warn if a SYCL implementation type is explicitly set but SYCL isn't the current (automatic) backend
-    if (!sycl_backend_is_used && sycl_implementation_type != sycl::implementation_type::automatic) {
-        detail::log_untracked(verbosity_level::full | verbosity_level::warning,
-                              "WARNING: explicitly set a SYCL implementation type but the current backend isn't SYCL; ignoring --sycl_implementation_type={}\n",
-                              sycl_implementation_type);
+        // assemble warning condition
+        const std::vector<plssvm::target_platform> target_platforms = { target == target_platform::automatic ? determine_default_target_platform() : target };
+        const bool kokkos_backend_is_used = backend == backend_type::kokkos || (backend == backend_type::automatic && determine_default_backend(list_available_backends(), target_platforms) == backend_type::kokkos);
+
+        // warn if the kokkos execution space is explicitly set but Kokkos isn't the current (automatic) backend
+        if (!kokkos_backend_is_used && kokkos_execution_space != kokkos::execution_space::automatic) {
+            detail::log_untracked(verbosity_level::full | verbosity_level::warning,
+                                  "WARNING: explicitly set a Kokkos execution space but the current backend isn't Kokkos; ignoring --kokkos_execution_space={}\n",
+                                  kokkos_execution_space);
+        }
     }
 #endif
 
@@ -300,6 +324,10 @@ std::ostream &operator<<(std::ostream &out, const parser_train &params) {
             "SYCL kernel invocation type: {}\n",
             params.sycl_implementation_type,
             params.sycl_kernel_invocation_type);
+    }
+
+    if (params.backend == backend_type::kokkos || params.backend == backend_type::automatic) {
+        out << fmt::format("Kokkos execution space: {}\n", params.kokkos_execution_space);
     }
 
     out << fmt::format(

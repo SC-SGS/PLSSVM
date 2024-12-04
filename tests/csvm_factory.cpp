@@ -30,7 +30,7 @@
 
 namespace util {
 
-using csvm_types = std::tuple<plssvm::openmp::csvm, plssvm::stdpar::csvm, plssvm::cuda::csvm, plssvm::hip::csvm, plssvm::opencl::csvm, plssvm::sycl::csvm>;
+using csvm_types = std::tuple<plssvm::openmp::csvm, plssvm::hpx::csvm, plssvm::stdpar::csvm, plssvm::cuda::csvm, plssvm::hip::csvm, plssvm::opencl::csvm, plssvm::sycl::csvm>;
 using csvm_types_gtest = util::combine_test_parameters_gtest_t<util::cartesian_type_product_t<csvm_types>>;
 /// A type list of all supported SYCL C-SVMs.
 using sycl_csvm_types = std::tuple<plssvm::sycl::csvm, plssvm::adaptivecpp::csvm, plssvm::dpcpp::csvm>;
@@ -42,6 +42,9 @@ namespace testing::internal {  // dirty hack to have type names for incomplete t
 
 template <>
 std::string GetTypeName<util::test_parameter<util::type_list<plssvm::openmp::csvm>, util::value_list<>>>() { return "openmp_csvm"; }
+
+template <>
+std::string GetTypeName<util::test_parameter<util::type_list<plssvm::hpx::csvm>, util::value_list<>>>() { return "hpx_csvm"; }
 
 template <>
 std::string GetTypeName<util::test_parameter<util::type_list<plssvm::stdpar::csvm>, util::value_list<>>>() { return "stdpar_csvm"; }
@@ -60,6 +63,9 @@ std::string GetTypeName<util::test_parameter<util::type_list<plssvm::dpcpp::csvm
 
 template <>
 std::string GetTypeName<util::test_parameter<util::type_list<plssvm::adaptivecpp::csvm>, util::value_list<>>>() { return "sycl_adaptivecpp_csvm"; }
+
+template <>
+std::string GetTypeName<util::test_parameter<util::type_list<plssvm::kokkos::csvm>, util::value_list<>>>() { return "kokkos_csvm"; }
 }  // namespace testing::internal
 
 template <typename T>
@@ -231,7 +237,7 @@ TEST(CSVMFactory, factory_named_parameter) {
 }
 
 TEST(CSVMFactory, invalid_backend) {
-    EXPECT_THROW_WHAT(std::ignore = plssvm::make_csvm(static_cast<plssvm::backend_type>(7)),
+    EXPECT_THROW_WHAT(std::ignore = plssvm::make_csvm(static_cast<plssvm::backend_type>(9)),
                       plssvm::unsupported_backend_exception,
                       "Unrecognized backend provided!");
 }
