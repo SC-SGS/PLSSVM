@@ -298,7 +298,7 @@ void file_reader::open_memory_mapped_file_unix([[maybe_unused]] const char *file
     // open the file
     file_descriptor_ = ::open(filename, O_RDONLY);
 
-    struct stat attr { };
+    struct stat attr{};
 
     // check if file could be opened
     if (fstat(file_descriptor_, &attr) == -1) {
