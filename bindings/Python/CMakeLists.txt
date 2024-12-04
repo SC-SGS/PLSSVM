@@ -41,7 +41,6 @@ set(PLSSVM_PYTHON_BINDINGS_SOURCES
     ${CMAKE_CURRENT_LIST_DIR}/classification_types.cpp
     ${CMAKE_CURRENT_LIST_DIR}/csvm.cpp
     ${CMAKE_CURRENT_LIST_DIR}/data_set.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/environment.cpp
     ${CMAKE_CURRENT_LIST_DIR}/file_format_types.cpp
     ${CMAKE_CURRENT_LIST_DIR}/gamma.cpp
     ${CMAKE_CURRENT_LIST_DIR}/kernel_function_types.cpp
@@ -97,6 +96,9 @@ if (TARGET ${PLSSVM_SYCL_BACKEND_ADAPTIVECPP_LIBRARY_NAME})
 endif ()
 if (TARGET ${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME})
     list(APPEND PLSSVM_PYTHON_BINDINGS_SOURCES ${CMAKE_CURRENT_LIST_DIR}/backends/dpcpp_csvm.cpp)
+endif ()
+if (TARGET ${PLSSVM_KOKKOS_BACKEND_LIBRARY_NAME})
+    list(APPEND PLSSVM_PYTHON_BINDINGS_SOURCES ${CMAKE_CURRENT_LIST_DIR}/backends/kokkos_csvm.cpp)
 endif ()
 
 # create pybind11 module

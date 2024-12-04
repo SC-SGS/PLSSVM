@@ -11,6 +11,7 @@
 #include "plssvm/detail/cmd/parser_predict.hpp"
 
 #include "plssvm/backend_types.hpp"                       // plssvm::backend_type
+#include "plssvm/backends/Kokkos/execution_space.hpp"     // plssvm::kokkos::execution_space
 #include "plssvm/backends/SYCL/implementation_types.hpp"  // plssvm::sycl::implementation_type
 #include "plssvm/constants.hpp"                           // plssvm::real_type
 #include "plssvm/target_platforms.hpp"                    // plssvm::target_platform
@@ -67,6 +68,7 @@ TEST_F(ParserPredict, minimal_output) {
         "backend: automatic\n"
         "target platform: automatic\n"
         "SYCL implementation type: automatic\n"
+        "Kokkos execution space: automatic\n"
         "label_type: int (default)\n"
         "real_type: {}\n"
         "input file (data set): 'data.libsvm'\n"
@@ -85,6 +87,10 @@ TEST_F(ParserPredict, all_arguments) {
 #if defined(PLSSVM_HAS_SYCL_BACKEND)
     cmd_args.insert(cmd_args.end(), { "--sycl_implementation_type", "dpcpp" });
 #endif
+#if defined(PLSSVM_HAS_KOKKOS_BACKEND)
+    const plssvm::kokkos::execution_space space = plssvm::kokkos::list_available_execution_spaces()[1];  // [0] would be automatic
+    cmd_args.insert(cmd_args.end(), { "--kokkos_execution_space", fmt::format("{}", space) });
+#endif
 #if defined(PLSSVM_PERFORMANCE_TRACKER_ENABLED)
     cmd_args.insert(cmd_args.end(), { "--performance_tracking", "tracking.yaml" });
 #endif
@@ -102,6 +108,11 @@ TEST_F(ParserPredict, all_arguments) {
 #else
     EXPECT_EQ(parser.sycl_implementation_type, plssvm::sycl::implementation_type::automatic);
 #endif
+#if defined(PLSSVM_HAS_KOKKOS_BACKEND)
+    EXPECT_EQ(parser.kokkos_execution_space, space);
+#else
+    EXPECT_EQ(parser.kokkos_execution_space, plssvm::kokkos::execution_space::automatic);
+#endif
     EXPECT_TRUE(parser.strings_as_labels);
     EXPECT_EQ(parser.input_filename, "data.libsvm");
     EXPECT_EQ(parser.model_filename, "data.libsvm.model");
@@ -117,9 +128,13 @@ TEST_F(ParserPredict, all_arguments) {
 
 TEST_F(ParserPredict, all_arguments_output) {
     // create artificial command line arguments in test fixture
-    std::vector<std::string> cmd_args = { "./plssvm-predict", "--backend", "cuda", "--target_platform", "gpu_nvidia", "--use_strings_as_labels", "--verbosity", "libsvm" };
+    std::vector<std::string> cmd_args = { "./plssvm-predict", "--backend", "automatic", "--target_platform", "gpu_nvidia", "--use_strings_as_labels", "--verbosity", "libsvm" };
 #if defined(PLSSVM_HAS_SYCL_BACKEND)
     cmd_args.insert(cmd_args.end(), { "--sycl_implementation_type", "dpcpp" });
+#endif
+#if defined(PLSSVM_HAS_KOKKOS_BACKEND)
+    const plssvm::kokkos::execution_space space = plssvm::kokkos::list_available_execution_spaces()[1];  // [0] would be automatic
+    cmd_args.insert(cmd_args.end(), { "--kokkos_execution_space", fmt::format("{}", space) });
 #endif
 #if defined(PLSSVM_PERFORMANCE_TRACKER_ENABLED)
     cmd_args.insert(cmd_args.end(), { "--performance_tracking", "tracking.yaml" });
@@ -131,15 +146,27 @@ TEST_F(ParserPredict, all_arguments_output) {
     const plssvm::detail::cmd::parser_predict parser{ this->get_argc(), this->get_argv() };
 
     // test output string
-    std::string correct = fmt::format(
-        "backend: cuda\n"
+    std::string correct{
+        "backend: automatic\n"
         "target platform: gpu_nvidia\n"
-        "label_type: std::string\n"
-        "real_type: {}\n"
-        "input file (data set): 'data1.libsvm'\n"
-        "input file (model): 'data2.libsvm.model'\n"
-        "output file (prediction): 'data3.libsvm.predict'\n",
-        std::is_same_v<plssvm::real_type, float> ? "float" : "double (default)");
+    };
+#if defined(PLSSVM_HAS_SYCL_BACKEND)
+    correct += "SYCL implementation type: dpcpp\n";
+#else
+    correct += "SYCL implementation type: automatic\n";
+#endif
+#if defined(PLSSVM_HAS_KOKKOS_BACKEND)
+    correct += fmt::format("Kokkos execution space: {}\n", space);
+#else
+    correct += "Kokkos execution space: automatic\n";
+#endif
+    correct += fmt::format("label_type: std::string\n"
+                           "real_type: {}\n"
+                           "input file (data set): 'data1.libsvm'\n"
+                           "input file (model): 'data2.libsvm.model'\n"
+                           "output file (prediction): 'data3.libsvm.predict'\n",
+                           std::is_same_v<plssvm::real_type, float> ? "float" : "double (default)");
+
 #if defined(PLSSVM_PERFORMANCE_TRACKER_ENABLED)
     correct += "performance tracking file: 'tracking.yaml'\n";
 #endif
@@ -168,7 +195,7 @@ TEST_P(ParserPredictBackend, parsing) {
 // clang-format off
 INSTANTIATE_TEST_SUITE_P(ParserPredict, ParserPredictBackend, ::testing::Combine(
                 ::testing::Values("-b", "--backend"),
-                ::testing::Values("automatic", "OpenMP", "HPX", "CUDA", "HIP", "OpenCL", "SYCL")),
+                ::testing::Values("automatic", "OpenMP", "HPX", "stdpar", "CUDA", "HIP", "OpenCL", "SYCL", "Kokkos")),
                 naming::pretty_print_parameter_flag_and_value<ParserPredictBackend>);
 // clang-format on
 
@@ -220,6 +247,32 @@ INSTANTIATE_TEST_SUITE_P(ParserPredict, ParserPredictSYCLImplementation, ::testi
 
 #endif  // PLSSVM_HAS_SYCL_BACKEND
 
+#if defined(PLSSVM_HAS_KOKKOS_BACKEND)
+
+class ParserPredictKokkosExecutionSpace : public ParserPredict,
+                                          public ::testing::WithParamInterface<std::tuple<std::string, std::string>> { };
+
+TEST_P(ParserPredictKokkosExecutionSpace, parsing) {
+    const auto &[flag, value] = GetParam();
+    // convert string to kokkos::execution_space
+    const auto kokkos_execution_space = util::convert_from_string<plssvm::kokkos::execution_space>(value);
+    // create artificial command line arguments in test fixture
+    this->CreateCMDArgs({ "./plssvm-predict", flag, value, "data.libsvm", "data.libsvm.model" });
+    // create parameter object
+    const plssvm::detail::cmd::parser_predict parser{ this->get_argc(), this->get_argv() };
+    // test for correctness
+    EXPECT_EQ(parser.kokkos_execution_space, kokkos_execution_space);
+}
+
+// clang-format off
+INSTANTIATE_TEST_SUITE_P(ParserTrain, ParserPredictKokkosExecutionSpace, ::testing::Combine(
+                ::testing::Values("--kokkos_execution_space"),
+                ::testing::Values("automatic", "Cuda", "HIP", "SYCL", "HPX", "OpenMP", "OpenMPTarget", "OpenACC", "Threads", "Serial")),
+                naming::pretty_print_parameter_flag_and_value<ParserPredictKokkosExecutionSpace>);
+// clang-format on
+
+#endif  // PLSSVM_HAS_KOKKOS_BACKEND
+
 #if defined(PLSSVM_PERFORMANCE_TRACKER_ENABLED)
 
 class ParserPredictPerformanceTrackingFilename : public ParserPredict,
@@ -270,7 +323,7 @@ class ParserPredictVerbosity : public ParserPredict,
 TEST_P(ParserPredictVerbosity, parsing) {
     const auto &[flag, value] = GetParam();
     // create artificial command line arguments in test fixture
-    this->CreateCMDArgs({ "./plssvm-train", flag, value, "data.libsvm", "data.libsvm.model" });
+    this->CreateCMDArgs({ "./plssvm-predict", flag, value, "data.libsvm", "data.libsvm.model" });
     // create parameter object
     const plssvm::detail::cmd::parser_predict parser{ this->get_argc(), this->get_argv() };
     // test for correctness
