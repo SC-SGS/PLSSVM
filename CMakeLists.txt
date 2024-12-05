@@ -205,6 +205,17 @@ else ()
 endif ()
 
 ########################################################################################################################
+##                                              check for MPI (optional)                                              ##
+########################################################################################################################
+find_package(MPI)
+if (MPI_FOUND)
+    message(STATUS "Found MPI ${MPI_CXX_VERSION} for distributed memory support.")
+    set(PLSSVM_FOUND_MPI ON)
+    target_link_libraries(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC MPI::MPI_CXX)
+    target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC PLSSVM_HAS_MPI_ENABLED)
+endif ()
+
+########################################################################################################################
 ##                                                 create executables                                                 ##
 ########################################################################################################################
 ## create train executable

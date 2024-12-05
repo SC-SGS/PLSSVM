@@ -8,10 +8,16 @@
 
 include(CMakeFindDependencyMacro)
 
-# check if the OpenMP is required for the library utilities
+# check if the OpenMP library is required for the library utilities
 set(PLSSVM_HAS_OPENMP_UTILITY @PLSSVM_FOUND_OPENMP_FOR_UTILITY@)
 if (PLSSVM_HAS_OPENMP_UTILITY)
     find_dependency(OpenMP)
+endif ()
+
+# check if the MPI library is required for distributed memory support
+set(PLSSVM_HAS_MPI @PLSSVM_FOUND_MPI@)
+if (PLSSVM_HAS_MPI)
+    find_dependency(MPI)
 endif ()
 
 # always try finding {fmt}
