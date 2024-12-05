@@ -54,6 +54,7 @@ PLSSVM_CREATE_EXCEPTION_TYPE_NAME(kernel_launch_resources)
 PLSSVM_CREATE_EXCEPTION_TYPE_NAME(classification_report_exception)
 PLSSVM_CREATE_EXCEPTION_TYPE_NAME(platform_devices_empty)
 PLSSVM_CREATE_EXCEPTION_TYPE_NAME(environment_exception)
+PLSSVM_CREATE_EXCEPTION_TYPE_NAME(mpi_exception)
 
 }  // namespace util
 

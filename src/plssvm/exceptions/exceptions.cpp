@@ -78,4 +78,7 @@ platform_devices_empty::platform_devices_empty(const std::string &msg, source_lo
 environment_exception::environment_exception(const std::string &msg, source_location loc) :
     exception{ msg, "environment_exception", loc } { }
 
+mpi_exception::mpi_exception(const std::string &msg, source_location loc) :
+    exception{ msg, "mpi_exception", loc } { }
+
 }  // namespace plssvm
