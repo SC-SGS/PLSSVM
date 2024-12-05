@@ -40,6 +40,7 @@ set(CMAKE_CUDA_STANDARD 17)
 set(CMAKE_CUDA_STANDARD_REQUIRED ON)
 
 if (CMAKE_CUDA_COMPILER_ID STREQUAL "NVIDIA")
+    message(STATUS "Using nvcc as CUDA compiler.")
     # use nvcc to compile CUDA code
     set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -Xcompiler '-fPIC' -Xcudafe \"--diag_suppress=unsigned_compare_with_zero --diag_suppress=128\" -lineinfo")
     # build type specific flags
@@ -55,6 +56,7 @@ if (CMAKE_CUDA_COMPILER_ID STREQUAL "NVIDIA")
         set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -Xcompiler '-fopenmp'")
     endif ()
 elseif (CMAKE_CUDA_COMPILER_ID STREQUAL "Clang")
+    message(STATUS "Using Clang as CUDA compiler.")
     # use clang to compile CUDA code
     set(CMAKE_CUDA_FLAGS
         "${CMAKE_CUDA_FLAGS} -Wall -Wextra -Wdouble-promotion -Wshadow -Wcast-qual -Wnull-dereference -Wextra-semi -Wunreachable-code -Wuninitialized -Wmost -Wconversion"

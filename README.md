@@ -64,7 +64,7 @@ The main highlights of our SVM implementations are:
    - [CUDA](https://developer.nvidia.com/cuda-zone)
    - [HIP](https://github.com/ROCm-Developer-Tools/HIP)
    - [OpenCL](https://www.khronos.org/opencl/)
-   - [SYCL](https://www.khronos.org/sycl/) (supported implementations are [DPC++](https://github.com/intel/llvm) and [AdaptiveCpp](https://github.com/AdaptiveCpp/AdaptiveCpp) (formerly known as hipSYCL); specifically the versions [sycl-nightly/20231201](https://github.com/intel/llvm/tree/sycl-nightly/20230110) and AdaptiveCpp release [v24.06.0](https://github.com/AdaptiveCpp/AdaptiveCpp/releases/tag/v23.10.0))
+   - [SYCL](https://www.khronos.org/sycl/) (supported implementations are Intel's [DPC++/icpx](https://github.com/intel/llvm) and [AdaptiveCpp](https://github.com/AdaptiveCpp/AdaptiveCpp) (formerly known as hipSYCL); specifically the versions [intel-oneapi-compilers@2025.0.0](https://github.com/spack/spack) (via spack) and AdaptiveCpp release [v24.06.0](https://github.com/AdaptiveCpp/AdaptiveCpp/releases/tag/v23.10.0))
    - [Kokkos](https://github.com/kokkos/kokkos) (all execution spaces supported except `OpenMPTarget` and `OpenACC`); specifically the version [4.5.00](https://github.com/kokkos/kokkos/releases/tag/4.5.00)
 3. Six different kernel functions to be able to classify a large variety of different problems:
    - linear: $\vec{u}^T$ $\cdot$ $\vec{v}$
@@ -127,7 +127,7 @@ Additional dependencies for the OpenCL backend:
 
 Additional dependencies for the SYCL backend:
 
-- the code must be compiled with a SYCL capable compiler; currently supported are [DPC++](https://github.com/intel/llvm) and [AdaptiveCpp](https://github.com/AdaptiveCpp/AdaptiveCpp)
+- the code must be compiled with a SYCL capable compiler; currently supported are [DPC++/icpx](https://github.com/spack/spack) (via spack) and [AdaptiveCpp](https://github.com/AdaptiveCpp/AdaptiveCpp)
 
 Additional dependencies for the Kokkos backend:
 
@@ -180,7 +180,7 @@ cmake --build . -j
 The CMake option `PLSSVM_TARGET_PLATFORMS` is used to determine for which targets the backends should be compiled.
 Valid targets are:
 
-- `cpu`: compile for the CPU; an **optional** architectural specifications is allowed but only used when compiling with DPC++, e.g., `cpu:avx2`
+- `cpu`: compile for the CPU; an **optional** architectural specifications is allowed but only used when compiling with DPC++/icpx, e.g., `cpu:avx2`
 - `nvidia`: compile for NVIDIA GPUs; **at least one** architectural specification is necessary, e.g., `nvidia:sm_86,sm_70`
 - `amd`: compile for AMD GPUs; **at least one** architectural specification is necessary, e.g., `amd:gfx906`
 - `intel`: compile for Intel GPUs; **at least one** architectural specification is necessary, e.g., `intel:skl`
@@ -191,7 +191,7 @@ are automatically determined using the Python3 `utility_scripts/plssvm_target_pl
 [`GPUtil`](https://pypi.org/project/GPUtil/), [`pyamdgpuinfo`](https://pypi.org/project/pyamdgpuinfo/), and
 [`pylspci`](https://pypi.org/project/pylspci/)).
 
-Note that when using DPC++ only a single architectural specification for `cpu`, `nvidia` or `amd` is allowed and that
+Note that when using DPC++/icpx only a single architectural specification for `cpu`, `nvidia` or `amd` is allowed and that
 automatically retrieving AMD GPU information on Windows is currently not supported due to `pyamdgpuinfo` limitations.
 
 
@@ -338,17 +338,17 @@ If the SYCL backend is available, additional options can be set.
   - `OFF`: do not check for AdaptiveCpp as implementation for the SYCL backend
 
 - `PLSSVM_ENABLE_SYCL_DPCPP_BACKEND=ON|OFF|AUTO` (default: `AUTO`):
-  - `ON`: check for DPC++ as implementation for the SYCL backend and fail if not available
-  - `AUTO`: check for DPC++ as implementation for the SYCL backend but **do not** fail if not available
-  - `OFF`: do not check for DPC++ as implementation for the SYCL backend
+  - `ON`: check for DPC++/icpx as implementation for the SYCL backend and fail if not available
+  - `AUTO`: check for DPC++/icpx as implementation for the SYCL backend but **do not** fail if not available
+  - `OFF`: do not check for DPC++/icpx as implementation for the SYCL backend
 
-To use DPC++ for SYCL, simply set the `CMAKE_CXX_COMPILER` to the respective DPC++ clang executable during CMake invocation.
+To use DPC++/icpx for SYCL, simply set the `CMAKE_CXX_COMPILER` to the respective DPC++/icpx clang executable during CMake invocation.
 
-If the SYCL implementation is DPC++ the following additional options are available:
+If the SYCL implementation is DPC++/icpx the following additional options are available:
 
 - `PLSSVM_SYCL_BACKEND_DPCPP_ENABLE_AOT` (default: `ON`): enable Ahead-of-Time (AOT) compilation for the specified target platforms
-- `PLSSVM_SYCL_BACKEND_DPCPP_USE_LEVEL_ZERO` (default: `ON`): use DPC++'s Level-Zero backend instead of its OpenCL backend **(only available if a CPU or Intel GPU is targeted)**
-- `PLSSVM_SYCL_BACKEND_DPCPP_GPU_AMD_USE_HIP` (default: `ON`): use DPC++'s HIP backend instead of its OpenCL backend for AMD GPUs **(only available if an AMD GPU is targeted)**
+- `PLSSVM_SYCL_BACKEND_DPCPP_USE_LEVEL_ZERO` (default: `ON`): use DPC++/icpx's Level-Zero backend instead of its OpenCL backend **(only available if a CPU or Intel GPU is targeted)**
+- `PLSSVM_SYCL_BACKEND_DPCPP_GPU_AMD_USE_HIP` (default: `ON`): use DPC++/icpx's HIP backend instead of its OpenCL backend for AMD GPUs **(only available if an AMD GPU is targeted)**
 
 If the SYCL implementation is AdaptiveCpp the following additional option is available:
 

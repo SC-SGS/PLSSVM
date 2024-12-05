@@ -215,9 +215,7 @@ find_package(OpenMP 4.0 QUIET)
 if (OpenMP_FOUND)
     message(STATUS "Found OpenMP ${OpenMP_CXX_VERSION} to speed-up library utilities (like file parsing).")
     set(PLSSVM_FOUND_OPENMP_FOR_UTILITY ON)
-    if (${CMAKE_CXX_COMPILER_ID} MATCHES "IntelLLVM")
-        target_link_libraries(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC -fopenmp)
-    elseif (${CMAKE_CXX_COMPILER_ID} MATCHES "MSVC")
+    if (${CMAKE_CXX_COMPILER_ID} MATCHES "MSVC")
         target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC -openmp:llvm -openmp:experimental)
     else ()
         target_link_libraries(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC OpenMP::OpenMP_CXX)
@@ -225,7 +223,7 @@ if (OpenMP_FOUND)
 else ()
     # disable warning for unknown OpenMP pragmas if no OpenMP could be found
     target_compile_options(
-        ${PLSSVM_BASE_LIBRARY_NAME} PUBLIC $<$<COMPILE_LANG_AND_ID:CXX,GNU,Clang>:-Wno-unknown-pragmas> $<$<COMPILE_LANG_AND_ID:CXX,MSVC>:/wd4068>
+        ${PLSSVM_BASE_LIBRARY_NAME} PUBLIC $<$<COMPILE_LANG_AND_ID:CXX,GNU,Clang,IntelLLVM>:-Wno-unknown-pragmas> $<$<COMPILE_LANG_AND_ID:CXX,MSVC>:/wd4068>
     )
     # issue warning that multi-GPU execution will be serialized
     message(WARNING "Couldn't find OpenMP. Note that in a multi-GPU setting this will result in serialized kernel calls across all GPUs!")
