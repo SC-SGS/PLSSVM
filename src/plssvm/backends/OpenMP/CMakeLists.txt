@@ -52,7 +52,7 @@ else ()
 endif ()
 
 # additional compilation flags
-target_compile_options(${PLSSVM_OPENMP_BACKEND_LIBRARY_NAME} PRIVATE $<$<COMPILE_LANG_AND_ID:CXX,GNU,Clang>:-Wconversion>)
+target_compile_options(${PLSSVM_OPENMP_BACKEND_LIBRARY_NAME} PRIVATE $<$<COMPILE_LANG_AND_ID:CXX,GNU,Clang,IntelLLVM>:-Wconversion>)
 
 # work-around since hipcc doesn't define _OPENMP
 if (${CMAKE_CXX_COMPILER_ID} MATCHES "Clang")

@@ -43,7 +43,7 @@ add_library(${PLSSVM_HPX_BACKEND_LIBRARY_NAME} SHARED ${PLSSVM_HPX_SOURCES})
 target_link_libraries(${PLSSVM_HPX_BACKEND_LIBRARY_NAME} PUBLIC HPX::hpx)
 
 # additional compilation flags
-target_compile_options(${PLSSVM_HPX_BACKEND_LIBRARY_NAME} PRIVATE $<$<COMPILE_LANG_AND_ID:CXX,GNU,Clang>:-Wconversion>)
+target_compile_options(${PLSSVM_HPX_BACKEND_LIBRARY_NAME} PRIVATE $<$<COMPILE_LANG_AND_ID:CXX,GNU,Clang,IntelLLVM>:-Wconversion>)
 
 # link base library against HPX library
 target_link_libraries(${PLSSVM_HPX_BACKEND_LIBRARY_NAME} PUBLIC ${PLSSVM_BASE_LIBRARY_NAME})

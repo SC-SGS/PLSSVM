@@ -126,7 +126,7 @@ target_link_libraries(${PLSSVM_PYTHON_BINDINGS_LIBRARY_NAME} PRIVATE ${PLSSVM_AL
 target_compile_definitions(${PLSSVM_PYTHON_BINDINGS_LIBRARY_NAME} PRIVATE PYBIND11_DETAILED_ERROR_MESSAGES)
 
 # disable clang compiler warning
-target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC $<$<COMPILE_LANG_AND_ID:CXX,Clang>:-Wno-self-assign-overloaded>)
+target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC $<$<COMPILE_LANG_AND_ID:CXX,Clang,IntelLLVM>:-Wno-self-assign-overloaded>)
 target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC -fPIC)
 
 # append pybind11 bindings library to installed targets

@@ -195,7 +195,7 @@ if (OpenMP_FOUND)
 else ()
     # disable warning for unknown OpenMP pragmas if no OpenMP could be found
     target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC
-                           $<$<COMPILE_LANG_AND_ID:CXX,GNU,Clang>:-Wno-unknown-pragmas>
+                           $<$<COMPILE_LANG_AND_ID:CXX,GNU,Clang,IntelLLVM>:-Wno-unknown-pragmas>
                            $<$<COMPILE_LANG_AND_ID:CXX,MSVC>:/wd4068>
     )
     # issue warning that multi-GPU execution will be serialized
