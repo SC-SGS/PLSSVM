@@ -16,7 +16,8 @@
     #include "mpi.h"
 #endif
 
-#include <string>  // std::string
+#include <cstddef>  // std::size_t
+#include <string>   // std::string
 
 #if defined(PLSSVM_HAS_MPI_ENABLED)
     #define PLSSVM_MPI_ERROR_CHECK(err)                                                                                              \
@@ -35,6 +36,41 @@
 #endif
 
 namespace plssvm::detail::mpi {
+
+communicator::communicator() { }
+
+#if defined(PLSSVM_HAS_MPI_ENABLED)
+communicator::communicator(MPI_Comm comm) :
+    comm_{ comm } { }
+#endif
+
+std::size_t communicator::size() const {
+#if defined(PLSSVM_HAS_MPI_ENABLED)
+    int size{};
+    PLSSVM_MPI_ERROR_CHECK(MPI_Comm_size(comm_, &size));
+    return static_cast<std::size_t>(size);
+#else
+    return std::size_t{ 0 };
+#endif
+}
+
+std::size_t communicator::rank() const {
+#if defined(PLSSVM_HAS_MPI_ENABLED)
+    int rank{};
+    PLSSVM_MPI_ERROR_CHECK(MPI_Comm_rank(comm_, &rank));
+    return static_cast<std::size_t>(rank);
+#else
+    return std::size_t{ 0 };
+#endif
+}
+
+bool communicator::is_main_rank() const {
+#if defined(PLSSVM_HAS_MPI_ENABLED)
+    return this->rank() == std::size_t{ 0 };
+#else
+    return false;
+#endif
+}
 
 void init() {
 #if defined(PLSSVM_HAS_MPI_ENABLED)

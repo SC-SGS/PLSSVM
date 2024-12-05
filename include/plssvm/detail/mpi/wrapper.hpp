@@ -14,14 +14,38 @@
 #define PLSSVM_DETAIL_MPI_WRAPPER_HPP_
 #pragma once
 
+#if defined(PLSSVM_HAS_MPI_ENABLED)
+    #include "mpi.h"  // MPI_Comm, MPI_COMM_WORLD
+#endif
+
+#include <cstddef>  // std::size_t
+
 namespace plssvm::detail::mpi {
+
+class communicator {
+  public:
+    communicator();
+
+#if defined(PLSSVM_HAS_MPI_ENABLED)
+    communicator(MPI_Comm comm);
+#endif
+
+    [[nodiscard]] std::size_t size() const;
+    [[nodiscard]] std::size_t rank() const;
+    [[nodiscard]] bool is_main_rank() const;
+
+  private:
+#if defined(PLSSVM_HAS_MPI_ENABLED)
+    MPI_Comm comm_{ MPI_COMM_WORLD };
+#endif
+};
 
 void init();
 void init(int &argc, char **argv);
 void finalize();
 
-bool is_initialized();
-bool is_finalized();
+[[nodiscard]] bool is_initialized();
+[[nodiscard]] bool is_finalized();
 
 }  // namespace plssvm::detail::mpi
 
