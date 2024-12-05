@@ -40,11 +40,16 @@ set(PLSSVM_OPENMP_SOURCES
 # set target properties
 set_local_and_parent(PLSSVM_OPENMP_BACKEND_LIBRARY_NAME plssvm-OpenMP)
 add_library(${PLSSVM_OPENMP_BACKEND_LIBRARY_NAME} SHARED ${PLSSVM_OPENMP_SOURCES})
-target_link_libraries(${PLSSVM_OPENMP_BACKEND_LIBRARY_NAME} PRIVATE $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:OpenMP::OpenMP_CXX>)
-# special command line options for MSVC:
-# -openmp:llvm -> enables unsigned loop indexes in OpenMP parallel for loops
-# -openmp:experimental -> enables OpenMP's SIMD instructions
-target_compile_options(${PLSSVM_OPENMP_BACKEND_LIBRARY_NAME} PRIVATE $<$<CXX_COMPILER_ID:MSVC>:-openmp:llvm -openmp:experimental>)
+
+# link against OpenMP
+if (${CMAKE_CXX_COMPILER_ID} MATCHES "MSVC")
+    # special command line options for MSVC:
+    # -openmp:llvm -> enables unsigned loop indexes in OpenMP parallel for loops
+    # -openmp:experimental -> enables OpenMP's SIMD instructions
+    target_compile_options(${PLSSVM_OPENMP_BACKEND_LIBRARY_NAME} PRIVATE -openmp:llvm -openmp:experimental)
+else ()
+    target_link_libraries(${PLSSVM_OPENMP_BACKEND_LIBRARY_NAME} PRIVATE OpenMP::OpenMP_CXX)
+endif ()
 
 # additional compilation flags
 target_compile_options(${PLSSVM_OPENMP_BACKEND_LIBRARY_NAME} PRIVATE $<$<COMPILE_LANG_AND_ID:CXX,GNU,Clang>:-Wconversion>)
