@@ -16,6 +16,7 @@
 
 #include "plssvm/backend_types.hpp"          // plssvm::backend_type, plssvm::list_available_backends
 #include "plssvm/detail/assert.hpp"          // PLSSVM_ASSERT
+#include "plssvm/detail/mpi/wrapper.hpp"     // plssvm::detail::mpi::{is_initialized, init, is_finalized, finalize}
 #include "plssvm/detail/string_utility.hpp"  // plssvm::detail::to_lower_case
 #include "plssvm/detail/utility.hpp"         // plssvm::detail::{contains, unreachable}
 #include "plssvm/exceptions/exceptions.hpp"  // plssvm::environment_exception
@@ -274,6 +275,11 @@ inline void finalize_backend([[maybe_unused]] const backend_type backend) {
  */
 template <typename... Args>
 inline void initialize_impl(const std::vector<backend_type> &backends, Args &...args) {
+    // if necessary, initialize MPI
+    if (!::plssvm::detail::mpi::is_initialized()) {
+        ::plssvm::detail::mpi::init(args...);
+    }
+
     // check if the provided backends are currently available
     const std::vector<backend_type> available_backends = list_available_backends();
     for (const backend_type backend : backends) {
@@ -400,6 +406,11 @@ inline std::vector<backend_type> initialize(int &argc, char **argv) {
  * @throws plssvm::environment_exception if one of the provided @p backends has already been finalized
  */
 inline void finalize(const std::vector<backend_type> &backends) {
+    // if necessary, finalize MPI
+    if (!::plssvm::detail::mpi::is_finalized()) {
+        ::plssvm::detail::mpi::finalize();
+    }
+
     // check if the provided backends are currently available
     const std::vector<backend_type> available_backends = list_available_backends();
     for (const backend_type backend : backends) {

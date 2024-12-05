@@ -8,7 +8,7 @@
  *
  * @brief Defines some wrapper functions necessary for our MPI support.
  * @details These wrapper functions are only conditionally compiled such that MPI is still an **optional** dependency in PLSSVM.
-*/
+ */
 
 #ifndef PLSSVM_DETAIL_MPI_WRAPPER_HPP_
 #define PLSSVM_DETAIL_MPI_WRAPPER_HPP_
@@ -16,6 +16,13 @@
 
 namespace plssvm::detail::mpi {
 
-}
+void init();
+void init(int &argc, char **argv);
+void finalize();
+
+bool is_initialized();
+bool is_finalized();
+
+}  // namespace plssvm::detail::mpi
 
 #endif  // PLSSVM_DETAIL_MPI_WRAPPER_HPP_
