@@ -1,10 +1,10 @@
-## Authors: Alexander Van Craen, Marcel Breyer
-## Copyright (C): 2018-today The PLSSVM project - All Rights Reserved
-## License: This file is part of the PLSSVM project which is released under the MIT license.
-##          See the LICENSE.md file in the project root for full license information.
+# Authors: Alexander Van Craen, Marcel Breyer
+# Copyright (C): 2018-today The PLSSVM project - All Rights Reserved
+# License: This file is part of the PLSSVM project which is released under the MIT license.
+#          See the LICENSE.md file in the project root for full license information.
 ########################################################################################################################
 
-## create HIP tests
+# create HIP tests
 set(PLSSVM_HIP_TEST_NAME HIP_tests)
 
 if (DEFINED PLSSVM_NVIDIA_TARGET_ARCHS)
@@ -52,7 +52,6 @@ target_link_libraries(${PLSSVM_HIP_BACKEND_TEST_LIBRARY_NAME} PUBLIC ${PLSSVM_BA
 # add test executable
 add_executable(${PLSSVM_HIP_TEST_NAME} ${CMAKE_CURRENT_LIST_DIR}/../../main.cpp)
 target_link_libraries(${PLSSVM_HIP_TEST_NAME} PRIVATE ${PLSSVM_HIP_BACKEND_TEST_LIBRARY_NAME})
-
 
 # add tests to google test
 include(GoogleTest)
