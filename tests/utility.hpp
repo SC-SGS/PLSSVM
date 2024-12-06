@@ -46,7 +46,8 @@
 #include <string>       // std::string
 #include <tuple>        // std::tuple, std::make_tuple, std::get, std::tuple_size
 #include <type_traits>  // std::is_floating_point_v, std::is_same_v, std::is_signed_v, std::is_unsigned_v, std::decay_t
-#include <utility>      // std::pair, std::make_pair, std::move, std::make_index_sequence, std::index_sequence
+#include <utility>      // std::pair, std::make_pair, std::move, std::make_index_sequence, std::index_sequence, std::forward
+#include <variant>      // std::variant_size_v, std::variant_alternative_t
 #include <vector>       // std::vector
 
 namespace util {
@@ -692,6 +693,23 @@ template <typename T, typename Tuple>
     }
 
     return count;
+}
+
+/**
+ * @brief Call the function @p func for each type in the @p Variant.
+ * @brief The function @p func must have a templated overload of the `operator()()` function.
+ * @tparam Variant the type of the std::variant
+ * @tparam Func the type of the function to apply
+ * @tparam Index the current index of the type the function should be applied to
+ * @param[in] func the function
+ */
+template <typename Variant, typename Func, std::size_t Index = 0>
+constexpr void for_each_variant_type(Func &&func) {
+    if constexpr (Index < std::variant_size_v<Variant>) {
+        using T = std::variant_alternative_t<Index, Variant>;
+        func.template operator()<T>();  // Call function with current type
+        for_each_variant_type<Variant, Func, Index + 1>(std::forward<Func>(func));
+    }
 }
 
 }  // namespace util

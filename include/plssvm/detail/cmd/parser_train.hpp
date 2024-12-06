@@ -14,6 +14,7 @@
 #pragma once
 
 #include "plssvm/backend_types.hpp"                          // plssvm::backend_type
+#include "plssvm/backends/Kokkos/execution_space.hpp"        // plssvm::kokkos::execution_space
 #include "plssvm/backends/SYCL/implementation_types.hpp"     // plssvm::sycl::implementation_type
 #include "plssvm/backends/SYCL/kernel_invocation_types.hpp"  // plssvm::sycl::kernel_invocation_type
 #include "plssvm/classification_types.hpp"                   // plssvm::classification_type
@@ -53,7 +54,7 @@ struct parser_train {
     /// The multi-class classification strategy used.
     classification_type classification{ classification_type::oaa };
 
-    /// The used backend: automatic (depending on the specified target_platforms), OpenMP, HPX, stdpar, CUDA, HIP, OpenCL, or SYCL.
+    /// The used backend: automatic (depending on the specified target_platforms), OpenMP, HPX, stdpar, CUDA, HIP, OpenCL, SYCL, or Kokkos.
     backend_type backend{ backend_type::automatic };
     /// The target platform: automatic (depending on the used backend), CPUs or GPUs from NVIDIA, AMD, or Intel.
     target_platform target{ target_platform::automatic };
@@ -64,6 +65,9 @@ struct parser_train {
     sycl::kernel_invocation_type sycl_kernel_invocation_type{ sycl::kernel_invocation_type::automatic };
     /// The SYCL implementation to use with --backend=sycl.
     sycl::implementation_type sycl_implementation_type{ sycl::implementation_type::automatic };
+
+    /// The Kokkos execution space to use with --backend=kokkos.
+    kokkos::execution_space kokkos_execution_space{ kokkos::execution_space::automatic };
 
     /// `true` if `std::string` should be used as label type instead of the default type `ìnt`.
     bool strings_as_labels{ false };

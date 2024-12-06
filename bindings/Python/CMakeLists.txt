@@ -41,7 +41,6 @@ set(PLSSVM_PYTHON_BINDINGS_SOURCES
     ${CMAKE_CURRENT_LIST_DIR}/classification_types.cpp
     ${CMAKE_CURRENT_LIST_DIR}/csvm.cpp
     ${CMAKE_CURRENT_LIST_DIR}/data_set.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/environment.cpp
     ${CMAKE_CURRENT_LIST_DIR}/file_format_types.cpp
     ${CMAKE_CURRENT_LIST_DIR}/gamma.cpp
     ${CMAKE_CURRENT_LIST_DIR}/kernel_function_types.cpp
@@ -98,6 +97,9 @@ endif ()
 if (TARGET ${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME})
     list(APPEND PLSSVM_PYTHON_BINDINGS_SOURCES ${CMAKE_CURRENT_LIST_DIR}/backends/dpcpp_csvm.cpp)
 endif ()
+if (TARGET ${PLSSVM_KOKKOS_BACKEND_LIBRARY_NAME})
+    list(APPEND PLSSVM_PYTHON_BINDINGS_SOURCES ${CMAKE_CURRENT_LIST_DIR}/backends/kokkos_csvm.cpp)
+endif ()
 
 # create pybind11 module
 set(PLSSVM_PYTHON_BINDINGS_LIBRARY_NAME plssvm)
@@ -124,7 +126,7 @@ target_link_libraries(${PLSSVM_PYTHON_BINDINGS_LIBRARY_NAME} PRIVATE ${PLSSVM_AL
 target_compile_definitions(${PLSSVM_PYTHON_BINDINGS_LIBRARY_NAME} PRIVATE PYBIND11_DETAILED_ERROR_MESSAGES)
 
 # disable clang compiler warning
-target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC $<$<COMPILE_LANG_AND_ID:CXX,Clang>:-Wno-self-assign-overloaded>)
+target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC $<$<COMPILE_LANG_AND_ID:CXX,Clang,IntelLLVM>:-Wno-self-assign-overloaded>)
 target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC -fPIC)
 
 # append pybind11 bindings library to installed targets

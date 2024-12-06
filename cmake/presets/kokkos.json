@@ -1,0 +1,142 @@
+{
+  "version": 6,
+  "include": [
+    "common.json"
+  ],
+  "configurePresets": [
+    {
+      "name": "kokkos",
+      "displayName": "Kokkos backend",
+      "inherits": "build",
+      "cacheVariables": {
+        "PLSSVM_ENABLE_KOKKOS_BACKEND": "ON"
+      }
+    },
+    {
+      "name": "kokkos_python",
+      "displayName": "Kokkos backend + Python bindings",
+      "inherits": "build",
+      "cacheVariables": {
+        "PLSSVM_ENABLE_KOKKOS_BACKEND": "ON",
+        "PLSSVM_ENABLE_LANGUAGE_BINDINGS": "ON",
+        "PLSSVM_ENABLE_PYTHON_BINDINGS": "ON"
+      }
+    },
+    {
+      "name": "kokkos_test",
+      "displayName": "Kokkos backend tests",
+      "inherits": "test",
+      "cacheVariables": {
+        "PLSSVM_ENABLE_KOKKOS_BACKEND": "ON"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "kokkos",
+      "displayName": "Kokkos backend",
+      "configurePreset": "kokkos",
+      "configuration": "RelWithDebInfo",
+      "inherits": "common"
+    },
+    {
+      "name": "kokkos_python",
+      "displayName": "Kokkos backend + Python bindings",
+      "configurePreset": "kokkos_python",
+      "configuration": "RelWithDebInfo",
+      "inherits": "common"
+    },
+    {
+      "name": "kokkos_test",
+      "displayName": "Kokkos backend tests",
+      "configurePreset": "kokkos_test",
+      "configuration": "Debug",
+      "inherits": "common"
+    }
+  ],
+  "testPresets": [
+    {
+      "name": "kokkos_test",
+      "displayName": "Kokkos backend all tests",
+      "configurePreset": "kokkos_test",
+      "inherits": "common"
+    },
+    {
+      "name": "kokkos_backend_test",
+      "displayName": "Kokkos backend specific tests",
+      "configurePreset": "kokkos_test",
+      "inherits": "common",
+      "filter": {
+        "include": {
+          "name": "Kokkos.*"
+        }
+      }
+    }
+  ],
+  "workflowPresets": [
+    {
+      "name": "kokkos",
+      "displayName": "Kokkos backend workflow",
+      "steps": [
+        {
+          "name": "kokkos",
+          "type": "configure"
+        },
+        {
+          "name": "kokkos",
+          "type": "build"
+        }
+      ]
+    },
+    {
+      "name": "kokkos_python",
+      "displayName": "Kokkos backend + Python bindings workflow",
+      "steps": [
+        {
+          "name": "kokkos_python",
+          "type": "configure"
+        },
+        {
+          "name": "kokkos_python",
+          "type": "build"
+        }
+      ]
+    },
+    {
+      "name": "kokkos_test",
+      "displayName": "Kokkos test workflow",
+      "steps": [
+        {
+          "name": "kokkos_test",
+          "type": "configure"
+        },
+        {
+          "name": "kokkos_test",
+          "type": "build"
+        },
+        {
+          "name": "kokkos_test",
+          "type": "test"
+        }
+      ]
+    },
+    {
+      "name": "kokkos_backend_test",
+      "displayName": "Kokkos backend test workflow",
+      "steps": [
+        {
+          "name": "kokkos_test",
+          "type": "configure"
+        },
+        {
+          "name": "kokkos_test",
+          "type": "build"
+        },
+        {
+          "name": "kokkos_backend_test",
+          "type": "test"
+        }
+      ]
+    }
+  ]
+}

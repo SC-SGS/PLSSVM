@@ -340,7 +340,7 @@ TEST_F(PerformanceTracker, add_parser_train_tracking_entry) {
     // check entries for correctness
     EXPECT_EQ(entries.size(), 1);
 
-    ASSERT_EQ(entries.at("parameter").size(), 17);
+    ASSERT_EQ(entries.at("parameter").size(), 18);
 }
 
 TEST_F(PerformanceTracker, add_parser_predict_tracking_entry) {
@@ -363,7 +363,7 @@ TEST_F(PerformanceTracker, add_parser_predict_tracking_entry) {
     // check entries for correctness
     EXPECT_EQ(entries.size(), 1);
 
-    ASSERT_EQ(entries.at("parameter").size(), 9);
+    ASSERT_EQ(entries.at("parameter").size(), 10);
 }
 
 TEST_F(PerformanceTracker, add_parser_scale_tracking_entry) {

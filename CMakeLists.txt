@@ -72,6 +72,7 @@ endif ()
 ########################################################################################################################
 ## set base sources
 set(PLSSVM_BASE_SOURCES
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/backends/Kokkos/execution_space.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/backends/SYCL/implementation_types.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/backends/SYCL/kernel_invocation_types.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/backends/stdpar/implementation_types.cpp
@@ -186,9 +187,7 @@ find_package(OpenMP 4.0 QUIET)
 if (OpenMP_FOUND)
     message(STATUS "Found OpenMP ${OpenMP_CXX_VERSION} to speed-up library utilities (like file parsing).")
     set(PLSSVM_FOUND_OPENMP_FOR_UTILITY ON)
-    if (${CMAKE_CXX_COMPILER_ID} MATCHES "IntelLLVM")
-        target_link_libraries(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC -fopenmp)
-    elseif (${CMAKE_CXX_COMPILER_ID} MATCHES "MSVC")
+    if (${CMAKE_CXX_COMPILER_ID} MATCHES "MSVC")
         target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC -openmp:llvm -openmp:experimental)
     else ()
         target_link_libraries(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC OpenMP::OpenMP_CXX)
@@ -196,7 +195,7 @@ if (OpenMP_FOUND)
 else ()
     # disable warning for unknown OpenMP pragmas if no OpenMP could be found
     target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC
-                           $<$<COMPILE_LANG_AND_ID:CXX,GNU,Clang>:-Wno-unknown-pragmas>
+                           $<$<COMPILE_LANG_AND_ID:CXX,GNU,Clang,IntelLLVM>:-Wno-unknown-pragmas>
                            $<$<COMPILE_LANG_AND_ID:CXX,MSVC>:/wd4068>
     )
     # issue warning that multi-GPU execution will be serialized
@@ -367,6 +366,13 @@ set(PLSSVM_ENABLE_SYCL_BACKEND AUTO CACHE STRING "Enable SYCL Backend")
 set_property(CACHE PLSSVM_ENABLE_SYCL_BACKEND PROPERTY STRINGS AUTO ON OFF)
 if (PLSSVM_ENABLE_SYCL_BACKEND MATCHES "AUTO" OR PLSSVM_ENABLE_SYCL_BACKEND)
     add_subdirectory(src/plssvm/backends/SYCL)
+endif ()
+
+## check for Kokkos backend
+set(PLSSVM_ENABLE_KOKKOS_BACKEND AUTO CACHE STRING "Enable SYCL Backend")
+set_property(CACHE PLSSVM_ENABLE_KOKKOS_BACKEND PROPERTY STRINGS AUTO ON OFF)
+if (PLSSVM_ENABLE_KOKKOS_BACKEND MATCHES "AUTO" OR PLSSVM_ENABLE_KOKKOS_BACKEND)
+    add_subdirectory(src/plssvm/backends/Kokkos)
 endif ()
 
 ## check if ANY backend is available/has been enabled
@@ -600,7 +606,7 @@ if (PLSSVM_ENABLE_FORMATTING)
     list(APPEND CMAKE_MESSAGE_INDENT "Formatting:  ")
     
     ## install library to add a clang-format target
-    set(PLSSVM_format_VERSION 7021abbf066e2e577926731c3fa4141f456c5024)
+    set(PLSSVM_format_VERSION d22c36043bea6ef85f3eb68b823f50703bd1cc21)
     find_package(format QUIET)
     if (format_FOUND)
         message(STATUS "Found package format.")
@@ -692,6 +698,10 @@ if (TARGET ${PLSSVM_SYCL_BACKEND_LIBRARY_NAME})
     endforeach ()
     list(APPEND PLSSVM_BACKEND_NAME_LIST "sycl")
 endif ()
+if (TARGET ${PLSSVM_KOKKOS_BACKEND_LIBRARY_NAME})
+    message(STATUS "${PLSSVM_KOKKOS_BACKEND_SUMMARY_STRING}")
+    list(APPEND PLSSVM_BACKEND_NAME_LIST "kokkos")
+endif ()
 message(STATUS "")
 
 ########################################################################################################################
@@ -716,8 +726,8 @@ message(STATUS "Generating manpage files.")
 string(TIMESTAMP PLSSVM_CURRENT_BUILD_TIME "%d. %B %Y")
 string(REPLACE ";" "|" PLSSVM_PLATFORM_NAME_LIST "${PLSSVM_PLATFORM_NAME_LIST}")
 string(REPLACE ";" "|" PLSSVM_BACKEND_NAME_LIST "${PLSSVM_BACKEND_NAME_LIST}")
-string(REPLACE ";" "|" PLSSVM_SYCL_BACKEND_NAME_LIST "${PLSSVM_SYCL_BACKEND_NAME_LIST}")
 if (TARGET ${PLSSVM_SYCL_BACKEND_LIBRARY_NAME})
+    string(REPLACE ";" "|" PLSSVM_SYCL_BACKEND_NAME_LIST "${PLSSVM_SYCL_BACKEND_NAME_LIST}")
     set(PLSSVM_SYCL_IMPLEMENTATION_TYPE_MANPAGE_ENTRY "
 .TP
 .B --sycl_implementation_type
@@ -730,6 +740,15 @@ choose the kernel invocation type when using SYCL as backend: automatic|nd_range
 ")
 endif ()
 set(PLSSVM_SYCL_MANPAGE_ENTRY "${PLSSVM_SYCL_KERNEL_INVOCATION_TYPE_MANPAGE_ENTRY}${PLSSVM_SYCL_IMPLEMENTATION_TYPE_MANPAGE_ENTRY}")
+## assemble the Kokkos manpage entry
+if (TARGET ${PLSSVM_KOKKOS_BACKEND_LIBRARY_NAME})
+    string(REPLACE ";" "|" PLSSVM_KOKKOS_BACKEND_AVAILABLE_EXECUTION_SPACES "${PLSSVM_KOKKOS_BACKEND_AVAILABLE_EXECUTION_SPACES}")
+    set(PLSSVM_KOKKOS_MANPAGE_ENTRY "
+.TP
+.B --kokkos_execution_space
+choose the Kokkos execution space to be used in the Kokkos backend: automatic|${PLSSVM_KOKKOS_BACKEND_AVAILABLE_EXECUTION_SPACES} (default: automatic)
+")
+endif ()
 ## assemble the performance tracker manpage entry
 if (PLSSVM_ENABLE_PERFORMANCE_TRACKING)
     set(PLSSVM_PERFORMANCE_TRACKER_MANPAGE_ENTRY "
@@ -745,6 +764,7 @@ configure_file(
         ${CMAKE_CURRENT_SOURCE_DIR}/docs/plssvm-train.1
         @ONLY
 )
+# update manpage entry since plssvm-predict can't recognize the SYCL kernel invocation type
 set(PLSSVM_SYCL_MANPAGE_ENTRY "${PLSSVM_SYCL_IMPLEMENTATION_TYPE_MANPAGE_ENTRY}")
 configure_file(
         ${CMAKE_CURRENT_SOURCE_DIR}/docs/plssvm-predict.1.in
@@ -824,6 +844,7 @@ install(FILES
         "${CMAKE_CURRENT_SOURCE_DIR}/cmake/plssvm/plssvmHPXTargets.cmake"
         "${CMAKE_CURRENT_SOURCE_DIR}/cmake/plssvm/plssvmAdaptiveCppTargets.cmake"
         "${CMAKE_CURRENT_SOURCE_DIR}/cmake/plssvm/plssvmDPCPPTargets.cmake"
+        "${CMAKE_CURRENT_SOURCE_DIR}/cmake/plssvm/plssvmKokkosTargets.cmake"
         "${CMAKE_CURRENT_SOURCE_DIR}/cmake/plssvm/plssvmstdparTargets.cmake"
         DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/plssvm/cmake
 )

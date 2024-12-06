@@ -46,7 +46,7 @@ TYPED_TEST_P(DevicePtr, default_construct) {
 
     // empty data
     EXPECT_FALSE(static_cast<bool>(ptr));
-    EXPECT_EQ(ptr.get(), nullptr);
+    EXPECT_EQ(ptr.get(), typename device_ptr_type::device_pointer_type{});
     EXPECT_EQ(ptr.size(), 0);
     EXPECT_EQ(ptr.shape(), (plssvm::shape{ 0, 0 }));
     EXPECT_TRUE(ptr.empty());
@@ -63,7 +63,7 @@ TYPED_TEST_P(DevicePtr, construct_size) {
 
     // check data
     EXPECT_TRUE(static_cast<bool>(ptr));
-    EXPECT_NE(ptr.get(), nullptr);
+    EXPECT_NE(ptr.get(), typename device_ptr_type::device_pointer_type{});
     EXPECT_EQ(ptr.shape(), (plssvm::shape{ 42, 1 }));
     // check padding
     EXPECT_EQ(ptr.padding(), (plssvm::shape{ 0, 0 }));
@@ -81,7 +81,7 @@ TYPED_TEST_P(DevicePtr, construct_shape) {
 
     // check data
     EXPECT_TRUE(static_cast<bool>(ptr));
-    EXPECT_NE(ptr.get(), nullptr);
+    EXPECT_NE(ptr.get(), typename device_ptr_type::device_pointer_type{});
     EXPECT_EQ(ptr.shape(), (plssvm::shape{ 42, 16 }));
     // check padding
     EXPECT_EQ(ptr.padding(), (plssvm::shape{ 0, 0 }));
@@ -99,7 +99,7 @@ TYPED_TEST_P(DevicePtr, construct_shape_and_padding) {
 
     // check data
     EXPECT_TRUE(static_cast<bool>(ptr));
-    EXPECT_NE(ptr.get(), nullptr);
+    EXPECT_NE(ptr.get(), typename device_ptr_type::device_pointer_type{});
     EXPECT_EQ(ptr.shape(), (plssvm::shape{ 42, 16 }));
     // check padding
     EXPECT_EQ(ptr.padding(), (plssvm::shape{ 4, 4 }));
@@ -119,7 +119,7 @@ TYPED_TEST_P(DevicePtr, move_construct) {
     // check data
     EXPECT_TRUE(static_cast<bool>(second));
     // EXPECT_EQ(second.queue(), queue);
-    EXPECT_NE(second.get(), nullptr);
+    EXPECT_NE(second.get(), typename device_ptr_type::device_pointer_type{});
     EXPECT_EQ(second.shape(), (plssvm::shape{ 42, 1 }));
     // check padding
     EXPECT_EQ(second.padding(), (plssvm::shape{ 0, 0 }));
@@ -127,7 +127,7 @@ TYPED_TEST_P(DevicePtr, move_construct) {
 
     // check moved-from data
     EXPECT_FALSE(static_cast<bool>(first));
-    EXPECT_EQ(first.get(), nullptr);
+    EXPECT_EQ(first.get(), typename device_ptr_type::device_pointer_type{});
     EXPECT_EQ(first.shape(), (plssvm::shape{ 0, 0 }));
     // check padding
     EXPECT_EQ(first.padding(), (plssvm::shape{ 0, 0 }));
@@ -147,7 +147,7 @@ TYPED_TEST_P(DevicePtr, move_construct_with_padding) {
     // check data
     EXPECT_TRUE(static_cast<bool>(second));
     // EXPECT_EQ(second.queue(), queue);
-    EXPECT_NE(second.get(), nullptr);
+    EXPECT_NE(second.get(), typename device_ptr_type::device_pointer_type{});
     EXPECT_EQ(second.shape(), (plssvm::shape{ 42, 10 }));
     // check padding
     EXPECT_EQ(second.padding(), (plssvm::shape{ 4, 5 }));
@@ -155,7 +155,7 @@ TYPED_TEST_P(DevicePtr, move_construct_with_padding) {
 
     // check moved-from data
     EXPECT_FALSE(static_cast<bool>(first));
-    EXPECT_EQ(first.get(), nullptr);
+    EXPECT_EQ(first.get(), typename device_ptr_type::device_pointer_type{});
     EXPECT_EQ(first.shape(), (plssvm::shape{ 0, 0 }));
     // check padding
     EXPECT_EQ(first.padding(), (plssvm::shape{ 0, 0 }));
@@ -177,7 +177,7 @@ TYPED_TEST_P(DevicePtr, move_assign) {
 
     // check data
     EXPECT_TRUE(static_cast<bool>(second));
-    EXPECT_NE(second.get(), nullptr);
+    EXPECT_NE(second.get(), typename device_ptr_type::device_pointer_type{});
     EXPECT_EQ(second.shape(), (plssvm::shape{ 42, 1 }));
     // check padding
     EXPECT_EQ(second.padding(), (plssvm::shape{ 0, 0 }));
@@ -185,7 +185,7 @@ TYPED_TEST_P(DevicePtr, move_assign) {
 
     // check moved-from data
     EXPECT_FALSE(static_cast<bool>(first));
-    EXPECT_EQ(first.get(), nullptr);
+    EXPECT_EQ(first.get(), typename device_ptr_type::device_pointer_type{});
     EXPECT_EQ(first.shape(), (plssvm::shape{ 0, 0 }));
     // check padding
     EXPECT_EQ(first.padding(), (plssvm::shape{ 0, 0 }));
@@ -207,7 +207,7 @@ TYPED_TEST_P(DevicePtr, move_assign_with_padding) {
 
     // check data
     EXPECT_TRUE(static_cast<bool>(second));
-    EXPECT_NE(second.get(), nullptr);
+    EXPECT_NE(second.get(), typename device_ptr_type::device_pointer_type{});
     EXPECT_EQ(second.shape(), (plssvm::shape{ 42, 10 }));
     // check padding
     EXPECT_EQ(second.padding(), (plssvm::shape{ 4, 5 }));
@@ -215,7 +215,7 @@ TYPED_TEST_P(DevicePtr, move_assign_with_padding) {
 
     // check moved-from data
     EXPECT_FALSE(static_cast<bool>(first));
-    EXPECT_EQ(first.get(), nullptr);
+    EXPECT_EQ(first.get(), typename device_ptr_type::device_pointer_type{});
     EXPECT_EQ(first.shape(), (plssvm::shape{ 0, 0 }));
     // check padding
     EXPECT_EQ(first.padding(), (plssvm::shape{ 0, 0 }));
@@ -237,14 +237,14 @@ TYPED_TEST_P(DevicePtr, swap_member_function) {
 
     // check data
     EXPECT_TRUE(static_cast<bool>(second));
-    EXPECT_NE(second.get(), nullptr);
+    EXPECT_NE(second.get(), typename device_ptr_type::device_pointer_type{});
     EXPECT_EQ(second.shape(), (plssvm::shape{ 42, 1 }));
     // check padding
     EXPECT_EQ(second.padding(), (plssvm::shape{ 0, 0 }));
     EXPECT_EQ(second.shape_padded(), (plssvm::shape{ 42, 1 }));
 
     EXPECT_FALSE(static_cast<bool>(first));
-    EXPECT_EQ(first.get(), nullptr);
+    EXPECT_EQ(first.get(), typename device_ptr_type::device_pointer_type{});
     EXPECT_EQ(first.shape(), (plssvm::shape{ 0, 0 }));
     // check padding
     EXPECT_EQ(first.padding(), (plssvm::shape{ 0, 0 }));
@@ -266,14 +266,14 @@ TYPED_TEST_P(DevicePtr, swap_member_function_with_padding) {
 
     // check data
     EXPECT_TRUE(static_cast<bool>(second));
-    EXPECT_NE(second.get(), nullptr);
+    EXPECT_NE(second.get(), typename device_ptr_type::device_pointer_type{});
     EXPECT_EQ(second.shape(), (plssvm::shape{ 42, 10 }));
     // check padding
     EXPECT_EQ(second.padding(), (plssvm::shape{ 4, 5 }));
     EXPECT_EQ(second.shape_padded(), (plssvm::shape{ 46, 15 }));
 
     EXPECT_FALSE(static_cast<bool>(first));
-    EXPECT_EQ(first.get(), nullptr);
+    EXPECT_EQ(first.get(), typename device_ptr_type::device_pointer_type{});
     EXPECT_EQ(first.shape(), (plssvm::shape{ 0, 0 }));
     // check padding
     EXPECT_EQ(first.padding(), (plssvm::shape{ 0, 0 }));
@@ -296,14 +296,14 @@ TYPED_TEST_P(DevicePtr, swap_free_function) {
 
     // check data
     EXPECT_TRUE(static_cast<bool>(second));
-    EXPECT_NE(second.get(), nullptr);
+    EXPECT_NE(second.get(), typename device_ptr_type::device_pointer_type{});
     EXPECT_EQ(second.shape(), (plssvm::shape{ 42, 1 }));
     // check padding
     EXPECT_EQ(second.padding(), (plssvm::shape{ 0, 0 }));
     EXPECT_EQ(second.shape_padded(), (plssvm::shape{ 42, 1 }));
 
     EXPECT_FALSE(static_cast<bool>(first));
-    EXPECT_EQ(first.get(), nullptr);
+    EXPECT_EQ(first.get(), typename device_ptr_type::device_pointer_type{});
     EXPECT_EQ(first.shape(), (plssvm::shape{ 0, 0 }));
     // check padding
     EXPECT_EQ(first.padding(), (plssvm::shape{ 0, 0 }));
@@ -326,14 +326,14 @@ TYPED_TEST_P(DevicePtr, swap_free_function_with_padding) {
 
     // check data
     EXPECT_TRUE(static_cast<bool>(second));
-    EXPECT_NE(second.get(), nullptr);
+    EXPECT_NE(second.get(), typename device_ptr_type::device_pointer_type{});
     EXPECT_EQ(second.shape(), (plssvm::shape{ 42, 10 }));
     // check padding
     EXPECT_EQ(second.padding(), (plssvm::shape{ 4, 5 }));
     EXPECT_EQ(second.shape_padded(), (plssvm::shape{ 46, 15 }));
 
     EXPECT_FALSE(static_cast<bool>(first));
-    EXPECT_EQ(first.get(), nullptr);
+    EXPECT_EQ(first.get(), typename device_ptr_type::device_pointer_type{});
     EXPECT_EQ(first.shape(), (plssvm::shape{ 0, 0 }));
     // check padding
     EXPECT_EQ(first.padding(), (plssvm::shape{ 0, 0 }));

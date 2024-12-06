@@ -36,6 +36,8 @@ enum class backend_type {
     automatic,
     /** [OpenMP](https://www.openmp.org/) to target CPUs only (currently no OpenMP target offloading support). */
     openmp,
+    /** [HPX] (https://hpx.stellar-group.org/) to target CPUs only (currently no GPU support). */
+    hpx,
     /** [C++ stdpar](https://en.cppreference.com/w/cpp/algorithm#Execution_policies) to target CPUs and GPUs from different vendors using C++ standard library parallel algorithms. */
     stdpar,
     /** [CUDA](https://developer.nvidia.com/cuda-zone) to target NVIDIA GPUs only. */
@@ -46,8 +48,8 @@ enum class backend_type {
     opencl,
     /** [SYCL](https://www.khronos.org/sycl/) to target CPUs and GPUs from different vendors. Currently tested SYCL implementations are [DPC++](https://github.com/intel/llvm) and [AdaptiveCpp](https://github.com/AdaptiveCpp/AdaptiveCpp) (formerly known as hipSYCL). */
     sycl,
-    /** [HPX] (https://hpx.stellar-group.org/) to target CPUs only (currently no GPU support). */
-    hpx
+    /** [Kokkos](https://github.com/kokkos/kokkos) to target CPUs and GPUs from different vendors. */
+    kokkos
 };
 
 /**
@@ -93,6 +95,7 @@ namespace hip { class csvm; }
 namespace opencl { class csvm; }
 namespace adaptivecpp { class csvm; }
 namespace dpcpp { class csvm; }
+namespace kokkos { class csvm; }
 
 // clang-format on
 
@@ -180,6 +183,15 @@ struct csvm_to_backend_type<dpcpp::csvm> {
     constexpr static backend_type value = backend_type::sycl;
     /// The enum value representing the SYCL implementation for the (DPC++) SYCL backend.
     constexpr static sycl::implementation_type impl = sycl::implementation_type::dpcpp;
+};
+
+/**
+ * @brief Sets the `value` to `plssvm::backend_type::kokkos` for the Kokkos C-SVM.
+ */
+template <>
+struct csvm_to_backend_type<kokkos::csvm> {
+    /// The enum value representing the Kokkos backend.
+    constexpr static backend_type value = backend_type::kokkos;
 };
 
 }  // namespace detail

@@ -13,7 +13,8 @@
         "PLSSVM_ENABLE_CUDA_BACKEND": "AUTO",
         "PLSSVM_ENABLE_HIP_BACKEND": "AUTO",
         "PLSSVM_ENABLE_OPENCL_BACKEND": "AUTO",
-        "PLSSVM_ENABLE_SYCL_BACKEND": "AUTO"
+        "PLSSVM_ENABLE_SYCL_BACKEND": "AUTO",
+        "PLSSVM_ENABLE_KOKKOS_BACKEND": "AUTO"
       }
     },
     {
@@ -28,6 +29,7 @@
         "PLSSVM_ENABLE_HIP_BACKEND": "AUTO",
         "PLSSVM_ENABLE_OPENCL_BACKEND": "AUTO",
         "PLSSVM_ENABLE_SYCL_BACKEND": "AUTO",
+        "PLSSVM_ENABLE_KOKKOS_BACKEND": "AUTO",
         "PLSSVM_ENABLE_LANGUAGE_BINDINGS": "ON",
         "PLSSVM_ENABLE_PYTHON_BINDINGS": "ON"
       }
@@ -43,7 +45,8 @@
         "PLSSVM_ENABLE_CUDA_BACKEND": "AUTO",
         "PLSSVM_ENABLE_HIP_BACKEND": "AUTO",
         "PLSSVM_ENABLE_OPENCL_BACKEND": "AUTO",
-        "PLSSVM_ENABLE_SYCL_BACKEND": "AUTO"
+        "PLSSVM_ENABLE_SYCL_BACKEND": "AUTO",
+        "PLSSVM_ENABLE_KOKKOS_BACKEND": "AUTO"
       }
     }
   ],
@@ -84,7 +87,7 @@
       "inherits": "common",
       "filter": {
         "include": {
-          "name": "OpenMP.*|HPX.*|CUDA.*|HIP.*|OpenCL.*|AdaptiveCpp.*|DPCPP.*"
+          "name": "OpenMP.*|HPX.*|CUDA.*|HIP.*|OpenCL.*|AdaptiveCpp.*|DPCPP.*|Kokkos.*"
         }
       }
     }
