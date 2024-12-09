@@ -6,6 +6,50 @@
 
 list(APPEND CMAKE_MESSAGE_INDENT "HPX:  ")
 
+
+message(CHECK_START "Checking for HPX platforms")
+########################################################################################################################
+##                                         parse target platform information                                          ##
+########################################################################################################################
+if (DEFINED PLSSVM_HPX_TARGET_PLATFORMS)
+    set(PLSSVM_HPX_TARGET_PLATFORMS ${PLSSVM_HPX_TARGET_PLATFORMS} CACHE STRING "The HPX target platforms to compile for." FORCE)
+elseif (DEFINED ENV{PLSSVM_HPX_TARGET_PLATFORMS})
+    set(PLSSVM_HPX_TARGET_PLATFORMS $ENV{PLSSVM_HPX_TARGET_PLATFORMS} CACHE STRING "The HPX target platforms to compile for." FORCE)
+elseif (DEFINED PLSSVM_TARGET_PLATFORMS)
+    set(PLSSVM_HPX_TARGET_PLATFORMS ${PLSSVM_TARGET_PLATFORMS} CACHE STRING "The HPX target platforms to compile for." FORCE)
+elseif (DEFINED ENV{PLSSVM_TARGET_PLATFORMS})
+    set(PLSSVM_HPX_TARGET_PLATFORMS $ENV{PLSSVM_TARGET_PLATFORMS} CACHE STRING "The HPX target platforms to compile for." FORCE)
+endif ()
+
+
+
+## parse provided target platforms
+include(${CMAKE_CURRENT_SOURCE_DIR}/../../../../cmake/parse_architecture_info.cmake)
+set(PLSSVM_PLATFORM_NAME_LIST "automatic")
+foreach (PLSSVM_PLATFORM ${PLSSVM_HPX_TARGET_PLATFORMS})
+    if (PLSSVM_PLATFORM MATCHES "^cpu")
+        # parse provided CPU architectures
+        parse_architecture_info(${PLSSVM_PLATFORM} PLSSVM_CPU_TARGET_ARCHS PLSSVM_NUM_CPU_TARGET_ARCHS)
+        if (PLSSVM_NUM_CPU_TARGET_ARCHS GREATER 1)
+            message(FATAL_ERROR "Target platform \"cpu\" must at most have one architecture specification!")
+        endif ()
+        list(APPEND PLSSVM_PLATFORM_NAME_LIST "cpu")
+    elseif (PLSSVM_PLATFORM MATCHES "^nvidia")
+        # parse provided NVIDIA GPU architectures
+        message(WARNING "The HPX backend currently does not support offloading and therefore the target platform \"nvidia\", ignoring it!")
+    elseif (PLSSVM_PLATFORM MATCHES "^amd")
+        # parse provided AMD GPU architectures
+        message(WARNING "The HPX backend currently does not support offloading and therefore the target platform \"amd\", ignoring it!")
+    elseif (PLSSVM_PLATFORM MATCHES "^intel")
+        # parse provided Intel GPU architectures
+        message(WARNING "The HPX backend currently does not support offloading and therefore the target platform \"intel\", ignoring it!")
+    else ()
+        message(FATAL_ERROR "Unrecognized target platform \"${PLSSVM_PLATFORM}\"! Must be one of: cpu nvidia amd intel")
+    endif ()
+endforeach ()
+
+message(CHECK_PASS "found")
+
 # check if HPX can be enabled
 message(CHECK_START "Checking for HPX backend")
 
