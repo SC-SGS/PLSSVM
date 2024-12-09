@@ -49,7 +49,13 @@ bool communicator::is_main_rank() const {
 #if defined(PLSSVM_HAS_MPI_ENABLED)
     return this->rank() == std::size_t{ 0 };
 #else
-    return false;
+    return true;
+#endif
+}
+
+void communicator::barrier() const {
+#if defined(PLSSVM_HAS_MPI_ENABLED)
+    PLSSVM_MPI_ERROR_CHECK(MPI_Barrier(comm_));
 #endif
 }
 

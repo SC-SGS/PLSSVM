@@ -14,16 +14,14 @@
 #include "fmt/format.h"  // fmt::format
 
 #if defined(PLSSVM_HAS_MPI_ENABLED)
-    #include "mpi.h"
+    #include "mpi.h"  // MPI_THREAD_FUNNELED, MPI_Init_thread, MPI_Finalize, MPI_Initialized, MPI_Finalized
 #endif
-
-#include <string>  // std::string
 
 namespace plssvm::mpi {
 
 void init() {
 #if defined(PLSSVM_HAS_MPI_ENABLED)
-    const int required = MPI_THREAD_FUNNELED;
+    constexpr int required = MPI_THREAD_FUNNELED;
     int provided{};
     PLSSVM_MPI_ERROR_CHECK(MPI_Init_thread(nullptr, nullptr, required, &provided));
     if (required < provided) {
@@ -34,7 +32,7 @@ void init() {
 
 void init(int &argc, char **argv) {
 #if defined(PLSSVM_HAS_MPI_ENABLED)
-    const int required = MPI_THREAD_FUNNELED;
+    constexpr int required = MPI_THREAD_FUNNELED;
     int provided{};
     PLSSVM_MPI_ERROR_CHECK(MPI_Init_thread(&argc, &argv, required, &provided));
     if (required < provided) {
