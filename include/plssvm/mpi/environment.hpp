@@ -27,11 +27,17 @@ void init();
  * @param[in,out] argv the values of the command line arguments
  */
 void init(int &argc, char **argv);
+
 /**
  * @brief Finalize the MPI environment.
  * @details If `PLSSVM_HAS_MPI_ENABLED` is undefined, does nothing.
  */
 void finalize();
+/**
+ * @brief Abort the MPI environment associated with `MPI_COMM_WORLD`.
+ * @details If `PLSSVM_HAS_MPI_ENABLED` is undefined, does nothing.
+ */
+void abort_world();
 
 /**
  * @brief Check if the MPI environment has been successfully initialized.
@@ -45,6 +51,12 @@ void finalize();
  * @return `true` if the environment was successfully finalized, otherwise `false` (`[[nodiscard]]`)
  */
 [[nodiscard]] bool is_finalized();
+/**
+ * @brief Check if the MPI environment is currently active, i.e., `init` has already been called, but not `finalize`.
+ * @details If `PLSSVM_HAS_MPI_ENABLED` is undefined, returns `false`.
+ * @return `true` if the environment is currently active, otherwise `false` (`[[nodiscard]]`)
+ */
+[[nodiscard]] bool is_active();
 
 }  // namespace plssvm::mpi
 

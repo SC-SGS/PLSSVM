@@ -17,6 +17,8 @@
     #include "mpi.h"  // MPI_THREAD_FUNNELED, MPI_Init_thread, MPI_Finalize, MPI_Initialized, MPI_Finalized
 #endif
 
+#include <cstdlib>  // EXIT_FAILURE
+
 namespace plssvm::mpi {
 
 void init() {
@@ -47,6 +49,12 @@ void finalize() {
 #endif
 }
 
+void abort_world() {
+#if defined(PLSSVM_HAS_MPI_ENABLED)
+    PLSSVM_MPI_ERROR_CHECK(MPI_Abort(MPI_COMM_WORLD, EXIT_FAILURE));
+#endif
+}
+
 bool is_initialized() {
 #if defined(PLSSVM_HAS_MPI_ENABLED)
     int flag{};
@@ -64,6 +72,14 @@ bool is_finalized() {
     return static_cast<bool>(flag);
 #else
     return true;
+#endif
+}
+
+bool is_active() {
+#if defined(PLSSVM_HAS_MPI_ENABLED)
+    return is_initialized() && !is_finalized();
+#else
+    return false;
 #endif
 }
 
