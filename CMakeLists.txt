@@ -88,6 +88,7 @@ set(PLSSVM_BASE_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/string_utility.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/utility.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/exceptions/exceptions.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/mpi/detail/version.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/mpi/communicator.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/mpi/environment.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/version/version.cpp
