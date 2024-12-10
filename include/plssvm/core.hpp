@@ -30,6 +30,7 @@
 #include "plssvm/kernel_functions.hpp"                       // implementation of all supported kernel functions
 #include "plssvm/matrix.hpp"                                 // a custom matrix class
 #include "plssvm/model.hpp"                                  // the model as a result of training a C-SVM
+#include "plssvm/mpi/communicator.hpp"                       // PLSSVM MPI communicator wrapper
 #include "plssvm/parameter.hpp"                              // the C-SVM parameter
 #include "plssvm/shape.hpp"                                  // shape for a matrix or device pointer
 #include "plssvm/solver_types.hpp"                           // all supported solver types (e.g., Conjugate Gradients with explicit, streaming, or implicit kernel matrix generation)
@@ -63,6 +64,9 @@ namespace plssvm::detail::cmd { }
 
 /// Namespace containing MPI wrapper functionality.
 namespace plssvm::mpi { }
+
+/// Namespace containing implementation details for our MPI wrapper functionality. **Should not** directly be used by users.
+namespace plssvm::mpi::detail { }
 
 /// Namespace containing implementation details for the performance tracking and hardware sampling functionality. **Should not** directly be used by users.
 namespace plssvm::detail::tracking { }
