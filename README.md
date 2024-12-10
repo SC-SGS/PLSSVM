@@ -80,7 +80,8 @@ The main highlights of our SVM implementations are:
    - OAA: one huge classification task where our CG algorithm solves a system of linear equations with multiple right-hand sides. The resulting model file is **not** compatible with LIBSVM.
    - OAO: constructs many but smaller binary classifications. The resulting model file is **fully** compatible with LIBSVM.
 6. Multi-GPU support for **all** kernel functions and GPU backends for `fit` as well as `predict/score` (**note**: no multi-GPU support for the stdpar backend even if run on a GPU!).
-7. Python bindings as drop-in replacement for `sklearn.SVC` (some features currently not implemented).
+7. Distributed memory support via [MPI](https://www.mpi-forum.org/) for all backends.
+8. Python bindings as drop-in replacement for `sklearn.SVC` (some features currently not implemented).
 
 
 ## Getting Started
@@ -96,6 +97,7 @@ General dependencies:
 - [doxygen](https://www.doxygen.nl/index.html) if documentation generation is enabled
 - [Pybind11 ≥ v2.13.3](https://github.com/pybind/pybind11) if Python bindings are enabled
 - [OpenMP](https://www.openmp.org/) 4.0 or newer (optional) to speed-up library utilities (like file parsing)
+- [MPI](https://www.mpi-forum.org/) if distributed memory systems should be supported
 - [Format.cmake](https://github.com/TheLartians/Format.cmake) if auto formatting via clang-format is enabled; also requires at least clang-format-18 and git
 - multiple Python modules used in the utility scripts, to install all modules use `pip install --user -r install/python_requirements.txt`
 
@@ -284,6 +286,11 @@ The `[optional_options]` can be one or multiple of:
     - `OFF`: do not check for the Kokkos backend
 
 **Attention:** at least one backend must be enabled and available!
+
+- `PLSSVM_ENABLE_MPI=ON|OFF|AUTO` (default: `AUTO`):
+    - `ON`: check for MPI and fail if not available
+    - `AUTO`: check for MPI but **do not** fail if not available
+    - `OFF`: do not check for MPI
 
 - `PLSSVM_ENABLE_FAST_MATH=ON|OFF` (default depending on `CMAKE_BUILD_TYPE`: `ON` for Release or RelWithDebInfo, `OFF` otherwise): enable `fast-math` compiler flags for all backends
 - `PLSSVM_ENABLE_ASSERTS=ON|OFF` (default: `OFF`): enables custom assertions
