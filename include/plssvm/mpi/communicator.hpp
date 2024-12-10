@@ -68,11 +68,13 @@ class communicator {
      */
     void barrier() const;
 
+#if defined(PLSSVM_HAS_MPI_ENABLED)
     /**
      * @brief Add implicit conversion operator back to a native MPI communicator.
      * @return The wrapped MPI communicator (`[[nodiscard]]`)
      */
     [[nodiscard]] operator MPI_Comm() const { return comm_; }
+#endif
 
   private:
 #if defined(PLSSVM_HAS_MPI_ENABLED)
