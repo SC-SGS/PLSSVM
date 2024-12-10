@@ -13,7 +13,11 @@
 #define PLSSVM_EXCEPTIONS_SOURCE_LOCATION_HPP_
 #pragma once
 
+#include "plssvm/mpi/communicator.hpp"  // plssvm::mpi::communicator
+#include "plssvm/mpi/environment.hpp"   // plssvm::mpi::is_active
+
 #include <cstdint>      // std::uint_least32_t
+#include <optional>     // std::optional, std::nullopt, std::make_optional
 #include <string_view>  // std::string_view
 
 namespace plssvm {
@@ -32,7 +36,7 @@ class source_location {
      * @param[in] column the column number, always `0`
      * @return the source location object holding the information about the current call side (`[[nodiscard]]`)
      */
-    [[nodiscard]] static constexpr source_location current(
+    [[nodiscard]] static source_location current(
         const char *file_name = __builtin_FILE(),
         const char *function_name = __builtin_FUNCTION(),
         int line = __builtin_LINE(),
@@ -44,6 +48,15 @@ class source_location {
         loc.line_ = static_cast<std::uint_least32_t>(line);
         loc.column_ = static_cast<uint_least32_t>(column);
 
+        // try getting the MPI rank wrt to MPI_COMM_WORLD
+        try {
+            if (mpi::is_active()) {
+                loc.world_rank_ = std::make_optional(mpi::communicator{}.rank());
+            }
+        } catch (...) {
+            // std::nullopt
+        }
+
         return loc;
     }
 
@@ -51,27 +64,34 @@ class source_location {
      * @brief Returns the absolute path name of the file or `"unknown"` if no information could be retrieved.
      * @return the file name (`[[nodiscard]]`)
      */
-    [[nodiscard]] constexpr std::string_view function_name() const noexcept { return function_name_; }
+    [[nodiscard]] std::string_view function_name() const noexcept { return function_name_; }
 
     /**
      * @brief Returns the function name without additional signature information (i.e. return type and parameters)
      *        or `"unknown"` if no information could be retrieved.
      * @return the function name (`[[nodiscard]]`)
      */
-    [[nodiscard]] constexpr std::string_view file_name() const noexcept { return file_name_; }
+    [[nodiscard]] std::string_view file_name() const noexcept { return file_name_; }
 
     /**
      * @brief Returns the line number or `0` if no information could be retrieved.
      * @return the line number (`[[nodiscard]]`)
      */
-    [[nodiscard]] constexpr std::uint_least32_t line() const noexcept { return line_; }
+    [[nodiscard]] std::uint_least32_t line() const noexcept { return line_; }
 
     /**
      * @brief Returns the column number.
      * @attention Always `0`!
      * @return `0` (`[[nodiscard]]`)
      */
-    [[nodiscard]] constexpr std::uint_least32_t column() const noexcept { return column_; }
+    [[nodiscard]] std::uint_least32_t column() const noexcept { return column_; }
+
+    /**
+     * @brief Returns the current MPI rank.
+     * @attention Only available in an active MPI environment.
+     * @return the current MPI rank, or `std::nullopt` if not available (`[[nodiscard]]`)
+     */
+    [[nodiscard]] std::optional<int> world_rank() const noexcept { return world_rank_; }
 
   private:
     /// The line number as retrieved by `__builtin_LINE()`.
@@ -82,6 +102,8 @@ class source_location {
     const char *file_name_{ "unknown" };
     /// The function name as retrieved by `__builtin_FUNCTION()`.
     const char *function_name_{ "unknown" };
+    /// The current MPI rank **with respect to** MPI_COMM_WORLD, if an MPI environment is active!
+    std::optional<int> world_rank_{ std::nullopt };
 };
 
 }  // namespace plssvm
