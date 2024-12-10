@@ -32,7 +32,7 @@ void init() {
 #endif
 }
 
-void init(int &argc, char **argv) {
+void init([[maybe_unused]] int &argc, [[maybe_unused]] char **argv) {
 #if defined(PLSSVM_HAS_MPI_ENABLED)
     constexpr int required = MPI_THREAD_FUNNELED;
     int provided{};
