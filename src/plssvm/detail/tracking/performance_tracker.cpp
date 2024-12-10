@@ -17,6 +17,9 @@
 #include "plssvm/detail/string_utility.hpp"              // plssvm::detail::replace_all
 #include "plssvm/detail/utility.hpp"                     // plssvm::detail::current_date_time, PLSSVM_IS_DEFINED
 #include "plssvm/gamma.hpp"                              // plssvm::get_gamma_string
+#include "plssvm/mpi/communicator.hpp"                   // plssvm::mpi::communicator
+#include "plssvm/mpi/detail/utility.hpp"                 // plssvm::mpi::detail::node_name
+#include "plssvm/mpi/detail/version.hpp"                 // plssvm::mpi::detail::{mpi_library_version, mpi_version}
 #include "plssvm/parameter.hpp"                          // plssvm::parameter
 #include "plssvm/version/git_metadata/git_metadata.hpp"  // plssvm::version::git_metadata::commit_sha1
 #include "plssvm/version/version.hpp"                    // plssvm::version::{version, detail::target_platforms}
@@ -95,6 +98,24 @@ void performance_tracker::add_tracking_entry(const tracking_entry<plssvm::parame
         tracking_entries_["parameter"].emplace("cost", std::vector<std::string>{ fmt::format("{}", entry.entry_value.cost) });
         tracking_entries_["parameter"].emplace("real_type", std::vector<std::string>{ std::string{ arithmetic_type_name<real_type>() } });
     }
+}
+
+void performance_tracker::add_tracking_entry([[maybe_unused]] const tracking_entry<mpi::communicator> &entry) {
+    // track MPI only if available
+#if defined(PLSSVM_HAS_MPI_ENABLED)
+    // check whether entries should currently be tracked
+    if (this->is_tracking()) {
+        // create category
+        tracking_entries_.emplace(entry.entry_category, std::map<std::string, std::vector<std::string>>{});
+        // fill category with value
+        tracking_entries_["mpi"].emplace("comm_size", std::vector<std::string>{ fmt::format("{}", entry.entry_value.size()) });
+        tracking_entries_["mpi"].emplace("comm_rank", std::vector<std::string>{ fmt::format("{}", entry.entry_value.rank()) });
+        tracking_entries_["mpi"].emplace("is_main_rank", std::vector<std::string>{ fmt::format("{}", entry.entry_value.is_main_rank()) });
+        tracking_entries_["mpi"].emplace("library_version", std::vector<std::string>{ fmt::format("\"{}\"", mpi::detail::mpi_library_version()) });
+        tracking_entries_["mpi"].emplace("version", std::vector<std::string>{ fmt::format("\"{}\"", mpi::detail::mpi_version()) });
+        tracking_entries_["mpi"].emplace("node_name", std::vector<std::string>{ fmt::format("\"{}\"", mpi::detail::node_name()) });
+    }
+#endif
 }
 
 void performance_tracker::add_tracking_entry(const tracking_entry<cmd::parser_train> &entry) {
