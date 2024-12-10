@@ -38,4 +38,14 @@
     #define PLSSVM_MPI_ERROR_CHECK(...)
 #endif
 
+namespace plssvm::mpi::detail {
+
+/**
+ * @brief Get the current processor name.
+ * @return the processor name (`[[nodiscard]]`)
+ */
+[[nodiscard]] std::string node_name();
+
+}  // namespace plssvm::mpi::detail
+
 #endif  // PLSSVM_MPI_DETAIL_UTILITY_HPP_
