@@ -211,13 +211,33 @@ endif ()
 ########################################################################################################################
 ##                                              check for MPI (optional)                                              ##
 ########################################################################################################################
-# TODO: maybe be able to explicitly disable MPI support?
-find_package(MPI)
-if (MPI_FOUND)
-    message(STATUS "Found MPI ${MPI_CXX_VERSION} for distributed memory support.")
-    set(PLSSVM_FOUND_MPI ON)
-    target_link_libraries(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC MPI::MPI_CXX)
-    target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC PLSSVM_HAS_MPI_ENABLED)
+## check for MPI
+set(PLSSVM_ENABLE_MPI AUTO CACHE STRING "Enable distributed memory support via MPI")
+set_property(CACHE PLSSVM_ENABLE_MPI PROPERTY STRINGS AUTO ON OFF)
+if (PLSSVM_ENABLE_MPI MATCHES "AUTO" OR PLSSVM_ENABLE_MPI)
+    list(APPEND CMAKE_MESSAGE_INDENT "MPI:  ")
+    message(CHECK_START "Checking for MPI")
+    
+    # try finding MPI
+    find_package(MPI)
+    
+    if (MPI_FOUND)
+        # MPI found
+        message(CHECK_PASS "found ")
+        
+        message(STATUS "Found MPI ${MPI_CXX_VERSION} for distributed memory support.")
+        set(PLSSVM_FOUND_MPI ON)
+        target_link_libraries(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC MPI::MPI_CXX)
+        target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC PLSSVM_HAS_MPI_ENABLED)
+    else ()
+        # MPI not found
+        message(CHECK_FAIL "not found")
+        if (PLSSVM_ENABLE_MPI MATCHES "ON")
+            message(SEND_ERROR "Cannot find requested MPI!")
+        endif ()
+    endif ()
+    
+    list(POP_BACK CMAKE_MESSAGE_INDENT)
 endif ()
 
 ########################################################################################################################
