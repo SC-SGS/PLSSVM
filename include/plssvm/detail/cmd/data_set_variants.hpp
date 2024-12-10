@@ -17,6 +17,7 @@
 #include "plssvm/detail/cmd/parser_predict.hpp"  // plssvm::detail::cmd::parser_predict
 #include "plssvm/detail/cmd/parser_scale.hpp"    // plssvm::detail::cmd::parser_scale
 #include "plssvm/detail/cmd/parser_train.hpp"    // plssvm::detail::cmd::parser_train
+#include "plssvm/mpi/communicator.hpp"           // plssvm::mpi::communicator
 
 #include <string>   // std::string
 #include <variant>  // std::variant
@@ -31,37 +32,40 @@ using data_set_variants = std::variant<plssvm::data_set<int>, plssvm::data_set<s
 /**
  * @brief Return the correct data set based on the plssvm::detail::cmd::parser_train command line options.
  * @tparam label_type the type of the labels
+ * @param[in] comm the MPI communicator wrapper
  * @param[in] cmd_parser the provided command line parser
  * @return the data set based on the provided command line parser (`[[nodiscard]]`)
  */
 template <typename label_type = typename data_set<>::label_type>
-[[nodiscard]] inline data_set_variants data_set_factory_impl(const cmd::parser_train &cmd_parser) {
-    return data_set_variants{ plssvm::data_set<label_type>{ cmd_parser.input_filename } };
+[[nodiscard]] inline data_set_variants data_set_factory_impl(mpi::communicator comm, const cmd::parser_train &cmd_parser) {
+    return data_set_variants{ plssvm::data_set<label_type>{ std::move(comm), cmd_parser.input_filename } };
 }
 
 /**
  * @brief Return the correct data set based on the plssvm::detail::cmd::parser_predict command line options.
  * @tparam label_type the type of the labels
+ * @param[in] comm the MPI communicator wrapper
  * @param[in] cmd_parser the provided command line parser
  * @return the data set based on the provided command line parser (`[[nodiscard]]`)
  */
 template <typename label_type = typename data_set<>::label_type>
-[[nodiscard]] inline data_set_variants data_set_factory_impl(const cmd::parser_predict &cmd_parser) {
-    return data_set_variants{ plssvm::data_set<label_type>{ cmd_parser.input_filename } };
+[[nodiscard]] inline data_set_variants data_set_factory_impl(mpi::communicator comm, const cmd::parser_predict &cmd_parser) {
+    return data_set_variants{ plssvm::data_set<label_type>{ std::move(comm), cmd_parser.input_filename } };
 }
 
 /**
  * @brief Return the correct data set based on the plssvm::detail::cmd::parser_scale command line options.
  * @tparam label_type the type of the labels
+ * @param[in] comm the MPI communicator wrapper
  * @param[in] cmd_parser the provided command line parser
  * @return the data set based on the provided command line parser (`[[nodiscard]]`)
  */
 template <typename label_type = typename data_set<>::label_type>
-[[nodiscard]] inline data_set_variants data_set_factory_impl(const cmd::parser_scale &cmd_parser) {
+[[nodiscard]] inline data_set_variants data_set_factory_impl(mpi::communicator comm, const cmd::parser_scale &cmd_parser) {
     if (!cmd_parser.restore_filename.empty()) {
-        return data_set_variants{ plssvm::data_set<label_type>{ cmd_parser.input_filename, { cmd_parser.restore_filename } } };
+        return data_set_variants{ plssvm::data_set<label_type>{ comm, cmd_parser.input_filename, { comm, cmd_parser.restore_filename } } };
     } else {
-        return data_set_variants{ plssvm::data_set<label_type>{ cmd_parser.input_filename, { cmd_parser.lower, cmd_parser.upper } } };
+        return data_set_variants{ plssvm::data_set<label_type>{ comm, cmd_parser.input_filename, { comm, cmd_parser.lower, cmd_parser.upper } } };
     }
 }
 
@@ -74,9 +78,25 @@ template <typename label_type = typename data_set<>::label_type>
 template <typename cmd_parser_type>
 [[nodiscard]] inline data_set_variants data_set_factory(const cmd_parser_type &cmd_parser) {
     if (cmd_parser.strings_as_labels) {
-        return data_set_factory_impl<std::string>(cmd_parser);
+        return data_set_factory_impl<std::string>(mpi::communicator{}, cmd_parser);
     } else {
-        return data_set_factory_impl(cmd_parser);
+        return data_set_factory_impl(mpi::communicator{}, cmd_parser);
+    }
+}
+
+/**
+ * @brief Based on the provided command line @p cmd_parser, return the correct plssvm::data_set.
+ * @tparam cmd_parser_type the type of the command line parser (train, predict, or scale)
+ * @param[in] comm the MPI communicator wrapper
+ * @param[in] cmd_parser the provided command line parser
+ * @return the data set based on the provided command line parser (`[[nodiscard]]`)
+ */
+template <typename cmd_parser_type>
+[[nodiscard]] inline data_set_variants data_set_factory(mpi::communicator comm, const cmd_parser_type &cmd_parser) {
+    if (cmd_parser.strings_as_labels) {
+        return data_set_factory_impl<std::string>(std::move(comm), cmd_parser);
+    } else {
+        return data_set_factory_impl(std::move(comm), cmd_parser);
     }
 }
 

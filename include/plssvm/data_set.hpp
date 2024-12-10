@@ -27,6 +27,7 @@
 #include "plssvm/exceptions/exceptions.hpp"                // plssvm::data_set_exception
 #include "plssvm/file_format_types.hpp"                    // plssvm::file_format_type
 #include "plssvm/matrix.hpp"                               // plssvm::soa_matrix
+#include "plssvm/mpi/communicator.hpp"                     // plssvm::mpi::communicator
 #include "plssvm/shape.hpp"                                // plssvm::shape
 #include "plssvm/verbosity_levels.hpp"                     // plssvm::verbosity_level
 
@@ -64,6 +65,7 @@ using optional_ref = std::optional<std::reference_wrapper<T>>;
  * @brief Encapsulate all necessary data that is needed for training or predicting using an SVM.
  * @details May or may not contain labels!
  *          Internally, saves all data using [`std::shared_ptr`](https://en.cppreference.com/w/cpp/memory/shared_ptr) to make a plssvm::data_set relatively cheap to copy!
+ * @note Currently, **each** MPI rank loads/stores the whole data set (if MPI is available).
  * @tparam U the label type of the data (must be an arithmetic type or `std::string`; default: `int`)
  */
 template <typename U = int>
@@ -97,12 +99,29 @@ class data_set {
      */
     explicit data_set(const std::string &filename);
     /**
+     * @brief Read the data points from the file @p filename.
+     *        Automatically determines the plssvm::file_format_type based on the file extension.
+     * @details If @p filename ends with `.arff` it uses the ARFF parser, otherwise the LIBSVM parser is used.
+     * @param[in] comm the used MPI communicator (**note**: currently unused)
+     * @param[in] filename the file to read the data points from
+     * @throws plssvm::invalid_file_format_exception all exceptions thrown by plssvm::data_set::read_file
+     */
+    explicit data_set(mpi::communicator comm, const std::string &filename);
+    /**
      * @brief Read the data points from the file @p filename assuming that the file is given in the @p plssvm::file_format_type.
      * @param[in] filename the file to read the data points from
      * @param[in] format the assumed file format used to parse the data points
      * @throws plssvm::invalid_file_format_exception all exceptions thrown by plssvm::data_set::read_file
      */
     data_set(const std::string &filename, file_format_type format);
+    /**
+     * @brief Read the data points from the file @p filename assuming that the file is given in the @p plssvm::file_format_type.
+     * @param[in] comm the used MPI communicator (**note**: currently unused)
+     * @param[in] filename the file to read the data points from
+     * @param[in] format the assumed file format used to parse the data points
+     * @throws plssvm::invalid_file_format_exception all exceptions thrown by plssvm::data_set::read_file
+     */
+    data_set(mpi::communicator comm, const std::string &filename, file_format_type format);
     /**
      * @brief Read the data points from the file @p filename and scale it using the provided @p scale_parameter.
      *        Automatically determines the plssvm::file_format_type based on the file extension.
@@ -114,6 +133,17 @@ class data_set {
      */
     data_set(const std::string &filename, scaling scale_parameter);
     /**
+     * @brief Read the data points from the file @p filename and scale it using the provided @p scale_parameter.
+     *        Automatically determines the plssvm::file_format_type based on the file extension.
+     * @details If @p filename ends with `.arff` it uses the ARFF parser, otherwise the LIBSVM parser is used.
+     * @param[in] comm the used MPI communicator (**note**: currently unused)
+     * @param[in] filename the file to read the data points from
+     * @param[in] scale_parameter the parameters used to scale the data set feature values to a given range
+     * @throws plssvm::invalid_file_format_exception all exceptions thrown by plssvm::data_set::read_file
+     * @throws plssvm::data_set_exception all exceptions thrown by plssvm::data_set::scale
+     */
+    data_set(mpi::communicator comm, const std::string &filename, scaling scale_parameter);
+    /**
      * @brief Read the data points from the file @p filename assuming that the file is given in the plssvm::file_format_type @p format and
      *        scale it using the provided @p scale_parameter.
      * @param[in] filename the file to read the data points from
@@ -123,6 +153,17 @@ class data_set {
      * @throws plssvm::data_set_exception all exceptions thrown by plssvm::data_set::scale
      */
     data_set(const std::string &filename, file_format_type format, scaling scale_parameter);
+    /**
+     * @brief Read the data points from the file @p filename assuming that the file is given in the plssvm::file_format_type @p format and
+     *        scale it using the provided @p scale_parameter.
+     * @param[in] comm the used MPI communicator (**note**: currently unused)
+     * @param[in] filename the file to read the data points from
+     * @param[in] format the assumed file format used to parse the data points
+     * @param[in] scale_parameter the parameters used to scale the data set feature values to a given range
+     * @throws plssvm::invalid_file_format_exception all exceptions thrown by plssvm::data_set::read_file
+     * @throws plssvm::data_set_exception all exceptions thrown by plssvm::data_set::scale
+     */
+    data_set(mpi::communicator comm, const std::string &filename, file_format_type format, scaling scale_parameter);
 
     /**
      * @brief Create a new data set by converting the provided @p data_points to a plssvm::matrix.
@@ -134,6 +175,16 @@ class data_set {
      */
     explicit data_set(const std::vector<std::vector<real_type>> &data_points);
     /**
+     * @brief Create a new data set by converting the provided @p data_points to a plssvm::matrix.
+     * @details Since no labels are provided, this data set may **not** be used to a call to plssvm::csvm::fit!
+     * @param[in] comm the used MPI communicator (**note**: currently unused)
+     * @param[in] data_points the data points used in this data set
+     * @throws plssvm::data_set_exception if the @p data_points vector is empty
+     * @throws plssvm::data_set_exception if the data points in @p data_points have mismatching number of features
+     * @throws plssvm::data_set_exception if any @p data_point has no features
+     */
+    explicit data_set(mpi::communicator comm, const std::vector<std::vector<real_type>> &data_points);
+    /**
      * @brief Create a new data set by converting the provided @p data_points to a plssvm::matrix and copying the @p labels.
      * @param[in] data_points the data points used in this data set
      * @param[in] labels the labels used in this data set
@@ -144,6 +195,17 @@ class data_set {
      */
     data_set(const std::vector<std::vector<real_type>> &data_points, std::vector<label_type> labels);
     /**
+     * @brief Create a new data set by converting the provided @p data_points to a plssvm::matrix and copying the @p labels.
+     * @param[in] comm the used MPI communicator (**note**: currently unused)
+     * @param[in] data_points the data points used in this data set
+     * @param[in] labels the labels used in this data set
+     * @throws plssvm::data_set_exception if the @p data_points vector is empty
+     * @throws plssvm::data_set_exception if the data points in @p data_points have mismatching number of features
+     * @throws plssvm::data_set_exception if any @p data_point has no features
+     * @throws plssvm::data_set_exception if the number of data points in @p data_points and number of @p labels mismatch
+     */
+    data_set(mpi::communicator comm, const std::vector<std::vector<real_type>> &data_points, std::vector<label_type> labels);
+    /**
      * @brief Create a new data set  by converting the provided @p data_points to a plssvm::matrix and scale them using the provided @p scale_parameter.
      * @param[in] data_points the data points used in this data set
      * @param[in] scale_parameter the parameters used to scale the data set feature values to a given range
@@ -153,6 +215,17 @@ class data_set {
      * @throws plssvm::data_set_exception all exceptions thrown by plssvm::data_set::scale
      */
     data_set(const std::vector<std::vector<real_type>> &data_points, scaling scale_parameter);
+    /**
+     * @brief Create a new data set  by converting the provided @p data_points to a plssvm::matrix and scale them using the provided @p scale_parameter.
+     * @param[in] comm the used MPI communicator (**note**: currently unused)
+     * @param[in] data_points the data points used in this data set
+     * @param[in] scale_parameter the parameters used to scale the data set feature values to a given range
+     * @throws plssvm::data_set_exception if the @p data_points vector is empty
+     * @throws plssvm::data_set_exception if the data points in @p data_points have mismatching number of features
+     * @throws plssvm::data_set_exception if any @p data_point has no features
+     * @throws plssvm::data_set_exception all exceptions thrown by plssvm::data_set::scale
+     */
+    data_set(mpi::communicator comm, const std::vector<std::vector<real_type>> &data_points, scaling scale_parameter);
     /**
      * @brief Create a new data set  by converting the provided @p data_points to a plssvm::matrix and copying the @p labels and scale the @p data_points using the provided @p scale_parameter.
      * @param[in] data_points the data points used in this data set
@@ -165,6 +238,19 @@ class data_set {
      * @throws plssvm::data_set_exception all exceptions thrown by plssvm::data_set::scale
      */
     data_set(const std::vector<std::vector<real_type>> &data_points, std::vector<label_type> labels, scaling scale_parameter);
+    /**
+     * @brief Create a new data set  by converting the provided @p data_points to a plssvm::matrix and copying the @p labels and scale the @p data_points using the provided @p scale_parameter.
+     * @param[in] comm the used MPI communicator (**note**: currently unused)
+     * @param[in] data_points the data points used in this data set
+     * @param[in] labels the labels used in this data set
+     * @param[in] scale_parameter the parameters used to scale the data set feature values to a given range
+     * @throws plssvm::data_set_exception if the @p data_points vector is empty
+     * @throws plssvm::data_set_exception if the data points in @p data_points have mismatching number of features
+     * @throws plssvm::data_set_exception if any @p data_point has no features
+     * @throws plssvm::data_set_exception if the number of data points in @p data_points and number of @p labels mismatch
+     * @throws plssvm::data_set_exception all exceptions thrown by plssvm::data_set::scale
+     */
+    data_set(mpi::communicator comm, const std::vector<std::vector<real_type>> &data_points, std::vector<label_type> labels, scaling scale_parameter);
 
     /**
      * @brief Create a new data set from the provided @p data_points.
@@ -179,6 +265,19 @@ class data_set {
     template <layout_type layout>
     explicit data_set(const matrix<real_type, layout> &data_points);
     /**
+     * @brief Create a new data set from the provided @p data_points.
+     * @details Since no labels are provided, this data set may **not** be used to a call to plssvm::csvm::fit!
+     * @note If the provided matrix isn't padded, adds the necessary padding entries automatically.
+     * @tparam layout the layout type of the input matrix
+     * @param[in] comm the used MPI communicator (**note**: currently unused)
+     * @param[in] data_points the data points used in this data set
+     * @throws plssvm::data_set_exception if the @p data_points vector is empty
+     * @throws plssvm::data_set_exception if the data points in @p data_points have mismatching number of features
+     * @throws plssvm::data_set_exception if any @p data_point has no features
+     */
+    template <layout_type layout>
+    explicit data_set(mpi::communicator comm, const matrix<real_type, layout> &data_points);
+    /**
      * @brief Create a new data set from the provided @p data_points and @p labels.
      * @note If the provided matrix isn't padded, adds the necessary padding entries automatically.
      * @tparam layout the layout type of the input matrix
@@ -192,6 +291,20 @@ class data_set {
     template <layout_type layout>
     data_set(const matrix<real_type, layout> &data_points, std::vector<label_type> labels);
     /**
+     * @brief Create a new data set from the provided @p data_points and @p labels.
+     * @note If the provided matrix isn't padded, adds the necessary padding entries automatically.
+     * @tparam layout the layout type of the input matrix
+     * @param[in] comm the used MPI communicator (**note**: currently unused)
+     * @param[in] data_points the data points used in this data set
+     * @param[in] labels the labels used in this data set
+     * @throws plssvm::data_set_exception if the @p data_points vector is empty
+     * @throws plssvm::data_set_exception if the data points in @p data_points have mismatching number of features
+     * @throws plssvm::data_set_exception if any @p data_point has no features
+     * @throws plssvm::data_set_exception if the number of data points in @p data_points and number of @p labels mismatch
+     */
+    template <layout_type layout>
+    data_set(mpi::communicator comm, const matrix<real_type, layout> &data_points, std::vector<label_type> labels);
+    /**
      * @brief Create a new data set from the the provided @p data_points and scale them using the provided @p scale_parameter.
      * @note If the provided matrix isn't padded, adds the necessary padding entries automatically.
      * @tparam layout the layout type of the input matrix
@@ -204,6 +317,20 @@ class data_set {
      */
     template <layout_type layout>
     data_set(const matrix<real_type, layout> &data_points, scaling scale_parameter);
+    /**
+     * @brief Create a new data set from the the provided @p data_points and scale them using the provided @p scale_parameter.
+     * @note If the provided matrix isn't padded, adds the necessary padding entries automatically.
+     * @tparam layout the layout type of the input matrix
+     * @param[in] comm the used MPI communicator (**note**: currently unused)
+     * @param[in] data_points the data points used in this data set
+     * @param[in] scale_parameter the parameters used to scale the data set feature values to a given range
+     * @throws plssvm::data_set_exception if the @p data_points vector is empty
+     * @throws plssvm::data_set_exception if the data points in @p data_points have mismatching number of features
+     * @throws plssvm::data_set_exception if any @p data_point has no features
+     * @throws plssvm::data_set_exception all exceptions thrown by plssvm::data_set::scale
+     */
+    template <layout_type layout>
+    data_set(mpi::communicator comm, const matrix<real_type, layout> &data_points, scaling scale_parameter);
     /**
      * @brief Create a new data set from the the provided @p data_points and @p labels and scale the @p data_points using the provided @p scale_parameter.
      * @note If the provided matrix isn't padded, adds the necessary padding entries automatically.
@@ -219,9 +346,26 @@ class data_set {
      */
     template <layout_type layout>
     data_set(const matrix<real_type, layout> &data_points, std::vector<label_type> labels, scaling scale_parameter);
+    /**
+     * @brief Create a new data set from the the provided @p data_points and @p labels and scale the @p data_points using the provided @p scale_parameter.
+     * @note If the provided matrix isn't padded, adds the necessary padding entries automatically.
+     * @tparam layout the layout type of the input matrix
+     * @param[in] comm the used MPI communicator (**note**: currently unused)
+     * @param[in] data_points the data points used in this data set
+     * @param[in] labels the labels used in this data set
+     * @param[in] scale_parameter the parameters used to scale the data set feature values to a given range
+     * @throws plssvm::data_set_exception if the @p data_points vector is empty
+     * @throws plssvm::data_set_exception if the data points in @p data_points have mismatching number of features
+     * @throws plssvm::data_set_exception if any @p data_point has no features
+     * @throws plssvm::data_set_exception if the number of data points in @p data_points and number of @p labels mismatch
+     * @throws plssvm::data_set_exception all exceptions thrown by plssvm::data_set::scale
+     */
+    template <layout_type layout>
+    data_set(mpi::communicator comm, const matrix<real_type, layout> &data_points, std::vector<label_type> labels, scaling scale_parameter);
 
     /**
      * @brief Save the data points and potential labels of this data set to the file @p filename using the file @p format type.
+     * @note Only the main MPI rank (traditionally rank 0) saves the whole data set (if MPI is available).
      * @param[in] filename the file to save the data points and labels to
      * @param[in] format the file format
      */
@@ -230,6 +374,7 @@ class data_set {
      * @brief Save the data points and potential labels of this data set to the file @p filename.
      * @details Automatically determines the plssvm::file_format_type based on the file extension.
      *          If the file extension isn't `.arff`, saves the data as `.libsvm` file.
+     * @note Only the main MPI rank (traditionally rank 0) saves the whole data set (if MPI is available).
      * @param[in] filename the file to save the data points and labels to
      */
     void save(const std::string &filename) const;
@@ -295,6 +440,14 @@ class data_set {
      */
     [[nodiscard]] optional_ref<const scaling> scaling_factors() const noexcept;
 
+    /**
+     * @brief Get the associated MPI communicator.
+     * @return the MPI communicator (`[[nodiscard]]`)
+     */
+    [[nodiscard]] mpi::communicator communicator() noexcept {
+        return comm_;
+    }
+
   private:
     /**
      * @brief Default construct an empty data set.
@@ -331,6 +484,9 @@ class data_set {
     size_type num_data_points_{ 0 };
     /// The number of features in this data set.
     size_type num_features_{ 0 };
+
+    /// The used MPI communicator.
+    mpi::communicator comm_{};
 
     /// A pointer to the two-dimensional data points.
     std::shared_ptr<soa_matrix<real_type>> data_ptr_{ nullptr };
@@ -390,12 +546,14 @@ class data_set<U>::scaling {
      * @throws plssvm::data_set_exception if lower is greater or equal than upper
      */
     scaling(real_type lower, real_type upper);
+    scaling(mpi::communicator comm, real_type lower, real_type upper);
     /**
      * @brief Read the scaling interval and factors from the provided file @p filename.
      * @param[in] filename the filename to read the scaling information from
      * @throws plssvm::invalid_file_format_exception all exceptions thrown by the plssvm::detail::io::parse_scaling_factors function
      */
-    scaling(const std::string &filename);  // can't be explicit due to the data_set_variant
+    scaling(const std::string &filename);                          // can't be explicit due to the data_set_variant
+    scaling(mpi::communicator comm, const std::string &filename);  // can't be explicit due to the data_set_variant
 
     /**
      * @brief Save the scaling factors to the file @p filename.
@@ -408,18 +566,31 @@ class data_set<U>::scaling {
     std::pair<real_type, real_type> scaling_interval{};
     /// The scaling factors for all features.
     std::vector<factors> scaling_factors{};
+
+    /// The used MPI communicator.
+    mpi::communicator comm_{};
 };
 
 template <typename U>
 data_set<U>::scaling::scaling(const real_type lower, const real_type upper) :
-    scaling_interval{ std::make_pair(lower, upper) } {
+    scaling{ mpi::communicator{}, lower, upper } { }
+
+template <typename U>
+data_set<U>::scaling::scaling(mpi::communicator comm, const real_type lower, const real_type upper) :
+    scaling_interval{ std::make_pair(lower, upper) },
+    comm_{ std::move(comm) } {
     if (lower >= upper) {
         throw data_set_exception{ fmt::format("Inconsistent scaling interval specification: lower ({}) must be less than upper ({})!", lower, upper) };
     }
 }
 
 template <typename U>
-data_set<U>::scaling::scaling(const std::string &filename) {
+data_set<U>::scaling::scaling(const std::string &filename) :
+    scaling{ mpi::communicator{}, filename } { }
+
+template <typename U>
+data_set<U>::scaling::scaling(mpi::communicator comm, const std::string &filename) :
+    comm_{ std::move(comm) } {
     // open the file
     detail::io::file_reader reader{ filename };
     reader.read_lines('#');
@@ -437,6 +608,7 @@ void data_set<U>::scaling::save(const std::string &filename) const {
 
     const std::chrono::time_point end_time = std::chrono::steady_clock::now();
     detail::log(verbosity_level::full | verbosity_level::timing,
+                comm_,
                 "Write {} scaling factors in {} to the file '{}'.\n",
                 detail::tracking::tracking_entry{ "scaling_factors_write", "num_scaling_factors", scaling_factors.size() },
                 detail::tracking::tracking_entry{ "scaling_factors_write", "time", std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time) },
@@ -545,21 +717,35 @@ auto data_set<U>::label_mapper::labels() const -> std::vector<label_type> {
 //*************************************************************************************************************************************//
 
 template <typename U>
-data_set<U>::data_set(const std::string &filename) {
+data_set<U>::data_set(const std::string &filename) :
+    data_set{ mpi::communicator{}, filename } { }
+
+template <typename U>
+data_set<U>::data_set(mpi::communicator comm, const std::string &filename) :
+    comm_{ std::move(comm) } {
     // read data set from file
     // if the file doesn't end with .arff, assume a LIBSVM file
     this->read_file(filename, detail::ends_with(filename, ".arff") ? file_format_type::arff : file_format_type::libsvm);
 }
 
 template <typename U>
-data_set<U>::data_set(const std::string &filename, const file_format_type format) {
+data_set<U>::data_set(const std::string &filename, const file_format_type format) :
+    data_set{ mpi::communicator{}, filename, format } { }
+
+template <typename U>
+data_set<U>::data_set(mpi::communicator comm, const std::string &filename, const file_format_type format) :
+    comm_{ std::move(comm) } {
     // read data set from file
     this->read_file(filename, format);
 }
 
 template <typename U>
 data_set<U>::data_set(const std::string &filename, scaling scale_parameter) :
-    data_set{ filename } {
+    data_set{ mpi::communicator{}, filename, std::move(scale_parameter) } { }
+
+template <typename U>
+data_set<U>::data_set(mpi::communicator comm, const std::string &filename, scaling scale_parameter) :
+    data_set{ std::move(comm), filename } {
     // initialize scaling
     scale_parameters_ = std::make_shared<scaling>(std::move(scale_parameter));
     // scale data set
@@ -568,7 +754,11 @@ data_set<U>::data_set(const std::string &filename, scaling scale_parameter) :
 
 template <typename U>
 data_set<U>::data_set(const std::string &filename, file_format_type format, scaling scale_parameter) :
-    data_set{ filename, format } {
+    data_set{ mpi::communicator{}, filename, format, std::move(scale_parameter) } { }
+
+template <typename U>
+data_set<U>::data_set(mpi::communicator comm, const std::string &filename, file_format_type format, scaling scale_parameter) :
+    data_set{ std::move(comm), filename, format } {
     // initialize scaling
     scale_parameters_ = std::make_shared<scaling>(std::move(scale_parameter));
     // scale data set
@@ -577,29 +767,45 @@ data_set<U>::data_set(const std::string &filename, file_format_type format, scal
 
 // clang-format off
 template <typename U>
-data_set<U>::data_set(const std::vector<std::vector<real_type>> &data_points) try :
-    data_set{ soa_matrix<real_type>{ data_points, shape{ PADDING_SIZE, PADDING_SIZE } } } {}
+data_set<U>::data_set(const std::vector<std::vector<real_type>> &data_points) :
+    data_set{ mpi::communicator{}, data_points } { }
+
+template <typename U>
+data_set<U>::data_set(mpi::communicator comm, const std::vector<std::vector<real_type>> &data_points) try :
+    data_set{ std::move(comm), soa_matrix<real_type>{ data_points, shape{ PADDING_SIZE, PADDING_SIZE } } } {}
     catch (const matrix_exception &e) {
         throw data_set_exception{ e.what() };
     }
 
 template <typename U>
-data_set<U>::data_set(const std::vector<std::vector<real_type>> &data_points, std::vector<label_type> labels) try :
-    data_set{ soa_matrix<real_type>{ data_points, shape{ PADDING_SIZE, PADDING_SIZE } }, std::move(labels) } {}
+data_set<U>::data_set(const std::vector<std::vector<real_type>> &data_points, std::vector<label_type> labels) :
+    data_set{ mpi::communicator{}, data_points, labels } { }
+
+template <typename U>
+data_set<U>::data_set(mpi::communicator comm, const std::vector<std::vector<real_type>> &data_points, std::vector<label_type> labels) try :
+    data_set{ std::move(comm), soa_matrix<real_type>{ data_points, shape{ PADDING_SIZE, PADDING_SIZE } }, std::move(labels) } {}
     catch (const matrix_exception &e) {
         throw data_set_exception{ e.what() };
     }
 
 template <typename U>
-data_set<U>::data_set(const std::vector<std::vector<real_type>> &data_points, scaling scale_parameter) try :
-    data_set{ soa_matrix<real_type>{ data_points, shape{ PADDING_SIZE, PADDING_SIZE } }, std::move(scale_parameter) } {}
+data_set<U>::data_set(const std::vector<std::vector<real_type>> &data_points, scaling scale_parameter) :
+    data_set{ mpi::communicator{}, data_points, std::move(scale_parameter) } { }
+
+template <typename U>
+data_set<U>::data_set(mpi::communicator comm, const std::vector<std::vector<real_type>> &data_points, scaling scale_parameter) try :
+    data_set{ std::move(comm), soa_matrix<real_type>{ data_points, shape{ PADDING_SIZE, PADDING_SIZE } }, std::move(scale_parameter) } {}
     catch (const matrix_exception &e) {
         throw data_set_exception{ e.what() };
     }
 
 template <typename U>
-data_set<U>::data_set(const std::vector<std::vector<real_type>> &data_points, std::vector<label_type> labels, scaling scale_parameter) try :
-    data_set{ soa_matrix<real_type>{ data_points, shape{ PADDING_SIZE, PADDING_SIZE } }, std::move(labels), std::move(scale_parameter) } {}
+data_set<U>::data_set(const std::vector<std::vector<real_type>> &data_points, std::vector<label_type> labels, scaling scale_parameter) :
+    data_set{ mpi::communicator{}, data_points, std::move(labels), std::move(scale_parameter) } { }
+
+template <typename U>
+data_set<U>::data_set(mpi::communicator comm, const std::vector<std::vector<real_type>> &data_points, std::vector<label_type> labels, scaling scale_parameter) try :
+    data_set{ std::move(comm), soa_matrix<real_type>{ data_points, shape{ PADDING_SIZE, PADDING_SIZE } }, std::move(labels), std::move(scale_parameter) } {}
     catch (const matrix_exception &e) {
         throw data_set_exception{ e.what() };
     }
@@ -609,8 +815,14 @@ data_set<U>::data_set(const std::vector<std::vector<real_type>> &data_points, st
 template <typename U>
 template <layout_type layout>
 data_set<U>::data_set(const matrix<real_type, layout> &data_points) :
+    data_set{ mpi::communicator{}, data_points } { }
+
+template <typename U>
+template <layout_type layout>
+data_set<U>::data_set(mpi::communicator comm, const matrix<real_type, layout> &data_points) :
     num_data_points_{ data_points.num_rows() },
     num_features_{ data_points.num_cols() },
+    comm_{ std::move(comm) },
     data_ptr_{ std::make_shared<soa_matrix<real_type>>(data_points, shape{ PADDING_SIZE, PADDING_SIZE }) } {
     // the provided data points vector may not be empty
     if (data_ptr_->num_rows() == 0) {
@@ -621,6 +833,7 @@ data_set<U>::data_set(const matrix<real_type, layout> &data_points) :
     }
 
     detail::log(verbosity_level::full | verbosity_level::timing,
+                comm_,
                 "Created a data set with {} data points and {} features.\n",
                 detail::tracking::tracking_entry{ "data_set_create", "num_data_points", num_data_points_ },
                 detail::tracking::tracking_entry{ "data_set_create", "num_features", num_features_ });
@@ -629,8 +842,14 @@ data_set<U>::data_set(const matrix<real_type, layout> &data_points) :
 template <typename U>
 template <layout_type layout>
 data_set<U>::data_set(const matrix<real_type, layout> &data_points, std::vector<label_type> labels) :
+    data_set{ mpi::communicator{}, data_points, std::move(labels) } { }
+
+template <typename U>
+template <layout_type layout>
+data_set<U>::data_set(mpi::communicator comm, const matrix<real_type, layout> &data_points, std::vector<label_type> labels) :
     num_data_points_{ data_points.num_rows() },
     num_features_{ data_points.num_cols() },
+    comm_{ std::move(comm) },
     data_ptr_{ std::make_shared<soa_matrix<real_type>>(data_points, shape{ PADDING_SIZE, PADDING_SIZE }) },
     labels_ptr_{ std::make_shared<std::vector<label_type>>(std::move(labels)) } {
     // the number of labels must be equal to the number of data points!
@@ -643,6 +862,7 @@ data_set<U>::data_set(const matrix<real_type, layout> &data_points, std::vector<
     this->create_mapping(std::vector<label_type>(unique_labels.cbegin(), unique_labels.cend()));
 
     detail::log(verbosity_level::full | verbosity_level::timing,
+                comm_,
                 "Created a data set with {} data points, {} features, and {} classes.\n",
                 detail::tracking::tracking_entry{ "data_set_create", "num_data_points", num_data_points_ },
                 detail::tracking::tracking_entry{ "data_set_create", "num_features", num_features_ },
@@ -652,7 +872,12 @@ data_set<U>::data_set(const matrix<real_type, layout> &data_points, std::vector<
 template <typename U>
 template <layout_type layout>
 data_set<U>::data_set(const matrix<real_type, layout> &data_points, scaling scale_parameter) :
-    data_set{ std::move(data_points) } {
+    data_set{ mpi::communicator{}, data_points, std::move(scale_parameter) } { }
+
+template <typename U>
+template <layout_type layout>
+data_set<U>::data_set(mpi::communicator comm, const matrix<real_type, layout> &data_points, scaling scale_parameter) :
+    data_set{ std::move(data_points), std::move(comm) } {
     // initialize scaling
     scale_parameters_ = std::make_shared<scaling>(std::move(scale_parameter));
     // scale data set
@@ -662,7 +887,12 @@ data_set<U>::data_set(const matrix<real_type, layout> &data_points, scaling scal
 template <typename U>
 template <layout_type layout>
 data_set<U>::data_set(const matrix<real_type, layout> &data_points, std::vector<label_type> labels, scaling scale_parameter) :
-    data_set{ std::move(data_points), std::move(labels) } {
+    data_set{ mpi::communicator{}, data_points, std::move(labels), std::move(scale_parameter) } { }
+
+template <typename U>
+template <layout_type layout>
+data_set<U>::data_set(mpi::communicator comm, const matrix<real_type, layout> &data_points, std::vector<label_type> labels, scaling scale_parameter) :
+    data_set{ std::move(data_points), std::move(labels), std::move(comm) } {
     // initialize scaling
     scale_parameters_ = std::make_shared<scaling>(std::move(scale_parameter));
     // scale data set
@@ -673,31 +903,34 @@ template <typename U>
 void data_set<U>::save(const std::string &filename, const file_format_type format) const {
     const std::chrono::time_point start_time = std::chrono::steady_clock::now();
 
-    // save the data set
-    if (this->has_labels()) {
-        // save data with labels
-        switch (format) {
-            case file_format_type::libsvm:
-                detail::io::write_libsvm_data(filename, *data_ptr_, *labels_ptr_);
-                break;
-            case file_format_type::arff:
-                detail::io::write_arff_data(filename, *data_ptr_, *labels_ptr_);
-                break;
-        }
-    } else {
-        // save data without labels
-        switch (format) {
-            case file_format_type::libsvm:
-                detail::io::write_libsvm_data(filename, *data_ptr_);
-                break;
-            case file_format_type::arff:
-                detail::io::write_arff_data(filename, *data_ptr_);
-                break;
+    if (comm_.is_main_rank()) {
+        // save the data set
+        if (this->has_labels()) {
+            // save data with labels
+            switch (format) {
+                case file_format_type::libsvm:
+                    detail::io::write_libsvm_data(filename, *data_ptr_, *labels_ptr_);
+                    break;
+                case file_format_type::arff:
+                    detail::io::write_arff_data(filename, *data_ptr_, *labels_ptr_);
+                    break;
+            }
+        } else {
+            // save data without labels
+            switch (format) {
+                case file_format_type::libsvm:
+                    detail::io::write_libsvm_data(filename, *data_ptr_);
+                    break;
+                case file_format_type::arff:
+                    detail::io::write_arff_data(filename, *data_ptr_);
+                    break;
+            }
         }
     }
 
     const std::chrono::time_point end_time = std::chrono::steady_clock::now();
     detail::log(verbosity_level::full | verbosity_level::timing,
+                comm_,
                 "Write {} data points with {} features and {} classes in {} to the {} file '{}'.\n",
                 detail::tracking::tracking_entry{ "data_set_write", "num_data_points", num_data_points_ },
                 detail::tracking::tracking_entry{ "data_set_write", "num_features", num_features_ },
@@ -829,6 +1062,7 @@ void data_set<U>::scale() {
 
     const std::chrono::time_point end_time = std::chrono::steady_clock::now();
     detail::log(verbosity_level::full | verbosity_level::timing,
+                comm_,
                 "Scaled the data set to the range [{}, {}] in {}.\n",
                 detail::tracking::tracking_entry{ "data_set_scale", "lower", lower },
                 detail::tracking::tracking_entry{ "data_set_scale", "upper", upper },
@@ -884,6 +1118,7 @@ void data_set<U>::read_file(const std::string &filename, file_format_type format
 
     const std::chrono::time_point end_time = std::chrono::steady_clock::now();
     detail::log(verbosity_level::full | verbosity_level::timing,
+                comm_,
                 "Read {} data points with {} features and {} classes in {} using the {} parser from file '{}'.\n",
                 detail::tracking::tracking_entry{ "data_set_read", "num_data_points", num_data_points_ },
                 detail::tracking::tracking_entry{ "data_set_read", "num_features", num_features_ },

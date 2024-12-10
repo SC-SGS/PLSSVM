@@ -144,6 +144,7 @@ std::pair<soa_matrix<real_type>, std::vector<unsigned long long>> csvm::conjugat
 
         const std::size_t max_residual_difference_idx = rhs_idx_max_residual_difference();
         detail::log(verbosity_level::full | verbosity_level::timing,
+                    comm_,
                     "Start Iteration {} (max: {}) with {}/{} converged rhs (max residual {} with target residual {} for rhs {}). ",
                     iter + 1,
                     max_cg_iter,
@@ -189,6 +190,7 @@ std::pair<soa_matrix<real_type>, std::vector<unsigned long long>> csvm::conjugat
         const std::chrono::steady_clock::time_point iteration_end_time = std::chrono::steady_clock::now();
         const std::chrono::duration iteration_duration = std::chrono::duration_cast<std::chrono::milliseconds>(iteration_end_time - iteration_start_time);
         detail::log(verbosity_level::full | verbosity_level::timing,
+                    comm_,
                     "Done in {}.\n",
                     iteration_duration);
         total_iteration_time += iteration_duration;
@@ -199,6 +201,7 @@ std::pair<soa_matrix<real_type>, std::vector<unsigned long long>> csvm::conjugat
     }
     const std::size_t max_residual_difference_idx = rhs_idx_max_residual_difference();
     detail::log(verbosity_level::full | verbosity_level::timing,
+                comm_,
                 "Finished after {}/{} iterations with {}/{} converged rhs (max residual {} with target residual {} for rhs {}) and an average iteration time of {}.\n",
                 detail::tracking::tracking_entry{ "cg", "iterations", iter },
                 detail::tracking::tracking_entry{ "cg", "max_iterations", max_cg_iter },
@@ -213,6 +216,7 @@ std::pair<soa_matrix<real_type>, std::vector<unsigned long long>> csvm::conjugat
     PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((detail::tracking::tracking_entry{ "cg", "target_residuals", eps * eps * delta0 }));
     PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((detail::tracking::tracking_entry{ "cg", "epsilon", eps }));
     detail::log(verbosity_level::libsvm,
+                comm_,
                 "optimization finished, #iter = {}\n",
                 iter);
 
@@ -271,6 +275,7 @@ std::pair<std::vector<real_type>, real_type> csvm::perform_dimensional_reduction
     const real_type QA_cost = kernel_function(A, num_rows_reduced, A, num_rows_reduced, params) + real_type{ 1.0 } / params.cost;
     const std::chrono::steady_clock::time_point dimension_reduction_end_time = std::chrono::steady_clock::now();
     detail::log(verbosity_level::full | verbosity_level::timing,
+                comm_,
                 "Performed dimensional reduction in {}.\n",
                 detail::tracking::tracking_entry{ "cg", "dimensional_reduction", std::chrono::duration_cast<std::chrono::milliseconds>(dimension_reduction_end_time - dimension_reduction_start_time) });
 
@@ -296,6 +301,7 @@ aos_matrix<real_type> csvm::run_predict_values(const parameter &params, const so
 
     const std::chrono::steady_clock::time_point end_time = std::chrono::steady_clock::now();
     detail::log(verbosity_level::full | verbosity_level::timing,
+                comm_,
                 "Predicted the values of {} predict points using {} support vectors with {} features each in {}.\n",
                 predict_points.num_rows(),
                 support_vectors.num_rows(),

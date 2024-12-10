@@ -31,6 +31,7 @@
 #include "plssvm/kernel_function_types.hpp"                // plssvm::kernel_function_type
 #include "plssvm/matrix.hpp"                               // plssvm::aos_matrix
 #include "plssvm/model.hpp"                                // plssvm::model
+#include "plssvm/mpi/communicator.hpp"                     // plssvm::mpi::communicator
 #include "plssvm/parameter.hpp"                            // plssvm::parameter
 #include "plssvm/shape.hpp"                                // plssvm::shape
 #include "plssvm/solver_types.hpp"                         // plssvm::solver_type
@@ -69,16 +70,18 @@ class csvm {
     /**
      * @brief Construct a C-SVM using the SVM parameter @p params.
      * @details Uses the default SVM parameter if none are provided.
+     * @param[in] comm the used MPI communicator (**note**: currently unused)
      * @param[in] params the SVM parameter
      */
-    explicit csvm(parameter params = {});
+    explicit csvm(mpi::communicator comm, parameter params = {});
     /**
      * @brief Construct a C-SVM forwarding all parameters @p args to the plssvm::parameter constructor.
      * @tparam Args the type of the (named-)parameters
+     * @param[in] comm the used MPI communicator (**note**: currently unused)
      * @param[in] args the parameters used to construct a plssvm::parameter
      */
     template <typename... Args>
-    explicit csvm(Args &&...args);
+    explicit csvm(mpi::communicator comm, Args &&...args);
 
     /**
      * @brief Delete copy-constructor since a CSVM is a move-only type.
@@ -255,6 +258,9 @@ class csvm {
     /// The data distribution on the available devices.
     mutable std::unique_ptr<detail::data_distribution> data_distribution_{};
 
+    /// The used MPI communicator.
+    mpi::communicator comm_{};
+
   protected:  // necessary for tests, would otherwise be private
     /**
      * @brief Perform some sanity checks on the passed SVM parameters.
@@ -311,13 +317,15 @@ class csvm {
     parameter params_{};
 };
 
-inline csvm::csvm(parameter params) :
+inline csvm::csvm(mpi::communicator comm, parameter params) :
+    comm_{ std::move(comm) },
     params_{ params } {
     this->sanity_check_parameter();
 }
 
 template <typename... Args>
-csvm::csvm(Args &&...named_args) :
+csvm::csvm(mpi::communicator comm, Args &&...named_args) :
+    comm_{ std::move(comm) },
     params_{ std::forward<Args>(named_args)... } {
     this->sanity_check_parameter();
 }
@@ -376,6 +384,7 @@ model<label_type> csvm::fit(const data_set<label_type> &data, Args &&...named_ar
     const std::chrono::time_point start_time = std::chrono::steady_clock::now();
 
     detail::log(verbosity_level::full,
+                comm_,
                 "Using {} ({}) as multi-class classification strategy.\n",
                 used_classification,
                 classification_type_to_full_string(used_classification));
@@ -417,6 +426,7 @@ model<label_type> csvm::fit(const data_set<label_type> &data, Args &&...named_ar
         if (num_classes == 2) {
             // special optimization for binary case (no temporary copies necessary)
             detail::log(verbosity_level::full,
+                        comm_,
                         "\nClassifying 0 vs 1 ({} vs {}) (1/1):\n",
                         data.mapping_->get_label_by_mapped_index(0),
                         data.mapping_->get_label_by_mapped_index(1));
@@ -460,6 +470,7 @@ model<label_type> csvm::fit(const data_set<label_type> &data, Args &&...named_ar
 
                     // solve the minimization problem -> note that only a single rhs is present
                     detail::log(verbosity_level::full,
+                                comm_,
                                 "\nClassifying {} vs {} ({} vs {}) ({}/{}):\n",
                                 i,
                                 j,
@@ -486,6 +497,7 @@ model<label_type> csvm::fit(const data_set<label_type> &data, Args &&...named_ar
 
     const std::chrono::time_point end_time = std::chrono::steady_clock::now();
     detail::log(verbosity_level::full | verbosity_level::timing,
+                comm_,
                 "\nLearned the SVM classifier for {} multi-class classification in {}.\n\n",
                 classification_type_to_full_string(used_classification),
                 detail::tracking::tracking_entry{ "cg", "total_runtime", std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time) });
@@ -804,6 +816,7 @@ std::tuple<aos_matrix<real_type>, std::vector<real_type>, std::vector<unsigned l
 
         // output the necessary information on the console
         detail::log(verbosity_level::full,
+                    comm_,
                     "Determining the solver type based on the available memory:\n"
                     "  - total system memory: {2}\n"
                     "  - usable system memory (with safety margin of min({0} %, {1}): {3}\n"
@@ -842,7 +855,10 @@ std::tuple<aos_matrix<real_type>, std::vector<real_type>, std::vector<unsigned l
             // use the explicit solver type
             used_solver = solver_type::cg_explicit;
         } else {
-            detail::log(verbosity_level::full, "Cannot use cg_explicit due to memory constraints on device(s) {}!\n", format_vector(failed_cg_explicit_constraints));
+            detail::log(verbosity_level::full,
+                        comm_,
+                        "Cannot use cg_explicit due to memory constraints on device(s) {}!\n",
+                        format_vector(failed_cg_explicit_constraints));
 
             // check whether there is enough memory available for cg_implicit
             if (const std::vector<std::size_t> failed_cg_implicit_constraints = check_sizes(total_memory_needed_implicit_per_device, usable_device_memory_per_device); failed_cg_implicit_constraints.empty()) {
@@ -865,6 +881,7 @@ std::tuple<aos_matrix<real_type>, std::vector<real_type>, std::vector<unsigned l
 
         // output the maximum memory allocation size per device
         detail::log(verbosity_level::full,
+                    comm_,
                     "  - maximum supported single memory allocation size: {}\n"
                     "  - maximum needed single memory allocation size (cg_explicit): {}\n"
                     "  - maximum needed single memory allocation size (cg_implicit): {}\n",
@@ -881,6 +898,7 @@ std::tuple<aos_matrix<real_type>, std::vector<real_type>, std::vector<unsigned l
             used_solver == solver_type::cg_explicit && !failed_cg_explicit_constraints.empty()) {
             // max mem alloc size constraints not fulfilled
             detail::log(verbosity_level::full,
+                        comm_,
                         "Cannot use cg_explicit due to maximum single memory allocation constraints on device(s) {}! Falling back to cg_implicit.\n",
                         format_vector(failed_cg_explicit_constraints));
             // can't use cg_explicit
@@ -890,6 +908,7 @@ std::tuple<aos_matrix<real_type>, std::vector<real_type>, std::vector<unsigned l
             used_solver == solver_type::cg_implicit && !failed_cg_implicit_constraints.empty()) {
             // can't fulfill maximum single memory allocation size even for cg_implicit
             plssvm::detail::log(verbosity_level::full | verbosity_level::warning,
+                                comm_,
                                 "WARNING: if you are sure that the guaranteed maximum memory allocation size can be safely ignored on your device, "
                                 "this check can be disabled via \"-DPLSSVM_ENFORCE_MAX_MEM_ALLOC_SIZE=OFF\" during the CMake configuration!\n");
             throw kernel_launch_resources{ fmt::format("Can't fulfill maximum single memory allocation constraint for device(s) {} even for the cg_implicit solver!", format_vector(failed_cg_implicit_constraints)) };
@@ -898,6 +917,7 @@ std::tuple<aos_matrix<real_type>, std::vector<real_type>, std::vector<unsigned l
     }
 
     detail::log(verbosity_level::full,
+                comm_,
                 "Using {} as solver for AX=B.\n\n",
                 detail::tracking::tracking_entry{ "solver", "solver_type", used_solver });
 
@@ -926,6 +946,7 @@ std::tuple<aos_matrix<real_type>, std::vector<real_type>, std::vector<unsigned l
 
     if (used_solver != solver_type::cg_implicit) {
         detail::log(verbosity_level::full | verbosity_level::timing,
+                    comm_,
                     "Assembled the kernel matrix in {}.\n",
                     assembly_duration);
     }

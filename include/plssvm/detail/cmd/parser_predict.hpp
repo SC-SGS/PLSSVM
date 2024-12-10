@@ -16,6 +16,7 @@
 #include "plssvm/backend_types.hpp"                       // plssvm::backend_type
 #include "plssvm/backends/Kokkos/execution_space.hpp"     // plssvm::kokkos::execution_space
 #include "plssvm/backends/SYCL/implementation_types.hpp"  // plssvm::sycl::implementation_type
+#include "plssvm/mpi/communicator.hpp"                    // plssvm::mpi::communicator
 #include "plssvm/target_platforms.hpp"                    // plssvm::target_platform
 
 #include "fmt/base.h"     // fmt::formatter
@@ -33,10 +34,11 @@ struct parser_predict {
     /**
      * @brief Parse the command line arguments @p argv using [`cxxopts`](https://github.com/jarro2783/cxxopts) and set the predict parameters accordingly.
      * @details If no output filename is given, uses the input filename and appends a ".predict". The output file is than saved in the current working directory.
+     * @param[in] comm the MPI communicator wrapper
      * @param[in] argc the number of passed command line arguments
      * @param[in] argv the command line arguments
      */
-    parser_predict(int argc, char **argv);
+    parser_predict(const mpi::communicator &comm, int argc, char **argv);
 
     /// The used backend: automatic (depending on the specified target_platforms), OpenMP, HPX, stdpar, CUDA, HIP, OpenCL, SYCL, or Kokkos.
     backend_type backend{ backend_type::automatic };

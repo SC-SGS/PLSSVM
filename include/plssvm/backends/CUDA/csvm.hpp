@@ -21,6 +21,7 @@
 #include "plssvm/csvm.hpp"                                // plssvm::detail::csvm_backend_exists
 #include "plssvm/detail/memory_size.hpp"                  // plssvm::detail::memory_size
 #include "plssvm/detail/type_traits.hpp"                  // PLSSVM_REQUIRES
+#include "plssvm/mpi/communicator.hpp"                    // plssvm::mpi::communicator
 #include "plssvm/parameter.hpp"                           // plssvm::parameter
 #include "plssvm/target_platforms.hpp"                    // plssvm::target_platform
 
@@ -60,6 +61,16 @@ class csvm : public ::plssvm::detail::gpu_csvm<detail::device_ptr, int, detail::
      */
     explicit csvm(parameter params = {});
     /**
+     * @brief Construct a new C-SVM using the CUDA backend with the default parameters.
+     * @param[in] comm the used MPI communicator (**note**: currently unused)
+     * @param[in] params struct encapsulating all possible parameters
+     * @throws plssvm::exception all exceptions thrown in the base class constructor
+     * @throws plssvm::cuda::backend_exception if the target platform isn't plssvm::target_platform::automatic or plssvm::target_platform::gpu_nvidia
+     * @throws plssvm::cuda::backend_exception if the plssvm::target_platform::gpu_nvidia target isn't available
+     * @throws plssvm::cuda::backend_exception if no CUDA capable devices could be found
+     */
+    explicit csvm(mpi::communicator comm, parameter params = {});
+    /**
      * @brief Construct a new C-SVM using the CUDA backend on the @p target platform with the parameters given through @p params.
      * @param[in] target the target platform used for this C-SVM
      * @param[in] params struct encapsulating all possible SVM parameters
@@ -69,6 +80,17 @@ class csvm : public ::plssvm::detail::gpu_csvm<detail::device_ptr, int, detail::
      * @throws plssvm::cuda::backend_exception if no CUDA capable devices could be found
      */
     explicit csvm(target_platform target, parameter params = {});
+    /**
+     * @brief Construct a new C-SVM using the CUDA backend on the @p target platform with the parameters given through @p params.
+     * @param[in] comm the used MPI communicator (**note**: currently unused)
+     * @param[in] target the target platform used for this C-SVM
+     * @param[in] params struct encapsulating all possible SVM parameters
+     * @throws plssvm::exception all exceptions thrown in the base class constructor
+     * @throws plssvm::cuda::backend_exception if the target platform isn't plssvm::target_platform::automatic or plssvm::target_platform::gpu_nvidia
+     * @throws plssvm::cuda::backend_exception if the plssvm::target_platform::gpu_nvidia target isn't available
+     * @throws plssvm::cuda::backend_exception if no CUDA capable devices could be found
+     */
+    explicit csvm(mpi::communicator comm, target_platform target, parameter params = {});
 
     /**
      * @brief Construct a new C-SVM using the CUDA backend and the optionally provided @p named_args.
@@ -80,7 +102,19 @@ class csvm : public ::plssvm::detail::gpu_csvm<detail::device_ptr, int, detail::
      */
     template <typename... Args, PLSSVM_REQUIRES(::plssvm::detail::has_only_parameter_named_args_v<Args...>)>
     explicit csvm(Args &&...named_args) :
-        csvm{ plssvm::target_platform::automatic, std::forward<Args>(named_args)... } { }
+        csvm{ mpi::communicator{}, std::forward<Args>(named_args)... } { }
+    /**
+     * @brief Construct a new C-SVM using the CUDA backend and the optionally provided @p named_args.
+     * @param[in] comm the used MPI communicator (**note**: currently unused)
+     * @param[in] named_args the additional optional named arguments
+     * @throws plssvm::exception all exceptions thrown in the base class constructor
+     * @throws plssvm::cuda::backend_exception if the target platform isn't plssvm::target_platform::automatic or plssvm::target_platform::gpu_nvidia
+     * @throws plssvm::cuda::backend_exception if the plssvm::target_platform::gpu_nvidia target isn't available
+     * @throws plssvm::cuda::backend_exception if no CUDA capable devices could be found
+     */
+    template <typename... Args, PLSSVM_REQUIRES(::plssvm::detail::has_only_parameter_named_args_v<Args...>)>
+    explicit csvm(mpi::communicator comm, Args &&...named_args) :
+        csvm{ std::move(comm), plssvm::target_platform::automatic, std::forward<Args>(named_args)... } { }
 
     /**
      * @brief Construct a new C-SVM using the CUDA backend on the @p target platform and the optionally provided @p named_args.
@@ -93,7 +127,20 @@ class csvm : public ::plssvm::detail::gpu_csvm<detail::device_ptr, int, detail::
      */
     template <typename... Args, PLSSVM_REQUIRES(::plssvm::detail::has_only_parameter_named_args_v<Args...>)>
     explicit csvm(const target_platform target, Args &&...named_args) :
-        base_type{ std::forward<Args>(named_args)... } {
+        csvm{ mpi::communicator{}, target, std::forward<Args>(named_args)... } { }
+    /**
+     * @brief Construct a new C-SVM using the CUDA backend on the @p target platform and the optionally provided @p named_args.
+     * @param[in] comm the used MPI communicator (**note**: currently unused)
+     * @param[in] target the target platform used for this C-SVM
+     * @param[in] named_args the additional optional named-parameters
+     * @throws plssvm::exception all exceptions thrown in the base class constructor
+     * @throws plssvm::cuda::backend_exception if the target platform isn't plssvm::target_platform::automatic or plssvm::target_platform::gpu_nvidia
+     * @throws plssvm::cuda::backend_exception if the plssvm::target_platform::gpu_nvidia target isn't available
+     * @throws plssvm::cuda::backend_exception if no CUDA capable devices could be found
+     */
+    template <typename... Args, PLSSVM_REQUIRES(::plssvm::detail::has_only_parameter_named_args_v<Args...>)>
+    explicit csvm(mpi::communicator comm, const target_platform target, Args &&...named_args) :
+        base_type{ std::move(comm), std::forward<Args>(named_args)... } {
         this->init(target);
     }
 

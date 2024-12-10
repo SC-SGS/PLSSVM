@@ -14,6 +14,7 @@
 #include "plssvm/constants.hpp"                                    // plssvm::real_type
 #include "plssvm/detail/assert.hpp"                                // PLSSVM_ASSERT
 #include "plssvm/detail/logging_without_performance_tracking.hpp"  // plssvm::detail::log_untracked
+#include "plssvm/mpi/communicator.hpp"                             // plssvm::mpi::communicator
 #include "plssvm/target_platforms.hpp"                             // plssvm::list_available_target_platforms
 #include "plssvm/verbosity_levels.hpp"                             // plssvm::verbosity, plssvm::verbosity_level
 #include "plssvm/version/version.hpp"                              // plssvm::version::detail::get_version_info
@@ -24,6 +25,7 @@
 #include "fmt/ranges.h"  // fmt::join
 
 #include <cstdlib>      // std::exit, EXIT_SUCCESS, EXIT_FAILURE
+#include <cstdlib>      // std::atexit
 #include <exception>    // std::exception
 #include <filesystem>   // std::filesystem::path
 #include <iostream>     // std::cout, std::cerr, std::endl
@@ -32,10 +34,17 @@
 
 namespace plssvm::detail::cmd {
 
-parser_predict::parser_predict(int argc, char **argv) {
+parser_predict::parser_predict(const mpi::communicator &comm, int argc, char **argv) {
     // check for basic argc and argv correctness
     PLSSVM_ASSERT(argc >= 1, fmt::format("At least one argument is always given (the executable name), but argc is {}!", argc));
     PLSSVM_ASSERT(argv != nullptr, "At least one argument is always given (the executable name), but argv is a nullptr!");
+
+    // register a std::atexit handler since our parser may directly call std::exit
+    std::atexit([]() {
+        if (mpi::is_active()) {
+            mpi::finalize();
+        }
+    });
 
     // setup command line parser with all available options
     cxxopts::Options options("plssvm-predict", "LS-SVM with multiple (GPU-)backends");
@@ -74,27 +83,35 @@ parser_predict::parser_predict(int argc, char **argv) {
         options.parse_positional({ "test", "model", "output" });
         result = options.parse(argc, argv);
     } catch (const std::exception &e) {
-        std::cerr << fmt::format(fmt::fg(fmt::color::red), "ERROR: {}\n", e.what()) << std::endl;
-        std::cout << options.help() << std::endl;
+        if (comm.is_main_rank()) {
+            std::cerr << fmt::format(fmt::fg(fmt::color::red), "ERROR: {}\n", e.what()) << std::endl;
+            std::cout << options.help() << std::endl;
+        }
         std::exit(EXIT_FAILURE);
     }
 
     // print help message and exit
     if (result.count("help")) {
-        std::cout << options.help() << std::endl;
+        if (comm.is_main_rank()) {
+            std::cout << options.help() << std::endl;
+        }
         std::exit(EXIT_SUCCESS);
     }
 
     // print version info
     if (result.count("version")) {
-        std::cout << version::detail::get_version_info("plssvm-predict") << std::endl;
+        if (comm.is_main_rank()) {
+            std::cout << version::detail::get_version_info("plssvm-predict") << std::endl;
+        }
         std::exit(EXIT_SUCCESS);
     }
 
     // check if the number of positional arguments is not too large
     if (!result.unmatched().empty()) {
-        std::cerr << fmt::format(fmt::fg(fmt::color::red), "ERROR: only up to three positional options may be given, but {} (\"{}\") additional option(s) where provided!", result.unmatched().size(), fmt::join(result.unmatched(), " ")) << std::endl;
-        std::cout << options.help() << std::endl;
+        if (comm.is_main_rank()) {
+            std::cerr << fmt::format(fmt::fg(fmt::color::red), "ERROR: only up to three positional options may be given, but {} (\"{}\") additional option(s) where provided!", result.unmatched().size(), fmt::join(result.unmatched(), " ")) << std::endl;
+            std::cout << options.help() << std::endl;
+        }
         std::exit(EXIT_FAILURE);
     }
 
@@ -116,6 +133,7 @@ parser_predict::parser_predict(int argc, char **argv) {
         // warn if a SYCL implementation type is explicitly set but SYCL isn't the current (automatic) backend
         if (!sycl_backend_is_used && sycl_implementation_type != sycl::implementation_type::automatic) {
             detail::log_untracked(verbosity_level::full | verbosity_level::warning,
+                                  comm,
                                   "WARNING: explicitly set a SYCL implementation type but the current backend isn't SYCL; ignoring --sycl_implementation_type={}\n",
                                   sycl_implementation_type);
         }
@@ -134,6 +152,7 @@ parser_predict::parser_predict(int argc, char **argv) {
         // warn if the kokkos execution space is explicitly set but Kokkos isn't the current (automatic) backend
         if (!kokkos_backend_is_used && kokkos_execution_space != kokkos::execution_space::automatic) {
             detail::log_untracked(verbosity_level::full | verbosity_level::warning,
+                                  comm,
                                   "WARNING: explicitly set a Kokkos execution space but the current backend isn't Kokkos; ignoring --kokkos_execution_space={}\n",
                                   kokkos_execution_space);
         }
@@ -151,6 +170,7 @@ parser_predict::parser_predict(int argc, char **argv) {
         const verbosity_level verb = result["verbosity"].as<verbosity_level>();
         if (quiet && verb != verbosity_level::quiet) {
             detail::log_untracked(verbosity_level::full | verbosity_level::warning,
+                                  comm,
                                   "WARNING: explicitly set the -q/--quiet flag, but the provided verbosity level isn't \"quiet\"; setting --verbosity={} to --verbosity=quiet\n",
                                   verb);
             verbosity = verbosity_level::quiet;
@@ -163,16 +183,20 @@ parser_predict::parser_predict(int argc, char **argv) {
 
     // parse test data filename
     if (!result.count("test")) {
-        std::cerr << fmt::format(fmt::fg(fmt::color::red), "ERROR: missing test file!\n") << std::endl;
-        std::cout << options.help() << std::endl;
+        if (comm.is_main_rank()) {
+            std::cerr << fmt::format(fmt::fg(fmt::color::red), "ERROR: missing test file!\n") << std::endl;
+            std::cout << options.help() << std::endl;
+        }
         std::exit(EXIT_FAILURE);
     }
     input_filename = result["test"].as<decltype(input_filename)>();
 
     // parse model filename
     if (!result.count("model")) {
-        std::cerr << fmt::format(fmt::fg(fmt::color::red), "ERROR: missing model file!\n") << std::endl;
-        std::cout << options.help() << std::endl;
+        if (comm.is_main_rank()) {
+            std::cerr << fmt::format(fmt::fg(fmt::color::red), "ERROR: missing model file!\n") << std::endl;
+            std::cout << options.help() << std::endl;
+        }
         std::exit(EXIT_FAILURE);
     }
     model_filename = result["model"].as<decltype(model_filename)>();

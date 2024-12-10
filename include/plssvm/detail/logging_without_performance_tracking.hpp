@@ -13,6 +13,7 @@
 #define PLSSVM_DETAIL_LOGGING_WITHOUT_PERFORMANCE_TRACKING_HPP_
 #pragma once
 
+#include "plssvm/mpi/communicator.hpp"  // plssvm::mpi::communicator
 #include "plssvm/verbosity_levels.hpp"  // plssvm::verbosity_level, plssvm::verbosity, bitwise-operators on plssvm::verbosity_level
 
 #include "fmt/chrono.h"  // format std::chrono types
@@ -43,6 +44,26 @@ void log_untracked(const verbosity_level verb, const std::string_view msg, Args 
         } else {
             std::cout << fmt::format(fmt::runtime(msg), std::forward<Args>(args)...) << std::flush;
         }
+    }
+}
+
+/**
+ * @brief Output the message @p msg filling the {fmt} like placeholders with @p args to the standard output stream if @p comm represents the current main MPI rank.
+ * @details Only logs the message if the verbosity level matches the `plssvm::verbosity` level.
+ * @tparam Args the types of the placeholder values
+ * @param[in] verb the verbosity level of the message to log; must match the `plssvm::verbosity` level to log the message
+ * @param[in] comm the used MPI communicator
+ * @param[in] msg the message to print on the standard output stream if requested (i.e., `plssvm::verbosity` isn't `plssvm::verbosity_level::quiet`)
+ * @param[in] args the values to fill the {fmt}-like placeholders in @p msg
+ */
+template <typename... Args>
+void log_untracked(const verbosity_level verb, const mpi::communicator &comm, const std::string_view msg, Args &&...args) {
+    if (comm.is_main_rank()) {
+        // only print on the main MPI rank
+        log_untracked(verb, msg, std::forward<Args>(args)...);
+    } else {
+        // set output to quiet otherwise
+        log_untracked(verbosity_level::quiet, msg, std::forward<Args>(args)...);
     }
 }
 

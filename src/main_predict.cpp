@@ -22,7 +22,7 @@
     #include "hws/system_hardware_sampler.hpp"  // hws::system_hardware_sampler
 #endif
 
-#include "fmt/format.h"  // fmt::print
+#include "fmt/format.h"  // fmt::print, fmt::format
 #include "fmt/os.h"      // fmt::ostream, fmt::output_file
 #include "fmt/ranges.h"  // fmt::join
 
@@ -34,6 +34,7 @@
 #include <functional>  // std::mem_fn
 #include <iostream>    // std::cerr, std::endl
 #include <memory>      // std::unique_ptr, std::make_unique
+#include <string>      // std::string
 #include <utility>     // std::pair
 #include <variant>     // std::visit
 #include <vector>      // std::vector
@@ -41,9 +42,11 @@
 using namespace std::chrono_literals;
 
 int main(int argc, char *argv[]) {
-    // create std::unique_ptr containing a plssvm::scope_guard
-    // -> used to automatically handle necessary environment teardown operations
-    std::unique_ptr<plssvm::environment::scope_guard> environment_guard{};
+    // create environment scoped guard
+    const plssvm::environment::scope_guard environment_guard{};
+    // create a PLSSVM communicator -> use MPI_COMM_WORLD for our executables
+    // if MPI is not supported, does nothing
+    const plssvm::mpi::communicator comm{};
 
     try {
         const std::chrono::steady_clock::time_point start_time = std::chrono::steady_clock::now();
@@ -56,17 +59,22 @@ int main(int argc, char *argv[]) {
 #endif
 
         // parse SVM parameter from command line
-        const plssvm::detail::cmd::parser_predict cmd_parser{ argc, argv };
+        const plssvm::detail::cmd::parser_predict cmd_parser{ comm, argc, argv };
+
+        // add MPI related tracking entries
+        PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "mpi", "", comm }));
 
         // send warning if the build type is release and assertions are enabled
         if constexpr (std::string_view{ PLSSVM_BUILD_TYPE } == "Release" && PLSSVM_IS_DEFINED(PLSSVM_ENABLE_ASSERTS)) {
             plssvm::detail::log(plssvm::verbosity_level::full | plssvm::verbosity_level::warning,
+                                comm,
                                 "WARNING: The build type is set to Release, but assertions are enabled. "
                                 "This may result in a noticeable performance degradation in parts of PLSSVM!\n");
         }
 
         // output used parameter
         plssvm::detail::log(plssvm::verbosity_level::full,
+                            comm,
                             "\ntask: prediction\n{}\n",
                             plssvm::detail::tracking::tracking_entry{ "parameter", "", cmd_parser });
 
@@ -76,39 +84,28 @@ int main(int argc, char *argv[]) {
 
             // check whether SYCL is used as backend (it is either requested directly or as automatic backend)
             const bool use_sycl_as_backend{ cmd_parser.backend == plssvm::backend_type::sycl || (cmd_parser.backend == plssvm::backend_type::automatic && plssvm::determine_default_backend() == plssvm::backend_type::sycl) };
-            // check whether HPX is used as backend (it is either requested directly or as automatic backend)
-            const bool use_hpx_as_backend{ cmd_parser.backend == plssvm::backend_type::hpx || (cmd_parser.backend == plssvm::backend_type::automatic && plssvm::determine_default_backend() == plssvm::backend_type::hpx) };
             // check whether Kokkos is used as backend (it is either requested directly or as automatic backend)
             const bool use_kokkos_as_backend{ cmd_parser.backend == plssvm::backend_type::kokkos || (cmd_parser.backend == plssvm::backend_type::automatic && plssvm::determine_default_backend() == plssvm::backend_type::kokkos) };
-
-            // initialize environments if necessary
-            std::vector<plssvm::backend_type> backends_to_initialize{};
-            if (use_hpx_as_backend) {
-                backends_to_initialize.push_back(plssvm::backend_type::hpx);
-            }
-            if (use_kokkos_as_backend) {
-                backends_to_initialize.push_back(plssvm::backend_type::kokkos);
-            }
-            environment_guard = std::make_unique<plssvm::environment::scope_guard>(backends_to_initialize);
 
             // create default csvm
             const std::unique_ptr<plssvm::csvm> svm = [&]() {
                 if (use_sycl_as_backend) {
-                    return plssvm::make_csvm(cmd_parser.backend, cmd_parser.target, plssvm::sycl_implementation_type = cmd_parser.sycl_implementation_type);
+                    return plssvm::make_csvm(cmd_parser.backend, comm, cmd_parser.target, plssvm::sycl_implementation_type = cmd_parser.sycl_implementation_type);
                 } else if (use_kokkos_as_backend) {
-                    return plssvm::make_csvm(cmd_parser.backend, cmd_parser.target, plssvm::kokkos_execution_space = cmd_parser.kokkos_execution_space);
+                    return plssvm::make_csvm(cmd_parser.backend, comm, cmd_parser.target, plssvm::kokkos_execution_space = cmd_parser.kokkos_execution_space);
                 } else {
-                    return plssvm::make_csvm(cmd_parser.backend, cmd_parser.target);
+                    return plssvm::make_csvm(cmd_parser.backend, comm, cmd_parser.target);
                 }
             }();
 
             // create model
-            const plssvm::model<label_type> model{ cmd_parser.model_filename };
+            const plssvm::model<label_type> model{ comm, cmd_parser.model_filename };
 
             // output parameter used to learn the model
             {
                 const plssvm::parameter params = model.get_params();
                 plssvm::detail::log(plssvm::verbosity_level::full,
+                                    comm,
                                     "Parameter used to train the model:\n"
                                     "  kernel_type: {} -> {}\n",
                                     params.kernel_type,
@@ -118,6 +115,7 @@ int main(int argc, char *argv[]) {
                         break;
                     case plssvm::kernel_function_type::polynomial:
                         plssvm::detail::log(plssvm::verbosity_level::full,
+                                            comm,
                                             "  degree: {}\n"
                                             "  gamma: {}\n"
                                             "  coef0: {}\n",
@@ -128,10 +126,11 @@ int main(int argc, char *argv[]) {
                     case plssvm::kernel_function_type::rbf:
                     case plssvm::kernel_function_type::laplacian:
                     case plssvm::kernel_function_type::chi_squared:
-                        plssvm::detail::log(plssvm::verbosity_level::full, "  gamma: {}\n", plssvm::get_gamma_string(params.gamma));
+                        plssvm::detail::log(plssvm::verbosity_level::full, comm, "  gamma: {}\n", plssvm::get_gamma_string(params.gamma));
                         break;
                     case plssvm::kernel_function_type::sigmoid:
                         plssvm::detail::log(plssvm::verbosity_level::full,
+                                            comm,
                                             "  gamma: {}\n"
                                             "  coef0: {}\n",
                                             plssvm::get_gamma_string(params.gamma),
@@ -147,11 +146,15 @@ int main(int argc, char *argv[]) {
             {
                 const std::chrono::time_point write_start_time = std::chrono::steady_clock::now();
 
-                fmt::ostream out = fmt::output_file(cmd_parser.predict_filename);
-                out.print("{}", fmt::join(predicted_labels, "\n"));
+                // only write predict file on the main MPI rank
+                if (comm.is_main_rank()) {
+                    fmt::ostream out = fmt::output_file(cmd_parser.predict_filename);
+                    out.print("{}", fmt::join(predicted_labels, "\n"));
+                }
 
                 const std::chrono::time_point write_end_time = std::chrono::steady_clock::now();
                 plssvm::detail::log(plssvm::verbosity_level::full | plssvm::verbosity_level::timing,
+                                    comm,
                                     "Write {} predictions in {} to the file '{}'.\n",
                                     plssvm::detail::tracking::tracking_entry{ "predictions_write", "num_predictions", predicted_labels.size() },
                                     plssvm::detail::tracking::tracking_entry{ "predictions_write", "time", std::chrono::duration_cast<std::chrono::milliseconds>(write_end_time - write_start_time) },
@@ -165,15 +168,15 @@ int main(int argc, char *argv[]) {
                 const plssvm::classification_report report{ correct_labels, predicted_labels };
 
                 // print complete report
-                plssvm::detail::log(plssvm::verbosity_level::full, "\n{}\n", report);
+                plssvm::detail::log(plssvm::verbosity_level::full, comm, "\n{}\n", report);
                 // print only accuracy for LIBSVM conformity
-                plssvm::detail::log(plssvm::verbosity_level::libsvm, "{} (classification)\n", report.accuracy());
+                plssvm::detail::log(plssvm::verbosity_level::libsvm, comm, "{} (classification)\n", report.accuracy());
                 PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "accuracy", "achieved_accuracy", report.accuracy().achieved_accuracy }));
                 PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "accuracy", "num_correct", report.accuracy().num_correct }));
                 PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "accuracy", "num_total", report.accuracy().num_total }));
             }
         };
-        std::visit(data_set_visitor, plssvm::detail::cmd::data_set_factory(cmd_parser));
+        std::visit(data_set_visitor, plssvm::detail::cmd::data_set_factory(comm, cmd_parser));
 
         // stop CPU hardware sampler and dump results if available
 #if defined(PLSSVM_HARDWARE_SAMPLING_ENABLED)
@@ -183,16 +186,25 @@ int main(int argc, char *argv[]) {
 
         const std::chrono::steady_clock::time_point end_time = std::chrono::steady_clock::now();
         plssvm::detail::log(plssvm::verbosity_level::full | plssvm::verbosity_level::timing,
+                            comm,
                             "\nTotal runtime: {}\n",
                             plssvm::detail::tracking::tracking_entry{ "", "total_time", std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time) });
 
-        PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_SAVE(cmd_parser.performance_tracking_filename);
+        // TODO: really change file name? what to output on the command line?
+        std::string performance_tracking_filename{ cmd_parser.performance_tracking_filename };
+#if defined(PLSSVM_HAS_MPI_ENABLED)
+        if (!performance_tracking_filename.empty()) {
+            // only append rank name to the file name if a file name has been provided
+            performance_tracking_filename += fmt::format(".{}", comm.rank());
+        }
+#endif
+        PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_SAVE(performance_tracking_filename);
 
     } catch (const plssvm::exception &e) {
-        std::cerr << e.what_with_loc() << std::endl;
+        std::cerr << fmt::format("An exception occurred on MPI rank {}!: {}", comm.rank(), e.what_with_loc()) << std::endl;
         return EXIT_FAILURE;
     } catch (const std::exception &e) {
-        std::cerr << e.what() << std::endl;
+        std::cerr << fmt::format("An exception occurred on MPI rank {}!: {}", comm.rank(), e.what()) << std::endl;
         return EXIT_FAILURE;
     }
 

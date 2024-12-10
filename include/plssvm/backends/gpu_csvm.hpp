@@ -21,6 +21,7 @@
 #include "plssvm/detail/move_only_any.hpp"      // plssvm::detail::{move_only_any, move_only_any_cast}
 #include "plssvm/kernel_function_types.hpp"     // plssvm::kernel_function_type
 #include "plssvm/matrix.hpp"                    // plssvm::aos_matrix, plssvm::soa_matrix
+#include "plssvm/mpi/communicator.hpp"          // plssvm::mpi::communicator
 #include "plssvm/parameter.hpp"                 // plssvm::parameter
 #include "plssvm/shape.hpp"                     // plssvm::shape
 #include "plssvm/solver_types.hpp"              // plssvm::solver_type
@@ -56,17 +57,18 @@ class gpu_csvm : public ::plssvm::csvm {
     /**
      * @copydoc plssvm::csvm::csvm()
      */
-    explicit gpu_csvm(parameter params = {}) :
-        ::plssvm::csvm{ params } { }
+    explicit gpu_csvm(mpi::communicator comm, parameter params = {}) :
+        ::plssvm::csvm{ std::move(comm), params } { }
 
     /**
      * @brief Construct a C-SVM forwarding all parameters @p args to the plssvm::parameter constructor.
      * @tparam Args the type of the (named-)parameters
+     * @param[in] comm the used MPI communicator (**note**: currently unused)
      * @param[in] args the parameters used to construct a plssvm::parameter
      */
     template <typename... Args>
-    explicit gpu_csvm(Args &&...args) :
-        ::plssvm::csvm{ std::forward<Args>(args)... } { }
+    explicit gpu_csvm(mpi::communicator comm, Args &&...args) :
+        ::plssvm::csvm{ std::move(comm), std::forward<Args>(args)... } { }
 
     /**
      * @copydoc plssvm::csvm::csvm(const plssvm::csvm &)

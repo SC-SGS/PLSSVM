@@ -26,6 +26,7 @@
 #include "plssvm/exceptions/exceptions.hpp"                                         // plssvm::exception
 #include "plssvm/gamma.hpp"                                                         // plssvm::gamma_type
 #include "plssvm/kernel_function_types.hpp"                                         // plssvm::kernel_function_type
+#include "plssvm/mpi/communicator.hpp"                                              // plssvm::mpi::communicator
 #include "plssvm/parameter.hpp"                                                     // plssvm::parameter
 #include "plssvm/shape.hpp"                                                         // plssvm::shape
 #include "plssvm/target_platforms.hpp"                                              // plssvm::target_platform
@@ -43,16 +44,23 @@
 #include <iostream>   // std::cout, std::endl
 #include <numeric>    // std::iota
 #include <string>     // std::string
+#include <utility>    // std::move
 #include <variant>    // std::get
 #include <vector>     // std:vector
 
 namespace plssvm::cuda {
 
 csvm::csvm(parameter params) :
-    csvm{ plssvm::target_platform::automatic, params } { }
+    csvm{ mpi::communicator{}, plssvm::target_platform::automatic, params } { }
+
+csvm::csvm(mpi::communicator comm, parameter params) :
+    csvm{ std::move(comm), plssvm::target_platform::automatic, params } { }
 
 csvm::csvm(target_platform target, parameter params) :
-    base_type{ params } {
+    csvm{ mpi::communicator{}, target, params } { }
+
+csvm::csvm(mpi::communicator comm, target_platform target, parameter params) :
+    base_type{ std::move(comm), params } {
     this->init(target);
 }
 
@@ -78,7 +86,10 @@ void csvm::init(const target_platform target) {
 #endif
     }
 
+    // TODO: how to handle device output on multiple MPI ranks?!
+
     plssvm::detail::log(verbosity_level::full,
+                        comm_,
                         "\nUsing CUDA ({}) as backend.\n",
                         plssvm::detail::tracking::tracking_entry{ "dependencies", "cuda_runtime_version", detail::get_runtime_version() });
     PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "backend", "backend", plssvm::backend_type::cuda }));
@@ -98,6 +109,7 @@ void csvm::init(const target_platform target) {
 
     // print found CUDA devices
     plssvm::detail::log(verbosity_level::full,
+                        comm_,
                         "Found {} CUDA device(s):\n",
                         plssvm::detail::tracking::tracking_entry{ "backend", "num_devices", devices_.size() });
     std::vector<std::string> device_names;
@@ -106,6 +118,7 @@ void csvm::init(const target_platform target) {
         cudaDeviceProp prop{};
         PLSSVM_CUDA_ERROR_CHECK(cudaGetDeviceProperties(&prop, device))
         plssvm::detail::log(verbosity_level::full,
+                            comm_,
                             "  [{}, {}, {}.{}]\n",
                             device,
                             prop.name,
@@ -115,6 +128,7 @@ void csvm::init(const target_platform target) {
     }
     PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "backend", "device", device_names }));
     plssvm::detail::log(verbosity_level::full | verbosity_level::timing,
+                        comm_,
                         "\n");
 }
 

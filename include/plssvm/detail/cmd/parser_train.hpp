@@ -19,6 +19,7 @@
 #include "plssvm/backends/SYCL/kernel_invocation_types.hpp"  // plssvm::sycl::kernel_invocation_type
 #include "plssvm/classification_types.hpp"                   // plssvm::classification_type
 #include "plssvm/constants.hpp"                              // plssvm::real_type
+#include "plssvm/mpi/communicator.hpp"                       // plssvm::mpi::communicator
 #include "plssvm/parameter.hpp"                              // plssvm::parameter
 #include "plssvm/solver_types.hpp"                           // plssvm::solving_type
 #include "plssvm/target_platforms.hpp"                       // plssvm::target_platform
@@ -39,10 +40,11 @@ struct parser_train {
     /**
      * @brief Parse the command line arguments @p argv using [`cxxopts`](https://github.com/jarro2783/cxxopts) and set the training parameters accordingly.
      * @details If no model filename is given, uses the input filename and appends a ".model". The model file is than saved in the current working directory.
+     * @param[in] comm the MPI communicator wrapper
      * @param[in] argc the number of passed command line arguments
      * @param[in] argv the command line arguments
      */
-    parser_train(int argc, char **argv);
+    parser_train(const mpi::communicator &comm, int argc, char **argv);
 
     /// Other base C-SVM parameters
     plssvm::parameter csvm_params{};

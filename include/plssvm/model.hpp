@@ -23,6 +23,7 @@
 #include "plssvm/detail/tracking/performance_tracker.hpp"  // PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY, plssvm::detail::tracking::tracking_entry
 #include "plssvm/detail/type_list.hpp"                     // plssvm::detail::{supported_label_types, tuple_contains_v}
 #include "plssvm/matrix.hpp"                               // plssvm::soa_matrix, plssvm::aos_matrix
+#include "plssvm/mpi/communicator.hpp"                     // plssvm::mpi::communicator
 #include "plssvm/parameter.hpp"                            // plssvm::parameter
 #include "plssvm/verbosity_levels.hpp"                     // plssvm::verbosity_level
 
@@ -45,6 +46,7 @@ namespace plssvm {
 
 /**
  * @brief Implements a class encapsulating the result of a call to the SVM fit function. A model is used to predict the labels of a new data set.
+ * @note Currently, **each** MPI rank loads/stores the whole data set (if MPI is available).
  * @tparam U the type of the used labels (must be an arithmetic type or `std:string`; default: `int`)
  */
 template <typename U = int>
@@ -67,9 +69,17 @@ class model {
      * @throws plssvm::invalid_file_format_exception all exceptions thrown by plssvm::detail::io::parse_libsvm_model_header and plssvm::detail::io::parse_libsvm_data
      */
     explicit model(const std::string &filename);
+    /**
+     * @brief Read a previously learned model from the LIBSVM model file @p filename.
+     * @param[in] comm the used MPI communicator (**note**: currently unused)
+     * @param[in] filename the model file to read
+     * @throws plssvm::invalid_file_format_exception all exceptions thrown by plssvm::detail::io::parse_libsvm_model_header and plssvm::detail::io::parse_libsvm_data
+     */
+    model(mpi::communicator comm, const std::string &filename);
 
     /**
      * @brief Save the model to a LIBSVM model file for later usage.
+     * @note Only the main MPI rank (traditionally rank 0) saves the whole data set (if MPI is available).
      * @param[in] filename the file to save the model to
      */
     void save(const std::string &filename) const;
@@ -177,6 +187,9 @@ class model {
     /// The number of iterations needed to fit this model.
     std::optional<std::vector<unsigned long long>> num_iters_{};
 
+    /// The used MPI communicator.
+    mpi::communicator comm_{};
+
     /**
      * @brief The learned weights for each support vector.
      * @details For one vs. all the vector contains a single matrix representing all weights.
@@ -213,10 +226,16 @@ model<U>::model(parameter params, data_set<label_type> data, const classificatio
     classification_strategy_{ classification_strategy },
     data_{ std::move(data) },
     num_support_vectors_{ data_.num_data_points() },
-    num_features_{ data_.num_features() } { }
+    num_features_{ data_.num_features() },
+    comm_{ data_.communicator() } { }
 
 template <typename U>
-model<U>::model(const std::string &filename) {
+model<U>::model(const std::string &filename) :
+    model{ mpi::communicator{}, filename } { }
+
+template <typename U>
+model<U>::model(mpi::communicator comm, const std::string &filename) :
+    comm_{ std::move(comm) } {
     const std::chrono::time_point start_time = std::chrono::steady_clock::now();
 
     // open the file
@@ -271,6 +290,7 @@ model<U>::model(const std::string &filename) {
 
     const std::chrono::time_point end_time = std::chrono::steady_clock::now();
     detail::log(verbosity_level::full | verbosity_level::timing,
+                comm_,
                 "Read {} support vectors with {} features and {} classes using {} classification in {} using the libsvm model parser from file '{}'.\n\n",
                 detail::tracking::tracking_entry{ "model_read", "num_support_vectors", num_support_vectors_ },
                 detail::tracking::tracking_entry{ "model_read", "num_features", num_features_ },
@@ -290,11 +310,14 @@ void model<U>::save(const std::string &filename) const {
 
     const std::chrono::time_point start_time = std::chrono::steady_clock::now();
 
-    // save model file header and support vectors
-    detail::io::write_libsvm_model_data(filename, params_, classification_strategy_, *rho_ptr_, *alpha_ptr_, *index_sets_ptr_, data_);
+    if (comm_.is_main_rank()) {
+        // save model file header and support vectors
+        detail::io::write_libsvm_model_data(filename, comm_, params_, classification_strategy_, *rho_ptr_, *alpha_ptr_, *index_sets_ptr_, data_);
+    }
 
     const std::chrono::time_point end_time = std::chrono::steady_clock::now();
     detail::log(verbosity_level::full | verbosity_level::timing,
+                comm_,
                 "Write {} support vectors with {} features and {} classes using {} classification in {} to the libsvm model file '{}'.\n",
                 detail::tracking::tracking_entry{ "model_write", "num_support_vectors", num_support_vectors_ },
                 detail::tracking::tracking_entry{ "model_write", "num_features", num_features_ },
