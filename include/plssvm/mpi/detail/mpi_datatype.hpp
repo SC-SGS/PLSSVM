@@ -19,19 +19,36 @@
 
     #include <complex>  // std::complex
 
+    /**
+     * @def PLSSVM_CREATE_MPI_DATATYPE_MAPPING
+     * @brief Defines a macro to create all possible conversion from a C++ type to a MPI_Datatype.
+     * @param[in] cpp_type the C++ type
+     * @param[in] mpi_type the corresponding MPI_Datatype
+     */
     #define PLSSVM_CREATE_MPI_DATATYPE_MAPPING(cpp_type, mpi_type) \
         template <>                                                \
         [[nodiscard]] inline MPI_Datatype mpi_datatype<cpp_type>() { return mpi_type; }
 
 namespace plssvm::mpi::detail {
 
+/**
+ * @brief Tries to convert the given C++ type to its corresponding MPI_Datatype.
+ * @details The definition is marked as **deleted** if `T` isn't representable as [`MPI_Datatype`](https://www.mpi-forum.org/docs/mpi-2.2/mpi22-report/node44.htm).
+ * @tparam T the type to convert to a MPI_Datatype
+ * @return the corresponding MPI_Datatype (`[[nodiscard]]`)
+ */
 template <typename T>
 [[nodiscard]] inline MPI_Datatype mpi_datatype() = delete;
 
+PLSSVM_CREATE_MPI_DATATYPE_MAPPING(bool, MPI_C_BOOL)
+
+// character types
 PLSSVM_CREATE_MPI_DATATYPE_MAPPING(char, MPI_CHAR)
 PLSSVM_CREATE_MPI_DATATYPE_MAPPING(signed char, MPI_SIGNED_CHAR)
 PLSSVM_CREATE_MPI_DATATYPE_MAPPING(unsigned char, MPI_UNSIGNED_CHAR)
 PLSSVM_CREATE_MPI_DATATYPE_MAPPING(wchar_t, MPI_WCHAR)
+
+// integer types
 PLSSVM_CREATE_MPI_DATATYPE_MAPPING(signed short, MPI_SHORT)
 PLSSVM_CREATE_MPI_DATATYPE_MAPPING(unsigned short, MPI_UNSIGNED_SHORT)
 PLSSVM_CREATE_MPI_DATATYPE_MAPPING(signed int, MPI_INT)
@@ -40,9 +57,6 @@ PLSSVM_CREATE_MPI_DATATYPE_MAPPING(signed long int, MPI_LONG)
 PLSSVM_CREATE_MPI_DATATYPE_MAPPING(unsigned long int, MPI_UNSIGNED_LONG)
 PLSSVM_CREATE_MPI_DATATYPE_MAPPING(signed long long int, MPI_LONG_LONG)
 PLSSVM_CREATE_MPI_DATATYPE_MAPPING(unsigned long long int, MPI_UNSIGNED_LONG_LONG)
-PLSSVM_CREATE_MPI_DATATYPE_MAPPING(float, MPI_FLOAT)
-PLSSVM_CREATE_MPI_DATATYPE_MAPPING(double, MPI_DOUBLE)
-PLSSVM_CREATE_MPI_DATATYPE_MAPPING(long double, MPI_LONG_DOUBLE)
 // PLSSVM_CREATE_MPI_DATATYPE_MAPPING(std::int8_t, MPI_INT8_T)
 // PLSSVM_CREATE_MPI_DATATYPE_MAPPING(std::int16_t, MPI_INT16_T)
 // PLSSVM_CREATE_MPI_DATATYPE_MAPPING(std::int32_t, MPI_INT32_T)
@@ -51,7 +65,13 @@ PLSSVM_CREATE_MPI_DATATYPE_MAPPING(long double, MPI_LONG_DOUBLE)
 // PLSSVM_CREATE_MPI_DATATYPE_MAPPING(std::uint16_t, MPI_UINT16_T)
 // PLSSVM_CREATE_MPI_DATATYPE_MAPPING(std::uint32_t, MPI_UINT32_T)
 // PLSSVM_CREATE_MPI_DATATYPE_MAPPING(std::uint64_t, MPI_UINT64_T)
-PLSSVM_CREATE_MPI_DATATYPE_MAPPING(bool, MPI_C_BOOL)
+
+// floating point types
+PLSSVM_CREATE_MPI_DATATYPE_MAPPING(float, MPI_FLOAT)
+PLSSVM_CREATE_MPI_DATATYPE_MAPPING(double, MPI_DOUBLE)
+PLSSVM_CREATE_MPI_DATATYPE_MAPPING(long double, MPI_LONG_DOUBLE)
+
+// complex types
 PLSSVM_CREATE_MPI_DATATYPE_MAPPING(std::complex<float>, MPI_C_COMPLEX)
 PLSSVM_CREATE_MPI_DATATYPE_MAPPING(std::complex<double>, MPI_C_DOUBLE_COMPLEX)
 PLSSVM_CREATE_MPI_DATATYPE_MAPPING(std::complex<long double>, MPI_C_LONG_DOUBLE_COMPLEX)
