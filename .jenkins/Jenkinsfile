@@ -162,8 +162,10 @@ pipeline {
                                     spack uninstall -a -y plssvm@develop || true
                                     spack clean -a || true
 
-                                    cd ${WORKSPACE}/plssvm
-                                    rm -rf *
+                                    if [ -d  ${WORKSPACE}/plssvm ]; then
+                                        cd ${WORKSPACE}/plssvm
+                                        rm -rf *
+                                    fi
                                 '''
 
 
