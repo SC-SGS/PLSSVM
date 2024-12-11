@@ -8,6 +8,10 @@
 
 #include "plssvm/mpi/detail/utility.hpp"
 
+#include "plssvm/exceptions/exceptions.hpp"  // plssvm::mpi_exception
+
+#include "fmt/format.h"  // fmt::format
+
 #if defined(PLSSVM_HAS_MPI_ENABLED)
     #include "mpi.h"  // MPI_Get_processor_name
 #endif
@@ -15,6 +19,21 @@
 #include <string>  // std::string
 
 namespace plssvm::mpi::detail {
+
+void mpi_error_check(const int err) {
+#if defined(PLSSVM_HAS_MPI_ENABLED)
+    if ((err) != MPI_SUCCESS) {
+        std::string err_str(MPI_MAX_ERROR_STRING, '\0');
+        int err_str_len{};
+        const int res = MPI_Error_string(err, err_str.data(), &err_str_len);
+        if (res == MPI_SUCCESS) {
+            throw plssvm::mpi_exception{ fmt::format("MPI error {}: {}", err, err_str.substr(0, err_str.find_first_of('\0'))) };
+        } else {
+            throw plssvm::mpi_exception{ fmt::format("MPI error {}", err) };
+        }
+    }
+#endif
+}
 
 std::string node_name() {
 #if defined(PLSSVM_HAS_MPI_ENABLED)

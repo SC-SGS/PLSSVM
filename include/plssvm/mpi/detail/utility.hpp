@@ -11,34 +11,29 @@
 
 #ifndef PLSSVM_MPI_DETAIL_UTILITY_HPP_
 #define PLSSVM_MPI_DETAIL_UTILITY_HPP_
-
-#include "plssvm/exceptions/exceptions.hpp"  // plssvm::mpi_exception
-
-#include "fmt/format.h"  // fmt::format
-
-#if defined(PLSSVM_HAS_MPI_ENABLED)
-    #include "mpi.h"  // MPI_SUCCESS, MPI_MAX_ERROR_STRING, MPI_Error_string
-#endif
+#pragma once
 
 #include <string>  // std::string
 
+/**
+ * @def PLSSVM_HAS_MPI_ENABLED
+ * @brief Check the MPI error @p err. If @p err signals an error, throw a plssvm::mpi_exception.
+ * @param[in] err the MPI error code to check
+ * @throws plssvm::mpi_exception if the error code signals a failure
+ */
 #if defined(PLSSVM_HAS_MPI_ENABLED)
-    #define PLSSVM_MPI_ERROR_CHECK(err)                                                                                              \
-        if ((err) != MPI_SUCCESS) {                                                                                                  \
-            std::string err_str(MPI_MAX_ERROR_STRING, '\0');                                                                         \
-            int err_str_len{};                                                                                                       \
-            const int res = MPI_Error_string(err, err_str.data(), &err_str_len);                                                     \
-            if (res == MPI_SUCCESS) {                                                                                                \
-                throw plssvm::mpi_exception{ fmt::format("MPI error {}: {}", err, err_str.substr(0, err_str.find_first_of('\0'))) }; \
-            } else {                                                                                                                 \
-                throw plssvm::mpi_exception{ fmt::format("MPI error {}", err) };                                                     \
-            }                                                                                                                        \
-        }
+    #define PLSSVM_MPI_ERROR_CHECK(err) plssvm::mpi::detail::mpi_error_check(err)
 #else
     #define PLSSVM_MPI_ERROR_CHECK(...)
 #endif
 
 namespace plssvm::mpi::detail {
+
+/**
+ * @brief Checks whether @p err is equal to `MPI_SUCCESS`. If this is not the case, throws an exception.
+ * @param[in] err the error code to check
+ */
+void mpi_error_check(int err);
 
 /**
  * @brief Get the current processor name.
