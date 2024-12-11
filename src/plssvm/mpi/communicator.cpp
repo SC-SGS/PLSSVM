@@ -47,7 +47,7 @@ std::size_t communicator::rank() const {
 
 bool communicator::is_main_rank() const {
 #if defined(PLSSVM_HAS_MPI_ENABLED)
-    return this->rank() == std::size_t{ 0 };
+    return this->rank() == communicator::main_rank();
 #else
     return true;
 #endif

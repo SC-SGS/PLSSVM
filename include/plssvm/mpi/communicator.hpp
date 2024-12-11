@@ -57,6 +57,14 @@ class communicator {
      * @return the current MPI rank with respect to this communicator (`[[nodiscard]]`)
      */
     [[nodiscard]] std::size_t rank() const;
+
+    /**
+     * @brief Return the MPI rank that is identified as main MPI rank.
+     * @details For PLSSVM, the main MPI rank is rank `0` in the current communicator.
+     * @return the main MPI rank `0` (`[[nodiscard]]`)
+     */
+    [[nodiscard]] static std::size_t main_rank() { return 0; }
+
     /**
      * @brief Returns `true` if the current MPI rank is rank `0`, i.e., the main MPI rank.
      * @details If `PLSSVM_HAS_MPI_ENABLED` is undefined, returns `true`.
