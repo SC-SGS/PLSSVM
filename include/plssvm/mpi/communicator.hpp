@@ -14,12 +14,18 @@
 #define PLSSVM_MPI_COMMUNICATOR_HPP_
 #pragma once
 
+#include "plssvm/mpi/detail/mpi_datatype.hpp"  // plssvm::mpi::detail::mpi_datatype
+#include "plssvm/mpi/detail/utility.hpp"       // PLSSVM_MPI_ERROR_CHECK
+
 #if defined(PLSSVM_HAS_MPI_ENABLED)
-    #include "mpi.h"  // MPI_Comm, MPI_COMM_WORLD
+    #include "mpi.h"  // MPI_Comm, MPI_COMM_WORLD, MPI_Gather
 #endif
 
-#include <cstddef>     // std::size_t
-#include <functional>  // std::invoke
+#include <algorithm>    // std::transform
+#include <cstddef>      // std::size_t
+#include <functional>   // std::invoke
+#include <type_traits>  // std::is_enum_v, std::underlying_type_t
+#include <vector>       // std::vector
 
 namespace plssvm::mpi {
 
@@ -93,6 +99,24 @@ class communicator {
             // wait for the current MPI rank to finish
             this->barrier();
         }
+    }
+
+    /**
+     * @brief Gather the @p value from each MPI rank on the `communicator::main_rank()`.
+     * @details If `PLSSVM_HAS_MPI_ENABLED` is undefined, returns the provided @p value wrapped in a `std::vector`.
+     * @tparam T the type of the values to gather
+     * @param value the value to gather at the main MPI rank
+     * @return a `std::vector` containing all gathered values (`[[nodiscard]]`)
+     */
+    template <typename T>
+    [[nodiscard]] std::vector<T> gather(T value) {
+#if defined(PLSSVM_HAS_MPI_ENABLED)
+        std::vector<T> result(this->size());
+        PLSSVM_MPI_ERROR_CHECK(MPI_Gather(&value, 1, detail::mpi_datatype<T>(), result.data(), 1, detail::mpi_datatype<T>(), communicator::main_rank(), comm_));
+        return result;
+#else
+        return { value };
+#endif
     }
 
 #if defined(PLSSVM_HAS_MPI_ENABLED)
