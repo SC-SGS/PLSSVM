@@ -49,6 +49,13 @@ int main(int argc, char *argv[]) {
     // if MPI is not supported, does nothing
     const plssvm::mpi::communicator comm{};
 
+#if defined(PLSSVM_HAS_MPI_ENABLED)
+    plssvm::detail::log(plssvm::verbosity_level::full,
+                        comm,
+                        "Using {} MPI rank(s) for our SVM.\n",
+                        comm.size());
+#endif
+
     // create std::unique_ptr containing a plssvm::scope_guard
     // -> used to automatically handle necessary environment teardown operations
     std::unique_ptr<plssvm::environment::scope_guard> environment_guard{};
