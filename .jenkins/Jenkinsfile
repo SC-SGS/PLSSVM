@@ -234,7 +234,7 @@ pipeline {
                 axes {
                     axis {
                         name 'BACKEND'
-                        values 'OPENMP', 'CUDA', 'OPENCL', 'DPCPP', 'ADAPTIVECPP', 'HIP', 'STDPAR-GNU-TBB', 'STDPAR-DPCPP', 'STDPAR-ADAPTIVECPP', 'STDPAR-NVHPC' //, 'STDPAR-ROC'
+                        values 'OPENMP', 'CUDA', 'OPENCL', 'DPCPP', 'ADAPTIVECPP', 'HIP', 'STDPAR-GNU-TBB', 'STDPAR-DPCPP', 'STDPAR-ADAPTIVECPP', 'STDPAR-NVHPC', 'HPX', 'KOKKOS' //, 'STDPAR-ROC'
                     }
                     axis {
                         name 'ARCHITECTURE'
@@ -269,7 +269,7 @@ pipeline {
                     exclude {
                       axis{
                         name 'BACKEND'
-                        values 'OPENMP', 'STDPAR-GNU-TBB'
+                        values 'OPENMP', 'STDPAR-GNU-TBB', 'HPX'
                       }
                       axis{
                         name 'ARCHITECTURE'
@@ -368,6 +368,8 @@ pipeline {
 
                                         spack uninstall -a -y plssvm@develop$([[ $BACKEND == ADAPTIVECPP ]] && echo "%clang" )  \
                                             $([[ $BACKEND == OPENMP ]] && echo "+openmp" || echo "~openmp") \
+                                            $([[ $BACKEND == HPX ]] && echo "+hpx" || echo "~hpx") \
+                                            $([[ $BACKEND == KOKKOS ]] && echo "+kokkos" || echo "~kokkos") \
                                             $([[ $BACKEND == CUDA ]] && echo "+cuda" || echo "~cuda") \
                                             $([[ $BACKEND == HIP ]] && echo "+hip" || echo "~hip") \
                                             $([[ $BACKEND == OPENCL ]] && echo "+opencl" || echo "~opencl") \
@@ -379,7 +381,8 @@ pipeline {
                                             $([[ $BACKEND == STDPAR-NVHPC ]] && echo "stdparimplementation=nvhpc" ) \
                                             $([[ $BACKEND == STDPAR-ADAPTIVECPP ]] && echo "stdparimplementation=adaptivecpp" ) \
                                             $([[ $BACKEND == STDPAR-ROC ]] && echo "stdparimplementation=roc" ) \
-                                            $([[ $ARCHITECTURE == NVIDIA ]] && echo "cuda_arch=86") \
+                                            $([[ $(hostname) != pcsgs03 ]] && [[ $ARCHITECTURE == NVIDIA ]] && echo "cuda_arch=86") \
+                                            $([[ $(hostname) == pcsgs03 ]] && [[ $ARCHITECTURE == NVIDIA ]] && echo "cuda_arch=75") \
                                             $([[ SET_NVIDIA_GPU_NONE == 1 ]] && echo "cuda_arch=none") \
                                             $([[ $ARCHITECTURE == AMD ]] && [[ $(hostname) == pcsgs13 ]] && echo "amdgpu_target=gfx1101") \
                                             $([[ $ARCHITECTURE == AMD ]] && [[ $(hostname) == simcl1n3 ]] && echo "amdgpu_target=gfx90a") \
@@ -391,6 +394,8 @@ pipeline {
                                         set -e -o pipefail
                                         spack dev-build plssvm@develop$([[ $BACKEND == ADAPTIVECPP ]] && echo "%clang" ) \
                                             $([[ $BACKEND == OPENMP ]] && echo "+openmp" || echo "~openmp") \
+                                            $([[ $BACKEND == HPX ]] && echo "+hpx" || echo "~hpx") \
+                                            $([[ $BACKEND == KOKKOS ]] && echo "+kokkos" || echo "~kokkos") \
                                             $([[ $BACKEND == CUDA ]] && echo "+cuda" || echo "~cuda") \
                                             $([[ $BACKEND == HIP ]] && echo "+hip" || echo "~hip") \
                                             $([[ $BACKEND == OPENCL ]] && echo "+opencl" || echo "~opencl") \
@@ -402,7 +407,8 @@ pipeline {
                                             $([[ $BACKEND == STDPAR-NVHPC ]] && echo "stdparimplementation=nvhpc" ) \
                                             $([[ $BACKEND == STDPAR-ADAPTIVECPP ]] && echo "stdparimplementation=adaptivecpp" ) \
                                             $([[ $BACKEND == STDPAR-ROC ]] && echo "stdparimplementation=roc" ) \
-                                            $([[ $ARCHITECTURE == NVIDIA ]] && echo "cuda_arch=86") \
+                                            $([[ $(hostname) != pcsgs03 ]] && [[ $ARCHITECTURE == NVIDIA ]] && echo "cuda_arch=86") \
+                                            $([[ $(hostname) == pcsgs03 ]] && [[ $ARCHITECTURE == NVIDIA ]] && echo "cuda_arch=75") \
                                             $([[ SET_NVIDIA_GPU_NONE == 1 ]] && echo "cuda_arch=none") \
                                             $([[ $ARCHITECTURE == AMD ]] && [[ $(hostname) == pcsgs13 ]] && echo "amdgpu_target=gfx1101") \
                                             $([[ $ARCHITECTURE == AMD ]] && [[ $(hostname) == simcl1n3 ]] && echo "amdgpu_target=gfx90a") \
@@ -511,7 +517,8 @@ pipeline {
 // $([[ $BACKEND == STDPAR-DPCPP ]] && echo "stdparimplementation=icpx" ) \
 // $([[ $BACKEND == STDPAR-NVHPC ]] && echo "stdparimplementation=nvhpc" ) \
 // $([[ $BACKEND == STDPAR-ADAPTIVECPP ]] && echo "stdparimplementation=adaptivecpp" ) \
-// $([[ $ARCHITECTURE == NVIDIA ]] && echo "cuda_arch=86") \
+// $([[ $(hostname) != pcsgs03 ]] && [[ $ARCHITECTURE == NVIDIA ]] && echo "cuda_arch=86") \
+// $([[ $(hostname) == pcsgs03 ]] && [[ $ARCHITECTURE == NVIDIA ]] && echo "cuda_arch=75") \
 // $([[ SET_NVIDIA_GPU_NONE == 1 ]] && echo "cuda_arch=none") \
 // $([[ $ARCHITECTURE == AMD ]] && [[ $(hostname) == pcsgs13 ]] && echo "amdgpu_target=gfx1101") \
 // $([[ $ARCHITECTURE == AMD ]] && [[ $(hostname) == simcl1n3 ]] && echo "amdgpu_target=gfx90a") \
@@ -585,7 +592,8 @@ pipeline {
 //                                         $([[ $BACKEND == STDPAR-DPCPP ]] && echo "stdparimplementation=icpx" ) \
 //                                         $([[ $BACKEND == STDPAR-NVHPC ]] && echo "stdparimplementation=nvhpc" ) \
 //                                         $([[ $BACKEND == STDPAR-ADAPTIVECPP ]] && echo "stdparimplementation=adaptivecpp" ) \
-//                                         $([[ $ARCHITECTURE == NVIDIA ]] && echo "cuda_arch=86") \
+//                                         $([[ $(hostname) != pcsgs03 ]] && [[ $ARCHITECTURE == NVIDIA ]] && echo "cuda_arch=86") \
+//                                         $([[ $(hostname) == pcsgs03 ]] && [[ $ARCHITECTURE == NVIDIA ]] && echo "cuda_arch=75") \
 //                                         $([[ SET_NVIDIA_GPU_NONE == 1 ]] && echo "cuda_arch=none") \
 //                                         $([[ $ARCHITECTURE == AMD ]] && [[ $(hostname) == pcsgs13 ]] && echo "amdgpu_target=gfx1101") \
 //                                         $([[ $ARCHITECTURE == AMD ]] && [[ $(hostname) == simcl1n3 ]] && echo "amdgpu_target=gfx90a") \
