@@ -17,7 +17,8 @@
 
     #include "mpi.h"  // MPI_Datatype, various MPI datatypes
 
-    #include <complex>  // std::complex
+    #include <complex>      // std::complex
+    #include <type_traits>  // std::enable_if_t, std::is_enum_v, std::underlying_type_t
 
     /**
      * @def PLSSVM_CREATE_MPI_DATATYPE_MAPPING
@@ -33,11 +34,11 @@ namespace plssvm::mpi::detail {
 
 /**
  * @brief Tries to convert the given C++ type to its corresponding MPI_Datatype.
- * @details The definition is marked as **deleted** if `T` isn't representable as [`MPI_Datatype`](https://www.mpi-forum.org/docs/mpi-2.2/mpi22-report/node44.htm).
+ * @details The definition is marked as **deleted** if `T` isn't representable as [`MPI_Datatype`](https://www.mpi-forum.org/docs/mpi-2.2/mpi22-report/node44.htm) or an enum.
  * @tparam T the type to convert to a MPI_Datatype
  * @return the corresponding MPI_Datatype (`[[nodiscard]]`)
  */
-template <typename T>
+template <typename T, std::enable_if_t<!std::is_enum_v<T>, bool> = true>
 [[nodiscard]] inline MPI_Datatype mpi_datatype() = delete;
 
 PLSSVM_CREATE_MPI_DATATYPE_MAPPING(bool, MPI_C_BOOL)
@@ -75,6 +76,16 @@ PLSSVM_CREATE_MPI_DATATYPE_MAPPING(long double, MPI_LONG_DOUBLE)
 PLSSVM_CREATE_MPI_DATATYPE_MAPPING(std::complex<float>, MPI_C_COMPLEX)
 PLSSVM_CREATE_MPI_DATATYPE_MAPPING(std::complex<double>, MPI_C_DOUBLE_COMPLEX)
 PLSSVM_CREATE_MPI_DATATYPE_MAPPING(std::complex<long double>, MPI_C_LONG_DOUBLE_COMPLEX)
+
+/**
+ * @brief Specialization for enums: for enums, use their underlying type in MPI communications.
+ * @tparam T the enum type to convert to a MPI_Datatype
+ * @return the corresponding MPI_Datatype (`[[nodiscard]]`)
+ */
+template <typename T, std::enable_if_t<std::is_enum_v<T>, bool> = true>
+[[nodiscard]] inline MPI_Datatype mpi_datatype() {
+    return mpi_datatype<std::underlying_type_t<T>>();
+}
 
 }  // namespace plssvm::mpi::detail
 
