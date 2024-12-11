@@ -193,8 +193,6 @@ pipeline {
                               dir("${env.WORKSPACE}/plssvm") {
                                checkout scm
                                }
-                               checkout scm
-
                           }
 
                       }
