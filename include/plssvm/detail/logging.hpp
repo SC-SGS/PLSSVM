@@ -39,7 +39,7 @@ namespace plssvm::detail {
  * @param[in] args the values to fill the {fmt}-like placeholders in @p msg
  */
 template <typename... Args>
-void log(const verbosity_level verb, const std::string_view msg, Args &&...args) {  // TODO: remove
+void log(const verbosity_level verb, const std::string_view msg, Args &&...args) {
     // if the verbosity level is quiet, nothing is logged
     // otherwise verb must contain the bit-flag currently set by plssvm::verbosity
     if (verbosity != verbosity_level::quiet && (verb & verbosity) != verbosity_level::quiet) {

@@ -61,10 +61,8 @@ void log_untracked(const verbosity_level verb, const mpi::communicator &comm, co
     if (comm.is_main_rank()) {
         // only print on the main MPI rank
         log_untracked(verb, msg, std::forward<Args>(args)...);
-    } else {
-        // set output to quiet otherwise
-        log_untracked(verbosity_level::quiet, msg, std::forward<Args>(args)...);
     }
+    // nothing to do on other MPI ranks
 }
 
 }  // namespace plssvm::detail
