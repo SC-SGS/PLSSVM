@@ -18,7 +18,8 @@
     #include "mpi.h"  // MPI_Comm, MPI_COMM_WORLD
 #endif
 
-#include <cstddef>  // std::size_t
+#include <cstddef>     // std::size_t
+#include <functional>  // std::invoke
 
 namespace plssvm::mpi {
 
@@ -67,6 +68,24 @@ class communicator {
      * @details If `PLSSVM_HAS_MPI_ENABLED` is undefined, does nothing.
      */
     void barrier() const;
+
+    /**
+     * @brief Execute the provided function @p f in a sequential manner across all MPI ranks in the current MPI communicator.
+     * @tparam Func the type of the function
+     * @param[in] f the function to execute
+     */
+    template <typename Func>
+    void sequentialize(Func f) const {
+        // iterate over all potential MPI ranks in the current communicator
+        for (std::size_t rank = 0; rank < this->size(); ++rank) {
+            // call function only if MY rank matches the current iteration
+            if (rank == this->rank()) {
+                std::invoke(f);
+            }
+            // wait for the current MPI rank to finish
+            this->barrier();
+        }
+    }
 
 #if defined(PLSSVM_HAS_MPI_ENABLED)
     /**

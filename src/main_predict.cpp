@@ -30,6 +30,7 @@
 #include <chrono>      // std::chrono::{steady_clock, duration}, std::chrono_literals namespace
 #include <cstdlib>     // EXIT_SUCCESS, EXIT_FAILURE
 #include <exception>   // std::exception
+#include <filesystem>  // std::filesystem::path
 #include <fstream>     // std::ofstream
 #include <functional>  // std::mem_fn
 #include <iostream>    // std::cerr, std::endl
@@ -190,15 +191,23 @@ int main(int argc, char *argv[]) {
                             "\nTotal runtime: {}\n",
                             plssvm::detail::tracking::tracking_entry{ "", "total_time", std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time) });
 
-        // TODO: really change file name? what to output on the command line?
-        std::string performance_tracking_filename{ cmd_parser.performance_tracking_filename };
 #if defined(PLSSVM_HAS_MPI_ENABLED)
-        if (!performance_tracking_filename.empty()) {
-            // only append rank name to the file name if a file name has been provided
-            performance_tracking_filename += fmt::format(".{}", comm.rank());
+        if (cmd_parser.performance_tracking_filename.empty()) {
+            // be sure that the output tracking results are correctly sequentialized
+            comm.sequentialize([&]() {
+                PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_SAVE(cmd_parser.performance_tracking_filename);
+            });
+        } else {
+            // update filename with MY MPI rank
+            std::filesystem::path path{ cmd_parser.performance_tracking_filename };
+            path.replace_filename(fmt::format("{}.{}{}", path.stem(), comm.rank(), path.extension()));
+            // output to all files in parallel
+            PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_SAVE(path.string());
         }
+#else
+        // if not compiled with MPI, simply output the tracking information
+        PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_SAVE(cmd_parser.performance_tracking_filename);
 #endif
-        PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_SAVE(performance_tracking_filename);
 
     } catch (const plssvm::exception &e) {
         std::cerr << fmt::format("An exception occurred on MPI rank {}!: {}", comm.rank(), e.what_with_loc()) << std::endl;
