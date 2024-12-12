@@ -63,6 +63,7 @@ parser_train::parser_train(int argc, char **argv) {
         .set_tab_expansion()
         // clang-format off
        .add_options()
+           ("s,svm_type", "set type of SVM\n\t 0 -- C-SVC\n\t 1 -- C-SVR", cxxopts::value<decltype(svm)>()->default_value(fmt::format("{}", detail::to_underlying(svm))))
            ("t,kernel_type", kernel_type_help, cxxopts::value<decltype(csvm_params.kernel_type)>()->default_value(fmt::format("{}", detail::to_underlying(csvm_params.kernel_type))))
            ("d,degree", "set degree in kernel function", cxxopts::value<decltype(csvm_params.degree)>()->default_value(fmt::format("{}", csvm_params.degree)))
            ("g,gamma", fmt::format("set gamma in kernel function (default: {})", get_gamma_string(csvm_params.gamma)), cxxopts::value<decltype(csvm_params.gamma)>())
@@ -121,6 +122,11 @@ parser_train::parser_train(int argc, char **argv) {
         std::cerr << fmt::format(fmt::fg(fmt::color::red), "ERROR: only up to two positional options may be given, but {} (\"{}\") additional option(s) where provided!\n", result.unmatched().size(), fmt::join(result.unmatched(), " ")) << std::endl;
         std::cout << options.help() << std::endl;
         std::exit(EXIT_FAILURE);
+    }
+
+    // parse svm_type and cast the value to the respective enum
+    if (result.count("svm_type")) {
+        svm = result["svm_type"].as<decltype(svm)>();
     }
 
     // parse kernel_type and cast the value to the respective enum

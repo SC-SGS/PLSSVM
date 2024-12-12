@@ -102,6 +102,7 @@ set(PLSSVM_BASE_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/shape.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/solver_types.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/target_platforms.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/svm_types.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/verbosity_levels.cpp
 )
 
