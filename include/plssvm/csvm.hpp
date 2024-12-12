@@ -15,7 +15,7 @@
 
 #include "plssvm/classification_types.hpp"                 // plssvm::classification_type, plssvm::classification_type_to_full_string
 #include "plssvm/constants.hpp"                            // plssvm::real_type, plssvm::PADDING_SIZE
-#include "plssvm/data_set.hpp"                             // plssvm::data_set
+#include "plssvm/data_set/data_set.hpp"                    // plssvm::data_set
 #include "plssvm/detail/assert.hpp"                        // PLSSVM_ASSERT
 #include "plssvm/detail/data_distribution.hpp"             // plssvm::detail::triangular_data_distribution
 #include "plssvm/detail/data_distribution.hpp"             // plssvm::detail::data_distribution

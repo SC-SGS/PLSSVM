@@ -13,7 +13,7 @@
 #define PLSSVM_DETAIL_CMD_DATA_SET_VARIANTS_HPP_
 #pragma once
 
-#include "plssvm/data_set.hpp"                   // plssvm::data_set
+#include "plssvm/data_set/data_set.hpp"          // plssvm::data_set
 #include "plssvm/detail/cmd/parser_predict.hpp"  // plssvm::detail::cmd::parser_predict
 #include "plssvm/detail/cmd/parser_scale.hpp"    // plssvm::detail::cmd::parser_scale
 #include "plssvm/detail/cmd/parser_train.hpp"    // plssvm::detail::cmd::parser_train

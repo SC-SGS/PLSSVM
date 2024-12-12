@@ -15,7 +15,7 @@
 
 #include "plssvm/classification_types.hpp"                 // plssvm::classification_type
 #include "plssvm/constants.hpp"                            // plssvm::real_type
-#include "plssvm/data_set.hpp"                             // plssvm::data_set
+#include "plssvm/data_set/data_set.hpp"                    // plssvm::data_set
 #include "plssvm/detail/assert.hpp"                        // PLSSVM_ASSERT
 #include "plssvm/detail/io/file_reader.hpp"                // plssvm::detail::io::file_reader
 #include "plssvm/detail/io/libsvm_model_parsing.hpp"       // plssvm::detail::io::{parse_libsvm_model_header, parse_libsvm_model_data, write_libsvm_model_data}

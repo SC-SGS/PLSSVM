@@ -9,8 +9,8 @@
  * @brief Implements a data set class encapsulating all data points, features, and potential labels.
  */
 
-#ifndef PLSSVM_DATA_SET_HPP_
-#define PLSSVM_DATA_SET_HPP_
+#ifndef PLSSVM_DATA_SET_DATA_SET_HPP_
+#define PLSSVM_DATA_SET_DATA_SET_HPP_
 #pragma once
 
 #include "plssvm/constants.hpp"                            // plssvm::real_type, plssvm::PADDING_SIZE
@@ -895,4 +895,4 @@ void data_set<U>::read_file(const std::string &filename, file_format_type format
 
 }  // namespace plssvm
 
-#endif  // PLSSVM_DATA_SET_HPP_
+#endif  // PLSSVM_DATA_SET_DATA_SET_HPP_
