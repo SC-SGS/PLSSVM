@@ -21,11 +21,10 @@
     #include "mpi.h"  // MPI_Comm, MPI_COMM_WORLD, MPI_Gather
 #endif
 
-#include <algorithm>    // std::transform
-#include <cstddef>      // std::size_t
-#include <functional>   // std::invoke
-#include <type_traits>  // std::is_enum_v, std::underlying_type_t
-#include <vector>       // std::vector
+#include <cstddef>     // std::size_t
+#include <functional>  // std::invoke
+#include <string>      // std::string
+#include <vector>      // std::vector
 
 namespace plssvm::mpi {
 
@@ -105,7 +104,7 @@ class communicator {
      * @brief Gather the @p value from each MPI rank on the `communicator::main_rank()`.
      * @details If `PLSSVM_HAS_MPI_ENABLED` is undefined, returns the provided @p value wrapped in a `std::vector`.
      * @tparam T the type of the values to gather
-     * @param value the value to gather at the main MPI rank
+     * @param[in] value the value to gather at the main MPI rank
      * @return a `std::vector` containing all gathered values (`[[nodiscard]]`)
      */
     template <typename T>
@@ -118,6 +117,14 @@ class communicator {
         return { value };
 #endif
     }
+
+    /**
+     * @brief Gather the `std::string` @p str from each MPI rank on the `communicator::main_rank()`.
+     * @details If `PLSSVM_HAS_MPI_ENABLED` is undefined, returns the provided @p str wrapped in a `std::vector`.
+     * @param[in] str the string to gather at the main MPI rank
+     * @return a `std::vector` containing all gathered strings (`[[nodiscard]]`)
+     */
+    [[nodiscard]] std::vector<std::string> gather(const std::string &str) const;
 
 #if defined(PLSSVM_HAS_MPI_ENABLED)
     /**
