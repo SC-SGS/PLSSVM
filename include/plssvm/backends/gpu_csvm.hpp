@@ -15,7 +15,6 @@
 
 #include "plssvm/backends/execution_range.hpp"  // plssvm::detail::{dim_type, execution_range}
 #include "plssvm/constants.hpp"                 // plssvm::real_type, plssvm::PADDING_SIZE
-#include "plssvm/csvm.hpp"                      // plssvm::csvm
 #include "plssvm/detail/assert.hpp"             // PLSSVM_ASSERT
 #include "plssvm/detail/data_distribution.hpp"  // plssvm::detail::{data_distribution, triangular_data_distribution, rectangular_data_distribution}
 #include "plssvm/detail/move_only_any.hpp"      // plssvm::detail::{move_only_any, move_only_any_cast}
@@ -24,6 +23,7 @@
 #include "plssvm/parameter.hpp"                 // plssvm::parameter
 #include "plssvm/shape.hpp"                     // plssvm::shape
 #include "plssvm/solver_types.hpp"              // plssvm::solver_type
+#include "plssvm/svm/csvm.hpp"                  // plssvm::csvm
 
 #include "fmt/format.h"  // fmt::format
 

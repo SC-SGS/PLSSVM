@@ -6,7 +6,7 @@
  *          See the LICENSE.md file in the project root for full license information.
  */
 
-#include "plssvm/csvm.hpp"
+#include "plssvm/svm/csvm.hpp"
 
 #include "plssvm/constants.hpp"                            // plssvm::real_type, plssvm::PADDING_SIZE
 #include "plssvm/detail/assert.hpp"                        // PLSSVM_ASSERT

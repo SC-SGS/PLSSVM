@@ -18,10 +18,10 @@
 #include "plssvm/backends/execution_range.hpp"            // plssvm::detail::{dim_type, execution_range}
 #include "plssvm/backends/gpu_csvm.hpp"                   // plssvm::detail::gpu_csvm
 #include "plssvm/constants.hpp"                           // plssvm::real_type
-#include "plssvm/csvm.hpp"                                // plssvm::detail::csvm_backend_exists
 #include "plssvm/detail/memory_size.hpp"                  // plssvm::detail::memory_size
 #include "plssvm/detail/type_traits.hpp"                  // PLSSVM_REQUIRES
 #include "plssvm/parameter.hpp"                           // plssvm::parameter
+#include "plssvm/svm/csvm.hpp"                            // plssvm::detail::csvm_backend_exists
 #include "plssvm/target_platforms.hpp"                    // plssvm::target_platform
 
 #include <cstddef>      // std::size_t

@@ -9,8 +9,8 @@
  * @brief Defines the base class for all C-SVM backends and implements the functionality shared by all of them.
  */
 
-#ifndef PLSSVM_CSVM_HPP_
-#define PLSSVM_CSVM_HPP_
+#ifndef PLSSVM_SVM_CSVM_HPP_
+#define PLSSVM_SVM_CSVM_HPP_
 #pragma once
 
 #include "plssvm/classification_types.hpp"                 // plssvm::classification_type, plssvm::classification_type_to_full_string
@@ -986,4 +986,4 @@ constexpr bool csvm_backend_exists_v = csvm_backend_exists<T>::value;
 
 }  // namespace plssvm
 
-#endif  // PLSSVM_CSVM_HPP_
+#endif  // PLSSVM_SVM_CSVM_HPP_

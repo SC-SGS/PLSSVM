@@ -16,10 +16,10 @@
 #include "plssvm/backend_types.hpp"                       // plssvm::backend, plssvm::csvm_to_backend_type_v
 #include "plssvm/backends/SYCL/detail/constants.hpp"      // plssvm::sycl::csvm alias
 #include "plssvm/backends/SYCL/implementation_types.hpp"  // plssvm::sycl::implementation_type
-#include "plssvm/csvm.hpp"                                // plssvm::csvm, plssvm::csvm_backend_exists_v
 #include "plssvm/detail/igor_utility.hpp"                 // plssvm::detail::get_value_from_named_parameter
 #include "plssvm/exceptions/exceptions.hpp"               // plssvm::unsupported_backend_exception
 #include "plssvm/parameter.hpp"                           // plssvm::sycl_implementation_type
+#include "plssvm/svm/csvm.hpp"                            // plssvm::csvm, plssvm::csvm_backend_exists_v
 
 // only include requested/available backends
 #if defined(PLSSVM_HAS_OPENMP_BACKEND)
