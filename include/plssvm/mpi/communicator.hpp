@@ -109,7 +109,7 @@ class communicator {
      * @return a `std::vector` containing all gathered values (`[[nodiscard]]`)
      */
     template <typename T>
-    [[nodiscard]] std::vector<T> gather(T value) {
+    [[nodiscard]] std::vector<T> gather(T value) const {
 #if defined(PLSSVM_HAS_MPI_ENABLED)
         std::vector<T> result(this->size());
         PLSSVM_MPI_ERROR_CHECK(MPI_Gather(&value, 1, detail::mpi_datatype<T>(), result.data(), 1, detail::mpi_datatype<T>(), communicator::main_rank(), comm_));
