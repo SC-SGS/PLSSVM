@@ -41,11 +41,13 @@
 
 #include "fmt/color.h"    // fmt::fg, fmt::color::orange
 #include "fmt/format.h"   // fmt::format
+#include "fmt/ranges.h"   // fmt::join
 #include "igor/igor.hpp"  // igor::parser
 
 #include <algorithm>    // std::max_element, std::all_of
 #include <chrono>       // std::chrono::{time_point, steady_clock, duration_cast}
 #include <cstddef>      // std::size_t
+#include <cstdint>      // std::int64_t
 #include <limits>       // std::numeric_limits::lowest
 #include <memory>       // std::unique_ptr
 #include <optional>     // std::optional, std::make_optional, std::nullopt
@@ -967,10 +969,22 @@ std::tuple<aos_matrix<real_type>, std::vector<real_type>, std::vector<unsigned l
     const auto assembly_duration = std::chrono::duration_cast<std::chrono::milliseconds>(assembly_end_time - assembly_start_time);
 
     if (used_solver != solver_type::cg_implicit) {
-        detail::log(verbosity_level::full | verbosity_level::timing,
-                    comm_,
-                    "Assembled the kernel matrix in {}.\n",
-                    assembly_duration);
+        if (comm_.size() > 1) {
+            // gather kernel matrix assembly runtimes from each MPI rank
+            const std::vector<std::chrono::milliseconds> durations = comm_.gather(assembly_duration);
+
+            detail::log(verbosity_level::full | verbosity_level::timing,
+                        comm_,
+                        "Assembled the kernel matrix in {} ({}).\n",
+                        *std::max_element(durations.cbegin(), durations.cend()),
+                        fmt::join(durations, "|"));
+
+        } else {
+            detail::log(verbosity_level::full | verbosity_level::timing,
+                        comm_,
+                        "Assembled the kernel matrix in {}.\n",
+                        assembly_duration);
+        }
     }
     PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((detail::tracking::tracking_entry{ "kernel_matrix", "kernel_matrix_assembly", assembly_duration }));
 
