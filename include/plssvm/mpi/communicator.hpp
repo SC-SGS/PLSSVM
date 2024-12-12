@@ -21,6 +21,7 @@
     #include "mpi.h"  // MPI_Comm, MPI_COMM_WORLD, MPI_Gather
 #endif
 
+#include <chrono>      // std::chrono::milliseconds
 #include <cstddef>     // std::size_t
 #include <functional>  // std::invoke
 #include <string>      // std::string
@@ -125,6 +126,14 @@ class communicator {
      * @return a `std::vector` containing all gathered strings (`[[nodiscard]]`)
      */
     [[nodiscard]] std::vector<std::string> gather(const std::string &str) const;
+
+    /**
+     * @brief Gather the `std::chrono::milliseconds` @p duration from each MPI rank on the `communicator::main_rank()`.
+     * @details If `PLSSVM_HAS_MPI_ENABLED` is undefined, returns the provided @p duration wrapped in a `std::vector`.
+     * @param[in] duration the duration to gather at the main MPI rank
+     * @return a `std::vector` containing all gathered durations (`[[nodiscard]]`)
+     */
+    [[nodiscard]] std::vector<std::chrono::milliseconds> gather(const std::chrono::milliseconds &duration) const;
 
 #if defined(PLSSVM_HAS_MPI_ENABLED)
     /**

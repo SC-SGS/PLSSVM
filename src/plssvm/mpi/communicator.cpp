@@ -14,9 +14,12 @@
     #include "mpi.h"
 #endif
 
-#include <cstddef>  // std::size_t
-#include <string>   // std::string
-#include <vector>   // std::vector
+#include <algorithm>  // std::transform
+#include <chrono>     // std::chrono::milliseconds
+#include <cstddef>    // std::size_t
+#include <cstdint>    // std::int64_t
+#include <string>     // std::string
+#include <vector>     // std::vector
 
 namespace plssvm::mpi {
 
@@ -92,6 +95,22 @@ std::vector<std::string> communicator::gather(const std::string &str) const {
     return result;
 #else
     return { str };
+#endif
+}
+
+std::vector<std::chrono::milliseconds> communicator::gather(const std::chrono::milliseconds &duration) const {
+#if defined(PLSSVM_HAS_MPI_ENABLED)
+    // convert the duration to an integer
+    const std::int64_t intermediate_dur = duration.count();
+    std::vector<std::int64_t> intermediate_result(this->size());
+    // gather the integer values from each MPI rank
+    PLSSVM_MPI_ERROR_CHECK(MPI_Gather(&intermediate_dur, 1, detail::mpi_datatype<std::int64_t>(), intermediate_result.data(), 1, detail::mpi_datatype<std::int64_t>(), communicator::main_rank(), comm_));
+    // cast integers back to durations
+    std::vector<std::chrono::milliseconds> result(this->size());
+    std::transform(intermediate_result.cbegin(), intermediate_result.cend(), result.begin(), [](const std::int64_t dur) { return static_cast<std::chrono::milliseconds>(dur); });
+    return result;
+#else
+    return { duration };
 #endif
 }
 
