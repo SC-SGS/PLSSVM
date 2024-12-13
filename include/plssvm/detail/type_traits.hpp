@@ -21,7 +21,7 @@
 #include <map>            // std::map, std::multimap
 #include <set>            // std::set, std::multiset
 #include <string>         // std::basic_string
-#include <type_traits>    // std::enable_if_t, std::remove_cv_t, std::remove_reference_t, std::false_type, std::true_type
+#include <type_traits>    // std::enable_if_t, std::remove_cv_t, std::remove_reference_t, std::is_same_v, std::false_type, std::true_type, std::is_same_v
 #include <unordered_map>  // std::unordered_map, std::unordered_multimap
 #include <unordered_set>  // std::unordered_set, std::unordered_multiset
 #include <vector>         // std::vector
@@ -341,6 +341,20 @@ constexpr bool is_unordered_associative_container_v = is_unordered_set_v<T> || i
  */
 template <typename T>
 constexpr bool is_container_v = is_sequence_container_v<T> || is_associative_container_v<T> || is_unordered_associative_container_v<T>;
+
+/**
+ * @brief Check whether @p T is in the type set @p Types.
+ */
+template <typename T, typename... Types>
+struct is_one_type_of {
+    constexpr static bool value = (std::is_same_v<T, Types> || ...);
+};
+
+/**
+ * @copydoc plssvm::detail::is_one_type_of
+ */
+template <typename T, typename... Types>
+constexpr bool is_one_type_of_v = is_one_type_of<T, Types...>::value;
 
 }  // namespace plssvm::detail
 

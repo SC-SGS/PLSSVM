@@ -17,14 +17,15 @@
 
 #include "plssvm/backends/SYCL/implementation_types.hpp"  // plssvm::sycl::implementation_type
 #include "plssvm/detail/type_traits.hpp"                  // plssvm::detail::remove_cvref_t
+#include "plssvm/detail/type_traits.hpp"                  // plssvm::detail::is_one_type_of
 #include "plssvm/target_platforms.hpp"                    // plssvm::list_available_target_platforms
 
 #include "fmt/base.h"     // fmt::formatter
 #include "fmt/ostream.h"  // fmt::ostream_formatter
 
-#include <iosfwd>  // forward declare std::ostream and std::istream
-#include <vector>  // std::vector
-#include <type_traits> // std::enable_if_t, std::is_base_of_v
+#include <iosfwd>       // forward declare std::ostream and std::istream
+#include <type_traits>  // std::enable_if_t
+#include <vector>       // std::vector
 
 namespace plssvm {
 
@@ -88,15 +89,15 @@ std::istream &operator>>(std::istream &in, backend_type &backend);
 /// @cond Doxygen_suppress
 // clang-format off
 // Forward declare all possible C-SVMs.
-namespace openmp { class csvm; }
-namespace stdpar { class csvm; }
-namespace hpx { class csvm; }
-namespace cuda { class csvm; }
-namespace hip { class csvm; }
-namespace opencl { class csvm; }
-namespace adaptivecpp { class csvm; }
-namespace dpcpp { class csvm; }
-namespace kokkos { class csvm; }
+namespace openmp { class csvm; class csvc; class csvr; }
+namespace stdpar { class csvm; class csvc; class csvr; }
+namespace hpx { class csvm; class csvc; class csvr; }
+namespace cuda { class csvm; class csvc; class csvr; }
+namespace hip { class csvm; class csvc; class csvr; }
+namespace opencl { class csvm; class csvc; class csvr; }
+namespace adaptivecpp { class csvm; class csvc; class csvr; }
+namespace dpcpp { class csvm; class csvc; class csvr; }
+namespace kokkos { class csvm; class csvc; class csvr; }
 
 // clang-format on
 
@@ -112,7 +113,7 @@ struct csvm_to_backend_type;
  * @brief Sets the `value` to `plssvm::backend_type::openmp` for the OpenMP C-SVM.
  */
 template <typename T>
-struct csvm_to_backend_type<T, std::enable_if_t<std::is_base_of_v<openmp::csvm, T>>> {
+struct csvm_to_backend_type<T, std::enable_if_t<detail::is_one_type_of_v<T, openmp::csvm, openmp::csvc, openmp::csvr>>> {
     /// The enum value representing the OpenMP backend.
     constexpr static backend_type value = backend_type::openmp;
 };
@@ -121,7 +122,7 @@ struct csvm_to_backend_type<T, std::enable_if_t<std::is_base_of_v<openmp::csvm, 
  * @brief Sets the `value` to `plssvm::backend_type::stdpar` for the C++ standard library parallelism C-SVM.
  */
 template <typename T>
-struct csvm_to_backend_type<T, std::enable_if_t<std::is_base_of_v<stdpar::csvm, T>>> {
+struct csvm_to_backend_type<T, std::enable_if_t<detail::is_one_type_of_v<T, stdpar::csvm, stdpar::csvc, stdpar::csvr>>> {
     /// The enum value representing the stdpar backend.
     constexpr static backend_type value = backend_type::stdpar;
 };
@@ -130,7 +131,7 @@ struct csvm_to_backend_type<T, std::enable_if_t<std::is_base_of_v<stdpar::csvm, 
  * @brief Sets the `value` to `plssvm::backend_type::hpx` for the HPX C-SVM.
  */
 template <typename T>
-struct csvm_to_backend_type<T, std::enable_if_t<std::is_base_of_v<hpx::csvm, T>>> {
+struct csvm_to_backend_type<T, std::enable_if_t<detail::is_one_type_of_v<T, hpx::csvm, hpx::csvc, hpx::csvr>>> {
     /// The enum value representing the hpx backend.
     constexpr static backend_type value = backend_type::hpx;
 };
@@ -139,7 +140,7 @@ struct csvm_to_backend_type<T, std::enable_if_t<std::is_base_of_v<hpx::csvm, T>>
  * @brief Sets the `value` to `plssvm::backend_type::cuda` for the CUDA C-SVM.
  */
 template <typename T>
-struct csvm_to_backend_type<T, std::enable_if_t<std::is_base_of_v<cuda::csvm, T>>> {
+struct csvm_to_backend_type<T, std::enable_if_t<detail::is_one_type_of_v<T, cuda::csvm, cuda::csvc, cuda::csvr>>> {
     /// The enum value representing the CUDA backend.
     constexpr static backend_type value = backend_type::cuda;
 };
@@ -148,7 +149,7 @@ struct csvm_to_backend_type<T, std::enable_if_t<std::is_base_of_v<cuda::csvm, T>
  * @brief Sets the `value` to `plssvm::backend_type::hip` for the HIP C-SVM.
  */
 template <typename T>
-struct csvm_to_backend_type<T, std::enable_if_t<std::is_base_of_v<hip::csvm, T>>> {
+struct csvm_to_backend_type<T, std::enable_if_t<detail::is_one_type_of_v<T, hip::csvm, hip::csvc, hip::csvr>>> {
     /// The enum value representing the HIP backend.
     constexpr static backend_type value = backend_type::hip;
 };
@@ -157,7 +158,7 @@ struct csvm_to_backend_type<T, std::enable_if_t<std::is_base_of_v<hip::csvm, T>>
  * @brief Sets the `value` to `plssvm::backend_type::opencl` for the OpenCL C-SVM.
  */
 template <typename T>
-struct csvm_to_backend_type<T, std::enable_if_t<std::is_base_of_v<opencl::csvm, T>>> {
+struct csvm_to_backend_type<T, std::enable_if_t<detail::is_one_type_of_v<T, opencl::csvm, opencl::csvc, opencl::csvr>>> {
     /// The enum value representing the OpenCL backend.
     constexpr static backend_type value = backend_type::opencl;
 };
@@ -167,7 +168,7 @@ struct csvm_to_backend_type<T, std::enable_if_t<std::is_base_of_v<opencl::csvm, 
  * @details Also sets a member variable `impl` to the value `plssvm::sycl::implementation_type::adaptivecpp` (only present for SYCL backends!).
  */
 template <typename T>
-struct csvm_to_backend_type<T, std::enable_if_t<std::is_base_of_v<adaptivecpp::csvm, T>>> {
+struct csvm_to_backend_type<T, std::enable_if_t<detail::is_one_type_of_v<T, adaptivecpp::csvm, adaptivecpp::csvc, adaptivecpp::csvr>>> {
     /// The enum value representing the SYCL (AdaptiveCpp) backend.
     constexpr static backend_type value = backend_type::sycl;
     /// The enum value representing the SYCL implementation for the (AdaptiveCpp) SYCL backend.
@@ -179,7 +180,7 @@ struct csvm_to_backend_type<T, std::enable_if_t<std::is_base_of_v<adaptivecpp::c
  * @details Also sets a member variable `impl` to the value `plssvm::sycl::implementation_type::dpcpp` (only present for SYCL backends!).
  */
 template <typename T>
-struct csvm_to_backend_type<T, std::enable_if_t<std::is_base_of_v<dpcpp::csvm, T>>> {
+struct csvm_to_backend_type<T, std::enable_if_t<detail::is_one_type_of_v<T, dpcpp::csvm, dpcpp::csvc, dpcpp::csvr>>> {
     /// The enum value representing the SYCL (DPC++) backend.
     constexpr static backend_type value = backend_type::sycl;
     /// The enum value representing the SYCL implementation for the (DPC++) SYCL backend.
@@ -190,7 +191,7 @@ struct csvm_to_backend_type<T, std::enable_if_t<std::is_base_of_v<dpcpp::csvm, T
  * @brief Sets the `value` to `plssvm::backend_type::kokkos` for the Kokkos C-SVM.
  */
 template <typename T>
-struct csvm_to_backend_type<T, std::enable_if_t<std::is_base_of_v<kokkos::csvm, T>>> {
+struct csvm_to_backend_type<T, std::enable_if_t<detail::is_one_type_of_v<T, kokkos::csvm, kokkos::csvc, kokkos::csvr>>> {
     /// The enum value representing the Kokkos backend.
     constexpr static backend_type value = backend_type::kokkos;
 };
