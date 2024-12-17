@@ -69,6 +69,7 @@ int main(int argc, char *argv[]) {
         // create data set
         const auto data_set_visitor = [&](auto &&data) {
             using label_type = typename std::remove_reference_t<decltype(data)>::label_type;
+            using csvm_type = typename std::remove_reference_t<decltype(data)>::svm_fit_type;
 
             // check whether SYCL is used as backend (it is either requested directly or as automatic backend)
             const bool use_sycl_as_backend{ cmd_parser.backend == plssvm::backend_type::sycl || (cmd_parser.backend == plssvm::backend_type::automatic && plssvm::determine_default_backend() == plssvm::backend_type::sycl) };
@@ -88,13 +89,13 @@ int main(int argc, char *argv[]) {
             environment_guard = std::make_unique<plssvm::environment::scope_guard>(backends_to_initialize);
 
             // create SVM
-            const std::unique_ptr<plssvm::csvm> svm = [&]() {
+            const std::unique_ptr<csvm_type> svm = [&]() {
                 if (use_sycl_as_backend) {
-                    return plssvm::make_csvm(cmd_parser.backend, cmd_parser.target, cmd_parser.csvm_params, plssvm::sycl_implementation_type = cmd_parser.sycl_implementation_type, plssvm::sycl_kernel_invocation_type = cmd_parser.sycl_kernel_invocation_type);
+                    return plssvm::make_csvm<csvm_type>(cmd_parser.backend, cmd_parser.target, cmd_parser.csvm_params, plssvm::sycl_implementation_type = cmd_parser.sycl_implementation_type, plssvm::sycl_kernel_invocation_type = cmd_parser.sycl_kernel_invocation_type);
                 } else if (use_kokkos_as_backend) {
-                    return plssvm::make_csvm(cmd_parser.backend, cmd_parser.target, cmd_parser.csvm_params, plssvm::kokkos_execution_space = cmd_parser.kokkos_execution_space);
+                    return plssvm::make_csvm<csvm_type>(cmd_parser.backend, cmd_parser.target, cmd_parser.csvm_params, plssvm::kokkos_execution_space = cmd_parser.kokkos_execution_space);
                 } else {
-                    return plssvm::make_csvm(cmd_parser.backend, cmd_parser.target, cmd_parser.csvm_params);
+                    return plssvm::make_csvm<csvm_type>(cmd_parser.backend, cmd_parser.target, cmd_parser.csvm_params);
                 }
             }();
 

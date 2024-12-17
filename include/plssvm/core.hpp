@@ -32,7 +32,9 @@
 #include "plssvm/parameter.hpp"                              // the C-SVM parameter
 #include "plssvm/shape.hpp"                                  // shape for a matrix or device pointer
 #include "plssvm/solver_types.hpp"                           // all supported solver types (e.g., Conjugate Gradients with explicit, streaming, or implicit kernel matrix generation)
+#include "plssvm/svm/csvc.hpp"                               // the base C-SVC every backend is inheriting from
 #include "plssvm/svm/csvm.hpp"                               // the base C-SVM every backend is inheriting from
+#include "plssvm/svm/csvr.hpp"                               // the base C-SVR every backend is inheriting from
 #include "plssvm/target_platforms.hpp"                       // all supported target platforms
 #include "plssvm/verbosity_levels.hpp"                       // all supported verbosity levels
 #include "plssvm/version/version.hpp"                        // version information

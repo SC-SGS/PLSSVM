@@ -13,10 +13,14 @@
 #define PLSSVM_DETAIL_CMD_DATA_SET_VARIANTS_HPP_
 #pragma once
 
-#include "plssvm/data_set/data_set.hpp"          // plssvm::data_set
-#include "plssvm/detail/cmd/parser_predict.hpp"  // plssvm::detail::cmd::parser_predict
-#include "plssvm/detail/cmd/parser_scale.hpp"    // plssvm::detail::cmd::parser_scale
-#include "plssvm/detail/cmd/parser_train.hpp"    // plssvm::detail::cmd::parser_train
+#include "plssvm/data_set/classification_data_set.hpp"  // plssvm::classification_data_set
+#include "plssvm/data_set/data_set.hpp"                 // plssvm::data_set
+#include "plssvm/data_set/regression_data_set.hpp"      // plssvm::regression_data_set
+#include "plssvm/detail/cmd/parser_predict.hpp"         // plssvm::detail::cmd::parser_predict
+#include "plssvm/detail/cmd/parser_scale.hpp"           // plssvm::detail::cmd::parser_scale
+#include "plssvm/detail/cmd/parser_train.hpp"           // plssvm::detail::cmd::parser_train
+#include "plssvm/detail/utility.hpp"                    // plssvm::detail::unreachable
+#include "plssvm/svm_types.hpp"                         // plssvm::svm_type
 
 #include <string>   // std::string
 #include <variant>  // std::variant
@@ -26,7 +30,7 @@ namespace plssvm::detail::cmd {
 /**
  * @brief Two different type combinations are allowed in the command line invocation: `real_type` + `int` and `real_type` + `std::string`.
  */
-using data_set_variants = std::variant<plssvm::data_set<int>, plssvm::data_set<std::string>>;
+using data_set_variants = std::variant<plssvm::classification_data_set<int>, plssvm::classification_data_set<std::string>, plssvm::regression_data_set<int>, plssvm::regression_data_set<std::string>>;
 
 /**
  * @brief Return the correct data set based on the plssvm::detail::cmd::parser_train command line options.
@@ -36,7 +40,14 @@ using data_set_variants = std::variant<plssvm::data_set<int>, plssvm::data_set<s
  */
 template <typename label_type = typename data_set<>::label_type>
 [[nodiscard]] inline data_set_variants data_set_factory_impl(const cmd::parser_train &cmd_parser) {
-    return data_set_variants{ plssvm::data_set<label_type>{ cmd_parser.input_filename } };
+    switch (cmd_parser.svm) {
+        case svm_type::csvc:
+            return data_set_variants{ classification_data_set<label_type>{ cmd_parser.input_filename } };
+        case svm_type::csvr:
+            return data_set_variants{ regression_data_set<label_type>{ cmd_parser.input_filename } };
+    }
+    // can never be reached
+    ::plssvm::detail::unreachable();
 }
 
 /**
@@ -47,7 +58,8 @@ template <typename label_type = typename data_set<>::label_type>
  */
 template <typename label_type = typename data_set<>::label_type>
 [[nodiscard]] inline data_set_variants data_set_factory_impl(const cmd::parser_predict &cmd_parser) {
-    return data_set_variants{ plssvm::data_set<label_type>{ cmd_parser.input_filename } };
+    // TODO: data set type
+    return data_set_variants{ classification_data_set<label_type>{ cmd_parser.input_filename } };
 }
 
 /**
@@ -58,10 +70,13 @@ template <typename label_type = typename data_set<>::label_type>
  */
 template <typename label_type = typename data_set<>::label_type>
 [[nodiscard]] inline data_set_variants data_set_factory_impl(const cmd::parser_scale &cmd_parser) {
+    // TODO: always use classification_data_set?
     if (!cmd_parser.restore_filename.empty()) {
-        return data_set_variants{ plssvm::data_set<label_type>{ cmd_parser.input_filename, { cmd_parser.restore_filename } } };
+        typename plssvm::data_set<label_type>::scaling scale{ cmd_parser.restore_filename };
+        return data_set_variants{ classification_data_set<label_type>{ cmd_parser.input_filename, scale } };
     } else {
-        return data_set_variants{ plssvm::data_set<label_type>{ cmd_parser.input_filename, { cmd_parser.lower, cmd_parser.upper } } };
+        typename plssvm::data_set<label_type>::scaling scale{ cmd_parser.lower, cmd_parser.upper };
+        return data_set_variants{ classification_data_set<label_type>{ cmd_parser.input_filename, scale } };
     }
 }
 

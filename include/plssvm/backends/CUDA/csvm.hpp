@@ -19,9 +19,11 @@
 #include "plssvm/backends/gpu_csvm.hpp"                   // plssvm::detail::gpu_csvm
 #include "plssvm/constants.hpp"                           // plssvm::real_type
 #include "plssvm/detail/memory_size.hpp"                  // plssvm::detail::memory_size
-#include "plssvm/detail/type_traits.hpp"                  // PLSSVM_REQUIRES
-#include "plssvm/parameter.hpp"                           // plssvm::parameter
-#include "plssvm/svm/csvm.hpp"                            // plssvm::detail::csvm_backend_exists
+#include "plssvm/detail/type_traits.hpp"                  // PLSSVM_REQUIRES, plssvm::detail::is_one_type_of
+#include "plssvm/parameter.hpp"                           // plssvm::parameter, plssvm::detail::has_only_parameter_named_args_v
+#include "plssvm/svm/csvc.hpp"                            // plssvm::csvc
+#include "plssvm/svm/csvm.hpp"                            // PLSSVM_CREATE_CSVC_CSVR_TO_BACKEND_CSVC_CSVR_MAP, plssvm::detail::csvm_backend_exists
+#include "plssvm/svm/csvr.hpp"                            // plssvm::csvr
 #include "plssvm/target_platforms.hpp"                    // plssvm::target_platform
 
 #include <cstddef>      // std::size_t
@@ -117,7 +119,7 @@ class csvm : public ::plssvm::detail::gpu_csvm<detail::device_ptr, int, detail::
      * @brief Wait for all operations on all CUDA devices to finish.
      * @details Terminates the program, if any exception is thrown.
      */
-    ~csvm() override;
+    ~csvm() override = 0;
 
   protected:
     /**
@@ -183,15 +185,42 @@ class csvm : public ::plssvm::detail::gpu_csvm<detail::device_ptr, int, detail::
     [[nodiscard]] device_ptr_type run_predict_kernel(std::size_t device_id, const ::plssvm::detail::execution_range &exec, const parameter &params, const device_ptr_type &alpha_d, const device_ptr_type &rho_d, const device_ptr_type &sv_or_w_d, const device_ptr_type &predict_points_d) const final;
 };
 
+/**
+ * @brief Create a C-SVC using the CUDA backend.
+ * @details Inherits all functionality either from the `plssvm::csvc` or `plssvm::cuda::csvm` classes.
+ */
+class csvc : public ::plssvm::csvc,
+             public ::plssvm::cuda::csvm {
+  public:
+    // use the CUDA C-SVM constructors
+    using ::plssvm::cuda::csvm::csvm;
+};
+
+/**
+ * @brief Create a C-SVR using the CUDA backend.
+ * @details Inherits all functionality either from the `plssvm::csvr` or `plssvm::cuda::csvm` classes.
+ */
+class csvr : public ::plssvm::csvr,
+             public ::plssvm::cuda::csvm {
+  public:
+    // use the CUDA C-SVM constructors
+    using ::plssvm::cuda::csvm::csvm;
+};
+
+// be able to create the following mappings:
+// plssvm::csvc -> plssvm::cuda::csvc
+// plssvm::csvr -> plssvm::cuda::csvr
+PLSSVM_CREATE_CSVC_CSVR_TO_BACKEND_CSVC_CSVR_MAP(cuda)
+
 }  // namespace cuda
 
 namespace detail {
 
 /**
- * @brief Sets the `value` to `true` since C-SVMs using the CUDA backend are available.
+ * @brief Sets the `value` to `true` since C-SVMs (C-SVCs, C-SVRs) using the CUDA backend are available.
  */
-template <>
-struct csvm_backend_exists<cuda::csvm> : std::true_type { };
+template <typename T>
+struct csvm_backend_exists<T, std::enable_if_t<is_one_type_of_v<T, cuda::csvm, cuda::csvc, cuda::csvr>>> : std::true_type { };
 
 }  // namespace detail
 

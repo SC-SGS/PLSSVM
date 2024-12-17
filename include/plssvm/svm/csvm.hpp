@@ -53,6 +53,28 @@
 #include <utility>      // std::pair, std::forward
 #include <vector>       // std::vector
 
+/**
+ * @def PLSSVM_CREATE_CSVC_CSVR_TO_BACKEND_CSVC_CSVR_MAP
+ * @brief Defines a macro to create typedefs (in the respective backend namespaces) to map from the base C-SVC and C-SVR classes to the backend specific C-SVC and C-SVR classes.
+ * @param[in] backend_namespace the backend namespace to use
+ */
+#define PLSSVM_CREATE_CSVC_CSVR_TO_BACKEND_CSVC_CSVR_MAP(backend_namespace) \
+    template <typename>                                                     \
+    struct backend_csvm_type { };                                           \
+                                                                            \
+    template <>                                                             \
+    struct backend_csvm_type<::plssvm::csvc> {                              \
+        using type = ::plssvm::backend_namespace::csvc;                     \
+    };                                                                      \
+                                                                            \
+    template <>                                                             \
+    struct backend_csvm_type<::plssvm::csvr> {                              \
+        using type = ::plssvm::backend_namespace::csvr;                     \
+    };                                                                      \
+                                                                            \
+    template <typename T>                                                   \
+    using backend_csvm_type_t = typename backend_csvm_type<T>::type;
+
 namespace plssvm {
 
 /**
@@ -964,7 +986,7 @@ namespace detail {
  * @brief Sets the `value` to `false` since the given type @p T is either not a C-SVM or the C-SVM using the requested backend isn't available.
  * @tparam T the type of the C-SVM
  */
-template <typename T>
+template <typename T, typename Enable = void>
 struct csvm_backend_exists : std::false_type { };
 
 }  // namespace detail
