@@ -284,7 +284,11 @@ parser_train::parser_train(int argc, char **argv) {
 }
 
 std::ostream &operator<<(std::ostream &out, const parser_train &params) {
-    out << fmt::format("kernel_type: {} -> {}\n", params.csvm_params.kernel_type, kernel_function_type_to_math_string(params.csvm_params.kernel_type));
+    out << fmt::format("svm_type: {}\n"
+                       "kernel_type: {} -> {}\n",
+                       params.svm,
+                       params.csvm_params.kernel_type,
+                       kernel_function_type_to_math_string(params.csvm_params.kernel_type));
     switch (params.csvm_params.kernel_type) {
         case kernel_function_type::linear:
             break;

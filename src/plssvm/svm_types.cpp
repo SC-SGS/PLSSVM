@@ -17,13 +17,14 @@
 #include "fmt/format.h"  // fmt::format
 #include "fmt/ranges.h"  // fmt::join
 
-#include <array>    // std::array
-#include <ios>      // std::ios::failbit
-#include <istream>  // std::istream
-#include <ostream>  // std::ostream
-#include <string>   // std::string
-#include <utility>  // std::pair
-#include <vector>   // std::vector
+#include <array>        // std::array
+#include <ios>          // std::ios::failbit
+#include <istream>      // std::istream
+#include <ostream>      // std::ostream
+#include <string>       // std::string
+#include <string_view>  // std::string_view
+#include <utility>      // std::pair
+#include <vector>       // std::vector
 
 namespace plssvm {
 
@@ -39,6 +40,16 @@ std::ostream &operator<<(std::ostream &out, const svm_type svm) {
             return out << "csvr";
     }
     return out << "unknown";
+}
+
+std::string_view svm_type_to_task_name(const svm_type svm) noexcept {
+    switch (svm) {
+        case svm_type::csvc:
+            return "classification";
+        case svm_type::csvr:
+            return "regression";
+    }
+    return "unknown";
 }
 
 std::istream &operator>>(std::istream &in, svm_type &svm) {

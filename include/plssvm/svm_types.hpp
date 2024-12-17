@@ -16,8 +16,9 @@
 #include "fmt/base.h"     // fmt::formatter
 #include "fmt/ostream.h"  // fmt::ostream_formatter
 
-#include <iosfwd>  // forward declare std::ostream and std::istream
-#include <vector>  // std::vector
+#include <iosfwd>       // forward declare std::ostream and std::istream
+#include <string_view>  // std::string_view
+#include <vector>       // std::vector
 
 namespace plssvm {
 
@@ -44,6 +45,13 @@ enum class svm_type {
  * @return the output-stream
  */
 std::ostream &operator<<(std::ostream &out, svm_type svm);
+
+/**
+ * @brief Return a task name (e.g., `"classification"` or `"regression"`) based on the provided @p svm.
+ * @param[in] svm the type of the C-SVM to retrieve the task name from
+ * @return the name of the task that the @p svm solves (`[[nodiscard]]`)
+ */
+[[nodiscard]] std::string_view svm_type_to_task_name(svm_type svm) noexcept;
 
 /**
  * @brief Use the input-stream @p in to initialize the @p svm type.

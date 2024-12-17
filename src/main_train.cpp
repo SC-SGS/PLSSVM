@@ -63,7 +63,8 @@ int main(int argc, char *argv[]) {
 
         // output used parameter
         plssvm::detail::log(plssvm::verbosity_level::full,
-                            "\ntask: training\n{}\n\n\n",
+                            "\ntask: training ({})\n{}\n\n\n",
+                            plssvm::svm_type_to_task_name(cmd_parser.svm),
                             plssvm::detail::tracking::tracking_entry{ "parameter", "", cmd_parser });
 
         // create data set
