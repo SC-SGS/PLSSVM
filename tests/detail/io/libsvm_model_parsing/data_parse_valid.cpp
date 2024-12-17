@@ -125,7 +125,6 @@ TYPED_TEST(LIBSVMModelDataParseValid, read) {
                 break;
             default:
                 FAIL() << "Unreachable!";
-                break;
         }
 
         EXPECT_EQ(alpha.front(), (plssvm::aos_matrix<plssvm::real_type>{ this->get_correct_weights(), plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE } }));
@@ -163,7 +162,6 @@ TYPED_TEST(LIBSVMModelDataParseValid, read) {
                 break;
             default:
                 FAIL() << "Unreachable!";
-                break;
         }
         // add padding to each matrix (theoretically expensive, but matrices are tiny)
         for (plssvm::aos_matrix<plssvm::real_type> &matr : weights) {
