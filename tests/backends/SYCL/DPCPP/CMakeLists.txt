@@ -1,10 +1,10 @@
-## Authors: Alexander Van Craen, Marcel Breyer
-## Copyright (C): 2018-today The PLSSVM project - All Rights Reserved
-## License: This file is part of the PLSSVM project which is released under the MIT license.
-##          See the LICENSE.md file in the project root for full license information.
+# Authors: Alexander Van Craen, Marcel Breyer
+# Copyright (C): 2018-today The PLSSVM project - All Rights Reserved
+# License: This file is part of the PLSSVM project which is released under the MIT license.
+#          See the LICENSE.md file in the project root for full license information.
 ########################################################################################################################
 
-### create SYCL tests
+# create SYCL tests
 set(PLSSVM_SYCL_DPCPP_TEST_NAME SYCL_DPCPP_tests)
 
 # list all necessary sources
@@ -14,10 +14,12 @@ set(PLSSVM_SYCL_DPCPP_TEST_SOURCES
     ${CMAKE_CURRENT_LIST_DIR}/detail/pinned_memory.cpp
     ${CMAKE_CURRENT_LIST_DIR}/detail/utility.cpp
     ${CMAKE_CURRENT_LIST_DIR}/dpcpp_csvm.cpp
-    ## since the SYCL implementation_type and kernel_invocation_type enumerations are used even if no SYCL backend
-    ## is available these are also tested in the base library
+    # ~~~
+    # since the SYCL implementation_type and kernel_invocation_type enumerations are used even if no SYCL backend
+    # is available these are also tested in the base library
     # ${CMAKE_CURRENT_LIST_DIR}/../implementation_types.cpp
     # ${CMAKE_CURRENT_LIST_DIR}/../kernel_invocation_types.cpp
+    # ~~~
 )
 
 # add test executable

@@ -1,7 +1,7 @@
-## Authors: Alexander Van Craen, Marcel Breyer
-## Copyright (C): 2018-today The PLSSVM project - All Rights Reserved
-## License: This file is part of the PLSSVM project which is released under the MIT license.
-##          See the LICENSE.md file in the project root for full license information.
+# Authors: Alexander Van Craen, Marcel Breyer
+# Copyright (C): 2018-today The PLSSVM project - All Rights Reserved
+# License: This file is part of the PLSSVM project which is released under the MIT license.
+#          See the LICENSE.md file in the project root for full license information.
 ########################################################################################################################
 
 list(APPEND CMAKE_MESSAGE_INDENT "stdpar:  ")
@@ -10,18 +10,23 @@ list(APPEND CMAKE_MESSAGE_INDENT "stdpar:  ")
 message(CHECK_START "Checking for stdpar backend")
 
 # explicitly set general sources
-set(PLSSVM_STDPAR_SOURCES
-    ${CMAKE_CURRENT_LIST_DIR}/detail/utility.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/csvm.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/exceptions.cpp
-)
+set(PLSSVM_STDPAR_SOURCES ${CMAKE_CURRENT_LIST_DIR}/detail/utility.cpp ${CMAKE_CURRENT_LIST_DIR}/csvm.cpp ${CMAKE_CURRENT_LIST_DIR}/exceptions.cpp)
 
 # create interface library used in the sub-CMakeLists
 set(PLSSVM_STDPAR_BACKEND_LIBRARY_INTERFACE plssvm-stdpar-interface)
 add_library(${PLSSVM_STDPAR_BACKEND_LIBRARY_INTERFACE} INTERFACE)
 
 set(PLSSVM_STDPAR_BACKEND_IMPLEMENTATION AUTO CACHE STRING "Set the stdpar implementation that should be used.")
-set_property(CACHE PLSSVM_STDPAR_BACKEND_IMPLEMENTATION PROPERTY STRINGS AUTO NVHPC roc-stdpar IntelLLVM ACPP GNU_TBB)
+set_property(
+    CACHE PLSSVM_STDPAR_BACKEND_IMPLEMENTATION
+    PROPERTY STRINGS
+             AUTO
+             NVHPC
+             roc-stdpar
+             IntelLLVM
+             ACPP
+             GNU_TBB
+)
 
 # try finding a stdpar backend
 if (PLSSVM_STDPAR_BACKEND_IMPLEMENTATION MATCHES "NVHPC")

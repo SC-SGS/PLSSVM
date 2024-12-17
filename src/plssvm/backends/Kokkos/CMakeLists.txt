@@ -1,7 +1,7 @@
-## Authors: Alexander Van Craen, Marcel Breyer
-## Copyright (C): 2018-today The PLSSVM project - All Rights Reserved
-## License: This file is part of the PLSSVM project which is released under the MIT license.
-##          See the LICENSE.md file in the project root for full license information.
+# Authors: Alexander Van Craen, Marcel Breyer
+# Copyright (C): 2018-today The PLSSVM project - All Rights Reserved
+# License: This file is part of the PLSSVM project which is released under the MIT license.
+#          See the LICENSE.md file in the project root for full license information.
 ########################################################################################################################
 
 list(APPEND CMAKE_MESSAGE_INDENT "Kokkos:  ")
@@ -40,7 +40,7 @@ if (Kokkos_ENABLE_SYCL)
     if (NOT ${CMAKE_CXX_COMPILER_ID} MATCHES "IntelLLVM")
         message(FATAL_ERROR "For Kokkos::SYCL to work, the compiler must be IntelLLVM, but is ${CMAKE_CXX_COMPILER}!")
     endif ()
-    
+
     # set icpx specific compiler flags based on the provided PLSSVM_TARGET_PLATFORMS
     set(PLSSVM_KOKKOS_SYCL_FSYCL_TARGETS "")
     # cpu targets
@@ -73,34 +73,38 @@ if (Kokkos_ENABLE_SYCL)
     list(JOIN PLSSVM_KOKKOS_SYCL_FSYCL_TARGETS "," PLSSVM_KOKKOS_SYCL_FSYCL_TARGETS_STRING)
     target_compile_options(${PLSSVM_KOKKOS_BACKEND_LIBRARY_NAME} PRIVATE -sycl-std=2020 -fsycl -fsycl-targets=${PLSSVM_KOKKOS_SYCL_FSYCL_TARGETS_STRING})
     target_link_options(${PLSSVM_KOKKOS_BACKEND_LIBRARY_NAME} PRIVATE -fsycl -fsycl-targets=${PLSSVM_KOKKOS_SYCL_FSYCL_TARGETS_STRING})
-    
+
     # add option for IntelLLVM Ahead-of-Time (AOT) compilation
     option(PLSSVM_KOKKOS_BACKEND_INTEL_LLVM_ENABLE_AOT "Enables Ahead-of-Time compilation for the Kokkos::SYCL execution space using IntelLLVM." ON)
     if (PLSSVM_KOKKOS_BACKEND_INTEL_LLVM_ENABLE_AOT)
         message(STATUS "Enabled Ahead-of-Time (AOT) compilation for the Kokkos::SYCL execution space using IntelLLVM.")
         target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PRIVATE PLSSVM_KOKKOS_BACKEND_INTEL_LLVM_ENABLE_AOT)
         target_compile_definitions(${PLSSVM_KOKKOS_BACKEND_LIBRARY_NAME} PUBLIC PLSSVM_KOKKOS_BACKEND_INTEL_LLVM_ENABLE_AOT)
-        ## set AOT compiler flags
-        # cpu targets
+        # set AOT compiler flags
         if (DEFINED PLSSVM_CPU_TARGET_ARCHS)
-            # add target specific flags for AOT
+            # add CPU target specific flags for AOT
             if (PLSSVM_NUM_CPU_TARGET_ARCHS EQUAL 1)
                 target_compile_options(${PLSSVM_KOKKOS_BACKEND_LIBRARY_NAME} PRIVATE -Xsycl-target-backend=spir64_x86_64 "-march=${PLSSVM_CPU_TARGET_ARCHS}")
                 target_link_options(${PLSSVM_KOKKOS_BACKEND_LIBRARY_NAME} PRIVATE -Xsycl-target-backend=spir64_x86_64 "-march=${PLSSVM_CPU_TARGET_ARCHS}")
             endif ()
         endif ()
-        # nvidia targets
         if (DEFINED PLSSVM_NVIDIA_TARGET_ARCHS)
-            # add target specific flags for AOT
+            # add NVIDIA GPU target specific flags for AOT
             if (NOT PLSSVM_NUM_NVIDIA_TARGET_ARCHS EQUAL 1)
-                message(SEND_ERROR "IntelLLVM currently only supports a single NVIDIA architecture specification for AOT but ${PLSSVM_NUM_NVIDIA_TARGET_ARCHS} were provided!")
+                message(
+                    SEND_ERROR
+                        "IntelLLVM currently only supports a single NVIDIA architecture specification for AOT but ${PLSSVM_NUM_NVIDIA_TARGET_ARCHS} were provided!"
+                )
             endif ()
-            target_compile_options(${PLSSVM_KOKKOS_BACKEND_LIBRARY_NAME} PRIVATE -Xsycl-target-backend=nvptx64-nvidia-cuda --offload-arch=${PLSSVM_NVIDIA_TARGET_ARCHS})
-            target_link_options(${PLSSVM_KOKKOS_BACKEND_LIBRARY_NAME} PRIVATE -Xsycl-target-backend=nvptx64-nvidia-cuda --offload-arch=${PLSSVM_NVIDIA_TARGET_ARCHS})
+            target_compile_options(
+                ${PLSSVM_KOKKOS_BACKEND_LIBRARY_NAME} PRIVATE -Xsycl-target-backend=nvptx64-nvidia-cuda --offload-arch=${PLSSVM_NVIDIA_TARGET_ARCHS}
+            )
+            target_link_options(
+                ${PLSSVM_KOKKOS_BACKEND_LIBRARY_NAME} PRIVATE -Xsycl-target-backend=nvptx64-nvidia-cuda --offload-arch=${PLSSVM_NVIDIA_TARGET_ARCHS}
+            )
         endif ()
-        # intel targets
         if (DEFINED PLSSVM_INTEL_TARGET_ARCHS)
-            # add target specific flags for AOT
+            # add Intel GPU target specific flags for AOT
             list(JOIN PLSSVM_INTEL_TARGET_ARCHS "," PLSSVM_INTEL_TARGET_ARCHS_STRING)
             target_compile_options(${PLSSVM_KOKKOS_BACKEND_LIBRARY_NAME} PRIVATE -Xsycl-target-backend=spir64_gen "-device ${PLSSVM_INTEL_TARGET_ARCHS_STRING}")
             target_link_options(${PLSSVM_KOKKOS_BACKEND_LIBRARY_NAME} PRIVATE -Xsycl-target-backend=spir64_gen "-device ${PLSSVM_INTEL_TARGET_ARCHS_STRING}")
@@ -121,9 +125,11 @@ target_link_libraries(${PLSSVM_ALL_LIBRARY_NAME} INTERFACE ${PLSSVM_KOKKOS_BACKE
 # mark backend library as install target
 append_local_and_parent(PLSSVM_TARGETS_TO_INSTALL ${PLSSVM_KOKKOS_BACKEND_LIBRARY_NAME})
 
+# ~~~
 # assemble Kokkos available execution space string
 # also set compile definitions -> can't use KOKKOS_ENABLE_* directly inside the "constexpr_available_execution_space.hpp"
 # header since we can't include "Kokkos_Core.hpp" there (transitively used in the base library that doesn't know anything about Kokkos
+# ~~~
 set(PLSSVM_KOKKOS_BACKEND_AVAILABLE_EXECUTION_SPACES "")
 if (Kokkos_ENABLE_CUDA)
     target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC PLSSVM_KOKKOS_BACKEND_ENABLE_CUDA)
@@ -163,10 +169,14 @@ if (Kokkos_ENABLE_SERIAL)
 endif ()
 set(PLSSVM_KOKKOS_BACKEND_AVAILABLE_EXECUTION_SPACES "${PLSSVM_KOKKOS_BACKEND_AVAILABLE_EXECUTION_SPACES}" PARENT_SCOPE)
 
+# ~~~
 # also set the number of available Kokkos execution spaces to explicitly set the type of the used std::array
 # -> necessary if NO Kokkos execution space is available and, therefore, the size of the std::array would be 0 (can't automatically be deduced)
+# ~~~
 list(LENGTH PLSSVM_KOKKOS_BACKEND_AVAILABLE_EXECUTION_SPACES PLSSVM_KOKKOS_BACKEND_NUM_AVAILABLE_EXECUTION_SPACES)
-target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC PLSSVM_KOKKOS_BACKEND_NUM_AVAILABLE_EXECUTION_SPACES=${PLSSVM_KOKKOS_BACKEND_NUM_AVAILABLE_EXECUTION_SPACES})
+target_compile_definitions(
+    ${PLSSVM_BASE_LIBRARY_NAME} PUBLIC PLSSVM_KOKKOS_BACKEND_NUM_AVAILABLE_EXECUTION_SPACES=${PLSSVM_KOKKOS_BACKEND_NUM_AVAILABLE_EXECUTION_SPACES}
+)
 
 # generate summary string
 set(PLSSVM_KOKKOS_BACKEND_SUMMARY_STRING_COMPILER " - Kokkos (${PLSSVM_KOKKOS_BACKEND_AVAILABLE_EXECUTION_SPACES}):")
