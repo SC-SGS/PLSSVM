@@ -15,10 +15,10 @@
 
 #include "plssvm/constants.hpp"                            // plssvm::real_type, plssvm::PADDING_SIZE
 #include "plssvm/detail/assert.hpp"                        // PLSSVM_ASSERT
-#include "plssvm/detail/io/arff_parsing.hpp"               // plssvm::detail::io::{read_libsvm_data, write_libsvm_data}
+#include "plssvm/detail/io/arff_parsing.hpp"               // plssvm::detail::io::write_libsvm_data
 #include "plssvm/detail/io/file_reader.hpp"                // plssvm::detail::io::file_reader
-#include "plssvm/detail/io/libsvm_parsing.hpp"             // plssvm::detail::io::{read_arff_data, write_arff_data}
-#include "plssvm/detail/io/scaling_factors_parsing.hpp"    // plssvm::detail::io::{parse_scaling_factors, read_scaling_factors}
+#include "plssvm/detail/io/libsvm_parsing.hpp"             // plssvm::detail::io::write_arff_data
+#include "plssvm/detail/io/scaling_factors_parsing.hpp"    // plssvm::detail::io::parse_scaling_factors
 #include "plssvm/detail/logging.hpp"                       // plssvm::detail::log
 #include "plssvm/detail/string_utility.hpp"                // plssvm::detail::ends_with
 #include "plssvm/detail/tracking/performance_tracker.hpp"  // plssvm::detail::tracking::tracking_entry
@@ -31,15 +31,13 @@
 
 #include "fmt/format.h"  // fmt::format
 
-#include <algorithm>   // std::all_of, std::max, std::min, std::sort, std::adjacent_find
+#include <algorithm>   // std::max, std::min, std::sort, std::adjacent_find
 #include <chrono>      // std::chrono::{time_point, steady_clock, duration_cast, millisecond}
 #include <cstddef>     // std::size_t
 #include <functional>  // std::reference_wrapper, std::cref
 #include <limits>      // std::numeric_limits::{max, lowest}
-#include <map>         // std::map
 #include <memory>      // std::shared_ptr, std::make_shared
 #include <optional>    // std::optional, std::make_optional, std::nullopt
-#include <set>         // std::set
 #include <string>      // std::string
 #include <tuple>       // std::tie
 #include <utility>     // std::move, std::pair, std::make_pair
@@ -215,6 +213,23 @@ class data_set {
      */
     template <layout_type layout>
     data_set(const matrix<real_type, layout> &data_points, std::vector<label_type> labels, scaling scale_parameter);
+
+    /**
+     * @brief Default copy constructor.
+     */
+    data_set(const data_set &) = default;
+    /**
+     * @brief Default move constructor.
+     */
+    data_set(data_set &&) noexcept = default;
+    /**
+     * @brief Default copy assignment operator.
+     */
+    data_set &operator=(const data_set &) = default;
+    /**
+     * @brief Default move assignment operator.
+     */
+    data_set &operator=(data_set &&) noexcept = default;
 
     /**
      * @brief Virtual destructor to allow derived classes to clean up properly.
