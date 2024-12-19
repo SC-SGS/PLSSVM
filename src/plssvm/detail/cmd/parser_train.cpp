@@ -19,6 +19,7 @@
 #include "plssvm/detail/utility.hpp"                               // plssvm::detail::to_underlying
 #include "plssvm/gamma.hpp"                                        // plssvm::get_gamma_string
 #include "plssvm/kernel_function_types.hpp"                        // plssvm::kernel_type_to_math_string
+#include "plssvm/svm_types.hpp"                                    // plssvm::svm_type
 #include "plssvm/target_platforms.hpp"                             // plssvm::list_available_target_platforms
 #include "plssvm/verbosity_levels.hpp"                             // plssvm::verbosity, plssvm::verbosity_level
 #include "plssvm/version/version.hpp"                              // plssvm::version::detail::get_version_info
@@ -85,7 +86,7 @@ parser_train::parser_train(int argc, char **argv) {
 #if defined(PLSSVM_PERFORMANCE_TRACKER_ENABLED)
            ("performance_tracking", "the output YAML file where the performance tracking results are written to; if not provided, the results are dumped to stderr", cxxopts::value<decltype(performance_tracking_filename)>())
 #endif
-           ("use_strings_as_labels", "use strings as labels instead of plane numbers", cxxopts::value<decltype(strings_as_labels)>()->default_value(fmt::format("{}", strings_as_labels)))
+           ("use_strings_as_labels", "use strings as labels for the classification task instead of plane numbers", cxxopts::value<decltype(strings_as_labels)>()->default_value(fmt::format("{}", strings_as_labels)))
            ("verbosity", fmt::format("choose the level of verbosity: full|timing|libsvm|quiet (default: {})", fmt::format("{}", verbosity)), cxxopts::value<verbosity_level>())
            ("q,quiet", "quiet mode (no outputs regardless the provided verbosity level!)", cxxopts::value<bool>())
            ("h,help", "print this helper message", cxxopts::value<bool>())
@@ -240,8 +241,12 @@ parser_train::parser_train(int argc, char **argv) {
     }
 #endif
 
-    // parse whether strings should be used as labels
+    // parse whether strings should be used as labels for the classification task
     strings_as_labels = result["use_strings_as_labels"].as<decltype(strings_as_labels)>();
+    if (svm != svm_type::csvc && strings_as_labels) {
+        detail::log_untracked(verbosity_level::full | verbosity_level::warning,
+                              "WARNING: explicitly requested string labels for the regression task; ignoring --use_strings_as_labels\n");
+    }
 
     // parse whether output is quiet or not
     const bool quiet = result["quiet"].as<bool>();

@@ -13,6 +13,7 @@
 #define PLSSVM_DETAIL_CMD_DATA_SET_VARIANTS_HPP_
 #pragma once
 
+#include "plssvm/constants.hpp"                         // plssvm::real_type
 #include "plssvm/data_set/classification_data_set.hpp"  // plssvm::classification_data_set
 #include "plssvm/data_set/data_set.hpp"                 // plssvm::data_set
 #include "plssvm/data_set/regression_data_set.hpp"      // plssvm::regression_data_set
@@ -28,9 +29,9 @@
 namespace plssvm::detail::cmd {
 
 /**
- * @brief Two different type combinations are allowed in the command line invocation: `real_type` + `int` and `real_type` + `std::string`.
+ * @brief Only a small number of label types are allowed in the command line invocation: for the classification task `int` and `std::string` and for the regression task the current `real_type`.
  */
-using data_set_variants = std::variant<plssvm::classification_data_set<int>, plssvm::classification_data_set<std::string>, plssvm::regression_data_set<int>, plssvm::regression_data_set<std::string>>;
+using data_set_variants = std::variant<plssvm::classification_data_set<int>, plssvm::classification_data_set<std::string>, plssvm::regression_data_set<real_type>>;
 
 /**
  * @brief Return the correct data set based on the plssvm::detail::cmd::parser_train command line options.
@@ -88,7 +89,9 @@ template <typename label_type = typename data_set<>::label_type>
  */
 template <typename cmd_parser_type>
 [[nodiscard]] inline data_set_variants data_set_factory(const cmd_parser_type &cmd_parser) {
-    if (cmd_parser.strings_as_labels) {
+    if (cmd_parser.svm == svm_type::csvr) {
+        return data_set_factory_impl<real_type>(cmd_parser);
+    } else if (cmd_parser.strings_as_labels) {
         return data_set_factory_impl<std::string>(cmd_parser);
     } else {
         return data_set_factory_impl(cmd_parser);

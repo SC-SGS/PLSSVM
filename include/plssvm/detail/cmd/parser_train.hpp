@@ -72,7 +72,8 @@ struct parser_train {
     /// The Kokkos execution space to use with --backend=kokkos.
     kokkos::execution_space kokkos_execution_space{ kokkos::execution_space::automatic };
 
-    /// `true` if `std::string` should be used as label type instead of the default type `ìnt`.
+    /// `true` if `std::string` should be used as label type for the classification task instead of the default type `ìnt`.
+    /// For the regression task, this parameter is ignored and `real_type` is always used.
     bool strings_as_labels{ false };
 
     /// The name of the data/test file to parse.
