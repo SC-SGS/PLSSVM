@@ -43,6 +43,9 @@ class regression_data_set : public data_set<U> {
     static_assert(detail::tuple_contains_v<U, detail::supported_label_types_regression>,
                   "Illegal label type for regression provided! See the 'supported_label_types_regression' in the type_list.hpp header for a list of the allowed types.");
 
+    // befriend C-SVR class used with the regression data set
+    friend class csvr;
+
     using base_data_set = data_set<U>;
 
     using base_data_set::data_ptr_;

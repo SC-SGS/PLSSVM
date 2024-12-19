@@ -70,8 +70,10 @@ class data_set {
     // plssvm::model needs the default constructor
     template <typename>
     friend class model;
-    // plssvm::csvm needs the label mapping // TODO: may be removed?!
-    friend class csvm;
+
+    // befriend the different C-SVM classes
+    friend class csvc;
+    friend class csvr;
 
   public:
     /// The type of the labels: any arithmetic type or `std::string`.

@@ -47,6 +47,9 @@ class classification_data_set : public data_set<U> {
     static_assert(detail::tuple_contains_v<U, detail::supported_label_types_classification>,
                   "Illegal label type for classification provided! See the 'supported_label_types_classification' in the type_list.hpp header for a list of the allowed types.");
 
+    // befriend C-SVC class used with the classification data set
+    friend class csvc;
+
     using base_data_set = data_set<U>;
 
     using base_data_set::data_ptr_;
