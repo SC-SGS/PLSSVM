@@ -34,18 +34,60 @@ namespace plssvm::detail::cmd {
 using data_set_variants = std::variant<plssvm::classification_data_set<int>, plssvm::classification_data_set<std::string>, plssvm::regression_data_set<real_type>>;
 
 /**
- * @brief Return the correct data set based on the plssvm::detail::cmd::parser_train command line options.
+ * @brief Create a classification data set based on the provided command line arguments.
  * @tparam label_type the type of the labels
+ * @tparam Args the types of the arguments
+ * @param[in] args the arguments to forward to the classification data set constructor
+ * @return the constructed classification data set (`[[nodiscard]]`)
+ */
+template <typename label_type, typename... Args>
+[[nodiscard]] inline data_set_variants make_classification_data_set(Args &&...args) {
+    return data_set_variants{ classification_data_set<label_type>{ std::forward<Args>(args)... } };
+}
+
+/**
+ * @brief Create a regression data set based on the provided command line arguments.
+ * @tparam label_type the type of the labels
+ * @tparam Args the types of the arguments
+ * @param[in] args the arguments to forward to the regression data set constructor
+ * @return the constructed regression data set (`[[nodiscard]]`)
+ */
+template <typename label_type, typename... Args>
+[[nodiscard]] inline data_set_variants make_regression_data_set(Args &&...args) {
+    return data_set_variants{ regression_data_set<label_type>{ std::forward<Args>(args)... } };
+}
+
+/**
+ * @brief Create scaling factors based on the provided command line arguments.
+ * @tparam label_type the type of the labels
+ * @param[in] cmd_parser the command line arguments
+ * @return the constructed scaling factors (`[[nodiscard]]`)
+ */
+template <typename label_type>
+[[nodiscard]] inline auto make_scaling_factors(const cmd::parser_scale &cmd_parser) {
+    using scaling_factors = typename plssvm::data_set<label_type>::scaling;
+    if (!cmd_parser.restore_filename.empty()) {
+        return scaling_factors{ cmd_parser.restore_filename };
+    } else {
+        return scaling_factors{ cmd_parser.lower, cmd_parser.upper };
+    }
+}
+
+/**
+ * @brief Return the correct data set based on the plssvm::detail::cmd::parser_train command line options.
  * @param[in] cmd_parser the provided command line parser
  * @return the data set based on the provided command line parser (`[[nodiscard]]`)
  */
-template <typename label_type = typename data_set<>::label_type>
-[[nodiscard]] inline data_set_variants data_set_factory_impl(const cmd::parser_train &cmd_parser) {
+[[nodiscard]] inline data_set_variants data_set_factory(const cmd::parser_train &cmd_parser) {
     switch (cmd_parser.svm) {
         case svm_type::csvc:
-            return data_set_variants{ classification_data_set<label_type>{ cmd_parser.input_filename } };
+            if (cmd_parser.strings_as_labels) {
+                return make_classification_data_set<std::string>(cmd_parser.input_filename);
+            } else {
+                return make_classification_data_set<typename data_set<>::label_type>(cmd_parser.input_filename);
+            }
         case svm_type::csvr:
-            return data_set_variants{ regression_data_set<label_type>{ cmd_parser.input_filename } };
+            return make_regression_data_set<real_type>(cmd_parser.input_filename);
     }
     // can never be reached
     ::plssvm::detail::unreachable();
@@ -53,48 +95,30 @@ template <typename label_type = typename data_set<>::label_type>
 
 /**
  * @brief Return the correct data set based on the plssvm::detail::cmd::parser_predict command line options.
- * @tparam label_type the type of the labels
  * @param[in] cmd_parser the provided command line parser
  * @return the data set based on the provided command line parser (`[[nodiscard]]`)
  */
-template <typename label_type = typename data_set<>::label_type>
-[[nodiscard]] inline data_set_variants data_set_factory_impl(const cmd::parser_predict &cmd_parser) {
+[[nodiscard]] inline data_set_variants data_set_factory(const cmd::parser_predict &cmd_parser) {
     // TODO: data set type
-    return data_set_variants{ classification_data_set<label_type>{ cmd_parser.input_filename } };
-}
-
-/**
- * @brief Return the correct data set based on the plssvm::detail::cmd::parser_scale command line options.
- * @tparam label_type the type of the labels
- * @param[in] cmd_parser the provided command line parser
- * @return the data set based on the provided command line parser (`[[nodiscard]]`)
- */
-template <typename label_type = typename data_set<>::label_type>
-[[nodiscard]] inline data_set_variants data_set_factory_impl(const cmd::parser_scale &cmd_parser) {
-    // TODO: always use classification_data_set?
-    if (!cmd_parser.restore_filename.empty()) {
-        typename plssvm::data_set<label_type>::scaling scale{ cmd_parser.restore_filename };
-        return data_set_variants{ classification_data_set<label_type>{ cmd_parser.input_filename, scale } };
+    if (cmd_parser.strings_as_labels) {
+        return make_classification_data_set<std::string>(cmd_parser.input_filename);
     } else {
-        typename plssvm::data_set<label_type>::scaling scale{ cmd_parser.lower, cmd_parser.upper };
-        return data_set_variants{ classification_data_set<label_type>{ cmd_parser.input_filename, scale } };
+        return make_classification_data_set<typename data_set<>::label_type>(cmd_parser.input_filename);
     }
 }
 
 /**
- * @brief Based on the provided command line @p cmd_parser, return the correct plssvm::data_set.
- * @tparam cmd_parser_type the type of the command line parser (train, predict, or scale)
+ * @brief Return the correct data set based on the plssvm::detail::cmd::parser_scale command line options.
+ * @details **Always** uses a classification data set since it allows more different label types.
  * @param[in] cmd_parser the provided command line parser
  * @return the data set based on the provided command line parser (`[[nodiscard]]`)
  */
-template <typename cmd_parser_type>
-[[nodiscard]] inline data_set_variants data_set_factory(const cmd_parser_type &cmd_parser) {
-    if (cmd_parser.svm == svm_type::csvr) {
-        return data_set_factory_impl<real_type>(cmd_parser);
-    } else if (cmd_parser.strings_as_labels) {
-        return data_set_factory_impl<std::string>(cmd_parser);
+[[nodiscard]] inline data_set_variants data_set_factory(const cmd::parser_scale &cmd_parser) {
+    if (cmd_parser.strings_as_labels) {
+        return make_classification_data_set<std::string>(cmd_parser.input_filename, make_scaling_factors<std::string>(cmd_parser));
     } else {
-        return data_set_factory_impl(cmd_parser);
+        using label_type = typename data_set<>::label_type;
+        return make_classification_data_set<label_type>(cmd_parser.input_filename, make_scaling_factors<label_type>(cmd_parser));
     }
 }
 
