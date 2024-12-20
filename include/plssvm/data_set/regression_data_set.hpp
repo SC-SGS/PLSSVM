@@ -142,9 +142,8 @@ void regression_data_set<U>::map_label() {
     for (std::size_t i = 0; i < labels.size(); ++i) {
         labels[i] = static_cast<real_type>((*labels_ptr_)[i]);
     }
-    aos_matrix<real_type> tmp{ shape{ 1, labels.size() }, labels };
 
-    y_ptr_ = std::make_shared<decltype(tmp)>(std::move(tmp));
+    y_ptr_ = std::make_shared<aos_matrix<real_type>>(shape{ 1, labels.size() }, labels);
 }
 
 }  // namespace plssvm
