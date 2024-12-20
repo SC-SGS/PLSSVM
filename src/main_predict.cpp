@@ -26,17 +26,15 @@
 #include "fmt/os.h"      // fmt::ostream, fmt::output_file
 #include "fmt/ranges.h"  // fmt::join
 
-#include <algorithm>   // std::for_each
-#include <chrono>      // std::chrono::{steady_clock, duration}, std::chrono_literals namespace
-#include <cstdlib>     // EXIT_SUCCESS, EXIT_FAILURE
-#include <exception>   // std::exception
-#include <fstream>     // std::ofstream
-#include <functional>  // std::mem_fn
-#include <iostream>    // std::cerr, std::endl
-#include <memory>      // std::unique_ptr, std::make_unique
-#include <utility>     // std::pair
-#include <variant>     // std::visit
-#include <vector>      // std::vector
+#include <chrono>       // std::chrono::{time_point, steady_clock, duration_cast, milliseconds}, std::chrono_literals namespace
+#include <cstdlib>      // EXIT_SUCCESS, EXIT_FAILURE
+#include <exception>    // std::exception
+#include <iostream>     // std::cerr, std::endl
+#include <memory>       // std::unique_ptr, std::make_unique
+#include <string_view>  // std::string_view
+#include <type_traits>  // std::remove_reference_t, std::is_same_v
+#include <variant>      // std::visit
+#include <vector>       // std::vector
 
 using namespace std::chrono_literals;
 
@@ -74,6 +72,7 @@ int main(int argc, char *argv[]) {
         const auto data_set_visitor = [&](auto &&data) {
             using label_type = typename std::remove_reference_t<decltype(data)>::label_type;
             using csvm_type = typename std::remove_reference_t<decltype(data)>::svm_fit_type;
+            using model_type = typename csvm_type::template model_type<label_type>;
 
             // check whether SYCL is used as backend (it is either requested directly or as automatic backend)
             const bool use_sycl_as_backend{ cmd_parser.backend == plssvm::backend_type::sycl || (cmd_parser.backend == plssvm::backend_type::automatic && plssvm::determine_default_backend() == plssvm::backend_type::sycl) };
@@ -104,7 +103,7 @@ int main(int argc, char *argv[]) {
             }();
 
             // create model
-            const plssvm::model<label_type> model{ cmd_parser.model_filename };
+            const model_type model{ cmd_parser.model_filename };
 
             // output parameter used to learn the model
             {

@@ -65,10 +65,6 @@ using optional_ref = std::optional<std::reference_wrapper<T>>;
  */
 template <typename U = int>
 class data_set {
-    // plssvm::model needs the default constructor
-    template <typename>
-    friend class model;
-
     // befriend the different C-SVM classes
     friend class csvc;
     friend class csvr;

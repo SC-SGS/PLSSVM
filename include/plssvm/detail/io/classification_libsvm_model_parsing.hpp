@@ -6,33 +6,35 @@
  * @license This file is part of the PLSSVM project which is released under the MIT license.
  *          See the LICENSE.md file in the project root for full license information.
  *
- * @brief Implements parsing functions for the LIBSVM model file.
+ * @brief Implements parsing functions for the LIBSVM SVC model file for the classification task.
  */
 
-#ifndef PLSSVM_DETAIL_IO_LIBSVM_MODEL_PARSING_HPP_
-#define PLSSVM_DETAIL_IO_LIBSVM_MODEL_PARSING_HPP_
+#ifndef PLSSVM_DETAIL_IO_CLASSIFICATION_LIBSVM_MODEL_PARSING_HPP_
+#define PLSSVM_DETAIL_IO_CLASSIFICATION_LIBSVM_MODEL_PARSING_HPP_
 #pragma once
 
-#include "plssvm/classification_types.hpp"      // plssvm::classification_type
-#include "plssvm/constants.hpp"                 // plssvm::real_type, plssvm::PADDING_SIZE
-#include "plssvm/data_set/data_set.hpp"         // plssvm::data_set
-#include "plssvm/detail/assert.hpp"             // PLSSVM_ASSERT
-#include "plssvm/detail/io/file_reader.hpp"     // plssvm::detail::io::file_reader
-#include "plssvm/detail/io/libsvm_parsing.hpp"  // plssvm::detail::io::parse_libsvm_num_features
-#include "plssvm/detail/logging.hpp"            // plssvm::detail::log
-#include "plssvm/detail/memory_size.hpp"        // plssvm::memory_size, custom literals
-#include "plssvm/detail/string_conversion.hpp"  // plssvm::detail::{convert_to, split_as}
-#include "plssvm/detail/string_utility.hpp"     // plssvm::detail::{trim, trim_left, to_lower_case}
-#include "plssvm/gamma.hpp"                     // plssvm::get_gamma_string
-#include "plssvm/kernel_function_types.hpp"     // plssvm::kernel_function_type
-#include "plssvm/matrix.hpp"                    // plssvm::soa_matrix
-#include "plssvm/parameter.hpp"                 // plssvm::parameter
-#include "plssvm/shape.hpp"                     // plssvm::shape
-#include "plssvm/verbosity_levels.hpp"          // plssvm::verbosity_level
+#include "plssvm/classification_types.hpp"              // plssvm::classification_type
+#include "plssvm/constants.hpp"                         // plssvm::real_type, plssvm::PADDING_SIZE
+#include "plssvm/data_set/classification_data_set.hpp"  // plssvm::classification_data_set
+#include "plssvm/data_set/data_set.hpp"                 // plssvm::data_set
+#include "plssvm/detail/assert.hpp"                     // PLSSVM_ASSERT
+#include "plssvm/detail/io/file_reader.hpp"             // plssvm::detail::io::file_reader
+#include "plssvm/detail/io/libsvm_parsing.hpp"          // plssvm::detail::io::parse_libsvm_num_features
+#include "plssvm/detail/logging.hpp"                    // plssvm::detail::log
+#include "plssvm/detail/memory_size.hpp"                // plssvm::memory_size, custom literals
+#include "plssvm/detail/string_conversion.hpp"          // plssvm::detail::{convert_to, split_as}
+#include "plssvm/detail/string_utility.hpp"             // plssvm::detail::{trim, trim_left, to_lower_case}
+#include "plssvm/gamma.hpp"                             // plssvm::get_gamma_string
+#include "plssvm/kernel_function_types.hpp"             // plssvm::kernel_function_type
+#include "plssvm/matrix.hpp"                            // plssvm::soa_matrix
+#include "plssvm/parameter.hpp"                         // plssvm::parameter
+#include "plssvm/shape.hpp"                             // plssvm::shape
+#include "plssvm/verbosity_levels.hpp"                  // plssvm::verbosity_level
 
 #include "fmt/compile.h"  // FMT_COMPILE
 #include "fmt/format.h"   // fmt::format_to, fmt::format
 #include "fmt/os.h"       // fmt::ostream, fmt::output_file
+#include "fmt/ranges.h"   // fmt::join
 #ifdef _OPENMP
     #include <omp.h>  // omp_get_num_threads
 #endif
@@ -76,7 +78,7 @@ namespace plssvm::detail::io {
     if (x > y) {
         std::swap(x, y);
     }
-    const std::size_t idx = (num_classes * (num_classes - 1) / 2) - (num_classes - x) * ((num_classes - x) - 1) / 2 + y - x - 1;
+    const std::size_t idx = (num_classes * (num_classes - 1) / 2) - (((num_classes - x) * ((num_classes - x) - 1)) / 2) + y - x - 1;
 
     PLSSVM_ASSERT(idx < num_classes * (num_classes - 1) / 2,
                   "The final index ({}) must be smaller than the total number of binary classifiers ({}) for {} different classes!",
@@ -119,7 +121,7 @@ namespace plssvm::detail::io {
 }
 
 /**
- * @brief Parse the modified LIBSVM model file header.
+ * @brief Parse the modified LIBSVM SVC model file header.
  * @details An example modified LIBSVM model file header for the linear kernel and three labels classified via one vs. all, could look like
  * @code
  * svm_type c_svc
@@ -156,7 +158,7 @@ namespace plssvm::detail::io {
  * @return [the SVM parameter; the values of rho; the labels for each data point; the different classes; the number of support vectors per class; the number of header lines] (`[[nodiscard]]`)
  */
 template <typename label_type>
-[[nodiscard]] inline std::tuple<plssvm::parameter, std::vector<real_type>, std::vector<label_type>, std::vector<label_type>, std::vector<std::size_t>, std::size_t> parse_libsvm_model_header(const std::vector<std::string_view> &lines) {
+[[nodiscard]] inline std::tuple<plssvm::parameter, std::vector<real_type>, std::vector<label_type>, std::vector<label_type>, std::vector<std::size_t>, std::size_t> parse_libsvm_model_header_classification(const std::vector<std::string_view> &lines) {
     // data to read
     plssvm::parameter params{};
     std::vector<real_type> rho{};
@@ -391,7 +393,7 @@ template <typename label_type>
  * @attention The PLSSVM model file is only compatible with LIBSVM for the one vs. one classification type.
  * @return [the data points; the weights; the classification type used to create the model] (`[[nodiscard]]`)
  */
-[[nodiscard]] inline std::tuple<soa_matrix<real_type>, std::vector<aos_matrix<real_type>>, classification_type> parse_libsvm_model_data(const file_reader &reader, const std::vector<std::size_t> &num_sv_per_class, const std::size_t skipped_lines) {
+[[nodiscard]] inline std::tuple<soa_matrix<real_type>, std::vector<aos_matrix<real_type>>, classification_type> parse_libsvm_model_data_classification(const file_reader &reader, const std::vector<std::size_t> &num_sv_per_class, const std::size_t skipped_lines) {
     PLSSVM_ASSERT(reader.is_open(), "The file_reader is currently not associated with a file!");
     PLSSVM_ASSERT(num_sv_per_class.size() > 1, "At least two classes must be present!");
     PLSSVM_ASSERT(skipped_lines <= reader.num_lines(), "Tried to skipp {} lines, but only {} are present!", skipped_lines, reader.num_lines());
@@ -566,7 +568,7 @@ template <typename label_type>
 }
 
 /**
- * @brief Write the modified LIBSVM model file header to @p out.
+ * @brief Write the modified LIBSVM SVC model file header to @p out.
  * @details An example modified LIBSVM model file header for the linear kernel and three labels classified via one vs. all, could look like
  * @code
  * svm_type c_svc
@@ -587,7 +589,7 @@ template <typename label_type>
  * @return the order of the different classes as it should appear in the following data section (`[[nodiscard]]`)
  */
 template <typename label_type>
-[[nodiscard]] inline std::vector<label_type> write_libsvm_model_header(fmt::ostream &out, const plssvm::parameter &params, const std::vector<real_type> &rho, const data_set<label_type> &data) {
+[[nodiscard]] inline std::vector<label_type> write_libsvm_model_header_classification(fmt::ostream &out, const plssvm::parameter &params, const std::vector<real_type> &rho, const classification_data_set<label_type> &data) {
     PLSSVM_ASSERT(data.has_labels(), "Cannot write a model file that does not include labels!");
     PLSSVM_ASSERT(!rho.empty(), "At least one rho value must be provided!");
 
@@ -643,7 +645,7 @@ template <typename label_type>
 }
 
 /**
- * @brief Write the modified LIBSVM model to the file @p filename.
+ * @brief Write the modified LIBSVM SVC model to the file @p filename.
  * @details An example modified LIBSVM model file for the linear kernel and three labels classified via one vs. all, could look like
  * @code
  * svm_type c_svc
@@ -674,7 +676,7 @@ template <typename label_type>
  * @attention The PLSSVM model file is only compatible with LIBSVM for the one vs. one classification type.
  */
 template <typename label_type>
-inline void write_libsvm_model_data(const std::string &filename, const plssvm::parameter &params, const classification_type classification, const std::vector<real_type> &rho, const std::vector<aos_matrix<real_type>> &alpha, const std::vector<std::vector<std::size_t>> &index_sets, const data_set<label_type> &data) {
+inline void write_libsvm_model_data_classification(const std::string &filename, const plssvm::parameter &params, const classification_type classification, const std::vector<real_type> &rho, const std::vector<aos_matrix<real_type>> &alpha, const std::vector<std::vector<std::size_t>> &index_sets, const classification_data_set<label_type> &data) {
     PLSSVM_ASSERT(!filename.empty(), "The provided model filename must not be empty!");
     PLSSVM_ASSERT(data.has_labels(), "Cannot write a model file that does not include labels!");
     PLSSVM_ASSERT(rho.size() == calculate_number_of_classifiers(classification, data.num_classes()),
@@ -725,7 +727,7 @@ inline void write_libsvm_model_data(const std::string &filename, const plssvm::p
     fmt::ostream out = fmt::output_file(filename);
 
     // write header information
-    const std::vector<label_type> label_order = write_libsvm_model_header(out, params, rho, data);
+    const std::vector<label_type> label_order = write_libsvm_model_header_classification(out, params, rho, data);
 
     // the maximum size of one formatted LIBSVM entry, e.g., 1234:1.365363e+10
     // biggest number representable as std::size_t: 18446744073709551615 -> 20 chars
@@ -767,7 +769,7 @@ inline void write_libsvm_model_data(const std::string &filename, const plssvm::p
     {
         // preallocate string buffer, only ONE allocation
         std::string out_string;
-        out_string.reserve(STRING_BUFFER_SIZE.num_bytes() + (num_features + num_alpha_per_point) * CHARS_PER_BLOCK);  // oversubscribe buffer that at least one additional line fits into it
+        out_string.reserve(STRING_BUFFER_SIZE.num_bytes() + ((num_features + num_alpha_per_point) * CHARS_PER_BLOCK));  // oversubscribe buffer that at least one additional line fits into it
         std::vector<real_type> alpha_per_point(num_alpha_per_point);
 
         // loop over all classes, since they must be sorted
@@ -832,4 +834,4 @@ inline void write_libsvm_model_data(const std::string &filename, const plssvm::p
 
 }  // namespace plssvm::detail::io
 
-#endif  // PLSSVM_DETAIL_IO_LIBSVM_MODEL_PARSING_HPP_
+#endif  // PLSSVM_DETAIL_IO_CLASSIFICATION_LIBSVM_MODEL_PARSING_HPP_

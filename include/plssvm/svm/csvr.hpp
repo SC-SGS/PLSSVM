@@ -13,13 +13,38 @@
 #define PLSSVM_SVM_CSVR_HPP_
 #pragma once
 
-#include "plssvm/data_set/regression_data_set.hpp"  // plssvm::regression_data_set
-#include "plssvm/svm/csvm.hpp"                      // plssvm::csvm
+#include "plssvm/constants.hpp"                            // plssvm::PADDING_SIZE, plssvm::real_type
+#include "plssvm/data_set/regression_data_set.hpp"         // plssvm::regression_data_set
+#include "plssvm/detail/assert.hpp"                        // PLSSVM_ASSERT
+#include "plssvm/detail/logging.hpp"                       // plssvm::detail::log
+#include "plssvm/detail/tracking/performance_tracker.hpp"  // PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_EVENT, plssvm::detail::tracking::tracking_entry
+#include "plssvm/exceptions/exceptions.hpp"                // plssvm::invalid_parameter_exception
+#include "plssvm/kernel_function_types.hpp"                // plssvm::kernel_function_type
+#include "plssvm/matrix.hpp"                               // plssvm::aos_matrix
+#include "plssvm/model/regression_model.hpp"               // plssvm::regression_model
+#include "plssvm/parameter.hpp"                            // plssvm::parameter
+#include "plssvm/svm/csvm.hpp"                             // plssvm::csvm
+#include "plssvm/verbosity_levels.hpp"                     // plssvm::verbosity_level
+
+#include "igor/igor.hpp"  // igor::parser
+
+#include <algorithm>  // std::all_of
+#include <chrono>     // std::chrono::{time_point, steady_clock, duration_cast, milliseconds}
+#include <cmath>      // std::clamp
+#include <cstddef>    // std::size_t
+#include <optional>   // std::make_optional
+#include <tuple>      // std::tie
+#include <utility>    // std::move
+#include <vector>     // std::vector
 
 namespace plssvm {
 
 class csvr : virtual public csvm {
   public:
+    /// The type of the model returned by a call to the `fit` function and used in the `predict` and `score` functions.
+    template <typename T>
+    using model_type = ::plssvm::regression_model<T>;
+
     //*************************************************************************************************************************************//
     //                                                              fit model                                                              //
     //*************************************************************************************************************************************//
@@ -37,9 +62,65 @@ class csvr : virtual public csvm {
      * @return the learned model (`[[nodiscard]]`)
      */
     template <typename label_type, typename... Args>
-    [[nodiscard]] model<label_type> fit(const regression_data_set<label_type> &data, Args &&...named_args) const {
-        std::cerr << "REGRESSION FIT" << std::endl;
-        return csvm::fit(data, std::forward<Args>(named_args)...);
+    [[nodiscard]] regression_model<label_type> fit(const regression_data_set<label_type> &data, Args &&...named_args) const {
+        PLSSVM_ASSERT(data.data().is_padded(), "The data points must be padded!");
+        PLSSVM_ASSERT((data.data().padding() == shape{ PADDING_SIZE, PADDING_SIZE }),
+                      "The provided matrix must be padded with {}, but is padded with {}!",
+                      shape{ PADDING_SIZE, PADDING_SIZE },
+                      data.data().padding());
+#if defined(PLSSVM_ENABLE_ASSERTS)
+        if (params_.kernel_type == kernel_function_type::chi_squared) {
+            PLSSVM_ASSERT(std::all_of(data.data().data(), data.data().data() + data.data().size_padded(), [](const real_type val) { return val >= real_type{ 0.0 }; }),
+                          "The chi-squared kernel is only well defined for non-negative values!");
+        }
+#endif
+
+        if (!data.has_labels()) {
+            throw invalid_parameter_exception{ "No labels given for training! Maybe the data is only usable for prediction?" };
+        }
+
+        PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_EVENT("fit start");
+
+        igor::parser parser{ named_args... };
+
+        // compile time check: only named parameters are permitted
+        static_assert(!parser.has_unnamed_arguments(), "Can only use named parameter!");
+        // compile time check: each named parameter must only be passed once
+        static_assert(!parser.has_duplicates(), "Can only use each named parameter once!");
+        // compile time check: only some named parameters are allowed
+        static_assert(!parser.has_other_than(epsilon, max_iter, solver), "An illegal named parameter has been passed!");
+
+        // start fitting the data set using a C-SVM
+        const std::chrono::time_point start_time = std::chrono::steady_clock::now();
+
+        // copy parameter and set gamma if necessary
+        parameter params{ params_ };
+        // if the active gamma_type variant member isn't a real_type, replace it with a real_type value by calculating its true value based on the used data set
+        // -> params.gamma is guaranteed to be a real_type now!
+        params.gamma = calculate_gamma_value(params_.gamma, data.data());
+
+        // create regression model
+        regression_model<label_type> csvr_model{ params, data };
+        std::vector<unsigned long long> num_iters{};
+
+        // solve the minimization problem
+        aos_matrix<real_type> alpha{};
+        std::tie(alpha, *csvr_model.rho_ptr_, num_iters) = this->solve_lssvm_system_of_linear_equations(*data.data_ptr_, *data.y_ptr_, params, std::forward<Args>(named_args)...);
+        csvr_model.alpha_ptr_->push_back(std::move(alpha));
+
+        // TODO: implement correct fit logic for the regression task
+
+        // move number of CG iterations to model
+        csvr_model.num_iters_ = std::make_optional(std::move(num_iters));
+
+        const std::chrono::time_point end_time = std::chrono::steady_clock::now();
+        detail::log(verbosity_level::full | verbosity_level::timing,
+                    "\nLearned the SVR classifier for regression in {}.\n\n",
+                    detail::tracking::tracking_entry{ "cg", "total_runtime", std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time) });
+
+        PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_EVENT("fit end");
+
+        return csvr_model;
     }
 
     //*************************************************************************************************************************************//
@@ -56,10 +137,62 @@ class csvr : virtual public csvm {
      * @return the predicted labels (`[[nodiscard]]`)
      */
     template <typename label_type>
-    [[nodiscard]] std::vector<label_type> predict(const model<label_type> &model, const regression_data_set<label_type> &data) const {
-        std::cerr << "REGRESSION PREDICT" << std::endl;
-        return csvm::predict(model, data);
+    [[nodiscard]] std::vector<label_type> predict(const regression_model<label_type> &model, const regression_data_set<label_type> &data) const {
+        PLSSVM_ASSERT(model.support_vectors().is_padded(), "The support vectors must be padded!");
+        PLSSVM_ASSERT((model.support_vectors().padding() == shape{ PADDING_SIZE, PADDING_SIZE }),
+                      "The support vectors must be padded with {}, but is padded with {}!",
+                      shape{ PADDING_SIZE, PADDING_SIZE },
+                      model.support_vectors().padding());
+        PLSSVM_ASSERT(data.data().is_padded(), "The data points must be padded!");
+        PLSSVM_ASSERT((data.data().padding() == shape{ PADDING_SIZE, PADDING_SIZE }),
+                      "The provided predict points must be padded with {}, but is padded with {}!",
+                      shape{ PADDING_SIZE, PADDING_SIZE },
+                      data.data().padding());
+#if defined(PLSSVM_ENABLE_ASSERTS)
+        if (params_.kernel_type == kernel_function_type::chi_squared) {
+            PLSSVM_ASSERT(std::all_of(data.data().data(), data.data().data() + data.data().size_padded(), [](const real_type val) { return val >= real_type{ 0.0 }; }),
+                          "The chi-squared kernel is only well defined for non-negative values!");
+        }
+#endif
+
+        if (model.num_features() != data.num_features()) {
+            throw invalid_parameter_exception{ fmt::format("Number of features per data point ({}) must match the number of features per support vector of the provided model ({})!", data.num_features(), model.num_features()) };
+        }
+
+        PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_EVENT("predict start");
+
+        // convert predicted values to the correct labels
+        std::vector<label_type> predicted_labels(data.num_data_points());
+
+        PLSSVM_ASSERT(data.data_ptr_ != nullptr, "The data_ptr_ (predict points) may never be a nullptr!");
+        const soa_matrix<real_type> &predict_points = *data.data_ptr_;
+
+        PLSSVM_ASSERT(data.data_ptr_ != nullptr, "The data_ptr_ (model) may never be a nullptr!");
+        PLSSVM_ASSERT(model.alpha_ptr_ != nullptr, "The alpha_ptr_ may never be a nullptr!");
+        PLSSVM_ASSERT(model.alpha_ptr_->size() == 1, "The alpha vector must only contain a single aos_matrix of size {}x{}!", 1, model.num_support_vectors());
+        PLSSVM_ASSERT(model.alpha_ptr_->front().num_rows() == 1, "The number of rows in the matrix must be exactly one, but is {}!", model.alpha_ptr_->front().num_rows());
+
+        const soa_matrix<real_type> &sv = *model.data_->data_ptr_;
+        const aos_matrix<real_type> &alpha = model.alpha_ptr_->front();  // num_classes x num_data_points
+
+        // predict values
+        const aos_matrix<real_type> votes = this->run_predict_values(model.params_, sv, alpha, *model.rho_ptr_, *model.w_ptr_, predict_points);
+
+        PLSSVM_ASSERT(votes.num_rows() == data.num_data_points(), "The number of votes ({}) must be equal the number of data points ({})!", votes.num_rows(), data.num_data_points());
+        PLSSVM_ASSERT(votes.num_cols() == 1, "The votes contain {} values, but must contain exactly one value!", votes.num_cols());
+
+        // TODO: implement correct predict logic for the regression task
+
+        PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_EVENT("predict end");
+
+        return predicted_labels;
     }
+
+    // TODO: not possible since the LIBSVM SVR model loses the original label values?!
+    // template <typename label_type>
+    // [[nodiscard]] real_type score(const regression_model<label_type> &model) const {
+    //     return this->score(model, model.data_);
+    // }
 
     /**
      * @brief Calculate the accuracy of the labeled @p data set using the @p model.
@@ -73,9 +206,39 @@ class csvr : virtual public csvm {
      * @return the accuracy of the labeled @p data (`[[nodiscard]]`)
      */
     template <typename label_type>
-    [[nodiscard]] real_type score(const model<label_type> &model, const regression_data_set<label_type> &data) const {
-        std::cerr << "REGRESSION SCORE" << std::endl;
-        return csvm::score(model, data);
+    [[nodiscard]] real_type score(const regression_model<label_type> &model, const regression_data_set<label_type> &data) const {
+        // the data set must contain labels in order to score the learned model
+        if (!data.has_labels()) {
+            throw invalid_parameter_exception{ "The data set to score must have labels!" };
+        }
+        // the number of features must be equal
+        if (model.num_features() != data.num_features()) {
+            throw invalid_parameter_exception{ fmt::format("Number of features per data point ({}) must match the number of features per support vector of the provided model ({})!", data.num_features(), model.num_features()) };
+        }
+
+        // predict labels
+        const std::vector<label_type> predicted_labels = this->predict(model, data);
+        // correct labels
+        const std::vector<label_type> &correct_labels = *data.labels();
+
+        // calculate the mean
+        real_type mean_correct{ 0.0 };
+#pragma omp parallel for default(none) shared(correct_labels) reduction(+ : mean_correct)
+        for (std::size_t i = 0; i < correct_labels.size(); ++i) {
+            mean_correct += static_cast<real_type>(correct_labels[i]);
+        }
+        mean_correct /= static_cast<real_type>(correct_labels.size());
+
+        // calculate the R^2 score
+        real_type ss_res{ 0.0 };
+        real_type ss_tot{ 0.0 };
+#pragma omp parallel for default(none) shared(correct_labels, predicted_labels) firstprivate(mean_correct) reduction(+ : ss_res, ss_tot)
+        for (std::size_t i = 0; i < correct_labels.size(); ++i) {
+            ss_res += static_cast<real_type>(correct_labels[i] - predicted_labels[i]) * static_cast<real_type>(correct_labels[i] - predicted_labels[i]);
+            ss_tot += static_cast<real_type>(correct_labels[i] - mean_correct) * static_cast<real_type>(correct_labels[i] - mean_correct);
+        }
+
+        return std::clamp(real_type{ 1.0 } - (ss_res / ss_tot), real_type{ 0.0 }, real_type{ 1.0 });
     }
 };
 

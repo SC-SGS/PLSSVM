@@ -21,20 +21,54 @@
     #include "hws/system_hardware_sampler.hpp"  // hws::system_hardware_sampler
 #endif
 
-#include <algorithm>    // std::for_each
-#include <chrono>       // std::chrono::{steady_clock, duration, milliseconds}, std::chrono_literals namespace
+#include <chrono>       // std::chrono::{time_point, steady_clock, duration_cast, milliseconds}, std::chrono_literals namespace
 #include <cstddef>      // std::size_t
 #include <cstdlib>      // EXIT_SUCCESS, EXIT_FAILURE
 #include <exception>    // std::exception
-#include <functional>   // std::mem_fn
 #include <iostream>     // std::cerr, std::endl
 #include <memory>       // std::unique_ptr, std::make_unique
-#include <type_traits>  // std::remove_reference_t
-#include <utility>      // std::pair
+#include <string_view>  // std::string_view
+#include <type_traits>  // std::remove_reference_t, std::is_same_v
 #include <variant>      // std::visit
 #include <vector>       // std::vector
 
 using namespace std::chrono_literals;
+
+/**
+ * @brief Fit a C-SVC model using the provided C-SVC, classification data set and command line parser.
+ * @tparam svm_type the type of the C-SVC
+ * @tparam label_type the type of the labels
+ * @param[in] svm the C-SVC used to fit the model
+ * @param[in] data the classification data set used to train the model
+ * @param[in] cmd_parser the command line parser containing the user provided parameters
+ * @return the learned classification model (`[[nodiscard]]`)
+ */
+template <typename svm_type, typename label_type>
+[[nodiscard]] plssvm::classification_model<label_type> fit_csvc(const svm_type &svm, const plssvm::classification_data_set<label_type> &data, const plssvm::detail::cmd::parser_train &cmd_parser) {
+    if (cmd_parser.max_iter == std::size_t{ 0 }) {
+        return svm.fit(data, plssvm::epsilon = cmd_parser.epsilon, plssvm::classification = cmd_parser.classification, plssvm::solver = cmd_parser.solver);
+    } else {
+        return svm.fit(data, plssvm::epsilon = cmd_parser.epsilon, plssvm::max_iter = cmd_parser.max_iter, plssvm::classification = cmd_parser.classification, plssvm::solver = cmd_parser.solver);
+    }
+}
+
+/**
+ * @brief Fit a C-SVR model using the provided C-SVR, regression data set and command line parser.
+ * @tparam svm_type the type of the C-SVR
+ * @tparam label_type the type of the labels
+ * @param[in] svm the C-SVR used to fit the model
+ * @param[in] data the regression data set used to train the model
+ * @param[in] cmd_parser the command line parser containing the user provided parameters
+ * @return the learned regression model (`[[nodiscard]]`)
+ */
+template <typename svm_type, typename label_type>
+[[nodiscard]] plssvm::regression_model<label_type> fit_csvr(const svm_type &svm, const plssvm::regression_data_set<label_type> &data, const plssvm::detail::cmd::parser_train &cmd_parser) {
+    if (cmd_parser.max_iter == std::size_t{ 0 }) {
+        return svm.fit(data, plssvm::epsilon = cmd_parser.epsilon, plssvm::solver = cmd_parser.solver);
+    } else {
+        return svm.fit(data, plssvm::epsilon = cmd_parser.epsilon, plssvm::max_iter = cmd_parser.max_iter, plssvm::solver = cmd_parser.solver);
+    }
+}
 
 int main(int argc, char *argv[]) {
     // create std::unique_ptr containing a plssvm::scope_guard
@@ -71,6 +105,7 @@ int main(int argc, char *argv[]) {
         const auto data_set_visitor = [&](auto &&data) {
             using label_type = typename std::remove_reference_t<decltype(data)>::label_type;
             using csvm_type = typename std::remove_reference_t<decltype(data)>::svm_fit_type;
+            using model_type = typename csvm_type::template model_type<label_type>;
 
             // check whether SYCL is used as backend (it is either requested directly or as automatic backend)
             const bool use_sycl_as_backend{ cmd_parser.backend == plssvm::backend_type::sycl || (cmd_parser.backend == plssvm::backend_type::automatic && plssvm::determine_default_backend() == plssvm::backend_type::sycl) };
@@ -100,18 +135,17 @@ int main(int argc, char *argv[]) {
                 }
             }();
 
-            // only specify plssvm::max_iter if it isn't its default value
-            const plssvm::model<label_type> model =
-                cmd_parser.max_iter == std::size_t{ 0 }
-                    ? svm->fit(data,
-                               plssvm::epsilon = cmd_parser.epsilon,
-                               plssvm::classification = cmd_parser.classification,
-                               plssvm::solver = cmd_parser.solver)
-                    : svm->fit(data,
-                               plssvm::epsilon = cmd_parser.epsilon,
-                               plssvm::max_iter = cmd_parser.max_iter,
-                               plssvm::classification = cmd_parser.classification,
-                               plssvm::solver = cmd_parser.solver);
+            // only specify the named arguments available for the respective SVM type
+            const model_type model = [&]() {
+                if constexpr (std::is_same_v<csvm_type, plssvm::csvc>) {
+                    return fit_csvc(*svm, data, cmd_parser);
+                } else if constexpr (std::is_same_v<csvm_type, plssvm::csvr>) {
+                    return fit_csvr(*svm, data, cmd_parser);
+                } else {
+                    // unreachable
+                    plssvm::detail::unreachable();
+                }
+            }();
             // save model to file
             model.save(cmd_parser.model_filename);
         };

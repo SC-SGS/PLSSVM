@@ -45,6 +45,9 @@ class regression_data_set : public data_set<U> {
 
     // befriend C-SVR class used with the regression data set
     friend class csvr;
+    // befriend C-SVR model used with the regression data set
+    template <typename>
+    friend class regression_model;
 
     using base_data_set = data_set<U>;
 

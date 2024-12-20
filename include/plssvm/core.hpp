@@ -28,7 +28,9 @@
 #include "plssvm/kernel_function_types.hpp"                  // all supported kernel function types
 #include "plssvm/kernel_functions.hpp"                       // implementation of all supported kernel functions
 #include "plssvm/matrix.hpp"                                 // a custom matrix class
-#include "plssvm/model.hpp"                                  // the model as a result of training a C-SVM
+#include "plssvm/model/classification_model.hpp"             // the model as a result of training a C-SVC
+#include "plssvm/model/model.hpp"                            // the model as a result of training a C-SVM
+#include "plssvm/model/regression_model.hpp"                 // the model as a result of training a C-SVR
 #include "plssvm/parameter.hpp"                              // the C-SVM parameter
 #include "plssvm/regression_report.hpp"                      // reports different metrics (e.g., mean squared error or R^2 score) for the regression task after scoring
 #include "plssvm/shape.hpp"                                  // shape for a matrix or device pointer

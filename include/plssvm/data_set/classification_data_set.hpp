@@ -49,6 +49,9 @@ class classification_data_set : public data_set<U> {
 
     // befriend C-SVC class used with the classification data set
     friend class csvc;
+    // befriend C-SVC model used with the classification data set
+    template <typename>
+    friend class classification_model;
 
     using base_data_set = data_set<U>;
 
