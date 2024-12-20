@@ -320,6 +320,26 @@ pipeline {
                         values 'AMD'
                       }
                     }
+                    exclude { // TODO: enable if hip is working again on cuda
+                      axis{
+                        name 'BACKEND'
+                        values 'HIP'
+                      }
+                      axis{
+                        name 'ARCHITECTURE'
+                        values 'CUDA'
+                      }
+                    }
+                    exclude { // TODO: enable if adaptivecpp is workingwith new llvm version
+                      axis{
+                        name 'BACKEND'
+                        values 'STDPAR-ADAPTIVECPP'
+                      }
+                      axis{
+                        name 'ARCHITECTURE'
+                        values 'AMD'
+                      }
+                    }
                   }
 
 
