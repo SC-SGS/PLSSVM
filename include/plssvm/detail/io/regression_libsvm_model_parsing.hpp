@@ -422,10 +422,8 @@ inline void write_libsvm_model_header_regression(fmt::ostream &out, const plssvm
  * @tparam label_type the type of the labels (any arithmetic type, except bool, or std::string)
  * @param[in] filename the file to write the LIBSVM model to
  * @param[in] params the SVM parameters
- * @param[in] classification the used multi-class classification strategy
  * @param[in] rho the rho value resulting from the hyperplane learning
  * @param[in] alpha the weights learned by the SVM
- * @param[in] index_sets index sets containing the SV indices per class
  * @param[in] data the data used to create the model
  * @attention The PLSSVM model file is only compatible with LIBSVM for the one vs. one classification type.
  */

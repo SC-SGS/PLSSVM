@@ -76,7 +76,7 @@ namespace plssvm {
 
 /**
  * @brief Base class for all C-SVM backends.
- * @details This class implements all features shared between all C-SVM backends. It defines the whole public API of a C-SVM.
+ * @details This class implements all features shared between all C-SVM backends.
  */
 class csvm {
   public:

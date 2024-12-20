@@ -39,6 +39,10 @@
 
 namespace plssvm {
 
+/**
+ * @brief Base class for all C-SVR backends.
+ * @details This class implements all features shared between all C-SVR backends. It defines the whole public API of a C-SVR.
+ */
 class csvr : virtual public csvm {
   public:
     /// The type of the model returned by a call to the `fit` function and used in the `predict` and `score` functions.
@@ -128,8 +132,7 @@ class csvr : virtual public csvm {
     //*************************************************************************************************************************************//
     /**
      * @brief Predict the labels for the @p data set using the @p model.
-     * @details Uses the one vs. all (OAA) for the multi-class classification task.
-     * @tparam label_type the type of the label (an arithmetic type or `std::string`)
+     * @tparam label_type the type of the label
      * @param[in] model a previously learned model
      * @param[in] data the data to predict the labels for
      * @throws plssvm::invalid_parameter_exception if the number of features in the @p model's support vectors don't match the number of features in the @p data set
@@ -189,21 +192,27 @@ class csvr : virtual public csvm {
     }
 
     // TODO: not possible since the LIBSVM SVR model loses the original label values?!
+    // /**
+    //  * @brief Calculate the regression loss of the @p model.
+    //  * @tparam label_type the type of the label
+    //  * @param[in] model a previously learned model
+    //  * @throws plssvm::exception any exception thrown in the respective backend's implementation of `plssvm::csvm::predict_values`
+    //  * @return the regression loss of the model (`[[nodiscard]]`)
+    //  */
     // template <typename label_type>
     // [[nodiscard]] real_type score(const regression_model<label_type> &model) const {
     //     return this->score(model, model.data_);
     // }
 
     /**
-     * @brief Calculate the accuracy of the labeled @p data set using the @p model.
-     * @details Uses the one vs. all (OAA) for the multi-class classification task.
-     * @tparam label_type the type of the label (an arithmetic type or `std::string`)
+     * @brief Calculate the regression loss of the labeled @p data set using the @p model.
+     * @tparam label_type the type of the label
      * @param[in] model a previously learned model
      * @param[in] data the labeled data set to score
      * @throws plssvm::invalid_parameter_exception if the @p data to score has no labels
      * @throws plssvm::invalid_parameter_exception if the number of features in the @p model's support vectors don't match the number of features in the @p data set
      * @throws plssvm::exception any exception thrown in the respective backend's implementation of `plssvm::csvm::predict_values`
-     * @return the accuracy of the labeled @p data (`[[nodiscard]]`)
+     * @return the regression loss of the labeled @p data (`[[nodiscard]]`)
      */
     template <typename label_type>
     [[nodiscard]] real_type score(const regression_model<label_type> &model, const regression_data_set<label_type> &data) const {

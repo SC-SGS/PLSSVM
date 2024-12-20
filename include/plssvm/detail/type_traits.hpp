@@ -347,6 +347,7 @@ constexpr bool is_container_v = is_sequence_container_v<T> || is_associative_con
  */
 template <typename T, typename... Types>
 struct is_one_type_of {
+    /// Set to `true` if @p T is in the type set @p Types.
     constexpr static bool value = (std::is_same_v<T, Types> || ...);
 };
 

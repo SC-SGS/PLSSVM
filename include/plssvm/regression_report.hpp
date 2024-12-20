@@ -214,7 +214,7 @@ std::ostream &operator<<(std::ostream &out, const regression_report &report);
  * @param[in] metric the metric
  * @return the output-stream
  */
-std::ostream &operator<<(std::ostream &out, const regression_report::metric &m);
+std::ostream &operator<<(std::ostream &out, const regression_report::metric &metric);
 
 }  // namespace plssvm
 

@@ -46,6 +46,10 @@
 
 namespace plssvm {
 
+/**
+ * @brief Base class for all C-SVC backends.
+ * @details This class implements all features shared between all C-SVC backends. It defines the whole public API of a C-SVC.
+ */
 class csvc : virtual public csvm {
   public:
     /// The type of the model returned by a call to the `fit` function and used in the `predict` and `score` functions.
@@ -422,6 +426,14 @@ class csvc : virtual public csvm {
         return predicted_labels;
     }
 
+    /**
+     * @brief Calculate the accuracy of the @p model.
+     * @details Uses the one vs. all (OAA) for the multi-class classification task.
+     * @tparam label_type the type of the label (an arithmetic type or `std::string`)
+     * @param[in] model a previously learned model
+     * @throws plssvm::exception any exception thrown in the respective backend's implementation of `plssvm::csvm::predict_values`
+     * @return the accuracy of the model (`[[nodiscard]]`)
+     */
     template <typename label_type>
     [[nodiscard]] real_type score(const classification_model<label_type> &model) const {
         return this->score(model, model.data_);

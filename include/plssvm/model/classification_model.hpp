@@ -32,7 +32,6 @@
 #include <cstddef>   // std::size_t
 #include <memory>    // std::shared_ptr, std::make_shared
 #include <numeric>   // std::iota
-#include <optional>  // std::optional
 #include <string>    // std::string
 #include <tuple>     // std::tie
 #include <utility>   // std::move
@@ -41,12 +40,7 @@
 namespace plssvm {
 
 /**
- * @example model_examples.cpp
- * @brief A few examples regarding the plssvm::model class.
- */
-
-/**
- * @brief Implements a class encapsulating the result of a call to the SVM fit function. A model is used to predict the labels of a new data set.
+ * @brief Implements a class encapsulating the result of a call to the C-SVC fit function. A model is used to predict the labels of a new data set.
  * @tparam U the type of the used labels (must be an arithmetic type or `std:string`; default: `int`)
  */
 template <typename U = int>
@@ -59,6 +53,7 @@ class classification_model : public model<U> {
     friend class csvm;
     friend class csvc;
 
+    /// The base model class.
     using base_model = model<U>;
 
     // TODO: better?

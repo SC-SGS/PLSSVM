@@ -220,10 +220,12 @@ class data_set {
     data_set(data_set &&) noexcept = default;
     /**
      * @brief Default copy assignment operator.
+     * @return `*this`
      */
     data_set &operator=(const data_set &) = default;
     /**
      * @brief Default move assignment operator.
+     * @return `*this`
      */
     data_set &operator=(data_set &&) noexcept = default;
 
@@ -300,8 +302,7 @@ class data_set {
         data_ptr_{ std::make_shared<soa_matrix<real_type>>() } { }
 
     /**
-     * @brief Create the mapping between the provided labels and the internally used indices.
-     * @param[in] classes the list of different labels used to create the index mapping
+     * @brief Create the mapping between the provided labels and the internally used values.
      * @throws plssvm::data_set_exception any exception of the plssvm::data_set::label_mapper class
      */
     virtual void map_label() = 0;

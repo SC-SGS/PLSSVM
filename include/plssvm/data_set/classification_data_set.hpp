@@ -41,6 +41,12 @@ namespace plssvm {
 // forward declare C-SVC class
 class csvc;
 
+/**
+ * @brief Encapsulate all necessary data that is needed for training or predicting using an C-SVC.
+ * @details May or may not contain labels!
+ *          Internally, saves all data using [`std::shared_ptr`](https://en.cppreference.com/w/cpp/memory/shared_ptr) to make a plssvm::classification_data_set relatively cheap to copy!
+ * @tparam U the label type of the data (must be an arithmetic type or `std::string`; default: `int`)
+ */
 template <typename U = int>
 class classification_data_set : public data_set<U> {
     // make sure only valid template types are used
@@ -53,6 +59,7 @@ class classification_data_set : public data_set<U> {
     template <typename>
     friend class classification_model;
 
+    /// The base data set class.
     using base_data_set = data_set<U>;
 
     using base_data_set::data_ptr_;
