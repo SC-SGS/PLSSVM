@@ -37,18 +37,8 @@ namespace plssvm {
  * @brief Implements a class encapsulating the result of a call to the SVM fit function. A model is used to predict the labels of a new data set.
  * @tparam U the type of the used labels (must be an arithmetic type or `std:string`; default: `int`)
  */
-template <typename U = int>
-class model {  // TODO: fix warning
-    // plssvm::csvm needs the private constructor
-    friend class csvm;
-    friend class csvc;
-    friend class csvr;
-
-    template <typename>
-    friend class classification_model;
-    template <typename>
-    friend class regression_model;
-
+template <typename U>
+class model {
   public:
     /// The type of the labels: any arithmetic type or `std::string`.
     using label_type = U;
