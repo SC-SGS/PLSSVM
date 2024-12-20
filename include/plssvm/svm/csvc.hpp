@@ -284,7 +284,7 @@ class csvc : virtual public csvm {
             PLSSVM_ASSERT(model.alpha_ptr_->size() == 1, "For OAA, the alpha vector must only contain a single aos_matrix of size {}x{}!", model.num_classes(), model.num_support_vectors());
             PLSSVM_ASSERT(model.alpha_ptr_->front().num_rows() == calculate_number_of_classifiers(classification_type::oaa, data.num_classes()), "The number of rows in the matrix must be {}, but is {}!", model.alpha_ptr_->front().num_rows(), calculate_number_of_classifiers(classification_type::oaa, data.num_classes()));
 
-            const soa_matrix<real_type> &sv = *model.data_->data_ptr_;
+            const soa_matrix<real_type> &sv = model.support_vectors();
             const aos_matrix<real_type> &alpha = model.alpha_ptr_->front();  // num_classes x num_data_points
 
             // predict values using OAA -> num_data_points x num_classes
@@ -343,7 +343,7 @@ class csvc : virtual public csvm {
                     const soa_matrix<real_type> &binary_sv = [&]() {
                         if (num_classes == 2) {
                             // no special assembly needed in binary case
-                            return *model.data_->data_ptr_;
+                            return model.support_vectors();
                         } else {
                             // note: if this is changed, it must also be changed in the libsvm_model_parsing.hpp in the calculate_alpha_idx function!!!
                             // order the indices in increasing order
@@ -354,7 +354,7 @@ class csvc : virtual public csvm {
 #pragma omp parallel for collapse(2)
                             for (std::size_t si = 0; si < num_data_points_in_sub_matrix; ++si) {
                                 for (std::size_t dim = 0; dim < num_features; ++dim) {
-                                    temp(si, dim) = (*model.data_->data_ptr_)(sorted_indices[si], dim);
+                                    temp(si, dim) = model.support_vectors()(sorted_indices[si], dim);
                                 }
                             }
                             return temp;

@@ -175,7 +175,7 @@ class csvr : virtual public csvm {
         PLSSVM_ASSERT(model.alpha_ptr_->size() == 1, "The alpha vector must only contain a single aos_matrix of size {}x{}!", 1, model.num_support_vectors());
         PLSSVM_ASSERT(model.alpha_ptr_->front().num_rows() == 1, "The number of rows in the matrix must be exactly one, but is {}!", model.alpha_ptr_->front().num_rows());
 
-        const soa_matrix<real_type> &sv = *model.data_->data_ptr_;
+        const soa_matrix<real_type> &sv = model.support_vectors();
         const aos_matrix<real_type> &alpha = model.alpha_ptr_->front();  // num_classes x num_data_points
 
         // predict values

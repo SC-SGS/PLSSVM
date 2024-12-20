@@ -65,10 +65,6 @@ using optional_ref = std::optional<std::reference_wrapper<T>>;
  */
 template <typename U>
 class data_set {
-    // befriend the different C-SVM classes
-    friend class csvc;
-    friend class csvr;
-
   public:
     /// The type of the labels: any arithmetic type or `std::string`.
     using label_type = U;
