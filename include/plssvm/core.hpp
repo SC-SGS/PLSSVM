@@ -30,6 +30,7 @@
 #include "plssvm/matrix.hpp"                                 // a custom matrix class
 #include "plssvm/model.hpp"                                  // the model as a result of training a C-SVM
 #include "plssvm/parameter.hpp"                              // the C-SVM parameter
+#include "plssvm/regression_report.hpp"                      // reports different metrics (e.g., mean squared error or R^2 score) for the regression task after scoring
 #include "plssvm/shape.hpp"                                  // shape for a matrix or device pointer
 #include "plssvm/solver_types.hpp"                           // all supported solver types (e.g., Conjugate Gradients with explicit, streaming, or implicit kernel matrix generation)
 #include "plssvm/svm/csvc.hpp"                               // the base C-SVC every backend is inheriting from

@@ -163,15 +163,34 @@ int main(int argc, char *argv[]) {
             if (data.has_labels()) {
                 // generate the classification report
                 const std::vector<label_type> &correct_labels = *data.labels();
-                const plssvm::classification_report report{ correct_labels, predicted_labels };
 
-                // print complete report
-                plssvm::detail::log(plssvm::verbosity_level::full, "\n{}\n", report);
-                // print only accuracy for LIBSVM conformity
-                plssvm::detail::log(plssvm::verbosity_level::libsvm, "{} (classification)\n", report.accuracy());
-                PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "accuracy", "achieved_accuracy", report.accuracy().achieved_accuracy }));
-                PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "accuracy", "num_correct", report.accuracy().num_correct }));
-                PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "accuracy", "num_total", report.accuracy().num_total }));
+                if constexpr (std::is_same_v<csvm_type, plssvm::csvc>) {
+                    const plssvm::classification_report report{ correct_labels, predicted_labels };
+
+                    // print complete report
+                    plssvm::detail::log(plssvm::verbosity_level::full, "\n{}\n", report);
+                    // print only accuracy for LIBSVM conformity
+                    plssvm::detail::log(plssvm::verbosity_level::libsvm, "{} (classification)\n", report.accuracy());
+                    PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "accuracy", "achieved_accuracy", report.accuracy().achieved_accuracy }));
+                    PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "accuracy", "num_correct", report.accuracy().num_correct }));
+                    PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "accuracy", "num_total", report.accuracy().num_total }));
+                } else if constexpr (std::is_same_v<csvm_type, plssvm::csvr>) {
+                    const plssvm::regression_report report{ correct_labels, predicted_labels };
+
+                    // print complete report
+                    plssvm::detail::log(plssvm::verbosity_level::full, "\n{}\n", report);
+                    // print only MSE and SCC for LIBSVM conformity
+                    plssvm::detail::log(plssvm::verbosity_level::libsvm, "Mean squared error = {} (regression)\nSquared correlation coefficient = {} (regression)\n", report.loss().mean_squared_error, report.loss().squared_correlation_coefficient);
+
+                    PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "loss", "explained_variance_score", report.loss().explained_variance_score }));
+                    PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "loss", "mean_absolute_error", report.loss().mean_absolute_error }));
+                    PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "loss", "mean_squared_error", report.loss().mean_squared_error }));
+                    PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "loss", "r2_score", report.loss().r2_score }));
+                    PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "loss", "squared_correlation_coefficient", report.loss().squared_correlation_coefficient }));
+                } else {
+                    // unreachable
+                    plssvm::detail::unreachable();
+                }
             }
         };
         std::visit(data_set_visitor, plssvm::detail::cmd::data_set_factory(cmd_parser));

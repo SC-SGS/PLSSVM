@@ -72,6 +72,9 @@ kernel_launch_resources::kernel_launch_resources(const std::string &msg, source_
 classification_report_exception::classification_report_exception(const std::string &msg, source_location loc) :
     exception{ msg, "classification_report_exception", loc } { }
 
+regression_report_exception::regression_report_exception(const std::string &msg, source_location loc) :
+    exception{ msg, "regression_report_exception", loc } { }
+
 platform_devices_empty::platform_devices_empty(const std::string &msg, source_location loc) :
     exception{ msg, "platform_devices_empty", loc } { }
 
