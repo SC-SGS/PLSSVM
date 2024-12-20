@@ -140,24 +140,23 @@ pipeline {
                                         rm ~/.spack/linux/compilers.yaml
                                     fi
 
-                                    spack install hip+cuda || true
 
                                     if [ ! -f $SPACK_SYSTEM_CONFIG_PATH/config.yaml ]; then
                                         touch  $SPACK_SYSTEM_CONFIG_PATH/config.yaml
                                         echo "config:" >> $SPACK_SYSTEM_CONFIG_PATH/config.yaml
                                         echo "  install_tree:" >> $SPACK_SYSTEM_CONFIG_PATH/config.yaml
                                         echo "    root: $SGSSCRATCH/spack/opt/spack" >> $SPACK_SYSTEM_CONFIG_PATH/config.yaml
-                                        echo "  build_jops: $(nproc)" >> $SPACK_SYSTEM_CONFIG_PATH/config.yaml
+                                        echo "  build_jops: $(nproc)" >> $SPACK_SYSTEM_CONFIG_PATH/config.yaml  spack info
                                         echo "  build_stage:" >> $SPACK_SYSTEM_CONFIG_PATH/config.yaml
                                         echo "      - /data/scratch/jenkins/spack_tmp" >> $SPACK_SYSTEM_CONFIG_PATH/config.yaml
                                     fi
 
                                     bash
                                     spack external find --scope system || true
-                                    spack external find --scope system cuda || true
+                                    spack external find --scope system cuda hip || true
 
                                     spack uninstall -a -y plssvm@develop || true
-                                    spack clean -a || true
+
 
                                     if [ -d  ${WORKSPACE}/plssvm ]; then
                                         cd ${WORKSPACE}/plssvm
