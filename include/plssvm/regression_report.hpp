@@ -219,7 +219,14 @@ regression_report::regression_report(const std::vector<label_type> &correct_labe
             sum_correct_squared += static_cast<double>(correct_label[i] * correct_label[i]);
             sum_predicted_times_correct += static_cast<double>(predicted_label[i] * correct_label[i]);
         }
-        regression_loss_.squared_correlation_coefficient = ((total * sum_predicted_times_correct - sum_predicted * sum_correct) * (total * sum_predicted_times_correct - sum_predicted * sum_correct)) / ((total * sum_predicted_squared - sum_predicted * sum_predicted) * (total * sum_correct_squared - sum_correct * sum_correct));
+        const double numerator = (total * sum_predicted_times_correct - sum_predicted * sum_correct) * (total * sum_predicted_times_correct - sum_predicted * sum_correct);
+        const double denominator = (total * sum_predicted_squared - sum_predicted * sum_predicted) * (total * sum_correct_squared - sum_correct * sum_correct);
+
+        if (force_finite_value && denominator == 0.0) {
+            regression_loss_.squared_correlation_coefficient = 0.0;
+        } else {
+            regression_loss_.squared_correlation_coefficient = numerator / denominator;
+        }
     }
 }
 
