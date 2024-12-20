@@ -84,10 +84,10 @@ template <typename label_type>
             if (cmd_parser.strings_as_labels) {
                 return make_classification_data_set<std::string>(cmd_parser.input_filename);
             } else {
-                return make_classification_data_set<typename data_set<>::label_type>(cmd_parser.input_filename);
+                return make_classification_data_set<typename classification_data_set<>::label_type>(cmd_parser.input_filename);
             }
         case svm_type::csvr:
-            return make_regression_data_set<real_type>(cmd_parser.input_filename);
+            return make_regression_data_set<typename regression_data_set<>::label_type>(cmd_parser.input_filename);
     }
     // can never be reached
     ::plssvm::detail::unreachable();
@@ -105,10 +105,10 @@ template <typename label_type>
             if (cmd_parser.strings_as_labels) {
                 return make_classification_data_set<std::string>(cmd_parser.input_filename);
             } else {
-                return make_classification_data_set<typename data_set<>::label_type>(cmd_parser.input_filename);
+                return make_classification_data_set<typename classification_data_set<>::label_type>(cmd_parser.input_filename);
             }
         case svm_type::csvr:
-            return make_regression_data_set<real_type>(cmd_parser.input_filename);
+            return make_regression_data_set<typename regression_data_set<>::label_type>(cmd_parser.input_filename);
     }
     // can never be reached
     ::plssvm::detail::unreachable();
@@ -124,7 +124,7 @@ template <typename label_type>
     if (cmd_parser.strings_as_labels) {
         return make_classification_data_set<std::string>(cmd_parser.input_filename, make_scaling_factors<std::string>(cmd_parser));
     } else {
-        using label_type = typename data_set<>::label_type;
+        using label_type = typename classification_data_set<>::label_type;
         return make_classification_data_set<label_type>(cmd_parser.input_filename, make_scaling_factors<label_type>(cmd_parser));
     }
 }

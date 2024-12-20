@@ -63,7 +63,7 @@ using optional_ref = std::optional<std::reference_wrapper<T>>;
  *          Internally, saves all data using [`std::shared_ptr`](https://en.cppreference.com/w/cpp/memory/shared_ptr) to make a plssvm::data_set relatively cheap to copy!
  * @tparam U the label type of the data (must be an arithmetic type or `std::string`; default: `int`)
  */
-template <typename U = int>
+template <typename U>
 class data_set {
     // befriend the different C-SVM classes
     friend class csvc;
