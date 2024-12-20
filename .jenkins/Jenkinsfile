@@ -327,7 +327,7 @@ pipeline {
                       }
                       axis{
                         name 'ARCHITECTURE'
-                        values 'CUDA'
+                        values 'NVIDIA'
                       }
                     }
                     exclude { // TODO: enable if adaptivecpp is workingwith new llvm version
