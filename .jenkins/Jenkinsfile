@@ -310,6 +310,16 @@ pipeline {
                         values 'AMD'
                       }
                     }
+                     exclude { // TODO: enable if kokkos+rocm is working again
+                      axis{
+                        name 'BACKEND'
+                        values 'KOKKOS'
+                      }
+                      axis{
+                        name 'ARCHITECTURE'
+                        values 'AMD'
+                      }
+                    }
                   }
 
 
