@@ -51,6 +51,11 @@ std::string_view svm_type_to_task_name(const svm_type svm) noexcept {
 svm_type svm_type_from_model_file(const std::string &filename) {
     // open the model file and check for the used SVM type
     std::ifstream model_file{ filename };
+    // check if the file could be opened successfully
+    if (model_file.fail()) {
+        throw invalid_file_format_exception{ fmt::format("The provided model file \"{}\" can't be opened!", filename) };
+    }
+
     std::string line{};
     while (model_file.good()) {
         // read the file line by line
