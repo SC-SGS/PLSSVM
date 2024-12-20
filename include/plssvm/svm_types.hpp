@@ -17,6 +17,7 @@
 #include "fmt/ostream.h"  // fmt::ostream_formatter
 
 #include <iosfwd>       // forward declare std::ostream and std::istream
+#include <string>       // std::string
 #include <string_view>  // std::string_view
 #include <vector>       // std::vector
 
@@ -52,6 +53,15 @@ std::ostream &operator<<(std::ostream &out, svm_type svm);
  * @return the name of the task that the @p svm solves (`[[nodiscard]]`)
  */
 [[nodiscard]] std::string_view svm_type_to_task_name(svm_type svm) noexcept;
+
+/**
+ * @brief Determine the SVM type used in the model file @p filename.
+ * @details The @p filename is assumed to be a valid LIBSVM model file.
+ * @param[in] filename the model file name
+ * @throws plssvm::invalid_file_format_exception if "svm_type" or "SV" are missing in the LIBSVM model header
+ * @return the C-SVM type used to train the model in @p filename (`[[nodiscard]]`)
+ */
+[[nodiscard]] svm_type svm_type_from_model_file(const std::string &filename);
 
 /**
  * @brief Use the input-stream @p in to initialize the @p svm type.

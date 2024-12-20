@@ -8,22 +8,18 @@
 
 #include "plssvm/svm_types.hpp"
 
-#include "plssvm/detail/assert.hpp"          // PLSSVM_ASSERT
-#include "plssvm/detail/string_utility.hpp"  // plssvm::detail::to_lower_case
-#include "plssvm/detail/utility.hpp"         // plssvm::detail::contains
-#include "plssvm/exceptions/exceptions.hpp"  // plssvm::unsupported_backend_exception
-#include "plssvm/target_platforms.hpp"       // plssvm::target_platform
+#include "plssvm/detail/string_utility.hpp"  // plssvm::detail::{starts_with, to_lower_case}
+#include "plssvm/exceptions/exceptions.hpp"  // plssvm::invalid_file_format_exception
 
 #include "fmt/format.h"  // fmt::format
-#include "fmt/ranges.h"  // fmt::join
 
-#include <array>        // std::array
+#include <fstream>      // std::ifstream
 #include <ios>          // std::ios::failbit
 #include <istream>      // std::istream
 #include <ostream>      // std::ostream
-#include <string>       // std::string
+#include <sstream>      // std::istringstream
+#include <string>       // std::string, std::getline
 #include <string_view>  // std::string_view
-#include <utility>      // std::pair
 #include <vector>       // std::vector
 
 namespace plssvm {
@@ -50,6 +46,35 @@ std::string_view svm_type_to_task_name(const svm_type svm) noexcept {
             return "regression";
     }
     return "unknown";
+}
+
+svm_type svm_type_from_model_file(const std::string &filename) {
+    // open the model file and check for the used SVM type
+    std::ifstream model_file{ filename };
+    std::string line{};
+    while (model_file.good()) {
+        // read the file line by line
+        // -> since the svm_type SHOULD be the first model file entry that should be faster than reading the whole file using the plssvm::detail::io::file_reader
+        std::getline(model_file, line);
+        detail::to_lower_case(line);
+
+        // check if the current line contains the SVM type
+        if (detail::starts_with(line, "svm_type")) {
+            std::istringstream iss{ line };
+            // skip "svm_type"
+            iss >> line;
+
+            // read the SVM type
+            svm_type svm{};
+            iss >> svm;
+            return svm;
+        } else if (detail::starts_with(line, "sv")) {
+            // read the last line of the header section but didn't find the SVM type yet -> throw an exception
+            throw invalid_file_format_exception{ R"(The provided model file is not a valid LIBSVM model file since "svm_type" is missing!)" };
+        }
+    }
+    // read to the end of the file without finding svm_type or SV -> throw an exception
+    throw invalid_file_format_exception{ R"(The provided model file is not a valid LIBSVM model file since "svm_type" AND "SV" are missing!)" };
 }
 
 std::istream &operator>>(std::istream &in, svm_type &svm) {

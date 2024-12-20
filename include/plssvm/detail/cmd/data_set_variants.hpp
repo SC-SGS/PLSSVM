@@ -21,7 +21,7 @@
 #include "plssvm/detail/cmd/parser_scale.hpp"           // plssvm::detail::cmd::parser_scale
 #include "plssvm/detail/cmd/parser_train.hpp"           // plssvm::detail::cmd::parser_train
 #include "plssvm/detail/utility.hpp"                    // plssvm::detail::unreachable
-#include "plssvm/svm_types.hpp"                         // plssvm::svm_type
+#include "plssvm/svm_types.hpp"                         // plssvm::svm_type, plssvm::svm_type_from_model_file
 
 #include <string>   // std::string
 #include <variant>  // std::variant
@@ -95,16 +95,23 @@ template <typename label_type>
 
 /**
  * @brief Return the correct data set based on the plssvm::detail::cmd::parser_predict command line options.
+ * @details Infers the C-SVM type from the provided model file header.
  * @param[in] cmd_parser the provided command line parser
  * @return the data set based on the provided command line parser (`[[nodiscard]]`)
  */
 [[nodiscard]] inline data_set_variants data_set_factory(const cmd::parser_predict &cmd_parser) {
-    // TODO: data set type
-    if (cmd_parser.strings_as_labels) {
-        return make_classification_data_set<std::string>(cmd_parser.input_filename);
-    } else {
-        return make_classification_data_set<typename data_set<>::label_type>(cmd_parser.input_filename);
+    switch (svm_type_from_model_file(cmd_parser.model_filename)) {
+        case svm_type::csvc:
+            if (cmd_parser.strings_as_labels) {
+                return make_classification_data_set<std::string>(cmd_parser.input_filename);
+            } else {
+                return make_classification_data_set<typename data_set<>::label_type>(cmd_parser.input_filename);
+            }
+        case svm_type::csvr:
+            return make_regression_data_set<real_type>(cmd_parser.input_filename);
     }
+    // can never be reached
+    ::plssvm::detail::unreachable();
 }
 
 /**
