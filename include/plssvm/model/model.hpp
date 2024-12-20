@@ -13,25 +13,16 @@
 #define PLSSVM_MODEL_MODEL_HPP_
 #pragma once
 
-#include "plssvm/classification_types.hpp"                 // plssvm::classification_type
-#include "plssvm/constants.hpp"                            // plssvm::real_type
-#include "plssvm/data_set/data_set.hpp"                    // plssvm::data_set
-#include "plssvm/detail/assert.hpp"                        // PLSSVM_ASSERT
-#include "plssvm/detail/io/file_reader.hpp"                // plssvm::detail::io::file_reader
-#include "plssvm/detail/logging.hpp"                       // plssvm::detail::log
-#include "plssvm/detail/tracking/performance_tracker.hpp"  // PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY, plssvm::detail::tracking::tracking_entry
-#include "plssvm/detail/type_list.hpp"                     // plssvm::detail::{supported_label_types, tuple_contains_v}
-#include "plssvm/matrix.hpp"                               // plssvm::soa_matrix, plssvm::aos_matrix
-#include "plssvm/parameter.hpp"                            // plssvm::parameter
-#include "plssvm/verbosity_levels.hpp"                     // plssvm::verbosity_level
+#include "plssvm/constants.hpp"          // plssvm::real_type
+#include "plssvm/data_set/data_set.hpp"  // plssvm::data_set
+#include "plssvm/detail/assert.hpp"      // PLSSVM_ASSERT
+#include "plssvm/matrix.hpp"             // plssvm::soa_matrix, plssvm::aos_matrix
+#include "plssvm/parameter.hpp"          // plssvm::parameter
 
-#include <chrono>    // std::chrono::{time_point, steady_clock, duration_cast, milliseconds}
 #include <cstddef>   // std::size_t
 #include <memory>    // std::shared_ptr, std::make_shared
-#include <numeric>   // std::iota
 #include <optional>  // std::optional
 #include <string>    // std::string
-#include <tuple>     // std::tie
 #include <utility>   // std::move
 #include <vector>    // std::vector
 
@@ -64,6 +55,28 @@ class model {  // TODO: fix warning
     /// The unsigned size type.
     using size_type = std::size_t;
 
+    /**
+     * @brief Default copy constructor.
+     */
+    model(const model &) = default;
+    /**
+     * @brief Default move constructor.
+     */
+    model(model &&) noexcept = default;
+    /**
+     * @brief Default copy assignment operator.
+     * @return `*this`
+     */
+    model &operator=(const model &) = default;
+    /**
+     * @brief Default move assignment operator.
+     * @return `*this`
+     */
+    model &operator=(model &&) noexcept = default;
+
+    /**
+     * @brief Virtual destructor to allow derived classes to clean up properly.
+     */
     virtual ~model() = default;
 
     /**
