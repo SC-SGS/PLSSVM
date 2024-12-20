@@ -172,7 +172,29 @@ regression_report::regression_report(const std::vector<label_type> &correct_labe
         regression_loss_.r2_score = 1.0 - ss_res / ss_tot;
 
         if (force_finite_value) {
-            regression_loss_.r2_score = std::clamp(regression_loss_.r2_score, 0.0, 1.0);
+#if !defined(PLSSVM_USE_FAST_MATH)
+            // R^2 score may not be finite
+            if (std::isnan(regression_loss_.r2_score)) {
+                // NaN means perfect prediction and is mapped to 1.0
+                regression_loss_.r2_score = 1.0;
+            } else {
+                if (regression_loss_.r2_score == -std::numeric_limits<double>::infinity()) {
+                    // -inf means worst possible prediction and is mapped to 0.0
+                    regression_loss_.r2_score = 0.0;
+                }
+            }
+#else
+            // R^2 score may not be finite
+            if (ss_res == 0.0 && ss_tot == 0.0) {
+                // NaN means perfect prediction and is mapped to 1.0
+                regression_loss_.r2_score = 1.0;
+            } else {
+                if (ss_tot == 0.0) {
+                    // -inf means worst possible prediction and is mapped to 0.0
+                    regression_loss_.r2_score = 0.0;
+                }
+            }
+#endif
         }
     }
 

@@ -23,6 +23,7 @@
 #include "plssvm/matrix.hpp"                               // plssvm::aos_matrix
 #include "plssvm/model/regression_model.hpp"               // plssvm::regression_model
 #include "plssvm/parameter.hpp"                            // plssvm::parameter
+#include "plssvm/regression_report.hpp"                    // plssvm::regression_report
 #include "plssvm/svm/csvm.hpp"                             // plssvm::csvm
 #include "plssvm/verbosity_levels.hpp"                     // plssvm::verbosity_level
 
@@ -30,7 +31,6 @@
 
 #include <algorithm>  // std::all_of
 #include <chrono>     // std::chrono::{time_point, steady_clock, duration_cast, milliseconds}
-#include <cmath>      // std::clamp
 #include <cstddef>    // std::size_t
 #include <optional>   // std::make_optional
 #include <tuple>      // std::tie
@@ -230,24 +230,7 @@ class csvr : virtual public csvm {
         // correct labels
         const std::vector<label_type> &correct_labels = *data.labels();
 
-        // calculate the mean
-        real_type mean_correct{ 0.0 };
-#pragma omp parallel for default(none) shared(correct_labels) reduction(+ : mean_correct)
-        for (std::size_t i = 0; i < correct_labels.size(); ++i) {
-            mean_correct += static_cast<real_type>(correct_labels[i]);
-        }
-        mean_correct /= static_cast<real_type>(correct_labels.size());
-
-        // calculate the R^2 score
-        real_type ss_res{ 0.0 };
-        real_type ss_tot{ 0.0 };
-#pragma omp parallel for default(none) shared(correct_labels, predicted_labels) firstprivate(mean_correct) reduction(+ : ss_res, ss_tot)
-        for (std::size_t i = 0; i < correct_labels.size(); ++i) {
-            ss_res += static_cast<real_type>(correct_labels[i] - predicted_labels[i]) * static_cast<real_type>(correct_labels[i] - predicted_labels[i]);
-            ss_tot += static_cast<real_type>(correct_labels[i] - mean_correct) * static_cast<real_type>(correct_labels[i] - mean_correct);
-        }
-
-        return std::clamp(real_type{ 1.0 } - (ss_res / ss_tot), real_type{ 0.0 }, real_type{ 1.0 });
+        return regression_report{ correct_labels, predicted_labels }.loss().r2_score;
     }
 };
 
