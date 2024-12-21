@@ -45,8 +45,7 @@ class regression_model : public model<U> {
     static_assert(detail::tuple_contains_v<U, detail::supported_label_types_regression>,
                   "Illegal label type for regression provided! See the 'supported_label_types_regression' in the type_list.hpp header for a list of the allowed types.");
 
-    // plssvm::csvm needs the private constructor
-    friend class csvm;
+    // befriend C-SVR class used with the regression data set: necessary to access the private constructor and multiple member variables
     friend class csvr;
 
     /// The base model class.

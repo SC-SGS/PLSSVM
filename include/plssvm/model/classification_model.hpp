@@ -49,8 +49,7 @@ class classification_model : public model<U> {
     static_assert(detail::tuple_contains_v<U, detail::supported_label_types_classification>,
                   "Illegal label type for classification provided! See the 'supported_label_types_classification' in the type_list.hpp header for a list of the allowed types.");
 
-    // plssvm::csvm needs the private constructor
-    friend class csvm;
+    // befriend C-SVC class used with the classification data set: necessary to access the private constructor and multiple member variables
     friend class csvc;
 
     /// The base model class.
