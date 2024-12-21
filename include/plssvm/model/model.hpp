@@ -135,7 +135,7 @@ class model {
 
   protected:
     /**
-     * @brief Default contruct an empty mpde.
+     * @brief Default construct an empty model.
      */
     model() = default;
     /**

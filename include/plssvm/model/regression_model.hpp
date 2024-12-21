@@ -51,15 +51,13 @@ class regression_model : public model<U> {
     /// The base model class.
     using base_model = model<U>;
 
-    // TODO: better?
+    // Make the protected member variables visible in the derived class.
     using base_model::alpha_ptr_;
     using base_model::data_;
-    using base_model::num_features_;
-    using base_model::num_iters_;
     using base_model::num_support_vectors_;
+    using base_model::num_features_;
     using base_model::params_;
     using base_model::rho_ptr_;
-    using base_model::w_ptr_;
 
   public:
     /// The type of the labels: any arithmetic type or `std::string`.
@@ -125,11 +123,11 @@ regression_model<U>::regression_model(const std::string &filename) {
     const std::chrono::time_point end_time = std::chrono::steady_clock::now();
     detail::log(verbosity_level::full | verbosity_level::timing,
                 "Read {} support vectors with {} features in {} using the libsvm regression model parser from file '{}'.\n\n",
-                detail::tracking::tracking_entry{ "model_read", "num_support_vectors", num_support_vectors_ },
-                detail::tracking::tracking_entry{ "model_read", "num_features", num_features_ },
+                detail::tracking::tracking_entry{ "model_read", "num_support_vectors", this->num_support_vectors() },
+                detail::tracking::tracking_entry{ "model_read", "num_features", this->num_features() },
                 detail::tracking::tracking_entry{ "model_read", "time", std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time) },
                 detail::tracking::tracking_entry{ "model_read", "filename", filename });
-    PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "model_read", "rho", *rho_ptr_ }));
+    PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "model_read", "rho", this->rho() }));
 }
 
 template <typename U>
@@ -137,16 +135,16 @@ void regression_model<U>::save(const std::string &filename) const {
     const std::chrono::time_point start_time = std::chrono::steady_clock::now();
 
     // save model file header and support vectors
-    detail::io::write_libsvm_model_data_regression(filename, params_, *rho_ptr_, *alpha_ptr_, dynamic_cast<regression_data_set<label_type> &>(*data_));
+    detail::io::write_libsvm_model_data_regression(filename, this->get_params(), this->rho(), this->weights(), dynamic_cast<regression_data_set<label_type> &>(*data_));
 
     const std::chrono::time_point end_time = std::chrono::steady_clock::now();
     detail::log(verbosity_level::full | verbosity_level::timing,
                 "Write {} support vectors with {} features in {} to the libsvm regression model file '{}'.\n",
-                detail::tracking::tracking_entry{ "model_write", "num_support_vectors", num_support_vectors_ },
-                detail::tracking::tracking_entry{ "model_write", "num_features", num_features_ },
+                detail::tracking::tracking_entry{ "model_write", "num_support_vectors", this->num_support_vectors() },
+                detail::tracking::tracking_entry{ "model_write", "num_features", this->num_features() },
                 detail::tracking::tracking_entry{ "model_write", "time", std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time) },
                 detail::tracking::tracking_entry{ "model_write", "filename", filename });
-    PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "model_write", "rho", *rho_ptr_ }));
+    PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "model_write", "rho", this->rho() }));
 }
 
 }  // namespace plssvm

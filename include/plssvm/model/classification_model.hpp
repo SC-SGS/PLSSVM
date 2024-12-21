@@ -55,15 +55,13 @@ class classification_model : public model<U> {
     /// The base model class.
     using base_model = model<U>;
 
-    // TODO: better?
+    // Make the protected member variables visible in the derived class.
     using base_model::alpha_ptr_;
     using base_model::data_;
     using base_model::num_features_;
-    using base_model::num_iters_;
     using base_model::num_support_vectors_;
     using base_model::params_;
     using base_model::rho_ptr_;
-    using base_model::w_ptr_;
 
   public:
     /// The type of the labels: any arithmetic type or `std::string`.
@@ -184,14 +182,14 @@ classification_model<U>::classification_model(const std::string &filename) {
     const std::chrono::time_point end_time = std::chrono::steady_clock::now();
     detail::log(verbosity_level::full | verbosity_level::timing,
                 "Read {} support vectors with {} features and {} classes using {} classification in {} using the libsvm classification model parser from file '{}'.\n\n",
-                detail::tracking::tracking_entry{ "model_read", "num_support_vectors", num_support_vectors_ },
-                detail::tracking::tracking_entry{ "model_read", "num_features", num_features_ },
+                detail::tracking::tracking_entry{ "model_read", "num_support_vectors", this->num_support_vectors() },
+                detail::tracking::tracking_entry{ "model_read", "num_features", this->num_features() },
                 detail::tracking::tracking_entry{ "model_read", "num_classes", this->num_classes() },
                 classification_type_to_full_string(classification_strategy_),
                 detail::tracking::tracking_entry{ "model_read", "time", std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time) },
                 detail::tracking::tracking_entry{ "model_read", "filename", filename });
-    PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "model_read", "rho", *rho_ptr_ }));
-    PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "model_read", "classification_type", classification_strategy_ }));
+    PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "model_read", "rho", this->rho() }));
+    PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "model_read", "classification_type", this->get_classification_type() }));
 }
 
 template <typename U>
@@ -199,19 +197,19 @@ void classification_model<U>::save(const std::string &filename) const {
     const std::chrono::time_point start_time = std::chrono::steady_clock::now();
 
     // save model file header and support vectors
-    detail::io::write_libsvm_model_data_classification(filename, params_, classification_strategy_, *rho_ptr_, *alpha_ptr_, *index_sets_ptr_, dynamic_cast<classification_data_set<label_type> &>(*data_));
+    detail::io::write_libsvm_model_data_classification(filename, this->get_params(), this->get_classification_type(), this->rho(), this->weights(), *index_sets_ptr_, dynamic_cast<classification_data_set<label_type> &>(*data_));
 
     const std::chrono::time_point end_time = std::chrono::steady_clock::now();
     detail::log(verbosity_level::full | verbosity_level::timing,
                 "Write {} support vectors with {} features and {} classes using {} classification in {} to the libsvm classification model file '{}'.\n",
-                detail::tracking::tracking_entry{ "model_write", "num_support_vectors", num_support_vectors_ },
-                detail::tracking::tracking_entry{ "model_write", "num_features", num_features_ },
+                detail::tracking::tracking_entry{ "model_write", "num_support_vectors", this->num_support_vectors() },
+                detail::tracking::tracking_entry{ "model_write", "num_features", this->num_features() },
                 detail::tracking::tracking_entry{ "model_write", "num_classes", this->num_classes() },
-                classification_type_to_full_string(classification_strategy_),
+                classification_type_to_full_string(this->get_classification_type()),
                 detail::tracking::tracking_entry{ "model_write", "time", std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time) },
                 detail::tracking::tracking_entry{ "model_write", "filename", filename });
-    PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "model_write", "rho", *rho_ptr_ }));
-    PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "model_write", "classification_type", classification_strategy_ }));
+    PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "model_write", "rho", this->rho() }));
+    PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "model_write", "classification_type", this->get_classification_type() }));
 }
 
 }  // namespace plssvm
