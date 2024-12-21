@@ -40,6 +40,11 @@
 namespace plssvm {
 
 /**
+ * @example csvr_examples.cpp
+ * @brief A few examples regarding the plssvm::csvr class.
+ */
+
+/**
  * @brief Base class for all C-SVR backends.
  * @details This class implements all features shared between all C-SVR backends. It defines the whole public API of a C-SVR.
  */

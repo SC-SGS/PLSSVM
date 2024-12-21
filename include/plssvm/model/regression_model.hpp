@@ -36,6 +36,11 @@
 namespace plssvm {
 
 /**
+ * @example regression_model_examples.cpp
+ * @brief A few examples regarding the plssvm::regression_model class.
+ */
+
+/**
  * @brief Implements a class encapsulating the result of a call to the C-SVR fit function. A model is used to predict the labels of a new data set.
  * @tparam U the type of the used labels (must be an arithmetic type, except boolean or character types; default: `real_type`)
  */

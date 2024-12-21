@@ -42,6 +42,11 @@ namespace plssvm {
 class csvc;
 
 /**
+ * @example classification_data_set_examples.cpp
+ * @brief A few examples regarding the plssvm::classification_data_set class.
+ */
+
+/**
  * @brief Encapsulate all necessary data that is needed for training or predicting using an C-SVC.
  * @details May or may not contain labels!
  *          Internally, saves all data using [`std::shared_ptr`](https://en.cppreference.com/w/cpp/memory/shared_ptr) to make a plssvm::classification_data_set relatively cheap to copy!

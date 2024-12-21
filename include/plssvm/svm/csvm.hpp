@@ -70,11 +70,6 @@
 namespace plssvm {
 
 /**
- * @example csvm_examples.cpp
- * @brief A few examples regarding the plssvm::csvm class.
- */
-
-/**
  * @brief Base class for all C-SVM backends.
  * @details This class implements all features shared between all C-SVM backends.
  */

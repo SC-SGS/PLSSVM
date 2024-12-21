@@ -40,6 +40,11 @@
 namespace plssvm {
 
 /**
+ * @example classification_model_examples.cpp
+ * @brief A few examples regarding the plssvm::classification_model class.
+ */
+
+/**
  * @brief Implements a class encapsulating the result of a call to the C-SVC fit function. A model is used to predict the labels of a new data set.
  * @tparam U the type of the used labels (must be an arithmetic type or `std:string`; default: `int`)
  */

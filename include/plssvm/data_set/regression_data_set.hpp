@@ -38,6 +38,11 @@ namespace plssvm {
 class csvr;
 
 /**
+ * @example regression_data_set_examples.cpp
+ * @brief A few examples regarding the plssvm::regression_data_set_examples class.
+ */
+
+/**
  * @brief Encapsulate all necessary data that is needed for training or predicting using an C-SVR.
  * @details May or may not contain labels!
  *          Internally, saves all data using [`std::shared_ptr`](https://en.cppreference.com/w/cpp/memory/shared_ptr) to make a plssvm::regression_data_set relatively cheap to copy!
