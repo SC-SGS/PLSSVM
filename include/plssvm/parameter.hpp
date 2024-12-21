@@ -177,6 +177,7 @@ struct parameter {
     }
 
   private:
+    // befriend C-SVM class: necessary to access the private `set_named_arguments` function
     friend class csvm;
 
     /**
