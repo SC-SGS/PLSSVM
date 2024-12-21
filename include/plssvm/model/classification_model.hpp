@@ -28,14 +28,14 @@
 #include "plssvm/parameter.hpp"                                      // plssvm::parameter
 #include "plssvm/verbosity_levels.hpp"                               // plssvm::verbosity_level
 
-#include <chrono>    // std::chrono::{time_point, steady_clock, duration_cast, milliseconds}
-#include <cstddef>   // std::size_t
-#include <memory>    // std::shared_ptr, std::make_shared
-#include <numeric>   // std::iota
-#include <string>    // std::string
-#include <tuple>     // std::tie
-#include <utility>   // std::move
-#include <vector>    // std::vector
+#include <chrono>   // std::chrono::{time_point, steady_clock, duration_cast, milliseconds}
+#include <cstddef>  // std::size_t
+#include <memory>   // std::shared_ptr, std::make_shared
+#include <numeric>  // std::iota
+#include <string>   // std::string
+#include <tuple>    // std::tie
+#include <utility>  // std::move
+#include <vector>   // std::vector
 
 namespace plssvm {
 
@@ -179,13 +179,7 @@ classification_model<U>::classification_model(const std::string &filename) {
     PLSSVM_ASSERT(support_vectors.num_rows() == labels.size(), "Number of labels ({}) must match the number of data points ({})!", labels.size(), support_vectors.num_rows());
     const verbosity_level old_verbosity = verbosity;
     verbosity = verbosity_level::quiet;
-    classification_data_set<label_type> data{};
-    data.num_data_points_ = support_vectors.num_rows();
-    data.num_features_ = support_vectors.num_cols();
-    *data.data_ptr_ = std::move(support_vectors);
-    data.labels_ptr_ = std::make_shared<typename decltype(data.labels_ptr_)::element_type>(std::move(labels));  // prevent multiple calls to "create_mapping"
-    data.map_label();
-    data_ = std::make_shared<classification_data_set<label_type>>(std::move(data));
+    data_ = std::make_shared<classification_data_set<label_type>>(std::move(support_vectors), std::move(labels));
     verbosity = old_verbosity;
 
     const std::chrono::time_point end_time = std::chrono::steady_clock::now();

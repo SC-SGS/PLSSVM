@@ -119,14 +119,8 @@ regression_model<U>::regression_model(const std::string &filename) {
     // create data set
     const verbosity_level old_verbosity = verbosity;
     verbosity = verbosity_level::quiet;
-    regression_data_set<label_type> data{};
-    data.num_data_points_ = support_vectors.num_rows();
-    data.num_features_ = support_vectors.num_cols();
-    *data.data_ptr_ = std::move(support_vectors);
-    // TODO: check whether this is necessary for regression!
-    // data.labels_ptr_ = std::make_shared<typename decltype(data.labels_ptr_)::element_type>(std::move(labels));  // prevent multiple calls to "create_mapping"
-    // data.create_mapping();
-    data_ = std::make_shared<regression_data_set<label_type>>(std::move(data));
+    // TODO: check whether whether labels can and should be ommitted for the regression task!
+    data_ = std::make_shared<regression_data_set<label_type>>(std::move(support_vectors));
     verbosity = old_verbosity;
 
     const std::chrono::time_point end_time = std::chrono::steady_clock::now();
