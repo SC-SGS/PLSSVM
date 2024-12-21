@@ -59,10 +59,7 @@ class classification_data_set : public data_set<U> {
     /// The base data set class.
     using base_data_set = data_set<U>;
 
-    using base_data_set::data_ptr_;
     using base_data_set::labels_ptr_;
-    using base_data_set::num_data_points_;
-    using base_data_set::num_features_;
     using base_data_set::y_ptr_;
 
     // forward declare the label_mapper class
@@ -229,14 +226,14 @@ classification_data_set<U>::classification_data_set(Args &&...args) :
     if (this->has_labels()) {
         detail::log(verbosity_level::full | verbosity_level::timing,
                     "Created a classification data set with {} data points, {} features, and {} classes.\n",
-                    detail::tracking::tracking_entry{ "data_set_create", "num_data_points", num_data_points_ },
-                    detail::tracking::tracking_entry{ "data_set_create", "num_features", num_features_ },
+                    detail::tracking::tracking_entry{ "data_set_create", "num_data_points", this->num_data_points() },
+                    detail::tracking::tracking_entry{ "data_set_create", "num_features", this->num_features() },
                     detail::tracking::tracking_entry{ "data_set_create", "num_classes", this->num_classes() });
     } else {
         detail::log(verbosity_level::full | verbosity_level::timing,
                     "Created a classification data set with {} data points and {} features.\n",
-                    detail::tracking::tracking_entry{ "data_set_create", "num_data_points", num_data_points_ },
-                    detail::tracking::tracking_entry{ "data_set_create", "num_features", num_features_ });
+                    detail::tracking::tracking_entry{ "data_set_create", "num_data_points", this->num_data_points() },
+                    detail::tracking::tracking_entry{ "data_set_create", "num_features", this->num_features() });
     }
 }
 
@@ -250,8 +247,8 @@ void classification_data_set<U>::save(const std::string &filename, const file_fo
     const std::chrono::time_point end_time = std::chrono::steady_clock::now();
     detail::log(verbosity_level::full | verbosity_level::timing,
                 "Write {} classification data points with {} features and {} classes in {} to the {} file '{}'.\n",
-                detail::tracking::tracking_entry{ "data_set_write", "num_data_points", num_data_points_ },
-                detail::tracking::tracking_entry{ "data_set_write", "num_features", num_features_ },
+                detail::tracking::tracking_entry{ "data_set_write", "num_data_points", this->num_data_points() },
+                detail::tracking::tracking_entry{ "data_set_write", "num_features", this->num_features() },
                 detail::tracking::tracking_entry{ "data_set_write", "num_classes", this->num_classes() },
                 detail::tracking::tracking_entry{ "data_set_write", "time", std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time) },
                 detail::tracking::tracking_entry{ "data_set_write", "format", format },
