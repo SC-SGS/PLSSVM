@@ -4,7 +4,12 @@ project(LibraryUsageExample LANGUAGES CXX)
 
 find_package(plssvm CONFIG REQUIRED)
 
-add_executable(prog main.cpp)
+# classification executable example
+add_executable(classification main_classification.cpp)
+target_compile_features(classification PUBLIC cxx_std_17)
+target_link_libraries(classification PUBLIC plssvm::plssvm-all)
 
-target_compile_features(prog PUBLIC cxx_std_17)
-target_link_libraries(prog PUBLIC plssvm::plssvm-all)
+# regression executable example
+add_executable(regression main_regression.cpp)
+target_compile_features(regression PUBLIC cxx_std_17)
+target_link_libraries(regression PUBLIC plssvm::plssvm-all)
