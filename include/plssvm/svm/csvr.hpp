@@ -206,7 +206,7 @@ class csvr : virtual public csvm {
     //  */
     // template <typename label_type>
     // [[nodiscard]] real_type score(const regression_model<label_type> &model) const {
-    //     return this->score(model, model.data_);
+    // return this->score(model, dynamic_cast<const regression_model<label_type> &>(*model.data_));
     // }
 
     /**
