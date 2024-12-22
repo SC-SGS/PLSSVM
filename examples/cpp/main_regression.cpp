@@ -14,7 +14,7 @@ int main() {
 
         // create two data sets: one with the training data scaled to [-1, 1]
         // and one with the test data scaled like the training data
-        const plssvm::regression_data_set train_data{ "train_file.libsvm", plssvm::data_set<plssvm::real_type>::scaling{ -1.0, 1.0 } };
+        const plssvm::regression_data_set train_data{ "train_file.libsvm", { -1.0, 1.0 } };
         const plssvm::regression_data_set test_data{ "test_file.libsvm", train_data.scaling_factors()->get() };
 
         // create C-SVR using the default backend and the previously defined parameter

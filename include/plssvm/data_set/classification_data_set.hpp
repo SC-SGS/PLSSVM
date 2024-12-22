@@ -64,6 +64,8 @@ class classification_data_set : public data_set<U> {
     /// The base data set class.
     using base_data_set = data_set<U>;
 
+    using typename base_data_set::scaling;
+
     using base_data_set::labels_ptr_;
     using base_data_set::y_ptr_;
 
@@ -79,12 +81,80 @@ class classification_data_set : public data_set<U> {
     using svm_fit_type = ::plssvm::csvc;
 
     /**
-     * @brief Construct a new classification data set by forwarding all provided arguments to the data_set constructors.
-     * @tparam Args the type of the provided arguments
-     * @param[in] args the provided arguments forwarded to the base class constructors
+     * @copydoc plssvm::data_set::data_set(const std::string &)
      */
-    template <typename... Args>
-    explicit classification_data_set(Args &&...args);
+    explicit classification_data_set(const std::string &filename) :
+        base_data_set{ filename } { this->init(); }
+
+    /**
+     * @copydoc plssvm::data_set::data_set(const std::string &, file_format_type)
+     */
+    classification_data_set(const std::string &filename, file_format_type format) :
+        base_data_set{ filename, format } { this->init(); }
+
+    /**
+     * @copydoc plssvm::data_set::data_set(const std::string &, plssvm::data_set::scaling)
+     */
+    classification_data_set(const std::string &filename, scaling scale_parameter) :
+        base_data_set{ filename, std::move(scale_parameter) } { this->init(); }
+
+    /**
+     * @copydoc plssvm::data_set::data_set(const std::string &, file_format_type, plssvm::data_set::scaling)
+     */
+    classification_data_set(const std::string &filename, file_format_type format, scaling scale_parameter) :
+        base_data_set{ filename, format, std::move(scale_parameter) } { this->init(); }
+
+    /**
+     * @copydoc plssvm::data_set::data_set(const std::vector<std::vector<real_type>> &)
+     */
+    explicit classification_data_set(const std::vector<std::vector<real_type>> &data_points) :
+        base_data_set{ data_points } { this->init(); }
+
+    /**
+     * @copydoc plssvm::data_set::data_set(const std::vector<std::vector<real_type>> &, std::vector<label_type>)
+     */
+    classification_data_set(const std::vector<std::vector<real_type>> &data_points, std::vector<label_type> labels) :
+        base_data_set{ data_points, std::move(labels) } { this->init(); }
+
+    /**
+     * @copydoc plssvm::data_set::data_set(const std::vector<std::vector<real_type>> &, plssvm::data_set::scaling)
+     */
+    classification_data_set(const std::vector<std::vector<real_type>> &data_points, scaling scale_parameter) :
+        base_data_set{ data_points, std::move(scale_parameter) } { this->init(); }
+
+    /**
+     * @copydoc plssvm::data_set::data_set(const std::vector<std::vector<real_type>> &, std::vector<label_type>, plssvm::data_set::scaling)
+     */
+    classification_data_set(const std::vector<std::vector<real_type>> &data_points, std::vector<label_type> labels, scaling scale_parameter) :
+        base_data_set{ data_points, std::move(labels), std::move(scale_parameter) } { this->init(); }
+
+    /**
+     * @copydoc plssvm::data_set::data_set(const matrix<real_type, layout> &)
+     */
+    template <layout_type layout>
+    explicit classification_data_set(const matrix<real_type, layout> &data_points) :
+        base_data_set{ data_points } { this->init(); }
+
+    /**
+     * @copydoc plssvm::data_set::data_set(const matrix<real_type, layout> &, std::vector<label_type>)
+     */
+    template <layout_type layout>
+    classification_data_set(const matrix<real_type, layout> &data_points, std::vector<label_type> labels) :
+        base_data_set{ data_points, std::move(labels) } { this->init(); }
+
+    /**
+     * @copydoc plssvm::data_set::data_set(const matrix<real_type, layout> &, plssvm::data_set::scaling)
+     */
+    template <layout_type layout>
+    classification_data_set(const matrix<real_type, layout> &data_points, scaling scale_parameter) :
+        base_data_set{ data_points, std::move(scale_parameter) } { this->init(); }
+
+    /**
+     * @copydoc plssvm::data_set::data_set(const matrix<real_type, layout> &, std::vector<label_type>, plssvm::data_set::scaling)
+     */
+    template <layout_type layout>
+    classification_data_set(const matrix<real_type, layout> &data_points, std::vector<label_type> labels, scaling scale_parameter) :
+        base_data_set{ data_points, std::move(labels), std::move(scale_parameter) } { this->init(); }
 
     /**
      * @copydoc plssvm::data_set::save
@@ -108,6 +178,11 @@ class classification_data_set : public data_set<U> {
     [[nodiscard]] size_type num_classes() const noexcept { return mapping_ != nullptr ? mapping_->num_mappings() : 0; }
 
   private:
+    /**
+     * @brief Initialize the classification data set.
+     */
+    void init();
+
     /**
      * @copydoc plssvm::data_set::map_label
      */
@@ -219,9 +294,7 @@ auto classification_data_set<U>::label_mapper::labels() const -> std::vector<lab
 //*************************************************************************************************************************************//
 
 template <typename U>
-template <typename... Args>
-classification_data_set<U>::classification_data_set(Args &&...args) :
-    base_data_set{ std::forward<Args>(args)... } {
+void classification_data_set<U>::init() {
     // create label mapping
     if (this->has_labels()) {
         this->map_label();
