@@ -201,7 +201,6 @@ regression_report::regression_report(const std::vector<label_type> &correct_labe
     // calculate the squared correlation coefficient
     {
         // create helper variables
-        double error{ 0.0 };
         double sum_predicted{ 0.0 };
         double sum_correct{ 0.0 };
         double sum_predicted_squared{ 0.0 };
@@ -210,9 +209,8 @@ regression_report::regression_report(const std::vector<label_type> &correct_labe
         const auto total = static_cast<double>(predicted_label.size());
 
         // calculate regression score metrics helper variables
-#pragma omp parallel for default(none) shared(correct_label, predicted_label) reduction(+ : error, sum_predicted, sum_correct, sum_predicted_squared, sum_correct_squared, sum_predicted_times_correct)
+#pragma omp parallel for default(none) shared(correct_label, predicted_label) reduction(+ : sum_predicted, sum_correct, sum_predicted_squared, sum_correct_squared, sum_predicted_times_correct)
         for (std::size_t i = 0; i < predicted_label.size(); ++i) {
-            error += static_cast<double>(predicted_label[i] - correct_label[i]) * static_cast<double>(predicted_label[i] - correct_label[i]);
             sum_predicted += static_cast<double>(predicted_label[i]);
             sum_correct += static_cast<double>(correct_label[i]);
             sum_predicted_squared += static_cast<double>(predicted_label[i] * predicted_label[i]);
