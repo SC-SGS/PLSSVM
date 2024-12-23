@@ -128,11 +128,7 @@ using namespace plssvm::sycl;
 namespace plssvm::adaptivecpp::detail { }
 
 /// Namespace containing the C-SVM using the SYCL backend with the preferred SYCL implementation.
-namespace plssvm::sycl {
-#if defined(PLSSVM_HAS_SYCL_BACKEND)
-using namespace plssvm::PLSSVM_SYCL_BACKEND_PREFERRED_IMPLEMENTATION;
-#endif
-}  // namespace plssvm::sycl
+namespace plssvm::sycl { }
 
 /// Namespace containing the C-SVM using the SYCL backend with the preferred SYCL implementation. **Should not** directly be used by users.
 namespace plssvm::sycl::detail { }

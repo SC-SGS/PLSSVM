@@ -16,7 +16,6 @@
 #include "plssvm/backends/OpenMP/kernel/cg_implicit/kernel_matrix_assembly_blas.hpp"  // plssvm::openmp::detail::device_kernel_assembly_symm
 #include "plssvm/backends/OpenMP/kernel/predict_kernel.hpp"                           // plssvm::openmp::detail::{device_kernel_w_linear, device_kernel_predict_linear, device_kernel_predict}
 #include "plssvm/constants.hpp"                                                       // plssvm::real_type
-#include "plssvm/csvm.hpp"                                                            // plssvm::csvm
 #include "plssvm/detail/assert.hpp"                                                   // PLSSVM_ASSERT
 #include "plssvm/detail/data_distribution.hpp"                                        // plssvm::detail::{data_distribution, triangular_data_distribution, rectangular_data_distribution}
 #include "plssvm/detail/logging.hpp"                                                  // plssvm::detail::log
@@ -30,6 +29,7 @@
 #include "plssvm/parameter.hpp"                                                       // plssvm::parameter
 #include "plssvm/shape.hpp"                                                           // plssvm::shape
 #include "plssvm/solver_types.hpp"                                                    // plssvm::solver_type
+#include "plssvm/svm/csvm.hpp"                                                        // plssvm::csvm
 #include "plssvm/target_platforms.hpp"                                                // plssvm::target_platform
 #include "plssvm/verbosity_levels.hpp"                                                // plssvm::verbosity_level
 
@@ -43,6 +43,8 @@
 #include <vector>   // std::vector
 
 namespace plssvm::openmp {
+
+csvm::~csvm() = default;
 
 csvm::csvm(parameter params) :
     csvm{ plssvm::target_platform::automatic, params } { }

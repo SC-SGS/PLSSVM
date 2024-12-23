@@ -20,11 +20,13 @@
 #include "plssvm/backends/Kokkos/detail/pinned_memory.hpp"   // plssvm::kokkos::detail::pinned_memory
 #include "plssvm/backends/Kokkos/execution_space.hpp"        // plssvm::kokkos::execution_space
 #include "plssvm/constants.hpp"                              // plssvm::real_type
-#include "plssvm/csvm.hpp"                                   // plssvm::detail::csvm_backend_exists
 #include "plssvm/detail/igor_utility.hpp"                    // plssvm::detail::get_value_from_named_parameter
 #include "plssvm/detail/memory_size.hpp"                     // plssvm::detail::memory_size
-#include "plssvm/detail/type_traits.hpp"                     // PLSSVM_REQUIRES
+#include "plssvm/detail/type_traits.hpp"                     // PLSSVM_REQUIRES, plssvm::detail::is_one_type_of
 #include "plssvm/parameter.hpp"                              // plssvm::parameter, plssvm::detail::parameter
+#include "plssvm/svm/csvc.hpp"                               // plssvm::csvc
+#include "plssvm/svm/csvm.hpp"                               // plssvm::detail::csvm_backend_exists
+#include "plssvm/svm/csvr.hpp"                               // plssvm::csvr
 #include "plssvm/target_platforms.hpp"                       // plssvm::target_platform
 
 #include "igor/igor.hpp"  // igor::parser
@@ -126,7 +128,7 @@ class csvm : public ::plssvm::detail::gpu_csvm<detail::device_ptr, detail::devic
      * @brief Wait for all operations on all Kokkos devices to finish.
      * @details Terminates the program, if any exception is thrown.
      */
-    ~csvm() override;
+    ~csvm() override = 0;
 
     /**
      * @brief Return the currently used Kokkos `execution_space`.
@@ -200,15 +202,37 @@ class csvm : public ::plssvm::detail::gpu_csvm<detail::device_ptr, detail::devic
     execution_space space_{};
 };
 
+/**
+ * @brief Create a C-SVC using the Kokkos backend.
+ * @details Inherits all functionality either from the `plssvm::csvc` or `plssvm::kokkos::csvm` classes.
+ */
+class csvc : public ::plssvm::csvc,
+             public ::plssvm::kokkos::csvm {
+  public:
+    // use the Kokkos C-SVM constructors
+    using ::plssvm::kokkos::csvm::csvm;
+};
+
+/**
+ * @brief Create a C-SVR using the Kokkos backend.
+ * @details Inherits all functionality either from the `plssvm::csvr` or `plssvm::kokkos::csvm` classes.
+ */
+class csvr : public ::plssvm::csvr,
+             public ::plssvm::kokkos::csvm {
+  public:
+    // use the Kokkos C-SVM constructors
+    using ::plssvm::kokkos::csvm::csvm;
+};
+
 }  // namespace kokkos
 
 namespace detail {
 
 /**
- * @brief Sets the `value` to `true` since C-SVMs using the Kokkos backend are available.
+ * @brief Sets the `value` to `true` since C-SVMs (C-SVCs, C-SVRs) using the Kokkos backend are available.
  */
-template <>
-struct csvm_backend_exists<kokkos::csvm> : std::true_type { };
+template <typename T>
+struct csvm_backend_exists<T, std::enable_if_t<is_one_type_of_v<T, kokkos::csvm, kokkos::csvc, kokkos::csvr>>> : std::true_type { };
 
 }  // namespace detail
 

@@ -18,10 +18,12 @@
 #include "plssvm/backends/HIP/detail/device_ptr.hip.hpp"     // plssvm::hip::detail::device_ptr
 #include "plssvm/backends/HIP/detail/pinned_memory.hip.hpp"  // plssvm::hip::detail::pinned_memory
 #include "plssvm/constants.hpp"                              // plssvm::real_type
-#include "plssvm/csvm.hpp"                                   // plssvm::detail::csvm_backend_exists
 #include "plssvm/detail/memory_size.hpp"                     // plssvm::detail::memory_size
-#include "plssvm/detail/type_traits.hpp"                     // PLSSVM_REQUIRES
+#include "plssvm/detail/type_traits.hpp"                     // PLSSVM_REQUIRES, plssvm::detail::is_one_type_of
 #include "plssvm/parameter.hpp"                              // plssvm::parameter, plssvm::detail::parameter
+#include "plssvm/svm/csvc.hpp"                               // plssvm::csvc
+#include "plssvm/svm/csvm.hpp"                               // plssvm::detail::csvm_backend_exists
+#include "plssvm/svm/csvr.hpp"                               // plssvm::csvr
 #include "plssvm/target_platforms.hpp"                       // plssvm::target_platform
 
 #include <cstddef>      // std::size_t
@@ -121,7 +123,7 @@ class csvm : public ::plssvm::detail::gpu_csvm<detail::device_ptr, int, detail::
      * @brief Wait for all operations on all HIP devices to finish.
      * @details Terminates the program, if any exception is thrown.
      */
-    ~csvm() override;
+    ~csvm() override = 0;
 
   protected:
     /**
@@ -187,15 +189,37 @@ class csvm : public ::plssvm::detail::gpu_csvm<detail::device_ptr, int, detail::
     [[nodiscard]] device_ptr_type run_predict_kernel(std::size_t device_id, const ::plssvm::detail::execution_range &exec, const parameter &params, const device_ptr_type &alpha_d, const device_ptr_type &rho_d, const device_ptr_type &sv_or_w_d, const device_ptr_type &predict_points_d) const final;
 };
 
+/**
+ * @brief Create a C-SVC using the HIP backend.
+ * @details Inherits all functionality either from the `plssvm::csvc` or `plssvm::hip::csvm` classes.
+ */
+class csvc : public ::plssvm::csvc,
+             public ::plssvm::hip::csvm {
+  public:
+    // use the HIP C-SVM constructors
+    using ::plssvm::hip::csvm::csvm;
+};
+
+/**
+ * @brief Create a C-SVR using the HIP backend.
+ * @details Inherits all functionality either from the `plssvm::csvr` or `plssvm::hip::csvm` classes.
+ */
+class csvr : public ::plssvm::csvr,
+             public ::plssvm::hip::csvm {
+  public:
+    // use the HIP C-SVM constructors
+    using ::plssvm::hip::csvm::csvm;
+};
+
 }  // namespace hip
 
 namespace detail {
 
 /**
- * @brief Sets the `value` to `true` since C-SVMs using the HIP backend are available.
+ * @brief Sets the `value` to `true` since C-SVMs (C-SVCs, C-SVRs) using the HIP backend are available.
  */
-template <>
-struct csvm_backend_exists<hip::csvm> : std::true_type { };
+template <typename T>
+struct csvm_backend_exists<T, std::enable_if_t<is_one_type_of_v<T, hip::csvm, hip::csvc, hip::csvr>>> : std::true_type { };
 
 }  // namespace detail
 

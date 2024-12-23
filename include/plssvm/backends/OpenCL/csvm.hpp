@@ -20,10 +20,12 @@
 #include "plssvm/backends/OpenCL/detail/device_ptr.hpp"     // plssvm::opencl::detail::device_ptr
 #include "plssvm/backends/OpenCL/detail/pinned_memory.hpp"  // plssvm::opencl::detail::pinned_memory
 #include "plssvm/constants.hpp"                             // plssvm::real_type
-#include "plssvm/csvm.hpp"                                  // plssvm::detail::csvm_backend_exists
 #include "plssvm/detail/memory_size.hpp"                    // plssvm::detail::memory_size
-#include "plssvm/detail/type_traits.hpp"                    // PLSSVM_REQUIRES
+#include "plssvm/detail/type_traits.hpp"                    // PLSSVM_REQUIRES, plssvm::detail::is_one_type_of
 #include "plssvm/parameter.hpp"                             // plssvm::parameter, plssvm::detail::parameter
+#include "plssvm/svm/csvc.hpp"                              // plssvm::csvc
+#include "plssvm/svm/csvm.hpp"                              // plssvm::detail::csvm_backend_exists
+#include "plssvm/svm/csvr.hpp"                              // plssvm::csvr
 #include "plssvm/target_platforms.hpp"                      // plssvm::target_platform
 
 #include <cstddef>      // std::size_t
@@ -119,7 +121,7 @@ class csvm : public ::plssvm::detail::gpu_csvm<detail::device_ptr, detail::comma
      * @brief Wait for all operations on all OpenCL devices to finish.
      * @details Terminates the program, if any exception is thrown.
      */
-    ~csvm() override;
+    ~csvm() override = 0;
 
   protected:
     /**
@@ -189,15 +191,37 @@ class csvm : public ::plssvm::detail::gpu_csvm<detail::device_ptr, detail::comma
     std::vector<detail::context> contexts_{};
 };
 
+/**
+ * @brief Create a C-SVC using the OpenCL backend.
+ * @details Inherits all functionality either from the `plssvm::csvc` or `plssvm::opencl::csvm` classes.
+ */
+class csvc : public ::plssvm::csvc,
+             public ::plssvm::opencl::csvm {
+  public:
+    // use the OpenCL C-SVM constructors
+    using ::plssvm::opencl::csvm::csvm;
+};
+
+/**
+ * @brief Create a C-SVR using the OpenCL backend.
+ * @details Inherits all functionality either from the `plssvm::csvr` or `plssvm::opencl::csvm` classes.
+ */
+class csvr : public ::plssvm::csvr,
+             public ::plssvm::opencl::csvm {
+  public:
+    // use the OpenCL C-SVM constructors
+    using ::plssvm::opencl::csvm::csvm;
+};
+
 }  // namespace opencl
 
 namespace detail {
 
 /**
- * @brief Sets the `value` to `true` since C-SVMs using the OpenCL backend are available.
+ * @brief Sets the `value` to `true` since C-SVMs (C-SVCs, C-SVRs) using the OpenCL backend are available.
  */
-template <>
-struct csvm_backend_exists<opencl::csvm> : std::true_type { };
+template <typename T>
+struct csvm_backend_exists<T, std::enable_if_t<is_one_type_of_v<T, opencl::csvm, opencl::csvc, opencl::csvr>>> : std::true_type { };
 
 }  // namespace detail
 

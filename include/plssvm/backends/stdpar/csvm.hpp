@@ -15,16 +15,19 @@
 
 #include "plssvm/backends/stdpar/implementation_types.hpp"  // plssvm::stdpar::implementation_type
 #include "plssvm/constants.hpp"                             // plssvm::real_type
-#include "plssvm/csvm.hpp"                                  // plssvm::csvm, plssvm::detail::csvm_backend_exists
 #include "plssvm/detail/memory_size.hpp"                    // plssvm::detail::memory_size
 #include "plssvm/detail/move_only_any.hpp"                  // plssvm::detail::move_only_any
-#include "plssvm/detail/type_traits.hpp"                    // PLSSVM_REQUIRES
+#include "plssvm/detail/type_traits.hpp"                    // PLSSVM_REQUIRES, plssvm::detail::is_one_type_of
 #include "plssvm/matrix.hpp"                                // plssvm::aos_matrix
 #include "plssvm/parameter.hpp"                             // plssvm::parameter, plssvm::detail::has_only_parameter_named_args_v
 #include "plssvm/solver_types.hpp"                          // plssvm::solver_type
+#include "plssvm/svm/csvc.hpp"                              // plssvm::csvc
+#include "plssvm/svm/csvm.hpp"                              // plssvm::csvm, plssvm::detail::csvm_backend_exists
+#include "plssvm/svm/csvr.hpp"                              // plssvm::csvr
 #include "plssvm/target_platforms.hpp"                      // plssvm::target_platform
 
 #include <cstddef>      // std::size_t
+#include <memory>       // std::addressof
 #include <type_traits>  // std::true_type
 #include <utility>      // std::forward, std::pair
 #include <vector>       // std::vector
@@ -36,7 +39,7 @@ namespace stdpar {
 /**
  * @brief A C-SVM implementation using stdpar as backend.
  */
-class csvm : public ::plssvm::csvm {
+class csvm : virtual public ::plssvm::csvm {
   public:
     /**
      * @brief Construct a new C-SVM using the stdpar backend with the parameters given through @p params.
@@ -96,14 +99,21 @@ class csvm : public ::plssvm::csvm {
      * @copydoc plssvm::csvm::operator=(const plssvm::csvm &)
      */
     csvm &operator=(const csvm &) = delete;
+
     /**
      * @copydoc plssvm::csvm::operator=(plssvm::csvm &&) noexcept
      */
-    csvm &operator=(csvm &&) noexcept = default;
+    csvm &operator=(csvm &&other) noexcept {
+        if (this != std::addressof(other)) {
+            ::plssvm::csvm::operator=(std::move(other));
+        }
+        return *this;
+    }
+
     /**
      * @brief Default destructor since the copy and move constructors and copy- and move-assignment operators are defined.
      */
-    ~csvm() override = default;
+    ~csvm() override = 0;
 
     /**
      * @copydoc plssvm::csvm::num_available_devices
@@ -159,15 +169,37 @@ class csvm : public ::plssvm::csvm {
     void init(target_platform target);
 };
 
+/**
+ * @brief Create a C-SVC using the stdpar backend.
+ * @details Inherits all functionality either from the `plssvm::csvc` or `plssvm::stdpar::csvm` classes.
+ */
+class csvc : public ::plssvm::csvc,
+             public ::plssvm::stdpar::csvm {
+  public:
+    // use the stdpar C-SVM constructors
+    using ::plssvm::stdpar::csvm::csvm;
+};
+
+/**
+ * @brief Create a C-SVR using the stdpar backend.
+ * @details Inherits all functionality either from the `plssvm::csvr` or `plssvm::stdpar::csvm` classes.
+ */
+class csvr : public ::plssvm::csvr,
+             public ::plssvm::stdpar::csvm {
+  public:
+    // use the stdpar C-SVM constructors
+    using ::plssvm::stdpar::csvm::csvm;
+};
+
 }  // namespace stdpar
 
 namespace detail {
 
 /**
- * @brief Sets the `value` to `true` since C-SVMs using the OpenMP backend are available.
+ * @brief Sets the `value` to `true` since C-SVMs (C-SVCs, C-SVRs) using the stdpar backend are available.
  */
-template <>
-struct csvm_backend_exists<stdpar::csvm> : std::true_type { };
+template <typename T>
+struct csvm_backend_exists<T, std::enable_if_t<is_one_type_of_v<T, stdpar::csvm, stdpar::csvc, stdpar::csvr>>> : std::true_type { };
 
 }  // namespace detail
 

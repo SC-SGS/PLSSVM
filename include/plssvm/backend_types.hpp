@@ -27,6 +27,30 @@
 #include <type_traits>  // std::enable_if_t
 #include <vector>       // std::vector
 
+/**
+ * @def PLSSVM_CREATE_CSVC_CSVR_TO_BACKEND_CSVC_CSVR_MAP
+ * @brief Defines a macro to create typedefs (in the respective backend namespaces) to map from the base C-SVC and C-SVR classes to the backend specific C-SVC and C-SVR classes.
+ * @param[in] backend_namespace the backend namespace to use
+ */
+#define PLSSVM_CREATE_CSVC_CSVR_TO_BACKEND_CSVC_CSVR_MAP(backend_namespace) \
+    namespace backend_namespace {                                           \
+    template <typename>                                                     \
+    struct backend_csvm_type { };                                           \
+                                                                            \
+    template <>                                                             \
+    struct backend_csvm_type<::plssvm::csvc> {                              \
+        using type = ::plssvm::backend_namespace::csvc;                     \
+    };                                                                      \
+                                                                            \
+    template <>                                                             \
+    struct backend_csvm_type<::plssvm::csvr> {                              \
+        using type = ::plssvm::backend_namespace::csvr;                     \
+    };                                                                      \
+                                                                            \
+    template <typename T>                                                   \
+    using backend_csvm_type_t = typename backend_csvm_type<T>::type;        \
+    }
+
 namespace plssvm {
 
 /**
@@ -89,6 +113,7 @@ std::istream &operator>>(std::istream &in, backend_type &backend);
 /// @cond Doxygen_suppress
 // clang-format off
 // Forward declare all possible C-SVMs.
+class csvc; class csvr;
 namespace openmp { class csvm; class csvc; class csvr; }
 namespace stdpar { class csvm; class csvc; class csvr; }
 namespace hpx { class csvm; class csvc; class csvr; }
@@ -200,6 +225,19 @@ struct csvm_to_backend_type<T, std::enable_if_t<detail::is_one_type_of_v<T, kokk
 
 /// @endcond
 
+// be able to create the following mappings (e.g. for the OpenMP backend, but also applicable to all other backends):
+// plssvm::csvc -> plssvm::openmp::csvc
+// plssvm::csvr -> plssvm::openmp::csvr
+PLSSVM_CREATE_CSVC_CSVR_TO_BACKEND_CSVC_CSVR_MAP(openmp)
+PLSSVM_CREATE_CSVC_CSVR_TO_BACKEND_CSVC_CSVR_MAP(stdpar)
+PLSSVM_CREATE_CSVC_CSVR_TO_BACKEND_CSVC_CSVR_MAP(hpx)
+PLSSVM_CREATE_CSVC_CSVR_TO_BACKEND_CSVC_CSVR_MAP(cuda)
+PLSSVM_CREATE_CSVC_CSVR_TO_BACKEND_CSVC_CSVR_MAP(hip)
+PLSSVM_CREATE_CSVC_CSVR_TO_BACKEND_CSVC_CSVR_MAP(opencl)
+PLSSVM_CREATE_CSVC_CSVR_TO_BACKEND_CSVC_CSVR_MAP(adaptivecpp)
+PLSSVM_CREATE_CSVC_CSVR_TO_BACKEND_CSVC_CSVR_MAP(dpcpp)
+PLSSVM_CREATE_CSVC_CSVR_TO_BACKEND_CSVC_CSVR_MAP(kokkos)
+
 /**
  * @brief Get the plssvm::backend_type of the C-SVM class of type @p T. Ignores all top-level const, volatile, and reference qualifiers.
  * @details Provides a member variable `value` if @p T is a valid C-SVM.
@@ -224,5 +262,7 @@ template <>
 struct fmt::formatter<plssvm::backend_type> : fmt::ostream_formatter { };
 
 /// @endcond
+
+#undef PLSSVM_CREATE_CSVC_CSVR_TO_BACKEND_CSVC_CSVR_MAP
 
 #endif  // PLSSVM_BACKEND_TYPES_HPP_

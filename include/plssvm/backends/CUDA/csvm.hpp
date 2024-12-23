@@ -22,7 +22,7 @@
 #include "plssvm/detail/type_traits.hpp"                  // PLSSVM_REQUIRES, plssvm::detail::is_one_type_of
 #include "plssvm/parameter.hpp"                           // plssvm::parameter, plssvm::detail::has_only_parameter_named_args_v
 #include "plssvm/svm/csvc.hpp"                            // plssvm::csvc
-#include "plssvm/svm/csvm.hpp"                            // PLSSVM_CREATE_CSVC_CSVR_TO_BACKEND_CSVC_CSVR_MAP, plssvm::detail::csvm_backend_exists
+#include "plssvm/svm/csvm.hpp"                            // plssvm::detail::csvm_backend_exists
 #include "plssvm/svm/csvr.hpp"                            // plssvm::csvr
 #include "plssvm/target_platforms.hpp"                    // plssvm::target_platform
 
@@ -206,11 +206,6 @@ class csvr : public ::plssvm::csvr,
     // use the CUDA C-SVM constructors
     using ::plssvm::cuda::csvm::csvm;
 };
-
-// be able to create the following mappings:
-// plssvm::csvc -> plssvm::cuda::csvc
-// plssvm::csvr -> plssvm::cuda::csvr
-PLSSVM_CREATE_CSVC_CSVR_TO_BACKEND_CSVC_CSVR_MAP(cuda)
 
 }  // namespace cuda
 

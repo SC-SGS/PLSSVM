@@ -20,11 +20,13 @@
 #include "plssvm/backends/SYCL/DPCPP/detail/queue.hpp"          // plssvm::dpcpp::detail::queue (PImpl)
 #include "plssvm/backends/SYCL/kernel_invocation_types.hpp"     // plssvm::sycl::kernel_invocation_type
 #include "plssvm/constants.hpp"                                 // plssvm::real_type
-#include "plssvm/csvm.hpp"                                      // plssvm::detail::csvm_backend_exists
 #include "plssvm/detail/igor_utility.hpp"                       // plssvm::detail::get_value_from_named_parameter
 #include "plssvm/detail/memory_size.hpp"                        // plssvm::detail::memory_size
-#include "plssvm/detail/type_traits.hpp"                        // PLSSVM_REQUIRES
+#include "plssvm/detail/type_traits.hpp"                        // PLSSVM_REQUIRES, plssvm::detail::is_one_type_of
 #include "plssvm/parameter.hpp"                                 // plssvm::parameter, plssvm::detail::parameter
+#include "plssvm/svm/csvc.hpp"                                  // plssvm::csvc
+#include "plssvm/svm/csvm.hpp"                                  // plssvm::detail::csvm_backend_exists
+#include "plssvm/svm/csvr.hpp"                                  // plssvm::csvr
 #include "plssvm/target_platforms.hpp"                          // plssvm::target_platform
 
 #include "igor/igor.hpp"  // igor::parser
@@ -126,7 +128,7 @@ class csvm : public ::plssvm::detail::gpu_csvm<detail::device_ptr, detail::queue
      * @brief Wait for all operations in all [`sycl::queue`](https://www.khronos.org/registry/SYCL/specs/sycl-2020/html/sycl-2020.html#sec:interface.queue.class) to finish.
      * @details Terminates the program, if any asynchronous exception is thrown.
      */
-    ~csvm() override;
+    ~csvm() override = 0;
 
     /**
      * @brief Return the kernel invocation type used in this SYCL SVM.
@@ -202,15 +204,37 @@ class csvm : public ::plssvm::detail::gpu_csvm<detail::device_ptr, detail::queue
     sycl::kernel_invocation_type invocation_type_{ sycl::kernel_invocation_type::automatic };
 };
 
+/**
+ * @brief Create a C-SVC using the DPC++ SYCL backend.
+ * @details Inherits all functionality either from the `plssvm::csvc` or `plssvm::dpcpp::csvm` classes.
+ */
+class csvc : public ::plssvm::csvc,
+             public ::plssvm::dpcpp::csvm {
+  public:
+    // use the DPC++ SYCL C-SVM constructors
+    using ::plssvm::dpcpp::csvm::csvm;
+};
+
+/**
+ * @brief Create a C-SVR using the DPC++ SYCL backend.
+ * @details Inherits all functionality either from the `plssvm::csvr` or `plssvm::dpcpp::csvm` classes.
+ */
+class csvr : public ::plssvm::csvr,
+             public ::plssvm::dpcpp::csvm {
+  public:
+    // use the DPC++ SYCL C-SVM constructors
+    using ::plssvm::dpcpp::csvm::csvm;
+};
+
 }  // namespace dpcpp
 
 namespace detail {
 
 /**
- * @brief Sets the `value` to `true` since C-SVMs using the SYCL backend with DPC++ as SYCL implementation are available.
+ * @brief Sets the `value` to `true` since C-SVMs (C-SVCs, C-SVRs) using the SYCL backend with DPC++ as SYCL implementation are available.
  */
-template <>
-struct csvm_backend_exists<dpcpp::csvm> : std::true_type { };
+template <typename T>
+struct csvm_backend_exists<T, std::enable_if_t<is_one_type_of_v<T, dpcpp::csvm, dpcpp::csvc, dpcpp::csvr>>> : std::true_type { };
 
 }  // namespace detail
 
