@@ -29,7 +29,7 @@
 
 #include <cmath>    // std::ceil
 #include <cstddef>  // std::size_t
-#include <memory>   // std::make_unique
+#include <memory>   // std::make_unique, std::addressof
 #include <tuple>    // std::tuple
 #include <utility>  // std::forward, std::move
 #include <vector>   // std::vector
