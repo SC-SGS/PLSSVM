@@ -14,7 +14,7 @@
 #pragma once
 
 #include "plssvm/constants.hpp"          // plssvm::real_type
-#include "plssvm/data_set/data_set.hpp"  // plssvm::data_set
+#include "plssvm/data_set/data_set.hpp"  // plssvm::data_set, plssvm::optional_ref
 #include "plssvm/detail/assert.hpp"      // PLSSVM_ASSERT
 #include "plssvm/matrix.hpp"             // plssvm::soa_matrix, plssvm::aos_matrix
 #include "plssvm/parameter.hpp"          // plssvm::parameter
@@ -96,11 +96,11 @@ class model {
     [[nodiscard]] const soa_matrix<real_type> &support_vectors() const noexcept { return data_->data(); }
 
     /**
-     * @brief Returns the labels of the support vectors.
+     * @brief Returns an optional reference to the labels of the support vectors.
      * @details If the labels are present, they can be retrieved as `std::vector` using: `dataset.labels()->%get()`.
      * @return the labels (`[[nodiscard]]`)
      */
-    [[nodiscard]] const std::vector<label_type> &labels() const noexcept { return data_.labels()->get(); }
+    [[nodiscard]] optional_ref<const std::vector<label_type>> labels() const noexcept { return data_->labels(); }
 
     /**
      * @brief The learned weights for the support vectors.
