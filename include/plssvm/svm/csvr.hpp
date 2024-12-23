@@ -196,18 +196,23 @@ class csvr : virtual public csvm {
         return predicted_labels;
     }
 
-    // TODO: not possible since the LIBSVM SVR model loses the original label values?!
-    // /**
-    //  * @brief Calculate the regression loss of the @p model.
-    //  * @tparam label_type the type of the label
-    //  * @param[in] model a previously learned model
-    //  * @throws plssvm::exception any exception thrown in the respective backend's implementation of `plssvm::csvm::predict_values`
-    //  * @return the regression loss of the model (`[[nodiscard]]`)
-    //  */
-    // template <typename label_type>
-    // [[nodiscard]] real_type score(const regression_model<label_type> &model) const {
-    // return this->score(model, dynamic_cast<const regression_model<label_type> &>(*model.data_));
-    // }
+    /**
+     * @brief Calculate the regression loss of the @p model.
+     * @details A model read from a LIBSVM model file can't be directly fitted, since it doesn't contain the original label information.
+     * @tparam label_type the type of the label
+     * @param[in] model a previously learned model
+     * @throws plssvm::invalid_parameter_exception if the @p model has no labels
+     * @throws plssvm::exception any exception thrown in the respective backend's implementation of `plssvm::csvm::predict_values`
+     * @return the regression loss of the model (`[[nodiscard]]`)
+     */
+    template <typename label_type>
+    [[nodiscard]] real_type
+    score(const regression_model<label_type> &model) const {
+        if (!model.data_->has_labels()) {
+            throw invalid_parameter_exception{ "The model must have labels to score it! Maybe to model was read from a LIBSVM model file?" };
+        }
+        return this->score(model, dynamic_cast<const regression_model<label_type> &>(*model.data_));
+    }
 
     /**
      * @brief Calculate the regression loss of the labeled @p data set using the @p model.
