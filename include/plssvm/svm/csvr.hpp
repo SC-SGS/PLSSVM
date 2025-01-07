@@ -197,7 +197,7 @@ class csvr : virtual public csvm {
     }
 
     /**
-     * @brief Calculate the regression loss of the @p model.
+     * @brief Calculate the regression loss of the @p model using the coefficient of determination.
      * @details A model read from a LIBSVM model file can't be directly fitted, since it doesn't contain the original label information.
      * @tparam label_type the type of the label
      * @param[in] model a previously learned model
@@ -215,7 +215,7 @@ class csvr : virtual public csvm {
     }
 
     /**
-     * @brief Calculate the regression loss of the labeled @p data set using the @p model.
+     * @brief Calculate the regression loss of the labeled @p data set using the @p model using the coefficient of determination.
      * @tparam label_type the type of the label
      * @param[in] model a previously learned model
      * @param[in] data the labeled data set to score
