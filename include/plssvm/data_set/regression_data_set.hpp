@@ -70,7 +70,7 @@ class regression_data_set : public data_set<U> {
     using typename base_data_set::size_type;
     /// The type of the scaling factors.
     using typename base_data_set::scaling;
-    /// Make the overloaded non-virtual save member function visible.
+    // Make the overloaded non-virtual save member function visible.
     using base_data_set::save;
     /// The C-SVM type used with this data set.
     using svm_fit_type = ::plssvm::csvr;

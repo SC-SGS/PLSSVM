@@ -101,7 +101,10 @@ class csvm : virtual public ::plssvm::csvm {
     csvm &operator=(const csvm &) = delete;
 
     /**
-     * @copydoc plssvm::csvm::operator=(plssvm::csvm &&) noexcept
+     * @brief Correctly implement the move-assignment operator in presence of a virtual base class.
+     * @details Calls the base class move-assignment operator. Afterwards, moves the additional `stdpar::csvm` members.
+     * @param[in,out] other the other C-SVM to move from
+     * @return `*this`
      */
     csvm &operator=(csvm &&other) noexcept {
         if (this != std::addressof(other)) {
