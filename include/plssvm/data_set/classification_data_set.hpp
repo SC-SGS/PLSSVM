@@ -64,8 +64,6 @@ class classification_data_set : public data_set<U> {
     /// The base data set class.
     using base_data_set = data_set<U>;
 
-    using typename base_data_set::scaling;
-
     using base_data_set::labels_ptr_;
     using base_data_set::y_ptr_;
 
@@ -77,6 +75,10 @@ class classification_data_set : public data_set<U> {
     using typename base_data_set::label_type;
     /// An unsigned integer type.
     using typename base_data_set::size_type;
+    /// The type of the scaling factors.
+    using typename base_data_set::scaling;
+    /// Make the overloaded non-virtual save member function visible.
+    using base_data_set::save;
     /// The C-SVM type used with this data set.
     using svm_fit_type = ::plssvm::csvc;
 
