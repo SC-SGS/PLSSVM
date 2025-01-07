@@ -126,8 +126,8 @@ regression_report::regression_report(const std::vector<label_type> &correct_labe
         double variance_correct_minus_predicted{ 0.0 };
 #pragma omp parallel for default(none) shared(correct_label, predicted_label) firstprivate(mean_correct, mean_correct_minus_predicted) reduction(+ : variance_correct, variance_correct_minus_predicted)
         for (std::size_t i = 0; i < correct_label.size(); ++i) {
-            variance_correct += static_cast<double>(correct_label[i] - mean_correct) * static_cast<double>(correct_label[i] - mean_correct);
-            variance_correct_minus_predicted += static_cast<double>(correct_label[i] - predicted_label[i] - mean_correct_minus_predicted) * static_cast<double>(correct_label[i] - predicted_label[i] - mean_correct_minus_predicted);
+            variance_correct += (static_cast<double>(correct_label[i]) - mean_correct) * (static_cast<double>(correct_label[i]) - mean_correct);
+            variance_correct_minus_predicted += (static_cast<double>(correct_label[i] - predicted_label[i]) - mean_correct_minus_predicted) * (static_cast<double>(correct_label[i] - predicted_label[i]) - mean_correct_minus_predicted);
         }
         variance_correct /= static_cast<double>(correct_label.size());
         variance_correct_minus_predicted /= static_cast<double>(correct_label.size());
@@ -167,7 +167,7 @@ regression_report::regression_report(const std::vector<label_type> &correct_labe
 #pragma omp parallel for default(none) shared(correct_label, predicted_label) firstprivate(mean_correct) reduction(+ : ss_res, ss_tot)
         for (std::size_t i = 0; i < correct_label.size(); ++i) {
             ss_res += static_cast<double>(correct_label[i] - predicted_label[i]) * static_cast<double>(correct_label[i] - predicted_label[i]);
-            ss_tot += static_cast<double>(correct_label[i] - mean_correct) * static_cast<double>(correct_label[i] - mean_correct);
+            ss_tot += (static_cast<double>(correct_label[i]) - mean_correct) * (static_cast<double>(correct_label[i]) - mean_correct);
         }
         regression_loss_.r2_score = 1.0 - ss_res / ss_tot;
 
