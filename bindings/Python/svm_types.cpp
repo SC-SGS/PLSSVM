@@ -12,7 +12,7 @@
 
 namespace py = pybind11;
 
-void init_svm_type(py::module_ &m) {
+void init_svm_types(py::module_ &m) {
     // bind enum class
     py::enum_<plssvm::svm_type> svm_type_enum(m, "SVMType");
     svm_type_enum.value("CSVC", plssvm::svm_type::csvc, "use a C-SVC for classification")
