@@ -211,7 +211,7 @@ class csvr : virtual public csvm {
         if (!model.data_->has_labels()) {
             throw invalid_parameter_exception{ "The model must have labels to score it! Maybe to model was read from a LIBSVM model file?" };
         }
-        return this->score(model, dynamic_cast<const regression_model<label_type> &>(*model.data_));
+        return this->score(model, dynamic_cast<const regression_data_set<label_type> &>(*model.data_));
     }
 
     /**
