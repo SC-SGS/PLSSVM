@@ -39,7 +39,7 @@ struct regression_data_set_bindings {
     void operator()(py::module_ &m, py::module_ &pure_virtual, label_type) {
         using data_set_type = plssvm::regression_data_set<label_type>;
 
-        // create the Python type names based on the provided real_type and label_type
+        // create the Python type names based on the provided label_type
         const std::string class_name = plssvm::bindings::python::util::assemble_unique_class_name<label_type>("RegressionDataSet");
         m.attr(plssvm::bindings::python::util::assemble_unique_class_name<label_type>("RegressionDataSetScalingFactors").c_str()) =
             pure_virtual.attr(plssvm::bindings::python::util::assemble_unique_class_name<label_type>("__pure_virtual_base_DataSetScalingFactors").c_str());

@@ -43,7 +43,7 @@ struct data_set_bindings {
         using data_set_type = plssvm::data_set<label_type>;
         using size_type = typename data_set_type::size_type;
 
-        // create the Python type names based on the provided real_type and label_type
+        // create the Python type names based on the provided label_type
         const std::string class_name_scaling_factors = plssvm::bindings::python::util::assemble_unique_class_name<label_type>("__pure_virtual_base_DataSetScalingFactors");
         const std::string class_name_scaling = plssvm::bindings::python::util::assemble_unique_class_name<label_type>("__pure_virtual_base_DataSetScaling");
         const std::string class_name = plssvm::bindings::python::util::assemble_unique_class_name<label_type>("__pure_virtual_base_DataSet");
