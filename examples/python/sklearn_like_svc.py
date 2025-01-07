@@ -7,7 +7,7 @@ num_features = 2**6
 samples, labels = make_classification(n_samples=num_samples, n_features=num_features, n_redundant=0,
                                       n_informative=2, n_clusters_per_class=1)
 
-# create C-SVM
+# create a C-SVC
 svc = plssvm.SVC(kernel='linear', C=1.0, tol=1e-3, verbose=False)
 
 # fit the model

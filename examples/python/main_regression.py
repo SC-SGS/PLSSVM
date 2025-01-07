@@ -1,5 +1,4 @@
 import plssvm
-from sklearn.metrics import classification_report
 
 try:
     # create a new C-SVM parameter set, explicitly overriding the default kernel function
@@ -7,11 +6,11 @@ try:
 
     # create two data sets: one with the training data scaled to [-1, 1]
     # and one with the test data scaled like the training data
-    train_data = plssvm.DataSet("train_file.libsvm", scaling=(-1.0, 1.0))
-    test_data = plssvm.DataSet("test_file.libsvm", scaling=train_data.scaling_factors())
+    train_data = plssvm.RegressionDataSet("train_file.libsvm", scaling=(-1.0, 1.0))
+    test_data = plssvm.RegressionDataSet("test_file.libsvm", scaling=train_data.scaling_factors())
 
-    # create C-SVM using the default backend and the previously defined parameter
-    svm = plssvm.CSVM(params)
+    # create C-SVR using the default backend and the previously defined parameter
+    svm = plssvm.CSVR(params)
 
     # fit using the training data, (optionally) set the termination criterion
     model = svm.fit(train_data, epsilon=10e-6)
@@ -22,9 +21,6 @@ try:
 
     # predict labels
     predicted_label = svm.predict(model, test_data)
-    # output a more complete classification report
-    correct_label = test_data.labels()
-    print(classification_report(correct_label, predicted_label))
 
     # write model file to disk
     model.save("model_file.libsvm")
