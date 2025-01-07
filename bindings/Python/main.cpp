@@ -44,7 +44,8 @@ void init_hip_csvm(py::module_ &, const py::exception<plssvm::exception> &);
 void init_opencl_csvm(py::module_ &, const py::exception<plssvm::exception> &);
 void init_sycl(py::module_ &, const py::exception<plssvm::exception> &);
 void init_kokkos_csvm(py::module_ &, const py::exception<plssvm::exception> &);
-void init_sklearn(py::module_ &);
+void init_sklearn_svc(py::module_ &);
+void init_sklearn_svr(py::module_ &);
 
 PYBIND11_MODULE(plssvm, m) {
     m.doc() = "Parallel Least Squares Support Vector Machine";
@@ -120,5 +121,6 @@ PYBIND11_MODULE(plssvm, m) {
     init_kokkos_csvm(m, base_exception);
 #endif
 
-    init_sklearn(m);
+    init_sklearn_svc(m);
+    init_sklearn_svr(m);
 }

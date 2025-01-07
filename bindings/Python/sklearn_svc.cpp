@@ -35,15 +35,15 @@ namespace py = pybind11;
 struct svc {
     // the types
     using real_type = plssvm::real_type;
-    using label_type = PLSSVM_PYTHON_BINDINGS_PREFERRED_LABEL_TYPE;
-    using data_set_type = plssvm::data_set<label_type>;
-    using model_type = plssvm::model<label_type>;
+    using label_type = PLSSVM_PYTHON_BINDINGS_PREFERRED_SVC_LABEL_TYPE;
+    using data_set_type = plssvm::classification_data_set<label_type>;
+    using model_type = plssvm::classification_model<label_type>;
 
     std::optional<real_type> epsilon{};
     std::optional<unsigned long long> max_iter{};
     plssvm::classification_type classification{ plssvm::classification_type::oaa };
 
-    std::unique_ptr<plssvm::csvm> svm_{ plssvm::make_csvm() };
+    std::unique_ptr<plssvm::csvc> svm_{ plssvm::make_csvc() };
     std::unique_ptr<data_set_type> data_{};
     std::unique_ptr<model_type> model_{};
 };
@@ -194,7 +194,7 @@ template <typename svc>
     }
     // sort the indices into the respective bucket based on their associated class
     for (std::size_t idx = 0; idx < self.model_->num_support_vectors(); ++idx) {
-        indices_per_class[self.model_->labels()[idx]].push_back(static_cast<int>(idx));
+        indices_per_class[self.model_->labels()->get()[idx]].push_back(static_cast<int>(idx));
     }
     // convert map values to vector
     std::vector<int> support{};
@@ -205,7 +205,7 @@ template <typename svc>
     return support;
 }
 
-void init_sklearn(py::module_ &m) {
+void init_sklearn_svc(py::module_ &m) {
     // documentation based on sklearn.svm.SVC documentation
     py::class_<svc> py_svc(m, "SVC");
     py_svc.def(py::init([](const py::kwargs &args) {
@@ -311,7 +311,7 @@ void init_sklearn(py::module_ &m) {
                         occurrences.insert({ label, std::int32_t{ 0 } });
                     }
                     // count occurrences
-                    for (const typename svc::label_type &label : self.model_->labels()) {
+                    for (const typename svc::label_type &label : self.model_->labels()->get()) {
                         ++occurrences[label];
                     }
                     // convert map values to vector
@@ -339,7 +339,7 @@ void init_sklearn(py::module_ &m) {
         // TODO: predict_values?!
         throw py::attribute_error{ "'SVC' object has no function 'decision_function' (not implemented)" };
     });
-#if !defined(PLSSVM_PYTHON_BINDINGS_LABEL_TYPE_IS_STRING)
+#if !defined(PLSSVM_PYTHON_BINDINGS_SVC_LABEL_TYPE_IS_STRING)
     py_svc.def(
         "fit", [](svc &self, py::array_t<typename svc::real_type, py::array::c_style | py::array::forcecast> data, py::array_t<typename svc::label_type, py::array::c_style | py::array::forcecast> labels, std::optional<std::vector<typename svc::real_type>> sample_weight) -> svc & {
             if (sample_weight.has_value()) {
@@ -421,7 +421,7 @@ void init_sklearn(py::module_ &m) {
                   return py_params;
               },
               "Get parameters for this estimator.",
-              py::arg("depp") = true)
+              py::arg("deep") = true)
         .def("predict", [](svc &self, py::array_t<typename svc::real_type, py::array::c_style | py::array::forcecast> data) {
                 if (self.model_ == nullptr) {
                     throw py::attribute_error{ "This SVC instance is not fitted yet. Call 'fit' with appropriate arguments before using this estimator." };
@@ -431,7 +431,7 @@ void init_sklearn(py::module_ &m) {
                 } }, "Perform classification on samples in X.")
         .def("predict_log_proba", [](const svc &, py::array_t<typename svc::real_type>) { throw py::attribute_error{ "'SVC' object has no function 'predict_log_proba' (not implemented)" }; })
         .def("predict_proba", [](const svc &, py::array_t<typename svc::real_type>) { throw py::attribute_error{ "'SVC' object has no function 'predict_proba' (not implemented)" }; });
-#if !defined(PLSSVM_PYTHON_BINDINGS_LABEL_TYPE_IS_STRING)
+#if !defined(PLSSVM_PYTHON_BINDINGS_SVC_LABEL_TYPE_IS_STRING)
     py_svc.def(
         "score", [](svc &self, py::array_t<typename svc::real_type, py::array::c_style | py::array::forcecast> data, py::array_t<typename svc::label_type, py::array::c_style | py::array::forcecast> labels, std::optional<std::vector<typename svc::real_type>> sample_weight) {
             if (sample_weight.has_value()) {
