@@ -40,6 +40,8 @@ void init_regression_data_set(py::module_ &, py::module_ &);
 void init_version(py::module_ &);
 void init_exceptions(py::module_ &, const py::exception<plssvm::exception> &);
 void init_csvm(py::module_ &);
+void init_csvc(py::module_ &, py::module_ &);
+void init_csvr(py::module_ &, py::module_ &);
 void init_openmp_csvm(py::module_ &, const py::exception<plssvm::exception> &);
 void init_hpx_csvm(py::module_ &, const py::exception<plssvm::exception> &);
 void init_stdpar_csvm(py::module_ &, const py::exception<plssvm::exception> &);
@@ -104,7 +106,9 @@ PYBIND11_MODULE(plssvm, m) {
     init_regression_data_set(m, pure_virtual);
     init_version(m);
     init_exceptions(m, base_exception);
-    init_csvm(m);
+    init_csvm(pure_virtual);
+    init_csvc(m, pure_virtual);
+    init_csvr(m, pure_virtual);
 
     // init bindings for the specific backends ONLY if the backend has been enabled
 #if defined(PLSSVM_HAS_OPENMP_BACKEND)

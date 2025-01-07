@@ -53,6 +53,7 @@ void init_sycl(py::module_ &m, const py::exception<plssvm::exception> &base_exce
     const py::module_ dpcpp_module = init_dpcpp_csvm(m, base_exception);
 #endif
 
-    // "alias" one of the DPC++ or AdaptiveCpp CSVMs to be the default SYCL CSVM
-    sycl_module.attr("CSVM") = PLSSVM_CONCATENATE(PLSSVM_SYCL_BACKEND_PREFERRED_IMPLEMENTATION, _module).attr("CSVM");
+    // "alias" one of the DPC++ or AdaptiveCpp CSVCs and CSVRs to be the respective default SYCL CSVC and CSVR
+    sycl_module.attr("CSVC") = PLSSVM_CONCATENATE(PLSSVM_SYCL_BACKEND_PREFERRED_IMPLEMENTATION, _module).attr("CSVC");
+    sycl_module.attr("CSVR") = PLSSVM_CONCATENATE(PLSSVM_SYCL_BACKEND_PREFERRED_IMPLEMENTATION, _module).attr("CSVR");
 }

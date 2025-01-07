@@ -39,8 +39,9 @@ set(PLSSVM_PYTHON_BINDINGS_SOURCES
     
     ${CMAKE_CURRENT_LIST_DIR}/backend_types.cpp
     ${CMAKE_CURRENT_LIST_DIR}/classification_types.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/csvm.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/data_set.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/svm/csvm.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/svm/csvc.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/svm/csvr.cpp
     ${CMAKE_CURRENT_LIST_DIR}/data_set/data_set.cpp
     ${CMAKE_CURRENT_LIST_DIR}/data_set/classification_data_set.cpp
     ${CMAKE_CURRENT_LIST_DIR}/data_set/regression_data_set.cpp

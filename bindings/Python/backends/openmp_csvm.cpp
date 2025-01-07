@@ -6,28 +6,31 @@
  *          See the LICENSE.md file in the project root for full license information.
  */
 
+#include "plssvm/backend_types.hpp"               // plssvm::openmp::backend_csvm_type_t
 #include "plssvm/backends/OpenMP/csvm.hpp"        // plssvm::openmp::csvm
 #include "plssvm/backends/OpenMP/exceptions.hpp"  // plssvm::openmp::backend_exception
-#include "plssvm/csvm.hpp"                        // plssvm::csvm
 #include "plssvm/exceptions/exceptions.hpp"       // plssvm::exception
 #include "plssvm/parameter.hpp"                   // plssvm::parameter
+#include "plssvm/svm/csvc.hpp"                    // plssvm::csvc
+#include "plssvm/svm/csvm.hpp"                    // plssvm::csvm
+#include "plssvm/svm/csvr.hpp"                    // plssvm::csvr
 #include "plssvm/target_platforms.hpp"            // plssvm::target_platform
 
 #include "bindings/Python/utility.hpp"  // check_kwargs_for_correctness, convert_kwargs_to_parameter, register_py_exception
 
-#include "pybind11/pybind11.h"  // py::module_, py::class_, py::init
+#include "pybind11/pybind11.h"  // py::module_, py::class_, py::init, py::kwargs, py::exception
 #include "pybind11/stl.h"       // support for STL types
 
 #include <memory>  // std::make_unique
+#include <string>  // std::string
 
 namespace py = pybind11;
 
-void init_openmp_csvm(py::module_ &m, const py::exception<plssvm::exception> &base_exception) {
-    // use its own submodule for the OpenMP CSVM bindings
-    py::module_ openmp_module = m.def_submodule("openmp", "a module containing all OpenMP backend specific functionality");
+template <typename csvm_type>
+void bind_openmp_csvms(py::module_ &m, const std::string &csvm_name) {
+    using backend_csvm_type = plssvm::openmp::backend_csvm_type_t<csvm_type>;
 
-    // bind the CSVM using the OpenMP backend
-    py::class_<plssvm::openmp::csvm, plssvm::csvm>(openmp_module, "CSVM")
+    py::class_<backend_csvm_type, plssvm::openmp::csvm, csvm_type>(m, csvm_name.c_str())
         .def(py::init<>(), "create an SVM with the automatic target platform and default parameter object")
         .def(py::init<plssvm::parameter>(), "create an SVM with the automatic target platform and provided parameter object")
         .def(py::init<plssvm::target_platform>(), "create an SVM with the provided target platform and default parameter object")
@@ -38,7 +41,7 @@ void init_openmp_csvm(py::module_ &m, const py::exception<plssvm::exception> &ba
                  // if one of the value keyword parameter is provided, set the respective value
                  const plssvm::parameter params = convert_kwargs_to_parameter(args);
                  // create CSVM with the default target platform
-                 return std::make_unique<plssvm::openmp::csvm>(params);
+                 return std::make_unique<backend_csvm_type>(params);
              }),
              "create an SVM with the default target platform and keyword arguments")
         .def(py::init([](const plssvm::target_platform target, const py::kwargs &args) {
@@ -47,9 +50,22 @@ void init_openmp_csvm(py::module_ &m, const py::exception<plssvm::exception> &ba
                  // if one of the value keyword parameter is provided, set the respective value
                  const plssvm::parameter params = convert_kwargs_to_parameter(args);
                  // create CSVM with the provided target platform
-                 return std::make_unique<plssvm::openmp::csvm>(target, params);
+                 return std::make_unique<backend_csvm_type>(target, params);
              }),
              "create an SVM with the provided target platform and keyword arguments");
+}
+
+void init_openmp_csvm(py::module_ &m, const py::exception<plssvm::exception> &base_exception) {
+    // use its own submodule for the OpenMP CSVM bindings
+    py::module_ openmp_module = m.def_submodule("openmp", "a module containing all OpenMP backend specific functionality");
+    const py::module_ openmp_pure_virtual_module = openmp_module.def_submodule("__pure_virtual", "a module containing all pure-virtual OpenMP backend specific functionality");
+
+    // bind the pure-virtual base OpenMP CSVM
+    py::class_<plssvm::openmp::csvm, plssvm::csvm>(openmp_pure_virtual_module, "__pure_virtual_openmp_base_CSVM");
+
+    // bind the specific OpenMP CSVC and CSVR classes
+    bind_openmp_csvms<plssvm::csvc>(openmp_module, "CSVC");
+    bind_openmp_csvms<plssvm::csvr>(openmp_module, "CSVR");
 
     // register OpenMP backend specific exceptions
     register_py_exception<plssvm::openmp::backend_exception>(openmp_module, "BackendError", base_exception);
