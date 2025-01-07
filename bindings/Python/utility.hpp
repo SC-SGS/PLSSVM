@@ -28,12 +28,15 @@
 #include "pybind11/pytypes.h"      // py::list
 #include "pybind11/stl.h"          // support for STL types
 
+#include <cstddef>      // std::size_t
 #include <cstring>      // std::memcpy
 #include <exception>    // std::exception_ptr, std::rethrow_exception
 #include <sstream>      // std::istringstream
 #include <string>       // std::string
 #include <string_view>  // std::string_view
+#include <tuple>        // std::tuple_element_t, std::tuple_size_v
 #include <type_traits>  // std::is_same_v, std::conditional_t
+#include <utility>      // std::integer_sequence, std::make_integer_sequence
 #include <vector>       // std::vector
 
 namespace py = pybind11;
@@ -308,7 +311,55 @@ PLSSVM_CREATE_NUMPY_NAME_MAPPING(std::string, "string")
  */
 template <typename label_type>
 [[nodiscard]] inline std::string assemble_unique_class_name(const std::string_view class_name) {
-    return fmt::format("{}_{}", class_name, detail::numpy_name_mapping<label_type>());
+    return fmt::format("{}_{}", class_name, ::detail::numpy_name_mapping<label_type>());
+}
+
+/**
+ * @brief Instantiate Python bindings using the @p InstantiationFunction for all @p LabelTypes.
+ * @tparam InstantiationFunction the functor used to instantiate the Python bindings
+ * @tparam LabelTypes the label types
+ * @tparam Idx the label type indices
+ * @param[in] m the Python module in which the Python bindings are instantiated
+ * @param[in] pure_virtual the pure-virtual Python module
+ */
+template <template <typename> typename InstantiationFunction, typename LabelTypes, std::size_t... Idx>
+inline void instantiate_bindings(py::module_ &m, py::module_ &pure_virtual, std::integer_sequence<std::size_t, Idx...>) {
+    (InstantiationFunction<std::tuple_element_t<Idx, LabelTypes>>{}(m, pure_virtual, std::tuple_element_t<Idx, LabelTypes>{}), ...);
+}
+
+/**
+ * @brief Instantiate Python bindings using the @p InstantiationFunction for all @p LabelTypes.
+ * @tparam InstantiationFunction the functor used to instantiate the Python bindings
+ * @tparam LabelTypes the label types
+ * @param[in] m the Python module in which the Python bindings are instantiated
+ * @param[in] pure_virtual the pure-virtual Python module
+ */
+template <template <typename> typename InstantiationFunction, typename LabelTypes>
+inline void instantiate_bindings(py::module_ &m, py::module_ &pure_virtual) {
+    instantiate_bindings<InstantiationFunction, LabelTypes>(m, pure_virtual, std::make_integer_sequence<std::size_t, std::tuple_size_v<LabelTypes>>{});
+}
+
+/**
+ * @brief Instantiate Python bindings using the @p InstantiationFunction for all @p LabelTypes.
+ * @tparam InstantiationFunction the functor used to instantiate the Python bindings
+ * @tparam LabelTypes the label types
+ * @tparam Idx the label type indices
+ * @param[in] m the Python module in which the Python bindings are instantiated
+ */
+template <template <typename> typename InstantiationFunction, typename LabelTypes, std::size_t... Idx>
+inline void instantiate_bindings(py::module_ &pure_virtual, std::integer_sequence<std::size_t, Idx...>) {
+    (InstantiationFunction<std::tuple_element_t<Idx, LabelTypes>>{}(pure_virtual, std::tuple_element_t<Idx, LabelTypes>{}), ...);
+}
+
+/**
+ * @brief Instantiate Python bindings using the @p InstantiationFunction for all @p LabelTypes.
+ * @tparam InstantiationFunction the functor used to instantiate the Python bindings
+ * @tparam LabelTypes the label types
+ * @param[in] m the Python module in which the Python bindings are instantiated
+ */
+template <template <typename> typename InstantiationFunction, typename LabelTypes>
+inline void instantiate_bindings(py::module_ &pure_virtual) {
+    instantiate_bindings<InstantiationFunction, LabelTypes>(pure_virtual, std::make_integer_sequence<std::size_t, std::tuple_size_v<LabelTypes>>{});
 }
 
 #endif  // PLSSVM_BINDINGS_PYTHON_UTILITY_HPP_

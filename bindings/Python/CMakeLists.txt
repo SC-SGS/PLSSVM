@@ -45,7 +45,9 @@ set(PLSSVM_PYTHON_BINDINGS_SOURCES
     ${CMAKE_CURRENT_LIST_DIR}/gamma.cpp
     ${CMAKE_CURRENT_LIST_DIR}/kernel_function_types.cpp
     ${CMAKE_CURRENT_LIST_DIR}/kernel_functions.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/model.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/model/model.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/model/classification_model.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/model/regression_model.cpp
     ${CMAKE_CURRENT_LIST_DIR}/parameter.cpp
     ${CMAKE_CURRENT_LIST_DIR}/solver_types.cpp
     ${CMAKE_CURRENT_LIST_DIR}/svm_types.cpp

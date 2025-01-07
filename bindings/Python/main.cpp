@@ -32,6 +32,8 @@ void init_kernel_function_types(py::module_ &);
 void init_kernel_functions(py::module_ &);
 void init_parameter(py::module_ &);
 void init_model(py::module_ &);
+void init_classification_model(py::module_ &);
+void init_regression_model(py::module_ &);
 void init_data_set(py::module_ &);
 void init_version(py::module_ &);
 void init_exceptions(py::module_ &, const py::exception<plssvm::exception> &);
@@ -49,6 +51,9 @@ void init_sklearn_svr(py::module_ &);
 
 PYBIND11_MODULE(plssvm, m) {
     m.doc() = "Parallel Least Squares Support Vector Machine";
+
+    // create a pure-virtual module
+    py::module_ pure_virtual = m.def_submodule("__pure_virtual");
 
     // automatically initialize the environments
     plssvm::environment::initialize();
@@ -91,6 +96,9 @@ PYBIND11_MODULE(plssvm, m) {
     init_parameter(m);
     init_model(m);
     init_data_set(m);
+    init_model(pure_virtual);
+    init_classification_model(m);
+    init_regression_model(m);
     init_version(m);
     init_exceptions(m, base_exception);
     init_csvm(m);
