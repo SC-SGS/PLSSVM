@@ -16,8 +16,8 @@
 #include "plssvm/parameter.hpp"                         // plssvm::parameter, named parameters
 #include "plssvm/solver_types.hpp"                      // plssvm::solver_type
 
-#include "bindings/Python/svm/utility.hpp"  // assemble_csvm
-#include "bindings/Python/utility.hpp"      // check_kwargs_for_correctness
+#include "bindings/Python/svm/utility.hpp"  // plssvm::bindings::python::util::{assemble_csvm, vector_to_pyarray, instantiate_csvm}
+#include "bindings/Python/utility.hpp"      // plssvm::bindings::python::util::check_kwargs_for_correctness
 
 #include "pybind11/pybind11.h"  // py::module_, py::class_, py::kwargs, py::overload_cast, py::const_
 
@@ -40,7 +40,7 @@ struct csvc_bindings {
         csvc.def(
                 "fit", [](const plssvm::csvc &self, const plssvm::classification_data_set<label_type> &data, const py::kwargs &args) {
                     // check keyword arguments
-                    check_kwargs_for_correctness(args, { "epsilon", "max_iter", "classification", "solver" });
+                    plssvm::bindings::python::util::check_kwargs_for_correctness(args, { "epsilon", "max_iter", "classification", "solver" });
 
                     auto epsilon{ plssvm::real_type{ 0.001 } };
                     if (args.contains("epsilon")) {
@@ -77,7 +77,7 @@ struct csvc_bindings {
                    if constexpr (std::is_same_v<label_type, std::string>) {
                        return self.predict<label_type>(model, data);
                    } else {
-                       return vector_to_pyarray(self.predict<label_type>(model, data));
+                       return plssvm::bindings::python::util::vector_to_pyarray(self.predict<label_type>(model, data));
                    } }, "predict the labels for a data set using a previously learned model")
             .def("score", py::overload_cast<const plssvm::classification_model<label_type> &>(&plssvm::csvc::score<label_type>, py::const_), "calculate the accuracy of the model")
             .def("score", py::overload_cast<const plssvm::classification_model<label_type> &, const plssvm::classification_data_set<label_type> &>(&plssvm::csvc::score<label_type>, py::const_), "calculate the accuracy of a data set using the model");
@@ -88,17 +88,17 @@ void init_csvc(py::module_ &m, py::module_ &pure_virtual) {
     py::class_<plssvm::csvc> py_csvc(pure_virtual, "__pure_virtual_base_CSVC");
 
     // instantiate all functions using all available label_type
-    instantiate_csvm<csvc_bindings, plssvm::detail::supported_label_types_classification>(py_csvc);
+    plssvm::bindings::python::util::instantiate_csvm<csvc_bindings, plssvm::detail::supported_label_types_classification>(py_csvc);
 
     // bind plssvm::make_csvm factory functions to "generic" Python CSVC class
     py::class_<plssvm::csvc>(m, "CSVC", py_csvc, py::module_local())
         // IMPLICIT BACKEND
         .def(py::init([](const py::kwargs &args) {
-                 return assemble_csvm<plssvm::csvc>(args);
+                 return plssvm::bindings::python::util::assemble_csvm<plssvm::csvc>(args);
              }),
              "create an CSVC with the provided keyword arguments")
         .def(py::init([](const plssvm::parameter &params, const py::kwargs &args) {
-                 return assemble_csvm<plssvm::csvc>(args, params);
+                 return plssvm::bindings::python::util::assemble_csvm<plssvm::csvc>(args, params);
              }),
              "create an CSVC with the provided parameters and keyword arguments; the values in params will be overwritten by the keyword arguments");
 }

@@ -13,7 +13,7 @@
 #include "plssvm/matrix.hpp"            // plssvm::aos_matrix
 #include "plssvm/model/model.hpp"       // plssvm::model
 
-#include "bindings/Python/utility.hpp"  // assemble_unique_class_name, vector_to_pyarray, instantiate_bindings
+#include "bindings/Python/utility.hpp"  // plssvm::bindings::python::util::{assemble_unique_class_name, instantiate_bindings}
 
 #include "fmt/format.h"         // fmt::format
 #include "pybind11/pybind11.h"  // py::module_, py::class_
@@ -36,7 +36,7 @@ struct regression_model_bindings {
     void operator()(py::module_ &m, label_type) {
         using model_type = plssvm::regression_model<label_type>;
 
-        const std::string class_name = assemble_unique_class_name<label_type>("RegressionModel");
+        const std::string class_name = plssvm::bindings::python::util::assemble_unique_class_name<label_type>("RegressionModel");
 
         py::class_<model_type, plssvm::model<label_type>>(m, class_name.c_str())
             .def(py::init<const std::string &>(), "load a previously learned regression model from a file")
@@ -50,8 +50,8 @@ struct regression_model_bindings {
 
 void init_regression_model(py::module_ &m) {
     // bind all regression model classes
-    instantiate_bindings<regression_model_bindings, plssvm::detail::supported_label_types_regression>(m);
+    plssvm::bindings::python::util::instantiate_bindings<regression_model_bindings, plssvm::detail::supported_label_types_regression>(m);
 
     // create alias
-    m.attr("RegressionModel") = m.attr(assemble_unique_class_name<double>("RegressionModel").c_str());
+    m.attr("RegressionModel") = m.attr(plssvm::bindings::python::util::assemble_unique_class_name<double>("RegressionModel").c_str());
 }

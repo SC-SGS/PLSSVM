@@ -8,7 +8,7 @@
 
 #include "plssvm/core.hpp"
 
-#include "bindings/Python/utility.hpp"  // check_kwargs_for_correctness, assemble_unique_class_name, pyarray_to_vector, pyarray_to_matrix
+#include "bindings/Python/utility.hpp"  // plssvm::bindings::python::util::{check_kwargs_for_correctness, pyarray_to_vector, pyarray_to_matrix}
 
 #include "fmt/format.h"          // fmt::format
 #include "pybind11/numpy.h"      // support for STL types
@@ -49,7 +49,7 @@ struct svr {
 
 void parse_provided_params(svr &self, const py::kwargs &args) {
     // check keyword arguments
-    check_kwargs_for_correctness(args, { "C", "kernel", "degree", "gamma", "coef0", "shrinking", "tol", "cache_size", "verbose", "max_iter", "epsilon" });
+    plssvm::bindings::python::util::check_kwargs_for_correctness(args, { "C", "kernel", "degree", "gamma", "coef0", "shrinking", "tol", "cache_size", "verbose", "max_iter", "epsilon" });
 
     if (args.contains("C")) {
         self.svm_->set_params(plssvm::cost = args["C"].cast<typename svr::real_type>());
@@ -83,7 +83,7 @@ void parse_provided_params(svr &self, const py::kwargs &args) {
         self.svm_->set_params(plssvm::degree = args["degree"].cast<int>());
     }
     if (args.contains("gamma")) {
-        const plssvm::gamma_type gamma = convert_gamma_kwarg_to_variant(args);
+        const plssvm::gamma_type gamma = plssvm::bindings::python::util::convert_gamma_kwarg_to_variant(args);
         if (std::holds_alternative<plssvm::real_type>(gamma)) {
             self.svm_->set_params(plssvm::gamma = std::get<plssvm::real_type>(gamma));
         } else {
@@ -211,7 +211,7 @@ void init_sklearn_svr(py::module_ &m) {
             if (self.model_ == nullptr) {
                 throw py::attribute_error{ "'SVR' object has no attribute 'support_'" };
             } else {
-                return vector_to_pyarray(self.model_->num_iters().value());
+                return plssvm::bindings::python::util::vector_to_pyarray(self.model_->num_iters().value());
             } })
         .def_property_readonly("support_", [](const svr &self) {
                 if (self.model_ == nullptr) {
@@ -220,7 +220,7 @@ void init_sklearn_svr(py::module_ &m) {
                     // for the SVR, the indices do not need to be sorted
                     std::vector<int> support(self.model_->num_support_vectors());
                     std::iota(support.begin(), support.end(), 0);
-                    return vector_to_pyarray(support);
+                    return plssvm::bindings::python::util::vector_to_pyarray(support);
                 } }, "Indices of support vectors. ndarray of shape (n_SV)")
         .def_property_readonly("support_vectors_", [](const svr &self) {
                 if (self.model_ == nullptr) {
@@ -228,14 +228,14 @@ void init_sklearn_svr(py::module_ &m) {
                 } else {
                     // for the SVR, the support vectors do not need to be sorted
                     // convert 2D vector back to plssvm::matrix
-                    return matrix_to_pyarray(plssvm::aos_matrix<plssvm::real_type>{ std::move(self.model_->support_vectors().to_2D_vector()) });
+                    return plssvm::bindings::python::util::matrix_to_pyarray(plssvm::aos_matrix<plssvm::real_type>{ std::move(self.model_->support_vectors().to_2D_vector()) });
                 } }, "Support vectors. ndarray of shape (n_SV, n_features)")
         .def_property_readonly("n_support_", [](const svr &self) {
                 if (self.model_ == nullptr) {
                     throw py::attribute_error{ "'SVR' object has no attribute 'n_support_'" };
                 } else {
                     // for SVR, only report the total number of support vectors
-                    return vector_to_pyarray(std::vector<std::int32_t>{ static_cast<std::int32_t>(self.model_->num_support_vectors()) });
+                    return plssvm::bindings::python::util::vector_to_pyarray(std::vector<std::int32_t>{ static_cast<std::int32_t>(self.model_->num_support_vectors()) });
                 } }, "Number of support vectors for each class. ndarray of shape (1,), dtype=int32")
         .def_property_readonly("probA_", [](const svr &) { throw py::attribute_error{ "'SVR' object has no attribute 'probA_' (not implemented)" }; })
         .def_property_readonly("probB_", [](const svr &) { throw py::attribute_error{ "'SVR' object has no attribute 'probB_' (not implemented)" }; })
@@ -256,7 +256,7 @@ void init_sklearn_svr(py::module_ &m) {
                   }
 
                   // fit the model using potentially provided keyword arguments
-                  self.data_ = std::make_unique<typename svr::data_set_type>(pyarray_to_matrix(data), pyarray_to_vector(labels));
+                  self.data_ = std::make_unique<typename svr::data_set_type>(plssvm::bindings::python::util::pyarray_to_matrix(data), plssvm::bindings::python::util::pyarray_to_vector(labels));
                   fit(self);
                   return self;
               },
@@ -298,8 +298,8 @@ void init_sklearn_svr(py::module_ &m) {
                 if (self.model_ == nullptr) {
                     throw py::attribute_error{ "This SVR instance is not fitted yet. Call 'fit' with appropriate arguments before using this estimator." };
                 } else {
-                    const typename svr::data_set_type data_to_predict{ pyarray_to_matrix(data) };
-                    return vector_to_pyarray(self.svm_->predict(*self.model_, data_to_predict));
+                    const typename svr::data_set_type data_to_predict{ plssvm::bindings::python::util::pyarray_to_matrix(data) };
+                    return plssvm::bindings::python::util::vector_to_pyarray(self.svm_->predict(*self.model_, data_to_predict));
                 } }, "Perform classification on samples in X.")
         .def("score", [](svr &self, py::array_t<typename svr::real_type, py::array::c_style | py::array::forcecast> data, py::array_t<typename svr::real_type, py::array::c_style | py::array::forcecast> labels, const std::optional<std::vector<typename svr::real_type>> &sample_weight) {
                   if (sample_weight.has_value()) {
@@ -309,7 +309,7 @@ void init_sklearn_svr(py::module_ &m) {
                   if (self.model_ == nullptr) {
                       throw py::attribute_error{ "This SVR instance is not fitted yet. Call 'fit' with appropriate arguments before using this estimator." };
                   } else {
-                      const typename svr::data_set_type data_to_score{ pyarray_to_matrix(data), pyarray_to_vector(labels) };
+                      const typename svr::data_set_type data_to_score{ plssvm::bindings::python::util::pyarray_to_matrix(data), plssvm::bindings::python::util::pyarray_to_vector(labels) };
                       return self.svm_->score(*self.model_, data_to_score);
                   } }, "Return the mean accuracy on the given test data and labels.", py::arg("X"), py::arg("y"), py::pos_only(), py::arg("sample_weight") = std::nullopt)
         .def("set_params", [](svr &self, const py::kwargs &args) -> svr & {

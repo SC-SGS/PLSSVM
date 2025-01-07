@@ -16,7 +16,7 @@
 #include "plssvm/svm/csvr.hpp"                 // plssvm::csvr
 #include "plssvm/target_platforms.hpp"         // plssvm::target_platform
 
-#include "bindings/Python/utility.hpp"  // check_kwargs_for_correctness, convert_kwargs_to_parameter, register_py_exception
+#include "bindings/Python/utility.hpp"  // plssvm::bindings::python::util::{check_kwargs_for_correctness, convert_kwargs_to_parameter, register_py_exception}
 
 #include "pybind11/pybind11.h"  // py::module_, py::class_, py::init, py::kwargs, py::exception
 #include "pybind11/stl.h"       // support for STL types
@@ -37,18 +37,18 @@ void bind_hip_csvms(py::module_ &m, const std::string &csvm_name) {
         .def(py::init<plssvm::target_platform, plssvm::parameter>(), "create an SVM with the provided target platform and parameter object")
         .def(py::init([](const py::kwargs &args) {
                  // check for valid keys
-                 check_kwargs_for_correctness(args, { "kernel_type", "degree", "gamma", "coef0", "cost" });
+                 plssvm::bindings::python::util::check_kwargs_for_correctness(args, { "kernel_type", "degree", "gamma", "coef0", "cost" });
                  // if one of the value keyword parameter is provided, set the respective value
-                 const plssvm::parameter params = convert_kwargs_to_parameter(args);
+                 const plssvm::parameter params = plssvm::bindings::python::util::convert_kwargs_to_parameter(args);
                  // create CSVM with the default target platform
                  return std::make_unique<backend_csvm_type>(params);
              }),
              "create an SVM with the default target platform and keyword arguments")
         .def(py::init([](const plssvm::target_platform target, const py::kwargs &args) {
                  // check for valid keys
-                 check_kwargs_for_correctness(args, { "kernel_type", "degree", "gamma", "coef0", "cost" });
+                 plssvm::bindings::python::util::check_kwargs_for_correctness(args, { "kernel_type", "degree", "gamma", "coef0", "cost" });
                  // if one of the value keyword parameter is provided, set the respective value
-                 const plssvm::parameter params = convert_kwargs_to_parameter(args);
+                 const plssvm::parameter params = plssvm::bindings::python::util::convert_kwargs_to_parameter(args);
                  // create CSVM with the provided target platform
                  return std::make_unique<backend_csvm_type>(target, params);
              }),
@@ -68,5 +68,5 @@ void init_hip_csvm(py::module_ &m, const py::exception<plssvm::exception> &base_
     bind_hip_csvms<plssvm::csvr>(hip_module, "CSVR");
 
     // register HIP backend specific exceptions
-    register_py_exception<plssvm::hip::backend_exception>(hip_module, "BackendError", base_exception);
+    plssvm::bindings::python::util::register_py_exception<plssvm::hip::backend_exception>(hip_module, "BackendError", base_exception);
 }

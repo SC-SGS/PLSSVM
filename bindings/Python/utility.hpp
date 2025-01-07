@@ -41,6 +41,8 @@
 
 namespace py = pybind11;
 
+namespace plssvm::bindings::python::util {
+
 /**
  * @brief Convert a `std::vector<T>` to a Python Numpy array.
  * @tparam T the type in the array
@@ -311,7 +313,7 @@ PLSSVM_CREATE_NUMPY_NAME_MAPPING(std::string, "string")
  */
 template <typename label_type>
 [[nodiscard]] inline std::string assemble_unique_class_name(const std::string_view class_name) {
-    return fmt::format("{}_{}", class_name, ::detail::numpy_name_mapping<label_type>());
+    return fmt::format("{}_{}", class_name, detail::numpy_name_mapping<label_type>());
 }
 
 /**
@@ -361,5 +363,7 @@ template <template <typename> typename InstantiationFunction, typename LabelType
 inline void instantiate_bindings(py::module_ &pure_virtual) {
     instantiate_bindings<InstantiationFunction, LabelTypes>(pure_virtual, std::make_integer_sequence<std::size_t, std::tuple_size_v<LabelTypes>>{});
 }
+
+}  // namespace plssvm::bindings::python::util
 
 #endif  // PLSSVM_BINDINGS_PYTHON_UTILITY_HPP_

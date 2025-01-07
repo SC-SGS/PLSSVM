@@ -12,7 +12,7 @@
 #include "plssvm/gamma.hpp"                  // plssvm::gamma_type
 #include "plssvm/kernel_function_types.hpp"  // plssvm::kernel_function_type
 
-#include "bindings/Python/utility.hpp"
+#include "bindings/Python/utility.hpp"  // plssvm::bindings::python::util::{check_kwargs_for_correctness, convert_kwargs_to_parameter}
 
 #include "fmt/format.h"          // fmt::format
 #include "pybind11/operators.h"  // support for operators
@@ -28,9 +28,9 @@ void init_parameter(py::module_ &m) {
         .def(py::init<plssvm::kernel_function_type, int, plssvm::real_type, plssvm::real_type, plssvm::real_type>())
         .def(py::init([](const py::kwargs &args) {
                  // check for valid keys
-                 check_kwargs_for_correctness(args, { "kernel_type", "degree", "gamma", "coef0", "cost" });
+                 plssvm::bindings::python::util::check_kwargs_for_correctness(args, { "kernel_type", "degree", "gamma", "coef0", "cost" });
                  // if one of the value named parameter is provided, set the respective value
-                 return convert_kwargs_to_parameter(args);
+                 return plssvm::bindings::python::util::convert_kwargs_to_parameter(args);
              }),
              "create a new SVM parameter object")
         .def_property(

@@ -17,9 +17,11 @@
 
 #include "pybind11/pybind11.h"  // py::kwargs, py::cast_error, py::attribute_error
 
-#include <array>    // std::array
+#include <array>  // std::array
 
 namespace py = pybind11;
+
+namespace plssvm::bindings::python::util {
 
 /**
  * @brief Create the necessary PLSSVM scaling objects to initialize a data set.
@@ -51,5 +53,7 @@ template <typename data_set_type>
         throw py::attribute_error{ "Can't extract scaling information, no scaling keyword argument given!" };
     }
 }
+
+}  // namespace plssvm::bindings::python::util
 
 #endif  // PLSSVM_BINDINGS_PYTHON_DATA_SET_UTILITY_HPP_

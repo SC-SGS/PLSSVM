@@ -20,7 +20,7 @@
 #include "plssvm/parameter.hpp"                              // plssvm::parameter, named parameters
 #include "plssvm/target_platforms.hpp"                       // plssvm::target_platform, plssvm::determine_default_target_platform, plssvm::list_available_target_platforms
 
-#include "bindings/Python/utility.hpp"  // check_kwargs_for_correctness, convert_kwargs_to_parameter
+#include "bindings/Python/utility.hpp"  // plssvm::bindings::python::util::{check_kwargs_for_correctness, convert_kwargs_to_parameter}
 
 #include "pybind11/pybind11.h"  // py::class_, py::kwargs, py::cast_error, py::attribute_error, py::value_error
 
@@ -34,6 +34,8 @@
 
 namespace py = pybind11;
 
+namespace plssvm::bindings::python::util {
+
 /**
  * @brief Assemble a CSVM (CSVC or CSVR based on the template parameter @p csvm_type) using the named Python arguments @p args and PLSSVM parameters @p input_params.
  * @tparam csvm_type the type of the CSVM to create
@@ -44,9 +46,9 @@ namespace py = pybind11;
 template <typename csvm_type>
 [[nodiscard]] inline std::unique_ptr<csvm_type> assemble_csvm(const py::kwargs &args, plssvm::parameter input_params = {}) {
     // check keyword arguments
-    check_kwargs_for_correctness(args, { "backend", "target_platform", "kernel_type", "degree", "gamma", "coef0", "cost", "sycl_implementation_type", "sycl_kernel_invocation_type" });
+    plssvm::bindings::python::util::check_kwargs_for_correctness(args, { "backend", "target_platform", "kernel_type", "degree", "gamma", "coef0", "cost", "sycl_implementation_type", "sycl_kernel_invocation_type" });
     // if one of the value keyword parameter is provided, set the respective value
-    const plssvm::parameter params = convert_kwargs_to_parameter(args, input_params);
+    const plssvm::parameter params = plssvm::bindings::python::util::convert_kwargs_to_parameter(args, input_params);
     plssvm::backend_type backend = plssvm::determine_default_backend();
     if (args.contains("backend")) {
         if (py::isinstance<py::str>(args["backend"])) {
@@ -112,5 +114,7 @@ template <template <typename> typename InstantiationFunction, typename LabelType
 void instantiate_csvm(py::class_<csvm_type> &csvm) {
     instantiate_csvm<InstantiationFunction, LabelTypes, csvm_type>(csvm, std::make_integer_sequence<std::size_t, std::tuple_size_v<LabelTypes>>{});
 }
+
+}  // namespace plssvm::bindings::python::util
 
 #endif  // PLSSVM_BINDINGS_PYTHON_SVM_UTILITY_HPP_

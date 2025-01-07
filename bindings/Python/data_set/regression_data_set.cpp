@@ -13,8 +13,8 @@
 #include "plssvm/detail/type_list.hpp"   // plssvm::detail::supported_label_types_regression
 #include "plssvm/file_format_types.hpp"  // plssvm::file_format_type
 
-#include "bindings/Python/data_set/utility.hpp"  // create_scaling_object
-#include "bindings/Python/utility.hpp"           // check_kwargs_for_correctness, assemble_unique_class_name, pyarray_to_vector, pyarray_to_matrix, instantiate_bindings
+#include "bindings/Python/data_set/utility.hpp"  // plssvm::bindings::python::util::create_scaling_object
+#include "bindings/Python/utility.hpp"           // plssvm::bindings::python::util::{check_kwargs_for_correctness, assemble_unique_class_name, pyarray_to_vector, pyarray_to_matrix, instantiate_bindings}
 
 #include "fmt/format.h"         // fmt::format
 #include "pybind11/numpy.h"     // py::array_t
@@ -40,24 +40,26 @@ struct regression_data_set_bindings {
         using data_set_type = plssvm::regression_data_set<label_type>;
 
         // create the Python type names based on the provided real_type and label_type
-        const std::string class_name = assemble_unique_class_name<label_type>("RegressionDataSet");
-        m.attr(assemble_unique_class_name<label_type>("RegressionDataSetScalingFactors").c_str()) = pure_virtual.attr(assemble_unique_class_name<label_type>("__pure_virtual_base_DataSetScalingFactors").c_str());
-        m.attr(assemble_unique_class_name<label_type>("RegressionDataSetScaling").c_str()) = pure_virtual.attr(assemble_unique_class_name<label_type>("__pure_virtual_base_DataSetScaling").c_str());
+        const std::string class_name = plssvm::bindings::python::util::assemble_unique_class_name<label_type>("RegressionDataSet");
+        m.attr(plssvm::bindings::python::util::assemble_unique_class_name<label_type>("RegressionDataSetScalingFactors").c_str()) =
+            pure_virtual.attr(plssvm::bindings::python::util::assemble_unique_class_name<label_type>("__pure_virtual_base_DataSetScalingFactors").c_str());
+        m.attr(plssvm::bindings::python::util::assemble_unique_class_name<label_type>("RegressionDataSetScaling").c_str()) =
+            pure_virtual.attr(plssvm::bindings::python::util::assemble_unique_class_name<label_type>("__pure_virtual_base_DataSetScaling").c_str());
 
         // bind the data set class
         py::class_<data_set_type, plssvm::data_set<label_type>> py_data_set(m, class_name.c_str());
         // bind constructor taking a data set file
         py_data_set.def(py::init([](const std::string &file_name, py::kwargs args) {
                             // check for valid keys
-                            check_kwargs_for_correctness(args, { "file_format", "scaling" });
+                            plssvm::bindings::python::util::check_kwargs_for_correctness(args, { "file_format", "scaling" });
 
                             // call the constructor corresponding to the provided keyword arguments
                             if (args.contains("file_format") && args.contains("scaling")) {
-                                return data_set_type{ file_name, args["file_format"].cast<plssvm::file_format_type>(), create_scaling_object<data_set_type>(args) };
+                                return data_set_type{ file_name, args["file_format"].cast<plssvm::file_format_type>(), plssvm::bindings::python::util::create_scaling_object<data_set_type>(args) };
                             } else if (args.contains("file_format")) {
                                 return data_set_type{ file_name, args["file_format"].cast<plssvm::file_format_type>() };
                             } else if (args.contains("scaling")) {
-                                return data_set_type{ file_name, create_scaling_object<data_set_type>(args) };
+                                return data_set_type{ file_name, plssvm::bindings::python::util::create_scaling_object<data_set_type>(args) };
                             } else {
                                 return data_set_type{ file_name };
                             }
@@ -66,23 +68,23 @@ struct regression_data_set_bindings {
         // bind constructor taking only data points without labels
         py_data_set.def(py::init([](py::array_t<plssvm::real_type, py::array::c_style | py::array::forcecast> data, py::kwargs args) {
                             // check keyword arguments
-                            check_kwargs_for_correctness(args, { "scaling" });
+                            plssvm::bindings::python::util::check_kwargs_for_correctness(args, { "scaling" });
 
                             if (args.contains("scaling")) {
-                                return data_set_type{ pyarray_to_matrix(data), create_scaling_object<data_set_type>(args) };
+                                return data_set_type{ plssvm::bindings::python::util::pyarray_to_matrix(data), plssvm::bindings::python::util::create_scaling_object<data_set_type>(args) };
                             } else {
-                                return data_set_type{ pyarray_to_matrix(data) };
+                                return data_set_type{ plssvm::bindings::python::util::pyarray_to_matrix(data) };
                             }
                         }),
                         "create a new data set without labels given additional optional parameters")
             .def(py::init([](py::array_t<plssvm::real_type, py::array::c_style | py::array::forcecast> data, py::array_t<label_type, py::array::c_style | py::array::forcecast> labels, py::kwargs args) {
                      // check keyword arguments
-                     check_kwargs_for_correctness(args, { "scaling" });
+                     plssvm::bindings::python::util::check_kwargs_for_correctness(args, { "scaling" });
 
                      if (args.contains("scaling")) {
-                         return data_set_type{ pyarray_to_matrix(data), pyarray_to_vector(labels), create_scaling_object<data_set_type>(args) };
+                         return data_set_type{ plssvm::bindings::python::util::pyarray_to_matrix(data), plssvm::bindings::python::util::pyarray_to_vector(labels), plssvm::bindings::python::util::create_scaling_object<data_set_type>(args) };
                      } else {
-                         return data_set_type{ pyarray_to_matrix(data), pyarray_to_vector(labels) };
+                         return data_set_type{ plssvm::bindings::python::util::pyarray_to_matrix(data), plssvm::bindings::python::util::pyarray_to_vector(labels) };
                      }
                  }),
                  "create a new data set with labels from a numpy array given additional optional parameters");
@@ -105,10 +107,10 @@ struct regression_data_set_bindings {
 
 void init_regression_data_set(py::module_ &m, py::module_ &pure_virtual) {
     // bind all regression data_set classes
-    instantiate_bindings<regression_data_set_bindings, plssvm::detail::supported_label_types_regression>(m, pure_virtual);
+    plssvm::bindings::python::util::instantiate_bindings<regression_data_set_bindings, plssvm::detail::supported_label_types_regression>(m, pure_virtual);
 
     // create regression data set aliases
-    m.attr("RegressionDataSetScalingFactors") = m.attr(assemble_unique_class_name<double>("RegressionDataSetScalingFactors").c_str());
-    m.attr("RegressionDataSetScaling") = m.attr(assemble_unique_class_name<double>("RegressionDataSetScaling").c_str());
-    m.attr("RegressionDataSet") = m.attr(assemble_unique_class_name<double>("RegressionDataSet").c_str());
+    m.attr("RegressionDataSetScalingFactors") = m.attr(plssvm::bindings::python::util::assemble_unique_class_name<double>("RegressionDataSetScalingFactors").c_str());
+    m.attr("RegressionDataSetScaling") = m.attr(plssvm::bindings::python::util::assemble_unique_class_name<double>("RegressionDataSetScaling").c_str());
+    m.attr("RegressionDataSet") = m.attr(plssvm::bindings::python::util::assemble_unique_class_name<double>("RegressionDataSet").c_str());
 }

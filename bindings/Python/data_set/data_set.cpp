@@ -12,7 +12,7 @@
 #include "plssvm/detail/type_list.hpp"   // plssvm::detail::supported_label_types
 #include "plssvm/file_format_types.hpp"  // plssvm::file_format_type
 
-#include "bindings/Python/utility.hpp"  // check_kwargs_for_correctness, assemble_unique_class_name, pyarray_to_vector, pyarray_to_string_vector, pyarray_to_matrix, instantiate_bindings
+#include "bindings/Python/utility.hpp"  // plssvm::bindings::python::util::{check_kwargs_for_correctness, assemble_unique_class_name, vector_to_pyarray, instantiate_bindings}
 
 #include "fmt/format.h"         // fmt::format
 #include "fmt/ranges.h"         // fmt::join
@@ -44,9 +44,9 @@ struct data_set_bindings {
         using size_type = typename data_set_type::size_type;
 
         // create the Python type names based on the provided real_type and label_type
-        const std::string class_name_scaling_factors = assemble_unique_class_name<label_type>("__pure_virtual_base_DataSetScalingFactors");
-        const std::string class_name_scaling = assemble_unique_class_name<label_type>("__pure_virtual_base_DataSetScaling");
-        const std::string class_name = assemble_unique_class_name<label_type>("__pure_virtual_base_DataSet");
+        const std::string class_name_scaling_factors = plssvm::bindings::python::util::assemble_unique_class_name<label_type>("__pure_virtual_base_DataSetScalingFactors");
+        const std::string class_name_scaling = plssvm::bindings::python::util::assemble_unique_class_name<label_type>("__pure_virtual_base_DataSetScaling");
+        const std::string class_name = plssvm::bindings::python::util::assemble_unique_class_name<label_type>("__pure_virtual_base_DataSet");
 
         PYBIND11_NUMPY_DTYPE(typename data_set_type::scaling::factors, feature, lower, upper);
         // bind the plssvm::data_set::scaling internal "factors" struct
@@ -75,7 +75,7 @@ struct data_set_bindings {
             .def_readonly("scaling_interval", &data_set_type::scaling::scaling_interval, "the interval to which the data points are scaled")
             .def_property_readonly(
                 "scaling_factors", [](const typename data_set_type::scaling &scaling) {
-                    return vector_to_pyarray(scaling.scaling_factors);
+                    return plssvm::bindings::python::util::vector_to_pyarray(scaling.scaling_factors);
                 },
                 "the scaling factors for each feature")
             .def("__repr__", [class_name_scaling](const typename data_set_type::scaling &self) {
@@ -92,7 +92,7 @@ struct data_set_bindings {
             .def("save", py::overload_cast<const std::string &>(&data_set_type::save, py::const_), "save the data set to a file automatically deriving the file format type from the file extension")
             .def("num_data_points", &data_set_type::num_data_points, "the number of data points in the data set")
             .def("num_features", &data_set_type::num_features, "the number of features per data point")
-            .def("data", [](const data_set_type &data) { return matrix_to_pyarray(data.data()); }, "the data saved as 2D vector")
+            .def("data", [](const data_set_type &data) { return plssvm::bindings::python::util::matrix_to_pyarray(data.data()); }, "the data saved as 2D vector")
             .def("has_labels", &data_set_type::has_labels, "check whether the data set has labels")
             .def("labels", [](const data_set_type &self) {
                 if (!self.has_labels()) {
@@ -101,7 +101,7 @@ struct data_set_bindings {
                     if constexpr (std::is_same_v<label_type, std::string>) {
                         return self.labels()->get();
                     } else {
-                        return vector_to_pyarray(self.labels()->get());
+                        return plssvm::bindings::python::util::vector_to_pyarray(self.labels()->get());
                     }
                 } }, "the labels")
             .def("is_scaled", &data_set_type::is_scaled, "check whether the original data has been scaled to [lower, upper] bounds")
@@ -117,5 +117,5 @@ struct data_set_bindings {
 void init_data_set(py::module_ &pure_virtual) {
     // bind pure-virtual base data_set classes
     // NOTE: supported_label_types_classification also contains all types in supported_label_types_regression
-    instantiate_bindings<data_set_bindings, plssvm::detail::supported_label_types_classification>(pure_virtual);
+    plssvm::bindings::python::util::instantiate_bindings<data_set_bindings, plssvm::detail::supported_label_types_classification>(pure_virtual);
 }

@@ -13,7 +13,7 @@
 #include "plssvm/matrix.hpp"            // plssvm::aos_matrix
 #include "plssvm/model/model.hpp"       // plssvm::model
 
-#include "bindings/Python/utility.hpp"  // assemble_unique_class_name, vector_to_pyarray, instantiate_bindings
+#include "bindings/Python/utility.hpp"  // plssvm::bindings::python::util::{assemble_unique_class_name, vector_to_pyarray, instantiate_bindings}
 
 #include "fmt/format.h"         // fmt::format
 #include "pybind11/pybind11.h"  // py::module_, py::class_
@@ -37,7 +37,7 @@ struct classification_model_bindings {
     void operator()(py::module_ &m, label_type) {
         using model_type = plssvm::classification_model<label_type>;
 
-        const std::string class_name = assemble_unique_class_name<label_type>("ClassificationModel");
+        const std::string class_name = plssvm::bindings::python::util::assemble_unique_class_name<label_type>("ClassificationModel");
 
         py::class_<model_type, plssvm::model<label_type>>(m, class_name.c_str())
             .def(py::init<const std::string &>(), "load a previously learned classification model from a file")
@@ -46,7 +46,7 @@ struct classification_model_bindings {
                if constexpr (std::is_same_v<label_type, std::string>) {
                    return self.classes();
                } else {
-                   return vector_to_pyarray(self.classes());
+                   return plssvm::bindings::python::util::vector_to_pyarray(self.classes());
                } }, "the classes")
             .def("get_classification_type", [](const model_type &self) { return self.get_classification_type(); }, "the classification type used to create this model")
             .def("__repr__", [class_name](const model_type &self) { return fmt::format("<plssvm.{} with {{ #sv: {}, #features: {}, rho: {}, classification_type: {} }}>",
@@ -60,8 +60,8 @@ struct classification_model_bindings {
 
 void init_classification_model(py::module_ &m) {
     // bind all classification model classes
-    instantiate_bindings<classification_model_bindings, plssvm::detail::supported_label_types_classification>(m);
+    plssvm::bindings::python::util::instantiate_bindings<classification_model_bindings, plssvm::detail::supported_label_types_classification>(m);
 
     // create alias
-    m.attr("ClassificationModel") = m.attr(assemble_unique_class_name<PLSSVM_PYTHON_BINDINGS_PREFERRED_SVC_LABEL_TYPE>("ClassificationModel").c_str());
+    m.attr("ClassificationModel") = m.attr(plssvm::bindings::python::util::assemble_unique_class_name<PLSSVM_PYTHON_BINDINGS_PREFERRED_SVC_LABEL_TYPE>("ClassificationModel").c_str());
 }

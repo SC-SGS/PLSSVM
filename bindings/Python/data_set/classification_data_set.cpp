@@ -13,8 +13,8 @@
 #include "plssvm/detail/type_list.hpp"   // plssvm::detail::supported_label_types_classification
 #include "plssvm/file_format_types.hpp"  // plssvm::file_format_type
 
-#include "bindings/Python/data_set/utility.hpp"  // create_scaling_object
-#include "bindings/Python/utility.hpp"           // check_kwargs_for_correctness, assemble_unique_class_name, pyarray_to_vector, pyarray_to_string_vector, pyarray_to_matrix, instantiate_bindings
+#include "bindings/Python/data_set/utility.hpp"  // plssvm::bindings::python::util::create_scaling_object
+#include "bindings/Python/utility.hpp"           // plssvm::bindings::python::util::{check_kwargs_for_correctness, assemble_unique_class_name, pyarray_to_vector, pyarray_to_string_vector, pyarray_to_matrix, instantiate_bindings}
 
 #include "fmt/format.h"         // fmt::format
 #include "fmt/ranges.h"         // fmt::join
@@ -42,24 +42,26 @@ struct classification_data_set_bindings {
         using data_set_type = plssvm::classification_data_set<label_type>;
 
         // create the Python type names based on the provided real_type and label_type
-        const std::string class_name = assemble_unique_class_name<label_type>("ClassificationDataSet");
-        m.attr(assemble_unique_class_name<label_type>("ClassificationDataSetScalingFactors").c_str()) = pure_virtual.attr(assemble_unique_class_name<label_type>("__pure_virtual_base_DataSetScalingFactors").c_str());
-        m.attr(assemble_unique_class_name<label_type>("ClassificationDataSetScaling").c_str()) = pure_virtual.attr(assemble_unique_class_name<label_type>("__pure_virtual_base_DataSetScaling").c_str());
+        const std::string class_name = plssvm::bindings::python::util::assemble_unique_class_name<label_type>("ClassificationDataSet");
+        m.attr(plssvm::bindings::python::util::assemble_unique_class_name<label_type>("ClassificationDataSetScalingFactors").c_str()) =
+            pure_virtual.attr(plssvm::bindings::python::util::assemble_unique_class_name<label_type>("__pure_virtual_base_DataSetScalingFactors").c_str());
+        m.attr(plssvm::bindings::python::util::assemble_unique_class_name<label_type>("ClassificationDataSetScaling").c_str()) =
+            pure_virtual.attr(plssvm::bindings::python::util::assemble_unique_class_name<label_type>("__pure_virtual_base_DataSetScaling").c_str());
 
         // bind the data set class
         py::class_<data_set_type, plssvm::data_set<label_type>> py_data_set(m, class_name.c_str());
         // bind constructor taking a data set file
         py_data_set.def(py::init([](const std::string &file_name, py::kwargs args) {
                             // check for valid keys
-                            check_kwargs_for_correctness(args, { "file_format", "scaling" });
+                            plssvm::bindings::python::util::check_kwargs_for_correctness(args, { "file_format", "scaling" });
 
                             // call the constructor corresponding to the provided keyword arguments
                             if (args.contains("file_format") && args.contains("scaling")) {
-                                return data_set_type{ file_name, args["file_format"].cast<plssvm::file_format_type>(), create_scaling_object<data_set_type>(args) };
+                                return data_set_type{ file_name, args["file_format"].cast<plssvm::file_format_type>(), plssvm::bindings::python::util::create_scaling_object<data_set_type>(args) };
                             } else if (args.contains("file_format")) {
                                 return data_set_type{ file_name, args["file_format"].cast<plssvm::file_format_type>() };
                             } else if (args.contains("scaling")) {
-                                return data_set_type{ file_name, create_scaling_object<data_set_type>(args) };
+                                return data_set_type{ file_name, plssvm::bindings::python::util::create_scaling_object<data_set_type>(args) };
                             } else {
                                 return data_set_type{ file_name };
                             }
@@ -68,12 +70,12 @@ struct classification_data_set_bindings {
         // bind constructor taking only data points without labels
         py_data_set.def(py::init([](py::array_t<plssvm::real_type, py::array::c_style | py::array::forcecast> data, py::kwargs args) {
                             // check keyword arguments
-                            check_kwargs_for_correctness(args, { "scaling" });
+                            plssvm::bindings::python::util::check_kwargs_for_correctness(args, { "scaling" });
 
                             if (args.contains("scaling")) {
-                                return data_set_type{ pyarray_to_matrix(data), create_scaling_object<data_set_type>(args) };
+                                return data_set_type{ plssvm::bindings::python::util::pyarray_to_matrix(data), plssvm::bindings::python::util::create_scaling_object<data_set_type>(args) };
                             } else {
-                                return data_set_type{ pyarray_to_matrix(data) };
+                                return data_set_type{ plssvm::bindings::python::util::pyarray_to_matrix(data) };
                             }
                         }),
                         "create a new data set without labels given additional optional parameters");
@@ -81,12 +83,12 @@ struct classification_data_set_bindings {
         if constexpr (!std::is_same_v<label_type, std::string>) {
             py_data_set.def(py::init([](py::array_t<plssvm::real_type, py::array::c_style | py::array::forcecast> data, py::array_t<label_type, py::array::c_style | py::array::forcecast> labels, py::kwargs args) {
                                 // check keyword arguments
-                                check_kwargs_for_correctness(args, { "scaling" });
+                                plssvm::bindings::python::util::check_kwargs_for_correctness(args, { "scaling" });
 
                                 if (args.contains("scaling")) {
-                                    return data_set_type{ pyarray_to_matrix(data), pyarray_to_vector(labels), create_scaling_object<data_set_type>(args) };
+                                    return data_set_type{ plssvm::bindings::python::util::pyarray_to_matrix(data), plssvm::bindings::python::util::pyarray_to_vector(labels), plssvm::bindings::python::util::create_scaling_object<data_set_type>(args) };
                                 } else {
-                                    return data_set_type{ pyarray_to_matrix(data), pyarray_to_vector(labels) };
+                                    return data_set_type{ plssvm::bindings::python::util::pyarray_to_matrix(data), plssvm::bindings::python::util::pyarray_to_vector(labels) };
                                 }
                             }),
                             "create a new data set with labels from a numpy array given additional optional parameters");
@@ -94,24 +96,24 @@ struct classification_data_set_bindings {
             // if the requested label_type is std::string, accept numpy arrays with real_type and convert them to a std::string internally
             py_data_set.def(py::init([](py::array_t<plssvm::real_type, py::array::c_style | py::array::forcecast> data, py::array_t<plssvm::real_type, py::array::c_style | py::array::forcecast> labels, py::kwargs args) {
                                 // check keyword arguments
-                                check_kwargs_for_correctness(args, { "scaling" });
+                                plssvm::bindings::python::util::check_kwargs_for_correctness(args, { "scaling" });
 
                                 if (args.contains("scaling")) {
-                                    return data_set_type{ pyarray_to_matrix(data), pyarray_to_string_vector(labels), create_scaling_object<data_set_type>(args) };
+                                    return data_set_type{ plssvm::bindings::python::util::pyarray_to_matrix(data), plssvm::bindings::python::util::pyarray_to_string_vector(labels), plssvm::bindings::python::util::create_scaling_object<data_set_type>(args) };
                                 } else {
-                                    return data_set_type{ pyarray_to_matrix(data), pyarray_to_string_vector(labels) };
+                                    return data_set_type{ plssvm::bindings::python::util::pyarray_to_matrix(data), plssvm::bindings::python::util::pyarray_to_string_vector(labels) };
                                 }
                             }),
                             "create a new data set with labels from a numpy array given additional optional parameters");
             // if the requested label_type is std::string, accept a python list (which can contain py::str) and convert them to a std::string internally
             py_data_set.def(py::init([](py::array_t<plssvm::real_type, py::array::c_style | py::array::forcecast> data, const py::list &labels, py::kwargs args) {
                                 // check keyword arguments
-                                check_kwargs_for_correctness(args, { "scaling" });
+                                plssvm::bindings::python::util::check_kwargs_for_correctness(args, { "scaling" });
 
                                 if (args.contains("scaling")) {
-                                    return data_set_type{ pyarray_to_matrix(data), pylist_to_string_vector(labels), create_scaling_object<data_set_type>(args) };
+                                    return data_set_type{ plssvm::bindings::python::util::pyarray_to_matrix(data), plssvm::bindings::python::util::pylist_to_string_vector(labels), plssvm::bindings::python::util::create_scaling_object<data_set_type>(args) };
                                 } else {
-                                    return data_set_type{ pyarray_to_matrix(data), pylist_to_string_vector(labels) };
+                                    return data_set_type{ plssvm::bindings::python::util::pyarray_to_matrix(data), plssvm::bindings::python::util::pylist_to_string_vector(labels) };
                                 }
                             }),
                             "create a new data set with labels from a Python list given additional optional parameters");
@@ -126,7 +128,7 @@ struct classification_data_set_bindings {
                     if constexpr (std::is_same_v<label_type, std::string>) {
                         return self.classes().value();
                     } else {
-                        return vector_to_pyarray(self.classes().value());
+                        return plssvm::bindings::python::util::vector_to_pyarray(self.classes().value());
                     }
                 } }, "the classes")
             .def("__repr__", [class_name](const data_set_type &self) {
@@ -149,10 +151,10 @@ struct classification_data_set_bindings {
 
 void init_classification_data_set(py::module_ &m, py::module_ &pure_virtual) {
     // bind all classification data_set classes
-    instantiate_bindings<classification_data_set_bindings, plssvm::detail::supported_label_types_classification>(m, pure_virtual);
+    plssvm::bindings::python::util::instantiate_bindings<classification_data_set_bindings, plssvm::detail::supported_label_types_classification>(m, pure_virtual);
 
     // create classification data set aliases
-    m.attr("ClassificationDataSetScalingFactors") = m.attr(assemble_unique_class_name<PLSSVM_PYTHON_BINDINGS_PREFERRED_SVC_LABEL_TYPE>("ClassificationDataSetScalingFactors").c_str());
-    m.attr("ClassificationDataSetScaling") = m.attr(assemble_unique_class_name<PLSSVM_PYTHON_BINDINGS_PREFERRED_SVC_LABEL_TYPE>("ClassificationDataSetScaling").c_str());
-    m.attr("ClassificationDataSet") = m.attr(assemble_unique_class_name<PLSSVM_PYTHON_BINDINGS_PREFERRED_SVC_LABEL_TYPE>("ClassificationDataSet").c_str());
+    m.attr("ClassificationDataSetScalingFactors") = m.attr(plssvm::bindings::python::util::assemble_unique_class_name<PLSSVM_PYTHON_BINDINGS_PREFERRED_SVC_LABEL_TYPE>("ClassificationDataSetScalingFactors").c_str());
+    m.attr("ClassificationDataSetScaling") = m.attr(plssvm::bindings::python::util::assemble_unique_class_name<PLSSVM_PYTHON_BINDINGS_PREFERRED_SVC_LABEL_TYPE>("ClassificationDataSetScaling").c_str());
+    m.attr("ClassificationDataSet") = m.attr(plssvm::bindings::python::util::assemble_unique_class_name<PLSSVM_PYTHON_BINDINGS_PREFERRED_SVC_LABEL_TYPE>("ClassificationDataSet").c_str());
 }

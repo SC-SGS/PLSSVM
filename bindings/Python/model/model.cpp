@@ -12,7 +12,7 @@
 #include "plssvm/detail/type_list.hpp"  // plssvm::detail::label_type_list
 #include "plssvm/matrix.hpp"            // plssvm::aos_matrix
 
-#include "bindings/Python/utility.hpp"  // assemble_unique_class_name, vector_to_pyarray, matrix_to_pyarray, instantiate_bindings
+#include "bindings/Python/utility.hpp"  // plssvm::bindings::python::util::{assemble_unique_class_name, vector_to_pyarray, matrix_to_pyarray, instantiate_bindings}
 
 #include "fmt/format.h"         // fmt::format
 #include "pybind11/pybind11.h"  // py::module_, py::class_, py::return_value_policy, py::list
@@ -38,21 +38,21 @@ struct model_bindings {
     void operator()(py::module_ &m, label_type) {
         using model_type = plssvm::model<label_type>;
 
-        const std::string class_name = assemble_unique_class_name<label_type>("__pure_virtual_base_Model");
+        const std::string class_name = plssvm::bindings::python::util::assemble_unique_class_name<label_type>("__pure_virtual_base_Model");
 
         py::class_<model_type> py_model(m, class_name.c_str());
         py_model.def("save", &model_type::save, "save the current model to a file")
             .def("num_support_vectors", &model_type::num_support_vectors, "the number of support vectors (note: all training points become support vectors for LSSVMs)")
             .def("num_features", &model_type::num_features, "the number of features of the support vectors")
             .def("get_params", &model_type::get_params, py::return_value_policy::reference_internal, "the SVM parameter used to learn this model")
-            .def("support_vectors", [](const model_type &self) { return matrix_to_pyarray(self.support_vectors()); }, "the support vectors (note: all training points become support vectors for LSSVMs)")
+            .def("support_vectors", [](const model_type &self) { return plssvm::bindings::python::util::matrix_to_pyarray(self.support_vectors()); }, "the support vectors (note: all training points become support vectors for LSSVMs)")
             .def("weights", []([[maybe_unused]] const model_type &self) {
                 py::list ret{};
                 for (const plssvm::aos_matrix<plssvm::real_type> &matr : self.weights()) {
-                    ret.append(matrix_to_pyarray(matr));
+                    ret.append(plssvm::bindings::python::util::matrix_to_pyarray(matr));
                 }
                 return ret; }, "the weights learned for each support vector and class")
-            .def("rho", [](const model_type &self) { return vector_to_pyarray(self.rho()); }, "the bias value after learning for each class");
+            .def("rho", [](const model_type &self) { return plssvm::bindings::python::util::vector_to_pyarray(self.rho()); }, "the bias value after learning for each class");
         if constexpr (std::is_same_v<label_type, std::string>) {
             py_model.def("labels", [](const model_type &self) -> std::optional<py::list> {
                 if (self.labels().has_value()) {
@@ -67,7 +67,7 @@ struct model_bindings {
         } else {
             py_model.def("labels", [](const model_type &self) -> std::optional<py::array_t<label_type, 1>> {
                 if (self.labels().has_value()) {
-                    return std::make_optional(vector_to_pyarray(self.labels()->get()));
+                    return std::make_optional(plssvm::bindings::python::util::vector_to_pyarray(self.labels()->get()));
                 } else {
                     return std::nullopt;
                 } }, "the labels");
@@ -78,5 +78,5 @@ struct model_bindings {
 void init_model(py::module_ &pure_virtual) {
     // bind all pure-virtual base model classes
     // NOTE: supported_label_types_classification also contains all types in supported_label_types_regression
-    instantiate_bindings<model_bindings, plssvm::detail::supported_label_types_classification>(pure_virtual);
+    plssvm::bindings::python::util::instantiate_bindings<model_bindings, plssvm::detail::supported_label_types_classification>(pure_virtual);
 }

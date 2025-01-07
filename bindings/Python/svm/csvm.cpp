@@ -10,7 +10,7 @@
 
 #include "plssvm/parameter.hpp"  // plssvm::parameter, named parameters
 
-#include "bindings/Python/utility.hpp"  // check_kwargs_for_correctness, convert_kwargs_to_parameter
+#include "bindings/Python/utility.hpp"  // plssvm::bindings::python::util::{check_kwargs_for_correctness, convert_kwargs_to_parameter}
 
 #include "pybind11/pybind11.h"  // py::module_, py::class_, py::kwargs
 
@@ -26,9 +26,9 @@ void init_csvm(py::module_ &pure_virtual) {
             "update the parameter used for this SVM using a plssvm.Parameter object")
         .def("set_params", [](plssvm::csvm &self, const py::kwargs &args) {
                 // check keyword arguments
-                check_kwargs_for_correctness(args, { "kernel_type", "degree", "gamma", "coef0", "cost" });
+                plssvm::bindings::python::util::check_kwargs_for_correctness(args, { "kernel_type", "degree", "gamma", "coef0", "cost" });
                 // convert kwargs to parameter and update csvm internal parameter
-                self.set_params(convert_kwargs_to_parameter(args, self.get_params())); }, "update the parameter used for this SVM using keyword arguments")
+                self.set_params(plssvm::bindings::python::util::convert_kwargs_to_parameter(args, self.get_params())); }, "update the parameter used for this SVM using keyword arguments")
         .def("get_target_platform", &plssvm::csvm::get_target_platform, "get the actual target platform this SVM runs on")
         .def("num_available_devices", &plssvm::csvm::num_available_devices, "get the number of available devices for the current SVM");
 }
