@@ -27,5 +27,6 @@ void init_exceptions(py::module_ &m, const py::exception<plssvm::exception> &bas
     register_py_exception<plssvm::matrix_exception>(m, "MatrixError", base_exception);
     register_py_exception<plssvm::kernel_launch_resources>(m, "KernelLaunchResourcesError", base_exception);
     register_py_exception<plssvm::classification_report_exception>(m, "ClassificationReportError", base_exception);
+    register_py_exception<plssvm::regression_report_exception>(m, "RegressionReportError", base_exception);
     register_py_exception<plssvm::environment_exception>(m, "EnvironmentError", base_exception);
 }
