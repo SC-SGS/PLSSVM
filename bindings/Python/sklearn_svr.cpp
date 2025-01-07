@@ -249,10 +249,6 @@ void init_sklearn_svr(py::module_ &m) {
     //*************************************************************************************************************************************//
     //                                                               METHODS                                                               //
     //*************************************************************************************************************************************//
-    py_svr.def("decision_function", [](const svr &, py::array_t<typename svr::real_type>) {
-        // TODO: predict_values?!
-        throw py::attribute_error{ "'SVR' object has no function 'decision_function' (not implemented)" };
-    });
     py_svr.def(
               "fit", [](svr &self, py::array_t<typename svr::real_type, py::array::c_style | py::array::forcecast> data, py::array_t<typename svr::real_type, py::array::c_style | py::array::forcecast> labels, const std::optional<std::vector<typename svr::real_type>> &sample_weight) -> svr & {
                   if (sample_weight.has_value()) {
