@@ -85,7 +85,7 @@ set(PLSSVM_HPX_SOURCES
 set_local_and_parent(PLSSVM_HPX_BACKEND_LIBRARY_NAME plssvm-HPX)
 add_library(${PLSSVM_HPX_BACKEND_LIBRARY_NAME} SHARED ${PLSSVM_HPX_SOURCES})
 target_link_libraries(${PLSSVM_HPX_BACKEND_LIBRARY_NAME} PUBLIC HPX::hpx)
-target_compile_definitions(${PLSSVM_HPX_BACKEND_LIBRARY_NAME} PUBLIC PLSSVM_HAS_CPU_TARGET)
+target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC PLSSVM_HAS_CPU_TARGET)
 
 # additional compilation flags
 target_compile_options(${PLSSVM_HPX_BACKEND_LIBRARY_NAME} PRIVATE $<$<COMPILE_LANG_AND_ID:CXX,GNU,Clang,IntelLLVM>:-Wconversion>)

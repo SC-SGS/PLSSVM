@@ -87,7 +87,7 @@ set(PLSSVM_OPENMP_SOURCES
 # set target properties
 set_local_and_parent(PLSSVM_OPENMP_BACKEND_LIBRARY_NAME plssvm-OpenMP)
 add_library(${PLSSVM_OPENMP_BACKEND_LIBRARY_NAME} SHARED ${PLSSVM_OPENMP_SOURCES})
-target_compile_definitions(${PLSSVM_OPENMP_BACKEND_LIBRARY_NAME} PUBLIC PLSSVM_HAS_CPU_TARGET)
+target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC PLSSVM_HAS_CPU_TARGET)
 
 target_link_libraries(${PLSSVM_OPENMP_BACKEND_LIBRARY_NAME} PRIVATE $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:OpenMP::OpenMP_CXX>)
 # special command line options for MSVC:
