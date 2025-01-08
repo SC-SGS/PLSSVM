@@ -15,6 +15,7 @@
 #if defined(PLSSVM_HAS_SYCL_BACKEND)
     #include "plssvm/backends/SYCL/implementation_types.hpp"  // plssvm::sycl::list_available_sycl_implementations
 #endif
+#include "plssvm/detail/string_utility.hpp"              // plssvm::detail::split
 #include "plssvm/target_platforms.hpp"                   // plssvm::list_available_target_platforms
 #include "plssvm/version/git_metadata/git_metadata.hpp"  // plssvm::version::git_metadata::{is_populated, commit_date, remote_url, branch, commit_sha1}
 
@@ -43,7 +44,8 @@ std::string get_version_info(const std::string_view executable_name, const bool 
     // print specific information if requested
     std::string backend_specifics;
     if (with_backend_info) {
-        backend_specifics += fmt::format("  PLSSVM_TARGET_PLATFORMS: {}\n", target_platforms);
+        // preprocess target_platforms for a prettier version output
+        backend_specifics += fmt::format("  enabled target platforms during the CMake configuration step:\n    {}\n", fmt::join(::plssvm::detail::split(target_platforms, '\n'), "\n    "));
         backend_specifics += fmt::format("  available target platforms: {}\n", fmt::join(list_available_target_platforms(), ", "));
         backend_specifics += fmt::format("  available backends: {}\n", fmt::join(list_available_backends(), ", "));
 #if defined(PLSSVM_HAS_SYCL_BACKEND)

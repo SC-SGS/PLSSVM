@@ -52,10 +52,36 @@ constexpr int patch = @PROJECT_VERSION_PATCH@;
 namespace detail {
 
 /**
- * @brief The provided target platforms to use.
+ * @brief The provided target platforms to use for the respective backends.
  * @details The value gets automatically set during the [`CMake`](https://cmake.org/) configuration step.
  */
-constexpr std::string_view target_platforms = "BASE: @PLSSVM_TARGET_PLATFORMS@ | SYCL: @PLSSVM_SYCL_TARGET_PLATFORMS@ | CUDA: @PLSSVM_CUDA_TARGET_PLATFORMS@ | HIP: @PLSSVM_HIP_TARGET_PLATFORMS@ | OpenMP: @PLSSVM_OPENMP_TARGET_PLATFORMS@ | OpenCL: @PLSSVM_OPENCL_TARGET_PLATFORMS@ | stdpar: @PLSSVM_STDPAR_TARGET_PLATFORMS@";
+constexpr std::string_view target_platforms =
+    "PLSSVM_TARGET_PLATFORMS:        @PLSSVM_TARGET_PLATFORMS@\n"
+#if defined(PLSSVM_HAS_OPENMP_BACKEND)
+    "PLSSVM_OPENMP_TARGET_PLATFORMS: @PLSSVM_OPENMP_TARGET_PLATFORMS@\n"
+#endif
+#if defined(PLSSVM_HAS_STDPAR_BACKEND)
+    "PLSSVM_STDPAR_TARGET_PLATFORMS: @PLSSVM_STDPAR_TARGET_PLATFORMS@\n"
+#endif
+#if defined(PLSSVM_HAS_HPX_BACKEND)
+    "PLSSVM_HPX_TARGET_PLATFORMS:    @PLSSVM_HPX_TARGET_PLATFORMS@\n"
+#endif
+#if defined(PLSSVM_HAS_CUDA_BACKEND)
+    "PLSSVM_CUDA_TARGET_PLATFORMS:   @PLSSVM_CUDA_TARGET_PLATFORMS@\n"
+#endif
+#if defined(PLSSVM_HAS_HIP_BACKEND)
+    "PLSSVM_HIP_TARGET_PLATFORMS:    @PLSSVM_HIP_TARGET_PLATFORMS@\n"
+#endif
+#if defined(PLSSVM_HAS_OPENCL_BACKEND)
+    "PLSSVM_OPENCL_TARGET_PLATFORMS: @PLSSVM_OPENCL_TARGET_PLATFORMS@\n"
+#endif
+#if defined(PLSSVM_HAS_SYCL_BACKEND)
+    "PLSSVM_SYCL_TARGET_PLATFORMS:   @PLSSVM_SYCL_TARGET_PLATFORMS@\n"
+#endif
+#if defined(PLSSVM_HAS_KOKKOS_BACKEND)
+    "PLSSVM_KOKKOS_TARGET_PLATFORMS: @PLSSVM_KOKKOS_TARGET_PLATFORMS@\n"
+#endif
+    ;
 
 /**
  * @brief The copyright notice of the PLSSVM library.
