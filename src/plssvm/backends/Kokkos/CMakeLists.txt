@@ -34,7 +34,7 @@ endif ()
 
 ## PLSSVM_TARGET_PLATFORMS must not be empty
 if (PLSSVM_KOKKOS_TARGET_PLATFORMS STREQUAL "")
-    message(FATAL_ERROR "Eather PLSSVM_TARGET_PLATFORMS or PLSSVM_KOKKOS_TARGET_PLATFORMS must not be empty to compile with the Kokkos backend!")
+    message(FATAL_ERROR "Either PLSSVM_TARGET_PLATFORMS or PLSSVM_KOKKOS_TARGET_PLATFORMS must not be empty to compile with the Kokkos backend!")
 endif ()
 
 ## parse provided target platforms
