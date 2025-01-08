@@ -12,7 +12,7 @@
 #include "plssvm/detail/type_list.hpp"  // plssvm::detail::label_type_list
 #include "plssvm/matrix.hpp"            // plssvm::aos_matrix
 
-#include "bindings/Python/utility.hpp"  // plssvm::bindings::python::util::{assemble_unique_class_name, vector_to_pyarray, matrix_to_pyarray, instantiate_bindings}
+#include "bindings/Python/utility.hpp"  // plssvm::bindings::python::util::{assemble_unique_class_name, vector_to_pyarray, matrix_to_pyarray, instantiate_module_bindings}
 
 #include "fmt/format.h"         // fmt::format
 #include "pybind11/pybind11.h"  // py::module_, py::class_, py::return_value_policy, py::list
@@ -78,5 +78,5 @@ struct model_bindings {
 void init_model(py::module_ &pure_virtual) {
     // bind all pure-virtual base model classes
     // NOTE: supported_label_types_classification also contains all types in supported_label_types_regression
-    plssvm::bindings::python::util::instantiate_bindings<model_bindings, plssvm::detail::supported_label_types_classification>(pure_virtual);
+    plssvm::bindings::python::util::instantiate_module_bindings<model_bindings, plssvm::detail::supported_label_types_classification>(pure_virtual);
 }

@@ -13,7 +13,7 @@
 #include "plssvm/matrix.hpp"            // plssvm::aos_matrix
 #include "plssvm/model/model.hpp"       // plssvm::model
 
-#include "bindings/Python/utility.hpp"  // plssvm::bindings::python::util::{assemble_unique_class_name, vector_to_pyarray, instantiate_bindings}
+#include "bindings/Python/utility.hpp"  // plssvm::bindings::python::util::{assemble_unique_class_name, vector_to_pyarray, instantiate_module_bindings}
 
 #include "fmt/format.h"         // fmt::format
 #include "pybind11/pybind11.h"  // py::module_, py::class_
@@ -60,7 +60,7 @@ struct classification_model_bindings {
 
 void init_classification_model(py::module_ &m) {
     // bind all classification model classes
-    plssvm::bindings::python::util::instantiate_bindings<classification_model_bindings, plssvm::detail::supported_label_types_classification>(m);
+    plssvm::bindings::python::util::instantiate_module_bindings<classification_model_bindings, plssvm::detail::supported_label_types_classification>(m);
 
     // create alias
     m.attr("ClassificationModel") = m.attr(plssvm::bindings::python::util::assemble_unique_class_name<PLSSVM_PYTHON_BINDINGS_PREFERRED_SVC_LABEL_TYPE>("ClassificationModel").c_str());

@@ -12,7 +12,7 @@
 #include "plssvm/detail/type_list.hpp"   // plssvm::detail::supported_label_types
 #include "plssvm/file_format_types.hpp"  // plssvm::file_format_type
 
-#include "bindings/Python/utility.hpp"  // plssvm::bindings::python::util::{check_kwargs_for_correctness, assemble_unique_class_name, vector_to_pyarray, instantiate_bindings}
+#include "bindings/Python/utility.hpp"  // plssvm::bindings::python::util::{check_kwargs_for_correctness, assemble_unique_class_name, vector_to_pyarray, instantiate_module_bindings}
 
 #include "fmt/format.h"         // fmt::format
 #include "fmt/ranges.h"         // fmt::join
@@ -117,5 +117,5 @@ struct data_set_bindings {
 void init_data_set(py::module_ &pure_virtual) {
     // bind pure-virtual base data_set classes
     // NOTE: supported_label_types_classification also contains all types in supported_label_types_regression
-    plssvm::bindings::python::util::instantiate_bindings<data_set_bindings, plssvm::detail::supported_label_types_classification>(pure_virtual);
+    plssvm::bindings::python::util::instantiate_module_bindings<data_set_bindings, plssvm::detail::supported_label_types_classification>(pure_virtual);
 }

@@ -22,15 +22,11 @@
 
 #include "bindings/Python/utility.hpp"  // plssvm::bindings::python::util::{check_kwargs_for_correctness, convert_kwargs_to_parameter}
 
-#include "pybind11/pybind11.h"  // py::class_, py::kwargs, py::cast_error, py::attribute_error, py::value_error
+#include "pybind11/pybind11.h"  // py::kwargs, py::instance, py::str, py::value_error
 
-#include <array>    // std::array
-#include <cstddef>  // std::size_t
 #include <memory>   // std::unique_ptr
 #include <sstream>  // std::istringstream
 #include <string>   // std::string
-#include <tuple>    // std::tuple_element_t, std::tuple_size_v
-#include <utility>  // std::integer_sequence, std::make_integer_sequence
 
 namespace py = pybind11;
 
@@ -90,29 +86,6 @@ template <typename csvm_type>
     } else {
         return plssvm::make_csvm<csvm_type>(backend, target, params);
     }
-}
-
-/**
- * @brief Instantiate Python bindings using the @p InstantiationFunction for all @p LabelTypes.
- * @tparam InstantiationFunction the functor used to instantiate the Python bindings
- * @tparam LabelTypes the label types
- * @tparam Idx the label type indices
- * @param[in] csvm the Python CSVM used for instantiation
- */
-template <template <typename> typename InstantiationFunction, typename LabelTypes, typename csvm_type, std::size_t... Idx>
-void instantiate_csvm(py::class_<csvm_type> &csvm, std::integer_sequence<std::size_t, Idx...>) {
-    (InstantiationFunction<std::tuple_element_t<Idx, LabelTypes>>{}(csvm, std::tuple_element_t<Idx, LabelTypes>{}), ...);
-}
-
-/**
- * @brief Instantiate Python bindings using the @p InstantiationFunction for all @p LabelTypes.
- * @tparam InstantiationFunction the functor used to instantiate the Python bindings
- * @tparam LabelTypes the label types
- * @param[in] csvm the Python CSVM used for instantiation
- */
-template <template <typename> typename InstantiationFunction, typename LabelTypes, typename csvm_type>
-void instantiate_csvm(py::class_<csvm_type> &csvm) {
-    instantiate_csvm<InstantiationFunction, LabelTypes, csvm_type>(csvm, std::make_integer_sequence<std::size_t, std::tuple_size_v<LabelTypes>>{});
 }
 
 }  // namespace plssvm::bindings::python::util

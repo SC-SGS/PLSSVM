@@ -14,7 +14,7 @@
 #include "plssvm/file_format_types.hpp"  // plssvm::file_format_type
 
 #include "bindings/Python/data_set/utility.hpp"  // plssvm::bindings::python::util::create_scaling_object
-#include "bindings/Python/utility.hpp"           // plssvm::bindings::python::util::{check_kwargs_for_correctness, assemble_unique_class_name, pyarray_to_vector, pyarray_to_string_vector, pyarray_to_matrix, instantiate_bindings}
+#include "bindings/Python/utility.hpp"           // plssvm::bindings::python::util::{check_kwargs_for_correctness, assemble_unique_class_name, pyarray_to_vector, pyarray_to_string_vector, pyarray_to_matrix, instantiate_module_bindings}
 
 #include "fmt/format.h"         // fmt::format
 #include "fmt/ranges.h"         // fmt::join
@@ -151,7 +151,7 @@ struct classification_data_set_bindings {
 
 void init_classification_data_set(py::module_ &m, py::module_ &pure_virtual) {
     // bind all classification data_set classes
-    plssvm::bindings::python::util::instantiate_bindings<classification_data_set_bindings, plssvm::detail::supported_label_types_classification>(m, pure_virtual);
+    plssvm::bindings::python::util::instantiate_module_bindings<classification_data_set_bindings, plssvm::detail::supported_label_types_classification>(m, pure_virtual);
 
     // create classification data set aliases
     m.attr("ClassificationDataSetScalingFactors") = m.attr(plssvm::bindings::python::util::assemble_unique_class_name<PLSSVM_PYTHON_BINDINGS_PREFERRED_SVC_LABEL_TYPE>("ClassificationDataSetScalingFactors").c_str());

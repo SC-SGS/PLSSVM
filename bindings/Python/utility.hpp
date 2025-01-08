@@ -325,7 +325,7 @@ template <typename label_type>
  * @param[in] pure_virtual the pure-virtual Python module
  */
 template <template <typename> typename InstantiationFunction, typename LabelTypes, std::size_t... Idx>
-inline void instantiate_bindings(py::module_ &m, py::module_ &pure_virtual, std::integer_sequence<std::size_t, Idx...>) {
+inline void instantiate_module_bindings(py::module_ &m, py::module_ &pure_virtual, std::integer_sequence<std::size_t, Idx...>) {
     (InstantiationFunction<std::tuple_element_t<Idx, LabelTypes>>{}(m, pure_virtual, std::tuple_element_t<Idx, LabelTypes>{}), ...);
 }
 
@@ -337,8 +337,8 @@ inline void instantiate_bindings(py::module_ &m, py::module_ &pure_virtual, std:
  * @param[in] pure_virtual the pure-virtual Python module
  */
 template <template <typename> typename InstantiationFunction, typename LabelTypes>
-inline void instantiate_bindings(py::module_ &m, py::module_ &pure_virtual) {
-    instantiate_bindings<InstantiationFunction, LabelTypes>(m, pure_virtual, std::make_integer_sequence<std::size_t, std::tuple_size_v<LabelTypes>>{});
+inline void instantiate_module_bindings(py::module_ &m, py::module_ &pure_virtual) {
+    instantiate_module_bindings<InstantiationFunction, LabelTypes>(m, pure_virtual, std::make_integer_sequence<std::size_t, std::tuple_size_v<LabelTypes>>{});
 }
 
 /**
@@ -349,7 +349,7 @@ inline void instantiate_bindings(py::module_ &m, py::module_ &pure_virtual) {
  * @param[in] m the Python module in which the Python bindings are instantiated
  */
 template <template <typename> typename InstantiationFunction, typename LabelTypes, std::size_t... Idx>
-inline void instantiate_bindings(py::module_ &pure_virtual, std::integer_sequence<std::size_t, Idx...>) {
+inline void instantiate_module_bindings(py::module_ &pure_virtual, std::integer_sequence<std::size_t, Idx...>) {
     (InstantiationFunction<std::tuple_element_t<Idx, LabelTypes>>{}(pure_virtual, std::tuple_element_t<Idx, LabelTypes>{}), ...);
 }
 
@@ -360,8 +360,33 @@ inline void instantiate_bindings(py::module_ &pure_virtual, std::integer_sequenc
  * @param[in] m the Python module in which the Python bindings are instantiated
  */
 template <template <typename> typename InstantiationFunction, typename LabelTypes>
-inline void instantiate_bindings(py::module_ &pure_virtual) {
-    instantiate_bindings<InstantiationFunction, LabelTypes>(pure_virtual, std::make_integer_sequence<std::size_t, std::tuple_size_v<LabelTypes>>{});
+inline void instantiate_module_bindings(py::module_ &pure_virtual) {
+    instantiate_module_bindings<InstantiationFunction, LabelTypes>(pure_virtual, std::make_integer_sequence<std::size_t, std::tuple_size_v<LabelTypes>>{});
+}
+
+/**
+ * @brief Instantiate Python bindings using the @p InstantiationFunction for all @p LabelTypes.
+ * @tparam InstantiationFunction the functor used to instantiate the Python bindings
+ * @tparam LabelTypes the label types
+ * @tparam PyClassType the type of the Python class to instantiate definitions for
+ * @tparam Idx the label type indices
+ * @param[in] c the Python class used for instantiation
+ */
+template <template <typename> typename InstantiationFunction, typename LabelTypes, typename PyClassType, std::size_t... Idx>
+void instantiate_class_bindings(py::class_<PyClassType> &c, std::integer_sequence<std::size_t, Idx...>) {
+    (InstantiationFunction<std::tuple_element_t<Idx, LabelTypes>>{}(c, std::tuple_element_t<Idx, LabelTypes>{}), ...);
+}
+
+/**
+ * @brief Instantiate Python bindings using the @p InstantiationFunction for all @p LabelTypes.
+ * @tparam InstantiationFunction the functor used to instantiate the Python bindings
+ * @tparam LabelTypes the label types
+ * @tparam PyClassType the type of the Python class to instantiate definitions for
+ * @param[in] csvm the Python class used for instantiation
+ */
+template <template <typename> typename InstantiationFunction, typename LabelTypes, typename PyClassType>
+void instantiate_class_bindings(py::class_<PyClassType> &c) {
+    instantiate_class_bindings<InstantiationFunction, LabelTypes, PyClassType>(c, std::make_integer_sequence<std::size_t, std::tuple_size_v<LabelTypes>>{});
 }
 
 }  // namespace plssvm::bindings::python::util

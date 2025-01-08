@@ -13,7 +13,7 @@
 #include "plssvm/matrix.hpp"            // plssvm::aos_matrix
 #include "plssvm/model/model.hpp"       // plssvm::model
 
-#include "bindings/Python/utility.hpp"  // plssvm::bindings::python::util::{assemble_unique_class_name, instantiate_bindings}
+#include "bindings/Python/utility.hpp"  // plssvm::bindings::python::util::{assemble_unique_class_name, instantiate_module_bindings}
 
 #include "fmt/format.h"         // fmt::format
 #include "pybind11/pybind11.h"  // py::module_, py::class_
@@ -50,7 +50,7 @@ struct regression_model_bindings {
 
 void init_regression_model(py::module_ &m) {
     // bind all regression model classes
-    plssvm::bindings::python::util::instantiate_bindings<regression_model_bindings, plssvm::detail::supported_label_types_regression>(m);
+    plssvm::bindings::python::util::instantiate_module_bindings<regression_model_bindings, plssvm::detail::supported_label_types_regression>(m);
 
     // create alias
     m.attr("RegressionModel") = m.attr(plssvm::bindings::python::util::assemble_unique_class_name<double>("RegressionModel").c_str());

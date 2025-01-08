@@ -16,8 +16,8 @@
 #include "plssvm/parameter.hpp"                         // plssvm::parameter, named parameters
 #include "plssvm/solver_types.hpp"                      // plssvm::solver_type
 
-#include "bindings/Python/svm/utility.hpp"  // plssvm::bindings::python::util::{assemble_csvm, vector_to_pyarray, instantiate_csvm}
-#include "bindings/Python/utility.hpp"      // plssvm::bindings::python::util::check_kwargs_for_correctness
+#include "bindings/Python/svm/utility.hpp"  // plssvm::bindings::python::util::assemble_csvm
+#include "bindings/Python/utility.hpp"      // plssvm::bindings::python::util::{check_kwargs_for_correctness, vector_to_pyarray, instantiate_class_bindings}
 
 #include "pybind11/pybind11.h"  // py::module_, py::class_, py::kwargs, py::overload_cast, py::const_
 
@@ -88,7 +88,7 @@ void init_csvc(py::module_ &m, py::module_ &pure_virtual) {
     py::class_<plssvm::csvc> py_csvc(pure_virtual, "__pure_virtual_base_CSVC");
 
     // instantiate all functions using all available label_type
-    plssvm::bindings::python::util::instantiate_csvm<csvc_bindings, plssvm::detail::supported_label_types_classification>(py_csvc);
+    plssvm::bindings::python::util::instantiate_class_bindings<csvc_bindings, plssvm::detail::supported_label_types_classification>(py_csvc);
 
     // bind plssvm::make_csvm factory functions to "generic" Python CSVC class
     py::class_<plssvm::csvc>(m, "CSVC", py_csvc, py::module_local())

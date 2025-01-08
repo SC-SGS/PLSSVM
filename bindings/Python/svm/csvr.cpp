@@ -15,8 +15,8 @@
 #include "plssvm/parameter.hpp"                     // plssvm::parameter, named parameters
 #include "plssvm/solver_types.hpp"                  // plssvm::solver_type
 
-#include "bindings/Python/svm/utility.hpp"  // plssvm::bindings::python::util::{assemble_csvm, vector_to_pyarray, instantiate_csvm}
-#include "bindings/Python/utility.hpp"      // plssvm::bindings::python::util::check_kwargs_for_correctness
+#include "bindings/Python/svm/utility.hpp"  // plssvm::bindings::python::util::assemble_csvm
+#include "bindings/Python/utility.hpp"      // plssvm::bindings::python::util::{check_kwargs_for_correctness, vector_to_pyarray, instantiate_class_bindings}
 
 #include "pybind11/pybind11.h"  // py::module_, py::class_, py::kwargs, py::overload_cast, py::const_
 
@@ -78,7 +78,7 @@ void init_csvr(py::module_ &m, py::module_ &pure_virtual) {
     py::class_<plssvm::csvr> py_csvr(pure_virtual, "__pure_virtual_base_CSVR");
 
     // instantiate all functions using all available label_type
-    plssvm::bindings::python::util::instantiate_csvm<csvr_bindings, plssvm::detail::supported_label_types_regression>(py_csvr);
+    plssvm::bindings::python::util::instantiate_class_bindings<csvr_bindings, plssvm::detail::supported_label_types_regression>(py_csvr);
 
     // bind plssvm::make_csvm factory functions to "generic" Python CSVR class
     py::class_<plssvm::csvr>(m, "CSVR", py_csvr, py::module_local())
