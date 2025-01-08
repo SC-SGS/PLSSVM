@@ -540,6 +540,7 @@ $([[ $ARCHITECTURE == AMD ]] && [[ $(hostname) == pcsgs13 ]] && echo "amdgpu_tar
 $([[ $ARCHITECTURE == AMD ]] && [[ $(hostname) == simcl1n3 ]] && echo "amdgpu_target=gfx90a") \
 $([[ $ARCHITECTURE == AMD ]] && [[ $(hostname) == pcsgs09 ]] && echo "amdgpu_target=gfx906") \
 $([[ SET_AMD_GPU_NONE == 1 ]] && "amdgpu_target=none") \
+~dpcpp \
 build_type=$BUILD_TYPE \
 arch=$(spack arch)" \
 ctest -j8 --no-tests=error --output-on-failure --timeout 600 --no-compress-output -T Test \
@@ -609,6 +610,7 @@ $([[ $BACKEND != OPENMP ]] &&  echo "-E \"Base*\"") # Exclude base tests for all
                                         $([[ $BACKEND == STDPAR-GNU-TBB ]] && echo "stdparimplementation=gnu-tbb" ) \
                                         $([[ $BACKEND == STDPAR-DPCPP ]] && echo "stdparimplementation=icpx" ) \
                                         $([[ $BACKEND == STDPAR-NVHPC ]] && echo "stdparimplementation=nvhpc" ) \
+                                        ~dpcpp \
                                         $([[ $BACKEND == STDPAR-ADAPTIVECPP ]] && echo "stdparimplementation=adaptivecpp" ) \
                                         $([[ $(hostname) != pcsgs03 ]] && [[ $ARCHITECTURE == NVIDIA ]] && echo "cuda_arch=86") \
                                         $([[ $(hostname) == pcsgs03 ]] && [[ $ARCHITECTURE == NVIDIA ]] && echo "cuda_arch=75") \
