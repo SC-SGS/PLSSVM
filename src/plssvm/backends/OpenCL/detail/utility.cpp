@@ -112,6 +112,11 @@ namespace plssvm::opencl::detail {
         }
     }
 
+    // platform_devices shouldn't be empty!
+    if (platform_devices.empty()) {
+        throw platform_devices_empty{ "No appropriate devices could be found!" };
+    }
+
     // determine target if provided target_platform is automatic
     if (target == target_platform::automatic) {
         // get the target_platforms available on this system from the platform_devices map
