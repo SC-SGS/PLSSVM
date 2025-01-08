@@ -25,7 +25,7 @@ endif ()
 
 ## PLSSVM_TARGET_PLATFORMS must not be empty
 if (PLSSVM_SYCL_TARGET_PLATFORMS STREQUAL "")
-    message(FATAL_ERROR "Eather PLSSVM_TARGET_PLATFORMS or PLSSVM_SYCL_TARGET_PLATFORMS must not be empty to compile with the SYCL backend!")
+    message(FATAL_ERROR "Either PLSSVM_TARGET_PLATFORMS or PLSSVM_SYCL_TARGET_PLATFORMS must not be empty to compile with the SYCL backend!")
 endif ()
 
 ## parse provided target platforms
