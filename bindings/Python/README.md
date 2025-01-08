@@ -16,6 +16,7 @@
         - [plssvm.CSVC and plssvm.CSVR](#plssvmcsvc-and-plssvmcsvr)
         - [The backend CSVCs and CSVRs](#the-backend-csvcs-and-csvrs)
         - [plssvm.ClassificationModel and plssvm.RegressionModel](#plssvmclassificationmodel-and-plssvmregressionmodel)
+        - [plssvm.RegressionReport and plssvm.RegressionReportMetric](#plssvmregressionreport-and-plssvmregressionreportmetric)
         - [plssvm.Version](#plssvmversion)
         - [plssvm.detail.tracking.PerformanceTracker](#plssvmdetailtrackingperformancetracker)
         - [plssvm.detail.tracking.Events](#plssvmdetailtrackingevent-plssvmdetailtrackingevents)
@@ -598,6 +599,36 @@ The following methods are **only** available for a `plssvm.ClassificationModel`:
 | `num_classes()`             | Return the number of different classes.  |
 | `get_classification_type()` | Return the used classification strategy. |
 
+#### `plssvm.RegressionReport` and `plssvm.RegressionReportMetric`
+
+The `plssvm.RegressionReport` (or `plssvm.regression_report`) can be used similar to sklearn's 
+[`metrics.classification_report`](https://scikit-learn.org/0.15/modules/generated/sklearn.metrics.classification_report.html)
+for the regression task.
+
+The support metrics in `plssvm.RegressionReportMetric` are:
+
+| attributes                                 | description                                                                                                                                                   |
+|--------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `explained_variance_score : double`        | Explained variance regression score function. Best possible score is 1.0, lower values are worse.                                                             |
+| `mean_absolute_error : double`             | Mean absolute error regression loss.                                                                                                                          |
+| `mean_squared_error : double`              | Mean squared error regression loss.                                                                                                                           |
+| `r2_score : double`                        | R^2 (coefficient of determination) regression score function. Best possible score is 1.0 and it can be negative (because the model can be arbitrarily worse). |
+| `squared_correlation_coefficient : double` | Squared correlation coefficient adopted from LIBSVM's regression model.                                                                                       |
+
+| methods                         | description                                      |
+|---------------------------------|--------------------------------------------------|
+| `print(RegressionReportMetric)` | Overload to print all regression report metrics. |
+
+The actual `plssvm.RegressionReport` looks as follows:
+
+| constructors                                              | description                                                                                                                                                                            |
+|-----------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `RegressionReport(correct_label, predicted_label kwargs)` | Construct a new regression report by calculating all above metrics between the correct and predicted labels. `kwargs` can be `force_finite` which sanitizes all possible `inf` values. |
+
+| methods                   | description                                                            |
+|---------------------------|------------------------------------------------------------------------|
+| `loss()`                  | Return the regression loss metrics as `plssvm.RegressionReportMetric`. |
+| `print(RegressionReport)` | Overload to print a regression report displaying the loss metrics.     |
 
 #### `plssvm.Version`
 

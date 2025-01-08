@@ -39,6 +39,7 @@ void init_classification_data_set(py::module_ &, py::module_ &);
 void init_regression_data_set(py::module_ &, py::module_ &);
 void init_version(py::module_ &);
 void init_exceptions(py::module_ &, const py::exception<plssvm::exception> &);
+void init_regression_report(py::module_ &);
 void init_csvm(py::module_ &);
 void init_csvc(py::module_ &, py::module_ &);
 void init_csvr(py::module_ &, py::module_ &);
@@ -106,6 +107,7 @@ PYBIND11_MODULE(plssvm, m) {
     init_regression_data_set(m, pure_virtual);
     init_version(m);
     init_exceptions(m, base_exception);
+    init_regression_report(m);
     init_csvm(pure_virtual);
     init_csvc(m, pure_virtual);
     init_csvr(m, pure_virtual);

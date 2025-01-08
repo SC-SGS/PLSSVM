@@ -1,4 +1,5 @@
 import plssvm
+from plssvm import regression_report
 
 try:
     # create a new C-SVM parameter set, explicitly overriding the default kernel function
@@ -21,6 +22,9 @@ try:
 
     # predict labels
     predicted_label = svm.predict(model, test_data)
+    # output a more complete regression report
+    correct_label = test_data.labels()
+    print(regression_report(correct_label, predicted_label))
 
     # write model file to disk
     model.save("model_file.libsvm")
