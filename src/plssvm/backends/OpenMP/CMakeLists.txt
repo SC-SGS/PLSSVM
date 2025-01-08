@@ -49,7 +49,7 @@ endforeach ()
 
 ## PLSSVM_TARGET_PLATFORMS must not be empty
 if (PLSSVM_OMP_TARGET_PLATFORMS STREQUAL "")
-    message(FATAL_ERROR "Eather PLSSVM_TARGET_PLATFORMS or PLSSVM_OMP_TARGET_PLATFORMS must not be empty to compile with the OpenMP backend!")
+    message(FATAL_ERROR "Either PLSSVM_TARGET_PLATFORMS or PLSSVM_OMP_TARGET_PLATFORMS must not be empty to compile with the OpenMP backend!")
 endif ()
 
 if ((NOT DEFINED PLSSVM_CPU_TARGET_ARCHS) AND ( NOT "cpu" IN_LIST PLSSVM_PLATFORM_NAME_LIST))

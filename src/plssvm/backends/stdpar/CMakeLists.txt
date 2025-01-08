@@ -23,7 +23,7 @@ endif ()
 
 ## PLSSVM_TARGET_PLATFORMS must not be empty
 if (PLSSVM_STDPAR_TARGET_PLATFORMS STREQUAL "")
-    message(FATAL_ERROR "Eather PLSSVM_TARGET_PLATFORMS or PLSSVM_STDPAR_TARGET_PLATFORMS must not be empty to compile with the stdpar backend!")
+    message(FATAL_ERROR "Either PLSSVM_TARGET_PLATFORMS or PLSSVM_STDPAR_TARGET_PLATFORMS must not be empty to compile with the stdpar backend!")
 endif ()
 
 ## parse provided target platforms
