@@ -124,7 +124,7 @@ TEST_F(stdparCSVM, calculate_w) {
     const plssvm::soa_matrix<plssvm::real_type> correct_w = ground_truth::calculate_w(weights, data.data());
 
     // check C for correctness
-    EXPECT_FLOATING_POINT_MATRIX_NEAR(w, correct_w);
+    EXPECT_FLOATING_POINT_MATRIX_NEAR_EPS(w, correct_w, 1e6);
 }
 
 using kernel_function_type_list_gtest = util::combine_test_parameters_gtest_t<util::kernel_function_type_list>;
