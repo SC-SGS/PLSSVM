@@ -330,7 +330,7 @@ template <typename T>
 template <typename T>
 [[nodiscard]] inline std::string pretty_print_data_set_factory(const ::testing::TestParamInfo<typename T::ParamType> &param_info) {
     // the values are bools
-    return detail::escape_string(fmt::format("strings_as_labels_{}", std::get<0>(param_info.param)));
+    return detail::escape_string(fmt::format("strings_as_labels_{}__svm_type_{}", std::get<0>(param_info.param), std::get<1>(param_info.param)));
 }
 
 // detail/sha256.cpp -> Sha256
