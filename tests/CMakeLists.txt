@@ -197,6 +197,7 @@ set(PLSSVM_BASE_TEST_SOURCES
     ${CMAKE_CURRENT_LIST_DIR}/kernel_functions.cpp
     ${CMAKE_CURRENT_LIST_DIR}/matrix.cpp
     ${CMAKE_CURRENT_LIST_DIR}/parameter.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/regression_model.cpp
     ${CMAKE_CURRENT_LIST_DIR}/shape.cpp
     ${CMAKE_CURRENT_LIST_DIR}/solver_types.cpp
     ${CMAKE_CURRENT_LIST_DIR}/svm_types.cpp
