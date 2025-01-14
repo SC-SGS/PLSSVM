@@ -366,7 +366,6 @@ template <typename label_type>
  */
 template <typename label_type>
 inline void write_libsvm_model_header_regression(fmt::ostream &out, const plssvm::parameter &params, const std::vector<real_type> &rho, const regression_data_set<label_type> &data) {
-    PLSSVM_ASSERT(data.has_labels(), "Cannot write a model file that does not include labels!");
     PLSSVM_ASSERT(rho.size() == 1, "Exactly one rho value must be provided!");
 
     // save model file header
@@ -430,7 +429,6 @@ inline void write_libsvm_model_header_regression(fmt::ostream &out, const plssvm
 template <typename label_type>
 inline void write_libsvm_model_data_regression(const std::string &filename, const plssvm::parameter &params, const std::vector<real_type> &rho, const std::vector<aos_matrix<real_type>> &alpha, const regression_data_set<label_type> &data) {
     PLSSVM_ASSERT(!filename.empty(), "The provided model filename must not be empty!");
-    PLSSVM_ASSERT(data.has_labels(), "Cannot write a model file that does not include labels!");
     PLSSVM_ASSERT(rho.size() == 1,
                   "The number of rho values is {} but must be exactly 1",
                   rho.size());
