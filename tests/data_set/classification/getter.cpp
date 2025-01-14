@@ -5,17 +5,17 @@
  * @license This file is part of the PLSSVM project which is released under the MIT license.
  *          See the LICENSE.md file in the project root for full license information.
  *
- * @brief Tests for the data_set getter member functions.
+ * @brief Tests for the classification data set getter member functions.
  */
 
-#include "plssvm/constants.hpp"  // plssvm::real_type, plssvm::PADDING_SIZE
-#include "plssvm/data_set.hpp"   // class to test
-#include "plssvm/matrix.hpp"     // plssvm::aos_matrix
-#include "plssvm/shape.hpp"      // plssvm::shape
+#include "plssvm/constants.hpp"                         // plssvm::real_type, plssvm::PADDING_SIZE
+#include "plssvm/data_set/classification_data_set.hpp"  // data set class to test
+#include "plssvm/matrix.hpp"                            // plssvm::aos_matrix
+#include "plssvm/shape.hpp"                             // plssvm::shape
 
 #include "tests/custom_test_macros.hpp"  // EXPECT_FLOATING_POINT_MATRIX_EQ, EXPECT_FLOATING_POINT_EQ, EXPECT_FLOATING_POINT_NEAR
 #include "tests/naming.hpp"              // naming::test_parameter_to_name
-#include "tests/types_to_test.hpp"       // util::{label_type_gtest, test_parameter_type_at_t}
+#include "tests/types_to_test.hpp"       // util::{classification_label_type_gtest, test_parameter_type_at_t}
 #include "tests/utility.hpp"             // util::{redirect_output, scale}
 
 #include "gtest/gtest.h"  // TYPED_TEST, TYPED_TEST_SUITE, EXPECT_TRUE, EXPECT_FALSE, EXPECT_EQ, ASSERT_TRUE, ::testing::Test
@@ -25,8 +25,8 @@
 #include <vector>   // std::vector
 
 template <typename T>
-class DataSetGetter : public ::testing::Test,
-                      private util::redirect_output<> {
+class ClassificationDataSetGetter : public ::testing::Test,
+                                    private util::redirect_output<> {
   protected:
     using fixture_label_type = util::test_parameter_type_at_t<0, T>;
 
@@ -52,121 +52,121 @@ class DataSetGetter : public ::testing::Test,
     /// The correct, different classes.
     std::vector<fixture_label_type> classes_{ util::get_distinct_label<fixture_label_type>() };
     /// The correct labels.
-    std::vector<fixture_label_type> label_{ util::get_correct_data_file_labels<fixture_label_type>() };
+    std::vector<fixture_label_type> label_{ util::get_correct_data_file_labels<fixture_label_type, plssvm::svm_type::csvc>() };
     /// The correct data points.
     plssvm::soa_matrix<plssvm::real_type> data_points_{ util::generate_specific_matrix<plssvm::aos_matrix<plssvm::real_type>>(plssvm::shape{ label_.size(), 4 }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE }) };
 };
 
-TYPED_TEST_SUITE(DataSetGetter, util::label_type_gtest, naming::test_parameter_to_name);
+TYPED_TEST_SUITE(ClassificationDataSetGetter, util::classification_label_type_gtest, naming::test_parameter_to_name);
 
-TYPED_TEST(DataSetGetter, data) {
+TYPED_TEST(ClassificationDataSetGetter, data) {
     using label_type = typename TestFixture::fixture_label_type;
 
     // create data set without labels
-    const plssvm::data_set<label_type> data{ this->get_data_points() };
+    const plssvm::classification_data_set<label_type> data{ this->get_data_points() };
     // check data getter
     EXPECT_FLOATING_POINT_MATRIX_EQ(data.data(), this->get_data_points());
 }
 
-TYPED_TEST(DataSetGetter, has_labels) {
+TYPED_TEST(ClassificationDataSetGetter, has_labels) {
     using label_type = typename TestFixture::fixture_label_type;
 
     // create data set without labels
-    const plssvm::data_set<label_type> data_without_labels{ this->get_data_points() };
+    const plssvm::classification_data_set<label_type> data_without_labels{ this->get_data_points() };
     // check has_labels getter
     EXPECT_FALSE(data_without_labels.has_labels());
     // create data set with labels
-    const plssvm::data_set<label_type> data_with_labels{ this->get_data_points(), this->get_label() };
+    const plssvm::classification_data_set<label_type> data_with_labels{ this->get_data_points(), this->get_label() };
     // check has_labels getter
     EXPECT_TRUE(data_with_labels.has_labels());
 }
 
-TYPED_TEST(DataSetGetter, labels) {
+TYPED_TEST(ClassificationDataSetGetter, labels) {
     using label_type = typename TestFixture::fixture_label_type;
 
     // create data set without labels
-    const plssvm::data_set<label_type> data_without_labels{ this->get_data_points() };
+    const plssvm::classification_data_set<label_type> data_without_labels{ this->get_data_points() };
     // check labels getter
     EXPECT_FALSE(data_without_labels.labels().has_value());
     // create data set with labels
-    const plssvm::data_set<label_type> data_with_labels{ this->get_data_points(), this->get_label() };
+    const plssvm::classification_data_set<label_type> data_with_labels{ this->get_data_points(), this->get_label() };
     // check labels getter
     ASSERT_TRUE(data_with_labels.labels().has_value());
     EXPECT_EQ(data_with_labels.labels()->get(), this->get_label());
 }
 
-TYPED_TEST(DataSetGetter, classes) {
+TYPED_TEST(ClassificationDataSetGetter, classes) {
     using label_type = typename TestFixture::fixture_label_type;
 
     // create data set without labels
-    const plssvm::data_set<label_type> data_without_labels{ this->get_data_points() };
+    const plssvm::classification_data_set<label_type> data_without_labels{ this->get_data_points() };
     // check different_labels getter
     EXPECT_FALSE(data_without_labels.classes().has_value());
     // create data set with labels
-    const plssvm::data_set<label_type> data_with_labels{ this->get_data_points(), this->get_label() };
+    const plssvm::classification_data_set<label_type> data_with_labels{ this->get_data_points(), this->get_label() };
     // check different_labels getter
     ASSERT_TRUE(data_with_labels.classes().has_value());
     EXPECT_EQ(*data_with_labels.classes(), this->get_classes());
 }
 
-TYPED_TEST(DataSetGetter, num_data_points) {
+TYPED_TEST(ClassificationDataSetGetter, num_data_points) {
     using label_type = typename TestFixture::fixture_label_type;
 
     // create data set
-    const plssvm::data_set<label_type> data{ this->get_data_points() };
+    const plssvm::classification_data_set<label_type> data{ this->get_data_points() };
     // check num_data_points getter
     EXPECT_EQ(data.num_data_points(), this->get_data_points().num_rows());
 }
 
-TYPED_TEST(DataSetGetter, num_features) {
+TYPED_TEST(ClassificationDataSetGetter, num_features) {
     using label_type = typename TestFixture::fixture_label_type;
 
     // create data set
-    const plssvm::data_set<label_type> data{ this->get_data_points() };
+    const plssvm::classification_data_set<label_type> data{ this->get_data_points() };
     // check num_features getter
     EXPECT_EQ(data.num_features(), this->get_data_points().num_cols());
 }
 
-TYPED_TEST(DataSetGetter, num_classes) {
+TYPED_TEST(ClassificationDataSetGetter, num_classes) {
     using label_type = typename TestFixture::fixture_label_type;
 
     // create data set without labels
-    const plssvm::data_set<label_type> data_without_label{ this->get_data_points() };
+    const plssvm::classification_data_set<label_type> data_without_label{ this->get_data_points() };
     // check num_different_labels getter
     EXPECT_EQ(data_without_label.num_classes(), 0);
 
     // create data set with labels
-    const plssvm::data_set<label_type> data_with_label{ this->get_data_points(), this->get_label() };
+    const plssvm::classification_data_set<label_type> data_with_label{ this->get_data_points(), this->get_label() };
     // check num_different_labels getter
     EXPECT_EQ(data_with_label.num_classes(), this->get_classes().size());
 }
 
-TYPED_TEST(DataSetGetter, is_scaled) {
+TYPED_TEST(ClassificationDataSetGetter, is_scaled) {
     using label_type = typename TestFixture::fixture_label_type;
-    using scaling_type = typename plssvm::data_set<label_type>::scaling;
+    using scaling_type = typename plssvm::classification_data_set<label_type>::scaling;
 
     // create data set
-    const plssvm::data_set<label_type> data{ this->get_data_points() };
+    const plssvm::classification_data_set<label_type> data{ this->get_data_points() };
     // check is_scaled getter
     EXPECT_FALSE(data.is_scaled());
 
     // create scaled data set
-    const plssvm::data_set<label_type> data_scaled{ this->get_data_points(), scaling_type{ plssvm::real_type{ -1.0 }, plssvm::real_type{ 1.0 } } };
+    const plssvm::classification_data_set<label_type> data_scaled{ this->get_data_points(), scaling_type{ plssvm::real_type{ -1.0 }, plssvm::real_type{ 1.0 } } };
     // check is_scaled getter
     EXPECT_TRUE(data_scaled.is_scaled());
 }
 
-TYPED_TEST(DataSetGetter, scaling_factors) {
+TYPED_TEST(ClassificationDataSetGetter, scaling_factors) {
     using label_type = typename TestFixture::fixture_label_type;
-    using scaling_type = typename plssvm::data_set<label_type>::scaling;
+    using scaling_type = typename plssvm::classification_data_set<label_type>::scaling;
 
     // create data set
-    const plssvm::data_set<label_type> data{ this->get_data_points() };
+    const plssvm::classification_data_set<label_type> data{ this->get_data_points() };
     // check scaling_factors getter
     EXPECT_FALSE(data.scaling_factors().has_value());
 
     // create scaled data set
-    const plssvm::data_set<label_type> data_scaled{ this->get_data_points(), scaling_type{ plssvm::real_type{ -1.0 }, plssvm::real_type{ 1.0 } } };
+    const plssvm::classification_data_set<label_type> data_scaled{ this->get_data_points(), scaling_type{ plssvm::real_type{ -1.0 }, plssvm::real_type{ 1.0 } } };
     // check scaling_factors getter
     ASSERT_TRUE(data_scaled.scaling_factors().has_value());
     const auto &[ignored, correct_scaling_factors] = util::scale(this->get_data_points(), plssvm::real_type{ -1.0 }, plssvm::real_type{ 1.0 });

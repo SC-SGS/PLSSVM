@@ -5,12 +5,12 @@
  * @license This file is part of the PLSSVM project which is released under the MIT license.
  *          See the LICENSE.md file in the project root for full license information.
  *
- * @brief Tests for functions related to the data_set label mapper used for learning an SVM model.
+ * @brief Tests for functions related to the classification data set label mapper used for learning an SVM model.
  */
 
-#include "plssvm/data_set.hpp"                  // class to test
-#include "plssvm/detail/string_conversion.hpp"  // plssvm::detail::convert_to
-#include "plssvm/exceptions/exceptions.hpp"     // plssvm::data_set_exception
+#include "plssvm/data_set/classification_data_set.hpp"  // data set class to test
+#include "plssvm/detail/string_conversion.hpp"          // plssvm::detail::convert_to
+#include "plssvm/exceptions/exceptions.hpp"             // plssvm::data_set_exception
 
 #include "tests/custom_test_macros.hpp"  // EXPECT_THROW_WHAT
 #include "tests/naming.hpp"              // naming::test_parameter_to_name
@@ -27,16 +27,16 @@
 #include <vector>       // std::vector
 
 template <typename T>
-class DataSetLabelMapper : public ::testing::Test {
+class ClassificationDataSetLabelMapper : public ::testing::Test {
   protected:
     using fixture_label_type = util::test_parameter_type_at_t<0, T>;
 };
 
-TYPED_TEST_SUITE(DataSetLabelMapper, util::label_type_gtest, naming::test_parameter_to_name);
+TYPED_TEST_SUITE(ClassificationDataSetLabelMapper, util::label_type_gtest, naming::test_parameter_to_name);
 
-TYPED_TEST(DataSetLabelMapper, construct) {
+TYPED_TEST(ClassificationDataSetLabelMapper, construct) {
     using label_type = typename TestFixture::fixture_label_type;
-    using label_mapper_type = typename plssvm::data_set<label_type>::label_mapper;
+    using label_mapper_type = typename plssvm::classification_data_set<label_type>::label_mapper;
 
     // the different labels
     const std::vector<label_type> distinct_labels = util::get_distinct_label<label_type>();
@@ -54,9 +54,9 @@ TYPED_TEST(DataSetLabelMapper, construct) {
     }
 }
 
-TYPED_TEST(DataSetLabelMapper, get_mapped_index_by_label) {
+TYPED_TEST(ClassificationDataSetLabelMapper, get_mapped_index_by_label) {
     using label_type = typename TestFixture::fixture_label_type;
-    using label_mapper_type = typename plssvm::data_set<label_type>::label_mapper;
+    using label_mapper_type = typename plssvm::classification_data_set<label_type>::label_mapper;
 
     // the different labels
     const std::vector<label_type> distinct_labels = util::get_distinct_label<label_type>();
@@ -73,9 +73,9 @@ TYPED_TEST(DataSetLabelMapper, get_mapped_index_by_label) {
     }
 }
 
-TYPED_TEST(DataSetLabelMapper, get_mapped_index_by_invalid_label) {
+TYPED_TEST(ClassificationDataSetLabelMapper, get_mapped_index_by_invalid_label) {
     using label_type = typename TestFixture::fixture_label_type;
-    using label_mapper_type = typename plssvm::data_set<label_type>::label_mapper;
+    using label_mapper_type = typename plssvm::classification_data_set<label_type>::label_mapper;
 
     // the different labels
     const std::vector<label_type> distinct_labels = util::get_distinct_label<label_type>();
@@ -94,9 +94,9 @@ TYPED_TEST(DataSetLabelMapper, get_mapped_index_by_invalid_label) {
     }
 }
 
-TYPED_TEST(DataSetLabelMapper, get_label_by_mapped_index) {
+TYPED_TEST(ClassificationDataSetLabelMapper, get_label_by_mapped_index) {
     using label_type = typename TestFixture::fixture_label_type;
-    using label_mapper_type = typename plssvm::data_set<label_type>::label_mapper;
+    using label_mapper_type = typename plssvm::classification_data_set<label_type>::label_mapper;
 
     // the different labels
     const std::vector<label_type> distinct_labels = util::get_distinct_label<label_type>();
@@ -113,9 +113,9 @@ TYPED_TEST(DataSetLabelMapper, get_label_by_mapped_index) {
     }
 }
 
-TYPED_TEST(DataSetLabelMapper, get_label_by_invalid_mapped_index) {
+TYPED_TEST(ClassificationDataSetLabelMapper, get_label_by_invalid_mapped_index) {
     using label_type = typename TestFixture::fixture_label_type;
-    using label_mapper_type = typename plssvm::data_set<label_type>::label_mapper;
+    using label_mapper_type = typename plssvm::classification_data_set<label_type>::label_mapper;
 
     // the different labels
     const std::vector<label_type> distinct_labels = util::get_distinct_label<label_type>();
@@ -129,9 +129,9 @@ TYPED_TEST(DataSetLabelMapper, get_label_by_invalid_mapped_index) {
                       fmt::format("Mapped index \"{}\" unknown in this label mapping!", mapper.num_mappings() + 1));
 }
 
-TYPED_TEST(DataSetLabelMapper, num_mappings) {
+TYPED_TEST(ClassificationDataSetLabelMapper, num_mappings) {
     using label_type = typename TestFixture::fixture_label_type;
-    using label_mapper_type = typename plssvm::data_set<label_type>::label_mapper;
+    using label_mapper_type = typename plssvm::classification_data_set<label_type>::label_mapper;
 
     // the different labels
     const std::vector<label_type> different_labels = util::get_distinct_label<label_type>();
@@ -143,9 +143,9 @@ TYPED_TEST(DataSetLabelMapper, num_mappings) {
     EXPECT_EQ(mapper.num_mappings(), different_labels.size());
 }
 
-TYPED_TEST(DataSetLabelMapper, labels) {
+TYPED_TEST(ClassificationDataSetLabelMapper, labels) {
     using label_type = typename TestFixture::fixture_label_type;
-    using label_mapper_type = typename plssvm::data_set<label_type>::label_mapper;
+    using label_mapper_type = typename plssvm::classification_data_set<label_type>::label_mapper;
 
     // the different labels
     const std::vector<label_type> different_labels = util::get_distinct_label<label_type>();
@@ -158,13 +158,13 @@ TYPED_TEST(DataSetLabelMapper, labels) {
 }
 
 template <typename T>
-class DataSetLabelMapperDeathTest : public DataSetLabelMapper<T> { };
+class ClassificationDataSetLabelMapperDeathTest : public ClassificationDataSetLabelMapper<T> { };
 
-TYPED_TEST_SUITE(DataSetLabelMapperDeathTest, util::label_type_gtest, naming::test_parameter_to_name);
+TYPED_TEST_SUITE(ClassificationDataSetLabelMapperDeathTest, util::label_type_gtest, naming::test_parameter_to_name);
 
-TYPED_TEST(DataSetLabelMapperDeathTest, duplicated_labels) {
+TYPED_TEST(ClassificationDataSetLabelMapperDeathTest, duplicated_labels) {
     using label_type = typename TestFixture::fixture_label_type;
-    using label_mapper_type = typename plssvm::data_set<label_type>::label_mapper;
+    using label_mapper_type = typename plssvm::classification_data_set<label_type>::label_mapper;
 
     // duplicated labels are not allowed in the label_mapper constructor
     EXPECT_DEATH(label_mapper_type{ util::get_correct_data_file_labels<label_type>() },

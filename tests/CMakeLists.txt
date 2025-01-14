@@ -179,12 +179,17 @@ set(PLSSVM_BASE_TEST_SOURCES
     ${CMAKE_CURRENT_LIST_DIR}/classification_types.cpp
     #    ${CMAKE_CURRENT_LIST_DIR}/csvm.cpp
     #    ${CMAKE_CURRENT_LIST_DIR}/csvm_factory.cpp
+    
     ${CMAKE_CURRENT_LIST_DIR}/data_set/classification/constructors.cpp
     ${CMAKE_CURRENT_LIST_DIR}/data_set/classification/getter.cpp
     ${CMAKE_CURRENT_LIST_DIR}/data_set/classification/label_mapper.cpp
     ${CMAKE_CURRENT_LIST_DIR}/data_set/classification/save.cpp
     ${CMAKE_CURRENT_LIST_DIR}/data_set/classification/scaling.cpp
     ${CMAKE_CURRENT_LIST_DIR}/data_set/regression/constructors.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/data_set/regression/getter.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/data_set/regression/save.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/data_set/regression/scaling.cpp
+    
     ${CMAKE_CURRENT_LIST_DIR}/file_format_types.cpp
     ${CMAKE_CURRENT_LIST_DIR}/gamma.cpp
     ${CMAKE_CURRENT_LIST_DIR}/kernel_function_types.cpp

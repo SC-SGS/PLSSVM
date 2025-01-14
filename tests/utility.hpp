@@ -13,15 +13,16 @@
 #define PLSSVM_TESTS_UTILITY_HPP_
 #pragma once
 
-#include "plssvm/constants.hpp"                    // plssvm::real_type
-#include "plssvm/data_set.hpp"                     // plssvm::data_set
-#include "plssvm/detail/arithmetic_type_name.hpp"  // plssvm::detail::arithmetic_type_name_v
-#include "plssvm/detail/string_utility.hpp"        // plssvm::detail::replace_all
-#include "plssvm/detail/type_traits.hpp"           // plssvm::detail::always_false_v
-#include "plssvm/kernel_function_types.hpp"        // plssvm::kernel_function_type
-#include "plssvm/matrix.hpp"                       // plssvm::layout_type, plssvm::matrix
-#include "plssvm/parameter.hpp"                    // plssvm::parameter
-#include "plssvm/shape.hpp"                        // plssvm::shape
+#include "plssvm/constants.hpp"                         // plssvm::real_type
+#include "plssvm/data_set/classification_data_set.hpp"  // plssvm::classification_data_set
+#include "plssvm/detail/arithmetic_type_name.hpp"       // plssvm::detail::arithmetic_type_name_v
+#include "plssvm/detail/string_utility.hpp"             // plssvm::detail::replace_all
+#include "plssvm/detail/type_traits.hpp"                // plssvm::detail::always_false_v
+#include "plssvm/kernel_function_types.hpp"             // plssvm::kernel_function_type
+#include "plssvm/matrix.hpp"                            // plssvm::layout_type, plssvm::matrix
+#include "plssvm/parameter.hpp"                         // plssvm::parameter
+#include "plssvm/shape.hpp"                             // plssvm::shape
+#include "plssvm/svm_types.hpp"                         // plssvm::svm_type
 
 #include "fmt/format.h"   // fmt::format
 #include "fmt/std.h"      // format std::vector<bool>::operator[] proxy type
@@ -312,17 +313,24 @@ inline void instantiate_template_file(const std::string &template_filename, cons
  * @tparam T the type of the labels
  * @return the correct label vector with respect to the input data template files (`[[nodiscard]]``)
  */
-template <typename T>
+template <typename T, plssvm::svm_type SVM = plssvm::svm_type::csvc>
 [[nodiscard]] inline std::vector<T> get_correct_data_file_labels() {
-    // get the distinct labels based on the current label type
-    const std::vector<T> labels = util::get_distinct_label<T>();
-    // for LABEL_PLACEHOLDER: [ 1, 1, 2, 3, 2, 4 ]
-    // if only two labels, e.g., [ -1, 1 ] are given, the output will look as follows: [ -1, -1, 1, 1, 1, 1 ]
-    // clang-format off
-    return std::vector<T>{ labels[std::min<std::size_t>(0, labels.size() - 1)], labels[std::min<std::size_t>(0, labels.size() - 1)],
-                           labels[std::min<std::size_t>(1, labels.size() - 1)], labels[std::min<std::size_t>(2, labels.size() - 1)],
-                           labels[std::min<std::size_t>(1, labels.size() - 1)], labels[std::min<std::size_t>(3, labels.size() - 1)] };
-    // clang-format on
+    if constexpr (SVM == plssvm::svm_type::csvc) {
+        // get the distinct labels based on the current label type
+        const std::vector<T> labels = util::get_distinct_label<T>();
+        // for LABEL_PLACEHOLDER: [ 1, 1, 2, 3, 2, 4 ]
+        // if only two labels, e.g., [ -1, 1 ] are given, the output will look as follows: [ -1, -1, 1, 1, 1, 1 ]
+        // clang-format off
+        return std::vector<T>{ labels[std::min<std::size_t>(0, labels.size() - 1)], labels[std::min<std::size_t>(0, labels.size() - 1)],
+                               labels[std::min<std::size_t>(1, labels.size() - 1)], labels[std::min<std::size_t>(2, labels.size() - 1)],
+                               labels[std::min<std::size_t>(1, labels.size() - 1)], labels[std::min<std::size_t>(3, labels.size() - 1)] };
+        // clang-format on
+    } else if constexpr (SVM == plssvm::svm_type::csvr) {
+        return std::vector<T>{ static_cast<T>(-1.5), static_cast<T>(1.5), static_cast<T>(0.0), static_cast<T>(2.0), static_cast<T>(2.5), static_cast<T>(-1.5) };
+    } else {
+        // shouldn't be reachable
+        plssvm::detail::always_false_v<T>;
+    }
 }
 
 /**
@@ -522,7 +530,7 @@ template <typename matrix_type>
  * @return the trivially solvable data set (`[[nodiscard]]`)
  */
 template <typename label_type>
-[[nodiscard]] inline plssvm::data_set<label_type> generate_trivially_solvable_data_set(const std::size_t num_data_points = std::size_t{ 20 }) {
+[[nodiscard]] inline plssvm::classification_data_set<label_type> generate_trivially_solvable_data_set(const std::size_t num_data_points = std::size_t{ 20 }) {
     const std::vector<label_type> different_labels = util::get_distinct_label<label_type>();
     const std::size_t num_labels = std::min(different_labels.size(), std::size_t{ 3 });  // at most 3 labels permitted in these tests
 
@@ -554,7 +562,7 @@ template <typename label_type>
         }
     }
 
-    return plssvm::data_set{ std::move(data), std::move(label) };
+    return plssvm::classification_data_set{ std::move(data), std::move(label) };
 }
 
 /**
