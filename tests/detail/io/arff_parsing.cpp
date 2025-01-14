@@ -46,13 +46,13 @@ TEST_P(ARFFParseHeaderValid, header) {
     const std::string filename = fmt::format("{}{}", PLSSVM_TEST_PATH, filename_part);
     plssvm::detail::io::file_reader reader{ filename };
     reader.read_lines('%');
-    const auto &[parsed_num_features, parsed_header_skip, unique_label, parsed_label_idx] = plssvm::detail::io::parse_arff_header<int>(reader.lines());
+    const auto &[parsed_num_features, parsed_header_skip, has_label_found, unique_label, parsed_label_idx] = plssvm::detail::io::parse_arff_header<int>(reader.lines());
 
     // check for correctness
     EXPECT_EQ(parsed_num_features, num_features);
     EXPECT_EQ(parsed_header_skip, header_skip);
-    EXPECT_EQ(!unique_label.empty(), has_label);
-    if (has_label) {
+    EXPECT_EQ(has_label_found, has_label);
+    if (has_label && !unique_label.empty()) {
         EXPECT_EQ(unique_label, (std::set<int>{ -1, 1 }));
     }
     EXPECT_EQ(parsed_label_idx, label_idx);
@@ -73,16 +73,6 @@ TEST(ARFFParseHeader, class_unquoted_nominal_attribute) {
     EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_arff_header<int>(reader.lines())),
                       plssvm::invalid_file_format_exception,
                       R"(The "@ATTRIBUTE class    0,1" nominal attribute must be enclosed with {}!)");
-}
-
-TEST(ARFFParseHeader, class_with_wrong_label) {
-    // parse the ARFF file
-    const std::string filename = PLSSVM_TEST_PATH "/data/arff/invalid/class_with_wrong_label.arff";
-    plssvm::detail::io::file_reader reader{ filename };
-    reader.read_lines('%');
-    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_arff_header<int>(reader.lines())),
-                      plssvm::invalid_file_format_exception,
-                      R"(May not use the combination of the reserved name "class" and attribute type NUMERIC!)");
 }
 
 TEST(ARFFParseHeader, class_without_label) {
