@@ -85,7 +85,7 @@ template <typename base_csvm_type, typename backend_csvm_type, typename... Args>
         if constexpr (std::is_constructible_v<backend_csvm_type, Args...>) {
             return std::make_unique<backend_csvm_type>(std::forward<Args>(args)...);
         } else {
-            throw unsupported_backend_exception{ fmt::format("No {} backend available!", csvm_to_backend_type_v<backend_csvm_type>) };
+            throw unsupported_backend_exception{ fmt::format("Provided invalid (named) arguments for the {} backend!", csvm_to_backend_type_v<backend_csvm_type>) };
         }
     } else {
         throw unsupported_backend_exception{ fmt::format("No {} backend available!", csvm_to_backend_type_v<backend_csvm_type>) };
