@@ -37,7 +37,7 @@
 #include <chrono>       // std::chrono::{time_point, steady_clock, duration_cast, milliseconds}
 #include <cstddef>      // std::size_t
 #include <limits>       // std::numeric_limits::lowest
-#include <memory>       // std::make_shared, std::dynamic_pointer_cast
+#include <memory>       // std::make_shared, std::dynamic_pointer_cast, std::addressof
 #include <optional>     // std::make_optional
 #include <tuple>        // std::tie
 #include <type_traits>  // std::is_same_v
@@ -60,6 +60,40 @@ class csvc : virtual public csvm {
     /// The type of the model returned by a call to the `fit` function and used in the `predict` and `score` functions.
     template <typename T>
     using model_type = ::plssvm::classification_model<T>;
+
+    // inherit C-SVM base class constructors
+    using ::plssvm::csvm::csvm;
+
+    /**
+     * @copydoc plssvm::csvm::csvm(const plssvm::csvm &)
+     */
+    csvc(const csvc &) = delete;
+    /**
+     * @copydoc plssvm::csvm::csvm(plssvm::csvm &&) noexcept
+     */
+    csvc(csvc &&) noexcept = default;
+    /**
+     * @copydoc plssvm::csvm::operator=(const plssvm::csvm &)
+     */
+    csvc &operator=(const csvc &) = delete;
+
+    /**
+     * @brief Correctly implement the move-assignment operator in presence of a virtual base class.
+     * @details Calls the base class move-assignment operator. Afterwards, moves the potential additional `csvr` members.
+     * @param[in,out] other the other C-SVM to move from
+     * @return `*this`
+     */
+    csvc &operator=(csvc &&other) noexcept {
+        if (this != std::addressof(other)) {
+            ::plssvm::csvm::operator=(std::move(other));
+        }
+        return *this;
+    }
+
+    /**
+     * @copydoc plssvm::csvm::~csvm() noexcept
+     */
+    ~csvc() noexcept = default;
 
     //*************************************************************************************************************************************//
     //                                                              fit model                                                              //
