@@ -136,6 +136,16 @@ set(PLSSVM_BASE_TEST_SOURCES
     ## is available this is also tested in the base library
     ${CMAKE_CURRENT_LIST_DIR}/backends/stdpar/implementation_types.cpp
     
+    ${CMAKE_CURRENT_LIST_DIR}/data_set/classification/constructors.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/data_set/classification/getter.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/data_set/classification/label_mapper.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/data_set/classification/save.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/data_set/classification/scaling.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/data_set/regression/constructors.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/data_set/regression/getter.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/data_set/regression/save.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/data_set/regression/scaling.cpp
+    
     ${CMAKE_CURRENT_LIST_DIR}/detail/cmd/data_set_variants.cpp
     ${CMAKE_CURRENT_LIST_DIR}/detail/cmd/parser_predict.cpp
     ${CMAKE_CURRENT_LIST_DIR}/detail/cmd/parser_scale.cpp
@@ -175,27 +185,17 @@ set(PLSSVM_BASE_TEST_SOURCES
     ${CMAKE_CURRENT_LIST_DIR}/version/version.cpp
     
     ${CMAKE_CURRENT_LIST_DIR}/backend_types.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/classification_model.cpp
     ${CMAKE_CURRENT_LIST_DIR}/classification_report.cpp
     ${CMAKE_CURRENT_LIST_DIR}/classification_types.cpp
     #    ${CMAKE_CURRENT_LIST_DIR}/csvm.cpp
     #    ${CMAKE_CURRENT_LIST_DIR}/csvm_factory.cpp
-    
-    ${CMAKE_CURRENT_LIST_DIR}/data_set/classification/constructors.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/data_set/classification/getter.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/data_set/classification/label_mapper.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/data_set/classification/save.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/data_set/classification/scaling.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/data_set/regression/constructors.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/data_set/regression/getter.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/data_set/regression/save.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/data_set/regression/scaling.cpp
     
     ${CMAKE_CURRENT_LIST_DIR}/file_format_types.cpp
     ${CMAKE_CURRENT_LIST_DIR}/gamma.cpp
     ${CMAKE_CURRENT_LIST_DIR}/kernel_function_types.cpp
     ${CMAKE_CURRENT_LIST_DIR}/kernel_functions.cpp
     ${CMAKE_CURRENT_LIST_DIR}/matrix.cpp
-    #    ${CMAKE_CURRENT_LIST_DIR}/model.cpp
     ${CMAKE_CURRENT_LIST_DIR}/parameter.cpp
     ${CMAKE_CURRENT_LIST_DIR}/shape.cpp
     ${CMAKE_CURRENT_LIST_DIR}/solver_types.cpp

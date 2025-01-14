@@ -5,10 +5,10 @@
  * @license This file is part of the PLSSVM project which is released under the MIT license.
  *          See the LICENSE.md file in the project root for full license information.
  *
- * @brief Tests for functions related to the model class representing a learned SVM model.
+ * @brief Tests for functions related to the classification model class representing a learned SVC model.
  */
 
-#include "plssvm/model.hpp"
+#include "plssvm/model/classification_model.hpp"
 
 #include "plssvm/classification_types.hpp"   // plssvm::classification_type, plssvm::calculate_number_of_classifiers
 #include "plssvm/constants.hpp"              // plssvm::real_type, plssvm::PADDING_SIZE
@@ -20,9 +20,10 @@
 
 #include "tests/custom_test_macros.hpp"  // EXPECT_FLOATING_POINT_MATRIX_EQ, EXPECT_FLOATING_POINT_VECTOR_EQ
 #include "tests/naming.hpp"              // naming::test_parameter_to_name
-#include "tests/types_to_test.hpp"       // util::{label_type_classification_type_gtest, test_parameter_type_at_t, test_parameter_value_at_v}
+#include "tests/types_to_test.hpp"       // util::{classification_label_type_classification_type_gtest, test_parameter_type_at_t, test_parameter_value_at_v}
 #include "tests/utility.hpp"             // util::{redirect_output, temporary_file, instantiate_template_file, get_num_classes, get_distinct_label, get_correct_model_file_labels}
 
+#include "fmt/format.h"   // fmt::format
 #include "gtest/gtest.h"  // TYPED_TEST, TYPED_TEST_SUITE, EXPECT_EQ, EXPECT_TRUE, EXPECT_DEATH, ASSERT_EQ, ASSERT_GT, FAIL,
                           // ::testing::{Test, StaticAssertTypeEq}
 
@@ -33,9 +34,9 @@
 #include <vector>       // std::vector
 
 template <typename T>
-class Model : public ::testing::Test,
-              private util::redirect_output<>,
-              protected util::temporary_file {
+class ClassificationModel : public ::testing::Test,
+                            private util::redirect_output<>,
+                            protected util::temporary_file {
   protected:
     using fixture_label_type = util::test_parameter_type_at_t<0, T>;
     constexpr static plssvm::classification_type fixture_classification = util::test_parameter_value_at_v<0, T>;
@@ -47,25 +48,25 @@ class Model : public ::testing::Test,
     }
 };
 
-TYPED_TEST_SUITE(Model, util::label_type_classification_type_gtest, naming::test_parameter_to_name);
+TYPED_TEST_SUITE(ClassificationModel, util::classification_label_type_classification_type_gtest, naming::test_parameter_to_name);
 
-TYPED_TEST(Model, typedefs) {
+TYPED_TEST(ClassificationModel, typedefs) {
     using label_type = typename TestFixture::fixture_label_type;
 
     // create model
-    const plssvm::model<label_type> model{ this->filename };
+    const plssvm::classification_model<label_type> model{ this->filename };
 
     // test internal typedefs
     ::testing::StaticAssertTypeEq<label_type, typename decltype(model)::label_type>();
     ::testing::StaticAssertTypeEq<std::size_t, typename decltype(model)::size_type>();
 }
 
-TYPED_TEST(Model, construct) {
+TYPED_TEST(ClassificationModel, construct) {
     using label_type = typename TestFixture::fixture_label_type;
     constexpr plssvm::classification_type classification = TestFixture::fixture_classification;
 
     // create model
-    const plssvm::model<label_type> model{ this->filename };
+    const plssvm::classification_model<label_type> model{ this->filename };
     const std::size_t num_classes_for_label_type = util::get_num_classes<label_type>();
 
     // test for correct construction
@@ -73,7 +74,8 @@ TYPED_TEST(Model, construct) {
     EXPECT_EQ(model.num_features(), 4);
     EXPECT_EQ(model.get_params(), plssvm::parameter{ plssvm::kernel_type = plssvm::kernel_function_type::linear });
     EXPECT_EQ(model.support_vectors().shape(), (plssvm::shape{ 6, 4 }));
-    EXPECT_EQ(model.labels().size(), 6);
+    EXPECT_TRUE(model.labels().has_value());
+    EXPECT_EQ(model.labels()->get().size(), 6);
     EXPECT_EQ(model.num_classes(), num_classes_for_label_type);
     EXPECT_EQ(model.classes(), util::get_distinct_label<label_type>());
     if constexpr (classification == plssvm::classification_type::oaa) {
@@ -91,41 +93,41 @@ TYPED_TEST(Model, construct) {
     EXPECT_FALSE(model.num_iters().has_value());
 }
 
-TYPED_TEST(Model, num_support_vectors) {
+TYPED_TEST(ClassificationModel, num_support_vectors) {
     using label_type = typename TestFixture::fixture_label_type;
 
     // create model
-    const plssvm::model<label_type> model{ this->filename };
+    const plssvm::classification_model<label_type> model{ this->filename };
 
     // test for the correct number of support vectors
     EXPECT_EQ(model.num_support_vectors(), 6);
 }
 
-TYPED_TEST(Model, num_features) {
+TYPED_TEST(ClassificationModel, num_features) {
     using label_type = typename TestFixture::fixture_label_type;
 
     // create model
-    const plssvm::model<label_type> model{ this->filename };
+    const plssvm::classification_model<label_type> model{ this->filename };
 
     // test for the correct number of features
     EXPECT_EQ(model.num_features(), 4);
 }
 
-TYPED_TEST(Model, get_params) {
+TYPED_TEST(ClassificationModel, get_params) {
     using label_type = typename TestFixture::fixture_label_type;
 
     // create model
-    const plssvm::model<label_type> model{ this->filename };
+    const plssvm::classification_model<label_type> model{ this->filename };
 
     // test for the correct number of features
     EXPECT_EQ(model.get_params(), plssvm::parameter{ plssvm::kernel_type = plssvm::kernel_function_type::linear });
 }
 
-TYPED_TEST(Model, support_vectors) {
+TYPED_TEST(ClassificationModel, support_vectors) {
     using label_type = typename TestFixture::fixture_label_type;
 
     // create model
-    const plssvm::model<label_type> model{ this->filename };
+    const plssvm::classification_model<label_type> model{ this->filename };
 
     // test for the correct support vectors
     const plssvm::soa_matrix<plssvm::real_type> support_vectors{ { { plssvm::real_type{ -1.1178275006 }, plssvm::real_type{ -2.9087188881 }, plssvm::real_type{ 0.66638344270 }, plssvm::real_type{ 1.0978832704 } },
@@ -138,42 +140,43 @@ TYPED_TEST(Model, support_vectors) {
     EXPECT_FLOATING_POINT_MATRIX_EQ(model.support_vectors(), support_vectors);
 }
 
-TYPED_TEST(Model, labels) {
+TYPED_TEST(ClassificationModel, labels) {
     using label_type = typename TestFixture::fixture_label_type;
 
     // create model
-    const plssvm::model<label_type> model{ this->filename };
+    const plssvm::classification_model<label_type> model{ this->filename };
 
     // check labels getter
-    EXPECT_EQ(model.labels(), util::get_correct_model_file_labels<label_type>());
+    EXPECT_TRUE(model.labels().has_value());
+    EXPECT_EQ(model.labels()->get(), util::get_correct_model_file_labels<label_type>());
 }
 
-TYPED_TEST(Model, num_classes) {
+TYPED_TEST(ClassificationModel, num_classes) {
     using label_type = typename TestFixture::fixture_label_type;
 
     // create model
-    const plssvm::model<label_type> model{ this->filename };
+    const plssvm::classification_model<label_type> model{ this->filename };
 
     // check num_different_labels getter
     EXPECT_EQ(model.num_classes(), util::get_num_classes<label_type>());
 }
 
-TYPED_TEST(Model, classes) {
+TYPED_TEST(ClassificationModel, classes) {
     using label_type = typename TestFixture::fixture_label_type;
 
     // create model
-    const plssvm::model<label_type> model{ this->filename };
+    const plssvm::classification_model<label_type> model{ this->filename };
 
     // check different_labels getter
     EXPECT_EQ(model.classes(), util::get_distinct_label<label_type>());
 }
 
-TYPED_TEST(Model, weights) {
+TYPED_TEST(ClassificationModel, weights) {
     using label_type = typename TestFixture::fixture_label_type;
     constexpr plssvm::classification_type classification = TestFixture::fixture_classification;
 
     // create model
-    const plssvm::model<label_type> model{ this->filename };
+    const plssvm::classification_model<label_type> model{ this->filename };
     const std::size_t num_classes_for_label_type = util::get_num_classes<label_type>();
 
     // test for the correct weights
@@ -253,12 +256,12 @@ TYPED_TEST(Model, weights) {
     }
 }
 
-TYPED_TEST(Model, rho) {
+TYPED_TEST(ClassificationModel, rho) {
     using label_type = typename TestFixture::fixture_label_type;
     constexpr plssvm::classification_type classification = TestFixture::fixture_classification;
 
     // create model
-    const plssvm::model<label_type> model{ this->filename };
+    const plssvm::classification_model<label_type> model{ this->filename };
     const std::size_t num_classes_for_label_type = util::get_num_classes<label_type>();
 
     // test for the correct rho (bias) value
@@ -303,42 +306,42 @@ TYPED_TEST(Model, rho) {
     }
 }
 
-TYPED_TEST(Model, get_classification_type) {
+TYPED_TEST(ClassificationModel, get_classification_type) {
     using label_type = typename TestFixture::fixture_label_type;
     constexpr plssvm::classification_type classification = TestFixture::fixture_classification;
 
     // create model
-    const plssvm::model<label_type> model{ this->filename };
+    const plssvm::classification_model<label_type> model{ this->filename };
 
     // check different_labels getter
     EXPECT_EQ(model.get_classification_type(), classification);
 }
 
-TYPED_TEST(Model, num_iters) {
+TYPED_TEST(ClassificationModel, num_iters) {
     using label_type = typename TestFixture::fixture_label_type;
 
     // create model
-    const plssvm::model<label_type> model{ this->filename };
+    const plssvm::classification_model<label_type> model{ this->filename };
 
     // check different_labels getter
     EXPECT_FALSE(model.num_iters().has_value());
 }
 
 template <typename T>
-class ModelSave : public ::testing::Test,
+class ClassificationModelSave : public ::testing::Test,
                   private util::redirect_output<> {
   protected:
     using fixture_label_type = util::test_parameter_type_at_t<0, T>;
     constexpr static plssvm::classification_type fixture_classification = util::test_parameter_value_at_v<0, T>;
 };
 
-TYPED_TEST_SUITE(ModelSave, util::label_type_classification_type_gtest, naming::test_parameter_to_name);
+TYPED_TEST_SUITE(ClassificationModelSave, util::classification_label_type_classification_type_gtest, naming::test_parameter_to_name);
 
-TYPED_TEST(ModelSave, save) {
+TYPED_TEST(ClassificationModelSave, save) {
     using label_type = typename TestFixture::fixture_label_type;
     constexpr plssvm::classification_type classification = TestFixture::fixture_classification;
 
-    for (const plssvm::kernel_function_type kernel_function : { plssvm::kernel_function_type::linear, plssvm::kernel_function_type::polynomial, plssvm::kernel_function_type::rbf }) {
+    for (const plssvm::kernel_function_type kernel_function : util::kernel_functions_to_test) {
         const std::size_t num_classes = util::get_num_classes<label_type>();
 
         const util::temporary_file model_file;
@@ -346,7 +349,7 @@ TYPED_TEST(ModelSave, save) {
         util::instantiate_template_file<label_type>(template_file_name, model_file.filename, kernel_function);
 
         // create a model using an existing LIBSVM model file
-        const plssvm::model<label_type> model{ model_file.filename };
+        const plssvm::classification_model<label_type> model{ model_file.filename };
 
         // write model to file
         model.save(model_file.filename);
