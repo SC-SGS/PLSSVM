@@ -121,7 +121,7 @@ regression_model<U>::regression_model(const std::string &filename) {
     // create data set
     const verbosity_level old_verbosity = verbosity;
     verbosity = verbosity_level::quiet;
-    // TODO: check whether whether labels can and should be ommitted for the regression task!
+    // TODO: check whether whether labels can and should be omitted for the regression task!
     data_ = std::make_shared<regression_data_set<label_type>>(std::move(support_vectors));
     verbosity = old_verbosity;
 
