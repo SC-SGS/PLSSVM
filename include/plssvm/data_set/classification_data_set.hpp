@@ -67,9 +67,6 @@ class classification_data_set : public data_set<U> {
     using base_data_set::labels_ptr_;
     using base_data_set::y_ptr_;
 
-    // forward declare the label_mapper class
-    class label_mapper;
-
   public:
     /// The type of the labels: any arithmetic type or `std::string`.
     using typename base_data_set::label_type;
@@ -81,6 +78,9 @@ class classification_data_set : public data_set<U> {
     using base_data_set::save;
     /// The C-SVM type used with this data set.
     using svm_fit_type = ::plssvm::csvc;
+
+    // forward declare the label_mapper class
+    class label_mapper;
 
     /**
      * @copydoc plssvm::data_set::data_set(const std::string &)
