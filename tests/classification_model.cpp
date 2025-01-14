@@ -74,7 +74,7 @@ TYPED_TEST(ClassificationModel, construct) {
     EXPECT_EQ(model.num_features(), 4);
     EXPECT_EQ(model.get_params(), plssvm::parameter{ plssvm::kernel_type = plssvm::kernel_function_type::linear });
     EXPECT_EQ(model.support_vectors().shape(), (plssvm::shape{ 6, 4 }));
-    EXPECT_TRUE(model.labels().has_value());
+    ASSERT_TRUE(model.labels().has_value());
     EXPECT_EQ(model.labels()->get().size(), 6);
     EXPECT_EQ(model.num_classes(), num_classes_for_label_type);
     EXPECT_EQ(model.classes(), util::get_distinct_label<label_type>());
@@ -147,7 +147,7 @@ TYPED_TEST(ClassificationModel, labels) {
     const plssvm::classification_model<label_type> model{ this->filename };
 
     // check labels getter
-    EXPECT_TRUE(model.labels().has_value());
+    ASSERT_TRUE(model.labels().has_value());
     EXPECT_EQ(model.labels()->get(), util::get_correct_model_file_labels<label_type>());
 }
 
