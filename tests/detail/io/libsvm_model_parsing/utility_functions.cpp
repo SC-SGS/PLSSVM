@@ -8,7 +8,7 @@
  * @brief Tests for the utility functions used for parsing a LIBSVM model file.
  */
 
-#include "plssvm/detail/io/libsvm_model_parsing.hpp"
+#include "plssvm/detail/io/classification_libsvm_model_parsing.hpp"
 
 #include "tests/naming.hpp"  // naming::{pretty_print_x_vs_y, pretty_print_calc_alpha_idx}
 
