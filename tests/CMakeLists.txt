@@ -181,6 +181,10 @@ set(PLSSVM_BASE_TEST_SOURCES
     ${CMAKE_CURRENT_LIST_DIR}/exceptions/exceptions.cpp
     ${CMAKE_CURRENT_LIST_DIR}/exceptions/source_location.cpp
     
+    ${CMAKE_CURRENT_LIST_DIR}/svm/csvm.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/svm/csvc.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/svm/csvr.cpp
+    
     ${CMAKE_CURRENT_LIST_DIR}/version/git_metadata/git_metadata.cpp
     ${CMAKE_CURRENT_LIST_DIR}/version/version.cpp
     
@@ -189,7 +193,6 @@ set(PLSSVM_BASE_TEST_SOURCES
     ${CMAKE_CURRENT_LIST_DIR}/classification_report.cpp
     ${CMAKE_CURRENT_LIST_DIR}/classification_types.cpp
     ${CMAKE_CURRENT_LIST_DIR}/csvc_factory.cpp
-    #    ${CMAKE_CURRENT_LIST_DIR}/csvm.cpp
     ${CMAKE_CURRENT_LIST_DIR}/csvr_factory.cpp
     
     ${CMAKE_CURRENT_LIST_DIR}/file_format_types.cpp

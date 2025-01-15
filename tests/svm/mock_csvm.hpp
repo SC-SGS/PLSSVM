@@ -14,12 +14,12 @@
 #pragma once
 
 #include "plssvm/constants.hpp"             // plssvm::real_type
-#include "plssvm/csvm.hpp"                  // plssvm::csvm
 #include "plssvm/detail/memory_size.hpp"    // plssvm::detail::memory_size, plssvm::detail::literals
 #include "plssvm/detail/move_only_any.hpp"  // plssvm::detail::move_only_any
 #include "plssvm/matrix.hpp"                // plssvm::aos_matrix
 #include "plssvm/parameter.hpp"             // plssvm::parameter
 #include "plssvm/solver_types.hpp"          // plssvm::solver_type
+#include "plssvm/svm/csvm.hpp"              // plssvm::csvm
 
 #include "gmock/gmock.h"  // MOCK_METHOD, ON_CALL, ::testing::Return
 
@@ -30,7 +30,7 @@
 /**
  * @brief GTest mock class for the base CSVM class.
  */
-class mock_csvm final : public plssvm::csvm {
+class mock_csvm : virtual public plssvm::csvm {
   public:
     template <typename... Args>
     explicit mock_csvm(Args &&...args) :
