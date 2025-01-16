@@ -8,7 +8,7 @@
  * @brief Tests for the utility functions used for parsing a LIBSVM model file.
  */
 
-#include "plssvm/detail/io/classification_libsvm_model_parsing.hpp"
+#include "plssvm/detail/io/classification_libsvm_model_parsing.hpp"  // functions to test
 
 #include "tests/naming.hpp"  // naming::{pretty_print_x_vs_y, pretty_print_calc_alpha_idx}
 
@@ -20,9 +20,9 @@
 #include <tuple>    // std::tuple, std::make_tuple, std::ignore
 #include <vector>   // std::vector
 
-class LIBSVMModelUtilityXvsY : public ::testing::TestWithParam<std::tuple<std::size_t, std::size_t, std::size_t, std::size_t>> { };
+class LIBSVMClassificationModelUtilityXvsY : public ::testing::TestWithParam<std::tuple<std::size_t, std::size_t, std::size_t, std::size_t>> { };
 
-TEST_P(LIBSVMModelUtilityXvsY, oao_x_vs_y_to_idx) {
+TEST_P(LIBSVMClassificationModelUtilityXvsY, oao_x_vs_y_to_idx) {
     const auto [x, y, num_classes, expected_idx] = GetParam();
 
     EXPECT_EQ(plssvm::detail::io::oao_x_vs_y_to_idx(x, y, num_classes), expected_idx);
@@ -30,30 +30,30 @@ TEST_P(LIBSVMModelUtilityXvsY, oao_x_vs_y_to_idx) {
 }
 
 // clang-format off
-INSTANTIATE_TEST_SUITE_P(LIBSVMModelUtilityXvsY, LIBSVMModelUtilityXvsY, ::testing::Values(
+INSTANTIATE_TEST_SUITE_P(LIBSVMClassificationModelUtilityXvsY, LIBSVMClassificationModelUtilityXvsY, ::testing::Values(
         std::make_tuple(0, 1, 4, 0), std::make_tuple(0, 2, 4, 1), std::make_tuple(0, 3, 4, 2), std::make_tuple(1, 2, 4, 3),
         std::make_tuple(1, 3, 4, 4), std::make_tuple(2, 3, 4, 5), std::make_tuple(0, 1, 2, 0), std::make_tuple(1, 0, 2, 0),
         std::make_tuple(1, 2, 3, 2), std::make_tuple(2, 1, 3, 2)),
-        naming::pretty_print_x_vs_y<LIBSVMModelUtilityXvsY>);
+        naming::pretty_print_x_vs_y<LIBSVMClassificationModelUtilityXvsY>);
 // clang-format on
 
-TEST(LIBSVMModelUtilityXvsYDeathTest, x_equal_to_y) {
+TEST(LIBSVMClassificationModelUtilityXvsYDeathTest, x_equal_to_y) {
     EXPECT_DEATH(std::ignore = plssvm::detail::io::oao_x_vs_y_to_idx(0, 0, 2), "Can't compute the index for the binary classification of 0vs0!");
 }
 
-TEST(LIBSVMModelUtilityXvsYDeathTest, too_few_classes) {
+TEST(LIBSVMClassificationModelUtilityXvsYDeathTest, too_few_classes) {
     EXPECT_DEATH(std::ignore = plssvm::detail::io::oao_x_vs_y_to_idx(0, 1, 1), "There must be at least two classes!");
 }
 
-TEST(LIBSVMModelUtilityXvsYDeathTest, x_greater_or_equal_than_num_classes) {
+TEST(LIBSVMClassificationModelUtilityXvsYDeathTest, x_greater_or_equal_than_num_classes) {
     EXPECT_DEATH(std::ignore = plssvm::detail::io::oao_x_vs_y_to_idx(3, 0, 2), ::testing::HasSubstr("The class x (3) must be smaller than the total number of classes (2)!"));
 }
 
-TEST(LIBSVMModelUtilityXvsYDeathTest, y_greater_or_equal_than_num_classes) {
+TEST(LIBSVMClassificationModelUtilityXvsYDeathTest, y_greater_or_equal_than_num_classes) {
     EXPECT_DEATH(std::ignore = plssvm::detail::io::oao_x_vs_y_to_idx(0, 3, 3), ::testing::HasSubstr("The class y (3) must be smaller than the total number of classes (3)!"));
 }
 
-class LIBSVMModelUtilityAlphaIdx : public ::testing::TestWithParam<std::tuple<std::size_t, std::size_t, std::size_t, std::size_t>> {
+class LIBSVMClassificationModelUtilityAlphaIdx : public ::testing::TestWithParam<std::tuple<std::size_t, std::size_t, std::size_t, std::size_t>> {
   protected:
     void SetUp() override {
         index_sets_ = std::vector<std::vector<std::size_t>>{
@@ -75,7 +75,7 @@ class LIBSVMModelUtilityAlphaIdx : public ::testing::TestWithParam<std::tuple<st
     std::vector<std::vector<std::size_t>> index_sets_{};
 };
 
-TEST_P(LIBSVMModelUtilityAlphaIdx, calculate_alpha_idx) {
+TEST_P(LIBSVMClassificationModelUtilityAlphaIdx, calculate_alpha_idx) {
     const auto [i, j, idx_to_find, expected_global_idx] = GetParam();
 
     EXPECT_EQ(plssvm::detail::io::calculate_alpha_idx(i, j, this->get_index_sets(), idx_to_find), expected_global_idx);
@@ -83,44 +83,44 @@ TEST_P(LIBSVMModelUtilityAlphaIdx, calculate_alpha_idx) {
 }
 
 // clang-format off
-INSTANTIATE_TEST_SUITE_P(LIBSVMModelUtilityAlphaIdx, LIBSVMModelUtilityAlphaIdx, ::testing::Values(
+INSTANTIATE_TEST_SUITE_P(LIBSVMClassificationModelUtilityAlphaIdx, LIBSVMClassificationModelUtilityAlphaIdx, ::testing::Values(
         std::make_tuple(0, 2, 4, 2), std::make_tuple(0, 2, 10, 5), std::make_tuple(0, 1, 1, 1), std::make_tuple(0, 1, 0, 0),
         std::make_tuple(0, 3, 7, 3), std::make_tuple(0, 3, 9, 4), std::make_tuple(3, 2, 8, 2), std::make_tuple(3, 2, 9, 3),
         std::make_tuple(1, 2, 3, 1), std::make_tuple(2, 1, 3, 1)),
-        naming::pretty_print_calc_alpha_idx<LIBSVMModelUtilityAlphaIdx>);
+        naming::pretty_print_calc_alpha_idx<LIBSVMClassificationModelUtilityAlphaIdx>);
 // clang-format on
 
-TEST(LIBSVMModelUtilityAlphaIdxDeathTest, i_equal_to_j) {
+TEST(LIBSVMClassificationModelUtilityAlphaIdxDeathTest, i_equal_to_j) {
     const std::vector<std::vector<std::size_t>> index_sets{ { 0, 1 }, { 2, 3 } };
     EXPECT_DEATH(std::ignore = plssvm::detail::io::calculate_alpha_idx(0, 0, index_sets, 0), "Can't compute the index for 0 == 0!");
 }
 
-TEST(LIBSVMModelUtilityAlphaIdxDeathTest, too_few_index_sets) {
+TEST(LIBSVMClassificationModelUtilityAlphaIdxDeathTest, too_few_index_sets) {
     const std::vector<std::vector<std::size_t>> index_sets{ { 0, 1 } };
     EXPECT_DEATH(std::ignore = plssvm::detail::io::calculate_alpha_idx(0, 1, index_sets, 0), "At least two index sets must be provided!");
 }
 
-TEST(LIBSVMModelUtilityAlphaIdxDeathTest, i_greater_or_equal_than_num_indices) {
+TEST(LIBSVMClassificationModelUtilityAlphaIdxDeathTest, i_greater_or_equal_than_num_indices) {
     const std::vector<std::vector<std::size_t>> index_sets{ { 0, 1 }, { 2, 3 } };
     EXPECT_DEATH(std::ignore = plssvm::detail::io::calculate_alpha_idx(3, 0, index_sets, 0), ::testing::HasSubstr("The index i (3) must be smaller than the total number of indices (2)!"));
 }
 
-TEST(LIBSVMModelUtilityAlphaIdxDeathTest, j_greater_or_equal_than_num_indices) {
+TEST(LIBSVMClassificationModelUtilityAlphaIdxDeathTest, j_greater_or_equal_than_num_indices) {
     const std::vector<std::vector<std::size_t>> index_sets{ { 0, 1 }, { 2, 3 } };
     EXPECT_DEATH(std::ignore = plssvm::detail::io::calculate_alpha_idx(0, 2, index_sets, 0), ::testing::HasSubstr("The index j (2) must be smaller than the total number of indices (2)!"));
 }
 
-TEST(LIBSVMModelUtilityAlphaIdxDeathTest, index_sets_not_sorted) {
+TEST(LIBSVMClassificationModelUtilityAlphaIdxDeathTest, index_sets_not_sorted) {
     const std::vector<std::vector<std::size_t>> index_sets{ { 0, 2, 1 }, { 3, 5, 4 } };
     EXPECT_DEATH(std::ignore = plssvm::detail::io::calculate_alpha_idx(0, 1, index_sets, 0), "The index sets must be sorted in ascending order!");
 }
 
-TEST(LIBSVMModelUtilityAlphaIdxDeathTest, indices_in_one_index_set_not_unique) {
+TEST(LIBSVMClassificationModelUtilityAlphaIdxDeathTest, indices_in_one_index_set_not_unique) {
     const std::vector<std::vector<std::size_t>> index_sets{ { 0, 0 }, { 2, 3 } };
     EXPECT_DEATH(std::ignore = plssvm::detail::io::calculate_alpha_idx(0, 1, index_sets, 1), "All indices in one index set must be unique!");
 }
 
-TEST(LIBSVMModelUtilityAlphaIdxDeathTest, index_sets_not_disjoint) {
+TEST(LIBSVMClassificationModelUtilityAlphaIdxDeathTest, index_sets_not_disjoint) {
     const std::vector<std::vector<std::size_t>> index_sets{ { 0, 1 }, { 1, 3 } };
     EXPECT_DEATH(std::ignore = plssvm::detail::io::calculate_alpha_idx(0, 1, index_sets, 1), "The content of both index sets must be disjoint!");
 }

@@ -5,23 +5,23 @@
  * @license This file is part of the PLSSVM project which is released under the MIT license.
  *          See the LICENSE.md file in the project root for full license information.
  *
- * @brief Tests for parsing an invalid LIBSVM model file header.
+ * @brief Tests for parsing an invalid LIBSVM classification model file header.
  */
 
-#include "plssvm/classification_types.hpp"   // plssvm::classification_type
-#include "plssvm/constants.hpp"              // plssvm::real_type
-#include "plssvm/detail/io/file_reader.hpp"  // plssvm::detail::io::file_reader
-#include "plssvm/detail/io/libsvm_model_parsing.hpp"
-#include "plssvm/kernel_function_types.hpp"  // plssvm::kernel_function_type
+#include "plssvm/classification_types.hpp"                           // plssvm::classification_type
+#include "plssvm/constants.hpp"                                      // plssvm::real_type
+#include "plssvm/detail/io/classification_libsvm_model_parsing.hpp"  // functions to test
+#include "plssvm/detail/io/file_reader.hpp"                          // plssvm::detail::io::file_reader
+#include "plssvm/kernel_function_types.hpp"                          // plssvm::kernel_function_type
 
 #include "tests/custom_test_macros.hpp"  // EXPECT_FLOATING_POINT_VECTOR_EQ, EXPECT_FLOATING_POINT_EQ
 #include "tests/naming.hpp"              // naming::parameter_definition_to_name
-#include "tests/types_to_test.hpp"       // util::label_type_classification_type_gtest
+#include "tests/types_to_test.hpp"       // util::classification_label_type_kernel_function_and_classification_type_gtest
 #include "tests/utility.hpp"             // util::{temporary_file, get_num_classes, instantiate_template_file, get_correct_model_file_labels,
                                          // get_distinct_label, get_correct_model_file_num_sv_per_class}
 
 #include "fmt/format.h"   // fmt::format
-#include "gtest/gtest.h"  // TYPED_TEST, TYPED_TEST_SUITE, EXPECT_EQ, EXPECT_TRUE, EXPECT_FALSE, ASSERT_EQ, FAIL, FAIL, ::testing::Test
+#include "gtest/gtest.h"  // TYPED_TEST, TYPED_TEST_SUITE, EXPECT_EQ, ASSERT_EQ, FAIL, ::testing::Test
 
 #include <cstddef>  // std::size_t
 #include <string>   // std::string
@@ -29,7 +29,7 @@
 #include <vector>   // std::vector
 
 template <typename T>
-class LIBSVMModelHeaderParseValid : public ::testing::Test {
+class LIBSVMClassificationModelHeaderParseValid : public ::testing::Test {
   protected:
     using fixture_label_type = util::test_parameter_type_at_t<0, T>;
     constexpr static plssvm::kernel_function_type fixture_kernel = util::test_parameter_value_at_v<0, T>;
@@ -80,9 +80,9 @@ class LIBSVMModelHeaderParseValid : public ::testing::Test {
     }
 };
 
-TYPED_TEST_SUITE(LIBSVMModelHeaderParseValid, util::label_type_kernel_function_and_classification_type_gtest, naming::test_parameter_to_name);
+TYPED_TEST_SUITE(LIBSVMClassificationModelHeaderParseValid, util::classification_label_type_kernel_function_and_classification_type_gtest, naming::test_parameter_to_name);
 
-TYPED_TEST(LIBSVMModelHeaderParseValid, read) {
+TYPED_TEST(LIBSVMClassificationModelHeaderParseValid, read) {
     using label_type = typename TestFixture::fixture_label_type;
     constexpr plssvm::kernel_function_type kernel = TestFixture::fixture_kernel;
     constexpr plssvm::classification_type classification = TestFixture::fixture_classification;
@@ -96,7 +96,7 @@ TYPED_TEST(LIBSVMModelHeaderParseValid, read) {
     // parse the LIBSVM model file header
     plssvm::detail::io::file_reader reader{ template_file.filename };
     reader.read_lines('#');
-    const auto &[params, rho, label, different_classes, num_sv_per_class, num_header_lines] = plssvm::detail::io::parse_libsvm_model_header<label_type>(reader.lines());
+    const auto &[params, rho, label, different_classes, num_sv_per_class, num_header_lines] = plssvm::detail::io::parse_libsvm_model_header_classification<label_type>(reader.lines());
 
     // check for correctness
 

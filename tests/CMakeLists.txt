@@ -158,6 +158,14 @@ set(PLSSVM_BASE_TEST_SOURCES
     #    ${CMAKE_CURRENT_LIST_DIR}/detail/io/libsvm_model_parsing/header_parse_invalid.cpp
     #    ${CMAKE_CURRENT_LIST_DIR}/detail/io/libsvm_model_parsing/header_write.cpp
     ${CMAKE_CURRENT_LIST_DIR}/detail/io/libsvm_model_parsing/utility_functions.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/detail/io/classification_libsvm_model_parsing/data_parse_invalid.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/detail/io/classification_libsvm_model_parsing/data_parse_valid.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/detail/io/classification_libsvm_model_parsing/data_write.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/detail/io/classification_libsvm_model_parsing/header_parse_invalid.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/detail/io/classification_libsvm_model_parsing/header_parse_valid.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/detail/io/classification_libsvm_model_parsing/header_write.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/detail/io/classification_libsvm_model_parsing/utility_functions.cpp
+    
     ${CMAKE_CURRENT_LIST_DIR}/detail/io/arff_parsing.cpp
     ${CMAKE_CURRENT_LIST_DIR}/detail/io/file_reader.cpp
     ${CMAKE_CURRENT_LIST_DIR}/detail/io/libsvm_parsing.cpp

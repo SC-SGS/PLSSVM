@@ -5,19 +5,19 @@
  * @license This file is part of the PLSSVM project which is released under the MIT license.
  *          See the LICENSE.md file in the project root for full license information.
  *
- * @brief Tests for parsing a valid LIBSVM model file data section.
+ * @brief Tests for parsing a valid LIBSVM classification model file data section.
  */
 
-#include "plssvm/classification_types.hpp"            // plssvm::classification_type
-#include "plssvm/constants.hpp"                       // plssvm::real_type, plssvm::PADDING_SIZE, plssvm::PADDING_SIZE
-#include "plssvm/detail/io/file_reader.hpp"           // plssvm::detail::io::file_reader
-#include "plssvm/detail/io/libsvm_model_parsing.hpp"  // functions to test
-#include "plssvm/matrix.hpp"                          // plssvm::aos_matrix
-#include "plssvm/shape.hpp"                           // plssvm::shape
+#include "plssvm/classification_types.hpp"                           // plssvm::classification_type
+#include "plssvm/constants.hpp"                                      // plssvm::real_type, plssvm::PADDING_SIZE, plssvm::PADDING_SIZE
+#include "plssvm/detail/io/classification_libsvm_model_parsing.hpp"  // functions to test
+#include "plssvm/detail/io/file_reader.hpp"                          // plssvm::detail::io::file_reader
+#include "plssvm/matrix.hpp"                                         // plssvm::aos_matrix
+#include "plssvm/shape.hpp"                                          // plssvm::shape
 
 #include "tests/custom_test_macros.hpp"  // EXPECT_FLOATING_POINT_MATRIX_NEAR
 #include "tests/naming.hpp"              // naming::parameter_definition_to_name
-#include "tests/types_to_test.hpp"       // util::label_type_classification_type_gtest
+#include "tests/types_to_test.hpp"       // util::classification_label_type_classification_type_gtest
 #include "tests/utility.hpp"             // util::{temporary_file, get_correct_model_file_labels, get_distinct_label, generate_specific_matrix}
 
 #include "fmt/format.h"   // fmt::format
@@ -30,8 +30,8 @@
 #include <vector>   // std::vector
 
 template <typename T>
-class LIBSVMModelDataParseValid : public ::testing::Test,
-                                  protected util::temporary_file {
+class LIBSVMClassificationModelDataParseValid : public ::testing::Test,
+                                                protected util::temporary_file {
   protected:
     using fixture_label_type = util::test_parameter_type_at_t<0, T>;
     constexpr static plssvm::classification_type fixture_classification = util::test_parameter_value_at_v<0, T>;
@@ -81,9 +81,9 @@ class LIBSVMModelDataParseValid : public ::testing::Test,
     };
 };
 
-TYPED_TEST_SUITE(LIBSVMModelDataParseValid, util::label_type_classification_type_gtest, naming::test_parameter_to_name);
+TYPED_TEST_SUITE(LIBSVMClassificationModelDataParseValid, util::classification_label_type_classification_type_gtest, naming::test_parameter_to_name);
 
-TYPED_TEST(LIBSVMModelDataParseValid, read) {
+TYPED_TEST(LIBSVMClassificationModelDataParseValid, read) {
     using label_type = typename TestFixture::fixture_label_type;
     constexpr plssvm::classification_type expected_classification = TestFixture::fixture_classification;
 
@@ -93,7 +93,7 @@ TYPED_TEST(LIBSVMModelDataParseValid, read) {
     // skip the first 8 lines, i.e., the model file header using the linear kernel function
     const std::size_t num_classes_for_label_type = util::get_num_classes<label_type>();
     const std::vector<std::size_t> num_sv_per_class = util::get_correct_model_file_num_sv_per_class<label_type>();
-    const auto [data, alpha, classification] = plssvm::detail::io::parse_libsvm_model_data(reader, num_sv_per_class, 8);
+    const auto [data, alpha, classification] = plssvm::detail::io::parse_libsvm_model_data_classification(reader, num_sv_per_class, 8);
 
     // check for correct sizes
     ASSERT_EQ(data.num_rows(), 6);
