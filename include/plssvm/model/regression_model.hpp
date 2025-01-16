@@ -108,7 +108,7 @@ regression_model<U>::regression_model(const std::string &filename) {
 
     // parse the libsvm model header
     std::size_t num_header_lines{};
-    std::tie(params_, *rho_ptr_, num_header_lines) = detail::io::parse_libsvm_model_header_regression<label_type>(reader.lines());
+    std::tie(params_, *rho_ptr_, num_header_lines) = detail::io::parse_libsvm_model_header_regression(reader.lines());
 
     // create empty support vectors and alpha vector
     soa_matrix<real_type> support_vectors{};

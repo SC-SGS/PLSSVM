@@ -58,7 +58,6 @@ namespace plssvm::detail::io {
  * total_sv 8
  * SV
  * @endcode
- * @tparam label_type the type of the labels (any arithmetic type, except bool, or std::string)
  * @param[in] lines the LIBSVM SVR model file header to parse
  * @throws plssvm::invalid_file_format_exception if an invalid 'svm_type' has been provided, i.e., 'svm_type' is not 'c_svr'
  * @throws plssvm::invalid_file_format_exception if an invalid 'kernel_type has been provided
@@ -74,7 +73,6 @@ namespace plssvm::detail::io {
  * @attention The PLSSVM model file is currently not compatible with LIBSVM due to other "svm_type" entries.
  * @return [the SVM parameter; the value of rho; the number of header lines] (`[[nodiscard]]`)
  */
-template <typename label_type>
 [[nodiscard]] inline std::tuple<plssvm::parameter, std::vector<real_type>, std::size_t> parse_libsvm_model_header_regression(const std::vector<std::string_view> &lines) {
     // data to read
     plssvm::parameter params{};
