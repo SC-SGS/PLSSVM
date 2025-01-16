@@ -17,7 +17,7 @@
 #include "plssvm/data_set/classification_data_set.hpp"  // plssvm::classification_data_set
 #include "plssvm/detail/arithmetic_type_name.hpp"       // plssvm::detail::arithmetic_type_name_v
 #include "plssvm/detail/string_utility.hpp"             // plssvm::detail::replace_all
-#include "plssvm/detail/type_traits.hpp"                // plssvm::detail::always_false_v
+#include "plssvm/detail/type_traits.hpp"                // PLSSVM_REQUIRES, plssvm::detail::always_false_v
 #include "plssvm/kernel_function_types.hpp"             // plssvm::kernel_function_type
 #include "plssvm/matrix.hpp"                            // plssvm::layout_type, plssvm::matrix
 #include "plssvm/parameter.hpp"                         // plssvm::parameter
@@ -379,21 +379,59 @@ template <typename T>
 
 /**
  * @brief Generate a vector of @p size filled with random floating point values in the @p range.
- * @tparam real_type the type of the elements in the vector (must be a floating point type)
+ * @tparam T the type of the elements in the vector (must be a floating point type)
  * @param[in] size the size of the vector
  * @param[in] range a pair containing the lower and upper bound of the random values in the vector
  * @return the randomly generated vector (`[[nodiscard]]`)
  */
-template <typename real_type>
-[[nodiscard]] inline std::vector<real_type> generate_random_vector(const std::size_t size, const std::pair<real_type, real_type> range = { real_type{ -1.0 }, real_type{ 1.0 } }) {
-    static_assert(std::is_floating_point_v<real_type>, "Can only meaningfully use a uniform_real_distribution with a floating point type!");
-
-    std::vector<real_type> vec(size);
+template <typename T, PLSSVM_REQUIRES(std::is_floating_point_v<T>)>
+[[nodiscard]] inline std::vector<T> generate_random_vector(const std::size_t size, const std::pair<T, T> range = { T{ -1.0 }, T{ 1.0 } }) {
+    std::vector<T> vec(size);
 
     // fill vectors with random values
     static std::random_device device;
     static std::mt19937 gen(device());
-    std::uniform_real_distribution<real_type> dist(range.first, range.second);
+    std::uniform_real_distribution<T> dist(range.first, range.second);
+    std::generate(vec.begin(), vec.end(), [&]() { return dist(gen); });
+
+    return vec;
+}
+
+/**
+ * @brief Generate a vector of @p size filled with random unsigned integer values in the @p range.
+ * @tparam T the type of the elements in the vector (must be an unsigned integer type)
+ * @param[in] size the size of the vector
+ * @param[in] range a pair containing the lower and upper bound of the random values in the vector
+ * @return the randomly generated vector (`[[nodiscard]]`)
+ */
+template <typename T, PLSSVM_REQUIRES(std::is_integral_v<T> &&std::is_unsigned_v<T>)>
+[[nodiscard]] inline std::vector<T> generate_random_vector(const std::size_t size, const std::pair<T, T> range = { T{ 0 }, T{ 1 } }) {
+    std::vector<T> vec(size);
+
+    // fill vectors with random values
+    static std::random_device device;
+    static std::mt19937 gen(device());
+    std::uniform_int_distribution<T> dist(range.first, range.second);
+    std::generate(vec.begin(), vec.end(), [&]() { return dist(gen); });
+
+    return vec;
+}
+
+/**
+ * @brief Generate a vector of @p size filled with random signed integer values in the @p range.
+ * @tparam T the type of the elements in the vector (must be an signed integer type)
+ * @param[in] size the size of the vector
+ * @param[in] range a pair containing the lower and upper bound of the random values in the vector
+ * @return the randomly generated vector (`[[nodiscard]]`)
+ */
+template <typename T, PLSSVM_REQUIRES(std::is_integral_v<T> &&std::is_signed_v<T>)>
+[[nodiscard]] inline std::vector<T> generate_random_vector(const std::size_t size, const std::pair<T, T> range = { T{ -1 }, T{ 1 } }) {
+    std::vector<T> vec(size);
+
+    // fill vectors with random values
+    static std::random_device device;
+    static std::mt19937 gen(device());
+    std::uniform_int_distribution<T> dist(range.first, range.second);
     std::generate(vec.begin(), vec.end(), [&]() { return dist(gen); });
 
     return vec;

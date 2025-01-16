@@ -560,6 +560,7 @@ using classification_label_type_kernel_function_and_classification_type_gtest = 
 using regression_label_type_gtest = combine_test_parameters_gtest_t<regression_label_type_list>;
 using regression_label_type_layout_type_gtest = combine_test_parameters_gtest_t<regression_label_type_list, layout_type_list>;
 using regression_label_type_solver_and_kernel_function_type_gtest = combine_test_parameters_gtest_t<regression_label_type_list, solver_and_kernel_function_type_list>;
+using regression_label_type_kernel_function_type_gtest = combine_test_parameters_gtest_t<regression_label_type_list, kernel_function_type_list>;
 
 }  // namespace util
 
