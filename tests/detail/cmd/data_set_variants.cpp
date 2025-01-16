@@ -47,9 +47,9 @@ TEST_P(DataSetFactory, data_set_factory_predict) {
     switch (svm) {
         case plssvm::svm_type::csvc:
             if (strings_as_labels) {
-                util::instantiate_template_file<std::string>(PLSSVM_TEST_PATH "/data/libsvm/6x4_TEMPLATE.libsvm", this->filename);
+                util::instantiate_template_file<std::string>(PLSSVM_TEST_PATH "/data/libsvm/classification/6x4_TEMPLATE.libsvm", this->filename);
             } else {
-                util::instantiate_template_file<int>(PLSSVM_TEST_PATH "/data/libsvm/6x4_TEMPLATE.libsvm", this->filename);
+                util::instantiate_template_file<int>(PLSSVM_TEST_PATH "/data/libsvm/classification/6x4_TEMPLATE.libsvm", this->filename);
             }
             cmd_args.insert(cmd_args.end(), { this->filename, PLSSVM_TEST_PATH "/data/model/classification/6x4.libsvm.model" });
             break;
@@ -74,9 +74,9 @@ TEST_P(DataSetFactory, data_set_factory_scale) {
     const auto [strings_as_labels, svm, result_index] = GetParam();
 
     if (strings_as_labels) {
-        util::instantiate_template_file<std::string>(PLSSVM_TEST_PATH "/data/libsvm/6x4_TEMPLATE.libsvm", this->filename);
+        util::instantiate_template_file<std::string>(PLSSVM_TEST_PATH "/data/libsvm/classification/6x4_TEMPLATE.libsvm", this->filename);
     } else {
-        util::instantiate_template_file<int>(PLSSVM_TEST_PATH "/data/libsvm/6x4_TEMPLATE.libsvm", this->filename);
+        util::instantiate_template_file<int>(PLSSVM_TEST_PATH "/data/libsvm/classification/6x4_TEMPLATE.libsvm", this->filename);
     }
 
     // assemble command line strings
@@ -106,9 +106,9 @@ TEST_P(DataSetFactory, data_set_factory_scale_restore_filename) {
     const auto [strings_as_labels, svm, result_index] = GetParam();
 
     if (strings_as_labels) {
-        util::instantiate_template_file<std::string>(PLSSVM_TEST_PATH "/data/libsvm/6x4_TEMPLATE.libsvm", this->filename);
+        util::instantiate_template_file<std::string>(PLSSVM_TEST_PATH "/data/libsvm/classification/6x4_TEMPLATE.libsvm", this->filename);
     } else {
-        util::instantiate_template_file<int>(PLSSVM_TEST_PATH "/data/libsvm/6x4_TEMPLATE.libsvm", this->filename);
+        util::instantiate_template_file<int>(PLSSVM_TEST_PATH "/data/libsvm/classification/6x4_TEMPLATE.libsvm", this->filename);
     }
 
     // assemble command line strings
@@ -138,9 +138,9 @@ TEST_P(DataSetFactory, data_set_factory_train) {
     const auto [strings_as_labels, svm, result_index] = GetParam();
 
     if (strings_as_labels) {
-        util::instantiate_template_file<std::string>(PLSSVM_TEST_PATH "/data/libsvm/6x4_TEMPLATE.libsvm", this->filename);
+        util::instantiate_template_file<std::string>(PLSSVM_TEST_PATH "/data/libsvm/classification/6x4_TEMPLATE.libsvm", this->filename);
     } else {
-        util::instantiate_template_file<int>(PLSSVM_TEST_PATH "/data/libsvm/6x4_TEMPLATE.libsvm", this->filename);
+        util::instantiate_template_file<int>(PLSSVM_TEST_PATH "/data/libsvm/classification/6x4_TEMPLATE.libsvm", this->filename);
     }
 
     // assemble command line strings

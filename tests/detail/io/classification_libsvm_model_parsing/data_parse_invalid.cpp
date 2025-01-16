@@ -205,7 +205,7 @@ TYPED_TEST(LIBSVMClassificationModelDataParseInvalidDeathTest, invalid_file_read
 
 TYPED_TEST(LIBSVMClassificationModelDataParseInvalidDeathTest, too_few_num_sv_per_class) {
     // parse LIBSVM file
-    const std::string filename = PLSSVM_TEST_PATH "/data/libsvm/5x4.libsvm";
+    const std::string filename = PLSSVM_TEST_PATH "/data/libsvm/classification/5x4.libsvm";
     plssvm::detail::io::file_reader reader{ filename };
     reader.read_lines('#');
     // try to skip more lines than are present in the data file

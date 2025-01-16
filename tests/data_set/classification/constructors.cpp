@@ -57,7 +57,7 @@ TYPED_TEST(ClassificationDataSetConstructors, typedefs) {
     using label_type = typename TestFixture::fixture_label_type;
 
     // create a data_set using an existing LIBSVM data set file
-    util::instantiate_template_file<label_type>(PLSSVM_TEST_PATH "/data/libsvm/6x4_TEMPLATE.libsvm", this->filename);
+    util::instantiate_template_file<label_type>(PLSSVM_TEST_PATH "/data/libsvm/classification/6x4_TEMPLATE.libsvm", this->filename);
     const plssvm::classification_data_set<label_type> data{ this->filename };
 
     // test internal typedefs
@@ -72,7 +72,7 @@ TYPED_TEST(ClassificationDataSetConstructors, construct_arff_from_file_with_labe
     this->append_to_filename(".arff");
 
     // create data set
-    util::instantiate_template_file<label_type>(PLSSVM_TEST_PATH "/data/arff/6x4_TEMPLATE.arff", this->filename);
+    util::instantiate_template_file<label_type>(PLSSVM_TEST_PATH "/data/arff/classification/6x4_TEMPLATE.arff", this->filename);
     const plssvm::classification_data_set<label_type> data{ this->filename };
 
     const std::vector<label_type> correct_different_labels = util::get_distinct_label<label_type>();
@@ -123,7 +123,7 @@ TYPED_TEST(ClassificationDataSetConstructors, construct_libsvm_from_file_with_la
     using label_type = typename TestFixture::fixture_label_type;
 
     // create data set
-    util::instantiate_template_file<label_type>(PLSSVM_TEST_PATH "/data/libsvm/6x4_TEMPLATE.libsvm", this->filename);
+    util::instantiate_template_file<label_type>(PLSSVM_TEST_PATH "/data/libsvm/classification/6x4_TEMPLATE.libsvm", this->filename);
     const plssvm::classification_data_set<label_type> data{ this->filename };
 
     const std::vector<label_type> correct_different_labels = util::get_distinct_label<label_type>();
@@ -174,7 +174,7 @@ TYPED_TEST(ClassificationDataSetConstructors, construct_explicit_arff_from_file)
     using label_type = typename TestFixture::fixture_label_type;
 
     // create data set
-    util::instantiate_template_file<label_type>(PLSSVM_TEST_PATH "/data/arff/6x4_TEMPLATE.arff", this->filename);
+    util::instantiate_template_file<label_type>(PLSSVM_TEST_PATH "/data/arff/classification/6x4_TEMPLATE.arff", this->filename);
     const plssvm::classification_data_set<label_type> data{ this->filename, plssvm::file_format_type::arff };
 
     const std::vector<label_type> correct_different_labels = util::get_distinct_label<label_type>();
@@ -200,7 +200,7 @@ TYPED_TEST(ClassificationDataSetConstructors, construct_explicit_libsvm_from_fil
     using label_type = typename TestFixture::fixture_label_type;
 
     // create data set
-    util::instantiate_template_file<label_type>(PLSSVM_TEST_PATH "/data/libsvm/6x4_TEMPLATE.libsvm", this->filename);
+    util::instantiate_template_file<label_type>(PLSSVM_TEST_PATH "/data/libsvm/classification/6x4_TEMPLATE.libsvm", this->filename);
     const plssvm::classification_data_set<label_type> data{ this->filename, plssvm::file_format_type::libsvm };
 
     const std::vector<label_type> correct_different_labels = util::get_distinct_label<label_type>();
@@ -229,7 +229,7 @@ TYPED_TEST(ClassificationDataSetConstructors, construct_scaled_arff_from_file) {
     this->append_to_filename(".arff");
 
     // create data set
-    util::instantiate_template_file<label_type>(PLSSVM_TEST_PATH "/data/arff/6x4_TEMPLATE.arff", this->filename);
+    util::instantiate_template_file<label_type>(PLSSVM_TEST_PATH "/data/arff/classification/6x4_TEMPLATE.arff", this->filename);
     const plssvm::classification_data_set<label_type> data{ this->filename, { plssvm::real_type{ -1.0 }, plssvm::real_type{ 1.0 } } };
 
     const std::vector<label_type> correct_different_labels = util::get_distinct_label<label_type>();
@@ -263,7 +263,7 @@ TYPED_TEST(ClassificationDataSetConstructors, construct_scaled_libsvm_from_file)
     using label_type = typename TestFixture::fixture_label_type;
 
     // create data set
-    util::instantiate_template_file<label_type>(PLSSVM_TEST_PATH "/data/libsvm/6x4_TEMPLATE.libsvm", this->filename);
+    util::instantiate_template_file<label_type>(PLSSVM_TEST_PATH "/data/libsvm/classification/6x4_TEMPLATE.libsvm", this->filename);
     const plssvm::classification_data_set<label_type> data{ this->filename, { plssvm::real_type{ -2.5 }, plssvm::real_type{ 2.5 } } };
 
     const std::vector<label_type> correct_different_labels = util::get_distinct_label<label_type>();
@@ -297,7 +297,7 @@ TYPED_TEST(ClassificationDataSetConstructors, construct_scaled_explicit_arff_fro
     using label_type = typename TestFixture::fixture_label_type;
 
     // create data set
-    util::instantiate_template_file<label_type>(PLSSVM_TEST_PATH "/data/arff/6x4_TEMPLATE.arff", this->filename);
+    util::instantiate_template_file<label_type>(PLSSVM_TEST_PATH "/data/arff/classification/6x4_TEMPLATE.arff", this->filename);
     const plssvm::classification_data_set<label_type> data{ this->filename, plssvm::file_format_type::arff, { plssvm::real_type{ -1.0 }, plssvm::real_type{ 1.0 } } };
 
     const std::vector<label_type> correct_different_labels = util::get_distinct_label<label_type>();
@@ -331,7 +331,7 @@ TYPED_TEST(ClassificationDataSetConstructors, construct_scaled_explicit_libsvm_f
     using label_type = typename TestFixture::fixture_label_type;
 
     // create data set
-    util::instantiate_template_file<label_type>(PLSSVM_TEST_PATH "/data/libsvm/6x4_TEMPLATE.libsvm", this->filename);
+    util::instantiate_template_file<label_type>(PLSSVM_TEST_PATH "/data/libsvm/classification/6x4_TEMPLATE.libsvm", this->filename);
     const plssvm::classification_data_set<label_type> data{ this->filename, plssvm::file_format_type::libsvm, { plssvm::real_type{ -2.5 }, plssvm::real_type{ 2.5 } } };
 
     const std::vector<label_type> correct_different_labels = util::get_distinct_label<label_type>();
@@ -367,7 +367,7 @@ TYPED_TEST(ClassificationDataSetConstructors, construct_scaled_too_many_factors)
     using factors_type = typename scaling_type::factors;
 
     // create data set
-    util::instantiate_template_file<label_type>(PLSSVM_TEST_PATH "/data/libsvm/6x4_TEMPLATE.libsvm", this->filename);
+    util::instantiate_template_file<label_type>(PLSSVM_TEST_PATH "/data/libsvm/classification/6x4_TEMPLATE.libsvm", this->filename);
     // create (invalid) scaling factors
     scaling_type scaling{ plssvm::real_type{ -1.0 }, plssvm::real_type{ 1.0 } };
     scaling.scaling_factors = std::vector<factors_type>{
@@ -390,7 +390,7 @@ TYPED_TEST(ClassificationDataSetConstructors, construct_scaled_invalid_feature_i
     using factors_type = typename scaling_type::factors;
 
     // create data set
-    util::instantiate_template_file<label_type>(PLSSVM_TEST_PATH "/data/libsvm/6x4_TEMPLATE.libsvm", this->filename);
+    util::instantiate_template_file<label_type>(PLSSVM_TEST_PATH "/data/libsvm/classification/6x4_TEMPLATE.libsvm", this->filename);
     // create (invalid) scaling factors
     scaling_type scaling{ plssvm::real_type{ -1.0 }, plssvm::real_type{ 1.0 } };
     scaling.scaling_factors = std::vector<factors_type>{
@@ -410,7 +410,7 @@ TYPED_TEST(ClassificationDataSetConstructors, construct_scaled_duplicate_feature
     using factors_type = typename scaling_type::factors;
 
     // create data set
-    util::instantiate_template_file<label_type>(PLSSVM_TEST_PATH "/data/libsvm/6x4_TEMPLATE.libsvm", this->filename);
+    util::instantiate_template_file<label_type>(PLSSVM_TEST_PATH "/data/libsvm/classification/6x4_TEMPLATE.libsvm", this->filename);
     // create (invalid) scaling factors
     scaling_type scaling{ plssvm::real_type{ -1.0 }, plssvm::real_type{ 1.0 } };
     scaling.scaling_factors = std::vector<factors_type>{
