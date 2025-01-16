@@ -73,9 +73,8 @@ TEST(SvmType, svm_type_to_task_name) {
 
 TEST(SvmType, svm_type_from_model_file) {
     // check a classification model file
-    EXPECT_EQ(plssvm::svm_type_from_model_file(PLSSVM_TEST_PATH "/data/model/6x4_linear.libsvm.model"), plssvm::svm_type::csvc);
+    EXPECT_EQ(plssvm::svm_type_from_model_file(PLSSVM_TEST_PATH "/data/model/classification/6x4.libsvm.model"), plssvm::svm_type::csvc);
 
-    // TODO: CSVR model file
     // check a regression model file
-    // EXPECT_EQ(plssvm::svm_type_from_model_file(PLSSVM_TEST_PATH "/data/model/6x4_linear.libsvm.model"), plssvm::svm_type::csvr);
+    EXPECT_EQ(plssvm::svm_type_from_model_file(PLSSVM_TEST_PATH "/data/model/regression/6x4.libsvm.model"), plssvm::svm_type::csvr);
 }

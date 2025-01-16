@@ -10,6 +10,7 @@
 
 #include "plssvm/detail/cmd/data_set_variants.hpp"
 
+#include "plssvm/constants.hpp"                  // plssvm::real_type
 #include "plssvm/detail/cmd/parser_predict.hpp"  // plssvm::detail::cmd::parser_predict
 #include "plssvm/detail/cmd/parser_scale.hpp"    // plssvm::detail::cmd::parser_scale
 #include "plssvm/detail/cmd/parser_train.hpp"    // plssvm::detail::cmd::parser_train
@@ -37,22 +38,26 @@ TEST_P(DataSetFactory, data_set_factory_predict) {
     // get parameter
     const auto [strings_as_labels, svm, result_index] = GetParam();
 
-    if (svm == plssvm::svm_type::csvr) {  // TODO: regression model
-        GTEST_SKIP();
-    }
-
-    if (strings_as_labels) {
-        util::instantiate_template_file<std::string>(PLSSVM_TEST_PATH "/data/libsvm/6x4_TEMPLATE.libsvm", this->filename);
-    } else {
-        util::instantiate_template_file<int>(PLSSVM_TEST_PATH "/data/libsvm/6x4_TEMPLATE.libsvm", this->filename);
-    }
-
     // assemble command line strings
     std::vector<std::string> cmd_args = { "./plssvm-predict" };
     if (strings_as_labels) {
         cmd_args.emplace_back("--use_strings_as_labels");
     }
-    cmd_args.insert(cmd_args.end(), { this->filename, PLSSVM_TEST_PATH "/data/model/6x4_linear.libsvm.model" });
+
+    switch (svm) {
+        case plssvm::svm_type::csvc:
+            if (strings_as_labels) {
+                util::instantiate_template_file<std::string>(PLSSVM_TEST_PATH "/data/libsvm/6x4_TEMPLATE.libsvm", this->filename);
+            } else {
+                util::instantiate_template_file<int>(PLSSVM_TEST_PATH "/data/libsvm/6x4_TEMPLATE.libsvm", this->filename);
+            }
+            cmd_args.insert(cmd_args.end(), { this->filename, PLSSVM_TEST_PATH "/data/model/classification/6x4.libsvm.model" });
+            break;
+        case plssvm::svm_type::csvr:
+            util::instantiate_template_file<plssvm::real_type>(PLSSVM_TEST_PATH "/data/libsvm/regression/6x4.libsvm", this->filename);
+            cmd_args.insert(cmd_args.end(), { this->filename, PLSSVM_TEST_PATH "/data/model/regression/6x4.libsvm.model" });
+            break;
+    }
 
     // create artificial command line arguments in test fixture
     this->CreateCMDArgs(cmd_args);

@@ -33,7 +33,7 @@ TYPED_TEST_SUITE(LIBSVMClassificationModelDataParseInvalid, util::classification
 
 TYPED_TEST(LIBSVMClassificationModelDataParseInvalid, zero_based_features) {
     // parse the LIBSVM file
-    const std::string filename = PLSSVM_TEST_PATH "/data/model/invalid/zero_based_features.libsvm.model";
+    const std::string filename = PLSSVM_TEST_PATH "/data/model/classification/invalid/zero_based_features.libsvm.model";
     plssvm::detail::io::file_reader reader{ filename };
     reader.read_lines('#');
     EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_libsvm_model_data_classification(reader, std::vector<std::size_t>{ 3, 3 }, 8)),
@@ -43,7 +43,7 @@ TYPED_TEST(LIBSVMClassificationModelDataParseInvalid, zero_based_features) {
 
 TYPED_TEST(LIBSVMClassificationModelDataParseInvalid, empty_data) {
     // parse the LIBSVM file
-    const std::string filename = PLSSVM_TEST_PATH "/data/model/invalid/empty_data.libsvm.model";
+    const std::string filename = PLSSVM_TEST_PATH "/data/model/classification/invalid/empty_data.libsvm.model";
     plssvm::detail::io::file_reader reader{ filename };
     reader.read_lines('#');
     EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_libsvm_model_data_classification(reader, std::vector<std::size_t>{ 3, 3 }, 8)),
@@ -53,7 +53,7 @@ TYPED_TEST(LIBSVMClassificationModelDataParseInvalid, empty_data) {
 
 TYPED_TEST(LIBSVMClassificationModelDataParseInvalid, too_few_alpha_values) {
     // parse the LIBSVM file
-    const std::string filename = PLSSVM_TEST_PATH "/data/model/invalid/too_few_alpha_values.libsvm.model";
+    const std::string filename = PLSSVM_TEST_PATH "/data/model/classification/invalid/too_few_alpha_values.libsvm.model";
     plssvm::detail::io::file_reader reader{ filename };
     reader.read_lines('#');
     EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_libsvm_model_data_classification(reader, std::vector<std::size_t>{ 3, 3 }, 8)),
@@ -63,7 +63,7 @@ TYPED_TEST(LIBSVMClassificationModelDataParseInvalid, too_few_alpha_values) {
 
 TYPED_TEST(LIBSVMClassificationModelDataParseInvalid, too_many_alpha_values) {
     // parse the LIBSVM file
-    const std::string filename = PLSSVM_TEST_PATH "/data/model/invalid/too_many_alpha_values.libsvm.model";
+    const std::string filename = PLSSVM_TEST_PATH "/data/model/classification/invalid/too_many_alpha_values.libsvm.model";
     plssvm::detail::io::file_reader reader{ filename };
     reader.read_lines('#');
     EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_libsvm_model_data_classification(reader, std::vector<std::size_t>{ 3, 3 }, 8)),
@@ -73,7 +73,7 @@ TYPED_TEST(LIBSVMClassificationModelDataParseInvalid, too_many_alpha_values) {
 
 TYPED_TEST(LIBSVMClassificationModelDataParseInvalid, feature_with_alpha_char_at_the_beginning) {
     // parse the LIBSVM file
-    const std::string filename = PLSSVM_TEST_PATH "/data/model/invalid/feature_with_alpha_char_at_the_beginning.libsvm.model";
+    const std::string filename = PLSSVM_TEST_PATH "/data/model/classification/invalid/feature_with_alpha_char_at_the_beginning.libsvm.model";
     plssvm::detail::io::file_reader reader{ filename };
     reader.read_lines('#');
     EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_libsvm_model_data_classification(reader, std::vector<std::size_t>{ 3, 3 }, 8)),
@@ -83,7 +83,7 @@ TYPED_TEST(LIBSVMClassificationModelDataParseInvalid, feature_with_alpha_char_at
 
 TYPED_TEST(LIBSVMClassificationModelDataParseInvalid, index_with_alpha_char_at_the_beginning) {
     // parse the LIBSVM file
-    const std::string filename = PLSSVM_TEST_PATH "/data/model/invalid/index_with_alpha_char_at_the_beginning.libsvm.model";
+    const std::string filename = PLSSVM_TEST_PATH "/data/model/classification/invalid/index_with_alpha_char_at_the_beginning.libsvm.model";
     plssvm::detail::io::file_reader reader{ filename };
     reader.read_lines('#');
     EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_libsvm_model_data_classification(reader, std::vector<std::size_t>{ 3, 3 }, 8)),
@@ -93,7 +93,7 @@ TYPED_TEST(LIBSVMClassificationModelDataParseInvalid, index_with_alpha_char_at_t
 
 TYPED_TEST(LIBSVMClassificationModelDataParseInvalid, invalid_colon_at_the_beginning) {
     // parse the LIBSVM file
-    const std::string filename = PLSSVM_TEST_PATH "/data/model/invalid/invalid_colon_at_the_beginning.libsvm.model";
+    const std::string filename = PLSSVM_TEST_PATH "/data/model/classification/invalid/invalid_colon_at_the_beginning.libsvm.model";
     plssvm::detail::io::file_reader reader{ filename };
     reader.read_lines('#');
     EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_libsvm_model_data_classification(reader, std::vector<std::size_t>{ 3, 3 }, 8)),
@@ -103,7 +103,7 @@ TYPED_TEST(LIBSVMClassificationModelDataParseInvalid, invalid_colon_at_the_begin
 
 TYPED_TEST(LIBSVMClassificationModelDataParseInvalid, invalid_colon_in_the_middle) {
     // parse the LIBSVM file
-    const std::string filename = PLSSVM_TEST_PATH "/data/model/invalid/invalid_colon_in_the_middle.libsvm.model";
+    const std::string filename = PLSSVM_TEST_PATH "/data/model/classification/invalid/invalid_colon_in_the_middle.libsvm.model";
     plssvm::detail::io::file_reader reader{ filename };
     reader.read_lines('#');
     EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_libsvm_model_data_classification(reader, std::vector<std::size_t>{ 3, 3 }, 8)),
@@ -113,7 +113,7 @@ TYPED_TEST(LIBSVMClassificationModelDataParseInvalid, invalid_colon_in_the_middl
 
 TYPED_TEST(LIBSVMClassificationModelDataParseInvalid, missing_feature_value) {
     // parse the LIBSVM file
-    const std::string filename = PLSSVM_TEST_PATH "/data/model/invalid/missing_feature_value.libsvm.model";
+    const std::string filename = PLSSVM_TEST_PATH "/data/model/classification/invalid/missing_feature_value.libsvm.model";
     plssvm::detail::io::file_reader reader{ filename };
     reader.read_lines('#');
     EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_libsvm_model_data_classification(reader, std::vector<std::size_t>{ 3, 3 }, 8)),
@@ -123,7 +123,7 @@ TYPED_TEST(LIBSVMClassificationModelDataParseInvalid, missing_feature_value) {
 
 TYPED_TEST(LIBSVMClassificationModelDataParseInvalid, missing_index_value) {
     // parse the LIBSVM file
-    const std::string filename = PLSSVM_TEST_PATH "/data/model/invalid/missing_index_value.libsvm.model";
+    const std::string filename = PLSSVM_TEST_PATH "/data/model/classification/invalid/missing_index_value.libsvm.model";
     plssvm::detail::io::file_reader reader{ filename };
     reader.read_lines('#');
     EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_libsvm_model_data_classification(reader, std::vector<std::size_t>{ 3, 3 }, 8)),
@@ -133,7 +133,7 @@ TYPED_TEST(LIBSVMClassificationModelDataParseInvalid, missing_index_value) {
 
 TYPED_TEST(LIBSVMClassificationModelDataParseInvalid, non_increasing_indices) {
     // parse the LIBSVM file
-    const std::string filename = PLSSVM_TEST_PATH "/data/model/invalid/non_increasing_indices.libsvm.model";
+    const std::string filename = PLSSVM_TEST_PATH "/data/model/classification/invalid/non_increasing_indices.libsvm.model";
     plssvm::detail::io::file_reader reader{ filename };
     reader.read_lines('#');
     EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_libsvm_model_data_classification(reader, std::vector<std::size_t>{ 3, 3 }, 8)),
@@ -143,7 +143,7 @@ TYPED_TEST(LIBSVMClassificationModelDataParseInvalid, non_increasing_indices) {
 
 TYPED_TEST(LIBSVMClassificationModelDataParseInvalid, non_strictly_increasing_indices) {
     // parse the LIBSVM file
-    const std::string filename = PLSSVM_TEST_PATH "/data/model/invalid/non_strictly_increasing_indices.libsvm.model";
+    const std::string filename = PLSSVM_TEST_PATH "/data/model/classification/invalid/non_strictly_increasing_indices.libsvm.model";
     plssvm::detail::io::file_reader reader{ filename };
     reader.read_lines('#');
     EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_libsvm_model_data_classification(reader, std::vector<std::size_t>{ 3, 3 }, 8)),
@@ -153,7 +153,7 @@ TYPED_TEST(LIBSVMClassificationModelDataParseInvalid, non_strictly_increasing_in
 
 TYPED_TEST(LIBSVMClassificationModelDataParseInvalid, oaa_and_oao) {
     // parse the LIBSVM file
-    const std::string filename = PLSSVM_TEST_PATH "/data/model/invalid/oaa_and_oao.libsvm.model";
+    const std::string filename = PLSSVM_TEST_PATH "/data/model/classification/invalid/oaa_and_oao.libsvm.model";
     plssvm::detail::io::file_reader reader{ filename };
     reader.read_lines('#');
     EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_libsvm_model_data_classification(reader, std::vector<std::size_t>{ 3, 3 }, 8)),
@@ -163,7 +163,7 @@ TYPED_TEST(LIBSVMClassificationModelDataParseInvalid, oaa_and_oao) {
 
 TYPED_TEST(LIBSVMClassificationModelDataParseInvalid, too_many_num_sv_per_class) {
     // parse the LIBSVM file
-    const std::string filename = PLSSVM_TEST_PATH "/data/model/invalid/too_many_num_sv_per_class.libsvm.model";
+    const std::string filename = PLSSVM_TEST_PATH "/data/model/classification/invalid/too_many_num_sv_per_class.libsvm.model";
     plssvm::detail::io::file_reader reader{ filename };
     reader.read_lines('#');
     EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_libsvm_model_data_classification(reader, std::vector<std::size_t>{ 2, 2, 1, 1 }, 8)),
@@ -173,7 +173,7 @@ TYPED_TEST(LIBSVMClassificationModelDataParseInvalid, too_many_num_sv_per_class)
 
 TYPED_TEST(LIBSVMClassificationModelDataParseInvalid, too_few_sv_according_to_header) {
     // parse the LIBSVM file
-    const std::string filename = PLSSVM_TEST_PATH "/data/model/invalid/too_few_sv_according_to_header.libsvm.model";
+    const std::string filename = PLSSVM_TEST_PATH "/data/model/classification/invalid/too_few_sv_according_to_header.libsvm.model";
     plssvm::detail::io::file_reader reader{ filename };
     reader.read_lines('#');
     EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_libsvm_model_data_classification(reader, std::vector<std::size_t>{ 3, 3 }, 8)),
@@ -183,7 +183,7 @@ TYPED_TEST(LIBSVMClassificationModelDataParseInvalid, too_few_sv_according_to_he
 
 TYPED_TEST(LIBSVMClassificationModelDataParseInvalid, too_many_sv_according_to_header) {
     // parse the LIBSVM file
-    const std::string filename = PLSSVM_TEST_PATH "/data/model/invalid/too_many_sv_according_to_header.libsvm.model";
+    const std::string filename = PLSSVM_TEST_PATH "/data/model/classification/invalid/too_many_sv_according_to_header.libsvm.model";
     plssvm::detail::io::file_reader reader{ filename };
     reader.read_lines('#');
     EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_libsvm_model_data_classification(reader, std::vector<std::size_t>{ 3, 3 }, 8)),
@@ -215,7 +215,7 @@ TYPED_TEST(LIBSVMClassificationModelDataParseInvalidDeathTest, too_few_num_sv_pe
 
 TYPED_TEST(LIBSVMClassificationModelDataParseInvalidDeathTest, skip_too_many_lines) {
     // parse LIBSVM file
-    const std::string filename = PLSSVM_TEST_PATH "/data/model/6x4_linear.libsvm.model";
+    const std::string filename = PLSSVM_TEST_PATH "/data/model/classification/6x4.libsvm.model";
     plssvm::detail::io::file_reader reader{ filename };
     reader.read_lines('#');
     // try to skip more lines than are present in the data file

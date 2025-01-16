@@ -165,7 +165,7 @@ class BaseCSVCMemberBase : public BaseCSVC,
 
     void SetUp() override {
         util::instantiate_template_file<fixture_label_type>(PLSSVM_TEST_PATH "/data/libsvm/6x4_TEMPLATE.libsvm", data_set_file_.filename);
-        const std::string model_template_file = fmt::format(PLSSVM_TEST_PATH "/data/model/6x4_{}_{}_TEMPLATE.libsvm.model",
+        const std::string model_template_file = fmt::format(PLSSVM_TEST_PATH "/data/model/classification/6x4_{}_{}_TEMPLATE.libsvm.model",
                                                             util::get_num_classes<fixture_label_type>(),
                                                             fixture_classification);
         util::instantiate_template_file<fixture_label_type>(model_template_file, model_file_.filename);

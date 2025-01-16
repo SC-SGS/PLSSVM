@@ -165,7 +165,7 @@ TYPED_TEST(LIBSVMRegressionModelDataParseInvalidDeathTest, invalid_file_reader) 
 
 TYPED_TEST(LIBSVMRegressionModelDataParseInvalidDeathTest, skip_too_many_lines) {
     // parse LIBSVM file
-    const std::string filename = PLSSVM_TEST_PATH "/data/model/regression/6x4_linear.libsvm.model";
+    const std::string filename = PLSSVM_TEST_PATH "/data/model/regression/6x4.libsvm.model";
     plssvm::detail::io::file_reader reader{ filename };
     reader.read_lines('#');
     // try to skip more lines than are present in the data file

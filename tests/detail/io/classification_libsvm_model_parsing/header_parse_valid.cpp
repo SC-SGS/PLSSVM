@@ -90,7 +90,7 @@ TYPED_TEST(LIBSVMClassificationModelHeaderParseValid, read) {
     // create temporary file
     const util::temporary_file template_file{};
     const std::size_t num_classes_for_label_type = util::get_num_classes<label_type>();
-    const std::string template_file_name = fmt::format(PLSSVM_TEST_PATH "/data/model/6x4_{}_{}_TEMPLATE.libsvm.model", num_classes_for_label_type, classification);
+    const std::string template_file_name = fmt::format(PLSSVM_TEST_PATH "/data/model/classification/6x4_{}_{}_TEMPLATE.libsvm.model", num_classes_for_label_type, classification);
     util::instantiate_template_file<label_type>(template_file_name, template_file.filename, kernel);
 
     // parse the LIBSVM model file header

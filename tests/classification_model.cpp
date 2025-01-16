@@ -43,7 +43,7 @@ class ClassificationModel : public ::testing::Test,
 
     void SetUp() override {
         // create file used in this test fixture by instantiating the template file
-        const std::string template_filename = fmt::format(PLSSVM_TEST_PATH "/data/model/6x4_{}_{}_TEMPLATE.libsvm.model", util::get_num_classes<fixture_label_type>(), fixture_classification);
+        const std::string template_filename = fmt::format(PLSSVM_TEST_PATH "/data/model/classification/6x4_{}_{}_TEMPLATE.libsvm.model", util::get_num_classes<fixture_label_type>(), fixture_classification);
         util::instantiate_template_file<fixture_label_type>(template_filename, this->filename);
     }
 };
@@ -345,7 +345,7 @@ TYPED_TEST(ClassificationModelSave, save) {
         const std::size_t num_classes = util::get_num_classes<label_type>();
 
         const util::temporary_file model_file;
-        const std::string template_file_name = fmt::format(PLSSVM_TEST_PATH "/data/model/6x4_{}_{}_TEMPLATE.libsvm.model", util::get_num_classes<label_type>(), classification);
+        const std::string template_file_name = fmt::format(PLSSVM_TEST_PATH "/data/model/classification/6x4_{}_{}_TEMPLATE.libsvm.model", util::get_num_classes<label_type>(), classification);
         util::instantiate_template_file<label_type>(template_file_name, model_file.filename, kernel_function);
 
         // create a model using an existing LIBSVM model file

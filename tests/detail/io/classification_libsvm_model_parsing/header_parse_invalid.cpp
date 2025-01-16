@@ -32,7 +32,7 @@ TYPED_TEST(LIBSVMClassificationModelHeaderParseInvalid, wrong_svm_type) {
     using label_type = util::test_parameter_type_at_t<0, TypeParam>;
 
     // parse the LIBSVM model file
-    const std::string filename = PLSSVM_TEST_PATH "/data/model/invalid/wrong_svm_type.libsvm.model";
+    const std::string filename = PLSSVM_TEST_PATH "/data/model/classification/invalid/wrong_svm_type.libsvm.model";
     plssvm::detail::io::file_reader reader{ filename };
     reader.read_lines('#');
     EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_libsvm_model_header_classification<label_type>(reader.lines())),
@@ -44,7 +44,7 @@ TYPED_TEST(LIBSVMClassificationModelHeaderParseInvalid, wrong_kernel_type) {
     using label_type = util::test_parameter_type_at_t<0, TypeParam>;
 
     // parse the LIBSVM model file
-    const std::string filename = PLSSVM_TEST_PATH "/data/model/invalid/wrong_kernel_type.libsvm.model";
+    const std::string filename = PLSSVM_TEST_PATH "/data/model/classification/invalid/wrong_kernel_type.libsvm.model";
     plssvm::detail::io::file_reader reader{ filename };
     reader.read_lines('#');
     EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_libsvm_model_header_classification<label_type>(reader.lines())),
@@ -56,7 +56,7 @@ TYPED_TEST(LIBSVMClassificationModelHeaderParseInvalid, wrong_total_sv) {
     using label_type = util::test_parameter_type_at_t<0, TypeParam>;
 
     // parse the LIBSVM model file
-    const std::string filename = PLSSVM_TEST_PATH "/data/model/invalid/wrong_total_sv.libsvm.model";
+    const std::string filename = PLSSVM_TEST_PATH "/data/model/classification/invalid/wrong_total_sv.libsvm.model";
     plssvm::detail::io::file_reader reader{ filename };
     reader.read_lines('#');
     EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_libsvm_model_header_classification<label_type>(reader.lines())),
@@ -68,7 +68,7 @@ TYPED_TEST(LIBSVMClassificationModelHeaderParseInvalid, too_few_label) {
     using label_type = util::test_parameter_type_at_t<0, TypeParam>;
 
     // parse the LIBSVM model file
-    const std::string filename = PLSSVM_TEST_PATH "/data/model/invalid/too_few_label.libsvm.model";
+    const std::string filename = PLSSVM_TEST_PATH "/data/model/classification/invalid/too_few_label.libsvm.model";
     plssvm::detail::io::file_reader reader{ filename };
     reader.read_lines('#');
     EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_libsvm_model_header_classification<label_type>(reader.lines())),
@@ -80,7 +80,7 @@ TYPED_TEST(LIBSVMClassificationModelHeaderParseInvalid, too_few_nr_sv) {
     using label_type = util::test_parameter_type_at_t<0, TypeParam>;
 
     // parse the LIBSVM model file
-    const std::string filename = PLSSVM_TEST_PATH "/data/model/invalid/too_few_nr_sv.libsvm.model";
+    const std::string filename = PLSSVM_TEST_PATH "/data/model/classification/invalid/too_few_nr_sv.libsvm.model";
     plssvm::detail::io::file_reader reader{ filename };
     reader.read_lines('#');
     EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_libsvm_model_header_classification<label_type>(reader.lines())),
@@ -92,7 +92,7 @@ TYPED_TEST(LIBSVMClassificationModelHeaderParseInvalid, empty_rho) {
     using label_type = util::test_parameter_type_at_t<0, TypeParam>;
 
     // parse the LIBSVM model file
-    const std::string filename = PLSSVM_TEST_PATH "/data/model/invalid/empty_rho.libsvm.model";
+    const std::string filename = PLSSVM_TEST_PATH "/data/model/classification/invalid/empty_rho.libsvm.model";
     plssvm::detail::io::file_reader reader{ filename };
     reader.read_lines('#');
     EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_libsvm_model_header_classification<label_type>(reader.lines())),
@@ -107,7 +107,7 @@ TYPED_TEST(LIBSVMClassificationModelHeaderParseInvalid, too_few_rho) {
         SUCCEED() << "Test not applicable for the label types with only two distinct classes.";
     } else {
         // parse the LIBSVM model file
-        const std::string filename = PLSSVM_TEST_PATH "/data/model/invalid/too_few_rho.libsvm.model";
+        const std::string filename = PLSSVM_TEST_PATH "/data/model/classification/invalid/too_few_rho.libsvm.model";
         plssvm::detail::io::file_reader reader{ filename };
         reader.read_lines('#');
         EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_libsvm_model_header_classification<label_type>(reader.lines())),
@@ -120,7 +120,7 @@ TYPED_TEST(LIBSVMClassificationModelHeaderParseInvalid, unrecognized_header_entr
     using label_type = util::test_parameter_type_at_t<0, TypeParam>;
 
     // parse the LIBSVM model file
-    const std::string filename = PLSSVM_TEST_PATH "/data/model/invalid/unrecognized_header_entry.libsvm.model";
+    const std::string filename = PLSSVM_TEST_PATH "/data/model/classification/invalid/unrecognized_header_entry.libsvm.model";
     plssvm::detail::io::file_reader reader{ filename };
     reader.read_lines('#');
     EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_libsvm_model_header_classification<label_type>(reader.lines())),
@@ -132,7 +132,7 @@ TYPED_TEST(LIBSVMClassificationModelHeaderParseInvalid, missing_svm_type) {
     using label_type = util::test_parameter_type_at_t<0, TypeParam>;
 
     // parse the LIBSVM model file
-    const std::string filename = PLSSVM_TEST_PATH "/data/model/invalid/missing_svm_type.libsvm.model";
+    const std::string filename = PLSSVM_TEST_PATH "/data/model/classification/invalid/missing_svm_type.libsvm.model";
     plssvm::detail::io::file_reader reader{ filename };
     reader.read_lines('#');
     EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_libsvm_model_header_classification<label_type>(reader.lines())),
@@ -144,7 +144,7 @@ TYPED_TEST(LIBSVMClassificationModelHeaderParseInvalid, missing_kernel_type) {
     using label_type = util::test_parameter_type_at_t<0, TypeParam>;
 
     // parse the LIBSVM model file
-    const std::string filename = PLSSVM_TEST_PATH "/data/model/invalid/missing_kernel_type.libsvm.model";
+    const std::string filename = PLSSVM_TEST_PATH "/data/model/classification/invalid/missing_kernel_type.libsvm.model";
     plssvm::detail::io::file_reader reader{ filename };
     reader.read_lines('#');
     EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_libsvm_model_header_classification<label_type>(reader.lines())),
@@ -156,7 +156,7 @@ TYPED_TEST(LIBSVMClassificationModelHeaderParseInvalid, explicit_degree_in_linea
     using label_type = util::test_parameter_type_at_t<0, TypeParam>;
 
     // parse the LIBSVM model file
-    const std::string filename = PLSSVM_TEST_PATH "/data/model/invalid/explicit_degree_in_linear_kernel.libsvm.model";
+    const std::string filename = PLSSVM_TEST_PATH "/data/model/classification/invalid/explicit_degree_in_linear_kernel.libsvm.model";
     plssvm::detail::io::file_reader reader{ filename };
     reader.read_lines('#');
     EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_libsvm_model_header_classification<label_type>(reader.lines())),
@@ -168,7 +168,7 @@ TYPED_TEST(LIBSVMClassificationModelHeaderParseInvalid, explicit_gamma_in_linear
     using label_type = util::test_parameter_type_at_t<0, TypeParam>;
 
     // parse the LIBSVM model file
-    const std::string filename = PLSSVM_TEST_PATH "/data/model/invalid/explicit_gamma_in_linear_kernel.libsvm.model";
+    const std::string filename = PLSSVM_TEST_PATH "/data/model/classification/invalid/explicit_gamma_in_linear_kernel.libsvm.model";
     plssvm::detail::io::file_reader reader{ filename };
     reader.read_lines('#');
     EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_libsvm_model_header_classification<label_type>(reader.lines())),
@@ -180,7 +180,7 @@ TYPED_TEST(LIBSVMClassificationModelHeaderParseInvalid, explicit_coef0_in_linear
     using label_type = util::test_parameter_type_at_t<0, TypeParam>;
 
     // parse the LIBSVM model file
-    const std::string filename = PLSSVM_TEST_PATH "/data/model/invalid/explicit_coef0_in_linear_kernel.libsvm.model";
+    const std::string filename = PLSSVM_TEST_PATH "/data/model/classification/invalid/explicit_coef0_in_linear_kernel.libsvm.model";
     plssvm::detail::io::file_reader reader{ filename };
     reader.read_lines('#');
     EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_libsvm_model_header_classification<label_type>(reader.lines())),
@@ -192,7 +192,7 @@ TYPED_TEST(LIBSVMClassificationModelHeaderParseInvalid, explicit_degree_in_rbf_k
     using label_type = util::test_parameter_type_at_t<0, TypeParam>;
 
     // parse the LIBSVM model file
-    const std::string filename = PLSSVM_TEST_PATH "/data/model/invalid/explicit_degree_in_rbf_kernel.libsvm.model";
+    const std::string filename = PLSSVM_TEST_PATH "/data/model/classification/invalid/explicit_degree_in_rbf_kernel.libsvm.model";
     plssvm::detail::io::file_reader reader{ filename };
     reader.read_lines('#');
     EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_libsvm_model_header_classification<label_type>(reader.lines())),
@@ -204,7 +204,7 @@ TYPED_TEST(LIBSVMClassificationModelHeaderParseInvalid, explicit_coef0_in_rbf_ke
     using label_type = util::test_parameter_type_at_t<0, TypeParam>;
 
     // parse the LIBSVM model file
-    const std::string filename = PLSSVM_TEST_PATH "/data/model/invalid/explicit_coef0_in_rbf_kernel.libsvm.model";
+    const std::string filename = PLSSVM_TEST_PATH "/data/model/classification/invalid/explicit_coef0_in_rbf_kernel.libsvm.model";
     plssvm::detail::io::file_reader reader{ filename };
     reader.read_lines('#');
     EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_libsvm_model_header_classification<label_type>(reader.lines())),
@@ -216,7 +216,7 @@ TYPED_TEST(LIBSVMClassificationModelHeaderParseInvalid, explicit_degree_in_sigmo
     using label_type = util::test_parameter_type_at_t<0, TypeParam>;
 
     // parse the LIBSVM model file
-    const std::string filename = PLSSVM_TEST_PATH "/data/model/invalid/explicit_degree_in_sigmoid_kernel.libsvm.model";
+    const std::string filename = PLSSVM_TEST_PATH "/data/model/classification/invalid/explicit_degree_in_sigmoid_kernel.libsvm.model";
     plssvm::detail::io::file_reader reader{ filename };
     reader.read_lines('#');
     EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_libsvm_model_header_classification<label_type>(reader.lines())),
@@ -228,7 +228,7 @@ TYPED_TEST(LIBSVMClassificationModelHeaderParseInvalid, explicit_degree_in_lapla
     using label_type = util::test_parameter_type_at_t<0, TypeParam>;
 
     // parse the LIBSVM model file
-    const std::string filename = PLSSVM_TEST_PATH "/data/model/invalid/explicit_degree_in_laplacian_kernel.libsvm.model";
+    const std::string filename = PLSSVM_TEST_PATH "/data/model/classification/invalid/explicit_degree_in_laplacian_kernel.libsvm.model";
     plssvm::detail::io::file_reader reader{ filename };
     reader.read_lines('#');
     EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_libsvm_model_header_classification<label_type>(reader.lines())),
@@ -240,7 +240,7 @@ TYPED_TEST(LIBSVMClassificationModelHeaderParseInvalid, explicit_coef0_in_laplac
     using label_type = util::test_parameter_type_at_t<0, TypeParam>;
 
     // parse the LIBSVM model file
-    const std::string filename = PLSSVM_TEST_PATH "/data/model/invalid/explicit_coef0_in_laplacian_kernel.libsvm.model";
+    const std::string filename = PLSSVM_TEST_PATH "/data/model/classification/invalid/explicit_coef0_in_laplacian_kernel.libsvm.model";
     plssvm::detail::io::file_reader reader{ filename };
     reader.read_lines('#');
     EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_libsvm_model_header_classification<label_type>(reader.lines())),
@@ -252,7 +252,7 @@ TYPED_TEST(LIBSVMClassificationModelHeaderParseInvalid, explicit_degree_in_chi_s
     using label_type = util::test_parameter_type_at_t<0, TypeParam>;
 
     // parse the LIBSVM model file
-    const std::string filename = PLSSVM_TEST_PATH "/data/model/invalid/explicit_degree_in_chi_squared_kernel.libsvm.model";
+    const std::string filename = PLSSVM_TEST_PATH "/data/model/classification/invalid/explicit_degree_in_chi_squared_kernel.libsvm.model";
     plssvm::detail::io::file_reader reader{ filename };
     reader.read_lines('#');
     EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_libsvm_model_header_classification<label_type>(reader.lines())),
@@ -264,7 +264,7 @@ TYPED_TEST(LIBSVMClassificationModelHeaderParseInvalid, explicit_coef0_in_chi_sq
     using label_type = util::test_parameter_type_at_t<0, TypeParam>;
 
     // parse the LIBSVM model file
-    const std::string filename = PLSSVM_TEST_PATH "/data/model/invalid/explicit_coef0_in_chi_squared_kernel.libsvm.model";
+    const std::string filename = PLSSVM_TEST_PATH "/data/model/classification/invalid/explicit_coef0_in_chi_squared_kernel.libsvm.model";
     plssvm::detail::io::file_reader reader{ filename };
     reader.read_lines('#');
     EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_libsvm_model_header_classification<label_type>(reader.lines())),
@@ -276,7 +276,7 @@ TYPED_TEST(LIBSVMClassificationModelHeaderParseInvalid, missing_nr_class) {
     using label_type = util::test_parameter_type_at_t<0, TypeParam>;
 
     // parse the LIBSVM model file
-    const std::string filename = PLSSVM_TEST_PATH "/data/model/invalid/missing_nr_class.libsvm.model";
+    const std::string filename = PLSSVM_TEST_PATH "/data/model/classification/invalid/missing_nr_class.libsvm.model";
     plssvm::detail::io::file_reader reader{ filename };
     reader.read_lines('#');
     EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_libsvm_model_header_classification<label_type>(reader.lines())),
@@ -288,7 +288,7 @@ TYPED_TEST(LIBSVMClassificationModelHeaderParseInvalid, missing_total_sv) {
     using label_type = util::test_parameter_type_at_t<0, TypeParam>;
 
     // parse the LIBSVM model file
-    const std::string filename = PLSSVM_TEST_PATH "/data/model/invalid/missing_total_sv.libsvm.model";
+    const std::string filename = PLSSVM_TEST_PATH "/data/model/classification/invalid/missing_total_sv.libsvm.model";
     plssvm::detail::io::file_reader reader{ filename };
     reader.read_lines('#');
     EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_libsvm_model_header_classification<label_type>(reader.lines())),
@@ -300,7 +300,7 @@ TYPED_TEST(LIBSVMClassificationModelHeaderParseInvalid, missing_rho) {
     using label_type = util::test_parameter_type_at_t<0, TypeParam>;
 
     // parse the LIBSVM model file
-    const std::string filename = PLSSVM_TEST_PATH "/data/model/invalid/missing_rho.libsvm.model";
+    const std::string filename = PLSSVM_TEST_PATH "/data/model/classification/invalid/missing_rho.libsvm.model";
     plssvm::detail::io::file_reader reader{ filename };
     reader.read_lines('#');
     EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_libsvm_model_header_classification<label_type>(reader.lines())),
@@ -312,7 +312,7 @@ TYPED_TEST(LIBSVMClassificationModelHeaderParseInvalid, missing_label) {
     using label_type = util::test_parameter_type_at_t<0, TypeParam>;
 
     // parse the LIBSVM model file
-    const std::string filename = PLSSVM_TEST_PATH "/data/model/invalid/missing_label.libsvm.model";
+    const std::string filename = PLSSVM_TEST_PATH "/data/model/classification/invalid/missing_label.libsvm.model";
     plssvm::detail::io::file_reader reader{ filename };
     reader.read_lines('#');
     EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_libsvm_model_header_classification<label_type>(reader.lines())),
@@ -324,7 +324,7 @@ TYPED_TEST(LIBSVMClassificationModelHeaderParseInvalid, nr_class_and_label_misma
     using label_type = util::test_parameter_type_at_t<0, TypeParam>;
 
     // parse the LIBSVM model file
-    const std::string filename = PLSSVM_TEST_PATH "/data/model/invalid/nr_class_and_label_mismatch.libsvm.model";
+    const std::string filename = PLSSVM_TEST_PATH "/data/model/classification/invalid/nr_class_and_label_mismatch.libsvm.model";
     plssvm::detail::io::file_reader reader{ filename };
     reader.read_lines('#');
     EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_libsvm_model_header_classification<label_type>(reader.lines())),
@@ -336,7 +336,7 @@ TYPED_TEST(LIBSVMClassificationModelHeaderParseInvalid, missing_nr_sv) {
     using label_type = util::test_parameter_type_at_t<0, TypeParam>;
 
     // parse the LIBSVM model file
-    const std::string filename = PLSSVM_TEST_PATH "/data/model/invalid/missing_nr_sv.libsvm.model";
+    const std::string filename = PLSSVM_TEST_PATH "/data/model/classification/invalid/missing_nr_sv.libsvm.model";
     plssvm::detail::io::file_reader reader{ filename };
     reader.read_lines('#');
     EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_libsvm_model_header_classification<label_type>(reader.lines())),
@@ -348,7 +348,7 @@ TYPED_TEST(LIBSVMClassificationModelHeaderParseInvalid, nr_class_and_nr_sv_misma
     using label_type = util::test_parameter_type_at_t<0, TypeParam>;
 
     // parse the LIBSVM model file
-    const std::string filename = PLSSVM_TEST_PATH "/data/model/invalid/nr_class_and_nr_sv_mismatch.libsvm.model";
+    const std::string filename = PLSSVM_TEST_PATH "/data/model/classification/invalid/nr_class_and_nr_sv_mismatch.libsvm.model";
     plssvm::detail::io::file_reader reader{ filename };
     reader.read_lines('#');
     EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_libsvm_model_header_classification<label_type>(reader.lines())),
@@ -360,7 +360,7 @@ TYPED_TEST(LIBSVMClassificationModelHeaderParseInvalid, total_sv_and_nr_sv_misma
     using label_type = util::test_parameter_type_at_t<0, TypeParam>;
 
     // parse the LIBSVM model file
-    const std::string filename = PLSSVM_TEST_PATH "/data/model/invalid/total_sv_and_nr_sv_mismatch.libsvm.model";
+    const std::string filename = PLSSVM_TEST_PATH "/data/model/classification/invalid/total_sv_and_nr_sv_mismatch.libsvm.model";
     plssvm::detail::io::file_reader reader{ filename };
     reader.read_lines('#');
     EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_libsvm_model_header_classification<label_type>(reader.lines())),
@@ -372,7 +372,7 @@ TYPED_TEST(LIBSVMClassificationModelHeaderParseInvalid, missing_sv) {
     using label_type = util::test_parameter_type_at_t<0, TypeParam>;
 
     // parse the LIBSVM model file
-    const std::string filename = PLSSVM_TEST_PATH "/data/model/invalid/missing_sv.libsvm.model";
+    const std::string filename = PLSSVM_TEST_PATH "/data/model/classification/invalid/missing_sv.libsvm.model";
     plssvm::detail::io::file_reader reader{ filename };
     reader.read_lines('#');
     EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_libsvm_model_header_classification<label_type>(reader.lines())),
@@ -384,7 +384,7 @@ TYPED_TEST(LIBSVMClassificationModelHeaderParseInvalid, missing_support_vectors)
     using label_type = util::test_parameter_type_at_t<0, TypeParam>;
 
     // parse the LIBSVM model file
-    const std::string filename = PLSSVM_TEST_PATH "/data/model/invalid/missing_support_vectors.libsvm.model";
+    const std::string filename = PLSSVM_TEST_PATH "/data/model/classification/invalid/missing_support_vectors.libsvm.model";
     plssvm::detail::io::file_reader reader{ filename };
     reader.read_lines('#');
     EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_libsvm_model_header_classification<label_type>(reader.lines())),
@@ -396,7 +396,7 @@ TYPED_TEST(LIBSVMClassificationModelHeaderParseInvalid, same_class_multiple_time
     using label_type = util::test_parameter_type_at_t<0, TypeParam>;
 
     // parse the LIBSVM model file
-    const std::string filename = PLSSVM_TEST_PATH "/data/model/invalid/same_class_multiple_times.libsvm.model";
+    const std::string filename = PLSSVM_TEST_PATH "/data/model/classification/invalid/same_class_multiple_times.libsvm.model";
     plssvm::detail::io::file_reader reader{ filename };
     reader.read_lines('#');
     EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_libsvm_model_header_classification<label_type>(reader.lines())),

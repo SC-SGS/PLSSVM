@@ -38,7 +38,7 @@ class LIBSVMClassificationModelDataParseValid : public ::testing::Test,
 
     void SetUp() override {
         // create file used in this test fixture by instantiating the template file
-        const std::string template_filename = fmt::format(PLSSVM_TEST_PATH "/data/model/6x4_{}_{}_TEMPLATE.libsvm.model", util::get_num_classes<fixture_label_type>(), fixture_classification);
+        const std::string template_filename = fmt::format(PLSSVM_TEST_PATH "/data/model/classification/6x4_{}_{}_TEMPLATE.libsvm.model", util::get_num_classes<fixture_label_type>(), fixture_classification);
         util::instantiate_template_file<fixture_label_type>(template_filename, this->filename);
     }
 
