@@ -25,7 +25,7 @@
 #include "tests/custom_test_macros.hpp"  // EXPECT_THROW_WHAT, EXPECT_INCLUSIVE_RANGE
 #include "tests/naming.hpp"              // naming::parameter_definition_to_name
 #include "tests/svm/mock_csvr.hpp"       // mock_csvr
-#include "tests/types_to_test.hpp"       // util::label_type_classification_type_gtest
+#include "tests/types_to_test.hpp"       // util::regression_label_type_classification_type_gtest
 #include "tests/utility.hpp"             // util::{redirect_output, temporary_file, instantiate_template_file, generate_random_matrix, get_correct_data_file_labels}
 
 #include "gmock/gmock.h"  // EXPECT_CALL, EXPECT_THAT, ::testing::{An, Between, Return, HasSubstr}

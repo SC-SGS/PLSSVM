@@ -18,7 +18,7 @@
 
 #include "tests/custom_test_macros.hpp"  // EXPECT_FLOATING_POINT_MATRIX_EQ, EXPECT_FLOATING_POINT_MATRIX_NEAR, EXPECT_FLOATING_POINT_NEAR, EXPECT_THROW_WHAT
 #include "tests/naming.hpp"              // naming::test_parameter_to_name
-#include "tests/types_to_test.hpp"       // util::{regression_label_type_gtest, label_type_layout_type_gtest, test_parameter_type_at_t, test_parameter_value_at_v}
+#include "tests/types_to_test.hpp"       // util::{regression_label_type_gtest, regression_label_type_layout_type_gtest, test_parameter_type_at_t, test_parameter_value_at_v}
 #include "tests/utility.hpp"             // util::{redirect_output, temporary_file, instantiate_template_file, get_distinct_label, get_correct_data_file_labels, generate_specific_matrix, scale}
 
 #include "gtest/gtest.h"  // TYPED_TEST, TYPED_TEST_SUITE, EXPECT_EQ, EXPECT_TRUE, EXPECT_FALSE; ASSERT_TRUE, FAIL, ::testing::{Test, StaticAssertTypeEq}

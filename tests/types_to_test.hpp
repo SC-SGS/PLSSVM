@@ -525,41 +525,45 @@ using solver_and_kernel_function_and_classification_type_list = cartesian_value_
 /// A list of all supported real types based on `plssvm::detail::supported_real_types`.
 using real_type_list = cartesian_type_product_t<plssvm::detail::supported_real_types>;
 
-/// A list of all supported label types based on `plssvm::detail::supported_label_types`.
 #if defined(PLSSVM_TEST_WITH_REDUCED_LABEL_TYPES)
-using classification_label_type_list = cartesian_type_product_t<plssvm::detail::supported_label_types_classification_reduced>;
-using regression_label_type_list = cartesian_type_product_t<plssvm::detail::supported_label_types_regression_reduced>;
+using classification_label_types = plssvm::detail::supported_label_types_classification_reduced;
+using regression_label_types = plssvm::detail::supported_label_types_regression_reduced;
 #else
-using classification_label_type_list = cartesian_type_product_t<plssvm::detail::supported_label_types_classification>;
-using regression_label_type_list = cartesian_type_product_t<plssvm::detail::supported_label_types_regression>;
+using classification_label_types = plssvm::detail::supported_label_types_classification;
+using regression_label_types = plssvm::detail::supported_label_types_regression;
 #endif
+/// A list of all supported classification label types. Maybe reduced based on `PLSSVM_TEST_WITH_REDUCED_LABEL_TYPES`.
+using classification_label_type_list = cartesian_type_product_t<classification_label_types>;
+/// A list of all supported regression label types. Maybe reduced based on `PLSSVM_TEST_WITH_REDUCED_LABEL_TYPES`.
+using regression_label_type_list = cartesian_type_product_t<regression_label_types>;
+/// A list of all supported label types.
+using all_label_type_list = cartesian_type_product_t<plssvm::detail::supported_label_types_classification>;  // classification contains more possible label types than regression
 
-// TODO: hardcoded classification_label_type_list
 /// A list of all supported real types wrapped in a Google test type.
 using real_type_gtest = combine_test_parameters_gtest_t<real_type_list>;
-/// A list of all supported label types (currently arithmetic types and `std::string`) wrapped in a Google test type.
-using label_type_gtest = combine_test_parameters_gtest_t<classification_label_type_list>;
+/// A list of all supported label types (for classification and regression) wrapped in a Google test type.
+using label_type_gtest = combine_test_parameters_gtest_t<all_label_type_list>;
 /// A list of a combination of all supported real types and layout types wrapped in a Google test type.
 using real_type_layout_type_gtest = combine_test_parameters_gtest_t<real_type_list, layout_type_list>;
-/// A list of a combination of all supported label types and classification types wrapped in a Google test type.
-using label_type_classification_type_gtest = combine_test_parameters_gtest_t<classification_label_type_list, classification_type_list>;
-/// A list of a combination of all supported label types and layout types wrapped in a Google test type.
-using label_type_layout_type_gtest = combine_test_parameters_gtest_t<classification_label_type_list, layout_type_list>;
-/// A list of a combination of all supported label types, kernel function and classification types wrapped in a Google test type.
-using label_type_kernel_function_and_classification_type_gtest = combine_test_parameters_gtest_t<classification_label_type_list, kernel_function_and_classification_type_list>;
-/// A list of a combination of all supported label types and classification, kernel function, and solver types wrapped in a Google test type.
-using label_type_solver_and_kernel_function_and_classification_type_gtest = combine_test_parameters_gtest_t<classification_label_type_list, solver_and_kernel_function_and_classification_type_list>;
 
+/// A list of all supported classification label types (currently arithmetic types and `std::string`) wrapped in a Google test type.
 using classification_label_type_gtest = combine_test_parameters_gtest_t<classification_label_type_list>;
+/// A list of a combination of all supported classification label types and layout types wrapped in a Google test type.
 using classification_label_type_layout_type_gtest = combine_test_parameters_gtest_t<classification_label_type_list, layout_type_list>;
+/// A list of a combination of all supported classification label types and classification types wrapped in a Google test type.
 using classification_label_type_classification_type_gtest = combine_test_parameters_gtest_t<classification_label_type_list, classification_type_list>;
+/// A list of a combination of all supported classification label types and solver, kernel function, and classification types wrapped in a Google test type.
 using classification_label_type_solver_and_kernel_function_and_classification_type_gtest = combine_test_parameters_gtest_t<classification_label_type_list, solver_and_kernel_function_and_classification_type_list>;
-using classification_label_type_classification_type_gtest = combine_test_parameters_gtest_t<classification_label_type_list, classification_type_list>;
+/// A list of a combination of all supported classification label types and kernel function, and classification types wrapped in a Google test type.
 using classification_label_type_kernel_function_and_classification_type_gtest = combine_test_parameters_gtest_t<classification_label_type_list, kernel_function_and_classification_type_list>;
 
+/// A list of all supported label types for regression (currently arithmetic types) wrapped in a Google test type.
 using regression_label_type_gtest = combine_test_parameters_gtest_t<regression_label_type_list>;
+/// A list of a combination of all supported regression label types and layout types wrapped in a Google test type.
 using regression_label_type_layout_type_gtest = combine_test_parameters_gtest_t<regression_label_type_list, layout_type_list>;
+/// A list of a combination of all supported regression label types and solver and kernel function types wrapped in a Google test type.
 using regression_label_type_solver_and_kernel_function_type_gtest = combine_test_parameters_gtest_t<regression_label_type_list, solver_and_kernel_function_type_list>;
+/// A list of a combination of all supported regression label types and kernel function types wrapped in a Google test type.
 using regression_label_type_kernel_function_type_gtest = combine_test_parameters_gtest_t<regression_label_type_list, kernel_function_type_list>;
 
 }  // namespace util
