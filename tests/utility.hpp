@@ -675,7 +675,7 @@ template <typename T, plssvm::layout_type layout>
  * @return an instance of type @p T (`[[nodiscard]]`)
  */
 template <typename T, typename Tuple, size_t... Is>
-[[nodiscard]] inline T construct_from_tuple(const plssvm::parameter &params, Tuple &&tuple, std::index_sequence<Is...>) {
+[[nodiscard]] inline T construct_from_tuple(const plssvm::parameter &params, [[maybe_unused]] Tuple tuple, std::index_sequence<Is...>) {
     return T{ params, (std::get<Is>(tuple).first = std::get<Is>(tuple).second)... };
 }
 
@@ -689,9 +689,9 @@ template <typename T, typename Tuple, size_t... Is>
  * @return an instance of type @p T (`[[nodiscard]]`)
  */
 template <typename T, typename Tuple>
-[[nodiscard]] inline T construct_from_tuple(const plssvm::parameter &params, Tuple &&tuple) {
+[[nodiscard]] inline T construct_from_tuple(const plssvm::parameter &params, Tuple tuple) {
     return construct_from_tuple<T>(params,
-                                   std::forward<Tuple>(tuple),
+                                   tuple,
                                    std::make_index_sequence<std::tuple_size<std::decay_t<Tuple>>::value>{});
 }
 
@@ -705,7 +705,7 @@ template <typename T, typename Tuple>
  * @return an instance of type @p T (`[[nodiscard]]`)
  */
 template <typename T, typename Tuple, size_t... Is>
-[[nodiscard]] inline T construct_from_tuple(Tuple &&tuple, std::index_sequence<Is...>) {
+[[nodiscard]] inline T construct_from_tuple([[maybe_unused]] Tuple tuple, std::index_sequence<Is...>) {
     return T{ (std::get<Is>(tuple).first = std::get<Is>(tuple).second)... };
 }
 
@@ -718,8 +718,8 @@ template <typename T, typename Tuple, size_t... Is>
  * @return an instance of type @p T (`[[nodiscard]]`)
  */
 template <typename T, typename Tuple>
-[[nodiscard]] inline T construct_from_tuple(Tuple &&tuple) {
-    return construct_from_tuple<T>(std::forward<Tuple>(tuple),
+[[nodiscard]] inline T construct_from_tuple(Tuple tuple) {
+    return construct_from_tuple<T>(tuple,
                                    std::make_index_sequence<std::tuple_size<std::decay_t<Tuple>>::value>{});
 }
 
