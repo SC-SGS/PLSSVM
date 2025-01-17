@@ -288,7 +288,7 @@ if (TARGET coverage)
 endif ()
 
 # add tests for the available backends
-#add_subdirectory(backends)
+add_subdirectory(backends)
 
 # add tests for the hardware samplers
 if (PLSSVM_ENABLE_PERFORMANCE_TRACKING)

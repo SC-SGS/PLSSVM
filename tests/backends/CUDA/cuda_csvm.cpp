@@ -16,7 +16,9 @@
 #include "plssvm/target_platforms.hpp"          // plssvm::target_platform
 
 #include "tests/backends/CUDA/mock_cuda_csvm.hpp"
-#include "tests/backends/generic_csvm_tests.hpp"      // generic CSVM tests to instantiate
+#include "tests/backends/generic_csvc_tests.hpp"      // generic C-SVC tests to instantiate
+#include "tests/backends/generic_csvm_tests.hpp"      // generic C-SVM tests to instantiate
+#include "tests/backends/generic_csvr_tests.hpp"      // generic C-SVR tests to instantiate
 #include "tests/backends/generic_gpu_csvm_tests.hpp"  // generic GPU CSVM tests to instantiate
 #include "tests/custom_test_macros.hpp"               // EXPECT_THROW_WHAT
 #include "tests/naming.hpp"                           // naming::test_parameter_to_name
@@ -30,81 +32,164 @@
 class CUDACSVM : public ::testing::Test,
                  private util::redirect_output<> { };
 
+class CUDACSVC : public CUDACSVM { };
+
 // check whether the constructor correctly fails when using an incompatible target platform
-TEST_F(CUDACSVM, construct_parameter) {
+TEST_F(CUDACSVC, construct_parameter) {
 #if defined(PLSSVM_HAS_NVIDIA_TARGET)
     // the automatic target platform must always be available
-    EXPECT_NO_THROW(plssvm::cuda::csvm{ plssvm::parameter{} });
+    EXPECT_NO_THROW(plssvm::cuda::csvc{ plssvm::parameter{} });
 #else
-    EXPECT_THROW_WHAT(plssvm::cuda::csvm{ plssvm::parameter{} },
+    EXPECT_THROW_WHAT(plssvm::cuda::csvc{ plssvm::parameter{} },
                       plssvm::cuda::backend_exception,
                       "Requested target platform 'gpu_nvidia' that hasn't been enabled using PLSSVM_TARGET_PLATFORMS!");
 #endif
 }
 
-TEST_F(CUDACSVM, construct_target_and_parameter) {
+TEST_F(CUDACSVC, construct_target_and_parameter) {
     // create parameter struct
     const plssvm::parameter params{};
 
 #if defined(PLSSVM_HAS_NVIDIA_TARGET)
     // only automatic or gpu_nvidia are allowed as target platform for the CUDA backend
-    EXPECT_NO_THROW((plssvm::cuda::csvm{ plssvm::target_platform::automatic, params }));
-    EXPECT_NO_THROW((plssvm::cuda::csvm{ plssvm::target_platform::gpu_nvidia, params }));
+    EXPECT_NO_THROW((plssvm::cuda::csvc{ plssvm::target_platform::automatic, params }));
+    EXPECT_NO_THROW((plssvm::cuda::csvc{ plssvm::target_platform::gpu_nvidia, params }));
 #else
-    EXPECT_THROW_WHAT((plssvm::cuda::csvm{ plssvm::target_platform::automatic, params }),
+    EXPECT_THROW_WHAT((plssvm::cuda::csvc{ plssvm::target_platform::automatic, params }),
                       plssvm::cuda::backend_exception,
                       "Requested target platform 'gpu_nvidia' that hasn't been enabled using PLSSVM_TARGET_PLATFORMS!");
-    EXPECT_THROW_WHAT((plssvm::cuda::csvm{ plssvm::target_platform::gpu_nvidia, params }),
+    EXPECT_THROW_WHAT((plssvm::cuda::csvc{ plssvm::target_platform::gpu_nvidia, params }),
                       plssvm::cuda::backend_exception,
                       "Requested target platform 'gpu_nvidia' that hasn't been enabled using PLSSVM_TARGET_PLATFORMS!");
 #endif
 
     // all other target platforms must throw
-    EXPECT_THROW_WHAT((plssvm::cuda::csvm{ plssvm::target_platform::cpu, params }),
+    EXPECT_THROW_WHAT((plssvm::cuda::csvc{ plssvm::target_platform::cpu, params }),
                       plssvm::cuda::backend_exception,
                       "Invalid target platform 'cpu' for the CUDA backend!");
-    EXPECT_THROW_WHAT((plssvm::cuda::csvm{ plssvm::target_platform::gpu_amd, params }),
+    EXPECT_THROW_WHAT((plssvm::cuda::csvc{ plssvm::target_platform::gpu_amd, params }),
                       plssvm::cuda::backend_exception,
                       "Invalid target platform 'gpu_amd' for the CUDA backend!");
-    EXPECT_THROW_WHAT((plssvm::cuda::csvm{ plssvm::target_platform::gpu_intel, params }),
+    EXPECT_THROW_WHAT((plssvm::cuda::csvc{ plssvm::target_platform::gpu_intel, params }),
                       plssvm::cuda::backend_exception,
                       "Invalid target platform 'gpu_intel' for the CUDA backend!");
 }
 
-TEST_F(CUDACSVM, construct_named_args) {
+TEST_F(CUDACSVC, construct_named_args) {
 #if defined(PLSSVM_HAS_NVIDIA_TARGET)
     // only automatic or gpu_nvidia are allowed as target platform for the CUDA backend
-    EXPECT_NO_THROW((plssvm::cuda::csvm{ plssvm::kernel_type = plssvm::kernel_function_type::linear, plssvm::cost = 2.0 }));
-    EXPECT_NO_THROW((plssvm::cuda::csvm{ plssvm::cost = 2.0 }));
+    EXPECT_NO_THROW((plssvm::cuda::csvc{ plssvm::kernel_type = plssvm::kernel_function_type::linear, plssvm::cost = 2.0 }));
+    EXPECT_NO_THROW((plssvm::cuda::csvc{ plssvm::cost = 2.0 }));
 #else
-    EXPECT_THROW_WHAT((plssvm::cuda::csvm{ plssvm::kernel_type = plssvm::kernel_function_type::linear, plssvm::cost = 2.0 }),
+    EXPECT_THROW_WHAT((plssvm::cuda::csvc{ plssvm::kernel_type = plssvm::kernel_function_type::linear, plssvm::cost = 2.0 }),
                       plssvm::cuda::backend_exception,
                       "Requested target platform 'gpu_nvidia' that hasn't been enabled using PLSSVM_TARGET_PLATFORMS!");
 #endif
 }
 
-TEST_F(CUDACSVM, construct_target_and_named_args) {
+TEST_F(CUDACSVC, construct_target_and_named_args) {
 #if defined(PLSSVM_HAS_NVIDIA_TARGET)
     // only automatic or gpu_nvidia are allowed as target platform for the CUDA backend
-    EXPECT_NO_THROW((plssvm::cuda::csvm{ plssvm::target_platform::automatic, plssvm::kernel_type = plssvm::kernel_function_type::linear, plssvm::cost = 2.0 }));
-    EXPECT_NO_THROW((plssvm::cuda::csvm{ plssvm::target_platform::gpu_nvidia, plssvm::cost = 2.0 }));
+    EXPECT_NO_THROW((plssvm::cuda::csvc{ plssvm::target_platform::automatic, plssvm::kernel_type = plssvm::kernel_function_type::linear, plssvm::cost = 2.0 }));
+    EXPECT_NO_THROW((plssvm::cuda::csvc{ plssvm::target_platform::gpu_nvidia, plssvm::cost = 2.0 }));
 #else
-    EXPECT_THROW_WHAT((plssvm::cuda::csvm{ plssvm::target_platform::automatic, plssvm::kernel_type = plssvm::kernel_function_type::linear, plssvm::cost = 2.0 }),
+    EXPECT_THROW_WHAT((plssvm::cuda::csvc{ plssvm::target_platform::automatic, plssvm::kernel_type = plssvm::kernel_function_type::linear, plssvm::cost = 2.0 }),
                       plssvm::cuda::backend_exception,
                       "Requested target platform 'gpu_nvidia' that hasn't been enabled using PLSSVM_TARGET_PLATFORMS!");
-    EXPECT_THROW_WHAT((plssvm::cuda::csvm{ plssvm::target_platform::gpu_nvidia, plssvm::cost = 2.0 }),
+    EXPECT_THROW_WHAT((plssvm::cuda::csvc{ plssvm::target_platform::gpu_nvidia, plssvm::cost = 2.0 }),
                       plssvm::cuda::backend_exception,
                       "Requested target platform 'gpu_nvidia' that hasn't been enabled using PLSSVM_TARGET_PLATFORMS!");
 #endif
 
     // all other target platforms must throw
-    EXPECT_THROW_WHAT((plssvm::cuda::csvm{ plssvm::target_platform::cpu, plssvm::cost = 2.0 }),
+    EXPECT_THROW_WHAT((plssvm::cuda::csvc{ plssvm::target_platform::cpu, plssvm::cost = 2.0 }),
                       plssvm::cuda::backend_exception,
                       "Invalid target platform 'cpu' for the CUDA backend!");
-    EXPECT_THROW_WHAT((plssvm::cuda::csvm{ plssvm::target_platform::gpu_amd, plssvm::cost = 2.0 }),
+    EXPECT_THROW_WHAT((plssvm::cuda::csvc{ plssvm::target_platform::gpu_amd, plssvm::cost = 2.0 }),
                       plssvm::cuda::backend_exception,
                       "Invalid target platform 'gpu_amd' for the CUDA backend!");
-    EXPECT_THROW_WHAT((plssvm::cuda::csvm{ plssvm::target_platform::gpu_intel, plssvm::cost = 2.0 }),
+    EXPECT_THROW_WHAT((plssvm::cuda::csvc{ plssvm::target_platform::gpu_intel, plssvm::cost = 2.0 }),
+                      plssvm::cuda::backend_exception,
+                      "Invalid target platform 'gpu_intel' for the CUDA backend!");
+}
+
+class CUDACSVR : public CUDACSVM { };
+
+// check whether the constructor correctly fails when using an incompatible target platform
+TEST_F(CUDACSVR, construct_parameter) {
+#if defined(PLSSVM_HAS_NVIDIA_TARGET)
+    // the automatic target platform must always be available
+    EXPECT_NO_THROW(plssvm::cuda::csvr{ plssvm::parameter{} });
+#else
+    EXPECT_THROW_WHAT(plssvm::cuda::csvr{ plssvm::parameter{} },
+                      plssvm::cuda::backend_exception,
+                      "Requested target platform 'gpu_nvidia' that hasn't been enabled using PLSSVM_TARGET_PLATFORMS!");
+#endif
+}
+
+TEST_F(CUDACSVR, construct_target_and_parameter) {
+    // create parameter struct
+    const plssvm::parameter params{};
+
+#if defined(PLSSVM_HAS_NVIDIA_TARGET)
+    // only automatic or gpu_nvidia are allowed as target platform for the CUDA backend
+    EXPECT_NO_THROW((plssvm::cuda::csvr{ plssvm::target_platform::automatic, params }));
+    EXPECT_NO_THROW((plssvm::cuda::csvr{ plssvm::target_platform::gpu_nvidia, params }));
+#else
+    EXPECT_THROW_WHAT((plssvm::cuda::csvr{ plssvm::target_platform::automatic, params }),
+                      plssvm::cuda::backend_exception,
+                      "Requested target platform 'gpu_nvidia' that hasn't been enabled using PLSSVM_TARGET_PLATFORMS!");
+    EXPECT_THROW_WHAT((plssvm::cuda::csvr{ plssvm::target_platform::gpu_nvidia, params }),
+                      plssvm::cuda::backend_exception,
+                      "Requested target platform 'gpu_nvidia' that hasn't been enabled using PLSSVM_TARGET_PLATFORMS!");
+#endif
+
+    // all other target platforms must throw
+    EXPECT_THROW_WHAT((plssvm::cuda::csvr{ plssvm::target_platform::cpu, params }),
+                      plssvm::cuda::backend_exception,
+                      "Invalid target platform 'cpu' for the CUDA backend!");
+    EXPECT_THROW_WHAT((plssvm::cuda::csvr{ plssvm::target_platform::gpu_amd, params }),
+                      plssvm::cuda::backend_exception,
+                      "Invalid target platform 'gpu_amd' for the CUDA backend!");
+    EXPECT_THROW_WHAT((plssvm::cuda::csvr{ plssvm::target_platform::gpu_intel, params }),
+                      plssvm::cuda::backend_exception,
+                      "Invalid target platform 'gpu_intel' for the CUDA backend!");
+}
+
+TEST_F(CUDACSVR, construct_named_args) {
+#if defined(PLSSVM_HAS_NVIDIA_TARGET)
+    // only automatic or gpu_nvidia are allowed as target platform for the CUDA backend
+    EXPECT_NO_THROW((plssvm::cuda::csvr{ plssvm::kernel_type = plssvm::kernel_function_type::linear, plssvm::cost = 2.0 }));
+    EXPECT_NO_THROW((plssvm::cuda::csvr{ plssvm::cost = 2.0 }));
+#else
+    EXPECT_THROW_WHAT((plssvm::cuda::csvr{ plssvm::kernel_type = plssvm::kernel_function_type::linear, plssvm::cost = 2.0 }),
+                      plssvm::cuda::backend_exception,
+                      "Requested target platform 'gpu_nvidia' that hasn't been enabled using PLSSVM_TARGET_PLATFORMS!");
+#endif
+}
+
+TEST_F(CUDACSVR, construct_target_and_named_args) {
+#if defined(PLSSVM_HAS_NVIDIA_TARGET)
+    // only automatic or gpu_nvidia are allowed as target platform for the CUDA backend
+    EXPECT_NO_THROW((plssvm::cuda::csvr{ plssvm::target_platform::automatic, plssvm::kernel_type = plssvm::kernel_function_type::linear, plssvm::cost = 2.0 }));
+    EXPECT_NO_THROW((plssvm::cuda::csvr{ plssvm::target_platform::gpu_nvidia, plssvm::cost = 2.0 }));
+#else
+    EXPECT_THROW_WHAT((plssvm::cuda::csvr{ plssvm::target_platform::automatic, plssvm::kernel_type = plssvm::kernel_function_type::linear, plssvm::cost = 2.0 }),
+                      plssvm::cuda::backend_exception,
+                      "Requested target platform 'gpu_nvidia' that hasn't been enabled using PLSSVM_TARGET_PLATFORMS!");
+    EXPECT_THROW_WHAT((plssvm::cuda::csvr{ plssvm::target_platform::gpu_nvidia, plssvm::cost = 2.0 }),
+                      plssvm::cuda::backend_exception,
+                      "Requested target platform 'gpu_nvidia' that hasn't been enabled using PLSSVM_TARGET_PLATFORMS!");
+#endif
+
+    // all other target platforms must throw
+    EXPECT_THROW_WHAT((plssvm::cuda::csvr{ plssvm::target_platform::cpu, plssvm::cost = 2.0 }),
+                      plssvm::cuda::backend_exception,
+                      "Invalid target platform 'cpu' for the CUDA backend!");
+    EXPECT_THROW_WHAT((plssvm::cuda::csvr{ plssvm::target_platform::gpu_amd, plssvm::cost = 2.0 }),
+                      plssvm::cuda::backend_exception,
+                      "Invalid target platform 'gpu_amd' for the CUDA backend!");
+    EXPECT_THROW_WHAT((plssvm::cuda::csvr{ plssvm::target_platform::gpu_intel, plssvm::cost = 2.0 }),
                       plssvm::cuda::backend_exception,
                       "Invalid target platform 'gpu_intel' for the CUDA backend!");
 }
@@ -113,30 +198,45 @@ template <bool mock_grid_size>
 struct cuda_csvm_test_type {
     using mock_csvm_type = mock_cuda_csvm<mock_grid_size>;
     using csvm_type = plssvm::cuda::csvm;
+    using csvc_type = plssvm::cuda::csvc;
+    using csvr_type = plssvm::cuda::csvr;
     using device_ptr_type = typename csvm_type::device_ptr_type;
-    inline constexpr static auto additional_arguments = std::make_tuple();
+    constexpr static auto additional_arguments = std::make_tuple();
 };
 
+// a tuple containing the test structs
 using cuda_csvm_test_tuple = std::tuple<cuda_csvm_test_type<false>>;
-using cuda_csvm_test_label_type_list = util::cartesian_type_product_t<cuda_csvm_test_tuple, plssvm::detail::supported_label_types>;
-using cuda_csvm_test_type_list = util::cartesian_type_product_t<cuda_csvm_test_tuple>;
 
 // the tests used in the instantiated GTest test suites
+// general test types
+using cuda_csvm_test_type_list = util::cartesian_type_product_t<cuda_csvm_test_tuple>;
 using cuda_csvm_test_type_gtest = util::combine_test_parameters_gtest_t<cuda_csvm_test_type_list>;
 using cuda_solver_type_gtest = util::combine_test_parameters_gtest_t<cuda_csvm_test_type_list, util::solver_type_list>;
 using cuda_kernel_function_type_gtest = util::combine_test_parameters_gtest_t<cuda_csvm_test_type_list, util::kernel_function_type_list>;
 using cuda_solver_and_kernel_function_type_gtest = util::combine_test_parameters_gtest_t<cuda_csvm_test_type_list, util::solver_and_kernel_function_type_list>;
-using cuda_label_type_kernel_function_and_classification_type_gtest = util::combine_test_parameters_gtest_t<cuda_csvm_test_label_type_list, util::kernel_function_and_classification_type_list>;
-using cuda_label_type_solver_kernel_function_and_classification_type_gtest = util::combine_test_parameters_gtest_t<cuda_csvm_test_label_type_list, util::solver_and_kernel_function_and_classification_type_list>;
+// C-SVC specific test types
+using cuda_csvm_test_classification_label_type_list = util::cartesian_type_product_t<cuda_csvm_test_tuple, util::classification_label_types>;
+using cuda_classification_label_type_kernel_function_and_classification_type_gtest = util::combine_test_parameters_gtest_t<cuda_csvm_test_classification_label_type_list, util::kernel_function_and_classification_type_list>;
+using cuda_classification_label_type_solver_kernel_function_and_classification_type_gtest = util::combine_test_parameters_gtest_t<cuda_csvm_test_classification_label_type_list, util::solver_and_kernel_function_and_classification_type_list>;
+// C-SVR specific test types
+using cuda_csvm_test_regression_label_type_list = util::cartesian_type_product_t<cuda_csvm_test_tuple, util::regression_label_types>;
+using cuda_regression_label_type_and_kernel_function_type_gtest = util::combine_test_parameters_gtest_t<cuda_csvm_test_regression_label_type_list, util::kernel_function_type_list>;
+using cuda_regression_label_type_solver_and_kernel_function_type_gtest = util::combine_test_parameters_gtest_t<cuda_csvm_test_regression_label_type_list, util::solver_and_kernel_function_type_list>;
 
 // instantiate type-parameterized tests
-// generic CSVM tests
+// generic C-SVM tests
 INSTANTIATE_TYPED_TEST_SUITE_P(CUDACSVM, GenericCSVM, cuda_csvm_test_type_gtest, naming::test_parameter_to_name);
 INSTANTIATE_TYPED_TEST_SUITE_P(CUDACSVM, GenericCSVMKernelFunction, cuda_kernel_function_type_gtest, naming::test_parameter_to_name);
 INSTANTIATE_TYPED_TEST_SUITE_P(CUDACSVM, GenericCSVMSolver, cuda_solver_type_gtest, naming::test_parameter_to_name);
 INSTANTIATE_TYPED_TEST_SUITE_P(CUDACSVM, GenericCSVMSolverKernelFunction, cuda_solver_and_kernel_function_type_gtest, naming::test_parameter_to_name);
-INSTANTIATE_TYPED_TEST_SUITE_P(CUDACSVM, GenericCSVMKernelFunctionClassification, cuda_label_type_kernel_function_and_classification_type_gtest, naming::test_parameter_to_name);
-INSTANTIATE_TYPED_TEST_SUITE_P(CUDACSVM, GenericCSVMSolverKernelFunctionClassification, cuda_label_type_solver_kernel_function_and_classification_type_gtest, naming::test_parameter_to_name);
+// generic C-SVC tests
+INSTANTIATE_TYPED_TEST_SUITE_P(CUDACSVC, GenericCSVC, cuda_csvm_test_type_gtest, naming::test_parameter_to_name);
+INSTANTIATE_TYPED_TEST_SUITE_P(CUDACSVC, GenericCSVCKernelFunctionClassification, cuda_classification_label_type_kernel_function_and_classification_type_gtest, naming::test_parameter_to_name);
+INSTANTIATE_TYPED_TEST_SUITE_P(CUDACSVC, GenericCSVCSolverKernelFunctionClassification, cuda_classification_label_type_solver_kernel_function_and_classification_type_gtest, naming::test_parameter_to_name);
+// generic C-SVR tests
+INSTANTIATE_TYPED_TEST_SUITE_P(CUDACSVR, GenericCSVR, cuda_csvm_test_type_gtest, naming::test_parameter_to_name);
+INSTANTIATE_TYPED_TEST_SUITE_P(CUDACSVR, GenericCSVRKernelFunction, cuda_regression_label_type_and_kernel_function_type_gtest, naming::test_parameter_to_name);
+INSTANTIATE_TYPED_TEST_SUITE_P(CUDACSVR, GenericCSVRSolverKernelFunction, cuda_regression_label_type_solver_and_kernel_function_type_gtest, naming::test_parameter_to_name);
 
 // generic CSVM DeathTests
 INSTANTIATE_TYPED_TEST_SUITE_P(CUDACSVMDeathTest, GenericCSVMDeathTest, cuda_csvm_test_type_gtest, naming::test_parameter_to_name);

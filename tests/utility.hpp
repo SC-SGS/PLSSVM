@@ -15,9 +15,11 @@
 
 #include "plssvm/constants.hpp"                         // plssvm::real_type
 #include "plssvm/data_set/classification_data_set.hpp"  // plssvm::classification_data_set
+#include "plssvm/data_set/regression_data_set.hpp"      // plssvm::regression_data_set
 #include "plssvm/detail/arithmetic_type_name.hpp"       // plssvm::detail::arithmetic_type_name_v
 #include "plssvm/detail/string_utility.hpp"             // plssvm::detail::replace_all
 #include "plssvm/detail/type_traits.hpp"                // PLSSVM_REQUIRES, plssvm::detail::always_false_v
+#include "plssvm/detail/utility.hpp"                    // plssvm::detail::unreachable
 #include "plssvm/kernel_function_types.hpp"             // plssvm::kernel_function_type
 #include "plssvm/matrix.hpp"                            // plssvm::layout_type, plssvm::matrix
 #include "plssvm/parameter.hpp"                         // plssvm::parameter
@@ -561,14 +563,14 @@ template <typename matrix_type>
 }
 
 /**
- * @brief Construct an artificial data set that is trivially solvable and should always yield 100% accuracy.
- * @details Up to three classes are supported. The classes are placed on the three coordinate axis with small random pertubations.
+ * @brief Construct an artificial classification data set that is trivially solvable and should always yield 100% accuracy.
+ * @details Up to three classes are supported. The classes are placed on the three coordinate axis with small random perturbations.
  * @tparam label_type the label type
  * @param[in] num_data_points the number of data points **per** class
- * @return the trivially solvable data set (`[[nodiscard]]`)
+ * @return the trivially solvable classification data set (`[[nodiscard]]`)
  */
 template <typename label_type>
-[[nodiscard]] inline plssvm::classification_data_set<label_type> generate_trivially_solvable_data_set(const std::size_t num_data_points = std::size_t{ 20 }) {
+[[nodiscard]] inline plssvm::classification_data_set<label_type> generate_trivially_solvable_classification_data_set(const std::size_t num_data_points = std::size_t{ 20 }) {
     const std::vector<label_type> different_labels = util::get_distinct_label<label_type>();
     const std::size_t num_labels = std::min(different_labels.size(), std::size_t{ 3 });  // at most 3 labels permitted in these tests
 
@@ -594,13 +596,42 @@ template <typename label_type>
                 case 2:
                     data.push_back({ plssvm::real_type{ 0.01 }, plssvm::real_type{ 0.01 }, plssvm::real_type{ 10.0 } + dist(gen) });
                     break;
+                default:
+                    plssvm::detail::unreachable();
+                    break;
             }
 
             label.emplace_back(different_labels[l]);
         }
     }
 
-    return plssvm::classification_data_set{ std::move(data), std::move(label) };
+    return plssvm::classification_data_set<label_type>{ std::move(data), std::move(label) };
+}
+
+/**
+ * @brief Construct an artificial regression data set that is trivially solvable and should always yield 100% accuracy.
+ * @tparam label_type the label type
+ * @param[in] num_data_points the total number of data points
+ * @return the trivially solvable regression data set (`[[nodiscard]]`)
+ */
+template <typename label_type>
+[[nodiscard]] inline plssvm::regression_data_set<label_type> generate_trivially_solvable_regression_data_set(const std::size_t num_data_points = std::size_t{ 20 }) {
+    // the data
+    std::vector<std::vector<plssvm::real_type>> data{};
+    data.reserve(num_data_points);
+    std::vector<label_type> label{};
+    label.reserve(num_data_points);
+
+    static std::random_device device;
+    static std::mt19937 gen(device());
+    std::uniform_real_distribution<plssvm::real_type> dist(plssvm::real_type{ 0.0001 }, plssvm::real_type{ 0.01 });
+
+    for (std::size_t i = 0; i < num_data_points; ++i) {
+        data.push_back({ static_cast<plssvm::real_type>(i) + dist(gen), static_cast<plssvm::real_type>(i) + dist(gen) });
+        label.push_back(static_cast<label_type>(i));
+    }
+
+    return plssvm::regression_data_set<label_type>{ std::move(data), std::move(label) };
 }
 
 /**
