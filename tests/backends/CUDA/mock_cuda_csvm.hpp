@@ -35,8 +35,8 @@ class mock_cuda_csvm final : public plssvm::cuda::csvm {
 
     template <typename... Args>
     explicit mock_cuda_csvm(Args &&...args) :
-        plssvm::csvm{ args... },
-        base_type{ std::forward<Args>(args)... } {
+        plssvm::csvm{ std::forward<Args>(args)... },
+        base_type{} {
         this->fake_functions();
     }
 
