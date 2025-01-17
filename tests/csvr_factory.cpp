@@ -19,14 +19,14 @@
 #include "plssvm/target_platforms.hpp"                    // plssvm::target_platform
 
 #include "tests/custom_test_macros.hpp"  // EXPECT_THROW_WHAT_MATCHER
+#include "tests/naming.hpp"              // naming::test_parameter_to_name
 #include "tests/types_to_test.hpp"       // util::{combine_test_parameters_gtest_t, cartesian_type_product_t, test_parameter_type_at_t}
 #include "tests/utility.hpp"             // util::redirect_output
 
 #include "fmt/format.h"   // fmt::format
 #include "gtest/gtest.h"  // TYPED_TEST_SUITE, TYPED_TEST, ::testing::{Test, Types, internal::GetTypeName}
 
-#include <string>  // std::string
-#include <tuple>   // std::tuple, std::ignore
+#include <tuple>  // std::tuple, std::ignore
 
 namespace util {
 
@@ -40,36 +40,6 @@ using sycl_csvr_types_gtest = util::combine_test_parameters_gtest_t<util::cartes
 
 }  // namespace util
 
-namespace testing::internal {  // dirty hack to have type names for incomplete types
-
-template <>
-std::string GetTypeName<util::test_parameter<util::type_list<plssvm::openmp::csvr>, util::value_list<>>>() { return "openmp_csvr"; }
-
-template <>
-std::string GetTypeName<util::test_parameter<util::type_list<plssvm::hpx::csvr>, util::value_list<>>>() { return "hpx_csvr"; }
-
-template <>
-std::string GetTypeName<util::test_parameter<util::type_list<plssvm::stdpar::csvr>, util::value_list<>>>() { return "stdpar_csvr"; }
-
-template <>
-std::string GetTypeName<util::test_parameter<util::type_list<plssvm::cuda::csvr>, util::value_list<>>>() { return "cuda_csvr"; }
-
-template <>
-std::string GetTypeName<util::test_parameter<util::type_list<plssvm::hip::csvr>, util::value_list<>>>() { return "hip_csvr"; }
-
-template <>
-std::string GetTypeName<util::test_parameter<util::type_list<plssvm::opencl::csvr>, util::value_list<>>>() { return "opencl_csvr"; }
-
-template <>
-std::string GetTypeName<util::test_parameter<util::type_list<plssvm::dpcpp::csvr>, util::value_list<>>>() { return "sycl_dpcpp_csvr"; }
-
-template <>
-std::string GetTypeName<util::test_parameter<util::type_list<plssvm::adaptivecpp::csvr>, util::value_list<>>>() { return "sycl_adaptivecpp_csvr"; }
-
-template <>
-std::string GetTypeName<util::test_parameter<util::type_list<plssvm::kokkos::csvr>, util::value_list<>>>() { return "kokkos_csvr"; }
-}  // namespace testing::internal
-
 template <typename T>
 class CSVRFactory : public ::testing::Test,
                     private util::redirect_output<> {
@@ -77,7 +47,7 @@ class CSVRFactory : public ::testing::Test,
     using fixture_backend_type = util::test_parameter_type_at_t<0, T>;
 };
 
-TYPED_TEST_SUITE(CSVRFactory, util::csvr_types_gtest);
+TYPED_TEST_SUITE(CSVRFactory, util::csvr_types_gtest, naming::test_parameter_to_name);
 
 TYPED_TEST(CSVRFactory, factory_backend) {
     using backend_type = typename TestFixture::fixture_backend_type;

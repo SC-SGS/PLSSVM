@@ -145,7 +145,43 @@ PLSSVM_CREATE_HAS_MEMBER_VARIABLE_TYPE_TRAIT(space)
  */
 template <typename T>
 [[nodiscard]] inline std::string type_name() {
-    if constexpr (plssvm::detail::is_map_v<T>) {
+    if constexpr (std::is_same_v<T, plssvm::openmp::csvc>) {
+        return "openmp_csvc";
+    } else if constexpr (std::is_same_v<T, plssvm::openmp::csvr>) {
+        return "openmp_csvr";
+    } else if constexpr (std::is_same_v<T, plssvm::hpx::csvc>) {
+        return "hpx_csvc";
+    } else if constexpr (std::is_same_v<T, plssvm::hpx::csvr>) {
+        return "hpx_csvr";
+    } else if constexpr (std::is_same_v<T, plssvm::stdpar::csvc>) {
+        return "stdpar_csvc";
+    } else if constexpr (std::is_same_v<T, plssvm::stdpar::csvr>) {
+        return "stdpar_csvr";
+    } else if constexpr (std::is_same_v<T, plssvm::cuda::csvc>) {
+        return "cuda_csvc";
+    } else if constexpr (std::is_same_v<T, plssvm::cuda::csvr>) {
+        return "cuda_csvr";
+    } else if constexpr (std::is_same_v<T, plssvm::hip::csvc>) {
+        return "hip_csvc";
+    } else if constexpr (std::is_same_v<T, plssvm::hip::csvr>) {
+        return "hip_csvr";
+    } else if constexpr (std::is_same_v<T, plssvm::opencl::csvc>) {
+        return "opencl_csvc";
+    } else if constexpr (std::is_same_v<T, plssvm::opencl::csvr>) {
+        return "opencl_csvr";
+    } else if constexpr (std::is_same_v<T, plssvm::dpcpp::csvc>) {
+        return "sycl_dpcpp_csvc";
+    } else if constexpr (std::is_same_v<T, plssvm::dpcpp::csvr>) {
+        return "sycl_dpcpp_csvr";
+    } else if constexpr (std::is_same_v<T, plssvm::adaptivecpp::csvc>) {
+        return "sycl_adaptivecpp_csvc";
+    } else if constexpr (std::is_same_v<T, plssvm::adaptivecpp::csvr>) {
+        return "sycl_adaptivecpp_csvr";
+    } else if constexpr (std::is_same_v<T, plssvm::kokkos::csvc>) {
+        return "kokkos_csvc";
+    } else if constexpr (std::is_same_v<T, plssvm::kokkos::csvr>) {
+        return "kokkos_csvr";
+    } else if constexpr (plssvm::detail::is_map_v<T>) {
         return "std_map";
     } else if constexpr (plssvm::detail::is_unordered_map_v<T>) {
         return "std_unordered_map";
