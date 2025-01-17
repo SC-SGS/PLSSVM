@@ -26,6 +26,7 @@
 #include <cstddef>      // std::size_t
 #include <tuple>        // std::tuple, std::tuple_element_t, std::get, std::array
 #include <type_traits>  // std::true_type, std::false_type, std::remove_pointer_t, std::conditional_t
+#include <utility>      // std::index_sequence, std::make_index_sequence
 
 namespace util {
 
