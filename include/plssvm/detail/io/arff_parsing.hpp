@@ -48,22 +48,21 @@ namespace plssvm::detail::io {
  * @throws plssvm::invalid_file_format_exception if the \@RELATION field does not come before any other \@ATTRIBUTE
  * @throws plssvm::invalid_file_format_exception if the \@RELATION field does not have a name
  * @throws plssvm::invalid_file_format_exception if the \@RELATION field does have a name with whitespaces but is not quoted
- * @throws plssvm::invalid_file_format_exception if an \@ATTRIBUTE field has the type NUMERIC **and** the name CLASS
  * @throws plssvm::invalid_file_format_exception if an \@ATTRIBUTE field does not have a name
  * @throws plssvm::invalid_file_format_exception if an \@ATTRIBUTE field does have a name with whitespaces but is not quoted
  * @throws plssvm::invalid_file_format_exception if multiple \@ATTRIBUTES with the name CLASS are provided
- * @throws plssvm::invalid_file_format_exception if the class field does not provide any labels
- * @throws plssvm::invalid_file_format_exception if the class field provides labels that are no enclosed in {} (ARFF nominal attributes)
+ * @throws plssvm::invalid_file_format_exception if the class field does not provide any labels (classification only)
+ * @throws plssvm::invalid_file_format_exception if the class field provides labels that are no enclosed in {} (ARFF nominal attributes) (classification only)
  * @throws plssvm::invalid_file_format_exception if only a single label has been provided
  * @throws plssvm::invalid_file_format_exception if a label has been provided multiple times
  * @throws plssvm::invalid_file_format_exception if a string label contains a whitespace
  * @throws plssvm::invalid_file_format_exception if a header entry starts with an @ but is none of \@RELATION, \@ATTRIBUTE, or \@DATA
  * @throws plssvm::invalid_file_format_exception if no feature attributes are provided
  * @throws plssvm::invalid_file_format_exception if the \@DATA attribute is missing
- * @return [the number of features; the number of header lines; the unique labels; the index at which the labels are stored in the file] (`[[nodiscard]]`)
+ * @return [the number of features; the number of header lines; a boolean whether labels have been found; the unique labels; the index at which the labels are stored in the file] (`[[nodiscard]]`)
  */
 template <typename label_type>
-[[nodiscard]] inline std::tuple<std::size_t, std::size_t, std::set<label_type>, std::size_t> parse_arff_header(const std::vector<std::string_view> &lines) {
+[[nodiscard]] inline std::tuple<std::size_t, std::size_t, bool, std::set<label_type>, std::size_t> parse_arff_header(const std::vector<std::string_view> &lines) {
     std::size_t num_features = 0;
     std::size_t label_idx = 0;
     bool has_label = false;
@@ -114,16 +113,14 @@ template <typename label_type>
                 // a numeric field must also contain a name
                 const std::string_view name = check_for_valid_name(line, "@ATTRIBUTE", "NUMERIC");
                 // the attribute name "CLASS" is reserved!
-                if (detail::as_upper_case(name) == "CLASS") {
-                    throw invalid_file_format_exception{ "May not use the combination of the reserved name \"class\" and attribute type NUMERIC!" };
+                if (detail::as_upper_case(name) != "CLASS") {// add a feature to the running count
+                    ++num_features;
+                    // increment class index as long as no class labels have been read
+                    if (!has_label) {
+                        ++label_idx;
+                    }
+                    continue;
                 }
-                // add a feature to the running count
-                ++num_features;
-                // increment class index as long as no class labels have been read
-                if (!has_label) {
-                    ++label_idx;
-                }
-                continue;
             }
 
             // only other valid line may be (nominal attribute with the name CLASS)
@@ -140,36 +137,40 @@ template <typename label_type>
                 if (has_label) {
                     throw invalid_file_format_exception{ "A nominal attribute with the name CLASS may only be provided once!" };
                 }
-                // check if the nominal attribute ist enclosed in curly braces
-                sv.remove_prefix(std::string_view{ "CLASS" }.size());
-                sv = detail::trim(sv);
-                // the class labels must be given
-                if (sv.empty()) {
-                    throw invalid_file_format_exception{ fmt::format("The \"{}\" field must contain class labels!", line) };
-                }
-                // check if string contains whitespaces -> must be quoted
-                if (!detail::starts_with(sv, '{') && !detail::ends_with(sv, '}')) {
-                    throw invalid_file_format_exception{ fmt::format("The \"{}\" nominal attribute must be enclosed with {{}}!", line) };
-                }
-                // remove curly braces
-                sv = sv.substr(1, sv.size() - 2);
-                // split string with delimiter ',' to check the number of provided classes
-                const std::vector<std::string_view> labels_split = detail::split(sv, ',');
-                if (labels_split.size() == 1) {
-                    throw invalid_file_format_exception{ "Only a single label has been provided!" };
-                }
-                // check whether only unique labels have been provided
-                for (const std::string_view label : labels_split) {
-                    labels.insert(detail::convert_to<label_type, invalid_file_format_exception>(detail::trim(label)));
-                }
-                if (labels_split.size() != labels.size()) {
-                    throw invalid_file_format_exception{ fmt::format("Provided {} labels but only {} of them was/where unique!", labels_split.size(), labels.size()) };
-                }
-                // check whether a string label contains a whitespace
-                if constexpr (std::is_same_v<label_type, std::string>) {
+                if (upper_case_line.find("NUMERIC") != std::string::npos) {
+                    // found a regression data set -> ignore class/label parsing, but has_label must still be set
+                } else {
+                    // check if the nominal attribute ist enclosed in curly braces
+                    sv.remove_prefix(std::string_view{ "CLASS" }.size());
+                    sv = detail::trim(sv);
+                    // the class labels must be given
+                    if (sv.empty()) {
+                        throw invalid_file_format_exception{ fmt::format("The \"{}\" field must contain class labels!", line) };
+                    }
+                    // check if string contains whitespaces -> must be quoted
+                    if (!detail::starts_with(sv, '{') && !detail::ends_with(sv, '}')) {
+                        throw invalid_file_format_exception{ fmt::format("The \"{}\" nominal attribute must be enclosed with {{}}!", line) };
+                    }
+                    // remove curly braces
+                    sv = sv.substr(1, sv.size() - 2);
+                    // split string with delimiter ',' to check the number of provided classes
+                    const std::vector<std::string_view> labels_split = detail::split(sv, ',');
+                    if (labels_split.size() == 1) {
+                        throw invalid_file_format_exception{ "Only a single label has been provided!" };
+                    }
+                    // check whether only unique labels have been provided
                     for (const std::string_view label : labels_split) {
-                        if (detail::contains(detail::trim(label), ' ')) {
-                            throw invalid_file_format_exception{ fmt::format("String labels may not contain whitespaces, but \"{}\" has at least one!", detail::trim(label)) };
+                        labels.insert(detail::convert_to<label_type, invalid_file_format_exception>(detail::trim(label)));
+                    }
+                    if (labels_split.size() != labels.size()) {
+                        throw invalid_file_format_exception{ fmt::format("Provided {} labels but only {} of them was/where unique!", labels_split.size(), labels.size()) };
+                    }
+                    // check whether a string label contains a whitespace
+                    if constexpr (std::is_same_v<label_type, std::string>) {
+                        for (const std::string_view label : labels_split) {
+                            if (detail::contains(detail::trim(label), ' ')) {
+                                throw invalid_file_format_exception{ fmt::format("String labels may not contain whitespaces, but \"{}\" has at least one!", detail::trim(label)) };
+                            }
                         }
                     }
                 }
@@ -200,7 +201,7 @@ template <typename label_type>
         throw invalid_file_format_exception{ "Can't parse file: @DATA is missing!" };
     }
 
-    return std::make_tuple(num_features, header_line + 1, labels, has_label ? label_idx : 0);
+    return std::make_tuple(num_features, header_line + 1, has_label, labels, has_label ? label_idx : 0);
 }
 
 /**
@@ -246,10 +247,10 @@ template <typename label_type>
     // parse arff header, structured bindings can't be used because of the OpenMP parallel section
     std::size_t num_header_lines = 0;
     std::size_t num_features = 0;
+    bool has_label = false;
     std::set<label_type> unique_label{};
     std::size_t label_idx = 0;
-    std::tie(num_features, num_header_lines, unique_label, label_idx) = detail::io::parse_arff_header<label_type>(reader.lines());
-    const bool has_label = !unique_label.empty();
+    std::tie(num_features, num_header_lines, has_label, unique_label, label_idx) = detail::io::parse_arff_header<label_type>(reader.lines());
 
     // calculate data set sizes
     const std::size_t num_data_points = reader.num_lines() - num_header_lines;
@@ -273,7 +274,7 @@ template <typename label_type>
                 }
 
                 // parse sparse or dense data point definition
-                // a sparse data point must start with a opening curly brace
+                // a sparse data point must start with an opening curly brace
                 if (detail::starts_with(line, '{')) {
                     // -> sparse data point given, but the closing brace is missing
                     if (!detail::ends_with(line, '}')) {
@@ -359,7 +360,7 @@ template <typename label_type>
                 }
 
                 // check if the parsed label is one of the labels specified in the ARFF file header
-                if (has_label && !detail::contains(unique_label, static_cast<label_type>(label[i]))) {
+                if (has_label && !unique_label.empty() && !detail::contains(unique_label, static_cast<label_type>(label[i]))) {
                     throw invalid_file_format_exception{ fmt::format("Found the label \"{}\" which was not specified in the header ({{{}}})!", static_cast<label_type>(label[i]), fmt::join(unique_label, ", ")) };
                 }
             } catch (const std::exception &) {

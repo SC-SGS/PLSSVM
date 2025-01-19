@@ -58,9 +58,8 @@ namespace plssvm::detail::io {
  * total_sv 8
  * SV
  * @endcode
- * @tparam label_type the type of the labels (any arithmetic type, except bool, or std::string)
  * @param[in] lines the LIBSVM SVR model file header to parse
- * @throws plssvm::invalid_file_format_exception if an invalid 'svm_type' has been provided, i.e., 'svm_type' is not 'c_svc'
+ * @throws plssvm::invalid_file_format_exception if an invalid 'svm_type' has been provided, i.e., 'svm_type' is not 'c_svr'
  * @throws plssvm::invalid_file_format_exception if an invalid 'kernel_type has been provided
  * @throws plssvm::invalid_file_format_exception if the number of support vectors ('total_sv') is zero
  * @throws plssvm::invalid_file_format_exception if not exactly one rho value has been provided
@@ -68,15 +67,12 @@ namespace plssvm::detail::io {
  * @throws plssvm::invalid_file_format_exception if the 'svm_type' is missing
  * @throws plssvm::invalid_file_format_exception if the 'kernel_type' is missing
  * @throws plssvm::invalid_file_format_exception if SVM parameter are explicitly provided that are not used in the give kernel (e.g., 'gamma' is provided for the 'linear' kernel)
- * @throws plssvm::invalid_file_format_exception if the number of classes ('nr_class') is missing
  * @throws plssvm::invalid_file_format_exception if the total number of support vectors ('total_sv') is missing
  * @throws plssvm::invalid_file_format_exception if the value for rho is missing
- * @throws plssvm::invalid_file_format_exception if the number of sum of all number of support vectors per class is not the same as the value of 'total_sv'
  * @throws plssvm::invalid_file_format_exception if no support vectors have been provided in the data section
  * @attention The PLSSVM model file is currently not compatible with LIBSVM due to other "svm_type" entries.
  * @return [the SVM parameter; the value of rho; the number of header lines] (`[[nodiscard]]`)
  */
-template <typename label_type>
 [[nodiscard]] inline std::tuple<plssvm::parameter, std::vector<real_type>, std::size_t> parse_libsvm_model_header_regression(const std::vector<std::string_view> &lines) {
     // data to read
     plssvm::parameter params{};
@@ -224,6 +220,10 @@ template <typename label_type>
     if (rho.size() != 1) {
         throw invalid_file_format_exception{ fmt::format("Provided {} rho values but only one is needed!", rho.size()) };
     }
+    // check whether the number of SV is correct
+    if (lines.size() - (header_line + 1) != num_support_vectors) {
+        throw invalid_file_format_exception{ fmt::format("Found {} support vectors, but it should be {}!", lines.size() - (header_line + 1), num_support_vectors) };
+    }
 
     return std::make_tuple(params, rho, header_line + 1);
 }
@@ -285,13 +285,24 @@ template <typename label_type>
                 std::string_view::size_type pos = 0;
                 {
                     const std::string_view::size_type first_colon = line.find_first_of(":\n");
-                    const std::string_view::size_type next_pos = line.find_first_of(" \n", pos);
-                    if (first_colon >= next_pos) {
-                        // get alpha value
-                        alpha(0, i) = detail::convert_to<real_type, invalid_file_format_exception>(line.substr(pos, next_pos));
-                        pos = next_pos + 1;
-                    } else {
-                        throw invalid_file_format_exception{ "Can't parse file: needed exactly one alpha value, but more none was provided!" };
+                    bool alpha_already_found = false;
+                    while (true) {
+                        const std::string_view::size_type next_pos = line.find_first_of(" \n", pos);
+                        if (first_colon >= next_pos) {
+                            if (alpha_already_found) {
+                                throw invalid_file_format_exception{ "Can't parse file: needed exactly one alpha value, but more were provided!" };
+                            }
+
+                            // get alpha value
+                            alpha(0, i) = detail::convert_to<real_type, invalid_file_format_exception>(line.substr(pos, next_pos));
+                            pos = next_pos + 1;
+                            alpha_already_found = true;
+                        } else {
+                            if (!alpha_already_found) {
+                                throw invalid_file_format_exception{ "Can't parse file: needed exactly one alpha value, but none were provided!" };
+                            }
+                            break;
+                        }
                     }
                 }
 
@@ -313,7 +324,7 @@ template <typename label_type>
                     }
                     // the indices must be strictly increasing!
                     if (last_index >= index) {
-                        throw invalid_file_format_exception{ fmt::format("The features indices must be strictly increasing, but {} is smaller or equal than {}! ({})", index, last_index, line) };
+                        throw invalid_file_format_exception{ fmt::format("The features indices must be strictly increasing, but {} is smaller or equal than {}!", index, last_index) };
                     }
                     last_index = index;
 
@@ -366,7 +377,6 @@ template <typename label_type>
  */
 template <typename label_type>
 inline void write_libsvm_model_header_regression(fmt::ostream &out, const plssvm::parameter &params, const std::vector<real_type> &rho, const regression_data_set<label_type> &data) {
-    PLSSVM_ASSERT(data.has_labels(), "Cannot write a model file that does not include labels!");
     PLSSVM_ASSERT(rho.size() == 1, "Exactly one rho value must be provided!");
 
     // save model file header
@@ -430,9 +440,8 @@ inline void write_libsvm_model_header_regression(fmt::ostream &out, const plssvm
 template <typename label_type>
 inline void write_libsvm_model_data_regression(const std::string &filename, const plssvm::parameter &params, const std::vector<real_type> &rho, const std::vector<aos_matrix<real_type>> &alpha, const regression_data_set<label_type> &data) {
     PLSSVM_ASSERT(!filename.empty(), "The provided model filename must not be empty!");
-    PLSSVM_ASSERT(data.has_labels(), "Cannot write a model file that does not include labels!");
     PLSSVM_ASSERT(rho.size() == 1,
-                  "The number of rho values is {} but must be exactly 1",
+                  "The number of rho values is {} but must be exactly 1!",
                   rho.size());
 #if defined(PLSSVM_ENABLE_ASSERTS)
     // weights

@@ -31,7 +31,7 @@
 
 #include <algorithm>  // std::all_of
 #include <chrono>     // std::chrono::{time_point, steady_clock, duration_cast, milliseconds}
-#include <cstddef>    // std::size_t
+#include <memory>     // std::addressof
 #include <optional>   // std::make_optional
 #include <tuple>      // std::tie
 #include <utility>    // std::move
@@ -53,6 +53,40 @@ class csvr : virtual public csvm {
     /// The type of the model returned by a call to the `fit` function and used in the `predict` and `score` functions.
     template <typename T>
     using model_type = ::plssvm::regression_model<T>;
+
+    // inherit C-SVM base class constructors
+    using ::plssvm::csvm::csvm;
+
+    /**
+     * @copydoc plssvm::csvm::csvm(const plssvm::csvm &)
+     */
+    csvr(const csvr &) = delete;
+    /**
+     * @copydoc plssvm::csvm::csvm(plssvm::csvm &&) noexcept
+     */
+    csvr(csvr &&) noexcept = default;
+    /**
+     * @copydoc plssvm::csvm::operator=(const plssvm::csvm &)
+     */
+    csvr &operator=(const csvr &) = delete;
+
+    /**
+     * @brief Correctly implement the move-assignment operator in presence of a virtual base class.
+     * @details Calls the base class move-assignment operator. Afterwards, moves the potential additional `csvr` members.
+     * @param[in,out] other the other C-SVM to move from
+     * @return `*this`
+     */
+    csvr &operator=(csvr &&other) noexcept {
+        if (this != std::addressof(other)) {
+            ::plssvm::csvm::operator=(std::move(other));
+        }
+        return *this;
+    }
+
+    /**
+     * @copydoc plssvm::csvm::~csvm() noexcept
+     */
+    ~csvr() noexcept = default;
 
     //*************************************************************************************************************************************//
     //                                                              fit model                                                              //

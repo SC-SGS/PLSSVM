@@ -108,7 +108,7 @@ regression_model<U>::regression_model(const std::string &filename) {
 
     // parse the libsvm model header
     std::size_t num_header_lines{};
-    std::tie(params_, *rho_ptr_, num_header_lines) = detail::io::parse_libsvm_model_header_regression<label_type>(reader.lines());
+    std::tie(params_, *rho_ptr_, num_header_lines) = detail::io::parse_libsvm_model_header_regression(reader.lines());
 
     // create empty support vectors and alpha vector
     soa_matrix<real_type> support_vectors{};
@@ -121,7 +121,7 @@ regression_model<U>::regression_model(const std::string &filename) {
     // create data set
     const verbosity_level old_verbosity = verbosity;
     verbosity = verbosity_level::quiet;
-    // TODO: check whether whether labels can and should be ommitted for the regression task!
+    // TODO: check whether whether labels can and should be omitted for the regression task!
     data_ = std::make_shared<regression_data_set<label_type>>(std::move(support_vectors));
     verbosity = old_verbosity;
 

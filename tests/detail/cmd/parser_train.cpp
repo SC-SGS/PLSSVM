@@ -19,6 +19,7 @@
 #include "plssvm/gamma.hpp"                                  // plssvm::gamma_type
 #include "plssvm/kernel_function_types.hpp"                  // plssvm::kernel_function_type
 #include "plssvm/solver_types.hpp"                           // plssvm::solver_type
+#include "plssvm/svm_types.hpp"                              // plssvm::svm_type
 #include "plssvm/target_platforms.hpp"                       // plssvm::target_platform
 #include "plssvm/verbosity_levels.hpp"                       // plssvm::verbosity
 
@@ -57,6 +58,7 @@ TEST_F(ParserTrain, minimal) {
     EXPECT_FLOATING_POINT_EQ(parser.epsilon, plssvm::real_type{ 0.001 });
     EXPECT_EQ(parser.max_iter, 0);
     EXPECT_EQ(parser.classification, plssvm::classification_type::oaa);
+    EXPECT_EQ(parser.svm, plssvm::svm_type::csvc);
     EXPECT_EQ(parser.backend, plssvm::backend_type::automatic);
     EXPECT_EQ(parser.target, plssvm::target_platform::automatic);
     EXPECT_EQ(parser.solver, plssvm::solver_type::automatic);
@@ -79,6 +81,7 @@ TEST_F(ParserTrain, minimal_output) {
 
     // test output string
     const std::string correct = fmt::format(
+        "svm_type: csvc\n"
         "kernel_type: rbf -> exp(-gamma*|u-v|^2)\n"
         "gamma: \"1 / num_features\"\n"
         "cost: 1\n"
@@ -103,7 +106,7 @@ TEST_F(ParserTrain, minimal_output) {
 
 TEST_F(ParserTrain, all_arguments) {
     // create artificial command line arguments in test fixture
-    std::vector<std::string> cmd_args = { "./plssvm-train", "--kernel_type", "1", "--degree", "2", "--gamma", "1.5", "--coef0", "-1.5", "--cost", "2", "--epsilon", "1e-10", "--max_iter", "100", "--classification", "oao", "--solver", "cg_implicit", "--backend", "cuda", "--target_platform", "gpu_nvidia", "--use_strings_as_labels", "--verbosity", "libsvm" };
+    std::vector<std::string> cmd_args = { "./plssvm-train", "--svm_type", "1", "--kernel_type", "1", "--degree", "2", "--gamma", "1.5", "--coef0", "-1.5", "--cost", "2", "--epsilon", "1e-10", "--max_iter", "100", "--classification", "oao", "--solver", "cg_implicit", "--backend", "cuda", "--target_platform", "gpu_nvidia", "--use_strings_as_labels", "--verbosity", "libsvm" };
 #if defined(PLSSVM_HAS_SYCL_BACKEND)
     cmd_args.insert(cmd_args.end(), { "--sycl_kernel_invocation_type", "nd_range", "--sycl_implementation_type", "dpcpp" });
 #endif
@@ -131,6 +134,7 @@ TEST_F(ParserTrain, all_arguments) {
     EXPECT_FLOATING_POINT_EQ(parser.epsilon, plssvm::real_type{ 1e-10 });
     EXPECT_EQ(parser.max_iter, 100);
     EXPECT_EQ(parser.classification, plssvm::classification_type::oao);
+    EXPECT_EQ(parser.svm, plssvm::svm_type::csvr);
     EXPECT_EQ(parser.backend, plssvm::backend_type::cuda);
     EXPECT_EQ(parser.target, plssvm::target_platform::gpu_nvidia);
     EXPECT_EQ(parser.solver, plssvm::solver_type::cg_implicit);
@@ -158,7 +162,7 @@ TEST_F(ParserTrain, all_arguments) {
 
 TEST_F(ParserTrain, all_arguments_output) {
     // create artificial command line arguments in test fixture
-    std::vector<std::string> cmd_args = { "./plssvm-train", "--kernel_type", "1", "--degree", "2", "--gamma", "1.5", "--coef0", "-1.5", "--cost", "2", "--epsilon", "1e-10", "--max_iter", "100", "--classification", "oao", "--solver", "cg_implicit", "--backend", "automatic", "--target_platform", "gpu_nvidia", "--use_strings_as_labels", "--verbosity", "libsvm" };
+    std::vector<std::string> cmd_args = { "./plssvm-train", "--svm_type", "1", "--kernel_type", "1", "--degree", "2", "--gamma", "1.5", "--coef0", "-1.5", "--cost", "2", "--epsilon", "1e-10", "--max_iter", "100", "--classification", "oao", "--solver", "cg_implicit", "--backend", "automatic", "--target_platform", "gpu_nvidia", "--use_strings_as_labels", "--verbosity", "libsvm" };
 #if defined(PLSSVM_HAS_SYCL_BACKEND)
     cmd_args.insert(cmd_args.end(), { "--sycl_kernel_invocation_type", "nd_range", "--sycl_implementation_type", "dpcpp" });
 #endif
@@ -177,6 +181,7 @@ TEST_F(ParserTrain, all_arguments_output) {
 
     // test output string
     std::string correct =
+        "svm_type: csvr\n"
         "kernel_type: polynomial -> (gamma*u'*v+coef0)^degree\n"
         "degree: 2\n"
         "gamma: 1.5\n"
@@ -215,6 +220,28 @@ TEST_F(ParserTrain, all_arguments_output) {
 }
 
 // test all command line parameter separately
+class ParserTrainSvm : public ParserTrain,
+                       public ::testing::WithParamInterface<std::tuple<std::string, std::string>> { };
+
+TEST_P(ParserTrainSvm, parsing) {
+    const auto &[flag, value] = GetParam();
+    // convert string to svm_type
+    const auto svm_type = util::convert_from_string<plssvm::svm_type>(value);
+    // create artificial command line arguments in test fixture
+    this->CreateCMDArgs({ "./plssvm-train", flag, value, "data.libsvm" });
+    // create parameter object
+    const plssvm::detail::cmd::parser_train parser{ this->get_argc(), this->get_argv() };
+    // test for correctness
+    EXPECT_EQ(parser.svm, svm_type);
+}
+
+// clang-format off
+INSTANTIATE_TEST_SUITE_P(ParserTrain, ParserTrainSvm, ::testing::Combine(
+                ::testing::Values("-s", "--svm_type"),
+                ::testing::Values("csvc", "c_svc", "0", "csvr", "c_svr", "1")),
+                naming::pretty_print_parameter_flag_and_value<ParserTrainSvm>);
+// clang-format on
+
 class ParserTrainKernel : public ParserTrain,
                           public ::testing::WithParamInterface<std::tuple<std::string, std::string>> { };
 

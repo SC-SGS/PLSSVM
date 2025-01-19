@@ -680,7 +680,7 @@ inline void write_libsvm_model_data_classification(const std::string &filename, 
     PLSSVM_ASSERT(!filename.empty(), "The provided model filename must not be empty!");
     PLSSVM_ASSERT(data.has_labels(), "Cannot write a model file that does not include labels!");
     PLSSVM_ASSERT(rho.size() == calculate_number_of_classifiers(classification, data.num_classes()),
-                  "The number of rho values is {} but must be {} ({})",
+                  "The number of rho values is {} but must be {} ({})!",
                   rho.size(),
                   calculate_number_of_classifiers(classification, data.num_classes()),
                   classification);

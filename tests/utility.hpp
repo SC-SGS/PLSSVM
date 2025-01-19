@@ -13,15 +13,18 @@
 #define PLSSVM_TESTS_UTILITY_HPP_
 #pragma once
 
-#include "plssvm/constants.hpp"                    // plssvm::real_type
-#include "plssvm/data_set.hpp"                     // plssvm::data_set
-#include "plssvm/detail/arithmetic_type_name.hpp"  // plssvm::detail::arithmetic_type_name_v
-#include "plssvm/detail/string_utility.hpp"        // plssvm::detail::replace_all
-#include "plssvm/detail/type_traits.hpp"           // plssvm::detail::always_false_v
-#include "plssvm/kernel_function_types.hpp"        // plssvm::kernel_function_type
-#include "plssvm/matrix.hpp"                       // plssvm::layout_type, plssvm::matrix
-#include "plssvm/parameter.hpp"                    // plssvm::parameter
-#include "plssvm/shape.hpp"                        // plssvm::shape
+#include "plssvm/constants.hpp"                         // plssvm::real_type
+#include "plssvm/data_set/classification_data_set.hpp"  // plssvm::classification_data_set
+#include "plssvm/data_set/regression_data_set.hpp"      // plssvm::regression_data_set
+#include "plssvm/detail/arithmetic_type_name.hpp"       // plssvm::detail::arithmetic_type_name_v
+#include "plssvm/detail/string_utility.hpp"             // plssvm::detail::replace_all
+#include "plssvm/detail/type_traits.hpp"                // PLSSVM_REQUIRES, plssvm::detail::always_false_v
+#include "plssvm/detail/utility.hpp"                    // plssvm::detail::unreachable
+#include "plssvm/kernel_function_types.hpp"             // plssvm::kernel_function_type
+#include "plssvm/matrix.hpp"                            // plssvm::layout_type, plssvm::matrix
+#include "plssvm/parameter.hpp"                         // plssvm::parameter
+#include "plssvm/shape.hpp"                             // plssvm::shape
+#include "plssvm/svm_types.hpp"                         // plssvm::svm_type
 
 #include "fmt/format.h"   // fmt::format
 #include "fmt/std.h"      // format std::vector<bool>::operator[] proxy type
@@ -312,17 +315,24 @@ inline void instantiate_template_file(const std::string &template_filename, cons
  * @tparam T the type of the labels
  * @return the correct label vector with respect to the input data template files (`[[nodiscard]]``)
  */
-template <typename T>
+template <typename T, plssvm::svm_type SVM = plssvm::svm_type::csvc>
 [[nodiscard]] inline std::vector<T> get_correct_data_file_labels() {
-    // get the distinct labels based on the current label type
-    const std::vector<T> labels = util::get_distinct_label<T>();
-    // for LABEL_PLACEHOLDER: [ 1, 1, 2, 3, 2, 4 ]
-    // if only two labels, e.g., [ -1, 1 ] are given, the output will look as follows: [ -1, -1, 1, 1, 1, 1 ]
-    // clang-format off
-    return std::vector<T>{ labels[std::min<std::size_t>(0, labels.size() - 1)], labels[std::min<std::size_t>(0, labels.size() - 1)],
-                           labels[std::min<std::size_t>(1, labels.size() - 1)], labels[std::min<std::size_t>(2, labels.size() - 1)],
-                           labels[std::min<std::size_t>(1, labels.size() - 1)], labels[std::min<std::size_t>(3, labels.size() - 1)] };
-    // clang-format on
+    if constexpr (SVM == plssvm::svm_type::csvc) {
+        // get the distinct labels based on the current label type
+        const std::vector<T> labels = util::get_distinct_label<T>();
+        // for LABEL_PLACEHOLDER: [ 1, 1, 2, 3, 2, 4 ]
+        // if only two labels, e.g., [ -1, 1 ] are given, the output will look as follows: [ -1, -1, 1, 1, 1, 1 ]
+        // clang-format off
+        return std::vector<T>{ labels[std::min<std::size_t>(0, labels.size() - 1)], labels[std::min<std::size_t>(0, labels.size() - 1)],
+                               labels[std::min<std::size_t>(1, labels.size() - 1)], labels[std::min<std::size_t>(2, labels.size() - 1)],
+                               labels[std::min<std::size_t>(1, labels.size() - 1)], labels[std::min<std::size_t>(3, labels.size() - 1)] };
+        // clang-format on
+    } else if constexpr (SVM == plssvm::svm_type::csvr) {
+        return std::vector<T>{ static_cast<T>(-1.5), static_cast<T>(1.5), static_cast<T>(0.0), static_cast<T>(2.0), static_cast<T>(2.5), static_cast<T>(-1.5) };
+    } else {
+        // shouldn't be reachable
+        plssvm::detail::always_false_v<T>;
+    }
 }
 
 /**
@@ -371,21 +381,59 @@ template <typename T>
 
 /**
  * @brief Generate a vector of @p size filled with random floating point values in the @p range.
- * @tparam real_type the type of the elements in the vector (must be a floating point type)
+ * @tparam T the type of the elements in the vector (must be a floating point type)
  * @param[in] size the size of the vector
  * @param[in] range a pair containing the lower and upper bound of the random values in the vector
  * @return the randomly generated vector (`[[nodiscard]]`)
  */
-template <typename real_type>
-[[nodiscard]] inline std::vector<real_type> generate_random_vector(const std::size_t size, const std::pair<real_type, real_type> range = { real_type{ -1.0 }, real_type{ 1.0 } }) {
-    static_assert(std::is_floating_point_v<real_type>, "Can only meaningfully use a uniform_real_distribution with a floating point type!");
-
-    std::vector<real_type> vec(size);
+template <typename T, PLSSVM_REQUIRES(std::is_floating_point_v<T>)>
+[[nodiscard]] inline std::vector<T> generate_random_vector(const std::size_t size, const std::pair<T, T> range = { T{ -1.0 }, T{ 1.0 } }) {
+    std::vector<T> vec(size);
 
     // fill vectors with random values
     static std::random_device device;
     static std::mt19937 gen(device());
-    std::uniform_real_distribution<real_type> dist(range.first, range.second);
+    std::uniform_real_distribution<T> dist(range.first, range.second);
+    std::generate(vec.begin(), vec.end(), [&]() { return dist(gen); });
+
+    return vec;
+}
+
+/**
+ * @brief Generate a vector of @p size filled with random unsigned integer values in the @p range.
+ * @tparam T the type of the elements in the vector (must be an unsigned integer type)
+ * @param[in] size the size of the vector
+ * @param[in] range a pair containing the lower and upper bound of the random values in the vector
+ * @return the randomly generated vector (`[[nodiscard]]`)
+ */
+template <typename T, PLSSVM_REQUIRES(std::is_integral_v<T> &&std::is_unsigned_v<T>)>
+[[nodiscard]] inline std::vector<T> generate_random_vector(const std::size_t size, const std::pair<T, T> range = { T{ 0 }, T{ 1 } }) {
+    std::vector<T> vec(size);
+
+    // fill vectors with random values
+    static std::random_device device;
+    static std::mt19937 gen(device());
+    std::uniform_int_distribution<T> dist(range.first, range.second);
+    std::generate(vec.begin(), vec.end(), [&]() { return dist(gen); });
+
+    return vec;
+}
+
+/**
+ * @brief Generate a vector of @p size filled with random signed integer values in the @p range.
+ * @tparam T the type of the elements in the vector (must be an signed integer type)
+ * @param[in] size the size of the vector
+ * @param[in] range a pair containing the lower and upper bound of the random values in the vector
+ * @return the randomly generated vector (`[[nodiscard]]`)
+ */
+template <typename T, PLSSVM_REQUIRES(std::is_integral_v<T> &&std::is_signed_v<T>)>
+[[nodiscard]] inline std::vector<T> generate_random_vector(const std::size_t size, const std::pair<T, T> range = { T{ -1 }, T{ 1 } }) {
+    std::vector<T> vec(size);
+
+    // fill vectors with random values
+    static std::random_device device;
+    static std::mt19937 gen(device());
+    std::uniform_int_distribution<T> dist(range.first, range.second);
     std::generate(vec.begin(), vec.end(), [&]() { return dist(gen); });
 
     return vec;
@@ -515,14 +563,14 @@ template <typename matrix_type>
 }
 
 /**
- * @brief Construct an artificial data set that is trivially solvable and should always yield 100% accuracy.
- * @details Up to three classes are supported. The classes are placed on the three coordinate axis with small random pertubations.
+ * @brief Construct an artificial classification data set that is trivially solvable and should always yield 100% accuracy.
+ * @details Up to three classes are supported. The classes are placed on the three coordinate axis with small random perturbations.
  * @tparam label_type the label type
  * @param[in] num_data_points the number of data points **per** class
- * @return the trivially solvable data set (`[[nodiscard]]`)
+ * @return the trivially solvable classification data set (`[[nodiscard]]`)
  */
 template <typename label_type>
-[[nodiscard]] inline plssvm::data_set<label_type> generate_trivially_solvable_data_set(const std::size_t num_data_points = std::size_t{ 20 }) {
+[[nodiscard]] inline plssvm::classification_data_set<label_type> generate_trivially_solvable_classification_data_set(const std::size_t num_data_points = std::size_t{ 20 }) {
     const std::vector<label_type> different_labels = util::get_distinct_label<label_type>();
     const std::size_t num_labels = std::min(different_labels.size(), std::size_t{ 3 });  // at most 3 labels permitted in these tests
 
@@ -548,13 +596,42 @@ template <typename label_type>
                 case 2:
                     data.push_back({ plssvm::real_type{ 0.01 }, plssvm::real_type{ 0.01 }, plssvm::real_type{ 10.0 } + dist(gen) });
                     break;
+                default:
+                    plssvm::detail::unreachable();
+                    break;
             }
 
             label.emplace_back(different_labels[l]);
         }
     }
 
-    return plssvm::data_set{ std::move(data), std::move(label) };
+    return plssvm::classification_data_set<label_type>{ std::move(data), std::move(label) };
+}
+
+/**
+ * @brief Construct an artificial regression data set that is trivially solvable and should always yield 100% accuracy.
+ * @tparam label_type the label type
+ * @param[in] num_data_points the total number of data points
+ * @return the trivially solvable regression data set (`[[nodiscard]]`)
+ */
+template <typename label_type>
+[[nodiscard]] inline plssvm::regression_data_set<label_type> generate_trivially_solvable_regression_data_set(const std::size_t num_data_points = std::size_t{ 20 }) {
+    // the data
+    std::vector<std::vector<plssvm::real_type>> data{};
+    data.reserve(num_data_points);
+    std::vector<label_type> label{};
+    label.reserve(num_data_points);
+
+    static std::random_device device;
+    static std::mt19937 gen(device());
+    std::uniform_real_distribution<plssvm::real_type> dist(plssvm::real_type{ 0.0001 }, plssvm::real_type{ 0.01 });
+
+    for (std::size_t i = 0; i < num_data_points; ++i) {
+        data.push_back({ static_cast<plssvm::real_type>(i) + dist(gen), static_cast<plssvm::real_type>(i) + dist(gen) });
+        label.push_back(static_cast<label_type>(i));
+    }
+
+    return plssvm::regression_data_set<label_type>{ std::move(data), std::move(label) };
 }
 
 /**
@@ -629,7 +706,7 @@ template <typename T, plssvm::layout_type layout>
  * @return an instance of type @p T (`[[nodiscard]]`)
  */
 template <typename T, typename Tuple, size_t... Is>
-[[nodiscard]] inline T construct_from_tuple(const plssvm::parameter &params, Tuple &&tuple, std::index_sequence<Is...>) {
+[[nodiscard]] inline T construct_from_tuple(const plssvm::parameter &params, [[maybe_unused]] Tuple tuple, std::index_sequence<Is...>) {
     return T{ params, (std::get<Is>(tuple).first = std::get<Is>(tuple).second)... };
 }
 
@@ -643,9 +720,9 @@ template <typename T, typename Tuple, size_t... Is>
  * @return an instance of type @p T (`[[nodiscard]]`)
  */
 template <typename T, typename Tuple>
-[[nodiscard]] inline T construct_from_tuple(const plssvm::parameter &params, Tuple &&tuple) {
+[[nodiscard]] inline T construct_from_tuple(const plssvm::parameter &params, Tuple tuple) {
     return construct_from_tuple<T>(params,
-                                   std::forward<Tuple>(tuple),
+                                   tuple,
                                    std::make_index_sequence<std::tuple_size<std::decay_t<Tuple>>::value>{});
 }
 
@@ -659,7 +736,7 @@ template <typename T, typename Tuple>
  * @return an instance of type @p T (`[[nodiscard]]`)
  */
 template <typename T, typename Tuple, size_t... Is>
-[[nodiscard]] inline T construct_from_tuple(Tuple &&tuple, std::index_sequence<Is...>) {
+[[nodiscard]] inline T construct_from_tuple([[maybe_unused]] Tuple tuple, std::index_sequence<Is...>) {
     return T{ (std::get<Is>(tuple).first = std::get<Is>(tuple).second)... };
 }
 
@@ -672,8 +749,8 @@ template <typename T, typename Tuple, size_t... Is>
  * @return an instance of type @p T (`[[nodiscard]]`)
  */
 template <typename T, typename Tuple>
-[[nodiscard]] inline T construct_from_tuple(Tuple &&tuple) {
-    return construct_from_tuple<T>(std::forward<Tuple>(tuple),
+[[nodiscard]] inline T construct_from_tuple(Tuple tuple) {
+    return construct_from_tuple<T>(tuple,
                                    std::make_index_sequence<std::tuple_size<std::decay_t<Tuple>>::value>{});
 }
 
