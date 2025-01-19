@@ -117,8 +117,6 @@ class csvr : virtual public csvm {
         std::tie(alpha, *csvr_model.rho_ptr_, num_iters) = this->solve_lssvm_system_of_linear_equations(*data.data_ptr_, *data.y_ptr_, params, std::forward<Args>(named_args)...);
         csvr_model.alpha_ptr_->push_back(std::move(alpha));
 
-        // TODO: implement correct fit logic for the regression task
-
         // move number of CG iterations to model
         csvr_model.num_iters_ = std::make_optional(std::move(num_iters));
 
@@ -189,7 +187,13 @@ class csvr : virtual public csvm {
         PLSSVM_ASSERT(votes.num_rows() == data.num_data_points(), "The number of votes ({}) must be equal the number of data points ({})!", votes.num_rows(), data.num_data_points());
         PLSSVM_ASSERT(votes.num_cols() == 1, "The votes contain {} values, but must contain exactly one value!", votes.num_cols());
 
-        // TODO: implement correct predict logic for the regression task
+
+        for(std::size_t i = 0; i < data.num_data_points(); ++i) {
+            // TODO: is there multiclass regression? https://en.wikipedia.org/wiki/Multinomial_logistic_regression
+            // TODO: implement?
+            predicted_labels[i] = static_cast<label_type>(votes(i, 0));
+        }
+
 
         PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_EVENT("predict end");
 
