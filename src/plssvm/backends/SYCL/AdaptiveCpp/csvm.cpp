@@ -52,14 +52,6 @@
 
 namespace plssvm::adaptivecpp {
 
-csvm::csvm(parameter params) :
-    csvm{ plssvm::target_platform::automatic, params } { }
-
-csvm::csvm(target_platform target, parameter params) :
-    base_type{ params } {
-    this->init(target);
-}
-
 void csvm::init(const target_platform target) {
     // check whether the requested target platform has been enabled
     switch (target) {
