@@ -331,7 +331,7 @@ template <typename T, plssvm::svm_type SVM = plssvm::svm_type::csvc>
         return std::vector<T>{ static_cast<T>(-1.5), static_cast<T>(1.5), static_cast<T>(0.0), static_cast<T>(2.0), static_cast<T>(2.5), static_cast<T>(-1.5) };
     } else {
         // shouldn't be reachable
-        plssvm::detail::always_false_v<T>;
+        static_assert(plssvm::detail::always_false_v<T>, "Unknown svm type provided!");
     }
 }
 
