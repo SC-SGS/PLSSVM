@@ -23,7 +23,7 @@
 #include "plssvm/detail/igor_utility.hpp"                       // plssvm::detail::get_value_from_named_parameter
 #include "plssvm/detail/memory_size.hpp"                        // plssvm::detail::memory_size
 #include "plssvm/detail/type_traits.hpp"                        // PLSSVM_REQUIRES, plssvm::detail::is_one_type_of
-#include "plssvm/parameter.hpp"                                 // plssvm::parameter, plssvm::detail::parameter
+#include "plssvm/parameter.hpp"                                 // plssvm::parameter, plssvm::detail::{has_only_sycl_parameter_named_args_v, has_only_sycl_named_args_v}
 #include "plssvm/svm/csvc.hpp"                                  // plssvm::csvc
 #include "plssvm/svm/csvm.hpp"                                  // plssvm::detail::csvm_backend_exists
 #include "plssvm/svm/csvr.hpp"                                  // plssvm::csvr
@@ -58,35 +58,6 @@ class csvm : public ::plssvm::detail::gpu_csvm<detail::device_ptr, detail::queue
     using typename base_type::queue_type;
 
     /**
-     * @brief Construct a new C-SVM using the SYCL backend with the parameters given through @p params.
-     * @param[in] params struct encapsulating all possible parameters
-     * @throws plssvm::exception all exceptions thrown in the base class constructor
-     * @throws plssvm::dpcpp::backend_exception if the requested target is not available
-     * @throws plssvm::dpcpp::backend_exception if no device for the requested target was found
-     */
-    explicit csvm(parameter params = {});
-    /**
-     * @brief Construct a new C-SVM using the SYCL backend on the @p target platform with the parameters given through @p params.
-     * @param[in] target the target platform used for this C-SVM
-     * @param[in] params struct encapsulating all possible SVM parameters
-     * @throws plssvm::exception all exceptions thrown in the base class constructor
-     * @throws plssvm::dpcpp::backend_exception if the requested target is not available
-     * @throws plssvm::dpcpp::backend_exception if no device for the requested target was found
-     */
-    explicit csvm(target_platform target, parameter params = {});
-
-    /**
-     * @brief Construct a new C-SVM using the SYCL backend and the optionally provided @p named_args.
-     * @param[in] named_args the additional optional named arguments
-     * @throws plssvm::exception all exceptions thrown in the base class constructor
-     * @throws plssvm::dpcpp::backend_exception if the requested target is not available
-     * @throws plssvm::dpcpp::backend_exception if no device for the requested target was found
-     */
-    template <typename... Args, PLSSVM_REQUIRES(::plssvm::detail::has_only_sycl_parameter_named_args_v<Args...>)>
-    explicit csvm(Args &&...named_args) :
-        csvm{ plssvm::target_platform::automatic, std::forward<Args>(named_args)... } { }
-
-    /**
      * @brief Construct a new C-SVM using the SYCL backend on the @p target platform and the optionally provided @p named_args.
      * @param[in] target the target platform used for this C-SVM
      * @param[in] named_args the additional optional named arguments
@@ -95,8 +66,7 @@ class csvm : public ::plssvm::detail::gpu_csvm<detail::device_ptr, detail::queue
      * @throws plssvm::dpcpp::backend_exception if no device for the requested target was found
      */
     template <typename... Args, PLSSVM_REQUIRES(::plssvm::detail::has_only_sycl_parameter_named_args_v<Args...>)>
-    explicit csvm(const target_platform target, Args &&...named_args) :
-        base_type{ named_args... } {
+    explicit csvm(const target_platform target = target_platform::automatic, Args &&...named_args) {
         // check igor parameter
         igor::parser parser{ std::forward<Args>(named_args)... };
 
@@ -211,8 +181,49 @@ class csvm : public ::plssvm::detail::gpu_csvm<detail::device_ptr, detail::queue
 class csvc : public ::plssvm::csvc,
              public ::plssvm::dpcpp::csvm {
   public:
-    // use the DPC++ SYCL C-SVM constructors
-    using ::plssvm::dpcpp::csvm::csvm;
+    /**
+     * @brief Construct a new C-SVC using the DPC++ backend with the parameters given through @p params.
+     * @param[in] params struct encapsulating all possible parameters
+     * @param[in] named_sycl_args the additional optional SYCL specific named arguments
+     * @throws plssvm::exception all exceptions thrown in the base class constructors
+     */
+    template <typename... Args, PLSSVM_REQUIRES(::plssvm::detail::has_only_sycl_named_args_v<Args...>)>
+    explicit csvc(const parameter params, Args &&...named_sycl_args) :
+        ::plssvm::csvm{ params },
+        ::plssvm::dpcpp::csvm(target_platform::automatic, std::forward<Args>(named_sycl_args)...) { }
+
+    /**
+     * @brief Construct a new C-SVC using the DPC++ backend on the @p target platform with the parameters given through @p params.
+     * @param[in] target the target platform used for this C-SVM
+     * @param[in] params struct encapsulating all possible SVM parameters
+     * @param[in] named_sycl_args the additional optional SYCL specific named arguments
+     * @throws plssvm::exception all exceptions thrown in the base class constructors
+     */
+    template <typename... Args, PLSSVM_REQUIRES(::plssvm::detail::has_only_sycl_named_args_v<Args...>)>
+    explicit csvc(const target_platform target, const parameter params, Args &&...named_sycl_args) :
+        ::plssvm::csvm{ params },
+        ::plssvm::dpcpp::csvm(target, std::forward<Args>(named_sycl_args)...) { }
+
+    /**
+     * @brief Construct a new C-SVC using the DPC++ backend and the optionally provided @p named_args.
+     * @param[in] named_args the additional optional named arguments
+     * @throws plssvm::exception all exceptions thrown in the base class constructors
+     */
+    template <typename... Args, PLSSVM_REQUIRES(::plssvm::detail::has_only_sycl_parameter_named_args_v<Args...>)>
+    explicit csvc(Args &&...named_args) :
+        ::plssvm::csvm{ named_args... },
+        ::plssvm::dpcpp::csvm(target_platform::automatic, std::forward<Args>(named_args)...) { }
+
+    /**
+     * @brief Construct a new C-SVC using the DPC++ backend on the @p target platform and the optionally provided @p named_args.
+     * @param[in] target the target platform used for this C-SVM
+     * @param[in] named_args the additional optional named-parameters
+     * @throws plssvm::exception all exceptions thrown in the base class constructors
+     */
+    template <typename... Args, PLSSVM_REQUIRES(::plssvm::detail::has_only_sycl_parameter_named_args_v<Args...>)>
+    explicit csvc(const target_platform target, Args &&...named_args) :
+        ::plssvm::csvm{ named_args... },
+        ::plssvm::dpcpp::csvm(target, std::forward<Args>(named_args)...) { }
 };
 
 /**
@@ -222,8 +233,49 @@ class csvc : public ::plssvm::csvc,
 class csvr : public ::plssvm::csvr,
              public ::plssvm::dpcpp::csvm {
   public:
-    // use the DPC++ SYCL C-SVM constructors
-    using ::plssvm::dpcpp::csvm::csvm;
+    /**
+     * @brief Construct a new C-SVR using the DPC++ backend with the parameters given through @p params.
+     * @param[in] params struct encapsulating all possible parameters
+     * @param[in] named_sycl_args the additional optional SYCL specific named arguments
+     * @throws plssvm::exception all exceptions thrown in the base class constructors
+     */
+    template <typename... Args, PLSSVM_REQUIRES(::plssvm::detail::has_only_sycl_named_args_v<Args...>)>
+    explicit csvr(parameter params, Args &&...named_sycl_args) :
+        ::plssvm::csvm{ params },
+        ::plssvm::dpcpp::csvm(target_platform::automatic, std::forward<Args>(named_sycl_args)...) { }
+
+    /**
+     * @brief Construct a new C-SVR using the DPC++ backend on the @p target platform with the parameters given through @p params.
+     * @param[in] target the target platform used for this C-SVM
+     * @param[in] params struct encapsulating all possible SVM parameters
+     * @param[in] named_sycl_args the additional optional SYCL specific named arguments
+     * @throws plssvm::exception all exceptions thrown in the base class constructors
+     */
+    template <typename... Args, PLSSVM_REQUIRES(::plssvm::detail::has_only_sycl_named_args_v<Args...>)>
+    explicit csvr(target_platform target, parameter params, Args &&...named_sycl_args) :
+        ::plssvm::csvm{ params },
+        ::plssvm::dpcpp::csvm(target, std::forward<Args>(named_sycl_args)...) { }
+
+    /**
+     * @brief Construct a new C-SVR using the DPC++ backend and the optionally provided @p named_args.
+     * @param[in] named_args the additional optional named arguments
+     * @throws plssvm::exception all exceptions thrown in the base class constructors
+     */
+    template <typename... Args, PLSSVM_REQUIRES(::plssvm::detail::has_only_sycl_parameter_named_args_v<Args...>)>
+    explicit csvr(Args &&...named_args) :
+        ::plssvm::csvm{ named_args... },
+        ::plssvm::dpcpp::csvm(target_platform::automatic, std::forward<Args>(named_args)...) { }
+
+    /**
+     * @brief Construct a new C-SVR using the DPC++ backend on the @p target platform and the optionally provided @p named_args.
+     * @param[in] target the target platform used for this C-SVM
+     * @param[in] named_args the additional optional named-parameters
+     * @throws plssvm::exception all exceptions thrown in the base class constructors
+     */
+    template <typename... Args, PLSSVM_REQUIRES(::plssvm::detail::has_only_sycl_parameter_named_args_v<Args...>)>
+    explicit csvr(const target_platform target, Args &&...named_args) :
+        ::plssvm::csvm{ named_args... },
+        ::plssvm::dpcpp::csvm(target, std::forward<Args>(named_args)...) { }
 };
 
 }  // namespace dpcpp
