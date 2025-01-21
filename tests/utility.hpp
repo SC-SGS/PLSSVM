@@ -333,6 +333,7 @@ template <typename T, plssvm::svm_type SVM = plssvm::svm_type::csvc>
         // shouldn't be reachable
         static_assert(plssvm::detail::always_false_v<T>, "Unknown svm type provided!");
     }
+    return {};
 }
 
 /**

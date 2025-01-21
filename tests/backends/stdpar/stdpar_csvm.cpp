@@ -9,14 +9,14 @@
  */
 
 #include "plssvm/backend_types.hpp"                                                   // plssvm::csvm_to_backend_type_v
-#include "plssvm/backends/stdpar/csvm.hpp"                                            // plssvm::stdpar::csvm
+#include "plssvm/backends/stdpar/csvm.hpp"                                            // plssvm::stdpar::{csvm, csvc, csvr}
 #include "plssvm/backends/stdpar/exceptions.hpp"                                      // plssvm::stdpar::backend_exception
 #include "plssvm/backends/stdpar/kernel/cg_explicit/blas.hpp"                         // plssvm::stdpar::device_kernel_symm
 #include "plssvm/backends/stdpar/kernel/cg_explicit/kernel_matrix_assembly.hpp"       // plssvm::stdpar::device_kernel_assembly
 #include "plssvm/backends/stdpar/kernel/cg_implicit/kernel_matrix_assembly_blas.hpp"  // plssvm::stdpar::device_kernel_assembly_symm
 #include "plssvm/backends/stdpar/kernel/predict_kernel.hpp"                           // plssvm::stdpar::{device_kernel_w_linear, device_kernel_predict_linear, device_kernel_predict}
 #include "plssvm/constants.hpp"                                                       // plssvm::PADDING_SIZE
-#include "plssvm/data_set.hpp"                                                        // plssvm::data_set
+#include "plssvm/data_set/classification_data_set.hpp"                                // plssvm::classification_data_set
 #include "plssvm/detail/arithmetic_type_name.hpp"                                     // plssvm::detail::arithmetic_type_name
 #include "plssvm/detail/data_distribution.hpp"                                        // plssvm::detail::triangular_data_distribution
 #include "plssvm/detail/type_list.hpp"                                                // plssvm::detail::supported_label_types
@@ -26,7 +26,9 @@
 #include "plssvm/shape.hpp"                                                           // plssvm::shape
 #include "plssvm/target_platforms.hpp"                                                // plssvm::target_platform
 
-#include "tests/backends/generic_csvm_tests.hpp"       // generic CSVM tests to instantiate
+#include "tests/backends/generic_csvc_tests.hpp"       // generic C-SVC tests to instantiate
+#include "tests/backends/generic_csvm_tests.hpp"       // generic C-SVM tests to instantiate
+#include "tests/backends/generic_csvr_tests.hpp"       // generic C-SVR tests to instantiate
 #include "tests/backends/ground_truth.hpp"             // ground_truth::{perform_dimensional_reduction, assemble_device_specific_kernel_matrix, assemble_full_kernel_matrix, gemm, calculate_w}
 #include "tests/backends/stdpar/mock_stdpar_csvm.hpp"  // mock_stdpar_csvm
 #include "tests/custom_test_macros.hpp"                // EXPECT_THROW_WHAT
@@ -42,36 +44,48 @@
 #include <tuple>      // std::make_tuple, std::tuple
 #include <vector>     // std::vector
 
-class stdparCSVM : public ::testing::Test,
-                   private util::redirect_output<> { };
-
 struct stdpar_csvm_test_type {
     using mock_csvm_type = mock_stdpar_csvm;
     using csvm_type = plssvm::stdpar::csvm;
+    using csvc_type = plssvm::stdpar::csvc;
+    using csvr_type = plssvm::stdpar::csvr;
     using device_ptr_type = const plssvm::soa_matrix<plssvm::real_type> *;
     inline constexpr static auto additional_arguments = std::make_tuple();
 };
 
+// a tuple containing the test structs
 using stdpar_csvm_test_tuple = std::tuple<stdpar_csvm_test_type>;
-using stdpar_csvm_test_label_type_list = util::cartesian_type_product_t<stdpar_csvm_test_tuple, plssvm::detail::supported_label_types>;
-using stdpar_csvm_test_type_list = util::cartesian_type_product_t<stdpar_csvm_test_tuple>;
 
 // the tests used in the instantiated GTest test suites
+// general test types
+using stdpar_csvm_test_type_list = util::cartesian_type_product_t<stdpar_csvm_test_tuple>;
 using stdpar_csvm_test_type_gtest = util::combine_test_parameters_gtest_t<stdpar_csvm_test_type_list>;
 using stdpar_solver_type_gtest = util::combine_test_parameters_gtest_t<stdpar_csvm_test_type_list, util::solver_type_list>;
 using stdpar_kernel_function_type_gtest = util::combine_test_parameters_gtest_t<stdpar_csvm_test_type_list, util::kernel_function_type_list>;
 using stdpar_solver_and_kernel_function_type_gtest = util::combine_test_parameters_gtest_t<stdpar_csvm_test_type_list, util::solver_and_kernel_function_type_list>;
-using stdpar_label_type_kernel_function_and_classification_type_gtest = util::combine_test_parameters_gtest_t<stdpar_csvm_test_label_type_list, util::kernel_function_and_classification_type_list>;
-using stdpar_label_type_solver_kernel_function_and_classification_type_gtest = util::combine_test_parameters_gtest_t<stdpar_csvm_test_label_type_list, util::solver_and_kernel_function_and_classification_type_list>;
+// C-SVC specific test types
+using stdpar_csvm_test_classification_label_type_list = util::cartesian_type_product_t<stdpar_csvm_test_tuple, util::classification_label_types>;
+using stdpar_classification_label_type_kernel_function_and_classification_type_gtest = util::combine_test_parameters_gtest_t<stdpar_csvm_test_classification_label_type_list, util::kernel_function_and_classification_type_list>;
+using stdpar_classification_label_type_solver_kernel_function_and_classification_type_gtest = util::combine_test_parameters_gtest_t<stdpar_csvm_test_classification_label_type_list, util::solver_and_kernel_function_and_classification_type_list>;
+// C-SVR specific test types
+using stdpar_csvm_test_regression_label_type_list = util::cartesian_type_product_t<stdpar_csvm_test_tuple, util::regression_label_types>;
+using stdpar_regression_label_type_and_kernel_function_type_gtest = util::combine_test_parameters_gtest_t<stdpar_csvm_test_regression_label_type_list, util::kernel_function_type_list>;
+using stdpar_regression_label_type_solver_and_kernel_function_type_gtest = util::combine_test_parameters_gtest_t<stdpar_csvm_test_regression_label_type_list, util::solver_and_kernel_function_type_list>;
 
 // instantiate type-parameterized tests
-// generic CSVM tests
+// generic C-SVM tests
 INSTANTIATE_TYPED_TEST_SUITE_P(stdparCSVM, GenericCSVM, stdpar_csvm_test_type_gtest, naming::test_parameter_to_name);
 INSTANTIATE_TYPED_TEST_SUITE_P(stdparCSVM, GenericCSVMKernelFunction, stdpar_kernel_function_type_gtest, naming::test_parameter_to_name);
 INSTANTIATE_TYPED_TEST_SUITE_P(stdparCSVM, GenericCSVMSolver, stdpar_solver_type_gtest, naming::test_parameter_to_name);
 INSTANTIATE_TYPED_TEST_SUITE_P(stdparCSVM, GenericCSVMSolverKernelFunction, stdpar_solver_and_kernel_function_type_gtest, naming::test_parameter_to_name);
-INSTANTIATE_TYPED_TEST_SUITE_P(stdparCSVM, GenericCSVMKernelFunctionClassification, stdpar_label_type_kernel_function_and_classification_type_gtest, naming::test_parameter_to_name);
-INSTANTIATE_TYPED_TEST_SUITE_P(stdparCSVM, GenericCSVMSolverKernelFunctionClassification, stdpar_label_type_solver_kernel_function_and_classification_type_gtest, naming::test_parameter_to_name);
+// generic C-SVC tests
+INSTANTIATE_TYPED_TEST_SUITE_P(stdparCSVC, GenericCSVC, stdpar_csvm_test_type_gtest, naming::test_parameter_to_name);
+INSTANTIATE_TYPED_TEST_SUITE_P(stdparCSVC, GenericCSVCKernelFunctionClassification, stdpar_classification_label_type_kernel_function_and_classification_type_gtest, naming::test_parameter_to_name);
+INSTANTIATE_TYPED_TEST_SUITE_P(stdparCSVC, GenericCSVCSolverKernelFunctionClassification, stdpar_classification_label_type_solver_kernel_function_and_classification_type_gtest, naming::test_parameter_to_name);
+// generic C-SVR tests
+INSTANTIATE_TYPED_TEST_SUITE_P(stdparCSVR, GenericCSVR, stdpar_csvm_test_type_gtest, naming::test_parameter_to_name);
+INSTANTIATE_TYPED_TEST_SUITE_P(stdparCSVR, GenericCSVRKernelFunction, stdpar_regression_label_type_and_kernel_function_type_gtest, naming::test_parameter_to_name);
+INSTANTIATE_TYPED_TEST_SUITE_P(stdparCSVR, GenericCSVRSolverKernelFunction, stdpar_regression_label_type_solver_and_kernel_function_type_gtest, naming::test_parameter_to_name);
 
 // generic CSVM DeathTests
 INSTANTIATE_TYPED_TEST_SUITE_P(stdparCSVMDeathTest, GenericCSVMDeathTest, stdpar_csvm_test_type_gtest, naming::test_parameter_to_name);
@@ -79,12 +93,15 @@ INSTANTIATE_TYPED_TEST_SUITE_P(stdparCSVMDeathTest, GenericCSVMSolverDeathTest, 
 INSTANTIATE_TYPED_TEST_SUITE_P(stdparCSVMDeathTest, GenericCSVMKernelFunctionDeathTest, stdpar_kernel_function_type_gtest, naming::test_parameter_to_name);
 INSTANTIATE_TYPED_TEST_SUITE_P(stdparCSVMDeathTest, GenericCSVMSolverKernelFunctionDeathTest, stdpar_solver_and_kernel_function_type_gtest, naming::test_parameter_to_name);
 
+class stdparCSVM : public ::testing::Test,
+                   private util::redirect_output<> { };
+
 TEST_F(stdparCSVM, blas_level_3_kernel_explicit) {
     const plssvm::real_type alpha{ 1.0 };
 
     // create kernel matrix to use in the BLAS calculation
     const plssvm::parameter params{ plssvm::gamma = plssvm::real_type{ 0.001 } };
-    const plssvm::data_set data{ PLSSVM_TEST_FILE };
+    const plssvm::classification_data_set data{ PLSSVM_CLASSIFICATION_TEST_FILE };
     const auto [q_red, QA_cost] = ground_truth::perform_dimensional_reduction(params, data.data());
 
     // create correct data distribution for the ground truth calculation
@@ -111,7 +128,7 @@ TEST_F(stdparCSVM, blas_level_3_kernel_explicit) {
 
 TEST_F(stdparCSVM, calculate_w) {
     // the data used for prediction
-    const plssvm::data_set data{ PLSSVM_TEST_FILE };
+    const plssvm::classification_data_set data{ PLSSVM_CLASSIFICATION_TEST_FILE };
 
     // the weights (i.e., alpha values) for all support vectors
     const auto weights = util::generate_specific_matrix<plssvm::aos_matrix<plssvm::real_type>>(plssvm::shape{ 3, data.num_data_points() }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE });
@@ -141,7 +158,7 @@ TYPED_TEST(stdparCSVMKernelFunction, assemble_kernel_matrix_explicit) {
     if constexpr (kernel != plssvm::kernel_function_type::linear) {
         params.gamma = plssvm::real_type{ 0.001 };
     }
-    const plssvm::data_set data{ PLSSVM_TEST_FILE };
+    const plssvm::classification_data_set data{ PLSSVM_CLASSIFICATION_TEST_FILE };
     auto data_matr{ data.data() };
     if constexpr (kernel == plssvm::kernel_function_type::chi_squared) {
         // chi-squared is well-defined for non-negative values only
@@ -193,7 +210,7 @@ TYPED_TEST(stdparCSVMKernelFunction, blas_level_3_kernel_implicit) {
     if constexpr (kernel != plssvm::kernel_function_type::linear) {
         params.gamma = plssvm::real_type{ 0.001 };
     }
-    const plssvm::data_set data{ PLSSVM_TEST_FILE };
+    const plssvm::classification_data_set data{ PLSSVM_CLASSIFICATION_TEST_FILE };
     auto data_matr{ data.data() };
     if constexpr (kernel == plssvm::kernel_function_type::chi_squared) {
         // chi-squared is well-defined for non-negative values only
@@ -245,7 +262,7 @@ TYPED_TEST(stdparCSVMKernelFunction, predict_values) {
     if constexpr (kernel != plssvm::kernel_function_type::linear) {
         params.gamma = plssvm::real_type{ 0.001 };
     }
-    const plssvm::data_set data{ PLSSVM_TEST_FILE };
+    const plssvm::classification_data_set data{ PLSSVM_CLASSIFICATION_TEST_FILE };
     auto data_matr{ data.data() };
     if constexpr (kernel == plssvm::kernel_function_type::chi_squared) {
         // chi-squared is well-defined for non-negative values only
@@ -319,7 +336,7 @@ TEST_F(stdparCSVMDeathTest, blas_level_3_kernel_explicit) {
 
 TEST_F(stdparCSVMDeathTest, calculate_w) {
     // the data used for prediction
-    const plssvm::data_set data{ PLSSVM_TEST_FILE };
+    const plssvm::classification_data_set data{ PLSSVM_CLASSIFICATION_TEST_FILE };
 
     // the weights (i.e., alpha values) for all support vectors
     const auto weights = util::generate_specific_matrix<plssvm::aos_matrix<plssvm::real_type>>(plssvm::shape{ 3, data.num_data_points() }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE });
@@ -346,7 +363,7 @@ TYPED_TEST(stdparCSVMKernelFunctionDeathTest, assemble_kernel_matrix_explicit) {
     if constexpr (kernel != plssvm::kernel_function_type::linear) {
         params.gamma = plssvm::real_type{ 0.001 };
     }
-    const plssvm::data_set data{ PLSSVM_TEST_FILE };
+    const plssvm::classification_data_set data{ PLSSVM_CLASSIFICATION_TEST_FILE };
 
     // create correct data distribution for the ground truth calculation
     const plssvm::detail::triangular_data_distribution dist{ data.num_data_points() - 1, 1 };
@@ -400,7 +417,7 @@ TYPED_TEST(stdparCSVMKernelFunctionDeathTest, blas_level_3_kernel_implicit) {
     if constexpr (kernel != plssvm::kernel_function_type::linear) {
         params.gamma = plssvm::real_type{ 0.001 };
     }
-    const plssvm::data_set data{ PLSSVM_TEST_FILE };
+    const plssvm::classification_data_set data{ PLSSVM_CLASSIFICATION_TEST_FILE };
 
     std::vector<plssvm::real_type> q_red{};
     plssvm::real_type QA_cost{};
@@ -459,7 +476,7 @@ TYPED_TEST(stdparCSVMKernelFunctionDeathTest, predict_values) {
     if constexpr (kernel != plssvm::kernel_function_type::linear) {
         params.gamma = plssvm::real_type{ 0.001 };
     }
-    const plssvm::data_set data{ PLSSVM_TEST_FILE };
+    const plssvm::classification_data_set data{ PLSSVM_CLASSIFICATION_TEST_FILE };
 
     const auto weights = util::generate_specific_matrix<plssvm::aos_matrix<plssvm::real_type>>(plssvm::shape{ 3, data.data().num_rows() }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE });
     const auto predict_points = util::generate_specific_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ data.data().num_rows(), data.data().num_cols() }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE });

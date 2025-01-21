@@ -226,6 +226,7 @@ template <typename T>
     } else {
         static_assert(plssvm::detail::always_false_v<T>, "Can't convert the type 'T' to a std::string!");
     }
+    return "unknown";
 }
 
 /**
