@@ -177,11 +177,20 @@ if args.format == "libsvm":
         plssvm.set_verbosity(plssvm.VerbosityLevel.QUIET)
 
         # dump data in libsvm format
-        data_set = plssvm.DataSet(samples[:args.samples, :], labels[:args.samples])
-        data_set.save(file, plssvm.FileFormatType.LIBSVM)
-        if args.test_samples>0:
-            test_data_set = plssvm.DataSet(samples[args.samples:, :], labels[args.samples:])
-            test_data_set.save(file, plssvm.FileFormatType.LIBSVM)
+        if args.task == "classification":
+            data_set = plssvm.ClassificationDataSet(samples[:args.samples, :], labels[:args.samples])
+            data_set.save(file, plssvm.FileFormatType.LIBSVM)
+            if args.test_samples>0:
+                test_data_set = plssvm.ClassificationDataSet(samples[args.samples:, :], labels[args.samples:])
+                test_data_set.save(file, plssvm.FileFormatType.LIBSVM)
+        elif args.task == "regression":
+            data_set = plssvm.RegressionDataSet(samples[:args.samples, :], labels[:args.samples])
+            data_set.save(file, plssvm.FileFormatType.LIBSVM)
+            if args.test_samples>0:
+                test_data_set = plssvm.RegressionDataSet(samples[args.samples:, :], labels[args.samples:])
+                test_data_set.save(file, plssvm.FileFormatType.LIBSVM)
+        else:
+            raise RuntimeError("Invalid type!")
     else:
         # save the libsvm file using the "slow" sklearn function
         from sklearn.datasets import dump_svmlight_file
