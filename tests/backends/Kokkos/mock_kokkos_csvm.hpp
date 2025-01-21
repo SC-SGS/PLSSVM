@@ -24,7 +24,7 @@
 #include <utility>  // std::forward
 
 /**
- * @brief GTest mock class for the Kokkos CSVM.
+ * @brief GTest mock class for the Kokkos C-SVM.
  * @tparam mock_grid_size `true` if the `plssvm::kokkos::csvm::get_max_grid_size()` function should be mocked, otherwise `false`
  */
 template <bool mock_grid_size>

@@ -40,7 +40,7 @@ void bind_kokkos_csvms(py::module_ &m, const std::string &csvm_name) {
                  plssvm::bindings::python::util::check_kwargs_for_correctness(args, { "kernel_type", "degree", "gamma", "coef0", "cost" });
                  // if one of the value keyword parameter is provided, set the respective value
                  const plssvm::parameter params = plssvm::bindings::python::util::convert_kwargs_to_parameter(args);
-                 // create CSVM with the default target platform
+                 // create C-SVM with the default target platform
                  return std::make_unique<backend_csvm_type>(params);
              }),
              "create an SVM with the default target platform and keyword arguments")
@@ -49,21 +49,21 @@ void bind_kokkos_csvms(py::module_ &m, const std::string &csvm_name) {
                  plssvm::bindings::python::util::check_kwargs_for_correctness(args, { "kernel_type", "degree", "gamma", "coef0", "cost" });
                  // if one of the value keyword parameter is provided, set the respective value
                  const plssvm::parameter params = plssvm::bindings::python::util::convert_kwargs_to_parameter(args);
-                 // create CSVM with the provided target platform
+                 // create C-SVM with the provided target platform
                  return std::make_unique<backend_csvm_type>(target, params);
              }),
              "create an SVM with the provided target platform and keyword arguments");
 }
 
 void init_kokkos_csvm(py::module_ &m, const py::exception<plssvm::exception> &base_exception) {
-    // use its own submodule for the Kokkos CSVM bindings
+    // use its own submodule for the Kokkos C-SVM bindings
     py::module_ kokkos_module = m.def_submodule("kokkos", "a module containing all Kokkos backend specific functionality");
     const py::module_ kokkos_pure_virtual_module = kokkos_module.def_submodule("__pure_virtual", "a module containing all pure-virtual Kokkos backend specific functionality");
 
-    // bind the pure-virtual base Kokkos CSVM
+    // bind the pure-virtual base Kokkos C-SVM
     py::class_<plssvm::kokkos::csvm, plssvm::csvm>(kokkos_pure_virtual_module, "__pure_virtual_kokkos_base_CSVM");
 
-    // bind the specific Kokkos CSVC and CSVR classes
+    // bind the specific Kokkos C-SVC and C-SVR classes
     bind_kokkos_csvms<plssvm::csvc>(kokkos_module, "CSVC");
     bind_kokkos_csvms<plssvm::csvr>(kokkos_module, "CSVR");
 

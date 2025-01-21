@@ -87,7 +87,7 @@ INSTANTIATE_TYPED_TEST_SUITE_P(stdparCSVR, GenericCSVR, stdpar_csvm_test_type_gt
 INSTANTIATE_TYPED_TEST_SUITE_P(stdparCSVR, GenericCSVRKernelFunction, stdpar_regression_label_type_and_kernel_function_type_gtest, naming::test_parameter_to_name);
 INSTANTIATE_TYPED_TEST_SUITE_P(stdparCSVR, GenericCSVRSolverKernelFunction, stdpar_regression_label_type_solver_and_kernel_function_type_gtest, naming::test_parameter_to_name);
 
-// generic CSVM DeathTests
+// generic C-SVM DeathTests
 INSTANTIATE_TYPED_TEST_SUITE_P(stdparCSVMDeathTest, GenericCSVMDeathTest, stdpar_csvm_test_type_gtest, naming::test_parameter_to_name);
 INSTANTIATE_TYPED_TEST_SUITE_P(stdparCSVMDeathTest, GenericCSVMSolverDeathTest, stdpar_solver_type_gtest, naming::test_parameter_to_name);
 INSTANTIATE_TYPED_TEST_SUITE_P(stdparCSVMDeathTest, GenericCSVMKernelFunctionDeathTest, stdpar_kernel_function_type_gtest, naming::test_parameter_to_name);
@@ -303,7 +303,7 @@ TYPED_TEST(stdparCSVMKernelFunction, predict_values) {
 }
 
 //*************************************************************************************************************************************//
-//                                                           CSVM DeathTests                                                           //
+//                                                          C-SVM DeathTests                                                           //
 //*************************************************************************************************************************************//
 
 class stdparCSVMDeathTest : public stdparCSVM { };

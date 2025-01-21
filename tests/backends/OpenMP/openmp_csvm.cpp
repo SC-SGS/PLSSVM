@@ -172,7 +172,7 @@ INSTANTIATE_TYPED_TEST_SUITE_P(OpenMPCSVR, GenericCSVR, openmp_csvm_test_type_gt
 INSTANTIATE_TYPED_TEST_SUITE_P(OpenMPCSVR, GenericCSVRKernelFunction, openmp_regression_label_type_and_kernel_function_type_gtest, naming::test_parameter_to_name);
 INSTANTIATE_TYPED_TEST_SUITE_P(OpenMPCSVR, GenericCSVRSolverKernelFunction, openmp_regression_label_type_solver_and_kernel_function_type_gtest, naming::test_parameter_to_name);
 
-// generic CSVM DeathTests
+// generic C-SVM DeathTests
 INSTANTIATE_TYPED_TEST_SUITE_P(OpenMPCSVMDeathTest, GenericCSVMDeathTest, openmp_csvm_test_type_gtest, naming::test_parameter_to_name);
 INSTANTIATE_TYPED_TEST_SUITE_P(OpenMPCSVMDeathTest, GenericCSVMSolverDeathTest, openmp_solver_type_gtest, naming::test_parameter_to_name);
 INSTANTIATE_TYPED_TEST_SUITE_P(OpenMPCSVMDeathTest, GenericCSVMKernelFunctionDeathTest, openmp_kernel_function_type_gtest, naming::test_parameter_to_name);
@@ -388,7 +388,7 @@ TYPED_TEST(OpenMPCSVMKernelFunction, predict_values) {
 }
 
 //*************************************************************************************************************************************//
-//                                                           CSVM DeathTests                                                           //
+//                                                          C-SVM DeathTests                                                           //
 //*************************************************************************************************************************************//
 
 class OpenMPCSVMDeathTest : public OpenMPCSVM { };

@@ -23,7 +23,7 @@
 #include <utility>  // std::forward
 
 /**
- * @brief GTest mock class for the SYCL CSVM using DPC++ as SYCL implementation.
+ * @brief GTest mock class for the SYCL C-SVM using DPC++ as SYCL implementation.
  * @tparam mock_grid_size `true` if the `plssvm::dpcpp::csvm::get_max_grid_size()` function should be mocked, otherwise `false`
  */
 template <bool mock_grid_size>

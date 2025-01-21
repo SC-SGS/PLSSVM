@@ -20,7 +20,7 @@
 #include "tests/backends/generic_csvc_tests.hpp"                      // generic C-SVC tests to instantiate
 #include "tests/backends/generic_csvm_tests.hpp"                      // generic C-SVM tests to instantiate
 #include "tests/backends/generic_csvr_tests.hpp"                      // generic C-SVR tests to instantiate
-#include "tests/backends/generic_gpu_csvm_tests.hpp"                  // generic GPU CSVM tests to instantiate
+#include "tests/backends/generic_gpu_csvm_tests.hpp"                  // generic GPU C-SVM tests to instantiate
 #include "tests/backends/SYCL/AdaptiveCpp/mock_adaptivecpp_csvm.hpp"  // mock_adaptivecpp_csvm
 #include "tests/custom_test_macros.hpp"                               // EXPECT_THROW_WHAT
 #include "tests/naming.hpp"                                           // naming::test_parameter_to_name
@@ -149,7 +149,7 @@ TYPED_TEST(AdaptiveCppCSVMConstructor, construct_target_and_named_args) {
 TYPED_TEST(AdaptiveCppCSVMConstructor, get_kernel_invocation_type) {
     using csvm_type = typename TestFixture::fixture_csvm_type;
 
-    // construct default CSVM
+    // construct default C-SVM
     const csvm_type svm{ plssvm::parameter{} };
 
     // after construction: get_kernel_invocation_type must refer to a plssvm::sycl::kernel_invocation_type that is not automatic
@@ -200,17 +200,17 @@ INSTANTIATE_TYPED_TEST_SUITE_P(AdaptiveCppCSVR, GenericCSVR, adaptivecpp_csvm_te
 INSTANTIATE_TYPED_TEST_SUITE_P(AdaptiveCppCSVR, GenericCSVRKernelFunction, adaptivecpp_regression_label_type_and_kernel_function_type_gtest, naming::test_parameter_to_name);
 INSTANTIATE_TYPED_TEST_SUITE_P(AdaptiveCppCSVR, GenericCSVRSolverKernelFunction, adaptivecpp_regression_label_type_solver_and_kernel_function_type_gtest, naming::test_parameter_to_name);
 
-// generic CSVM DeathTests
+// generic C-SVM DeathTests
 INSTANTIATE_TYPED_TEST_SUITE_P(AdaptiveCppCSVMDeathTest, GenericCSVMDeathTest, adaptivecpp_csvm_test_type_gtest, naming::test_parameter_to_name);
 INSTANTIATE_TYPED_TEST_SUITE_P(AdaptiveCppCSVMDeathTest, GenericCSVMSolverDeathTest, adaptivecpp_solver_type_gtest, naming::test_parameter_to_name);
 INSTANTIATE_TYPED_TEST_SUITE_P(AdaptiveCppCSVMDeathTest, GenericCSVMKernelFunctionDeathTest, adaptivecpp_kernel_function_type_gtest, naming::test_parameter_to_name);
 INSTANTIATE_TYPED_TEST_SUITE_P(AdaptiveCppCSVMDeathTest, GenericCSVMSolverKernelFunctionDeathTest, adaptivecpp_solver_and_kernel_function_type_gtest, naming::test_parameter_to_name);
 
-// generic GPU CSVM tests - correct grid sizes
+// generic GPU C-SVM tests - correct grid sizes
 INSTANTIATE_TYPED_TEST_SUITE_P(AdaptiveCppCSVM, GenericGPUCSVM, adaptivecpp_csvm_test_type_gtest, naming::test_parameter_to_name);
 INSTANTIATE_TYPED_TEST_SUITE_P(AdaptiveCppCSVM, GenericGPUCSVMKernelFunction, adaptivecpp_kernel_function_type_gtest, naming::test_parameter_to_name);
 
-// generic GPU CSVM DeathTests - correct grid sizes
+// generic GPU C-SVM DeathTests - correct grid sizes
 INSTANTIATE_TYPED_TEST_SUITE_P(AdaptiveCppCSVMDeathTest, GenericGPUCSVMDeathTest, adaptivecpp_csvm_test_type_gtest, naming::test_parameter_to_name);
 
 using adaptivecpp_mock_csvm_test_tuple = std::tuple<adaptivecpp_csvm_test_type<true>>;
@@ -219,6 +219,6 @@ using adaptivecpp_mock_csvm_test_type_list = util::cartesian_type_product_t<adap
 using adaptivecpp_mock_csvm_test_type_gtest = util::combine_test_parameters_gtest_t<adaptivecpp_mock_csvm_test_type_list>;
 using adaptivecpp_mock_kernel_function_type_gtest = util::combine_test_parameters_gtest_t<adaptivecpp_mock_csvm_test_type_list, util::kernel_function_type_list>;
 
-// generic GPU CSVM tests - mocked grid sizes
+// generic GPU C-SVM tests - mocked grid sizes
 INSTANTIATE_TYPED_TEST_SUITE_P(AdaptiveCppCSVMFakedGridSize, GenericGPUCSVM, adaptivecpp_mock_csvm_test_type_gtest, naming::test_parameter_to_name);
 INSTANTIATE_TYPED_TEST_SUITE_P(AdaptiveCppCSVMFakedGridSize, GenericGPUCSVMKernelFunction, adaptivecpp_mock_kernel_function_type_gtest, naming::test_parameter_to_name);

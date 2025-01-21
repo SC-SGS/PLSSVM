@@ -17,7 +17,7 @@
 #include "plssvm/svm/csvm.hpp"              // plssvm::csvm
 
 /**
- * @brief GTest mock class for the OpenMP CSVM.
+ * @brief GTest mock class for the OpenMP C-SVM.
  */
 class mock_openmp_csvm final : public plssvm::openmp::csvm {
     using base_type = plssvm::openmp::csvm;

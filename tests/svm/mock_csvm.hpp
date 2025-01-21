@@ -28,7 +28,7 @@
 #include <vector>   // std::vector
 
 /**
- * @brief GTest mock class for the base CSVM class.
+ * @brief GTest mock class for the base C-SVM class.
  */
 class mock_csvm : virtual public plssvm::csvm {
   public:

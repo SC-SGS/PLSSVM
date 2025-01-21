@@ -26,14 +26,14 @@
 namespace py = pybind11;
 
 /**
- * @brief Functor to instantiate all CSVR bindings.
- * @tparam label_type the label type for the CSVR
+ * @brief Functor to instantiate all C-SVR bindings.
+ * @tparam label_type the label type for the C-SVR
  */
 template <typename label_type>
 struct csvr_bindings {
     /**
      * @brief Function call operator to initialize the Python bindings.
-     * @param[in] csvr the Python CSVR class
+     * @param[in] csvr the Python C-SVR class
      */
     void operator()(py::class_<plssvm::csvr> &csvr, label_type) {
         csvr.def(
@@ -80,15 +80,15 @@ void init_csvr(py::module_ &m, py::module_ &pure_virtual) {
     // instantiate all functions using all available label_type
     plssvm::bindings::python::util::instantiate_class_bindings<csvr_bindings, plssvm::detail::supported_label_types_regression>(py_csvr);
 
-    // bind plssvm::make_csvm factory functions to "generic" Python CSVR class
+    // bind plssvm::make_csvm factory functions to "generic" Python C-SVR class
     py::class_<plssvm::csvr>(m, "CSVR", py_csvr, py::module_local())
         // IMPLICIT BACKEND
         .def(py::init([](const py::kwargs &args) {
                  return plssvm::bindings::python::util::assemble_csvm<plssvm::csvr>(args);
              }),
-             "create an CSVR with the provided keyword arguments")
+             "create an C-SVR with the provided keyword arguments")
         .def(py::init([](const plssvm::parameter &params, const py::kwargs &args) {
                  return plssvm::bindings::python::util::assemble_csvm<plssvm::csvr>(args, params);
              }),
-             "create an CSVR with the provided parameters and keyword arguments; the values in params will be overwritten by the keyword arguments");
+             "create an C-SVR with the provided parameters and keyword arguments; the values in params will be overwritten by the keyword arguments");
 }

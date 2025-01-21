@@ -40,7 +40,7 @@ void bind_opencl_csvms(py::module_ &m, const std::string &csvm_name) {
                  plssvm::bindings::python::util::check_kwargs_for_correctness(args, { "kernel_type", "degree", "gamma", "coef0", "cost" });
                  // if one of the value keyword parameter is provided, set the respective value
                  const plssvm::parameter params = plssvm::bindings::python::util::convert_kwargs_to_parameter(args);
-                 // create CSVM with the default target platform
+                 // create C-SVM with the default target platform
                  return std::make_unique<backend_csvm_type>(params);
              }),
              "create an SVM with the default target platform and keyword arguments")
@@ -49,21 +49,21 @@ void bind_opencl_csvms(py::module_ &m, const std::string &csvm_name) {
                  plssvm::bindings::python::util::check_kwargs_for_correctness(args, { "kernel_type", "degree", "gamma", "coef0", "cost" });
                  // if one of the value keyword parameter is provided, set the respective value
                  const plssvm::parameter params = plssvm::bindings::python::util::convert_kwargs_to_parameter(args);
-                 // create CSVM with the provided target platform
+                 // create C-SVM with the provided target platform
                  return std::make_unique<backend_csvm_type>(target, params);
              }),
              "create an SVM with the provided target platform and keyword arguments");
 }
 
 void init_opencl_csvm(py::module_ &m, const py::exception<plssvm::exception> &base_exception) {
-    // use its own submodule for the OpenCL CSVM bindings
+    // use its own submodule for the OpenCL C-SVM bindings
     py::module_ opencl_module = m.def_submodule("opencl", "a module containing all OpenCL backend specific functionality");
     const py::module_ opencl_pure_virtual_module = opencl_module.def_submodule("__pure_virtual", "a module containing all pure-virtual OpenCL backend specific functionality");
 
-    // bind the pure-virtual base OpenCL CSVM
+    // bind the pure-virtual base OpenCL C-SVM
     py::class_<plssvm::opencl::csvm, plssvm::csvm>(opencl_pure_virtual_module, "__pure_virtual_opencl_base_CSVM");
 
-    // bind the specific OpenCL CSVC and CSVR classes
+    // bind the specific OpenCL C-SVC and C-SVR classes
     bind_opencl_csvms<plssvm::csvc>(opencl_module, "CSVC");
     bind_opencl_csvms<plssvm::csvr>(opencl_module, "CSVR");
 

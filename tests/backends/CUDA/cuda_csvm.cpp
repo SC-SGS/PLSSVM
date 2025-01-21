@@ -19,7 +19,7 @@
 #include "tests/backends/generic_csvc_tests.hpp"      // generic C-SVC tests to instantiate
 #include "tests/backends/generic_csvm_tests.hpp"      // generic C-SVM tests to instantiate
 #include "tests/backends/generic_csvr_tests.hpp"      // generic C-SVR tests to instantiate
-#include "tests/backends/generic_gpu_csvm_tests.hpp"  // generic GPU CSVM tests to instantiate
+#include "tests/backends/generic_gpu_csvm_tests.hpp"  // generic GPU C-SVM tests to instantiate
 #include "tests/custom_test_macros.hpp"               // EXPECT_THROW_WHAT
 #include "tests/naming.hpp"                           // naming::test_parameter_to_name
 #include "tests/types_to_test.hpp"                    // util::{cartesian_type_product_t, combine_test_parameters_gtest_t}
@@ -172,17 +172,17 @@ INSTANTIATE_TYPED_TEST_SUITE_P(CUDACSVR, GenericCSVR, cuda_csvm_test_type_gtest,
 INSTANTIATE_TYPED_TEST_SUITE_P(CUDACSVR, GenericCSVRKernelFunction, cuda_regression_label_type_and_kernel_function_type_gtest, naming::test_parameter_to_name);
 INSTANTIATE_TYPED_TEST_SUITE_P(CUDACSVR, GenericCSVRSolverKernelFunction, cuda_regression_label_type_solver_and_kernel_function_type_gtest, naming::test_parameter_to_name);
 
-// generic CSVM DeathTests
+// generic C-SVM DeathTests
 INSTANTIATE_TYPED_TEST_SUITE_P(CUDACSVMDeathTest, GenericCSVMDeathTest, cuda_csvm_test_type_gtest, naming::test_parameter_to_name);
 INSTANTIATE_TYPED_TEST_SUITE_P(CUDACSVMDeathTest, GenericCSVMSolverDeathTest, cuda_solver_type_gtest, naming::test_parameter_to_name);
 INSTANTIATE_TYPED_TEST_SUITE_P(CUDACSVMDeathTest, GenericCSVMKernelFunctionDeathTest, cuda_kernel_function_type_gtest, naming::test_parameter_to_name);
 INSTANTIATE_TYPED_TEST_SUITE_P(CUDACSVMDeathTest, GenericCSVMSolverKernelFunctionDeathTest, cuda_solver_and_kernel_function_type_gtest, naming::test_parameter_to_name);
 
-// generic GPU CSVM tests - correct grid sizes
+// generic GPU C-SVM tests - correct grid sizes
 INSTANTIATE_TYPED_TEST_SUITE_P(CUDACSVM, GenericGPUCSVM, cuda_csvm_test_type_gtest, naming::test_parameter_to_name);
 INSTANTIATE_TYPED_TEST_SUITE_P(CUDACSVM, GenericGPUCSVMKernelFunction, cuda_kernel_function_type_gtest, naming::test_parameter_to_name);
 
-// generic GPU CSVM DeathTests - correct grid sizes
+// generic GPU C-SVM DeathTests - correct grid sizes
 INSTANTIATE_TYPED_TEST_SUITE_P(CUDACSVMDeathTest, GenericGPUCSVMDeathTest, cuda_csvm_test_type_gtest, naming::test_parameter_to_name);
 
 using cuda_mock_csvm_test_tuple = std::tuple<cuda_csvm_test_type<true>>;
@@ -191,6 +191,6 @@ using cuda_mock_csvm_test_type_list = util::cartesian_type_product_t<cuda_mock_c
 using cuda_mock_csvm_test_type_gtest = util::combine_test_parameters_gtest_t<cuda_mock_csvm_test_type_list>;
 using cuda_mock_kernel_function_type_gtest = util::combine_test_parameters_gtest_t<cuda_mock_csvm_test_type_list, util::kernel_function_type_list>;
 
-// generic GPU CSVM tests - mocked grid sizes
+// generic GPU C-SVM tests - mocked grid sizes
 INSTANTIATE_TYPED_TEST_SUITE_P(CUDACSVMFakedGridSize, GenericGPUCSVM, cuda_mock_csvm_test_type_gtest, naming::test_parameter_to_name);
 INSTANTIATE_TYPED_TEST_SUITE_P(CUDACSVMFakedGridSize, GenericGPUCSVMKernelFunction, cuda_mock_kernel_function_type_gtest, naming::test_parameter_to_name);

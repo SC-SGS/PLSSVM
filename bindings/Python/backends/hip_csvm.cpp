@@ -40,7 +40,7 @@ void bind_hip_csvms(py::module_ &m, const std::string &csvm_name) {
                  plssvm::bindings::python::util::check_kwargs_for_correctness(args, { "kernel_type", "degree", "gamma", "coef0", "cost" });
                  // if one of the value keyword parameter is provided, set the respective value
                  const plssvm::parameter params = plssvm::bindings::python::util::convert_kwargs_to_parameter(args);
-                 // create CSVM with the default target platform
+                 // create C-SVM with the default target platform
                  return std::make_unique<backend_csvm_type>(params);
              }),
              "create an SVM with the default target platform and keyword arguments")
@@ -49,21 +49,21 @@ void bind_hip_csvms(py::module_ &m, const std::string &csvm_name) {
                  plssvm::bindings::python::util::check_kwargs_for_correctness(args, { "kernel_type", "degree", "gamma", "coef0", "cost" });
                  // if one of the value keyword parameter is provided, set the respective value
                  const plssvm::parameter params = plssvm::bindings::python::util::convert_kwargs_to_parameter(args);
-                 // create CSVM with the provided target platform
+                 // create C-SVM with the provided target platform
                  return std::make_unique<backend_csvm_type>(target, params);
              }),
              "create an SVM with the provided target platform and keyword arguments");
 }
 
 void init_hip_csvm(py::module_ &m, const py::exception<plssvm::exception> &base_exception) {
-    // use its own submodule for the HIP CSVM bindings
+    // use its own submodule for the HIP C-SVM bindings
     py::module_ hip_module = m.def_submodule("hip", "a module containing all HIP backend specific functionality");
     const py::module_ hip_pure_virtual_module = hip_module.def_submodule("__pure_virtual", "a module containing all pure-virtual HIP backend specific functionality");
 
-    // bind the pure-virtual base HIP CSVM
+    // bind the pure-virtual base HIP C-SVM
     py::class_<plssvm::hip::csvm, plssvm::csvm>(hip_pure_virtual_module, "__pure_virtual_hip_base_CSVM");
 
-    // bind the specific HIP CSVC and CSVR classes
+    // bind the specific HIP C-SVC and C-SVR classes
     bind_hip_csvms<plssvm::csvc>(hip_module, "CSVC");
     bind_hip_csvms<plssvm::csvr>(hip_module, "CSVR");
 

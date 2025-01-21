@@ -14,7 +14,7 @@
         - [plssvm.Parameter](#plssvmparameter)
         - [plssvm.ClassificationDataSet and plssvm.RegressionDataSet](#plssvmclassificationdataset-and-plssvmregressiondataset)
         - [plssvm.CSVC and plssvm.CSVR](#plssvmcsvc-and-plssvmcsvr)
-        - [The backend CSVCs and CSVRs](#the-backend-csvcs-and-csvrs)
+        - [The backend C-SVCs and C-SVRs](#the-backend-c-svcs-and-c-svrs)
         - [plssvm.ClassificationModel and plssvm.RegressionModel](#plssvmclassificationmodel-and-plssvmregressionmodel)
         - [plssvm.RegressionReport and plssvm.RegressionReportMetric](#plssvmregressionreport-and-plssvmregressionreportmetric)
         - [plssvm.Version](#plssvmversion)
@@ -328,7 +328,7 @@ The following table lists all PLSSVM enumerations exposed on the Python side:
 | `ClassificationType`   | `OAA`, `OAO`                                                            | The different supported multi-class classification strategies (default: `LIBSVM`).                                                                                                                                                                          |
 | `BackendType`          | `AUTOMATIC`, `OPENMP`, `HPX`, `CUDA`, `HIP`, `OPENCL`, `SYCL`, `KOKKOS` | The different supported backends (default: `AUTOMATIC`). If `AUTOMATIC` is provided, the selected backend depends on the used target platform.                                                                                                              |
 | `VerbosityLevel`       | `QUIET`, `LIBSVM`, `TIMING`, `FULL`                                     | The different supported log levels (default: `FULL`). `QUIET` means no output, `LIBSVM` output that is as conformant as possible with LIBSVM's output, `TIMING` all timing related outputs, and `FULL` everything. Can be combined via bit-wise operations. |
-| `SVMType`              | `CSVC`, `CSVR`,                                                         | The different supported CSVM types.                                                                                                                                                                                                                         |
+| `SVMType`              | `CSVC`, `CSVR`,                                                         | The different supported C-SVM types.                                                                                                                                                                                                                        |
 
 If a SYCL implementation is available, additional enumerations are available:
 
@@ -471,20 +471,20 @@ The following constructors and methods are available for both the classification
 #### `plssvm.CSVC` and `plssvm.CSVR`
 
 The main class responsible for fitting an SVM model and later predicting or scoring new data sets.
-It uses either the provided backend type or the default determined one to create a PLSSVM CSVM of the correct backend
+It uses either the provided backend type or the default determined one to create a PLSSVM C-SVM of the correct backend
 type.
-**Note**: the backend specific CSVMs are only available if the respective backend has been enabled during PLSSVM's build
+**Note**: the backend specific C-SVMs are only available if the respective backend has been enabled during PLSSVM's build
 step.
-These backend specific CSVMs can also directly be used, e.g., `plssvm.CSVC(plssvm.BackendType.CUDA)` is equal
+These backend specific C-SVMs can also directly be used, e.g., `plssvm.CSVC(plssvm.BackendType.CUDA)` is equal
 to `plssvm.cuda.CSVC` (the same also holds for all other backends).
 If the most performant backend should be used, it is sufficient to use `plssvm.CSVC()` or `plssvm.CSVR()`.
 
 The following constructors and methods are available for both classification `CSVC` and regression `CSVR`:
 
-| constructors                                                        | description                                                                                                                                            |
-|---------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `CSVC([backend, target_platform, plssvm.Parameter kwargs])`         | Create a new CSVM with the provided named arguments.                                                                                                   |
-| `CSVC(params, [backend, target_platform, plssvm.Parameter kwargs])` | Create a new CSVM with the provided parameters and named arguments; the values in the `plssvm.Parameter` will be overwritten by the keyword arguments. |
+| constructors                                                        | description                                                                                                                                             |
+|---------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `CSVC([backend, target_platform, plssvm.Parameter kwargs])`         | Create a new C-SVM with the provided named arguments.                                                                                                   |
+| `CSVC(params, [backend, target_platform, plssvm.Parameter kwargs])` | Create a new C-SVM with the provided parameters and named arguments; the values in the `plssvm.Parameter` will be overwritten by the keyword arguments. |
 
 **Note**: if the backend type is `plssvm.BackendType.SYCL` two additional named parameters can be provided:
 `sycl_implementation_type` to choose between DPC++ and AdaptiveCpp as SYCL implementations
@@ -498,8 +498,8 @@ However, this is **automatically** handled by our Python bindings on the module 
 |----------------------------------------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `set_params(params)`                                                                                                                         | Replace the current `plssvm.Parameter` with the provided one.                                                                                                                                                       |
 | `set_params([kernel_type=KernelFunctionType.LINEAR, degree=3, gamma=*1/#features*, coef=0.0, cost=1.0])`                                     | Replace the current `plssvm.Parameter` values with the provided named parameters.                                                                                                                                   |
-| `get_params()`                                                                                                                               | Return the `plssvm.Parameter` that are used in the CSVM to learn the model.                                                                                                                                         |
-| `get_target_platform()`                                                                                                                      | Return the target platform this CSVM is running on.                                                                                                                                                                 |
+| `get_params()`                                                                                                                               | Return the `plssvm.Parameter` that are used in the C-SVM to learn the model.                                                                                                                                        |
+| `get_target_platform()`                                                                                                                      | Return the target platform this C-SVM is running on.                                                                                                                                                                |
 | `num_available_devices()`                                                                                                                    | Return the number of available devices, i.e., if the target platform represents a GPU, this function returns the number of used GPUs. Returns always 1 for CPU only backends.                                       |
 | `fit(data_set, [epsilon=0.01, classification=plssvm.ClassificatioType.OAA, solver=plssvm.SolverType.AUTOMATIC, max_iter=*#datapoints - 1*])` | Learn a LS-SVM model given the provided data points and optional parameters (the termination criterion in the CG algorithm, the classification strategy, the used solver, and the maximum number of CG iterations). |
 | `predict(model, data_set)`                                                                                                                   | Predict the labels of the data set using the previously learned model.                                                                                                                                              |
@@ -508,9 +508,9 @@ However, this is **automatically** handled by our Python bindings on the module 
 
 **Note**: the `classification` named parameter is not allowed for the `CSVR`!
 
-#### The backend `CSVC`s and `CSVR`s
+#### The backend `C-SVC`s and `C-SVR`s
 
-These classes represent the backend specific CSVMs:
+These classes represent the backend specific C-SVMs:
 - OpenMP: `plssvm.openmp.CSVC` and `plssvm.openmp.CSVR`
 - HPX: `plssvm.hpx.CSVC` and `plssvm.hpx.CSVR`
 - stdpar: `plssvm.stdpar.CSVC` and `plssvm.stdpar.CSVR`
@@ -531,34 +531,34 @@ supported as target.
 These classes inherit all methods from the base `plssvm.CSVC` or `plssvm.CSVR` classes.
 The following constructors and methods are available for both classification `CSVC` and regression `CSVR`:
 
-| constructors                              | description                                                                                                                                  |
-|-------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------|
-| `CSVC()`                                  | Create a new CSVM with the default target platform. The hyper-parameters are set to their default values.                                    |
-| `CSVC([plssvm.Parameter kwargs])`         | Create a new CSVM with the default target platform. The hyper-parameter values are set ot the provided named parameter values.               |
-| `CSVC(params)`                            | Create a new CSVM with the default target platform. The hyper-parameters are explicitly set to the provided `plssvm.Parameter`.              |
-| `CSVC(target)`                            | Create a new CSVM with the default the provided target platform. The hyper-parameters are set to their default values.                       |
-| `CSVC(target, [plssvm.Parameter kwargs])` | Create a new CSVM with the default the provided target platform. The hyper-parameter values are set ot the provided named parameter values.  |
-| `CSVC(target, params)`                    | Create a new CSVM with the default the provided target platform. The hyper-parameters are explicitly set to the provided `plssvm.Parameter`. |
+| constructors                              | description                                                                                                                                   |
+|-------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------|
+| `CSVC()`                                  | Create a new C-SVM with the default target platform. The hyper-parameters are set to their default values.                                    |
+| `CSVC([plssvm.Parameter kwargs])`         | Create a new C-SVM with the default target platform. The hyper-parameter values are set ot the provided named parameter values.               |
+| `CSVC(params)`                            | Create a new C-SVM with the default target platform. The hyper-parameters are explicitly set to the provided `plssvm.Parameter`.              |
+| `CSVC(target)`                            | Create a new C-SVM with the default the provided target platform. The hyper-parameters are set to their default values.                       |
+| `CSVC(target, [plssvm.Parameter kwargs])` | Create a new C-SVM with the default the provided target platform. The hyper-parameter values are set ot the provided named parameter values.  |
+| `CSVC(target, params)`                    | Create a new C-SVM with the default the provided target platform. The hyper-parameters are explicitly set to the provided `plssvm.Parameter`. |
 
-In case of the SYCL CSVMs (`plssvm.sycl.CSVC`, `plssvm.dpcpp.CSVC`, and `plssvm.adaptivecpp.CSVC`; the same for the `CSVR`s) the additional named
+In case of the SYCL C-SVMs (`plssvm.sycl.CSVC`, `plssvm.dpcpp.CSVC`, and `plssvm.adaptivecpp.CSVC`; the same for the `CSVR`s) the additional named
 argument `sycl_kernel_invocation_type` to choose between the two different SYCL kernel invocation types can be provided.
 
-In case of the SYCL CSVMs (`plssvm.sycl.CSVM`, `plssvm.dpcpp.CSVM`, and `plssvm.adaptivecpp.CSVM`; the same for the `CSVR`s) the following methods
-are additional available for the backend specific CSVMs.
+In case of the SYCL C-SVMs (`plssvm.sycl.CSVM`, `plssvm.dpcpp.CSVM`, and `plssvm.adaptivecpp.CSVM`; the same for the `CSVR`s) the following methods
+are additional available for the backend specific C-SVMs.
 
 | methods                        | description                             |
 |--------------------------------|-----------------------------------------|
 | `get_kernel_invocation_type()` | Return the SYCL kernel invocation type. |
 
-In case of the stdpar CSVM (`plssvm.stdpar.CSVC` and `plssvm.stdpar.CSVR`) the following method is additional available for the backend specific
-CSVM.
+In case of the stdpar C-SVM (`plssvm.stdpar.CSVC` and `plssvm.stdpar.CSVR`) the following method is additional available for the backend specific
+C-SVM.
 
 | methods                     | description                                 |
 |-----------------------------|---------------------------------------------|
 | `get_implementation_type()` | Return the used stdpar implementation type. |
 
-In case of the Kokkos CSVM (`plssvm.kokkos.CSVC` and `plssvm.kokkos.CSVR`) the following method is additional available for the backend specific
-CSVM.
+In case of the Kokkos C-SVM (`plssvm.kokkos.CSVC` and `plssvm.kokkos.CSVR`) the following method is additional available for the backend specific
+C-SVM.
 
 | methods                 | description                             |
 |-------------------------|-----------------------------------------|
@@ -722,7 +722,7 @@ The following table lists all free functions in PLSSVM directly callable via `pl
 | `equivalent(params1, params2)`                                              | Check whether the two parameter classes are equivalent, i.e., the parameters for **the current kernel function** are identical. E.g., for the rbf kernel function the gamma values must be identical, but the degree values can be different, since degree isn't used in the rbf kernel function. |
 | `get_gamma_string(gamma)`                                                   | Returns the gamma string based on the active member in the `gamma_type` `std::variant`.                                                                                                                                                                                                           |
 | `calculate_gamma_value(gamma, matrix)`                                      | Calculate the value of gamma based on the active member in the `gamma_type` `std::variant`.                                                                                                                                                                                                       |
-| `list_available_svm_types()`                                                | List all available SVM types (CSVC or CSVR).                                                                                                                                                                                                                                                      |
+| `list_available_svm_types()`                                                | List all available SVM types (C-SVC or C-SVR).                                                                                                                                                                                                                                                    |
 | `svm_type_to_task_name(svm_type)`                                           | Returns the task name (classification or regression) associated with the provided SVM type.                                                                                                                                                                                                       |
 | `svm_type_from_model_file(model_file)`                                      | Returns the SVM type used to create the provided model file.                                                                                                                                                                                                                                      |
 

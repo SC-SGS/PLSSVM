@@ -6,7 +6,7 @@
  * @license This file is part of the PLSSVM project which is released under the MIT license.
  *          See the LICENSE.md file in the project root for full license information.
  *
- * @brief Utility functions used for creating the Pybind11 Python bindings for the CSVM classes.
+ * @brief Utility functions used for creating the Pybind11 Python bindings for the C-SVM classes.
  */
 
 #ifndef PLSSVM_BINDINGS_PYTHON_SVM_UTILITY_HPP_
@@ -33,11 +33,11 @@ namespace py = pybind11;
 namespace plssvm::bindings::python::util {
 
 /**
- * @brief Assemble a CSVM (CSVC or CSVR based on the template parameter @p csvm_type) using the named Python arguments @p args and PLSSVM parameters @p input_params.
- * @tparam csvm_type the type of the CSVM to create
+ * @brief Assemble a C-SVM (C-SVC or C-SVR based on the template parameter @p csvm_type) using the named Python arguments @p args and PLSSVM parameters @p input_params.
+ * @tparam csvm_type the type of the C-SVM to create
  * @param[in] args the named Python arguments
  * @param[in] input_params the PLSSVM parameter
- * @return the created CSVM (`[[nodiscard]]`)
+ * @return the created C-SVM (`[[nodiscard]]`)
  */
 template <typename csvm_type>
 [[nodiscard]] inline std::unique_ptr<csvm_type> assemble_csvm(const py::kwargs &args, plssvm::parameter input_params = {}) {

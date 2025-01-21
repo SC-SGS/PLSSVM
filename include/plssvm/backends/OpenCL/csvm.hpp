@@ -163,7 +163,7 @@ class csvc : public ::plssvm::csvc,
 
     /**
      * @brief Construct a new C-SVC using the OpenCL backend on the @p target platform with the parameters given through @p params.
-     * @param[in] target the target platform used for this C-SVM
+     * @param[in] target the target platform used for this C-SVC
      * @param[in] params struct encapsulating all possible SVM parameters
      * @throws plssvm::exception all exceptions thrown in the base class constructors
      */
@@ -183,7 +183,7 @@ class csvc : public ::plssvm::csvc,
 
     /**
      * @brief Construct a new C-SVC using the OpenCL backend on the @p target platform and the optionally provided @p named_args.
-     * @param[in] target the target platform used for this C-SVM
+     * @param[in] target the target platform used for this C-SVC
      * @param[in] named_args the additional optional named-parameters
      * @throws plssvm::exception all exceptions thrown in the base class constructors
      */
@@ -211,7 +211,7 @@ class csvr : public ::plssvm::csvr,
 
     /**
      * @brief Construct a new C-SVR using the OpenCL backend on the @p target platform with the parameters given through @p params.
-     * @param[in] target the target platform used for this C-SVM
+     * @param[in] target the target platform used for this C-SVR
      * @param[in] params struct encapsulating all possible SVM parameters
      * @throws plssvm::exception all exceptions thrown in the base class constructors
      */
@@ -231,7 +231,7 @@ class csvr : public ::plssvm::csvr,
 
     /**
      * @brief Construct a new C-SVR using the OpenCL backend on the @p target platform and the optionally provided @p named_args.
-     * @param[in] target the target platform used for this C-SVM
+     * @param[in] target the target platform used for this C-SVR
      * @param[in] named_args the additional optional named-parameters
      * @throws plssvm::exception all exceptions thrown in the base class constructors
      */

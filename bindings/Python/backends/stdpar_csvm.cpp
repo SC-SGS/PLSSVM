@@ -41,7 +41,7 @@ void bind_stdpar_csvms(py::module_ &m, const std::string &csvm_name) {
                  plssvm::bindings::python::util::check_kwargs_for_correctness(args, { "kernel_type", "degree", "gamma", "coef0", "cost" });
                  // if one of the value keyword parameter is provided, set the respective value
                  const plssvm::parameter params = plssvm::bindings::python::util::convert_kwargs_to_parameter(args);
-                 // create CSVM with the default target platform
+                 // create C-SVM with the default target platform
                  return std::make_unique<backend_csvm_type>(params);
              }),
              "create an SVM with the default target platform and keyword arguments")
@@ -50,14 +50,14 @@ void bind_stdpar_csvms(py::module_ &m, const std::string &csvm_name) {
                  plssvm::bindings::python::util::check_kwargs_for_correctness(args, { "kernel_type", "degree", "gamma", "coef0", "cost" });
                  // if one of the value keyword parameter is provided, set the respective value
                  const plssvm::parameter params = plssvm::bindings::python::util::convert_kwargs_to_parameter(args);
-                 // create CSVM with the provided target platform
+                 // create C-SVM with the provided target platform
                  return std::make_unique<backend_csvm_type>(target, params);
              }),
              "create an SVM with the provided target platform and keyword arguments");
 }
 
 void init_stdpar_csvm(py::module_ &m, const py::exception<plssvm::exception> &base_exception) {
-    // use its own submodule for the stdpar CSVM bindings
+    // use its own submodule for the stdpar C-SVM bindings
     py::module_ stdpar_module = m.def_submodule("stdpar", "a module containing all stdpar backend specific functionality");
     const py::module_ stdpar_pure_virtual_module = stdpar_module.def_submodule("__pure_virtual", "a module containing all pure-virtual stdpar backend specific functionality");
 
@@ -71,10 +71,10 @@ void init_stdpar_csvm(py::module_ &m, const py::exception<plssvm::exception> &ba
 
     stdpar_module.def("list_available_stdpar_implementations", &plssvm::stdpar::list_available_stdpar_implementations, "list all available stdpar implementations");
 
-    // bind the pure-virtual base stdpar CSVM
+    // bind the pure-virtual base stdpar C-SVM
     py::class_<plssvm::stdpar::csvm, plssvm::csvm>(stdpar_pure_virtual_module, "__pure_virtual_stdpar_base_CSVM");
 
-    // bind the specific stdpar CSVC and CSVR classes
+    // bind the specific stdpar C-SVC and C-SVR classes
     bind_stdpar_csvms<plssvm::csvc>(stdpar_module, "CSVC");
     bind_stdpar_csvms<plssvm::csvr>(stdpar_module, "CSVR");
 

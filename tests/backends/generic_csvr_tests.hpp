@@ -82,7 +82,7 @@ REGISTER_TYPED_TEST_SUITE_P(GenericCSVR,
                             move_assignment);
 
 //*************************************************************************************************************************************//
-//                                             CSVR tests depending on the kernel function                                             //
+//                                            C-SVR tests depending on the kernel function                                             //
 //*************************************************************************************************************************************//
 
 template <typename T>
@@ -201,7 +201,7 @@ REGISTER_TYPED_TEST_SUITE_P(GenericCSVRKernelFunction,
                             score);
 
 //*************************************************************************************************************************************//
-//                                       CSVR tests depending on the solver and kernel function                                        //
+//                                       C-SVR tests depending on the solver and kernel function                                       //
 //*************************************************************************************************************************************//
 
 template <typename T>

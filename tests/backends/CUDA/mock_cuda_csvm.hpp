@@ -23,7 +23,7 @@
 #include <utility>  // std::forward
 
 /**
- * @brief GTest mock class for the CUDA CSVM.
+ * @brief GTest mock class for the CUDA C-SVM.
  * @tparam mock_grid_size `true` if the `plssvm::cuda::csvm::get_max_grid_size()` function should be mocked, otherwise `false`
  */
 template <bool mock_grid_size>

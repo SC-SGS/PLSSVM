@@ -19,7 +19,7 @@
 #include "tests/svm/mock_csvm.hpp"  // mock_csvm
 
 /**
- * @brief GTest mock class for the base CSVR class.
+ * @brief GTest mock class for the base C-SVR class.
  */
 class mock_csvr final : virtual public plssvm::csvr,
                         public mock_csvm {

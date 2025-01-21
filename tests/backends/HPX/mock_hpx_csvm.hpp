@@ -18,7 +18,7 @@
 #include "plssvm/svm/csvm.hpp"           // plssvm::csvm
 
 /**
- * @brief GTest mock class for the HPX CSVM.
+ * @brief GTest mock class for the HPX C-SVM.
  */
 class mock_hpx_csvm final : public plssvm::hpx::csvm {
     using base_type = plssvm::hpx::csvm;

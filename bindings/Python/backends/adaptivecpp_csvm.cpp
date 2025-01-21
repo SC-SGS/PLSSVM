@@ -40,7 +40,7 @@ void bind_adaptivecpp_csvms(py::module_ &m, const std::string &csvm_name) {
                  plssvm::bindings::python::util::check_kwargs_for_correctness(args, { "kernel_type", "degree", "gamma", "coef0", "cost" });
                  // if one of the value keyword parameter is provided, set the respective value
                  const plssvm::parameter params = plssvm::bindings::python::util::convert_kwargs_to_parameter(args);
-                 // create CSVM with the default target platform
+                 // create C-SVM with the default target platform
                  return std::make_unique<backend_csvm_type>(params);
              }),
              "create an SVM with the default target platform and keyword arguments")
@@ -49,21 +49,21 @@ void bind_adaptivecpp_csvms(py::module_ &m, const std::string &csvm_name) {
                  plssvm::bindings::python::util::check_kwargs_for_correctness(args, { "kernel_type", "degree", "gamma", "coef0", "cost" });
                  // if one of the value keyword parameter is provided, set the respective value
                  const plssvm::parameter params = plssvm::bindings::python::util::convert_kwargs_to_parameter(args);
-                 // create CSVM with the provided target platform
+                 // create C-SVM with the provided target platform
                  return std::make_unique<backend_csvm_type>(target, params);
              }),
              "create an SVM with the provided target platform and keyword arguments");
 }
 
 py::module_ init_adaptivecpp_csvm(py::module_ &m, const py::exception<plssvm::exception> &base_exception) {
-    // use its own submodule for the AdaptiveCpp CSVM bindings
+    // use its own submodule for the AdaptiveCpp C-SVM bindings
     py::module_ adaptivecpp_module = m.def_submodule("adaptivecpp", "a module containing all AdaptiveCpp backend specific functionality");
     const py::module_ adaptivecpp_pure_virtual_module = adaptivecpp_module.def_submodule("__pure_virtual", "a module containing all pure-virtual AdaptiveCpp backend specific functionality");
 
-    // bind the pure-virtual base AdaptiveCpp CSVM
+    // bind the pure-virtual base AdaptiveCpp C-SVM
     py::class_<plssvm::adaptivecpp::csvm, plssvm::csvm>(adaptivecpp_pure_virtual_module, "__pure_virtual_adaptivecpp_base_CSVM");
 
-    // bind the specific AdaptiveCpp CSVC and CSVR classes
+    // bind the specific AdaptiveCpp C-SVC and C-SVR classes
     bind_adaptivecpp_csvms<plssvm::csvc>(adaptivecpp_module, "CSVC");
     bind_adaptivecpp_csvms<plssvm::csvr>(adaptivecpp_module, "CSVR");
 

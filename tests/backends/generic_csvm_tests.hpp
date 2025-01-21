@@ -50,13 +50,13 @@ namespace util {
 
 /**
  * @brief Initialize the explicit kernel matrices adding necessary padding entries using the values provided by @p matr based on the @p csvm_type.
- * @tparam csvm_type the PLSSVM CSVM backend type
+ * @tparam csvm_type the PLSSVM C-SVM backend type
  * @tparam device_ptr_type the device pointer type; only used if a GPU backend is used
  * @tparam matrix_type the type of the matrix
- * @tparam used_csvm_type the type of the @p csvm; may also be a Mock CSVM!
+ * @tparam used_csvm_type the type of the @p csvm; may also be a Mock C-SVM!
  * @tparam Args the types of the additional arguments; none for the explicit matrix
  * @param[in] matr the matrix to create the explicit kernel matrix from
- * @param[in] csvm the CSVM encapsulating the device on which the matrix should be allocated
+ * @param[in] csvm the C-SVM encapsulating the device on which the matrix should be allocated
  * @return a std::vector of `plssvm::detail::move_only_any` with a wrapped value usable in the PLSSVM functions (`[[nodiscard]]`)
  */
 template <typename csvm_type, typename device_ptr_type, typename matrix_type, typename used_csvm_type, typename... Args>
@@ -106,13 +106,13 @@ template <typename csvm_type, typename device_ptr_type, typename matrix_type, ty
 
 /**
  * @brief Initialize the implicit kernel matrices adding necessary padding entries using the values provided by @p matr based on the @p csvm_type.
- * @tparam csvm_type the PLSSVM CSVM backend type
+ * @tparam csvm_type the PLSSVM C-SVM backend type
  * @tparam device_ptr_type the device pointer type; only used if a GPU backend is used
  * @tparam matrix_type the type of the matrix
- * @tparam used_csvm_type the type of the @p csvm; may also be a Mock CSVM!
+ * @tparam used_csvm_type the type of the @p csvm; may also be a Mock C-SVM!
  * @tparam Args the types of the additional arguments
  * @param[in] matr the matrix to create the explicit kernel matrix from
- * @param[in] csvm the CSVM encapsulating the device on which the matrix should be allocated
+ * @param[in] csvm the C-SVM encapsulating the device on which the matrix should be allocated
  * @param[in] args the additional arguments
  * @return a std::vector of `plssvm::detail::move_only_any` with a wrapped value usable in the PLSSVM functions (`[[nodiscard]]`)
  */
@@ -169,14 +169,14 @@ template <typename csvm_type, typename device_ptr_type, typename matrix_type, ty
 
 /**
  * @brief Initialize the kernel matrices based on the used @p solver type adding necessary padding entries using the values provided by @p matr based on the @p csvm_type.
- * @tparam csvm_type the PLSSVM CSVM backend type
+ * @tparam csvm_type the PLSSVM C-SVM backend type
  * @tparam device_ptr_type the device pointer type; only used if a GPU backend is used
  * @tparam matrix_type the type of the matrix
- * @tparam used_csvm_type the type of the @p csvm; may also be a Mock CSVM!
+ * @tparam used_csvm_type the type of the @p csvm; may also be a Mock C-SVM!
  * @tparam Args the types of the additional arguments
  * @param[in] matr the matrix to create the explicit kernel matrix from
  * @param[in] solver the used solver type in the CG algorithm
- * @param[in] csvm the CSVM encapsulating the device on which the matrix should be allocated
+ * @param[in] csvm the C-SVM encapsulating the device on which the matrix should be allocated
  * @param[in] args the additional arguments
  * @return a std::vector of `plssvm::detail::move_only_any` with a wrapped value usable in the PLSSVM functions (`[[nodiscard]]`)
  */
@@ -205,7 +205,7 @@ template <typename csvm_type, typename device_ptr_type, typename matrix_type, ty
 }  // namespace util
 
 //*************************************************************************************************************************************//
-//                                                   CSVM tests depending on nothing                                                   //
+//                                                  C-SVM tests depending on nothing                                                   //
 //*************************************************************************************************************************************//
 
 template <typename T>
@@ -444,7 +444,7 @@ REGISTER_TYPED_TEST_SUITE_P(GenericCSVM,
                             conjugate_gradients);
 
 //*************************************************************************************************************************************//
-//                                           CSVM tests depending on the kernel function type                                          //
+//                                          C-SVM tests depending on the kernel function type                                          //
 //*************************************************************************************************************************************//
 
 template <typename T>
@@ -715,7 +715,7 @@ REGISTER_TYPED_TEST_SUITE_P(GenericCSVMKernelFunction,
                             perform_dimensional_reduction);
 
 //*************************************************************************************************************************************//
-//                                               CSVM tests depending on the solver type                                               //
+//                                              C-SVM tests depending on the solver type                                               //
 //*************************************************************************************************************************************//
 
 template <typename T>
@@ -812,7 +812,7 @@ REGISTER_TYPED_TEST_SUITE_P(GenericCSVMSolver,
                             solve_lssvm_system_of_linear_equations);
 
 //*************************************************************************************************************************************//
-//                                     CSVM tests depending on the solver and kernel function type                                     //
+//                                    C-SVM tests depending on the solver and kernel function type                                     //
 //*************************************************************************************************************************************//
 
 template <typename T>
@@ -1048,7 +1048,7 @@ REGISTER_TYPED_TEST_SUITE_P(GenericCSVMSolverKernelFunction,
                             assemble_kernel_matrix);
 
 //*************************************************************************************************************************************//
-//                                                           CSVM DeathTests                                                           //
+//                                                          C-SVM DeathTests                                                           //
 //*************************************************************************************************************************************//
 
 template <typename T>

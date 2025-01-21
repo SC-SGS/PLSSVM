@@ -185,10 +185,10 @@ parser_train::parser_train(int argc, char **argv) {
     if (result.count("classification")) {
         classification = result["classification"].as<decltype(classification)>();
 
-        // warn if a classification type has been provided, but the SVM type is a CSVR (regression)
+        // warn if a classification type has been provided, but the SVM type is a C-SVR (regression)
         if (svm == svm_type::csvr) {
             detail::log_untracked(verbosity_level::full | verbosity_level::warning,
-                                  "WARNING: explicitly set a classification type but the current svm_type is a CSVR; ignoring --classification={}\n",
+                                  "WARNING: explicitly set a classification type but the current svm_type is a C-SVR; ignoring --classification={}\n",
                                   classification);
         }
     }

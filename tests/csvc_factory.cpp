@@ -5,7 +5,7 @@
  * @license This file is part of the PLSSVM project which is released under the MIT license.
  *          See the LICENSE.md file in the project root for full license information.
  *
- * @brief Tests for the CSVM factory function creating a C-SVC.
+ * @brief Tests for the C-SVM factory function creating a C-SVC.
  */
 
 #include "plssvm/backend_types.hpp"                       // plssvm::backend_type, plssvm::csvm_to_backend_type_v

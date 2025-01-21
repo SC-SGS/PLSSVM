@@ -83,7 +83,7 @@ REGISTER_TYPED_TEST_SUITE_P(GenericCSVC,
                             move_assignment);
 
 //*************************************************************************************************************************************//
-//                                 CSVC tests depending on the kernel function and classification type                                 //
+//                                C-SVC tests depending on the kernel function and classification type                                 //
 //*************************************************************************************************************************************//
 
 template <typename T>
@@ -202,7 +202,7 @@ REGISTER_TYPED_TEST_SUITE_P(GenericCSVCKernelFunctionClassification,
                             score);
 
 //*************************************************************************************************************************************//
-//                             CSVC tests depending on the solver, kernel function, and classification type                            //
+//                            C-SVC tests depending on the solver, kernel function, and classification type                            //
 //*************************************************************************************************************************************//
 
 template <typename T>

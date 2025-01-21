@@ -68,7 +68,7 @@ class csvm {
     explicit csvm(Args &&...args);
 
     /**
-     * @brief Delete copy-constructor since a CSVM is a move-only type.
+     * @brief Delete copy-constructor since a C-SVM is a move-only type.
      */
     csvm(const csvm &) = delete;
     /**
@@ -76,7 +76,7 @@ class csvm {
      */
     csvm(csvm &&) noexcept = default;
     /**
-     * @brief Delete copy-assignment operator since a CSVM is a move-only type.
+     * @brief Delete copy-assignment operator since a C-SVM is a move-only type.
      * @return `*this`
      */
     csvm &operator=(const csvm &) = delete;

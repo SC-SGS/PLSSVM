@@ -40,7 +40,7 @@ void bind_dpcpp_csvms(py::module_ &m, const std::string &csvm_name) {
                  plssvm::bindings::python::util::check_kwargs_for_correctness(args, { "kernel_type", "degree", "gamma", "coef0", "cost" });
                  // if one of the value keyword parameter is provided, set the respective value
                  const plssvm::parameter params = plssvm::bindings::python::util::convert_kwargs_to_parameter(args);
-                 // create CSVM with the default target platform
+                 // create C-SVM with the default target platform
                  return std::make_unique<backend_csvm_type>(params);
              }),
              "create an SVM with the default target platform and keyword arguments")
@@ -49,21 +49,21 @@ void bind_dpcpp_csvms(py::module_ &m, const std::string &csvm_name) {
                  plssvm::bindings::python::util::check_kwargs_for_correctness(args, { "kernel_type", "degree", "gamma", "coef0", "cost" });
                  // if one of the value keyword parameter is provided, set the respective value
                  const plssvm::parameter params = plssvm::bindings::python::util::convert_kwargs_to_parameter(args);
-                 // create CSVM with the provided target platform
+                 // create C-SVM with the provided target platform
                  return std::make_unique<backend_csvm_type>(target, params);
              }),
              "create an SVM with the provided target platform and keyword arguments");
 }
 
 py::module_ init_dpcpp_csvm(py::module_ &m, const py::exception<plssvm::exception> &base_exception) {
-    // use its own submodule for the DPC++ CSVM bindings
+    // use its own submodule for the DPC++ C-SVM bindings
     py::module_ dpcpp_module = m.def_submodule("dpcpp", "a module containing all DPC++ backend specific functionality");
     const py::module_ dpcpp_pure_virtual_module = dpcpp_module.def_submodule("__pure_virtual", "a module containing all pure-virtual DPC++ backend specific functionality");
 
-    // bind the pure-virtual base DPC++ CSVM
+    // bind the pure-virtual base DPC++ C-SVM
     py::class_<plssvm::dpcpp::csvm, plssvm::csvm>(dpcpp_pure_virtual_module, "__pure_virtual_dpcpp_base_CSVM");
 
-    // bind the specific DPC++ CSVC and CSVR classes
+    // bind the specific DPC++ C-SVC and C-SVR classes
     bind_dpcpp_csvms<plssvm::csvc>(dpcpp_module, "CSVC");
     bind_dpcpp_csvms<plssvm::csvr>(dpcpp_module, "CSVR");
 

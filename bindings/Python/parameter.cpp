@@ -62,7 +62,7 @@ void init_parameter(py::module_ &m) {
             [](const plssvm::parameter &self) { return self.cost; },
             [](plssvm::parameter &self, const plssvm::real_type cost) { self.cost = cost; },
             py::return_value_policy::reference,
-            "change the cost parameter for the CSVM")
+            "change the cost parameter for the C-SVM")
         .def("equivalent", &plssvm::parameter::equivalent, "check whether two parameter objects are equivalent, i.e., the SVM parameter important for the current 'kernel_type' are the same")
         .def(py::self == py::self, "check whether two parameter objects are identical")
         .def(py::self != py::self, "check whether two parameter objects are different")

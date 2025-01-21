@@ -162,7 +162,7 @@ TEST_P(DataSetFactory, data_set_factory_train) {
 
 // clang-format off
 // get<0>(tuple): whether the command line flag "string_as_labels" is provided (true) or not (false)
-// get<1>(tuple): whether a CSVC or CSVR is used
+// get<1>(tuple): whether a C-SVC or C-SVR is used
 // get<2>(tuple): the active index in the constructed variant
 INSTANTIATE_TEST_SUITE_P(DataSetFactory, DataSetFactory, ::testing::Values(
                 std::make_tuple(false, plssvm::svm_type::csvc, 0), std::make_tuple(true, plssvm::svm_type::csvc, 1), std::make_tuple(false, plssvm::svm_type::csvr, 2)),

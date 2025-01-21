@@ -165,7 +165,7 @@ template <typename base_csvm_type, typename... Args>
  */
 
 /**
- * @brief Create a new C-SVM based on the @p csvm_type (either C-CSVC or C-SVR) using the @p backend type and additional parameter @p args.
+ * @brief Create a new C-SVM based on the @p csvm_type (either C-SVC or C-SVR) using the @p backend type and additional parameter @p args.
  * @tparam Args the types of the parameters to initialize the C-SVM
  * @param[in] backend the backend to use
  * @param[in] args the parameters used to initialize the respective C-SVM
@@ -178,7 +178,7 @@ template <typename csvm_type, typename... Args>
 }
 
 /**
- * @brief Create a new  based on the @p csvm_type (either C-CSVC or C-SVR) using the automatic backend type and the additional parameter @p args.
+ * @brief Create a new  based on the @p csvm_type (either C-SVC or C-SVR) using the automatic backend type and the additional parameter @p args.
  * @tparam Args the types of the parameters to initialize the C-SVM
  * @param[in] args the parameters used to initialize the respective C-SVM
  * @throws plssvm::unsupported_backend_exception if the @p backend is not recognized

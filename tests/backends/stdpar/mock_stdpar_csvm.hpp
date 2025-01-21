@@ -17,7 +17,7 @@
 #include "plssvm/svm/csvm.hpp"              // plssvm::csvm
 
 /**
- * @brief GTest mock class for the stdpar CSVM.
+ * @brief GTest mock class for the stdpar C-SVM.
  */
 class mock_stdpar_csvm final : public plssvm::stdpar::csvm {
     using base_type = plssvm::stdpar::csvm;

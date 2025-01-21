@@ -41,7 +41,7 @@ void bind_hpx_csvms(py::module_ &m, const std::string &csvm_name) {
                  plssvm::bindings::python::util::check_kwargs_for_correctness(args, { "kernel_type", "degree", "gamma", "coef0", "cost" });
                  // if one of the value keyword parameter is provided, set the respective value
                  const plssvm::parameter params = plssvm::bindings::python::util::convert_kwargs_to_parameter(args);
-                 // create CSVM with the default target platform
+                 // create C-SVM with the default target platform
                  return std::make_unique<backend_csvm_type>(params);
              }),
              "create an SVM with the default target platform and keyword arguments")
@@ -50,21 +50,21 @@ void bind_hpx_csvms(py::module_ &m, const std::string &csvm_name) {
                  plssvm::bindings::python::util::check_kwargs_for_correctness(args, { "kernel_type", "degree", "gamma", "coef0", "cost" });
                  // if one of the value keyword parameter is provided, set the respective value
                  const plssvm::parameter params = plssvm::bindings::python::util::convert_kwargs_to_parameter(args);
-                 // create CSVM with the provided target platform
+                 // create C-SVM with the provided target platform
                  return std::make_unique<backend_csvm_type>(target, params);
              }),
              "create an SVM with the provided target platform and keyword arguments");
 }
 
 void init_hpx_csvm(py::module_ &m, const py::exception<plssvm::exception> &base_exception) {
-    // use its own submodule for the HPX CSVM bindings
+    // use its own submodule for the HPX C-SVM bindings
     py::module_ hpx_module = m.def_submodule("hpx", "a module containing all HPX backend specific functionality");
     const py::module_ hpx_pure_virtual_module = hpx_module.def_submodule("__pure_virtual", "a module containing all pure-virtual HPX backend specific functionality");
 
-    // bind the pure-virtual base HPX CSVM
+    // bind the pure-virtual base HPX C-SVM
     py::class_<plssvm::hpx::csvm, plssvm::csvm>(hpx_pure_virtual_module, "__pure_virtual_hpx_base_CSVM");
 
-    // bind the specific HPX CSVC and CSVR classes
+    // bind the specific HPX C-SVC and C-SVR classes
     bind_hpx_csvms<plssvm::csvc>(hpx_module, "CSVC");
     bind_hpx_csvms<plssvm::csvr>(hpx_module, "CSVR");
 

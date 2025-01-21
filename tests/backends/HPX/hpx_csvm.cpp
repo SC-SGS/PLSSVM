@@ -173,7 +173,7 @@ INSTANTIATE_TYPED_TEST_SUITE_P(HPXCSVR, GenericCSVR, hpx_csvm_test_type_gtest, n
 INSTANTIATE_TYPED_TEST_SUITE_P(HPXCSVR, GenericCSVRKernelFunction, hpx_regression_label_type_and_kernel_function_type_gtest, naming::test_parameter_to_name);
 INSTANTIATE_TYPED_TEST_SUITE_P(HPXCSVR, GenericCSVRSolverKernelFunction, hpx_regression_label_type_solver_and_kernel_function_type_gtest, naming::test_parameter_to_name);
 
-// generic CSVM DeathTests
+// generic C-SVM DeathTests
 INSTANTIATE_TYPED_TEST_SUITE_P(HPXCSVMDeathTest, GenericCSVMDeathTest, hpx_csvm_test_type_gtest, naming::test_parameter_to_name);
 INSTANTIATE_TYPED_TEST_SUITE_P(HPXCSVMDeathTest, GenericCSVMSolverDeathTest, hpx_solver_type_gtest, naming::test_parameter_to_name);
 INSTANTIATE_TYPED_TEST_SUITE_P(HPXCSVMDeathTest, GenericCSVMKernelFunctionDeathTest, hpx_kernel_function_type_gtest, naming::test_parameter_to_name);
@@ -389,7 +389,7 @@ TYPED_TEST(HPXCSVMKernelFunction, predict_values) {
 }
 
 //*************************************************************************************************************************************//
-//                                                           CSVM DeathTests                                                           //
+//                                                          C-SVM DeathTests                                                           //
 //*************************************************************************************************************************************//
 
 class HPXCSVMDeathTest : public HPXCSVM { };

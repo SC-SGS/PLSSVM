@@ -57,17 +57,17 @@ TEST(SvmType, from_string_unknown) {
 TEST(SvmType, minimal_available_svm_types) {
     const std::vector<plssvm::svm_type> svms = plssvm::list_available_svm_types();
 
-    // both CSVM types must be available
+    // both C-SVM types must be available
     EXPECT_EQ(svms.size(), 2);
     EXPECT_THAT(svms, ::testing::Contains(plssvm::svm_type::csvc));
     EXPECT_THAT(svms, ::testing::Contains(plssvm::svm_type::csvr));
 }
 
 TEST(SvmType, svm_type_to_task_name) {
-    // get the task name from a CSVC
+    // get the task name from a C-SVC
     EXPECT_EQ(plssvm::svm_type_to_task_name(plssvm::svm_type::csvc), std::string_view{ "classification" });
 
-    // get the task name from a CSVR
+    // get the task name from a C-SVR
     EXPECT_EQ(plssvm::svm_type_to_task_name(plssvm::svm_type::csvr), std::string_view{ "regression" });
 }
 

@@ -20,7 +20,7 @@
 #include "tests/backends/generic_csvc_tests.hpp"       // generic C-SVC tests to instantiate
 #include "tests/backends/generic_csvm_tests.hpp"       // generic C-SVM tests to instantiate
 #include "tests/backends/generic_csvr_tests.hpp"       // generic C-SVR tests to instantiate
-#include "tests/backends/generic_gpu_csvm_tests.hpp"   // generic GPU CSVM tests to instantiate
+#include "tests/backends/generic_gpu_csvm_tests.hpp"   // generic GPU C-SVM tests to instantiate
 #include "tests/backends/Kokkos/mock_kokkos_csvm.hpp"  // mock_kokkos_csvm
 #include "tests/backends/Kokkos/utility.hpp"           // util::create_kokkos_test_tuple_impl
 #include "tests/custom_test_macros.hpp"                // EXPECT_THROW_WHAT
@@ -731,7 +731,7 @@ TYPED_TEST(KokkosCSVMConstructor, construct_target_and_execution_space_and_named
 TYPED_TEST(KokkosCSVMConstructor, get_execution_space) {
     using csvm_type = typename TestFixture::fixture_csvm_type;
 
-    // construct default CSVM
+    // construct default C-SVM
     const csvm_type svm{ plssvm::parameter{} };
 
     // after construction: get_execution_space must refer to a plssvm::kokkos::execution_space that is not automatic
@@ -787,17 +787,17 @@ INSTANTIATE_TYPED_TEST_SUITE_P(KokkosCSVR, GenericCSVR, kokkos_csvm_test_type_gt
 INSTANTIATE_TYPED_TEST_SUITE_P(KokkosCSVR, GenericCSVRKernelFunction, kokkos_regression_label_type_and_kernel_function_type_gtest, naming::test_parameter_to_name);
 INSTANTIATE_TYPED_TEST_SUITE_P(KokkosCSVR, GenericCSVRSolverKernelFunction, kokkos_regression_label_type_solver_and_kernel_function_type_gtest, naming::test_parameter_to_name);
 
-// generic CSVM DeathTests
+// generic C-SVM DeathTests
 INSTANTIATE_TYPED_TEST_SUITE_P(KokkosCSVMDeathTest, GenericCSVMDeathTest, kokkos_csvm_test_type_gtest, naming::test_parameter_to_name);
 INSTANTIATE_TYPED_TEST_SUITE_P(KokkosCSVMDeathTest, GenericCSVMSolverDeathTest, kokkos_solver_type_gtest, naming::test_parameter_to_name);
 INSTANTIATE_TYPED_TEST_SUITE_P(KokkosCSVMDeathTest, GenericCSVMKernelFunctionDeathTest, kokkos_kernel_function_type_gtest, naming::test_parameter_to_name);
 INSTANTIATE_TYPED_TEST_SUITE_P(KokkosCSVMDeathTest, GenericCSVMSolverKernelFunctionDeathTest, kokkos_solver_and_kernel_function_type_gtest, naming::test_parameter_to_name);
 
-// generic GPU CSVM tests - correct grid sizes
+// generic GPU C-SVM tests - correct grid sizes
 INSTANTIATE_TYPED_TEST_SUITE_P(KokkosCSVM, GenericGPUCSVM, kokkos_csvm_test_type_gtest, naming::test_parameter_to_name);
 INSTANTIATE_TYPED_TEST_SUITE_P(KokkosCSVM, GenericGPUCSVMKernelFunction, kokkos_kernel_function_type_gtest, naming::test_parameter_to_name);
 
-// generic GPU CSVM DeathTests - correct grid sizes
+// generic GPU C-SVM DeathTests - correct grid sizes
 INSTANTIATE_TYPED_TEST_SUITE_P(KokkosCSVMDeathTest, GenericGPUCSVMDeathTest, kokkos_csvm_test_type_gtest, naming::test_parameter_to_name);
 
 template <plssvm::kokkos::execution_space space>
@@ -809,6 +809,6 @@ using kokkos_mock_csvm_test_type_list = util::cartesian_type_product_t<kokkos_mo
 using kokkos_mock_csvm_test_type_gtest = util::combine_test_parameters_gtest_t<kokkos_mock_csvm_test_type_list>;
 using kokkos_mock_kernel_function_type_gtest = util::combine_test_parameters_gtest_t<kokkos_mock_csvm_test_type_list, util::kernel_function_type_list>;
 
-// generic GPU CSVM tests - mocked grid sizes
+// generic GPU C-SVM tests - mocked grid sizes
 INSTANTIATE_TYPED_TEST_SUITE_P(KokkosCSVMFakedGridSize, GenericGPUCSVM, kokkos_mock_csvm_test_type_gtest, naming::test_parameter_to_name);
 INSTANTIATE_TYPED_TEST_SUITE_P(KokkosCSVMFakedGridSize, GenericGPUCSVMKernelFunction, kokkos_mock_kernel_function_type_gtest, naming::test_parameter_to_name);

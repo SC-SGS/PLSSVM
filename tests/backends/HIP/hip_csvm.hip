@@ -18,7 +18,7 @@
 #include "tests/backends/generic_csvc_tests.hpp"      // generic C-SVC tests to instantiate
 #include "tests/backends/generic_csvm_tests.hpp"      // generic C-SVM tests to instantiate
 #include "tests/backends/generic_csvr_tests.hpp"      // generic C-SVR tests to instantiate
-#include "tests/backends/generic_gpu_csvm_tests.hpp"  // generic GPU CSVM tests to instantiate
+#include "tests/backends/generic_gpu_csvm_tests.hpp"  // generic GPU C-SVM tests to instantiate
 #include "tests/backends/HIP/mock_hip_csvm.hpp"       // mock_hip_csvm
 #include "tests/custom_test_macros.hpp"               // EXPECT_THROW_WHAT
 #include "tests/naming.hpp"                           // naming::test_parameter_to_name
@@ -247,17 +247,17 @@ INSTANTIATE_TYPED_TEST_SUITE_P(HIPCSVR, GenericCSVR, hip_csvm_test_type_gtest, n
 INSTANTIATE_TYPED_TEST_SUITE_P(HIPCSVR, GenericCSVRKernelFunction, hip_regression_label_type_and_kernel_function_type_gtest, naming::test_parameter_to_name);
 INSTANTIATE_TYPED_TEST_SUITE_P(HIPCSVR, GenericCSVRSolverKernelFunction, hip_regression_label_type_solver_and_kernel_function_type_gtest, naming::test_parameter_to_name);
 
-// generic CSVM DeathTests
+// generic C-SVM DeathTests
 INSTANTIATE_TYPED_TEST_SUITE_P(HIPCSVMDeathTest, GenericCSVMDeathTest, hip_csvm_test_type_gtest, naming::test_parameter_to_name);
 INSTANTIATE_TYPED_TEST_SUITE_P(HIPCSVMDeathTest, GenericCSVMSolverDeathTest, hip_solver_type_gtest, naming::test_parameter_to_name);
 INSTANTIATE_TYPED_TEST_SUITE_P(HIPCSVMDeathTest, GenericCSVMKernelFunctionDeathTest, hip_kernel_function_type_gtest, naming::test_parameter_to_name);
 INSTANTIATE_TYPED_TEST_SUITE_P(HIPCSVMDeathTest, GenericCSVMSolverKernelFunctionDeathTest, hip_solver_and_kernel_function_type_gtest, naming::test_parameter_to_name);
 
-// generic GPU CSVM tests - correct grid sizes
+// generic GPU C-SVM tests - correct grid sizes
 INSTANTIATE_TYPED_TEST_SUITE_P(HIPCSVM, GenericGPUCSVM, hip_csvm_test_type_gtest, naming::test_parameter_to_name);
 INSTANTIATE_TYPED_TEST_SUITE_P(HIPCSVM, GenericGPUCSVMKernelFunction, hip_kernel_function_type_gtest, naming::test_parameter_to_name);
 
-// generic GPU CSVM DeathTests - correct grid sizes
+// generic GPU C-SVM DeathTests - correct grid sizes
 INSTANTIATE_TYPED_TEST_SUITE_P(HIPCSVMDeathTest, GenericGPUCSVMDeathTest, hip_csvm_test_type_gtest, naming::test_parameter_to_name);
 
 using hip_mock_csvm_test_tuple = std::tuple<hip_csvm_test_type<true>>;
@@ -266,6 +266,6 @@ using hip_mock_csvm_test_type_list = util::cartesian_type_product_t<hip_mock_csv
 using hip_mock_csvm_test_type_gtest = util::combine_test_parameters_gtest_t<hip_mock_csvm_test_type_list>;
 using hip_mock_kernel_function_type_gtest = util::combine_test_parameters_gtest_t<hip_mock_csvm_test_type_list, util::kernel_function_type_list>;
 
-// generic GPU CSVM tests - mocked grid sizes
+// generic GPU C-SVM tests - mocked grid sizes
 INSTANTIATE_TYPED_TEST_SUITE_P(HIPCSVMFakedGridSize, GenericGPUCSVM, hip_mock_csvm_test_type_gtest, naming::test_parameter_to_name);
 INSTANTIATE_TYPED_TEST_SUITE_P(HIPCSVMFakedGridSize, GenericGPUCSVMKernelFunction, hip_mock_kernel_function_type_gtest, naming::test_parameter_to_name);
