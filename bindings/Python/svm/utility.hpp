@@ -14,6 +14,7 @@
 #pragma once
 
 #include "plssvm/backend_types.hpp"                          // plssvm::backend_type, plssvm::determine_default_backend, plssvm::list_available_backends
+#include "plssvm/backends/Kokkos/execution_space.hpp"        // plssvm::kokkos::execution_space
 #include "plssvm/backends/SYCL/implementation_types.hpp"     // plssvm::sycl::implementation_type
 #include "plssvm/backends/SYCL/kernel_invocation_types.hpp"  // plssvm::sycl::kernel_invocation_type
 #include "plssvm/csvm_factory.hpp"                           // plssvm::make_csvm
@@ -42,7 +43,7 @@ namespace plssvm::bindings::python::util {
 template <typename csvm_type>
 [[nodiscard]] inline std::unique_ptr<csvm_type> assemble_csvm(const py::kwargs &args, plssvm::parameter input_params = {}) {
     // check keyword arguments
-    plssvm::bindings::python::util::check_kwargs_for_correctness(args, { "backend", "target_platform", "kernel_type", "degree", "gamma", "coef0", "cost", "sycl_implementation_type", "sycl_kernel_invocation_type" });
+    plssvm::bindings::python::util::check_kwargs_for_correctness(args, { "backend", "target_platform", "kernel_type", "degree", "gamma", "coef0", "cost", "sycl_implementation_type", "sycl_kernel_invocation_type", "kokkos_execution_space" });
     // if one of the value keyword parameter is provided, set the respective value
     const plssvm::parameter params = plssvm::bindings::python::util::convert_kwargs_to_parameter(args, input_params);
     plssvm::backend_type backend = plssvm::determine_default_backend();
@@ -70,9 +71,8 @@ template <typename csvm_type>
         }
     }
 
-    // parse SYCL specific keyword arguments
     if (backend == plssvm::backend_type::sycl) {
-        // sycl specific flags
+        // parse SYCL specific keyword arguments
         plssvm::sycl::implementation_type impl_type = plssvm::sycl::implementation_type::automatic;
         if (args.contains("sycl_implementation_type")) {
             impl_type = args["sycl_implementation_type"].cast<plssvm::sycl::implementation_type>();
@@ -83,6 +83,14 @@ template <typename csvm_type>
         }
 
         return plssvm::make_csvm<csvm_type>(backend, target, params, plssvm::sycl_implementation_type = impl_type, plssvm::sycl_kernel_invocation_type = invocation_type);
+    } else if (backend == plssvm::backend_type::kokkos) {
+        // parse Kokkos specific keyword arguments
+        plssvm::kokkos::execution_space space = plssvm::kokkos::execution_space::automatic;
+        if (args.contains("kokkos_execution_space")) {
+            space = args["kokkos_execution_space"].cast<plssvm::kokkos::execution_space>();
+        }
+
+        return plssvm::make_csvm<csvm_type>(backend, target, params, plssvm::kokkos_execution_space = space);
     } else {
         return plssvm::make_csvm<csvm_type>(backend, target, params);
     }

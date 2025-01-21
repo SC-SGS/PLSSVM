@@ -531,20 +531,18 @@ supported as target.
 These classes inherit all methods from the base `plssvm.CSVC` or `plssvm.CSVR` classes.
 The following constructors and methods are available for both classification `CSVC` and regression `CSVR`:
 
-| constructors                              | description                                                                                                                                   |
-|-------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------|
-| `CSVC()`                                  | Create a new C-SVM with the default target platform. The hyper-parameters are set to their default values.                                    |
-| `CSVC([plssvm.Parameter kwargs])`         | Create a new C-SVM with the default target platform. The hyper-parameter values are set ot the provided named parameter values.               |
-| `CSVC(params)`                            | Create a new C-SVM with the default target platform. The hyper-parameters are explicitly set to the provided `plssvm.Parameter`.              |
-| `CSVC(target)`                            | Create a new C-SVM with the default the provided target platform. The hyper-parameters are set to their default values.                       |
-| `CSVC(target, [plssvm.Parameter kwargs])` | Create a new C-SVM with the default the provided target platform. The hyper-parameter values are set ot the provided named parameter values.  |
-| `CSVC(target, params)`                    | Create a new C-SVM with the default the provided target platform. The hyper-parameters are explicitly set to the provided `plssvm.Parameter`. |
+| constructors                              | description                                                                                                                       |
+|-------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------|
+| `CSVC(params)`                            | Create a new C-SVM with the default target platform. The hyper-parameters are explicitly set to the provided `plssvm.Parameter`.  |
+| `CSVC(target, params)`                    | Create a new C-SVM with the provided target platform. The hyper-parameters are explicitly set to the provided `plssvm.Parameter`. |
+| `CSVC([plssvm.Parameter kwargs])`         | Create a new C-SVM with the default target platform. The hyper-parameter values are set ot the provided named parameter values.   |
+| `CSVC(target, [plssvm.Parameter kwargs])` | Create a new C-SVM with the provided target platform. The hyper-parameter values are set ot the provided named parameter values.  |
 
 In case of the SYCL C-SVMs (`plssvm.sycl.CSVC`, `plssvm.dpcpp.CSVC`, and `plssvm.adaptivecpp.CSVC`; the same for the `CSVR`s) the additional named
 argument `sycl_kernel_invocation_type` to choose between the two different SYCL kernel invocation types can be provided.
 
-In case of the SYCL C-SVMs (`plssvm.sycl.CSVM`, `plssvm.dpcpp.CSVM`, and `plssvm.adaptivecpp.CSVM`; the same for the `CSVR`s) the following methods
-are additional available for the backend specific C-SVMs.
+In case of the SYCL C-SVMs (`plssvm.sycl.CSVM`, `plssvm.dpcpp.CSVM`, and `plssvm.adaptivecpp.CSVM`; the same for the `CSVR`s), additionally, all constructors also accept the SYCL specific `sycl_kernel_invocation_type` keyword parameter.
+Also, the following methods are additional available for the backend specific C-SVMs.
 
 | methods                        | description                             |
 |--------------------------------|-----------------------------------------|
@@ -557,8 +555,8 @@ C-SVM.
 |-----------------------------|---------------------------------------------|
 | `get_implementation_type()` | Return the used stdpar implementation type. |
 
-In case of the Kokkos C-SVM (`plssvm.kokkos.CSVC` and `plssvm.kokkos.CSVR`) the following method is additional available for the backend specific
-C-SVM.
+In case of the Kokkos C-SVM (`plssvm.kokkos.CSVC` and `plssvm.kokkos.CSVR`), additionally, all constructors also accept the Kokkos specific `kokkos_execution_space` keyword parameter.
+Also, the following method is additional available for the backend specific C-SVM.
 
 | methods                 | description                             |
 |-------------------------|-----------------------------------------|
