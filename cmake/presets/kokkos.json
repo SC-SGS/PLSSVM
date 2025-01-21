@@ -59,13 +59,19 @@
       "name": "kokkos_test",
       "displayName": "Kokkos backend all tests",
       "configurePreset": "kokkos_test",
-      "inherits": "common"
+      "inherits": "common",
+      "environment": {
+        "OMP_PROC_BIND": "false"
+      }
     },
     {
       "name": "kokkos_backend_test",
       "displayName": "Kokkos backend specific tests",
       "configurePreset": "kokkos_test",
       "inherits": "common",
+      "environment": {
+        "OMP_PROC_BIND": "false"
+      },
       "filter": {
         "include": {
           "name": "Kokkos.*"
