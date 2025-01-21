@@ -10,8 +10,8 @@
  * @brief Generic C-SVM tests for all backends to reduce code duplication.
  */
 
-#ifndef PLSSVM_TESTS_BACKENDS_GENERIC_CSVM_TESTS_HPP_
-#define PLSSVM_TESTS_BACKENDS_GENERIC_CSVM_TESTS_HPP_
+#ifndef PLSSVM_TESTS_BACKENDS_GENERIC_BASE_CSVM_TESTS_HPP_
+#define PLSSVM_TESTS_BACKENDS_GENERIC_BASE_CSVM_TESTS_HPP_
 #pragma once
 
 #include "plssvm/backend_types.hpp"             // plssvm::backend_type
@@ -1814,4 +1814,4 @@ REGISTER_TYPED_TEST_SUITE_P(GenericCSVMSolverKernelFunctionDeathTest,
                             assemble_kernel_matrix_A_not_padded,
                             assemble_kernel_matrix_size_mismatch);
 
-#endif  // PLSSVM_TESTS_BACKENDS_GENERIC_CSVM_TESTS_HPP_
+#endif  // PLSSVM_TESTS_BACKENDS_GENERIC_BASE_CSVM_TESTS_HPP_

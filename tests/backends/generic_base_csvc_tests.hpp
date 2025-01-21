@@ -10,8 +10,8 @@
  * @brief Generic C-SVC tests for all backends to reduce code duplication.
  */
 
-#ifndef PLSSVM_TESTS_BACKENDS_GENERIC_CSVC_TESTS_HPP_
-#define PLSSVM_TESTS_BACKENDS_GENERIC_CSVC_TESTS_HPP_
+#ifndef PLSSVM_TESTS_BACKENDS_GENERIC_BASE_CSVC_TESTS_HPP_
+#define PLSSVM_TESTS_BACKENDS_GENERIC_BASE_CSVC_TESTS_HPP_
 #pragma once
 
 #include "plssvm/classification_types.hpp"              // plssvm::classification_type
@@ -260,4 +260,4 @@ TYPED_TEST_P(GenericCSVCSolverKernelFunctionClassification, fit) {
 REGISTER_TYPED_TEST_SUITE_P(GenericCSVCSolverKernelFunctionClassification,
                             fit);
 
-#endif  // PLSSVM_TESTS_BACKENDS_GENERIC_CSVC_TESTS_HPP_
+#endif  // PLSSVM_TESTS_BACKENDS_GENERIC_BASE_CSVC_TESTS_HPP_

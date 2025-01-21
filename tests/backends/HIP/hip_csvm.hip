@@ -15,15 +15,15 @@
 #include "plssvm/parameter.hpp"                    // plssvm::parameter, plssvm::kernel_type, plssvm::cost
 #include "plssvm/target_platforms.hpp"             // plssvm::target_platform
 
-#include "tests/backends/generic_csvc_tests.hpp"      // generic C-SVC tests to instantiate
-#include "tests/backends/generic_csvm_tests.hpp"      // generic C-SVM tests to instantiate
-#include "tests/backends/generic_csvr_tests.hpp"      // generic C-SVR tests to instantiate
-#include "tests/backends/generic_gpu_csvm_tests.hpp"  // generic GPU C-SVM tests to instantiate
-#include "tests/backends/HIP/mock_hip_csvm.hpp"       // mock_hip_csvm
-#include "tests/custom_test_macros.hpp"               // EXPECT_THROW_WHAT
-#include "tests/naming.hpp"                           // naming::test_parameter_to_name
-#include "tests/types_to_test.hpp"                    // util::{cartesian_type_product_t, combine_test_parameters_gtest_t}
-#include "tests/utility.hpp"                          // util::redirect_output
+#include "tests/backends/generic_base_csvc_tests.hpp"  // generic C-SVC tests to instantiate
+#include "tests/backends/generic_base_csvm_tests.hpp"  // generic C-SVM tests to instantiate
+#include "tests/backends/generic_base_csvr_tests.hpp"  // generic C-SVR tests to instantiate
+#include "tests/backends/generic_gpu_csvm_tests.hpp"   // generic GPU C-SVM tests to instantiate
+#include "tests/backends/HIP/mock_hip_csvm.hpp"        // mock_hip_csvm
+#include "tests/custom_test_macros.hpp"                // EXPECT_THROW_WHAT
+#include "tests/naming.hpp"                            // naming::test_parameter_to_name
+#include "tests/types_to_test.hpp"                     // util::{cartesian_type_product_t, combine_test_parameters_gtest_t}
+#include "tests/utility.hpp"                           // util::redirect_output
 
 #include "gtest/gtest.h"  // TYPED_TEST, EXPECT_NO_THROW, INSTANTIATE_TYPED_TEST_SUITE_P, ::testing::Test
 

@@ -17,9 +17,9 @@
 #include "plssvm/parameter.hpp"                              // plssvm::parameter, plssvm::kernel_type, plssvm::cost
 #include "plssvm/target_platforms.hpp"                       // plssvm::target_platform
 
-#include "tests/backends/generic_csvc_tests.hpp"          // generic C-SVC tests to instantiate
-#include "tests/backends/generic_csvm_tests.hpp"          // generic C-SVM tests to instantiate
-#include "tests/backends/generic_csvr_tests.hpp"          // generic C-SVR tests to instantiate
+#include "tests/backends/generic_base_csvc_tests.hpp"     // generic C-SVC tests to instantiate
+#include "tests/backends/generic_base_csvm_tests.hpp"     // generic C-SVM tests to instantiate
+#include "tests/backends/generic_base_csvr_tests.hpp"     // generic C-SVR tests to instantiate
 #include "tests/backends/generic_gpu_csvm_tests.hpp"      // generic GPU C-SVM tests to instantiate
 #include "tests/backends/SYCL/DPCPP/mock_dpcpp_csvm.hpp"  // mock_dpcpp_csvm
 #include "tests/custom_test_macros.hpp"                   // EXPECT_THROW_WHAT
@@ -36,7 +36,7 @@ using dpcpp_csvm_types_gtest = util::combine_test_parameters_gtest_t<util::carte
 
 template <typename T>
 class DPCPPCSVMConstructor : public ::testing::Test,
-                           private util::redirect_output<> {
+                             private util::redirect_output<> {
   protected:
     using fixture_csvm_type = util::test_parameter_type_at_t<0, T>;
 };
@@ -102,9 +102,9 @@ TYPED_TEST(DPCPPCSVMConstructor, construct_target_and_named_args) {
     EXPECT_NO_THROW((csvm_type{ plssvm::target_platform::cpu, plssvm::sycl_kernel_invocation_type = plssvm::sycl::kernel_invocation_type::nd_range }));
 #else
     EXPECT_THROW_WHAT((csvm_type{ plssvm::target_platform::cpu,
-                                            plssvm::kernel_type = plssvm::kernel_function_type::linear,
-                                            plssvm::cost = 2.0,
-                                            plssvm::sycl_kernel_invocation_type = plssvm::sycl::kernel_invocation_type::nd_range }),
+                                  plssvm::kernel_type = plssvm::kernel_function_type::linear,
+                                  plssvm::cost = 2.0,
+                                  plssvm::sycl_kernel_invocation_type = plssvm::sycl::kernel_invocation_type::nd_range }),
                       plssvm::dpcpp::backend_exception,
                       "Requested target platform 'cpu' that hasn't been enabled using PLSSVM_TARGET_PLATFORMS!");
 #endif
@@ -114,9 +114,9 @@ TYPED_TEST(DPCPPCSVMConstructor, construct_target_and_named_args) {
     EXPECT_NO_THROW((csvm_type{ plssvm::target_platform::gpu_nvidia, plssvm::sycl_kernel_invocation_type = plssvm::sycl::kernel_invocation_type::nd_range }));
 #else
     EXPECT_THROW_WHAT((csvm_type{ plssvm::target_platform::gpu_nvidia,
-                                            plssvm::kernel_type = plssvm::kernel_function_type::linear,
-                                            plssvm::cost = 2.0,
-                                            plssvm::sycl_kernel_invocation_type = plssvm::sycl::kernel_invocation_type::nd_range }),
+                                  plssvm::kernel_type = plssvm::kernel_function_type::linear,
+                                  plssvm::cost = 2.0,
+                                  plssvm::sycl_kernel_invocation_type = plssvm::sycl::kernel_invocation_type::nd_range }),
                       plssvm::dpcpp::backend_exception,
                       "Requested target platform 'gpu_nvidia' that hasn't been enabled using PLSSVM_TARGET_PLATFORMS!");
 #endif
@@ -126,9 +126,9 @@ TYPED_TEST(DPCPPCSVMConstructor, construct_target_and_named_args) {
     EXPECT_NO_THROW((csvm_type{ plssvm::target_platform::gpu_amd, plssvm::sycl_kernel_invocation_type = plssvm::sycl::kernel_invocation_type::nd_range }));
 #else
     EXPECT_THROW_WHAT((csvm_type{ plssvm::target_platform::gpu_amd,
-                                            plssvm::kernel_type = plssvm::kernel_function_type::linear,
-                                            plssvm::cost = 2.0,
-                                            plssvm::sycl_kernel_invocation_type = plssvm::sycl::kernel_invocation_type::nd_range }),
+                                  plssvm::kernel_type = plssvm::kernel_function_type::linear,
+                                  plssvm::cost = 2.0,
+                                  plssvm::sycl_kernel_invocation_type = plssvm::sycl::kernel_invocation_type::nd_range }),
                       plssvm::dpcpp::backend_exception,
                       "Requested target platform 'gpu_amd' that hasn't been enabled using PLSSVM_TARGET_PLATFORMS!");
 #endif
@@ -138,9 +138,9 @@ TYPED_TEST(DPCPPCSVMConstructor, construct_target_and_named_args) {
     EXPECT_NO_THROW((csvm_type{ plssvm::target_platform::gpu_intel, plssvm::sycl_kernel_invocation_type = plssvm::sycl::kernel_invocation_type::nd_range }));
 #else
     EXPECT_THROW_WHAT((csvm_type{ plssvm::target_platform::gpu_intel,
-                                            plssvm::kernel_type = plssvm::kernel_function_type::linear,
-                                            plssvm::cost = 2.0,
-                                            plssvm::sycl_kernel_invocation_type = plssvm::sycl::kernel_invocation_type::nd_range }),
+                                  plssvm::kernel_type = plssvm::kernel_function_type::linear,
+                                  plssvm::cost = 2.0,
+                                  plssvm::sycl_kernel_invocation_type = plssvm::sycl::kernel_invocation_type::nd_range }),
                       plssvm::dpcpp::backend_exception,
                       "Requested target platform 'gpu_intel' that hasn't been enabled using PLSSVM_TARGET_PLATFORMS!");
 #endif

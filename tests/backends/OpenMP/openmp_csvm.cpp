@@ -26,9 +26,9 @@
 #include "plssvm/shape.hpp"                                                           // plssvm::shape
 #include "plssvm/target_platforms.hpp"                                                // plssvm::target_platform
 
-#include "tests/backends/generic_csvc_tests.hpp"       // generic C-SVC tests to instantiate
-#include "tests/backends/generic_csvm_tests.hpp"       // generic C-SVM tests to instantiate
-#include "tests/backends/generic_csvr_tests.hpp"       // generic C-SVR tests to instantiate
+#include "tests/backends/generic_base_csvc_tests.hpp"  // generic C-SVC tests to instantiate
+#include "tests/backends/generic_base_csvm_tests.hpp"  // generic C-SVM tests to instantiate
+#include "tests/backends/generic_base_csvr_tests.hpp"  // generic C-SVR tests to instantiate
 #include "tests/backends/ground_truth.hpp"             // ground_truth::{perform_dimensional_reduction, assemble_device_specific_kernel_matrix, assemble_full_kernel_matrix, gemm, calculate_w}
 #include "tests/backends/OpenMP/mock_openmp_csvm.hpp"  // mock_openmp_csvm
 #include "tests/custom_test_macros.hpp"                // EXPECT_THROW_WHAT

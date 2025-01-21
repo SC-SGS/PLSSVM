@@ -10,8 +10,8 @@
  * @brief Generic C-SVR tests for all backends to reduce code duplication.
  */
 
-#ifndef PLSSVM_TESTS_BACKENDS_GENERIC_CSVR_TESTS_HPP_
-#define PLSSVM_TESTS_BACKENDS_GENERIC_CSVR_TESTS_HPP_
+#ifndef PLSSVM_TESTS_BACKENDS_GENERIC_BASE_CSVR_TESTS_HPP_
+#define PLSSVM_TESTS_BACKENDS_GENERIC_BASE_CSVR_TESTS_HPP_
 #pragma once
 
 #include "plssvm/constants.hpp"                     // plssvm::real_type, plssvm::PADDING_SIZE
@@ -251,4 +251,4 @@ TYPED_TEST_P(GenericCSVRSolverKernelFunction, fit) {
 REGISTER_TYPED_TEST_SUITE_P(GenericCSVRSolverKernelFunction,
                             fit);
 
-#endif  // PLSSVM_TESTS_BACKENDS_GENERIC_CSVR_TESTS_HPP_
+#endif  // PLSSVM_TESTS_BACKENDS_GENERIC_BASE_CSVR_TESTS_HPP_

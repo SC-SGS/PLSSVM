@@ -27,15 +27,15 @@
 #include "plssvm/shape.hpp"                                                        // plssvm::shape
 #include "plssvm/target_platforms.hpp"                                             // plssvm::target_platform
 
-#include "tests/backends/generic_csvc_tests.hpp"  // generic C-SVC tests to instantiate
-#include "tests/backends/generic_csvm_tests.hpp"  // generic C-SVM tests to instantiate
-#include "tests/backends/generic_csvr_tests.hpp"  // generic C-SVR tests to instantiate
-#include "tests/backends/ground_truth.hpp"        // ground_truth::{perform_dimensional_reduction, assemble_device_specific_kernel_matrix, assemble_full_kernel_matrix, gemm, calculate_w}
-#include "tests/backends/HPX/mock_hpx_csvm.hpp"   // mock_hpx_csvm
-#include "tests/custom_test_macros.hpp"           // EXPECT_THROW_WHAT
-#include "tests/naming.hpp"                       // naming::test_parameter_to_name
-#include "tests/types_to_test.hpp"                // util::{cartesian_type_product_t, combine_test_parameters_gtest_t}
-#include "tests/utility.hpp"                      // util::redirect_output
+#include "tests/backends/generic_base_csvc_tests.hpp"  // generic C-SVC tests to instantiate
+#include "tests/backends/generic_base_csvm_tests.hpp"  // generic C-SVM tests to instantiate
+#include "tests/backends/generic_base_csvr_tests.hpp"  // generic C-SVR tests to instantiate
+#include "tests/backends/ground_truth.hpp"             // ground_truth::{perform_dimensional_reduction, assemble_device_specific_kernel_matrix, assemble_full_kernel_matrix, gemm, calculate_w}
+#include "tests/backends/HPX/mock_hpx_csvm.hpp"        // mock_hpx_csvm
+#include "tests/custom_test_macros.hpp"                // EXPECT_THROW_WHAT
+#include "tests/naming.hpp"                            // naming::test_parameter_to_name
+#include "tests/types_to_test.hpp"                     // util::{cartesian_type_product_t, combine_test_parameters_gtest_t}
+#include "tests/utility.hpp"                           // util::redirect_output
 
 #include "fmt/format.h"   // fmt::format
 #include "gtest/gtest.h"  // TYPED_TEST, TYPED_TEST_SUITE, TEST_F, EXPECT_NO_THROW, INSTANTIATE_TYPED_TEST_SUITE_P, ::testing::Test
