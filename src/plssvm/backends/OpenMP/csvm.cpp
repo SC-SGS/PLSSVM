@@ -44,17 +44,7 @@
 
 namespace plssvm::openmp {
 
-csvm::~csvm() = default;
-
-csvm::csvm(parameter params) :
-    csvm{ plssvm::target_platform::automatic, params } { }
-
-csvm::csvm(const target_platform target, parameter params) :
-    ::plssvm::csvm{ params } {
-    this->init(target);
-}
-
-void csvm::init(const target_platform target) {
+csvm::csvm(const target_platform target) {
     // check if supported target platform has been selected
     if (target != target_platform::automatic && target != target_platform::cpu) {
         throw backend_exception{ fmt::format("Invalid target platform '{}' for the OpenMP backend!", target) };
@@ -74,6 +64,8 @@ void csvm::init(const target_platform target) {
     // update the target platform
     target_ = plssvm::target_platform::cpu;
 }
+
+csvm::~csvm() = default;
 
 std::vector<::plssvm::detail::memory_size> csvm::get_device_memory() const {
     return { ::plssvm::detail::get_system_memory() };

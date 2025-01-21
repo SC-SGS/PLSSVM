@@ -14,6 +14,7 @@
 #pragma once
 
 #include "plssvm/backends/OpenMP/csvm.hpp"  // plssvm::openmp::csvm
+#include "plssvm/svm/csvm.hpp"              // plssvm::csvm
 
 /**
  * @brief GTest mock class for the OpenMP CSVM.
@@ -24,7 +25,8 @@ class mock_openmp_csvm final : public plssvm::openmp::csvm {
   public:
     template <typename... Args>
     explicit mock_openmp_csvm(Args &&...args) :
-        base_type{ std::forward<Args>(args)... } { }
+        plssvm::csvm{ std::forward<Args>(args)... },
+        base_type{} { }
 
     // make protected member functions public
     using base_type::assemble_kernel_matrix;
