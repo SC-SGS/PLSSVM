@@ -42,7 +42,7 @@ struct csvc_bindings {
                     // check keyword arguments
                     plssvm::bindings::python::util::check_kwargs_for_correctness(args, { "epsilon", "max_iter", "classification", "solver" });
 
-                    auto epsilon{ plssvm::real_type{ 0.001 } };
+                    auto epsilon{ plssvm::real_type{ 1e-10 } };
                     if (args.contains("epsilon")) {
                         epsilon = args["epsilon"].cast<plssvm::real_type>();
                     }

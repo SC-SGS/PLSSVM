@@ -55,7 +55,7 @@ TEST_F(ParserTrain, minimal) {
 
     // check parsed values
     EXPECT_EQ(parser.csvm_params, plssvm::parameter{});
-    EXPECT_FLOATING_POINT_EQ(parser.epsilon, plssvm::real_type{ 0.001 });
+    EXPECT_FLOATING_POINT_EQ(parser.epsilon, plssvm::real_type{ 1e-10 });
     EXPECT_EQ(parser.max_iter, 0);
     EXPECT_EQ(parser.classification, plssvm::classification_type::oaa);
     EXPECT_EQ(parser.svm, plssvm::svm_type::csvc);
@@ -85,7 +85,7 @@ TEST_F(ParserTrain, minimal_output) {
         "kernel_type: rbf -> exp(-gamma*|u-v|^2)\n"
         "gamma: \"1 / num_features\"\n"
         "cost: 1\n"
-        "epsilon: 0.001\n"
+        "epsilon: 1e-10\n"
         "max_iter: num_data_points\n"
         "backend: automatic\n"
         "target platform: automatic\n"
@@ -106,7 +106,7 @@ TEST_F(ParserTrain, minimal_output) {
 
 TEST_F(ParserTrain, all_arguments) {
     // create artificial command line arguments in test fixture
-    std::vector<std::string> cmd_args = { "./plssvm-train", "--svm_type", "1", "--kernel_type", "1", "--degree", "2", "--gamma", "1.5", "--coef0", "-1.5", "--cost", "2", "--epsilon", "1e-10", "--max_iter", "100", "--classification", "oao", "--solver", "cg_implicit", "--backend", "cuda", "--target_platform", "gpu_nvidia", "--use_strings_as_labels", "--verbosity", "libsvm" };
+    std::vector<std::string> cmd_args = { "./plssvm-train", "--svm_type", "1", "--kernel_type", "1", "--degree", "2", "--gamma", "1.5", "--coef0", "-1.5", "--cost", "2", "--epsilon", "1e-12", "--max_iter", "100", "--classification", "oao", "--solver", "cg_implicit", "--backend", "cuda", "--target_platform", "gpu_nvidia", "--use_strings_as_labels", "--verbosity", "libsvm" };
 #if defined(PLSSVM_HAS_SYCL_BACKEND)
     cmd_args.insert(cmd_args.end(), { "--sycl_kernel_invocation_type", "nd_range", "--sycl_implementation_type", "dpcpp" });
 #endif
@@ -131,7 +131,7 @@ TEST_F(ParserTrain, all_arguments) {
     EXPECT_FLOATING_POINT_EQ(parser.csvm_params.coef0, plssvm::real_type{ -1.5 });
     EXPECT_FLOATING_POINT_EQ(parser.csvm_params.cost, plssvm::real_type{ 2.0 });
 
-    EXPECT_FLOATING_POINT_EQ(parser.epsilon, plssvm::real_type{ 1e-10 });
+    EXPECT_FLOATING_POINT_EQ(parser.epsilon, plssvm::real_type{ 1e-12 });
     EXPECT_EQ(parser.max_iter, 100);
     EXPECT_EQ(parser.classification, plssvm::classification_type::oao);
     EXPECT_EQ(parser.svm, plssvm::svm_type::csvr);
@@ -162,7 +162,7 @@ TEST_F(ParserTrain, all_arguments) {
 
 TEST_F(ParserTrain, all_arguments_output) {
     // create artificial command line arguments in test fixture
-    std::vector<std::string> cmd_args = { "./plssvm-train", "--svm_type", "1", "--kernel_type", "1", "--degree", "2", "--gamma", "1.5", "--coef0", "-1.5", "--cost", "2", "--epsilon", "1e-10", "--max_iter", "100", "--classification", "oao", "--solver", "cg_implicit", "--backend", "automatic", "--target_platform", "gpu_nvidia", "--use_strings_as_labels", "--verbosity", "libsvm" };
+    std::vector<std::string> cmd_args = { "./plssvm-train", "--svm_type", "1", "--kernel_type", "1", "--degree", "2", "--gamma", "1.5", "--coef0", "-1.5", "--cost", "2", "--epsilon", "1e-12", "--max_iter", "100", "--classification", "oao", "--solver", "cg_implicit", "--backend", "automatic", "--target_platform", "gpu_nvidia", "--use_strings_as_labels", "--verbosity", "libsvm" };
 #if defined(PLSSVM_HAS_SYCL_BACKEND)
     cmd_args.insert(cmd_args.end(), { "--sycl_kernel_invocation_type", "nd_range", "--sycl_implementation_type", "dpcpp" });
 #endif
@@ -187,7 +187,7 @@ TEST_F(ParserTrain, all_arguments_output) {
         "gamma: 1.5\n"
         "coef0: -1.5\n"
         "cost: 2\n"
-        "epsilon: 1e-10\n"
+        "epsilon: 1e-12\n"
         "max_iter: 100\n"
         "backend: automatic\n"
         "target platform: gpu_nvidia\n"
