@@ -15,6 +15,8 @@
 
 #include "plssvm/backends/execution_range.hpp"  // plssvm::detail::dim_type
 #include "plssvm/backends/Kokkos/csvm.hpp"      // plssvm::kokkos::csvm
+#include "plssvm/svm/csvm.hpp"                  // plssvm::csvm
+#include "plssvm/target_platforms.hpp"          // plssvm::target_platform
 
 #include "gmock/gmock.h"  // MOCK_METHOD, ON_CALL, ::testing::Return
 
@@ -34,7 +36,8 @@ class mock_kokkos_csvm final : public plssvm::kokkos::csvm {
 
     template <typename... Args>
     explicit mock_kokkos_csvm(Args &&...args) :
-        base_type{ std::forward<Args>(args)... } {
+        plssvm::csvm{ args... },
+        base_type{ plssvm::target_platform::automatic, std::forward<Args>(args)... } {
         this->fake_functions();
     }
 
