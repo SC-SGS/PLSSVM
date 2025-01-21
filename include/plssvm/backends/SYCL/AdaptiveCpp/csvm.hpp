@@ -67,7 +67,7 @@ class csvm : public ::plssvm::detail::gpu_csvm<detail::device_ptr, detail::queue
      * @throws plssvm::adaptivecpp::backend_exception if no device for the requested target was found
      */
     template <typename... Args, PLSSVM_REQUIRES(::plssvm::detail::has_only_sycl_parameter_named_args_v<Args...>)>
-    explicit csvm(const target_platform target, Args &&...named_args) {
+    explicit csvm(const target_platform target = target_platform::automatic, Args &&...named_args) {
         // check igor parameter
         igor::parser parser{ std::forward<Args>(named_args)... };
 
@@ -200,7 +200,7 @@ class csvc : public ::plssvm::csvc,
      * @throws plssvm::exception all exceptions thrown in the base class constructors
      */
     template <typename... Args, PLSSVM_REQUIRES(::plssvm::detail::has_only_sycl_named_args_v<Args...>)>
-    explicit csvc(const target_platform target, const parameter params = {}, Args &&...named_sycl_args) :
+    explicit csvc(const target_platform target, const parameter params, Args &&...named_sycl_args) :
         ::plssvm::csvm{ params },
         ::plssvm::adaptivecpp::csvm(target, std::forward<Args>(named_sycl_args)...) { }
 
@@ -252,7 +252,7 @@ class csvr : public ::plssvm::csvr,
      * @throws plssvm::exception all exceptions thrown in the base class constructors
      */
     template <typename... Args, PLSSVM_REQUIRES(::plssvm::detail::has_only_sycl_named_args_v<Args...>)>
-    explicit csvr(target_platform target, parameter params = {}, Args &&...named_sycl_args) :
+    explicit csvr(target_platform target, parameter params, Args &&...named_sycl_args) :
         ::plssvm::csvm{ params },
         ::plssvm::adaptivecpp::csvm(target, std::forward<Args>(named_sycl_args)...) { }
 

@@ -157,7 +157,7 @@ class csvc : public ::plssvm::csvc,
      * @param[in] params struct encapsulating all possible parameters
      * @throws plssvm::exception all exceptions thrown in the base class constructors
      */
-    explicit csvc(parameter params = {}) :
+    explicit csvc(const parameter params) :
         ::plssvm::csvm{ params },
         ::plssvm::opencl::csvm{} { }
 
@@ -167,7 +167,7 @@ class csvc : public ::plssvm::csvc,
      * @param[in] params struct encapsulating all possible SVM parameters
      * @throws plssvm::exception all exceptions thrown in the base class constructors
      */
-    explicit csvc(target_platform target, parameter params = {}) :
+    explicit csvc(const target_platform target, const parameter params) :
         ::plssvm::csvm{ params },
         ::plssvm::opencl::csvm{ target } { }
 
@@ -205,7 +205,7 @@ class csvr : public ::plssvm::csvr,
      * @param[in] params struct encapsulating all possible parameters
      * @throws plssvm::exception all exceptions thrown in the base class constructors
      */
-    explicit csvr(parameter params = {}) :
+    explicit csvr(const parameter params) :
         ::plssvm::csvm{ params },
         ::plssvm::opencl::csvm{} { }
 
@@ -215,7 +215,7 @@ class csvr : public ::plssvm::csvr,
      * @param[in] params struct encapsulating all possible SVM parameters
      * @throws plssvm::exception all exceptions thrown in the base class constructors
      */
-    explicit csvr(target_platform target, parameter params = {}) :
+    explicit csvr(const target_platform target, const parameter params) :
         ::plssvm::csvm{ params },
         ::plssvm::opencl::csvm{ target } { }
 
