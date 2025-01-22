@@ -262,17 +262,17 @@ add_test(NAME MainScale/executable_save_scaling_factors COMMAND ${PLSSVM_EXECUTA
 # add minimal run test for the classification task
 add_test(NAME MainTrainClassification/executable_minimal COMMAND ${PLSSVM_EXECUTABLE_TRAIN_NAME} "${PLSSVM_CLASSIFICATION_TEST_FILE}" "${CMAKE_CURRENT_BINARY_DIR}/test_classification.libsvm.model")
 add_test(NAME MainPredictClassification/executable_minimal COMMAND ${PLSSVM_EXECUTABLE_PREDICT_NAME}
-         "${CMAKE_CURRENT_LIST_DIR}/data/predict/50x20.libsvm"                          # test file
-         "${CMAKE_CURRENT_LIST_DIR}/data/predict/50x20_double_linear_oaa.libsvm.model"  # model file
-         "${CMAKE_CURRENT_BINARY_DIR}/test.libsvm.predict"                              # predict file (result)
+         "${CMAKE_CURRENT_LIST_DIR}/data/libsvm/classification/5x4.libsvm"       # test file
+         "${CMAKE_CURRENT_LIST_DIR}/data/model/classification/5x4.libsvm.model"  # model file
+         "${CMAKE_CURRENT_BINARY_DIR}/test_classification.libsvm.predict"        # predict file (result)
 )
 # add minimal run test for the regression task
 add_test(NAME MainTrainRegression/executable_minimal COMMAND ${PLSSVM_EXECUTABLE_TRAIN_NAME} "${PLSSVM_REGRESSION_TEST_FILE}" "${CMAKE_CURRENT_BINARY_DIR}/test_regression.libsvm.model")
-#add_test(NAME MainPredictRegression/executable_minimal COMMAND ${PLSSVM_EXECUTABLE_PREDICT_NAME}  # TODO: enable
-#         "${CMAKE_CURRENT_LIST_DIR}/data/predict/50x20.libsvm"                          # test file
-#         "${CMAKE_CURRENT_LIST_DIR}/data/predict/50x20_double_linear_oaa.libsvm.model"  # model file
-#         "${CMAKE_CURRENT_BINARY_DIR}/test.libsvm.predict"                              # predict file (result)
-#)
+add_test(NAME MainPredictRegression/executable_minimal COMMAND ${PLSSVM_EXECUTABLE_PREDICT_NAME}
+         "${CMAKE_CURRENT_LIST_DIR}/data/libsvm/regression/5x4.libsvm"       # test file
+         "${CMAKE_CURRENT_LIST_DIR}/data/model/regression/5x4.libsvm.model"  # model file
+         "${CMAKE_CURRENT_BINARY_DIR}/test_regression.libsvm.predict"        # predict file (result)
+)
 
 # add failing test (must return with a non-zero exit code)
 add_test(NAME MainTrain/executable_fail COMMAND ${PLSSVM_EXECUTABLE_TRAIN_NAME} " ")

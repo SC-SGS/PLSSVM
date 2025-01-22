@@ -24,10 +24,12 @@
 #include "plssvm/target_platforms.hpp"                  // plssvm::target_platform
 
 #include "tests/types_to_test.hpp"  // util::{test_parameter_type_at_t, test_parameter_value_at_v}
-#include "tests/utility.hpp"        // util::{redirect_output, construct_from_tuple}
+#include "tests/utility.hpp"        // util::{redirect_output, construct_from_tuple, temporary_file, instantiate_template_file}
 
+#include "fmt/format.h"   // fmt::format
 #include "gtest/gtest.h"  // TYPED_TEST_SUITE_P, TYPED_TEST_P, REGISTER_TYPED_TEST_SUITE_P, EXPECT_EQ, EXPECT_TRUE, ::testing::Test
 
+#include <string>   // std::string
 #include <utility>  // std::move
 #include <vector>   // std::vector
 
@@ -206,7 +208,16 @@ REGISTER_TYPED_TEST_SUITE_P(GenericCSVCKernelFunctionClassification,
 //*************************************************************************************************************************************//
 
 template <typename T>
-class GenericCSVCSolverKernelFunctionClassification : public GenericCSVC<T> { };
+class GenericCSVCSolverKernelFunctionClassification : public GenericCSVC<T>,
+                                                      protected util::temporary_file {
+  protected:
+    using fixture_label_type = util::test_parameter_type_at_t<1, T>;
+
+    void SetUp() override {
+        // create file used in this test fixture by instantiating the template file
+        util::instantiate_template_file<fixture_label_type>(PLSSVM_TEST_PATH "/data/libsvm/classification/6x4_TEMPLATE.libsvm", this->filename);
+    }
+};
 
 TYPED_TEST_SUITE_P(GenericCSVCSolverKernelFunctionClassification);
 
@@ -223,7 +234,7 @@ TYPED_TEST_P(GenericCSVCSolverKernelFunctionClassification, fit) {
     const plssvm::parameter params{ plssvm::kernel_type = kernel };
 
     // create data set to be used
-    plssvm::classification_data_set<label_type> test_data{ PLSSVM_TEST_PATH "/data/predict/50x20.libsvm" };
+    plssvm::classification_data_set<label_type> test_data{ this->filename };
     if constexpr (kernel == plssvm::kernel_function_type::chi_squared) {
         // chi-squared is well-defined for non-negative values only
         if (test_data.labels().has_value()) {
