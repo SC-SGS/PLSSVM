@@ -628,7 +628,7 @@ template <typename label_type>
     std::uniform_real_distribution<plssvm::real_type> dist(plssvm::real_type{ 0.0001 }, plssvm::real_type{ 0.01 });
 
     for (std::size_t i = 0; i < num_data_points; ++i) {
-        data.push_back({ static_cast<plssvm::real_type>(i) + dist(gen), static_cast<plssvm::real_type>(i) + dist(gen) });
+        data.push_back({ static_cast<plssvm::real_type>(i), static_cast<plssvm::real_type>(i) });
         label.push_back(static_cast<label_type>(i));
     }
 

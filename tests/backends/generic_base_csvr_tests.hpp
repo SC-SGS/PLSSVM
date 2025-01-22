@@ -156,8 +156,9 @@ TYPED_TEST_P(GenericCSVRKernelFunction, score_model) {
     [[maybe_unused]] const plssvm::real_type calculated = svr.score(model);
 
     // check the calculated result for correctness
-    GTEST_SKIP() << "not yet implemented for C-SVR";
-    // EXPECT_EQ(calculated, plssvm::real_type{ 1.0 });
+    // 1.0 is the maximum possible value
+    // arbitrary small (negative) values are possible, but the "easy" data set shouldn't result in values smaller 0.0
+    EXPECT_EXCLUSIVE_RANGE(calculated, plssvm::real_type{ 0.0 }, plssvm::real_type{ 1.0 });
 }
 
 TYPED_TEST_P(GenericCSVRKernelFunction, score) {
@@ -191,8 +192,9 @@ TYPED_TEST_P(GenericCSVRKernelFunction, score) {
     [[maybe_unused]] const plssvm::real_type calculated = svr.score(model, test_data);
 
     // check the calculated result for correctness
-    GTEST_SKIP() << "not yet implemented for C-SVR";
-    // EXPECT_EQ(calculated, plssvm::real_type{ 1.0 });
+    // 1.0 is the maximum possible value
+    // arbitrary small (negative) values are possible, but the "easy" data set shouldn't result in values smaller 0.0
+    EXPECT_EXCLUSIVE_RANGE(calculated, plssvm::real_type{ 0.0 }, plssvm::real_type{ 1.0 });
 }
 
 REGISTER_TYPED_TEST_SUITE_P(GenericCSVRKernelFunction,
