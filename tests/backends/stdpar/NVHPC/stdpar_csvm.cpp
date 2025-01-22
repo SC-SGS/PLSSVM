@@ -37,6 +37,19 @@ class nvhpc_stdparCSVMConstructor : public ::testing::Test,
 TYPED_TEST_SUITE(nvhpc_stdparCSVMConstructor, stdpar_csvm_types_gtest, naming::test_parameter_to_name);
 
 // check whether the constructor correctly fails when using an incompatible target platform
+TYPED_TEST(nvhpc_stdparCSVMConstructor, default_construct) {
+    using csvm_type = typename TestFixture::fixture_csvm_type;
+
+#if defined(PLSSVM_HAS_CPU_TARGET) || defined(PLSSVM_HAS_NVIDIA_TARGET)
+    // default constructor must always work
+    EXPECT_NO_THROW(csvm_type{});
+#else
+    EXPECT_THROW_WHAT((csvm_type{}),
+                      plssvm::stdpar::backend_exception,
+                      fmt::format("Requested target platform '{}' that hasn't been enabled using PLSSVM_TARGET_PLATFORMS!", plssvm::determine_default_target_platform()));
+#endif
+}
+
 TYPED_TEST(nvhpc_stdparCSVMConstructor, construct_parameter) {
     using csvm_type = typename TestFixture::fixture_csvm_type;
 
@@ -80,19 +93,43 @@ TYPED_TEST(nvhpc_stdparCSVMConstructor, construct_target_and_parameter) {
                       "Invalid target platform 'gpu_intel' for the nvhpc stdpar backend!");
 }
 
+TYPED_TEST(nvhpc_stdparCSVMConstructor, construct_named_args) {
+    using csvm_type = typename TestFixture::fixture_csvm_type;
+
+#if defined(PLSSVM_HAS_CPU_TARGET) || defined(PLSSVM_HAS_NVIDIA_TARGET)
+    EXPECT_NO_THROW((csvm_type{ plssvm::kernel_type = plssvm::kernel_function_type::linear, plssvm::cost = 2.0 }));
+    EXPECT_NO_THROW((csvm_type{ plssvm::cost = 2.0 }));
+#else
+    EXPECT_THROW_WHAT((csvm_type{ plssvm::kernel_type = plssvm::kernel_function_type::linear, plssvm::cost = 2.0 }),
+                      plssvm::stdpar::backend_exception,
+                      "Requested target platform 'cpu' that hasn't been enabled using PLSSVM_TARGET_PLATFORMS!");
+    EXPECT_THROW_WHAT((csvm_type{ plssvm::cost = 2.0 }),
+                      plssvm::stdpar::backend_exception,
+                      "Requested target platform 'cpu' that hasn't been enabled using PLSSVM_TARGET_PLATFORMS!");
+#endif
+}
+
 TYPED_TEST(nvhpc_stdparCSVMConstructor, construct_target_and_named_args) {
     using csvm_type = typename TestFixture::fixture_csvm_type;
 
 #if defined(PLSSVM_HAS_CPU_TARGET)
+    EXPECT_NO_THROW((csvm_type{ plssvm::target_platform::cpu, plssvm::kernel_type = plssvm::kernel_function_type::linear, plssvm::cost = 2.0 }));
     EXPECT_NO_THROW((csvm_type{ plssvm::target_platform::cpu, plssvm::cost = 2.0 }));
 #else
+    EXPECT_THROW_WHAT((csvm_type{ plssvm::target_platform::cpu, plssvm::kernel_type = plssvm::kernel_function_type::linear, plssvm::cost = 2.0 }),
+                      plssvm::stdpar::backend_exception,
+                      "Requested target platform 'cpu' that hasn't been enabled using PLSSVM_TARGET_PLATFORMS!");
     EXPECT_THROW_WHAT((csvm_type{ plssvm::target_platform::cpu, plssvm::cost = 2.0 }),
                       plssvm::stdpar::backend_exception,
                       "Requested target platform 'cpu' that hasn't been enabled using PLSSVM_TARGET_PLATFORMS!");
 #endif
 #if defined(PLSSVM_HAS_NVIDIA_TARGET)
+    EXPECT_NO_THROW((csvm_type{ plssvm::target_platform::gpu_nvidia, plssvm::kernel_type = plssvm::kernel_function_type::linear, plssvm::cost = 2.0 }));
     EXPECT_NO_THROW((csvm_type{ plssvm::target_platform::gpu_nvidia, plssvm::cost = 2.0 }));
 #else
+    EXPECT_THROW_WHAT((csvm_type{ plssvm::target_platform::gpu_nvidia, plssvm::kernel_type = plssvm::kernel_function_type::linear, plssvm::cost = 2.0 }),
+                      plssvm::stdpar::backend_exception,
+                      "Requested target platform 'gpu_nvidia' that hasn't been enabled using PLSSVM_TARGET_PLATFORMS!");
     EXPECT_THROW_WHAT((csvm_type{ plssvm::target_platform::gpu_nvidia, plssvm::cost = 2.0 }),
                       plssvm::stdpar::backend_exception,
                       "Requested target platform 'gpu_nvidia' that hasn't been enabled using PLSSVM_TARGET_PLATFORMS!");

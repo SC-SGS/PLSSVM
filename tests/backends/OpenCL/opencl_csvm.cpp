@@ -42,6 +42,13 @@ class OpenCLCSVMConstructor : public ::testing::Test,
 TYPED_TEST_SUITE(OpenCLCSVMConstructor, opencl_csvm_types_gtest, naming::test_parameter_to_name);
 
 // check whether the constructor correctly fails when using an incompatible target platform
+TYPED_TEST(OpenCLCSVMConstructor, default_construct) {
+    using csvm_type = typename TestFixture::fixture_csvm_type;
+
+    // default constructor must always work
+    EXPECT_NO_THROW(csvm_type{});
+}
+
 TYPED_TEST(OpenCLCSVMConstructor, construct_parameter) {
     using csvm_type = typename TestFixture::fixture_csvm_type;
 
@@ -84,6 +91,14 @@ TYPED_TEST(OpenCLCSVMConstructor, construct_target_and_parameter) {
                       plssvm::opencl::backend_exception,
                       "Requested target platform 'gpu_intel' that hasn't been enabled using PLSSVM_TARGET_PLATFORMS!");
 #endif
+}
+
+TYPED_TEST(OpenCLCSVMConstructor, construct_named_args) {
+    using csvm_type = typename TestFixture::fixture_csvm_type;
+
+    // every target is allowed for OpenCL
+    EXPECT_NO_THROW((csvm_type{ plssvm::kernel_type = plssvm::kernel_function_type::linear, plssvm::cost = 2.0 }));
+    EXPECT_NO_THROW((csvm_type{ plssvm::cost = 2.0 }));
 }
 
 TYPED_TEST(OpenCLCSVMConstructor, construct_target_and_named_args) {

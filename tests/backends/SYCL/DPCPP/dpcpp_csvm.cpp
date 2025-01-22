@@ -44,11 +44,20 @@ class DPCPPCSVMConstructor : public ::testing::Test,
 TYPED_TEST_SUITE(DPCPPCSVMConstructor, dpcpp_csvm_types_gtest, naming::test_parameter_to_name);
 
 // check whether the constructor correctly fails when using an incompatible target platform
+TYPED_TEST(DPCPPCSVMConstructor, default_construct) {
+    using csvm_type = typename TestFixture::fixture_csvm_type;
+
+    // default constructor must always work
+    EXPECT_NO_THROW(csvm_type{});
+    EXPECT_NO_THROW((csvm_type{ plssvm::sycl_kernel_invocation_type = plssvm::sycl::kernel_invocation_type::nd_range }));
+}
+
 TYPED_TEST(DPCPPCSVMConstructor, construct_parameter) {
     using csvm_type = typename TestFixture::fixture_csvm_type;
 
     // the automatic target platform must always be available
     EXPECT_NO_THROW(csvm_type{ plssvm::parameter{} });
+    EXPECT_NO_THROW((csvm_type{ plssvm::parameter{}, plssvm::sycl_kernel_invocation_type = plssvm::sycl::kernel_invocation_type::nd_range }));
 }
 
 TYPED_TEST(DPCPPCSVMConstructor, construct_target_and_parameter) {
@@ -90,6 +99,15 @@ TYPED_TEST(DPCPPCSVMConstructor, construct_target_and_parameter) {
                       plssvm::dpcpp::backend_exception,
                       "Requested target platform 'gpu_intel' that hasn't been enabled using PLSSVM_TARGET_PLATFORMS!");
 #endif
+}
+
+TYPED_TEST(DPCPPCSVMConstructor, construct_named_args) {
+    using csvm_type = typename TestFixture::fixture_csvm_type;
+
+    // every target is allowed for SYCL
+    EXPECT_NO_THROW((csvm_type{ plssvm::kernel_type = plssvm::kernel_function_type::linear, plssvm::cost = 2.0 }));
+    EXPECT_NO_THROW((csvm_type{ plssvm::cost = 2.0 }));
+    EXPECT_NO_THROW((csvm_type{ plssvm::sycl_kernel_invocation_type = plssvm::sycl::kernel_invocation_type::nd_range }));
 }
 
 TYPED_TEST(DPCPPCSVMConstructor, construct_target_and_named_args) {

@@ -48,6 +48,29 @@ class KokkosCSVMConstructor : public ::testing::Test,
 
 TYPED_TEST_SUITE(KokkosCSVMConstructor, kokkos_csvm_types_gtest, naming::test_parameter_to_name);
 
+TYPED_TEST(KokkosCSVMConstructor, default_construct) {  // execution_space automatic, target_platform automatic
+    using csvm_type = typename TestFixture::fixture_csvm_type;
+
+    // check whether the execution space would be automatically determined as either OpenMPTarget or OpenACC
+    const std::map<plssvm::target_platform, std::vector<plssvm::kokkos::execution_space>> available_combinations = plssvm::kokkos::detail::available_target_platform_to_execution_space_mapping();
+    plssvm::kokkos::execution_space space{};
+    for (const plssvm::target_platform target : plssvm::list_available_target_platforms()) {
+        if (plssvm::detail::contains(available_combinations, target)) {
+            space = available_combinations.at(target).front();
+            break;
+        }
+    }
+
+    // must throw an exception if the execution space would be OpenMPTarget or OpenACC
+    if (space == plssvm::kokkos::execution_space::openmp_target || space == plssvm::kokkos::execution_space::openacc) {
+        EXPECT_THROW_WHAT(csvm_type{},
+                          plssvm::kokkos::backend_exception,
+                          fmt::format("The Kokkos execution space {} is currently not supported !", space));
+    } else {
+        EXPECT_NO_THROW(csvm_type{});
+    }
+}
+
 TYPED_TEST(KokkosCSVMConstructor, construct_parameter) {  // execution_space automatic, target_platform automatic
     using csvm_type = typename TestFixture::fixture_csvm_type;
 

@@ -36,6 +36,19 @@ class roc_stdpar_stdparCSVMConstructor : public ::testing::Test,
 TYPED_TEST_SUITE(roc_stdpar_stdparCSVMConstructor, stdpar_csvm_types_gtest, naming::test_parameter_to_name);
 
 // check whether the constructor correctly fails when using an incompatible target platform
+TYPED_TEST(roc_stdpar_stdparCSVMConstructor, default_construct) {
+    using csvm_type = typename TestFixture::fixture_csvm_type;
+
+#if defined(PLSSVM_HAS_AMD_TARGET)
+    // default constructor must always work
+    EXPECT_NO_THROW(csvm_type{});
+#else
+    EXPECT_THROW_WHAT((csvm_type{}),
+                      plssvm::stdpar::backend_exception,
+                      "Requested target platform 'gpu_amd' that hasn't been enabled using PLSSVM_TARGET_PLATFORMS!");
+#endif
+}
+
 TYPED_TEST(roc_stdpar_stdparCSVMConstructor, construct_parameter) {
     using csvm_type = typename TestFixture::fixture_csvm_type;
 
@@ -78,6 +91,23 @@ TYPED_TEST(roc_stdpar_stdparCSVMConstructor, construct_target_and_parameter) {
     EXPECT_THROW_WHAT((csvm_type{ plssvm::target_platform::gpu_intel, params }),
                       plssvm::stdpar::backend_exception,
                       "Invalid target platform 'gpu_intel' for the roc-stdpar stdpar backend!");
+}
+
+TYPED_TEST(roc_stdpar_stdparCSVMConstructor, construct_named_args) {
+    using csvm_type = typename TestFixture::fixture_csvm_type;
+
+#if defined(PLSSVM_HAS_CPU_TARGET)
+    // only automatic or AMD GPU are allowed as target platform for the stdpar backend using roc-stdpar
+    EXPECT_NO_THROW((csvm_type{ plssvm::kernel_type = plssvm::kernel_function_type::linear, plssvm::cost = 2.0 }));
+    EXPECT_NO_THROW((csvm_type{ plssvm::cost = 2.0 }));
+#else
+    EXPECT_THROW_WHAT((csvm_type{ plssvm::kernel_type = plssvm::kernel_function_type::linear, plssvm::cost = 2.0 }),
+                      plssvm::stdpar::backend_exception,
+                      "Requested target platform 'gpu_amd' that hasn't been enabled using PLSSVM_TARGET_PLATFORMS!");
+    EXPECT_THROW_WHAT((csvm_type{ plssvm::cost = 2.0 }),
+                      plssvm::stdpar::backend_exception,
+                      "Requested target platform 'gpu_amd' that hasn't been enabled using PLSSVM_TARGET_PLATFORMS!");
+#endif
 }
 
 TYPED_TEST(roc_stdpar_stdparCSVMConstructor, construct_target_and_named_args) {

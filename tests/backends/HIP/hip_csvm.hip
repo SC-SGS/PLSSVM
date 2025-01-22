@@ -42,6 +42,30 @@ class HIPCSVMConstructor : public ::testing::Test,
 TYPED_TEST_SUITE(HIPCSVMConstructor, hip_csvm_types_gtest, naming::test_parameter_to_name);
 
 // check whether the constructor correctly fails when using an incompatible target platform
+TYPED_TEST(HIPCSVMConstructor, default_construct) {
+    using csvm_type = typename TestFixture::fixture_csvm_type;
+
+#if defined(PLSSVM_HIP_BACKEND_USE_HIP_RUNTIME)
+    #if defined(PLSSVM_HAS_AMD_TARGET)
+    // default constructor must always work
+    EXPECT_NO_THROW(csvm_type{});
+    #else
+    EXPECT_THROW_WHAT(csvm_type{},
+                      plssvm::hip::backend_exception,
+                      "Requested target platform 'gpu_amd' that hasn't been enabled using PLSSVM_TARGET_PLATFORMS!");
+    #endif
+#elif defined(PLSSVM_HIP_BACKEND_USE_CUDA_RUNTIME)
+    #if defined(PLSSVM_HAS_NVIDIA_TARGET)
+    // default constructor must always work
+    EXPECT_NO_THROW(csvm_type{});
+    #else
+    EXPECT_THROW_WHAT(csvm_type{},
+                      plssvm::hip::backend_exception,
+                      "Requested target platform 'gpu_nvidia' that hasn't been enabled using PLSSVM_TARGET_PLATFORMS!");
+    #endif
+#endif
+}
+
 TYPED_TEST(HIPCSVMConstructor, construct_parameter) {
     using csvm_type = typename TestFixture::fixture_csvm_type;
 
@@ -135,6 +159,9 @@ TYPED_TEST(HIPCSVMConstructor, construct_named_args) {
     EXPECT_THROW_WHAT((csvm_type{ plssvm::kernel_type = plssvm::kernel_function_type::linear, plssvm::cost = 2.0 }),
                       plssvm::hip::backend_exception,
                       "Requested target platform 'gpu_amd' that hasn't been enabled using PLSSVM_TARGET_PLATFORMS!");
+    EXPECT_THROW_WHAT((csvm_type{ plssvm::cost = 2.0 }),
+                      plssvm::hip::backend_exception,
+                      "Requested target platform 'gpu_amd' that hasn't been enabled using PLSSVM_TARGET_PLATFORMS!");
     #endif
 #elif defined(PLSSVM_HIP_BACKEND_USE_CUDA_RUNTIME)
     #if defined(PLSSVM_HAS_NVIDIA_TARGET)
@@ -143,6 +170,9 @@ TYPED_TEST(HIPCSVMConstructor, construct_named_args) {
     EXPECT_NO_THROW((csvm_type{ plssvm::cost = 2.0 }));
     #else
     EXPECT_THROW_WHAT((csvm_type{ plssvm::kernel_type = plssvm::kernel_function_type::linear, plssvm::cost = 2.0 }),
+                      plssvm::hip::backend_exception,
+                      "Requested target platform 'gpu_nvidia' that hasn't been enabled using PLSSVM_TARGET_PLATFORMS!");
+    EXPECT_THROW_WHAT((csvm_type{ plssvm::cost = 2.0 }),
                       plssvm::hip::backend_exception,
                       "Requested target platform 'gpu_nvidia' that hasn't been enabled using PLSSVM_TARGET_PLATFORMS!");
     #endif
