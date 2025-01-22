@@ -960,7 +960,7 @@ weighted avg       0.91      0.91      0.91       569
 Score: 91.39%
 ```
 <p align="center">
-  <img alt="Example classification task breast cancer decision boundary output." src=".figures/classification_example.png" width="50%">
+  <img alt="Example classification task breast cancer decision boundary output." src=".figures/classification_example.png" width="80%">
 </p>
 
 A regression example comparing PLSSVM's `SVR` Python binding and `sklearn.SVR` using a sine curve:
@@ -1027,7 +1027,7 @@ plt.show()
 ```
 with an example output:
 <p align="center">
-  <img alt="Example regression output using a sine curve." src=".figures/regression_example.png" width="50%">
+  <img alt="Example regression output using a sine curve." src=".figures/regression_example.png" width="80%">
 </p>
 
 **Note:** it may be necessary to set the environment variable `PYTHONPATH` to the `lib` folder in the PLSSVM install path.
