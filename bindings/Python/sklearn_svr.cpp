@@ -13,7 +13,7 @@
 #include "fmt/format.h"          // fmt::format
 #include "pybind11/numpy.h"      // support for STL types
 #include "pybind11/operators.h"  // support for operators
-#include "pybind11/pybind11.h"   // py::module_, py::class_, py::init, py::arg, py::return_value_policy, py::self
+#include "pybind11/pybind11.h"   // py::module_, py::class_, py::init, py::arg, py::return_value_policy, py::self, py::dynamic_attr
 #include "pybind11/stl.h"        // support for STL types
 
 #include <cstddef>   // std::size_t
@@ -70,7 +70,7 @@ void parse_provided_params(svr &self, const py::kwargs &args) {
         } else if (kernel_str == "chi_squared") {
             kernel = plssvm::kernel_function_type::chi_squared;
         } else if (kernel_str == "precomputed") {
-            throw py::attribute_error{ R"(The "kernel = 'precomputed'" parameter for a call to the 'SVR' constructor is not implemented yet!)" };
+            throw py::attribute_error{ R"(The "kernel = 'precomputed'" parameter for the 'SVR' is not implemented yet!)" };
         } else {
             throw py::value_error{ fmt::format("'{}' is not in list", kernel_str) };
         }
@@ -94,13 +94,13 @@ void parse_provided_params(svr &self, const py::kwargs &args) {
         self.svm_->set_params(plssvm::coef0 = args["coef0"].cast<typename svr::real_type>());
     }
     if (args.contains("shrinking")) {
-        throw py::attribute_error{ "The 'shrinking' parameter for a call to the 'SVR' constructor is not implemented yet!" };
+        throw py::attribute_error{ "The 'shrinking' parameter for the 'SVR' is not implemented yet!" };
     }
     if (args.contains("tol")) {
         self.epsilon = args["tol"].cast<typename svr::real_type>();
     }
     if (args.contains("cache_size")) {
-        throw py::attribute_error{ "The 'cache_size' parameter for a call to the 'SVR' constructor is not implemented yet!" };
+        throw py::attribute_error{ "The 'cache_size' parameter for the 'SVR' is not implemented yet!" };
     }
     if (args.contains("verbose")) {
         if (args["verbose"].cast<bool>()) {
@@ -129,7 +129,7 @@ void parse_provided_params(svr &self, const py::kwargs &args) {
         }
     }
     if (args.contains("epsilon")) {
-        throw py::attribute_error{ "The 'epsilon' parameter for a call to the 'SVR' constructor is not implemented yet!" };
+        throw py::attribute_error{ "The 'epsilon' parameter for the 'SVR' is not implemented yet!" };
     }
 }
 
@@ -163,7 +163,7 @@ void fit(svr &self) {
 
 void init_sklearn_svr(py::module_ &m) {
     // documentation based on sklearn.svm.SVR documentation
-    py::class_<svr> py_svr(m, "SVR");
+    py::class_<svr> py_svr(m, "SVR", py::dynamic_attr());
     py_svr.def(py::init([](const py::kwargs &args) {
                    // to silence constructor messages
                    if (args.contains("verbose")) {
@@ -314,5 +314,14 @@ void init_sklearn_svr(py::module_ &m) {
                   } }, "Return the mean accuracy on the given test data and labels.", py::arg("X"), py::arg("y"), py::pos_only(), py::arg("sample_weight") = std::nullopt)
         .def("set_params", [](svr &self, const py::kwargs &args) -> svr & {
             parse_provided_params(self, args);
-            return self; }, "Set the parameters of this estimator.", py::return_value_policy::reference);
+            return self; }, "Set the parameters of this estimator.", py::return_value_policy::reference)
+        .def("__sklearn_is_fitted__", [](const svr &self) { return self.model_ != nullptr; })
+        .def("__sklearn_clone__", [](const svr &self) {
+            // create a new SVR instance
+            svr new_svr{};
+            // copy the parameters
+            new_svr.svm_->set_params(self.svm_->get_params());
+            new_svr.epsilon = self.epsilon;
+            new_svr.max_iter = self.max_iter;
+            return new_svr; });
 }

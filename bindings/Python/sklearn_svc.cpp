@@ -13,7 +13,7 @@
 #include "fmt/format.h"          // fmt::format
 #include "pybind11/numpy.h"      // support for STL types
 #include "pybind11/operators.h"  // support for operators
-#include "pybind11/pybind11.h"   // py::module_, py::class_, py::init, py::arg, py::return_value_policy, py::self
+#include "pybind11/pybind11.h"   // py::module_, py::class_, py::init, py::arg, py::return_value_policy, py::self, py::dynamic_attr
 #include "pybind11/stl.h"        // support for STL types
 
 #include <algorithm>  // std::fill
@@ -50,7 +50,7 @@ struct svc {
 
 void parse_provided_params(svc &self, const py::kwargs &args) {
     // check keyword arguments
-    plssvm::bindings::python::util::check_kwargs_for_correctness(args, { "C", "kernel", "degree", "gamma", "coef0", "shrinking", "probability", "tol", "cache_size", "class_weight", "verbose", "max_iter", "decision_function_shape", "break_ties", "random_state", "classification" });
+    plssvm::bindings::python::util::check_kwargs_for_correctness(args, { "C", "kernel", "degree", "gamma", "coef0", "shrinking", "probability", "tol", "cache_size", "class_weight", "verbose", "max_iter", "decision_function_shape", "break_ties", "random_state" });
 
     if (args.contains("C")) {
         self.svm_->set_params(plssvm::cost = args["C"].cast<typename svc::real_type>());
@@ -71,7 +71,7 @@ void parse_provided_params(svc &self, const py::kwargs &args) {
         } else if (kernel_str == "chi_squared") {
             kernel = plssvm::kernel_function_type::chi_squared;
         } else if (kernel_str == "precomputed") {
-            throw py::attribute_error{ R"(The "kernel = 'precomputed'" parameter for a call to the 'SVC' constructor is not implemented yet!)" };
+            throw py::attribute_error{ R"(The "kernel = 'precomputed'" parameter for the 'SVC' is not implemented yet!)" };
         } else {
             throw py::value_error{ fmt::format("'{}' is not in list", kernel_str) };
         }
@@ -95,19 +95,19 @@ void parse_provided_params(svc &self, const py::kwargs &args) {
         self.svm_->set_params(plssvm::coef0 = args["coef0"].cast<typename svc::real_type>());
     }
     if (args.contains("shrinking")) {
-        throw py::attribute_error{ "The 'shrinking' parameter for a call to the 'SVC' constructor is not implemented yet!" };
+        throw py::attribute_error{ "The 'shrinking' parameter for the 'SVC' is not implemented yet!" };
     }
     if (args.contains("probability")) {
-        throw py::attribute_error{ "The 'probability' parameter for a call to the 'SVC' constructor is not implemented yet!" };
+        throw py::attribute_error{ "The 'probability' parameter for the 'SVC' is not implemented yet!" };
     }
     if (args.contains("tol")) {
         self.epsilon = args["tol"].cast<typename svc::real_type>();
     }
     if (args.contains("cache_size")) {
-        throw py::attribute_error{ "The 'cache_size' parameter for a call to the 'SVC' constructor is not implemented yet!" };
+        throw py::attribute_error{ "The 'cache_size' parameter for the 'SVC' is not implemented yet!" };
     }
     if (args.contains("class_weight")) {
-        throw py::attribute_error{ "The 'class_weight' parameter for a call to the 'SVC' constructor is not implemented yet!" };
+        throw py::attribute_error{ "The 'class_weight' parameter for the 'SVC' is not implemented yet!" };
     }
     if (args.contains("verbose")) {
         if (args["verbose"].cast<bool>()) {
@@ -146,10 +146,10 @@ void parse_provided_params(svc &self, const py::kwargs &args) {
         }
     }
     if (args.contains("break_ties")) {
-        throw py::attribute_error{ "The 'break_ties' parameter for a call to the 'SVC' constructor is not implemented yet!" };
+        throw py::attribute_error{ "The 'break_ties' parameter for the 'SVC' is not implemented yet!" };
     }
     if (args.contains("random_state")) {
-        throw py::attribute_error{ "The 'random_state' parameter for a call to the 'SVC' constructor is not implemented yet!" };
+        throw py::attribute_error{ "The 'random_state' parameter for the 'SVC' is not implemented yet!" };
     }
 }
 
@@ -207,7 +207,7 @@ template <typename svc>
 
 void init_sklearn_svc(py::module_ &m) {
     // documentation based on sklearn.svm.SVC documentation
-    py::class_<svc> py_svc(m, "SVC");
+    py::class_<svc> py_svc(m, "SVC", py::dynamic_attr());
     py_svc.def(py::init([](const py::kwargs &args) {
                    // to silence constructor messages
                    if (args.contains("verbose")) {
@@ -330,7 +330,8 @@ void init_sklearn_svc(py::module_ &m) {
                     throw py::attribute_error{ "'SVC' object has no attribute 'shape_fit_'" };
                 } else {
                     return std::make_tuple(static_cast<int>(self.data_->num_data_points()), static_cast<int>(self.data_->num_features()));
-                } }, "Array dimensions of training vector X. tuple of int of shape (n_dimensions_of_X,)");
+                } }, "Array dimensions of training vector X. tuple of int of shape (n_dimensions_of_X,)")
+        .def_property_readonly("_estimator_type", [](const svc &) { return "classifier"; });
 
     //*************************************************************************************************************************************//
     //                                                               METHODS                                                               //
@@ -482,10 +483,21 @@ void init_sklearn_svc(py::module_ &m) {
                 } }, "Return the mean accuracy on the given test data and labels.", py::arg("X"), py::arg("y"), py::pos_only(), py::arg("sample_weight") = std::nullopt);
 #endif
     py_svc.def(
-        "set_params", [](svc &self, const py::kwargs &args) -> svc & {
-            parse_provided_params(self, args);
-            return self;
-        },
-        "Set the parameters of this estimator.",
-        py::return_value_policy::reference);
+              "set_params", [](svc &self, const py::kwargs &args) -> svc & {
+                  parse_provided_params(self, args);
+                  return self;
+              },
+              "Set the parameters of this estimator.",
+              py::return_value_policy::reference)
+        .def("__sklearn_is_fitted__", [](const svc &self) { return self.model_ != nullptr; })
+        .def("__sklearn_clone__", [](const svc &self) {
+            // create a new SVC instance
+            svc new_svc{};
+            // copy the parameters
+            new_svc.svm_->set_params(self.svm_->get_params());
+            new_svc.epsilon = self.epsilon;
+            new_svc.max_iter = self.max_iter;
+            new_svc.classification = self.classification;
+            return new_svc;
+        });
 }
