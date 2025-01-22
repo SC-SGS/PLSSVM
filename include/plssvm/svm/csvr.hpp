@@ -31,6 +31,7 @@
 
 #include <algorithm>  // std::all_of
 #include <chrono>     // std::chrono::{time_point, steady_clock, duration_cast, milliseconds}
+#include <cstddef>    // std::size_t
 #include <memory>     // std::addressof
 #include <optional>   // std::make_optional
 #include <tuple>      // std::tie
@@ -221,13 +222,10 @@ class csvr : virtual public csvm {
         PLSSVM_ASSERT(votes.num_rows() == data.num_data_points(), "The number of votes ({}) must be equal the number of data points ({})!", votes.num_rows(), data.num_data_points());
         PLSSVM_ASSERT(votes.num_cols() == 1, "The votes contain {} values, but must contain exactly one value!", votes.num_cols());
 
-
-        for(std::size_t i = 0; i < data.num_data_points(); ++i) {
+        for (std::size_t i = 0; i < data.num_data_points(); ++i) {
             // TODO: is there multiclass regression? https://en.wikipedia.org/wiki/Multinomial_logistic_regression
-            // TODO: implement?
             predicted_labels[i] = static_cast<label_type>(votes(i, 0));
         }
-
 
         PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_EVENT("predict end");
 
