@@ -8,7 +8,7 @@
 
 #include "plssvm/core.hpp"
 
-#include "bindings/Python/utility.hpp"  // plssvm::bindings::python::util::{check_kwargs_for_correctness, pyarray_to_vector, pyarray_to_matrix}
+#include "bindings/Python/utility.hpp"  // plssvm::bindings::python::util::{check_kwargs_for_correctness, pyarray_t_to_vector, pyarray_to_matrix}
 
 #include "fmt/format.h"          // fmt::format
 #include "pybind11/numpy.h"      // support for STL types
@@ -256,7 +256,7 @@ void init_sklearn_svr(py::module_ &m) {
                   }
 
                   // fit the model using potentially provided keyword arguments
-                  self.data_ = std::make_unique<typename svr::data_set_type>(plssvm::bindings::python::util::pyarray_to_matrix(data), plssvm::bindings::python::util::pyarray_to_vector(labels));
+                  self.data_ = std::make_unique<typename svr::data_set_type>(plssvm::bindings::python::util::pyarray_to_matrix(data), plssvm::bindings::python::util::pyarray_t_to_vector(labels));
                   fit(self);
                   return self;
               },
@@ -309,7 +309,7 @@ void init_sklearn_svr(py::module_ &m) {
                   if (self.model_ == nullptr) {
                       throw py::attribute_error{ "This SVR instance is not fitted yet. Call 'fit' with appropriate arguments before using this estimator." };
                   } else {
-                      const typename svr::data_set_type data_to_score{ plssvm::bindings::python::util::pyarray_to_matrix(data), plssvm::bindings::python::util::pyarray_to_vector(labels) };
+                      const typename svr::data_set_type data_to_score{ plssvm::bindings::python::util::pyarray_to_matrix(data), plssvm::bindings::python::util::pyarray_t_to_vector(labels) };
                       return self.svm_->score(*self.model_, data_to_score);
                   } }, "Return the mean accuracy on the given test data and labels.", py::arg("X"), py::arg("y"), py::pos_only(), py::arg("sample_weight") = std::nullopt)
         .def("set_params", [](svr &self, const py::kwargs &args) -> svr & {

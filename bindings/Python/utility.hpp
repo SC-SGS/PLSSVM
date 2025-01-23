@@ -23,21 +23,25 @@
 
 #include "fmt/format.h"            // fmt::format
 #include "pybind11/buffer_info.h"  // py::buffer_info
+#include "pybind11/cast.h"         // py::cast
 #include "pybind11/numpy.h"        // py::array_t
 #include "pybind11/pybind11.h"     // py::kwargs, py::value_error, py::exception, py::str, py::set_error
 #include "pybind11/pytypes.h"      // py::list
 #include "pybind11/stl.h"          // support for STL types
 
-#include <cstddef>      // std::size_t
-#include <cstring>      // std::memcpy
-#include <exception>    // std::exception_ptr, std::rethrow_exception
-#include <sstream>      // std::istringstream
-#include <string>       // std::string
-#include <string_view>  // std::string_view
-#include <tuple>        // std::tuple_element_t, std::tuple_size_v
-#include <type_traits>  // std::is_same_v, std::conditional_t
-#include <utility>      // std::integer_sequence, std::make_integer_sequence
-#include <vector>       // std::vector
+#include <cstddef>        // std::size_t
+#include <cstdint>        // fixed-width integers
+#include <cstring>        // std::memcpy
+#include <exception>      // std::exception_ptr, std::rethrow_exception
+#include <sstream>        // std::istringstream
+#include <string>         // std::string
+#include <string_view>    // std::string_view
+#include <tuple>          // std::tuple_element_t, std::tuple_size_v
+#include <type_traits>    // std::is_same_v, std::conditional_t
+#include <unordered_map>  // std::unordered_map
+#include <utility>        // std::integer_sequence, std::make_integer_sequence
+#include <variant>        // std::variant
+#include <vector>         // std::vector
 
 namespace py = pybind11;
 
@@ -50,7 +54,7 @@ namespace plssvm::bindings::python::util {
  * @return the Python Numpy array (`[[nodiscard]]`)
  */
 template <typename T>
-[[nodiscard]] auto vector_to_pyarray(const std::vector<T> &vec) {
+[[nodiscard]] py::array vector_to_pyarray(const std::vector<T> &vec) {
     if constexpr (std::is_same_v<T, std::string>) {
         py::list l{};
         for (const std::string &str : vec) {
@@ -81,7 +85,7 @@ template <typename T>
  * @return the Python Numpy array (`[[nodiscard]]`)
  */
 template <typename T, plssvm::layout_type layout>
-[[nodiscard]] auto matrix_to_pyarray(const plssvm::matrix<T, layout> &mat) {
+[[nodiscard]] py::array matrix_to_pyarray(const plssvm::matrix<T, layout> &mat) {
     using size_type = typename plssvm::matrix<T, layout>::size_type;
     const size_type num_data_points = mat.num_rows();
     const size_type num_features = mat.num_cols();
@@ -109,10 +113,10 @@ template <typename T, plssvm::layout_type layout>
  * @return the `std::vector<T>` (`[[nodiscard]]`)
  */
 template <typename T>
-[[nodiscard]] std::vector<T> pyarray_to_vector(const py::array_t<T, py::array::c_style | py::array::forcecast> &vec) {
+[[nodiscard]] std::vector<T> pyarray_t_to_vector(const py::array_t<T, py::array::c_style | py::array::forcecast> &vec) {
     // check dimensions
     if (vec.ndim() != 1) {
-        throw py::value_error{ fmt::format("the provided array must have exactly one dimension but has {}!", vec.ndim()) };
+        throw py::value_error{ fmt::format("The provided array must have exactly one dimension but has {}!", vec.ndim()) };
     }
 
     // convert py::array to std::vector
@@ -126,7 +130,7 @@ template <typename T>
  * @return the `std::vector<std::string>` (`[[nodiscard]]`)
  */
 template <typename T>
-[[nodiscard]] std::vector<std::string> pyarray_to_string_vector(const py::array_t<T, py::array::c_style | py::array::forcecast> &vec) {
+[[nodiscard]] std::vector<std::string> pyarray_t_to_string_vector(const py::array_t<T, py::array::c_style | py::array::forcecast> &vec) {
     // check dimensions
     if (vec.ndim() != 1) {
         throw py::value_error{ fmt::format("the provided array must have exactly one dimension but has {}!", vec.ndim()) };
@@ -141,19 +145,182 @@ template <typename T>
     return tmp;
 }
 
+/// The possible vector types supported when converting a py::array to a std::vector.
+using possible_vector_types = std::variant<std::vector<bool>,           // np.bool
+                                           std::vector<std::int8_t>,    // np.int8
+                                           std::vector<std::uint8_t>,   // np.uint8
+                                           std::vector<std::int16_t>,   // np.int16
+                                           std::vector<std::uint16_t>,  // np.uint16
+                                           std::vector<std::int32_t>,   // np.int32
+                                           std::vector<std::uint32_t>,  // np.uint32
+                                           std::vector<std::int64_t>,   // np.int64
+                                           std::vector<std::uint64_t>,  // np.uint64
+                                           std::vector<float>,          // np.float32
+                                           std::vector<double>,         // np.float64
+                                           std::vector<std::string>>;   // np.string
+
 /**
- * @brief Convert a Python List to a `std::vector<std::string>`.
- * @param[in] list the Python List to convert
- * @return the `std::vector<std::string>` (`[[nodiscard]]`)
+ * @brief Convert a generic Python Numpy array to a `std::vector<T>`.
+ * @param[in] vec the generic Python Numpy array to convert
+ * @return a `std::variant` containing the converted `std::vector` (`[[nodiscard]]`)
  */
-[[nodiscard]] inline std::vector<std::string> pylist_to_string_vector(const py::list &list) {
-    // convert a Python list containing strings to a std::vector<std::string>
-    std::vector<std::string> tmp(py::len(list));
-    for (std::vector<std::string>::size_type i = 0; i < tmp.size(); ++i) {
-        tmp[i] = list[i].cast<py::str>().cast<std::string>();
+[[nodiscard]] inline possible_vector_types pyarray_to_vector(const py::array &vec) {
+    // sanity check the passed py::array
+    if (!(vec.flags() & py::array::c_style)) {
+        throw py::attribute_error{ "The py::array must be C-contiguous" };
     }
 
-    return tmp;
+    // the type used in the py::array
+    py::dtype type = vec.dtype();
+
+    if (type.is(py::dtype::of<bool>())) {
+        return pyarray_t_to_vector<bool>(vec);
+    } else if (type.is(py::dtype::of<std::int8_t>())) {
+        return pyarray_t_to_vector<std::int8_t>(vec);
+    } else if (type.is(py::dtype::of<std::uint8_t>())) {
+        return pyarray_t_to_vector<std::uint8_t>(vec);
+    } else if (type.is(py::dtype::of<std::int16_t>())) {
+        return pyarray_t_to_vector<std::int16_t>(vec);
+    } else if (type.is(py::dtype::of<std::uint16_t>())) {
+        return pyarray_t_to_vector<std::uint16_t>(vec);
+    } else if (type.is(py::dtype::of<std::int32_t>())) {
+        return pyarray_t_to_vector<std::int32_t>(vec);
+    } else if (type.is(py::dtype::of<std::uint32_t>())) {
+        return pyarray_t_to_vector<std::uint32_t>(vec);
+    } else if (type.is(py::dtype::of<std::int64_t>())) {
+        return pyarray_t_to_vector<std::int64_t>(vec);
+    } else if (type.is(py::dtype::of<std::uint64_t>())) {
+        return pyarray_t_to_vector<std::uint64_t>(vec);
+    } else if (type.is(py::dtype::of<float>())) {
+        return pyarray_t_to_vector<float>(vec);
+    } else if (type.is(py::dtype::of<double>())) {
+        return pyarray_t_to_vector<double>(vec);
+    } else if (type.attr("kind").cast<std::string>() == "U") {
+        // convert py::array of strings to a std::vector<std::string>
+        if (vec.ndim() != 1) {
+            throw py::value_error{ fmt::format("The provided array must have exactly one dimension but has {}!", vec.ndim()) };
+        }
+
+        std::vector<std::string> result;
+        result.reserve(vec.shape(0));
+        for (py::handle item : vec) {
+            result.push_back(py::cast<std::string>(item));
+        }
+        return result;
+    } else {
+        throw py::value_error{ fmt::format("Unsupported data type: {}!", type.attr("name").cast<std::string>()) };
+    }
+}
+
+/**
+ * @brief Convert a Python List to a `std::vector<T>`.
+ * @tparam T the types in the `std::vector`
+ * @param[in] list list the Python List to convert
+ * @return the `std::vector<T>` (`[[nodiscard]]`)
+ */
+template <typename T>
+[[nodiscard]] std::vector<T> pylist_to_vector(const py::list &list) {
+    std::vector<T> vec(py::len(list));
+    for (std::size_t i = 0; i < vec.size(); ++i) {
+        if constexpr (std::is_same_v<T, std::string>) {
+            vec[i] = list[i].cast<py::str>().cast<std::string>();
+        } else {
+            vec[i] = list[i].cast<T>();
+        }
+    }
+    return vec;
+}
+
+namespace impl {
+
+/**
+ * @brief A hash struct for creating the hash value of a py::type.
+ */
+struct py_type_hash {
+    std::size_t operator()(const py::type &t) const {
+        return py::hash(t);
+    }
+};
+
+/**
+ * @brief A comparison struct to check two py::type for equality.
+ */
+struct py_type_equal {
+    bool operator()(const py::type &lhs, const py::type &rhs) const {
+        return lhs.is(rhs);
+    }
+};
+
+}  // namespace impl
+
+/**
+ * @brief Convert a Python List to a `std::vector`. The `std::vector<>::value_type` depends on the types provided in the py::list.
+ * @param[in] list the Python List to convert
+ * @return [a `std::variant` containing the converted `std::vector`, the used py::dtype] (`[[nodiscard]]`)
+ */
+[[nodiscard]] inline std::pair<possible_vector_types, py::dtype> pylist_to_vector(const py::list &list) {
+    static const py::module_ np = py::module_::import("numpy");
+    // define a precedence map, i.e., we internally use the type in the py::list with the highest precedence value
+    // example: [0, 1.3, np.int8(6)] -> the types are [int, float, int8] -> precedences are [8, 10, 2] -> the highest precedence is 10 -> we use float internally
+    static const std::unordered_map<py::type, int, impl::py_type_hash, impl::py_type_equal> precedence_map{
+        { py::module_::import("builtins").attr("bool"), 0 },
+        { np.attr("uint8"), 1 },
+        { np.attr("int8"), 2 },
+        { np.attr("uint16"), 3 },
+        { np.attr("int16"), 4 },
+        { np.attr("uint32"), 5 },
+        { np.attr("int32"), 6 },
+        { np.attr("uint64"), 7 },
+        { np.attr("int64"), 8 },
+        { py::module_::import("builtins").attr("int"), 8 },
+        { np.attr("float32"), 9 },
+        { np.attr("float64"), 10 },
+        { py::module_::import("builtins").attr("float"), 10 },
+        { py::module_::import("builtins").attr("str"), 11 }
+    };
+
+    // get the "super" type used internally as defined by the precedence_map
+    py::type highest_type{ py::module_::import("builtins").attr("bool") };
+    int highest_precedence{ -1 };
+    for (std::size_t i = 0; i < py::len(list); ++i) {
+        py::object item = list[i];
+        py::type type = py::type::of(item);
+        int precedence = precedence_map.at(type);
+        if (precedence > highest_precedence) {
+            highest_precedence = precedence;
+            highest_type = type;
+        }
+    }
+
+    // convert the py::list to a vector of the previously determined type
+    if (highest_type.is(py::module_::import("builtins").attr("bool"))) {
+        return std::make_pair(pylist_to_vector<bool>(list), py::dtype::of<bool>());
+    } else if (highest_type.is(np.attr("int8"))) {
+        return std::make_pair(pylist_to_vector<std::int8_t>(list), py::dtype::of<std::int8_t>());
+    } else if (highest_type.is(np.attr("uint8"))) {
+        return std::make_pair(pylist_to_vector<std::uint8_t>(list), py::dtype::of<std::uint8_t>());
+    } else if (highest_type.is(np.attr("int16"))) {
+        return std::make_pair(pylist_to_vector<std::int16_t>(list), py::dtype::of<std::int16_t>());
+    } else if (highest_type.is(np.attr("uint16"))) {
+        return std::make_pair(pylist_to_vector<std::uint16_t>(list), py::dtype::of<std::uint16_t>());
+    } else if (highest_type.is(np.attr("int32"))) {
+        return std::make_pair(pylist_to_vector<std::int32_t>(list), py::dtype::of<std::int32_t>());
+    } else if (highest_type.is(np.attr("uint32"))) {
+        return std::make_pair(pylist_to_vector<std::uint32_t>(list), py::dtype::of<std::uint32_t>());
+    } else if (highest_type.is(np.attr("int64")) || highest_type.is(py::module_::import("builtins").attr("int"))) {
+        return std::make_pair(pylist_to_vector<std::int64_t>(list), py::dtype::of<std::int64_t>());
+    } else if (highest_type.is(np.attr("uint64"))) {
+        return std::make_pair(pylist_to_vector<std::uint64_t>(list), py::dtype::of<std::uint64_t>());
+    } else if (highest_type.is(np.attr("float32"))) {
+        return std::make_pair(pylist_to_vector<float>(list), py::dtype::of<float>());
+    } else if (highest_type.is(np.attr("float64")) || highest_type.is(py::module_::import("builtins").attr("float"))) {
+        return std::make_pair(pylist_to_vector<double>(list), py::dtype::of<double>());
+    } else if (highest_type.is(py::module_::import("builtins").attr("str"))) {
+        // convert py::array of strings to a std::vector<std::string>
+        return std::make_pair(pylist_to_vector<std::string>(list), py::dtype("U"));
+    } else {
+        throw py::value_error{ fmt::format("Unsupported data type: {}!", highest_type.attr("__name__").cast<std::string>()) };
+    }
 }
 
 /**
@@ -176,6 +343,11 @@ template <typename T>
     T *ptr = static_cast<T *>(buffer.ptr);
     plssvm::aos_matrix<T> tmp{ plssvm::shape{ static_cast<size_type>(mat.shape(0)), static_cast<size_type>(mat.shape(1)) }, ptr, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE } };
     return tmp;
+}
+
+template <typename T>
+[[nodiscard]] plssvm::soa_matrix<T> pyarray_to_soa_matrix(const py::array_t<T, py::array::c_style | py::array::forcecast> &mat) {
+    return plssvm::soa_matrix<T>{ pyarray_to_matrix(mat) };  // TODO: better?
 }
 
 /**
