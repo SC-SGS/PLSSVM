@@ -13,6 +13,7 @@
 #include "plssvm/detail/type_traits.hpp"                // plssvm::detail::remove_cvref_t
 #include "plssvm/gamma.hpp"                             // plssvm::gamma_coefficient_type, plssvm::gamma_type
 #include "plssvm/kernel_function_types.hpp"             // plssvm::kernel_function_type
+#include "plssvm/matrix.hpp"                            // plssvm::aos_matrix, plssvm::soa_matrix
 #include "plssvm/model/classification_model.hpp"        // plssvm::classification_model
 #include "plssvm/parameter.hpp"                         // plssvm::parameter, named arguments definition
 #include "plssvm/svm/csvc.hpp"                          // plssvm::csvc
@@ -71,6 +72,12 @@ struct svc {
                                               plssvm::classification_model<float>,          // np.float32
                                               plssvm::classification_model<double>,         // np.float64
                                               plssvm::classification_model<std::string>>;   // np.str
+
+    // wrapper class to make friendship work
+    template <typename... Args>
+    auto call_predict_values(Args &&...args) const {
+        return svm_->predict_values(std::forward<Args>(args)...);
+    }
 
     py::dtype py_dtype{};
     std::optional<plssvm::real_type> epsilon{};
@@ -392,7 +399,24 @@ void init_sklearn_svc(py::module_ &m) {
     //                                                               METHODS                                                               //
     //*************************************************************************************************************************************//
     py_svc
-        .def("decision_function", [](const svc &, py::array_t<plssvm::real_type, py::array::c_style | py::array::forcecast>) { throw py::attribute_error{ "'SVC' object has no function 'decision_function' (not implemented)" }; }, "Evaluate the decision function for the samples in X.")
+        .def("decision_function", [](const svc &self, py::array_t<plssvm::real_type, py::array::c_style | py::array::forcecast> predict_points) {
+            if (self.model_ == nullptr) {
+                throw py::attribute_error{ "This SVC instance is not fitted yet. Call 'fit' with appropriate arguments before using this estimator." };
+            }
+
+            return std::visit([&](auto &&model) -> py::array {
+                const plssvm::parameter &params = model.get_params();
+                const plssvm::soa_matrix<plssvm::real_type> &sv = model.support_vectors();
+                const plssvm::aos_matrix<plssvm::real_type> &alpha = model.weights().front();  // num_classes x num_data_points
+                const std::vector<plssvm::real_type> &rho = model.rho();
+                plssvm::soa_matrix<plssvm::real_type> w{};  // empty -> no need to befriend the model class!
+
+                // TODO: OAA vs OAO
+                // predict values using OAA -> num_data_points x num_classes
+                plssvm::aos_matrix<plssvm::real_type> votes = self.call_predict_values(params, sv, alpha, rho, w, plssvm::bindings::python::util::pyarray_to_soa_matrix(predict_points));
+                // votes *= plssvm::real_type{ -1.0 };  // TODO: sometimes necessary?
+                return plssvm::bindings::python::util::matrix_to_pyarray(votes);
+            }, *self.model_); }, "Evaluate the decision function for the samples in X.")
         .def("fit", [](svc &self, py::array_t<plssvm::real_type, py::array::c_style | py::array::forcecast> data, py::array labels, std::optional<std::vector<plssvm::real_type>> sample_weight) -> svc & {
             // sanity check parameter
             if (!(labels.flags() & py::array::c_style)) {

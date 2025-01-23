@@ -44,6 +44,9 @@
 #include <utility>      // std::forward, std::move
 #include <vector>       // std::vector
 
+// forward declare svc dummy struct used in the plssvm.SVC Python bindings
+struct svc;
+
 namespace plssvm {
 
 /**
@@ -56,6 +59,8 @@ namespace plssvm {
  * @details This class implements all features shared between all C-SVC backends. It defines the whole public API of a C-SVC.
  */
 class csvc : virtual public csvm {
+    // befriend svc dummy struct used in the plssvm.SVC Python bindings
+    friend struct ::svc;
   public:
     /// The type of the model returned by a call to the `fit` function and used in the `predict` and `score` functions.
     template <typename T>
