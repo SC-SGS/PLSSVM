@@ -173,27 +173,27 @@ using possible_vector_types = std::variant<std::vector<bool>,           // np.bo
     // the type used in the py::array
     py::dtype type = vec.dtype();
 
-    if (type.is(py::dtype::of<bool>())) {
+    if (type.equal(py::dtype::of<bool>())) {
         return pyarray_t_to_vector<bool>(vec);
-    } else if (type.is(py::dtype::of<std::int8_t>())) {
+    } else if (type.equal(py::dtype::of<std::int8_t>())) {
         return pyarray_t_to_vector<std::int8_t>(vec);
-    } else if (type.is(py::dtype::of<std::uint8_t>())) {
+    } else if (type.equal(py::dtype::of<std::uint8_t>())) {
         return pyarray_t_to_vector<std::uint8_t>(vec);
-    } else if (type.is(py::dtype::of<std::int16_t>())) {
+    } else if (type.equal(py::dtype::of<std::int16_t>())) {
         return pyarray_t_to_vector<std::int16_t>(vec);
-    } else if (type.is(py::dtype::of<std::uint16_t>())) {
+    } else if (type.equal(py::dtype::of<std::uint16_t>())) {
         return pyarray_t_to_vector<std::uint16_t>(vec);
-    } else if (type.is(py::dtype::of<std::int32_t>())) {
+    } else if (type.equal(py::dtype::of<std::int32_t>())) {
         return pyarray_t_to_vector<std::int32_t>(vec);
-    } else if (type.is(py::dtype::of<std::uint32_t>())) {
+    } else if (type.equal(py::dtype::of<std::uint32_t>())) {
         return pyarray_t_to_vector<std::uint32_t>(vec);
-    } else if (type.is(py::dtype::of<std::int64_t>())) {
+    } else if (type.equal(py::dtype::of<std::int64_t>())) {
         return pyarray_t_to_vector<std::int64_t>(vec);
-    } else if (type.is(py::dtype::of<std::uint64_t>())) {
+    } else if (type.equal(py::dtype::of<std::uint64_t>())) {
         return pyarray_t_to_vector<std::uint64_t>(vec);
-    } else if (type.is(py::dtype::of<float>())) {
+    } else if (type.equal(py::dtype::of<float>())) {
         return pyarray_t_to_vector<float>(vec);
-    } else if (type.is(py::dtype::of<double>())) {
+    } else if (type.equal(py::dtype::of<double>())) {
         return pyarray_t_to_vector<double>(vec);
     } else if (type.attr("kind").cast<std::string>() == "U") {
         // convert py::array of strings to a std::vector<std::string>
@@ -293,29 +293,29 @@ struct py_type_equal {
     }
 
     // convert the py::list to a vector of the previously determined type
-    if (highest_type.is(py::module_::import("builtins").attr("bool"))) {
+    if (highest_type.equal(py::module_::import("builtins").attr("bool"))) {
         return std::make_pair(pylist_to_vector<bool>(list), py::dtype::of<bool>());
-    } else if (highest_type.is(np.attr("int8"))) {
+    } else if (highest_type.equal(np.attr("int8"))) {
         return std::make_pair(pylist_to_vector<std::int8_t>(list), py::dtype::of<std::int8_t>());
-    } else if (highest_type.is(np.attr("uint8"))) {
+    } else if (highest_type.equal(np.attr("uint8"))) {
         return std::make_pair(pylist_to_vector<std::uint8_t>(list), py::dtype::of<std::uint8_t>());
-    } else if (highest_type.is(np.attr("int16"))) {
+    } else if (highest_type.equal(np.attr("int16"))) {
         return std::make_pair(pylist_to_vector<std::int16_t>(list), py::dtype::of<std::int16_t>());
-    } else if (highest_type.is(np.attr("uint16"))) {
+    } else if (highest_type.equal(np.attr("uint16"))) {
         return std::make_pair(pylist_to_vector<std::uint16_t>(list), py::dtype::of<std::uint16_t>());
-    } else if (highest_type.is(np.attr("int32"))) {
+    } else if (highest_type.equal(np.attr("int32"))) {
         return std::make_pair(pylist_to_vector<std::int32_t>(list), py::dtype::of<std::int32_t>());
-    } else if (highest_type.is(np.attr("uint32"))) {
+    } else if (highest_type.equal(np.attr("uint32"))) {
         return std::make_pair(pylist_to_vector<std::uint32_t>(list), py::dtype::of<std::uint32_t>());
-    } else if (highest_type.is(np.attr("int64")) || highest_type.is(py::module_::import("builtins").attr("int"))) {
+    } else if (highest_type.equal(np.attr("int64")) || highest_type.equal(py::module_::import("builtins").attr("int"))) {
         return std::make_pair(pylist_to_vector<std::int64_t>(list), py::dtype::of<std::int64_t>());
-    } else if (highest_type.is(np.attr("uint64"))) {
+    } else if (highest_type.equal(np.attr("uint64"))) {
         return std::make_pair(pylist_to_vector<std::uint64_t>(list), py::dtype::of<std::uint64_t>());
-    } else if (highest_type.is(np.attr("float32"))) {
+    } else if (highest_type.equal(np.attr("float32"))) {
         return std::make_pair(pylist_to_vector<float>(list), py::dtype::of<float>());
-    } else if (highest_type.is(np.attr("float64")) || highest_type.is(py::module_::import("builtins").attr("float"))) {
+    } else if (highest_type.equal(np.attr("float64")) || highest_type.equal(py::module_::import("builtins").attr("float"))) {
         return std::make_pair(pylist_to_vector<double>(list), py::dtype::of<double>());
-    } else if (highest_type.is(py::module_::import("builtins").attr("str"))) {
+    } else if (highest_type.equal(py::module_::import("builtins").attr("str"))) {
         // convert py::array of strings to a std::vector<std::string>
         return std::make_pair(pylist_to_vector<std::string>(list), py::dtype("U"));
     } else {
