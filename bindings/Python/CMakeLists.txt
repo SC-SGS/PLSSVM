@@ -125,9 +125,6 @@ message(STATUS "The preferred label_type for the Python SVC bindings is \"${PLSS
 
 # add necessary compile definitions for the default real_type and label_type
 target_compile_definitions(${PLSSVM_PYTHON_BINDINGS_LIBRARY_NAME} PRIVATE PLSSVM_PYTHON_BINDINGS_PREFERRED_SVC_LABEL_TYPE=${PLSSVM_PYTHON_BINDINGS_PREFERRED_SVC_LABEL_TYPE})
-if (PLSSVM_PYTHON_BINDINGS_PREFERRED_SVC_LABEL_TYPE STREQUAL "std::string")
-    target_compile_definitions(${PLSSVM_PYTHON_BINDINGS_LIBRARY_NAME} PRIVATE PLSSVM_PYTHON_BINDINGS_SVC_LABEL_TYPE_IS_STRING)
-endif ()
 
 # add necessary compile options
 target_include_directories(${PLSSVM_PYTHON_BINDINGS_LIBRARY_NAME} PRIVATE ${CMAKE_CURRENT_LIST_DIR}/../..)
