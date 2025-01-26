@@ -33,13 +33,14 @@
 #include <cstdint>        // fixed-width integers
 #include <cstring>        // std::memcpy
 #include <exception>      // std::exception_ptr, std::rethrow_exception
+#include <optional>       // std::optional, std::nullopt
 #include <sstream>        // std::istringstream
 #include <string>         // std::string
 #include <string_view>    // std::string_view
 #include <tuple>          // std::tuple_element_t, std::tuple_size_v
 #include <type_traits>    // std::is_same_v, std::conditional_t
 #include <unordered_map>  // std::unordered_map
-#include <utility>        // std::integer_sequence, std::make_integer_sequence
+#include <utility>        // std::integer_sequence, std::make_integer_sequence, std::pair
 #include <variant>        // std::variant
 #include <vector>         // std::vector
 
@@ -119,8 +120,13 @@ template <typename T>
         throw py::value_error{ fmt::format("The provided array must have exactly one dimension but has {}!", vec.ndim()) };
     }
 
-    // convert py::array to std::vector
-    return std::vector<T>(vec.data(0), vec.data(0) + vec.shape(0));
+    if (vec.size() == 0) {
+        // return an empty vector
+        return std::vector<T>{};
+    } else {
+        // convert py::array to std::vector
+        return std::vector<T>(vec.data(0), vec.data(0) + vec.shape(0));
+    }
 }
 
 /**
@@ -201,12 +207,17 @@ using possible_vector_types = std::variant<std::vector<bool>,           // np.bo
             throw py::value_error{ fmt::format("The provided array must have exactly one dimension but has {}!", vec.ndim()) };
         }
 
-        std::vector<std::string> result;
-        result.reserve(vec.shape(0));
-        for (py::handle item : vec) {
-            result.push_back(py::cast<std::string>(item));
+        if (vec.size() == 0) {
+            // return an empty vector
+            return std::vector<std::string>{};
+        } else {
+            std::vector<std::string> result;
+            result.reserve(vec.shape(0));
+            for (py::handle item : vec) {
+                result.push_back(py::cast<std::string>(item));
+            }
+            return result;
         }
-        return result;
     } else {
         throw py::value_error{ fmt::format("Unsupported data type: {}!", type.attr("name").cast<std::string>()) };
     }
@@ -341,8 +352,190 @@ template <typename T>
     // convert py::array to plssvm::matrix<T>
     py::buffer_info buffer = mat.request();
     T *ptr = static_cast<T *>(buffer.ptr);
-    plssvm::aos_matrix<T> tmp{ plssvm::shape{ static_cast<size_type>(mat.shape(0)), static_cast<size_type>(mat.shape(1)) }, ptr, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE } };
-    return tmp;
+    return plssvm::aos_matrix<T>{ plssvm::shape{ static_cast<size_type>(mat.shape(0)), static_cast<size_type>(mat.shape(1)) }, ptr, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE } };
+}
+
+/**
+ * @brief Check if the provided Python object @p obj is a Pandas DataFrame.
+ * @param[in] obj the Python object to check
+ * @return `true` if @p obj is a Pandas DataFrame, otherwise `false` (`[[nodiscard]]`)
+ */
+[[nodiscard]] inline bool is_pandas_data_frame(const py::object &obj) {
+    try {
+        // try importing the pandas module
+        const py::module_ pd = py::module_::import("pandas");
+        const py::object pd_data_frame = pd.attr("DataFrame");
+        // check the instance
+        return py::isinstance(obj, pd_data_frame);
+    } catch (const py::error_already_set &) {
+        // error loading the pandas library -> obj can't be a DataFrame
+        return false;
+    }
+}
+
+/**
+ * @brief Check if the provided Python object @p obj is a Pandas Series.
+ * @param[in] obj the Python object to check
+ * @return `true` if @p obj is a Pandas Series, otherwise `false` (`[[nodiscard]]`)
+ */
+[[nodiscard]] inline bool is_pandas_series(const py::object &obj) {
+    try {
+        // try importing the pandas module
+        const py::module_ pd = py::module_::import("pandas");
+        const py::object pd_series = pd.attr("Series");
+        // check the instance
+        return py::isinstance(obj, pd_series);
+    } catch (const py::error_already_set &) {
+        // error loading the pandas library -> obj can't be a Series
+        return false;
+    }
+}
+
+/**
+ * @brief Check if the provided Python object @p obj is a SciPy sparse matrix.
+ * @param[in] obj the Python object to check
+ * @return `true` if @p obj is a SciPy sparse matrix, otherwise `false` (`[[nodiscard]]`)
+ */
+[[nodiscard]] inline bool is_scipy_sparse_matrix(const py::object &obj) {
+    try {
+        // try importing the scipy module
+        const py::module_ scipy_sparse = py::module_::import("scipy.sparse");
+        const py::object spmatrix_class = scipy_sparse.attr("spmatrix");
+        // check the instance
+        return py::isinstance(obj, spmatrix_class);
+    } catch (const py::error_already_set &) {
+        // error loading the scipy library -> obj can't be a sparse matrix
+        return false;
+    }
+}
+
+/**
+ * @brief Convert the provided Pybind11 object @p obj to a plssvm::aos_matrix.
+ * @details The supported object types are: Numpy ndarrays, Pandas DataFrames, SciPy sparse matrices, and 2D Python lists.
+ *          If the object is a Pandas DataFrame and column names are set, returns these column names (can later be queried using the SVC `feature_names_in_` attribute).
+ * @param[in] obj the Python object to convert
+ * @throws py::value_error if the Numpy ndarray has more than two dimensions
+ * @throws py::value_error if the Numpy ndarray has only one dimension
+ * @throws py::value_error if one dimension in the Numpy ndarray is zero
+ * @throws py::value_error if the Pandas DataFrame is empty
+ * @throws py::value_error if the provided Python list is empty
+ * @throws py::value_error if the provided 2D Python list has different number of elements per sublist
+ * @throws py::value_error if the provided @p obj isn't a Numpy ndarray, Pandas DataFrame, SciPy sparse matrix, or Python list
+ * @return { the converted plssvm::aos_matrix; if available, the feature names } (`[[nodiscard]]`)
+ */
+[[nodiscard]] inline std::pair<plssvm::aos_matrix<plssvm::real_type>, std::optional<std::vector<std::string>>> pyobject_to_matrix(const py::object &obj) {
+    if (py::isinstance<py::array>(obj)) {
+        // provided obj is a numpy array
+        // convert to py::array
+        const auto &py_array = py::cast<py::array>(obj);
+
+        // sanity check the number of elements in the numpy array
+        if (py_array.ndim() > 2) {
+            throw py::value_error{ fmt::format("Found array with dim {}. SVC expected <= 2.", py_array.ndim()) };
+        }
+        if (py_array.ndim() == 1) {
+            throw py::value_error{ "Expected 2D array, got 1D array instead." };
+        }
+        if (py_array.size() == 0) {
+            throw py::value_error{ fmt::format("Found array with 0 sample(s) (shape=({}, {})) while a minimum of 1 is required by SVC.", py_array.shape(0), py_array.shape(1)) };
+        }
+
+        const auto &py_array_t = py::cast<py::array_t<plssvm::real_type, py::array::c_style | py::array::forcecast>>(py_array);
+        return std::make_pair(plssvm::bindings::python::util::pyarray_to_matrix(py_array_t), std::nullopt);
+    } else if (is_pandas_data_frame(obj)) {
+        // provided obj is a Pandas DataFrame
+        // convert to py::array_t
+        const auto &py_array_t = obj.attr("values").cast<py::array_t<plssvm::real_type, py::array::c_style | py::array::forcecast>>();
+
+        // sanity check the number of elements in the Pandas DataFrame
+        if (py_array_t.size() == 0) {
+            throw py::value_error{ "at least one array or dtype is required" };
+        }
+
+        // convert py::array_t to plssvm::matrix
+        auto matr = plssvm::bindings::python::util::pyarray_to_matrix(py_array_t);
+
+        // get the feature names (column names) if possible
+        if (py::hasattr(obj, "columns")) {
+            return std::make_pair(std::move(matr), plssvm::bindings::python::util::pylist_to_vector<std::string>(obj.attr("columns")));
+        } else {
+            return std::make_pair(std::move(matr), std::nullopt);
+        }
+    } else if (is_scipy_sparse_matrix(obj)) {
+        // provided obj is a SciPy sparse matrix
+        // convert to py::array_t
+        const auto &py_array_t = obj.attr("toarray")("C").cast<py::array_t<plssvm::real_type, py::array::c_style | py::array::forcecast>>();
+
+        return std::make_pair(plssvm::bindings::python::util::pyarray_to_matrix(py_array_t), std::nullopt);
+    } else if (py::isinstance<py::list>(obj)) {
+        // provided obj is a Python list -> check if it is a correct py::list of py::list
+        // convert to py::list
+        const auto &list = py::cast<py::list>(obj);
+        if (list.empty()) {
+            throw py::value_error{ "Expected 2D array, got 1D array instead!" };
+        }
+
+        // iterate over py::list
+        const std::size_t num_rows = list.size();
+        const std::size_t num_cols = list[0].cast<py::list>().size();
+
+        // create the matrix with the expected size
+        plssvm::aos_matrix<plssvm::real_type> matrix{ plssvm::shape{ num_rows, num_cols } };
+
+        // fill the matrix
+        for (std::size_t row = 0; row < num_rows; ++row) {
+            // get the sublist
+            const auto &sublist = list[row].cast<py::list>();
+            // check if the number of values in the sublist is correct
+            if (num_cols != sublist.size()) {
+                throw py::value_error{ "setting an array element with a sequence. The requested array has an inhomogeneous shape." };
+            }
+            // add list values to the result matrix
+            for (std::size_t col = 0; col < num_cols; ++col) {
+                if (py::isinstance<py::str>(sublist[col])) {
+                    // cast py::str to a plssvm::real_type
+                    matrix(row, col) = static_cast<plssvm::real_type>(py::float_(sublist[col]));
+                } else {
+                    matrix(row, col) = sublist[col].cast<plssvm::real_type>();
+                }
+            }
+        }
+        return std::make_pair(std::move(matrix), std::nullopt);
+    } else {
+        throw py::value_error{ fmt::format("Unsupported data type: {}", std::string{ py::str(obj.get_type().attr("__name__")) }) };
+    }
+}
+
+/**
+ * @brief Convert the provided Pybind11 object @p obj to a std::vector.
+ * @details The supported object types are: Numpy ndarrays, Pandas Series, Pandas DataFrames, and Python lists. Also returns the data type used for the labels.
+ * @param[in] obj the Python object to convert
+ * @throws py::value_error if the provided @p obj isn't a Numpy ndarray, Pandas Series, Pandas DataFrame, or Python list
+ * @return { the converted std::vector; the data type of the labels } (`[[nodiscard]]`)
+ */
+[[nodiscard]] inline std::pair<possible_vector_types, py::dtype> pyobject_to_vector(const py::object &obj) {
+    if (py::isinstance<py::array>(obj)) {
+        // provided obj is a numpy array
+        // convert to py::array
+        auto py_array = py::cast<py::array>(obj);
+        return std::make_pair(plssvm::bindings::python::util::pyarray_to_vector(py_array), py_array.dtype());
+    } else if (is_pandas_series(obj)) {
+        // provided obj is a Pandas Series
+        // convert to py::array_t
+        const auto &py_array_t = obj.attr("values").cast<py::array_t<plssvm::real_type, py::array::c_style | py::array::forcecast>>();
+        return std::make_pair(plssvm::bindings::python::util::pyarray_t_to_vector(py_array_t), py_array_t.dtype());
+    } else if (is_pandas_data_frame(obj)) {
+        // provided obj is a Pandas Series
+        // convert to py::array_t
+        auto py_array_t = obj.attr("values").cast<py::array_t<plssvm::real_type, py::array::c_style | py::array::forcecast>>();
+        py_array_t = py_array_t.reshape({ py_array_t.size() });
+        return std::make_pair(plssvm::bindings::python::util::pyarray_t_to_vector(py_array_t), py_array_t.dtype());
+    } else if (py::isinstance<py::list>(obj)) {
+        // provided obj is a Python list
+        return plssvm::bindings::python::util::pylist_to_vector(py::cast<py::list>(obj));
+    } else {
+        throw py::attribute_error{ fmt::format("Unsupported data type: {}", std::string{ py::str(obj.get_type().attr("__name__")) }) };
+    }
 }
 
 template <typename T>

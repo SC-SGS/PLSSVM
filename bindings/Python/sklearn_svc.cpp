@@ -87,6 +87,8 @@ struct svc {
     std::unique_ptr<plssvm::csvc> svm_{ plssvm::make_csvc() };
     std::unique_ptr<possible_data_set_types> data_{};
     std::unique_ptr<possible_model_types> model_{};
+
+    std::optional<std::vector<std::string>> feature_names_{};
 };
 
 namespace {
@@ -327,7 +329,12 @@ void init_sklearn_svc(py::module_ &m) {
             }
 
             return static_cast<int>(std::visit([](auto &&data) { return data.num_features(); }, *self.data_)); }, "Number of features seen during fit. int")
-        .def_property_readonly("feature_names_in_", [](const svc &) { throw py::attribute_error{ "'SVC' object has no attribute 'feature_names_in_' (not implemented)" }; }, "Names of features seen during fit. ndarray of shape (n_features_in_,)")
+        .def_property_readonly("feature_names_in_", [](const svc &self) {
+            if (!self.feature_names_.has_value()) {
+                throw py::attribute_error{ "'SVC' object has no attribute 'feature_names_in_'" };
+            }
+
+            return plssvm::bindings::python::util::vector_to_pyarray(self.feature_names_.value()); }, "Names of features seen during fit. ndarray of shape (n_features_in_,)")
         .def_property_readonly("n_iter_", [](const svc &self) -> py::array {
             if (self.model_ == nullptr) {
                 throw py::attribute_error{ "'SVC' object has no attribute 'support_'" };
@@ -421,45 +428,18 @@ void init_sklearn_svc(py::module_ &m) {
                 return plssvm::bindings::python::util::matrix_to_pyarray(votes);
                 // votes *= plssvm::real_type{ -1.0 };  // TODO: sometimes necessary? -> change label mapping in classification data set?!
             }, *self.model_); }, "Evaluate the decision function for the samples in X.")
-        .def("fit", [](svc &self, py::array_t<plssvm::real_type, py::array::c_style | py::array::forcecast> data, py::array labels, std::optional<std::vector<plssvm::real_type>> sample_weight) -> svc & {
-            // sanity check parameter
-            if (!(labels.flags() & py::array::c_style)) {
-                throw py::attribute_error{ "Labels array must be C-contiguous" };
-            }
-            if (sample_weight.has_value()) {
-                throw py::attribute_error{ "The 'sample_weight' parameter for a call to 'fit' is not implemented yet!" };
-            }
-
-            // convert the labels to a std::vector (std::variant)
-            auto labels_vector_variant = plssvm::bindings::python::util::pyarray_to_vector(labels);
-
-            // set used Python dtype
-            self.py_dtype = labels.dtype();
-
-            // create the data set to fit
-            std::visit([&](auto &&labels_vector) {
-                // get the label type and possible data set types
-                using label_type = typename plssvm::detail::remove_cvref_t<decltype(labels_vector)>::value_type;
-                using possible_data_set_types = typename svc::possible_data_set_types;
-                // create the data set to fit
-                self.data_ = std::make_unique<possible_data_set_types>(plssvm::classification_data_set<label_type>(plssvm::bindings::python::util::pyarray_to_matrix(data), labels_vector));
-            },
-                       labels_vector_variant);
-
-            // fit the model
-            fit(self);
-            return self; }, "Fit the SVM model according to the given training data.", py::arg("X"), py::arg("y"), py::pos_only(), py::arg("sample_weight") = std::nullopt, py::return_value_policy::reference)
-        .def("fit", [](svc &self, py::array_t<plssvm::real_type, py::array::c_style | py::array::forcecast> data, py::list labels, std::optional<std::vector<plssvm::real_type>> sample_weight) -> svc & {
+        .def("fit", [](svc &self, py::object data, py::object labels, std::optional<std::vector<plssvm::real_type>> sample_weight) -> svc & {
             // sanity check parameter
             if (sample_weight.has_value()) {
                 throw py::attribute_error{ "The 'sample_weight' parameter for a call to 'fit' is not implemented yet!" };
             }
 
             // convert the labels to a std::vector
-            const auto &[labels_vector_variant, dtype] = plssvm::bindings::python::util::pylist_to_vector(labels);
+            const auto &[labels_vector_variant, dtype] = plssvm::bindings::python::util::pyobject_to_vector(labels);
 
-            // set used Python dtype
-            self.py_dtype = dtype;
+            // convert the data py::object to a plssvm::aos_matrix
+            const auto &[data_matrix, opt_feature_names] = plssvm::bindings::python::util::pyobject_to_matrix(data);
+            self.feature_names_ = opt_feature_names;
 
             // create the data set to fit
             std::visit([&](auto &&labels_vector) {
@@ -467,7 +447,7 @@ void init_sklearn_svc(py::module_ &m) {
                 using label_type = typename plssvm::detail::remove_cvref_t<decltype(labels_vector)>::value_type;
                 using possible_data_set_types = typename svc::possible_data_set_types;
                 // create the data set to fit
-                self.data_ = std::make_unique<possible_data_set_types>(plssvm::classification_data_set<label_type>(plssvm::bindings::python::util::pyarray_to_matrix(data), labels_vector));
+                self.data_ = std::make_unique<possible_data_set_types>(plssvm::classification_data_set<label_type>(data_matrix, labels_vector));
             },
                        labels_vector_variant);
 
@@ -507,50 +487,25 @@ void init_sklearn_svc(py::module_ &m) {
             py_params["verbose"] = plssvm::verbosity != plssvm::verbosity_level::quiet;
 
             return py_params; }, "Get parameters for this estimator.", py::arg("deep") = true)
-        .def("predict", [](svc &self, py::array_t<plssvm::real_type, py::array::c_style | py::array::forcecast> data) -> py::array {
+        .def("predict", [](svc &self, py::object data) -> py::array {
             if (self.model_ == nullptr) {
                 throw py::attribute_error{ "This SVC instance is not fitted yet. Call 'fit' with appropriate arguments before using this estimator." };
             }
+
+            // convert the data py::object to a plssvm::aos_matrix
+            const auto &[data_matrix, opt_feature_names] = plssvm::bindings::python::util::pyobject_to_matrix(data);
 
             return std::visit([&](auto &&model) {
                 // get the label type
                 using label_type = typename plssvm::detail::remove_cvref_t<decltype(model)>::label_type;
                 // create the data set to predict
-                const plssvm::classification_data_set<label_type> data_to_predict{ plssvm::bindings::python::util::pyarray_to_matrix(data) };
+                const plssvm::classification_data_set<label_type> data_to_predict{ data_matrix };
                 // predict the data
                 return plssvm::bindings::python::util::vector_to_pyarray<label_type>(self.svm_->predict(model, data_to_predict));
             }, *self.model_); }, "Perform classification on samples in X.")
         .def("predict_log_proba", [](const svc &, py::array_t<plssvm::real_type>) { throw py::attribute_error{ "'SVC' object has no function 'predict_log_proba' (not implemented)" }; }, "Compute log probabilities of possible outcomes for samples in X.")
         .def("predict_proba", [](const svc &, py::array_t<plssvm::real_type>) { throw py::attribute_error{ "'SVC' object has no function 'predict_proba' (not implemented)" }; }, "Compute probabilities of possible outcomes for samples in X.")
-        .def("score", [](svc &self, py::array_t<plssvm::real_type, py::array::c_style | py::array::forcecast> data, py::array labels, std::optional<std::vector<plssvm::real_type>> sample_weight) -> plssvm::real_type {
-            // sanity check parameter
-            if (!(labels.flags() & py::array::c_style)) {
-                throw py::attribute_error{ "Labels array must be C-contiguous" };
-            }
-            if (sample_weight.has_value()) {
-                throw py::attribute_error{ "The 'sample_weight' parameter for a call to 'fit' is not implemented yet!" };
-            }
-            if (self.model_ == nullptr) {
-                throw py::attribute_error{ "This SVC instance is not fitted yet. Call 'fit' with appropriate arguments before using this estimator." };
-            }
-
-            // convert the labels to a std::vector (std::variant)
-            auto labels_vector_variant = plssvm::bindings::python::util::pyarray_to_vector(labels);
-
-            // score the data
-            return std::visit([&](auto &&labels_vector) {
-                // get the label types
-                using label_type = typename plssvm::detail::remove_cvref_t<decltype(labels_vector)>::value_type;
-                // create the data set to score
-                const plssvm::classification_data_set<label_type> data_to_score{ plssvm::bindings::python::util::pyarray_to_matrix(data), labels_vector };
-                // score the data
-                try {
-                    return self.svm_->score(std::get<plssvm::classification_model<label_type>>(*self.model_), data_to_score);
-                } catch (const std::exception &) {
-                    throw py::attribute_error{ fmt::format(R"(The dtype of the labels to score is "{}", but the model was fitted with "{}". Please use the same types for fit and score!)", labels.dtype().attr("name").cast<std::string>(), self.py_dtype.attr("name").cast<std::string>()) };
-                }
-            }, labels_vector_variant); }, "Return the mean accuracy on the given test data and labels.", py::arg("X"), py::arg("y"), py::pos_only(), py::arg("sample_weight") = std::nullopt)
-        .def("score", [](svc &self, py::array_t<plssvm::real_type, py::array::c_style | py::array::forcecast> data, py::list labels, std::optional<std::vector<plssvm::real_type>> sample_weight) -> plssvm::real_type {
+        .def("score", [](svc &self, py::object data, py::object labels, std::optional<std::vector<plssvm::real_type>> sample_weight) -> plssvm::real_type {
             // sanity check parameter
             if (sample_weight.has_value()) {
                 throw py::attribute_error{ "The 'sample_weight' parameter for a call to 'fit' is not implemented yet!" };
@@ -559,15 +514,18 @@ void init_sklearn_svc(py::module_ &m) {
                 throw py::attribute_error{ "This SVC instance is not fitted yet. Call 'fit' with appropriate arguments before using this estimator." };
             }
 
-            // convert the labels to a std::vector (std::variant)
-            const auto &[labels_vector_variant, dtype] = plssvm::bindings::python::util::pylist_to_vector(labels);
+            // convert the labels to a std::vector
+            const auto &[labels_vector_variant, dtype] = plssvm::bindings::python::util::pyobject_to_vector(labels);
+
+            // convert the data py::object to a plssvm::aos_matrix
+            const auto &[data_matrix, opt_feature_names] = plssvm::bindings::python::util::pyobject_to_matrix(data);
 
             // score the data
             return std::visit([&](auto &&labels_vector) {
                 // get the label types
                 using label_type = typename plssvm::detail::remove_cvref_t<decltype(labels_vector)>::value_type;
                 // create the data set to score
-                const plssvm::classification_data_set<label_type> data_to_score{ plssvm::bindings::python::util::pyarray_to_matrix(data), labels_vector };
+                const plssvm::classification_data_set<label_type> data_to_score{ data_matrix, labels_vector };
                 // score the data
                 try {
                     return self.svm_->score(std::get<plssvm::classification_model<label_type>>(*self.model_), data_to_score);
