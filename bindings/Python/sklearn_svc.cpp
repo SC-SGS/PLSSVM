@@ -84,7 +84,7 @@ struct svc {
     std::optional<unsigned long long> max_iter{};
     plssvm::classification_type classification{ plssvm::classification_type::oaa };
 
-    std::unique_ptr<plssvm::csvc> svm_{ plssvm::make_csvc() };
+    std::unique_ptr<plssvm::csvc> svm_{ plssvm::make_csvc(plssvm::gamma = plssvm::gamma_coefficient_type::scale) };
     std::unique_ptr<possible_data_set_types> data_{};
     std::unique_ptr<possible_model_types> model_{};
 
@@ -121,9 +121,6 @@ void parse_provided_kwargs(svc &self, const py::kwargs &args) {
             throw py::value_error{ fmt::format("'{}' is not in list", kernel_str) };
         }
         self.svm_->set_params(plssvm::kernel_type = kernel);
-    } else {
-        // sklearn default kernel is the rbf kernel
-        self.svm_->set_params(plssvm::kernel_type = plssvm::kernel_function_type::rbf);
     }
     if (args.contains("degree")) {
         self.svm_->set_params(plssvm::degree = args["degree"].cast<int>());
@@ -164,9 +161,6 @@ void parse_provided_kwargs(svc &self, const py::kwargs &args) {
         } else {
             plssvm::verbosity = plssvm::verbosity_level::quiet;
         }
-    } else {
-        // sklearn default is quiet
-        plssvm::verbosity = plssvm::verbosity_level::quiet;
     }
     if (args.contains("max_iter")) {
         const auto max_iter = args["max_iter"].cast<long long>();
