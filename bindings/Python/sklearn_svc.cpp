@@ -73,10 +73,31 @@ struct svc {
                                               plssvm::classification_model<double>,         // np.float64
                                               plssvm::classification_model<std::string>>;   // np.str
 
-    // wrapper class to make friendship work
+    /**
+     * @brief Wrapper function to call the private (friendship) predict_values function.
+     * @tparam Args the types of the parameter used for calling the predict_values function
+     * @param[in] args the predict_values function parameter
+     * @return the predicted values (`[[nodiscard]]`)
+     */
     template <typename... Args>
     auto call_predict_values(Args &&...args) const {
         return svm_->predict_values(std::forward<Args>(args)...);
+    }
+
+    /**
+     * @brief Get the index sets used for the decision_function attribute in the one-vs-one classification case from the currently learned model.
+     * @return the index sets (`[[nodiscard]]`)
+     */
+    [[nodiscard]] const auto &get_index_sets_ptr() const {
+        if (model_ == nullptr) {
+            throw py::attribute_error{ "This SVC instance is not fitted yet. Call 'fit' with appropriate arguments before using this estimator." };
+        }
+
+        // clang-format off
+        return std::visit([&](auto &&model) -> const auto & {
+            return *model.index_sets_ptr_;
+        }, *model_);
+        // clang-format on
     }
 
     py::dtype py_dtype{};
@@ -400,27 +421,113 @@ void init_sklearn_svc(py::module_ &m) {
     //                                                               METHODS                                                               //
     //*************************************************************************************************************************************//
     py_svc
-        .def("decision_function", [](const svc &self, py::array_t<plssvm::real_type, py::array::c_style | py::array::forcecast> predict_points) {
+        .def("decision_function", [](const svc &self, py::object predict_points) -> py::array {
             if (self.model_ == nullptr) {
                 throw py::attribute_error{ "This SVC instance is not fitted yet. Call 'fit' with appropriate arguments before using this estimator." };
             }
-            if (self.classification != plssvm::classification_type::oaa) {
-                throw py::attribute_error{ "The \"decision_function\" is currently only supported for ovr!" };
-            }
+
+            // convert the data py::object to a plssvm::soa_matrix
+            const auto &[predict_points_aos_matrix, opt_feature_names] = plssvm::bindings::python::util::pyobject_to_matrix(predict_points);
+            plssvm::soa_matrix<plssvm::real_type> predict_points_matrix{ predict_points_aos_matrix };  // TODO: more performant
 
             return std::visit([&](auto &&model) -> py::array {
-                const plssvm::parameter &params = model.get_params();
-                const plssvm::soa_matrix<plssvm::real_type> &sv = model.support_vectors();
-                const plssvm::aos_matrix<plssvm::real_type> &alpha = model.weights().front();  // num_classes x num_data_points
-                const std::vector<plssvm::real_type> &rho = model.rho();
-                plssvm::soa_matrix<plssvm::real_type> w{};  // empty -> no need to befriend the model class!
+                switch (self.classification) {
+                    case plssvm::classification_type::oaa:
+                        {
+                            const plssvm::parameter &params = model.get_params();
+                            const plssvm::soa_matrix<plssvm::real_type> &sv = model.support_vectors();
+                            const plssvm::aos_matrix<plssvm::real_type> &alpha = model.weights().front();  // num_classes x num_data_points
+                            const std::vector<plssvm::real_type> &rho = model.rho();
+                            plssvm::soa_matrix<plssvm::real_type> w{};  // empty -> no need to befriend the model class!
 
-                // TODO: OAA vs OAO
-                // predict values using OAA -> num_data_points x num_classes
-                plssvm::aos_matrix<plssvm::real_type> votes = self.call_predict_values(params, sv, alpha, rho, w, plssvm::bindings::python::util::pyarray_to_soa_matrix(predict_points));
-                // votes *= plssvm::real_type{ -1.0 };  // TODO: sometimes necessary?
-                return plssvm::bindings::python::util::matrix_to_pyarray(votes);
-                // votes *= plssvm::real_type{ -1.0 };  // TODO: sometimes necessary? -> change label mapping in classification data set?!
+                            // predict values using OAA -> num_data_points x num_classes
+                            const plssvm::aos_matrix<plssvm::real_type> votes = self.call_predict_values(params, sv, alpha, rho, w, predict_points_matrix);
+
+                            // special case for binary classification
+                            if (model.num_classes() == 2) {
+                                std::vector<plssvm::real_type> reduced_votes(votes.num_rows());
+                                for (std::size_t i = 0; i < votes.num_rows(); ++i) {
+                                    reduced_votes[i] = -votes(i, 0);
+                                }
+                                return plssvm::bindings::python::util::vector_to_pyarray(reduced_votes);
+                            } else {
+                                return plssvm::bindings::python::util::matrix_to_pyarray(votes);
+                            }
+                        }
+                    case plssvm::classification_type::oao:
+                        {
+                            const std::size_t num_features = model.num_features();
+                            const std::size_t num_classes = model.num_classes();
+                            const std::vector<std::vector<std::size_t>> &index_sets = self.get_index_sets_ptr();
+
+                            const plssvm::parameter &params = model.get_params();
+                            const std::vector<plssvm::aos_matrix<plssvm::real_type>> &alpha = model.weights();
+                            const std::vector<plssvm::real_type> &rho = model.rho();
+
+                            // create the numpy array
+                            py::array_t<plssvm::real_type, py::array::c_style> votes{ { predict_points_matrix.num_rows(), plssvm::calculate_number_of_classifiers(plssvm::classification_type::oao, num_classes) } };
+                            auto votes_access = votes.mutable_unchecked<2>();
+
+                            // perform one vs. one prediction
+                            std::size_t pos = 0;
+                            for (std::size_t i = 0; i < num_classes; ++i) {
+                                for (std::size_t j = i + 1; j < num_classes; ++j) {
+                                    // assemble one vs. one classification matrix and rhs
+                                    const std::size_t num_data_points_in_sub_matrix{ index_sets[i].size() + index_sets[j].size() };
+                                    const plssvm::aos_matrix<plssvm::real_type> &binary_alpha = alpha[pos];
+                                    const std::vector<plssvm::real_type> binary_rho{ rho[pos] };
+
+                                    // create binary support vector matrix, based on the number of classes
+                                    const plssvm::soa_matrix<plssvm::real_type> &binary_sv = [&]() {
+                                        if (num_classes == 2) {
+                                            // no special assembly needed in binary case
+                                            return model.support_vectors();
+                                        } else {
+                                            // note: if this is changed, it must also be changed in the libsvm_model_parsing.hpp in the calculate_alpha_idx function!!!
+                                            // order the indices in increasing order
+                                            plssvm::soa_matrix<plssvm::real_type> temp{ plssvm::shape{ num_data_points_in_sub_matrix, num_features }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE } };
+                                            std::vector<std::size_t> sorted_indices(num_data_points_in_sub_matrix);
+                                            std::merge(index_sets[i].cbegin(), index_sets[i].cend(), index_sets[j].cbegin(), index_sets[j].cend(), sorted_indices.begin());
+// copy the support vectors to the binary support vectors
+#pragma omp parallel for collapse(2)
+                                            for (std::size_t si = 0; si < num_data_points_in_sub_matrix; ++si) {
+                                                for (std::size_t dim = 0; dim < num_features; ++dim) {
+                                                    temp(si, dim) = model.support_vectors()(sorted_indices[si], dim);
+                                                }
+                                            }
+                                            return temp;
+                                        }
+                                    }();
+
+                                    // we don't use the w optimization for the linear kernel here due to code simplicity
+                                    plssvm::soa_matrix<plssvm::real_type> w{};
+                                    // predict the values
+                                    const plssvm::aos_matrix<plssvm::real_type> binary_votes = self.call_predict_values(params, binary_sv, binary_alpha, binary_rho, w, predict_points_matrix);
+
+                                    // update final votes
+                                    for (std::size_t pp = 0; pp < predict_points_matrix.num_rows(); ++pp) {
+                                        votes_access(pp, pos) = binary_votes(pp, 0);
+                                    }
+
+                                    // go to next one vs. one classification
+                                    ++pos;
+                                    // order of the alpha value: 0 vs 1, 0 vs 2, 0 vs 3, 1 vs 2, 1 vs 3, 2 vs 3
+                                }
+                            }
+
+                            // special case binary classification
+                            if (num_classes == 2) {
+                                for (std::size_t pp = 0; pp < predict_points_matrix.num_rows(); ++pp) {
+                                    votes_access(pp, pos) *= plssvm::real_type{ -1.0 };
+                                }
+                                return votes.reshape(py::array::ShapeContainer{ votes.size() });
+                            } else {
+                                return votes;
+                            }
+                        }
+                }
+                // unreachable
+                return py::array{};
             }, *self.model_); }, "Evaluate the decision function for the samples in X.")
         .def("fit", [](svc &self, py::object data, py::object labels, std::optional<std::vector<plssvm::real_type>> sample_weight) -> svc & {
             // sanity check parameter
