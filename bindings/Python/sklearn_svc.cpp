@@ -22,6 +22,7 @@
 #include "bindings/Python/utility.hpp"  // plssvm::bindings::python::util::{check_kwargs_for_correctness, pyarray_t_to_vector, pyarray_to_matrix}
 
 #include "fmt/format.h"          // fmt::format
+#include "fmt/ranges.h"          // fmt::join
 #include "pybind11/numpy.h"      // support for STL types
 #include "pybind11/operators.h"  // support for operators
 #include "pybind11/pybind11.h"   // py::module_, py::class_, py::init, py::arg, py::return_value_policy, py::self, py::dynamic_attr
@@ -98,6 +99,46 @@ struct svc {
             return *model.index_sets_ptr_;
         }, *model_);
         // clang-format on
+    }
+
+    /**
+     * @brief Return the currently used params.
+     * @details Necessary for the same Python function and also the string representation.
+     * @return a Python dictionary containing the used parameter (`[[nodiscard]]`)
+     */
+    [[nodiscard]] py::dict get_params(const bool) const {
+        const plssvm::parameter params = svm_->get_params();
+
+        // fill a Python dictionary with the supported keys and values
+        py::dict py_params;
+        py_params["C"] = params.cost;
+        py_params["break_ties"] = false;
+        py_params["cache_size"] = 0;
+        py_params["class_weight"] = py::none();
+        py_params["coef0"] = params.coef0;
+        py_params["decision_function_shape"] = classification == plssvm::classification_type::oaa ? "ovr" : "ovo";
+        py_params["degree"] = params.degree;
+        if (std::holds_alternative<plssvm::real_type>(params.gamma)) {
+            py_params["gamma"] = std::get<plssvm::real_type>(params.gamma);
+        } else {
+            switch (std::get<plssvm::gamma_coefficient_type>(params.gamma)) {
+                case plssvm::gamma_coefficient_type::automatic:
+                    py_params["gamma"] = "auto";
+                    break;
+                case plssvm::gamma_coefficient_type::scale:
+                    py_params["gamma"] = "scale";
+                    break;
+            }
+        }
+        py_params["kernel"] = fmt::format("{}", params.kernel_type);
+        py_params["max_iter"] = max_iter.has_value() ? static_cast<long long>(max_iter.value()) : -1;
+        py_params["probability"] = false;
+        py_params["random_state"] = py::none();
+        py_params["shrinking"] = false;
+        py_params["tol"] = epsilon.value_or(plssvm::real_type{ 1e-10 });
+        py_params["verbose"] = plssvm::verbosity != plssvm::verbosity_level::quiet;
+
+        return py_params;
     }
 
     py::dtype py_dtype{};
@@ -555,39 +596,7 @@ void init_sklearn_svc(py::module_ &m) {
             // fit the model
             fit(self);
             return self; }, "Fit the SVM model according to the given training data.", py::arg("X"), py::arg("y"), py::pos_only(), py::arg("sample_weight") = std::nullopt, py::return_value_policy::reference)
-        .def("get_params", [](const svc &self, const bool) -> py::dict {
-            const plssvm::parameter params = self.svm_->get_params();
-
-            // fill a Python dictionary with the supported keys and values
-            py::dict py_params;
-            py_params["C"] = params.cost;
-            py_params["break_ties"] = false;
-            py_params["cache_size"] = 0;
-            py_params["class_weight"] = py::none();
-            py_params["coef0"] = params.coef0;
-            py_params["decision_function_shape"] = self.classification == plssvm::classification_type::oaa ? "ovr" : "ovo";
-            py_params["degree"] = params.degree;
-            if (std::holds_alternative<plssvm::real_type>(params.gamma)) {
-                py_params["gamma"] = std::get<plssvm::real_type>(params.gamma);
-            } else {
-                switch (std::get<plssvm::gamma_coefficient_type>(params.gamma)) {
-                    case plssvm::gamma_coefficient_type::automatic:
-                        py_params["gamma"] = "auto";
-                        break;
-                    case plssvm::gamma_coefficient_type::scale:
-                        py_params["gamma"] = "scale";
-                        break;
-                }
-            }
-            py_params["kernel"] = fmt::format("{}", params.kernel_type);
-            py_params["max_iter"] = self.max_iter.has_value() ? static_cast<long long>(self.max_iter.value()) : -1;
-            py_params["probability"] = false;
-            py_params["random_state"] = py::none();
-            py_params["shrinking"] = false;
-            py_params["tol"] = self.epsilon.value_or(plssvm::real_type{ 1e-10 });
-            py_params["verbose"] = plssvm::verbosity != plssvm::verbosity_level::quiet;
-
-            return py_params; }, "Get parameters for this estimator.", py::arg("deep") = true)
+        .def("get_params", &svc::get_params, "Get parameters for this estimator.", py::arg("deep") = true)
         .def("predict", [](svc &self, py::object data) -> py::array {
             if (self.model_ == nullptr) {
                 throw py::attribute_error{ "This SVC instance is not fitted yet. Call 'fit' with appropriate arguments before using this estimator." };
@@ -646,5 +655,27 @@ void init_sklearn_svc(py::module_ &m) {
             new_svc.epsilon = self.epsilon;
             new_svc.max_iter = self.max_iter;
             new_svc.classification = self.classification;
-            return new_svc; }, "Clone the estimator.");
+            return new_svc; }, "Clone the estimator.")
+        .def("__repr__", [](const svc &self) {
+            // get the currently used parameters
+            py::dict used_params = self.get_params(true);
+            py::dict default_params = svc{}.get_params(true);
+
+            std::vector<std::string> non_default_values{};
+
+            // iterate over all available keys and check if the currently used one differs from the default one
+            for (auto item : used_params) {
+                const auto key = item.first.cast<std::string>();
+
+                // get the values as string
+                const std::string used_param_str = py::str(used_params[key.c_str()]);
+                const std::string default_param_str = py::str(default_params[key.c_str()]);
+
+                // check if the parameter values are identical, if not, add them to the vector
+                if (used_param_str != default_param_str) {
+                    non_default_values.push_back(fmt::format("{}={}", key, used_param_str));
+                }
+            }
+
+            return fmt::format("plssvm.SVC({})", fmt::join(non_default_values, ", ")); });
 }
