@@ -643,6 +643,7 @@ void init_sklearn_svc(py::module_ &m) {
             // fit the model
             fit(self);
             return self; }, "Fit the SVM model according to the given training data.", py::arg("X"), py::arg("y"), py::pos_only(), py::arg("sample_weight") = std::nullopt, py::return_value_policy::reference)
+        .def("get_metadata_routing", [](const svc &) { throw py::attribute_error{ "'SVC' object has no function 'get_metadata_routing' (not implemented)" }; }, "Get metadata routing of this object.")
         .def("get_params", &svc::get_params, "Get parameters for this estimator.", py::arg("deep") = true)
         .def("predict", [](svc &self, py::object data) -> py::array {
             if (self.model_ == nullptr) {
@@ -690,9 +691,11 @@ void init_sklearn_svc(py::module_ &m) {
                     throw py::attribute_error{ fmt::format(R"(The dtype of the labels to score is "{}", but the model was fitted with "{}". Please use the same types for fit and score!)", dtype.attr("name").cast<std::string>(), self.py_dtype.attr("name").cast<std::string>()) };
                 }
             }, labels_vector_variant); }, "Return the mean accuracy on the given test data and labels.", py::arg("X"), py::arg("y"), py::pos_only(), py::arg("sample_weight") = std::nullopt)
+        .def("set_fit_request", [](const svc &) { throw py::attribute_error{ "'SVC' object has no function 'set_fit_request' (not implemented)" }; }, "Request metadata passed to the fit method.")
         .def("set_params", [](svc &self, const py::kwargs &args) -> svc & {
             parse_provided_kwargs(self, args);
             return self; }, "Set the parameters of this estimator.", py::return_value_policy::reference)
+        .def("set_score_request", [](const svc &) { throw py::attribute_error{ "'SVC' object has no function 'set_score_request' (not implemented)" }; }, "Request metadata passed to the score method.")
         .def("__sklearn_is_fitted__", [](const svc &self) -> bool { return self.model_ != nullptr; }, "Return True if the estimator is fitted, False otherwise.")
         .def("__sklearn_clone__", [](const svc &self) -> svc {
             // create a new SVC instance
