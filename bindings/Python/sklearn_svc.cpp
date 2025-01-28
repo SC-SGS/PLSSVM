@@ -37,7 +37,7 @@
 #include <memory>     // std::unique_ptr, std::make_unique
 #include <optional>   // std::optional, std::nullopt
 #include <string>     // std::string
-#include <tuple>      // std::make_tuple
+#include <tuple>      // std::make_tuple, std::ignore
 #include <utility>    // std::move
 #include <variant>    // std::holds_alternative, std::variant, std::visit
 #include <vector>     // std::vector
@@ -86,7 +86,7 @@ struct svc {
     }
 
     /**
-     * @brief Get the index sets used for the decision_function attribute in the one-vs-one classification case from the currently learned model.
+     * @brief Get the index sets used for the decision_function function in the one-vs-one classification case from the currently learned model.
      * @return the index sets (`[[nodiscard]]`)
      */
     [[nodiscard]] const auto &get_index_sets_ptr() const {
@@ -97,6 +97,22 @@ struct svc {
         // clang-format off
         return std::visit([&](auto &&model) -> const auto & {
             return *model.index_sets_ptr_;
+        }, *model_);
+        // clang-format on
+    }
+
+    /**
+     * @brief Get the w values used for the coef_ attribute from the currently learned linear model.
+     * @return the w values (`[[nodiscard]]`)
+     */
+    [[nodiscard]] const auto &get_w_ptr() const {
+        if (model_ == nullptr) {
+            throw py::attribute_error{ "This SVC instance is not fitted yet. Call 'fit' with appropriate arguments before using this estimator." };
+        }
+
+        // clang-format off
+        return std::visit([&](auto &&model) -> const auto & {
+            return *model.w_ptr_;
         }, *model_);
         // clang-format on
     }
@@ -370,7 +386,24 @@ void init_sklearn_svc(py::module_ &m) {
                 using label_type = typename plssvm::detail::remove_cvref_t<decltype(data)>::label_type;
                 return plssvm::bindings::python::util::vector_to_pyarray<label_type>(data.classes().value());
             }, *self.data_); }, "The classes labels. ndarray of shape (n_classes,)")
-        .def_property_readonly("coef_", [](const svc &) { throw py::attribute_error{ "'SVC' object has no attribute 'coef_' (not implemented)" }; }, "Weights assigned to the features when kernel=\"linear\". ndarray of shape (n_classes * (n_classes - 1) / 2, n_features)")
+        .def_property_readonly("coef_", [](const svc &self) -> py::array {
+            if (self.model_ == nullptr) {
+                throw py::attribute_error{ "'SVC' object has no attribute 'coef_'" };
+            }
+            if (self.svm_->get_params().kernel_type != plssvm::kernel_function_type::linear) {
+                throw py::attribute_error{ "coef_ is only available when using a linear kernel" };
+            }
+
+            return std::visit([&](auto &&model) {
+                // check if the w ptr has already been set
+                if (self.get_w_ptr().empty()) {
+                    // score
+                    std::ignore = self.svm_->score(model);
+                }
+
+                // now, the w ptr is set and can be used
+                return plssvm::bindings::python::util::matrix_to_pyarray(self.get_w_ptr());
+            }, *self.model_); }, "Weights assigned to the features when kernel=\"linear\". ovo: ndarray of shape (n_classes * (n_classes - 1) / 2, n_features). ovr: (n_classes, n_features)")
         .def_property_readonly("dual_coef_", [](const svc &) { throw py::attribute_error{ "'SVC' object has no attribute 'dual_coef_' (not implemented)" }; }, "Dual coefficients of the support vector in the decision function, multiplied by their targets. ndarray of shape (n_classes - 1, n_SV)")
         .def_property_readonly("fit_status_", [](const svc &self) -> int {
             if (self.model_ == nullptr) {
@@ -378,7 +411,21 @@ void init_sklearn_svc(py::module_ &m) {
             }
 
             return 0; }, "0 if correctly fitted, 1 otherwise (will raise exception). int")
-        .def_property_readonly("intercept_", [](const svc &) { throw py::attribute_error{ "'SVC' object has no attribute 'intercept_' (not implemented)" }; }, "Constants in decision function. ndarray of shape (n_classes * (n_classes - 1) / 2,)")
+        .def_property_readonly("intercept_", [](const svc &self) -> py::array {
+            if (self.model_ == nullptr) {
+                throw py::attribute_error{ "'SVC' object has no attribute 'intercept_'" };
+            }
+
+            return std::visit([&](auto &&model) {
+                std::vector<plssvm::real_type> rho = model.rho();
+
+                // ovr binary special case
+                if (self.classification == plssvm::classification_type::oaa && model.num_classes() == 2) {
+                    rho.pop_back();
+                }
+
+                return plssvm::bindings::python::util::vector_to_pyarray(rho);
+            }, *self.model_); }, "Constants in decision function. ovo: ndarray of shape (n_classes * (n_classes - 1) / 2,). ovr: ndarray of shape (n_classes,)")
         .def_property_readonly("n_features_in_", [](const svc &self) -> int {
             if (self.model_ == nullptr) {
                 throw py::attribute_error{ "'SVC' object has no attribute 'n_features_in_'" };

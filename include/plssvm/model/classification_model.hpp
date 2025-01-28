@@ -73,6 +73,7 @@ class classification_model : public model<U> {
     using base_model::num_support_vectors_;
     using base_model::params_;
     using base_model::rho_ptr_;
+    using base_model::w_ptr_;
 
   public:
     /// The type of the labels: any arithmetic type or `std::string`.
