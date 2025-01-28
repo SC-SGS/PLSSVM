@@ -37,6 +37,9 @@
 #include <utility>  // std::move
 #include <vector>   // std::vector
 
+// forward declare svc dummy struct used in the plssvm.SVC Python bindings
+struct svc;
+
 namespace plssvm {
 
 /**
@@ -56,6 +59,9 @@ class classification_model : public model<U> {
 
     // befriend C-SVC class used with the classification data set: necessary to access the private constructor and multiple member variables
     friend class csvc;
+
+    // befriend svc dummy struct used in the plssvm.SVC Python bindings
+    friend struct ::svc;
 
     /// The base model class.
     using base_model = model<U>;
