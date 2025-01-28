@@ -199,7 +199,7 @@ void parse_provided_kwargs(svc &self, const py::kwargs &args) {
         self.svm_->set_params(plssvm::coef0 = args["coef0"].cast<plssvm::real_type>());
     }
     if (args.contains("shrinking")) {
-        throw py::attribute_error{ "The 'shrinking' parameter for the 'SVC' is not implemented yet!" };
+        throw py::attribute_error{ "The 'shrinking' parameter for the 'SVC' is not implemented and makes no sense for a LS-SVM!" };
     }
     if (args.contains("probability")) {
         throw py::attribute_error{ "The 'probability' parameter for the 'SVC' is not implemented yet!" };
@@ -208,7 +208,7 @@ void parse_provided_kwargs(svc &self, const py::kwargs &args) {
         self.epsilon = args["tol"].cast<plssvm::real_type>();
     }
     if (args.contains("cache_size")) {
-        throw py::attribute_error{ "The 'cache_size' parameter for the 'SVC' is not implemented yet!" };
+        throw py::attribute_error{ "The 'cache_size' parameter for the 'SVC' is not implemented and makes no sense for our PLSSVM implementation!" };
     }
     if (args.contains("class_weight")) {
         throw py::attribute_error{ "The 'class_weight' parameter for the 'SVC' is not implemented yet!" };
