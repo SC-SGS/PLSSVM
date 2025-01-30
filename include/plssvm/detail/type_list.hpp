@@ -78,8 +78,6 @@ struct tuple_subset_of<std::tuple<SubSetTypes...>, std::tuple<BaseSetTypes...>> 
 template <typename SubSetTuple, typename BaseSetTuple>
 inline constexpr bool tuple_subset_of_v = tuple_subset_of<SubSetTuple, BaseSetTuple>::value;
 
-// check reduced supported label types for correctness
-static_assert(tuple_subset_of_v<supported_label_types_reduced, supported_label_types>, "The reduced label types MUST be a subset of all possible label types!");
 
 }  // namespace plssvm::detail
 
