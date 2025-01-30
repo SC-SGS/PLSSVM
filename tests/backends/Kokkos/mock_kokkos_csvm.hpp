@@ -37,7 +37,7 @@ class mock_kokkos_csvm final : public plssvm::kokkos::csvm {
     template <typename... Args>
     explicit mock_kokkos_csvm(Args &&...args) :
         plssvm::csvm{ args... },
-        base_type{ plssvm::target_platform::automatic, std::forward<Args>(args)... } {
+        base_type(plssvm::target_platform::automatic, std::forward<Args>(args)...) {
         this->fake_functions();
     }
 

@@ -36,7 +36,7 @@ class mock_dpcpp_csvm final : public plssvm::dpcpp::csvm {
     template <typename... Args>
     explicit mock_dpcpp_csvm(Args &&...args) :
         plssvm::csvm{ args... },
-        base_type{ plssvm::target_platform::automatic, std::forward<Args>(args)... } {
+        base_type(plssvm::target_platform::automatic, std::forward<Args>(args)...) {
         this->fake_functions();
     }
 
