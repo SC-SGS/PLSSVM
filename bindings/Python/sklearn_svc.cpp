@@ -613,7 +613,7 @@ void init_sklearn_svc(py::module_ &m) {
             self.feature_names_ = opt_feature_names;
 
             // create the data set to fit
-            std::visit([&self, &data_matrix](auto &&labels_vector) {
+            std::visit([&self, &data_matrix = data_matrix](auto &&labels_vector) {
                 // get the label type and possible data set types
                 using label_type = typename plssvm::detail::remove_cvref_t<decltype(labels_vector)>::value_type;
                 using possible_data_set_types = typename svc::possible_data_set_types;
@@ -635,7 +635,7 @@ void init_sklearn_svc(py::module_ &m) {
             // convert the data py::object to a plssvm::aos_matrix
             const auto &[data_matrix, opt_feature_names] = plssvm::bindings::python::util::pyobject_to_matrix(data);
 
-            return std::visit([&self, &data_matrix](auto &&model) {
+            return std::visit([&self, &data_matrix = data_matrix](auto &&model) {
                 // get the label type
                 using label_type = typename plssvm::detail::remove_cvref_t<decltype(model)>::label_type;
                 // create the data set to predict
@@ -661,7 +661,7 @@ void init_sklearn_svc(py::module_ &m) {
             const auto &[data_matrix, opt_feature_names] = plssvm::bindings::python::util::pyobject_to_matrix(data);
 
             // score the data
-            return std::visit([&self, &data_matrix, &dtype](auto &&labels_vector) {
+            return std::visit([&self, &data_matrix = data_matrix, &dtype = dtype](auto &&labels_vector) {
                 // get the label types
                 using label_type = typename plssvm::detail::remove_cvref_t<decltype(labels_vector)>::value_type;
                 // create the data set to score
