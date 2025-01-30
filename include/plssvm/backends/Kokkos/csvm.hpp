@@ -262,7 +262,7 @@ class csvr : public ::plssvm::csvr,
     template <typename... Args, PLSSVM_REQUIRES(::plssvm::detail::has_only_kokkos_parameter_named_args_v<Args...>)>
     explicit csvr(Args &&...named_args) :
         ::plssvm::csvm{ named_args... },
-        ::plssvm::kokkos::csvm{ target_platform::automatic, std::forward<Args>(named_args)... } { }
+        ::plssvm::kokkos::csvm(target_platform::automatic, std::forward<Args>(named_args)...) { }
 
     /**
      * @brief Construct a new C-SVR using the Kokkos backend on the @p target platform and the optionally provided @p named_args.
@@ -273,7 +273,7 @@ class csvr : public ::plssvm::csvr,
     template <typename... Args, PLSSVM_REQUIRES(::plssvm::detail::has_only_kokkos_parameter_named_args_v<Args...>)>
     explicit csvr(const target_platform target, Args &&...named_args) :
         ::plssvm::csvm{ named_args... },
-        ::plssvm::kokkos::csvm{ target, std::forward<Args>(named_args)... } { }
+        ::plssvm::kokkos::csvm(target, std::forward<Args>(named_args)...) { }
 };
 
 }  // namespace kokkos
