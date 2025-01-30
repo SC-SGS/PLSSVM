@@ -88,20 +88,22 @@ set(PLSSVM_BASE_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/string_utility.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/utility.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/exceptions/exceptions.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/svm/csvm.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/version/version.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/version/git_metadata/git_metadata.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/backend_types.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/classification_report.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/classification_types.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/csvm.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/file_format_types.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/gamma.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/kernel_function_types.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/matrix.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/parameter.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/regression_report.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/shape.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/solver_types.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/target_platforms.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/svm_types.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/verbosity_levels.cpp
 )
 

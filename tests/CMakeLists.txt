@@ -33,31 +33,27 @@ else ()
 endif ()
 
 # create larger test files if desired
-option(PLSSVM_GENERATE_TEST_FILE "Generate test file with user defined sizes." ON)
-if (PLSSVM_GENERATE_TEST_FILE)
+option(PLSSVM_GENERATE_TEST_FILES "Generate test files with user defined sizes." ON)
+if (PLSSVM_GENERATE_TEST_FILES)
     include(${PROJECT_SOURCE_DIR}/cmake/utility_macros.cmake)
     # set default sizes
     set(PLSSVM_TEST_FILE_NUM_DATA_POINTS "5000" CACHE STRING "Number of data points for the test file generator")
     check_integer(PLSSVM_TEST_FILE_NUM_DATA_POINTS)
     set(PLSSVM_TEST_FILE_NUM_FEATURES "2000" CACHE STRING "Number of features for each data point for the test file generator")
     check_integer(PLSSVM_TEST_FILE_NUM_FEATURES)
-    set(PLSSVM_TEST_FILE_NUM_CLASSES "4" CACHE STRING "number of classes for the test file generator")
+    set(PLSSVM_TEST_FILE_NUM_CLASSES "4" CACHE STRING "Number of classes (classification task only) for the test file generator")
     check_integer(PLSSVM_TEST_FILE_NUM_CLASSES)
     
     # set test file name based on requested sizes
-    set(PLSSVM_TEST_FILE "${PROJECT_SOURCE_DIR}/tests/data/${PLSSVM_TEST_FILE_NUM_DATA_POINTS}x${PLSSVM_TEST_FILE_NUM_FEATURES}_${PLSSVM_TEST_FILE_NUM_CLASSES}.libsvm" CACHE STRING "Path including name of the test file" FORCE)
+    set(PLSSVM_CLASSIFICATION_TEST_FILE "${PROJECT_SOURCE_DIR}/tests/data/${PLSSVM_TEST_FILE_NUM_DATA_POINTS}x${PLSSVM_TEST_FILE_NUM_FEATURES}_${PLSSVM_TEST_FILE_NUM_CLASSES}_classification.libsvm" CACHE STRING "Path including name of the classification test file" FORCE)
+    set(PLSSVM_REGRESSION_TEST_FILE "${PROJECT_SOURCE_DIR}/tests/data/${PLSSVM_TEST_FILE_NUM_DATA_POINTS}x${PLSSVM_TEST_FILE_NUM_FEATURES}_regression.libsvm" CACHE STRING "Path including name of the regression test file" FORCE)
     
     # check if the requested test file already exists and is not zero based indexed (otherwise create new test file)
-    if (EXISTS "${PLSSVM_TEST_FILE}")
-        file(READ "${PLSSVM_TEST_FILE}" PLSSVM_TEST_FILE_CONTENT)
-        if (PLSSVM_TEST_FILE_CONTENT MATCHES " 0:[0-9]")
-            message(STATUS "Test file already exists but is zero based indexed. Generating new test file.")
-            file(REMOVE "${PLSSVM_TEST_FILE}")
-        else ()
-            message(STATUS "Skipped test file generation since it already exists (${PLSSVM_TEST_FILE})!")
-        endif ()
-    endif ()
-    if (NOT EXISTS "${PLSSVM_TEST_FILE}")
+    check_test_file_validity(${PLSSVM_CLASSIFICATION_TEST_FILE})
+    check_test_file_validity(${PLSSVM_REGRESSION_TEST_FILE})
+    
+    # check for possible Python dependencies
+    if (NOT EXISTS "${PLSSVM_CLASSIFICATION_TEST_FILE}" OR NOT EXISTS "${PLSSVM_REGRESSION_TEST_FILE}")
         # find necessary Python3 packages to use the test file generator
         find_package(Python3 REQUIRED COMPONENTS Interpreter Development)
         
@@ -65,16 +61,26 @@ if (PLSSVM_GENERATE_TEST_FILE)
         set(PLSSVM_TEST_REQUIRED_LIBS argparse sklearn humanize numpy)
         message(STATUS "Checking required Python3 libraries (${PLSSVM_TEST_REQUIRED_LIBS}) to to generate the test file.")
         check_python_libs("${PLSSVM_TEST_REQUIRED_LIBS}" "or set PLSSVM_GENERATE_TEST_FILE to OFF.")
-        
-        # generate test file
-        message(STATUS "Generating test file: ${PLSSVM_TEST_FILE}.")
+    endif ()
+    
+    if (NOT EXISTS "${PLSSVM_CLASSIFICATION_TEST_FILE}")
+        # generate the classification test file if necessary
+        message(STATUS "Generating the classification test file: ${PLSSVM_CLASSIFICATION_TEST_FILE}.")
         execute_process(
-                COMMAND ${Python3_EXECUTABLE} "${PROJECT_SOURCE_DIR}/utility_scripts/generate_data.py" "--output" "${PLSSVM_TEST_FILE}" "--format" "libsvm" "--samples" "${PLSSVM_TEST_FILE_NUM_DATA_POINTS}" "--features" "${PLSSVM_TEST_FILE_NUM_FEATURES}" "--classes" "${PLSSVM_TEST_FILE_NUM_CLASSES}"
+                COMMAND ${Python3_EXECUTABLE} "${PROJECT_SOURCE_DIR}/utility_scripts/generate_data.py" "--output" "${PLSSVM_CLASSIFICATION_TEST_FILE}" "--format" "libsvm" "--samples" "${PLSSVM_TEST_FILE_NUM_DATA_POINTS}" "--features" "${PLSSVM_TEST_FILE_NUM_FEATURES}" "classification" "--classes" "${PLSSVM_TEST_FILE_NUM_CLASSES}"
+                OUTPUT_QUIET)
+    endif ()
+    if (NOT EXISTS "${PLSSVM_REGRESSION_TEST_FILE}")
+        # generate the regression test file if necessary
+        message(STATUS "Generating the regression test file: ${PLSSVM_REGRESSION_TEST_FILE}.")
+        execute_process(
+                COMMAND ${Python3_EXECUTABLE} "${PROJECT_SOURCE_DIR}/utility_scripts/generate_data.py" "--output" "${PLSSVM_REGRESSION_TEST_FILE}" "--format" "libsvm" "--samples" "${PLSSVM_TEST_FILE_NUM_DATA_POINTS}" "--features" "${PLSSVM_TEST_FILE_NUM_FEATURES}" "regression"
                 OUTPUT_QUIET)
     endif ()
 else ()
     # set test file to default test file
-    set(PLSSVM_TEST_FILE "${PROJECT_SOURCE_DIR}/tests/data/libsvm/500x200_4.libsvm" CACHE STRING "Path including name of the test file")
+    set(PLSSVM_CLASSIFICATION_TEST_FILE "${PROJECT_SOURCE_DIR}/tests/data/libsvm/500x200_4_classification.libsvm" CACHE STRING "Path including name of the classification test file")
+    set(PLSSVM_REGRESSION_TEST_FILE "${PROJECT_SOURCE_DIR}/tests/data/libsvm/500x200_regression.libsvm" CACHE STRING "Path including name of the regression test file")
 endif ()
 
 ## warn if PLSSVM_ENABLE_FAST_MATH is set and tests are enabled
@@ -105,7 +111,8 @@ target_include_directories(${PLSSVM_BASE_TEST_LIBRARY_NAME} PUBLIC "${CMAKE_CURR
 
 # add necessary compile definitions
 target_compile_definitions(${PLSSVM_BASE_TEST_LIBRARY_NAME} PUBLIC PLSSVM_TEST_PATH="${CMAKE_CURRENT_LIST_DIR}")
-target_compile_definitions(${PLSSVM_BASE_TEST_LIBRARY_NAME} PUBLIC PLSSVM_TEST_FILE="${PLSSVM_TEST_FILE}")
+target_compile_definitions(${PLSSVM_BASE_TEST_LIBRARY_NAME} PUBLIC PLSSVM_CLASSIFICATION_TEST_FILE="${PLSSVM_CLASSIFICATION_TEST_FILE}")
+target_compile_definitions(${PLSSVM_BASE_TEST_LIBRARY_NAME} PUBLIC PLSSVM_REGRESSION_TEST_FILE="${PLSSVM_REGRESSION_TEST_FILE}")
 
 # link against plssvm library
 target_link_libraries(${PLSSVM_BASE_TEST_LIBRARY_NAME} PUBLIC ${PLSSVM_ALL_LIBRARY_NAME})
@@ -129,18 +136,36 @@ set(PLSSVM_BASE_TEST_SOURCES
     ## is available this is also tested in the base library
     ${CMAKE_CURRENT_LIST_DIR}/backends/stdpar/implementation_types.cpp
     
+    ${CMAKE_CURRENT_LIST_DIR}/data_set/classification/constructors.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/data_set/classification/getter.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/data_set/classification/label_mapper.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/data_set/classification/save.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/data_set/classification/scaling.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/data_set/regression/constructors.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/data_set/regression/getter.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/data_set/regression/save.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/data_set/regression/scaling.cpp
+    
     ${CMAKE_CURRENT_LIST_DIR}/detail/cmd/data_set_variants.cpp
     ${CMAKE_CURRENT_LIST_DIR}/detail/cmd/parser_predict.cpp
     ${CMAKE_CURRENT_LIST_DIR}/detail/cmd/parser_scale.cpp
     ${CMAKE_CURRENT_LIST_DIR}/detail/cmd/parser_train.cpp
     
-    ${CMAKE_CURRENT_LIST_DIR}/detail/io/libsvm_model_parsing/data_parse_valid.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/detail/io/libsvm_model_parsing/data_parse_invalid.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/detail/io/libsvm_model_parsing/data_write.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/detail/io/libsvm_model_parsing/header_parse_valid.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/detail/io/libsvm_model_parsing/header_parse_invalid.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/detail/io/libsvm_model_parsing/header_write.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/detail/io/libsvm_model_parsing/utility_functions.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/detail/io/classification_libsvm_model_parsing/data_parse_invalid.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/detail/io/classification_libsvm_model_parsing/data_parse_valid.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/detail/io/classification_libsvm_model_parsing/data_write.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/detail/io/classification_libsvm_model_parsing/header_parse_invalid.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/detail/io/classification_libsvm_model_parsing/header_parse_valid.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/detail/io/classification_libsvm_model_parsing/header_write.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/detail/io/classification_libsvm_model_parsing/utility_functions.cpp
+    
+    ${CMAKE_CURRENT_LIST_DIR}/detail/io/regression_libsvm_model_parsing/data_parse_invalid.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/detail/io/regression_libsvm_model_parsing/data_parse_valid.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/detail/io/regression_libsvm_model_parsing/data_write.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/detail/io/regression_libsvm_model_parsing/header_parse_invalid.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/detail/io/regression_libsvm_model_parsing/header_parse_valid.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/detail/io/regression_libsvm_model_parsing/header_write.cpp
+    
     ${CMAKE_CURRENT_LIST_DIR}/detail/io/arff_parsing.cpp
     ${CMAKE_CURRENT_LIST_DIR}/detail/io/file_reader.cpp
     ${CMAKE_CURRENT_LIST_DIR}/detail/io/libsvm_parsing.cpp
@@ -164,28 +189,30 @@ set(PLSSVM_BASE_TEST_SOURCES
     ${CMAKE_CURRENT_LIST_DIR}/exceptions/exceptions.cpp
     ${CMAKE_CURRENT_LIST_DIR}/exceptions/source_location.cpp
     
+    ${CMAKE_CURRENT_LIST_DIR}/svm/csvm.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/svm/csvc.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/svm/csvr.cpp
+    
     ${CMAKE_CURRENT_LIST_DIR}/version/git_metadata/git_metadata.cpp
     ${CMAKE_CURRENT_LIST_DIR}/version/version.cpp
     
     ${CMAKE_CURRENT_LIST_DIR}/backend_types.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/classification_model.cpp
     ${CMAKE_CURRENT_LIST_DIR}/classification_report.cpp
     ${CMAKE_CURRENT_LIST_DIR}/classification_types.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/csvm.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/csvm_factory.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/data_set/constructors.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/data_set/getter.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/data_set/label_mapper.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/data_set/save.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/data_set/scaling.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/csvc_factory.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/csvr_factory.cpp
+    
     ${CMAKE_CURRENT_LIST_DIR}/file_format_types.cpp
     ${CMAKE_CURRENT_LIST_DIR}/gamma.cpp
     ${CMAKE_CURRENT_LIST_DIR}/kernel_function_types.cpp
     ${CMAKE_CURRENT_LIST_DIR}/kernel_functions.cpp
     ${CMAKE_CURRENT_LIST_DIR}/matrix.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/model.cpp
     ${CMAKE_CURRENT_LIST_DIR}/parameter.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/regression_model.cpp
     ${CMAKE_CURRENT_LIST_DIR}/shape.cpp
     ${CMAKE_CURRENT_LIST_DIR}/solver_types.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/svm_types.cpp
     ${CMAKE_CURRENT_LIST_DIR}/target_platforms.cpp
     ${CMAKE_CURRENT_LIST_DIR}/verbosity_levels.cpp
 )
@@ -224,18 +251,27 @@ add_test(NAME MainTrain/executable_version COMMAND ${PLSSVM_EXECUTABLE_TRAIN_NAM
 add_test(NAME MainPredict/executable_version COMMAND ${PLSSVM_EXECUTABLE_PREDICT_NAME} --version)
 add_test(NAME MainScale/executable_version COMMAND ${PLSSVM_EXECUTABLE_SCALE_NAME} --version)
 
-# add minimal run test
-add_test(NAME MainTrain/executable_minimal COMMAND ${PLSSVM_EXECUTABLE_TRAIN_NAME} "${PLSSVM_TEST_FILE}" "${CMAKE_CURRENT_BINARY_DIR}/test.libsvm.model")
-add_test(NAME MainPredict/executable_minimal COMMAND ${PLSSVM_EXECUTABLE_PREDICT_NAME}
-         "${CMAKE_CURRENT_LIST_DIR}/data/predict/50x20.libsvm"                          # test file
-         "${CMAKE_CURRENT_LIST_DIR}/data/predict/50x20_double_linear_oaa.libsvm.model"  # model file
-         "${CMAKE_CURRENT_BINARY_DIR}/test.libsvm.predict"                              # predict file (result)
-)
-add_test(NAME MainScale/executable_minimal COMMAND ${PLSSVM_EXECUTABLE_SCALE_NAME} "${PLSSVM_TEST_FILE}" "${CMAKE_CURRENT_BINARY_DIR}/scaled.libsvm.model")
+# add minimal run test for scaling
+add_test(NAME MainScale/executable_minimal COMMAND ${PLSSVM_EXECUTABLE_SCALE_NAME} "${PLSSVM_CLASSIFICATION_TEST_FILE}" "${CMAKE_CURRENT_BINARY_DIR}/scaled.libsvm.model")
 add_test(NAME MainScale/executable_save_scaling_factors COMMAND ${PLSSVM_EXECUTABLE_SCALE_NAME}
          -s "${CMAKE_CURRENT_BINARY_DIR}/scaling_parameter.txt"  # the file the scaling parameters are saved to
-         "${PLSSVM_TEST_FILE}"                                   # the file to scale
+         "${PLSSVM_CLASSIFICATION_TEST_FILE}"                    # the file to scale
          "${CMAKE_CURRENT_BINARY_DIR}/scaled.libsvm.model"       # the scaled file (result)
+)
+
+# add minimal run test for the classification task
+add_test(NAME MainTrainClassification/executable_minimal COMMAND ${PLSSVM_EXECUTABLE_TRAIN_NAME} "${PLSSVM_CLASSIFICATION_TEST_FILE}" "${CMAKE_CURRENT_BINARY_DIR}/test_classification.libsvm.model")
+add_test(NAME MainPredictClassification/executable_minimal COMMAND ${PLSSVM_EXECUTABLE_PREDICT_NAME}
+         "${CMAKE_CURRENT_LIST_DIR}/data/libsvm/classification/5x4.libsvm"       # test file
+         "${CMAKE_CURRENT_LIST_DIR}/data/model/classification/5x4.libsvm.model"  # model file
+         "${CMAKE_CURRENT_BINARY_DIR}/test_classification.libsvm.predict"        # predict file (result)
+)
+# add minimal run test for the regression task
+add_test(NAME MainTrainRegression/executable_minimal COMMAND ${PLSSVM_EXECUTABLE_TRAIN_NAME} "${PLSSVM_REGRESSION_TEST_FILE}" "${CMAKE_CURRENT_BINARY_DIR}/test_regression.libsvm.model")
+add_test(NAME MainPredictRegression/executable_minimal COMMAND ${PLSSVM_EXECUTABLE_PREDICT_NAME}
+         "${CMAKE_CURRENT_LIST_DIR}/data/libsvm/regression/5x4.libsvm"       # test file
+         "${CMAKE_CURRENT_LIST_DIR}/data/model/regression/5x4.libsvm.model"  # model file
+         "${CMAKE_CURRENT_BINARY_DIR}/test_regression.libsvm.predict"        # predict file (result)
 )
 
 # add failing test (must return with a non-zero exit code)

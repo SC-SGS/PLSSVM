@@ -11,7 +11,7 @@
 #include "plssvm/backends/SYCL/kernel_invocation_types.hpp"  // plssvm::sycl::kernel_invocation_type
 #include "plssvm/exceptions/exceptions.hpp"                  // plssvm::exception
 
-#include "bindings/Python/utility.hpp"  // register_py_exception
+#include "bindings/Python/utility.hpp"  // plssvm::bindings::python::util::register_py_exception
 
 #include "pybind11/pybind11.h"  // py::module_, py::enum_, py::exception
 #include "pybind11/stl.h"       // support for STL types: std:vector
@@ -31,7 +31,7 @@ void init_sycl(py::module_ &m, const py::exception<plssvm::exception> &base_exce
     py::module_ sycl_module = m.def_submodule("sycl", "a module containing all SYCL backend specific functionality");
 
     // register SYCL backend specific exceptions
-    register_py_exception<plssvm::sycl::backend_exception>(sycl_module, "BackendError", base_exception);
+    plssvm::bindings::python::util::register_py_exception<plssvm::sycl::backend_exception>(sycl_module, "BackendError", base_exception);
 
     // bind the two enum classes
     py::enum_<plssvm::sycl::implementation_type>(sycl_module, "ImplementationType")
@@ -53,6 +53,7 @@ void init_sycl(py::module_ &m, const py::exception<plssvm::exception> &base_exce
     const py::module_ dpcpp_module = init_dpcpp_csvm(m, base_exception);
 #endif
 
-    // "alias" one of the DPC++ or AdaptiveCpp CSVMs to be the default SYCL CSVM
-    sycl_module.attr("CSVM") = PLSSVM_CONCATENATE(PLSSVM_SYCL_BACKEND_PREFERRED_IMPLEMENTATION, _module).attr("CSVM");
+    // "alias" one of the DPC++ or AdaptiveCpp C-SVCs and C-SVRs to be the respective default SYCL C-SVC and C-SVR
+    sycl_module.attr("CSVC") = PLSSVM_CONCATENATE(PLSSVM_SYCL_BACKEND_PREFERRED_IMPLEMENTATION, _module).attr("CSVC");
+    sycl_module.attr("CSVR") = PLSSVM_CONCATENATE(PLSSVM_SYCL_BACKEND_PREFERRED_IMPLEMENTATION, _module).attr("CSVR");
 }

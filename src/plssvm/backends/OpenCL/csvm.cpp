@@ -53,27 +53,7 @@
 
 namespace plssvm::opencl {
 
-csvm::csvm(parameter params) :
-    csvm{ plssvm::target_platform::automatic, params } { }
-
-csvm::csvm(target_platform target, parameter params) :
-    base_type{ params } {
-    this->init(target);
-}
-
-csvm::~csvm() {
-    try {
-        // be sure that all operations on the OpenCL devices have finished before destruction
-        for (const queue_type &queue : devices_) {
-            detail::device_synchronize(queue);
-        }
-    } catch (const plssvm::exception &e) {
-        std::cout << e.what_with_loc() << std::endl;
-        std::terminate();
-    }
-}
-
-void csvm::init(const target_platform target) {
+csvm::csvm(const target_platform target) {
     // check whether the requested target platform has been enabled
     switch (target) {
         case target_platform::automatic:
@@ -202,6 +182,18 @@ void csvm::init(const target_platform target) {
                   "The predict_kernel_laplacian device kernel is missing!");
     PLSSVM_ASSERT(std::all_of(devices_.begin(), devices_.end(), [](const queue_type &queue) { return ::plssvm::detail::contains(queue.kernels, detail::compute_kernel_name::predict_kernel_chi_squared); }),
                   "The predict_kernel_chi_squared device kernel is missing!");
+}
+
+csvm::~csvm() {
+    try {
+        // be sure that all operations on the OpenCL devices have finished before destruction
+        for (const queue_type &queue : devices_) {
+            detail::device_synchronize(queue);
+        }
+    } catch (const plssvm::exception &e) {
+        std::cout << e.what_with_loc() << std::endl;
+        std::terminate();
+    }
 }
 
 std::vector<::plssvm::detail::memory_size> csvm::get_device_memory() const {

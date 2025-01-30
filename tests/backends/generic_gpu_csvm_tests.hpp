@@ -13,13 +13,13 @@
 #define PLSSVM_TESTS_BACKENDS_GENERIC_GPU_CSVM_TESTS_HPP_
 #pragma once
 
-#include "plssvm/constants.hpp"                 // plssvm::real_type, plssvm::PADDING_SIZE
-#include "plssvm/data_set.hpp"                  // plssvm::data_set
-#include "plssvm/detail/data_distribution.hpp"  // plssvm::detail::{triangular_data_distribution, rectangular_data_distribution}
-#include "plssvm/kernel_function_types.hpp"     // plssvm::kernel_function_type
-#include "plssvm/matrix.hpp"                    // plssvm::aos_matrix
-#include "plssvm/parameter.hpp"                 // plssvm::parameter
-#include "plssvm/shape.hpp"                     // plssvm::shape
+#include "plssvm/constants.hpp"                         // plssvm::real_type, plssvm::PADDING_SIZE
+#include "plssvm/data_set/classification_data_set.hpp"  // plssvm::classification_data_set
+#include "plssvm/detail/data_distribution.hpp"          // plssvm::detail::{triangular_data_distribution, rectangular_data_distribution}
+#include "plssvm/kernel_function_types.hpp"             // plssvm::kernel_function_type
+#include "plssvm/matrix.hpp"                            // plssvm::aos_matrix
+#include "plssvm/parameter.hpp"                         // plssvm::parameter
+#include "plssvm/shape.hpp"                             // plssvm::shape
 
 #include "tests/backends/ground_truth.hpp"  // ground_truth::{perform_dimensional_reduction, assemble_full_kernel_matrix, assemble_device_specific_kernel_matrix, device_specific_gemm,
                                             // calculate_device_specific_w, calculate_w, predict_values}
@@ -36,7 +36,7 @@
 #include <vector>   // std::vector
 
 //*************************************************************************************************************************************//
-//                                                 GPU CSVM tests depending on nothing                                                 //
+//                                                GPU C-SVM tests depending on nothing                                                 //
 //*************************************************************************************************************************************//
 
 template <typename T>
@@ -80,7 +80,7 @@ TYPED_TEST_P(GenericGPUCSVM, run_blas_level_3_kernel_explicit) {
     using device_ptr_type = typename csvm_test_type::device_ptr_type;
 
     const plssvm::parameter params{ plssvm::gamma = plssvm::real_type{ 1.0 } };
-    const plssvm::data_set data{ PLSSVM_TEST_FILE };
+    const plssvm::classification_data_set data{ PLSSVM_CLASSIFICATION_TEST_FILE };
 
     // create C-SVM: must be done using the mock class since the member function to test is private or protected
     const mock_csvm_type svm = util::construct_from_tuple<mock_csvm_type>(csvm_test_type::additional_arguments);
@@ -165,7 +165,7 @@ TYPED_TEST_P(GenericGPUCSVM, run_w_kernel) {
     using mock_csvm_type = typename csvm_test_type::mock_csvm_type;
     using device_ptr_type = typename csvm_test_type::device_ptr_type;
 
-    const plssvm::data_set data{ PLSSVM_TEST_FILE };
+    const plssvm::classification_data_set data{ PLSSVM_CLASSIFICATION_TEST_FILE };
     const std::size_t num_features = data.num_features();
     const std::size_t num_classes = data.num_classes();
 
@@ -233,7 +233,7 @@ TYPED_TEST_P(GenericGPUCSVM, run_inplace_matrix_addition) {
     using mock_csvm_type = typename csvm_test_type::mock_csvm_type;
     using device_ptr_type = typename csvm_test_type::device_ptr_type;
 
-    const plssvm::data_set data{ PLSSVM_TEST_FILE };
+    const plssvm::classification_data_set data{ PLSSVM_CLASSIFICATION_TEST_FILE };
     const plssvm::soa_matrix<plssvm::real_type> &matr = data.data();
 
     // create C-SVM: must be done using the mock class since the member function to test is private or protected
@@ -286,7 +286,7 @@ TYPED_TEST_P(GenericGPUCSVM, run_inplace_matrix_scale) {
     using mock_csvm_type = typename csvm_test_type::mock_csvm_type;
     using device_ptr_type = typename csvm_test_type::device_ptr_type;
 
-    const plssvm::data_set data{ PLSSVM_TEST_FILE };
+    const plssvm::classification_data_set data{ PLSSVM_CLASSIFICATION_TEST_FILE };
     const plssvm::soa_matrix<plssvm::real_type> &matr = data.data();
     const plssvm::real_type scaling_factor = 3.1415;
 
@@ -341,7 +341,7 @@ REGISTER_TYPED_TEST_SUITE_P(GenericGPUCSVM,
                             run_inplace_matrix_scale);
 
 //*************************************************************************************************************************************//
-//                                        GPU CSVM tests depending on the kernel function type                                         //
+//                                        GPU C-SVM tests depending on the kernel function type                                        //
 //*************************************************************************************************************************************//
 
 template <typename T>
@@ -359,7 +359,7 @@ TYPED_TEST_P(GenericGPUCSVMKernelFunction, run_assemble_kernel_matrix_explicit) 
     if constexpr (kernel != plssvm::kernel_function_type::linear) {
         params.gamma = plssvm::real_type{ 0.001 };
     }
-    const plssvm::data_set data{ PLSSVM_TEST_FILE };
+    const plssvm::classification_data_set data{ PLSSVM_CLASSIFICATION_TEST_FILE };
     auto data_matr{ data.data() };
     if constexpr (kernel == plssvm::kernel_function_type::chi_squared) {
         // chi-squared is well-defined for non-negative values only
@@ -434,7 +434,7 @@ TYPED_TEST_P(GenericGPUCSVMKernelFunction, run_assemble_kernel_matrix_implicit_b
     if constexpr (kernel != plssvm::kernel_function_type::linear) {
         params.gamma = plssvm::real_type{ 0.001 };
     }
-    const plssvm::data_set data{ PLSSVM_TEST_FILE };
+    const plssvm::classification_data_set data{ PLSSVM_CLASSIFICATION_TEST_FILE };
     auto data_matr{ data.data() };
     if constexpr (kernel == plssvm::kernel_function_type::chi_squared) {
         // chi-squared is well-defined for non-negative values only
@@ -523,7 +523,7 @@ TYPED_TEST_P(GenericGPUCSVMKernelFunction, run_predict_kernel) {
         params.gamma = plssvm::real_type{ 1.0 };
     }
 
-    const plssvm::data_set data{ PLSSVM_TEST_FILE };
+    const plssvm::classification_data_set data{ PLSSVM_CLASSIFICATION_TEST_FILE };
     auto data_matr{ data.data() };
     if constexpr (kernel == plssvm::kernel_function_type::chi_squared) {
         // chi-squared is well-defined for non-negative values only

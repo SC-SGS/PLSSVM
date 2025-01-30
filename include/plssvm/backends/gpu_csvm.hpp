@@ -15,7 +15,6 @@
 
 #include "plssvm/backends/execution_range.hpp"  // plssvm::detail::{dim_type, execution_range}
 #include "plssvm/constants.hpp"                 // plssvm::real_type, plssvm::PADDING_SIZE
-#include "plssvm/csvm.hpp"                      // plssvm::csvm
 #include "plssvm/detail/assert.hpp"             // PLSSVM_ASSERT
 #include "plssvm/detail/data_distribution.hpp"  // plssvm::detail::{data_distribution, triangular_data_distribution, rectangular_data_distribution}
 #include "plssvm/detail/move_only_any.hpp"      // plssvm::detail::{move_only_any, move_only_any_cast}
@@ -24,12 +23,13 @@
 #include "plssvm/parameter.hpp"                 // plssvm::parameter
 #include "plssvm/shape.hpp"                     // plssvm::shape
 #include "plssvm/solver_types.hpp"              // plssvm::solver_type
+#include "plssvm/svm/csvm.hpp"                  // plssvm::csvm
 
 #include "fmt/format.h"  // fmt::format
 
 #include <cmath>    // std::ceil
 #include <cstddef>  // std::size_t
-#include <memory>   // std::make_unique
+#include <memory>   // std::make_unique, std::addressof
 #include <tuple>    // std::tuple
 #include <utility>  // std::forward, std::move
 #include <vector>   // std::vector
@@ -44,7 +44,7 @@ namespace plssvm::detail {
  * @tparam pinned_memory_t the type of the pinned memory wrapper (dependent on the used backend)
  */
 template <template <typename> typename device_ptr_t, typename queue_t, template <typename> typename pinned_memory_t>
-class gpu_csvm : public ::plssvm::csvm {
+class gpu_csvm : virtual public ::plssvm::csvm {
   public:
     /// The type of the device pointer (dependent on the used backend).
     using device_ptr_type = device_ptr_t<real_type>;
@@ -80,10 +80,21 @@ class gpu_csvm : public ::plssvm::csvm {
      * @copydoc plssvm::csvm::operator=(const plssvm::csvm &)
      */
     gpu_csvm &operator=(const gpu_csvm &) = delete;
+
     /**
-     * @copydoc plssvm::csvm::operator=(plssvm::csvm &&) noexcept
+     * @brief Correctly implement the move-assignment operator in presence of a virtual base class.
+     * @details Calls the base class move-assignment operator. Afterwards, moves the additional `gpu_csvm` members.
+     * @param[in,out] other the other C-SVM to move from
+     * @return `*this`
      */
-    gpu_csvm &operator=(gpu_csvm &&) noexcept = default;
+    gpu_csvm &operator=(gpu_csvm &&other) noexcept {
+        if (this != std::addressof(other)) {
+            ::plssvm::csvm::operator=(std::move(other));
+            devices_ = std::move(other.devices_);
+        }
+        return *this;
+    }
+
     /**
      * @copydoc plssvm::csvm::~csvm()
      */

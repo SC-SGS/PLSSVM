@@ -20,11 +20,13 @@
 #include "plssvm/backends/Kokkos/detail/pinned_memory.hpp"   // plssvm::kokkos::detail::pinned_memory
 #include "plssvm/backends/Kokkos/execution_space.hpp"        // plssvm::kokkos::execution_space
 #include "plssvm/constants.hpp"                              // plssvm::real_type
-#include "plssvm/csvm.hpp"                                   // plssvm::detail::csvm_backend_exists
 #include "plssvm/detail/igor_utility.hpp"                    // plssvm::detail::get_value_from_named_parameter
 #include "plssvm/detail/memory_size.hpp"                     // plssvm::detail::memory_size
-#include "plssvm/detail/type_traits.hpp"                     // PLSSVM_REQUIRES
-#include "plssvm/parameter.hpp"                              // plssvm::parameter, plssvm::detail::parameter
+#include "plssvm/detail/type_traits.hpp"                     // PLSSVM_REQUIRES, plssvm::detail::is_one_type_of
+#include "plssvm/parameter.hpp"                              // plssvm::parameter, plssvm::detail::{has_only_kokkos_parameter_named_args_v, has_only_kokkos_named_args_v}
+#include "plssvm/svm/csvc.hpp"                               // plssvm::csvc
+#include "plssvm/svm/csvm.hpp"                               // plssvm::detail::csvm_backend_exists
+#include "plssvm/svm/csvr.hpp"                               // plssvm::csvr
 #include "plssvm/target_platforms.hpp"                       // plssvm::target_platform
 
 #include "igor/igor.hpp"  // igor::parser
@@ -56,35 +58,6 @@ class csvm : public ::plssvm::detail::gpu_csvm<detail::device_ptr, detail::devic
     using typename base_type::queue_type;
 
     /**
-     * @brief Construct a new C-SVM using the Kokkos backend with the parameters given through @p params.
-     * @param[in] params struct encapsulating all possible parameters
-     * @throws plssvm::exception all exceptions thrown in the base class constructor
-     * @throws plssvm::kokkos::backend_exception if the requested target is not available
-     * @throws plssvm::kokkos::backend_exception if no device for the requested target was found
-     */
-    explicit csvm(parameter params = {});
-    /**
-     * @brief Construct a new C-SVM using the Kokkos backend on the @p target platform with the parameters given through @p params.
-     * @param[in] target the target platform used for this C-SVM
-     * @param[in] params struct encapsulating all possible SVM parameters
-     * @throws plssvm::exception all exceptions thrown in the base class constructor
-     * @throws plssvm::kokkos::backend_exception if the requested target is not available
-     * @throws plssvm::kokkos::backend_exception if no device for the requested target was found
-     */
-    explicit csvm(target_platform target, parameter params = {});
-
-    /**
-     * @brief Construct a new C-SVM using the Kokkos backend and the optionally provided @p named_args.
-     * @param[in] named_args the additional optional named arguments
-     * @throws plssvm::exception all exceptions thrown in the base class constructor
-     * @throws plssvm::kokkos::backend_exception if the requested target is not available
-     * @throws plssvm::kokkos::backend_exception if no device for the requested target was found
-     */
-    template <typename... Args, PLSSVM_REQUIRES(::plssvm::detail::has_only_kokkos_parameter_named_args_v<Args...>)>
-    explicit csvm(Args &&...named_args) :
-        csvm{ plssvm::target_platform::automatic, std::forward<Args>(named_args)... } { }
-
-    /**
      * @brief Construct a new C-SVM using the Kokkos backend on the @p target platform and the optionally provided @p named_args.
      * @param[in] target the target platform used for this C-SVM
      * @param[in] named_args the additional optional named-parameters
@@ -93,8 +66,7 @@ class csvm : public ::plssvm::detail::gpu_csvm<detail::device_ptr, detail::devic
      * @throws plssvm::kokkos::backend_exception if no device for the requested target was found
      */
     template <typename... Args, PLSSVM_REQUIRES(::plssvm::detail::has_only_kokkos_parameter_named_args_v<Args...>)>
-    explicit csvm(const target_platform target, Args &&...named_args) :
-        base_type{ std::forward<Args>(named_args)... } {
+    explicit csvm(const target_platform target = target_platform::automatic, Args &&...named_args) {
         // check igor parameter
         igor::parser parser{ std::forward<Args>(named_args)... };
 
@@ -126,7 +98,7 @@ class csvm : public ::plssvm::detail::gpu_csvm<detail::device_ptr, detail::devic
      * @brief Wait for all operations on all Kokkos devices to finish.
      * @details Terminates the program, if any exception is thrown.
      */
-    ~csvm() override;
+    ~csvm() override = 0;
 
     /**
      * @brief Return the currently used Kokkos `execution_space`.
@@ -200,15 +172,119 @@ class csvm : public ::plssvm::detail::gpu_csvm<detail::device_ptr, detail::devic
     execution_space space_{};
 };
 
+/**
+ * @brief Create a C-SVC using the Kokkos backend.
+ * @details Inherits all functionality either from the `plssvm::csvc` or `plssvm::kokkos::csvm` classes.
+ */
+class csvc : public ::plssvm::csvc,
+             public ::plssvm::kokkos::csvm {
+  public:
+    /**
+     * @brief Construct a new C-SVC using the Kokkos backend with the parameters given through @p params.
+     * @param[in] params struct encapsulating all possible parameters
+     * @param[in] named_kokkos_args the additional optional Kokkos specific named arguments
+     * @throws plssvm::exception all exceptions thrown in the base class constructors
+     */
+    template <typename... Args, PLSSVM_REQUIRES(::plssvm::detail::has_only_kokkos_named_args_v<Args...>)>
+    explicit csvc(const parameter params, Args &&...named_kokkos_args) :
+        ::plssvm::csvm{ params },
+        ::plssvm::kokkos::csvm(target_platform::automatic, std::forward<Args>(named_kokkos_args)...) { }
+
+    /**
+     * @brief Construct a new C-SVC using the Kokkos backend on the @p target platform with the parameters given through @p params.
+     * @param[in] target the target platform used for this C-SVC
+     * @param[in] params struct encapsulating all possible SVM parameters
+     * @param[in] named_kokkos_args the additional optional Kokkos specific named arguments
+     * @throws plssvm::exception all exceptions thrown in the base class constructors
+     */
+    template <typename... Args, PLSSVM_REQUIRES(::plssvm::detail::has_only_kokkos_named_args_v<Args...>)>
+    explicit csvc(const target_platform target, const parameter params, Args &&...named_kokkos_args) :
+        ::plssvm::csvm{ params },
+        ::plssvm::kokkos::csvm(target, std::forward<Args>(named_kokkos_args)...) { }
+
+    /**
+     * @brief Construct a new C-SVC using the Kokkos backend and the optionally provided @p named_args.
+     * @param[in] named_args the additional optional named arguments
+     * @throws plssvm::exception all exceptions thrown in the base class constructors
+     */
+    template <typename... Args, PLSSVM_REQUIRES(::plssvm::detail::has_only_kokkos_parameter_named_args_v<Args...>)>
+    explicit csvc(Args &&...named_args) :
+        ::plssvm::csvm{ named_args... },
+        ::plssvm::kokkos::csvm(target_platform::automatic, std::forward<Args>(named_args)...) { }
+
+    /**
+     * @brief Construct a new C-SVC using the Kokkos backend on the @p target platform and the optionally provided @p named_args.
+     * @param[in] target the target platform used for this C-SVC
+     * @param[in] named_args the additional optional named-parameters
+     * @throws plssvm::exception all exceptions thrown in the base class constructors
+     */
+    template <typename... Args, PLSSVM_REQUIRES(::plssvm::detail::has_only_kokkos_parameter_named_args_v<Args...>)>
+    explicit csvc(const target_platform target, Args &&...named_args) :
+        ::plssvm::csvm{ named_args... },
+        ::plssvm::kokkos::csvm(target, std::forward<Args>(named_args)...) { }
+};
+
+/**
+ * @brief Create a C-SVR using the Kokkos backend.
+ * @details Inherits all functionality either from the `plssvm::csvr` or `plssvm::kokkos::csvm` classes.
+ */
+class csvr : public ::plssvm::csvr,
+             public ::plssvm::kokkos::csvm {
+  public:
+    /**
+     * @brief Construct a new C-SVR using the Kokkos backend with the parameters given through @p params.
+     * @param[in] params struct encapsulating all possible parameters
+     * @param[in] named_kokkos_args the additional optional Kokkos specific named arguments
+     * @throws plssvm::exception all exceptions thrown in the base class constructors
+     */
+    template <typename... Args, PLSSVM_REQUIRES(::plssvm::detail::has_only_kokkos_named_args_v<Args...>)>
+    explicit csvr(parameter params, Args &&...named_kokkos_args) :
+        ::plssvm::csvm{ params },
+        ::plssvm::kokkos::csvm(target_platform::automatic, std::forward<Args>(named_kokkos_args)...) { }
+
+    /**
+     * @brief Construct a new C-SVR using the Kokkos backend on the @p target platform with the parameters given through @p params.
+     * @param[in] target the target platform used for this C-SVR
+     * @param[in] params struct encapsulating all possible SVM parameters
+     * @param[in] named_kokkos_args the additional optional Kokkos specific named arguments
+     * @throws plssvm::exception all exceptions thrown in the base class constructors
+     */
+    template <typename... Args, PLSSVM_REQUIRES(::plssvm::detail::has_only_kokkos_named_args_v<Args...>)>
+    explicit csvr(target_platform target, parameter params, Args &&...named_kokkos_args) :
+        ::plssvm::csvm{ params },
+        ::plssvm::kokkos::csvm(target, std::forward<Args>(named_kokkos_args)...) { }
+
+    /**
+     * @brief Construct a new C-SVR using the Kokkos backend and the optionally provided @p named_args.
+     * @param[in] named_args the additional optional named arguments
+     * @throws plssvm::exception all exceptions thrown in the base class constructors
+     */
+    template <typename... Args, PLSSVM_REQUIRES(::plssvm::detail::has_only_kokkos_parameter_named_args_v<Args...>)>
+    explicit csvr(Args &&...named_args) :
+        ::plssvm::csvm{ named_args... },
+        ::plssvm::kokkos::csvm{ target_platform::automatic, std::forward<Args>(named_args)... } { }
+
+    /**
+     * @brief Construct a new C-SVR using the Kokkos backend on the @p target platform and the optionally provided @p named_args.
+     * @param[in] target the target platform used for this C-SVR
+     * @param[in] named_args the additional optional named-parameters
+     * @throws plssvm::exception all exceptions thrown in the base class constructors
+     */
+    template <typename... Args, PLSSVM_REQUIRES(::plssvm::detail::has_only_kokkos_parameter_named_args_v<Args...>)>
+    explicit csvr(const target_platform target, Args &&...named_args) :
+        ::plssvm::csvm{ named_args... },
+        ::plssvm::kokkos::csvm{ target, std::forward<Args>(named_args)... } { }
+};
+
 }  // namespace kokkos
 
 namespace detail {
 
 /**
- * @brief Sets the `value` to `true` since C-SVMs using the Kokkos backend are available.
+ * @brief Sets the `value` to `true` since C-SVMs (C-SVCs, C-SVRs) using the Kokkos backend are available.
  */
-template <>
-struct csvm_backend_exists<kokkos::csvm> : std::true_type { };
+template <typename T>
+struct csvm_backend_exists<T, std::enable_if_t<is_one_type_of_v<T, kokkos::csvm, kokkos::csvc, kokkos::csvr>>> : std::true_type { };
 
 }  // namespace detail
 

@@ -21,6 +21,7 @@
 #include "plssvm/constants.hpp"                              // plssvm::real_type
 #include "plssvm/parameter.hpp"                              // plssvm::parameter
 #include "plssvm/solver_types.hpp"                           // plssvm::solving_type
+#include "plssvm/svm_types.hpp"                              // plssvm::svm_type
 #include "plssvm/target_platforms.hpp"                       // plssvm::target_platform
 
 #include "fmt/base.h"     // fmt::formatter
@@ -48,12 +49,14 @@ struct parser_train {
     plssvm::parameter csvm_params{};
 
     /// The error tolerance parameter for the CG algorithm.
-    real_type epsilon = static_cast<real_type>(1e-3);
+    real_type epsilon = static_cast<real_type>(1e-10);
     /// The maximum number of iterations in the CG algorithm.
     std::size_t max_iter{ 0 };
     /// The multi-class classification strategy used.
     classification_type classification{ classification_type::oaa };
 
+    /// The used SVM: C-SVC or C-SVR.
+    svm_type svm{ svm_type::csvc };
     /// The used backend: automatic (depending on the specified target_platforms), OpenMP, HPX, stdpar, CUDA, HIP, OpenCL, SYCL, or Kokkos.
     backend_type backend{ backend_type::automatic };
     /// The target platform: automatic (depending on the used backend), CPUs or GPUs from NVIDIA, AMD, or Intel.
@@ -69,7 +72,8 @@ struct parser_train {
     /// The Kokkos execution space to use with --backend=kokkos.
     kokkos::execution_space kokkos_execution_space{ kokkos::execution_space::automatic };
 
-    /// `true` if `std::string` should be used as label type instead of the default type `ìnt`.
+    /// `true` if `std::string` should be used as label type for the classification task instead of the default type `ìnt`.
+    /// For the regression task, this parameter is ignored and `real_type` is always used.
     bool strings_as_labels{ false };
 
     /// The name of the data/test file to parse.

@@ -16,10 +16,12 @@
 #include "plssvm/backend_types.hpp"                       // plssvm::backend, plssvm::csvm_to_backend_type_v
 #include "plssvm/backends/SYCL/detail/constants.hpp"      // plssvm::sycl::csvm alias
 #include "plssvm/backends/SYCL/implementation_types.hpp"  // plssvm::sycl::implementation_type
-#include "plssvm/csvm.hpp"                                // plssvm::csvm, plssvm::csvm_backend_exists_v
 #include "plssvm/detail/igor_utility.hpp"                 // plssvm::detail::get_value_from_named_parameter
 #include "plssvm/exceptions/exceptions.hpp"               // plssvm::unsupported_backend_exception
 #include "plssvm/parameter.hpp"                           // plssvm::sycl_implementation_type
+#include "plssvm/svm/csvc.hpp"                            // plssvm::csvc
+#include "plssvm/svm/csvm.hpp"                            // plssvm::csvm_backend_exists_v
+#include "plssvm/svm/csvr.hpp"                            // plssvm::csvr
 
 // only include requested/available backends
 #if defined(PLSSVM_HAS_OPENMP_BACKEND)
@@ -41,6 +43,7 @@
     #include "plssvm/backends/OpenCL/csvm.hpp"  // plssvm::opencl::csvm, plssvm::csvm_backend_exists_v
 #endif
 #if defined(PLSSVM_HAS_SYCL_BACKEND)
+using namespace plssvm::PLSSVM_SYCL_BACKEND_PREFERRED_IMPLEMENTATION;
     #if defined(PLSSVM_SYCL_BACKEND_HAS_DPCPP)
         #include "plssvm/backends/SYCL/DPCPP/csvm.hpp"  // plssvm::dpcpp::csvm, plssvm::csvm_backend_exists_v
     #endif
@@ -72,31 +75,32 @@ namespace detail {
  * @throws plssvm::unsupported_backend_exception if the @p backend is not recognized
  * @return the C-SVM (`[[nodiscard]]`)
  */
-template <typename csvm_type, typename... Args>
-[[nodiscard]] inline std::unique_ptr<csvm> make_csvm_default_impl([[maybe_unused]] Args &&...args) {
+template <typename base_csvm_type, typename backend_csvm_type, typename... Args>
+[[nodiscard]] inline std::unique_ptr<base_csvm_type> make_csvm_default_impl([[maybe_unused]] Args &&...args) {
     // test whether the backend is available
-    if constexpr (csvm_backend_exists_v<csvm_type>) {
+    if constexpr (csvm_backend_exists_v<backend_csvm_type>) {
         // test whether the backend can be constructed with the provided parameter
-        if constexpr (std::is_constructible_v<csvm_type, Args...>) {
-            return std::make_unique<csvm_type>(std::forward<Args>(args)...);
+        if constexpr (std::is_constructible_v<backend_csvm_type, Args...>) {
+            return std::make_unique<backend_csvm_type>(std::forward<Args>(args)...);
         } else {
-            throw unsupported_backend_exception{ fmt::format("Provided invalid (named) arguments for the {} backend!", csvm_to_backend_type_v<csvm_type>) };
+            throw unsupported_backend_exception{ fmt::format("Provided invalid (named) arguments for the {} backend!", csvm_to_backend_type_v<backend_csvm_type>) };
         }
     } else {
-        throw unsupported_backend_exception{ fmt::format("No {} backend available!", csvm_to_backend_type_v<csvm_type>) };
+        throw unsupported_backend_exception{ fmt::format("No {} backend available!", csvm_to_backend_type_v<backend_csvm_type>) };
     }
 }
 
 /**
- * @brief Construct a SYCL C-SVM using the parameters @p args.
+ * @brief Create a new SYCL C-SVM, i.e., either a C-SVC or C-SVR depending on the template parameter @p base_csvm_type using the @p backend type and the additional parameter @p args.
  * @details The special case for the SYCL backend to handle the SYCL specific parameters.
+ * @tparam base_csvm_type the type of the C-SVM to create, i.e., create a C-SVC for classification or C-SVR for regression
  * @tparam Args the types of the parameters to initialize the SYCL C-SVM
  * @param[in] args the parameters used to initialize the SYCL C-SVM
  * @throws plssvm::unsupported_backend_exception if the @p backend is not recognized
- * @return the SYCL C-SVM (`[[nodiscard]]`)
+ * @return the SYCL C-SVC or C-SVR (`[[nodiscard]]`)
  */
-template <typename... Args>
-[[nodiscard]] inline std::unique_ptr<csvm> make_csvm_sycl_impl([[maybe_unused]] Args &&...args) {
+template <typename base_csvm_type, typename... Args>
+[[nodiscard]] inline std::unique_ptr<base_csvm_type> make_csvm_sycl_impl([[maybe_unused]] Args &&...args) {
     // check igor parameter
     igor::parser parser{ args... };
 
@@ -110,44 +114,45 @@ template <typename... Args>
 
     switch (impl_type) {
         case sycl::implementation_type::automatic:
-            return make_csvm_default_impl<sycl::csvm>(std::forward<Args>(args)...);
+            return make_csvm_default_impl<base_csvm_type, sycl::backend_csvm_type_t<base_csvm_type>>(std::forward<Args>(args)...);
         case sycl::implementation_type::dpcpp:
-            return make_csvm_default_impl<dpcpp::csvm>(std::forward<Args>(args)...);
+            return make_csvm_default_impl<base_csvm_type, dpcpp::backend_csvm_type_t<base_csvm_type>>(std::forward<Args>(args)...);
         case sycl::implementation_type::adaptivecpp:
-            return make_csvm_default_impl<adaptivecpp::csvm>(std::forward<Args>(args)...);
+            return make_csvm_default_impl<base_csvm_type, adaptivecpp::backend_csvm_type_t<base_csvm_type>>(std::forward<Args>(args)...);
     }
     throw unsupported_backend_exception{ "No sycl backend available!" };
 }
 
 /**
- * @brief Create a new C-SVM using the @p backend type and the additional parameter @p args.
+ * @brief Create a new C-SVM, i.e., either a C-SVC or C-SVR depending on the template parameter @p base_csvm_type using the @p backend type and the additional parameter @p args.
+ * @tparam base_csvm_type the type of the C-SVM to create, i.e., create a C-SVC for classification or C-SVR for regression
  * @tparam Args the types of the parameters to initialize the C-SVM
  * @param[in] backend the backend to use
  * @param[in] args the parameters used to initialize the respective C-SVM
  * @throws plssvm::unsupported_backend_exception if the @p backend is not recognized
- * @return the C-SVM (`[[nodiscard]]`)
+ * @return the C-SVC or C-SVR (`[[nodiscard]]`)
  */
-template <typename... Args>
-[[nodiscard]] inline std::unique_ptr<csvm> make_csvm_impl(const backend_type backend, Args &&...args) {
+template <typename base_csvm_type, typename... Args>
+[[nodiscard]] inline std::unique_ptr<base_csvm_type> make_csvm_impl(const backend_type backend, Args &&...args) {
     switch (backend) {
         case backend_type::automatic:
-            return make_csvm_impl(determine_default_backend(), std::forward<Args>(args)...);
+            return make_csvm_impl<base_csvm_type>(determine_default_backend(), std::forward<Args>(args)...);
         case backend_type::openmp:
-            return make_csvm_default_impl<openmp::csvm>(std::forward<Args>(args)...);
+            return make_csvm_default_impl<base_csvm_type, openmp::backend_csvm_type_t<base_csvm_type>>(std::forward<Args>(args)...);
         case backend_type::stdpar:
-            return make_csvm_default_impl<stdpar::csvm>(std::forward<Args>(args)...);
+            return make_csvm_default_impl<base_csvm_type, stdpar::backend_csvm_type_t<base_csvm_type>>(std::forward<Args>(args)...);
         case backend_type::hpx:
-            return make_csvm_default_impl<hpx::csvm>(std::forward<Args>(args)...);
+            return make_csvm_default_impl<base_csvm_type, hpx::backend_csvm_type_t<base_csvm_type>>(std::forward<Args>(args)...);
         case backend_type::cuda:
-            return make_csvm_default_impl<cuda::csvm>(std::forward<Args>(args)...);
+            return make_csvm_default_impl<base_csvm_type, cuda::backend_csvm_type_t<base_csvm_type>>(std::forward<Args>(args)...);
         case backend_type::hip:
-            return make_csvm_default_impl<hip::csvm>(std::forward<Args>(args)...);
+            return make_csvm_default_impl<base_csvm_type, hip::backend_csvm_type_t<base_csvm_type>>(std::forward<Args>(args)...);
         case backend_type::opencl:
-            return make_csvm_default_impl<opencl::csvm>(std::forward<Args>(args)...);
+            return make_csvm_default_impl<base_csvm_type, opencl::backend_csvm_type_t<base_csvm_type>>(std::forward<Args>(args)...);
         case backend_type::sycl:
-            return make_csvm_sycl_impl(std::forward<Args>(args)...);
+            return make_csvm_sycl_impl<base_csvm_type>(std::forward<Args>(args)...);
         case backend_type::kokkos:
-            return make_csvm_default_impl<kokkos::csvm>(std::forward<Args>(args)...);
+            return make_csvm_default_impl<base_csvm_type, kokkos::backend_csvm_type_t<base_csvm_type>>(std::forward<Args>(args)...);
     }
     throw unsupported_backend_exception{ "Unrecognized backend provided!" };
 }
@@ -160,28 +165,78 @@ template <typename... Args>
  */
 
 /**
- * @brief Create a new C-SVM using the @p backend type and additional parameter @p args.
+ * @brief Create a new C-SVM based on the @p csvm_type (either C-SVC or C-SVR) using the @p backend type and additional parameter @p args.
  * @tparam Args the types of the parameters to initialize the C-SVM
  * @param[in] backend the backend to use
  * @param[in] args the parameters used to initialize the respective C-SVM
  * @throws plssvm::unsupported_backend_exception if the @p backend is not recognized
  * @return the C-SVM (`[[nodiscard]]`)
  */
-template <typename... Args>
-[[nodiscard]] inline std::unique_ptr<csvm> make_csvm(const backend_type backend, Args... args) {
-    return detail::make_csvm_impl(backend, args...);
+template <typename csvm_type, typename... Args>
+[[nodiscard]] inline std::unique_ptr<csvm_type> make_csvm(const backend_type backend, Args... args) {
+    return detail::make_csvm_impl<csvm_type>(backend, args...);
 }
 
 /**
- * @brief Create a new C-SVM using the automatic backend type and the additional parameter @p args.
+ * @brief Create a new  based on the @p csvm_type (either C-SVC or C-SVR) using the automatic backend type and the additional parameter @p args.
  * @tparam Args the types of the parameters to initialize the C-SVM
  * @param[in] args the parameters used to initialize the respective C-SVM
  * @throws plssvm::unsupported_backend_exception if the @p backend is not recognized
  * @return the C-SVM (`[[nodiscard]]`)
  */
+template <typename csvm_type, typename... Args>
+[[nodiscard]] inline std::unique_ptr<csvm_type> make_csvm(Args... args) {
+    return detail::make_csvm_impl<csvm_type>(backend_type::automatic, args...);
+}
+
+/**
+ * @brief Create a new C-SVC using the @p backend type and additional parameter @p args.
+ * @tparam Args the types of the parameters to initialize the C-SVC
+ * @param[in] backend the backend to use
+ * @param[in] args the parameters used to initialize the respective C-SVC
+ * @throws plssvm::unsupported_backend_exception if the @p backend is not recognized
+ * @return the C-SVC (`[[nodiscard]]`)
+ */
 template <typename... Args>
-[[nodiscard]] inline std::unique_ptr<csvm> make_csvm(Args... args) {
-    return detail::make_csvm_impl(backend_type::automatic, args...);
+[[nodiscard]] inline std::unique_ptr<csvc> make_csvc(const backend_type backend, Args... args) {
+    return detail::make_csvm_impl<csvc>(backend, args...);
+}
+
+/**
+ * @brief Create a new C-SVC using the automatic backend type and the additional parameter @p args.
+ * @tparam Args the types of the parameters to initialize the C-SVC
+ * @param[in] args the parameters used to initialize the respective C-SVC
+ * @throws plssvm::unsupported_backend_exception if the @p backend is not recognized
+ * @return the C-SVC (`[[nodiscard]]`)
+ */
+template <typename... Args>
+[[nodiscard]] inline std::unique_ptr<csvc> make_csvc(Args... args) {
+    return detail::make_csvm_impl<csvc>(backend_type::automatic, args...);
+}
+
+/**
+ * @brief Create a new C-SVR using the @p backend type and additional parameter @p args.
+ * @tparam Args the types of the parameters to initialize the C-SVR
+ * @param[in] backend the backend to use
+ * @param[in] args the parameters used to initialize the respective C-SVR
+ * @throws plssvm::unsupported_backend_exception if the @p backend is not recognized
+ * @return the C-SVR (`[[nodiscard]]`)
+ */
+template <typename... Args>
+[[nodiscard]] inline std::unique_ptr<csvr> make_csvr(const backend_type backend, Args... args) {
+    return detail::make_csvm_impl<csvr>(backend, args...);
+}
+
+/**
+ * @brief Create a new C-SVR using the automatic backend type and the additional parameter @p args.
+ * @tparam Args the types of the parameters to initialize the C-SVR
+ * @param[in] args the parameters used to initialize the respective C-SVR
+ * @throws plssvm::unsupported_backend_exception if the @p backend is not recognized
+ * @return the C-SVR (`[[nodiscard]]`)
+ */
+template <typename... Args>
+[[nodiscard]] inline std::unique_ptr<csvr> make_csvr(Args... args) {
+    return detail::make_csvm_impl<csvr>(backend_type::automatic, args...);
 }
 
 }  // namespace plssvm
