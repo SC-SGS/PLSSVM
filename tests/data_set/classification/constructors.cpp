@@ -66,6 +66,10 @@ TYPED_TEST(ClassificationDataSetConstructors, typedefs) {
     EXPECT_TRUE(std::is_integral_v<typename decltype(data)::size_type>);
 }
 
+//*************************************************************************************************************************************//
+//                                                         construct from file                                                         //
+//*************************************************************************************************************************************//
+
 TYPED_TEST(ClassificationDataSetConstructors, construct_arff_from_file_with_label) {
     using label_type = typename TestFixture::fixture_label_type;
 
@@ -366,6 +370,10 @@ TYPED_TEST(ClassificationDataSetConstructors, construct_scaled_explicit_libsvm_f
     }
 }
 
+//*************************************************************************************************************************************//
+//                                                      construct from 2D vector                                                       //
+//*************************************************************************************************************************************//
+
 TYPED_TEST(ClassificationDataSetConstructors, construct_from_vector_without_label) {
     using label_type = typename TestFixture::fixture_label_type;
 
@@ -534,6 +542,10 @@ TYPED_TEST(ClassificationDataSetConstructors, construct_scaled_from_vector_with_
     }
 }
 
+//*************************************************************************************************************************************//
+//                                                        construct from matrix                                                        //
+//*************************************************************************************************************************************//
+
 template <typename T>
 class ClassificationDataSetMatrixConstructors : public ClassificationDataSetConstructors<T> {
   protected:
@@ -596,8 +608,10 @@ TYPED_TEST(ClassificationDataSetMatrixConstructors, construct_from_empty_matrix_
     using label_type = typename TestFixture::fixture_label_type;
     constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
 
+    const plssvm::matrix<plssvm::real_type, layout> data_points{};
+
     // creating a data set from an empty vector is illegal
-    EXPECT_THROW_WHAT((plssvm::classification_data_set<label_type>{ plssvm::matrix<plssvm::real_type, layout>{} }),
+    EXPECT_THROW_WHAT((plssvm::classification_data_set<label_type>{ data_points }),
                       plssvm::data_set_exception,
                       "Data vector is empty!");
 }
@@ -606,8 +620,10 @@ TYPED_TEST(ClassificationDataSetMatrixConstructors, construct_from_empty_matrix)
     using label_type = typename TestFixture::fixture_label_type;
     constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
 
+    const plssvm::matrix<plssvm::real_type, layout> data_points{ plssvm::shape{ 0, 0 }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE } };
+
     // creating a data set from an empty vector is illegal
-    EXPECT_THROW_WHAT((plssvm::classification_data_set<label_type>{ plssvm::matrix<plssvm::real_type, layout>{ plssvm::shape{ 0, 0 }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE } } }),
+    EXPECT_THROW_WHAT((plssvm::classification_data_set<label_type>{ data_points }),
                       plssvm::data_set_exception,
                       "Data vector is empty!");
 }
@@ -792,6 +808,178 @@ TYPED_TEST(ClassificationDataSetMatrixConstructors, construct_scaled_from_matrix
     EXPECT_TRUE(data.has_labels());
     ASSERT_TRUE(data.labels().has_value());
     EXPECT_EQ(data.labels().value().get(), labels);
+    ASSERT_TRUE(data.classes().has_value());
+    EXPECT_EQ(data.classes().value(), different_labels);
+
+    EXPECT_EQ(data.num_data_points(), correct_data_points_scaled.num_rows());
+    EXPECT_EQ(data.num_features(), correct_data_points_scaled.num_cols());
+    EXPECT_EQ(data.num_classes(), different_labels.size());
+
+    EXPECT_TRUE(data.is_scaled());
+    EXPECT_TRUE(data.scaling_factors().has_value());
+    ASSERT_TRUE(data.scaling_factors().value().get().scaling_factors().has_value());
+    ASSERT_EQ(data.scaling_factors().value().get().scaling_factors()->size(), scaling_factors.size());
+    for (std::size_t i = 0; i < scaling_factors.size(); ++i) {
+        auto factors = data.scaling_factors().value().get().scaling_factors().value()[i];
+        EXPECT_EQ(factors.feature, std::get<0>(scaling_factors[i]));
+        EXPECT_FLOATING_POINT_NEAR(factors.lower, std::get<1>(scaling_factors[i]));
+        EXPECT_FLOATING_POINT_NEAR(factors.upper, std::get<2>(scaling_factors[i]));
+    }
+}
+
+//*************************************************************************************************************************************//
+//                                                    construct from r-value matrix                                                    //
+//*************************************************************************************************************************************//
+
+template <typename T>
+class ClassificationDataSetRValueMatrixConstructors : public ClassificationDataSetConstructors<T> {
+  protected:
+    using typename ClassificationDataSetConstructors<T>::fixture_label_type;
+};
+
+TYPED_TEST_SUITE(ClassificationDataSetRValueMatrixConstructors, util::classification_label_type_gtest, naming::test_parameter_to_name);
+
+TYPED_TEST(ClassificationDataSetRValueMatrixConstructors, construct_from_rvalue_matrix_without_label) {
+    using label_type = typename TestFixture::fixture_label_type;
+
+    // create data points
+    auto correct_data_points = util::generate_specific_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ 4, 4 }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE });
+    const auto copied_correct_data_points = correct_data_points;
+
+    // create data set
+    const plssvm::classification_data_set<label_type> data{ std::move(correct_data_points) };
+
+    // check values
+    EXPECT_FLOATING_POINT_MATRIX_EQ(data.data(), copied_correct_data_points);
+    EXPECT_TRUE(data.data().is_padded());
+    EXPECT_FALSE(data.has_labels());
+    EXPECT_FALSE(data.labels().has_value());
+    EXPECT_FALSE(data.classes().has_value());
+
+    EXPECT_EQ(data.num_data_points(), copied_correct_data_points.num_rows());
+    EXPECT_EQ(data.num_features(), copied_correct_data_points.num_cols());
+    EXPECT_EQ(data.num_classes(), 0);
+
+    EXPECT_FALSE(data.is_scaled());
+    EXPECT_FALSE(data.scaling_factors().has_value());
+}
+
+TYPED_TEST(ClassificationDataSetRValueMatrixConstructors, construct_from_empty_rvalue_matrix) {
+    using label_type = typename TestFixture::fixture_label_type;
+
+    plssvm::soa_matrix<plssvm::real_type> data_points{ plssvm::shape{ 0, 0 }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE } };
+
+    // creating a data set from an empty vector is illegal
+    EXPECT_THROW_WHAT((plssvm::classification_data_set<label_type>{ std::move(data_points) }),
+                      plssvm::data_set_exception,
+                      "Data vector is empty!");
+}
+
+TYPED_TEST(ClassificationDataSetRValueMatrixConstructors, construct_from_rvalue_matrix_wrong_padding) {
+    using label_type = typename TestFixture::fixture_label_type;
+
+    plssvm::soa_matrix<plssvm::real_type> data_points{ plssvm::shape{ 4, 4 }, plssvm::shape{ 0, 0 } };
+
+    // the padding must be correct for this constructor overload
+    EXPECT_THROW_WHAT((plssvm::classification_data_set<label_type>{ std::move(data_points) }),
+                      plssvm::data_set_exception,
+                      "Data vector has the wring padding ([0, 0])!");
+}
+
+TYPED_TEST(ClassificationDataSetRValueMatrixConstructors, construct_from_rvalue_matrix_with_label) {
+    using label_type = typename TestFixture::fixture_label_type;
+
+    // create data points and labels
+    const std::vector<label_type> different_labels = util::get_distinct_label<label_type>();
+    std::vector<label_type> labels = util::get_correct_data_file_labels<label_type>();
+    const std::vector<label_type> copied_labels = labels;
+    auto correct_data_points = util::generate_specific_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ labels.size(), 4 }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE });
+    const auto copied_correct_data_points = correct_data_points;
+
+    // create data set
+    const plssvm::classification_data_set<label_type> data{ std::move(correct_data_points), std::move(labels) };
+
+    // check values
+    EXPECT_FLOATING_POINT_MATRIX_EQ(data.data(), copied_correct_data_points);
+    EXPECT_TRUE(data.has_labels());
+    ASSERT_TRUE(data.labels().has_value());
+    EXPECT_EQ(data.labels().value().get(), copied_labels);
+    ASSERT_TRUE(data.classes().has_value());
+    EXPECT_EQ(data.classes().value(), different_labels);
+
+    EXPECT_EQ(data.num_data_points(), copied_correct_data_points.num_rows());
+    EXPECT_EQ(data.num_features(), copied_correct_data_points.num_cols());
+    EXPECT_EQ(data.num_classes(), different_labels.size());
+
+    EXPECT_FALSE(data.is_scaled());
+    EXPECT_FALSE(data.scaling_factors().has_value());
+}
+
+TYPED_TEST(ClassificationDataSetRValueMatrixConstructors, construct_from_rvalue_matrix_with_label_wrong_padding) {
+    using label_type = typename TestFixture::fixture_label_type;
+
+    const std::vector<label_type> different_labels = util::get_distinct_label<label_type>();
+    std::vector<label_type> labels = util::get_correct_data_file_labels<label_type>();
+    plssvm::soa_matrix<plssvm::real_type> data_points{ plssvm::shape{ labels.size(), 4 }, plssvm::shape{ 0, 0 } };
+
+    // the padding must be correct for this constructor overload
+    EXPECT_THROW_WHAT((plssvm::classification_data_set<label_type>{ std::move(data_points), std::move(labels) }),
+                      plssvm::data_set_exception,
+                      "Data vector has the wring padding ([0, 0])!");
+}
+
+TYPED_TEST(ClassificationDataSetRValueMatrixConstructors, construct_scaled_from_rvalue_matrix_without_label) {
+    using label_type = typename TestFixture::fixture_label_type;
+
+    // create data points
+    auto data_points = util::generate_specific_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ 4, 4 }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE });
+
+    const auto [correct_data_points_scaled, scaling_factors] = util::scale(data_points, plssvm::real_type{ -1.0 }, plssvm::real_type{ 1.0 });
+
+    // create data set
+    const plssvm::classification_data_set<label_type> data{ std::move(data_points), plssvm::min_max_scaler{ plssvm::real_type{ -1.0 }, plssvm::real_type{ 1.0 } } };
+
+    // check values
+    EXPECT_FLOATING_POINT_MATRIX_NEAR(data.data(), correct_data_points_scaled);
+    EXPECT_FALSE(data.has_labels());
+    EXPECT_FALSE(data.labels().has_value());
+    EXPECT_FALSE(data.classes().has_value());
+
+    EXPECT_EQ(data.num_data_points(), correct_data_points_scaled.num_rows());
+    EXPECT_EQ(data.num_features(), correct_data_points_scaled.num_cols());
+    EXPECT_EQ(data.num_classes(), 0);
+
+    EXPECT_TRUE(data.is_scaled());
+    EXPECT_TRUE(data.scaling_factors().has_value());
+    ASSERT_TRUE(data.scaling_factors().value().get().scaling_factors().has_value());
+    ASSERT_EQ(data.scaling_factors().value().get().scaling_factors()->size(), scaling_factors.size());
+    for (std::size_t i = 0; i < scaling_factors.size(); ++i) {
+        auto factors = data.scaling_factors().value().get().scaling_factors().value()[i];
+        EXPECT_EQ(factors.feature, std::get<0>(scaling_factors[i]));
+        EXPECT_FLOATING_POINT_NEAR(factors.lower, std::get<1>(scaling_factors[i]));
+        EXPECT_FLOATING_POINT_NEAR(factors.upper, std::get<2>(scaling_factors[i]));
+    }
+}
+
+TYPED_TEST(ClassificationDataSetRValueMatrixConstructors, construct_scaled_from_rvalue_matrix_with_label) {
+    using label_type = typename TestFixture::fixture_label_type;
+
+    // create data points and labels
+    const std::vector<label_type> different_labels = util::get_distinct_label<label_type>();
+    std::vector<label_type> labels = util::get_correct_data_file_labels<label_type>();
+    const std::vector<label_type> copied_labels = labels;
+    auto correct_data_points = util::generate_specific_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ labels.size(), 4 }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE });
+
+    const auto [correct_data_points_scaled, scaling_factors] = util::scale(correct_data_points, plssvm::real_type{ -1.0 }, plssvm::real_type{ 1.0 });
+
+    // create data set
+    const plssvm::classification_data_set<label_type> data{ std::move(correct_data_points), std::move(labels), { -1.0, 1.0 } };
+
+    // check values
+    EXPECT_FLOATING_POINT_MATRIX_NEAR(data.data(), correct_data_points_scaled);
+    EXPECT_TRUE(data.has_labels());
+    ASSERT_TRUE(data.labels().has_value());
+    EXPECT_EQ(data.labels().value().get(), copied_labels);
     ASSERT_TRUE(data.classes().has_value());
     EXPECT_EQ(data.classes().value(), different_labels);
 
