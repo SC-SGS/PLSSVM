@@ -86,7 +86,7 @@ void init_classification_data_set(py::module_ &m) {
                  // convert the labels to a std::vector
                  auto [labels_vector_variant, dtype] = plssvm::bindings::python::util::pyobject_to_vector<typename classification_data_set_wrapper::possible_vector_types>(labels);
 
-                 return std::visit([&dtype, &data_matrix, &scaler](auto &&labels_vector) {
+                 return std::visit([&data_matrix = data_matrix, &dtype = dtype, &scaler](auto &&labels_vector) {
                      using label_type = typename plssvm::detail::remove_cvref_t<decltype(labels_vector)>::value_type;
                      if (scaler.has_value()) {
                          return std::make_unique<classification_data_set_wrapper>(plssvm::classification_data_set<label_type>(std::move(data_matrix), std::move(labels_vector), scaler.value()));
