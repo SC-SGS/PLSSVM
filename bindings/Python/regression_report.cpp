@@ -50,7 +50,7 @@ void init_regression_report(py::module_ &m) {
                      throw py::value_error{ fmt::format(R"(The type of the correct labels "{}" differs from the type of the predicted labels "{}"!)", dtype_correct_label.attr("name").cast<std::string>(), dtype_predicted_label.attr("name").cast<std::string>()) };
                  }
 
-                 return std::visit([&predicted_label_variant, force_finite](auto &&correct_label) {
+                 return std::visit([&predicted_label_variant = predicted_label_variant, force_finite](auto &&correct_label) {
                      using vector_type = plssvm::detail::remove_cvref_t<decltype(correct_label)>;
                      return plssvm::regression_report{ correct_label, std::get<vector_type>(predicted_label_variant), plssvm::regression_report::force_finite = force_finite };
                  },
