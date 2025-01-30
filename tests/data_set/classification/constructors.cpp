@@ -10,6 +10,7 @@
 
 #include "plssvm/constants.hpp"                         // plssvm::real_type, plssvm::PADDING_SIZE
 #include "plssvm/data_set/classification_data_set.hpp"  // data set class to test
+#include "plssvm/data_set/min_max_scaler.hpp"           // plssvm::min_max_scaler
 #include "plssvm/exceptions/exceptions.hpp"             // plssvm::data_set_exception
 #include "plssvm/file_format_types.hpp"                 // plssvm::file_format_type
 #include "plssvm/matrix.hpp"                            // plssvm::matrix, plssvm::layout_type
@@ -250,9 +251,10 @@ TYPED_TEST(ClassificationDataSetConstructors, construct_scaled_arff_from_file) {
 
     EXPECT_TRUE(data.is_scaled());
     EXPECT_TRUE(data.scaling_factors().has_value());
-    ASSERT_EQ(data.scaling_factors().value().get().scaling_factors.size(), scaling_factors.size());
+    ASSERT_TRUE(data.scaling_factors().value().get().scaling_factors().has_value());
+    ASSERT_EQ(data.scaling_factors().value().get().scaling_factors()->size(), scaling_factors.size());
     for (std::size_t i = 0; i < scaling_factors.size(); ++i) {
-        auto factors = data.scaling_factors().value().get().scaling_factors[i];
+        auto factors = data.scaling_factors().value().get().scaling_factors().value()[i];
         EXPECT_EQ(factors.feature, std::get<0>(scaling_factors[i]));
         EXPECT_FLOATING_POINT_NEAR(factors.lower, std::get<1>(scaling_factors[i]));
         EXPECT_FLOATING_POINT_NEAR(factors.upper, std::get<2>(scaling_factors[i]));
@@ -284,9 +286,10 @@ TYPED_TEST(ClassificationDataSetConstructors, construct_scaled_libsvm_from_file)
 
     EXPECT_TRUE(data.is_scaled());
     EXPECT_TRUE(data.scaling_factors().has_value());
-    ASSERT_EQ(data.scaling_factors().value().get().scaling_factors.size(), scaling_factors.size());
+    ASSERT_TRUE(data.scaling_factors().value().get().scaling_factors().has_value());
+    ASSERT_EQ(data.scaling_factors().value().get().scaling_factors()->size(), scaling_factors.size());
     for (std::size_t i = 0; i < scaling_factors.size(); ++i) {
-        auto factors = data.scaling_factors().value().get().scaling_factors[i];
+        auto factors = data.scaling_factors().value().get().scaling_factors().value()[i];
         EXPECT_EQ(factors.feature, std::get<0>(scaling_factors[i]));
         EXPECT_FLOATING_POINT_NEAR(factors.lower, std::get<1>(scaling_factors[i]));
         EXPECT_FLOATING_POINT_NEAR(factors.upper, std::get<2>(scaling_factors[i]));
@@ -318,9 +321,10 @@ TYPED_TEST(ClassificationDataSetConstructors, construct_scaled_explicit_arff_fro
 
     EXPECT_TRUE(data.is_scaled());
     EXPECT_TRUE(data.scaling_factors().has_value());
-    ASSERT_EQ(data.scaling_factors().value().get().scaling_factors.size(), scaling_factors.size());
+    ASSERT_TRUE(data.scaling_factors().value().get().scaling_factors().has_value());
+    ASSERT_EQ(data.scaling_factors().value().get().scaling_factors()->size(), scaling_factors.size());
     for (std::size_t i = 0; i < scaling_factors.size(); ++i) {
-        auto factors = data.scaling_factors().value().get().scaling_factors[i];
+        auto factors = data.scaling_factors().value().get().scaling_factors().value()[i];
         EXPECT_EQ(factors.feature, std::get<0>(scaling_factors[i]));
         EXPECT_FLOATING_POINT_NEAR(factors.lower, std::get<1>(scaling_factors[i]));
         EXPECT_FLOATING_POINT_NEAR(factors.upper, std::get<2>(scaling_factors[i]));
@@ -352,78 +356,14 @@ TYPED_TEST(ClassificationDataSetConstructors, construct_scaled_explicit_libsvm_f
 
     EXPECT_TRUE(data.is_scaled());
     EXPECT_TRUE(data.scaling_factors().has_value());
-    ASSERT_EQ(data.scaling_factors().value().get().scaling_factors.size(), scaling_factors.size());
+    ASSERT_TRUE(data.scaling_factors().value().get().scaling_factors().has_value());
+    ASSERT_EQ(data.scaling_factors().value().get().scaling_factors()->size(), scaling_factors.size());
     for (std::size_t i = 0; i < scaling_factors.size(); ++i) {
-        auto factors = data.scaling_factors().value().get().scaling_factors[i];
+        auto factors = data.scaling_factors().value().get().scaling_factors().value()[i];
         EXPECT_EQ(factors.feature, std::get<0>(scaling_factors[i]));
         EXPECT_FLOATING_POINT_NEAR(factors.lower, std::get<1>(scaling_factors[i]));
         EXPECT_FLOATING_POINT_NEAR(factors.upper, std::get<2>(scaling_factors[i]));
     }
-}
-
-TYPED_TEST(ClassificationDataSetConstructors, construct_scaled_too_many_factors) {
-    using label_type = typename TestFixture::fixture_label_type;
-    using scaling_type = typename plssvm::classification_data_set<label_type>::scaling;
-    using factors_type = typename scaling_type::factors;
-
-    // create data set
-    util::instantiate_template_file<label_type>(PLSSVM_TEST_PATH "/data/libsvm/classification/6x4_TEMPLATE.libsvm", this->filename);
-    // create (invalid) scaling factors
-    scaling_type scaling{ plssvm::real_type{ -1.0 }, plssvm::real_type{ 1.0 } };
-    scaling.scaling_factors = std::vector<factors_type>{
-        factors_type{ 0, plssvm::real_type{ 0.0 }, plssvm::real_type{ 0.1 } },
-        factors_type{ 1, plssvm::real_type{ 1.0 }, plssvm::real_type{ 1.1 } },
-        factors_type{ 2, plssvm::real_type{ 2.0 }, plssvm::real_type{ 2.1 } },
-        factors_type{ 3, plssvm::real_type{ 3.0 }, plssvm::real_type{ 3.1 } },
-        factors_type{ 4, plssvm::real_type{ 4.0 }, plssvm::real_type{ 4.1 } }
-    };
-
-    // try creating a data set with invalid scaling factors
-    EXPECT_THROW_WHAT((plssvm::classification_data_set<label_type>{ this->filename, scaling }),
-                      plssvm::data_set_exception,
-                      "Need at most as much scaling factors as features in the data set are present (4), but 5 were given!");
-}
-
-TYPED_TEST(ClassificationDataSetConstructors, construct_scaled_invalid_feature_index) {
-    using label_type = typename TestFixture::fixture_label_type;
-    using scaling_type = typename plssvm::classification_data_set<label_type>::scaling;
-    using factors_type = typename scaling_type::factors;
-
-    // create data set
-    util::instantiate_template_file<label_type>(PLSSVM_TEST_PATH "/data/libsvm/classification/6x4_TEMPLATE.libsvm", this->filename);
-    // create (invalid) scaling factors
-    scaling_type scaling{ plssvm::real_type{ -1.0 }, plssvm::real_type{ 1.0 } };
-    scaling.scaling_factors = std::vector<factors_type>{
-        factors_type{ 4, plssvm::real_type{ 4.0 }, plssvm::real_type{ 4.1 } },
-        factors_type{ 2, plssvm::real_type{ 2.0 }, plssvm::real_type{ 2.1 } }
-    };
-
-    // try creating a data set with invalid scaling factors
-    EXPECT_THROW_WHAT((plssvm::classification_data_set<label_type>{ this->filename, scaling }),
-                      plssvm::data_set_exception,
-                      "The maximum scaling feature index most not be greater than 3, but is 4!");
-}
-
-TYPED_TEST(ClassificationDataSetConstructors, construct_scaled_duplicate_feature_index) {
-    using label_type = typename TestFixture::fixture_label_type;
-    using scaling_type = typename plssvm::classification_data_set<label_type>::scaling;
-    using factors_type = typename scaling_type::factors;
-
-    // create data set
-    util::instantiate_template_file<label_type>(PLSSVM_TEST_PATH "/data/libsvm/classification/6x4_TEMPLATE.libsvm", this->filename);
-    // create (invalid) scaling factors
-    scaling_type scaling{ plssvm::real_type{ -1.0 }, plssvm::real_type{ 1.0 } };
-    scaling.scaling_factors = std::vector<factors_type>{
-        factors_type{ 1, plssvm::real_type{ 1.0 }, plssvm::real_type{ 1.1 } },
-        factors_type{ 2, plssvm::real_type{ 2.0 }, plssvm::real_type{ 2.1 } },
-        factors_type{ 3, plssvm::real_type{ 3.0 }, plssvm::real_type{ 3.1 } },
-        factors_type{ 2, plssvm::real_type{ 2.0 }, plssvm::real_type{ 2.1 } }
-    };
-
-    // try creating a data set with invalid scaling factors
-    EXPECT_THROW_WHAT((plssvm::classification_data_set<label_type>{ this->filename, scaling }),
-                      plssvm::data_set_exception,
-                      "Found more than one scaling factor for the feature index 2!");
 }
 
 TYPED_TEST(ClassificationDataSetConstructors, construct_from_vector_without_label) {
@@ -528,13 +468,12 @@ TYPED_TEST(ClassificationDataSetConstructors, construct_from_vector_mismatching_
 
 TYPED_TEST(ClassificationDataSetConstructors, construct_scaled_from_vector_without_label) {
     using label_type = typename TestFixture::fixture_label_type;
-    using scaling_type = typename plssvm::classification_data_set<label_type>::scaling;
 
     // create data points
     const auto data_points = util::generate_specific_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ 4, 4 }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE });
 
     // create data set
-    const plssvm::classification_data_set<label_type> data{ data_points.to_2D_vector(), scaling_type{ plssvm::real_type{ -1.0 }, plssvm::real_type{ 1.0 } } };
+    const plssvm::classification_data_set<label_type> data{ data_points.to_2D_vector(), plssvm::min_max_scaler{ plssvm::real_type{ -1.0 }, plssvm::real_type{ 1.0 } } };
 
     const auto [correct_data_points_scaled, scaling_factors] = util::scale(data_points, plssvm::real_type{ -1.0 }, plssvm::real_type{ 1.0 });
     // check values
@@ -549,9 +488,10 @@ TYPED_TEST(ClassificationDataSetConstructors, construct_scaled_from_vector_witho
 
     EXPECT_TRUE(data.is_scaled());
     EXPECT_TRUE(data.scaling_factors().has_value());
-    ASSERT_EQ(data.scaling_factors().value().get().scaling_factors.size(), scaling_factors.size());
+    ASSERT_TRUE(data.scaling_factors().value().get().scaling_factors().has_value());
+    ASSERT_EQ(data.scaling_factors().value().get().scaling_factors()->size(), scaling_factors.size());
     for (std::size_t i = 0; i < scaling_factors.size(); ++i) {
-        auto factors = data.scaling_factors().value().get().scaling_factors[i];
+        auto factors = data.scaling_factors().value().get().scaling_factors().value()[i];
         EXPECT_EQ(factors.feature, std::get<0>(scaling_factors[i]));
         EXPECT_FLOATING_POINT_NEAR(factors.lower, std::get<1>(scaling_factors[i]));
         EXPECT_FLOATING_POINT_NEAR(factors.upper, std::get<2>(scaling_factors[i]));
@@ -584,9 +524,10 @@ TYPED_TEST(ClassificationDataSetConstructors, construct_scaled_from_vector_with_
 
     EXPECT_TRUE(data.is_scaled());
     EXPECT_TRUE(data.scaling_factors().has_value());
-    ASSERT_EQ(data.scaling_factors().value().get().scaling_factors.size(), scaling_factors.size());
+    ASSERT_TRUE(data.scaling_factors().value().get().scaling_factors().has_value());
+    ASSERT_EQ(data.scaling_factors().value().get().scaling_factors()->size(), scaling_factors.size());
     for (std::size_t i = 0; i < scaling_factors.size(); ++i) {
-        auto factors = data.scaling_factors().value().get().scaling_factors[i];
+        auto factors = data.scaling_factors().value().get().scaling_factors().value()[i];
         EXPECT_EQ(factors.feature, std::get<0>(scaling_factors[i]));
         EXPECT_FLOATING_POINT_NEAR(factors.lower, std::get<1>(scaling_factors[i]));
         EXPECT_FLOATING_POINT_NEAR(factors.upper, std::get<2>(scaling_factors[i]));
@@ -731,13 +672,12 @@ TYPED_TEST(ClassificationDataSetMatrixConstructors, construct_from_matrix_with_l
 TYPED_TEST(ClassificationDataSetMatrixConstructors, construct_scaled_from_matrix_without_label_no_padding) {
     using label_type = typename TestFixture::fixture_label_type;
     constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
-    using scaling_type = typename plssvm::classification_data_set<label_type>::scaling;
 
     // create data points
     const auto correct_data_points = util::generate_specific_matrix<plssvm::matrix<plssvm::real_type, layout>>(plssvm::shape{ 4, 4 });
 
     // create data set
-    const plssvm::classification_data_set<label_type> data{ correct_data_points, scaling_type{ plssvm::real_type{ -1.0 }, plssvm::real_type{ 1.0 } } };
+    const plssvm::classification_data_set<label_type> data{ correct_data_points, plssvm::min_max_scaler{ plssvm::real_type{ -1.0 }, plssvm::real_type{ 1.0 } } };
 
     const auto [correct_data_points_scaled, scaling_factors] = util::scale(correct_data_points, plssvm::real_type{ -1.0 }, plssvm::real_type{ 1.0 });
     // check values
@@ -753,9 +693,10 @@ TYPED_TEST(ClassificationDataSetMatrixConstructors, construct_scaled_from_matrix
 
     EXPECT_TRUE(data.is_scaled());
     EXPECT_TRUE(data.scaling_factors().has_value());
-    ASSERT_EQ(data.scaling_factors().value().get().scaling_factors.size(), scaling_factors.size());
+    ASSERT_TRUE(data.scaling_factors().value().get().scaling_factors().has_value());
+    ASSERT_EQ(data.scaling_factors().value().get().scaling_factors()->size(), scaling_factors.size());
     for (std::size_t i = 0; i < scaling_factors.size(); ++i) {
-        auto factors = data.scaling_factors().value().get().scaling_factors[i];
+        auto factors = data.scaling_factors().value().get().scaling_factors().value()[i];
         EXPECT_EQ(factors.feature, std::get<0>(scaling_factors[i]));
         EXPECT_FLOATING_POINT_NEAR(factors.lower, std::get<1>(scaling_factors[i]));
         EXPECT_FLOATING_POINT_NEAR(factors.upper, std::get<2>(scaling_factors[i]));
@@ -765,13 +706,12 @@ TYPED_TEST(ClassificationDataSetMatrixConstructors, construct_scaled_from_matrix
 TYPED_TEST(ClassificationDataSetMatrixConstructors, construct_scaled_from_matrix_without_label) {
     using label_type = typename TestFixture::fixture_label_type;
     constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
-    using scaling_type = typename plssvm::classification_data_set<label_type>::scaling;
 
     // create data points
     const auto data_points = util::generate_specific_matrix<plssvm::matrix<plssvm::real_type, layout>>(plssvm::shape{ 4, 4 }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE });
 
     // create data set
-    const plssvm::classification_data_set<label_type> data{ data_points, scaling_type{ plssvm::real_type{ -1.0 }, plssvm::real_type{ 1.0 } } };
+    const plssvm::classification_data_set<label_type> data{ data_points, plssvm::min_max_scaler{ plssvm::real_type{ -1.0 }, plssvm::real_type{ 1.0 } } };
 
     const auto [correct_data_points_scaled, scaling_factors] = util::scale(data_points, plssvm::real_type{ -1.0 }, plssvm::real_type{ 1.0 });
     // check values
@@ -786,9 +726,10 @@ TYPED_TEST(ClassificationDataSetMatrixConstructors, construct_scaled_from_matrix
 
     EXPECT_TRUE(data.is_scaled());
     EXPECT_TRUE(data.scaling_factors().has_value());
-    ASSERT_EQ(data.scaling_factors().value().get().scaling_factors.size(), scaling_factors.size());
+    ASSERT_TRUE(data.scaling_factors().value().get().scaling_factors().has_value());
+    ASSERT_EQ(data.scaling_factors().value().get().scaling_factors()->size(), scaling_factors.size());
     for (std::size_t i = 0; i < scaling_factors.size(); ++i) {
-        auto factors = data.scaling_factors().value().get().scaling_factors[i];
+        auto factors = data.scaling_factors().value().get().scaling_factors().value()[i];
         EXPECT_EQ(factors.feature, std::get<0>(scaling_factors[i]));
         EXPECT_FLOATING_POINT_NEAR(factors.lower, std::get<1>(scaling_factors[i]));
         EXPECT_FLOATING_POINT_NEAR(factors.upper, std::get<2>(scaling_factors[i]));
@@ -823,9 +764,10 @@ TYPED_TEST(ClassificationDataSetMatrixConstructors, construct_scaled_from_matrix
 
     EXPECT_TRUE(data.is_scaled());
     EXPECT_TRUE(data.scaling_factors().has_value());
-    ASSERT_EQ(data.scaling_factors().value().get().scaling_factors.size(), scaling_factors.size());
+    ASSERT_TRUE(data.scaling_factors().value().get().scaling_factors().has_value());
+    ASSERT_EQ(data.scaling_factors().value().get().scaling_factors()->size(), scaling_factors.size());
     for (std::size_t i = 0; i < scaling_factors.size(); ++i) {
-        auto factors = data.scaling_factors().value().get().scaling_factors[i];
+        auto factors = data.scaling_factors().value().get().scaling_factors().value()[i];
         EXPECT_EQ(factors.feature, std::get<0>(scaling_factors[i]));
         EXPECT_FLOATING_POINT_NEAR(factors.lower, std::get<1>(scaling_factors[i]));
         EXPECT_FLOATING_POINT_NEAR(factors.upper, std::get<2>(scaling_factors[i]));
@@ -859,9 +801,10 @@ TYPED_TEST(ClassificationDataSetMatrixConstructors, construct_scaled_from_matrix
 
     EXPECT_TRUE(data.is_scaled());
     EXPECT_TRUE(data.scaling_factors().has_value());
-    ASSERT_EQ(data.scaling_factors().value().get().scaling_factors.size(), scaling_factors.size());
+    ASSERT_TRUE(data.scaling_factors().value().get().scaling_factors().has_value());
+    ASSERT_EQ(data.scaling_factors().value().get().scaling_factors()->size(), scaling_factors.size());
     for (std::size_t i = 0; i < scaling_factors.size(); ++i) {
-        auto factors = data.scaling_factors().value().get().scaling_factors[i];
+        auto factors = data.scaling_factors().value().get().scaling_factors().value()[i];
         EXPECT_EQ(factors.feature, std::get<0>(scaling_factors[i]));
         EXPECT_FLOATING_POINT_NEAR(factors.lower, std::get<1>(scaling_factors[i]));
         EXPECT_FLOATING_POINT_NEAR(factors.upper, std::get<2>(scaling_factors[i]));

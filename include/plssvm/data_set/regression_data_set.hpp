@@ -15,6 +15,7 @@
 
 #include "plssvm/constants.hpp"                            // plssvm::real_type
 #include "plssvm/data_set/data_set.hpp"                    // plssvm::data_set
+#include "plssvm/data_set/min_max_scaler.hpp"              // plssvm::min_max_scaler
 #include "plssvm/detail/assert.hpp"                        // PLSSVM_ASSERT
 #include "plssvm/detail/logging.hpp"                       // plssvm::detail::log
 #include "plssvm/detail/tracking/performance_tracker.hpp"  // plssvm::detail::tracking::tracking_entry
@@ -68,8 +69,6 @@ class regression_data_set : public data_set<U> {
     using typename base_data_set::label_type;
     /// An unsigned integer type.
     using typename base_data_set::size_type;
-    /// The type of the scaling factors.
-    using typename base_data_set::scaling;
     // Make the overloaded non-virtual save member function visible.
     using base_data_set::save;
     /// The C-SVM type used with this data set.
@@ -90,13 +89,13 @@ class regression_data_set : public data_set<U> {
     /**
      * @copydoc plssvm::data_set::data_set(const std::string &, plssvm::data_set::scaling)
      */
-    regression_data_set(const std::string &filename, scaling scale_parameter) :
+    regression_data_set(const std::string &filename, min_max_scaler scale_parameter) :
         base_data_set{ filename, std::move(scale_parameter) } { this->init(); }
 
     /**
      * @copydoc plssvm::data_set::data_set(const std::string &, file_format_type, plssvm::data_set::scaling)
      */
-    regression_data_set(const std::string &filename, file_format_type format, scaling scale_parameter) :
+    regression_data_set(const std::string &filename, file_format_type format, min_max_scaler scale_parameter) :
         base_data_set{ filename, format, std::move(scale_parameter) } { this->init(); }
 
     /**
@@ -114,13 +113,13 @@ class regression_data_set : public data_set<U> {
     /**
      * @copydoc plssvm::data_set::data_set(const std::vector<std::vector<real_type>> &, plssvm::data_set::scaling)
      */
-    regression_data_set(const std::vector<std::vector<real_type>> &data_points, scaling scale_parameter) :
+    regression_data_set(const std::vector<std::vector<real_type>> &data_points, min_max_scaler scale_parameter) :
         base_data_set{ data_points, std::move(scale_parameter) } { this->init(); }
 
     /**
      * @copydoc plssvm::data_set::data_set(const std::vector<std::vector<real_type>> &, std::vector<label_type>, plssvm::data_set::scaling)
      */
-    regression_data_set(const std::vector<std::vector<real_type>> &data_points, std::vector<label_type> labels, scaling scale_parameter) :
+    regression_data_set(const std::vector<std::vector<real_type>> &data_points, std::vector<label_type> labels, min_max_scaler scale_parameter) :
         base_data_set{ data_points, std::move(labels), std::move(scale_parameter) } { this->init(); }
 
     /**
@@ -141,14 +140,14 @@ class regression_data_set : public data_set<U> {
      * @copydoc plssvm::data_set::data_set(const matrix<real_type, layout> &, plssvm::data_set::scaling)
      */
     template <layout_type layout>
-    regression_data_set(const matrix<real_type, layout> &data_points, scaling scale_parameter) :
+    regression_data_set(const matrix<real_type, layout> &data_points, min_max_scaler scale_parameter) :
         base_data_set{ data_points, std::move(scale_parameter) } { this->init(); }
 
     /**
      * @copydoc plssvm::data_set::data_set(const matrix<real_type, layout> &, std::vector<label_type>, plssvm::data_set::scaling)
      */
     template <layout_type layout>
-    regression_data_set(const matrix<real_type, layout> &data_points, std::vector<label_type> labels, scaling scale_parameter) :
+    regression_data_set(const matrix<real_type, layout> &data_points, std::vector<label_type> labels, min_max_scaler scale_parameter) :
         base_data_set{ data_points, std::move(labels), std::move(scale_parameter) } { this->init(); }
 
     /**

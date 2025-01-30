@@ -223,7 +223,7 @@ TYPED_TEST_P(GenericCSVRSolverKernelFunction, fit) {
     const plssvm::parameter params{ plssvm::kernel_type = kernel };
 
     // create data set to be used
-    plssvm::regression_data_set<label_type> test_data{ PLSSVM_TEST_PATH "/data/predict/50x20.libsvm" };
+    plssvm::regression_data_set<label_type> test_data{ PLSSVM_TEST_PATH "/data/libsvm/regression/6x4.libsvm" };
     if constexpr (kernel == plssvm::kernel_function_type::chi_squared) {
         // chi-squared is well-defined for non-negative values only
         if (test_data.labels().has_value()) {

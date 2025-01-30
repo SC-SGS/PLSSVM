@@ -15,6 +15,7 @@
 
 #include "plssvm/constants.hpp"                         // plssvm::real_type
 #include "plssvm/data_set/classification_data_set.hpp"  // plssvm::classification_data_set
+#include "plssvm/data_set/min_max_scaler.hpp" // plssvm::min_max_scaler
 #include "plssvm/data_set/data_set.hpp"                 // plssvm::data_set
 #include "plssvm/data_set/regression_data_set.hpp"      // plssvm::regression_data_set
 #include "plssvm/detail/cmd/parser_predict.hpp"         // plssvm::detail::cmd::parser_predict
@@ -58,18 +59,15 @@ template <typename label_type, typename... Args>
 }
 
 /**
- * @brief Create scaling factors based on the provided command line arguments.
- * @tparam label_type the type of the labels
+ * @brief Create a plssvm::min_max_scaler based on the provided command line arguments.
  * @param[in] cmd_parser the command line arguments
- * @return the constructed scaling factors (`[[nodiscard]]`)
+ * @return the constructed plssvm::min_max_scaler (`[[nodiscard]]`)
  */
-template <typename label_type>
-[[nodiscard]] inline auto make_scaling_factors(const cmd::parser_scale &cmd_parser) {
-    using scaling_factors = typename plssvm::data_set<label_type>::scaling;
+[[nodiscard]] inline min_max_scaler make_scaling_factors(const cmd::parser_scale &cmd_parser) {
     if (!cmd_parser.restore_filename.empty()) {
-        return scaling_factors{ cmd_parser.restore_filename };
+        return min_max_scaler{ cmd_parser.restore_filename };
     } else {
-        return scaling_factors{ cmd_parser.lower, cmd_parser.upper };
+        return min_max_scaler{ cmd_parser.lower, cmd_parser.upper };
     }
 }
 
@@ -122,10 +120,10 @@ template <typename label_type>
  */
 [[nodiscard]] inline data_set_variants data_set_factory(const cmd::parser_scale &cmd_parser) {
     if (cmd_parser.strings_as_labels) {
-        return make_classification_data_set<std::string>(cmd_parser.input_filename, make_scaling_factors<std::string>(cmd_parser));
+        return make_classification_data_set<std::string>(cmd_parser.input_filename, make_scaling_factors(cmd_parser));
     } else {
         using label_type = typename classification_data_set<>::label_type;
-        return make_classification_data_set<label_type>(cmd_parser.input_filename, make_scaling_factors<label_type>(cmd_parser));
+        return make_classification_data_set<label_type>(cmd_parser.input_filename, make_scaling_factors(cmd_parser));
     }
 }
 

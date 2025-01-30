@@ -10,6 +10,7 @@
 
 #include "plssvm/constants.hpp"                         // plssvm::real_type, plssvm::PADDING_SIZE
 #include "plssvm/data_set/classification_data_set.hpp"  // data set class to test
+#include "plssvm/data_set/min_max_scaler.hpp"           // plssvm::min_max_scaler
 #include "plssvm/matrix.hpp"                            // plssvm::aos_matrix
 #include "plssvm/shape.hpp"                             // plssvm::shape
 
@@ -143,7 +144,6 @@ TYPED_TEST(ClassificationDataSetGetter, num_classes) {
 
 TYPED_TEST(ClassificationDataSetGetter, is_scaled) {
     using label_type = typename TestFixture::fixture_label_type;
-    using scaling_type = typename plssvm::classification_data_set<label_type>::scaling;
 
     // create data set
     const plssvm::classification_data_set<label_type> data{ this->get_data_points() };
@@ -151,14 +151,13 @@ TYPED_TEST(ClassificationDataSetGetter, is_scaled) {
     EXPECT_FALSE(data.is_scaled());
 
     // create scaled data set
-    const plssvm::classification_data_set<label_type> data_scaled{ this->get_data_points(), scaling_type{ plssvm::real_type{ -1.0 }, plssvm::real_type{ 1.0 } } };
+    const plssvm::classification_data_set<label_type> data_scaled{ this->get_data_points(), plssvm::min_max_scaler{ plssvm::real_type{ -1.0 }, plssvm::real_type{ 1.0 } } };
     // check is_scaled getter
     EXPECT_TRUE(data_scaled.is_scaled());
 }
 
 TYPED_TEST(ClassificationDataSetGetter, scaling_factors) {
     using label_type = typename TestFixture::fixture_label_type;
-    using scaling_type = typename plssvm::classification_data_set<label_type>::scaling;
 
     // create data set
     const plssvm::classification_data_set<label_type> data{ this->get_data_points() };
@@ -166,17 +165,18 @@ TYPED_TEST(ClassificationDataSetGetter, scaling_factors) {
     EXPECT_FALSE(data.scaling_factors().has_value());
 
     // create scaled data set
-    const plssvm::classification_data_set<label_type> data_scaled{ this->get_data_points(), scaling_type{ plssvm::real_type{ -1.0 }, plssvm::real_type{ 1.0 } } };
+    const plssvm::classification_data_set<label_type> data_scaled{ this->get_data_points(), plssvm::min_max_scaler{ plssvm::real_type{ -1.0 }, plssvm::real_type{ 1.0 } } };
     // check scaling_factors getter
     ASSERT_TRUE(data_scaled.scaling_factors().has_value());
     const auto &[ignored, correct_scaling_factors] = util::scale(this->get_data_points(), plssvm::real_type{ -1.0 }, plssvm::real_type{ 1.0 });
-    const scaling_type &scaling_factors = *data_scaled.scaling_factors();
-    EXPECT_FLOATING_POINT_EQ(scaling_factors.scaling_interval.first, plssvm::real_type{ -1.0 });
-    EXPECT_FLOATING_POINT_EQ(scaling_factors.scaling_interval.second, plssvm::real_type{ 1.0 });
-    ASSERT_EQ(scaling_factors.scaling_factors.size(), correct_scaling_factors.size());
-    for (std::size_t i = 0; i < scaling_factors.scaling_factors.size(); ++i) {
-        EXPECT_EQ(scaling_factors.scaling_factors[i].feature, std::get<0>(correct_scaling_factors[i]));
-        EXPECT_FLOATING_POINT_NEAR(scaling_factors.scaling_factors[i].lower, std::get<1>(correct_scaling_factors[i]));
-        EXPECT_FLOATING_POINT_NEAR(scaling_factors.scaling_factors[i].upper, std::get<2>(correct_scaling_factors[i]));
+    const plssvm::min_max_scaler &scaling_factors = *data_scaled.scaling_factors();
+    EXPECT_FLOATING_POINT_EQ(scaling_factors.scaling_interval().first, plssvm::real_type{ -1.0 });
+    EXPECT_FLOATING_POINT_EQ(scaling_factors.scaling_interval().second, plssvm::real_type{ 1.0 });
+    ASSERT_TRUE(scaling_factors.scaling_factors().has_value());
+    ASSERT_EQ(scaling_factors.scaling_factors()->size(), correct_scaling_factors.size());
+    for (std::size_t i = 0; i < scaling_factors.scaling_factors()->size(); ++i) {
+        EXPECT_EQ(scaling_factors.scaling_factors().value()[i].feature, std::get<0>(correct_scaling_factors[i]));
+        EXPECT_FLOATING_POINT_NEAR(scaling_factors.scaling_factors().value()[i].lower, std::get<1>(correct_scaling_factors[i]));
+        EXPECT_FLOATING_POINT_NEAR(scaling_factors.scaling_factors().value()[i].upper, std::get<2>(correct_scaling_factors[i]));
     }
 }

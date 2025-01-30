@@ -20,7 +20,9 @@
 #include "plssvm/classification_types.hpp"                   // all supported multi-class classification strategies
 #include "plssvm/constants.hpp"                              // verbosity flag und compile-time constants
 #include "plssvm/csvm_factory.hpp"                           // a factory function to instantiate a C-SVM using a runtime backend; includes the available backend C-SVMs
-#include "plssvm/data_set/data_set.hpp"                      // a data set used for training a C-SVM
+#include "plssvm/data_set/classification_data_set.hpp"       // a classification data set used for training a C-SVC
+#include "plssvm/data_set/min_max_scaler.hpp"                // a min-max scaler for the data sets
+#include "plssvm/data_set/regression_data_set.hpp"           // a regression data set used for training a C-SVR
 #include "plssvm/environment.hpp"                            // environment management functions and classes
 #include "plssvm/exceptions/exceptions.hpp"                  // exception hierarchy
 #include "plssvm/file_format_types.hpp"                      // all supported file format types
@@ -29,14 +31,12 @@
 #include "plssvm/kernel_functions.hpp"                       // implementation of all supported kernel functions
 #include "plssvm/matrix.hpp"                                 // a custom matrix class
 #include "plssvm/model/classification_model.hpp"             // the model as a result of training a C-SVC
-#include "plssvm/model/model.hpp"                            // the model as a result of training a C-SVM
 #include "plssvm/model/regression_model.hpp"                 // the model as a result of training a C-SVR
 #include "plssvm/parameter.hpp"                              // the C-SVM parameter
 #include "plssvm/regression_report.hpp"                      // reports different metrics (e.g., mean squared error or R^2 score) for the regression task after scoring
 #include "plssvm/shape.hpp"                                  // shape for a matrix or device pointer
 #include "plssvm/solver_types.hpp"                           // all supported solver types (e.g., Conjugate Gradients with explicit, streaming, or implicit kernel matrix generation)
 #include "plssvm/svm/csvc.hpp"                               // the base C-SVC every backend is inheriting from
-#include "plssvm/svm/csvm.hpp"                               // the base C-SVM every backend is inheriting from
 #include "plssvm/svm/csvr.hpp"                               // the base C-SVR every backend is inheriting from
 #include "plssvm/target_platforms.hpp"                       // all supported target platforms
 #include "plssvm/verbosity_levels.hpp"                       // all supported verbosity levels

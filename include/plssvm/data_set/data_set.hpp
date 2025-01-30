@@ -14,11 +14,11 @@
 #pragma once
 
 #include "plssvm/constants.hpp"                            // plssvm::real_type, plssvm::PADDING_SIZE
+#include "plssvm/data_set/min_max_scaler.hpp"              // plssvm::min_max_scaler
 #include "plssvm/detail/assert.hpp"                        // PLSSVM_ASSERT
 #include "plssvm/detail/io/arff_parsing.hpp"               // plssvm::detail::io::write_libsvm_data
 #include "plssvm/detail/io/file_reader.hpp"                // plssvm::detail::io::file_reader
 #include "plssvm/detail/io/libsvm_parsing.hpp"             // plssvm::detail::io::write_arff_data
-#include "plssvm/detail/io/scaling_factors_parsing.hpp"    // plssvm::detail::io::parse_scaling_factors
 #include "plssvm/detail/logging.hpp"                       // plssvm::detail::log
 #include "plssvm/detail/string_utility.hpp"                // plssvm::detail::ends_with
 #include "plssvm/detail/tracking/performance_tracker.hpp"  // plssvm::detail::tracking::tracking_entry
@@ -66,9 +66,6 @@ class data_set {
     /// An unsigned integer type.
     using size_type = std::size_t;
 
-    // forward declare the scaling class
-    class scaling;
-
     /**
      * @brief Read the data points from the file @p filename.
      *        Automatically determines the plssvm::file_format_type based on the file extension.
@@ -89,21 +86,21 @@ class data_set {
      *        Automatically determines the plssvm::file_format_type based on the file extension.
      * @details If @p filename ends with `.arff` it uses the ARFF parser, otherwise the LIBSVM parser is used.
      * @param[in] filename the file to read the data points from
-     * @param[in] scale_parameter the parameters used to scale the data set feature values to a given range
+     * @param[in] scaler the parameters used to scale the data set feature values to a given range
      * @throws plssvm::invalid_file_format_exception all exceptions thrown by plssvm::data_set::read_file
-     * @throws plssvm::data_set_exception all exceptions thrown by plssvm::data_set::scale
+     * @throws plssvm::min_max_scaler_exception all exceptions thrown by plssvm::min_max_scaler::scale
      */
-    data_set(const std::string &filename, scaling scale_parameter);
+    data_set(const std::string &filename, min_max_scaler scaler);
     /**
      * @brief Read the data points from the file @p filename assuming that the file is given in the plssvm::file_format_type @p format and
-     *        scale it using the provided @p scale_parameter.
+     *        scale it using the provided @p scaler.
      * @param[in] filename the file to read the data points from
      * @param[in] format the assumed file format used to parse the data points
-     * @param[in] scale_parameter the parameters used to scale the data set feature values to a given range
+     * @param[in] scaler the parameters used to scale the data set feature values to a given range
      * @throws plssvm::invalid_file_format_exception all exceptions thrown by plssvm::data_set::read_file
-     * @throws plssvm::data_set_exception all exceptions thrown by plssvm::data_set::scale
+     * @throws plssvm::min_max_scaler_exception all exceptions thrown by plssvm::min_max_scaler::scale
      */
-    data_set(const std::string &filename, file_format_type format, scaling scale_parameter);
+    data_set(const std::string &filename, file_format_type format, min_max_scaler scaler);
 
     /**
      * @brief Create a new data set by converting the provided @p data_points to a plssvm::matrix.
@@ -125,27 +122,27 @@ class data_set {
      */
     data_set(const std::vector<std::vector<real_type>> &data_points, std::vector<label_type> labels);
     /**
-     * @brief Create a new data set  by converting the provided @p data_points to a plssvm::matrix and scale them using the provided @p scale_parameter.
+     * @brief Create a new data set  by converting the provided @p data_points to a plssvm::matrix and scale them using the provided @p scaler.
      * @param[in] data_points the data points used in this data set
-     * @param[in] scale_parameter the parameters used to scale the data set feature values to a given range
+     * @param[in] scaler the parameters used to scale the data set feature values to a given range
      * @throws plssvm::data_set_exception if the @p data_points vector is empty
      * @throws plssvm::data_set_exception if the data points in @p data_points have mismatching number of features
      * @throws plssvm::data_set_exception if any @p data_point has no features
-     * @throws plssvm::data_set_exception all exceptions thrown by plssvm::data_set::scale
+     * @throws plssvm::min_max_scaler_exception all exceptions thrown by plssvm::min_max_scaler::scale
      */
-    data_set(const std::vector<std::vector<real_type>> &data_points, scaling scale_parameter);
+    data_set(const std::vector<std::vector<real_type>> &data_points, min_max_scaler scaler);
     /**
-     * @brief Create a new data set  by converting the provided @p data_points to a plssvm::matrix and copying the @p labels and scale the @p data_points using the provided @p scale_parameter.
+     * @brief Create a new data set  by converting the provided @p data_points to a plssvm::matrix and copying the @p labels and scale the @p data_points using the provided @p scaler.
      * @param[in] data_points the data points used in this data set
      * @param[in] labels the labels used in this data set
-     * @param[in] scale_parameter the parameters used to scale the data set feature values to a given range
+     * @param[in] scaler the parameters used to scale the data set feature values to a given range
      * @throws plssvm::data_set_exception if the @p data_points vector is empty
      * @throws plssvm::data_set_exception if the data points in @p data_points have mismatching number of features
      * @throws plssvm::data_set_exception if any @p data_point has no features
      * @throws plssvm::data_set_exception if the number of data points in @p data_points and number of @p labels mismatch
-     * @throws plssvm::data_set_exception all exceptions thrown by plssvm::data_set::scale
+     * @throws plssvm::min_max_scaler_exception all exceptions thrown by plssvm::min_max_scaler::scale
      */
-    data_set(const std::vector<std::vector<real_type>> &data_points, std::vector<label_type> labels, scaling scale_parameter);
+    data_set(const std::vector<std::vector<real_type>> &data_points, std::vector<label_type> labels, min_max_scaler scaler);
 
     /**
      * @brief Create a new data set from the provided @p data_points.
@@ -173,33 +170,34 @@ class data_set {
     template <layout_type layout>
     data_set(const matrix<real_type, layout> &data_points, std::vector<label_type> labels);
     /**
-     * @brief Create a new data set from the the provided @p data_points and scale them using the provided @p scale_parameter.
+     * @brief Create a new data set from the the provided @p data_points and scale them using the provided @p scaler.
      * @note If the provided matrix isn't padded, adds the necessary padding entries automatically.
      * @tparam layout the layout type of the input matrix
      * @param[in] data_points the data points used in this data set
-     * @param[in] scale_parameter the parameters used to scale the data set feature values to a given range
+     * @param[in] scaler the parameters used to scale the data set feature values to a given range
      * @throws plssvm::data_set_exception if the @p data_points vector is empty
      * @throws plssvm::data_set_exception if the data points in @p data_points have mismatching number of features
      * @throws plssvm::data_set_exception if any @p data_point has no features
-     * @throws plssvm::data_set_exception all exceptions thrown by plssvm::data_set::scale
+     * @throws plssvm::min_max_scaler_exception all exceptions thrown by plssvm::min_max_scaler::scale
      */
     template <layout_type layout>
-    data_set(const matrix<real_type, layout> &data_points, scaling scale_parameter);
+    data_set(const matrix<real_type, layout> &data_points, min_max_scaler scaler);
     /**
-     * @brief Create a new data set from the the provided @p data_points and @p labels and scale the @p data_points using the provided @p scale_parameter.
+     * @brief Create a new data set from the the provided @p data_points and @p labels and scale the @p data_points using the provided @p scaler.
      * @note If the provided matrix isn't padded, adds the necessary padding entries automatically.
      * @tparam layout the layout type of the input matrix
      * @param[in] data_points the data points used in this data set
      * @param[in] labels the labels used in this data set
-     * @param[in] scale_parameter the parameters used to scale the data set feature values to a given range
+     * @param[in] scaler the parameters used to scale the data set feature values to a given range
      * @throws plssvm::data_set_exception if the @p data_points vector is empty
      * @throws plssvm::data_set_exception if the data points in @p data_points have mismatching number of features
      * @throws plssvm::data_set_exception if any @p data_point has no features
      * @throws plssvm::data_set_exception if the number of data points in @p data_points and number of @p labels mismatch
-     * @throws plssvm::data_set_exception all exceptions thrown by plssvm::data_set::scale
+     * @throws plssvm::min_max_scaler_exception all exceptions thrown by plssvm::min_max_scaler::scale
      */
     template <layout_type layout>
     data_set(const matrix<real_type, layout> &data_points, std::vector<label_type> labels, scaling scale_parameter);
+    data_set(const matrix<real_type, layout> &data_points, std::vector<label_type> labels, min_max_scaler scaler);
 
     /**
      * @brief Default copy constructor.
@@ -275,7 +273,7 @@ class data_set {
      * @details The used scaling factors can be retrieved using plssvm::data_set::scaling_factors().
      * @return `true` if this data set has been scaled, `false` otherwise (`[[nodiscard]]`)
      */
-    [[nodiscard]] bool is_scaled() const noexcept { return scale_parameters_ != nullptr; }
+    [[nodiscard]] bool is_scaled() const noexcept { return scaler_ != nullptr; }
 
     /**
      * @brief Returns the scaling factors as an optional reference used to scale the data points in this data set.
@@ -283,7 +281,7 @@ class data_set {
      *          If the data set has been scaled, the scaling factors can be retrieved as using: `dataset.scaling_factors()->%get()`.
      * @return the scaling factors (`[[nodiscard]]`)
      */
-    [[nodiscard]] optional_ref<const scaling> scaling_factors() const noexcept;
+    [[nodiscard]] optional_ref<const min_max_scaler> scaling_factors() const noexcept;
 
   protected:
     /**
@@ -297,16 +295,7 @@ class data_set {
      * @throws plssvm::data_set_exception any exception of the plssvm::data_set::label_mapper class
      */
     virtual void map_label() = 0;
-    /**
-     * @brief Scale the feature values of the data set to the provided range.
-     * @details Scales all data points feature wise, i.e., one scaling factor is responsible, e.g., for the first feature of **all** data points. <br>
-     *          Scaling a data value \f$x\f$ to the range \f$[a, b]\f$ is done with the formular:
-     *          \f$x_{scaled} = a + (b - a) \cdot \frac{x - min(x)}{max(x) - min(x)}\f$
-     * @throws plssvm::data_set_exception if more scaling factors than features are present
-     * @throws plssvm::data_set_exception if the largest scaling factor index is larger than the number of features
-     * @throws plssvm::data_set_exception if for any feature more than one scaling factor is present
-     */
-    void scale();
+
     /**
      * @brief Read the data points and potential labels from the file @p filename assuming the plssvm::file_format_type @p format.
      * @param[in] filename the filename to read the data from
@@ -328,107 +317,9 @@ class data_set {
     /// A pointer to the mapped values of the labels of this data set; may be `nullptr` if no labels have been provided.
     std::shared_ptr<aos_matrix<real_type>> y_ptr_{ nullptr };
 
-    /// The scaling parameters used to scale the data points in this data set; may be `nullptr` if no data point scaling was requested.
-    std::shared_ptr<scaling> scale_parameters_{ nullptr };
+    /// The min-max scaling parameters used to scale the data points in this data set; may be `nullptr` if no data point scaling was requested.
+    std::shared_ptr<min_max_scaler> scaler_{ nullptr };
 };
-
-//*************************************************************************************************************************************//
-//                                                         scaling nested-class                                                        //
-//*************************************************************************************************************************************//
-
-/**
- * @brief Implements all necessary data and functions needed for scaling a plssvm::data_set to an user-defined range.
- */
-template <typename U>
-class data_set<U>::scaling {
-  public:
-    /**
-     * @brief The calculated or read feature-wise scaling factors.
-     */
-    struct factors {
-        /**
-         * @brief Default construct new scaling factors.
-         */
-        factors() = default;
-
-        /**
-         * @brief Construct new scaling factors struct with the provided values.
-         * @param[in] feature_index the feature index for which the bounds are valid
-         * @param[in] lower_bound the lowest value of the feature @p feature_index for all data points
-         * @param[in] upper_bound the maximum value of the feature @p feature_index for all data points
-         */
-        factors(const size_type feature_index, const real_type lower_bound, const real_type upper_bound) :
-            feature{ feature_index },
-            lower{ lower_bound },
-            upper{ upper_bound } { }
-
-        /// The feature index for which the scaling factors are valid.
-        size_type feature{};
-        /// The lowest value of the @p feature for all data points.
-        real_type lower{};
-        /// The maximum value of the @p feature for all data points.
-        real_type upper{};
-    };
-
-    /**
-     * @brief Create a new scaling class that can be used to scale all features of a data set to the interval [lower, upper].
-     * @param[in] lower the lower bound value of all features
-     * @param[in] upper the upper bound value of all features
-     * @throws plssvm::data_set_exception if lower is greater or equal than upper
-     */
-    scaling(real_type lower, real_type upper);
-    /**
-     * @brief Read the scaling interval and factors from the provided file @p filename.
-     * @param[in] filename the filename to read the scaling information from
-     * @throws plssvm::invalid_file_format_exception all exceptions thrown by the plssvm::detail::io::parse_scaling_factors function
-     */
-    scaling(const std::string &filename);  // can't be explicit due to the data_set_variant
-
-    /**
-     * @brief Save the scaling factors to the file @p filename.
-     * @param[in] filename the file to save the scaling factors to
-     * @throws plssvm::data_set_exception if no scaling factors are available
-     */
-    void save(const std::string &filename) const;
-
-    /// The user-provided scaling interval. After scaling, all feature values are scaled to [lower, upper].
-    std::pair<real_type, real_type> scaling_interval{};
-    /// The scaling factors for all features.
-    std::vector<factors> scaling_factors{};
-};
-
-template <typename U>
-data_set<U>::scaling::scaling(const real_type lower, const real_type upper) :
-    scaling_interval{ std::make_pair(lower, upper) } {
-    if (lower >= upper) {
-        throw data_set_exception{ fmt::format("Inconsistent scaling interval specification: lower ({}) must be less than upper ({})!", lower, upper) };
-    }
-}
-
-template <typename U>
-data_set<U>::scaling::scaling(const std::string &filename) {
-    // open the file
-    detail::io::file_reader reader{ filename };
-    reader.read_lines('#');
-
-    // read scaling values from file
-    std::tie(scaling_interval, scaling_factors) = detail::io::parse_scaling_factors<factors>(reader);
-}
-
-template <typename U>
-void data_set<U>::scaling::save(const std::string &filename) const {
-    const std::chrono::time_point start_time = std::chrono::steady_clock::now();
-
-    // write scaling values to file
-    detail::io::write_scaling_factors(filename, scaling_interval, scaling_factors);
-
-    const std::chrono::time_point end_time = std::chrono::steady_clock::now();
-    detail::log(verbosity_level::full | verbosity_level::timing,
-                "Write {} scaling factors in {} to the file '{}'.\n",
-                detail::tracking::tracking_entry{ "scaling_factors_write", "num_scaling_factors", scaling_factors.size() },
-                detail::tracking::tracking_entry{ "scaling_factors_write", "time", std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time) },
-                detail::tracking::tracking_entry{ "scaling_factors_write", "filename", filename });
-}
 
 //*************************************************************************************************************************************//
 //                                                           data set class                                                            //
@@ -448,21 +339,21 @@ data_set<U>::data_set(const std::string &filename, const file_format_type format
 }
 
 template <typename U>
-data_set<U>::data_set(const std::string &filename, scaling scale_parameter) :
+data_set<U>::data_set(const std::string &filename, min_max_scaler scale_parameter) :
     data_set{ filename } {
     // initialize scaling
-    scale_parameters_ = std::make_shared<scaling>(std::move(scale_parameter));
+    scaler_ = std::make_shared<min_max_scaler>(std::move(scale_parameter));
     // scale data set
-    this->scale();
+    scaler_->scale(*data_ptr_);
 }
 
 template <typename U>
-data_set<U>::data_set(const std::string &filename, file_format_type format, scaling scale_parameter) :
+data_set<U>::data_set(const std::string &filename, file_format_type format, min_max_scaler scale_parameter) :
     data_set{ filename, format } {
     // initialize scaling
-    scale_parameters_ = std::make_shared<scaling>(std::move(scale_parameter));
+    scaler_ = std::make_shared<min_max_scaler>(std::move(scale_parameter));
     // scale data set
-    this->scale();
+    scaler_->scale(*data_ptr_);
 }
 
 // clang-format off
@@ -481,14 +372,14 @@ data_set<U>::data_set(const std::vector<std::vector<real_type>> &data_points, st
     }
 
 template <typename U>
-data_set<U>::data_set(const std::vector<std::vector<real_type>> &data_points, scaling scale_parameter) try :
+data_set<U>::data_set(const std::vector<std::vector<real_type>> &data_points, min_max_scaler scale_parameter) try :
     data_set{ soa_matrix<real_type>{ data_points, shape{ PADDING_SIZE, PADDING_SIZE } }, std::move(scale_parameter) } {}
     catch (const matrix_exception &e) {
         throw data_set_exception{ e.what() };
     }
 
 template <typename U>
-data_set<U>::data_set(const std::vector<std::vector<real_type>> &data_points, std::vector<label_type> labels, scaling scale_parameter) try :
+data_set<U>::data_set(const std::vector<std::vector<real_type>> &data_points, std::vector<label_type> labels, min_max_scaler scale_parameter) try :
     data_set{ soa_matrix<real_type>{ data_points, shape{ PADDING_SIZE, PADDING_SIZE } }, std::move(labels), std::move(scale_parameter) } {}
     catch (const matrix_exception &e) {
         throw data_set_exception{ e.what() };
@@ -526,17 +417,24 @@ data_set<U>::data_set(const matrix<real_type, layout> &data_points, std::vector<
 
 template <typename U>
 template <layout_type layout>
-data_set<U>::data_set(const matrix<real_type, layout> &data_points, scaling scale_parameter) :
-    data_set{ std::move(data_points) } {
+data_set<U>::data_set(const matrix<real_type, layout> &data_points, min_max_scaler scale_parameter) :
+    data_set{ data_points } {
     // initialize scaling
-    scale_parameters_ = std::make_shared<scaling>(std::move(scale_parameter));
+    scaler_ = std::make_shared<min_max_scaler>(std::move(scale_parameter));
     // scale data set
-    this->scale();
+    scaler_->scale(*data_ptr_);
 }
 
 template <typename U>
 template <layout_type layout>
 data_set<U>::data_set(const matrix<real_type, layout> &data_points, std::vector<label_type> labels, scaling scale_parameter) :
+data_set<U>::data_set(const matrix<real_type, layout> &data_points, std::vector<label_type> labels, min_max_scaler scale_parameter) :
+    data_set{ data_points, std::move(labels) } {
+    // initialize scaling
+    scaler_ = std::make_shared<min_max_scaler>(std::move(scale_parameter));
+    // scale data set
+    scaler_->scale(*data_ptr_);
+}
     data_set{ std::move(data_points), std::move(labels) } {
     // initialize scaling
     scale_parameters_ = std::make_shared<scaling>(std::move(scale_parameter));
@@ -588,9 +486,9 @@ auto data_set<U>::labels() const noexcept -> optional_ref<const std::vector<labe
 }
 
 template <typename U>
-auto data_set<U>::scaling_factors() const noexcept -> optional_ref<const scaling> {
+auto data_set<U>::scaling_factors() const noexcept -> optional_ref<const min_max_scaler> {
     if (this->is_scaled()) {
-        return std::make_optional(std::cref(*scale_parameters_));
+        return std::make_optional(std::cref(*scaler_));
     }
     return std::nullopt;
 }
@@ -598,74 +496,6 @@ auto data_set<U>::scaling_factors() const noexcept -> optional_ref<const scaling
 //*************************************************************************************************************************************//
 //                                                      PRIVATE MEMBER FUNCTIONS                                                       //
 //*************************************************************************************************************************************//
-
-template <typename U>
-void data_set<U>::scale() {
-    PLSSVM_ASSERT(this->is_scaled(), "No scaling parameters given for scaling!");
-
-    const std::chrono::time_point start_time = std::chrono::steady_clock::now();
-
-    // unpack scaling interval pair
-    const real_type lower = scale_parameters_->scaling_interval.first;
-    const real_type upper = scale_parameters_->scaling_interval.second;
-
-    // calculate scaling factors if necessary, use provided ones otherwise
-    if (scale_parameters_->scaling_factors.empty()) {
-        // calculate feature-wise min/max values for scaling
-        for (size_type feature = 0; feature < num_features_; ++feature) {
-            real_type min_value = std::numeric_limits<real_type>::max();
-            real_type max_value = std::numeric_limits<real_type>::lowest();
-
-// calculate min/max values of all data points at the specific feature
-#pragma omp parallel for default(shared) firstprivate(feature) reduction(min : min_value) reduction(max : max_value)
-            for (size_type data_point = 0; data_point < num_data_points_; ++data_point) {
-                min_value = std::min(min_value, (*data_ptr_)(data_point, feature));
-                max_value = std::max(max_value, (*data_ptr_)(data_point, feature));
-            }
-
-            // add scaling factor only if min_value != 0.0 AND max_value != 0.0
-            if (!(min_value == real_type{ 0.0 } && max_value == real_type{ 0.0 })) {
-                scale_parameters_->scaling_factors.emplace_back(feature, min_value, max_value);
-            }
-        }
-    } else {
-        // the number of scaling factors may not exceed the number of features
-        if (scale_parameters_->scaling_factors.size() > num_features_) {
-            throw data_set_exception{ fmt::format("Need at most as much scaling factors as features in the data set are present ({}), but {} were given!", num_features_, scale_parameters_->scaling_factors.size()) };
-        }
-        // sort vector
-        const auto scaling_factors_comp_less = [](const typename scaling::factors &lhs, const typename scaling::factors &rhs) { return lhs.feature < rhs.feature; };
-        std::sort(scale_parameters_->scaling_factors.begin(), scale_parameters_->scaling_factors.end(), scaling_factors_comp_less);
-        // check whether the biggest feature index is smaller than the number of features
-        if (scale_parameters_->scaling_factors.back().feature >= num_features_) {
-            throw data_set_exception{ fmt::format("The maximum scaling feature index most not be greater than {}, but is {}!", num_features_ - 1, scale_parameters_->scaling_factors.back().feature) };
-        }
-        // check that there are no duplicate entries
-        const auto scaling_factors_comp_eq = [](const typename scaling::factors &lhs, const typename scaling::factors &rhs) { return lhs.feature == rhs.feature; };
-        const auto iter = std::adjacent_find(scale_parameters_->scaling_factors.begin(), scale_parameters_->scaling_factors.end(), scaling_factors_comp_eq);
-        if (iter != scale_parameters_->scaling_factors.end()) {
-            throw data_set_exception{ fmt::format("Found more than one scaling factor for the feature index {}!", iter->feature) };
-        }
-    }
-
-// scale values
-#pragma omp parallel for default(shared) firstprivate(lower, upper)
-    for (size_type i = 0; i < scale_parameters_->scaling_factors.size(); ++i) {
-        // extract feature-wise min and max values
-        const typename scaling::factors factor = scale_parameters_->scaling_factors[i];
-        // scale data values
-        for (size_type data_point = 0; data_point < num_data_points_; ++data_point) {
-            (*data_ptr_)(data_point, factor.feature) = lower + (upper - lower) * ((*data_ptr_)(data_point, factor.feature) - factor.lower) / (factor.upper - factor.lower);
-        }
-    }
-
-    const std::chrono::time_point end_time = std::chrono::steady_clock::now();
-    detail::log(verbosity_level::full | verbosity_level::timing,
-                "Scaled the data set to the range [{}, {}] in {}.\n",
-                detail::tracking::tracking_entry{ "data_set_scale", "lower", lower },
-                detail::tracking::tracking_entry{ "data_set_scale", "upper", upper },
-                detail::tracking::tracking_entry{ "data_set_scale", "time", std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time) });
-}
 
 template <typename U>
 void data_set<U>::read_file(const std::string &filename, file_format_type format) {

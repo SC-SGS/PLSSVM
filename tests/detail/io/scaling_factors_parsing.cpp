@@ -11,7 +11,7 @@
 #include "plssvm/detail/io/scaling_factors_parsing.hpp"
 
 #include "plssvm/constants.hpp"                         // plssvm::real_type
-#include "plssvm/data_set/classification_data_set.hpp"  // plssvm::data_set::scaling::factors
+#include "plssvm/data_set/min_max_scaler.hpp"  // plssvm::min_max_scaler
 #include "plssvm/detail/arithmetic_type_name.hpp"       // plssvm::detail::arithmetic_type_name
 #include "plssvm/detail/io/file_reader.hpp"             // plssvm::detail::io::file_reader
 #include "plssvm/exceptions/exceptions.hpp"             // plssvm::invalid_file_format_exception
@@ -30,7 +30,7 @@
 #include <vector>     // std::vector
 
 // typedef nested struct -> the same for classification and regression -> not necessary to test it twice
-using factors_type = plssvm::classification_data_set<>::scaling::factors;
+using factors_type = plssvm::min_max_scaler::factors;
 
 TEST(ScalingFactorsRead, read) {
     // parse scaling factors!
