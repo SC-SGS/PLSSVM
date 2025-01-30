@@ -21,7 +21,7 @@ int main() {
         const auto svc = plssvm::make_csvc(params);
 
         // fit using the training data, (optionally) set the termination criterion
-        const plssvm::classification_model model = svc->fit(train_data, plssvm::epsilon = 10e-6);
+        const plssvm::classification_model model = svc->fit(train_data, plssvm::epsilon = 1e-6);
 
         // get accuracy of the trained model
         const double model_accuracy = svc->score(model);

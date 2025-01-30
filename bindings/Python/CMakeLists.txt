@@ -42,14 +42,13 @@ set(PLSSVM_PYTHON_BINDINGS_SOURCES
     ${CMAKE_CURRENT_LIST_DIR}/svm/csvm.cpp
     ${CMAKE_CURRENT_LIST_DIR}/svm/csvc.cpp
     ${CMAKE_CURRENT_LIST_DIR}/svm/csvr.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/data_set/data_set.cpp
     ${CMAKE_CURRENT_LIST_DIR}/data_set/classification_data_set.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/data_set/min_max_scaler.cpp
     ${CMAKE_CURRENT_LIST_DIR}/data_set/regression_data_set.cpp
     ${CMAKE_CURRENT_LIST_DIR}/file_format_types.cpp
     ${CMAKE_CURRENT_LIST_DIR}/gamma.cpp
     ${CMAKE_CURRENT_LIST_DIR}/kernel_function_types.cpp
     ${CMAKE_CURRENT_LIST_DIR}/kernel_functions.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/model/model.cpp
     ${CMAKE_CURRENT_LIST_DIR}/model/classification_model.cpp
     ${CMAKE_CURRENT_LIST_DIR}/model/regression_model.cpp
     ${CMAKE_CURRENT_LIST_DIR}/parameter.cpp
@@ -113,18 +112,6 @@ endif ()
 # create pybind11 module
 set(PLSSVM_PYTHON_BINDINGS_LIBRARY_NAME plssvm)
 pybind11_add_module(${PLSSVM_PYTHON_BINDINGS_LIBRARY_NAME} ${PLSSVM_PYTHON_BINDINGS_SOURCES})
-
-# set default label type
-set(PLSSVM_PYTHON_BINDINGS_POSSIBLE_SVC_LABEL_TYPE "bool;char;signed char;unsigned char;short;unsigned short;int;unsigned int;long;unsigned long;long long;unsigned long long;float;double;long double;std::string")
-set(PLSSVM_PYTHON_BINDINGS_PREFERRED_SVC_LABEL_TYPE "std::string" CACHE STRING "The preferred type of the labels for the Python SVC bindings.")
-set_property(CACHE PLSSVM_PYTHON_BINDINGS_PREFERRED_SVC_LABEL_TYPE PROPERTY STRINGS ${PLSSVM_PYTHON_BINDINGS_POSSIBLE_SVC_LABEL_TYPE})
-if (NOT "${PLSSVM_PYTHON_BINDINGS_PREFERRED_SVC_LABEL_TYPE}" IN_LIST PLSSVM_PYTHON_BINDINGS_POSSIBLE_SVC_LABEL_TYPE)
-    message(FATAL_ERROR "The provided label_type \"${PLSSVM_PYTHON_BINDINGS_PREFERRED_SVC_LABEL_TYPE}\" is not one of the allowed values: \"${PLSSVM_PYTHON_BINDINGS_POSSIBLE_SVC_LABEL_TYPE}\"")
-endif ()
-message(STATUS "The preferred label_type for the Python SVC bindings is \"${PLSSVM_PYTHON_BINDINGS_PREFERRED_SVC_LABEL_TYPE}\".")
-
-# add necessary compile definitions for the default real_type and label_type
-target_compile_definitions(${PLSSVM_PYTHON_BINDINGS_LIBRARY_NAME} PRIVATE PLSSVM_PYTHON_BINDINGS_PREFERRED_SVC_LABEL_TYPE=${PLSSVM_PYTHON_BINDINGS_PREFERRED_SVC_LABEL_TYPE})
 
 # add necessary compile options
 target_include_directories(${PLSSVM_PYTHON_BINDINGS_LIBRARY_NAME} PRIVATE ${CMAKE_CURRENT_LIST_DIR}/../..)

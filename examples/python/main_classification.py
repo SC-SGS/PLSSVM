@@ -10,6 +10,7 @@
 
 import plssvm
 from sklearn.metrics import classification_report
+import numpy as np
 
 try:
     # create a new C-SVM parameter set, explicitly overriding the default kernel function
@@ -17,14 +18,14 @@ try:
 
     # create two data sets: one with the training data scaled to [-1, 1]
     # and one with the test data scaled like the training data
-    train_data = plssvm.ClassificationDataSet("train_file.libsvm", scaling=(-1.0, 1.0))
-    test_data = plssvm.ClassificationDataSet("test_file.libsvm", scaling=train_data.scaling_factors())
+    train_data = plssvm.ClassificationDataSet("train_file.libsvm", type=np.int32, scaler=plssvm.MinMaxScaler(-1.0, 1.0))
+    test_data = plssvm.ClassificationDataSet("test_file.libsvm", type=np.int32, scaler=train_data.scaling_factors())
 
     # create C-SVC using the default backend and the previously defined parameter
     svm = plssvm.CSVC(params)
 
     # fit using the training data, (optionally) set the termination criterion
-    model = svm.fit(train_data, epsilon=10e-6)
+    model = svm.fit(train_data, epsilon=1e-6)
 
     # get accuracy of the trained model
     model_accuracy = svm.score(model)
