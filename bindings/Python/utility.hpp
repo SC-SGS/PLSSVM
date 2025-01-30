@@ -11,537 +11,80 @@
 
 #ifndef PLSSVM_BINDINGS_PYTHON_UTILITY_HPP_
 #define PLSSVM_BINDINGS_PYTHON_UTILITY_HPP_
-
 #pragma once
 
-#include "plssvm/constants.hpp"       // plssvm::real_type, plssvm::PADDING_SIZE
-#include "plssvm/detail/utility.hpp"  // plssvm::detail::contains
-#include "plssvm/gamma.hpp"           // plssvm::gamma_type
-#include "plssvm/matrix.hpp"          // plssvm::matrix, plssvm::layout_type
-#include "plssvm/parameter.hpp"       // plssvm::parameter
-#include "plssvm/shape.hpp"           // plssvm::shape
+#include "plssvm/constants.hpp"           // plssvm::real_type
+#include "plssvm/detail/type_traits.hpp"  // plssvm::detail::remove_cvref_t
+#include "plssvm/detail/utility.hpp"      // plssvm::detail::contains
+#include "plssvm/gamma.hpp"               // plssvm::gamma_type
+#include "plssvm/parameter.hpp"           // plssvm::parameter
 
-#include "fmt/format.h"            // fmt::format
-#include "pybind11/buffer_info.h"  // py::buffer_info
-#include "pybind11/cast.h"         // py::cast
-#include "pybind11/numpy.h"        // py::array_t
-#include "pybind11/pybind11.h"     // py::kwargs, py::value_error, py::exception, py::str, py::set_error
-#include "pybind11/pytypes.h"      // py::list
-#include "pybind11/stl.h"          // support for STL types
+#include "fmt/format.h"         // fmt::format
+#include "pybind11/pybind11.h"  // py::kwargs, py::value_error, py::isinstance, py::str, py::module_, py::register_exception_translator, py::set_error
+#include "pybind11/pytypes.h"   // py::type
 
-#include <cstddef>        // std::size_t
-#include <cstdint>        // fixed-width integers
-#include <cstring>        // std::memcpy
-#include <exception>      // std::exception_ptr, std::rethrow_exception
-#include <optional>       // std::optional, std::nullopt
-#include <sstream>        // std::istringstream
-#include <string>         // std::string
-#include <string_view>    // std::string_view
-#include <tuple>          // std::tuple_element_t, std::tuple_size_v
-#include <type_traits>    // std::is_same_v, std::conditional_t
-#include <unordered_map>  // std::unordered_map
-#include <utility>        // std::integer_sequence, std::make_integer_sequence, std::pair
-#include <variant>        // std::variant
-#include <vector>         // std::vector
+#include <cstdint>      // fixed-width integers
+#include <exception>    // std::exception_ptr, std::rethrow_exception
+#include <sstream>      // std::istringstream
+#include <string>       // std::string
+#include <string_view>  // std::string_view
+#include <type_traits>  // std::is_same_v, std::false_type
+#include <utility>      // std::forward
+#include <variant>      // std::variant
+#include <vector>       // std::vector
 
 namespace py = pybind11;
 
 namespace plssvm::bindings::python::util {
 
+namespace detail {
+
 /**
- * @brief Convert a `std::vector<T>` to a Python Numpy array.
- * @tparam T the type in the array
- * @param[in] vec the vector to convert
- * @return the Python Numpy array (`[[nodiscard]]`)
+ * @brief Base case for a type having a label_type typedef.
  */
 template <typename T>
-[[nodiscard]] py::array vector_to_pyarray(const std::vector<T> &vec) {
-    if constexpr (std::is_same_v<T, std::string>) {
-        py::list l{};
-        for (const std::string &str : vec) {
-            l.append(str);
-        }
-        return py::array{ l };
-    } else {
-        py::array_t<T, py::array::c_style> py_array(vec.size());
-        py::buffer_info buffer = py_array.request();
-        T *ptr = static_cast<T *>(buffer.ptr);
-        if constexpr (std::is_same_v<T, bool>) {
-            // can't use memcpy with std::vector<bool>
-            for (typename std::vector<T>::size_type i = 0; i < vec.size(); ++i) {
-                ptr[i] = vec[i];
-            }
-        } else {
-            // use plain memcpy
-            std::memcpy(ptr, vec.data(), vec.size() * sizeof(T));
-        }
-        return py_array;
-    }
-}
-
-/**
- * @brief Convert a `plssvm::matrix<T>` to a Python Numpy array.
- * @tparam T the type in the array
- * @param[in] mat the matrix to convert
- * @return the Python Numpy array (`[[nodiscard]]`)
- */
-template <typename T, plssvm::layout_type layout>
-[[nodiscard]] py::array matrix_to_pyarray(const plssvm::matrix<T, layout> &mat) {
-    using size_type = typename plssvm::matrix<T, layout>::size_type;
-    const size_type num_data_points = mat.num_rows();
-    const size_type num_features = mat.num_cols();
-
-    using py_array_type = std::conditional_t<layout == plssvm::layout_type::aos, py::array_t<T, py::array::c_style>, py::array_t<T, py::array::f_style>>;
-
-    py_array_type py_array({ num_data_points, num_features });
-    py::buffer_info buffer = py_array.request();
-    T *ptr = static_cast<T *>(buffer.ptr);
-    if (mat.is_padded()) {
-        // must remove padding entries before copying to Python numpy array
-        const plssvm::matrix<T, layout> mat_without_padding{ mat, plssvm::shape{ 0, 0 } };
-        std::memcpy(ptr, mat_without_padding.data(), mat.size() * sizeof(T));
-    } else {
-        // can memcpy data directly
-        std::memcpy(ptr, mat.data(), mat.size() * sizeof(T));
-    }
-    return py_array;
-}
-
-/**
- * @brief Convert a Python Numpy array to a `std::vector<T>`.
- * @tparam T the type in the array
- * @param[in] vec the Python Numpy array to convert
- * @return the `std::vector<T>` (`[[nodiscard]]`)
- */
-template <typename T>
-[[nodiscard]] std::vector<T> pyarray_t_to_vector(const py::array_t<T, py::array::c_style | py::array::forcecast> &vec) {
-    // check dimensions
-    if (vec.ndim() != 1) {
-        throw py::value_error{ fmt::format("The provided array must have exactly one dimension but has {}!", vec.ndim()) };
-    }
-
-    if (vec.size() == 0) {
-        // return an empty vector
-        return std::vector<T>{};
-    } else {
-        // convert py::array to std::vector
-        return std::vector<T>(vec.data(0), vec.data(0) + vec.shape(0));
-    }
-}
-
-/**
- * @brief Convert a Python Numpy array to a `std::vector<std::string>`.
- * @tparam T the type in the array
- * @param[in] vec the Python Numpy array to convert
- * @return the `std::vector<std::string>` (`[[nodiscard]]`)
- */
-template <typename T>
-[[nodiscard]] std::vector<std::string> pyarray_t_to_string_vector(const py::array_t<T, py::array::c_style | py::array::forcecast> &vec) {
-    // check dimensions
-    if (vec.ndim() != 1) {
-        throw py::value_error{ fmt::format("the provided array must have exactly one dimension but has {}!", vec.ndim()) };
-    }
-
-    // convert labels to strings
-    std::vector<std::string> tmp(vec.shape(0));
-    for (std::vector<std::string>::size_type i = 0; i < tmp.size(); ++i) {
-        tmp[i] = fmt::format("{}", *vec.data(i));
-    }
-
-    return tmp;
-}
-
-/// The possible vector types supported when converting a py::array to a std::vector.
-using possible_vector_types = std::variant<std::vector<bool>,           // np.bool
-                                           std::vector<std::int8_t>,    // np.int8
-                                           std::vector<std::uint8_t>,   // np.uint8
-                                           std::vector<std::int16_t>,   // np.int16
-                                           std::vector<std::uint16_t>,  // np.uint16
-                                           std::vector<std::int32_t>,   // np.int32
-                                           std::vector<std::uint32_t>,  // np.uint32
-                                           std::vector<std::int64_t>,   // np.int64
-                                           std::vector<std::uint64_t>,  // np.uint64
-                                           std::vector<float>,          // np.float32
-                                           std::vector<double>,         // np.float64
-                                           std::vector<std::string>>;   // np.string
-
-/**
- * @brief Convert a generic Python Numpy array to a `std::vector<T>`.
- * @param[in] vec the generic Python Numpy array to convert
- * @return a `std::variant` containing the converted `std::vector` (`[[nodiscard]]`)
- */
-[[nodiscard]] inline possible_vector_types pyarray_to_vector(const py::array &vec) {
-    // sanity check the passed py::array
-    if (!(vec.flags() & py::array::c_style)) {
-        throw py::attribute_error{ "The py::array must be C-contiguous" };
-    }
-
-    // the type used in the py::array
-    py::dtype type = vec.dtype();
-
-    if (type.equal(py::dtype::of<bool>())) {
-        return pyarray_t_to_vector<bool>(vec);
-    } else if (type.equal(py::dtype::of<std::int8_t>())) {
-        return pyarray_t_to_vector<std::int8_t>(vec);
-    } else if (type.equal(py::dtype::of<std::uint8_t>())) {
-        return pyarray_t_to_vector<std::uint8_t>(vec);
-    } else if (type.equal(py::dtype::of<std::int16_t>())) {
-        return pyarray_t_to_vector<std::int16_t>(vec);
-    } else if (type.equal(py::dtype::of<std::uint16_t>())) {
-        return pyarray_t_to_vector<std::uint16_t>(vec);
-    } else if (type.equal(py::dtype::of<std::int32_t>())) {
-        return pyarray_t_to_vector<std::int32_t>(vec);
-    } else if (type.equal(py::dtype::of<std::uint32_t>())) {
-        return pyarray_t_to_vector<std::uint32_t>(vec);
-    } else if (type.equal(py::dtype::of<std::int64_t>())) {
-        return pyarray_t_to_vector<std::int64_t>(vec);
-    } else if (type.equal(py::dtype::of<std::uint64_t>())) {
-        return pyarray_t_to_vector<std::uint64_t>(vec);
-    } else if (type.equal(py::dtype::of<float>())) {
-        return pyarray_t_to_vector<float>(vec);
-    } else if (type.equal(py::dtype::of<double>())) {
-        return pyarray_t_to_vector<double>(vec);
-    } else if (type.attr("kind").cast<std::string>() == "U") {
-        // convert py::array of strings to a std::vector<std::string>
-        if (vec.ndim() != 1) {
-            throw py::value_error{ fmt::format("The provided array must have exactly one dimension but has {}!", vec.ndim()) };
-        }
-
-        if (vec.size() == 0) {
-            // return an empty vector
-            return std::vector<std::string>{};
-        } else {
-            std::vector<std::string> result;
-            result.reserve(vec.shape(0));
-            for (py::handle item : vec) {
-                result.push_back(py::cast<std::string>(item));
-            }
-            return result;
-        }
-    } else {
-        throw py::value_error{ fmt::format("Unsupported data type: {}!", type.attr("name").cast<std::string>()) };
-    }
-}
-
-/**
- * @brief Convert a Python List to a `std::vector<T>`.
- * @tparam T the types in the `std::vector`
- * @param[in] list list the Python List to convert
- * @return the `std::vector<T>` (`[[nodiscard]]`)
- */
-template <typename T>
-[[nodiscard]] std::vector<T> pylist_to_vector(const py::list &list) {
-    std::vector<T> vec(py::len(list));
-    for (std::size_t i = 0; i < vec.size(); ++i) {
-        if constexpr (std::is_same_v<T, std::string>) {
-            vec[i] = list[i].cast<py::str>().cast<std::string>();
-        } else {
-            vec[i] = list[i].cast<T>();
-        }
-    }
-    return vec;
-}
-
-namespace impl {
-
-/**
- * @brief A hash struct for creating the hash value of a py::type.
- */
-struct py_type_hash {
-    std::size_t operator()(const py::type &t) const {
-        return py::hash(t);
-    }
+struct get_label_type {
+    using type = typename T::label_type;
 };
 
 /**
- * @brief A comparison struct to check two py::type for equality.
+ * @brief Specialization for a std::vector.
  */
-struct py_type_equal {
-    bool operator()(const py::type &lhs, const py::type &rhs) const {
-        return lhs.is(rhs);
-    }
+template <typename T>
+struct get_label_type<std::vector<T>> {
+    using type = T;
 };
 
-}  // namespace impl
-
 /**
- * @brief Convert a Python List to a `std::vector`. The `std::vector<>::value_type` depends on the types provided in the py::list.
- * @param[in] list the Python List to convert
- * @return [a `std::variant` containing the converted `std::vector`, the used py::dtype] (`[[nodiscard]]`)
- */
-[[nodiscard]] inline std::pair<possible_vector_types, py::dtype> pylist_to_vector(const py::list &list) {
-    static const py::module_ np = py::module_::import("numpy");
-    // define a precedence map, i.e., we internally use the type in the py::list with the highest precedence value
-    // example: [0, 1.3, np.int8(6)] -> the types are [int, float, int8] -> precedences are [8, 10, 2] -> the highest precedence is 10 -> we use float internally
-    static const std::unordered_map<py::type, int, impl::py_type_hash, impl::py_type_equal> precedence_map{
-        { py::module_::import("builtins").attr("bool"), 0 },
-        { np.attr("uint8"), 1 },
-        { np.attr("int8"), 2 },
-        { np.attr("uint16"), 3 },
-        { np.attr("int16"), 4 },
-        { np.attr("uint32"), 5 },
-        { np.attr("int32"), 6 },
-        { np.attr("uint64"), 7 },
-        { np.attr("int64"), 8 },
-        { py::module_::import("builtins").attr("int"), 8 },
-        { np.attr("float32"), 9 },
-        { np.attr("float64"), 10 },
-        { py::module_::import("builtins").attr("float"), 10 },
-        { py::module_::import("builtins").attr("str"), 11 }
-    };
-
-    // get the "super" type used internally as defined by the precedence_map
-    py::type highest_type{ py::module_::import("builtins").attr("bool") };
-    int highest_precedence{ -1 };
-    for (std::size_t i = 0; i < py::len(list); ++i) {
-        py::object item = list[i];
-        py::type type = py::type::of(item);
-        int precedence = precedence_map.at(type);
-        if (precedence > highest_precedence) {
-            highest_precedence = precedence;
-            highest_type = type;
-        }
-    }
-
-    // convert the py::list to a vector of the previously determined type
-    if (highest_type.equal(py::module_::import("builtins").attr("bool"))) {
-        return std::make_pair(pylist_to_vector<bool>(list), py::dtype::of<bool>());
-    } else if (highest_type.equal(np.attr("int8"))) {
-        return std::make_pair(pylist_to_vector<std::int8_t>(list), py::dtype::of<std::int8_t>());
-    } else if (highest_type.equal(np.attr("uint8"))) {
-        return std::make_pair(pylist_to_vector<std::uint8_t>(list), py::dtype::of<std::uint8_t>());
-    } else if (highest_type.equal(np.attr("int16"))) {
-        return std::make_pair(pylist_to_vector<std::int16_t>(list), py::dtype::of<std::int16_t>());
-    } else if (highest_type.equal(np.attr("uint16"))) {
-        return std::make_pair(pylist_to_vector<std::uint16_t>(list), py::dtype::of<std::uint16_t>());
-    } else if (highest_type.equal(np.attr("int32"))) {
-        return std::make_pair(pylist_to_vector<std::int32_t>(list), py::dtype::of<std::int32_t>());
-    } else if (highest_type.equal(np.attr("uint32"))) {
-        return std::make_pair(pylist_to_vector<std::uint32_t>(list), py::dtype::of<std::uint32_t>());
-    } else if (highest_type.equal(np.attr("int64")) || highest_type.equal(py::module_::import("builtins").attr("int"))) {
-        return std::make_pair(pylist_to_vector<std::int64_t>(list), py::dtype::of<std::int64_t>());
-    } else if (highest_type.equal(np.attr("uint64"))) {
-        return std::make_pair(pylist_to_vector<std::uint64_t>(list), py::dtype::of<std::uint64_t>());
-    } else if (highest_type.equal(np.attr("float32"))) {
-        return std::make_pair(pylist_to_vector<float>(list), py::dtype::of<float>());
-    } else if (highest_type.equal(np.attr("float64")) || highest_type.equal(py::module_::import("builtins").attr("float"))) {
-        return std::make_pair(pylist_to_vector<double>(list), py::dtype::of<double>());
-    } else if (highest_type.equal(py::module_::import("builtins").attr("str"))) {
-        // convert py::array of strings to a std::vector<std::string>
-        return std::make_pair(pylist_to_vector<std::string>(list), py::dtype("U"));
-    } else {
-        throw py::value_error{ fmt::format("Unsupported data type: {}!", highest_type.attr("__name__").cast<std::string>()) };
-    }
-}
-
-/**
- * @brief Convert a Python Numpy array to a `plssvm::aos_matrix<T>`.
- * @tparam T the type in the array
- * @param[in] mat the 2D Python Numpy matrix to convert
- * @return the `plssvm::aos_matrix` (`[[nodiscard]]`)
+ * @brief Get the label type from @p T. If @p T is a std::vector, uses the std::vector<>::value_type, otherwise directly uses the member label_type typedef.
+ * @tparam T the type to get the label type from
  */
 template <typename T>
-[[nodiscard]] plssvm::aos_matrix<T> pyarray_to_matrix(const py::array_t<T, py::array::c_style | py::array::forcecast> &mat) {
-    // TODO: if C++20 is available, use templated lambdas to also support f_style arrays (template)
-    using size_type = typename plssvm::aos_matrix<T>::size_type;
-    // check dimensions
-    if (mat.ndim() != 2) {
-        throw py::value_error{ fmt::format("the provided matrix must have exactly two dimensions but has {}!", mat.ndim()) };
-    }
-
-    // convert py::array to plssvm::matrix<T>
-    py::buffer_info buffer = mat.request();
-    T *ptr = static_cast<T *>(buffer.ptr);
-    return plssvm::aos_matrix<T>{ plssvm::shape{ static_cast<size_type>(mat.shape(0)), static_cast<size_type>(mat.shape(1)) }, ptr, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE } };
-}
+using get_label_type_t = typename get_label_type<typename plssvm::detail::remove_cvref_t<T>>::type;
 
 /**
- * @brief Check if the provided Python object @p obj is a Pandas DataFrame.
- * @param[in] obj the Python object to check
- * @return `true` if @p obj is a Pandas DataFrame, otherwise `false` (`[[nodiscard]]`)
+ * @brief Base false case.
  */
-[[nodiscard]] inline bool is_pandas_data_frame(const py::object &obj) {
-    try {
-        // try importing the pandas module
-        const py::module_ pd = py::module_::import("pandas");
-        const py::object pd_data_frame = pd.attr("DataFrame");
-        // check the instance
-        return py::isinstance(obj, pd_data_frame);
-    } catch (const py::error_already_set &) {
-        // error loading the pandas library -> obj can't be a DataFrame
-        return false;
-    }
-}
+template <typename T, typename Variant>
+struct is_label_type_in_variant : std::false_type { };
 
 /**
- * @brief Check if the provided Python object @p obj is a Pandas Series.
- * @param[in] obj the Python object to check
- * @return `true` if @p obj is a Pandas Series, otherwise `false` (`[[nodiscard]]`)
+ * @brief Specialization for a std::variant. Checks for the types using logical or via fold expression.
  */
-[[nodiscard]] inline bool is_pandas_series(const py::object &obj) {
-    try {
-        // try importing the pandas module
-        const py::module_ pd = py::module_::import("pandas");
-        const py::object pd_series = pd.attr("Series");
-        // check the instance
-        return py::isinstance(obj, pd_series);
-    } catch (const py::error_already_set &) {
-        // error loading the pandas library -> obj can't be a Series
-        return false;
-    }
-}
+template <typename T, typename... Args>
+struct is_label_type_in_variant<T, std::variant<Args...>> {
+    constexpr static bool value = ((std::is_same_v<T, get_label_type_t<Args>>) || ...);
+};
 
 /**
- * @brief Check if the provided Python object @p obj is a SciPy sparse matrix.
- * @param[in] obj the Python object to check
- * @return `true` if @p obj is a SciPy sparse matrix, otherwise `false` (`[[nodiscard]]`)
+ * @brief Check whether @p T is a label type in @p Variant.
+ * @tparam T the type to check
+ * @tparam Variant the variant type that should contain the label type @p T
  */
-[[nodiscard]] inline bool is_scipy_sparse_matrix(const py::object &obj) {
-    try {
-        // try importing the scipy module
-        const py::module_ scipy_sparse = py::module_::import("scipy.sparse");
-        const py::object spmatrix_class = scipy_sparse.attr("spmatrix");
-        // check the instance
-        return py::isinstance(obj, spmatrix_class);
-    } catch (const py::error_already_set &) {
-        // error loading the scipy library -> obj can't be a sparse matrix
-        return false;
-    }
-}
+template <typename T, typename Variant>
+constexpr bool is_label_type_in_variant_v = is_label_type_in_variant<T, Variant>::value;
 
-/**
- * @brief Convert the provided Pybind11 object @p obj to a plssvm::aos_matrix.
- * @details The supported object types are: Numpy ndarrays, Pandas DataFrames, SciPy sparse matrices, and 2D Python lists.
- *          If the object is a Pandas DataFrame and column names are set, returns these column names (can later be queried using the SVC `feature_names_in_` attribute).
- * @param[in] obj the Python object to convert
- * @throws py::value_error if the Numpy ndarray has more than two dimensions
- * @throws py::value_error if the Numpy ndarray has only one dimension
- * @throws py::value_error if one dimension in the Numpy ndarray is zero
- * @throws py::value_error if the Pandas DataFrame is empty
- * @throws py::value_error if the provided Python list is empty
- * @throws py::value_error if the provided 2D Python list has different number of elements per sublist
- * @throws py::value_error if the provided @p obj isn't a Numpy ndarray, Pandas DataFrame, SciPy sparse matrix, or Python list
- * @return { the converted plssvm::aos_matrix; if available, the feature names } (`[[nodiscard]]`)
- */
-[[nodiscard]] inline std::pair<plssvm::aos_matrix<plssvm::real_type>, std::optional<std::vector<std::string>>> pyobject_to_matrix(const py::object &obj) {
-    if (py::isinstance<py::array>(obj)) {
-        // provided obj is a numpy array
-        // convert to py::array
-        const auto &py_array = py::cast<py::array>(obj);
-
-        // sanity check the number of elements in the numpy array
-        if (py_array.ndim() > 2) {
-            throw py::value_error{ fmt::format("Found array with dim {}. SVC expected <= 2.", py_array.ndim()) };
-        }
-        if (py_array.ndim() == 1) {
-            throw py::value_error{ "Expected 2D array, got 1D array instead." };
-        }
-        if (py_array.size() == 0) {
-            throw py::value_error{ fmt::format("Found array with 0 sample(s) (shape=({}, {})) while a minimum of 1 is required by SVC.", py_array.shape(0), py_array.shape(1)) };
-        }
-
-        const auto &py_array_t = py::cast<py::array_t<plssvm::real_type, py::array::c_style | py::array::forcecast>>(py_array);
-        return std::make_pair(plssvm::bindings::python::util::pyarray_to_matrix(py_array_t), std::nullopt);
-    } else if (is_pandas_data_frame(obj)) {
-        // provided obj is a Pandas DataFrame
-        // convert to py::array_t
-        const auto &py_array_t = obj.attr("values").cast<py::array_t<plssvm::real_type, py::array::c_style | py::array::forcecast>>();
-
-        // sanity check the number of elements in the Pandas DataFrame
-        if (py_array_t.size() == 0) {
-            throw py::value_error{ "at least one array or dtype is required" };
-        }
-
-        // convert py::array_t to plssvm::matrix
-        auto matr = plssvm::bindings::python::util::pyarray_to_matrix(py_array_t);
-
-        // get the feature names (column names) if possible
-        if (py::hasattr(obj, "columns")) {
-            return std::make_pair(std::move(matr), plssvm::bindings::python::util::pylist_to_vector<std::string>(obj.attr("columns")));
-        } else {
-            return std::make_pair(std::move(matr), std::nullopt);
-        }
-    } else if (is_scipy_sparse_matrix(obj)) {
-        // provided obj is a SciPy sparse matrix
-        // convert to py::array_t
-        const auto &py_array_t = obj.attr("toarray")("C").cast<py::array_t<plssvm::real_type, py::array::c_style | py::array::forcecast>>();
-
-        return std::make_pair(plssvm::bindings::python::util::pyarray_to_matrix(py_array_t), std::nullopt);
-    } else if (py::isinstance<py::list>(obj)) {
-        // provided obj is a Python list -> check if it is a correct py::list of py::list
-        // convert to py::list
-        const auto &list = py::cast<py::list>(obj);
-        if (list.empty()) {
-            throw py::value_error{ "Expected 2D array, got 1D array instead!" };
-        }
-
-        // iterate over py::list
-        const std::size_t num_rows = list.size();
-        const std::size_t num_cols = list[0].cast<py::list>().size();
-
-        // create the matrix with the expected size
-        plssvm::aos_matrix<plssvm::real_type> matrix{ plssvm::shape{ num_rows, num_cols } };
-
-        // fill the matrix
-        for (std::size_t row = 0; row < num_rows; ++row) {
-            // get the sublist
-            const auto &sublist = list[row].cast<py::list>();
-            // check if the number of values in the sublist is correct
-            if (num_cols != sublist.size()) {
-                throw py::value_error{ "setting an array element with a sequence. The requested array has an inhomogeneous shape." };
-            }
-            // add list values to the result matrix
-            for (std::size_t col = 0; col < num_cols; ++col) {
-                if (py::isinstance<py::str>(sublist[col])) {
-                    // cast py::str to a plssvm::real_type
-                    matrix(row, col) = static_cast<plssvm::real_type>(py::float_(sublist[col]));
-                } else {
-                    matrix(row, col) = sublist[col].cast<plssvm::real_type>();
-                }
-            }
-        }
-        return std::make_pair(std::move(matrix), std::nullopt);
-    } else {
-        throw py::value_error{ fmt::format("Unsupported data type: {}", std::string{ py::str(obj.get_type().attr("__name__")) }) };
-    }
-}
-
-/**
- * @brief Convert the provided Pybind11 object @p obj to a std::vector.
- * @details The supported object types are: Numpy ndarrays, Pandas Series, Pandas DataFrames, and Python lists. Also returns the data type used for the labels.
- * @param[in] obj the Python object to convert
- * @throws py::value_error if the provided @p obj isn't a Numpy ndarray, Pandas Series, Pandas DataFrame, or Python list
- * @return { the converted std::vector; the data type of the labels } (`[[nodiscard]]`)
- */
-[[nodiscard]] inline std::pair<possible_vector_types, py::dtype> pyobject_to_vector(const py::object &obj) {
-    if (py::isinstance<py::array>(obj)) {
-        // provided obj is a numpy array
-        // convert to py::array
-        auto py_array = py::cast<py::array>(obj);
-        return std::make_pair(plssvm::bindings::python::util::pyarray_to_vector(py_array), py_array.dtype());
-    } else if (is_pandas_series(obj)) {
-        // provided obj is a Pandas Series
-        // convert to py::array_t
-        const auto &py_array_t = obj.attr("values").cast<py::array_t<plssvm::real_type, py::array::c_style | py::array::forcecast>>();
-        return std::make_pair(plssvm::bindings::python::util::pyarray_t_to_vector(py_array_t), py_array_t.dtype());
-    } else if (is_pandas_data_frame(obj)) {
-        // provided obj is a Pandas Series
-        // convert to py::array_t
-        auto py_array_t = obj.attr("values").cast<py::array_t<plssvm::real_type, py::array::c_style | py::array::forcecast>>();
-        py_array_t = py_array_t.reshape({ py_array_t.size() });
-        return std::make_pair(plssvm::bindings::python::util::pyarray_t_to_vector(py_array_t), py_array_t.dtype());
-    } else if (py::isinstance<py::list>(obj)) {
-        // provided obj is a Python list
-        return plssvm::bindings::python::util::pylist_to_vector(py::cast<py::list>(obj));
-    } else {
-        throw py::attribute_error{ fmt::format("Unsupported data type: {}", std::string{ py::str(obj.get_type().attr("__name__")) }) };
-    }
-}
-
-template <typename T>
-[[nodiscard]] plssvm::soa_matrix<T> pyarray_to_soa_matrix(const py::array_t<T, py::array::c_style | py::array::forcecast> &mat) {
-    return plssvm::soa_matrix<T>{ pyarray_to_matrix(mat) };  // TODO: better?
-}
+}  // namespace detail
 
 /**
  * @brief Check that the Python kwargs @p args only contain keyword arguments with names present in @p valid_named_args.
@@ -630,15 +173,13 @@ void register_py_exception(py::module_ &m, const std::string &py_exception_name,
     });
 }
 
-namespace detail {
-
 /**
- * @def PLSSVM_CREATE_NUMPY_NAME_MAPPING
+ * @def PLSSVM_CREATE_PYTHON_TYPE_NAME_MAPPING
  * @brief Map the @p type to its Numpy type name pendant @p numpy_name.
  */
-#define PLSSVM_CREATE_NUMPY_NAME_MAPPING(type, numpy_name) \
-    template <>                                            \
-    [[nodiscard]] constexpr inline std::string_view numpy_name_mapping<type>() { return numpy_name; }
+#define PLSSVM_CREATE_PYTHON_TYPE_NAME_MAPPING(type, numpy_name) \
+    template <>                                                  \
+    [[nodiscard]] constexpr std::string_view python_type_name_mapping<type>() { return numpy_name; }
 
 /**
  * @brief Tries to convert the given type to its Numpy name.
@@ -647,111 +188,117 @@ namespace detail {
  * @return the name of `T` (`[[nodiscard]]`)
  */
 template <typename T>
-[[nodiscard]] constexpr inline std::string_view numpy_name_mapping() = delete;
+[[nodiscard]] constexpr std::string_view python_type_name_mapping() = delete;
 
-PLSSVM_CREATE_NUMPY_NAME_MAPPING(bool, "bool")
-PLSSVM_CREATE_NUMPY_NAME_MAPPING(char, "char")
-PLSSVM_CREATE_NUMPY_NAME_MAPPING(signed char, "byte")
-PLSSVM_CREATE_NUMPY_NAME_MAPPING(unsigned char, "ubyte")
-PLSSVM_CREATE_NUMPY_NAME_MAPPING(short, "short")
-PLSSVM_CREATE_NUMPY_NAME_MAPPING(unsigned short, "ushort")
-PLSSVM_CREATE_NUMPY_NAME_MAPPING(int, "intc")
-PLSSVM_CREATE_NUMPY_NAME_MAPPING(unsigned int, "uintc")
-PLSSVM_CREATE_NUMPY_NAME_MAPPING(long, "int")
-PLSSVM_CREATE_NUMPY_NAME_MAPPING(unsigned long, "uint")
-PLSSVM_CREATE_NUMPY_NAME_MAPPING(long long, "longlong")
-PLSSVM_CREATE_NUMPY_NAME_MAPPING(unsigned long long, "ulonglong")
-PLSSVM_CREATE_NUMPY_NAME_MAPPING(float, "float")
-PLSSVM_CREATE_NUMPY_NAME_MAPPING(double, "double")
-PLSSVM_CREATE_NUMPY_NAME_MAPPING(long double, "longdouble")
-PLSSVM_CREATE_NUMPY_NAME_MAPPING(std::string, "string")
+// map all our supported types
+PLSSVM_CREATE_PYTHON_TYPE_NAME_MAPPING(bool, "bool")
+PLSSVM_CREATE_PYTHON_TYPE_NAME_MAPPING(char, "np.byte")
+PLSSVM_CREATE_PYTHON_TYPE_NAME_MAPPING(signed char, "np.int8")
+PLSSVM_CREATE_PYTHON_TYPE_NAME_MAPPING(unsigned char, "np.uint8")
+PLSSVM_CREATE_PYTHON_TYPE_NAME_MAPPING(short, "np.int16")
+PLSSVM_CREATE_PYTHON_TYPE_NAME_MAPPING(unsigned short, "np.uint16")
+PLSSVM_CREATE_PYTHON_TYPE_NAME_MAPPING(int, "np.int32")
+PLSSVM_CREATE_PYTHON_TYPE_NAME_MAPPING(unsigned int, "np.uint32")
+PLSSVM_CREATE_PYTHON_TYPE_NAME_MAPPING(long, "np.int64")
+PLSSVM_CREATE_PYTHON_TYPE_NAME_MAPPING(unsigned long, "np.uint64")
+PLSSVM_CREATE_PYTHON_TYPE_NAME_MAPPING(long long, "np.int64")
+PLSSVM_CREATE_PYTHON_TYPE_NAME_MAPPING(unsigned long long, "np.uint64")
+PLSSVM_CREATE_PYTHON_TYPE_NAME_MAPPING(float, "np.float32")
+PLSSVM_CREATE_PYTHON_TYPE_NAME_MAPPING(double, "np.float64")
+PLSSVM_CREATE_PYTHON_TYPE_NAME_MAPPING(long double, "np.longdouble")
+PLSSVM_CREATE_PYTHON_TYPE_NAME_MAPPING(std::string, "str")
 
-#undef PLSSVM_CREATE_NUMPY_NAME_MAPPING
-
-}  // namespace detail
-
-/**
- * @brief Append the type information to the base @p class_name.
- * @tparam label_type the type of the labels to convert to its Numpy name
- * @param class_name the base class name (the type names are appended to it)
- * @return the unique class name
- */
-template <typename label_type>
-[[nodiscard]] inline std::string assemble_unique_class_name(const std::string_view class_name) {
-    return fmt::format("{}_{}", class_name, detail::numpy_name_mapping<label_type>());
-}
+#undef PLSSVM_CREATE_PYTHON_TYPE_NAME_MAPPING
 
 /**
- * @brief Instantiate Python bindings using the @p InstantiationFunction for all @p LabelTypes.
- * @tparam InstantiationFunction the functor used to instantiate the Python bindings
- * @tparam LabelTypes the label types
- * @tparam Idx the label type indices
- * @param[in] m the Python module in which the Python bindings are instantiated
- * @param[in] pure_virtual the pure-virtual Python module
+ * @brief Depending on the Python @p type, construct a new @p Instance of the @p PossibleTypes using the provided parameters @p args.
+ * @details Checks all supported Python types. If a theoretically supported type is not present in @p PossibleTypes, the type is skipped with a constexpr if.
+ * @tparam Instance the type of the object to create
+ * @tparam PossibleTypes all possible types that could be created using a std::variant
+ * @tparam Args the type of the constructor parameters forwarded to the constructor of @p Instance.
+ * @param[in] type the dynamic Python type used to determine the used label type
+ * @param[in] args the parameters forwarded to the @p Instance constructor
+ * @return the constructed @p Instance wrapped in a std::variant of type @p PossibleTypes (`[[nodiscard]]`)
  */
-template <template <typename> typename InstantiationFunction, typename LabelTypes, std::size_t... Idx>
-inline void instantiate_module_bindings(py::module_ &m, py::module_ &pure_virtual, std::integer_sequence<std::size_t, Idx...>) {
-    (InstantiationFunction<std::tuple_element_t<Idx, LabelTypes>>{}(m, pure_virtual, std::tuple_element_t<Idx, LabelTypes>{}), ...);
-}
+template <template <typename> typename Instance, typename PossibleTypes, typename... Args>
+[[nodiscard]] PossibleTypes create_instance(const py::type type, Args &&...args) {
+    const py::module_ np = py::module_::import("numpy");
 
-/**
- * @brief Instantiate Python bindings using the @p InstantiationFunction for all @p LabelTypes.
- * @tparam InstantiationFunction the functor used to instantiate the Python bindings
- * @tparam LabelTypes the label types
- * @param[in] m the Python module in which the Python bindings are instantiated
- * @param[in] pure_virtual the pure-virtual Python module
- */
-template <template <typename> typename InstantiationFunction, typename LabelTypes>
-inline void instantiate_module_bindings(py::module_ &m, py::module_ &pure_virtual) {
-    instantiate_module_bindings<InstantiationFunction, LabelTypes>(m, pure_virtual, std::make_integer_sequence<std::size_t, std::tuple_size_v<LabelTypes>>{});
-}
+    // boolean
+    if constexpr (detail::is_label_type_in_variant_v<bool, PossibleTypes>) {
+        if (type.equal(py::module_::import("builtins").attr("bool"))) {
+            return Instance<bool>{ std::forward<Args>(args)... };
+        }
+    }
+    // std::int8_t, signed char
+    if constexpr (detail::is_label_type_in_variant_v<std::int8_t, PossibleTypes>) {
+        if (type.equal(np.attr("int8"))) {
+            return Instance<std::int8_t>{ std::forward<Args>(args)... };
+        }
+    }
+    // std::uint8_t, unsigned char
+    if constexpr (detail::is_label_type_in_variant_v<std::uint8_t, PossibleTypes>) {
+        if (type.equal(np.attr("uint8"))) {
+            return Instance<std::uint8_t>{ std::forward<Args>(args)... };
+        }
+    }
+    // std::int16_t, short
+    if constexpr (detail::is_label_type_in_variant_v<std::int16_t, PossibleTypes>) {
+        if (type.equal(np.attr("int16"))) {
+            return Instance<std::int16_t>{ std::forward<Args>(args)... };
+        }
+    }
+    // std::uint16_t, unsigned short
+    if constexpr (detail::is_label_type_in_variant_v<std::uint16_t, PossibleTypes>) {
+        if (type.equal(np.attr("uint16"))) {
+            return Instance<std::uint16_t>{ std::forward<Args>(args)... };
+        }
+    }
+    // std::int32_t, int
+    if constexpr (detail::is_label_type_in_variant_v<std::int32_t, PossibleTypes>) {
+        if (type.equal(np.attr("int32"))) {
+            return Instance<std::int32_t>{ std::forward<Args>(args)... };
+        }
+    }
+    // std::uint32_t, unsigned int
+    if constexpr (detail::is_label_type_in_variant_v<std::uint32_t, PossibleTypes>) {
+        if (type.equal(np.attr("uint32"))) {
+            return Instance<std::uint32_t>{ std::forward<Args>(args)... };
+        }
+    }
+    // std::int64_t, long, long long
+    if constexpr (detail::is_label_type_in_variant_v<std::int64_t, PossibleTypes>) {
+        if (type.equal(np.attr("int64")) || type.equal(py::module_::import("builtins").attr("int"))) {
+            return Instance<std::int64_t>{ std::forward<Args>(args)... };
+        }
+    }
+    // std::uint64_t, unsigned long, unsigned long long
+    if constexpr (detail::is_label_type_in_variant_v<std::uint64_t, PossibleTypes>) {
+        if (type.equal(np.attr("uint64"))) {
+            return Instance<std::uint64_t>{ std::forward<Args>(args)... };
+        }
+    }
+    // float
+    if constexpr (detail::is_label_type_in_variant_v<float, PossibleTypes>) {
+        if (type.equal(np.attr("float32"))) {
+            return Instance<float>{ std::forward<Args>(args)... };
+        }
+    }
+    // double
+    if constexpr (detail::is_label_type_in_variant_v<double, PossibleTypes>) {
+        if (type.equal(np.attr("float64")) || type.equal(py::module_::import("builtins").attr("float"))) {
+            return Instance<double>{ std::forward<Args>(args)... };
+        }
+    }
+    // std::string
+    if constexpr (detail::is_label_type_in_variant_v<std::string, PossibleTypes>) {
+        if (type.equal(py::module_::import("builtins").attr("str"))) {
+            return Instance<std::string>{ std::forward<Args>(args)... };
+        }
+    }
 
-/**
- * @brief Instantiate Python bindings using the @p InstantiationFunction for all @p LabelTypes.
- * @tparam InstantiationFunction the functor used to instantiate the Python bindings
- * @tparam LabelTypes the label types
- * @tparam Idx the label type indices
- * @param[in] m the Python module in which the Python bindings are instantiated
- */
-template <template <typename> typename InstantiationFunction, typename LabelTypes, std::size_t... Idx>
-inline void instantiate_module_bindings(py::module_ &pure_virtual, std::integer_sequence<std::size_t, Idx...>) {
-    (InstantiationFunction<std::tuple_element_t<Idx, LabelTypes>>{}(pure_virtual, std::tuple_element_t<Idx, LabelTypes>{}), ...);
-}
-
-/**
- * @brief Instantiate Python bindings using the @p InstantiationFunction for all @p LabelTypes.
- * @tparam InstantiationFunction the functor used to instantiate the Python bindings
- * @tparam LabelTypes the label types
- * @param[in] m the Python module in which the Python bindings are instantiated
- */
-template <template <typename> typename InstantiationFunction, typename LabelTypes>
-inline void instantiate_module_bindings(py::module_ &pure_virtual) {
-    instantiate_module_bindings<InstantiationFunction, LabelTypes>(pure_virtual, std::make_integer_sequence<std::size_t, std::tuple_size_v<LabelTypes>>{});
-}
-
-/**
- * @brief Instantiate Python bindings using the @p InstantiationFunction for all @p LabelTypes.
- * @tparam InstantiationFunction the functor used to instantiate the Python bindings
- * @tparam LabelTypes the label types
- * @tparam PyClassType the type of the Python class to instantiate definitions for
- * @tparam Idx the label type indices
- * @param[in] c the Python class used for instantiation
- */
-template <template <typename> typename InstantiationFunction, typename LabelTypes, typename PyClassType, std::size_t... Idx>
-void instantiate_class_bindings(py::class_<PyClassType> &c, std::integer_sequence<std::size_t, Idx...>) {
-    (InstantiationFunction<std::tuple_element_t<Idx, LabelTypes>>{}(c, std::tuple_element_t<Idx, LabelTypes>{}), ...);
-}
-
-/**
- * @brief Instantiate Python bindings using the @p InstantiationFunction for all @p LabelTypes.
- * @tparam InstantiationFunction the functor used to instantiate the Python bindings
- * @tparam LabelTypes the label types
- * @tparam PyClassType the type of the Python class to instantiate definitions for
- * @param[in] csvm the Python class used for instantiation
- */
-template <template <typename> typename InstantiationFunction, typename LabelTypes, typename PyClassType>
-void instantiate_class_bindings(py::class_<PyClassType> &c) {
-    instantiate_class_bindings<InstantiationFunction, LabelTypes, PyClassType>(c, std::make_integer_sequence<std::size_t, std::tuple_size_v<LabelTypes>>{});
+    // if we are here, no type match has been found -> throw an exception
+    throw py::value_error{ fmt::format("Unsupported label type: {}!", type.attr("__name__").cast<std::string>()) };
 }
 
 }  // namespace plssvm::bindings::python::util

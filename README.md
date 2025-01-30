@@ -324,10 +324,6 @@ If `PLSSVM_ENABLE_LANGUAGE_BINDINGS` is set to `ON`, the following option can al
 
 - `PLSSVM_ENABLE_PYTHON_BINDINGS=ON|OFF` (default: `PLSSVM_ENABLE_LANGUAGE_BINDINGS`): enable Python bindings using Pybind11; **note:** `PLSSVM_ENABLE_LANGUAGE_BINDINGS` must be set that this option has any effect
 
-If `PLSSVM_ENABLE_PYTHON_BINDINGS` is set to `ON`, the following options can also be set:
-
-- `PLSSVM_PYTHON_BINDINGS_PREFERRED_LABEL_TYPE` (default: `std::string`): the default `label_type` used if the generic `plssvm.Model` and `plssvm.DataSet` Python classes are used
-
 If the OpenCL backend is available and NVIDIA GPUs should be targeted, an additional option can be set.
 
 - `PLSSVM_OPENCL_BACKEND_ENABLE_PTX_INLINE_ASSEMBLY=ON|OFF` (default: `ON`): enable PTX inline assembly to speed up the FP32/FP64 atomicAdd implementations on NVIDIA GPUs. **Note:** requires `sm_60` or newer!
@@ -790,7 +786,7 @@ int main() {
         const auto svc = plssvm::make_csvc(params);
 
         // fit using the training data, (optionally) set the termination criterion
-        const plssvm::classification_model model = svc->fit(train_data, plssvm::epsilon = 10e-6);
+        const plssvm::classification_model model = svc->fit(train_data, plssvm::epsilon = 1e-6);
 
         // get accuracy of the trained model
         const double model_accuracy = svc->score(model);
@@ -840,7 +836,7 @@ int main() {
         const auto svr = plssvm::make_csvr(params);
 
         // fit using the training data, (optionally) set the termination criterion
-        const plssvm::regression_model model = svr->fit(train_data, plssvm::epsilon = 10e-6);
+        const plssvm::regression_model model = svr->fit(train_data, plssvm::epsilon = 1e-6);
 
         // get accuracy of the trained model
         const double model_accuracy = svr->score(model);

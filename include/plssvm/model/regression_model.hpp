@@ -33,6 +33,9 @@
 #include <tuple>    // std::tie
 #include <utility>  // std::move
 
+// forward declare svr dummy struct used in the plssvm.SVR Python bindings
+struct svr;
+
 namespace plssvm {
 
 /**
@@ -52,6 +55,9 @@ class regression_model : public model<U> {
 
     // befriend C-SVR class used with the regression data set: necessary to access the private constructor and multiple member variables
     friend class csvr;
+
+    // befriend svr dummy struct used in the plssvm.SVR Python bindings
+    friend struct ::svr;
 
     /// The base model class.
     using base_model = model<U>;

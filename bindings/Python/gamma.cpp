@@ -10,7 +10,7 @@
 
 #include "plssvm/constants.hpp"  // plssvm::real_type
 
-#include "bindings/Python/utility.hpp"  // plssvm::bindings::python::util::pyarray_to_matrix
+#include "bindings/Python/conversion_from_python.hpp"  // plssvm::bindings::python::util::pyarray_to_matrix
 
 #include "pybind11/pybind11.h"  // py::module_, py::enum_
 #include "pybind11/stl.h"       // support for STL types: std::variant

@@ -17,14 +17,14 @@ try:
 
     # create two data sets: one with the training data scaled to [-1, 1]
     # and one with the test data scaled like the training data
-    train_data = plssvm.RegressionDataSet("train_file.libsvm", scaling=(-1.0, 1.0))
-    test_data = plssvm.RegressionDataSet("test_file.libsvm", scaling=train_data.scaling_factors())
+    train_data = plssvm.RegressionDataSet("train_file_reg.libsvm", scaler=plssvm.MinMaxScaler(-1.0, 1.0))
+    test_data = plssvm.RegressionDataSet("test_file_reg.libsvm", scaler=train_data.scaling_factors())
 
     # create C-SVR using the default backend and the previously defined parameter
     svm = plssvm.CSVR(params)
 
     # fit using the training data, (optionally) set the termination criterion
-    model = svm.fit(train_data, epsilon=10e-6)
+    model = svm.fit(train_data, epsilon=1e-6)
 
     # get accuracy of the trained model
     model_accuracy = svm.score(model)
@@ -34,6 +34,7 @@ try:
     predicted_label = svm.predict(model, test_data)
     # output a more complete regression report
     correct_label = test_data.labels()
+    correct_label = [int(l) for l in correct_label]
     print(regression_report(correct_label, predicted_label))
 
     # write model file to disk

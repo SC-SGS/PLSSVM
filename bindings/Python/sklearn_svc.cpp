@@ -19,13 +19,17 @@
 #include "plssvm/svm/csvc.hpp"                          // plssvm::csvc
 #include "plssvm/verbosity_levels.hpp"                  // plssvm::verbosity_level, plssvm::verbosity
 
-#include "bindings/Python/utility.hpp"  // plssvm::bindings::python::util::{check_kwargs_for_correctness, pyarray_t_to_vector, pyarray_to_matrix}
+#include "bindings/Python/conversion_from_python.hpp"    // plssvm::bindings::python::util::{pyobject_to_vector, pyobject_to_matrix}
+#include "bindings/Python/conversion_to_python.hpp"      // plssvm::bindings::python::util::{vector_to_pyarray, matrix_to_pyarray}
+#include "bindings/Python/data_set/variant_wrapper.hpp"  // plssvm::bindings::python::util::classification_data_set_wrapper
+#include "bindings/Python/model/variant_wrapper.hpp"     // plssvm::bindings::python::util::classification_model_wrapper
+#include "bindings/Python/utility.hpp"                   // plssvm::bindings::python::util::{check_kwargs_for_correctness, convert_gamma_kwarg_to_variant}
 
 #include "fmt/format.h"          // fmt::format
 #include "fmt/ranges.h"          // fmt::join
 #include "pybind11/numpy.h"      // support for STL types
 #include "pybind11/operators.h"  // support for operators
-#include "pybind11/pybind11.h"   // py::module_, py::class_, py::init, py::arg, py::return_value_policy, py::self, py::dynamic_attr
+#include "pybind11/pybind11.h"   // py::module_, py::class_, py::init, py::arg, py::return_value_policy, py::self, py::dynamic_attr, py::value_error, py::attribute_error
 #include "pybind11/stl.h"        // support for STL types
 
 #include <algorithm>  // std::fill
@@ -48,31 +52,9 @@ namespace py = pybind11;
 
 // dummy
 struct svc {
-    using possible_data_set_types = std::variant<plssvm::classification_data_set<bool>,           // np.bool
-                                                 plssvm::classification_data_set<std::int8_t>,    // np.int8
-                                                 plssvm::classification_data_set<std::uint8_t>,   // np.uint8
-                                                 plssvm::classification_data_set<std::int16_t>,   // np.int16
-                                                 plssvm::classification_data_set<std::uint16_t>,  // np.uint16
-                                                 plssvm::classification_data_set<std::int32_t>,   // np.int32
-                                                 plssvm::classification_data_set<std::uint32_t>,  // np.uint32
-                                                 plssvm::classification_data_set<std::int64_t>,   // np.int64
-                                                 plssvm::classification_data_set<std::uint64_t>,  // np.uint64
-                                                 plssvm::classification_data_set<float>,          // np.float32
-                                                 plssvm::classification_data_set<double>,         // np.float64
-                                                 plssvm::classification_data_set<std::string>>;   // np.str
-
-    using possible_model_types = std::variant<plssvm::classification_model<bool>,           // np.bool
-                                              plssvm::classification_model<std::int8_t>,    // np.int8
-                                              plssvm::classification_model<std::uint8_t>,   // np.uint8
-                                              plssvm::classification_model<std::int16_t>,   // np.int16
-                                              plssvm::classification_model<std::uint16_t>,  // np.uint16
-                                              plssvm::classification_model<std::int32_t>,   // np.int32
-                                              plssvm::classification_model<std::uint32_t>,  // np.uint32
-                                              plssvm::classification_model<std::int64_t>,   // np.int64
-                                              plssvm::classification_model<std::uint64_t>,  // np.uint64
-                                              plssvm::classification_model<float>,          // np.float32
-                                              plssvm::classification_model<double>,         // np.float64
-                                              plssvm::classification_model<std::string>>;   // np.str
+    using possible_vector_types = typename plssvm::bindings::python::util::classification_data_set_wrapper::possible_vector_types;
+    using possible_data_set_types = typename plssvm::bindings::python::util::classification_data_set_wrapper::possible_data_set_types;
+    using possible_model_types = typename plssvm::bindings::python::util::classification_model_wrapper::possible_model_types;
 
     /**
      * @brief Wrapper function to call the private (friendship) predict_values function.
@@ -95,7 +77,7 @@ struct svc {
         }
 
         // clang-format off
-        return std::visit([&](auto &&model) -> const auto & {
+        return std::visit([](auto &&model) -> const auto & {
             return *model.index_sets_ptr_;
         }, *model_);
         // clang-format on
@@ -111,7 +93,7 @@ struct svc {
         }
 
         // clang-format off
-        return std::visit([&](auto &&model) -> const auto & {
+        return std::visit([](auto &&model) -> const auto & {
             return *model.w_ptr_;
         }, *model_);
         // clang-format on
@@ -132,7 +114,7 @@ struct svc {
         py_params["cache_size"] = 0;
         py_params["class_weight"] = py::none();
         py_params["coef0"] = params.coef0;
-        py_params["decision_function_shape"] = classification == plssvm::classification_type::oaa ? "ovr" : "ovo";
+        py_params["decision_function_shape"] = classification_ == plssvm::classification_type::oaa ? "ovr" : "ovo";
         py_params["degree"] = params.degree;
         if (std::holds_alternative<plssvm::real_type>(params.gamma)) {
             py_params["gamma"] = std::get<plssvm::real_type>(params.gamma);
@@ -147,20 +129,20 @@ struct svc {
             }
         }
         py_params["kernel"] = fmt::format("{}", params.kernel_type);
-        py_params["max_iter"] = max_iter.has_value() ? static_cast<long long>(max_iter.value()) : -1;
+        py_params["max_iter"] = max_iter_.has_value() ? static_cast<long long>(max_iter_.value()) : -1;
         py_params["probability"] = false;
         py_params["random_state"] = py::none();
         py_params["shrinking"] = false;
-        py_params["tol"] = epsilon.value_or(plssvm::real_type{ 1e-10 });
+        py_params["tol"] = epsilon_.value_or(plssvm::real_type{ 1e-10 });
         py_params["verbose"] = plssvm::verbosity != plssvm::verbosity_level::quiet;
 
         return py_params;
     }
 
-    py::dtype py_dtype{};
-    std::optional<plssvm::real_type> epsilon{};
-    std::optional<unsigned long long> max_iter{};
-    plssvm::classification_type classification{ plssvm::classification_type::oaa };
+    py::dtype py_dtype_{};
+    std::optional<plssvm::real_type> epsilon_{};
+    std::optional<unsigned long long> max_iter_{};
+    plssvm::classification_type classification_{ plssvm::classification_type::oaa };
 
     std::unique_ptr<plssvm::csvc> svm_{ plssvm::make_csvc(plssvm::gamma = plssvm::gamma_coefficient_type::scale) };
     std::unique_ptr<possible_data_set_types> data_{};
@@ -194,7 +176,7 @@ void parse_provided_kwargs(svc &self, const py::kwargs &args) {
         } else if (kernel_str == "chi_squared") {
             kernel = plssvm::kernel_function_type::chi_squared;
         } else if (kernel_str == "precomputed") {
-            throw py::attribute_error{ R"(The "kernel = 'precomputed'" parameter for the 'SVC' is not implemented yet!)" };
+            throw py::value_error{ R"(The "kernel = 'precomputed'" parameter for the 'SVC' is not implemented yet!)" };
         } else {
             throw py::value_error{ fmt::format("'{}' is not in list", kernel_str) };
         }
@@ -215,19 +197,19 @@ void parse_provided_kwargs(svc &self, const py::kwargs &args) {
         self.svm_->set_params(plssvm::coef0 = args["coef0"].cast<plssvm::real_type>());
     }
     if (args.contains("shrinking")) {
-        throw py::attribute_error{ "The 'shrinking' parameter for the 'SVC' is not implemented and makes no sense for a LS-SVM!" };
+        throw py::value_error{ "The 'shrinking' parameter for the 'SVC' is not implemented and makes no sense for a LS-SVM!" };
     }
     if (args.contains("probability")) {
-        throw py::attribute_error{ "The 'probability' parameter for the 'SVC' is not implemented yet!" };
+        throw py::value_error{ "The 'probability' parameter for the 'SVC' is not implemented yet!" };
     }
     if (args.contains("tol")) {
-        self.epsilon = args["tol"].cast<plssvm::real_type>();
+        self.epsilon_ = args["tol"].cast<plssvm::real_type>();
     }
     if (args.contains("cache_size")) {
-        throw py::attribute_error{ "The 'cache_size' parameter for the 'SVC' is not implemented and makes no sense for our PLSSVM implementation!" };
+        throw py::value_error{ "The 'cache_size' parameter for the 'SVC' is not implemented and makes no sense for our PLSSVM implementation!" };
     }
     if (args.contains("class_weight")) {
-        throw py::attribute_error{ "The 'class_weight' parameter for the 'SVC' is not implemented yet!" };
+        throw py::value_error{ "The 'class_weight' parameter for the 'SVC' is not implemented yet!" };
     }
     if (args.contains("verbose")) {
         if (args["verbose"].cast<bool>()) {
@@ -244,7 +226,7 @@ void parse_provided_kwargs(svc &self, const py::kwargs &args) {
         const auto max_iter = args["max_iter"].cast<long long>();
         if (max_iter > 0) {
             // use provided value
-            self.max_iter = static_cast<unsigned long long>(max_iter);
+            self.max_iter_ = static_cast<unsigned long long>(max_iter);
         } else if (max_iter == -1) {
             // default behavior in PLSSVM -> do nothing
         } else {
@@ -255,18 +237,18 @@ void parse_provided_kwargs(svc &self, const py::kwargs &args) {
     if (args.contains("decision_function_shape")) {
         const std::string &dfs = args["decision_function_shape"].cast<std::string>();
         if (dfs == "ovo") {
-            self.classification = plssvm::classification_type::oao;
+            self.classification_ = plssvm::classification_type::oao;
         } else if (dfs == "ovr") {
-            self.classification = plssvm::classification_type::oaa;
+            self.classification_ = plssvm::classification_type::oaa;
         } else {
             throw py::value_error{ fmt::format("decision_function_shape must be either 'ovr' or 'ovo', got {}.", dfs) };
         }
     }
     if (args.contains("break_ties")) {
-        throw py::attribute_error{ "The 'break_ties' parameter for the 'SVC' is not implemented yet!" };
+        throw py::value_error{ "The 'break_ties' parameter for the 'SVC' is not implemented yet!" };
     }
     if (args.contains("random_state")) {
-        throw py::attribute_error{ "The 'random_state' parameter for the 'SVC' is not implemented yet!" };
+        throw py::value_error{ "The 'random_state' parameter for the 'SVC' is not implemented yet!" };
     }
 }
 
@@ -278,7 +260,7 @@ void fit(svc &self) {
     if (self.svm_->get_params().degree < 0) {
         throw py::value_error{ "degree of polynomial kernel < 0" };
     }
-    if (self.epsilon.has_value() && self.epsilon.value() <= plssvm::real_type{ 0.0 }) {
+    if (self.epsilon_.has_value() && self.epsilon_.value() <= plssvm::real_type{ 0.0 }) {
         throw py::value_error{ "eps <= 0" };
     }
 
@@ -286,22 +268,22 @@ void fit(svc &self) {
     std::visit([&](auto &&data) {
         using possible_model_types = typename svc::possible_model_types;
 
-        if (self.epsilon.has_value() && self.max_iter.has_value()) {
+        if (self.epsilon_.has_value() && self.max_iter_.has_value()) {
             self.model_ = std::make_unique<possible_model_types>(self.svm_->fit(data,
-                                                                                plssvm::classification = self.classification,
-                                                                                plssvm::epsilon = self.epsilon.value(),
-                                                                                plssvm::max_iter = self.max_iter.value()));
-        } else if (self.epsilon.has_value()) {
+                                                                                plssvm::classification = self.classification_,
+                                                                                plssvm::epsilon = self.epsilon_.value(),
+                                                                                plssvm::max_iter = self.max_iter_.value()));
+        } else if (self.epsilon_.has_value()) {
             self.model_ = std::make_unique<possible_model_types>(self.svm_->fit(data,
-                                                                                plssvm::classification = self.classification,
-                                                                                plssvm::epsilon = self.epsilon.value()));
-        } else if (self.max_iter.has_value()) {
+                                                                                plssvm::classification = self.classification_,
+                                                                                plssvm::epsilon = self.epsilon_.value()));
+        } else if (self.max_iter_.has_value()) {
             self.model_ = std::make_unique<possible_model_types>(self.svm_->fit(data,
-                                                                                plssvm::classification = self.classification,
-                                                                                plssvm::max_iter = self.max_iter.value()));
+                                                                                plssvm::classification = self.classification_,
+                                                                                plssvm::max_iter = self.max_iter_.value()));
         } else {
             self.model_ = std::make_unique<possible_model_types>(self.svm_->fit(data,
-                                                                                plssvm::classification = self.classification));
+                                                                                plssvm::classification = self.classification_));
         }
     },
                *self.data_);
@@ -383,8 +365,7 @@ void init_sklearn_svc(py::module_ &m) {
             }
 
             return std::visit([](auto &&data) -> py::array {
-                using label_type = typename plssvm::detail::remove_cvref_t<decltype(data)>::label_type;
-                return plssvm::bindings::python::util::vector_to_pyarray<label_type>(data.classes().value());
+                return plssvm::bindings::python::util::vector_to_pyarray(data.classes().value());
             }, *self.data_); }, "The classes labels. ndarray of shape (n_classes,)")
         .def_property_readonly("coef_", [](const svc &self) -> py::array {
             if (self.model_ == nullptr) {
@@ -420,7 +401,7 @@ void init_sklearn_svc(py::module_ &m) {
                 std::vector<plssvm::real_type> rho = model.rho();
 
                 // ovr binary special case
-                if (self.classification == plssvm::classification_type::oaa && model.num_classes() == 2) {
+                if (self.classification_ == plssvm::classification_type::oaa && model.num_classes() == 2) {
                     rho.pop_back();
                 }
 
@@ -443,7 +424,7 @@ void init_sklearn_svc(py::module_ &m) {
                 throw py::attribute_error{ "'SVC' object has no attribute 'support_'" };
             }
 
-            return plssvm::bindings::python::util::vector_to_pyarray(std::visit([](auto &&model) { return model.num_iters().value(); }, *self.model_)); }, "Number of iterations run by the optimization routine to fit the model. ndarray of shape (n_classes * (n_classes - 1) // 2,)")
+            return std::visit([](auto &&model) { return plssvm::bindings::python::util::vector_to_pyarray(model.num_iters().value()); }, *self.model_); }, "Number of iterations run by the optimization routine to fit the model. ndarray of shape (n_classes * (n_classes - 1) // 2,)")
         .def_property_readonly("support_", [](const svc &self) -> py::array {
             if (self.model_ == nullptr) {
                 throw py::attribute_error{ "'SVC' object has no attribute 'support_'" };
@@ -509,7 +490,7 @@ void init_sklearn_svc(py::module_ &m) {
     //                                                               METHODS                                                               //
     //*************************************************************************************************************************************//
     py_svc
-        .def("decision_function", [](const svc &self, py::object predict_points) -> py::array {
+        .def("decision_function", [](const svc &self, const py::object &predict_points) -> py::array {
             if (self.model_ == nullptr) {
                 throw py::attribute_error{ "This SVC instance is not fitted yet. Call 'fit' with appropriate arguments before using this estimator." };
             }
@@ -519,7 +500,7 @@ void init_sklearn_svc(py::module_ &m) {
             plssvm::soa_matrix<plssvm::real_type> predict_points_matrix{ predict_points_aos_matrix };  // TODO: more performant
 
             return std::visit([&](auto &&model) -> py::array {
-                switch (self.classification) {
+                switch (self.classification_) {
                     case plssvm::classification_type::oaa:
                         {
                             const plssvm::parameter &params = model.get_params();
@@ -617,14 +598,15 @@ void init_sklearn_svc(py::module_ &m) {
                 // unreachable
                 return py::array{};
             }, *self.model_); }, "Evaluate the decision function for the samples in X.")
-        .def("fit", [](svc &self, py::object data, py::object labels, std::optional<std::vector<plssvm::real_type>> sample_weight) -> svc & {
+        .def("fit", [](svc &self, const py::object &data, const py::object &labels, const std::optional<std::vector<plssvm::real_type>> &sample_weight) -> svc & {
             // sanity check parameter
             if (sample_weight.has_value()) {
                 throw py::attribute_error{ "The 'sample_weight' parameter for a call to 'fit' is not implemented yet!" };
             }
 
             // convert the labels to a std::vector
-            const auto &[labels_vector_variant, dtype] = plssvm::bindings::python::util::pyobject_to_vector(labels);
+            const auto &[labels_vector_variant, dtype] = plssvm::bindings::python::util::pyobject_to_vector<typename svc::possible_vector_types>(labels);
+            self.py_dtype_ = dtype;
 
             // convert the data py::object to a plssvm::aos_matrix
             const auto &[data_matrix, opt_feature_names] = plssvm::bindings::python::util::pyobject_to_matrix(data);
@@ -645,7 +627,7 @@ void init_sklearn_svc(py::module_ &m) {
             return self; }, "Fit the SVM model according to the given training data.", py::arg("X"), py::arg("y"), py::pos_only(), py::arg("sample_weight") = std::nullopt, py::return_value_policy::reference)
         .def("get_metadata_routing", [](const svc &) { throw py::attribute_error{ "'SVC' object has no function 'get_metadata_routing' (not implemented)" }; }, "Get metadata routing of this object.")
         .def("get_params", &svc::get_params, "Get parameters for this estimator.", py::arg("deep") = true)
-        .def("predict", [](svc &self, py::object data) -> py::array {
+        .def("predict", [](svc &self, const py::object &data) -> py::array {
             if (self.model_ == nullptr) {
                 throw py::attribute_error{ "This SVC instance is not fitted yet. Call 'fit' with appropriate arguments before using this estimator." };
             }
@@ -659,11 +641,11 @@ void init_sklearn_svc(py::module_ &m) {
                 // create the data set to predict
                 const plssvm::classification_data_set<label_type> data_to_predict{ data_matrix };
                 // predict the data
-                return plssvm::bindings::python::util::vector_to_pyarray<label_type>(self.svm_->predict(model, data_to_predict));
+                return plssvm::bindings::python::util::vector_to_pyarray(self.svm_->predict(model, data_to_predict));
             }, *self.model_); }, "Perform classification on samples in X.")
         .def("predict_log_proba", [](const svc &, py::array_t<plssvm::real_type>) { throw py::attribute_error{ "'SVC' object has no function 'predict_log_proba' (not implemented)" }; }, "Compute log probabilities of possible outcomes for samples in X.")
         .def("predict_proba", [](const svc &, py::array_t<plssvm::real_type>) { throw py::attribute_error{ "'SVC' object has no function 'predict_proba' (not implemented)" }; }, "Compute probabilities of possible outcomes for samples in X.")
-        .def("score", [](svc &self, py::object data, py::object labels, std::optional<std::vector<plssvm::real_type>> sample_weight) -> plssvm::real_type {
+        .def("score", [](svc &self, const py::object &data, const py::object &labels, const std::optional<std::vector<plssvm::real_type>> &sample_weight) -> plssvm::real_type {
             // sanity check parameter
             if (sample_weight.has_value()) {
                 throw py::attribute_error{ "The 'sample_weight' parameter for a call to 'fit' is not implemented yet!" };
@@ -673,7 +655,7 @@ void init_sklearn_svc(py::module_ &m) {
             }
 
             // convert the labels to a std::vector
-            const auto &[labels_vector_variant, dtype] = plssvm::bindings::python::util::pyobject_to_vector(labels);
+            const auto &[labels_vector_variant, dtype] = plssvm::bindings::python::util::pyobject_to_vector<typename svc::possible_vector_types>(labels);
 
             // convert the data py::object to a plssvm::aos_matrix
             const auto &[data_matrix, opt_feature_names] = plssvm::bindings::python::util::pyobject_to_matrix(data);
@@ -688,7 +670,7 @@ void init_sklearn_svc(py::module_ &m) {
                 try {
                     return self.svm_->score(std::get<plssvm::classification_model<label_type>>(*self.model_), data_to_score);
                 } catch (const std::exception &) {
-                    throw py::attribute_error{ fmt::format(R"(The dtype of the labels to score is "{}", but the model was fitted with "{}". Please use the same types for fit and score!)", dtype.attr("name").cast<std::string>(), self.py_dtype.attr("name").cast<std::string>()) };
+                    throw py::value_error{ fmt::format(R"(The dtype of the labels to score is "{}", but the model was fitted with "{}". Please use the same types for fit and score!)", dtype.attr("name").cast<std::string>(), self.py_dtype_.attr("name").cast<std::string>()) };
                 }
             }, labels_vector_variant); }, "Return the mean accuracy on the given test data and labels.", py::arg("X"), py::arg("y"), py::pos_only(), py::arg("sample_weight") = std::nullopt)
         .def("set_fit_request", [](const svc &) { throw py::attribute_error{ "'SVC' object has no function 'set_fit_request' (not implemented)" }; }, "Request metadata passed to the fit method.")
@@ -702,9 +684,10 @@ void init_sklearn_svc(py::module_ &m) {
             svc new_svc{};
             // copy the parameters
             new_svc.svm_->set_params(self.svm_->get_params());
-            new_svc.epsilon = self.epsilon;
-            new_svc.max_iter = self.max_iter;
-            new_svc.classification = self.classification;
+            new_svc.py_dtype_ = self.py_dtype_;
+            new_svc.epsilon_ = self.epsilon_;
+            new_svc.max_iter_ = self.max_iter_;
+            new_svc.classification_ = self.classification_;
             return new_svc; }, "Clone the estimator.")
         .def("__repr__", [](const svc &self) {
             // get the currently used parameters

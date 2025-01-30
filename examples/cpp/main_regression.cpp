@@ -21,7 +21,7 @@ int main() {
         const auto svr = plssvm::make_csvr(params);
 
         // fit using the training data, (optionally) set the termination criterion
-        const plssvm::regression_model model = svr->fit(train_data, plssvm::epsilon = 10e-6);
+        const plssvm::regression_model model = svr->fit(train_data, plssvm::epsilon = 1e-6);
 
         // predict the labels
         const std::vector<plssvm::real_type> predicted_label = svr->predict(model, test_data);
