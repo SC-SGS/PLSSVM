@@ -58,11 +58,11 @@ template <typename T>
     }
 }
 
-#define PLSSVM_CREATE_PYARRAY_T_TO_VECTOR_MAPPINGS(data_type)                                          \
-    if constexpr (detail::is_label_type_in_variant_v<std::vector<data_type>, possible_vector_types>) { \
-        if (type.equal(py::dtype::of<data_type>())) {                                                  \
-            return pyarray_t_to_vector<data_type>(vec);                                                \
-        }                                                                                              \
+#define PLSSVM_CREATE_PYARRAY_T_TO_VECTOR_MAPPINGS(data_type)                             \
+    if constexpr (detail::is_label_type_in_variant_v<data_type, possible_vector_types>) { \
+        if (type.equal(py::dtype::of<data_type>())) {                                     \
+            return pyarray_t_to_vector<data_type>(vec);                                   \
+        }                                                                                 \
     }
 
 /**
@@ -92,7 +92,7 @@ template <typename possible_vector_types>
     PLSSVM_CREATE_PYARRAY_T_TO_VECTOR_MAPPINGS(float)
     PLSSVM_CREATE_PYARRAY_T_TO_VECTOR_MAPPINGS(double)
 
-    if constexpr (detail::is_label_type_in_variant_v<std::vector<std::string>, possible_vector_types>) {
+    if constexpr (detail::is_label_type_in_variant_v<std::string, possible_vector_types>) {
         if (type.attr("kind").cast<std::string>() == "U") {
             // convert py::array of strings to a std::vector<std::string>
             if (vec.ndim() != 1) {
@@ -158,11 +158,11 @@ struct py_type_equal {
 
 }  // namespace impl
 
-#define PLSSVM_CREATE_PYLIST_TO_VECTOR_MAPPINGS(np_data_type, cpp_data_type)                               \
-    if constexpr (detail::is_label_type_in_variant_v<std::vector<cpp_data_type>, possible_vector_types>) { \
-        if (highest_type.equal(np.attr(np_data_type))) {                                                   \
-            return std::make_pair(pylist_to_vector<cpp_data_type>(list), py::dtype::of<cpp_data_type>());  \
-        }                                                                                                  \
+#define PLSSVM_CREATE_PYLIST_TO_VECTOR_MAPPINGS(np_data_type, cpp_data_type)                              \
+    if constexpr (detail::is_label_type_in_variant_v<cpp_data_type, possible_vector_types>) {             \
+        if (highest_type.equal(np.attr(np_data_type))) {                                                  \
+            return std::make_pair(pylist_to_vector<cpp_data_type>(list), py::dtype::of<cpp_data_type>()); \
+        }                                                                                                 \
     }
 
 /**
@@ -218,22 +218,22 @@ template <typename possible_vector_types>
     PLSSVM_CREATE_PYLIST_TO_VECTOR_MAPPINGS("float32", float)
     PLSSVM_CREATE_PYLIST_TO_VECTOR_MAPPINGS("float64", double)
 
-    if constexpr (detail::is_label_type_in_variant_v<std::vector<bool>, possible_vector_types>) {
+    if constexpr (detail::is_label_type_in_variant_v<bool, possible_vector_types>) {
         if (highest_type.equal(py::module_::import("builtins").attr("bool"))) {
             return std::make_pair(pylist_to_vector<bool>(list), py::dtype::of<bool>());
         }
     }
-    if constexpr (detail::is_label_type_in_variant_v<std::vector<std::int64_t>, possible_vector_types>) {
+    if constexpr (detail::is_label_type_in_variant_v<std::int64_t, possible_vector_types>) {
         if (highest_type.equal(py::module_::import("builtins").attr("int"))) {
             return std::make_pair(pylist_to_vector<std::int64_t>(list), py::dtype::of<std::int64_t>());
         }
     }
-    if constexpr (detail::is_label_type_in_variant_v<std::vector<double>, possible_vector_types>) {
+    if constexpr (detail::is_label_type_in_variant_v<double, possible_vector_types>) {
         if (highest_type.equal(py::module_::import("builtins").attr("float"))) {
             return std::make_pair(pylist_to_vector<double>(list), py::dtype::of<double>());
         }
     }
-    if constexpr (detail::is_label_type_in_variant_v<std::vector<std::string>, possible_vector_types>) {
+    if constexpr (detail::is_label_type_in_variant_v<std::string, possible_vector_types>) {
         if (highest_type.equal(py::module_::import("builtins").attr("str"))) {
             return std::make_pair(pylist_to_vector<std::string>(list), py::dtype("U"));
         }
