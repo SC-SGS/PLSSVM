@@ -19,11 +19,12 @@
 #include "plssvm/svm/csvc.hpp"                          // plssvm::csvc
 #include "plssvm/verbosity_levels.hpp"                  // plssvm::verbosity_level, plssvm::verbosity
 
-#include "bindings/Python/conversion_from_python.hpp"    // plssvm::bindings::python::util::{pyobject_to_vector, pyobject_to_matrix}
-#include "bindings/Python/conversion_to_python.hpp"      // plssvm::bindings::python::util::{vector_to_pyarray, matrix_to_pyarray}
-#include "bindings/Python/data_set/variant_wrapper.hpp"  // plssvm::bindings::python::util::classification_data_set_wrapper
-#include "bindings/Python/model/variant_wrapper.hpp"     // plssvm::bindings::python::util::classification_model_wrapper
-#include "bindings/Python/utility.hpp"                   // plssvm::bindings::python::util::{check_kwargs_for_correctness, convert_gamma_kwarg_to_variant}
+#include "bindings/Python/data_set/variant_wrapper.hpp"                 // plssvm::bindings::python::util::classification_data_set_wrapper
+#include "bindings/Python/model/variant_wrapper.hpp"                    // plssvm::bindings::python::util::classification_model_wrapper
+#include "bindings/Python/type_caster/label_vector_wrapper_caster.hpp"  // a custom Pybind11 type caster for a plssvm::bindings::python::label_vector_wrapper
+#include "bindings/Python/type_caster/matrix_type_caster.hpp"           // a custom Pybind11 type caster for a plssvm::matrix
+#include "bindings/Python/type_caster/matrix_wrapper_type_caster.hpp"   // a custom Pybind11 type caster for a plssvm::bindings::python::util::matrix_wrapper
+#include "bindings/Python/utility.hpp"                                  // plssvm::bindings::python::util::{check_kwargs_for_correctness, convert_gamma_kwarg_to_variant, vector_to_pyarray}
 
 #include "fmt/format.h"          // fmt::format
 #include "fmt/ranges.h"          // fmt::join
@@ -383,7 +384,7 @@ void init_sklearn_svc(py::module_ &m) {
                 }
 
                 // now, the w ptr is set and can be used
-                return plssvm::bindings::python::util::matrix_to_pyarray(self.get_w_ptr());
+                return py::cast(self.get_w_ptr());
             }, *self.model_); }, "Weights assigned to the features when kernel=\"linear\". ovo: ndarray of shape (n_classes * (n_classes - 1) / 2, n_features). ovr: (n_classes, n_features)")
         .def_property_readonly("dual_coef_", [](const svc &) { throw py::attribute_error{ "'SVC' object has no attribute 'dual_coef_' (not implemented)" }; }, "Dual coefficients of the support vector in the decision function, multiplied by their targets. ndarray of shape (n_classes - 1, n_SV)")
         .def_property_readonly("fit_status_", [](const svc &self) -> int {
@@ -449,7 +450,7 @@ void init_sklearn_svc(py::module_ &m) {
             }
 
             // convert 2D vector back to plssvm::matrix
-            return plssvm::bindings::python::util::matrix_to_pyarray(plssvm::aos_matrix<plssvm::real_type>{ std::move(sorted_sv) }); }, "Support vectors. ndarray of shape (n_SV, n_features)")
+            return py::cast(plssvm::aos_matrix<plssvm::real_type>{ std::move(sorted_sv) }); }, "Support vectors. ndarray of shape (n_SV, n_features)")
         .def_property_readonly("n_support_", [](const svc &self) -> py::array {
             if (self.model_ == nullptr) {
                 throw py::attribute_error{ "'SVC' object has no attribute 'n_support_'" };
@@ -490,14 +491,10 @@ void init_sklearn_svc(py::module_ &m) {
     //                                                               METHODS                                                               //
     //*************************************************************************************************************************************//
     py_svc
-        .def("decision_function", [](const svc &self, const py::object &predict_points) -> py::array {
+        .def("decision_function", [](const svc &self, plssvm::soa_matrix<plssvm::real_type> predict_points) -> py::array {
             if (self.model_ == nullptr) {
                 throw py::attribute_error{ "This SVC instance is not fitted yet. Call 'fit' with appropriate arguments before using this estimator." };
             }
-
-            // convert the data py::object to a plssvm::soa_matrix
-            const auto &[predict_points_aos_matrix, opt_feature_names] = plssvm::bindings::python::util::pyobject_to_matrix(predict_points);
-            plssvm::soa_matrix<plssvm::real_type> predict_points_matrix{ predict_points_aos_matrix };  // TODO: more performant
 
             return std::visit([&](auto &&model) -> py::array {
                 switch (self.classification_) {
@@ -510,7 +507,7 @@ void init_sklearn_svc(py::module_ &m) {
                             plssvm::soa_matrix<plssvm::real_type> w{};  // empty -> no need to befriend the model class!
 
                             // predict values using OAA -> num_data_points x num_classes
-                            const plssvm::aos_matrix<plssvm::real_type> votes = self.call_predict_values(params, sv, alpha, rho, w, predict_points_matrix);
+                            const plssvm::aos_matrix<plssvm::real_type> votes = self.call_predict_values(params, sv, alpha, rho, w, predict_points);
 
                             // special case for binary classification
                             if (model.num_classes() == 2) {
@@ -520,7 +517,7 @@ void init_sklearn_svc(py::module_ &m) {
                                 }
                                 return plssvm::bindings::python::util::vector_to_pyarray(reduced_votes);
                             } else {
-                                return plssvm::bindings::python::util::matrix_to_pyarray(votes);
+                                return py::cast(votes);
                             }
                         }
                     case plssvm::classification_type::oao:
@@ -534,7 +531,7 @@ void init_sklearn_svc(py::module_ &m) {
                             const std::vector<plssvm::real_type> &rho = model.rho();
 
                             // create the numpy array
-                            py::array_t<plssvm::real_type, py::array::c_style> votes{ { predict_points_matrix.num_rows(), plssvm::calculate_number_of_classifiers(plssvm::classification_type::oao, num_classes) } };
+                            py::array_t<plssvm::real_type, py::array::c_style> votes{ { predict_points.num_rows(), plssvm::calculate_number_of_classifiers(plssvm::classification_type::oao, num_classes) } };
                             auto votes_access = votes.mutable_unchecked<2>();
 
                             // perform one vs. one prediction
@@ -571,10 +568,10 @@ void init_sklearn_svc(py::module_ &m) {
                                     // we don't use the w optimization for the linear kernel here due to code simplicity
                                     plssvm::soa_matrix<plssvm::real_type> w{};
                                     // predict the values
-                                    const plssvm::aos_matrix<plssvm::real_type> binary_votes = self.call_predict_values(params, binary_sv, binary_alpha, binary_rho, w, predict_points_matrix);
+                                    const plssvm::aos_matrix<plssvm::real_type> binary_votes = self.call_predict_values(params, binary_sv, binary_alpha, binary_rho, w, predict_points);
 
                                     // update final votes
-                                    for (std::size_t pp = 0; pp < predict_points_matrix.num_rows(); ++pp) {
+                                    for (std::size_t pp = 0; pp < predict_points.num_rows(); ++pp) {
                                         votes_access(pp, pos) = binary_votes(pp, 0);
                                     }
 
@@ -586,7 +583,7 @@ void init_sklearn_svc(py::module_ &m) {
 
                             // special case binary classification
                             if (num_classes == 2) {
-                                for (std::size_t pp = 0; pp < predict_points_matrix.num_rows(); ++pp) {
+                                for (std::size_t pp = 0; pp < predict_points.num_rows(); ++pp) {
                                     votes_access(pp, pos) *= plssvm::real_type{ -1.0 };
                                 }
                                 return votes.reshape(py::array::ShapeContainer{ votes.size() });
@@ -598,54 +595,49 @@ void init_sklearn_svc(py::module_ &m) {
                 // unreachable
                 return py::array{};
             }, *self.model_); }, "Evaluate the decision function for the samples in X.")
-        .def("fit", [](svc &self, const py::object &data, const py::object &labels, const std::optional<std::vector<plssvm::real_type>> &sample_weight) -> svc & {
+        .def("fit", [](svc &self, plssvm::bindings::python::util::soa_matrix_wrapper<plssvm::real_type> data, plssvm::bindings::python::util::label_vector_wrapper<typename svc::possible_vector_types> labels, const std::optional<std::vector<plssvm::real_type>> &sample_weight) -> svc & {
             // sanity check parameter
             if (sample_weight.has_value()) {
                 throw py::attribute_error{ "The 'sample_weight' parameter for a call to 'fit' is not implemented yet!" };
             }
 
-            // convert the labels to a std::vector
-            const auto &[labels_vector_variant, dtype] = plssvm::bindings::python::util::pyobject_to_vector<typename svc::possible_vector_types>(labels);
-            self.py_dtype_ = dtype;
+            // store the used label type
+            self.py_dtype_ = labels.dtype;
 
-            // convert the data py::object to a plssvm::aos_matrix
-            const auto &[data_matrix, opt_feature_names] = plssvm::bindings::python::util::pyobject_to_matrix(data);
-            self.feature_names_ = opt_feature_names;
+            // retrieve the potential feature names
+            self.feature_names_ = std::move(data.feature_names);
 
             // create the data set to fit
-            std::visit([&self, &data_matrix = data_matrix](auto &&labels_vector) {
+            std::visit([&](auto &&labels_vector) {
                 // get the label type and possible data set types
                 using label_type = typename plssvm::detail::remove_cvref_t<decltype(labels_vector)>::value_type;
                 using possible_data_set_types = typename svc::possible_data_set_types;
                 // create the data set to fit
-                self.data_ = std::make_unique<possible_data_set_types>(plssvm::classification_data_set<label_type>(data_matrix, labels_vector));
+                self.data_ = std::make_unique<possible_data_set_types>(plssvm::classification_data_set<label_type>(std::move(data.matrix), std::move(labels_vector)));
             },
-                       labels_vector_variant);
+                       labels.labels);
 
             // fit the model
             fit(self);
             return self; }, "Fit the SVM model according to the given training data.", py::arg("X"), py::arg("y"), py::pos_only(), py::arg("sample_weight") = std::nullopt, py::return_value_policy::reference)
         .def("get_metadata_routing", [](const svc &) { throw py::attribute_error{ "'SVC' object has no function 'get_metadata_routing' (not implemented)" }; }, "Get metadata routing of this object.")
         .def("get_params", &svc::get_params, "Get parameters for this estimator.", py::arg("deep") = true)
-        .def("predict", [](svc &self, const py::object &data) -> py::array {
+        .def("predict", [](svc &self, plssvm::soa_matrix<plssvm::real_type> data) -> py::array {
             if (self.model_ == nullptr) {
                 throw py::attribute_error{ "This SVC instance is not fitted yet. Call 'fit' with appropriate arguments before using this estimator." };
             }
 
-            // convert the data py::object to a plssvm::aos_matrix
-            const auto &[data_matrix, opt_feature_names] = plssvm::bindings::python::util::pyobject_to_matrix(data);
-
-            return std::visit([&self, &data_matrix = data_matrix](auto &&model) {
+            return std::visit([&](auto &&model) {
                 // get the label type
                 using label_type = typename plssvm::detail::remove_cvref_t<decltype(model)>::label_type;
                 // create the data set to predict
-                const plssvm::classification_data_set<label_type> data_to_predict{ data_matrix };
+                const plssvm::classification_data_set<label_type> data_to_predict{ std::move(data) };
                 // predict the data
                 return plssvm::bindings::python::util::vector_to_pyarray(self.svm_->predict(model, data_to_predict));
             }, *self.model_); }, "Perform classification on samples in X.")
         .def("predict_log_proba", [](const svc &, py::array_t<plssvm::real_type>) { throw py::attribute_error{ "'SVC' object has no function 'predict_log_proba' (not implemented)" }; }, "Compute log probabilities of possible outcomes for samples in X.")
         .def("predict_proba", [](const svc &, py::array_t<plssvm::real_type>) { throw py::attribute_error{ "'SVC' object has no function 'predict_proba' (not implemented)" }; }, "Compute probabilities of possible outcomes for samples in X.")
-        .def("score", [](svc &self, const py::object &data, const py::object &labels, const std::optional<std::vector<plssvm::real_type>> &sample_weight) -> plssvm::real_type {
+        .def("score", [](svc &self, plssvm::soa_matrix<plssvm::real_type> data, plssvm::bindings::python::util::label_vector_wrapper<typename svc::possible_vector_types> labels, const std::optional<std::vector<plssvm::real_type>> &sample_weight) -> plssvm::real_type {
             // sanity check parameter
             if (sample_weight.has_value()) {
                 throw py::attribute_error{ "The 'sample_weight' parameter for a call to 'fit' is not implemented yet!" };
@@ -654,25 +646,19 @@ void init_sklearn_svc(py::module_ &m) {
                 throw py::attribute_error{ "This SVC instance is not fitted yet. Call 'fit' with appropriate arguments before using this estimator." };
             }
 
-            // convert the labels to a std::vector
-            const auto &[labels_vector_variant, dtype] = plssvm::bindings::python::util::pyobject_to_vector<typename svc::possible_vector_types>(labels);
-
-            // convert the data py::object to a plssvm::aos_matrix
-            const auto &[data_matrix, opt_feature_names] = plssvm::bindings::python::util::pyobject_to_matrix(data);
-
             // score the data
-            return std::visit([&self, &data_matrix = data_matrix, &dtype = dtype](auto &&labels_vector) {
+            return std::visit([&](auto &&labels_vector) {
                 // get the label types
                 using label_type = typename plssvm::detail::remove_cvref_t<decltype(labels_vector)>::value_type;
                 // create the data set to score
-                const plssvm::classification_data_set<label_type> data_to_score{ data_matrix, labels_vector };
+                const plssvm::classification_data_set<label_type> data_to_score{ std::move(data), std::move(labels_vector) };
                 // score the data
                 try {
                     return self.svm_->score(std::get<plssvm::classification_model<label_type>>(*self.model_), data_to_score);
                 } catch (const std::exception &) {
-                    throw py::value_error{ fmt::format(R"(The dtype of the labels to score is "{}", but the model was fitted with "{}". Please use the same types for fit and score!)", dtype.attr("name").cast<std::string>(), self.py_dtype_.attr("name").cast<std::string>()) };
+                    throw py::value_error{ fmt::format(R"(The dtype of the labels to score is "{}", but the model was fitted with "{}". Please use the same types for fit and score!)", labels.dtype.attr("name").cast<std::string>(), self.py_dtype_.attr("name").cast<std::string>()) };
                 }
-            }, labels_vector_variant); }, "Return the mean accuracy on the given test data and labels.", py::arg("X"), py::arg("y"), py::pos_only(), py::arg("sample_weight") = std::nullopt)
+            }, labels.labels); }, "Return the mean accuracy on the given test data and labels.", py::arg("X"), py::arg("y"), py::pos_only(), py::arg("sample_weight") = std::nullopt)
         .def("set_fit_request", [](const svc &) { throw py::attribute_error{ "'SVC' object has no function 'set_fit_request' (not implemented)" }; }, "Request metadata passed to the fit method.")
         .def("set_params", [](svc &self, const py::kwargs &args) -> svc & {
             parse_provided_kwargs(self, args);

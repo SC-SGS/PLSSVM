@@ -16,11 +16,10 @@
 #include "plssvm/parameter.hpp"                         // plssvm::parameter, named parameters
 #include "plssvm/solver_types.hpp"                      // plssvm::solver_type
 
-#include "bindings/Python/conversion_to_python.hpp"  // plssvm::bindings::python::util::vector_to_pyarray
 #include "bindings/Python/data_set/variant_wrapper.hpp"  // plssvm::bindings::python::util::classification_data_set_wrapper
 #include "bindings/Python/model/variant_wrapper.hpp"     // plssvm::bindings::python::util::classification_model_wrapper
-#include "bindings/Python/svm/utility.hpp"           // plssvm::bindings::python::util::assemble_csvm
-#include "bindings/Python/utility.hpp"               // plssvm::bindings::python::util::{check_kwargs_for_correctness, python_type_name_mapping}
+#include "bindings/Python/svm/utility.hpp"               // plssvm::bindings::python::util::assemble_csvm
+#include "bindings/Python/utility.hpp"                   // plssvm::bindings::python::util::{check_kwargs_for_correctness, python_type_name_mapping, vector_to_pyarray}
 
 #include "fmt/format.h"         // fmt::format
 #include "pybind11/pybind11.h"  // py::module_, py::class_, py::init, py::kwargs, py::value_error
