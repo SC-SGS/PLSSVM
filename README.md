@@ -485,6 +485,8 @@ The documentation of the current state of the main branch can be found [here](ht
 
 ### Installing
 
+#### Install via CMake
+
 The library supports the `install` target:
 
 ```bash
@@ -500,6 +502,48 @@ export MANPATH=${CMAKE_INSTALL_PREFIX}/share/man:$MANPATH
 export PATH=${CMAKE_INSTALL_PREFIX}/bin:${PATH}
 export LD_LIBRARY_PATH=${CMAKE_INSTALL_PREFIX}/lib:${CMAKE_INSTALL_PREFIX}/lib64:${LD_LIBRARY_PATH}
 export CPLUS_INCLUDE_PATH=${CMAKE_INSTALL_PREFIX}/include:${CPLUS_INCLUDE_PATH}
+```
+
+If our library was built with the Python bindings enabled, the `PYTHONPATH` must additionally be set:
+
+```bash
+export PYTHONPATH=${CMAKE_INSTALL_PREFIX}/lib:${CMAKE_INSTALL_PREFIX}/lib64:${PYTHONPATH}
+```
+
+#### Install via pip
+
+We also support a pip packages that can be used to install our library: 
+
+```bash
+pip install plssvm
+```
+
+This pip install behaves **as if** the CMake `all_python` preset is used. 
+This means that the `PLSSVM_TARGET_PLATFORMS` are automatically determined and PLSSVM is build with all supported 
+backends that available on the target machine at the point of the `pip install plssvm` invocation. 
+To check the installation, including, e.g., the installed backends, we provide the `plssvm-install-check` command after 
+PLSSVM has been installed via pip. 
+An example output of this command can look like: 
+
+```text
+PLSSVM - Parallel Least Squares Support Vector Machine (3.0.0)
+
+Copyright(C) 2018-today The PLSSVM project - All Rights Reserved
+This is free software distributed under the MIT license.
+
+Available target platforms: TargetPlatform.AUTOMATIC, TargetPlatform.GPU_NVIDIA, TargetPlatform.CPU
+Default target platform: TargetPlatform.GPU_NVIDIA
+
+Available backends: BackendType.AUTOMATIC, BackendType.OPENMP, BackendType.CUDA, BackendType.OPENCL, BackendType.SYCL
+Default backend for target platform TargetPlatform.GPU_NVIDIA: BackendType.CUDA
+Default backend for target platform TargetPlatform.CPU: BackendType.SYCL
+
+Available SYCL implementations: ImplementationType.AUTOMATIC, ImplementationType.ADAPTIVECPP
+
+
+Repository: https://github.com/SC-SGS/PLSSVM.git
+Documentation: https://sc-sgs.github.io/PLSSVM
+Issues: https://github.com/SC-SGS/PLSSVM/issues
 ```
 
 ## Usage
@@ -1019,12 +1063,6 @@ with an example output:
 <p align="center">
   <img alt="Example regression output using a sine curve." src="https://github.com/SC-SGS/PLSSVM/raw/regression/.figures/regression_example.png" width="80%">
 </p>
-
-**Note:** it may be necessary to set the environment variable `PYTHONPATH` to the `lib` folder in the PLSSVM install path.
-
-```bash
-export PYTHONPATH=${CMAKE_INSTALL_PREFIX}/lib:${CMAKE_INSTALL_PREFIX}/lib64:${PYTHONPATH}
-```
 
 Note that currently not all sklearn `SVC` and `SVR` functionality has been implemented in PLSSVM.
 The respective functions will throw a Python `AttributeError` if called.
