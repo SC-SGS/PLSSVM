@@ -101,7 +101,7 @@ struct svr {
     std::optional<plssvm::real_type> epsilon_{};
     std::optional<unsigned long long> max_iter_{};
 
-    std::unique_ptr<plssvm::csvr> svm_{ plssvm::make_csvr() };
+    std::unique_ptr<plssvm::csvr> svm_ = plssvm::make_csvr(plssvm::gamma = plssvm::gamma_coefficient_type::scale);
     std::unique_ptr<possible_data_set_types> data_{};
     std::unique_ptr<possible_model_types> model_{};
 

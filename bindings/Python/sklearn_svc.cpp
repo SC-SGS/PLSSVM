@@ -145,7 +145,7 @@ struct svc {
     std::optional<unsigned long long> max_iter_{};
     plssvm::classification_type classification_{ plssvm::classification_type::oaa };
 
-    std::unique_ptr<plssvm::csvc> svm_{ plssvm::make_csvc(plssvm::gamma = plssvm::gamma_coefficient_type::scale) };
+    std::unique_ptr<plssvm::csvc> svm_ = plssvm::make_csvc(plssvm::gamma = plssvm::gamma_coefficient_type::scale);
     std::unique_ptr<possible_data_set_types> data_{};
     std::unique_ptr<possible_model_types> model_{};
 
