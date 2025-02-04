@@ -181,10 +181,10 @@ template <typename T>
  */
 template <typename possible_vector_types>
 [[nodiscard]] inline std::pair<possible_vector_types, py::dtype> generic_pylist_to_vector(const py::list &list) {
-    static const py::module_ np = py::module_::import("numpy");
+    const py::module_ np = py::module_::import("numpy");
     // define a precedence map, i.e., we internally use the type in the py::list with the highest precedence value
     // example: [0, 1.3, np.int8(6)] -> the types are [int, float, int8] -> precedences are [8, 10, 2] -> the highest precedence is 10 -> we use float internally
-    static const std::unordered_map<py::type, int, impl::py_type_hash, impl::py_type_equal> precedence_map{
+    const std::unordered_map<py::type, int, impl::py_type_hash, impl::py_type_equal> precedence_map{
         { py::module_::import("builtins").attr("bool"), 0 },
         { np.attr("uint8"), 1 },
         { np.attr("int8"), 2 },
