@@ -20,10 +20,12 @@
 #include "plssvm/parameter.hpp"           // plssvm::parameter
 
 #include "fmt/format.h"         // fmt::format
-#include "pybind11/pybind11.h"  // py::kwargs, py::value_error, py::isinstance, py::str, py::module_, py::register_exception_translator, py::set_error
-#include "pybind11/pytypes.h"   // py::type
+#include "pybind11/numpy.h"     // py::array, py::array_t, py::buffer_info, py::array::c_style
+#include "pybind11/pybind11.h"  // py::kwargs, py::value_error, py::isinstance, py::str, py::module_, py::register_exception_translator, py::set_error, py::object, py::len
+#include "pybind11/pytypes.h"   // py::type, py::ssize_t
 
 #include <cstdint>      // fixed-width integers
+#include <cstring>      // std::memcpy
 #include <exception>    // std::exception_ptr, std::rethrow_exception
 #include <sstream>      // std::istringstream
 #include <string>       // std::string
@@ -299,6 +301,127 @@ template <template <typename> typename Instance, typename PossibleTypes, typenam
 
     // if we are here, no type match has been found -> throw an exception
     throw py::value_error{ fmt::format("Unsupported label type: {}!", type.attr("__name__").cast<std::string>()) };
+}
+
+/**
+ * @brief Convert a `std::vector<T>` to a Python Numpy array.
+ * @tparam T the type in the array
+ * @param[in] vec the vector to convert
+ * @return the Python Numpy array (`[[nodiscard]]`)
+ */
+template <typename T>
+[[nodiscard]] py::array vector_to_pyarray(const std::vector<T> &vec) {
+    if constexpr (std::is_same_v<T, std::string>) {
+        py::list l{};
+        for (const std::string &str : vec) {
+            l.append(str);
+        }
+        return py::array{ l };
+    } else {
+        py::array_t<T, py::array::c_style> arr(vec.size());
+        py::buffer_info buffer = arr.request();
+        T *ptr = static_cast<T *>(buffer.ptr);
+        if constexpr (std::is_same_v<T, bool>) {
+            // can't use memcpy with std::vector<bool>
+            for (typename std::vector<T>::size_type i = 0; i < vec.size(); ++i) {
+                ptr[i] = vec[i];
+            }
+        } else {
+            // use plain memcpy
+            std::memcpy(ptr, vec.data(), vec.size() * sizeof(T));
+        }
+        return arr;
+    }
+}
+
+/**
+ * @brief Check if the provided Python object @p obj is a Pandas DataFrame.
+ * @param[in] obj the Python object to check
+ * @return `true` if @p obj is a Pandas DataFrame, otherwise `false` (`[[nodiscard]]`)
+ */
+[[nodiscard]] inline bool is_pandas_data_frame(const py::handle &obj) {
+    try {
+        // try importing the pandas module
+        const py::module_ pd = py::module_::import("pandas");
+        const py::object pd_data_frame = pd.attr("DataFrame");
+        // check the instance
+        return py::isinstance(obj, pd_data_frame);
+    } catch (const py::error_already_set &) {
+        // error loading the pandas library -> obj can't be a DataFrame
+        return false;
+    }
+}
+
+/**
+ * @brief Check if the provided Python object @p obj is a Pandas Series.
+ * @param[in] obj the Python object to check
+ * @return `true` if @p obj is a Pandas Series, otherwise `false` (`[[nodiscard]]`)
+ */
+[[nodiscard]] inline bool is_pandas_series(const py::handle &obj) {
+    try {
+        // try importing the pandas module
+        const py::module_ pd = py::module_::import("pandas");
+        const py::object pd_series = pd.attr("Series");
+        // check the instance
+        return py::isinstance(obj, pd_series);
+    } catch (const py::error_already_set &) {
+        // error loading the pandas library -> obj can't be a Series
+        return false;
+    }
+}
+
+/**
+ * @brief Check if the provided Python object @p obj is a SciPy sparse matrix.
+ * @param[in] obj the Python object to check
+ * @return `true` if @p obj is a SciPy sparse matrix, otherwise `false` (`[[nodiscard]]`)
+ */
+[[nodiscard]] inline bool is_scipy_sparse_matrix(const py::handle &obj) {
+    try {
+        // try importing the scipy module
+        const py::module_ scipy_sparse = py::module_::import("scipy.sparse");
+        const py::object spmatrix_class = scipy_sparse.attr("spmatrix");
+        // check the instance
+        return py::isinstance(obj, spmatrix_class);
+    } catch (const py::error_already_set &) {
+        // error loading the scipy library -> obj can't be a sparse matrix
+        return false;
+    }
+}
+
+/**
+ * @brief Check if the @p buffer is C-contiguous by checking the stride and shape values.
+ * @tparam T the type used to calculated the size of the strides
+ * @param[in] buffer the buffer to check
+ * @return `true` if the buffer is C-contiguous, otherwise `false` (`[[nodiscard]]`)
+ */
+template <typename T>
+[[nodiscard]] bool is_c_contiguous(const py::buffer_info &buffer) {
+    auto expected_stride = static_cast<py::ssize_t>(sizeof(T));
+    for (py::ssize_t i = buffer.ndim - 1; i >= 0; --i) {
+        if (buffer.strides[i] != expected_stride) {
+            return false;
+        }
+        expected_stride *= buffer.shape[i];
+    }
+    return true;
+}
+
+/**
+ * @brief Check if the @p buffer is Fortran-contiguous by checking the stride and shape values.
+ * @tparam T the type used to calculated the size of the strides
+ * @param[in] buffer the buffer to check
+ * @return `true` if the buffer is Fortran-contiguous, otherwise `false` (`[[nodiscard]]`)
+ */
+template <typename T>
+[[nodiscard]] bool is_f_contiguous(const py::buffer_info &buffer) {
+    auto expected_stride = static_cast<py::ssize_t>(sizeof(T));
+    for (py::ssize_t i = 0; i < buffer.ndim; ++i) {
+        if (buffer.strides[i] != expected_stride) {
+            return false;
+        }
+        expected_stride *= buffer.shape[i];
+    }
+    return true;
 }
 
 }  // namespace plssvm::bindings::python::util

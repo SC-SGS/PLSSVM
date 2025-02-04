@@ -1,0 +1,58 @@
+[build-system]
+requires = ["scikit-build-core"]
+build-backend = "scikit_build_core.build"
+
+# set the necessary CMake build options
+[tool.scikit-build]
+cmake.args = [
+    "--preset all_python",
+    "-DCMAKE_INSTALL_LIBDIR=plssvm",
+    "-DCMAKE_INSTALL_BINDIR=plssvm",
+    "-DCMAKE_INSTALL_INCLUDEDIR=plssvm",
+    "-DCMAKE_INSTALL_MANDIR=plssvm",
+    "-DCMAKE_INSTALL_DATAROOTDIR=plssvm/cmake",
+    "-DCMAKE_INSTALL_RPATH=$ORIGIN"
+]
+sdist.exclude = ["build*/", "dist/", "docs/html/", ".github", ".jenkins", "examples", "install", "tests", ".clang*", ".clion*", ".gitignore"]
+
+# expose the PLSSVM executables after a pip install
+[project.scripts]
+plssvm-train = "plssvm.__cli__:train"
+plssvm-predict = "plssvm.__cli__:predict"
+plssvm-scale = "plssvm.__cli__:scale"
+plssvm-install-check = "plssvm.__install_check__:check"
+
+# project specific metadata
+[project]
+name = "plssvm"
+version = "3.0.3" # TODO: fix
+description = "PLSSVM - A high-performance Least Squares Support Vector Machine implementation for GPUs and CPUs"
+readme = "README.md"
+license = { file = "LICENSE.md" }
+authors = [
+    { name = "Alexander Van Craen, Marcel Breyer" }
+]
+maintainers = [
+    { name = "University of Stuttgart IPVS - SC", email = "sc@ipvs.uni-stuttgart.de" }
+]
+dependencies = ["numpy"]
+requires-python = ">=3.8"
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Environment :: GPU",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Natural Language :: English",
+    "Operating System :: POSIX :: Linux",
+    "Operating System :: Microsoft :: Windows",
+    "Programming Language :: C++",
+    "Programming Language :: Python :: 3",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence"
+]
+
+# project specific URLs
+[project.urls]
+homepage = "https://www.ipvs.uni-stuttgart.de/departments/sc/research/projects/recent/plssvm/"
+documentation = "https://sc-sgs.github.io/PLSSVM/"
+repository = "https://github.com/SC-SGS/PLSSVM.git"
+issues = "https://github.com/SC-SGS/PLSSVM/issues"

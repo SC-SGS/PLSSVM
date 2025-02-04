@@ -10,8 +10,8 @@
 
 #include "plssvm/detail/type_traits.hpp"  // plssvm::detail::remove_cvref_t
 
-#include "bindings/Python/conversion_from_python.hpp"    // plssvm::bindings::python::util::pyobject_to_vector
-#include "bindings/Python/data_set/variant_wrapper.hpp"  // plssvm::bindings::python::util::regression_data_set_wrapper
+#include "bindings/Python/data_set/variant_wrapper.hpp"                 // plssvm::bindings::python::util::regression_data_set_wrapper
+#include "bindings/Python/type_caster/label_vector_wrapper_caster.hpp"  // a custom Pybind11 type caster for a plssvm::bindings::python::util::label_vector_wrapper
 
 #include "fmt/format.h"         // fmt::format
 #include "pybind11/pybind11.h"  // py::module_, py::class_, py::init, py::arg, py::pos_only, py::value_error
@@ -37,24 +37,21 @@ void init_regression_report(py::module_ &m) {
 
     // bind regression_report class
     py::class_<plssvm::regression_report>(m, "RegressionReport")
-        .def(py::init([](py::object y_true, py::object y_pred, const bool force_finite) {
+        .def(py::init([](plssvm::bindings::python::util::label_vector_wrapper<typename plssvm::bindings::python::util::regression_data_set_wrapper::possible_vector_types> y_true,
+                         plssvm::bindings::python::util::label_vector_wrapper<typename plssvm::bindings::python::util::regression_data_set_wrapper::possible_vector_types> y_pred,
+                         const bool force_finite) {
                  using plssvm::bindings::python::util::regression_data_set_wrapper;
 
-                 // convert the correct labels to a std::vector
-                 const auto &[correct_label_variant, dtype_correct_label] = plssvm::bindings::python::util::pyobject_to_vector<typename regression_data_set_wrapper::possible_vector_types>(y_true);
-                 // convert the predicted labels to a std::vector
-                 const auto &[predicted_label_variant, dtype_predicted_label] = plssvm::bindings::python::util::pyobject_to_vector<typename regression_data_set_wrapper::possible_vector_types>(y_pred);
-
                  // check that the data types are equal
-                 if (!dtype_correct_label.equal(dtype_predicted_label)) {
-                     throw py::value_error{ fmt::format(R"(The type of the correct labels "{}" differs from the type of the predicted labels "{}"!)", dtype_correct_label.attr("name").cast<std::string>(), dtype_predicted_label.attr("name").cast<std::string>()) };
+                 if (!y_true.dtype.equal(y_pred.dtype)) {
+                     throw py::value_error{ fmt::format(R"(The type of the correct labels "{}" differs from the type of the predicted labels "{}"!)", y_true.dtype.attr("name").cast<std::string>(), y_pred.dtype.attr("name").cast<std::string>()) };
                  }
 
-                 return std::visit([&predicted_label_variant = predicted_label_variant, force_finite](auto &&correct_label) {
+                 return std::visit([&](auto &&correct_label) {
                      using vector_type = plssvm::detail::remove_cvref_t<decltype(correct_label)>;
-                     return plssvm::regression_report{ correct_label, std::get<vector_type>(predicted_label_variant), plssvm::regression_report::force_finite = force_finite };
+                     return plssvm::regression_report{ correct_label, std::get<vector_type>(y_pred.labels), plssvm::regression_report::force_finite = force_finite };
                  },
-                                   correct_label_variant);
+                                   y_true.labels);
              }),
              "create a new regression report by calculating all metrics between the correct and predicted labels",
              py::arg("y_true"),

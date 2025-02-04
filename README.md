@@ -1,4 +1,4 @@
-![![PLSSVM](../resources/logo_245x150.png)](docs/resources/logo_245x150.png)
+![PLSSVM](https://github.com/SC-SGS/PLSSVM/raw/main/docs/resources/logo_245x150.png)
 
 # PLSSVM - Parallel Least Squares Support Vector Machine
 
@@ -35,7 +35,7 @@ To predict to which class a new, unseen data point belongs, the SVM simply has t
 This is very efficient since it only involves a single scalar product of the size corresponding to the numer of features of the data set.
 
 <p align="center">
-  <img alt="Basic idea of an Support Vector Machine as classification model." src=".figures/support_vector_machine.png" width="50%">
+  <img alt="Basic idea of an Support Vector Machine as classification model." src="https://github.com/SC-SGS/PLSSVM/raw/main/.figures/support_vector_machine.png" width="50%">
 </p>
 
 However, normal SVMs suffer in their potential parallelizability.
@@ -188,13 +188,9 @@ Valid targets are:
 - `intel`: compile for Intel GPUs; **at least one** architectural specification is necessary, e.g., `intel:skl`
 
 At least one of the above targets must be present. If the option `PLSSVM_TARGET_PLATFORMS` is not present, the targets 
-are automatically determined using the Python3 `utility_scripts/plssvm_target_platforms.py` script (required Python3 dependencies:
-[`argparse`](https://docs.python.org/3/library/argparse.html), [`py-cpuinfo`](https://pypi.org/project/py-cpuinfo/),
-[`GPUtil`](https://pypi.org/project/GPUtil/), [`pyamdgpuinfo`](https://pypi.org/project/pyamdgpuinfo/), and
-[`pylspci`](https://pypi.org/project/pylspci/)).
+are automatically determined using the Python3 `utility_scripts/plssvm_target_platforms.py` script.
 
-Note that when using DPC++/icpx only a single architectural specification for `cpu`, `nvidia` or `amd` is allowed and that
-automatically retrieving AMD GPU information on Windows is currently not supported due to `pyamdgpuinfo` limitations.
+Note that when using DPC++/icpx only a single architectural specification for `cpu`, `nvidia` or `amd` is allowed.
 
 
 ```bash
@@ -204,8 +200,9 @@ python3 utility_scripts/plssvm_target_platforms.py --help
 usage: plssvm_target_platforms.py [-h] [--quiet]
 
 optional arguments:
-  -h, --help  show this help message and exit
-  --quiet     only output the final PLSSVM_TARGET_PLATFORMS string
+  -h, --help   show this help message and exit
+  --quiet      only output the final PLSSVM_TARGET_PLATFORMS string
+  --gpus_only  only output gpu architectures to the final PLSSVM_TARGET_PLATFORMS string
 ```
 
 Example invocation:
@@ -214,10 +211,9 @@ Example invocation:
 python3 utility_scripts/plssvm_target_platforms.py
 ```
 ```
-Intel(R) Core(TM) i9-10980XE CPU @ 3.00GHz: {'avx512': True, 'avx2': True, 'avx': True, 'sse4_2': True}
+supported CPU SIMD flags: {'avx512': True, 'avx2': True, 'avx': True, 'sse4_2': True}
 
-Found 1 NVIDIA GPU(s):
-  1x NVIDIA GeForce RTX 3080: sm_86
+Found 1 NVIDIA GPU(s): [sm_86]
 
 Possible -DPLSSVM_TARGET_PLATFORMS entries:
 cpu:avx512;nvidia:sm_86
@@ -231,13 +227,11 @@ or with the `--quiet` flag provided:
 python3 utility_scripts/plssvm_target_platforms.py --quiet
 ```
 ```
-cpu:avx512;intel:dg1
+cpu:avx512;nvidia:sm_86
 ```
 
 If the architectural information for the requested GPU could not be retrieved, one option would be to have a look at:
 
-- for NVIDIA GPUs:  [Your GPU Compute Capability](https://developer.nvidia.com/cuda-gpus)
-- for AMD GPUs: [clang AMDGPU backend usage](https://llvm.org/docs/AMDGPUUsage.html)
 - for Intel GPUs and CPUs: [Ahead of Time Compilation](https://www.intel.com/content/www/us/en/develop/documentation/oneapi-dpcpp-cpp-compiler-dev-guide-and-reference/top/compilation/ahead-of-time-compilation.html) and [Intel graphics processor table](https://dgpu-docs.intel.com/devices/hardware-table.html)
 
 
@@ -498,6 +492,8 @@ The documentation of the current state of the main branch can be found [here](ht
 
 ### Installing
 
+#### Install via CMake
+
 The library supports the `install` target:
 
 ```bash
@@ -513,6 +509,48 @@ export MANPATH=${CMAKE_INSTALL_PREFIX}/share/man:$MANPATH
 export PATH=${CMAKE_INSTALL_PREFIX}/bin:${PATH}
 export LD_LIBRARY_PATH=${CMAKE_INSTALL_PREFIX}/lib:${CMAKE_INSTALL_PREFIX}/lib64:${LD_LIBRARY_PATH}
 export CPLUS_INCLUDE_PATH=${CMAKE_INSTALL_PREFIX}/include:${CPLUS_INCLUDE_PATH}
+```
+
+If our library was built with the Python bindings enabled, the `PYTHONPATH` must additionally be set:
+
+```bash
+export PYTHONPATH=${CMAKE_INSTALL_PREFIX}/lib:${CMAKE_INSTALL_PREFIX}/lib64:${PYTHONPATH}
+```
+
+#### Install via pip
+
+We also support a pip packages that can be used to install our library: 
+
+```bash
+pip install plssvm
+```
+
+This pip install behaves **as if** the CMake `all_python` preset is used. 
+This means that the `PLSSVM_TARGET_PLATFORMS` are automatically determined and PLSSVM is build with all supported 
+backends that available on the target machine at the point of the `pip install plssvm` invocation. 
+To check the installation, including, e.g., the installed backends, we provide the `plssvm-install-check` command after 
+PLSSVM has been installed via pip. 
+An example output of this command can look like: 
+
+```text
+PLSSVM - Parallel Least Squares Support Vector Machine (3.0.0)
+
+Copyright(C) 2018-today The PLSSVM project - All Rights Reserved
+This is free software distributed under the MIT license.
+
+Available target platforms: TargetPlatform.AUTOMATIC, TargetPlatform.GPU_NVIDIA, TargetPlatform.CPU
+Default target platform: TargetPlatform.GPU_NVIDIA
+
+Available backends: BackendType.AUTOMATIC, BackendType.OPENMP, BackendType.CUDA, BackendType.OPENCL, BackendType.SYCL
+Default backend for target platform TargetPlatform.GPU_NVIDIA: BackendType.CUDA
+Default backend for target platform TargetPlatform.CPU: BackendType.SYCL
+
+Available SYCL implementations: ImplementationType.AUTOMATIC, ImplementationType.ADAPTIVECPP
+
+
+Repository: https://github.com/SC-SGS/PLSSVM.git
+Documentation: https://sc-sgs.github.io/PLSSVM
+Issues: https://github.com/SC-SGS/PLSSVM/issues
 ```
 
 ## Usage
@@ -963,7 +1001,7 @@ weighted avg       0.91      0.91      0.91       569
 Score: 91.39%
 ```
 <p align="center">
-  <img alt="Example classification task breast cancer decision boundary output." src=".figures/classification_example.png" width="80%">
+  <img alt="Example classification task breast cancer decision boundary output." src="https://github.com/SC-SGS/PLSSVM/raw/regression/.figures/classification_example.png" width="80%">
 </p>
 
 A regression example comparing PLSSVM's `SVR` Python binding and `sklearn.SVR` using a sine curve:
@@ -1030,14 +1068,8 @@ plt.show()
 ```
 with an example output:
 <p align="center">
-  <img alt="Example regression output using a sine curve." src=".figures/regression_example.png" width="80%">
+  <img alt="Example regression output using a sine curve." src="https://github.com/SC-SGS/PLSSVM/raw/regression/.figures/regression_example.png" width="80%">
 </p>
-
-**Note:** it may be necessary to set the environment variable `PYTHONPATH` to the `lib` folder in the PLSSVM install path.
-
-```bash
-export PYTHONPATH=${CMAKE_INSTALL_PREFIX}/lib:${CMAKE_INSTALL_PREFIX}/lib64:${PYTHONPATH}
-```
 
 Note that currently not all sklearn `SVC` and `SVR` functionality has been implemented in PLSSVM.
 The respective functions will throw a Python `AttributeError` if called.

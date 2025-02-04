@@ -10,7 +10,7 @@
 
 #include "plssvm/constants.hpp"  // plssvm::real_type
 
-#include "bindings/Python/conversion_to_python.hpp"  // plssvm::bindings::python::util::vector_to_pyarray
+#include "bindings/Python/utility.hpp"  // plssvm::bindings::python::util::vector_to_pyarray
 
 #include "fmt/format.h"         // fmt::format
 #include "pybind11/numpy.h"     // py::array
@@ -54,7 +54,8 @@ void init_min_max_scaler(py::module_ &m) {
                      throw py::value_error{ fmt::format("MinMaxScaler can only be created from two interval values (lower, upper), but {} were provided!", interval.size()) };
                  }
                  return plssvm::min_max_scaler{ interval[0].cast<plssvm::real_type>(), interval[1].cast<plssvm::real_type>() };
-             }), "create new scaling factors for the range [lower, upper]")
+             }),
+             "create new scaling factors for the range [lower, upper]")
         .def("save", &plssvm::min_max_scaler::save, "save the scaling factors to a file")
         .def("scaling_interval", &plssvm::min_max_scaler::scaling_interval, "the interval to which the data points are scaled")
         .def(

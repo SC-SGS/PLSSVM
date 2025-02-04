@@ -10,7 +10,7 @@
 
 #include "plssvm/constants.hpp"  // plssvm::real_type
 
-#include "bindings/Python/conversion_from_python.hpp"  // plssvm::bindings::python::util::pyarray_to_matrix
+#include "bindings/Python/type_caster/matrix_type_caster.hpp"  // a custom Pybind11 type caster for a plssvm::matrix
 
 #include "pybind11/pybind11.h"  // py::module_, py::enum_
 #include "pybind11/stl.h"       // support for STL types: std::variant
@@ -25,7 +25,7 @@ void init_gamma(py::module_ &m) {
 
     // bind free functions
     m.def("get_gamma_string", &plssvm::get_gamma_string, "get the gamma string based on the currently active variant member");
-    m.def("calculate_gamma_value", [](const plssvm::gamma_type &gamma, py::array_t<plssvm::real_type, py::array::c_style | py::array::forcecast> data) {
-        return plssvm::calculate_gamma_value(gamma, plssvm::bindings::python::util::pyarray_to_matrix(data));
+    m.def("calculate_gamma_value", [](const plssvm::gamma_type &gamma, plssvm::aos_matrix<plssvm::real_type> data) {
+        return plssvm::calculate_gamma_value(gamma, data);
     });
 }

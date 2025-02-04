@@ -12,9 +12,8 @@
 #include "plssvm/detail/type_traits.hpp"  // plssvm::detail::remove_cvref_t
 #include "plssvm/matrix.hpp"              // plssvm::aos_matrix
 
-#include "bindings/Python/conversion_to_python.hpp"   // plssvm::bindings::python::util::{matrix_to_pyarray, vector_to_pyarray}
 #include "bindings/Python/model/variant_wrapper.hpp"  // plssvm::bindings::python::util::classification_model_wrapper
-#include "bindings/Python/utility.hpp"                // plssvm::bindings::python::util::{python_type_name_mapping, create_instance}
+#include "bindings/Python/utility.hpp"                // plssvm::bindings::python::util::{python_type_name_mapping, create_instance, vector_to_pyarray}
 
 #include "fmt/format.h"         // fmt::format
 #include "fmt/ranges.h"         // fmt::join
@@ -48,7 +47,7 @@ void init_classification_model(py::module_ &m) {
         .def("num_support_vectors", [](const classification_model_wrapper &self) { return std::visit([](auto &&model) { return model.num_support_vectors(); }, self.model); }, "the number of support vectors (note: all training points become support vectors for LSSVMs)")
         .def("num_features", [](const classification_model_wrapper &self) { return std::visit([](auto &&model) { return model.num_features(); }, self.model); }, "the number of features of the support vectors")
         .def("get_params", [](const classification_model_wrapper &self) { return std::visit([](auto &&model) { return model.get_params(); }, self.model); }, "the SVM parameter used to learn this model")
-        .def("support_vectors", [](const classification_model_wrapper &self) { return std::visit([](auto &&model) { return plssvm::bindings::python::util::matrix_to_pyarray(model.support_vectors()); }, self.model); }, "the support vectors (note: all training points become support vectors for LSSVMs)")
+        .def("support_vectors", [](const classification_model_wrapper &self) { return std::visit([](auto &&model) { return py::cast(model.support_vectors()); }, self.model); }, "the support vectors (note: all training points become support vectors for LSSVMs)")
         // clang-format off
         .def("labels", [](const classification_model_wrapper &self) {
             return std::visit([](auto &&model) -> std::optional<py::array> {
@@ -62,7 +61,7 @@ void init_classification_model(py::module_ &m) {
             return std::visit([](auto &&model) {
                 py::list ret{};
                 for (const plssvm::aos_matrix<plssvm::real_type> &matr : model.weights()) {
-                    ret.append(plssvm::bindings::python::util::matrix_to_pyarray(matr));
+                    ret.append(py::cast(matr));
                 }
                 return ret;
             }, self.model); }, "the weights learned for each support vector and class")
