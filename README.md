@@ -1,4 +1,4 @@
-![![PLSSVM](../resources/logo_245x150.png)](docs/resources/logo_245x150.png)
+![PLSSVM](https://github.com/SC-SGS/PLSSVM/raw/main/docs/resources/logo_245x150.png)
 
 # PLSSVM - Parallel Least Squares Support Vector Machine
 
@@ -35,7 +35,7 @@ To predict to which class a new, unseen data point belongs, the SVM simply has t
 This is very efficient since it only involves a single scalar product of the size corresponding to the numer of features of the data set.
 
 <p align="center">
-  <img alt="Basic idea of an Support Vector Machine as classification model." src=".figures/support_vector_machine.png" width="50%">
+  <img alt="Basic idea of an Support Vector Machine as classification model." src="https://github.com/SC-SGS/PLSSVM/raw/main/.figures/support_vector_machine.png" width="50%">
 </p>
 
 However, normal SVMs suffer in their potential parallelizability.
@@ -950,7 +950,7 @@ weighted avg       0.91      0.91      0.91       569
 Score: 91.39%
 ```
 <p align="center">
-  <img alt="Example classification task breast cancer decision boundary output." src=".figures/classification_example.png" width="80%">
+  <img alt="Example classification task breast cancer decision boundary output." src="https://github.com/SC-SGS/PLSSVM/raw/regression/.figures/classification_example.png" width="80%">
 </p>
 
 A regression example comparing PLSSVM's `SVR` Python binding and `sklearn.SVR` using a sine curve:
@@ -1017,7 +1017,7 @@ plt.show()
 ```
 with an example output:
 <p align="center">
-  <img alt="Example regression output using a sine curve." src=".figures/regression_example.png" width="80%">
+  <img alt="Example regression output using a sine curve." src="https://github.com/SC-SGS/PLSSVM/raw/regression/.figures/regression_example.png" width="80%">
 </p>
 
 **Note:** it may be necessary to set the environment variable `PYTHONPATH` to the `lib` folder in the PLSSVM install path.
