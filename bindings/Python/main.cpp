@@ -9,6 +9,7 @@
 
 #include "plssvm/environment.hpp"            // plssvm::environment::{initialize, finalize}
 #include "plssvm/exceptions/exceptions.hpp"  // plssvm::exception
+#include "plssvm/version/version.hpp"        // plssvm::version::version
 
 #include "pybind11/pybind11.h"  // PYBIND11_MODULE, py::module_, py::exception, py::register_exception_translator
 #include "pybind11/pytypes.h"   // py::set_error
@@ -54,7 +55,8 @@ void init_sklearn_svc(py::module_ &);
 void init_sklearn_svr(py::module_ &);
 
 PYBIND11_MODULE(plssvm, m) {
-    m.doc() = "Parallel Least Squares Support Vector Machine";
+    m.doc() = "PLSSVM - Parallel Least Squares Support Vector Machine";
+    m.attr("__version__") = plssvm::version::version;
 
     // create a pure-virtual module
     py::module_ pure_virtual = m.def_submodule("__pure_virtual");
