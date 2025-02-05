@@ -166,7 +166,7 @@ void parse_provided_kwargs(svc &self, const py::kwargs &args) {
         plssvm::kernel_function_type kernel{};
         if (kernel_str == "linear") {
             kernel = plssvm::kernel_function_type::linear;
-        } else if (kernel_str == "poly") {
+        } else if (kernel_str == "poly" || kernel_str == "polynomial") {
             kernel = plssvm::kernel_function_type::polynomial;
         } else if (kernel_str == "rbf") {
             kernel = plssvm::kernel_function_type::rbf;
@@ -174,7 +174,7 @@ void parse_provided_kwargs(svc &self, const py::kwargs &args) {
             kernel = plssvm::kernel_function_type::sigmoid;
         } else if (kernel_str == "laplacian") {
             kernel = plssvm::kernel_function_type::laplacian;
-        } else if (kernel_str == "chi_squared") {
+        } else if (kernel_str == "chi_squared" || kernel_str == "chi-squared") {
             kernel = plssvm::kernel_function_type::chi_squared;
         } else if (kernel_str == "precomputed") {
             throw py::value_error{ R"(The "kernel = 'precomputed'" parameter for the 'SVC' is not implemented yet!)" };

@@ -110,7 +110,7 @@ struct type_caster<plssvm::matrix<T, layout>> {
         const T *ptr = static_cast<T *>(buffer.ptr);
 
         // check the memory layout of the Python Numpy array
-        if constexpr (Flags & py::array::c_style) {
+        if constexpr (static_cast<bool>(Flags & py::array::c_style)) {
             // the provided Python Numpy array has C style layout
             if constexpr (layout == plssvm::layout_type::aos) {
                 // memory layout of Python Numpy array and PLSSVM matrix are the same -> can use memcpy to convert
@@ -130,7 +130,7 @@ struct type_caster<plssvm::matrix<T, layout>> {
                 // unsupported PLSSVM matrix memory layout
                 return false;
             }
-        } else if constexpr (Flags & py::array::f_style) {
+        } else if constexpr (static_cast<bool>(Flags & py::array::f_style)) {
             if constexpr (layout == plssvm::layout_type::aos) {
                 // the memory layouts don't match -> must use loops to convert layouts
 #pragma omp parallel for collapse(2)
