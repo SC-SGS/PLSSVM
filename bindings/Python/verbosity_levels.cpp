@@ -15,7 +15,7 @@ namespace py = pybind11;
 
 void init_verbosity_levels(py::module_ &m) {
     // bind enum class
-    py::enum_<plssvm::verbosity_level> verb_enum(m, "VerbosityLevel");
+    py::enum_<plssvm::verbosity_level> verb_enum(m, "VerbosityLevel", "Enum class for all possible verbosity levels used in our own logging infrastructure.");
     verb_enum.value("QUIET", plssvm::verbosity_level::quiet, "nothing is logged to the standard output to stdout")
         .value("LIBSVM", plssvm::verbosity_level::libsvm, "log the same messages as LIBSVM (used for better LIBSVM conformity) to stdout")
         .value("TIMING", plssvm::verbosity_level::timing, "log all messages related to timing information to stdout")

@@ -97,7 +97,7 @@ constexpr bool is_label_type_in_variant_v = is_label_type_in_variant<T, Variant>
 inline void check_kwargs_for_correctness(const py::kwargs &args, const std::vector<std::string_view> &valid_named_args) {
     for (const auto &[key, value] : args) {
         if (!plssvm::detail::contains(valid_named_args, key.cast<std::string_view>())) {
-            throw py::value_error(fmt::format("got an unexpected keyword argument '{}'", key.cast<std::string_view>()));
+            throw py::value_error{ fmt::format("got an unexpected keyword argument '{}'", key.cast<std::string_view>()) };
         }
     }
 }

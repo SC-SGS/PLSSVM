@@ -14,7 +14,7 @@ namespace py = pybind11;
 
 void init_solver_types(py::module_ &m) {
     // bind enum class
-    py::enum_<plssvm::solver_type>(m, "SolverType")
+    py::enum_<plssvm::solver_type>(m, "SolverType", "Enum class for all possible solver types implemented in PLSSVM.")
         .value("AUTOMATIC", plssvm::solver_type::automatic, "the default solver type; depends on the available device and system memory")
         .value("CG_EXPLICIT", plssvm::solver_type::cg_explicit, "explicitly assemble the kernel matrix on the device")
         .value("CG_IMPLICIT", plssvm::solver_type::cg_implicit, "implicitly calculate the kernel matrix entries in each CG iteration");

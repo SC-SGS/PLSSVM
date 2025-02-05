@@ -26,17 +26,16 @@ namespace py = pybind11;
 
 void init_regression_report(py::module_ &m) {
     // bind regression report class
-    py::class_<plssvm::regression_report::metric>(m, "RegressionReportMetric")
-        .def(py::init<>())
-        .def_property_readonly("explained_variance_score", [](const plssvm::regression_report::metric &self) { return self.explained_variance_score; })
-        .def_property_readonly("mean_absolute_error", [](const plssvm::regression_report::metric &self) { return self.mean_absolute_error; })
-        .def_property_readonly("mean_squared_error", [](const plssvm::regression_report::metric &self) { return self.mean_squared_error; })
-        .def_property_readonly("r2_score", [](const plssvm::regression_report::metric &self) { return self.r2_score; })
-        .def_property_readonly("squared_correlation_coefficient", [](const plssvm::regression_report::metric &self) { return self.squared_correlation_coefficient; })
+    py::class_<plssvm::regression_report::metric>(m, "RegressionReportMetric", "A class representing all metrics in a regression report.")
+        .def_property_readonly("explained_variance_score", [](const plssvm::regression_report::metric &self) { return self.explained_variance_score; }, "the explained variance score")
+        .def_property_readonly("mean_absolute_error", [](const plssvm::regression_report::metric &self) { return self.mean_absolute_error; }, "the mean absolute error")
+        .def_property_readonly("mean_squared_error", [](const plssvm::regression_report::metric &self) { return self.mean_squared_error; }, "the mean squared error")
+        .def_property_readonly("r2_score", [](const plssvm::regression_report::metric &self) { return self.r2_score; }, "the R^2 score")
+        .def_property_readonly("squared_correlation_coefficient", [](const plssvm::regression_report::metric &self) { return self.squared_correlation_coefficient; }, "the squared correlation coefficient")
         .def("__repr__", [](const plssvm::regression_report::metric &self) { return fmt::format("{}", self); });
 
     // bind regression_report class
-    py::class_<plssvm::regression_report>(m, "RegressionReport")
+    py::class_<plssvm::regression_report>(m, "RegressionReport", "A class calculating a regression report (e.g., MSE or R^2 score). Similar to sklearn's classification_report.")
         .def(py::init([](plssvm::bindings::python::util::label_vector_wrapper<typename plssvm::bindings::python::util::regression_data_set_wrapper::possible_vector_types> y_true,
                          plssvm::bindings::python::util::label_vector_wrapper<typename plssvm::bindings::python::util::regression_data_set_wrapper::possible_vector_types> y_pred,
                          const bool force_finite) {

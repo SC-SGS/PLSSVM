@@ -101,7 +101,7 @@ struct svr {
     std::optional<plssvm::real_type> epsilon_{};
     std::optional<unsigned long long> max_iter_{};
 
-    std::unique_ptr<plssvm::csvr> svm_{ plssvm::make_csvr() };
+    std::unique_ptr<plssvm::csvr> svm_ = plssvm::make_csvr(plssvm::gamma = plssvm::gamma_coefficient_type::scale);
     std::unique_ptr<possible_data_set_types> data_{};
     std::unique_ptr<possible_model_types> model_{};
 
@@ -227,7 +227,7 @@ void fit(svr &self) {
 
 void init_sklearn_svr(py::module_ &m) {
     // documentation based on sklearn.svm.SVR documentation
-    py::class_<svr> py_svr(m, "SVR", py::dynamic_attr());
+    py::class_<svr> py_svr(m, "SVR", py::dynamic_attr(), "A C-SVR implementation adhering to sklearn.svm.SVR using PLSSVM as backend.");
     py_svr.def(py::init([](const py::kwargs &args) {
                    // to silence constructor messages
                    if (args.contains("verbose")) {
@@ -422,7 +422,11 @@ void init_sklearn_svr(py::module_ &m) {
 
                 // check if the parameter values are identical, if not, add them to the vector
                 if (used_param_str != default_param_str) {
-                    non_default_values.push_back(fmt::format("{}={}", key, used_param_str));
+                    if (py::isinstance<py::str>(used_params[key.c_str()])) {
+                        non_default_values.push_back(fmt::format("{}='{}'", key, used_param_str));
+                    } else {
+                        non_default_values.push_back(fmt::format("{}={}", key, used_param_str));
+                    }
                 }
             }
 

@@ -14,7 +14,7 @@ namespace py = pybind11;
 
 void init_kernel_function_types(py::module_ &m) {
     // bind enum class
-    py::enum_<plssvm::kernel_function_type>(m, "KernelFunctionType")
+    py::enum_<plssvm::kernel_function_type>(m, "KernelFunctionType", "Enum class for all implemented kernel functions in PLSSVM.")
         .value("LINEAR", plssvm::kernel_function_type::linear, "linear kernel function: <u, v>")
         .value("POLYNOMIAL", plssvm::kernel_function_type::polynomial, "polynomial kernel function: (gamma * <u, v> + coef0)^degree")
         .value("RBF", plssvm::kernel_function_type::rbf, "radial basis function: exp(-gamma * ||u - v||^2)")

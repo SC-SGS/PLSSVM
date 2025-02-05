@@ -15,7 +15,7 @@ namespace py = pybind11;
 
 void init_target_platforms(py::module_ &m) {
     // bind enum class
-    py::enum_<plssvm::target_platform>(m, "TargetPlatform")
+    py::enum_<plssvm::target_platform>(m, "TargetPlatform", "Enum class for all possible targets that PLSSVM supports.")
         .value("AUTOMATIC", plssvm::target_platform::automatic, "the default target with respect to the used backend type; checks for available devices in the following order: NVIDIA GPUs -> AMD GPUs -> Intel GPUs -> CPUs")
         .value("CPU", plssvm::target_platform::cpu, "target CPUs only (Intel, AMD, IBM, ...)")
         .value("GPU_NVIDIA", plssvm::target_platform::gpu_nvidia, "target GPUs from NVIDIA")

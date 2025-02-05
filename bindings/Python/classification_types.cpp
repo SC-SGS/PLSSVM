@@ -16,7 +16,7 @@ namespace py = pybind11;
 
 void init_classification_types(py::module_ &m) {
     // bind enum class
-    py::enum_<plssvm::classification_type>(m, "ClassificationType")
+    py::enum_<plssvm::classification_type>(m, "ClassificationType", "Enum class for all implemented multiclass classification strategies.")
         .value("OAA", plssvm::classification_type::oaa, "use the one vs. all classification strategy (default)")
         .value("OAO", plssvm::classification_type::oao, "use the one vs. one classification strategy");
 

@@ -35,12 +35,13 @@ void bind_adaptivecpp_csvms(py::module_ &m, const std::string &csvm_name) {
     using backend_csvm_type = plssvm::adaptivecpp::backend_csvm_type_t<csvm_type>;
 
     // assemble docstrings
+    const std::string class_docstring{ fmt::format("A {} using the AdaptiveCpp SYCL backend.", csvm_name) };
     const std::string param_docstring{ fmt::format("create an AdaptiveCpp SYCL {} with the provided parameters and optional SYCL specific keyword arguments", csvm_name) };
     const std::string target_param_docstring{ fmt::format("create an AdaptiveCpp SYCL {} with the provided target platform, parameters, and optional SYCL specific keyword arguments", csvm_name) };
     const std::string kwargs_docstring{ fmt::format("create an AdaptiveCpp SYCL {} with the provided keyword arguments (including optional SYCL specific keyword arguments)", csvm_name) };
     const std::string target_kwargs_docstring{ fmt::format("create an AdaptiveCpp SYCL {} with the provided target platform and keyword arguments (including optional SYCL specific keyword arguments)", csvm_name) };
 
-    py::class_<backend_csvm_type, plssvm::adaptivecpp::csvm, csvm_type>(m, csvm_name.c_str())
+    py::class_<backend_csvm_type, plssvm::adaptivecpp::csvm, csvm_type>(m, csvm_name.c_str(), class_docstring.c_str())
         .def(py::init([](const plssvm::parameter params, const py::kwargs &args) {
                  // check for valid keys
                  plssvm::bindings::python::util::check_kwargs_for_correctness(args, { "sycl_kernel_invocation_type" });
@@ -81,7 +82,10 @@ void bind_adaptivecpp_csvms(py::module_ &m, const std::string &csvm_name) {
                  return std::make_unique<backend_csvm_type>(target, params, plssvm::sycl_kernel_invocation_type = invocation);
              }),
              target_kwargs_docstring.c_str())
-        .def("get_kernel_invocation_type", &plssvm::adaptivecpp::csvm::get_kernel_invocation_type, "get the kernel invocation type used in this SYCL C-SVM");
+        .def("get_kernel_invocation_type", &plssvm::adaptivecpp::csvm::get_kernel_invocation_type, "get the kernel invocation type used in this SYCL C-SVM")
+        .def("__repr__", [csvm_name](const backend_csvm_type &self) {
+            return fmt::format("<plssvm.adaptivecpp.{} with {{ #devices: {}, kernel_invocation_type: {} }}>", csvm_name, self.num_available_devices(), self.get_kernel_invocation_type());
+        });
 }
 
 }  // namespace

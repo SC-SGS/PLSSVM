@@ -145,7 +145,7 @@ struct svc {
     std::optional<unsigned long long> max_iter_{};
     plssvm::classification_type classification_{ plssvm::classification_type::oaa };
 
-    std::unique_ptr<plssvm::csvc> svm_{ plssvm::make_csvc(plssvm::gamma = plssvm::gamma_coefficient_type::scale) };
+    std::unique_ptr<plssvm::csvc> svm_ = plssvm::make_csvc(plssvm::gamma = plssvm::gamma_coefficient_type::scale);
     std::unique_ptr<possible_data_set_types> data_{};
     std::unique_ptr<possible_model_types> model_{};
 
@@ -319,7 +319,7 @@ template <typename svc>
 
 void init_sklearn_svc(py::module_ &m) {
     // documentation based on sklearn.svm.SVC documentation
-    py::class_<svc> py_svc(m, "SVC", py::dynamic_attr());
+    py::class_<svc> py_svc(m, "SVC", py::dynamic_attr(), "A C-SVC implementation adhering to sklearn.svm.SVC using PLSSVM as backend.");
     py_svc.def(py::init([](const py::kwargs &args) {
                    // to silence constructor messages
                    if (args.contains("verbose")) {
@@ -692,7 +692,11 @@ void init_sklearn_svc(py::module_ &m) {
 
                 // check if the parameter values are identical, if not, add them to the vector
                 if (used_param_str != default_param_str) {
-                    non_default_values.push_back(fmt::format("{}={}", key, used_param_str));
+                    if (py::isinstance<py::str>(used_params[key.c_str()])) {
+                        non_default_values.push_back(fmt::format("{}='{}'", key, used_param_str));
+                    } else {
+                        non_default_values.push_back(fmt::format("{}={}", key, used_param_str));
+                    }
                 }
             }
 

@@ -34,12 +34,13 @@ void bind_opencl_csvms(py::module_ &m, const std::string &csvm_name) {
     using backend_csvm_type = plssvm::opencl::backend_csvm_type_t<csvm_type>;
 
     // assemble docstrings
+    const std::string class_docstring{ fmt::format("A {} using the OpenCL backend.", csvm_name) };
     const std::string param_docstring{ fmt::format("create an OpenCL {} with provided parameters", csvm_name) };
     const std::string target_param_docstring{ fmt::format("create an OpenCL {} with the provided target platform and parameters", csvm_name) };
     const std::string kwargs_docstring{ fmt::format("create an OpenCL {} with the provided keyword arguments", csvm_name) };
     const std::string target_kwargs_docstring{ fmt::format("create an OpenCL {} with the provided target platform and keyword arguments", csvm_name) };
 
-    py::class_<backend_csvm_type, plssvm::opencl::csvm, csvm_type>(m, csvm_name.c_str())
+    py::class_<backend_csvm_type, plssvm::opencl::csvm, csvm_type>(m, csvm_name.c_str(), class_docstring.c_str())
         .def(py::init<plssvm::parameter>(), param_docstring.c_str())
         .def(py::init<plssvm::target_platform, plssvm::parameter>(), target_param_docstring.c_str())
         .def(py::init([](const py::kwargs &args) {
@@ -59,7 +60,10 @@ void bind_opencl_csvms(py::module_ &m, const std::string &csvm_name) {
                  // create C-SVM with the provided target platform
                  return std::make_unique<backend_csvm_type>(target, params);
              }),
-             target_kwargs_docstring.c_str());
+             target_kwargs_docstring.c_str())
+        .def("__repr__", [csvm_name](const backend_csvm_type &self) {
+            return fmt::format("<plssvm.opencl.{} with {{ #devices: {} }}>", csvm_name, self.num_available_devices());
+        });
 }
 
 }  // namespace

@@ -38,7 +38,7 @@ void init_csvc(py::module_ &m, py::module_ &pure_virtual) {
     const py::class_<plssvm::csvc> py_csvc(pure_virtual, "__pure_virtual_base_CSVC");
 
     // bind plssvm::make_csvm factory functions to "generic" Python C-SVC class
-    py::class_<plssvm::csvc>(m, "CSVC", py_csvc, py::module_local())
+    py::class_<plssvm::csvc>(m, "CSVC", py_csvc, py::module_local(), "Base class for all backend C-SVC implementations.")
         // IMPLICIT BACKEND
         .def(py::init([](const py::kwargs &args) {
                  return plssvm::bindings::python::util::assemble_csvm<plssvm::csvc>(args);
@@ -83,7 +83,7 @@ void init_csvc(py::module_ &m, py::module_ &pure_virtual) {
                                                                       plssvm::classification = classification,
                                                                       plssvm::solver = solver) };
                     }
-                }, data_set.data_set); }, "fit a model using the current SVM on the provided data")
+                }, data_set.data_set); }, "fit a model using the current C-SVC on the provided data")
         .def("predict", [](const plssvm::csvc &self, const classification_model_wrapper &trained_model, const classification_data_set_wrapper &data_set) {
                 return std::visit([&](auto &&model) {
                     using label_type = typename plssvm::detail::remove_cvref_t<decltype(model)>::label_type;

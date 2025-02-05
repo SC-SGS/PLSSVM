@@ -35,6 +35,7 @@ void bind_stdpar_csvms(py::module_ &m, const std::string &csvm_name) {
     using backend_csvm_type = plssvm::stdpar::backend_csvm_type_t<csvm_type>;
 
     // assemble docstrings
+    const std::string class_docstring{ fmt::format("A {} using the stdpar backend.", csvm_name) };
     const std::string param_docstring{ fmt::format("create an stdpar {} with the provided parameters", csvm_name) };
     const std::string target_param_docstring{ fmt::format("create an stdpar {} with the provided target platform and parameters", csvm_name) };
     const std::string kwargs_docstring{ fmt::format("create an stdpar {} with the provided keyword arguments", csvm_name) };
@@ -60,7 +61,11 @@ void bind_stdpar_csvms(py::module_ &m, const std::string &csvm_name) {
                  // create C-SVM with the provided target platform
                  return std::make_unique<backend_csvm_type>(target, params);
              }),
-             target_kwargs_docstring.c_str());
+             target_kwargs_docstring.c_str())
+        .def("get_implementation_type", &plssvm::stdpar::csvm::get_implementation_type, "get the stdpar implementation used in this stdpar C-SVM")
+        .def("__repr__", [csvm_name](const backend_csvm_type &self) {
+            return fmt::format("<plssvm.stdpar.{} with {{ #devices: {}, implementation_type: {} }}>", csvm_name, self.num_available_devices(), self.get_implementation_type());
+        });
 }
 
 }  // namespace
@@ -71,7 +76,7 @@ void init_stdpar_csvm(py::module_ &m, const py::exception<plssvm::exception> &ba
     const py::module_ stdpar_pure_virtual_module = stdpar_module.def_submodule("__pure_virtual", "a module containing all pure-virtual stdpar backend specific functionality");
 
     // bind the enum class
-    py::enum_<plssvm::stdpar::implementation_type>(stdpar_module, "ImplementationType")
+    py::enum_<plssvm::stdpar::implementation_type>(stdpar_module, "ImplementationType", "Enum class for all supported stdpar implementations in PLSSVM.")
         .value("NVHPC", plssvm::stdpar::implementation_type::nvhpc, "use NVIDIA's HPC SDK (NVHPC) compiler nvc++")
         .value("ROC_STDPAR", plssvm::stdpar::implementation_type::roc_stdpar, "use AMD's roc-stdpar compiler (patched LLVM)")
         .value("INTEL_LLVM", plssvm::stdpar::implementation_type::intel_llvm, "use Intel's LLVM compiler icpx")

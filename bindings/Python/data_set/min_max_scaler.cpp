@@ -29,7 +29,7 @@ void init_min_max_scaler(py::module_ &m) {
     PYBIND11_NUMPY_DTYPE(plssvm::min_max_scaler::factors, feature, lower, upper);
 
     // bind the plssvm::min_max_scaler::factors struct
-    py::class_<plssvm::min_max_scaler::factors>(m, "MinMaxScalerFactors")
+    py::class_<plssvm::min_max_scaler::factors>(m, "MinMaxScalerFactors", "The calculated or read feature-wise scaling factors.")
         .def(py::init<std::size_t, plssvm::real_type, plssvm::real_type>(), "create a new scaling factor", py::arg("feature"), py::arg("lower"), py::arg("upper"))
         .def_readonly("feature", &plssvm::min_max_scaler::factors::feature, "the feature index for which the factors are valid")
         .def_readonly("lower", &plssvm::min_max_scaler::factors::lower, "the lower scaling factor")
@@ -42,7 +42,7 @@ void init_min_max_scaler(py::module_ &m) {
         });
 
     // bind the plssvm::min_max_scaler class
-    py::class_<plssvm::min_max_scaler>(m, "MinMaxScaler")
+    py::class_<plssvm::min_max_scaler>(m, "MinMaxScaler", "Implements all necessary data and functions needed for scaling a plssvm::data_set to an user-defined range [lower, upper].")
         .def(py::init<plssvm::real_type, plssvm::real_type>(), "create new scaling factors for the range [lower, upper]", py::arg("lower"), py::arg("upper"))
         .def(py::init([](const std::array<plssvm::real_type, 2> interval) {
                  return plssvm::min_max_scaler{ interval[0], interval[1] };
@@ -58,16 +58,13 @@ void init_min_max_scaler(py::module_ &m) {
              "create new scaling factors for the range [lower, upper]")
         .def("save", &plssvm::min_max_scaler::save, "save the scaling factors to a file")
         .def("scaling_interval", &plssvm::min_max_scaler::scaling_interval, "the interval to which the data points are scaled")
-        .def(
-            "scaling_factors", [](const plssvm::min_max_scaler &self) -> std::optional<py::array> {
+        .def("scaling_factors", [](const plssvm::min_max_scaler &self) -> std::optional<py::array> {
                 const auto scaling_factors = self.scaling_factors();
                 if (scaling_factors.has_value()) {
                     return plssvm::bindings::python::util::vector_to_pyarray(scaling_factors.value());
                 } else {
                     return std::nullopt;
-                }
-            },
-            "the scaling factors for each feature")
+                } }, "the scaling factors for each feature")
         .def("__repr__", [](const plssvm::min_max_scaler &self) {
             std::string optional_repr{};
             const auto scaling_factors = self.scaling_factors();
@@ -77,6 +74,5 @@ void init_min_max_scaler(py::module_ &m) {
             return fmt::format("<plssvm.MinMaxScaler with {{ lower: {}, upper: {}{} }}>",
                                self.scaling_interval().first,
                                self.scaling_interval().second,
-                               optional_repr);
-        });
+                               optional_repr); });
 }

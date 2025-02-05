@@ -31,7 +31,7 @@ namespace py = pybind11;
 void init_regression_model(py::module_ &m) {
     using plssvm::bindings::python::util::regression_model_wrapper;
 
-    py::class_<regression_model_wrapper>(m, "RegressionModel")
+    py::class_<regression_model_wrapper>(m, "RegressionModel", "Implements a class encapsulating the result of a call to the C-SVR fit function. A model is used to predict the labels of a new data set.")
         .def(py::init([](const std::string &filename, const std::optional<py::type> type) {
                  if (type.has_value()) {
                      return std::make_unique<regression_model_wrapper>(plssvm::bindings::python::util::create_instance<plssvm::regression_model, typename regression_model_wrapper::possible_model_types>(type.value(), filename));
@@ -44,10 +44,10 @@ void init_regression_model(py::module_ &m) {
              py::pos_only(),
              py::arg("type") = std::nullopt)
         .def("save", [](const regression_model_wrapper &self, const std::string &filename) { return std::visit([&filename](auto &&model) { model.save(filename); }, self.model); }, "save the current model to a file")
-        .def("num_support_vectors", [](const regression_model_wrapper &self) { return std::visit([](auto &&model) { return model.num_support_vectors(); }, self.model); }, "the number of support vectors (note: all training points become support vectors for LSSVMs)")
+        .def("num_support_vectors", [](const regression_model_wrapper &self) { return std::visit([](auto &&model) { return model.num_support_vectors(); }, self.model); }, "the number of support vectors (note: all training points become support vectors for LS-SVMs)")
         .def("num_features", [](const regression_model_wrapper &self) { return std::visit([](auto &&model) { return model.num_features(); }, self.model); }, "the number of features of the support vectors")
-        .def("get_params", [](const regression_model_wrapper &self) { return std::visit([](auto &&model) { return model.get_params(); }, self.model); }, "the SVM parameter used to learn this model")
-        .def("support_vectors", [](const regression_model_wrapper &self) { return std::visit([](auto &&model) { return py::cast(model.support_vectors()); }, self.model); }, "the support vectors (note: all training points become support vectors for LSSVMs)")
+        .def("get_params", [](const regression_model_wrapper &self) { return std::visit([](auto &&model) { return model.get_params(); }, self.model); }, "the C-SVR hyper-parameters used to learn this model")
+        .def("support_vectors", [](const regression_model_wrapper &self) { return std::visit([](auto &&model) { return py::cast(model.support_vectors()); }, self.model); }, "the support vectors (note: all training points become support vectors for LS-SVMs)")
         // clang-format off
         .def("labels", [](const regression_model_wrapper &self) {
             return std::visit([](auto &&model) -> std::optional<py::array> {
