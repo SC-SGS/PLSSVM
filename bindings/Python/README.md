@@ -13,6 +13,7 @@
     - [Classes and submodules](#classes-and-submodules)
         - [plssvm.Parameter](#plssvmparameter)
         - [plssvm.ClassificationDataSet and plssvm.RegressionDataSet](#plssvmclassificationdataset-and-plssvmregressiondataset)
+        - [plssvm.MinMaxScaler](#plssvmminmaxscaler)
         - [plssvm.CSVC and plssvm.CSVR](#plssvmcsvc-and-plssvmcsvr)
         - [The backend C-SVCs and C-SVRs](#the-backend-c-svcs-and-c-svrs)
         - [plssvm.ClassificationModel and plssvm.RegressionModel](#plssvmclassificationmodel-and-plssvmregressionmodel)
@@ -318,17 +319,17 @@ More detailed description of the class methods:
 
 The following table lists all PLSSVM enumerations exposed on the Python side:
 
-| enumeration            | values                                                                  | description                                                                                                                                                                                                                                                 |
-|------------------------|-------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `TargetPlatform`       | `AUTOMATIC`, `CPU`, `GPU_NVIDIA`, `GPU_AMD`, `GPU_INTEL`                | The different supported target platforms (default: `AUTOMATIC`). If `AUTOMATIC` is provided, checks for available devices in the following order: NVIDIA GPUs -> AMD GPUs -> Intel GPUs -> CPUs.                                                            |
-| `SolverType`           | `AUTOMATIC`, `CG_EXPLICIT`, `CG_IMPLICIT`                               | The different supported solver types (default: `AUTOMATIC`). If `AUTOMATIC` is provided, the used solver types depends on the available device and system memory.                                                                                           |
-| `KernelFunctionType`   | `LINEAR`, `POLYNOMIAL`, `RBF`, `SIGMOID`, `LAPLACIAN`, `CHI_SQUARED`    | The different supported kernel functions (default: `LINEAR`).                                                                                                                                                                                               |
-| `FileFormatType`       | `LIBSVM`, `ARFF`                                                        | The different supported file format types (default: `LIBSVM`).                                                                                                                                                                                              |
-| `GammaCoefficientType` | `AUTOMATIC`, `SCALE`                                                    | The different modes for the dynamic gamma calculation (default: `AUTOMATIC`).                                                                                                                                                                               |
-| `ClassificationType`   | `OAA`, `OAO`                                                            | The different supported multi-class classification strategies (default: `LIBSVM`).                                                                                                                                                                          |
-| `BackendType`          | `AUTOMATIC`, `OPENMP`, `HPX`, `CUDA`, `HIP`, `OPENCL`, `SYCL`, `KOKKOS` | The different supported backends (default: `AUTOMATIC`). If `AUTOMATIC` is provided, the selected backend depends on the used target platform.                                                                                                              |
-| `VerbosityLevel`       | `QUIET`, `LIBSVM`, `TIMING`, `FULL`                                     | The different supported log levels (default: `FULL`). `QUIET` means no output, `LIBSVM` output that is as conformant as possible with LIBSVM's output, `TIMING` all timing related outputs, and `FULL` everything. Can be combined via bit-wise operations. |
-| `SVMType`              | `CSVC`, `CSVR`,                                                         | The different supported C-SVM types.                                                                                                                                                                                                                        |
+| enumeration            | values                                                                           | description                                                                                                                                                                                                                                                 |
+|------------------------|----------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `TargetPlatform`       | `AUTOMATIC`, `CPU`, `GPU_NVIDIA`, `GPU_AMD`, `GPU_INTEL`                         | The different supported target platforms (default: `AUTOMATIC`). If `AUTOMATIC` is provided, checks for available devices in the following order: NVIDIA GPUs -> AMD GPUs -> Intel GPUs -> CPUs.                                                            |
+| `SolverType`           | `AUTOMATIC`, `CG_EXPLICIT`, `CG_IMPLICIT`                                        | The different supported solver types (default: `AUTOMATIC`). If `AUTOMATIC` is provided, the used solver types depends on the available device and system memory.                                                                                           |
+| `KernelFunctionType`   | `LINEAR`, `POLYNOMIAL`, `RBF`, `SIGMOID`, `LAPLACIAN`, `CHI_SQUARED`             | The different supported kernel functions (default: `RBF`).                                                                                                                                                                                                  |
+| `FileFormatType`       | `LIBSVM`, `ARFF`                                                                 | The different supported file format types (default: `LIBSVM`).                                                                                                                                                                                              |
+| `GammaCoefficientType` | `AUTOMATIC`, `SCALE`                                                             | The different modes for the dynamic gamma calculation (default: `AUTOMATIC`).                                                                                                                                                                               |
+| `ClassificationType`   | `OAA`, `OAO`                                                                     | The different supported multi-class classification strategies (default: `LIBSVM`).                                                                                                                                                                          |
+| `BackendType`          | `AUTOMATIC`, `OPENMP`, `HPX`, `STDPAR` `CUDA`, `HIP`, `OPENCL`, `SYCL`, `KOKKOS` | The different supported backends (default: `AUTOMATIC`). If `AUTOMATIC` is provided, the selected backend depends on the used target platform.                                                                                                              |
+| `VerbosityLevel`       | `QUIET`, `LIBSVM`, `TIMING`, `FULL`                                              | The different supported log levels (default: `FULL`). `QUIET` means no output, `LIBSVM` output that is as conformant as possible with LIBSVM's output, `TIMING` all timing related outputs, and `FULL` everything. Can be combined via bit-wise operations. |
+| `SVMType`              | `CSVC`, `CSVR`,                                                                  | The different supported C-SVM types.                                                                                                                                                                                                                        |
 
 If a SYCL implementation is available, additional enumerations are available:
 
@@ -357,15 +358,15 @@ The following tables list all PLSSVM classes exposed on the Python side:
 
 The parameter class encapsulates all necessary hyperparameters needed to fit an SVM.
 
-| constructors                                                                                            | description                                                                      |
-|---------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------|
-| `Parameter()`                                                                                           | Default construct a parameter object.                                            |
-| `Parameter(kernel_type, degree, gamma, coef0, cost)`                                                    | Construct a parameter object by explicitly providing each hyper-parameter value. |
-| `Parameter([kernel_type=KernelFunctionType.LINEAR, degree=3, gamma=*1/#features*, coef=0.0, cost=1.0])` | Construct a parameter object with the provided named parameters.                 |
+| constructors                                                                                         | description                                                                      |
+|------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------|
+| `Parameter()`                                                                                        | Default construct a parameter object.                                            |
+| `Parameter(kernel_type, degree, gamma, coef0, cost)`                                                 | Construct a parameter object by explicitly providing each hyper-parameter value. |
+| `Parameter([kernel_type=KernelFunctionType.RBF, degree=3, gamma=*1/#features*, coef=0.0, cost=1.0])` | Construct a parameter object with the provided named parameters.                 |
 
 | attributes                         | description                                                                                                                                                                                                                                                     |
 |------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `kernel_type : KernelFunctionType` | The used kernel function type (default: `LINEAR`).                                                                                                                                                                                                              |
+| `kernel_type : KernelFunctionType` | The used kernel function type (default: `RBF`).                                                                                                                                                                                                                 |
 | `degree : int`                     | The used degree in the polynomial kernel function (default: `3`).                                                                                                                                                                                               |
 | `gamma : gamma_type`               | The used gamma in the different kernel functions (default: `AUTOMATIC`). The `gamma_type` is a `std::variant<real_type, plssvm.GammaCoefficientType`, i.e., either a normal floating point value can be provided or a `GammaCoefficientType` enumeration value. |
 | `coef0 : real_type`                | The used coef0 in the polynomial and sigmoid kernel function (default: `0.0`).                                                                                                                                                                                  |
@@ -376,37 +377,33 @@ The parameter class encapsulates all necessary hyperparameters needed to fit an 
 | `equivalent(params2)` | Check whether the two parameter objects are equivalent. Same as `plssvm.equivalent(self, params2)`. |
 | `param1 == param2`    | Check whether two parameter objects are identical.                                                  |
 | `param1 != param2`    | Check whether two parameter objects aren't identical.                                               |
-| `print(param)`        | Overload to print a `plssvm.Parameter` object displaying the used hyper-parameter.                  |
+| `print(param)`        | Overload to print a `plssvm.Parameter` object displaying the used hyper-parameters.                 |
 
 #### `plssvm.ClassificationDataSet` and `plssvm.RegressionDataSet`
 
 A class encapsulating a used classification or regression data set.
-The label type of `plssvm.ClassificationDataSet` corresponds to the value of
-`-DPLSSVM_PYTHON_BINDINGS_PREFERRED_LABEL_TYPE` as
-provided during PLSSVM's build step (default: `std::string`).
-The label type of `plssvmRegressionDataSet` corresponds to `double`.
-If another label type is desired, one can simply use, e.g., `plssvm.ClassificationDataSet_intc` for a data set with
-plain integers as label type (the same for `plssvm.RegressionDataSet`).
+The label types are either determined by the provided labels or if no labels are given or the data is read through a 
+file, they must be explicitly stated using the `type` parameter.
 
 The following constructors and methods are available for both the classification and regression data sets:
 
-| constructors                                                                                                       | description                                                                                                                                                                                                                                     |
-|--------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `ClassificationDataSet(filename, [file_format=*depending on the extesion of the filename*, scaling=*no scaling*])` | Construct a new data set using the data provided in the given file. Default file format: determines the file content based on its extension (.arff, everything else assumed to be a LIBSVM file). Default scaling: don't scale the data points. |
-| `ClassificationDataSet(data, [scaling=*no scaling*])`                                                              | Construct a new data set using the provided data directly. Default scaling: don't scale the data points.                                                                                                                                        |
-| `ClassificationDataSet(data, labels, [scaling=*no scaling*])`                                                      | Construct a new data set using the provided data and labels directly. Default scaling: don't scale the data points.                                                                                                                             |
+| constructors                                                                                                                                   | description                                                                                                                                                                                                                                                                                                                                    |
+|------------------------------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `ClassificationDataSet(filename, [type=*the used label type*, file_format=*depending on the extesion of the filename*, scaling=*no scaling*])` | Construct a new data set using the data provided in the given file. Default type: `std::string` for the ClassificationDataSet, `double` for the RegressionDataSet. Default file format: determines the file content based on its extension (.arff, everything else assumed to be a LIBSVM file). Default scaling: don't scale the data points. |
+| `ClassificationDataSet(data, [type=*the used label type*, scaling=*no scaling*])`                                                              | Construct a new data set using the provided data directly. Default type: `std::string` for the ClassificationDataSet, `double` for the RegressionDataSet. Default scaling: don't scale the data points.                                                                                                                                        |
+| `ClassificationDataSet(data, labels, [scaling=*no scaling*])`                                                                                  | Construct a new data set using the provided data and labels directly. Default scaling: don't scale the data points.                                                                                                                                                                                                                            |
 
-| methods             | description                                                                                                                                        |
-|---------------------|----------------------------------------------------------------------------------------------------------------------------------------------------|
-| `save(filename)`    | Save the current data set to the provided file.                                                                                                    |
-| `num_data_points()` | Return the number of data points in the data set.                                                                                                  |
-| `num_features()`    | Return the number of features in the data set.                                                                                                     |
-| `data()`            | Return the data points.                                                                                                                            |
-| `has_labels()`      | Check whether the data set is annotated with labels.                                                                                               |
-| `labels()`          | Return the labels, if present.                                                                                                                     |
-| `is_scaled()`       | Check whether the data points have been scaled.                                                                                                    |
-| `scaling_factors()` | Return the scaling factors, if the data set has been scaled.                                                                                       |
-| `print(param)`      | Overload to print a data set object displaying the number of data points and features as well as the classes and scaling interval (if applicable). |
+| methods             | description                                                                                                                                                        |
+|---------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `save(filename)`    | Save the current data set to the provided file.                                                                                                                    |
+| `num_data_points()` | Return the number of data points in the data set.                                                                                                                  |
+| `num_features()`    | Return the number of features in the data set.                                                                                                                     |
+| `data()`            | Return the data points.                                                                                                                                            |
+| `has_labels()`      | Check whether the data set is annotated with labels.                                                                                                               |
+| `labels()`          | Return the labels, if present.                                                                                                                                     |
+| `is_scaled()`       | Check whether the data points have been scaled.                                                                                                                    |
+| `scaling_factors()` | Return the scaling factors, if the data set has been scaled.                                                                                                       |
+| `print(data_set)`   | Overload to print a data set object displaying the label type, the number of data points and features as well as the classes and scaling interval (if applicable). |
 
 The following methods are **only** available for a `plssvm.ClassificationDataSet`:
 
@@ -415,54 +412,37 @@ The following methods are **only** available for a `plssvm.ClassificationDataSet
 | `num_classes()` | Return the number of classes. **Note**: `0` if no labels are present. |
 | `classes()`     | Return the different classes, if labels are present.                  |
 
-##### `plssvm.ClassificationDataSetScaling` and `plssvm.RegressionDataSetScaling`
+#### `plssvm.MinMaxScaler`
 
-A class encapsulating and performing the scaling of a data set.
-The label type of `plssvm.ClassificationDataSetScaling` corresponds to the value of `-DPLSSVM_PYTHON_BINDINGS_PREFERRED_LABEL_TYPE` as
-provided during PLSSVM's build step (default: `std::string`).
-The label type of `plssvm.RegressionDataSetScaling` corresponds to `double`.
-If another label type is desired, one can simply use, e.g., `plssvm.ClassificationDataSetScaling_intc` for a data set with plain
-integers as label type (the same for `plssvm.RegressionDataSetScaling`).
+A class encapsulating and performing the scaling of a data set to the provided `[lower, upper]` range.
 
-The following constructors and methods are available for both the classification and regression data sets:
+| constructors                 | description                                                          |
+|------------------------------|----------------------------------------------------------------------|
+| `MinMaxScaler(lower, upper)` | Scale all data points feature-wise to the interval `[lower, upper]`. |
+| `MinMaxScaler(interval)`     | Scale all data points feature-wise to the provided interval.         |
+| `MinMaxScaler(filename)`     | Read previously calculated scaling factors from the provided file.   |
 
-| constructors                                 | description                                                          |
-|----------------------------------------------|----------------------------------------------------------------------|
-| `ClassificationDataSetScaling(lower, upper)` | Scale all data points feature-wise to the interval `[lower, upper]`. |
-| `ClassificationDataSetScaling(interval)`     | Scale all data points feature-wise to the provided interval.         |
-| `ClassificationDataSetScaling(filename)`     | Read previously calculated scaling factors from the provided file.   |
+| methods              | description                                                                                                       |
+|----------------------|-------------------------------------------------------------------------------------------------------------------|
+| `save(filename)`     | Save the current scaling factors to the provided file.                                                            |
+| `scaling_interval()` | The scaling interval.                                                                                             |
+| `scaling_factors())` | The calculated feature-wise scaling factors.                                                                      |
+| `print(scaling)`     | Overload to print a data set scaling object object displaying the scaling interval and number of scaling factors. |
 
-| attributes                                                        | description                                  |
-|-------------------------------------------------------------------|----------------------------------------------|
-| `scaling_interval : tuple of real_type of shape (2,)`             | The scaling interval.                        |
-| `scaling_factors : numpy.ndarray of plssvm.DataSetScalingFactors` | The calculated feature-wise scaling factors. |
+##### `plssvm.MinMaxScalerFactors`
 
-| methods          | description                                                                                                       |
-|------------------|-------------------------------------------------------------------------------------------------------------------|
-| `save(filename)` | Save the current scaling factors to the provided file.                                                            |
-| `print(scaling)` | Overload to print a data set scaling object object displaying the scaling interval and number of scaling factors. |
+A class encapsulating a scaling factor for a specific feature in a data set obtained by `plssvm.MinMaxScaler`.
+**Note**: it shouldn't be necessary to directly use `plssvm.MinMaxScalerFactors` in user code.
 
-##### `plssvm.ClassificationDataSetScalingFactors` and `plssvm.RegressionDataSetScalingFactors`
+| constructors                                       | description                                                                                           |
+|----------------------------------------------------|-------------------------------------------------------------------------------------------------------|
+| `MinMaxScalerFactors(feature_index, lower, upper)` | Construct a new scaling factor for the provided feature with the features minimum and maximum values. |
 
-A class encapsulating a scaling factor for a specific feature in a data set.
-The label type of `plssvm.ClassificationDataSetScalingFactors` corresponds to the value
-of `-DPLSSVM_PYTHON_BINDINGS_PREFERRED_LABEL_TYPE` as provided during PLSSVM's build step (default: `std::string`).
-The label type of `plssvm.RegressionDataSetScalingFactors` corresponds to `double`.
-If another label type is desired, one can simply use, e.g., `plssvm.ClassificationDataSetScalingFactors_intc` for a data set with
-plain integers as label type (the same for `plssvm.RegressionDataSetScalingFactors`).
-**Note**: it shouldn't be necessary to directly use `plssvm.ClassificationDataSetScalingFactors` or `plssvm.RegressionDataSetScalingFactors` in user code.
-
-The following constructors and methods are available for both the classification and regression data sets:
-
-| constructors                                                       | description                                                                                           |
-|--------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------|
-| `ClassificationDataSetScalingFactors(feature_index, lower, upper)` | Construct a new scaling factor for the provided feature with the features minimum and maximum values. |
-
-| attributes            | description                                     |
-|-----------------------|-------------------------------------------------|
-| `feature : size_type` | The index of the current feature.               |
-| `lower : real_type`   | The minimum value of the current feature index. |
-| `upper : real_type`   | The maximum value of the current feature index. |
+| attributes                  | description                                     |
+|-----------------------------|-------------------------------------------------|
+| `feature_index : size_type` | The index of the current feature.               |
+| `lower : real_type`         | The minimum value of the current feature index. |
+| `upper : real_type`         | The maximum value of the current feature index. |
 
 | methods                 | description                                                                                                    |
 |-------------------------|----------------------------------------------------------------------------------------------------------------|
@@ -538,11 +518,8 @@ The following constructors and methods are available for both classification `CS
 | `CSVC([plssvm.Parameter kwargs])`         | Create a new C-SVM with the default target platform. The hyper-parameter values are set ot the provided named parameter values.   |
 | `CSVC(target, [plssvm.Parameter kwargs])` | Create a new C-SVM with the provided target platform. The hyper-parameter values are set ot the provided named parameter values.  |
 
-In case of the SYCL C-SVMs (`plssvm.sycl.CSVC`, `plssvm.dpcpp.CSVC`, and `plssvm.adaptivecpp.CSVC`; the same for the `CSVR`s) the additional named
-argument `sycl_kernel_invocation_type` to choose between the two different SYCL kernel invocation types can be provided.
-
 In case of the SYCL C-SVMs (`plssvm.sycl.CSVM`, `plssvm.dpcpp.CSVM`, and `plssvm.adaptivecpp.CSVM`; the same for the `CSVR`s), additionally, all constructors also accept the SYCL specific `sycl_kernel_invocation_type` keyword parameter.
-Also, the following methods are additional available for the backend specific C-SVMs.
+Also, the following method is additional available for the backend specific C-SVM:
 
 | methods                        | description                             |
 |--------------------------------|-----------------------------------------|
@@ -556,7 +533,7 @@ C-SVM.
 | `get_implementation_type()` | Return the used stdpar implementation type. |
 
 In case of the Kokkos C-SVM (`plssvm.kokkos.CSVC` and `plssvm.kokkos.CSVR`), additionally, all constructors also accept the Kokkos specific `kokkos_execution_space` keyword parameter.
-Also, the following method is additional available for the backend specific C-SVM.
+Also, the following method is additional available for the backend specific C-SVM:
 
 | methods                 | description                             |
 |-------------------------|-----------------------------------------|
@@ -564,18 +541,13 @@ Also, the following method is additional available for the backend specific C-SV
 
 #### `plssvm.ClassificationModel` and `plssvm::RegressionModel`
 
-A class encapsulating a model learned during a call to `plssvm.CSVC.fit()` or `plssvm::CSVR.fit()`.
-The label type of `plssvm.ClassificationModel` corresponds to the value of `-DPLSSVM_PYTHON_BINDINGS_PREFERRED_LABEL_TYPE` as provided
-during PLSSVM's build step (default: `std::string`).
-The label type of `plssvm.RegressionModel` corresponds to `double`.
-If another label type is desired, one can simply use, e.g., `plssvm.ClassificationModel_intc` for a model with plain integers as label
-type (the same for `plssvm.RegressionModel`).
+A class encapsulating a model learned during a call to `plssvm.CSVC.fit()` or `plssvm::CSVR.fit()`. 
 
 The following constructors and methods are available for both the classification and regression models:
 
-| constructors                      | description                                                                     |
-|-----------------------------------|---------------------------------------------------------------------------------|
-| `ClassificationModel(model_file)` | Construct a new model object by reading a previously learned model from a file. |
+| constructors                                                    | description                                                                                                                                                                |
+|-----------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `ClassificationModel(model_file, [type=*the used label type*])` | Construct a new model object by reading a previously learned model from a file. Default type: `std::string` for the ClassificationModel, `double` for the RegressionModel. |
 
 | methods                     | description                                                                                                                                                             |
 |-----------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -593,7 +565,7 @@ The following methods are **only** available for a `plssvm.ClassificationModel`:
 
 | methods                     | description                              |
 |-----------------------------|------------------------------------------|
-| `classes()`                 | Retrn the different classes.             |
+| `classes()`                 | Return the different classes.            |
 | `num_classes()`             | Return the number of different classes.  |
 | `get_classification_type()` | Return the used classification strategy. |
 
@@ -707,8 +679,8 @@ The following table lists all free functions in PLSSVM directly callable via `pl
 | `polynomial_kernel_function(x, y, degree, gamma, coef0)`                    | Calculate the polynomial kernel function of two vectors: (gamma*x'*y+coef0)^degree, with degree ∊ ℤ, gamma > 0                                                                                                                                                                                    |
 | `rbf_kernel_function(x, y, gamma)`                                          | Calculate the radial basis function kernel function of two vectors: exp(-gamma*\|x-y\|^2), with gamma > 0                                                                                                                                                                                         |
 | `sigmoid_kernel_function(x, y, gamma, coef0)`                               | Calculate the sigmoid kernel function of two vectors: tanh(gamma*x'*y), with gamma > 0                                                                                                                                                                                                            |
-| `laplacian_kernel_function(x, y, gamma)`                                    | Calculate the sigmoid kernel function of two vectors: exp(-gamma*\|x-y\|_1), with gamma > 0                                                                                                                                                                                                       |
-| `chi_squared_kernel_function(x, y, gamma)`                                  | Calculate the sigmoid kernel function of two vectors: exp(-gamma*sum_i((x[i] - y[i])^2) / (x[i] + y[i])), with gamma > 0                                                                                                                                                                          |
+| `laplacian_kernel_function(x, y, gamma)`                                    | Calculate the laplacian kernel function of two vectors: exp(-gamma*\|x-y\|_1), with gamma > 0                                                                                                                                                                                                     |
+| `chi_squared_kernel_function(x, y, gamma)`                                  | Calculate the chi-squared kernel function of two vectors: exp(-gamma*sum_i((x[i] - y[i])^2) / (x[i] + y[i])), with gamma > 0                                                                                                                                                                      |
 | `kernel_function(x, y, params)`                                             | Calculate the kernel function provided in params with the additional parameters also provided in params.                                                                                                                                                                                          |
 | `classification_type_to_full_string(classification)`                        | Returns the full string of the provided classification type, i.e., "one vs. all" and "one vs. one" instead of only "oaa" or "oao".                                                                                                                                                                |
 | `calculate_number_of_classifiers(classification, num_classes)`              | Return the number of necessary classifiers in a multi-class setting with the provided classification strategy and number of different classes.                                                                                                                                                    |
@@ -740,20 +712,22 @@ If a stdpar implementation is available, additional free functions are available
 
 The PLSSVM Python3 bindings define a few new exception types:
 
-| exception                    | description                                                                                                            |
-|------------------------------|------------------------------------------------------------------------------------------------------------------------|
-| `PLSSVMError`                | Base class of all other PLSSVM specific exceptions.                                                                    |
-| `InvalidParameterError`      | If an invalid hyper-parameter has been provided in the `plssvm.Parameter` class.                                       |
-| `FileReaderError`            | If something went wrong while reading the requested file (possibly using memory mapped IO.)                            |
-| `DataSetError`               | If something related to the `plssvm.DataSet` class(es) went wrong, e.g., wrong arguments provided to the constructors. |
-| `FileNotFoundError`          | If the requested data or model file couldn't be found.                                                                 |
-| `InvalidFileFormatError`     | If the requested data or model file are invalid, e.g., wrong LIBSVM model header.                                      |
-| `UnsupportedBackendError`    | If an unsupported backend has been requested.                                                                          |
-| `UnsupportedKernelTypeError` | If an unsupported target platform has been requested.                                                                  |
-| `GPUDevicePtrError`          | If something went wrong in one of the backend's GPU device pointers. **Note**: shouldn't occur in user code.           |
-| `MatrixError`                | If something went wrong in the internal matrix class. **Note**: shouldn't occur in user code.                          |
-| `KernelLaunchResourcesError` | If something went wrong during a kernel launch due to insufficient ressources.                                         |
-| `ClassificationReportError`  | If something in the classification report went wrong. **Note**: shouldn't occur in user code.                          |
-| `RegressionReportError`      | If something in the regression report went wrong. **Note**: shouldn't occur in user code.                              |
+| exception                    | description                                                                                                                                                     |
+|------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `PLSSVMError`                | Base class of all other PLSSVM specific exceptions.                                                                                                             |
+| `InvalidParameterError`      | If an invalid hyper-parameter has been provided in the `plssvm.Parameter` class.                                                                                |
+| `FileReaderError`            | If something went wrong while reading the requested file (possibly using memory mapped IO.)                                                                     |
+| `DataSetError`               | If something related to the `plssvm.ClassificationDataSet`/`plssvm.RegressionDataSet` class(es) went wrong, e.g., wrong arguments provided to the constructors. |
+| `MinMaxScalerError`          | If something related to the `plssvm.MinMaxScaler` went wrong, e.g., scaling wasn't successfully.                                                                |
+| `FileNotFoundError`          | If the requested data or model file couldn't be found.                                                                                                          |
+| `InvalidFileFormatError`     | If the requested data or model file are invalid, e.g., wrong LIBSVM model header.                                                                               |
+| `UnsupportedBackendError`    | If an unsupported backend has been requested.                                                                                                                   |
+| `UnsupportedKernelTypeError` | If an unsupported target platform has been requested.                                                                                                           |
+| `GPUDevicePtrError`          | If something went wrong in one of the backend's GPU device pointers. **Note**: shouldn't occur in user code.                                                    |
+| `MatrixError`                | If something went wrong in the internal matrix class. **Note**: shouldn't occur in user code.                                                                   |
+| `KernelLaunchResourcesError` | If something went wrong during a kernel launch due to insufficient ressources.                                                                                  |
+| `ClassificationReportError`  | If something in the classification report went wrong. **Note**: shouldn't occur in user code.                                                                   |
+| `RegressionReportError`      | If something in the regression report went wrong. **Note**: shouldn't occur in user code.                                                                       |
+| `EnvironmentError`           | If something during the special environment initialization or finalization went wrong.                                                                          |
 
 Depending on the available backends, additional `BackendError`s are also available (e.g., `plssvm.cuda.BackendError`).
