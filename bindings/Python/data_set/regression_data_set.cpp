@@ -8,6 +8,7 @@
 
 #include "plssvm/data_set/regression_data_set.hpp"  // plssvm::regression_data_set
 
+#include "plssvm/constants.hpp"                // plssvm::real_type
 #include "plssvm/data_set/min_max_scaler.hpp"  // plssvm::min_max_scaler
 #include "plssvm/detail/type_traits.hpp"       // plssvm::detail::remove_cvref_t
 #include "plssvm/file_format_types.hpp"        // plssvm::file_format_type
