@@ -692,7 +692,11 @@ void init_sklearn_svc(py::module_ &m) {
 
                 // check if the parameter values are identical, if not, add them to the vector
                 if (used_param_str != default_param_str) {
-                    non_default_values.push_back(fmt::format("{}={}", key, used_param_str));
+                    if (py::isinstance<py::str>(used_params[key.c_str()])) {
+                        non_default_values.push_back(fmt::format("{}='{}'", key, used_param_str));
+                    } else {
+                        non_default_values.push_back(fmt::format("{}={}", key, used_param_str));
+                    }
                 }
             }
 
