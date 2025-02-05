@@ -87,7 +87,7 @@ TYPED_TEST(intel_llvm_stdparCSVMConstructor, construct_target_and_parameter) {
 #endif
 }
 
-TYPED_TEST(intel_llvm_stdparCSVMConstructor, construct_target_and_named_args) {
+TYPED_TEST(intel_llvm_stdparCSVMConstructor, construct_named_args) {
     using csvm_type = typename TestFixture::fixture_csvm_type;
 
     // every target is allowed for the stdpar backend using Intel LLVM as implementation
