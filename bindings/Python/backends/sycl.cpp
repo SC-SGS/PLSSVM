@@ -34,14 +34,14 @@ void init_sycl(py::module_ &m, const py::exception<plssvm::exception> &base_exce
     plssvm::bindings::python::util::register_py_exception<plssvm::sycl::backend_exception>(sycl_module, "BackendError", base_exception);
 
     // bind the two enum classes
-    py::enum_<plssvm::sycl::implementation_type>(sycl_module, "ImplementationType")
+    py::enum_<plssvm::sycl::implementation_type>(sycl_module, "ImplementationType", "Enum class for all supported SYCL implementation in PLSSVM.")
         .value("AUTOMATIC", plssvm::sycl::implementation_type::automatic, "use the available SYCL implementation; if more than one implementation is available, the macro PLSSVM_SYCL_BACKEND_PREFERRED_IMPLEMENTATION must be defined during the CMake configuration")
         .value("DPCPP", plssvm::sycl::implementation_type::dpcpp, "use DPC++ as SYCL implementation")
         .value("ADAPTIVECPP", plssvm::sycl::implementation_type::adaptivecpp, "use AdaptiveCpp (formerly known as hipSYCL) as SYCL implementation");
 
     sycl_module.def("list_available_sycl_implementations", &plssvm::sycl::list_available_sycl_implementations, "list all available SYCL implementations");
 
-    py::enum_<plssvm::sycl::kernel_invocation_type>(sycl_module, "KernelInvocationType")
+    py::enum_<plssvm::sycl::kernel_invocation_type>(sycl_module, "KernelInvocationType", "Enum class for all possible SYCL kernel invocation types supported in PLSSVM.")
         .value("AUTOMATIC", plssvm::sycl::kernel_invocation_type::automatic, "use the best kernel invocation type for the current SYCL implementation and target hardware platform")
         .value("ND_RANGE", plssvm::sycl::kernel_invocation_type::nd_range, "use the nd_range kernel invocation type");
 

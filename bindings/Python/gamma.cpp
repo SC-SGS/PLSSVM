@@ -9,6 +9,7 @@
 #include "plssvm/gamma.hpp"
 
 #include "plssvm/constants.hpp"  // plssvm::real_type
+#include "plssvm/matrix.hpp"     // plssvm::aos_matrix
 
 #include "bindings/Python/type_caster/matrix_type_caster.hpp"  // a custom Pybind11 type caster for a plssvm::matrix
 
@@ -19,13 +20,13 @@ namespace py = pybind11;
 
 void init_gamma(py::module_ &m) {
     // bind enum class
-    py::enum_<plssvm::gamma_coefficient_type>(m, "GammaCoefficientType")
+    py::enum_<plssvm::gamma_coefficient_type>(m, "GammaCoefficientType", "Enum class for all possible gamma coefficient types (can also be a number).")
         .value("AUTOMATIC", plssvm::gamma_coefficient_type::automatic, "use a dynamic gamma value of 1 / num_features for the kernel functions")
         .value("SCALE", plssvm::gamma_coefficient_type::scale, "use a dynamic gamma value of 1 / (num_features * data.var()) for the kernel functions");
 
     // bind free functions
     m.def("get_gamma_string", &plssvm::get_gamma_string, "get the gamma string based on the currently active variant member");
-    m.def("calculate_gamma_value", [](const plssvm::gamma_type &gamma, plssvm::aos_matrix<plssvm::real_type> data) {
+    m.def("calculate_gamma_value", [](const plssvm::gamma_type &gamma, const plssvm::aos_matrix<plssvm::real_type> &data) {
         return plssvm::calculate_gamma_value(gamma, data);
     });
 }

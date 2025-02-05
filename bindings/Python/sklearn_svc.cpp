@@ -319,7 +319,7 @@ template <typename svc>
 
 void init_sklearn_svc(py::module_ &m) {
     // documentation based on sklearn.svm.SVC documentation
-    py::class_<svc> py_svc(m, "SVC", py::dynamic_attr());
+    py::class_<svc> py_svc(m, "SVC", py::dynamic_attr(), "A C-SVC implementation adhering to sklearn.svm.SVC using PLSSVM as backend.");
     py_svc.def(py::init([](const py::kwargs &args) {
                    // to silence constructor messages
                    if (args.contains("verbose")) {

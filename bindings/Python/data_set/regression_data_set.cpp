@@ -11,6 +11,7 @@
 #include "plssvm/data_set/min_max_scaler.hpp"  // plssvm::min_max_scaler
 #include "plssvm/detail/type_traits.hpp"       // plssvm::detail::remove_cvref_t
 #include "plssvm/file_format_types.hpp"        // plssvm::file_format_type
+#include "plssvm/matrix.hpp"                   // plssvm::soa_matrix
 
 #include "bindings/Python/data_set/variant_wrapper.hpp"                 // plssvm::bindings::python::util::regression_data_set_wrapper
 #include "bindings/Python/type_caster/label_vector_wrapper_caster.hpp"  // a custom Pybind11 type caster for a plssvm::bindings::python::util::label_vector_wrapper
@@ -35,7 +36,7 @@ namespace py = pybind11;
 void init_regression_data_set(py::module_ &m) {
     using plssvm::bindings::python::util::regression_data_set_wrapper;
 
-    py::class_<regression_data_set_wrapper>(m, "RegressionDataSet")
+    py::class_<regression_data_set_wrapper>(m, "RegressionDataSet", "Encapsulate all necessary data that is needed for training or predicting using an C-SVR.")
         .def(py::init([](const std::string &filename, const std::optional<py::type> type, const plssvm::file_format_type format, const std::optional<plssvm::min_max_scaler> scaler) {
                  if (type.has_value()) {
                      if (scaler.has_value()) {

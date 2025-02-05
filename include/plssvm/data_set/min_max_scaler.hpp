@@ -37,7 +37,7 @@
 namespace plssvm {
 
 /**
- * @brief Implements all necessary data and functions needed for scaling a plssvm::data_set to an user-defined range.
+ * @brief Implements all necessary data and functions needed for scaling a plssvm::data_set to an user-defined range [lower, upper].
  */
 class min_max_scaler {
   public:

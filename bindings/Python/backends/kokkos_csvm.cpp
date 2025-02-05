@@ -35,12 +35,13 @@ void bind_kokkos_csvms(py::module_ &m, const std::string &csvm_name) {
     using backend_csvm_type = plssvm::kokkos::backend_csvm_type_t<csvm_type>;
 
     // assemble docstrings
+    const std::string class_docstring{ fmt::format("A {} using the Kokkos backend.", csvm_name) };
     const std::string param_docstring{ fmt::format("create a Kokkos {} with the provided parameters and optional Kokkos specific keyword arguments", csvm_name) };
     const std::string target_param_docstring{ fmt::format("create a Kokkos {} with the provided target platform, parameters, and optional Kokkos specific keyword arguments", csvm_name) };
     const std::string kwargs_docstring{ fmt::format("create a Kokkos {} with the provided keyword arguments (including optional Kokkos specific keyword arguments)", csvm_name) };
     const std::string target_kwargs_docstring{ fmt::format("create a Kokkos {} with the provided target platform and keyword arguments (including optional Kokkos specific keyword arguments)", csvm_name) };
 
-    py::class_<backend_csvm_type, plssvm::kokkos::csvm, csvm_type>(m, csvm_name.c_str())
+    py::class_<backend_csvm_type, plssvm::kokkos::csvm, csvm_type>(m, csvm_name.c_str(), class_docstring.c_str())
         .def(py::init([](const plssvm::parameter params, const py::kwargs &args) {
                  // check for valid keys
                  plssvm::bindings::python::util::check_kwargs_for_correctness(args, { "kokkos_execution_space" });
@@ -81,7 +82,10 @@ void bind_kokkos_csvms(py::module_ &m, const std::string &csvm_name) {
                  return std::make_unique<backend_csvm_type>(target, params, plssvm::kokkos_execution_space = space);
              }),
              target_kwargs_docstring.c_str())
-        .def("get_execution_space", &plssvm::kokkos::csvm::get_execution_space, "get the Kokkos execution space used in this Kokkos C-SVM");
+        .def("get_execution_space", &plssvm::kokkos::csvm::get_execution_space, "get the Kokkos execution space used in this Kokkos C-SVM")
+        .def("__repr__", [csvm_name](const backend_csvm_type &self) {
+            return fmt::format("<plssvm.kokkos.{} with {{ #devices: {}, execution_space: {} }}>", csvm_name, self.num_available_devices(), self.get_execution_space());
+        });
 }
 
 }  // namespace

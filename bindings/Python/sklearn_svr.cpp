@@ -227,7 +227,7 @@ void fit(svr &self) {
 
 void init_sklearn_svr(py::module_ &m) {
     // documentation based on sklearn.svm.SVR documentation
-    py::class_<svr> py_svr(m, "SVR", py::dynamic_attr());
+    py::class_<svr> py_svr(m, "SVR", py::dynamic_attr(), "A C-SVR implementation adhering to sklearn.svm.SVR using PLSSVM as backend.");
     py_svr.def(py::init([](const py::kwargs &args) {
                    // to silence constructor messages
                    if (args.contains("verbose")) {

@@ -36,7 +36,7 @@ void init_csvr(py::module_ &m, py::module_ &pure_virtual) {
     const py::class_<plssvm::csvr> py_csvr(pure_virtual, "__pure_virtual_base_CSVR");
 
     // bind plssvm::make_csvm factory functions to "generic" Python C-SVR class
-    py::class_<plssvm::csvr>(m, "CSVR", py_csvr, py::module_local())
+    py::class_<plssvm::csvr>(m, "CSVR", py_csvr, py::module_local(), "Base class for all backend C-SVR implementations.")
         // IMPLICIT BACKEND
         .def(py::init([](const py::kwargs &args) {
                  return plssvm::bindings::python::util::assemble_csvm<plssvm::csvr>(args);
@@ -72,7 +72,7 @@ void init_csvr(py::module_ &m, py::module_ &pure_virtual) {
                                                                   plssvm::epsilon = epsilon,
                                                                   plssvm::solver = solver) };
                     }
-                }, data_set.data_set); }, "fit a model using the current SVM on the provided data")
+                }, data_set.data_set); }, "fit a model using the current C-SVR on the provided data")
         .def("predict", [](const plssvm::csvr &self, const regression_model_wrapper &trained_model, const regression_data_set_wrapper &data_set) {
                 return std::visit([&](auto &&model) {
                     using label_type = typename plssvm::detail::remove_cvref_t<decltype(model)>::label_type;

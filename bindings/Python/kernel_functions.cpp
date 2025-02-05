@@ -9,14 +9,15 @@
 #include "plssvm/kernel_functions.hpp"  // plssvm::kernel_function
 
 #include "plssvm/constants.hpp"              // plssvm::real_type
-#include "plssvm/gamma.hpp"                  // plssvm::calculate_gamma_value
 #include "plssvm/kernel_function_types.hpp"  // plssvm::kernel_function_type
 #include "plssvm/parameter.hpp"              // plssvm::parameter
 
+#include "fmt/format.h"         // fmt::format
 #include "pybind11/pybind11.h"  // py::module_, py::arg
 #include "pybind11/stl.h"       // support for STL types: std::vector
 
-#include <vector>  // std::vector
+#include <variant>  // std::holds_alternative
+#include <vector>   // std::vector
 
 namespace py = pybind11;
 
@@ -67,8 +68,11 @@ void init_kernel_functions(py::module_ &m) {
         py::arg("gamma"));
 
     m.def(
-        "kernel_function", [](const std::vector<plssvm::real_type> &x, const std::vector<plssvm::real_type> &y, plssvm::parameter params) {
-            // assume params.gamma holds a real_type
+        "kernel_function", [](const std::vector<plssvm::real_type> &x, const std::vector<plssvm::real_type> &y, const plssvm::parameter &params) {
+            // check if params.gamma can be used -> must be a real_type!
+            if (params.kernel_type != plssvm::kernel_function_type::linear && !std::holds_alternative<plssvm::real_type>(params.gamma)) {
+                throw py::value_error{ fmt::format("In order to call 'kernel_function' the 'gamma' parameter must be a real_type, but is '{}'!", params.gamma) };
+            }
             return plssvm::kernel_function(x, y, params);
         },
         "apply the kernel function defined in the parameter object to two vectors");
