@@ -158,7 +158,7 @@ TYPED_TEST_P(GenericCSVRKernelFunction, score_model) {
     // check the calculated result for correctness
     // 1.0 is the maximum possible value
     // arbitrary small (negative) values are possible, but the "easy" data set shouldn't result in values smaller 0.0
-    EXPECT_EXCLUSIVE_RANGE(calculated, plssvm::real_type{ 0.0 }, plssvm::real_type{ 1.0 });
+    EXPECT_INCLUSIVE_RANGE(calculated, plssvm::real_type{ 0.0 }, plssvm::real_type{ 1.0 });
 }
 
 TYPED_TEST_P(GenericCSVRKernelFunction, score) {
@@ -194,7 +194,7 @@ TYPED_TEST_P(GenericCSVRKernelFunction, score) {
     // check the calculated result for correctness
     // 1.0 is the maximum possible value
     // arbitrary small (negative) values are possible, but the "easy" data set shouldn't result in values smaller 0.0
-    EXPECT_EXCLUSIVE_RANGE(calculated, plssvm::real_type{ 0.0 }, plssvm::real_type{ 1.0 });
+    EXPECT_INCLUSIVE_RANGE(calculated, plssvm::real_type{ 0.0 }, plssvm::real_type{ 1.0 });
 }
 
 REGISTER_TYPED_TEST_SUITE_P(GenericCSVRKernelFunction,
