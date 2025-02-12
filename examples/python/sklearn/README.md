@@ -30,7 +30,7 @@ The four datasets are:
 4. a dataset with **four** classes created via `sklearn.datasets.make_blobs`
 
 <p align="center">
-  <img alt="plot_classifier_comparison.py output" src="https://github.com/SC-SGS/PLSSVM/raw/regression/.figures//sklearn_examples/classifier_comparison.png" width="80%">
+  <img alt="plot_classifier_comparison.py output" src="https://github.com/SC-SGS/PLSSVM/raw/regression/.figures//sklearn_examples/classifier_comparison.png" width="100%">
 </p>
 
 ```text
@@ -121,7 +121,7 @@ Training score plssvm.SVC(C=10.0, decision_function_shape='ovo'): 0.95
 This example showcases the decision boundary differences when using the different supported kernel functions and classification types in PLSSVM.
 
 <p align="center">
-  <img alt="plot_different_classifiers.py output" src="https://github.com/SC-SGS/PLSSVM/raw/regression/.figures//sklearn_examples/different_classifiers.png" width="80%">
+  <img alt="plot_different_classifiers.py output" src="https://github.com/SC-SGS/PLSSVM/raw/regression/.figures//sklearn_examples/different_classifiers.png" width="100%">
 </p>
 
 ```text
@@ -256,7 +256,7 @@ Again, with the same default parameters, PLSSVM also achieves a high accuracy of
 This example is the standard feature discretization example from `sklearn` using PLSSVM as `SVC` implementation.
 
 <p align="center">
-  <img alt="plot_rbf_parameters.py output" src="https://github.com/SC-SGS/PLSSVM/raw/regression/.figures//sklearn_examples/feature_discretization.png" width="80%">
+  <img alt="plot_rbf_parameters.py output" src="https://github.com/SC-SGS/PLSSVM/raw/regression/.figures//sklearn_examples/feature_discretization.png" width="100%">
 </p>
 
 ```text
@@ -398,7 +398,7 @@ A small examples showing the different PLSSVM kernel functions for three differe
 3. irregular function
 
 <p align="center">
-  <img alt="plot_svm_regression.py output" src="https://github.com/SC-SGS/PLSSVM/raw/regression/.figures//sklearn_examples/svm_regression.png" width="80%">
+  <img alt="plot_svm_regression.py output" src="https://github.com/SC-SGS/PLSSVM/raw/regression/.figures//sklearn_examples/svm_regression.png" width="100%">
 </p>
 
 ```text
@@ -440,7 +440,7 @@ samples and 26'032 test samples with 3072 features each (32x32 RGB images) of ho
 </p>
 
 <p align="center">
-  <img alt="plot_SVHN.py output" src="https://github.com/SC-SGS/PLSSVM/raw/regression/.figures//sklearn_examples/real_world/svhn.png" width="80%">
+  <img alt="plot_SVHN.py output" src="https://github.com/SC-SGS/PLSSVM/raw/regression/.figures//sklearn_examples/real_world/svhn.png" width="1000%">
 </p>
 
 ```text
