@@ -29,14 +29,16 @@
 
 #include "igor/igor.hpp"  // igor::parser
 
-#include <algorithm>  // std::all_of
-#include <chrono>     // std::chrono::{time_point, steady_clock, duration_cast, milliseconds}
-#include <cstddef>    // std::size_t
-#include <memory>     // std::addressof
-#include <optional>   // std::make_optional
-#include <tuple>      // std::tie
-#include <utility>    // std::move
-#include <vector>     // std::vector
+#include <algorithm>    // std::all_of
+#include <chrono>       // std::chrono::{time_point, steady_clock, duration_cast, milliseconds}
+#include <cmath>        // std::round
+#include <cstddef>      // std::size_t
+#include <memory>       // std::addressof
+#include <optional>     // std::make_optional
+#include <tuple>        // std::tie
+#include <type_traits>  // std::is_floating_point_v
+#include <utility>      // std::move
+#include <vector>       // std::vector
 
 namespace plssvm {
 
@@ -224,7 +226,11 @@ class csvr : virtual public csvm {
 
         for (std::size_t i = 0; i < data.num_data_points(); ++i) {
             // TODO: is there multiclass regression? https://en.wikipedia.org/wiki/Multinomial_logistic_regression
-            predicted_labels[i] = static_cast<label_type>(votes(i, 0));
+            if constexpr (std::is_floating_point_v<label_type>) {
+                predicted_labels[i] = static_cast<label_type>(votes(i, 0));
+            } else {
+                predicted_labels[i] = static_cast<label_type>(std::round(votes(i, 0)));
+            }
         }
 
         PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_EVENT("predict end");
