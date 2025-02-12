@@ -449,8 +449,9 @@ pipeline {
                                                 $([[ $BACKEND == ADAPTIVECPP ]] && [[ $ARCHITECTURE == NVIDIA ]] && echo "^llvm@17~gold~libomptarget") \
                                                 $([[ $BACKEND == STDPAR-ADAPTIVECPP ]] && [[ $ARCHITECTURE == AMD ]] && echo "^llvm@18~gold~libomptarget") \
                                                 $([[ $BACKEND == STDPAR-ADAPTIVECPP ]] && [[ $ARCHITECTURE == NVIDIA ]] && echo "^llvm@17~gold~libomptarget") \
-                                                | tee $(tty) | tail -n 1 | cut -d " " -f 2 > ${WORKSPACE}/plssvm/${BUILD_TYPE}-${BACKEND}-${ARCHITECTURE}.installpath && break || sleep 10 || spack clean
+                                                | tee $(tty) | tail -n 1 | cut -d " " -f 2 > ${WORKSPACE}/plssvm/${BUILD_TYPE}-${BACKEND}-${ARCHITECTURE}.installpath  && s=0 && break ||  s=$? && sleep 10 && spack clean
                                             done
+                                        (exit $s)
 
                                         echo ${PIPESTATUS[@]}
 
