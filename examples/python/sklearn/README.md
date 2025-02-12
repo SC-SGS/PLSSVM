@@ -428,7 +428,7 @@ plssvm.SVR(C=100.0, gamma=0.1, kernel='laplacian'): 0.990297601578695
 
 In this section, we want to showcase the full potential of PLSSVM using larger real-world datasets that may be too large for
 `sklearn` to process in a meaningful timeframe. 
-All runtimes are gathered on two NVIDIA Tesla GPUs.
+All runtimes are gathered on two NVIDIA Tesla P100 GPUs.
 
 ## plot_SVHN.py
 
