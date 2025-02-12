@@ -1097,6 +1097,8 @@ Note that currently not all sklearn `SVC` and `SVR` functionality has been imple
 The respective functions will throw a Python `AttributeError` if called.
 For a detailed overview of the functions that are currently implemented, see [our API documentation](bindings/Python/README.md).
 
+There are more examples located in the `examples/python/sklearn` directory that are copied from the sklearn repository and slightly changed for PLSSVM.
+
 ## Citing PLSSVM
 
 If you use PLSSVM in your research, we kindly request you to cite:
