@@ -715,7 +715,36 @@ If the `--kokkos_execution_space` is `automatic`, uses the best fitting executio
 ### Predicting using `plssvm-predict`
 
 Our predict utility is fully conform to LIBSVM's model files. 
-This means that our `plssvm-predict` can be used on model files learned with, e.g., LIBSVM's `svm-train`.
+This means that our `plssvm-predict` can be used on model files learned with, e.g., LIBSVM's `svm-train`. 
+Note: this is not the case for the regression task since the `svm_type` filed mismatch between LIBSVM (`epsilon_svr`) 
+and PLSSVM (`c_svr`). To automatically convert between the two, simply use the `convert_model.py` script 
+(in the `utility_scripts/` directory) which simply replaces these fields with the respectively expected one 
+(note that for large files doing that manually may be faster):
+
+```bash
+usage: convert_model.py [-h] [-o OUTPUT] [--to_plssvm] [--to_libsvm] model_file
+
+positional arguments:
+  model_file            the regression model file to convert
+
+options:
+  -h, --help            show this help message and exit
+  -o OUTPUT, --output OUTPUT
+                        output the regression model to the new file, otherwise the regression model us updated inplace
+  --to_plssvm           convert the regression model to a PLSSVM conform model file
+  --to_libsvm           convert the regression model to a LIBSVM conform model file
+```
+
+An example invocation could look like:
+
+```bash
+python3 convert_model.py --to_libsvm -o 5x4_libsvm.libsvm.model 5x4.libsvm.model
+```
+```
+Converting a PLSSVM model file to a LIBSVM model file.
+```
+
+After a correct model file exists, predict works as follows:
 
 ```bash
 ./plssvm-predict --help
