@@ -10,11 +10,11 @@
 
 #include "plssvm/detail/io/scaling_factors_parsing.hpp"
 
-#include "plssvm/constants.hpp"                         // plssvm::real_type
-#include "plssvm/data_set/min_max_scaler.hpp"  // plssvm::min_max_scaler
-#include "plssvm/detail/arithmetic_type_name.hpp"       // plssvm::detail::arithmetic_type_name
-#include "plssvm/detail/io/file_reader.hpp"             // plssvm::detail::io::file_reader
-#include "plssvm/exceptions/exceptions.hpp"             // plssvm::invalid_file_format_exception
+#include "plssvm/constants.hpp"                    // plssvm::real_type
+#include "plssvm/data_set/min_max_scaler.hpp"      // plssvm::min_max_scaler
+#include "plssvm/detail/arithmetic_type_name.hpp"  // plssvm::detail::arithmetic_type_name
+#include "plssvm/detail/io/file_reader.hpp"        // plssvm::detail::io::file_reader
+#include "plssvm/exceptions/exceptions.hpp"        // plssvm::invalid_file_format_exception
 
 #include "tests/custom_test_macros.hpp"  // EXPECT_FLOATING_POINT_EQ, EXPECT_THROW_WHAT
 #include "tests/utility.hpp"             // util::temporary_file

@@ -65,8 +65,8 @@ class regression_model : public model<U> {
     // Make the protected member variables visible in the derived class.
     using base_model::alpha_ptr_;
     using base_model::data_;
-    using base_model::num_support_vectors_;
     using base_model::num_features_;
+    using base_model::num_support_vectors_;
     using base_model::params_;
     using base_model::rho_ptr_;
 

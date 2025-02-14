@@ -122,12 +122,12 @@ target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC -fPIC)
 # append pybind11 bindings library to installed targets
 append_local_and_parent(PLSSVM_TARGETS_TO_INSTALL ${PLSSVM_PYTHON_BINDINGS_LIBRARY_NAME})
 
-# install the __init__.py file so Python recognizes the package when installed via pip
-# install the __cli__.py file so the PLSSVM executables can be used when installed via pip
-# install the __install_check__.py file creating a new executable plssvm-install-check outputting some information when installed via pip
+# install necessary Python files to make pip install plssvm work correctly:
+#
+# - __init__.py: PLSSVM is correctly recognized as Python package
+# - __cli__.py: PLSSVM's executables are correctly usable
+# - __install_check__.py: custom script outputting some PLSSVM build information
 include(GNUInstallDirs)
-install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/__init__.py"
-        "${CMAKE_CURRENT_SOURCE_DIR}/__cli__.py"
-        "${CMAKE_CURRENT_SOURCE_DIR}/__install_check__.py"
+install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/__init__.py" "${CMAKE_CURRENT_SOURCE_DIR}/__cli__.py" "${CMAKE_CURRENT_SOURCE_DIR}/__install_check__.py"
         DESTINATION "${CMAKE_INSTALL_LIBDIR}"
 )

@@ -93,7 +93,6 @@ constexpr bool has_only_kokkos_parameter_named_args_v = !igor::has_other_than<Ar
 template <typename... Args>
 constexpr bool has_only_kokkos_named_args_v = !igor::has_other_than<Args...>(plssvm::kokkos_execution_space);
 
-
 }  // namespace detail
 
 /**

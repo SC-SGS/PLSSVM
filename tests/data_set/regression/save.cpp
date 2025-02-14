@@ -8,16 +8,16 @@
  * @brief Tests for functions related to saving a regression data set.
  */
 
-#include "plssvm/constants.hpp"                         // plssvm::real_type, plssvm::PADDING_SIZE
+#include "plssvm/constants.hpp"                     // plssvm::real_type, plssvm::PADDING_SIZE
 #include "plssvm/data_set/regression_data_set.hpp"  // data set class to test
-#include "plssvm/detail/io/file_reader.hpp"             // plssvm::detail::io::file_reader
-#include "plssvm/detail/string_utility.hpp"             // plssvm::detail::as_lower_case
-#include "plssvm/file_format_types.hpp"                 // plssvm::file_format_type
-#include "plssvm/matrix.hpp"                            // plssvm::aos_matrix
+#include "plssvm/detail/io/file_reader.hpp"         // plssvm::detail::io::file_reader
+#include "plssvm/detail/string_utility.hpp"         // plssvm::detail::as_lower_case
+#include "plssvm/file_format_types.hpp"             // plssvm::file_format_type
+#include "plssvm/matrix.hpp"                        // plssvm::aos_matrix
 
-#include "tests/naming.hpp"              // naming::test_parameter_to_name
-#include "tests/types_to_test.hpp"       // util::{regression_label_type_gtest, test_parameter_type_at_t}
-#include "tests/utility.hpp"             // util::{redirect_output, temporary_file, get_correct_data_file_labels, generate_specific_matrix}
+#include "tests/naming.hpp"         // naming::test_parameter_to_name
+#include "tests/types_to_test.hpp"  // util::{regression_label_type_gtest, test_parameter_type_at_t}
+#include "tests/utility.hpp"        // util::{redirect_output, temporary_file, get_correct_data_file_labels, generate_specific_matrix}
 
 #include "gmock/gmock.h"  // EXPECT_THAT, ::testing::{ContainsRegex, StartsWith}
 #include "gtest/gtest.h"  // TYPED_TEST, TYPED_TEST_SUITE, EXPECT_TRUE, ASSERT_EQ, ::testing::Test
@@ -31,8 +31,8 @@
 
 template <typename T>
 class RegressionDataSetSave : public ::testing::Test,
-                                  private util::redirect_output<>,
-                                  protected util::temporary_file {
+                              private util::redirect_output<>,
+                              protected util::temporary_file {
   protected:
     using fixture_label_type = util::test_parameter_type_at_t<0, T>;
 

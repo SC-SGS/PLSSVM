@@ -113,7 +113,7 @@ template <typename label_type>
                 // a numeric field must also contain a name
                 const std::string_view name = check_for_valid_name(line, "@ATTRIBUTE", "NUMERIC");
                 // the attribute name "CLASS" is reserved!
-                if (detail::as_upper_case(name) != "CLASS") {// add a feature to the running count
+                if (detail::as_upper_case(name) != "CLASS") {  // add a feature to the running count
                     ++num_features;
                     // increment class index as long as no class labels have been read
                     if (!has_label) {

@@ -140,7 +140,7 @@ class csvc : public ::plssvm::csvc,
      */
     explicit csvc(const parameter params) :
         ::plssvm::csvm{ params },
-        ::plssvm::stdpar::csvm{ } { }
+        ::plssvm::stdpar::csvm{} { }
 
     /**
      * @brief Construct a new C-SVC using the stdpar backend on the @p target platform with the parameters given through @p params.
@@ -160,7 +160,7 @@ class csvc : public ::plssvm::csvc,
     template <typename... Args, PLSSVM_REQUIRES(::plssvm::detail::has_only_parameter_named_args_v<Args...>)>
     explicit csvc(Args &&...named_args) :
         ::plssvm::csvm{ std::forward<Args>(named_args)... },
-        ::plssvm::stdpar::csvm{  } { }
+        ::plssvm::stdpar::csvm{} { }
 
     /**
      * @brief Construct a new C-SVC using the stdpar backend on the @p target platform and the optionally provided @p named_args.
@@ -188,7 +188,7 @@ class csvr : public ::plssvm::csvr,
      */
     explicit csvr(const parameter params) :
         ::plssvm::csvm{ params },
-        ::plssvm::stdpar::csvm{  } { }
+        ::plssvm::stdpar::csvm{} { }
 
     /**
      * @brief Construct a new C-SVR using the stdpar backend on the @p target platform with the parameters given through @p params.
@@ -208,7 +208,7 @@ class csvr : public ::plssvm::csvr,
     template <typename... Args, PLSSVM_REQUIRES(::plssvm::detail::has_only_parameter_named_args_v<Args...>)>
     explicit csvr(Args &&...named_args) :
         ::plssvm::csvm{ std::forward<Args>(named_args)... },
-        ::plssvm::stdpar::csvm{  } { }
+        ::plssvm::stdpar::csvm{} { }
 
     /**
      * @brief Construct a new C-SVR using the stdpar backend on the @p target platform and the optionally provided @p named_args.
@@ -219,7 +219,7 @@ class csvr : public ::plssvm::csvr,
     template <typename... Args, PLSSVM_REQUIRES(::plssvm::detail::has_only_parameter_named_args_v<Args...>)>
     explicit csvr(const target_platform target, Args &&...named_args) :
         ::plssvm::csvm{ std::forward<Args>(named_args)... },
-        ::plssvm::stdpar::csvm{ target} { }
+        ::plssvm::stdpar::csvm{ target } { }
 };
 
 }  // namespace stdpar

@@ -46,13 +46,18 @@ if (PLSSVM_GENERATE_TEST_FILES)
     check_integer(PLSSVM_TEST_FILE_NUM_CLASSES)
 
     # set test file name based on requested sizes
-    set(PLSSVM_CLASSIFICATION_TEST_FILE "${PROJECT_SOURCE_DIR}/tests/data/${PLSSVM_TEST_FILE_NUM_DATA_POINTS}x${PLSSVM_TEST_FILE_NUM_FEATURES}_${PLSSVM_TEST_FILE_NUM_CLASSES}_classification.libsvm" CACHE STRING "Path including name of the classification test file" FORCE)
-    set(PLSSVM_REGRESSION_TEST_FILE "${PROJECT_SOURCE_DIR}/tests/data/${PLSSVM_TEST_FILE_NUM_DATA_POINTS}x${PLSSVM_TEST_FILE_NUM_FEATURES}_regression.libsvm" CACHE STRING "Path including name of the regression test file" FORCE)
-    
+    set(PLSSVM_CLASSIFICATION_TEST_FILE
+        "${PROJECT_SOURCE_DIR}/tests/data/${PLSSVM_TEST_FILE_NUM_DATA_POINTS}x${PLSSVM_TEST_FILE_NUM_FEATURES}_${PLSSVM_TEST_FILE_NUM_CLASSES}_classification.libsvm"
+        CACHE STRING "Path including name of the classification test file" FORCE
+    )
+    set(PLSSVM_REGRESSION_TEST_FILE "${PROJECT_SOURCE_DIR}/tests/data/${PLSSVM_TEST_FILE_NUM_DATA_POINTS}x${PLSSVM_TEST_FILE_NUM_FEATURES}_regression.libsvm"
+        CACHE STRING "Path including name of the regression test file" FORCE
+    )
+
     # check if the requested test file already exists and is not zero based indexed (otherwise create new test file)
     check_test_file_validity(${PLSSVM_CLASSIFICATION_TEST_FILE})
     check_test_file_validity(${PLSSVM_REGRESSION_TEST_FILE})
-    
+
     # check for possible Python dependencies
     if (NOT EXISTS "${PLSSVM_CLASSIFICATION_TEST_FILE}" OR NOT EXISTS "${PLSSVM_REGRESSION_TEST_FILE}")
         # find necessary Python3 packages to use the test file generator
@@ -63,25 +68,32 @@ if (PLSSVM_GENERATE_TEST_FILES)
         message(STATUS "Checking required Python3 libraries (${PLSSVM_TEST_REQUIRED_LIBS}) to to generate the test file.")
         check_python_libs("${PLSSVM_TEST_REQUIRED_LIBS}" "or set PLSSVM_GENERATE_TEST_FILES to OFF.")
     endif ()
-    
+
     if (NOT EXISTS "${PLSSVM_CLASSIFICATION_TEST_FILE}")
         # generate the classification test file if necessary
         message(STATUS "Generating the classification test file: ${PLSSVM_CLASSIFICATION_TEST_FILE}.")
         execute_process(
-                COMMAND ${Python3_EXECUTABLE} "${PROJECT_SOURCE_DIR}/utility_scripts/generate_data.py" "--output" "${PLSSVM_CLASSIFICATION_TEST_FILE}" "--format" "libsvm" "--samples" "${PLSSVM_TEST_FILE_NUM_DATA_POINTS}" "--features" "${PLSSVM_TEST_FILE_NUM_FEATURES}" "classification" "--classes" "${PLSSVM_TEST_FILE_NUM_CLASSES}"
-                OUTPUT_QUIET)
+            COMMAND ${Python3_EXECUTABLE} "${PROJECT_SOURCE_DIR}/utility_scripts/generate_data.py" "--output" "${PLSSVM_CLASSIFICATION_TEST_FILE}" "--format"
+                    "libsvm" "--samples" "${PLSSVM_TEST_FILE_NUM_DATA_POINTS}" "--features" "${PLSSVM_TEST_FILE_NUM_FEATURES}" "classification" "--classes"
+                    "${PLSSVM_TEST_FILE_NUM_CLASSES}" OUTPUT_QUIET
+        )
     endif ()
     if (NOT EXISTS "${PLSSVM_REGRESSION_TEST_FILE}")
         # generate the regression test file if necessary
         message(STATUS "Generating the regression test file: ${PLSSVM_REGRESSION_TEST_FILE}.")
         execute_process(
-                COMMAND ${Python3_EXECUTABLE} "${PROJECT_SOURCE_DIR}/utility_scripts/generate_data.py" "--output" "${PLSSVM_REGRESSION_TEST_FILE}" "--format" "libsvm" "--samples" "${PLSSVM_TEST_FILE_NUM_DATA_POINTS}" "--features" "${PLSSVM_TEST_FILE_NUM_FEATURES}" "regression"
-                OUTPUT_QUIET)
+            COMMAND ${Python3_EXECUTABLE} "${PROJECT_SOURCE_DIR}/utility_scripts/generate_data.py" "--output" "${PLSSVM_REGRESSION_TEST_FILE}" "--format"
+                    "libsvm" "--samples" "${PLSSVM_TEST_FILE_NUM_DATA_POINTS}" "--features" "${PLSSVM_TEST_FILE_NUM_FEATURES}" "regression" OUTPUT_QUIET
+        )
     endif ()
 else ()
     # set test file to default test file
-    set(PLSSVM_CLASSIFICATION_TEST_FILE "${PROJECT_SOURCE_DIR}/tests/data/libsvm/500x200_4_classification.libsvm" CACHE STRING "Path including name of the classification test file")
-    set(PLSSVM_REGRESSION_TEST_FILE "${PROJECT_SOURCE_DIR}/tests/data/libsvm/500x200_regression.libsvm" CACHE STRING "Path including name of the regression test file")
+    set(PLSSVM_CLASSIFICATION_TEST_FILE "${PROJECT_SOURCE_DIR}/tests/data/libsvm/500x200_4_classification.libsvm"
+        CACHE STRING "Path including name of the classification test file"
+    )
+    set(PLSSVM_REGRESSION_TEST_FILE "${PROJECT_SOURCE_DIR}/tests/data/libsvm/500x200_regression.libsvm" CACHE STRING
+                                                                                                              "Path including name of the regression test file"
+    )
 endif ()
 
 # warn if PLSSVM_ENABLE_FAST_MATH is set and tests are enabled
@@ -239,26 +251,32 @@ add_test(NAME MainPredict/executable_version COMMAND ${PLSSVM_EXECUTABLE_PREDICT
 add_test(NAME MainScale/executable_version COMMAND ${PLSSVM_EXECUTABLE_SCALE_NAME} --version)
 
 # add minimal run test for scaling
-add_test(NAME MainScale/executable_minimal COMMAND ${PLSSVM_EXECUTABLE_SCALE_NAME} "${PLSSVM_CLASSIFICATION_TEST_FILE}" "${CMAKE_CURRENT_BINARY_DIR}/scaled.libsvm.model")
-add_test(NAME MainScale/executable_save_scaling_factors COMMAND ${PLSSVM_EXECUTABLE_SCALE_NAME}
-         -s "${CMAKE_CURRENT_BINARY_DIR}/scaling_parameter.txt"  # the file the scaling parameters are saved to
-         "${PLSSVM_CLASSIFICATION_TEST_FILE}"                    # the file to scale
-         "${CMAKE_CURRENT_BINARY_DIR}/scaled.libsvm.model"       # the scaled file (result)
+add_test(NAME MainScale/executable_minimal COMMAND ${PLSSVM_EXECUTABLE_SCALE_NAME} "${PLSSVM_CLASSIFICATION_TEST_FILE}"
+                                                   "${CMAKE_CURRENT_BINARY_DIR}/scaled.libsvm.model"
+)
+add_test(NAME MainScale/executable_save_scaling_factors
+         COMMAND ${PLSSVM_EXECUTABLE_SCALE_NAME} -s "${CMAKE_CURRENT_BINARY_DIR}/scaling_parameter.txt" # the file the scaling parameters are saved to
+                 "${PLSSVM_CLASSIFICATION_TEST_FILE}" # the file to scale
+                 "${CMAKE_CURRENT_BINARY_DIR}/scaled.libsvm.model" # the scaled file (result)
 )
 
 # add minimal run test for the classification task
-add_test(NAME MainTrainClassification/executable_minimal COMMAND ${PLSSVM_EXECUTABLE_TRAIN_NAME} "${PLSSVM_CLASSIFICATION_TEST_FILE}" "${CMAKE_CURRENT_BINARY_DIR}/test_classification.libsvm.model")
-add_test(NAME MainPredictClassification/executable_minimal COMMAND ${PLSSVM_EXECUTABLE_PREDICT_NAME}
-         "${CMAKE_CURRENT_LIST_DIR}/data/libsvm/classification/5x4.libsvm"       # test file
-         "${CMAKE_CURRENT_LIST_DIR}/data/model/classification/5x4.libsvm.model"  # model file
-         "${CMAKE_CURRENT_BINARY_DIR}/test_classification.libsvm.predict"        # predict file (result)
+add_test(NAME MainTrainClassification/executable_minimal COMMAND ${PLSSVM_EXECUTABLE_TRAIN_NAME} "${PLSSVM_CLASSIFICATION_TEST_FILE}"
+                                                                 "${CMAKE_CURRENT_BINARY_DIR}/test_classification.libsvm.model"
+)
+add_test(NAME MainPredictClassification/executable_minimal
+         COMMAND ${PLSSVM_EXECUTABLE_PREDICT_NAME} "${CMAKE_CURRENT_LIST_DIR}/data/libsvm/classification/5x4.libsvm" # test file
+                 "${CMAKE_CURRENT_LIST_DIR}/data/model/classification/5x4.libsvm.model" # model file
+                 "${CMAKE_CURRENT_BINARY_DIR}/test_classification.libsvm.predict" # predict file (result)
 )
 # add minimal run test for the regression task
-add_test(NAME MainTrainRegression/executable_minimal COMMAND ${PLSSVM_EXECUTABLE_TRAIN_NAME} "${PLSSVM_REGRESSION_TEST_FILE}" "${CMAKE_CURRENT_BINARY_DIR}/test_regression.libsvm.model")
-add_test(NAME MainPredictRegression/executable_minimal COMMAND ${PLSSVM_EXECUTABLE_PREDICT_NAME}
-         "${CMAKE_CURRENT_LIST_DIR}/data/libsvm/regression/5x4.libsvm"       # test file
-         "${CMAKE_CURRENT_LIST_DIR}/data/model/regression/5x4.libsvm.model"  # model file
-         "${CMAKE_CURRENT_BINARY_DIR}/test_regression.libsvm.predict"        # predict file (result)
+add_test(NAME MainTrainRegression/executable_minimal COMMAND ${PLSSVM_EXECUTABLE_TRAIN_NAME} "${PLSSVM_REGRESSION_TEST_FILE}"
+                                                             "${CMAKE_CURRENT_BINARY_DIR}/test_regression.libsvm.model"
+)
+add_test(NAME MainPredictRegression/executable_minimal
+         COMMAND ${PLSSVM_EXECUTABLE_PREDICT_NAME} "${CMAKE_CURRENT_LIST_DIR}/data/libsvm/regression/5x4.libsvm" # test file
+                 "${CMAKE_CURRENT_LIST_DIR}/data/model/regression/5x4.libsvm.model" # model file
+                 "${CMAKE_CURRENT_BINARY_DIR}/test_regression.libsvm.predict" # predict file (result)
 )
 
 # add failing test (must return with a non-zero exit code)
