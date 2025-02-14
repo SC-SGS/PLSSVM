@@ -208,7 +208,6 @@ TYPED_TEST(ClassificationModel, weights) {
                 break;
             default:
                 FAIL() << "Unreachable!";
-                break;
         }
         EXPECT_FLOATING_POINT_MATRIX_EQ(model.weights().front(), (plssvm::aos_matrix<plssvm::real_type>{ correct_weights, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE } }));
     } else if constexpr (classification == plssvm::classification_type::oao) {
@@ -245,7 +244,6 @@ TYPED_TEST(ClassificationModel, weights) {
                 break;
             default:
                 FAIL() << "Unreachable!";
-                break;
         }
         ASSERT_EQ(model.weights().size(), weights.size());
         for (std::size_t i = 0; i < weights.size(); ++i) {

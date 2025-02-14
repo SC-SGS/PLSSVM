@@ -1,7 +1,7 @@
-## Authors: Alexander Van Craen, Marcel Breyer, Alexander Strack
-## Copyright (C): 2018-today The PLSSVM project - All Rights Reserved
-## License: This file is part of the PLSSVM project which is released under the MIT license.
-##          See the LICENSE.md file in the project root for full license information.
+# Authors: Alexander Van Craen, Marcel Breyer, Alexander Strack
+# Copyright (C): 2018-today The PLSSVM project - All Rights Reserved
+# License: This file is part of the PLSSVM project which is released under the MIT license.
+#          See the LICENSE.md file in the project root for full license information.
 ########################################################################################################################
 
 list(APPEND CMAKE_MESSAGE_INDENT "HPX:  ")
@@ -31,11 +31,7 @@ endif ()
 message(CHECK_PASS "found ")
 
 # explicitly set sources
-set(PLSSVM_HPX_SOURCES
-    ${CMAKE_CURRENT_LIST_DIR}/detail/utility.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/csvm.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/exceptions.cpp
-)
+set(PLSSVM_HPX_SOURCES ${CMAKE_CURRENT_LIST_DIR}/detail/utility.cpp ${CMAKE_CURRENT_LIST_DIR}/csvm.cpp ${CMAKE_CURRENT_LIST_DIR}/exceptions.cpp)
 
 # set target properties
 set_local_and_parent(PLSSVM_HPX_BACKEND_LIBRARY_NAME plssvm-HPX)
