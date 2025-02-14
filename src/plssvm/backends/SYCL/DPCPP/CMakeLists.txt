@@ -8,10 +8,10 @@ message(CHECK_START "Checking for DPC++ as SYCL implementation")
 
 # check if current compiler is Intel's clang llvm fork aka DPC++
 set(PLSSVM_SYCL_BACKEND_CHECK_FOR_DPCPP_COMPILER OFF)
-if (${CMAKE_CXX_COMPILER_ID} MATCHES "IntelLLVM")
+if (CMAKE_CXX_COMPILER_ID STREQUAL "IntelLLVM")
     message(STATUS "Found Intel icpx compiler.")
     set(PLSSVM_SYCL_BACKEND_CHECK_FOR_DPCPP_COMPILER ON)
-elseif (${CMAKE_CXX_COMPILER_ID} MATCHES "Clang")
+elseif (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     # intel llvm fork must be clang
     execute_process(COMMAND ${CMAKE_CXX_COMPILER} --help OUTPUT_VARIABLE PLSSVM_DPCPP_CLANG_HELP_OUTPUT)
     # check if help message contains DPC++ specific values
