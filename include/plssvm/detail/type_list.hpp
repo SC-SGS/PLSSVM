@@ -79,7 +79,8 @@ template <typename SubSetTuple, typename BaseSetTuple>
 inline constexpr bool tuple_subset_of_v = tuple_subset_of<SubSetTuple, BaseSetTuple>::value;
 
 // check reduced supported label types for correctness
-static_assert(tuple_subset_of_v<supported_label_types_reduced, supported_label_types>, "The reduced label types MUST be a subset of all possible label types!");
+static_assert(tuple_subset_of_v<supported_label_types_classification_reduced, supported_label_types_classification>, "The reduced classification label types MUST be a subset of all possible classification label types!");
+static_assert(tuple_subset_of_v<supported_label_types_regression_reduced, supported_label_types_regression>, "The reduced regression label types MUST be a subset of all possible regression label types!");
 
 }  // namespace plssvm::detail
 
