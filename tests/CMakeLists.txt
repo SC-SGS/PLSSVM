@@ -88,10 +88,10 @@ if (PLSSVM_GENERATE_TEST_FILES)
     endif ()
 else ()
     # set test file to default test file
-    set(PLSSVM_CLASSIFICATION_TEST_FILE "${PROJECT_SOURCE_DIR}/tests/data/libsvm/500x200_4_classification.libsvm"
+    set(PLSSVM_CLASSIFICATION_TEST_FILE "${PROJECT_SOURCE_DIR}/tests/data/libsvm/classification/500x200_4.libsvm"
         CACHE STRING "Path including name of the classification test file"
     )
-    set(PLSSVM_REGRESSION_TEST_FILE "${PROJECT_SOURCE_DIR}/tests/data/libsvm/500x200_regression.libsvm" CACHE STRING
+    set(PLSSVM_REGRESSION_TEST_FILE "${PROJECT_SOURCE_DIR}/tests/data/libsvm/regression/500x200.libsvm" CACHE STRING
                                                                                                               "Path including name of the regression test file"
     )
 endif ()
