@@ -84,6 +84,8 @@ The main highlights of our SVM implementations are:
 7. Multi-GPU support for **all** kernel functions and GPU backends for `fit` as well as `predict/score` (**note**: no multi-GPU support for the stdpar backend even if run on a GPU!).
 8. Python bindings as drop-in replacement for `sklearn.SVC` and `sklearn.SVR` (some features currently not implemented).
 
+To see the full power of Support Vector Machines, have a look at our live visualization examples in 
+[examples/python/interactive](examples/python/interactive/README.md).
 
 ## Getting Started
 
