@@ -32,7 +32,7 @@ jobs:
           cd PLSSVM
           export LDFLAGS="-L/opt/homebrew/opt/libomp/lib"
           export CPPFLAGS="-I/opt/homebrew/opt/libomp/include"
-          cmake --preset openmp_test -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DPLSSVM_TARGET_PLATFORMS="cpu" -DPLSSVM_ENABLE_LANGUAGE_BINDINGS=ON -DPLSSVM_ENABLE_PERFORMANCE_TRACKING=ON -DPLSSVM_GENERATE_TEST_FILE=OFF -DPLSSVM_ENABLE_LTO=OFF
+          cmake --preset openmp_test -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DPLSSVM_TARGET_PLATFORMS="cpu" -DPLSSVM_ENABLE_LANGUAGE_BINDINGS=ON -DPLSSVM_ENABLE_PERFORMANCE_TRACKING=ON -DPLSSVM_GENERATE_TEST_FILES=OFF -DPLSSVM_ENABLE_LTO=OFF
       - name: "Build PLSSVM"
         shell: bash
         run: |

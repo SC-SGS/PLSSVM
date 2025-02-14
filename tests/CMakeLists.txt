@@ -60,7 +60,7 @@ if (PLSSVM_GENERATE_TEST_FILES)
         include(${PROJECT_SOURCE_DIR}/cmake/check_python_libs.cmake)
         set(PLSSVM_TEST_REQUIRED_LIBS argparse sklearn humanize numpy)
         message(STATUS "Checking required Python3 libraries (${PLSSVM_TEST_REQUIRED_LIBS}) to to generate the test file.")
-        check_python_libs("${PLSSVM_TEST_REQUIRED_LIBS}" "or set PLSSVM_GENERATE_TEST_FILE to OFF.")
+        check_python_libs("${PLSSVM_TEST_REQUIRED_LIBS}" "or set PLSSVM_GENERATE_TEST_FILES to OFF.")
     endif ()
     
     if (NOT EXISTS "${PLSSVM_CLASSIFICATION_TEST_FILE}")
