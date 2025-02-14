@@ -213,7 +213,7 @@ endif ()
 ########################################################################################################################
 #                                       check for OpenMP (not for the backend!)                                        #
 ########################################################################################################################
-find_package(OpenMP 4.0 QUIET)
+find_package(OpenMP QUIET)
 if (OpenMP_FOUND)
     message(STATUS "Found OpenMP ${OpenMP_CXX_VERSION} to speed-up library utilities (like file parsing).")
     set(PLSSVM_FOUND_OPENMP_FOR_UTILITY ON)
