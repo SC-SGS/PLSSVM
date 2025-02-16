@@ -899,9 +899,12 @@ matrix<T, layout> &operator+=(matrix<T, layout> &lhs, const matrix<T, layout> &r
     PLSSVM_ASSERT(lhs.shape() == rhs.shape(), "Error: shapes missmatch! ({} != {})", lhs.shape(), rhs.shape());
     using size_type = typename matrix<T, layout>::size_type;
 
-#pragma omp parallel for collapse(2) default(none) shared(lhs, rhs)
-    for (size_type row = 0; row < lhs.num_rows(); ++row) {
-        for (size_type col = 0; col < lhs.num_cols(); ++col) {
+    const size_type num_rows = lhs.num_rows();
+    const size_type num_cols = lhs.num_cols();
+
+#pragma omp parallel for collapse(2) default(none) shared(lhs, rhs) firstprivate(num_rows, num_cols)
+    for (size_type row = 0; row < num_rows; ++row) {
+        for (size_type col = 0; col < num_cols; ++col) {
             lhs(row, col) += rhs(row, col);
         }
     }
