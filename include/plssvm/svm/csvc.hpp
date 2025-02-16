@@ -397,7 +397,7 @@ class csvc : virtual public csvm {
                             std::merge(index_sets[i].cbegin(), index_sets[i].cend(), index_sets[j].cbegin(), index_sets[j].cend(), sorted_indices.begin());
 // copy the support vectors to the binary support vectors
 // NOTE: it seems that MSVC doesn't like the collapse clause inside a lambda function
-#if defined(MSC_VER)
+#if defined(_MSC_VER)
     #pragma omp parallel for
 #else
     #pragma omp parallel for collapse(2)
