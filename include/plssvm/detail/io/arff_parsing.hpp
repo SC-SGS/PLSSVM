@@ -15,7 +15,6 @@
 
 #include "plssvm/constants.hpp"                 // plssvm::real_type, plssvm::PADDING_SIZE
 #include "plssvm/detail/io/file_reader.hpp"     // plssvm::detail::io::file_reader
-#include "plssvm/detail/operators.hpp"          // plssvm::operator::sign
 #include "plssvm/detail/string_conversion.hpp"  // plssvm::detail::convert_to
 #include "plssvm/detail/string_utility.hpp"     // plssvm::detail::{to_upper_case, as_upper_case, starts_with, ends_with}
 #include "plssvm/detail/utility.hpp"            // plssvm::detail::current_date_time

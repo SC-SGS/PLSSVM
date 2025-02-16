@@ -525,10 +525,12 @@ matrix<T, layout_>::matrix(const matrix<T, other_layout_> &other) :
         // same layout -> simply memcpy underlying array
         std::memcpy(this->data(), other.data(), this->size_padded() * sizeof(value_type));
     } else {
+        const size_type num_rows = this->num_rows();
+        const size_type num_cols = this->num_cols();
 // convert AoS -> SoA or SoA -> AoS
 #pragma omp parallel for collapse(2)
-        for (size_type row = 0; row < this->num_rows(); ++row) {
-            for (size_type col = 0; col < this->num_cols(); ++col) {
+        for (size_type row = 0; row < num_rows; ++row) {
+            for (size_type col = 0; col < num_cols; ++col) {
                 (*this)(row, col) = other(row, col);
             }
         }
@@ -546,10 +548,12 @@ matrix<T, layout_>::matrix(const matrix<value_type, other_layout_> &other, const
         // same layout but different padding -> memcpy each row separately
         this->opt_mismatched_padding_copy(this->data(), this->shape_padded(), other.data(), other.shape_padded());
     } else {
+        const size_type num_rows = this->num_rows();
+        const size_type num_cols = this->num_cols();
 // convert AoS -> SoA or SoA -> AoS or manual copy because of mismatching padding sizes
 #pragma omp parallel for collapse(2)
-        for (size_type row = 0; row < this->num_rows(); ++row) {
-            for (size_type col = 0; col < this->num_cols(); ++col) {
+        for (size_type row = 0; row < num_rows; ++row) {
+            for (size_type col = 0; col < num_cols; ++col) {
                 (*this)(row, col) = other(row, col);
             }
         }
@@ -586,10 +590,12 @@ matrix<T, layout_>::matrix(const std::vector<std::vector<value_type>> &data, con
                 std::memcpy(this->data() + row * this->num_cols_padded(), data[row].data(), this->num_cols() * sizeof(value_type));
             }
         } else {
+            const size_type num_rows = this->num_rows();
+            const size_type num_cols = this->num_cols();
 // explicitly iterate all elements otherwise
 #pragma omp parallel for collapse(2)
-            for (size_type row = 0; row < this->num_rows(); ++row) {
-                for (size_type col = 0; col < this->num_cols(); ++col) {
+            for (size_type row = 0; row < num_rows; ++row) {
+                for (size_type col = 0; col < num_cols; ++col) {
                     (*this)(row, col) = data[row][col];
                 }
             }
@@ -728,10 +734,12 @@ auto matrix<T, layout_>::to_2D_vector() const -> std::vector<std::vector<value_t
             std::memcpy(ret[row].data(), this->data() + row * this->num_cols_padded(), this->num_cols() * sizeof(value_type));
         }
     } else {
+        const size_type num_rows = this->num_rows();
+        const size_type num_cols = this->num_cols();
 // explicitly iterate all elements otherwise
 #pragma omp parallel for collapse(2)
-        for (size_type row = 0; row < this->num_rows(); ++row) {
-            for (size_type col = 0; col < this->num_cols(); ++col) {
+        for (size_type row = 0; row < num_rows; ++row) {
+            for (size_type col = 0; col < num_cols; ++col) {
                 ret[row][col] = (*this)(row, col);
             }
         }
@@ -749,10 +757,12 @@ auto matrix<T, layout_>::to_2D_vector_padded() const -> std::vector<std::vector<
             std::memcpy(ret[row].data(), this->data() + row * this->num_cols_padded(), this->num_cols_padded() * sizeof(value_type));
         }
     } else {
+        const size_type num_rows = this->num_rows();
+        const size_type num_cols = this->num_cols();
 // explicitly iterate all elements otherwise
 #pragma omp parallel for collapse(2)
-        for (size_type row = 0; row < this->num_rows(); ++row) {
-            for (size_type col = 0; col < this->num_cols(); ++col) {
+        for (size_type row = 0; row < num_rows; ++row) {
+            for (size_type col = 0; col < num_cols; ++col) {
                 ret[row][col] = (*this)(row, col);
             }
         }
@@ -842,9 +852,12 @@ template <typename T, layout_type layout>
 matrix<T, layout> &operator*=(matrix<T, layout> &matr, const T scale) {
     using size_type = typename matrix<T, layout>::size_type;
 
-#pragma omp parallel for collapse(2) default(none) shared(matr) firstprivate(scale)
-    for (size_type row = 0; row < matr.num_rows(); ++row) {
-        for (size_type col = 0; col < matr.num_cols(); ++col) {
+    const size_type num_rows = matr.num_rows();
+    const size_type num_cols = matr.num_cols();
+
+#pragma omp parallel for collapse(2) default(none) shared(matr) firstprivate(scale, num_rows, num_cols)
+    for (size_type row = 0; row < num_rows; ++row) {
+        for (size_type col = 0; col < num_cols; ++col) {
             matr(row, col) *= scale;
         }
     }
@@ -922,9 +935,12 @@ matrix<T, layout> &operator-=(matrix<T, layout> &lhs, const matrix<T, layout> &r
     PLSSVM_ASSERT(lhs.shape() == rhs.shape(), "Error: shapes missmatch! ({} != {})", lhs.shape(), rhs.shape());
     using size_type = typename matrix<T, layout>::size_type;
 
-#pragma omp parallel for collapse(2) default(none) shared(lhs, rhs)
-    for (size_type row = 0; row < lhs.num_rows(); ++row) {
-        for (size_type col = 0; col < lhs.num_cols(); ++col) {
+    const size_type num_rows = lhs.num_rows();
+    const size_type num_cols = lhs.num_cols();
+
+#pragma omp parallel for collapse(2) default(none) shared(lhs, rhs) firstprivate(num_rows, num_cols)
+    for (size_type row = 0; row < num_rows; ++row) {
+        for (size_type col = 0; col < num_cols; ++col) {
             lhs(row, col) -= rhs(row, col);
         }
     }
@@ -959,9 +975,12 @@ template <typename T, layout_type layout>
     using size_type = typename matrix<T, layout>::size_type;
     matrix<T, layout> res{ plssvm::shape{ lhs.num_rows(), rhs.num_cols() } };
 
-#pragma omp parallel for collapse(2) default(none) shared(lhs, rhs, res)
-    for (size_type row = 0; row < res.num_rows(); ++row) {
-        for (size_type col = 0; col < res.num_cols(); ++col) {
+    const size_type num_rows = res.num_rows();
+    const size_type num_cols = res.num_cols();
+
+#pragma omp parallel for collapse(2) default(none) shared(lhs, rhs, res) firstprivate(num_rows, num_cols)
+    for (size_type row = 0; row < num_rows; ++row) {
+        for (size_type col = 0; col < num_cols; ++col) {
             T temp{ 0.0 };
             for (size_type dim = 0; dim < lhs.num_cols(); ++dim) {
                 temp = std::fma(lhs(row, dim), rhs(dim, col), temp);
@@ -1011,9 +1030,12 @@ template <typename T, layout_type layout>
     PLSSVM_ASSERT(scale.size() == matr.num_rows(), "Error: shapes missmatch! ({} != {} (num_rows))", scale.size(), matr.num_rows());
     using size_type = typename matrix<T, layout>::size_type;
 
-#pragma omp parallel for collapse(2) default(none) shared(matr, scale)
-    for (size_type row = 0; row < matr.num_rows(); ++row) {
-        for (size_type col = 0; col < matr.num_cols(); ++col) {
+    const size_type num_rows = matr.num_rows();
+    const size_type num_cols = matr.num_cols();
+
+#pragma omp parallel for collapse(2) default(none) shared(matr, scale) firstprivate(num_rows, num_cols)
+    for (size_type row = 0; row < num_rows; ++row) {
+        for (size_type col = 0; col < num_cols; ++col) {
             matr(row, col) *= scale[row];
         }
     }
@@ -1057,11 +1079,14 @@ template <typename T, layout_type layout>
 [[nodiscard]] T variance(const matrix<T, layout> &matr) {
     using size_type = typename matrix<T, layout>::size_type;
 
+    const size_type num_rows = matr.num_rows();
+    const size_type num_cols = matr.num_cols();
+
     // calculate the mean of the matrix
     T mean{};
 #pragma omp parallel for collapse(2) reduction(+ : mean)
-    for (size_type row = 0; row < matr.num_rows(); ++row) {
-        for (size_type col = 0; col < matr.num_cols(); ++col) {
+    for (size_type row = 0; row < num_rows; ++row) {
+        for (size_type col = 0; col < num_cols; ++col) {
             mean += matr(row, col);
         }
     }
@@ -1070,8 +1095,8 @@ template <typename T, layout_type layout>
     // calculate the variance of the matrix using the previous calculated mean
     T var{};
 #pragma omp parallel for collapse(2) reduction(+ : var)
-    for (size_type row = 0; row < matr.num_rows(); ++row) {
-        for (size_type col = 0; col < matr.num_cols(); ++col) {
+    for (size_type row = 0; row < num_rows; ++row) {
+        for (size_type col = 0; col < num_cols; ++col) {
             const T diff = matr(row, col) - mean;
             var += diff * diff;
         }

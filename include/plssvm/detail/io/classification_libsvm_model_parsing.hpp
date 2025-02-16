@@ -776,7 +776,7 @@ inline void write_libsvm_model_data_classification(const std::string &filename, 
         for (typename std::vector<label_type>::size_type l = 0; l < label_order.size(); ++l) {
 // the support vectors with the l-th class
 #pragma omp for nowait
-            for (typename std::vector<real_type>::size_type i = 0; i < support_vectors.num_rows(); ++i) {
+            for (std::size_t i = 0; i < support_vectors.num_rows(); ++i) {
                 if (labels[i] == label_order[l]) {
                     switch (classification) {
                         case classification_type::oaa:

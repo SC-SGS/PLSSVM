@@ -168,7 +168,9 @@ target_compile_options(
            /wd4005
            /wd4702
            /wd4849
-           /wd4127>
+           /wd4127
+           /wd4250  # disable multiple-inheritance dominance warning
+           /wd4589> # disable constructor inheritance warning
            # /wd4849: ignore "OpenMP 'reduction' clause ignored in 'simd' directive" -> no SIMD clause currently effective in MSVC /wd4127: ignore "conditional
            # expression is constant" from {fmt} ranges.h header
 )

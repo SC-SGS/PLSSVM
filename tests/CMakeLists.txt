@@ -20,10 +20,11 @@ else ()
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
     # fetch testing framework GoogleTest
     include(FetchContent)
+    # TODO: really use custom fork? -> try finding another GoogleTest fix for MSVC on Windows
     FetchContent_Declare(
         googletest
-        GIT_REPOSITORY https://github.com/google/googletest
-        GIT_TAG ${PLSSVM_googletest_VERSION}
+        GIT_REPOSITORY https://github.com/breyerml/googletest
+        GIT_TAG windows-msvc-fix
         GIT_SHALLOW TRUE
         QUIET
     )
