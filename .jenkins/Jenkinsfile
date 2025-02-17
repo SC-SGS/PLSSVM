@@ -55,11 +55,6 @@ pipeline {
 
     parameters{
     booleanParam(defaultValue: false, description: 'Update Spack to new version.', name: 'update_spack')
-    matrixCombinationsParam(
-                name: 'Build Combinations',
-                description: 'Select specific matrix combinations to run',
-                defaultValue: '[]' // Default is to run all if none selected
-            )
     }
 
     options {
@@ -228,7 +223,13 @@ pipeline {
 
 
         stage('Build and Test'){
-
+            parameters{
+                matrixCombinationsParam(
+                            name: 'Build Combinations',
+                            description: 'Select specific matrix combinations to run',
+                            defaultValue: '[]' // Default is to run all if none selected
+                        )
+                }
             matrix{
                 axes {
                     axis {
