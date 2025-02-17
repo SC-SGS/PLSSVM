@@ -452,7 +452,7 @@ pipeline {
                                                 $([[ $BACKEND == ADAPTIVECPP ]] && [[ $ARCHITECTURE == NVIDIA ]] && echo "^llvm@17~gold~libomptarget") \
                                                 $([[ $BACKEND == STDPAR-ADAPTIVECPP ]] && [[ $ARCHITECTURE == AMD ]] && echo "^llvm@18~gold~libomptarget") \
                                                 $([[ $BACKEND == STDPAR-ADAPTIVECPP ]] && [[ $ARCHITECTURE == NVIDIA ]] && echo "^llvm@17~gold~libomptarget") \
-                                                | tee $(tty) | tail -n 1 | cut -d " " -f 2 > ${WORKSPACE}/plssvm/${BUILD_TYPE}-${BACKEND}-${ARCHITECTURE}.installpath  && s=0 && break ||  s=$? && while ps axf -U $UID | grep import/sgs.scratch/jenkines/spack/bin/spack | grep -v grep >/dev/null 2>&1 ; do sleep 10 ; done && spack clean
+                                                | tee $(tty) | tail -n 1 | cut -d " " -f 2 > ${WORKSPACE}/plssvm/${BUILD_TYPE}-${BACKEND}-${ARCHITECTURE}.installpath  && s=0 && break ||  s=$? && while ps axf -U $UID | grep import/sgs.scratch/jenkines/spack/bin/spack | grep -v grep >/dev/null 2>&1 ; do sleep 10 ; done && cat ${WORKSPACE}/plssvm/${BUILD_TYPE}-${BACKEND}-${ARCHITECTURE}.installpath
                                             done
                                         (exit $s)
 
