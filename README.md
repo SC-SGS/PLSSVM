@@ -84,6 +84,8 @@ The main highlights of our SVM implementations are:
 7. Multi-GPU support for **all** kernel functions and GPU backends for `fit` as well as `predict/score` (**note**: no multi-GPU support for the stdpar backend even if run on a GPU!).
 8. Python bindings as drop-in replacement for `sklearn.SVC` and `sklearn.SVR` (some features currently not implemented).
 
+To see the full power of Support Vector Machines, have a look at our live visualization examples in 
+[examples/python/interactive](examples/python/interactive/README.md).
 
 ## Getting Started
 
@@ -146,7 +148,7 @@ Additional dependencies for the stdpar backend:
     - `AdaptiveCpp`: Intel's [TBB](https://github.com/wjakob/tbb) library
     - `GNU GCC`: [Boost ≥ 1.73.0](https://www.boost.org/) with the `atomic` library enabled and Intel's [TBB](https://github.com/wjakob/tbb) library
 
-Additional dependencies if `PLSSVM_ENABLE_TESTING` and `PLSSVM_GENERATE_TEST_FILE` are both set to `ON`:
+Additional dependencies if `PLSSVM_ENABLE_TESTING` and `PLSSVM_GENERATE_TEST_FILES` are both set to `ON`:
 
 - [Python3](https://www.python.org/) with the [`argparse`](https://docs.python.org/3/library/argparse.html), [`timeit`](https://docs.python.org/3/library/timeit.html), [`sklearn`](https://scikit-learn.org/stable/), and [`humanize`](https://pypi.org/project/humanize/) modules
 
@@ -297,9 +299,9 @@ The `[optional_options]` can be one or multiple of:
 
 If `PLSSVM_ENABLE_TESTING` is set to `ON`, the following option can also be set:
 
-- `PLSSVM_GENERATE_TEST_FILE=ON|OFF` (default: `ON`): automatically generate test files
+- `PLSSVM_GENERATE_TEST_FILES=ON|OFF` (default: `ON`): automatically generate test files
 
-If `PLSSVM_GENERATE_TEST_FILE` is set to `ON`, the following options can also be set:
+If `PLSSVM_GENERATE_TEST_FILES` is set to `ON`, the following options can also be set:
 
 - `PLSSVM_TEST_FILE_NUM_DATA_POINTS` (default: `5000`): the number of data points in the test file
 - `PLSSVM_TEST_FILE_NUM_FEATURES` (default: `2000`): the number of features per data point in the test file

@@ -41,9 +41,9 @@ TYPED_TEST(gnu_tbb_stdparCSVMConstructor, default_construct) {
 
 #if defined(PLSSVM_HAS_CPU_TARGET)
     // default constructor must always work
-    EXPECT_NO_THROW(csvm_type{  });
+    EXPECT_NO_THROW(csvm_type{});
 #else
-    EXPECT_THROW_WHAT((csvm_type{  }),
+    EXPECT_THROW_WHAT((csvm_type{}),
                       plssvm::stdpar::backend_exception,
                       "Requested target platform 'cpu' that hasn't been enabled using PLSSVM_TARGET_PLATFORMS!");
 #endif

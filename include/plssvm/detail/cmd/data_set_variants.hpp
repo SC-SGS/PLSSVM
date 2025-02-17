@@ -15,8 +15,8 @@
 
 #include "plssvm/constants.hpp"                         // plssvm::real_type
 #include "plssvm/data_set/classification_data_set.hpp"  // plssvm::classification_data_set
-#include "plssvm/data_set/min_max_scaler.hpp" // plssvm::min_max_scaler
 #include "plssvm/data_set/data_set.hpp"                 // plssvm::data_set
+#include "plssvm/data_set/min_max_scaler.hpp"           // plssvm::min_max_scaler
 #include "plssvm/data_set/regression_data_set.hpp"      // plssvm::regression_data_set
 #include "plssvm/detail/cmd/parser_predict.hpp"         // plssvm::detail::cmd::parser_predict
 #include "plssvm/detail/cmd/parser_scale.hpp"           // plssvm::detail::cmd::parser_scale

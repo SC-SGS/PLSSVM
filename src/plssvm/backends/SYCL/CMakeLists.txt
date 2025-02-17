@@ -1,7 +1,7 @@
-## Authors: Alexander Van Craen, Marcel Breyer
-## Copyright (C): 2018-today The PLSSVM project - All Rights Reserved
-## License: This file is part of the PLSSVM project which is released under the MIT license.
-##          See the LICENSE.md file in the project root for full license information.
+# Authors: Alexander Van Craen, Marcel Breyer
+# Copyright (C): 2018-today The PLSSVM project - All Rights Reserved
+# License: This file is part of the PLSSVM project which is released under the MIT license.
+#          See the LICENSE.md file in the project root for full license information.
 ########################################################################################################################
 
 include(CMakeDependentOption)
@@ -129,28 +129,29 @@ message(CHECK_PASS "found " ${PLSSVM_SYCL_BACKEND_SUMMARY_STRINGS})
 message(CHECK_START "Checking for SYCL backend")
 
 # explicitly set sources shared between all SYCL implementations
-set(PLSSVM_SYCL_SOURCES
-    ${CMAKE_CURRENT_LIST_DIR}/exceptions.cpp
-)
+set(PLSSVM_SYCL_SOURCES ${CMAKE_CURRENT_LIST_DIR}/exceptions.cpp)
 
 # list of found SYCL implementations
 set(PLSSVM_SYCL_BACKEND_FOUND_IMPLEMENTATIONS "")
 
-# check if SYCL can be enabled
-## add AdaptiveCpp
+########################################################################################################################
+#                                             check if SYCL can be enabled                                             #
+########################################################################################################################
+
+# add AdaptiveCpp
 set(PLSSVM_ENABLE_SYCL_ADAPTIVECPP_BACKEND ${PLSSVM_ENABLE_SYCL_BACKEND} CACHE STRING "Enable AdaptiveCpp as SYCL Backend")
 set_property(CACHE PLSSVM_ENABLE_SYCL_ADAPTIVECPP_BACKEND PROPERTY STRINGS AUTO ON OFF)
 if (PLSSVM_ENABLE_SYCL_ADAPTIVECPP_BACKEND MATCHES "AUTO" OR PLSSVM_ENABLE_SYCL_ADAPTIVECPP_BACKEND)
     add_subdirectory(AdaptiveCpp)
 endif ()
-## add DPC++
+# add DPC++
 set(PLSSVM_ENABLE_SYCL_DPCPP_BACKEND ${PLSSVM_ENABLE_SYCL_BACKEND} CACHE STRING "Enable DPC++ as SYCL Backend")
 set_property(CACHE PLSSVM_ENABLE_SYCL_DPCPP_BACKEND PROPERTY STRINGS AUTO ON OFF)
 if (PLSSVM_ENABLE_SYCL_DPCPP_BACKEND MATCHES "AUTO" OR PLSSVM_ENABLE_SYCL_DPCPP_BACKEND)
     add_subdirectory(DPCPP)
 endif ()
 
-## check if ANY SYCL implementation has been found
+# check if ANY SYCL implementation has been found
 if (NOT PLSSVM_SYCL_BACKEND_FOUND_IMPLEMENTATIONS)
     message(CHECK_FAIL "not found")
     if (PLSSVM_ENABLE_SYCL_BACKEND MATCHES "ON")
@@ -174,7 +175,7 @@ if (TARGET ${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME})
     target_link_libraries(${PLSSVM_SYCL_BACKEND_LIBRARY_NAME} INTERFACE ${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME})
 endif ()
 
-## check if environment variables are correctly set if more than one SYCL implementation has been found
+# check if environment variables are correctly set if more than one SYCL implementation has been found
 list(LENGTH PLSSVM_SYCL_BACKEND_FOUND_IMPLEMENTATIONS PLSSVM_SYCL_BACKEND_NUM_FOUND_IMPLEMENTATIONS)
 if (PLSSVM_SYCL_BACKEND_NUM_FOUND_IMPLEMENTATIONS GREATER 1)
     if (NOT DEFINED ENV{PLSSVM_SYCL_ADAPTIVECPP_INCLUDE_DIR} AND NOT DEFINED PLSSVM_SYCL_ADAPTIVECPP_INCLUDE_DIR)
@@ -194,7 +195,10 @@ if (DEFINED PLSSVM_SYCL_BACKEND_PREFERRED_IMPLEMENTATION)
         message(STATUS "Setting preferred SYCL implementation to \"${PLSSVM_SYCL_BACKEND_PREFERRED_IMPLEMENTATION}\".")
     else ()
         # value not recognized
-        message(SEND_ERROR "\"${PLSSVM_SYCL_BACKEND_PREFERRED_IMPLEMENTATION}\" as preferred SYCL implementation unrecognized or not available! Possible values are: ${PLSSVM_SYCL_BACKEND_FOUND_IMPLEMENTATIONS}.")
+        message(
+            SEND_ERROR
+                "\"${PLSSVM_SYCL_BACKEND_PREFERRED_IMPLEMENTATION}\" as preferred SYCL implementation unrecognized or not available! Possible values are: ${PLSSVM_SYCL_BACKEND_FOUND_IMPLEMENTATIONS}."
+        )
     endif ()
 else ()
     # no command line value provided -> try to infer preferred SYCL implementation
@@ -208,12 +212,18 @@ else ()
         message(STATUS "Setting preferred SYCL implementation to \"${PLSSVM_SYCL_BACKEND_PREFERRED_IMPLEMENTATION}\".")
     endif ()
 endif ()
-target_compile_definitions(${PLSSVM_SYCL_BACKEND_LIBRARY_NAME} INTERFACE PLSSVM_SYCL_BACKEND_PREFERRED_IMPLEMENTATION=${PLSSVM_SYCL_BACKEND_PREFERRED_IMPLEMENTATION})
+target_compile_definitions(
+    ${PLSSVM_SYCL_BACKEND_LIBRARY_NAME} INTERFACE PLSSVM_SYCL_BACKEND_PREFERRED_IMPLEMENTATION=${PLSSVM_SYCL_BACKEND_PREFERRED_IMPLEMENTATION}
+)
 if (TARGET ${PLSSVM_SYCL_BACKEND_ADAPTIVECPP_LIBRARY_NAME})
-    target_compile_definitions(${PLSSVM_SYCL_BACKEND_ADAPTIVECPP_LIBRARY_NAME} PRIVATE PLSSVM_SYCL_BACKEND_PREFERRED_IMPLEMENTATION=${PLSSVM_SYCL_BACKEND_PREFERRED_IMPLEMENTATION})
+    target_compile_definitions(
+        ${PLSSVM_SYCL_BACKEND_ADAPTIVECPP_LIBRARY_NAME} PRIVATE PLSSVM_SYCL_BACKEND_PREFERRED_IMPLEMENTATION=${PLSSVM_SYCL_BACKEND_PREFERRED_IMPLEMENTATION}
+    )
 endif ()
 if (TARGET ${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME})
-    target_compile_definitions(${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME} PRIVATE PLSSVM_SYCL_BACKEND_PREFERRED_IMPLEMENTATION=${PLSSVM_SYCL_BACKEND_PREFERRED_IMPLEMENTATION})
+    target_compile_definitions(
+        ${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME} PRIVATE PLSSVM_SYCL_BACKEND_PREFERRED_IMPLEMENTATION=${PLSSVM_SYCL_BACKEND_PREFERRED_IMPLEMENTATION}
+    )
 endif ()
 
 # link against interface library

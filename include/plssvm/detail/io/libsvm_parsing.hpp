@@ -299,7 +299,7 @@ inline void write_libsvm_data_impl(const std::string &filename, const soa_matrix
         out_string.reserve(STRING_BUFFER_SIZE.num_bytes() + (num_features + 1) * CHARS_PER_BLOCK);  // oversubscribe buffer that at least one additional line fits into it
 
 #pragma omp for schedule(dynamic) nowait
-        for (typename std::vector<real_type>::size_type i = 0; i < num_data_points; ++i) {
+        for (std::size_t i = 0; i < num_data_points; ++i) {
             if constexpr (has_label) {
                 out_string.append(fmt::format(FMT_COMPILE("{} "), label[i]));
             }

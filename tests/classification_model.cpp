@@ -327,7 +327,7 @@ TYPED_TEST(ClassificationModel, num_iters) {
 
 template <typename T>
 class ClassificationModelSave : public ::testing::Test,
-                  private util::redirect_output<> {
+                                private util::redirect_output<> {
   protected:
     using fixture_label_type = util::test_parameter_type_at_t<0, T>;
     constexpr static plssvm::classification_type fixture_classification = util::test_parameter_value_at_v<0, T>;

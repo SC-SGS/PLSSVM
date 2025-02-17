@@ -1,7 +1,7 @@
-## Authors: Alexander Van Craen, Marcel Breyer, Alexander Strack
-## Copyright (C): 2018-today The PLSSVM project - All Rights Reserved
-## License: This file is part of the PLSSVM project which is released under the MIT license.
-##          See the LICENSE.md file in the project root for full license information.
+# Authors: Alexander Van Craen, Marcel Breyer, Alexander Strack
+# Copyright (C): 2018-today The PLSSVM project - All Rights Reserved
+# License: This file is part of the PLSSVM project which is released under the MIT license.
+#          See the LICENSE.md file in the project root for full license information.
 ########################################################################################################################
 
 include(${PROJECT_SOURCE_DIR}/cmake/utility_macros.cmake)
@@ -10,7 +10,7 @@ message(STATUS "Building Python language bindings for PLSSVM.")
 
 find_package(Python COMPONENTS Interpreter Development)
 
-## try finding pybind11
+# try finding pybind11
 set(PLSSVM_pybind11_VERSION v2.13.3)
 find_package(pybind11 2.13.3 QUIET)
 if (pybind11_FOUND)
@@ -18,25 +18,21 @@ if (pybind11_FOUND)
 else ()
     message(STATUS "Couldn't find package pybind11. Building version ${PLSSVM_pybind11_VERSION} from source.")
     # fetch pybind11 library for creating Python bindings
-    FetchContent_Declare(pybind11
-                         GIT_REPOSITORY https://github.com/pybind/pybind11.git
-                         GIT_TAG ${PLSSVM_pybind11_VERSION}
-                         GIT_SHALLOW TRUE
-                         QUIET
+    FetchContent_Declare(
+        pybind11
+        GIT_REPOSITORY https://github.com/pybind/pybind11.git
+        GIT_TAG ${PLSSVM_pybind11_VERSION}
+        GIT_SHALLOW TRUE
+        QUIET
     )
     FetchContent_MakeAvailable(pybind11)
-    target_include_directories(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC
-                               $<BUILD_INTERFACE:${pybind11_SOURCE_DIR}/include>
-                               $<INSTALL_INTERFACE:include>
-    )
+    target_include_directories(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC $<BUILD_INTERFACE:${pybind11_SOURCE_DIR}/include> $<INSTALL_INTERFACE:include>)
 endif ()
 
 # set source files that are always used
 set(PLSSVM_PYTHON_BINDINGS_SOURCES
     ${CMAKE_CURRENT_LIST_DIR}/exceptions/exceptions.cpp
-    
     ${CMAKE_CURRENT_LIST_DIR}/version/version.cpp
-    
     ${CMAKE_CURRENT_LIST_DIR}/backend_types.cpp
     ${CMAKE_CURRENT_LIST_DIR}/classification_types.cpp
     ${CMAKE_CURRENT_LIST_DIR}/svm/csvm.cpp
@@ -57,10 +53,8 @@ set(PLSSVM_PYTHON_BINDINGS_SOURCES
     ${CMAKE_CURRENT_LIST_DIR}/svm_types.cpp
     ${CMAKE_CURRENT_LIST_DIR}/target_platforms.cpp
     ${CMAKE_CURRENT_LIST_DIR}/verbosity_levels.cpp
-    
     ${CMAKE_CURRENT_LIST_DIR}/sklearn_svc.cpp
     ${CMAKE_CURRENT_LIST_DIR}/sklearn_svr.cpp
-    
     ${CMAKE_CURRENT_LIST_DIR}/main.cpp
 )
 
@@ -79,12 +73,15 @@ if (TARGET ${PLSSVM_HPX_BACKEND_LIBRARY_NAME})
     list(APPEND PLSSVM_PYTHON_BINDINGS_SOURCES ${CMAKE_CURRENT_LIST_DIR}/backends/hpx_csvm.cpp)
 endif ()
 if (TARGET ${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME})
-    
+
     # AdaptiveCpp stdpar only support on the CPU when using our Python bindings
     if (PLSSVM_STDPAR_BACKEND STREQUAL "ACPP" AND (DEFINED PLSSVM_NVIDIA_TARGET_ARCHS OR DEFINED PLSSVM_AMD_TARGET_ARCHS OR DEFINED PLSSVM_INTEL_TARGET_ARCHS))
-        message(FATAL_ERROR "The stdpar implementation using AdaptiveCpp isn't currently supported in the Python bindings when targeting something different than the CPU!")
+        message(
+            FATAL_ERROR
+                "The stdpar implementation using AdaptiveCpp isn't currently supported in the Python bindings when targeting something different than the CPU!"
+        )
     endif ()
-    
+
     list(APPEND PLSSVM_PYTHON_BINDINGS_SOURCES ${CMAKE_CURRENT_LIST_DIR}/backends/stdpar_csvm.cpp)
 endif ()
 if (TARGET ${PLSSVM_CUDA_BACKEND_LIBRARY_NAME})
@@ -125,12 +122,12 @@ target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC -fPIC)
 # append pybind11 bindings library to installed targets
 append_local_and_parent(PLSSVM_TARGETS_TO_INSTALL ${PLSSVM_PYTHON_BINDINGS_LIBRARY_NAME})
 
-# install the __init__.py file so Python recognizes the package when installed via pip
-# install the __cli__.py file so the PLSSVM executables can be used when installed via pip
-# install the __install_check__.py file creating a new executable plssvm-install-check outputting some information when installed via pip
+# install necessary Python files to make pip install plssvm work correctly:
+#
+# - __init__.py: PLSSVM is correctly recognized as Python package
+# - __cli__.py: PLSSVM's executables are correctly usable
+# - __install_check__.py: custom script outputting some PLSSVM build information
 include(GNUInstallDirs)
-install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/__init__.py"
-        "${CMAKE_CURRENT_SOURCE_DIR}/__cli__.py"
-        "${CMAKE_CURRENT_SOURCE_DIR}/__install_check__.py"
+install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/__init__.py" "${CMAKE_CURRENT_SOURCE_DIR}/__cli__.py" "${CMAKE_CURRENT_SOURCE_DIR}/__install_check__.py"
         DESTINATION "${CMAKE_INSTALL_LIBDIR}"
 )

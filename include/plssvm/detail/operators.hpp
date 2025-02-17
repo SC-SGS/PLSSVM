@@ -15,8 +15,9 @@
 
 #include "plssvm/detail/assert.hpp"  // PLSSVM_ASSERT
 
-#include <cmath>   // std::fma, std::abs
-#include <vector>  // std::vector
+#include <cmath>    // std::fma, std::abs
+#include <cstddef>  // std::size_t
+#include <vector>   // std::vector
 
 //*************************************************************************************************************************************//
 //                                                          scalar operations                                                          //
@@ -163,7 +164,7 @@ template <typename T>
 [[nodiscard]] inline T sum(const std::vector<T> &vec) {
     T val{};
 #pragma omp simd reduction(+ : val)
-    for (typename std::vector<T>::size_type i = 0; i < vec.size(); ++i) {
+    for (std::size_t i = 0; i < vec.size(); ++i) {
         val += vec[i];
     }
     return val;

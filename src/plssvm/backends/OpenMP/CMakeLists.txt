@@ -1,7 +1,7 @@
-## Authors: Alexander Van Craen, Marcel Breyer
-## Copyright (C): 2018-today The PLSSVM project - All Rights Reserved
-## License: This file is part of the PLSSVM project which is released under the MIT license.
-##          See the LICENSE.md file in the project root for full license information.
+# Authors: Alexander Van Craen, Marcel Breyer
+# Copyright (C): 2018-today The PLSSVM project - All Rights Reserved
+# License: This file is part of the PLSSVM project which is released under the MIT license.
+#          See the LICENSE.md file in the project root for full license information.
 ########################################################################################################################
 
 list(APPEND CMAKE_MESSAGE_INDENT "OpenMP:  ")
@@ -78,35 +78,38 @@ endif ()
 message(CHECK_PASS "found ")
 
 # explicitly set sources
-set(PLSSVM_OPENMP_SOURCES
-    ${CMAKE_CURRENT_LIST_DIR}/detail/utility.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/csvm.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/exceptions.cpp
-)
+set(PLSSVM_OPENMP_SOURCES ${CMAKE_CURRENT_LIST_DIR}/detail/utility.cpp ${CMAKE_CURRENT_LIST_DIR}/csvm.cpp ${CMAKE_CURRENT_LIST_DIR}/exceptions.cpp)
 
 # set target properties
 set_local_and_parent(PLSSVM_OPENMP_BACKEND_LIBRARY_NAME plssvm-OpenMP)
 add_library(${PLSSVM_OPENMP_BACKEND_LIBRARY_NAME} SHARED ${PLSSVM_OPENMP_SOURCES})
 target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC PLSSVM_HAS_CPU_TARGET)
 
-target_link_libraries(${PLSSVM_OPENMP_BACKEND_LIBRARY_NAME} PRIVATE $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:OpenMP::OpenMP_CXX>)
-# special command line options for MSVC:
-# -openmp:llvm -> enables unsigned loop indexes in OpenMP parallel for loops
-# -openmp:experimental -> enables OpenMP's SIMD instructions
-target_compile_options(${PLSSVM_OPENMP_BACKEND_LIBRARY_NAME} PRIVATE $<$<CXX_COMPILER_ID:MSVC>:-openmp:llvm -openmp:experimental>)
+# link against OpenMP
+if (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+    # ~~~
+    # special command line options for MSVC:
+    # - openmp:llvm -> enables unsigned loop indexes in OpenMP parallel for loops
+    # - openmp:experimental -> enables OpenMP's SIMD instructions
+    # ~~~
+    target_compile_options(${PLSSVM_OPENMP_BACKEND_LIBRARY_NAME} PRIVATE -openmp:llvm -openmp:experimental)
+else ()
+    target_link_libraries(${PLSSVM_OPENMP_BACKEND_LIBRARY_NAME} PRIVATE OpenMP::OpenMP_CXX)
+endif ()
 
 # additional compilation flags
 target_compile_options(${PLSSVM_OPENMP_BACKEND_LIBRARY_NAME} PRIVATE $<$<COMPILE_LANG_AND_ID:CXX,GNU,Clang,IntelLLVM>:-Wconversion>)
 
 # work-around since hipcc doesn't define _OPENMP
-if (${CMAKE_CXX_COMPILER_ID} MATCHES "Clang")
+if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     # hipcc must be clang
-    execute_process(
-            COMMAND ${CMAKE_CXX_COMPILER} --version
-            OUTPUT_VARIABLE PLSSVM_CLANG_VERSION_OUTPUT)
+    execute_process(COMMAND ${CMAKE_CXX_COMPILER} --version OUTPUT_VARIABLE PLSSVM_CLANG_VERSION_OUTPUT)
     # check if version message contains hipcc specific values
     if ("${PLSSVM_CLANG_VERSION_OUTPUT}" MATCHES ".*HIP.*" AND "${PLSSVM_CLANG_VERSION_OUTPUT}" MATCHES ".*AMD clang.*")
-        message(STATUS "Add compiler options \"-x c++\" as workaround for hipcc (https://docs.amd.com/projects/HIP/en/docs-5.2.0/user_guide/faq.html#why-openmp-is-undefined-when-compiling-with-fopenmp).")
+        message(
+            STATUS
+                "Add compiler options \"-x c++\" as workaround for hipcc (https://docs.amd.com/projects/HIP/en/docs-5.2.0/user_guide/faq.html#why-openmp-is-undefined-when-compiling-with-fopenmp)."
+        )
         target_compile_options(${PLSSVM_OPENMP_BACKEND_LIBRARY_NAME} PRIVATE -x c++)
     endif ()
 endif ()

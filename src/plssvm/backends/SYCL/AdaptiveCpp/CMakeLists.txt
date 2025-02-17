@@ -1,7 +1,7 @@
-## Authors: Alexander Van Craen, Marcel Breyer
-## Copyright (C): 2018-today The PLSSVM project - All Rights Reserved
-## License: This file is part of the PLSSVM project which is released under the MIT license.
-##          See the LICENSE.md file in the project root for full license information.
+# Authors: Alexander Van Craen, Marcel Breyer
+# Copyright (C): 2018-today The PLSSVM project - All Rights Reserved
+# License: This file is part of the PLSSVM project which is released under the MIT license.
+#          See the LICENSE.md file in the project root for full license information.
 ########################################################################################################################
 
 message(CHECK_START "Checking for AdaptiveCpp as SYCL implementation")
@@ -38,11 +38,8 @@ if (AdaptiveCpp_FOUND)
     append_local_and_parent(PLSSVM_SYCL_BACKEND_FOUND_IMPLEMENTATIONS "adaptivecpp")
 
     # set AdaptiveCpp specific targets
-    set(PLSSVM_SYCL_ADAPTIVECPP_SOURCES
-        ${CMAKE_CURRENT_LIST_DIR}/detail/device_ptr.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/detail/pinned_memory.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/detail/utility.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/csvm.cpp
+    set(PLSSVM_SYCL_ADAPTIVECPP_SOURCES ${CMAKE_CURRENT_LIST_DIR}/detail/device_ptr.cpp ${CMAKE_CURRENT_LIST_DIR}/detail/pinned_memory.cpp
+                                        ${CMAKE_CURRENT_LIST_DIR}/detail/utility.cpp ${CMAKE_CURRENT_LIST_DIR}/csvm.cpp
     )
 
     # set target properties
@@ -81,8 +78,8 @@ if (AdaptiveCpp_FOUND)
     endif ()
 
     # silence unknown options warnings
-    target_compile_options(${PLSSVM_SYCL_BACKEND_ADAPTIVECPP_LIBRARY_NAME} PRIVATE -Wno-unknown-warning-option -Wconversion
-                           $<$<CXX_COMPILER_ID:GNU>:-Wno-unknown-pragmas>
+    target_compile_options(
+        ${PLSSVM_SYCL_BACKEND_ADAPTIVECPP_LIBRARY_NAME} PRIVATE -Wno-unknown-warning-option -Wconversion $<$<CXX_COMPILER_ID:GNU>:-Wno-unknown-pragmas>
     )
 
     # print note that Intel GPU architecture specifications are ignored when using AdaptiveCpp

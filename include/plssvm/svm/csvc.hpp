@@ -61,6 +61,7 @@ namespace plssvm {
 class csvc : virtual public csvm {
     // befriend svc dummy struct used in the plssvm.SVC Python bindings
     friend struct ::svc;
+
   public:
     /// The type of the model returned by a call to the `fit` function and used in the `predict` and `score` functions.
     template <typename T>
@@ -339,7 +340,7 @@ class csvc : virtual public csvm {
 
 // use voting
 #pragma omp parallel for default(none) shared(predicted_labels, votes, model) if (!std::is_same_v<label_type, bool>)
-            for (typename std::vector<label_type>::size_type i = 0; i < predicted_labels.size(); ++i) {
+            for (std::size_t i = 0; i < predicted_labels.size(); ++i) {
                 std::size_t argmax = 0;
                 real_type max = std::numeric_limits<real_type>::lowest();
                 for (std::size_t v = 0; v < votes.num_cols(); ++v) {
@@ -395,7 +396,12 @@ class csvc : virtual public csvm {
                             std::vector<std::size_t> sorted_indices(num_data_points_in_sub_matrix);
                             std::merge(index_sets[i].cbegin(), index_sets[i].cend(), index_sets[j].cbegin(), index_sets[j].cend(), sorted_indices.begin());
 // copy the support vectors to the binary support vectors
-#pragma omp parallel for collapse(2)
+// NOTE: it seems that MSVC doesn't like the collapse clause inside a lambda function
+#if defined(_MSC_VER)
+    #pragma omp parallel for
+#else
+    #pragma omp parallel for collapse(2)
+#endif
                             for (std::size_t si = 0; si < num_data_points_in_sub_matrix; ++si) {
                                 for (std::size_t dim = 0; dim < num_features; ++dim) {
                                     temp(si, dim) = model.support_vectors()(sorted_indices[si], dim);
@@ -452,7 +458,7 @@ class csvc : virtual public csvm {
 
 // map majority vote to predicted class
 #pragma omp parallel for default(none) shared(predicted_labels, class_votes, model) if (!std::is_same_v<label_type, bool>)
-            for (typename std::vector<label_type>::size_type i = 0; i < predicted_labels.size(); ++i) {
+            for (std::size_t i = 0; i < predicted_labels.size(); ++i) {
                 std::size_t argmax = 0;
                 std::size_t max = 0;
                 for (std::size_t v = 0; v < class_votes.num_cols(); ++v) {
@@ -513,7 +519,7 @@ class csvc : virtual public csvm {
         // calculate the accuracy
         typename std::vector<label_type>::size_type correct{ 0 };
 #pragma omp parallel for default(none) shared(predicted_labels, correct_labels) reduction(+ : correct)
-        for (typename std::vector<label_type>::size_type i = 0; i < predicted_labels.size(); ++i) {
+        for (std::size_t i = 0; i < predicted_labels.size(); ++i) {
             if (predicted_labels[i] == correct_labels[i]) {
                 ++correct;
             }

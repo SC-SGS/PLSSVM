@@ -122,7 +122,7 @@ inline void check_kwargs_for_correctness(const py::kwargs &args, const std::vect
     } else {
         const auto gamma = args["gamma"].cast<plssvm::real_type>();
         if (gamma <= plssvm::real_type{ 0.0 }) {
-            throw py::value_error{ fmt::format("gamma value must be > 0; {} is invalid. Use a positive number or use 'auto' to set gamma to a value of 1 / n_features.", gamma) };
+            throw py::value_error{ fmt::format("gamma value must be > 0; {} is invalid. Use a positive number or use 'scale' or 'auto'.", gamma) };
         }
         return gamma;
     }

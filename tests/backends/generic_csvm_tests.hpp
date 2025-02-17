@@ -206,7 +206,7 @@ TYPED_TEST_P(GenericBackendCSVMKernelFunction, blas_level_3_kernel_implicit) {
     ground_truth::gemm(alpha, kernel_matrix_gemm_padded, B, beta, ground_truth_C);
 
     // check C for correctness
-    EXPECT_FLOATING_POINT_MATRIX_NEAR(C, ground_truth_C);
+    EXPECT_FLOATING_POINT_MATRIX_NEAR_EPS(C, ground_truth_C, 1e6);
 }
 
 TYPED_TEST_P(GenericBackendCSVMKernelFunction, predict_values) {

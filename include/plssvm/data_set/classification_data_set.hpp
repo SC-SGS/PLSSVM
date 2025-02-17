@@ -384,9 +384,12 @@ void classification_data_set<U>::map_label() {
     // convert input labels to now mapped values
     aos_matrix<real_type> tmp{ shape{ mapper.num_mappings(), labels_ptr_->size() }, real_type{ -1.0 } };
 
+    const std::size_t num_rows = tmp.num_rows();
+    const std::size_t num_cols = tmp.num_cols();
+
 #pragma omp parallel for collapse(2)
-    for (typename std::vector<std::vector<real_type>>::size_type label = 0; label < tmp.num_rows(); ++label) {
-        for (typename std::vector<real_type>::size_type i = 0; i < tmp.num_cols(); ++i) {
+    for (std::size_t label = 0; label < num_rows; ++label) {
+        for (std::size_t i = 0; i < num_cols; ++i) {
             if (label == mapper.get_mapped_index_by_label((*labels_ptr_)[i])) {
                 tmp(label, i) = real_type{ 1.0 };
             }

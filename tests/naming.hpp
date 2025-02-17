@@ -227,8 +227,8 @@ template <typename T>
     } else {
         static_assert(plssvm::detail::always_false_v<T>, "Can't convert the type 'T' to a std::string!");
     }
-
-    return "unknown";
+    // should never be reachable (silence nvc++ warnings)
+    plssvm::detail::unreachable();
 }
 
 /**

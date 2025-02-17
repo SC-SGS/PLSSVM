@@ -1,21 +1,19 @@
-## Authors: Alexander Van Craen, Marcel Breyer
-## Copyright (C): 2018-today The PLSSVM project - All Rights Reserved
-## License: This file is part of the PLSSVM project which is released under the MIT license.
-##          See the LICENSE.md file in the project root for full license information.
+# Authors: Alexander Van Craen, Marcel Breyer
+# Copyright (C): 2018-today The PLSSVM project - All Rights Reserved
+# License: This file is part of the PLSSVM project which is released under the MIT license.
+#          See the LICENSE.md file in the project root for full license information.
 ########################################################################################################################
 
 message(CHECK_START "Checking for DPC++ as SYCL implementation")
 
 # check if current compiler is Intel's clang llvm fork aka DPC++
 set(PLSSVM_SYCL_BACKEND_CHECK_FOR_DPCPP_COMPILER OFF)
-if (${CMAKE_CXX_COMPILER_ID} MATCHES "IntelLLVM")
+if (CMAKE_CXX_COMPILER_ID STREQUAL "IntelLLVM")
     message(STATUS "Found Intel icpx compiler.")
     set(PLSSVM_SYCL_BACKEND_CHECK_FOR_DPCPP_COMPILER ON)
-elseif (${CMAKE_CXX_COMPILER_ID} MATCHES "Clang")
+elseif (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     # intel llvm fork must be clang
-    execute_process(
-            COMMAND ${CMAKE_CXX_COMPILER} --help
-            OUTPUT_VARIABLE PLSSVM_DPCPP_CLANG_HELP_OUTPUT)
+    execute_process(COMMAND ${CMAKE_CXX_COMPILER} --help OUTPUT_VARIABLE PLSSVM_DPCPP_CLANG_HELP_OUTPUT)
     # check if help message contains DPC++ specific values
     if ("${PLSSVM_DPCPP_CLANG_HELP_OUTPUT}" MATCHES ".*intel.*" AND "${PLSSVM_DPCPP_CLANG_HELP_OUTPUT}" MATCHES ".*-fsycl.*")
         message(STATUS "Found Intel LLVM fork (https://github.com/intel/llvm).")
@@ -28,11 +26,8 @@ if (PLSSVM_SYCL_BACKEND_CHECK_FOR_DPCPP_COMPILER)
     append_local_and_parent(PLSSVM_SYCL_BACKEND_FOUND_IMPLEMENTATIONS "dpcpp")
 
     # set DPC++ specific targets
-    set(PLSSVM_SYCL_DPCPP_SOURCES
-        ${CMAKE_CURRENT_LIST_DIR}/detail/device_ptr.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/detail/pinned_memory.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/detail/utility.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/csvm.cpp
+    set(PLSSVM_SYCL_DPCPP_SOURCES ${CMAKE_CURRENT_LIST_DIR}/detail/device_ptr.cpp ${CMAKE_CURRENT_LIST_DIR}/detail/pinned_memory.cpp
+                                  ${CMAKE_CURRENT_LIST_DIR}/detail/utility.cpp ${CMAKE_CURRENT_LIST_DIR}/csvm.cpp
     )
 
     # set target properties
@@ -95,7 +90,9 @@ if (PLSSVM_SYCL_BACKEND_CHECK_FOR_DPCPP_COMPILER)
         if (NOT PLSSVM_NUM_AMD_TARGET_ARCHS EQUAL 1)
             message(SEND_ERROR "DPC++ currently only supports a single AMD architecture specification but ${PLSSVM_NUM_AMD_TARGET_ARCHS} were provided!")
         endif ()
-        target_compile_options(${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME} PRIVATE -Xsycl-target-backend=amdgcn-amd-amdhsa --offload-arch=${PLSSVM_AMD_TARGET_ARCHS})
+        target_compile_options(
+            ${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME} PRIVATE -Xsycl-target-backend=amdgcn-amd-amdhsa --offload-arch=${PLSSVM_AMD_TARGET_ARCHS}
+        )
         target_link_options(${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME} PRIVATE -Xsycl-target-backend=amdgcn-amd-amdhsa --offload-arch=${PLSSVM_AMD_TARGET_ARCHS})
     endif ()
     # intel targets
@@ -114,12 +111,13 @@ if (PLSSVM_SYCL_BACKEND_CHECK_FOR_DPCPP_COMPILER)
         message(STATUS "Enabled Ahead-of-Time (AOT) compilation with DPC++.")
         target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PRIVATE PLSSVM_SYCL_BACKEND_DPCPP_ENABLE_AOT)
         target_compile_definitions(${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME} PUBLIC PLSSVM_SYCL_BACKEND_DPCPP_ENABLE_AOT)
-        ## set AOT compiler flags
-        # cpu targets
+        # set AOT compiler flags cpu targets
         if (DEFINED PLSSVM_CPU_TARGET_ARCHS)
             # add target specific flags for AOT
             if (PLSSVM_NUM_CPU_TARGET_ARCHS EQUAL 1)
-                target_compile_options(${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME} PRIVATE -Xsycl-target-backend=spir64_x86_64 "-march=${PLSSVM_CPU_TARGET_ARCHS}")
+                target_compile_options(
+                    ${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME} PRIVATE -Xsycl-target-backend=spir64_x86_64 "-march=${PLSSVM_CPU_TARGET_ARCHS}"
+                )
                 target_link_options(${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME} PRIVATE -Xsycl-target-backend=spir64_x86_64 "-march=${PLSSVM_CPU_TARGET_ARCHS}")
             endif ()
         endif ()
@@ -127,17 +125,30 @@ if (PLSSVM_SYCL_BACKEND_CHECK_FOR_DPCPP_COMPILER)
         if (DEFINED PLSSVM_NVIDIA_TARGET_ARCHS)
             # add target specific flags for AOT
             if (NOT PLSSVM_NUM_NVIDIA_TARGET_ARCHS EQUAL 1)
-                message(SEND_ERROR "DPC++ currently only supports a single NVIDIA architecture specification for AOT but ${PLSSVM_NUM_NVIDIA_TARGET_ARCHS} were provided!")
+                message(
+                    SEND_ERROR
+                        "DPC++ currently only supports a single NVIDIA architecture specification for AOT but ${PLSSVM_NUM_NVIDIA_TARGET_ARCHS} were provided!"
+                )
             endif ()
             target_compile_options(${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME} PRIVATE -Xsycl-target-backend=nvptx64-nvidia-cuda --offload-arch=${PLSSVM_NVIDIA_TARGET_ARCHS})
             target_link_options(${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME} PRIVATE -Xsycl-target-backend=nvptx64-nvidia-cuda --offload-arch=${PLSSVM_NVIDIA_TARGET_ARCHS})
+            target_compile_options(
+                ${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME} PRIVATE -Xsycl-target-backend=nvptx64-nvidia-cuda --offload-arch=${PLSSVM_NVIDIA_TARGET_ARCHS}
+            )
+            target_link_options(
+                ${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME} PRIVATE -Xsycl-target-backend=nvptx64-nvidia-cuda --offload-arch=${PLSSVM_NVIDIA_TARGET_ARCHS}
+            )
         endif ()
         # intel targets
         if (DEFINED PLSSVM_INTEL_TARGET_ARCHS)
             # add target specific flags for AOT
             list(JOIN PLSSVM_INTEL_TARGET_ARCHS "," PLSSVM_INTEL_TARGET_ARCHS_STRING)
-            target_compile_options(${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME} PRIVATE -Xsycl-target-backend=spir64_gen "-device ${PLSSVM_INTEL_TARGET_ARCHS_STRING}")
-            target_link_options(${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME} PRIVATE -Xsycl-target-backend=spir64_gen "-device ${PLSSVM_INTEL_TARGET_ARCHS_STRING}")
+            target_compile_options(
+                ${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME} PRIVATE -Xsycl-target-backend=spir64_gen "-device ${PLSSVM_INTEL_TARGET_ARCHS_STRING}"
+            )
+            target_link_options(
+                ${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME} PRIVATE -Xsycl-target-backend=spir64_gen "-device ${PLSSVM_INTEL_TARGET_ARCHS_STRING}"
+            )
         endif ()
     endif ()
 

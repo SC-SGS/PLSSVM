@@ -15,7 +15,6 @@
 
 #include "plssvm/constants.hpp"                 // plssvm::real_type, plssvm::PADDING_SIZE
 #include "plssvm/detail/io/file_reader.hpp"     // plssvm::detail::io::file_reader
-#include "plssvm/detail/operators.hpp"          // plssvm::operator::sign
 #include "plssvm/detail/string_conversion.hpp"  // plssvm::detail::convert_to
 #include "plssvm/detail/string_utility.hpp"     // plssvm::detail::{to_upper_case, as_upper_case, starts_with, ends_with}
 #include "plssvm/detail/utility.hpp"            // plssvm::detail::current_date_time
@@ -113,7 +112,7 @@ template <typename label_type>
                 // a numeric field must also contain a name
                 const std::string_view name = check_for_valid_name(line, "@ATTRIBUTE", "NUMERIC");
                 // the attribute name "CLASS" is reserved!
-                if (detail::as_upper_case(name) != "CLASS") {// add a feature to the running count
+                if (detail::as_upper_case(name) != "CLASS") {  // add a feature to the running count
                     ++num_features;
                     // increment class index as long as no class labels have been read
                     if (!has_label) {

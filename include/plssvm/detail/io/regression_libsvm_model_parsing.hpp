@@ -500,7 +500,7 @@ inline void write_libsvm_model_data_regression(const std::string &filename, cons
         out_string.reserve(STRING_BUFFER_SIZE.num_bytes() + ((num_features + std::size_t{ 1 }) * CHARS_PER_BLOCK));  // oversubscribe buffer that at least one additional line fits into it
 
 #pragma omp for
-        for (typename std::vector<real_type>::size_type i = 0; i < support_vectors.num_rows(); ++i) {
+        for (std::size_t i = 0; i < support_vectors.num_rows(); ++i) {
             // format the current LIBSVM line
             format_libsvm_line(out_string, alpha.front()(0, i), support_vectors, i);
 

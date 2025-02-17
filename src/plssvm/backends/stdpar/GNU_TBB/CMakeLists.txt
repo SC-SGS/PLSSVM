@@ -1,7 +1,7 @@
-## Authors: Alexander Van Craen, Marcel Breyer
-## Copyright (C): 2018-today The PLSSVM project - All Rights Reserved
-## License: This file is part of the PLSSVM project which is released under the MIT license.
-##          See the LICENSE.md file in the project root for full license information.
+# Authors: Alexander Van Craen, Marcel Breyer
+# Copyright (C): 2018-today The PLSSVM project - All Rights Reserved
+# License: This file is part of the PLSSVM project which is released under the MIT license.
+#          See the LICENSE.md file in the project root for full license information.
 ########################################################################################################################
 
 message(CHECK_START "searching for GNU GCC + TBB")
@@ -31,7 +31,7 @@ endif ()
 # add stdpar implementation specific source file to library
 append_local_and_parent(PLSSVM_STDPAR_SOURCES ${CMAKE_CURRENT_LIST_DIR}/csvm.cpp)
 
-## try finding Boost atomic
+# try finding Boost atomic
 if (POLICY CMP0144)
     cmake_policy(SET CMP0144 OLD) # suppress cmake warning
 endif ()

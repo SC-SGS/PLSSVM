@@ -204,7 +204,7 @@ const std::vector<std::string_view> &file_reader::read_lines(const std::string_v
 
     // find all newlines - parallel
     #pragma omp for
-        for (std::string_view::size_type i = 0; i < file_content_view.size(); ++i) {
+        for (std::size_t i = 0; i < file_content_view.size(); ++i) {
             if (file_content_view[i] == '\n') {
                 per_thread_newlines[omp_get_thread_num()].push_back(i + 1);
             }
@@ -226,7 +226,7 @@ const std::vector<std::string_view> &file_reader::read_lines(const std::string_v
 
     // get lines from newlines - parallel
     #pragma omp for
-        for (std::vector<std::deque<std::size_t>>::size_type i = 0; i < per_thread_newlines.size(); ++i) {
+        for (std::size_t i = 0; i < per_thread_newlines.size(); ++i) {
             // reserve lines sizes
             per_thread_lines[i].reserve(per_thread_newlines[i].size());
 
@@ -298,7 +298,7 @@ void file_reader::open_memory_mapped_file_unix([[maybe_unused]] const char *file
     // open the file
     file_descriptor_ = ::open(filename, O_RDONLY);
 
-    struct stat attr { };
+    struct stat attr{};
 
     // check if file could be opened
     if (fstat(file_descriptor_, &attr) == -1) {

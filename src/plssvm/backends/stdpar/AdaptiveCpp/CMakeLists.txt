@@ -1,7 +1,7 @@
-## Authors: Alexander Van Craen, Marcel Breyer
-## Copyright (C): 2018-today The PLSSVM project - All Rights Reserved
-## License: This file is part of the PLSSVM project which is released under the MIT license.
-##          See the LICENSE.md file in the project root for full license information.
+# Authors: Alexander Van Craen, Marcel Breyer
+# Copyright (C): 2018-today The PLSSVM project - All Rights Reserved
+# License: This file is part of the PLSSVM project which is released under the MIT license.
+#          See the LICENSE.md file in the project root for full license information.
 ########################################################################################################################
 
 message(CHECK_START "searching for AdaptiveCpp")
@@ -16,7 +16,9 @@ if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND TBB_FOUND)
     if (NOT PLSSVM_HAS_ACPP_STDPAR_FLAG)
         # the stdpar flag couldn't be found!
         if (PLSSVM_ENABLE_STDPAR_BACKEND MATCHES "ON")
-            message(SEND_ERROR "Found a Clang, but AdaptiveCpp's stdpar compiler flag isn't supported (mostly likely because the used Clang isn't AdaptiveCpp)!")
+            message(
+                SEND_ERROR "Found a Clang, but AdaptiveCpp's stdpar compiler flag isn't supported (mostly likely because the used Clang isn't AdaptiveCpp)!"
+            )
         else ()
             message(STATUS "Found a Clang, but AdaptiveCpp's stdpar compiler flag isn't supported (mostly likely because the used Clang isn't AdaptiveCpp)!")
         endif ()
