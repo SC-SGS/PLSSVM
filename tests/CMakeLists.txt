@@ -18,13 +18,23 @@ else ()
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${PLSSVM_STL_DEBUG_MODE_FLAGS}")
     endif ()
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
+    # TODO: really use custom fork? -> try finding another GoogleTest fix for MSVC on Windows
+    if (MSVC)
+        # use custom fork including linker bugfix
+        message(STATUS "Use custom GoogleTest fork fixing a MSVC linker problem.")
+        set(PLSSVM_googletest_REPO https://github.com/breyerml/googletest)
+        set(PLSSVM_googletest_VERSION windows-msvc-fix)
+    else ()
+        # use original repo otherwise
+        message(STATUS "Use GoogleTest upstream repository.")
+        set(PLSSVM_googletest_REPO https://github.com/google/googletest)
+    endif ()
     # fetch testing framework GoogleTest
     include(FetchContent)
-    # TODO: really use custom fork? -> try finding another GoogleTest fix for MSVC on Windows
     FetchContent_Declare(
         googletest
-        GIT_REPOSITORY https://github.com/breyerml/googletest
-        GIT_TAG windows-msvc-fix
+        GIT_REPOSITORY ${PLSSVM_googletest_REPO}
+        GIT_TAG ${PLSSVM_googletest_VERSION}
         GIT_SHALLOW TRUE
         QUIET
     )
