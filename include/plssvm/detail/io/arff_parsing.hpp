@@ -328,7 +328,9 @@ template <typename label_type>
                     }
                     // there should be a class label but none has been found
                     if (has_label && !is_class_set) {
-                        throw invalid_file_format_exception{ fmt::format("Missing label for data point \"{}\"!", reader.line(i + num_header_lines)) };
+                        // NOTE: must be in two lines due to nvc++ test errors
+                        const std::string msg = fmt::format("Missing label for data point \"{}\"!", reader.line(i + num_header_lines));
+                        throw invalid_file_format_exception{ msg };
                     }
                 } else {
                     // check if the last character is a closing brace
