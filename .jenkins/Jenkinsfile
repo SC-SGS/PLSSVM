@@ -283,7 +283,7 @@ pipeline {
                     exclude { // TODO: enable if pocl is supported in spack
                       axis{
                         name 'ARCHITECTURE'
-                        values 'OPENCL',  'STDPAR-DPCPP'
+                        values 'OPENCL',  'STDPAR-DPCPP', 'DPCPP'
                       }
                       axis{
                         name 'BUILD_TYPE'
