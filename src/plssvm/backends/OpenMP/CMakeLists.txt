@@ -38,7 +38,7 @@ set_local_and_parent(PLSSVM_OPENMP_BACKEND_LIBRARY_NAME plssvm-OpenMP)
 add_library(${PLSSVM_OPENMP_BACKEND_LIBRARY_NAME} SHARED ${PLSSVM_OPENMP_SOURCES})
 
 # link against OpenMP
-if (${CMAKE_CXX_COMPILER_ID} MATCHES "MSVC")
+if (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
     # ~~~
     # special command line options for MSVC:
     # - openmp:llvm -> enables unsigned loop indexes in OpenMP parallel for loops
@@ -53,7 +53,7 @@ endif ()
 target_compile_options(${PLSSVM_OPENMP_BACKEND_LIBRARY_NAME} PRIVATE $<$<COMPILE_LANG_AND_ID:CXX,GNU,Clang,IntelLLVM>:-Wconversion>)
 
 # work-around since hipcc doesn't define _OPENMP
-if (${CMAKE_CXX_COMPILER_ID} MATCHES "Clang")
+if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     # hipcc must be clang
     execute_process(COMMAND ${CMAKE_CXX_COMPILER} --version OUTPUT_VARIABLE PLSSVM_CLANG_VERSION_OUTPUT)
     # check if version message contains hipcc specific values

@@ -15,16 +15,19 @@
 
 #include "plssvm/backends/stdpar/implementation_types.hpp"  // plssvm::stdpar::implementation_type
 #include "plssvm/constants.hpp"                             // plssvm::real_type
-#include "plssvm/csvm.hpp"                                  // plssvm::csvm, plssvm::detail::csvm_backend_exists
 #include "plssvm/detail/memory_size.hpp"                    // plssvm::detail::memory_size
 #include "plssvm/detail/move_only_any.hpp"                  // plssvm::detail::move_only_any
-#include "plssvm/detail/type_traits.hpp"                    // PLSSVM_REQUIRES
+#include "plssvm/detail/type_traits.hpp"                    // PLSSVM_REQUIRES, plssvm::detail::is_one_type_of
 #include "plssvm/matrix.hpp"                                // plssvm::aos_matrix
 #include "plssvm/parameter.hpp"                             // plssvm::parameter, plssvm::detail::has_only_parameter_named_args_v
 #include "plssvm/solver_types.hpp"                          // plssvm::solver_type
+#include "plssvm/svm/csvc.hpp"                              // plssvm::csvc
+#include "plssvm/svm/csvm.hpp"                              // plssvm::csvm, plssvm::detail::csvm_backend_exists
+#include "plssvm/svm/csvr.hpp"                              // plssvm::csvr
 #include "plssvm/target_platforms.hpp"                      // plssvm::target_platform
 
 #include <cstddef>      // std::size_t
+#include <memory>       // std::addressof
 #include <type_traits>  // std::true_type
 #include <utility>      // std::forward, std::pair
 #include <vector>       // std::vector
@@ -36,53 +39,16 @@ namespace stdpar {
 /**
  * @brief A C-SVM implementation using stdpar as backend.
  */
-class csvm : public ::plssvm::csvm {
+class csvm : virtual public ::plssvm::csvm {
   public:
     /**
-     * @brief Construct a new C-SVM using the stdpar backend with the parameters given through @p params.
-     * @param[in] params struct encapsulating all possible SVM parameters
-     * @throws plssvm::exception all exceptions thrown in the base class constructor
-     * @throws plssvm::stdpar::backend_exception if the requested target is not available
-     * @throws plssvm::stdpar::backend_exception if no device for the requested target was found
-     */
-    explicit csvm(parameter params = {});
-    /**
-     * @brief Construct a new C-SVM using the stdpar backend on the @p target platform with the parameters given through @p params.
+     * @brief Construct a new C-SVM using the stdpar backend on the @p target platform.
      * @param[in] target the target platform used for this C-SVM
-     * @param[in] params struct encapsulating all possible SVM parameters
      * @throws plssvm::exception all exceptions thrown in the base class constructor
      * @throws plssvm::stdpar::backend_exception if the requested target is not available
      * @throws plssvm::stdpar::backend_exception if no device for the requested target was found
      */
-    explicit csvm(target_platform target, parameter params = {});
-
-    /**
-     * @brief Construct a new C-SVM using the stdpar backend and the optionally provided @p named_args.
-     * @param[in] named_args the additional optional named-parameters
-     * @throws plssvm::exception all exceptions thrown in the base class constructor
-     * @throws plssvm::stdpar::backend_exception if the requested target is not available
-     * @throws plssvm::stdpar::backend_exception if no device for the requested target was found
-     */
-    template <typename... Args, PLSSVM_REQUIRES(::plssvm::detail::has_only_parameter_named_args_v<Args...>)>
-    explicit csvm(Args &&...named_args) :
-        ::plssvm::csvm{ std::forward<Args>(named_args)... } {
-        // the default target is the automatic one
-        this->init(plssvm::target_platform::automatic);
-    }
-
-    /**
-     * @brief Construct a new C-SVM using the stdpar backend on the @p target platform and the optionally provided @p named_args.
-     * @param[in] target the target platform used for this C-SVM
-     * @param[in] named_args the additional optional named-parameters
-     * @throws plssvm::exception all exceptions thrown in the base class constructor
-     * @throws plssvm::stdpar::backend_exception if the requested target is not available
-     * @throws plssvm::stdpar::backend_exception if no device for the requested target was found
-     */
-    template <typename... Args, PLSSVM_REQUIRES(::plssvm::detail::has_only_parameter_named_args_v<Args...>)>
-    explicit csvm(const target_platform target, Args &&...named_args) :
-        ::plssvm::csvm{ std::forward<Args>(named_args)... } {
-        this->init(target);
-    }
+    explicit csvm(target_platform target = target_platform::automatic);
 
     /**
      * @copydoc plssvm::csvm::csvm(const plssvm::csvm &)
@@ -96,14 +62,24 @@ class csvm : public ::plssvm::csvm {
      * @copydoc plssvm::csvm::operator=(const plssvm::csvm &)
      */
     csvm &operator=(const csvm &) = delete;
+
     /**
-     * @copydoc plssvm::csvm::operator=(plssvm::csvm &&) noexcept
+     * @brief Correctly implement the move-assignment operator in presence of a virtual base class.
+     * @details Calls the base class move-assignment operator. Afterwards, moves the additional `stdpar::csvm` members.
+     * @param[in,out] other the other C-SVM to move from
+     * @return `*this`
      */
-    csvm &operator=(csvm &&) noexcept = default;
+    csvm &operator=(csvm &&other) noexcept {
+        if (this != std::addressof(other)) {
+            ::plssvm::csvm::operator=(std::move(other));
+        }
+        return *this;
+    }
+
     /**
      * @brief Default destructor since the copy and move constructors and copy- and move-assignment operators are defined.
      */
-    ~csvm() override = default;
+    ~csvm() override = 0;
 
     /**
      * @copydoc plssvm::csvm::num_available_devices
@@ -148,15 +124,102 @@ class csvm : public ::plssvm::csvm {
      * @copydoc plssvm::csvm::predict_values
      */
     [[nodiscard]] aos_matrix<real_type> predict_values(const parameter &params, const soa_matrix<real_type> &support_vectors, const aos_matrix<real_type> &alpha, const std::vector<real_type> &rho, soa_matrix<real_type> &w, const soa_matrix<real_type> &predict_points) const final;
+};
 
-  private:
+/**
+ * @brief Create a C-SVC using the stdpar backend.
+ * @details Inherits all functionality either from the `plssvm::csvc` or `plssvm::stdpar::csvm` classes.
+ */
+class csvc : public ::plssvm::csvc,
+             public ::plssvm::stdpar::csvm {
+  public:
     /**
-     * @brief Initializes the stdpar backend and performs some sanity checks.
-     * @param[in] target the target platform to use
-     * @throws plssvm::stdpar::backend_exception if the requested target is not available
-     * @throws plssvm::stdpar::backend_exception if no device for the requested target was found
+     * @brief Construct a new C-SVC using the stdpar backend with the parameters given through @p params.
+     * @param[in] params struct encapsulating all possible parameters
+     * @throws plssvm::exception all exceptions thrown in the base class constructors
      */
-    void init(target_platform target);
+    explicit csvc(const parameter params) :
+        ::plssvm::csvm{ params },
+        ::plssvm::stdpar::csvm{} { }
+
+    /**
+     * @brief Construct a new C-SVC using the stdpar backend on the @p target platform with the parameters given through @p params.
+     * @param[in] target the target platform used for this C-SVC
+     * @param[in] params struct encapsulating all possible SVM parameters
+     * @throws plssvm::exception all exceptions thrown in the base class constructors
+     */
+    explicit csvc(const target_platform target, const parameter params) :
+        ::plssvm::csvm{ params },
+        ::plssvm::stdpar::csvm{ target } { }
+
+    /**
+     * @brief Construct a new C-SVC using the stdpar backend and the optionally provided @p named_args.
+     * @param[in] named_args the additional optional named arguments
+     * @throws plssvm::exception all exceptions thrown in the base class constructors
+     */
+    template <typename... Args, PLSSVM_REQUIRES(::plssvm::detail::has_only_parameter_named_args_v<Args...>)>
+    explicit csvc(Args &&...named_args) :
+        ::plssvm::csvm{ std::forward<Args>(named_args)... },
+        ::plssvm::stdpar::csvm{} { }
+
+    /**
+     * @brief Construct a new C-SVC using the stdpar backend on the @p target platform and the optionally provided @p named_args.
+     * @param[in] target the target platform used for this C-SVC
+     * @param[in] named_args the additional optional named-parameters
+     * @throws plssvm::exception all exceptions thrown in the base class constructors
+     */
+    template <typename... Args, PLSSVM_REQUIRES(::plssvm::detail::has_only_parameter_named_args_v<Args...>)>
+    explicit csvc(const target_platform target, Args &&...named_args) :
+        ::plssvm::csvm{ std::forward<Args>(named_args)... },
+        ::plssvm::stdpar::csvm{ target } { }
+};
+
+/**
+ * @brief Create a C-SVR using the stdpar backend.
+ * @details Inherits all functionality either from the `plssvm::csvr` or `plssvm::stdpar::csvm` classes.
+ */
+class csvr : public ::plssvm::csvr,
+             public ::plssvm::stdpar::csvm {
+  public:
+    /**
+     * @brief Construct a new C-SVR using the stdpar backend with the parameters given through @p params.
+     * @param[in] params struct encapsulating all possible parameters
+     * @throws plssvm::exception all exceptions thrown in the base class constructors
+     */
+    explicit csvr(const parameter params) :
+        ::plssvm::csvm{ params },
+        ::plssvm::stdpar::csvm{} { }
+
+    /**
+     * @brief Construct a new C-SVR using the stdpar backend on the @p target platform with the parameters given through @p params.
+     * @param[in] target the target platform used for this C-SVR
+     * @param[in] params struct encapsulating all possible SVM parameters
+     * @throws plssvm::exception all exceptions thrown in the base class constructors
+     */
+    explicit csvr(const target_platform target, const parameter params) :
+        ::plssvm::csvm{ params },
+        ::plssvm::stdpar::csvm{ target } { }
+
+    /**
+     * @brief Construct a new C-SVR using the stdpar backend and the optionally provided @p named_args.
+     * @param[in] named_args the additional optional named arguments
+     * @throws plssvm::exception all exceptions thrown in the base class constructors
+     */
+    template <typename... Args, PLSSVM_REQUIRES(::plssvm::detail::has_only_parameter_named_args_v<Args...>)>
+    explicit csvr(Args &&...named_args) :
+        ::plssvm::csvm{ std::forward<Args>(named_args)... },
+        ::plssvm::stdpar::csvm{} { }
+
+    /**
+     * @brief Construct a new C-SVR using the stdpar backend on the @p target platform and the optionally provided @p named_args.
+     * @param[in] target the target platform used for this C-SVR
+     * @param[in] named_args the additional optional named-parameters
+     * @throws plssvm::exception all exceptions thrown in the base class constructors
+     */
+    template <typename... Args, PLSSVM_REQUIRES(::plssvm::detail::has_only_parameter_named_args_v<Args...>)>
+    explicit csvr(const target_platform target, Args &&...named_args) :
+        ::plssvm::csvm{ std::forward<Args>(named_args)... },
+        ::plssvm::stdpar::csvm{ target } { }
 };
 
 }  // namespace stdpar
@@ -164,10 +227,10 @@ class csvm : public ::plssvm::csvm {
 namespace detail {
 
 /**
- * @brief Sets the `value` to `true` since C-SVMs using the OpenMP backend are available.
+ * @brief Sets the `value` to `true` since C-SVMs (C-SVCs, C-SVRs) using the stdpar backend are available.
  */
-template <>
-struct csvm_backend_exists<stdpar::csvm> : std::true_type { };
+template <typename T>
+struct csvm_backend_exists<T, std::enable_if_t<is_one_type_of_v<T, stdpar::csvm, stdpar::csvc, stdpar::csvr>>> : std::true_type { };
 
 }  // namespace detail
 

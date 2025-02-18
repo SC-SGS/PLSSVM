@@ -12,7 +12,7 @@
 #include "plssvm/gamma.hpp"                  // plssvm::gamma_type
 #include "plssvm/kernel_function_types.hpp"  // plssvm::kernel_function_type
 
-#include "bindings/Python/utility.hpp"
+#include "bindings/Python/utility.hpp"  // plssvm::bindings::python::util::{check_kwargs_for_correctness, convert_kwargs_to_parameter}
 
 #include "fmt/format.h"          // fmt::format
 #include "pybind11/operators.h"  // support for operators
@@ -23,22 +23,22 @@ namespace py = pybind11;
 
 void init_parameter(py::module_ &m) {
     // bind parameter class
-    py::class_<plssvm::parameter>(m, "Parameter")
-        .def(py::init<>())
-        .def(py::init<plssvm::kernel_function_type, int, plssvm::real_type, plssvm::real_type, plssvm::real_type>())
+    py::class_<plssvm::parameter>(m, "Parameter", "A class for encapsulating all important C-SVM hyper-parameters.")
+        .def(py::init<>(), "default construct all hyper-parameters")
+        .def(py::init<plssvm::kernel_function_type, int, plssvm::real_type, plssvm::real_type, plssvm::real_type>(), "create a new Parameter object providing all hyper-parameters explicitly")
         .def(py::init([](const py::kwargs &args) {
                  // check for valid keys
-                 check_kwargs_for_correctness(args, { "kernel_type", "degree", "gamma", "coef0", "cost" });
+                 plssvm::bindings::python::util::check_kwargs_for_correctness(args, { "kernel_type", "degree", "gamma", "coef0", "cost" });
                  // if one of the value named parameter is provided, set the respective value
-                 return convert_kwargs_to_parameter(args);
+                 return plssvm::bindings::python::util::convert_kwargs_to_parameter(args);
              }),
-             "create a new SVM parameter object")
+             "create a new Parameter object with the optionally provided hyper-parameter values")
         .def_property(
             "kernel_type",
             [](const plssvm::parameter &self) { return self.kernel_type; },
             [](plssvm::parameter &self, const plssvm::kernel_function_type kernel_type) { self.kernel_type = kernel_type; },
             py::return_value_policy::reference,
-            "change the used kernel function: linear, polynomial, and rbf")
+            "change the used kernel function: linear, polynomial, rbf, sigmoid, laplacian, or chi_squared")
         .def_property(
             "degree",
             [](const plssvm::parameter &self) { return self.degree; },
@@ -50,20 +50,20 @@ void init_parameter(py::module_ &m) {
             [](const plssvm::parameter &self) { return self.gamma; },
             [](plssvm::parameter &self, const plssvm::gamma_type &gamma) { self.gamma = gamma; },
             py::return_value_policy::reference,
-            "change the gamma parameter for the polynomial and rbf kernel functions")
+            "change the gamma parameter for all kernel functions except the linear one")
         .def_property(
             "coef0",
             [](const plssvm::parameter &self) { return self.coef0; },
             [](plssvm::parameter &self, const plssvm::real_type coef0) { self.coef0 = coef0; },
             py::return_value_policy::reference,
-            "change the coef0 parameter for the polynomial kernel function")
+            "change the coef0 parameter for the polynomial and sigmoid kernel functions")
         .def_property(
             "cost",
             [](const plssvm::parameter &self) { return self.cost; },
             [](plssvm::parameter &self, const plssvm::real_type cost) { self.cost = cost; },
             py::return_value_policy::reference,
-            "change the cost parameter for the CSVM")
-        .def("equivalent", &plssvm::parameter::equivalent, "check whether two parameter objects are equivalent, i.e., the SVM parameter important for the current 'kernel_type' are the same")
+            "change the cost parameter for the C-SVM")
+        .def("equivalent", &plssvm::parameter::equivalent, "check whether two parameter objects are equivalent, i.e., the SVM hyper-parameters important for the current 'kernel_type' are the same")
         .def(py::self == py::self, "check whether two parameter objects are identical")
         .def(py::self != py::self, "check whether two parameter objects are different")
         .def("__repr__", [](const plssvm::parameter &self) {
@@ -76,5 +76,5 @@ void init_parameter(py::module_ &m) {
         });
 
     // bind free functions
-    m.def("equivalent", &plssvm::equivalent, "check whether two parameter objects are equivalent, i.e., the SVM parameter important for the current 'kernel_type' are the same");
+    m.def("equivalent", &plssvm::equivalent, "check whether two parameter objects are equivalent, i.e., the SVM hyper-parameters important for the current 'kernel_type' are the same");
 }

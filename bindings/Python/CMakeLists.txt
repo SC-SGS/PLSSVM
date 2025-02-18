@@ -35,18 +35,26 @@ set(PLSSVM_PYTHON_BINDINGS_SOURCES
     ${CMAKE_CURRENT_LIST_DIR}/version/version.cpp
     ${CMAKE_CURRENT_LIST_DIR}/backend_types.cpp
     ${CMAKE_CURRENT_LIST_DIR}/classification_types.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/csvm.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/data_set.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/svm/csvm.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/svm/csvc.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/svm/csvr.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/data_set/classification_data_set.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/data_set/min_max_scaler.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/data_set/regression_data_set.cpp
     ${CMAKE_CURRENT_LIST_DIR}/file_format_types.cpp
     ${CMAKE_CURRENT_LIST_DIR}/gamma.cpp
     ${CMAKE_CURRENT_LIST_DIR}/kernel_function_types.cpp
     ${CMAKE_CURRENT_LIST_DIR}/kernel_functions.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/model.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/model/classification_model.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/model/regression_model.cpp
     ${CMAKE_CURRENT_LIST_DIR}/parameter.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/regression_report.cpp
     ${CMAKE_CURRENT_LIST_DIR}/solver_types.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/svm_types.cpp
     ${CMAKE_CURRENT_LIST_DIR}/target_platforms.cpp
     ${CMAKE_CURRENT_LIST_DIR}/verbosity_levels.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/sklearn.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/sklearn_svc.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/sklearn_svr.cpp
     ${CMAKE_CURRENT_LIST_DIR}/main.cpp
 )
 
@@ -102,28 +110,6 @@ endif ()
 set(PLSSVM_PYTHON_BINDINGS_LIBRARY_NAME plssvm)
 pybind11_add_module(${PLSSVM_PYTHON_BINDINGS_LIBRARY_NAME} ${PLSSVM_PYTHON_BINDINGS_SOURCES})
 
-# set default label type
-set(PLSSVM_PYTHON_BINDINGS_POSSIBLE_LABEL_TYPE
-    "bool;char;signed char;unsigned char;short;unsigned short;int;unsigned int;long;unsigned long;long long;unsigned long long;float;double;long double;std::string"
-)
-set(PLSSVM_PYTHON_BINDINGS_PREFERRED_LABEL_TYPE "std::string" CACHE STRING "The preferred type of the labels for the Python bindings.")
-set_property(CACHE PLSSVM_PYTHON_BINDINGS_PREFERRED_LABEL_TYPE PROPERTY STRINGS ${PLSSVM_PYTHON_BINDINGS_POSSIBLE_LABEL_TYPE})
-if (NOT "${PLSSVM_PYTHON_BINDINGS_PREFERRED_LABEL_TYPE}" IN_LIST PLSSVM_PYTHON_BINDINGS_POSSIBLE_LABEL_TYPE)
-    message(
-        FATAL_ERROR
-            "The provided label_type \"${PLSSVM_PYTHON_BINDINGS_PREFERRED_LABEL_TYPE}\" is not one of the allowed values: \"${PLSSVM_PYTHON_BINDINGS_POSSIBLE_LABEL_TYPE}\""
-    )
-endif ()
-message(STATUS "The preferred label_type for the Python bindings is \"${PLSSVM_PYTHON_BINDINGS_PREFERRED_LABEL_TYPE}\".")
-
-# add necessary compile definitions for the default real_type and label_type
-target_compile_definitions(
-    ${PLSSVM_PYTHON_BINDINGS_LIBRARY_NAME} PRIVATE PLSSVM_PYTHON_BINDINGS_PREFERRED_LABEL_TYPE=${PLSSVM_PYTHON_BINDINGS_PREFERRED_LABEL_TYPE}
-)
-if (PLSSVM_PYTHON_BINDINGS_PREFERRED_LABEL_TYPE STREQUAL "std::string")
-    target_compile_definitions(${PLSSVM_PYTHON_BINDINGS_LIBRARY_NAME} PRIVATE PLSSVM_PYTHON_BINDINGS_LABEL_TYPE_IS_STRING)
-endif ()
-
 # add necessary compile options
 target_include_directories(${PLSSVM_PYTHON_BINDINGS_LIBRARY_NAME} PRIVATE ${CMAKE_CURRENT_LIST_DIR}/../..)
 target_link_libraries(${PLSSVM_PYTHON_BINDINGS_LIBRARY_NAME} PRIVATE ${PLSSVM_ALL_LIBRARY_NAME})
@@ -135,3 +121,13 @@ target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC -fPIC)
 
 # append pybind11 bindings library to installed targets
 append_local_and_parent(PLSSVM_TARGETS_TO_INSTALL ${PLSSVM_PYTHON_BINDINGS_LIBRARY_NAME})
+
+# install necessary Python files to make pip install plssvm work correctly:
+#
+# - __init__.py: PLSSVM is correctly recognized as Python package
+# - __cli__.py: PLSSVM's executables are correctly usable
+# - __install_check__.py: custom script outputting some PLSSVM build information
+include(GNUInstallDirs)
+install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/__init__.py" "${CMAKE_CURRENT_SOURCE_DIR}/__cli__.py" "${CMAKE_CURRENT_SOURCE_DIR}/__install_check__.py"
+        DESTINATION "${CMAKE_INSTALL_LIBDIR}"
+)

@@ -328,8 +328,9 @@ TEST_F(PerformanceTracker, add_parser_train_tracking_entry) {
     std::array<std::string, 3> input_argv{ "./plssvm-train", "/path/to/train", "/path/to/model" };
     std::array<char *, input_argv.size()> argv{};
     std::transform(input_argv.begin(), input_argv.end(), argv.begin(), [](std::string &str) { return str.data(); });
+    const auto argc = static_cast<int>(argv.size());
 
-    const plssvm::detail::cmd::parser_train parser{ argv.size(), argv.data() };
+    const plssvm::detail::cmd::parser_train parser{ argc, argv.data() };
 
     // save cmd::parser_train entry
     tracker.add_tracking_entry(plssvm::detail::tracking::tracking_entry{ "parameter", "", parser });
@@ -351,8 +352,9 @@ TEST_F(PerformanceTracker, add_parser_predict_tracking_entry) {
     std::array<std::string, 4> input_argv{ "./plssvm-predict", "/path/to/train", "/path/to/model", "/path/to/predict" };
     std::array<char *, input_argv.size()> argv{};
     std::transform(input_argv.begin(), input_argv.end(), argv.begin(), [](std::string &str) { return str.data(); });
+    const auto argc = static_cast<int>(argv.size());
 
-    const plssvm::detail::cmd::parser_predict parser{ argv.size(), argv.data() };
+    const plssvm::detail::cmd::parser_predict parser{ argc, argv.data() };
 
     // save cmd::parser_predict entry
     tracker.add_tracking_entry(plssvm::detail::tracking::tracking_entry{ "parameter", "", parser });
@@ -374,8 +376,9 @@ TEST_F(PerformanceTracker, add_parser_scale_tracking_entry) {
     std::array<std::string, 3> input_argv{ "./plssvm-train", "/path/to/train", "/path/to/scaled" };
     std::array<char *, input_argv.size()> argv{};
     std::transform(input_argv.begin(), input_argv.end(), argv.begin(), [](std::string &str) { return str.data(); });
+    const auto argc = static_cast<int>(argv.size());
 
-    const plssvm::detail::cmd::parser_scale parser{ argv.size(), argv.data() };
+    const plssvm::detail::cmd::parser_scale parser{ argc, argv.data() };
 
     // save cmd::parser_scale entry
     tracker.add_tracking_entry(plssvm::detail::tracking::tracking_entry{ "parameter", "", parser });

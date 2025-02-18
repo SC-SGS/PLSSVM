@@ -48,6 +48,9 @@ file_reader_exception::file_reader_exception(const std::string &msg, source_loca
 data_set_exception::data_set_exception(const std::string &msg, source_location loc) :
     exception{ msg, "data_set_exception", loc } { }
 
+min_max_scaler_exception::min_max_scaler_exception(const std::string &msg, source_location loc) :
+    exception{ msg, "min_max_scaler_exception", loc } { }
+
 file_not_found_exception::file_not_found_exception(const std::string &msg, source_location loc) :
     exception{ msg, "file_not_found_exception", loc } { }
 
@@ -71,6 +74,9 @@ kernel_launch_resources::kernel_launch_resources(const std::string &msg, source_
 
 classification_report_exception::classification_report_exception(const std::string &msg, source_location loc) :
     exception{ msg, "classification_report_exception", loc } { }
+
+regression_report_exception::regression_report_exception(const std::string &msg, source_location loc) :
+    exception{ msg, "regression_report_exception", loc } { }
 
 platform_devices_empty::platform_devices_empty(const std::string &msg, source_location loc) :
     exception{ msg, "platform_devices_empty", loc } { }

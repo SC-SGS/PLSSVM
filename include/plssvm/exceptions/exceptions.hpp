@@ -96,6 +96,19 @@ class data_set_exception : public exception {
 };
 
 /**
+ * @brief Exception type thrown if a `plssvm::min_max_scaler` is used inappropriately.
+ */
+class min_max_scaler_exception : public exception {
+  public:
+    /**
+     * @brief Construct a new exception forwarding the exception message and source location to `plssvm::exception`.
+     * @param[in] msg the exception's `what()` message
+     * @param[in] loc the exception's call side information
+     */
+    explicit min_max_scaler_exception(const std::string &msg, source_location loc = source_location::current());
+};
+
+/**
  * @brief Exception type thrown if the provided file couldn't be found.
  */
 class file_not_found_exception : public exception {
@@ -197,6 +210,19 @@ class classification_report_exception : public exception {
      * @param[in] loc the exception's call side information
      */
     explicit classification_report_exception(const std::string &msg, source_location loc = source_location::current());
+};
+
+/**
+ * @brief Exception type thrown if something during the creation of the regression report goes wrong.
+ */
+class regression_report_exception : public exception {
+  public:
+    /**
+     * @brief Construct a new exception forwarding the exception message and source location to `plssvm::exception`.
+     * @param[in] msg the exception's `what()` message
+     * @param[in] loc the exception's call side information
+     */
+    explicit regression_report_exception(const std::string &msg, source_location loc = source_location::current());
 };
 
 /**

@@ -20,10 +20,11 @@
 #include "plssvm/gamma.hpp"                                        // plssvm::get_gamma_string
 #include "plssvm/kernel_function_types.hpp"                        // plssvm::kernel_type_to_math_string
 #include "plssvm/mpi/communicator.hpp"                             // plssvm::mpi::communicator
-#include "plssvm/mpi/environment.hpp"
-#include "plssvm/target_platforms.hpp"  // plssvm::list_available_target_platforms
-#include "plssvm/verbosity_levels.hpp"  // plssvm::verbosity, plssvm::verbosity_level
-#include "plssvm/version/version.hpp"   // plssvm::version::detail::get_version_info
+#include "plssvm/mpi/environment.hpp"                              // plssvm::mpi::{is_active, finalize}
+#include "plssvm/svm_types.hpp"                                    // plssvm::svm_type
+#include "plssvm/target_platforms.hpp"                             // plssvm::list_available_target_platforms
+#include "plssvm/verbosity_levels.hpp"                             // plssvm::verbosity, plssvm::verbosity_level
+#include "plssvm/version/version.hpp"                              // plssvm::version::detail::get_version_info
 
 #include "cxxopts.hpp"   // cxxopts::Options, cxxopts::value,cxxopts::ParseResult
 #include "fmt/color.h"   // fmt::fg, fmt::color::red
@@ -73,6 +74,7 @@ parser_train::parser_train(const mpi::communicator &comm, int argc, char **argv)
         .set_tab_expansion()
         // clang-format off
        .add_options()
+           ("s,svm_type", "set type of SVM\n\t 0 -- C-SVC\n\t 1 -- C-SVR", cxxopts::value<decltype(svm)>()->default_value(fmt::format("{}", detail::to_underlying(svm))))
            ("t,kernel_type", kernel_type_help, cxxopts::value<decltype(csvm_params.kernel_type)>()->default_value(fmt::format("{}", detail::to_underlying(csvm_params.kernel_type))))
            ("d,degree", "set degree in kernel function", cxxopts::value<decltype(csvm_params.degree)>()->default_value(fmt::format("{}", csvm_params.degree)))
            ("g,gamma", fmt::format("set gamma in kernel function (default: {})", get_gamma_string(csvm_params.gamma)), cxxopts::value<decltype(csvm_params.gamma)>())
@@ -94,7 +96,7 @@ parser_train::parser_train(const mpi::communicator &comm, int argc, char **argv)
 #if defined(PLSSVM_PERFORMANCE_TRACKER_ENABLED)
            ("performance_tracking", "the output YAML file where the performance tracking results are written to; if not provided, the results are dumped to stderr", cxxopts::value<decltype(performance_tracking_filename)>())
 #endif
-           ("use_strings_as_labels", "use strings as labels instead of plane numbers", cxxopts::value<decltype(strings_as_labels)>()->default_value(fmt::format("{}", strings_as_labels)))
+           ("use_strings_as_labels", "use strings as labels for the classification task instead of plane numbers", cxxopts::value<decltype(strings_as_labels)>()->default_value(fmt::format("{}", strings_as_labels)))
            ("verbosity", fmt::format("choose the level of verbosity: full|timing|libsvm|quiet (default: {})", fmt::format("{}", verbosity)), cxxopts::value<verbosity_level>())
            ("q,quiet", "quiet mode (no outputs regardless the provided verbosity level!)", cxxopts::value<bool>())
            ("h,help", "print this helper message", cxxopts::value<bool>())
@@ -139,6 +141,11 @@ parser_train::parser_train(const mpi::communicator &comm, int argc, char **argv)
             std::cout << options.help() << std::endl;
         }
         std::exit(EXIT_FAILURE);
+    }
+
+    // parse svm_type and cast the value to the respective enum
+    if (result.count("svm_type")) {
+        svm = result["svm_type"].as<decltype(svm)>();
     }
 
     // parse kernel_type and cast the value to the respective enum
@@ -199,6 +206,14 @@ parser_train::parser_train(const mpi::communicator &comm, int argc, char **argv)
     // parse the classification type
     if (result.count("classification")) {
         classification = result["classification"].as<decltype(classification)>();
+
+        // warn if a classification type has been provided, but the SVM type is a C-SVR (regression)
+        if (svm == svm_type::csvr) {
+            detail::log_untracked(verbosity_level::full | verbosity_level::warning,
+                                  comm,
+                                  "WARNING: explicitly set a classification type but the current svm_type is a C-SVR; ignoring --classification={}\n",
+                                  classification);
+        }
     }
 
     // parse backend_type and cast the value to the respective enum
@@ -259,8 +274,13 @@ parser_train::parser_train(const mpi::communicator &comm, int argc, char **argv)
     }
 #endif
 
-    // parse whether strings should be used as labels
+    // parse whether strings should be used as labels for the classification task
     strings_as_labels = result["use_strings_as_labels"].as<decltype(strings_as_labels)>();
+    if (svm != svm_type::csvc && strings_as_labels) {
+        detail::log_untracked(verbosity_level::full | verbosity_level::warning,
+                              comm,
+                              "WARNING: explicitly requested string labels for the regression task; ignoring --use_strings_as_labels\n");
+    }
 
     // parse whether output is quiet or not
     const bool quiet = result["quiet"].as<bool>();
@@ -306,7 +326,11 @@ parser_train::parser_train(const mpi::communicator &comm, int argc, char **argv)
 }
 
 std::ostream &operator<<(std::ostream &out, const parser_train &params) {
-    out << fmt::format("kernel_type: {} -> {}\n", params.csvm_params.kernel_type, kernel_function_type_to_math_string(params.csvm_params.kernel_type));
+    out << fmt::format("svm_type: {}\n"
+                       "kernel_type: {} -> {}\n",
+                       params.svm,
+                       params.csvm_params.kernel_type,
+                       kernel_function_type_to_math_string(params.csvm_params.kernel_type));
     switch (params.csvm_params.kernel_type) {
         case kernel_function_type::linear:
             break;

@@ -1,7 +1,10 @@
 name: Windows MSVC CPU
 on:
-  workflow_dispatch:
   push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch:
 jobs:
   MSVC-Test:
     runs-on: windows-latest

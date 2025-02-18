@@ -51,33 +51,7 @@
 
 namespace plssvm::cuda {
 
-csvm::csvm(parameter params) :
-    csvm{ mpi::communicator{}, plssvm::target_platform::automatic, params } { }
-
-csvm::csvm(mpi::communicator comm, parameter params) :
-    csvm{ std::move(comm), plssvm::target_platform::automatic, params } { }
-
-csvm::csvm(target_platform target, parameter params) :
-    csvm{ mpi::communicator{}, target, params } { }
-
-csvm::csvm(mpi::communicator comm, target_platform target, parameter params) :
-    base_type{ std::move(comm), params } {
-    this->init(target);
-}
-
-csvm::~csvm() {
-    try {
-        // be sure that all operations on the CUDA devices have finished before destruction
-        for (const queue_type &device : devices_) {
-            detail::device_synchronize(device);
-        }
-    } catch (const plssvm::exception &e) {
-        std::cout << e.what_with_loc() << std::endl;
-        std::terminate();
-    }
-}
-
-void csvm::init(const target_platform target) {
+csvm::csvm(const target_platform target) {
     // check if supported target platform has been selected
     if (target != target_platform::automatic && target != target_platform::gpu_nvidia) {
         throw backend_exception{ fmt::format("Invalid target platform '{}' for the CUDA backend!", target) };
@@ -143,6 +117,18 @@ void csvm::init(const target_platform target) {
     PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "backend", "target_platform", plssvm::target_platform::gpu_nvidia }));
     PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "backend", "num_devices", devices_.size() }));
     PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "backend", "device", device_names }));
+}
+
+csvm::~csvm() {
+    try {
+        // be sure that all operations on the CUDA devices have finished before destruction
+        for (const queue_type &device : devices_) {
+            detail::device_synchronize(device);
+        }
+    } catch (const plssvm::exception &e) {
+        std::cout << e.what_with_loc() << std::endl;
+        std::terminate();
+    }
 }
 
 std::vector<::plssvm::detail::memory_size> csvm::get_device_memory() const {

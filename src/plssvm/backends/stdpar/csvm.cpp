@@ -13,7 +13,6 @@
 #include "plssvm/backends/stdpar/kernel/cg_implicit/kernel_matrix_assembly_blas.hpp"  // plssvm::stdpar::detail::device_kernel_assembly_symm
 #include "plssvm/backends/stdpar/kernel/predict_kernel.hpp"                           // plssvm::stdpar::detail::{device_kernel_w_linear, device_kernel_predict_linear, device_kernel_predict}
 #include "plssvm/constants.hpp"                                                       // plssvm::real_type
-#include "plssvm/csvm.hpp"                                                            // plssvm::csvm
 #include "plssvm/detail/assert.hpp"                                                   // PLSSVM_ASSERT
 #include "plssvm/detail/data_distribution.hpp"                                        // plssvm::detail::{data_distribution, triangular_data_distribution, rectangular_data_distribution}
 #include "plssvm/detail/memory_size.hpp"                                              // plssvm::detail::memory_size
@@ -24,6 +23,7 @@
 #include "plssvm/parameter.hpp"                                                       // plssvm::parameter
 #include "plssvm/shape.hpp"                                                           // plssvm::shape
 #include "plssvm/solver_types.hpp"                                                    // plssvm::solver_type
+#include "plssvm/svm/csvm.hpp"                                                        // plssvm::csvm
 #include "plssvm/target_platforms.hpp"                                                // plssvm::target_platform
 
 #include <cstddef>  // std::size_t
@@ -33,16 +33,7 @@
 
 namespace plssvm::stdpar {
 
-csvm::csvm(parameter params) :
-    csvm{ plssvm::target_platform::automatic, params } { }
-
-csvm::csvm(const target_platform target, parameter params) :
-    ::plssvm::csvm{ params } {
-    this->init(target);
-
-    // At this point, target_ may NEVER be target_platform::automatic!
-    PLSSVM_ASSERT(target_ != target_platform::automatic, "At this point, the target platform must be determined and must NOT be automatic!");
-}
+csvm::~csvm() = default;
 
 std::vector<::plssvm::detail::memory_size> csvm::get_device_memory() const {
     return { ::plssvm::detail::get_system_memory() };

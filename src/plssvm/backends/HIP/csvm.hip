@@ -46,15 +46,7 @@
 
 namespace plssvm::hip {
 
-csvm::csvm(parameter params) :
-    csvm{ plssvm::target_platform::automatic, params } { }
-
-csvm::csvm(target_platform target, parameter params) :
-    base_type{ params } {
-    this->init(target);
-}
-
-void csvm::init(const target_platform target) {
+csvm::csvm(const target_platform target) {
     // check if supported target platform has been selected
 #if defined(PLSSVM_HIP_BACKEND_USE_HIP_RUNTIME)
     if (target != target_platform::automatic && target != target_platform::gpu_amd) {

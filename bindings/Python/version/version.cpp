@@ -18,11 +18,11 @@ class version { };
 
 void init_version(py::module_ &m) {
     // bind global version information
-    // complexity necessary to enforce read-only
-    py::class_<version>(m, "version")
-        .def_property_readonly_static("name", [](const py::object & /* self */) { return plssvm::version::name; }, "the name of the PLSSVM library")
-        .def_property_readonly_static("version", [](const py::object & /* self */) { return plssvm::version::version; }, "the used version of the PLSSVM library")
-        .def_property_readonly_static("major", [](const py::object & /* self */) { return plssvm::version::major; }, "the used major version of the PLSSVM library")
-        .def_property_readonly_static("minor", [](const py::object & /* self */) { return plssvm::version::minor; }, "the used minor version of the PLSSVM library")
-        .def_property_readonly_static("patch", [](const py::object & /* self */) { return plssvm::version::patch; }, "the used patch version of the PLSSVM library");
+    // complexity necessary to enforce read-only (py::object necessary for def_property_readonly_static)
+    py::class_<version>(m, "version", "A version class encapsulation all PLSSVM version information.")
+        .def_property_readonly_static("name", [](const py::object &) { return plssvm::version::name; }, "the name of the PLSSVM library")
+        .def_property_readonly_static("version", [](const py::object &) { return plssvm::version::version; }, "the used version of the PLSSVM library")
+        .def_property_readonly_static("major", [](const py::object &) { return plssvm::version::major; }, "the used major version of the PLSSVM library")
+        .def_property_readonly_static("minor", [](const py::object &) { return plssvm::version::minor; }, "the used minor version of the PLSSVM library")
+        .def_property_readonly_static("patch", [](const py::object &) { return plssvm::version::patch; }, "the used patch version of the PLSSVM library");
 }

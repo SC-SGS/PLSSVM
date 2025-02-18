@@ -22,23 +22,22 @@
     #include "hws/system_hardware_sampler.hpp"  // hws::system_hardware_sampler
 #endif
 
-#include "fmt/format.h"  // fmt::print, fmt::format
+#include "fmt/format.h"  // fmt::format
 #include "fmt/os.h"      // fmt::ostream, fmt::output_file
 #include "fmt/ranges.h"  // fmt::join
 
-#include <algorithm>   // std::for_each
-#include <chrono>      // std::chrono::{steady_clock, duration}, std::chrono_literals namespace
-#include <cstdlib>     // EXIT_SUCCESS, EXIT_FAILURE
-#include <exception>   // std::exception
-#include <filesystem>  // std::filesystem::path
-#include <fstream>     // std::ofstream
-#include <functional>  // std::mem_fn
-#include <iostream>    // std::cerr, std::endl
-#include <memory>      // std::unique_ptr, std::make_unique
-#include <string>      // std::string
-#include <utility>     // std::pair
-#include <variant>     // std::visit
-#include <vector>      // std::vector
+#include <chrono>       // std::chrono::{time_point, steady_clock, duration_cast, milliseconds}, std::chrono_literals namespace
+#include <cstdlib>      // EXIT_SUCCESS, EXIT_FAILURE
+#include <exception>    // std::exception
+#include <filesystem>   // std::filesystem::path
+#include <iostream>     // std::cerr, std::endl
+#include <memory>       // std::unique_ptr, std::make_unique
+#include <string>       // std::string
+#include <string_view>  // std::string_view
+#include <type_traits>  // std::remove_reference_t, std::is_same_v
+#include <utility>      // std::pair
+#include <variant>      // std::visit
+#include <vector>       // std::vector
 
 using namespace std::chrono_literals;
 
@@ -93,6 +92,8 @@ int main(int argc, char *argv[]) {
         // create data set
         const auto data_set_visitor = [&](auto &&data) {
             using label_type = typename std::remove_reference_t<decltype(data)>::label_type;
+            using csvm_type = typename std::remove_reference_t<decltype(data)>::svm_fit_type;
+            using model_type = typename csvm_type::template model_type<label_type>;
 
             // check whether SYCL is used as backend (it is either requested directly or as automatic backend)
             const bool use_sycl_as_backend{ cmd_parser.backend == plssvm::backend_type::sycl || (cmd_parser.backend == plssvm::backend_type::automatic && plssvm::determine_default_backend() == plssvm::backend_type::sycl) };
@@ -112,18 +113,18 @@ int main(int argc, char *argv[]) {
             environment_guard = std::make_unique<plssvm::environment::scope_guard>(backends_to_initialize);
 
             // create default csvm
-            const std::unique_ptr<plssvm::csvm> svm = [&]() {
+            const std::unique_ptr<csvm_type> svm = [&]() {
                 if (use_sycl_as_backend) {
-                    return plssvm::make_csvm(cmd_parser.backend, comm, cmd_parser.target, plssvm::sycl_implementation_type = cmd_parser.sycl_implementation_type);
+                    return plssvm::make_csvm<csvm_type>(cmd_parser.backend, comm, cmd_parser.target, plssvm::sycl_implementation_type = cmd_parser.sycl_implementation_type);
                 } else if (use_kokkos_as_backend) {
-                    return plssvm::make_csvm(cmd_parser.backend, comm, cmd_parser.target, plssvm::kokkos_execution_space = cmd_parser.kokkos_execution_space);
+                    return plssvm::make_csvm<csvm_type>(cmd_parser.backend, comm, cmd_parser.target, plssvm::kokkos_execution_space = cmd_parser.kokkos_execution_space);
                 } else {
-                    return plssvm::make_csvm(cmd_parser.backend, comm, cmd_parser.target);
+                    return plssvm::make_csvm<csvm_type>(cmd_parser.backend, comm, cmd_parser.target);
                 }
             }();
 
             // create model
-            const plssvm::model<label_type> model{ comm, cmd_parser.model_filename };
+            const model_type model{ comm, cmd_parser.model_filename };
 
             // output parameter used to learn the model
             {
@@ -189,15 +190,34 @@ int main(int argc, char *argv[]) {
             if (data.has_labels()) {
                 // generate the classification report
                 const std::vector<label_type> &correct_labels = *data.labels();
-                const plssvm::classification_report report{ correct_labels, predicted_labels };
 
-                // print complete report
-                plssvm::detail::log(plssvm::verbosity_level::full, comm, "\n{}\n", report);
-                // print only accuracy for LIBSVM conformity
-                plssvm::detail::log(plssvm::verbosity_level::libsvm, comm, "{} (classification)\n", report.accuracy());
-                PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "accuracy", "achieved_accuracy", report.accuracy().achieved_accuracy }));
-                PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "accuracy", "num_correct", report.accuracy().num_correct }));
-                PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "accuracy", "num_total", report.accuracy().num_total }));
+                if constexpr (std::is_same_v<csvm_type, plssvm::csvc>) {
+                    const plssvm::classification_report report{ correct_labels, predicted_labels };
+
+                    // print complete report
+                    plssvm::detail::log(plssvm::verbosity_level::full, comm, "\n{}\n", report);
+                    // print only accuracy for LIBSVM conformity
+                    plssvm::detail::log(plssvm::verbosity_level::libsvm, comm, "{} (classification)\n", report.accuracy());
+                    PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "accuracy", "achieved_accuracy", report.accuracy().achieved_accuracy }));
+                    PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "accuracy", "num_correct", report.accuracy().num_correct }));
+                    PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "accuracy", "num_total", report.accuracy().num_total }));
+                } else if constexpr (std::is_same_v<csvm_type, plssvm::csvr>) {
+                    const plssvm::regression_report report{ correct_labels, predicted_labels };
+
+                    // print complete report
+                    plssvm::detail::log(plssvm::verbosity_level::full, comm, "\n{}\n", report);
+                    // print only MSE and SCC for LIBSVM conformity
+                    plssvm::detail::log(plssvm::verbosity_level::libsvm, comm, "Mean squared error = {} (regression)\nSquared correlation coefficient = {} (regression)\n", report.loss().mean_squared_error, report.loss().squared_correlation_coefficient);
+
+                    PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "loss", "explained_variance_score", report.loss().explained_variance_score }));
+                    PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "loss", "mean_absolute_error", report.loss().mean_absolute_error }));
+                    PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "loss", "mean_squared_error", report.loss().mean_squared_error }));
+                    PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "loss", "r2_score", report.loss().r2_score }));
+                    PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "loss", "squared_correlation_coefficient", report.loss().squared_correlation_coefficient }));
+                } else {
+                    // unreachable
+                    plssvm::detail::unreachable();
+                }
             }
         };
         std::visit(data_set_visitor, plssvm::detail::cmd::data_set_factory(comm, cmd_parser));

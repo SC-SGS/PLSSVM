@@ -24,6 +24,7 @@
 #include "fmt/format.h"  // fmt::format
 #include "fmt/os.h"      // fmt::ostream, fmt::output_file
 
+#include <cstddef>      // std::size_t
 #include <exception>    // std::exception_ptr, std::exception, std::current_exception, std::rethrow_exception
 #include <string>       // std::string
 #include <string_view>  // std::string_view
@@ -83,7 +84,7 @@ template <typename factors_type>
 #pragma omp parallel default(none) shared(parallel_exception, scaling_factors, reader)
     {
 #pragma omp for
-        for (typename std::vector<factors_type>::size_type i = 0; i < scaling_factors.size(); ++i) {
+        for (std::size_t i = 0; i < scaling_factors.size(); ++i) {
             try {
                 // parse the current line
                 const std::string_view line = reader.line(i + 2);

@@ -13,10 +13,7 @@
 #define PLSSVM_DETAIL_MEMORY_SIZE_HPP_
 #pragma once
 
-#include "plssvm/exceptions/exceptions.hpp"  // plssvm::exception
-
 #include "fmt/base.h"     // fmt::formatter
-#include "fmt/format.h"   // fmt::format
 #include "fmt/ostream.h"  // fmt::ostream_formatter
 
 #include <cstddef>     // std::size_t
