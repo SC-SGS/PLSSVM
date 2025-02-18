@@ -64,7 +64,7 @@ The main highlights of our SVM implementations are:
    - [CUDA](https://developer.nvidia.com/cuda-zone)
    - [HIP](https://github.com/ROCm-Developer-Tools/HIP)
    - [OpenCL](https://www.khronos.org/opencl/)
-   - [SYCL](https://www.khronos.org/sycl/) (supported implementations are [DPC++](https://github.com/intel/llvm) and [AdaptiveCpp](https://github.com/AdaptiveCpp/AdaptiveCpp) (formerly known as hipSYCL); specifically the versions [sycl-nightly/20231201](https://github.com/intel/llvm/tree/sycl-nightly/20230110) and AdaptiveCpp release [v24.06.0](https://github.com/AdaptiveCpp/AdaptiveCpp/releases/tag/v23.10.0))
+   - [SYCL](https://www.khronos.org/sycl/) (supported implementations are Intel's [DPC++/icpx](https://github.com/intel/llvm) and [AdaptiveCpp](https://github.com/AdaptiveCpp/AdaptiveCpp) (formerly known as hipSYCL); specifically the versions [intel-oneapi-compilers@2025.0.0](https://github.com/spack/spack) (via spack) and AdaptiveCpp release [v24.06.0](https://github.com/AdaptiveCpp/AdaptiveCpp/releases/tag/v23.10.0))
    - [Kokkos](https://github.com/kokkos/kokkos) (all execution spaces supported except `OpenMPTarget` and `OpenACC`); specifically the version [4.5.00](https://github.com/kokkos/kokkos/releases/tag/4.5.00)
 3. Six different kernel functions to be able to classify a large variety of different problems:
    - linear: $\vec{u}^T$ $\cdot$ $\vec{v}$
@@ -98,7 +98,7 @@ General dependencies:
 - [Pybind11 ≥ v2.13.3](https://github.com/pybind/pybind11) if Python bindings are enabled
 - [OpenMP](https://www.openmp.org/) 4.0 or newer (optional) to speed-up library utilities (like file parsing)
 - [MPI](https://www.mpi-forum.org/) if distributed memory systems should be supported
-- [Format.cmake](https://github.com/TheLartians/Format.cmake) if auto formatting via clang-format is enabled; also requires at least clang-format-18 and git
+- [Format.cmake](https://github.com/TheLartians/Format.cmake) if auto formatting via cmake-format and clang-format is enabled; also requires at least clang-format-18 and git, additionally, needs our custom [cmake-format fork](https://github.com/vancraar/cmake_format) incorporating some patches
 - multiple Python modules used in the utility scripts, to install all modules use `pip install --user -r install/python_requirements.txt`
 
 Additional dependencies for the OpenMP backend:
@@ -129,7 +129,7 @@ Additional dependencies for the OpenCL backend:
 
 Additional dependencies for the SYCL backend:
 
-- the code must be compiled with a SYCL capable compiler; currently supported are [DPC++](https://github.com/intel/llvm) and [AdaptiveCpp](https://github.com/AdaptiveCpp/AdaptiveCpp)
+- the code must be compiled with a SYCL capable compiler; currently supported are [DPC++/icpx](https://github.com/spack/spack) (via spack) and [AdaptiveCpp](https://github.com/AdaptiveCpp/AdaptiveCpp)
 
 Additional dependencies for the Kokkos backend:
 
@@ -182,7 +182,7 @@ cmake --build . -j
 The CMake option `PLSSVM_TARGET_PLATFORMS` is used to determine for which targets the backends should be compiled.
 Valid targets are:
 
-- `cpu`: compile for the CPU; an **optional** architectural specifications is allowed but only used when compiling with DPC++, e.g., `cpu:avx2`
+- `cpu`: compile for the CPU; an **optional** architectural specifications is allowed but only used when compiling with DPC++/icpx, e.g., `cpu:avx2`
 - `nvidia`: compile for NVIDIA GPUs; **at least one** architectural specification is necessary, e.g., `nvidia:sm_86,sm_70`
 - `amd`: compile for AMD GPUs; **at least one** architectural specification is necessary, e.g., `amd:gfx906`
 - `intel`: compile for Intel GPUs; **at least one** architectural specification is necessary, e.g., `intel:skl`
@@ -193,7 +193,7 @@ are automatically determined using the Python3 `utility_scripts/plssvm_target_pl
 [`GPUtil`](https://pypi.org/project/GPUtil/), [`pyamdgpuinfo`](https://pypi.org/project/pyamdgpuinfo/), and
 [`pylspci`](https://pypi.org/project/pylspci/)).
 
-Note that when using DPC++ only a single architectural specification for `cpu`, `nvidia` or `amd` is allowed and that
+Note that when using DPC++/icpx only a single architectural specification for `cpu`, `nvidia` or `amd` is allowed and that
 automatically retrieving AMD GPU information on Windows is currently not supported due to `pyamdgpuinfo` limitations.
 
 
@@ -304,7 +304,7 @@ The `[optional_options]` can be one or multiple of:
 - `PLSSVM_ENABLE_TESTING=ON|OFF` (default: `ON`): enable testing using GoogleTest and ctest
 - `PLSSVM_ENABLE_LANGUAGE_BINDINGS=ON|OFF` (default: `OFF`): enable language bindings
 - `PLSSVM_STL_DEBUG_MODE_FLAGS=ON|OFF` (default: `OFF`): enable STL debug modes (**note**: changes the resulting library's ABI!)
-- `PLSSVM_ENABLE_FORMATTING=ON|OFF` (default: `OFF`): enable automatic formatting using clang-format; adds additional targets `check-clang-format`, `clang-format`, and `fix-clang-format`
+- `PLSSVM_ENABLE_FORMATTING=ON|OFF` (default: `OFF`): enable automatic formatting using cmake-format and clang-format; adds additional targets `check-cmake-format`, `cmake-format`, `fix-cmake-format`, `check-clang-format`, `clang-format`, and `fix-clang-format`
 
 If `PLSSVM_ENABLE_TESTING` is set to `ON`, the following option can also be set:
 
@@ -345,17 +345,17 @@ If the SYCL backend is available, additional options can be set.
   - `OFF`: do not check for AdaptiveCpp as implementation for the SYCL backend
 
 - `PLSSVM_ENABLE_SYCL_DPCPP_BACKEND=ON|OFF|AUTO` (default: `AUTO`):
-  - `ON`: check for DPC++ as implementation for the SYCL backend and fail if not available
-  - `AUTO`: check for DPC++ as implementation for the SYCL backend but **do not** fail if not available
-  - `OFF`: do not check for DPC++ as implementation for the SYCL backend
+  - `ON`: check for DPC++/icpx as implementation for the SYCL backend and fail if not available
+  - `AUTO`: check for DPC++/icpx as implementation for the SYCL backend but **do not** fail if not available
+  - `OFF`: do not check for DPC++/icpx as implementation for the SYCL backend
 
-To use DPC++ for SYCL, simply set the `CMAKE_CXX_COMPILER` to the respective DPC++ clang executable during CMake invocation.
+To use DPC++/icpx for SYCL, simply set the `CMAKE_CXX_COMPILER` to the respective DPC++/icpx clang executable during CMake invocation.
 
-If the SYCL implementation is DPC++ the following additional options are available:
+If the SYCL implementation is DPC++/icpx the following additional options are available:
 
 - `PLSSVM_SYCL_BACKEND_DPCPP_ENABLE_AOT` (default: `ON`): enable Ahead-of-Time (AOT) compilation for the specified target platforms
-- `PLSSVM_SYCL_BACKEND_DPCPP_USE_LEVEL_ZERO` (default: `ON`): use DPC++'s Level-Zero backend instead of its OpenCL backend **(only available if a CPU or Intel GPU is targeted)**
-- `PLSSVM_SYCL_BACKEND_DPCPP_GPU_AMD_USE_HIP` (default: `ON`): use DPC++'s HIP backend instead of its OpenCL backend for AMD GPUs **(only available if an AMD GPU is targeted)**
+- `PLSSVM_SYCL_BACKEND_DPCPP_USE_LEVEL_ZERO` (default: `ON`): use DPC++/icpx's Level-Zero backend instead of its OpenCL backend **(only available if a CPU or Intel GPU is targeted)**
+- `PLSSVM_SYCL_BACKEND_DPCPP_GPU_AMD_USE_HIP` (default: `ON`): use DPC++/icpx's HIP backend instead of its OpenCL backend for AMD GPUs **(only available if an AMD GPU is targeted)**
 
 If the SYCL implementation is AdaptiveCpp the following additional option is available:
 
@@ -474,17 +474,24 @@ The resulting `html` coverage report is located in the `coverage` folder in the 
 ### Automatic Source File Formatting
 
 To enable automatic formatting `PLSSVM_ENABLE_FORMATTING` must be set to `ON` and a `clang-format` and `git` executables must be available in `PATH` (minimum `clang-format` version is 18).
+Additionally, our custom [cmake-format fork](https://github.com/vancraar/cmake_format) must be used since it has incorporated some necessary patches. 
+Our `cmake-format` can be installed via:
+
+```bash
+pip install "git+https://github.com/vancraar/cmake_format@master"
+```
 
 To check whether formatting changes must be applied use: 
 
 ```bash
+cmake --build . --target check-cmake-format
 cmake --build . --target check-clang-format
 ```
 
 To auto format all files use:
 
 ```bash
-cmake --build . --target clang-format
+cmake --build . --target fix-cmake-format
 cmake --build . --target fix-clang-format
 ```
 

@@ -50,6 +50,31 @@ struct tuple_contains<T, std::tuple<Types...>> : std::disjunction<std::is_same<T
 template <typename T, typename Tuple>
 inline constexpr bool tuple_contains_v = tuple_contains<T, Tuple>::value;
 
+/**
+ * @brief Checks whether the types in the tuple @p SubSetTuple are **all** contained in the tuple @p BaseSetTuple, i.e., @p SubSetTuple is a subset of @p BaseSetTuple.
+ * @tparam SubSetTuple the tuple that should be a subset of @p BaseSetTuple
+ * @tparam BaseSetTuple the base tuple
+ */
+template <typename SubSetTuple, typename BaseSetTuple>
+struct tuple_subset_of;
+
+/**
+ * @brief Checks whether the @p SubSetTypes are **all** present in @p BaseSetTypes.
+ * @tparam SubSetTypes the types that should be a subset
+ * @tparam BaseSetTypes the base types
+ */
+template <typename... SubSetTypes, typename... BaseSetTypes>
+struct tuple_subset_of<std::tuple<SubSetTypes...>, std::tuple<BaseSetTypes...>> : std::integral_constant<bool, ((tuple_contains_v<SubSetTypes, std::tuple<BaseSetTypes...>>) && ...)> { };
+
+/**
+ * @brief Checks whether @p SubSetTuple is a type subset of @p BaseSetTuple.
+ */
+template <typename SubSetTuple, typename BaseSetTuple>
+inline constexpr bool tuple_subset_of_v = tuple_subset_of<SubSetTuple, BaseSetTuple>::value;
+
+// check reduced supported label types for correctness
+static_assert(tuple_subset_of_v<supported_label_types_reduced, supported_label_types>, "The reduced label types MUST be a subset of all possible label types!");
+
 }  // namespace plssvm::detail
 
 #endif  // PLSSVM_DETAIL_TYPE_LIST_HPP_

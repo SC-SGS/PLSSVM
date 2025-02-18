@@ -498,9 +498,16 @@ constexpr std::array<plssvm::classification_type, 2> classification_types_to_tes
     plssvm::classification_type::oaa, plssvm::classification_type::oao
 };
 /// A list of all available solver types.
-constexpr std::array<plssvm::solver_type, 3> solver_types_to_test{
-    plssvm::solver_type::automatic, plssvm::solver_type::cg_explicit, plssvm::solver_type::cg_implicit
-};
+constexpr std::array<plssvm::solver_type,
+#if defined(__NVCOMPILER)  // TODO: fixes nvc++ compilation error, that SHOULD NOT be there in the first place
+                     4
+#else
+                     3
+#endif
+                     >
+    solver_types_to_test{
+        plssvm::solver_type::automatic, plssvm::solver_type::cg_explicit, plssvm::solver_type::cg_implicit
+    };
 
 /// A list of all solver types.
 using solver_type_list = cartesian_value_product_t<solver_types_to_test>;

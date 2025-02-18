@@ -1,10 +1,10 @@
-## Authors: Alexander Van Craen, Marcel Breyer
-## Copyright (C): 2018-today The PLSSVM project - All Rights Reserved
-## License: This file is part of the PLSSVM project which is released under the MIT license.
-##          See the LICENSE.md file in the project root for full license information.
+# Authors: Alexander Van Craen, Marcel Breyer
+# Copyright (C): 2018-today The PLSSVM project - All Rights Reserved
+# License: This file is part of the PLSSVM project which is released under the MIT license.
+#          See the LICENSE.md file in the project root for full license information.
 ########################################################################################################################
 
-## create Kokkos tests
+# create Kokkos tests
 set(PLSSVM_KOKKOS_TEST_NAME Kokkos_tests)
 
 # list all necessary sources
@@ -30,7 +30,7 @@ add_executable(${PLSSVM_KOKKOS_TEST_NAME} ${CMAKE_CURRENT_LIST_DIR}/../../main.c
 if (Kokkos_ENABLE_CUDA)
     # fix template limit when using Kokkos::Cuda
     target_compile_options(${PLSSVM_KOKKOS_TEST_NAME} PRIVATE -Xcudafe --pending_instantiations=0)
-    
+
     # tests won't compile with nvcc
     if (NOT PLSSVM_TEST_WITH_REDUCED_LABEL_TYPES)
         message(FATAL_ERROR "Due to template instantiation limits within nvcc, only reduced label type tests are currently supported!")

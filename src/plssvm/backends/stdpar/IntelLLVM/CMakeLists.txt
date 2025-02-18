@@ -1,7 +1,7 @@
-## Authors: Alexander Van Craen, Marcel Breyer
-## Copyright (C): 2018-today The PLSSVM project - All Rights Reserved
-## License: This file is part of the PLSSVM project which is released under the MIT license.
-##          See the LICENSE.md file in the project root for full license information.
+# Authors: Alexander Van Craen, Marcel Breyer
+# Copyright (C): 2018-today The PLSSVM project - All Rights Reserved
+# License: This file is part of the PLSSVM project which is released under the MIT license.
+#          See the LICENSE.md file in the project root for full license information.
 ########################################################################################################################
 
 message(CHECK_START "searching for Intel LLVM (icpx)")
@@ -47,18 +47,38 @@ if (DEFINED PLSSVM_CPU_TARGET_ARCHS)
     message(STATUS "CPU target platform provided, setting: \"-fsycl-pstl-offload=cpu\"")
     set_local_and_parent(PLSSVM_STDPAR_BACKEND_COMPILER_FLAG -fsycl -fsycl-pstl-offload=cpu -fsycl-targets=spir64_x86_64)
     if (PLSSVM_NUM_CPU_TARGET_ARCHS EQUAL 1)
-        set_local_and_parent(PLSSVM_STDPAR_BACKEND_COMPILER_FLAG ${PLSSVM_STDPAR_BACKEND_COMPILER_FLAG} -Xsycl-target-backend=spir64_x86_64 "-march=${PLSSVM_CPU_TARGET_ARCHS}")
+        set_local_and_parent(
+            PLSSVM_STDPAR_BACKEND_COMPILER_FLAG ${PLSSVM_STDPAR_BACKEND_COMPILER_FLAG} -Xsycl-target-backend=spir64_x86_64 "-march=${PLSSVM_CPU_TARGET_ARCHS}"
+        )
     endif ()
 else ()
     message(STATUS "A GPU target platform provided, setting: \"-fsycl-pstl-offload=gpu\"")
     set_local_and_parent(PLSSVM_STDPAR_BACKEND_COMPILER_FLAG -fsycl -fsycl-pstl-offload=gpu)
-    
+
     if (DEFINED PLSSVM_NVIDIA_TARGET_ARCHS)
-        set_local_and_parent(PLSSVM_STDPAR_BACKEND_COMPILER_FLAG ${PLSSVM_STDPAR_BACKEND_COMPILER_FLAG} -fsycl-targets=nvptx64-nvidia-cuda -Xsycl-target-backend=nvptx64-nvidia-cuda --offload-arch=${PLSSVM_NVIDIA_TARGET_ARCHS})
+        set_local_and_parent(
+            PLSSVM_STDPAR_BACKEND_COMPILER_FLAG
+            ${PLSSVM_STDPAR_BACKEND_COMPILER_FLAG}
+            -fsycl-targets=nvptx64-nvidia-cuda
+            -Xsycl-target-backend=nvptx64-nvidia-cuda
+            --offload-arch=${PLSSVM_NVIDIA_TARGET_ARCHS}
+        )
     elseif (DEFINED PLSSVM_AMD_TARGET_ARCHS)
-        set_local_and_parent(PLSSVM_STDPAR_BACKEND_COMPILER_FLAG ${PLSSVM_STDPAR_BACKEND_COMPILER_FLAG} -fsycl-targets=amdgcn-amd-amdhsa -Xsycl-target-backend=amdgcn-amd-amdhsa --offload-arch=${PLSSVM_AMD_TARGET_ARCHS})
+        set_local_and_parent(
+            PLSSVM_STDPAR_BACKEND_COMPILER_FLAG
+            ${PLSSVM_STDPAR_BACKEND_COMPILER_FLAG}
+            -fsycl-targets=amdgcn-amd-amdhsa
+            -Xsycl-target-backend=amdgcn-amd-amdhsa
+            --offload-arch=${PLSSVM_AMD_TARGET_ARCHS}
+        )
     elseif (DEFINED PLSSVM_INTEL_TARGET_ARCHS)
-        set_local_and_parent(PLSSVM_STDPAR_BACKEND_COMPILER_FLAG ${PLSSVM_STDPAR_BACKEND_COMPILER_FLAG} -fsycl-targets=spir64_gen -Xsycl-target-backend=spir64_gen "-device ${PLSSVM_INTEL_TARGET_ARCHS}")
+        set_local_and_parent(
+            PLSSVM_STDPAR_BACKEND_COMPILER_FLAG
+            ${PLSSVM_STDPAR_BACKEND_COMPILER_FLAG}
+            -fsycl-targets=spir64_gen
+            -Xsycl-target-backend=spir64_gen
+            "-device ${PLSSVM_INTEL_TARGET_ARCHS}"
+        )
     endif ()
 endif ()
 if (PLSSVM_ENABLE_FAST_MATH)

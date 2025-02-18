@@ -1,12 +1,12 @@
-## Authors: Alexander Van Craen, Marcel Breyer
-## Copyright (C): 2018-today The PLSSVM project - All Rights Reserved
-## License: This file is part of the PLSSVM project which is released under the MIT license.
-##          See the LICENSE.md file in the project root for full license information.
+# Authors: Alexander Van Craen, Marcel Breyer
+# Copyright (C): 2018-today The PLSSVM project - All Rights Reserved
+# License: This file is part of the PLSSVM project which is released under the MIT license.
+#          See the LICENSE.md file in the project root for full license information.
 ########################################################################################################################
 
 list(APPEND CMAKE_MESSAGE_INDENT "Tests:  ")
 
-## setup testing wit GoogleTest
+# setup testing wit GoogleTest
 set(PLSSVM_googletest_VERSION v1.15.2)
 find_package(GTest 1.15.2 QUIET)
 if (GTEST_FOUND)
@@ -20,11 +20,12 @@ else ()
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
     # fetch testing framework GoogleTest
     include(FetchContent)
-    FetchContent_Declare(googletest
-                         GIT_REPOSITORY https://github.com/google/googletest
-                         GIT_TAG ${PLSSVM_googletest_VERSION}
-                         GIT_SHALLOW TRUE
-                         QUIET
+    FetchContent_Declare(
+        googletest
+        GIT_REPOSITORY https://github.com/google/googletest
+        GIT_TAG ${PLSSVM_googletest_VERSION}
+        GIT_SHALLOW TRUE
+        QUIET
     )
     FetchContent_MakeAvailable(googletest)
     # For Windows: Prevent overriding the parent project's compiler/linker settings
@@ -43,10 +44,13 @@ if (PLSSVM_GENERATE_TEST_FILE)
     check_integer(PLSSVM_TEST_FILE_NUM_FEATURES)
     set(PLSSVM_TEST_FILE_NUM_CLASSES "4" CACHE STRING "number of classes for the test file generator")
     check_integer(PLSSVM_TEST_FILE_NUM_CLASSES)
-    
+
     # set test file name based on requested sizes
-    set(PLSSVM_TEST_FILE "${PROJECT_SOURCE_DIR}/tests/data/${PLSSVM_TEST_FILE_NUM_DATA_POINTS}x${PLSSVM_TEST_FILE_NUM_FEATURES}_${PLSSVM_TEST_FILE_NUM_CLASSES}.libsvm" CACHE STRING "Path including name of the test file" FORCE)
-    
+    set(PLSSVM_TEST_FILE
+        "${PROJECT_SOURCE_DIR}/tests/data/${PLSSVM_TEST_FILE_NUM_DATA_POINTS}x${PLSSVM_TEST_FILE_NUM_FEATURES}_${PLSSVM_TEST_FILE_NUM_CLASSES}.libsvm"
+        CACHE STRING "Path including name of the test file" FORCE
+    )
+
     # check if the requested test file already exists and is not zero based indexed (otherwise create new test file)
     if (EXISTS "${PLSSVM_TEST_FILE}")
         file(READ "${PLSSVM_TEST_FILE}" PLSSVM_TEST_FILE_CONTENT)
@@ -60,40 +64,42 @@ if (PLSSVM_GENERATE_TEST_FILE)
     if (NOT EXISTS "${PLSSVM_TEST_FILE}")
         # find necessary Python3 packages to use the test file generator
         find_package(Python3 REQUIRED COMPONENTS Interpreter Development)
-        
+
         include(${PROJECT_SOURCE_DIR}/cmake/check_python_libs.cmake)
         set(PLSSVM_TEST_REQUIRED_LIBS argparse sklearn humanize numpy)
         message(STATUS "Checking required Python3 libraries (${PLSSVM_TEST_REQUIRED_LIBS}) to to generate the test file.")
         check_python_libs("${PLSSVM_TEST_REQUIRED_LIBS}" "or set PLSSVM_GENERATE_TEST_FILE to OFF.")
-        
+
         # generate test file
         message(STATUS "Generating test file: ${PLSSVM_TEST_FILE}.")
         execute_process(
-                COMMAND ${Python3_EXECUTABLE} "${PROJECT_SOURCE_DIR}/utility_scripts/generate_data.py" "--output" "${PLSSVM_TEST_FILE}" "--format" "libsvm" "--samples" "${PLSSVM_TEST_FILE_NUM_DATA_POINTS}" "--features" "${PLSSVM_TEST_FILE_NUM_FEATURES}" "--classes" "${PLSSVM_TEST_FILE_NUM_CLASSES}"
-                OUTPUT_QUIET)
+            COMMAND ${Python3_EXECUTABLE} "${PROJECT_SOURCE_DIR}/utility_scripts/generate_data.py" "--output" "${PLSSVM_TEST_FILE}" "--format" "libsvm"
+                    "--samples" "${PLSSVM_TEST_FILE_NUM_DATA_POINTS}" "--features" "${PLSSVM_TEST_FILE_NUM_FEATURES}" "--classes"
+                    "${PLSSVM_TEST_FILE_NUM_CLASSES}" OUTPUT_QUIET
+        )
     endif ()
 else ()
     # set test file to default test file
     set(PLSSVM_TEST_FILE "${PROJECT_SOURCE_DIR}/tests/data/libsvm/500x200_4.libsvm" CACHE STRING "Path including name of the test file")
 endif ()
 
-## warn if PLSSVM_ENABLE_FAST_MATH is set and tests are enabled
+# warn if PLSSVM_ENABLE_FAST_MATH is set and tests are enabled
 if (PLSSVM_ENABLE_FAST_MATH)
-    message(WARNING "PLSSVM_ENABLE_FAST_MATH is set while also testing is enabled. This may result in tests failing due to increased floating point inaccuracies.")
+    message(
+        WARNING "PLSSVM_ENABLE_FAST_MATH is set while also testing is enabled. This may result in tests failing due to increased floating point inaccuracies."
+    )
 endif ()
 
-## create base test library
+# create base test library
 set(PLSSVM_BASE_TEST_LIBRARY_NAME base_tests_lib)
 
 # list all necessary sources
-set(PLSSVM_BASE_TEST_LIBRARY_NAME_SOURCES
-    ${CMAKE_CURRENT_LIST_DIR}/backends/ground_truth.cpp
-)
+set(PLSSVM_BASE_TEST_LIBRARY_NAME_SOURCES ${CMAKE_CURRENT_LIST_DIR}/backends/ground_truth.cpp)
 
 # create base test library
 add_library(${PLSSVM_BASE_TEST_LIBRARY_NAME} SHARED ${PLSSVM_BASE_TEST_LIBRARY_NAME_SOURCES})
 
-## optionally use a reduced number of label types in the tests
+# optionally use a reduced number of label types in the tests
 option(PLSSVM_TEST_WITH_REDUCED_LABEL_TYPES "Reduce the number of tested label types to speed up compilation and actual tests." OFF)
 if (PLSSVM_TEST_WITH_REDUCED_LABEL_TYPES)
     message(STATUS "Reducing the number of tested label types.")
@@ -113,27 +119,23 @@ target_link_libraries(${PLSSVM_BASE_TEST_LIBRARY_NAME} PUBLIC ${PLSSVM_ALL_LIBRA
 # link against gtest
 target_link_libraries(${PLSSVM_BASE_TEST_LIBRARY_NAME} PUBLIC GTest::gmock)
 
-## create base tests
+# create base tests
 set(PLSSVM_BASE_TEST_NAME Base_tests)
 
 # list all necessary sources
 set(PLSSVM_BASE_TEST_SOURCES
-    ## it is unnecessary to test the execution range for each backend
+    # it is unnecessary to test the execution range for each backend
     ${CMAKE_CURRENT_LIST_DIR}/backends/execution_range.cpp
-    
-    ## since the SYCL implementation_type and kernel_invocation_type enumerations are used even if no SYCL backend
-    ## is available these are also tested in the base library
+    # since the SYCL implementation_type and kernel_invocation_type enumerations are used even if no SYCL backend is available these are also tested in the base
+    # library
     ${CMAKE_CURRENT_LIST_DIR}/backends/SYCL/implementation_types.cpp
     ${CMAKE_CURRENT_LIST_DIR}/backends/SYCL/kernel_invocation_types.cpp
-    ## since the stdpar implementation_type enumeration is used even if no stdpar backend
-    ## is available this is also tested in the base library
+    # since the stdpar implementation_type enumeration is used even if no stdpar backend is available this is also tested in the base library
     ${CMAKE_CURRENT_LIST_DIR}/backends/stdpar/implementation_types.cpp
-    
     ${CMAKE_CURRENT_LIST_DIR}/detail/cmd/data_set_variants.cpp
     ${CMAKE_CURRENT_LIST_DIR}/detail/cmd/parser_predict.cpp
     ${CMAKE_CURRENT_LIST_DIR}/detail/cmd/parser_scale.cpp
     ${CMAKE_CURRENT_LIST_DIR}/detail/cmd/parser_train.cpp
-    
     ${CMAKE_CURRENT_LIST_DIR}/detail/io/libsvm_model_parsing/data_parse_valid.cpp
     ${CMAKE_CURRENT_LIST_DIR}/detail/io/libsvm_model_parsing/data_parse_invalid.cpp
     ${CMAKE_CURRENT_LIST_DIR}/detail/io/libsvm_model_parsing/data_write.cpp
@@ -145,7 +147,6 @@ set(PLSSVM_BASE_TEST_SOURCES
     ${CMAKE_CURRENT_LIST_DIR}/detail/io/file_reader.cpp
     ${CMAKE_CURRENT_LIST_DIR}/detail/io/libsvm_parsing.cpp
     ${CMAKE_CURRENT_LIST_DIR}/detail/io/scaling_factors_parsing.cpp
-    
     ${CMAKE_CURRENT_LIST_DIR}/detail/arithmetic_type_name.cpp
     ${CMAKE_CURRENT_LIST_DIR}/detail/assert.cpp
     ${CMAKE_CURRENT_LIST_DIR}/detail/data_distribution.cpp
@@ -160,13 +161,10 @@ set(PLSSVM_BASE_TEST_SOURCES
     ${CMAKE_CURRENT_LIST_DIR}/detail/type_list.cpp
     ${CMAKE_CURRENT_LIST_DIR}/detail/type_traits.cpp
     ${CMAKE_CURRENT_LIST_DIR}/detail/utility.cpp
-    
     ${CMAKE_CURRENT_LIST_DIR}/exceptions/exceptions.cpp
     ${CMAKE_CURRENT_LIST_DIR}/exceptions/source_location.cpp
-    
     ${CMAKE_CURRENT_LIST_DIR}/version/git_metadata/git_metadata.cpp
     ${CMAKE_CURRENT_LIST_DIR}/version/version.cpp
-    
     ${CMAKE_CURRENT_LIST_DIR}/backend_types.cpp
     ${CMAKE_CURRENT_LIST_DIR}/classification_report.cpp
     ${CMAKE_CURRENT_LIST_DIR}/classification_types.cpp
@@ -226,16 +224,16 @@ add_test(NAME MainScale/executable_version COMMAND ${PLSSVM_EXECUTABLE_SCALE_NAM
 
 # add minimal run test
 add_test(NAME MainTrain/executable_minimal COMMAND ${PLSSVM_EXECUTABLE_TRAIN_NAME} "${PLSSVM_TEST_FILE}" "${CMAKE_CURRENT_BINARY_DIR}/test.libsvm.model")
-add_test(NAME MainPredict/executable_minimal COMMAND ${PLSSVM_EXECUTABLE_PREDICT_NAME}
-         "${CMAKE_CURRENT_LIST_DIR}/data/predict/50x20.libsvm"                          # test file
-         "${CMAKE_CURRENT_LIST_DIR}/data/predict/50x20_double_linear_oaa.libsvm.model"  # model file
-         "${CMAKE_CURRENT_BINARY_DIR}/test.libsvm.predict"                              # predict file (result)
+add_test(NAME MainPredict/executable_minimal
+         COMMAND ${PLSSVM_EXECUTABLE_PREDICT_NAME} "${CMAKE_CURRENT_LIST_DIR}/data/predict/50x20.libsvm" # test file
+                 "${CMAKE_CURRENT_LIST_DIR}/data/predict/50x20_double_linear_oaa.libsvm.model" # model file
+                 "${CMAKE_CURRENT_BINARY_DIR}/test.libsvm.predict" # predict file (result)
 )
 add_test(NAME MainScale/executable_minimal COMMAND ${PLSSVM_EXECUTABLE_SCALE_NAME} "${PLSSVM_TEST_FILE}" "${CMAKE_CURRENT_BINARY_DIR}/scaled.libsvm.model")
-add_test(NAME MainScale/executable_save_scaling_factors COMMAND ${PLSSVM_EXECUTABLE_SCALE_NAME}
-         -s "${CMAKE_CURRENT_BINARY_DIR}/scaling_parameter.txt"  # the file the scaling parameters are saved to
-         "${PLSSVM_TEST_FILE}"                                   # the file to scale
-         "${CMAKE_CURRENT_BINARY_DIR}/scaled.libsvm.model"       # the scaled file (result)
+add_test(NAME MainScale/executable_save_scaling_factors
+         COMMAND ${PLSSVM_EXECUTABLE_SCALE_NAME} -s "${CMAKE_CURRENT_BINARY_DIR}/scaling_parameter.txt" # the file the scaling parameters are saved to
+                 "${PLSSVM_TEST_FILE}" # the file to scale
+                 "${CMAKE_CURRENT_BINARY_DIR}/scaled.libsvm.model" # the scaled file (result)
 )
 
 # add failing test (must return with a non-zero exit code)
