@@ -24,7 +24,7 @@ namespace plssvm::detail {
 //                                                              dim_type                                                               //
 //*************************************************************************************************************************************//
 
-std::ostream &operator<<(std::ostream &out, const dim_type dim) {
+std::ostream &operator<<(std::ostream &out, const dim_type &dim) {
     return out << fmt::format("[{}, {}, {}]", dim.x, dim.y, dim.z);
 }
 
