@@ -24,8 +24,7 @@
 #include "fmt/format.h"  // fmt::format
 #include "fmt/ranges.h"  // fmt::join
 
-#include <cstdlib>      // std::exit, EXIT_SUCCESS, EXIT_FAILURE
-#include <cstdlib>      // std::atexit
+#include <cstdlib>      // std::exit, EXIT_SUCCESS, EXIT_FAILURE, std::atexit
 #include <exception>    // std::exception
 #include <filesystem>   // std::filesystem::path
 #include <iostream>     // std::cout, std::cerr, std::endl

@@ -15,6 +15,7 @@
 
 #include "plssvm/backends/CUDA/csvm.hpp"        // plssvm::cuda::csvm
 #include "plssvm/backends/execution_range.hpp"  // plssvm::detail::dim_type
+#include "plssvm/mpi/communicator.hpp"          // plssvm::mpi::communicator
 #include "plssvm/svm/csvm.hpp"                  // plssvm::csvm
 
 #include "gmock/gmock.h"  // MOCK_METHOD, ON_CALL, ::testing::Return
@@ -35,7 +36,7 @@ class mock_cuda_csvm final : public plssvm::cuda::csvm {
 
     template <typename... Args>
     explicit mock_cuda_csvm(Args &&...args) :
-        plssvm::csvm{ std::forward<Args>(args)... },
+        plssvm::csvm{ plssvm::mpi::communicator{}, std::forward<Args>(args)... },
         base_type{} {
         this->fake_functions();
     }

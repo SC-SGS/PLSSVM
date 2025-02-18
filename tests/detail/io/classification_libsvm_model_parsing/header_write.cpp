@@ -34,7 +34,18 @@
 
 template <typename T>
 class LIBSVMClassificationModelHeaderWrite : public ::testing::Test,
-                                             protected util::temporary_file { };
+                                             protected util::temporary_file {
+  public:
+    /**
+     * @brief Return the used MPI communicator.
+     * @return the MPI communicator (`[[nodiscard]]`)
+     */
+    [[nodiscard]] const plssvm::mpi::communicator get_comm() const noexcept { return comm_; }
+
+  private:
+    /// The MPI communicator (unused during testing since we do not support MPI runtime tests).
+    plssvm::mpi::communicator comm_{};
+};
 
 TYPED_TEST_SUITE(LIBSVMClassificationModelHeaderWrite, util::classification_label_type_gtest, naming::test_parameter_to_name);
 
@@ -55,7 +66,7 @@ TYPED_TEST(LIBSVMClassificationModelHeaderWrite, write_linear) {
 
     // write the LIBSVM model to the temporary file
     fmt::ostream out = fmt::output_file(this->filename);
-    const std::vector<label_type> &label_order = plssvm::detail::io::write_libsvm_model_header_classification(out, params, rho, data_set);
+    const std::vector<label_type> &label_order = plssvm::detail::io::write_libsvm_model_header_classification(out, this->get_comm(), params, rho, data_set);
     out.close();
 
     // check returned label order
@@ -94,7 +105,7 @@ TYPED_TEST(LIBSVMClassificationModelHeaderWrite, write_polynomial) {
 
     // write the LIBSVM model to the temporary file
     fmt::ostream out = fmt::output_file(this->filename);
-    const std::vector<label_type> &label_order = plssvm::detail::io::write_libsvm_model_header_classification(out, params, rho, data_set);
+    const std::vector<label_type> &label_order = plssvm::detail::io::write_libsvm_model_header_classification(out, this->get_comm(), params, rho, data_set);
     out.close();
 
     // check returned label order
@@ -136,7 +147,7 @@ TYPED_TEST(LIBSVMClassificationModelHeaderWrite, write_rbf) {
 
     // write the LIBSVM model to the temporary file
     fmt::ostream out = fmt::output_file(this->filename);
-    const std::vector<label_type> &label_order = plssvm::detail::io::write_libsvm_model_header_classification(out, params, rho, data_set);
+    const std::vector<label_type> &label_order = plssvm::detail::io::write_libsvm_model_header_classification(out, this->get_comm(), params, rho, data_set);
     out.close();
 
     // check returned label order
@@ -176,7 +187,7 @@ TYPED_TEST(LIBSVMClassificationModelHeaderWrite, write_sigmoid) {
 
     // write the LIBSVM model to the temporary file
     fmt::ostream out = fmt::output_file(this->filename);
-    const std::vector<label_type> &label_order = plssvm::detail::io::write_libsvm_model_header_classification(out, params, rho, data_set);
+    const std::vector<label_type> &label_order = plssvm::detail::io::write_libsvm_model_header_classification(out, this->get_comm(), params, rho, data_set);
     out.close();
 
     // check returned label order
@@ -217,7 +228,7 @@ TYPED_TEST(LIBSVMClassificationModelHeaderWrite, write_laplacian) {
 
     // write the LIBSVM model to the temporary file
     fmt::ostream out = fmt::output_file(this->filename);
-    const std::vector<label_type> &label_order = plssvm::detail::io::write_libsvm_model_header_classification(out, params, rho, data_set);
+    const std::vector<label_type> &label_order = plssvm::detail::io::write_libsvm_model_header_classification(out, this->get_comm(), params, rho, data_set);
     out.close();
 
     // check returned label order
@@ -257,7 +268,7 @@ TYPED_TEST(LIBSVMClassificationModelHeaderWrite, write_chi_squared) {
 
     // write the LIBSVM model to the temporary file
     fmt::ostream out = fmt::output_file(this->filename);
-    const std::vector<label_type> &label_order = plssvm::detail::io::write_libsvm_model_header_classification(out, params, rho, data_set);
+    const std::vector<label_type> &label_order = plssvm::detail::io::write_libsvm_model_header_classification(out, this->get_comm(), params, rho, data_set);
     out.close();
 
     // check returned label order
@@ -299,7 +310,7 @@ TYPED_TEST(LIBSVMClassificationModelHeaderWriteDeathTest, write_header_without_l
     fmt::ostream out = fmt::output_file(this->filename);
 
     // try writing the LIBSVM model header
-    EXPECT_DEATH(std::ignore = (plssvm::detail::io::write_libsvm_model_header_classification(out, params, rho, data_set)),
+    EXPECT_DEATH(std::ignore = (plssvm::detail::io::write_libsvm_model_header_classification(out, this->get_comm(), params, rho, data_set)),
                  "Cannot write a model file that does not include labels!");
 }
 
@@ -316,6 +327,6 @@ TYPED_TEST(LIBSVMClassificationModelHeaderWriteDeathTest, write_header_invalid_n
     fmt::ostream out = fmt::output_file(this->filename);
 
     // try writing the LIBSVM model header
-    EXPECT_DEATH(std::ignore = (plssvm::detail::io::write_libsvm_model_header_classification(out, params, rho, data_set)),
+    EXPECT_DEATH(std::ignore = (plssvm::detail::io::write_libsvm_model_header_classification(out, this->get_comm(), params, rho, data_set)),
                  ::testing::HasSubstr("At least one rho value must be provided!"));
 }

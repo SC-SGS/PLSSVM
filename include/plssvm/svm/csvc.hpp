@@ -160,6 +160,7 @@ class csvc : virtual public csvm {
         const std::chrono::time_point start_time = std::chrono::steady_clock::now();
 
         detail::log(verbosity_level::full,
+                    comm_,
                     "Using {} ({}) as multi-class classification strategy.\n",
                     used_classification,
                     classification_type_to_full_string(used_classification));
@@ -201,6 +202,7 @@ class csvc : virtual public csvm {
             if (num_classes == 2) {
                 // special optimization for binary case (no temporary copies necessary)
                 detail::log(verbosity_level::full,
+                            comm_,
                             "\nClassifying 0 vs 1 ({} vs {}) (1/1):\n",
                             data.mapping_->get_label_by_mapped_index(0),
                             data.mapping_->get_label_by_mapped_index(1));
@@ -244,6 +246,7 @@ class csvc : virtual public csvm {
 
                         // solve the minimization problem -> note that only a single rhs is present
                         detail::log(verbosity_level::full,
+                                    comm_,
                                     "\nClassifying {} vs {} ({} vs {}) ({}/{}):\n",
                                     i,
                                     j,
@@ -270,6 +273,7 @@ class csvc : virtual public csvm {
 
         const std::chrono::time_point end_time = std::chrono::steady_clock::now();
         detail::log(verbosity_level::full | verbosity_level::timing,
+                    comm_,
                     "\nLearned the SVC classifier for {} multi-class classification in {}.\n\n",
                     classification_type_to_full_string(used_classification),
                     detail::tracking::tracking_entry{ "cg", "total_runtime", std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time) });

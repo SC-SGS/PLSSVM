@@ -25,6 +25,7 @@
 #include "plssvm/detail/type_list.hpp"                               // plssvm::detail::{supported_label_types, tuple_contains_v}
 #include "plssvm/matrix.hpp"                                         // plssvm::soa_matrix, plssvm::aos_matrix
 #include "plssvm/model/model.hpp"                                    // plssvm::model
+#include "plssvm/mpi/communicator.hpp"                               // plssvm::mpi::communicator
 #include "plssvm/parameter.hpp"                                      // plssvm::parameter
 #include "plssvm/verbosity_levels.hpp"                               // plssvm::verbosity_level
 
@@ -89,6 +90,14 @@ class classification_model : public model<U> {
     explicit classification_model(const std::string &filename);
 
     /**
+     * @brief Read a previously learned model from the LIBSVM model file @p filename.
+     * @param[in] comm the used MPI communicator (**note**: currently unused)
+     * @param[in] filename the model file to read
+     * @throws plssvm::invalid_file_format_exception all exceptions thrown by plssvm::detail::io::parse_libsvm_model_header and plssvm::detail::io::parse_libsvm_data
+     */
+    classification_model(mpi::communicator comm, const std::string &filename);
+
+    /**
      * @brief Save the model to a LIBSVM model file for later usage.
      * @param[in] filename the file to save the model to
      */
@@ -143,7 +152,12 @@ classification_model<U>::classification_model(parameter params, classification_d
     classification_strategy_{ classification_strategy } { }
 
 template <typename U>
-classification_model<U>::classification_model(const std::string &filename) {
+classification_model<U>::classification_model(const std::string &filename) :
+    classification_model{ mpi::communicator{}, filename } { }
+
+template <typename U>
+classification_model<U>::classification_model(mpi::communicator comm, const std::string &filename) :
+    base_model{ std::move(comm) } {
     const std::chrono::time_point start_time = std::chrono::steady_clock::now();
 
     // open the file
@@ -193,6 +207,7 @@ classification_model<U>::classification_model(const std::string &filename) {
 
     const std::chrono::time_point end_time = std::chrono::steady_clock::now();
     detail::log(verbosity_level::full | verbosity_level::timing,
+                this->communicator(),
                 "Read {} support vectors with {} features and {} classes using {} classification in {} using the libsvm classification model parser from file '{}'.\n\n",
                 detail::tracking::tracking_entry{ "model_read", "num_support_vectors", this->num_support_vectors() },
                 detail::tracking::tracking_entry{ "model_read", "num_features", this->num_features() },
@@ -208,11 +223,14 @@ template <typename U>
 void classification_model<U>::save(const std::string &filename) const {
     const std::chrono::time_point start_time = std::chrono::steady_clock::now();
 
-    // save model file header and support vectors
-    detail::io::write_libsvm_model_data_classification(filename, this->get_params(), this->get_classification_type(), this->rho(), this->weights(), *index_sets_ptr_, dynamic_cast<classification_data_set<label_type> &>(*data_));
+    if (this->communicator().is_main_rank()) {
+        // save model file header and support vectors
+        detail::io::write_libsvm_model_data_classification(filename, this->communicator(), this->get_params(), this->get_classification_type(), this->rho(), this->weights(), *index_sets_ptr_, dynamic_cast<classification_data_set<label_type> &>(*data_));
+    }
 
     const std::chrono::time_point end_time = std::chrono::steady_clock::now();
     detail::log(verbosity_level::full | verbosity_level::timing,
+                this->communicator(),
                 "Write {} support vectors with {} features and {} classes using {} classification in {} to the libsvm classification model file '{}'.\n",
                 detail::tracking::tracking_entry{ "model_write", "num_support_vectors", this->num_support_vectors() },
                 detail::tracking::tracking_entry{ "model_write", "num_features", this->num_features() },

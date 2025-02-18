@@ -13,6 +13,7 @@
 #define PLSSVM_TESTS_DETAIL_CMD_UTILITY_HPP_
 #pragma once
 
+#include "plssvm/mpi/communicator.hpp"  // plssvm::mpi::communicator
 #include "plssvm/verbosity_levels.hpp"  // plssvm::verbosity_level, plssvm::verbosity
 
 #include "tests/utility.hpp"  // util::redirect_output
@@ -58,6 +59,12 @@ class ParameterBase : public ::testing::Test,
     }
 
     /**
+     * @brief Return the used MPI communicator.
+     * @return the MPI communicator (`[[nodiscard]]`)
+     */
+    [[nodiscard]] const plssvm::mpi::communicator get_comm() const noexcept { return comm_; }
+
+    /**
      * @brief Return the number of command line arguments encapsulated in this class.
      * @return the number of cmd arguments (`[[nodiscard]]`)
      */
@@ -74,6 +81,8 @@ class ParameterBase : public ::testing::Test,
     mutable std::vector<std::string> cmd_options_{};
     /// The command line options cast to a char *.
     mutable std::vector<char *> cmd_argv_{};
+    /// The MPI communicator (unused during testing since we do not support MPI runtime tests).
+    plssvm::mpi::communicator comm_{};
     /// The verbosity level at the time of the test start.
     plssvm::verbosity_level verbosity_save_{};
 };

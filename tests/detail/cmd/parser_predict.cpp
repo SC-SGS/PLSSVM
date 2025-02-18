@@ -41,7 +41,7 @@ TEST_F(ParserPredict, minimal) {
     this->CreateCMDArgs({ "./plssvm-predict", "data.libsvm", "data.libsvm.model" });
 
     // create parameter object
-    const plssvm::detail::cmd::parser_predict parser{ this->get_argc(), this->get_argv() };
+    const plssvm::detail::cmd::parser_predict parser{ this->get_comm(), this->get_argc(), this->get_argv() };
 
     // check parsed values
     EXPECT_EQ(parser.backend, plssvm::backend_type::automatic);
@@ -61,7 +61,7 @@ TEST_F(ParserPredict, minimal_output) {
     this->CreateCMDArgs({ "./plssvm-predict", "data.libsvm", "data.libsvm.model" });
 
     // create parameter object
-    const plssvm::detail::cmd::parser_predict parser{ this->get_argc(), this->get_argv() };
+    const plssvm::detail::cmd::parser_predict parser{ this->get_comm(), this->get_argc(), this->get_argv() };
 
     // test output string
     const std::string correct = fmt::format(
@@ -98,7 +98,7 @@ TEST_F(ParserPredict, all_arguments) {
     this->CreateCMDArgs(cmd_args);
 
     // create parameter object
-    const plssvm::detail::cmd::parser_predict parser{ this->get_argc(), this->get_argv() };
+    const plssvm::detail::cmd::parser_predict parser{ this->get_comm(), this->get_argc(), this->get_argv() };
 
     // check parsed values
     EXPECT_EQ(parser.backend, plssvm::backend_type::cuda);
@@ -143,7 +143,7 @@ TEST_F(ParserPredict, all_arguments_output) {
     this->CreateCMDArgs(cmd_args);
 
     // create parameter object
-    const plssvm::detail::cmd::parser_predict parser{ this->get_argc(), this->get_argv() };
+    const plssvm::detail::cmd::parser_predict parser{ this->get_comm(), this->get_argc(), this->get_argv() };
 
     // test output string
     std::string correct{
@@ -187,7 +187,7 @@ TEST_P(ParserPredictBackend, parsing) {
     // create artificial command line arguments in test fixture
     this->CreateCMDArgs({ "./plssvm-predict", flag, value, "data.libsvm", "data.libsvm.model" });
     // create parameter object
-    const plssvm::detail::cmd::parser_predict parser{ this->get_argc(), this->get_argv() };
+    const plssvm::detail::cmd::parser_predict parser{ this->get_comm(), this->get_argc(), this->get_argv() };
     // test for correctness
     EXPECT_EQ(parser.backend, backend);
 }
@@ -209,7 +209,7 @@ TEST_P(ParserPredictTargetPlatform, parsing) {
     // create artificial command line arguments in test fixture
     this->CreateCMDArgs({ "./plssvm-predict", flag, value, "data.libsvm", "data.libsvm.model" });
     // create parameter object
-    const plssvm::detail::cmd::parser_predict parser{ this->get_argc(), this->get_argv() };
+    const plssvm::detail::cmd::parser_predict parser{ this->get_comm(), this->get_argc(), this->get_argv() };
     // test for correctness
     EXPECT_EQ(parser.target, target_platform);
 }
@@ -233,7 +233,7 @@ TEST_P(ParserPredictSYCLImplementation, parsing) {
     // create artificial command line arguments in test fixture
     this->CreateCMDArgs({ "./plssvm-predict", flag, value, "data.libsvm", "data.libsvm.model" });
     // create parameter object
-    const plssvm::detail::cmd::parser_predict parser{ this->get_argc(), this->get_argv() };
+    const plssvm::detail::cmd::parser_predict parser{ this->get_comm(), this->get_argc(), this->get_argv() };
     // test for correctness
     EXPECT_EQ(parser.sycl_implementation_type, sycl_implementation_type);
 }
@@ -259,7 +259,7 @@ TEST_P(ParserPredictKokkosExecutionSpace, parsing) {
     // create artificial command line arguments in test fixture
     this->CreateCMDArgs({ "./plssvm-predict", flag, value, "data.libsvm", "data.libsvm.model" });
     // create parameter object
-    const plssvm::detail::cmd::parser_predict parser{ this->get_argc(), this->get_argv() };
+    const plssvm::detail::cmd::parser_predict parser{ this->get_comm(), this->get_argc(), this->get_argv() };
     // test for correctness
     EXPECT_EQ(parser.kokkos_execution_space, kokkos_execution_space);
 }
@@ -283,7 +283,7 @@ TEST_P(ParserPredictPerformanceTrackingFilename, parsing) {
     // create artificial command line arguments in test fixture
     this->CreateCMDArgs({ "./plssvm-predict", flag, value, "data.libsvm", "data.libsvm.model" });
     // create parameter object
-    const plssvm::detail::cmd::parser_predict parser{ this->get_argc(), this->get_argv() };
+    const plssvm::detail::cmd::parser_predict parser{ this->get_comm(), this->get_argc(), this->get_argv() };
     // test for correctness
     EXPECT_EQ(parser.performance_tracking_filename, value);
 }
@@ -305,7 +305,7 @@ TEST_P(ParserPredictUseStringsAsLabels, parsing) {
     // create artificial command line arguments in test fixture
     this->CreateCMDArgs({ "./plssvm-predict", fmt::format("{}={}", flag, value), "data.libsvm", "data.libsvm.model" });
     // create parameter object
-    const plssvm::detail::cmd::parser_predict parser{ this->get_argc(), this->get_argv() };
+    const plssvm::detail::cmd::parser_predict parser{ this->get_comm(), this->get_argc(), this->get_argv() };
     // test for correctness
     EXPECT_EQ(parser.strings_as_labels, value);
 }
@@ -325,7 +325,7 @@ TEST_P(ParserPredictVerbosity, parsing) {
     // create artificial command line arguments in test fixture
     this->CreateCMDArgs({ "./plssvm-predict", flag, value, "data.libsvm", "data.libsvm.model" });
     // create parameter object
-    const plssvm::detail::cmd::parser_predict parser{ this->get_argc(), this->get_argv() };
+    const plssvm::detail::cmd::parser_predict parser{ this->get_comm(), this->get_argc(), this->get_argv() };
     // test for correctness
     EXPECT_EQ(fmt::format("{}", plssvm::verbosity), value);
 }
@@ -346,7 +346,7 @@ TEST_P(ParserPredictQuiet, parsing) {
     // create artificial command line arguments in test fixture
     this->CreateCMDArgs({ "./plssvm-predict", flag, "data.libsvm", "data.libsvm.model" });
     // create parameter object
-    const plssvm::detail::cmd::parser_predict parser{ this->get_argc(), this->get_argv() };
+    const plssvm::detail::cmd::parser_predict parser{ this->get_comm(), this->get_argc(), this->get_argv() };
     // test for correctness
     EXPECT_EQ(plssvm::verbosity, flag.empty() ? old_verbosity : plssvm::verbosity_level::quiet);
 }
@@ -360,7 +360,7 @@ TEST_F(ParserPredictVerbosityAndQuiet, parsing) {
     // create artificial command line arguments in test fixture
     this->CreateCMDArgs({ "./plssvm-predict", "--quiet", "--verbosity", "full", "data.libsvm", "data.libsvm.model" });
     // create parameter object
-    const plssvm::detail::cmd::parser_predict parser{ this->get_argc(), this->get_argv() };
+    const plssvm::detail::cmd::parser_predict parser{ this->get_comm(), this->get_argc(), this->get_argv() };
     // the quiet flag overrides the verbosity flag
     EXPECT_EQ(plssvm::verbosity, plssvm::verbosity_level::quiet);
 }
@@ -373,7 +373,7 @@ TEST_P(ParserPredictHelp, parsing) {
     // create artificial command line arguments in test fixture
     this->CreateCMDArgs({ "./plssvm-predict", flag });
     // create parameter object
-    EXPECT_EXIT((plssvm::detail::cmd::parser_predict{ this->get_argc(), this->get_argv() }), ::testing::ExitedWithCode(EXIT_SUCCESS), "");
+    EXPECT_EXIT((plssvm::detail::cmd::parser_predict{ this->get_comm(), this->get_argc(), this->get_argv() }), ::testing::ExitedWithCode(EXIT_SUCCESS), "");
 }
 
 INSTANTIATE_TEST_SUITE_P(ParserPredict, ParserPredictHelp, ::testing::Values("-h", "--help"), naming::pretty_print_parameter_flag<ParserPredictHelp>);
@@ -386,7 +386,7 @@ TEST_P(ParserPredictVersion, parsing) {
     // create artificial command line arguments in test fixture
     this->CreateCMDArgs({ "./plssvm-predict", flag });
     // create parameter object
-    EXPECT_EXIT((plssvm::detail::cmd::parser_predict{ this->get_argc(), this->get_argv() }), ::testing::ExitedWithCode(EXIT_SUCCESS), "");
+    EXPECT_EXIT((plssvm::detail::cmd::parser_predict{ this->get_comm(), this->get_argc(), this->get_argv() }), ::testing::ExitedWithCode(EXIT_SUCCESS), "");
 }
 
 INSTANTIATE_TEST_SUITE_P(ParserPredict, ParserPredictVersion, ::testing::Values("-v", "--version"), naming::pretty_print_parameter_flag<ParserPredictHelp>);
@@ -395,37 +395,37 @@ class ParserPredictDeathTest : public ParserPredict { };
 
 TEST_F(ParserPredictDeathTest, no_positional_argument) {
     this->CreateCMDArgs({ "./plssvm-predict" });
-    EXPECT_EXIT((plssvm::detail::cmd::parser_predict{ this->get_argc(), this->get_argv() }),
+    EXPECT_EXIT((plssvm::detail::cmd::parser_predict{ this->get_comm(), this->get_argc(), this->get_argv() }),
                 ::testing::ExitedWithCode(EXIT_FAILURE),
                 ::testing::HasSubstr("ERROR: missing test file!"));
 }
 
 TEST_F(ParserPredictDeathTest, single_positional_argument) {
     this->CreateCMDArgs({ "./plssvm-predict", "data.libsvm" });
-    EXPECT_EXIT((plssvm::detail::cmd::parser_predict{ this->get_argc(), this->get_argv() }),
+    EXPECT_EXIT((plssvm::detail::cmd::parser_predict{ this->get_comm(), this->get_argc(), this->get_argv() }),
                 ::testing::ExitedWithCode(EXIT_FAILURE),
                 ::testing::HasSubstr("ERROR: missing model file!"));
 }
 
 TEST_F(ParserPredictDeathTest, too_many_positional_arguments) {
     this->CreateCMDArgs({ "./plssvm-predict", "p1", "p2", "p3", "p4" });
-    EXPECT_EXIT((plssvm::detail::cmd::parser_predict{ this->get_argc(), this->get_argv() }),
+    EXPECT_EXIT((plssvm::detail::cmd::parser_predict{ this->get_comm(), this->get_argc(), this->get_argv() }),
                 ::testing::ExitedWithCode(EXIT_FAILURE),
                 ::testing::HasSubstr(R"(ERROR: only up to three positional options may be given, but 1 ("p4") additional option(s) where provided!)"));
 }
 
 // test whether nonsensical cmd arguments trigger the assertions
 TEST_F(ParserPredictDeathTest, too_few_argc) {
-    EXPECT_DEATH((plssvm::detail::cmd::parser_predict{ 0, nullptr }),
+    EXPECT_DEATH((plssvm::detail::cmd::parser_predict{ this->get_comm(), 0, nullptr }),
                  ::testing::HasSubstr("At least one argument is always given (the executable name), but argc is 0!"));
 }
 
 TEST_F(ParserPredictDeathTest, nullptr_argv) {
-    EXPECT_DEATH((plssvm::detail::cmd::parser_predict{ 1, nullptr }),
+    EXPECT_DEATH((plssvm::detail::cmd::parser_predict{ this->get_comm(), 1, nullptr }),
                  ::testing::HasSubstr("At least one argument is always given (the executable name), but argv is a nullptr!"));
 }
 
 TEST_F(ParserPredictDeathTest, unrecognized_option) {
     this->CreateCMDArgs({ "./plssvm-predict", "--foo", "bar" });
-    EXPECT_DEATH((plssvm::detail::cmd::parser_predict{ this->get_argc(), this->get_argv() }), "");
+    EXPECT_DEATH((plssvm::detail::cmd::parser_predict{ this->get_comm(), this->get_argc(), this->get_argv() }), "");
 }

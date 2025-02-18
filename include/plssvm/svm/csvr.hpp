@@ -159,6 +159,7 @@ class csvr : virtual public csvm {
 
         const std::chrono::time_point end_time = std::chrono::steady_clock::now();
         detail::log(verbosity_level::full | verbosity_level::timing,
+                    comm_,
                     "\nLearned the SVR classifier for regression in {}.\n\n",
                     detail::tracking::tracking_entry{ "cg", "total_runtime", std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time) });
 

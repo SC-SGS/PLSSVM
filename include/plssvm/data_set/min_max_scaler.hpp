@@ -27,6 +27,7 @@
 #include <algorithm>  // std::min, std::max, std::sort, std::adjacent_find
 #include <chrono>     // std::chrono::{time_point, steady_clock, duration_cast, milliseconds}
 #include <cstddef>    // std::size_t
+#include <limits>     // std::numeric_limits::{max, lowest}
 #include <numeric>    // std::numeric_limits::{min, max}
 #include <optional>   // std::optional, std::make_optional, std::nullopt
 #include <string>     // std::string
@@ -80,11 +81,27 @@ class min_max_scaler {
      */
     min_max_scaler(real_type lower, real_type upper);
     /**
+     * @brief Create a new scaling class that can be used to scale all features of a data set to the interval [lower, upper].
+     * @param[in] comm the used MPI communicator (**note**: currently unused)
+     * @param[in] lower the lower bound value of all features
+     * @param[in] upper the upper bound value of all features
+     * @throws plssvm::data_set_exception if lower is greater or equal than upper
+     */
+    min_max_scaler(mpi::communicator comm, real_type lower, real_type upper);
+
+    /**
      * @brief Read the scaling interval and factors from the provided file @p filename.
      * @param[in] filename the filename to read the scaling information from
      * @throws plssvm::invalid_file_format_exception all exceptions thrown by the plssvm::detail::io::parse_scaling_factors function
      */
     min_max_scaler(const std::string &filename);  // can't be explicit due to the data_set_variant
+    /**
+     * @brief Read the scaling interval and factors from the provided file @p filename.
+     * @param[in] comm the used MPI communicator (**note**: currently unused)
+     * @param[in] filename the filename to read the scaling information from
+     * @throws plssvm::invalid_file_format_exception all exceptions thrown by the plssvm::detail::io::parse_scaling_factors function
+     */
+    min_max_scaler(mpi::communicator comm, const std::string &filename);  // can't be explicit due to the data_set_variant
 
     /**
      * @brief Save the scaling factors to the file @p filename.
@@ -131,16 +148,27 @@ class min_max_scaler {
     std::pair<real_type, real_type> scaling_interval_{};
     /// The scaling factors for all features.
     std::vector<factors> scaling_factors_{};
+
+    /// The used MPI communicator.
+    mpi::communicator comm_{};
 };
 
 inline min_max_scaler::min_max_scaler(const real_type lower, const real_type upper) :
-    scaling_interval_{ std::make_pair(lower, upper) } {
+    min_max_scaler{ mpi::communicator{}, lower, upper } { }
+
+inline min_max_scaler::min_max_scaler(mpi::communicator comm, const real_type lower, const real_type upper) :
+    scaling_interval_{ std::make_pair(lower, upper) },
+    comm_{ std::move(comm) } {
     if (lower >= upper) {
         throw min_max_scaler_exception{ fmt::format("Inconsistent scaling interval specification: lower ({}) must be less than upper ({})!", lower, upper) };
     }
 }
 
-inline min_max_scaler::min_max_scaler(const std::string &filename) {
+inline min_max_scaler::min_max_scaler(const std::string &filename) :
+    min_max_scaler{ mpi::communicator{}, filename } { }
+
+inline min_max_scaler::min_max_scaler(mpi::communicator comm, const std::string &filename) :
+    comm_{ std::move(comm) } {
     // open the file
     detail::io::file_reader reader{ filename };
     reader.read_lines('#');
@@ -157,6 +185,7 @@ inline void min_max_scaler::save(const std::string &filename) const {
 
     const std::chrono::time_point end_time = std::chrono::steady_clock::now();
     detail::log(verbosity_level::full | verbosity_level::timing,
+                comm_,
                 "Write {} scaling factors in {} to the file '{}'.\n",
                 detail::tracking::tracking_entry{ "scaling_factors_write", "num_scaling_factors", scaling_factors_.size() },
                 detail::tracking::tracking_entry{ "scaling_factors_write", "time", std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time) },
@@ -227,6 +256,7 @@ void min_max_scaler::scale(plssvm::matrix<real_type, layout> &data) {
 
     const std::chrono::time_point end_time = std::chrono::steady_clock::now();
     detail::log(verbosity_level::full | verbosity_level::timing,
+                comm_,
                 "Scaled the data set to the range [{}, {}] in {}.\n",
                 detail::tracking::tracking_entry{ "data_set_scale", "lower", lower },
                 detail::tracking::tracking_entry{ "data_set_scale", "upper", upper },

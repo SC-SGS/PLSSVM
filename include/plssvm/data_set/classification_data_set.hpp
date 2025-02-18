@@ -24,6 +24,7 @@
 #include "plssvm/exceptions/exceptions.hpp"                // plssvm::data_set_exception
 #include "plssvm/file_format_types.hpp"                    // plssvm::file_format_type
 #include "plssvm/matrix.hpp"                               // plssvm::aos_matrix
+#include "plssvm/mpi/communicator.hpp"                     // plssvm::mpi::communicator
 #include "plssvm/shape.hpp"                                // plssvm::shape
 #include "plssvm/verbosity_levels.hpp"                     // plssvm::verbosity_level
 
@@ -82,104 +83,204 @@ class classification_data_set : public data_set<U> {
     class label_mapper;
 
     /**
-     * @copydoc plssvm::data_set::data_set(const std::string &)
+     * @copydoc plssvm::data_set::data_set(mpi::communicator, const std::string &)
      */
     explicit classification_data_set(const std::string &filename) :
-        base_data_set{ filename } { this->init(); }
+        base_data_set{ mpi::communicator{}, filename } { this->init(); }
 
     /**
-     * @copydoc plssvm::data_set::data_set(const std::string &, file_format_type)
+     * @copydoc plssvm::data_set::data_set(mpi::communicator, const std::string &)
+     */
+    classification_data_set(mpi::communicator comm, const std::string &filename) :
+        base_data_set{ std::move(comm), filename } { this->init(); }
+
+    /**
+     * @copydoc plssvm::data_set::data_set(mpi::communicator, const std::string &, file_format_type)
      */
     classification_data_set(const std::string &filename, file_format_type format) :
-        base_data_set{ filename, format } { this->init(); }
+        base_data_set{ mpi::communicator{}, filename, format } { this->init(); }
 
     /**
-     * @copydoc plssvm::data_set::data_set(const std::string &, min_max_scaler)
+     * @copydoc plssvm::data_set::data_set(mpi::communicator, const std::string &, file_format_type)
+     */
+    classification_data_set(mpi::communicator comm, const std::string &filename, file_format_type format) :
+        base_data_set{ std::move(comm), filename, format } { this->init(); }
+
+    /**
+     * @copydoc plssvm::data_set::data_set(mpi::communicator, const std::string &, min_max_scaler)
      */
     classification_data_set(const std::string &filename, min_max_scaler scaler) :
-        base_data_set{ filename, std::move(scaler) } { this->init(); }
+        base_data_set{ mpi::communicator{}, filename, std::move(scaler) } { this->init(); }
 
     /**
-     * @copydoc plssvm::data_set::data_set(const std::string &, file_format_type, min_max_scaler)
+     * @copydoc plssvm::data_set::data_set(mpi::communicator, const std::string &, min_max_scaler)
+     */
+    classification_data_set(mpi::communicator comm, const std::string &filename, min_max_scaler scaler) :
+        base_data_set{ std::move(comm), filename, std::move(scaler) } { this->init(); }
+
+    /**
+     * @copydoc plssvm::data_set::data_set(mpi::communicator, const std::string &, file_format_type, min_max_scaler)
      */
     classification_data_set(const std::string &filename, file_format_type format, min_max_scaler scaler) :
-        base_data_set{ filename, format, std::move(scaler) } { this->init(); }
+        base_data_set{ mpi::communicator{}, filename, format, std::move(scaler) } { this->init(); }
 
     /**
-     * @copydoc plssvm::data_set::data_set(const std::vector<std::vector<real_type>> &)
+     * @copydoc plssvm::data_set::data_set(mpi::communicator, const std::string &, file_format_type, min_max_scaler)
+     */
+    classification_data_set(mpi::communicator comm, const std::string &filename, file_format_type format, min_max_scaler scaler) :
+        base_data_set{ std::move(comm), filename, format, std::move(scaler) } { this->init(); }
+
+    /**
+     * @copydoc plssvm::data_set::data_set(mpi::communicator, const std::vector<std::vector<real_type>> &)
      */
     explicit classification_data_set(const std::vector<std::vector<real_type>> &data_points) :
-        base_data_set{ data_points } { this->init(); }
+        base_data_set{ mpi::communicator{}, data_points } { this->init(); }
 
     /**
-     * @copydoc plssvm::data_set::data_set(const std::vector<std::vector<real_type>> &, std::vector<label_type>)
+     * @copydoc plssvm::data_set::data_set(mpi::communicator, const std::vector<std::vector<real_type>> &)
+     */
+    explicit classification_data_set(mpi::communicator comm, const std::vector<std::vector<real_type>> &data_points) :
+        base_data_set{ std::move(comm), data_points } { this->init(); }
+
+    /**
+     * @copydoc plssvm::data_set::data_set(mpi::communicator, const std::vector<std::vector<real_type>> &, std::vector<label_type>)
      */
     classification_data_set(const std::vector<std::vector<real_type>> &data_points, std::vector<label_type> labels) :
-        base_data_set{ data_points, std::move(labels) } { this->init(); }
+        base_data_set{ mpi::communicator{}, data_points, std::move(labels) } { this->init(); }
 
     /**
-     * @copydoc plssvm::data_set::data_set(const std::vector<std::vector<real_type>> &, min_max_scaler)
+     * @copydoc plssvm::data_set::data_set(mpi::communicator, const std::vector<std::vector<real_type>> &, std::vector<label_type>)
+     */
+    classification_data_set(mpi::communicator comm, const std::vector<std::vector<real_type>> &data_points, std::vector<label_type> labels) :
+        base_data_set{ std::move(comm), data_points, std::move(labels) } { this->init(); }
+
+    /**
+     * @copydoc plssvm::data_set::data_set(mpi::communicator, const std::vector<std::vector<real_type>> &, min_max_scaler)
      */
     classification_data_set(const std::vector<std::vector<real_type>> &data_points, min_max_scaler scaler) :
-        base_data_set{ data_points, std::move(scaler) } { this->init(); }
+        base_data_set{ mpi::communicator{}, data_points, std::move(scaler) } { this->init(); }
 
     /**
-     * @copydoc plssvm::data_set::data_set(const std::vector<std::vector<real_type>> &, std::vector<label_type>, min_max_scaler)
+     * @copydoc plssvm::data_set::data_set(mpi::communicator, const std::vector<std::vector<real_type>> &, min_max_scaler)
+     */
+    classification_data_set(mpi::communicator comm, const std::vector<std::vector<real_type>> &data_points, min_max_scaler scaler) :
+        base_data_set{ std::move(comm), data_points, std::move(scaler) } { this->init(); }
+
+    /**
+     * @copydoc plssvm::data_set::data_set(mpi::communicator, const std::vector<std::vector<real_type>> &, std::vector<label_type>, min_max_scaler)
      */
     classification_data_set(const std::vector<std::vector<real_type>> &data_points, std::vector<label_type> labels, min_max_scaler scaler) :
-        base_data_set{ data_points, std::move(labels), std::move(scaler) } { this->init(); }
+        base_data_set{ mpi::communicator{}, data_points, std::move(labels), std::move(scaler) } { this->init(); }
 
     /**
-     * @copydoc plssvm::data_set::data_set(const matrix<real_type, layout> &)
+     * @copydoc plssvm::data_set::data_set(mpi::communicator, const std::vector<std::vector<real_type>> &, std::vector<label_type>, min_max_scaler)
+     */
+    classification_data_set(mpi::communicator comm, const std::vector<std::vector<real_type>> &data_points, std::vector<label_type> labels, min_max_scaler scaler) :
+        base_data_set{ std::move(comm), data_points, std::move(labels), std::move(scaler) } { this->init(); }
+
+    /**
+     * @copydoc plssvm::data_set::data_set(mpi::communicator, const matrix<real_type, layout> &)
      */
     template <layout_type layout>
     explicit classification_data_set(const matrix<real_type, layout> &data_points) :
-        base_data_set{ data_points } { this->init(); }
+        base_data_set{ mpi::communicator{}, data_points } { this->init(); }
 
     /**
-     * @copydoc plssvm::data_set::data_set(const matrix<real_type, layout> &, std::vector<label_type>)
+     * @copydoc plssvm::data_set::data_set(mpi::communicator, const matrix<real_type, layout> &)
+     */
+    template <layout_type layout>
+    explicit classification_data_set(mpi::communicator comm, const matrix<real_type, layout> &data_points) :
+        base_data_set{ std::move(comm), data_points } { this->init(); }
+
+    /**
+     * @copydoc plssvm::data_set::data_set(mpi::communicator, const matrix<real_type, layout> &, std::vector<label_type>)
      */
     template <layout_type layout>
     classification_data_set(const matrix<real_type, layout> &data_points, std::vector<label_type> labels) :
-        base_data_set{ data_points, std::move(labels) } { this->init(); }
+        base_data_set{ mpi::communicator{}, data_points, std::move(labels) } { this->init(); }
 
     /**
-     * @copydoc plssvm::data_set::data_set(const matrix<real_type, layout> &, min_max_scaler)
+     * @copydoc plssvm::data_set::data_set(mpi::communicator, const matrix<real_type, layout> &, std::vector<label_type>)
+     */
+    template <layout_type layout>
+    classification_data_set(mpi::communicator comm, const matrix<real_type, layout> &data_points, std::vector<label_type> labels) :
+        base_data_set{ std::move(comm), data_points, std::move(labels) } { this->init(); }
+
+    /**
+     * @copydoc plssvm::data_set::data_set(mpi::communicator, const matrix<real_type, layout> &, min_max_scaler)
      */
     template <layout_type layout>
     classification_data_set(const matrix<real_type, layout> &data_points, min_max_scaler scaler) :
-        base_data_set{ data_points, std::move(scaler) } { this->init(); }
+        base_data_set{ mpi::communicator{}, data_points, std::move(scaler) } { this->init(); }
 
     /**
-     * @copydoc plssvm::data_set::data_set(const matrix<real_type, layout> &, std::vector<label_type>, min_max_scaler)
+     * @copydoc plssvm::data_set::data_set(mpi::communicator, const matrix<real_type, layout> &, min_max_scaler)
+     */
+    template <layout_type layout>
+    classification_data_set(mpi::communicator comm, const matrix<real_type, layout> &data_points, min_max_scaler scaler) :
+        base_data_set{ std::move(comm), data_points, std::move(scaler) } { this->init(); }
+
+    /**
+     * @copydoc plssvm::data_set::data_set(mpi::communicator, const matrix<real_type, layout> &, std::vector<label_type>, min_max_scaler)
      */
     template <layout_type layout>
     classification_data_set(const matrix<real_type, layout> &data_points, std::vector<label_type> labels, min_max_scaler scaler) :
-        base_data_set{ data_points, std::move(labels), std::move(scaler) } { this->init(); }
+        base_data_set{ mpi::communicator{}, data_points, std::move(labels), std::move(scaler) } { this->init(); }
 
     /**
-     * @copydoc plssvm::data_set::data_set(soa_matrix<real_type> &&)
+     * @copydoc plssvm::data_set::data_set(mpi::communicator, const matrix<real_type, layout> &, std::vector<label_type>, min_max_scaler)
+     */
+    template <layout_type layout>
+    classification_data_set(mpi::communicator comm, const matrix<real_type, layout> &data_points, std::vector<label_type> labels, min_max_scaler scaler) :
+        base_data_set{ std::move(comm), data_points, std::move(labels), std::move(scaler) } { this->init(); }
+
+    /**
+     * @copydoc plssvm::data_set::data_set(mpi::communicator, soa_matrix<real_type> &&)
      */
     explicit classification_data_set(soa_matrix<real_type> &&data_points) :
-        base_data_set{ std::move(data_points) } { this->init(); }
+        base_data_set{ mpi::communicator{}, std::move(data_points) } { this->init(); }
 
     /**
-     * @copydoc plssvm::data_set::data_set(soa_matrix<real_type> &&, std::vector<label_type> &&)
+     * @copydoc plssvm::data_set::data_set(mpi::communicator, soa_matrix<real_type> &&)
+     */
+    explicit classification_data_set(mpi::communicator comm, soa_matrix<real_type> &&data_points) :
+        base_data_set{ std::move(comm), std::move(data_points) } { this->init(); }
+
+    /**
+     * @copydoc plssvm::data_set::data_set(mpi::communicator, soa_matrix<real_type> &&, std::vector<label_type> &&)
      */
     classification_data_set(soa_matrix<real_type> &&data_points, std::vector<label_type> &&labels) :
-        base_data_set{ std::move(data_points), std::move(labels) } { this->init(); }
+        base_data_set{ mpi::communicator{}, std::move(data_points), std::move(labels) } { this->init(); }
 
     /**
-     * @copydoc plssvm::data_set::data_set(soa_matrix<real_type> &&, min_max_scaler)
+     * @copydoc plssvm::data_set::data_set(mpi::communicator, soa_matrix<real_type> &&, std::vector<label_type> &&)
+     */
+    classification_data_set(mpi::communicator comm, soa_matrix<real_type> &&data_points, std::vector<label_type> &&labels) :
+        base_data_set{ std::move(comm), std::move(data_points), std::move(labels) } { this->init(); }
+
+    /**
+     * @copydoc plssvm::data_set::data_set(mpi::communicator, soa_matrix<real_type> &&, min_max_scaler)
      */
     classification_data_set(soa_matrix<real_type> &&data_points, min_max_scaler scaler) :
-        base_data_set{ std::move(data_points), std::move(scaler) } { this->init(); }
+        base_data_set{ mpi::communicator{}, std::move(data_points), std::move(scaler) } { this->init(); }
 
     /**
-     * @copydoc plssvm::data_set::data_set(soa_matrix<real_type> &&, std::vector<label_type> &&, min_max_scaler)
+     * @copydoc plssvm::data_set::data_set(mpi::communicator, soa_matrix<real_type> &&, min_max_scaler)
+     */
+    classification_data_set(mpi::communicator comm, soa_matrix<real_type> &&data_points, min_max_scaler scaler) :
+        base_data_set{ std::move(comm), std::move(data_points), std::move(scaler) } { this->init(); }
+
+    /**
+     * @copydoc plssvm::data_set::data_set(mpi::communicator, soa_matrix<real_type> &&, std::vector<label_type> &&, min_max_scaler)
      */
     classification_data_set(soa_matrix<real_type> &&data_points, std::vector<label_type> &&labels, min_max_scaler scaler) :
-        base_data_set{ std::move(data_points), std::move(labels), std::move(scaler) } { this->init(); }
+        base_data_set{ mpi::communicator{}, std::move(data_points), std::move(labels), std::move(scaler) } { this->init(); }
+
+    /**
+     * @copydoc plssvm::data_set::data_set(mpi::communicator, soa_matrix<real_type> &&, std::vector<label_type> &&, min_max_scaler)
+     */
+    classification_data_set(mpi::communicator comm, soa_matrix<real_type> &&data_points, std::vector<label_type> &&labels, min_max_scaler scaler) :
+        base_data_set{ std::move(comm), std::move(data_points), std::move(labels), std::move(scaler) } { this->init(); }
 
     /**
      * @copydoc plssvm::data_set::save
@@ -328,12 +429,14 @@ void classification_data_set<U>::init() {
     PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((detail::tracking::tracking_entry{ "data_set_create", "type", "classification" }));
     if (this->has_labels()) {
         detail::log(verbosity_level::full | verbosity_level::timing,
+                    this->communicator(),
                     "Created a classification data set with {} data points, {} features, and {} classes.\n",
                     detail::tracking::tracking_entry{ "data_set_create", "num_data_points", this->num_data_points() },
                     detail::tracking::tracking_entry{ "data_set_create", "num_features", this->num_features() },
                     detail::tracking::tracking_entry{ "data_set_create", "num_classes", this->num_classes() });
     } else {
         detail::log(verbosity_level::full | verbosity_level::timing,
+                    this->communicator(),
                     "Created a classification data set with {} data points and {} features.\n",
                     detail::tracking::tracking_entry{ "data_set_create", "num_data_points", this->num_data_points() },
                     detail::tracking::tracking_entry{ "data_set_create", "num_features", this->num_features() });
@@ -349,6 +452,7 @@ void classification_data_set<U>::save(const std::string &filename, const file_fo
 
     const std::chrono::time_point end_time = std::chrono::steady_clock::now();
     detail::log(verbosity_level::full | verbosity_level::timing,
+                this->communicator(),
                 "Write {} classification data points with {} features and {} classes in {} to the {} file '{}'.\n",
                 detail::tracking::tracking_entry{ "data_set_write", "num_data_points", this->num_data_points() },
                 detail::tracking::tracking_entry{ "data_set_write", "num_features", this->num_features() },

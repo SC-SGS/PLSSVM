@@ -23,19 +23,16 @@
 
 #include "fmt/format.h"  // fmt::format
 
-#include <algorithm>    // std::for_each
 #include <chrono>       // std::chrono::{time_point, steady_clock, duration_cast, milliseconds}, std::chrono_literals namespace
 #include <cstddef>      // std::size_t
 #include <cstdlib>      // EXIT_SUCCESS, EXIT_FAILURE
 #include <exception>    // std::exception
 #include <filesystem>   // std::filesystem::path
-#include <functional>   // std::mem_fn
 #include <iostream>     // std::cerr, std::endl
 #include <memory>       // std::unique_ptr, std::make_unique
 #include <string>       // std::string
 #include <string_view>  // std::string_view
 #include <type_traits>  // std::remove_reference_t
-#include <utility>      // std::pair
 #include <variant>      // std::visit
 #include <vector>       // std::vector
 
@@ -121,8 +118,8 @@ int main(int argc, char *argv[]) {
 
         // output used parameter
         plssvm::detail::log(plssvm::verbosity_level::full,
-                            "\ntask: training ({})\n{}\n\n\n",
                             comm,
+                            "\ntask: training ({})\n{}\n\n\n",
                             plssvm::svm_type_to_task_name(cmd_parser.svm),
                             plssvm::detail::tracking::tracking_entry{ "parameter", "", cmd_parser });
 

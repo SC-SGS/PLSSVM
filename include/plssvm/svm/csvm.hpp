@@ -57,6 +57,11 @@ namespace plssvm {
 class csvm {
   public:
     /**
+     * @brief Default constructor.
+     * @details Needed due to multiple-inheritance.
+     */
+    csvm() = default;
+    /**
      * @brief Construct a C-SVM using the SVM parameter @p params.
      * @details Uses the default SVM parameter if none are provided.
      * @param[in] comm the used MPI communicator (**note**: currently unused)
@@ -244,15 +249,15 @@ class csvm {
 };
 
 inline csvm::csvm(mpi::communicator comm, parameter params) :
-    comm_{ std::move(comm) },
-    params_{ params } {
+    params_{ params },
+    comm_{ std::move(comm) } {
     this->sanity_check_parameter();
 }
 
 template <typename... Args>
 csvm::csvm(mpi::communicator comm, Args &&...named_args) :
-    comm_{ std::move(comm) },
-    params_{ std::forward<Args>(named_args)... } {
+    params_{ std::forward<Args>(named_args)... },
+    comm_{ std::move(comm) } {
     this->sanity_check_parameter();
 }
 

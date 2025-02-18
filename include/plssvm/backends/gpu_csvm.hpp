@@ -55,20 +55,10 @@ class gpu_csvm : virtual public ::plssvm::csvm {
     using pinned_memory_type = pinned_memory_t<real_type>;
 
     /**
-     * @copydoc plssvm::csvm::csvm()
+     * @brief Default constructor.
+     * @details Needed due to multiple-inheritance.
      */
-    explicit gpu_csvm(mpi::communicator comm, parameter params = {}) :
-        ::plssvm::csvm{ std::move(comm), params } { }
-
-    /**
-     * @brief Construct a C-SVM forwarding all parameters @p args to the plssvm::parameter constructor.
-     * @tparam Args the type of the (named-)parameters
-     * @param[in] comm the used MPI communicator (**note**: currently unused)
-     * @param[in] args the parameters used to construct a plssvm::parameter
-     */
-    template <typename... Args>
-    explicit gpu_csvm(mpi::communicator comm, Args &&...args) :
-        ::plssvm::csvm{ std::move(comm), std::forward<Args>(args)... } { }
+    gpu_csvm() = default;
 
     /**
      * @copydoc plssvm::csvm::csvm(const plssvm::csvm &)

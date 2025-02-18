@@ -16,12 +16,12 @@
 #include <cstdint>  // std::uint_least32_t
 
 // dummy function to be able to specify the function name
-constexpr plssvm::source_location dummy() {
+[[nodiscard]] plssvm::source_location dummy() {
     return plssvm::source_location::current();
 }
 
 TEST(SourceLocation, default_construct) {
-    constexpr plssvm::source_location loc{};
+    const plssvm::source_location loc{};
 
     EXPECT_EQ(loc.file_name(), std::string{ "unknown" });
     EXPECT_EQ(loc.function_name(), std::string{ "unknown" });
@@ -30,7 +30,7 @@ TEST(SourceLocation, default_construct) {
 }
 
 TEST(SourceLocation, current_location) {
-    constexpr plssvm::source_location loc = dummy();
+    const plssvm::source_location loc = dummy();
 
     EXPECT_EQ(loc.file_name(), __builtin_FILE());
     EXPECT_THAT(loc.function_name(), ::testing::HasSubstr("dummy"));
