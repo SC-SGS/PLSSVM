@@ -30,7 +30,7 @@ int main() {
     const plssvm::regression_model model = svr->fit(train_data_with_label);
 
     // score a new, unseen data set
-    const double score = svr->score(model, test_data);
+    const double model_score = svr->score(model, test_data);
     std::cout << "score: " << model_score << std::endl;
 
     //
