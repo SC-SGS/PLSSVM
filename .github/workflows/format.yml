@@ -31,6 +31,7 @@ jobs:
           cmake --preset all -DPLSSVM_TARGET_PLATFORMS="cpu" -DPLSSVM_ENABLE_FORMATTING=ON
       # check source file formatting
       - name: "Check source file formatting via clang-format"
+        if: always()
         run: |
           set +e
           cd PLSSVM
@@ -53,6 +54,7 @@ jobs:
           if-no-files-found: ignore
       # check CMake formatting
       - name: "Check CMake formatting via cmake-format"
+        if: always()
         run: |
           set +e
           cd PLSSVM
