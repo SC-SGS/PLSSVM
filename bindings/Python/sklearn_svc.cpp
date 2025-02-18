@@ -557,9 +557,9 @@ void init_sklearn_svc(py::module_ &m) {
 // copy the support vectors to the binary support vectors
 // NOTE: it seems that MSVC doesn't like the collapse clause inside a lambda function
 #if defined(_MSC_VER)
-#pragma omp parallel for
+    #pragma omp parallel for
 #else
-#pragma omp parallel for collapse(2)
+    #pragma omp parallel for collapse(2)
 #endif
                                             for (std::size_t si = 0; si < num_data_points_in_sub_matrix; ++si) {
                                                 for (std::size_t dim = 0; dim < num_features; ++dim) {
