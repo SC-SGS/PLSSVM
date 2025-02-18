@@ -38,10 +38,9 @@ if not args.gpus_only:
         "sse4_2": False,
     }
 
-    proc = subprocess.Popen(["lscpu"], stdout=subprocess.PIPE, shell=True)
-    (out, err) = proc.communicate()
-    for simd_version in simd_version_support.keys():
-        if simd_version in str(out):
+    result = subprocess.run(["lscpu"], capture_output=True, text=True, check=True)
+    for simd_version in simd_version_support:
+        if simd_version in str(result.stdout):
             simd_version_support[simd_version] = True
 
     cond_print("supported CPU SIMD flags: {}\n".format(simd_version_support))
@@ -109,9 +108,10 @@ if len(amd_gpus)>0:
 
 # Intel GPU information
 intel_gpus = []
-pci_entry = subprocess.Popen(["lspci -nn | grep  -Ei 'VGA|DISPLAY'"], stdout=subprocess.PIPE, shell=True)
-(out, err) = pci_entry.communicate()
-for vga in str(out).splitlines():
+pci_entry = subprocess.run(["lspci", "-nn"], capture_output=True, text=True, check=True)
+output_lines = [line for line in pci_entry.stdout.splitlines() if "VGA" in line or "DISPLAY" in line]
+
+for vga in output_lines:
     # check if the device is an Intel GPU
     if "Intel" in vga:
         # extract the architecture hex-value from the lspci line
