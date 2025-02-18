@@ -1,4 +1,6 @@
-# import all bindings from the compiled PLSSVM module
+# import the plssvm module explicitly
+from . import plssvm
+# export everything
 from .plssvm import *  # noqa: F405
 
 # explicitly set the module level attributes
