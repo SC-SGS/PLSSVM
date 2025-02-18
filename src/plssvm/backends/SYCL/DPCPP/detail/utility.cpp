@@ -47,8 +47,6 @@ namespace plssvm::dpcpp::detail {
                 // the current device is a GPU
                 // get vendor string and convert it to all lower case
                 const std::string vendor_string = ::plssvm::detail::as_lower_case(device.get_info<::sycl::info::device::vendor>());
-                // get platform name of current GPU device and convert it to all lower case
-                const std::string platform_string = ::plssvm::detail::as_lower_case(platform.get_info<::sycl::info::platform::name>());
 
                 // check vendor string and insert to correct target platform
                 if (::plssvm::detail::contains(vendor_string, "nvidia") && ::plssvm::detail::contains(available_target_platforms, target_platform::gpu_nvidia)) {
@@ -66,6 +64,8 @@ namespace plssvm::dpcpp::detail {
                 } else if (::plssvm::detail::contains(vendor_string, "intel") || ::plssvm::detail::contains(available_target_platforms, target_platform::gpu_intel)) {
                     // select between DPC++'s OpenCL and Level-Zero backend
 #if defined(PLSSVM_SYCL_BACKEND_DPCPP_BACKEND_TYPE)
+                    // get platform name of current GPU device and convert it to all lower case
+                    const std::string platform_string = ::plssvm::detail::as_lower_case(platform.get_info<::sycl::info::platform::name>());
                     if (::plssvm::detail::contains(platform_string, PLSSVM_SYCL_BACKEND_DPCPP_BACKEND_TYPE)) {
                         platform_devices.insert({ target_platform::gpu_intel, device });
                     }
