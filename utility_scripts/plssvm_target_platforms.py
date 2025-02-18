@@ -75,7 +75,7 @@ try:
     if len(nvidia_gpus)>0:
         cond_print("Found {} NVIDIA GPU(s): [{}]\n".format(len(nvidia_gpus), ", ".join(nvidia_gpus)))
         plssvm_target_platforms.append("nvidia:" + ",".join(set(nvidia_gpus)))
-except:
+except Exception:
     pass
 
 # AMD GPU information
