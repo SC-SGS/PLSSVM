@@ -8,12 +8,12 @@
 
 #include "plssvm/mpi/detail/information.hpp"
 
-#include "plssvm/backend_types.hpp"                                // plssvm::backend_type
-#include "plssvm/detail/logging_without_performance_tracking.hpp"  // plssvm::detail::log_untracked
-#include "plssvm/mpi/communicator.hpp"                             // plssvm::mpi::communicator
-#include "plssvm/solver_types.hpp"                                 // plssvm::solver_type
-#include "plssvm/target_platforms.hpp"                             // plssvm::target_platform
-#include "plssvm/verbosity_levels.hpp"                             // plssvm::verbosity_level
+#include "plssvm/backend_types.hpp"                     // plssvm::backend_type
+#include "plssvm/detail/logging/mpi_log_untracked.hpp"  // plssvm::detail::log_untracked
+#include "plssvm/mpi/communicator.hpp"                  // plssvm::mpi::communicator
+#include "plssvm/solver_types.hpp"                      // plssvm::solver_type
+#include "plssvm/target_platforms.hpp"                  // plssvm::target_platform
+#include "plssvm/verbosity_levels.hpp"                  // plssvm::verbosity_level
 
 #include "fmt/format.h"  // fmt::format
 #include "fmt/ranges.h"  // fmt::join

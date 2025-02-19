@@ -16,7 +16,7 @@
 #include "plssvm/constants.hpp"                            // plssvm::real_type
 #include "plssvm/detail/io/file_reader.hpp"                // plssvm::detail::io::file_reader
 #include "plssvm/detail/io/scaling_factors_parsing.hpp"    // plssvm::detail::io::parse_scaling_factors
-#include "plssvm/detail/logging.hpp"                       // plssvm::detail::log
+#include "plssvm/detail/logging/mpi_log.hpp"               // plssvm::detail::log
 #include "plssvm/detail/tracking/performance_tracker.hpp"  // plssvm::detail::tracking_entry
 #include "plssvm/exceptions/exceptions.hpp"                // plssvm::min_max_scaler_exception
 #include "plssvm/matrix.hpp"                               // plssvm::matrix, plssvm::layout_type

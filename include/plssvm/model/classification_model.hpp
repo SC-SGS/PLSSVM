@@ -20,7 +20,7 @@
 #include "plssvm/detail/assert.hpp"                                  // PLSSVM_ASSERT
 #include "plssvm/detail/io/classification_libsvm_model_parsing.hpp"  // plssvm::detail::io::{parse_libsvm_model_header_classification, parse_libsvm_model_data_classification, write_libsvm_model_data_classification}
 #include "plssvm/detail/io/file_reader.hpp"                          // plssvm::detail::io::file_reader
-#include "plssvm/detail/logging.hpp"                                 // plssvm::detail::log
+#include "plssvm/detail/logging/mpi_log.hpp"                         // plssvm::detail::log
 #include "plssvm/detail/tracking/performance_tracker.hpp"            // PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY, plssvm::detail::tracking::tracking_entry
 #include "plssvm/detail/type_list.hpp"                               // plssvm::detail::{supported_label_types, tuple_contains_v}
 #include "plssvm/matrix.hpp"                                         // plssvm::soa_matrix, plssvm::aos_matrix

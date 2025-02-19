@@ -16,7 +16,7 @@
 #include "plssvm/constants.hpp"                            // plssvm::PADDING_SIZE, plssvm::real_type
 #include "plssvm/data_set/regression_data_set.hpp"         // plssvm::regression_data_set
 #include "plssvm/detail/assert.hpp"                        // PLSSVM_ASSERT
-#include "plssvm/detail/logging.hpp"                       // plssvm::detail::log
+#include "plssvm/detail/logging/mpi_log.hpp"               // plssvm::detail::log
 #include "plssvm/detail/tracking/performance_tracker.hpp"  // PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_EVENT, plssvm::detail::tracking::tracking_entry
 #include "plssvm/exceptions/exceptions.hpp"                // plssvm::invalid_parameter_exception
 #include "plssvm/kernel_function_types.hpp"                // plssvm::kernel_function_type

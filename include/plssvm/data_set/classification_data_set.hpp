@@ -17,7 +17,7 @@
 #include "plssvm/data_set/data_set.hpp"                    // plssvm::data_set
 #include "plssvm/data_set/min_max_scaler.hpp"              // plssvm::min_max_scaler
 #include "plssvm/detail/assert.hpp"                        // PLSSVM_ASSERT
-#include "plssvm/detail/logging.hpp"                       // plssvm::detail::log
+#include "plssvm/detail/logging/mpi_log.hpp"               // plssvm::detail::log
 #include "plssvm/detail/tracking/performance_tracker.hpp"  // PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY, plssvm::detail::tracking::tracking_entry
 #include "plssvm/detail/type_list.hpp"                     // plssvm::detail::{supported_label_types_classification, tuple_contains_v}
 #include "plssvm/detail/utility.hpp"                       // plssvm::detail::contains

@@ -22,7 +22,7 @@
 #include "plssvm/constants.hpp"                                                       // plssvm::THREAD_BLOCK_SIZE, plssvm::INTERNAL_BLOCK_SIZE, plssvm::FEATURE_BLOCK_SIZE
 #include "plssvm/detail/assert.hpp"                                                   // PLSSVM_ASSERT
 #include "plssvm/detail/data_distribution.hpp"                                        // plssvm::detail::triangular_data_distribution
-#include "plssvm/detail/logging.hpp"                                                  // plssvm::detail::log
+#include "plssvm/detail/logging/log.hpp"                                              // plssvm::detail::log
 #include "plssvm/detail/memory_size.hpp"                                              // plssvm::detail::memory_size
 #include "plssvm/detail/tracking/performance_tracker.hpp"                             // plssvm::detail::tracking::tracking_entry
 #include "plssvm/detail/type_traits.hpp"                                              // plssvm::detail::remove_cvref_t

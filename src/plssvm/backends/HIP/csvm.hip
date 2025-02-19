@@ -20,7 +20,7 @@
 #include "plssvm/constants.hpp"                                                        // plssvm::{real_type, THREAD_BLOCK_SIZE, INTERNAL_BLOCK_SIZE, PADDING_SIZE}
 #include "plssvm/detail/assert.hpp"                                                    // PLSSVM_ASSERT
 #include "plssvm/detail/data_distribution.hpp"                                         // plssvm::detail::{data_distribution, triangular_data_distribution, rectangular_data_distribution}
-#include "plssvm/detail/logging.hpp"                                                   // plssvm::detail::log
+#include "plssvm/detail/logging/log.hpp"                                               // plssvm::detail::log
 #include "plssvm/detail/memory_size.hpp"                                               // plssvm::detail::memory_size
 #include "plssvm/detail/tracking/performance_tracker.hpp"                              // plssvm::detail::tracking::tracking_entry
 #include "plssvm/exceptions/exceptions.hpp"                                            // plssvm::exception

@@ -8,23 +8,23 @@
 
 #include "plssvm/detail/cmd/parser_train.hpp"
 
-#include "plssvm/backend_types.hpp"                                // plssvm::list_available_backends, plssvm::determine_default_backend
-#include "plssvm/backends/Kokkos/execution_space.hpp"              // plssvm::kokkos::{list_available_execution_spaces, execution_space}
-#include "plssvm/backends/SYCL/implementation_types.hpp"           // plssvm::sycl::{list_available_sycl_implementations, implementation_type}
-#include "plssvm/backends/SYCL/kernel_invocation_types.hpp"        // plssvm::sycl::kernel_invocation_type
-#include "plssvm/classification_types.hpp"                         // plssvm::classification_type, plssvm::classification_type_to_full_string
-#include "plssvm/constants.hpp"                                    // plssvm::real_type
-#include "plssvm/detail/assert.hpp"                                // PLSSVM_ASSERT
-#include "plssvm/detail/logging_without_performance_tracking.hpp"  // plssvm::detail::log_untracked
-#include "plssvm/detail/utility.hpp"                               // plssvm::detail::to_underlying
-#include "plssvm/gamma.hpp"                                        // plssvm::get_gamma_string
-#include "plssvm/kernel_function_types.hpp"                        // plssvm::kernel_type_to_math_string
-#include "plssvm/mpi/communicator.hpp"                             // plssvm::mpi::communicator
-#include "plssvm/mpi/environment.hpp"                              // plssvm::mpi::{is_active, finalize}
-#include "plssvm/svm_types.hpp"                                    // plssvm::svm_type
-#include "plssvm/target_platforms.hpp"                             // plssvm::list_available_target_platforms
-#include "plssvm/verbosity_levels.hpp"                             // plssvm::verbosity, plssvm::verbosity_level
-#include "plssvm/version/version.hpp"                              // plssvm::version::detail::get_version_info
+#include "plssvm/backend_types.hpp"                          // plssvm::list_available_backends, plssvm::determine_default_backend
+#include "plssvm/backends/Kokkos/execution_space.hpp"        // plssvm::kokkos::{list_available_execution_spaces, execution_space}
+#include "plssvm/backends/SYCL/implementation_types.hpp"     // plssvm::sycl::{list_available_sycl_implementations, implementation_type}
+#include "plssvm/backends/SYCL/kernel_invocation_types.hpp"  // plssvm::sycl::kernel_invocation_type
+#include "plssvm/classification_types.hpp"                   // plssvm::classification_type, plssvm::classification_type_to_full_string
+#include "plssvm/constants.hpp"                              // plssvm::real_type
+#include "plssvm/detail/assert.hpp"                          // PLSSVM_ASSERT
+#include "plssvm/detail/logging/mpi_log_untracked.hpp"       // plssvm::detail::log_untracked
+#include "plssvm/detail/utility.hpp"                         // plssvm::detail::to_underlying
+#include "plssvm/gamma.hpp"                                  // plssvm::get_gamma_string
+#include "plssvm/kernel_function_types.hpp"                  // plssvm::kernel_type_to_math_string
+#include "plssvm/mpi/communicator.hpp"                       // plssvm::mpi::communicator
+#include "plssvm/mpi/environment.hpp"                        // plssvm::mpi::{is_active, finalize}
+#include "plssvm/svm_types.hpp"                              // plssvm::svm_type
+#include "plssvm/target_platforms.hpp"                       // plssvm::list_available_target_platforms
+#include "plssvm/verbosity_levels.hpp"                       // plssvm::verbosity, plssvm::verbosity_level
+#include "plssvm/version/version.hpp"                        // plssvm::version::detail::get_version_info
 
 #include "cxxopts.hpp"   // cxxopts::Options, cxxopts::value,cxxopts::ParseResult
 #include "fmt/color.h"   // fmt::fg, fmt::color::red

@@ -13,12 +13,12 @@
 #define PLSSVM_DETAIL_MATRIX_HPP_
 #pragma once
 
-#include "plssvm/detail/assert.hpp"                                // PLSSVM_ASSERT
-#include "plssvm/detail/logging_without_performance_tracking.hpp"  // plssvm::detail::log_untracked
-#include "plssvm/detail/utility.hpp"                               // plssvm::detail::{always_false_v, unreachable}
-#include "plssvm/exceptions/exceptions.hpp"                        // plssvm::matrix_exception
-#include "plssvm/shape.hpp"                                        // plssvm::shape
-#include "plssvm/verbosity_levels.hpp"                             // plssvm::verbosity_level
+#include "plssvm/detail/assert.hpp"                 // PLSSVM_ASSERT
+#include "plssvm/detail/logging/log_untracked.hpp"  // plssvm::detail::log_untracked
+#include "plssvm/detail/utility.hpp"                // plssvm::detail::{always_false_v, unreachable}
+#include "plssvm/exceptions/exceptions.hpp"         // plssvm::matrix_exception
+#include "plssvm/shape.hpp"                         // plssvm::shape
+#include "plssvm/verbosity_levels.hpp"              // plssvm::verbosity_level
 
 #include "fmt/base.h"     // fmt::formatter
 #include "fmt/color.h"    // fmt::fg, fmt::color::orange

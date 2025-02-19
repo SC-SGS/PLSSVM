@@ -13,9 +13,6 @@
 #define PLSSVM_EXCEPTIONS_SOURCE_LOCATION_HPP_
 #pragma once
 
-#include "plssvm/mpi/communicator.hpp"  // plssvm::mpi::communicator
-#include "plssvm/mpi/environment.hpp"   // plssvm::mpi::is_active
-
 #include <cstdint>      // std::uint_least32_t
 #include <optional>     // std::optional, std::nullopt, std::make_optional
 #include <string_view>  // std::string_view
@@ -40,25 +37,7 @@ class source_location {
         const char *file_name = __builtin_FILE(),
         const char *function_name = __builtin_FUNCTION(),
         int line = __builtin_LINE(),
-        int column = 0) noexcept {
-        source_location loc;
-
-        loc.file_name_ = file_name;
-        loc.function_name_ = function_name;
-        loc.line_ = static_cast<std::uint_least32_t>(line);
-        loc.column_ = static_cast<uint_least32_t>(column);
-
-        // try getting the MPI rank wrt to MPI_COMM_WORLD
-        try {
-            if (mpi::is_active()) {
-                loc.world_rank_ = std::make_optional(mpi::communicator{}.rank());
-            }
-        } catch (...) {
-            // std::nullopt
-        }
-
-        return loc;
-    }
+        int column = 0) noexcept;
 
     /**
      * @brief Returns the absolute path name of the file or `"unknown"` if no information could be retrieved.

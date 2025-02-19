@@ -18,7 +18,7 @@
 #include "plssvm/data_set/classification_data_set.hpp"     // plssvm::classification_data_set
 #include "plssvm/detail/assert.hpp"                        // PLSSVM_ASSERT
 #include "plssvm/detail/igor_utility.hpp"                  // plssvm::detail::{has_only_named_args_v, get_value_from_named_parameter}
-#include "plssvm/detail/logging.hpp"                       // plssvm::detail::log
+#include "plssvm/detail/logging/mpi_log.hpp"               // plssvm::detail::log
 #include "plssvm/detail/tracking/performance_tracker.hpp"  // PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_EVENT, plssvm::detail::tracking::tracking_entry
 #include "plssvm/detail/utility.hpp"                       // plssvm::detail::contains
 #include "plssvm/exceptions/exceptions.hpp"                // plssvm::invalid_parameter_exception

@@ -20,7 +20,7 @@
 #include "plssvm/detail/assert.hpp"                     // PLSSVM_ASSERT
 #include "plssvm/detail/io/file_reader.hpp"             // plssvm::detail::io::file_reader
 #include "plssvm/detail/io/libsvm_parsing.hpp"          // plssvm::detail::io::parse_libsvm_num_features
-#include "plssvm/detail/logging.hpp"                    // plssvm::detail::log
+#include "plssvm/detail/logging/mpi_log_untracked.hpp"  // plssvm::detail::log_untracked
 #include "plssvm/detail/memory_size.hpp"                // plssvm::memory_size, custom literals
 #include "plssvm/detail/string_conversion.hpp"          // plssvm::detail::{convert_to, split_as}
 #include "plssvm/detail/string_utility.hpp"             // plssvm::detail::{trim, trim_left, to_lower_case}
@@ -637,10 +637,10 @@ template <typename label_type>
                               fmt::join(rho, " "));
 
     // print model header
-    detail::log(verbosity_level::full | verbosity_level::libsvm,
-                comm,
-                "\n{}\n",
-                out_string);
+    detail::log_untracked(verbosity_level::full | verbosity_level::libsvm,
+                          comm,
+                          "\n{}\n",
+                          out_string);
     // write model header to file
     out.print("{}", out_string);
 
