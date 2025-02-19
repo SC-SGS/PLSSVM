@@ -480,7 +480,7 @@ template <typename label_type>
                     if (index == 0) {
                         // NOTE: must be in two lines due to nvc++ test errors
                         const std::string msg{ "LIBSVM assumes a 1-based feature indexing scheme, but 0 was given!" };
-                        throw invalid_file_format_exception{  };
+                        throw invalid_file_format_exception{ msg };
                     }
                     // the indices must be strictly increasing!
                     if (last_index >= index) {
