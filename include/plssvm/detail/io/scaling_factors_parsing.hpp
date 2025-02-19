@@ -91,13 +91,17 @@ template <typename factors_type>
                 const std::vector<real_type> values = detail::split_as<real_type>(line);
                 // check if the line contains the correct number of values
                 if (values.size() != 3) {
-                    throw invalid_file_format_exception{ fmt::format("Each line must contain exactly three values, but {} were given!", values.size()) };
+                    // NOTE: must be in two lines due to nvc++ test errors
+                    const std::string msg = fmt::format("Each line must contain exactly three values, but {} were given!", values.size());
+                    throw invalid_file_format_exception{ msg };
                 }
                 // set the scaling factor based on the parsed values
                 const auto feature = static_cast<decltype(scaling_factors[i].feature)>(values[0]);
                 // check if we are one-based, i.e., no 0 must be read as feature value
                 if (feature == 0) {
-                    throw invalid_file_format_exception{ "The scaling factors must be provided one-based, but are zero-based!" };
+                    // NOTE: must be in two lines due to nvc++ test errors
+                    const std::string msg{ "The scaling factors must be provided one-based, but are zero-based!" };
+                    throw invalid_file_format_exception{ msg };
                 }
                 scaling_factors[i].feature = feature - 1;
                 scaling_factors[i].lower = values[1];

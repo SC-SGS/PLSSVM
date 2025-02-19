@@ -78,13 +78,17 @@ template <typename T, typename Exception = std::runtime_error, PLSSVM_REQUIRES((
         const std::string_view trimmed = trim(str);
         // since we expect a character, after trimming the string must only contain exactly one character
         if (trimmed.size() != 1) {
-            throw Exception{ fmt::format("Can't convert '{}' to a value of type char!", str) };
+            // NOTE: must be in two lines due to nvc++ test errors
+            const std::string msg = fmt::format("Can't convert '{}' to a value of type char!", str);
+            throw Exception{ msg };
         }
         return trimmed.front();
     } else if constexpr (std::is_floating_point_v<remove_cvref_t<T>>) {
         const auto [val, err] = convert_to_floating_point<T>(str);
         if (err != std::errc{}) {
-            throw Exception{ fmt::format("Can't convert '{}' to a value of type {}!", str, arithmetic_type_name<T>()) };
+            // NOTE: must be in two lines due to nvc++ test errors
+            const std::string msg = fmt::format("Can't convert '{}' to a value of type {}!", str, arithmetic_type_name<T>());
+            throw Exception{ msg };
         }
         return val;
     } else {
@@ -95,7 +99,9 @@ template <typename T, typename Exception = std::runtime_error, PLSSVM_REQUIRES((
         T val;
         auto res = std::from_chars(trimmed_str.data(), trimmed_str.data() + trimmed_str.size(), val);
         if (res.ec != std::errc{}) {
-            throw Exception{ fmt::format("Can't convert '{}' to a value of type {}!", str, arithmetic_type_name<T>()) };
+            // NOTE: must be in two lines due to nvc++ test errors
+            const std::string msg = fmt::format("Can't convert '{}' to a value of type {}!", str, arithmetic_type_name<T>());
+            throw Exception{ msg };
         }
         return val;
     }

@@ -269,7 +269,9 @@ template <typename label_type>
                 std::string_view line = reader.line(i + num_header_lines);
                 // there must not be any @ inside the data section
                 if (detail::starts_with(line, '@')) {
-                    throw invalid_file_format_exception{ fmt::format("Read @ inside data section!: \"{}\"!", line) };
+                    // NOTE: must be in two lines due to nvc++ test errors
+                    const std::string msg = fmt::format("Read @ inside data section!: \"{}\"!", line);
+                    throw invalid_file_format_exception{ msg };
                 }
 
                 // parse sparse or dense data point definition
@@ -277,7 +279,9 @@ template <typename label_type>
                 if (detail::starts_with(line, '{')) {
                     // -> sparse data point given, but the closing brace is missing
                     if (!detail::ends_with(line, '}')) {
-                        throw invalid_file_format_exception{ fmt::format("Missing closing '}}' for sparse data point \"{}\" description!", line) };
+                        // NOTE: must be in two lines due to nvc++ test errors
+                        const std::string msg = fmt::format("Missing closing '}}' for sparse data point \"{}\" description!", line);
+                        throw invalid_file_format_exception{ msg };
                     }
                     // parse the sparse line
                     bool is_class_set = false;
@@ -293,7 +297,9 @@ template <typename label_type>
                         auto index = detail::convert_to<unsigned long, invalid_file_format_exception>(line.substr(pos, next_pos - pos));
                         if (index >= num_attributes) {
                             // index too big for specified number of features
-                            throw invalid_file_format_exception{ fmt::format("Trying to add feature/label at index {} but the maximum index is {}!", index, num_attributes - 1) };
+                            // NOTE: must be in two lines due to nvc++ test errors
+                            const std::string msg = fmt::format("Trying to add feature/label at index {} but the maximum index is {}!", index, num_attributes - 1);
+                            throw invalid_file_format_exception{ msg };
                         }
                         pos = next_pos + 1;
 
@@ -335,12 +341,16 @@ template <typename label_type>
                     // check if the last character is a closing brace
                     if (detail::ends_with(line, '}')) {
                         // no dense line given but a sparse line with a missing opening brace
-                        throw invalid_file_format_exception{ fmt::format("Missing opening '{{' for sparse data point \"{}\" description!", line) };
+                        // NOTE: must be in two lines due to nvc++ test errors
+                        const std::string msg = fmt::format("Missing opening '{{' for sparse data point \"{}\" description!", line);
+                        throw invalid_file_format_exception{ msg };
                     }
                     // dense line given
                     const std::vector<std::string_view> line_split = detail::split(line, ',');
                     if (line_split.size() != num_attributes) {
-                        throw invalid_file_format_exception{ fmt::format("Invalid number of features and labels! Found {} but should be {}!", line_split.size(), num_attributes) };
+                        // NOTE: must be in two lines due to nvc++ test errors
+                        const std::string msg = fmt::format("Invalid number of features and labels! Found {} but should be {}!", line_split.size(), num_attributes);
+                        throw invalid_file_format_exception{ msg };
                     }
                     for (std::size_t j = 0; j < num_attributes; ++j) {
                         if (has_label && label_idx == j) {
@@ -362,7 +372,9 @@ template <typename label_type>
 
                 // check if the parsed label is one of the labels specified in the ARFF file header
                 if (has_label && !unique_label.empty() && !detail::contains(unique_label, static_cast<label_type>(label[i]))) {
-                    throw invalid_file_format_exception{ fmt::format("Found the label \"{}\" which was not specified in the header ({{{}}})!", static_cast<label_type>(label[i]), fmt::join(unique_label, ", ")) };
+                    // NOTE: must be in two lines due to nvc++ test errors
+                    const std::string msg = fmt::format("Found the label \"{}\" which was not specified in the header ({{{}}})!", static_cast<label_type>(label[i]), fmt::join(unique_label, ", "));
+                    throw invalid_file_format_exception{ msg };
                 }
             } catch (const std::exception &) {
 // catch first exception and store it

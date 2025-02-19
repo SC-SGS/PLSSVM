@@ -436,7 +436,9 @@ template <typename label_type>
                     const std::string_view::size_type next_pos = line.find_first_of(" \n", pos);
                     if (first_colon >= next_pos) {
                         if (alpha_val >= max_num_alpha_values) {
-                            throw invalid_file_format_exception{ fmt::format("Can't parse file: needed at most {} alpha values, but more ({}) were provided!", max_num_alpha_values, alpha_val + 1) };
+                            // NOTE: must be in two lines due to nvc++ test errors
+                            const std::string msg = fmt::format("Can't parse file: needed at most {} alpha values, but more ({}) were provided!", max_num_alpha_values, alpha_val + 1);
+                            throw invalid_file_format_exception{ msg };
                         }
 
                         // get alpha value
@@ -448,7 +450,9 @@ template <typename label_type>
                     }
                 }
                 if (alpha_val < max_num_alpha_values - 1) {
-                    throw invalid_file_format_exception{ fmt::format("Can't parse file: needed at least {} alpha values, but fewer ({}) were provided!", max_num_alpha_values - 1, alpha_val) };
+                    // NOTE: must be in two lines due to nvc++ test errors
+                    const std::string msg = fmt::format("Can't parse file: needed at least {} alpha values, but fewer ({}) were provided!", max_num_alpha_values - 1, alpha_val);
+                    throw invalid_file_format_exception{ msg };
                 }
 
                 // check whether we read a file given OAA classification or OAO classification
@@ -474,11 +478,15 @@ template <typename label_type>
 
                     // LIBSVM assumes a 1-based indexing -> if the parsed index is 0 this condition is violated
                     if (index == 0) {
-                        throw invalid_file_format_exception{ "LIBSVM assumes a 1-based feature indexing scheme, but 0 was given!" };
+                        // NOTE: must be in two lines due to nvc++ test errors
+                        const std::string msg{ "LIBSVM assumes a 1-based feature indexing scheme, but 0 was given!" };
+                        throw invalid_file_format_exception{  };
                     }
                     // the indices must be strictly increasing!
                     if (last_index >= index) {
-                        throw invalid_file_format_exception{ fmt::format("The features indices must be strictly increasing, but {} is smaller or equal than {}!", index, last_index) };
+                        // NOTE: must be in two lines due to nvc++ test errors
+                        const std::string msg = fmt::format("The features indices must be strictly increasing, but {} is smaller or equal than {}!", index, last_index);
+                        throw invalid_file_format_exception{ msg };
                     }
                     last_index = index;
 
