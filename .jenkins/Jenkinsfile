@@ -155,6 +155,12 @@ pipeline {
                                     spack external find --scope system || true
                                     spack external find --scope system cuda hip || true
 
+                                    spack uninstall -a -y plssvm@develop || true
+
+
+                                    while ! spack clean -a; do
+                                        sleep 5
+                                    done
 
 
                                     if [ -d  ${WORKSPACE}/plssvm ]; then
@@ -169,37 +175,10 @@ pipeline {
                         }
                     }
                     parallel builders
-
-
-
-
-            for (x in labels){
-                def label = x
-                    builders[label] = {
-                        node(label) {
-                            sh '''
-                                hostname
-                                bash
-                                source $SGSSCRATCH/spack/share/spack/setup-env.sh
-
-                                spack uninstall -a -y plssvm@develop || true
-
-                                spack clean -a
-
-                            '''
-
-
-                        }
-
-                    }
                 }
-                builders
 
-
+            }
         }
-        }
-        }
-
 
 
 
