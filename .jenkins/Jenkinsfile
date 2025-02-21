@@ -620,7 +620,7 @@ $([[ $BACKEND != OPENMP ]] &&  echo "-E \"Base*\"") # Exclude base tests for all
                                         $([[ $BACKEND == STDPAR-ADAPTIVECPP ]] && echo "stdparimplementation=adaptivecpp" ) \
                                         $([[ $(hostname) != pcsgs03 ]] && [[ $ARCHITECTURE == NVIDIA ]] && echo "cuda_arch=86") \
                                         $([[ $(hostname) == pcsgs03 ]] && [[ $ARCHITECTURE == NVIDIA ]] && echo "cuda_arch=75") \
-                                        $([[ SET_NVIDIA_GPU_NONE == 1 ]] && echo "cuda_arch=none") \
+                                        $([[ $SET_NVIDIA_GPU_NONE == 1 ]] && echo "cuda_arch=none") \
                                         $([[ $ARCHITECTURE == AMD ]] && [[ $(hostname) == pcsgs13 ]] && echo "amdgpu_target=gfx1101") \
                                         $([[ $ARCHITECTURE == AMD ]] && [[ $(hostname) == simcl1n3 ]] && echo "amdgpu_target=gfx90a") \
                                         $([[ $ARCHITECTURE == AMD ]] && [[ $(hostname) == pcsgs09 ]] && echo "amdgpu_target=gfx906") \
