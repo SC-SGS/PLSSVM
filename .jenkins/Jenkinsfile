@@ -377,7 +377,7 @@ pipeline {
                                             *) ;;
                                         esac
 
-
+                                        export ACPP_APPDB_DIR=${WORKSPACE}/acpp/jit-${BACKEND}-${ARCHITECTURE}-${BUILD_TYPE}
 
 
 
@@ -498,6 +498,7 @@ pipeline {
                                 ls -l
                                 ls -l build-$(spack arch)-$(echo ${installpath##*-}| cut -c1-7)
                                 cd build-$(spack arch)-$(echo ${installpath##*-}| cut -c1-7)/spack-build-$(echo ${installpath##*-}| cut -c1-7)
+                                export ACPP_APPDB_DIR=${WORKSPACE}/acpp/jit-${BACKEND}-${ARCHITECTURE}-${BUILD_TYPE}
 
 
 
@@ -583,6 +584,7 @@ $([[ $BACKEND != OPENMP ]] &&  echo "-E \"Base*\"") # Exclude base tests for all
                                     ;;
                                     *) ;;
                                 esac
+                                export ACPP_APPDB_DIR=${WORKSPACE}/acpp/jit-${BACKEND}-${ARCHITECTURE}-${BUILD_TYPE}
 
                                 if [[ $ARCHITECTURE == NVIDIA ]]; then
                                     export ONEAPI_DEVICE_SELECTOR=cuda:*
@@ -644,7 +646,7 @@ $([[ $BACKEND != OPENMP ]] &&  echo "-E \"Base*\"") # Exclude base tests for all
                                 plssvm-predict 5x4.libsvm ${BACKEND}-${ARCHITECTURE}-${BUILD_TYPE}.model
                                 rm ${BACKEND}-${ARCHITECTURE}-${BUILD_TYPE}.model
 
-
+                                rm -rf ${ACPP_APPDB_DIR}
 
                             '''
                         }
