@@ -14,11 +14,12 @@
 #define PLSSVM_MPI_COMMUNICATOR_HPP_
 #pragma once
 
+#include "plssvm/matrix.hpp"                   // plssvm::matrix, plssvm::layout_type
 #include "plssvm/mpi/detail/mpi_datatype.hpp"  // plssvm::mpi::detail::mpi_datatype
 #include "plssvm/mpi/detail/utility.hpp"       // PLSSVM_MPI_ERROR_CHECK
 
 #if defined(PLSSVM_HAS_MPI_ENABLED)
-    #include "mpi.h"  // MPI_Comm, MPI_COMM_WORLD, MPI_Gather
+    #include "mpi.h"  // MPI_Comm, MPI_COMM_WORLD, MPI_Gather, MPI_Allreduce, MPI_Exscan, MPI_IN_PLACE, MPI_SUM
 #endif
 
 #include <chrono>      // std::chrono::milliseconds
@@ -134,6 +135,54 @@ class communicator {
      * @return a `std::vector` containing all gathered durations (`[[nodiscard]]`)
      */
     [[nodiscard]] std::vector<std::chrono::milliseconds> gather(const std::chrono::milliseconds &duration) const;
+
+    /**
+     * @biref Reduce the @p value on all MPI ranks and return the reduced value.
+     * @tparam T the type of the values to reduce
+     * @param[in] value the value to reduce
+     * @return the reduced value (`[[nodiscard]]`)
+     */
+    template <typename T>
+    [[nodiscard]] T allreduce(T value) const {
+#if defined(PLSSVM_HAS_MPI_ENABLED)
+        PLSSVM_MPI_ERROR_CHECK(MPI_Allreduce(MPI_IN_PLACE, &value, 1, detail::mpi_datatype<T>(), MPI_SUM, comm_));
+        return value;
+#else
+        return value;
+#endif
+    }
+
+    /**
+     * @brief Reduce the @p matr on all MPI ranks by summing all elements elementwise.
+     * @tparam T the value type of the matrix
+     * @tparam layout the matrix layout
+     * @param[in,out] matr the matrix to reduce, changed inplace
+     */
+    template <typename T, layout_type layout>
+    void allreduce_inplace(plssvm::matrix<T, layout> &matr) const {
+#if defined(PLSSVM_HAS_MPI_ENABLED)
+        PLSSVM_MPI_ERROR_CHECK(MPI_Allreduce(MPI_IN_PLACE, matr.data(), matr.size_padded(), detail::mpi_datatype<T>(), MPI_SUM, comm_));
+#endif
+    }
+
+    /**
+     * @brief Perform an exclusive scan over all MPI ranks with the @p value.
+     * @details If value for the MPI ranks' values [1, 2, 1, 3] the resulting exclusive scan looks like [0, 1, 3, 4].
+     *          Note the MPI rank i only uses and outputs the value at position i in the above arrays.
+     * @tparam T the type of the values to compute the exclusive scan for
+     * @param[in] value the value used in the exclusive scan
+     * @return the exclusive scan value for this MPI rank (`[[nodiscard]]`)
+     */
+    template <typename T>
+    [[nodiscard]] T exclusive_scan(T value) const {
+#if defined(PLSSVM_HAS_MPI_ENABLED)
+        T result{ 0 };
+        PLSSVM_MPI_ERROR_CHECK(MPI_Exscan(&value, &result, 1, detail::mpi_datatype<T>(), MPI_SUM, comm_));
+        return result;
+#else
+        return T{ 0 };
+#endif
+    }
 
 #if defined(PLSSVM_HAS_MPI_ENABLED)
     /**

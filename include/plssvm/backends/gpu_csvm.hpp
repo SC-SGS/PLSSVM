@@ -20,7 +20,6 @@
 #include "plssvm/detail/move_only_any.hpp"      // plssvm::detail::{move_only_any, move_only_any_cast}
 #include "plssvm/kernel_function_types.hpp"     // plssvm::kernel_function_type
 #include "plssvm/matrix.hpp"                    // plssvm::aos_matrix, plssvm::soa_matrix
-#include "plssvm/mpi/communicator.hpp"          // plssvm::mpi::communicator
 #include "plssvm/parameter.hpp"                 // plssvm::parameter
 #include "plssvm/shape.hpp"                     // plssvm::shape
 #include "plssvm/solver_types.hpp"              // plssvm::solver_type
@@ -237,7 +236,7 @@ std::vector<::plssvm::detail::move_only_any> gpu_csvm<device_ptr_t, queue_t, pin
 
     // update the data distribution: only the upper triangular kernel matrix is used
     // note: account for the dimensional reduction
-    data_distribution_ = std::make_unique<detail::triangular_data_distribution>(A.num_rows() - 1, num_devices);
+    data_distribution_ = std::make_unique<detail::triangular_data_distribution>(comm_, A.num_rows() - 1, num_devices);
 
     // the final kernel matrix; multiple parts in case of multi-device execution
     std::vector<::plssvm::detail::move_only_any> kernel_matrices_parts(num_devices);
@@ -359,7 +358,7 @@ void gpu_csvm<device_ptr_t, queue_t, pinned_memory_t>::blas_level_3(const solver
 
         // copy data to the device
         B_d[device_id].copy_to_device(B);
-        if (device_id == 0) {
+        if (device_id == 0 && comm_.is_main_rank()) {
             // device 0 always touches all values in C -> it is sufficient that only device 0 gets the actual C matrix
             C_d[device_id].copy_to_device(C);
             // we do not perform the beta scale in C in the cg_implicit device kernel
@@ -519,7 +518,7 @@ aos_matrix<real_type> gpu_csvm<device_ptr_t, queue_t, pinned_memory_t>::predict_
             }
 
             // update the data distribution to account for the support vectors
-            data_distribution_ = std::make_unique<detail::rectangular_data_distribution>(num_support_vectors, num_devices);
+            data_distribution_ = std::make_unique<detail::rectangular_data_distribution>(comm_, num_support_vectors, num_devices);
 
             std::vector<device_ptr_type> sv_d(num_devices);
             // split memory allocation and memory copy!
@@ -586,6 +585,9 @@ aos_matrix<real_type> gpu_csvm<device_ptr_t, queue_t, pinned_memory_t>::predict_
             w = soa_matrix<real_type>{ shape{ num_classes, num_features }, shape{ PADDING_SIZE, PADDING_SIZE } };
             w_d[0].copy_to_host(w);
             w.restore_padding();
+
+            // reduce w on all MPI ranks
+            comm_.allreduce_inplace(w);
         }
 
         // upload the w vector to all devices
@@ -620,7 +622,7 @@ aos_matrix<real_type> gpu_csvm<device_ptr_t, queue_t, pinned_memory_t>::predict_
     }
 
     // update the data distribution to account for the predict points
-    data_distribution_ = std::make_unique<detail::rectangular_data_distribution>(num_predict_points, num_devices);
+    data_distribution_ = std::make_unique<detail::rectangular_data_distribution>(comm_, num_predict_points, num_devices);
 
     // the predict points; partial stored on each device
     std::vector<device_ptr_type> predict_points_d(num_devices);

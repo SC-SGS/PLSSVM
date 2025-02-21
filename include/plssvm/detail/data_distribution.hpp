@@ -14,6 +14,7 @@
 #pragma once
 
 #include "plssvm/detail/memory_size.hpp"  // plssvm:detail::memory_size
+#include "plssvm/mpi/communicator.hpp"    // plssvm::mpi::communicator
 
 #include "fmt/base.h"     // fmt::formatter
 #include "fmt/ostream.h"  // fmt::ostream_formatter
@@ -76,25 +77,38 @@ class data_distribution {
      */
     [[nodiscard]] std::size_t num_rows() const noexcept;
     /**
-     * @brief The number of places (e.g., devices) to which the rows has been distributed.
-     * @return the number of places (`[[nodiscard]]`)
+     * @brief The number of places (e.g., devices) on the current MPI rank to which the rows has been distributed.
+     * @return the number of places on the current MPI rank (`[[nodiscard]]`)
      */
     [[nodiscard]] std::size_t num_places() const noexcept;
+    /**
+     * @brief The total number of places (e.g., devices) across all MPI ranks to which the rows has been distributed.
+     * @return the total number of places across all MPI ranks (`[[nodiscard]]`)
+     */
+    [[nodiscard]] std::size_t total_num_places() const noexcept;
 
   protected:
     /**
      * @brief Construct a new data distribution being able to hold the distribution for @p num_places.
+     * @param[in] comm the used MPI communicator
      * @param[in] num_rows the number of rows to distribute (used to initialize the values in the distribution)
      * @param[in] num_places the number of places to distribute the rows to
      */
-    data_distribution(std::size_t num_rows, std::size_t num_places);
+    data_distribution(mpi::communicator comm, std::size_t num_rows, std::size_t num_places);
+
+    /// The number of rows distributed.
+    std::size_t num_rows_;
+    /// The number of places on this MPI rank the rows should be distributed to.
+    std::size_t num_places_;
+    /// The used MPI communicator.
+    mpi::communicator comm_;
+    /// The total number of places the rows should be distributed to.
+    std::size_t total_num_places_;
+    /// The number of places per MPI rank.
+    std::size_t rank_places_offset_;
 
     /// The specific data distribution across the requested number of places.
     std::vector<std::size_t> distribution_;
-    /// The number of rows distributed.
-    std::size_t num_rows_;
-    /// The number of places the rows should be distributed to.
-    std::size_t num_places_;
 };
 
 /**
@@ -118,7 +132,7 @@ class triangular_data_distribution : public data_distribution {
      * @brief Calculate the data distribution (i.e., the number of rows in the kernel matrix a *place* is responsible for) such that each *place* has
      *        approximately the same number of data points it is responsible for accounting only for the upper triangular matrix.
      * @details Example: if we have 10 data points, the number of entries in the triangular matrix is equal to 10 * (10 + 1) / 2 = 55.
-     *          If we want to distribute these 10 data points across 2 devices, each device would be responsible for the following rows/data points:
+     *          If we want to distribute these 10 data points across 2 devices (or 2 MPI ranks), each device would be responsible for the following rows/data points:
      *          - device 0: rows 0, 1, and 2 -> 10 + 9 + 8 = **27 matrix entries**
      *          - device 1: rows 3, 4, 5, 6, 7, 8, 9 -> 7 + 6 + 5 + 4 + 3 + 2 + 1 = **28 matrix entries**
      *          Therefore, each device is responsible for approximately the same number of **matrix entries** and **not** the same number of **rows**!
@@ -136,10 +150,11 @@ class triangular_data_distribution : public data_distribution {
      *          8           \  |
      *          9            \_|  ______
      *
+     * @param[in] comm the used MPI communicator
      * @param[in] num_rows the number of data points to distribute
      * @param[in] num_places the number of places, i.e., different devices to distribute the data to
      */
-    triangular_data_distribution(std::size_t num_rows, std::size_t num_places);
+    triangular_data_distribution(mpi::communicator comm, std::size_t num_rows, std::size_t num_places);
 
     /**
      * @brief Calculate the number of entries in the explicit kernel matrix for the current number of rows and @p place.
@@ -187,11 +202,13 @@ class triangular_data_distribution : public data_distribution {
 class rectangular_data_distribution : public data_distribution {
   public:
     /**
-     * @brief Calculate the data distribution (i.e., the number of rows in the kernel matrix a *place* is responsible for) such that each *place* has approximately the same number of data points it is responsible for.
+     * @brief Calculate the data distribution (i.e., the number of rows in the kernel matrix a *place* is responsible for) such that each
+     *        *place* has approximately the same number of data points it is responsible for.
+     * @param[in] comm the used MPI communicator
      * @param[in] num_rows the number of data points to distribute
      * @param[in] num_places the number of places, i.e., different devices to distribute the data to
      */
-    rectangular_data_distribution(std::size_t num_rows, std::size_t num_places);
+    rectangular_data_distribution(mpi::communicator comm, std::size_t num_rows, std::size_t num_places);
 };
 
 }  // namespace plssvm::detail

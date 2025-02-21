@@ -11,13 +11,16 @@
 #include "plssvm/constants.hpp"           // plssvm::PADDING_SIZE
 #include "plssvm/detail/assert.hpp"       // PLSSVM_ASSERT
 #include "plssvm/detail/memory_size.hpp"  // plssvm::detail::memory_size
+#include "plssvm/mpi/communicator.hpp"    // plssvm::mpi::communicator
 
-#include "fmt/format.h"  // fmt::format, fmt::runtime
+#include "fmt/base.h"    // fmt::runtime
+#include "fmt/format.h"  // fmt::format
 #include "fmt/ranges.h"  // fmt::join
 
 #include <algorithm>  // std::max, std::fill
 #include <cstddef>    // std::size_t
 #include <ostream>    // std::ostream
+#include <utility>    // std::move
 #include <vector>     // std::vector
 
 [[nodiscard]] std::size_t calculate_data_set_num_entries(const std::size_t num_data_points, const std::size_t num_features) noexcept {
@@ -34,26 +37,33 @@
 
 namespace plssvm::detail {
 
-data_distribution::data_distribution(const std::size_t num_rows, const std::size_t num_places) :
-    distribution_(num_places + 1),
+data_distribution::data_distribution(mpi::communicator comm, const std::size_t num_rows, const std::size_t num_places) :
     num_rows_{ num_rows },
-    num_places_{ num_places } {
-    PLSSVM_ASSERT(num_rows_ > 0, "At least one row must be present!");
-    PLSSVM_ASSERT(num_places_ > 0, "At least one place must be present!");
+    num_places_{ num_places },
+    comm_{ std::move(comm) } {
+    PLSSVM_ASSERT(num_rows > 0, "At least one row must be present!");
+    PLSSVM_ASSERT(num_places > 0, "At least one place must be present!");
+
+    // communicate places through the MPI ranks
+    total_num_places_ = comm_.allreduce(num_places);
+    rank_places_offset_ = comm_.exclusive_scan(num_places);
+
+    // create distribution
+    distribution_ = std::vector<std::size_t>(total_num_places_ + 1);
 }
 
 data_distribution::~data_distribution() = default;
 
 std::size_t data_distribution::place_specific_num_rows(const std::size_t place) const noexcept {
     PLSSVM_ASSERT(distribution_.size() >= 2, "At least one place must be present and, therefore, the distribution vector must contain at least two entries!");
-    PLSSVM_ASSERT(place < distribution_.size() - 1, "The queried place can at most be {}, but is {}!", distribution_.size() - 1, place);
-    return distribution_[place + 1] - distribution_[place];
+    PLSSVM_ASSERT(rank_places_offset_ + place < distribution_.size() - 1, "The queried place can at most be {}, but is {}!", distribution_.size() - 1, rank_places_offset_ + place);
+    return distribution_[rank_places_offset_ + place + 1] - distribution_[rank_places_offset_ + place];
 }
 
 std::size_t data_distribution::place_row_offset(const std::size_t place) const noexcept {
     PLSSVM_ASSERT(distribution_.size() >= 2, "At least one place must be present and, therefore, the distribution vector must contain at least two entries!");
-    PLSSVM_ASSERT(place < distribution_.size() - 1, "The queried place can at most be {}, but is {}!", distribution_.size() - 1, place);
-    return distribution_[place];
+    PLSSVM_ASSERT(rank_places_offset_ + place < distribution_.size() - 1, "The queried place can at most be {}, but is {}!", distribution_.size() - 1, rank_places_offset_ + place);
+    return distribution_[rank_places_offset_ + place];
 }
 
 const std::vector<std::size_t> &data_distribution::distribution() const noexcept {
@@ -64,12 +74,16 @@ std::size_t data_distribution::num_rows() const noexcept {
     return num_rows_;
 }
 
+std::size_t data_distribution::total_num_places() const noexcept {
+    return total_num_places_;
+}
+
 std::size_t data_distribution::num_places() const noexcept {
     return num_places_;
 }
 
 std::ostream &operator<<(std::ostream &out, const data_distribution &dist) {
-    return out << fmt::format(fmt::runtime("{ num_rows: {}, num_places: {}, dist: [{}] }"), dist.num_rows(), dist.num_places(), fmt::join(dist.distribution(), ", "));
+    return out << fmt::format(fmt::runtime("{{ num_rows: {}, total_num_places: {}, dist: [{}] }}"), dist.num_rows(), dist.total_num_places(), fmt::join(dist.distribution(), ", "));
 }
 
 //*************************************************************************************************************************************//
@@ -77,8 +91,8 @@ std::ostream &operator<<(std::ostream &out, const data_distribution &dist) {
 //*************************************************************************************************************************************//
 using namespace literals;
 
-triangular_data_distribution::triangular_data_distribution(const std::size_t num_rows, const std::size_t num_places) :
-    data_distribution{ num_rows, num_places } {
+triangular_data_distribution::triangular_data_distribution(mpi::communicator comm, const std::size_t num_rows, const std::size_t num_places) :
+    data_distribution{ std::move(comm), num_rows, num_places } {
     // set all distribution values to "num_rows"
     std::fill(distribution_.begin(), distribution_.end(), num_rows);
 
@@ -87,7 +101,7 @@ triangular_data_distribution::triangular_data_distribution(const std::size_t num
     }
 
     // only the upper triangular matrix is important
-    const std::size_t balanced = (num_rows * (num_rows + 1) / 2) / num_places;
+    const std::size_t balanced = (num_rows * (num_rows + 1) / 2) / total_num_places_;
 
     std::size_t range_idx = 1;
     std::size_t sum = 0;
@@ -267,18 +281,18 @@ std::vector<memory_size> triangular_data_distribution::calculate_maximum_implici
     return res;
 }
 
-rectangular_data_distribution::rectangular_data_distribution(const std::size_t num_rows, const std::size_t num_places) :
-    data_distribution{ num_rows, num_places } {
+rectangular_data_distribution::rectangular_data_distribution(mpi::communicator comm, const std::size_t num_rows, const std::size_t num_places) :
+    data_distribution{ std::move(comm), num_rows, num_places } {
     // uniform distribution
-    const std::size_t balanced = num_rows / num_places;
-    for (std::size_t device_id = 0; device_id < num_places; ++device_id) {
+    const std::size_t balanced = num_rows / total_num_places_;
+    for (std::size_t device_id = 0; device_id < total_num_places_; ++device_id) {
         distribution_[device_id] = balanced * device_id;
     }
 
     // fill remaining values into distribution starting at device 0
-    const std::size_t remaining = num_rows - num_places * balanced;
+    const std::size_t remaining = num_rows - (total_num_places_ * balanced);
     std::size_t running = 0;
-    for (std::size_t device_id = 1; device_id <= num_places; ++device_id) {
+    for (std::size_t device_id = 1; device_id <= total_num_places_; ++device_id) {
         distribution_[device_id] += running;
         if (device_id - 1 < remaining) {
             distribution_[device_id] += 1;

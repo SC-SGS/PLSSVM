@@ -84,6 +84,8 @@ std::pair<soa_matrix<real_type>, std::vector<unsigned long long>> csvm::conjugat
     // R = B - A * X
     soa_matrix<real_type> R{ B, shape{ PADDING_SIZE, PADDING_SIZE } };
     blas_level_3_times.push_back(this->run_blas_level_3(cg_solver, real_type{ -1.0 }, A, X, real_type{ 1.0 }, R));
+    // reduce R matrix on all MPI ranks
+    comm_.allreduce_inplace(R);
 
     // delta = R.T * R
     std::vector<real_type> delta = rowwise_dot(R, R);
@@ -161,6 +163,8 @@ std::pair<soa_matrix<real_type>, std::vector<unsigned long long>> csvm::conjugat
         // Q = A * D
         soa_matrix<real_type> Q{ shape{ D.num_rows(), D.num_cols() }, shape{ PADDING_SIZE, PADDING_SIZE } };
         blas_level_3_times.push_back(this->run_blas_level_3(cg_solver, real_type{ 1.0 }, A, D, real_type{ 0.0 }, Q));
+        // reduce Q matrix on all MPI ranks
+        comm_.allreduce_inplace(Q);
 
         // alpha = delta_new / (D^T * Q))
         const std::vector<real_type> alpha = delta / rowwise_dot(D, Q);
@@ -173,6 +177,8 @@ std::pair<soa_matrix<real_type>, std::vector<unsigned long long>> csvm::conjugat
             // R = B - A * X
             R = soa_matrix<real_type>{ B, shape{ PADDING_SIZE, PADDING_SIZE } };
             blas_level_3_times.push_back(this->run_blas_level_3(cg_solver, real_type{ -1.0 }, A, X, real_type{ 1.0 }, R));
+            // reduce R matrix on all MPI ranks
+            comm_.allreduce_inplace(R);
         } else {
             // R = R - alpha * Q
             R -= rowwise_scale(alpha, Q);
@@ -297,7 +303,8 @@ std::chrono::duration<long, std::milli> csvm::run_blas_level_3(const solver_type
 aos_matrix<real_type> csvm::run_predict_values(const parameter &params, const soa_matrix<real_type> &support_vectors, const aos_matrix<real_type> &alpha, const std::vector<real_type> &rho, soa_matrix<real_type> &w, const soa_matrix<real_type> &predict_points) const {
     const std::chrono::steady_clock::time_point start_time = std::chrono::steady_clock::now();
 
-    decltype(auto) res = this->predict_values(params, support_vectors, alpha, rho, w, predict_points);
+    aos_matrix<real_type> res = this->predict_values(params, support_vectors, alpha, rho, w, predict_points);
+    comm_.allreduce_inplace(res);
 
     const std::chrono::steady_clock::time_point end_time = std::chrono::steady_clock::now();
     detail::log(verbosity_level::full | verbosity_level::timing,

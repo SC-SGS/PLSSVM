@@ -355,7 +355,7 @@ std::tuple<aos_matrix<real_type>, std::vector<real_type>, std::vector<unsigned l
         }();
 
         // calculate the maximum total memory needed for the explicit and implicit kernel matrix per device
-        const detail::triangular_data_distribution data_distribution{ num_rows_reduced, this->num_available_devices() };
+        const detail::triangular_data_distribution data_distribution{ comm_, num_rows_reduced, this->num_available_devices() };
         const std::vector<detail::memory_size> total_memory_needed_explicit_per_device = data_distribution.calculate_maximum_explicit_kernel_matrix_memory_needed_per_place(num_features, num_rhs);
         const std::vector<detail::memory_size> total_memory_needed_implicit_per_device = data_distribution.calculate_maximum_implicit_kernel_matrix_memory_needed_per_place(num_features, num_rhs);
 
