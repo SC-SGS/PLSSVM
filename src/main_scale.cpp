@@ -37,6 +37,12 @@ int main(int argc, char *argv[]) {
     // if MPI is not supported, does nothing
     const plssvm::mpi::communicator comm{};
 
+    // plssvm-scale ONLY supports one MPI rank
+    if (comm.size() > std::size_t{ 1 }) {
+        std::cerr << fmt::format("Currently, plssvm-scale only supports a single MPI process, but {} where used!", comm.size()) << std::endl;
+        return EXIT_FAILURE;
+    }
+
     try {
         const std::chrono::steady_clock::time_point start_time = std::chrono::steady_clock::now();
         PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_SET_REFERENCE_TIME(start_time);
