@@ -20,6 +20,8 @@
     #include "hws/system_hardware_sampler.hpp"  // hws::system_hardware_sampler
 #endif
 
+#include "fmt/format.h"  // fmt::format
+
 #include <chrono>     // std::chrono::{steady_clock, duration}, std::chrono_literals namespace
 #include <cstddef>    // std::size_t
 #include <cstdlib>    // std::exit, EXIT_SUCCESS, EXIT_FAILURE
