@@ -14,6 +14,7 @@
 #define PLSSVM_MPI_COMMUNICATOR_HPP_
 #pragma once
 
+#include "plssvm/detail/utility.hpp"           // PLSSVM_IS_DEFINED
 #include "plssvm/matrix.hpp"                   // plssvm::matrix, plssvm::layout_type
 #include "plssvm/mpi/detail/mpi_datatype.hpp"  // plssvm::mpi::detail::mpi_datatype
 #include "plssvm/mpi/detail/utility.hpp"       // PLSSVM_MPI_ERROR_CHECK
@@ -70,7 +71,13 @@ class communicator {
      * @details For PLSSVM, the main MPI rank is rank `0` in the current communicator.
      * @return the main MPI rank `0` (`[[nodiscard]]`)
      */
-    [[nodiscard]] static std::size_t main_rank() { return 0; }
+    [[nodiscard]] constexpr static std::size_t main_rank() { return 0; }
+
+    /**
+     * @brief Check whether distributed execution via MPI is enabled.
+     * @return `true` if MPI is enabled, otherwise `false` (`[[nodiscard]]`)
+     */
+    [[nodiscard]] constexpr static bool is_mpi_enabled() { return PLSSVM_IS_DEFINED(PLSSVM_HAS_MPI_ENABLED); }
 
     /**
      * @brief Returns `true` if the current MPI rank is rank `0`, i.e., the main MPI rank.
