@@ -169,7 +169,7 @@ pipeline {
                         }
                     }
                     parallel builders
-                }
+
 
 
 
@@ -194,7 +194,7 @@ pipeline {
                     }
                 }
 
-            }
+
 
         }
 
