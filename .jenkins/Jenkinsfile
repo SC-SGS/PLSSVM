@@ -158,9 +158,9 @@ pipeline {
                                     spack uninstall -a -y plssvm@develop || true
 
 
-                                    while ! spack clean -a; do
-                                        sleep 5
-                                    done
+                                    #while ! spack clean -a; do
+                                    #    sleep 5
+                                    #done
 
 
                                     if [ -d  ${WORKSPACE}/plssvm ]; then
