@@ -157,6 +157,8 @@ pipeline {
 
                                     spack uninstall -a -y plssvm@develop || true
 
+                                    spack clean -a
+
 
                                     if [ -d  ${WORKSPACE}/plssvm ]; then
                                         cd ${WORKSPACE}/plssvm
@@ -293,16 +295,6 @@ pipeline {
                       axis{
                         name 'BACKEND'
                         values 'ADAPTIVECPP'
-                      }
-                      axis{
-                        name 'BUILD_TYPE'
-                        values 'Debug'
-                      }
-                    }
-                    exclude { // TODO: enable if nvhpc debug is working again
-                      axis{
-                        name 'BACKEND'
-                        values 'STDPAR_NVHPC'
                       }
                       axis{
                         name 'BUILD_TYPE'
