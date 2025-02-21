@@ -553,6 +553,7 @@ $([[ $BACKEND == STDPAR-DPCPP ]] && echo "-E \"Parser*/Parser*Help.parsing/h*\" 
 $([[ $BACKEND == STDPAR-DPCPP ]] && echo "-E \"Parser*/Parser*Help.parsing/help*\" ") \
 $([[ $BACKEND == STDPAR-DPCPP ]] && echo "-E \"Parser*/Parser*Version.parsing/v*\" ") \
 $([[ $BACKEND == STDPAR-DPCPP ]] && echo "-E \"Parser*/Parser*Version.parsing/version*\" ") \
+$([[ $BACKEND == STDPAR-NVHPC ]] && echo "-E \"*DataParseInvalid*\" ") \
 $([[ $BACKEND != OPENMP ]] &&  echo "-E \"Base*\"") # Exclude base tests for all backends except openmp
                             '''
                         }
