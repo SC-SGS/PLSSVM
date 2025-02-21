@@ -299,6 +299,16 @@ pipeline {
                         values 'Debug'
                       }
                     }
+                    exclude { // TODO: enable if nvhpc debug is working again
+                      axis{
+                        name 'BACKEND'
+                        values 'STDPAR_NVHPC'
+                      }
+                      axis{
+                        name 'BUILD_TYPE'
+                        values 'Debug'
+                      }
+                    }
                      exclude { // TODO: enable if kokkos+rocm is working again
                       axis{
                         name 'BACKEND'
