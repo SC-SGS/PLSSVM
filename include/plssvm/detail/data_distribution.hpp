@@ -19,9 +19,11 @@
 #include "fmt/base.h"     // fmt::formatter
 #include "fmt/ostream.h"  // fmt::ostream_formatter
 
-#include <cstddef>  // std::size_t
-#include <iosfwd>   // std::ostream forward declaration
-#include <vector>   // std::vector
+#include <algorithm>  // std::fill
+#include <cstddef>    // std::size_t
+#include <iosfwd>     // std::ostream forward declaration
+#include <numeric>    // std::accumulate
+#include <vector>     // std::vector
 
 namespace plssvm::detail {
 
@@ -96,16 +98,69 @@ class data_distribution {
      */
     data_distribution(mpi::communicator comm, std::size_t num_rows, std::size_t num_places);
 
+    /**
+     * @brief Distribute the previously provided number of rows on all MPI ranks and places given the load balancing weights
+     *        using the distribution function @p distribute.
+     * @tparam DistributionFunction the type of the distribution function
+     * @param[in] distribute the distribution function
+     */
+    template <typename DistributionFunction>
+    void update_distribution(DistributionFunction distribute) {
+        // set all distribution values to "num_rows"
+        std::fill(distribution_.begin(), distribution_.end(), num_rows_);
+
+        if (!distribution_.empty()) {  // necessary to silence GCC "potential null pointer dereference [-Wnull-dereference]" warning
+            distribution_.front() = 0;
+        }
+
+        // calculate the weight sum
+        const std::size_t weight_sum = std::accumulate(load_balancing_weights_.cbegin(), load_balancing_weights_.cend(), std::size_t{ 0 });
+
+        // calculate the distribution for the MPI ranks based on the provided weights
+        const std::vector<std::size_t> weight_distribution = distribute(num_rows_, std::size_t{ 0 }, weight_sum);
+
+        // calculate the MPI rank distribution based on the weight distribution
+        std::vector<std::size_t> mpi_distribution(comm_.size() + 1, num_rows_);
+        for (std::size_t i = 0, idx = 0; i < comm_.size(); ++i) {
+            mpi_distribution[i] = weight_distribution[idx];
+            idx += load_balancing_weights_[i];
+        }
+
+        // update the final distribution with the information we already know (we don't know the correct distribution for MPI ranks with more than one place)
+        for (std::size_t i = 0, idx = 0; i < comm_.size(); ++i) {
+            distribution_[idx] = mpi_distribution[i];
+            idx += places_[i];
+        }
+
+        // now, if an MPI rank has more than one place, calculate the distribution based on the MPI rank's previous distribution
+        for (std::size_t i = 0, idx = 0; i < comm_.size(); ++i) {
+            if (places_[i] > 1) {
+                // calculate the required sub-distribution on the MPI rank i
+                const std::vector<std::size_t> sub_distribution = distribute(mpi_distribution[i + 1] - mpi_distribution[i], num_rows_ - mpi_distribution[i + 1], places_[i]);
+                // update the final distribution accordingly
+                for (std::size_t j = 0; j < places_[i]; ++j) {
+                    distribution_[idx + j + 1] = distribution_[idx + j] + (sub_distribution[j + 1] - sub_distribution[j]);
+                }
+            }
+            idx += places_[i];
+        }
+    }
+
     /// The number of rows distributed.
     std::size_t num_rows_;
     /// The number of places on this MPI rank the rows should be distributed to.
     std::size_t num_places_;
-    /// The used MPI communicator.
-    mpi::communicator comm_;
     /// The total number of places the rows should be distributed to.
     std::size_t total_num_places_;
+    /// The number of places for each MPI rank.
+    std::vector<std::size_t> places_;
+
+    /// The used MPI communicator.
+    mpi::communicator comm_;
     /// The number of places per MPI rank.
     std::size_t rank_places_offset_;
+    /// The load balancing weights for each MPI rank.
+    std::vector<std::size_t> load_balancing_weights_;
 
     /// The specific data distribution across the requested number of places.
     std::vector<std::size_t> distribution_;

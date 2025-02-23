@@ -31,6 +31,7 @@
 #include <cstddef>  // std::size_t
 #include <iosfwd>   // forward declare std::ostream
 #include <string>   // std::string
+#include <vector>   // std::vector
 
 namespace plssvm::detail::cmd {
 
@@ -77,6 +78,10 @@ struct parser_train {
     /// `true` if `std::string` should be used as label type for the classification task instead of the default type `ìnt`.
     /// For the regression task, this parameter is ignored and `real_type` is always used.
     bool strings_as_labels{ false };
+
+    /// Load balancing weights for MPI used if different hardware per MPI process is used. The number must match the number of spawned MPI processes.
+    /// Providing [1, 1] means every process gets the same amount of work, providing [1, 3] means that the second process has three times the work to do compared to process zero.
+    std::vector<std::size_t> mpi_load_balancing_weights{};
 
     /// The name of the data/test file to parse.
     std::string input_filename{};

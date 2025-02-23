@@ -66,6 +66,9 @@ parser_predict::parser_predict(const mpi::communicator &comm, int argc, char **a
 #if defined(PLSSVM_PERFORMANCE_TRACKER_ENABLED)
            ("performance_tracking", "the output YAML file where the performance tracking results are written to; if not provided, the results are dumped to stderr", cxxopts::value<decltype(performance_tracking_filename)>())
 #endif
+#if defined(PLSSVM_HAS_MPI_ENABLED)
+           ("mpi_load_balancing_weights", "can be used to load balance for MPI (must be integers); number of provided values must match the number of MPI ranks", cxxopts::value<decltype(mpi_load_balancing_weights)>())
+#endif
             ("use_strings_as_labels", "use strings as labels instead of plane numbers", cxxopts::value<decltype(strings_as_labels)>()->default_value(fmt::format("{}", strings_as_labels)))
             ("verbosity", fmt::format("choose the level of verbosity: full|timing|libsvm|quiet (default: {})", fmt::format("{}", verbosity)), cxxopts::value<verbosity_level>())
             ("q,quiet", "quiet mode (no outputs regardless the provided verbosity level!)", cxxopts::value<bool>())
@@ -211,6 +214,20 @@ parser_predict::parser_predict(const mpi::communicator &comm, int argc, char **a
     // parse performance tracking filename
     if (result.count("performance_tracking")) {
         performance_tracking_filename = result["performance_tracking"].as<decltype(performance_tracking_filename)>();
+    }
+
+    // parse MPI load balancing factors
+    if (result.count("mpi_load_balancing_weights")) {
+        mpi_load_balancing_weights = result["mpi_load_balancing_weights"].as<decltype(mpi_load_balancing_weights)>();
+
+        // sanity check provided balance factors
+        if (mpi_load_balancing_weights.size() != comm.size()) {
+            if (comm.is_main_rank()) {
+                std::cerr << fmt::format(fmt::fg(fmt::color::red), "ERROR: the number of load balancing weights ({}) must match the number of MPI ranks ({})!\n", mpi_load_balancing_weights.size(), comm.size()) << std::endl;
+                std::cout << options.help() << std::endl;
+            }
+            std::exit(EXIT_FAILURE);
+        }
     }
 }
 

@@ -79,7 +79,7 @@ int main(int argc, char *argv[]) {
     [[maybe_unused]] plssvm::environment::scope_guard mpi_guard{ {} };
     // create a PLSSVM communicator -> use MPI_COMM_WORLD for our executables
     // if MPI is not supported, does nothing
-    const plssvm::mpi::communicator comm{};
+    plssvm::mpi::communicator comm{};
 
 #if defined(PLSSVM_HAS_MPI_ENABLED)
     plssvm::detail::log(plssvm::verbosity_level::full,
@@ -122,6 +122,11 @@ int main(int argc, char *argv[]) {
                             "\ntask: training ({})\n{}\n\n\n",
                             plssvm::svm_type_to_task_name(cmd_parser.svm),
                             plssvm::detail::tracking::tracking_entry{ "parameter", "", cmd_parser });
+
+        // update the load balancing weights if they were provided
+        if (!cmd_parser.mpi_load_balancing_weights.empty()) {
+            comm.set_load_balancing_weights(cmd_parser.mpi_load_balancing_weights);
+        }
 
         // create data set
         const auto data_set_visitor = [&](auto &&data) {

@@ -17,8 +17,10 @@
 #include "fmt/format.h"  // fmt::format
 #include "fmt/ranges.h"  // fmt::join
 
-#include <algorithm>  // std::max, std::fill
+#include <algorithm>  // std::max
 #include <cstddef>    // std::size_t
+#include <numeric>    // std::accumulate, std::gcd, std::exclusive_scan
+#include <optional>   // std::optional
 #include <ostream>    // std::ostream
 #include <utility>    // std::move
 #include <vector>     // std::vector
@@ -44,9 +46,29 @@ data_distribution::data_distribution(mpi::communicator comm, const std::size_t n
     PLSSVM_ASSERT(num_rows > 0, "At least one row must be present!");
     PLSSVM_ASSERT(num_places > 0, "At least one place must be present!");
 
-    // communicate places through the MPI ranks
-    total_num_places_ = comm_.allreduce(num_places);
-    rank_places_offset_ = comm_.exclusive_scan(num_places);
+    // gather the number of places from all MPI ranks on all MPI ranks
+    places_ = comm_.allgather(num_places_);
+
+    // calculate the total number of places
+    total_num_places_ = std::accumulate(places_.cbegin(), places_.cend(), std::size_t{ 0 });
+    // calculate the prefix sum given the places
+    std::vector<std::size_t> offsets(places_.size());
+    std::exclusive_scan(places_.cbegin(), places_.cend(), offsets.begin(), std::size_t{ 0 });
+    rank_places_offset_ = offsets[comm_.rank()];
+
+    // check whether there are load balancing weights
+    const std::optional<std::vector<std::size_t>> weights = comm_.get_load_balancing_weights();
+    if (weights.has_value()) {
+        // get the load balancing weights -> reduce them to reduce the allocation side later
+        const std::size_t gcd = std::accumulate(weights->cbegin(), weights->cend(), weights->front(), std::gcd<std::size_t, std::size_t>);
+        load_balancing_weights_.resize(weights->size());
+        for (std::size_t i = 0; i < load_balancing_weights_.size(); ++i) {
+            load_balancing_weights_[i] = weights.value()[i] / gcd;
+        }
+    } else {
+        // no load balancing weights -> determine default weights -> equals to the place distribution
+        load_balancing_weights_ = places_;
+    }
 
     // create distribution
     distribution_ = std::vector<std::size_t>(total_num_places_ + 1);
@@ -93,29 +115,35 @@ using namespace literals;
 
 triangular_data_distribution::triangular_data_distribution(mpi::communicator comm, const std::size_t num_rows, const std::size_t num_places) :
     data_distribution{ std::move(comm), num_rows, num_places } {
-    // set all distribution values to "num_rows"
-    std::fill(distribution_.begin(), distribution_.end(), num_rows);
-
-    if (!distribution_.empty()) {  // necessary to silence GCC "potential null pointer dereference [-Wnull-dereference]" warning
-        distribution_.front() = 0;
-    }
-
-    // only the upper triangular matrix is important
-    const std::size_t balanced = (num_rows * (num_rows + 1) / 2) / total_num_places_;
-
-    std::size_t range_idx = 1;
-    std::size_t sum = 0;
-    std::size_t row = 0;
-
-    // the first row has the most data points, while the last row has the fewest
-    for (std::size_t i = num_rows; i >= 1; --i) {
-        sum += i;
-        ++row;
-        if (sum >= balanced) {
-            distribution_[range_idx++] = row;
-            sum = 0;
+    // the triangular distribution function
+    const auto distribute = [](const std::size_t current_num_rows, const std::size_t offset, const std::size_t current_num_places) {
+        std::vector<std::size_t> result(current_num_places + 1, current_num_rows);
+        if (!result.empty()) {  // necessary to silence GCC "potential null pointer dereference [-Wnull-dereference]" warning
+            result.front() = 0;
         }
-    }
+
+        // only the upper triangular matrix is important
+        const std::size_t balanced = ((current_num_rows * (current_num_rows + 1) / 2) + current_num_rows * offset) / current_num_places;
+
+        std::size_t range_idx = 1;
+        std::size_t sum = 0;
+        std::size_t row = 0;
+
+        // the first row has the most data points, while the last row has the fewest
+        for (std::size_t i = current_num_rows; i >= 1; --i) {
+            sum += i + offset;
+            ++row;
+            if (sum >= balanced) {
+                result[range_idx++] = row;
+                sum = 0;
+            }
+        }
+
+        return result;
+    };
+
+    // update the final distribution given the custom distribution function
+    this->update_distribution(distribute);
 
     PLSSVM_ASSERT(std::is_sorted(distribution_.cbegin(), distribution_.cend()), "The distribution must be sorted in an ascending order!");
 }
@@ -283,23 +311,32 @@ std::vector<memory_size> triangular_data_distribution::calculate_maximum_implici
 
 rectangular_data_distribution::rectangular_data_distribution(mpi::communicator comm, const std::size_t num_rows, const std::size_t num_places) :
     data_distribution{ std::move(comm), num_rows, num_places } {
-    // uniform distribution
-    const std::size_t balanced = num_rows / total_num_places_;
-    for (std::size_t device_id = 0; device_id < total_num_places_; ++device_id) {
-        distribution_[device_id] = balanced * device_id;
-    }
+    // the uniform distribution function
+    const auto distribute = [](const std::size_t current_num_rows, const std::size_t, const std::size_t current_num_places) {
+        std::vector<std::size_t> result(current_num_places + 1);
 
-    // fill remaining values into distribution starting at device 0
-    const std::size_t remaining = num_rows - (total_num_places_ * balanced);
-    std::size_t running = 0;
-    for (std::size_t device_id = 1; device_id <= total_num_places_; ++device_id) {
-        distribution_[device_id] += running;
-        if (device_id - 1 < remaining) {
-            distribution_[device_id] += 1;
-            ++running;
+        const std::size_t balanced = current_num_rows / current_num_places;
+        for (std::size_t device_id = 0; device_id < current_num_places; ++device_id) {
+            result[device_id] = balanced * device_id;
         }
-    }
-    distribution_.back() = num_rows;
+
+        // fill remaining values into distribution starting at device 0
+        const std::size_t remaining = current_num_rows - (current_num_places * balanced);
+        std::size_t running = 0;
+        for (std::size_t device_id = 1; device_id <= current_num_places; ++device_id) {
+            result[device_id] += running;
+            if (device_id - 1 < remaining) {
+                result[device_id] += 1;
+                ++running;
+            }
+        }
+        result.back() = current_num_rows;
+
+        return result;
+    };
+
+    // update the final distribution given the custom distribution function
+    this->update_distribution(distribute);
 
     PLSSVM_ASSERT(std::is_sorted(distribution_.cbegin(), distribution_.cend()), "The distribution must be sorted in an ascending order!");
 }

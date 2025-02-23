@@ -26,6 +26,7 @@
 #include <chrono>      // std::chrono::milliseconds
 #include <cstddef>     // std::size_t
 #include <functional>  // std::invoke
+#include <optional>    // std::optional
 #include <string>      // std::string
 #include <vector>      // std::vector
 
@@ -43,14 +44,30 @@ class communicator {
      */
     communicator();
 
+    /**
+     * @brief Default construct an MPI communicator wrapper using `MPI_COMM_WORLD` and set the load balancing @p weights.
+     * @details If `PLSSVM_HAS_MPI_ENABLED` is undefined, only stores the load balancing weights.
+     * @param[in] weights the load balancing weights
+     * @throws plssvm::mpi_exception if the number of @p weights does not match the MPI communicator size
+     */
+    explicit communicator(std::vector<std::size_t> weights);
+
 #if defined(PLSSVM_HAS_MPI_ENABLED)
     /**
      * @brief Construct an MPI communicator wrapper using the provided MPI communicator.
-     * @details If `PLSSVM_HAS_MPI_ENABLED` is undefined, does nothing.
      * @param[in] comm the provided MPI communicator
      * @note This function does not take ownership of the provided MPI communicator!
      */
     explicit communicator(MPI_Comm comm);
+
+    /**
+     * @brief Construct an MPI communicator wrapper using the provided MPI communicator and set the load balancing @p weights.
+     * @param[in] comm the provided MPI communicator
+     * @param[in] weights the load balancing weights
+     * @throws plssvm::mpi_exception if the number of @p weights does not match the MPI communicator size
+     * @note This function does not take ownership of the provided MPI communicator!
+     */
+    communicator(MPI_Comm comm, std::vector<std::size_t> weights);
 #endif
 
     /**
@@ -144,23 +161,8 @@ class communicator {
     [[nodiscard]] std::vector<std::chrono::milliseconds> gather(const std::chrono::milliseconds &duration) const;
 
     /**
-     * @biref Reduce the @p value on all MPI ranks and return the reduced value.
-     * @tparam T the type of the values to reduce
-     * @param[in] value the value to reduce
-     * @return the reduced value (`[[nodiscard]]`)
-     */
-    template <typename T>
-    [[nodiscard]] T allreduce(T value) const {
-#if defined(PLSSVM_HAS_MPI_ENABLED)
-        PLSSVM_MPI_ERROR_CHECK(MPI_Allreduce(MPI_IN_PLACE, &value, 1, detail::mpi_datatype<T>(), MPI_SUM, comm_));
-        return value;
-#else
-        return value;
-#endif
-    }
-
-    /**
      * @brief Reduce the @p matr on all MPI ranks by summing all elements elementwise.
+     * @details If `PLSSVM_HAS_MPI_ENABLED` is undefined, does not mutate `matr`.
      * @tparam T the value type of the matrix
      * @tparam layout the matrix layout
      * @param[in,out] matr the matrix to reduce, changed inplace
@@ -173,21 +175,20 @@ class communicator {
     }
 
     /**
-     * @brief Perform an exclusive scan over all MPI ranks with the @p value.
-     * @details If value for the MPI ranks' values [1, 2, 1, 3] the resulting exclusive scan looks like [0, 1, 3, 4].
-     *          Note the MPI rank i only uses and outputs the value at position i in the above arrays.
-     * @tparam T the type of the values to compute the exclusive scan for
-     * @param[in] value the value used in the exclusive scan
-     * @return the exclusive scan value for this MPI rank (`[[nodiscard]]`)
+     * @brief Gather the @p value from each MPI rank and distribute the result to all MPI ranks.
+     * @details If `PLSSVM_HAS_MPI_ENABLED` is undefined, returns the provided @p value wrapped in a `std::vector`.
+     * @tparam T the type of the values to gather
+     * @param[in] value the value to gather on all MPI ranks
+     * @return a `std::vector` containing all gathered values (`[[nodiscard]]`)
      */
     template <typename T>
-    [[nodiscard]] T exclusive_scan(T value) const {
+    [[nodiscard]] std::vector<T> allgather(T value) const {
 #if defined(PLSSVM_HAS_MPI_ENABLED)
-        T result{ 0 };
-        PLSSVM_MPI_ERROR_CHECK(MPI_Exscan(&value, &result, 1, detail::mpi_datatype<T>(), MPI_SUM, comm_));
+        std::vector<T> result(this->size());
+        PLSSVM_MPI_ERROR_CHECK(MPI_Allgather(&value, 1, detail::mpi_datatype<T>(), result.data(), 1, detail::mpi_datatype<T>(), comm_));
         return result;
 #else
-        return T{ 0 };
+        return { value };
 #endif
     }
 
@@ -199,11 +200,27 @@ class communicator {
     [[nodiscard]] operator MPI_Comm() const { return comm_; }
 #endif
 
+    /**
+     * @brief Update the load balancing weights.
+     * @param[in] weights the new weights
+     * @throws plssvm::mpi_exception if the number of @p weights does not match the MPI communicator size
+     */
+    void set_load_balancing_weights(std::vector<std::size_t> weights);
+
+    /**
+     * @brief Return the current load balancing weights if any.
+     * @details If assertions are enabled and there are load balancing weights, always checks whether the load balancing weights are the same for **all** MPI ranks.
+     * @return the weights (`[[nodiscard]]`)
+     */
+    [[nodiscard]] const std::optional<std::vector<std::size_t>> &get_load_balancing_weights() const noexcept;
+
   private:
 #if defined(PLSSVM_HAS_MPI_ENABLED)
     /// The wrapped MPI communicator. Only available if `PLSSVM_HAS_MPI_ENABLED` is defined!
     MPI_Comm comm_{ MPI_COMM_WORLD };
 #endif
+    /// The MPI load balancing weights. Always guaranteed to be the same size as the communicator size.
+    std::optional<std::vector<std::size_t>> load_balancing_weights_{};
 };
 
 }  // namespace plssvm::mpi

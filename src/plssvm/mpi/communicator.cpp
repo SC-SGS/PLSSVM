@@ -8,26 +8,46 @@
 
 #include "plssvm/mpi/communicator.hpp"
 
-#include "plssvm/mpi/detail/utility.hpp"  // PLSSVM_MPI_ERROR_CHECK
+#include "plssvm/detail/assert.hpp"            // PLSSVM_ASSERT
+#include "plssvm/exceptions/exceptions.hpp"    // plssvm::mpi_exception
+#include "plssvm/mpi/detail/mpi_datatype.hpp"  // plssvm::mpi::detail::mpi_datatype
+#include "plssvm/mpi/detail/utility.hpp"       // PLSSVM_MPI_ERROR_CHECK
 
 #if defined(PLSSVM_HAS_MPI_ENABLED)
-    #include "mpi.h"
+    #include "mpi.h"  // MPI_Comm, MPI_Comm_size, MPI_Comm_rank, MPI_Barrier, MPI_Gatherv, MPI_Gather, MPI_Bcast
 #endif
+
+#include "fmt/format.h"  // fmt::format
 
 #include <algorithm>  // std::transform
 #include <chrono>     // std::chrono::milliseconds
 #include <cstddef>    // std::size_t
 #include <cstdint>    // std::int64_t
+#include <optional>   // std::optional, std::nullopt
 #include <string>     // std::string
+#include <utility>    // std::move
 #include <vector>     // std::vector
 
 namespace plssvm::mpi {
 
-communicator::communicator() { }
+communicator::communicator() :
+    load_balancing_weights_{ std::nullopt } { }
+
+communicator::communicator(std::vector<std::size_t> weights) {
+    // set load balancing weights
+    this->set_load_balancing_weights(std::move(weights));
+}
 
 #if defined(PLSSVM_HAS_MPI_ENABLED)
 communicator::communicator(MPI_Comm comm) :
-    comm_{ comm } { }
+    comm_{ comm },
+    load_balancing_weights_{ std::nullopt } { }
+
+communicator::communicator(MPI_Comm comm, std::vector<std::size_t> weights) :
+    comm_{ comm } {
+    // set load balancing weights
+    this->set_load_balancing_weights(std::move(weights));
+}
 #endif
 
 std::size_t communicator::size() const {
@@ -82,7 +102,7 @@ std::vector<std::string> communicator::gather(const std::string &str) const {
     }
 
     // gather the strings on the MPI main rank
-    PLSSVM_MPI_ERROR_CHECK(MPI_Gatherv(str.data(), str.size(), MPI_CHAR, recv_buffer.data(), sizes.data(), displacements.data(), MPI_CHAR, communicator::main_rank(), comm_));
+    PLSSVM_MPI_ERROR_CHECK(MPI_Gatherv(str.data(), str.size(), detail::mpi_datatype<char>(), recv_buffer.data(), sizes.data(), displacements.data(), detail::mpi_datatype<char>(), communicator::main_rank(), comm_));
 
     // unpack the receive-buffer to the separate strings
     std::vector<std::string> result(sizes.size());
@@ -112,6 +132,44 @@ std::vector<std::chrono::milliseconds> communicator::gather(const std::chrono::m
 #else
     return { duration };
 #endif
+}
+
+void communicator::set_load_balancing_weights(std::vector<std::size_t> weights) {
+    if (weights.size() != this->size()) {
+        throw mpi_exception{ fmt::format("The number of load balancing weights ({}) must match the number of MPI ranks ({})!", weights.size(), this->size()) };
+    }
+    load_balancing_weights_ = std::move(weights);
+}
+
+const std::optional<std::vector<std::size_t>> &communicator::get_load_balancing_weights() const noexcept {
+#if defined(PLSSVM_ENABLE_ASSERTS)
+    // check if all MPI ranks have balancing weights
+    bool has_weights = load_balancing_weights_.has_value();
+    bool and_result{};
+    PLSSVM_MPI_ERROR_CHECK(MPI_Allreduce(&has_weights, &and_result, 1, MPI_C_BOOL, MPI_LAND, comm_));
+    bool or_result{};
+    PLSSVM_MPI_ERROR_CHECK(MPI_Allreduce(&has_weights, &or_result, 1, MPI_C_BOOL, MPI_LOR, comm_));
+
+    // All ranks are true: Both MPI_LAND and MPI_LOR will return 1.
+    // All ranks are false: Both MPI_LAND and MPI_LOR will return 0.
+    // Mixed values: MPI_LAND will return 0, and MPI_LOR will return 1.
+    // -> if the values are not equal some ranks have load balancing weights and some don't
+    PLSSVM_ASSERT(and_result == or_result, "Some MPI ranks have load balancing weights and some don't!");
+
+    // if all MPI ranks have load balancing weights, check that they are the same
+    if (and_result) {
+        // check that the balancing weights are the same for all MPI ranks
+        std::vector<std::size_t> reference_weights(load_balancing_weights_->size());
+        if (this->is_main_rank()) {
+            reference_weights = load_balancing_weights_.value();
+        }
+        PLSSVM_MPI_ERROR_CHECK(MPI_Bcast(reference_weights.data(), reference_weights.size(), detail::mpi_datatype<std::size_t>(), communicator::main_rank(), comm_));
+        // each rank checks whether its array is correct
+        // if this is not the case for at least one array, abort
+        PLSSVM_ASSERT(static_cast<bool>(reference_weights == load_balancing_weights_.value()), "The load balancing weights must be the same on all MPI ranks which is currently not the case!");
+    }
+#endif
+    return load_balancing_weights_;
 }
 
 }  // namespace plssvm::mpi
