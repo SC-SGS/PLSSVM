@@ -26,6 +26,7 @@
 #include "plssvm/svm_types.hpp"                         // plssvm::svm_type, plssvm::svm_type_from_model_file
 
 #include <string>   // std::string
+#include <utility>  // std::move
 #include <variant>  // std::variant
 
 namespace plssvm::detail::cmd {
