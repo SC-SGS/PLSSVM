@@ -20,6 +20,7 @@
   - [Training using `plssvm-train`](#training-using-plssvm-train)
   - [Predicting using `plssvm-predict`](#predicting-using-plssvm-predict)
   - [Data Scaling using `plssvm-scale`](#data-scaling-using-plssvm-scale)
+  - [Distributed Memory Support via MPI](#distributed-memory-support-via-mpi)
   - [Example Code for PLSSVM Used as a Library](#example-code-for-plssvm-used-as-a-library)
   - [Example Using the `sklearn` Python Bindings Available For PLSSVM](#example-using-the-sklearn-like-python-bindings-available-for-plssvm)
 - [Citing PLSSVM](#citing-plssvm)
@@ -667,6 +668,8 @@ Usage:
                                 choose the Kokkos execution space to be used in the Kokkos backend: automatic|Cuda|OpenMP|Serial (default: automatic)
       --performance_tracking arg
                                 the output YAML file where the performance tracking results are written to; if not provided, the results are dumped to stderr
+      --mpi_load_balancing_weights arg
+                                can be used to load balance for MPI (must be integers); number of provided values must match the number of MPI ranks
       --use_strings_as_labels   use strings as labels instead of plane numbers
       --verbosity               choose the level of verbosity: full|timing|libsvm|quiet (default: full)
   -q, --quiet                   quiet mode (no outputs regardless the provided verbosity level!)
@@ -773,6 +776,8 @@ Usage:
                                 choose the Kokkos execution space to be used in the Kokkos backend: automatic|Cuda|OpenMP|Serial (default: automatic)
       --performance_tracking arg
                                 the output YAML file where the performance tracking results are written to; if not provided, the results are dumped to stderr
+      --mpi_load_balancing_weights arg
+                                can be used to load balance for MPI (must be integers); number of provided values must match the number of MPI ranks
       --use_strings_as_labels   use strings as labels instead of plane numbers
       --verbosity               choose the level of verbosity: full|timing|libsvm|quiet (default: full)
   -q, --quiet                   quiet mode (no outputs regardless the provided verbosity level!)
@@ -835,6 +840,37 @@ An example invocation to scale a train and test file in the same way looks like:
 ./plssvm-scale -l -1.0 -u 1.0 -s scaling_parameter.txt train_file.libsvm train_file_scaled.libsvm
 ./plssvm-scale -r scaling_parameter.txt test_file.libsvm test_file_scaled.libsvm
 ```
+
+### Distributed Memory Support via MPI
+
+We support distributed memory via MPI for `plssvm-train` and `plssvm-predict` while simultaneously allowing multiple devices per MPI rank.
+In order to use it, MPI must be found during the CMake configuration step.
+Note that if MPI couldn't be found, PLSSVM still works in shared memory mode only and internally disables all MPI related functionality.
+For example, to run PLSSVM via MPI on four nodes simply use the normal `mpirun` command:
+
+```bash
+mpirun -N 4 ./plssvm-train --backend cuda --input /path/to/data_file
+```
+
+We also have support for a rudimentary, manual load balancing: 
+
+```bash
+mpirun -N 4 ./plssvm-train mpi_load_balancing_weights=1,2,2,1 --backend cuda --input /path/to/data_file
+```
+
+The above command results in MPI rank 1 and 2 computing twice the matrix elements than the ranks 0 and 3. 
+This can be used to load balance our computations in scenarios where heterogeneous hardware is used. 
+Note that the number of provided load balancing weights must be equal to the used MPI ranks and is independent of the number of devices per MPI rank. 
+If one MPI rank has more than one device, all these devices on one MPI rank compute the same number of matrix elements. 
+
+Our MPI implementation, however, currently has some limitations:
+- the training, test, and model data is fully read by **every** MPI rank
+- the training, test, and model data is fully stored on **each** compute device on **every** MPI rank
+- **only** the kernel matrix is really divided across **all** MPI ranks
+- while the expensive BLAS level 3 operations in the CG algorithm are computed in a distributed way, everything else is computed on **every** MPI rank
+- in the CG algorithm we communicate the whole matrix, although it would be sufficient to communicate only matrix parts
+- **only** the **main** MPI rank (per default rank 0) writes the output files
+- `plssvm-scale` **does not** support more than one MPI rank
 
 ### Example Code for PLSSVM Used as a Library
 
