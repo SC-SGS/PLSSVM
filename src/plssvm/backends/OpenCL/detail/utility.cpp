@@ -21,6 +21,7 @@
 #include "plssvm/detail/string_utility.hpp"                 // plssvm::detail::replace_all, plssvm::detail::to_lower_case, plssvm::detail::contains
 #include "plssvm/detail/tracking/performance_tracker.hpp"   // PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY, plssvm::detail::tracking::tracking_entry
 #include "plssvm/detail/utility.hpp"                        // plssvm::detail::erase_if
+#include "plssvm/exceptions/exceptions.hpp"                 // plssvm::platform_devices_empty
 #include "plssvm/kernel_function_types.hpp"                 // plssvm::kernel_function_type
 #include "plssvm/target_platforms.hpp"                      // plssvm::target_platform
 #include "plssvm/verbosity_levels.hpp"                      // plssvm::verbosity_level
