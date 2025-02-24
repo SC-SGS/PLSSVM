@@ -132,6 +132,14 @@ class csvm {
     template <typename... Args, PLSSVM_REQUIRES(detail::has_only_parameter_named_args_v<Args...>)>
     void set_params(Args &&...named_args);
 
+    /**
+     * @brief Get the associated MPI communicator.
+     * @return the MPI communicator (`[[nodiscard]]`)
+     */
+    [[nodiscard]] const mpi::communicator &communicator() const noexcept {
+        return comm_;
+    }
+
   protected:
     //*************************************************************************************************************************************//
     //                        pure virtual functions, must be implemented for all subclasses; doing the actual work                        //
