@@ -497,6 +497,10 @@ pipeline {
                                     *) ;;
                                 esac
 
+                                if [[ $BACKEND == "KOKKOS" ]] ; then
+                                    export OMP_PROC_BIND=false
+                                fi
+
                                 installpath=$(cat ${WORKSPACE}/plssvm/${BUILD_TYPE}-${BACKEND}-${ARCHITECTURE}.installpath)
 
                                 cd ${WORKSPACE}/plssvm
