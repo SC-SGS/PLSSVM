@@ -19,7 +19,7 @@ def check():
         try:
             backend = plssvm.determine_default_backend(available_target_platforms=[target])
             print("Default backend for target platform {}: {}".format(str(target), str(backend)))
-        except:
+        except Exception:
             pass
     print()
 

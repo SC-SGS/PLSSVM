@@ -10,6 +10,7 @@
 
 import plssvm
 from plssvm import regression_report
+import sys
 
 try:
     # create a new C-SVM parameter set, explicitly overriding the default kernel function
@@ -41,5 +42,7 @@ try:
     model.save("model_file.libsvm")
 except plssvm.PLSSVMError as e:
     print(e)
+    sys.exit(1)
 except RuntimeError as e:
     print(e)
+    sys.exit(1)

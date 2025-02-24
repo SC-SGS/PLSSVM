@@ -10,6 +10,7 @@
 
 #include "plssvm/core.hpp"
 
+#include <iostream>
 #include <string>
 #include <vector>
 
@@ -29,7 +30,8 @@ int main() {
     const plssvm::regression_model model = svr->fit(train_data_with_label);
 
     // score a new, unseen data set
-    const double score = svr->score(model, test_data);
+    const double model_score = svr->score(model, test_data);
+    std::cout << "score: " << model_score << std::endl;
 
     //
     // Note: the model is NOT bound to a specific support vector machine
@@ -39,6 +41,7 @@ int main() {
 
     // predict labels
     const std::vector<int> predicted_labels = opencl_svr.predict(model, test_data);
+    std::cout << "prediction: " << plssvm::regression_report{ test_data.labels()->get(), predicted_labels } << std::endl;
 
     return 0;
 }

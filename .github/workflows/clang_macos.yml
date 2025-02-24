@@ -1,7 +1,10 @@
 name: macOS CPU
 on:
-  workflow_dispatch:
   push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch:
 jobs:
   macOS-Test:
     runs-on: macos-13

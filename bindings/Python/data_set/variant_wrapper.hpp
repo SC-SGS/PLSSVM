@@ -62,14 +62,14 @@ struct classification_data_set_wrapper {
      * @param[in] d the classification data set
      */
     template <typename T>
-    classification_data_set_wrapper(plssvm::classification_data_set<T> d) :
+    explicit classification_data_set_wrapper(plssvm::classification_data_set<T> d) :
         data_set{ std::move(d) } { }
 
     /**
      * @brief Construct a new classification data set using the provided std::variant.
      * @param[in] d the classification data set variant
      */
-    classification_data_set_wrapper(possible_data_set_types d) :
+    explicit classification_data_set_wrapper(possible_data_set_types d) :
         data_set{ std::move(d) } { }
 
     /// The actual classification data set (active type in the std::variant).
@@ -106,14 +106,14 @@ struct regression_data_set_wrapper {
      * @param[in] d the regression data set
      */
     template <typename T>
-    regression_data_set_wrapper(plssvm::regression_data_set<T> d) :
+    explicit regression_data_set_wrapper(plssvm::regression_data_set<T> d) :
         data_set{ std::move(d) } { }
 
     /**
      * @brief Construct a new regression data set using the provided std::variant.
      * @param[in] d the regression data set variant
      */
-    regression_data_set_wrapper(possible_data_set_types d) :
+    explicit regression_data_set_wrapper(possible_data_set_types d) :
         data_set{ std::move(d) } { }
 
     /// The actual regression data set (active type in the std::variant).

@@ -102,7 +102,7 @@ constexpr void swap(dim_type &lhs, dim_type &rhs) noexcept {
  * @param[in] rhs the second dim_type
  * @return `true` if all three dimensions are equal, otherwise `false` (`[[nodiscard]]`)
  */
-constexpr bool operator==(const dim_type lhs, const dim_type rhs) {
+constexpr bool operator==(const dim_type &lhs, const dim_type &rhs) {
     return lhs.x == rhs.x && lhs.y == rhs.y && lhs.z == rhs.z;
 }
 
@@ -112,7 +112,7 @@ constexpr bool operator==(const dim_type lhs, const dim_type rhs) {
  * @param[in] rhs the second dim_type
  * @return `false` if all three dimensions are equal, otherwise `true` (`[[nodiscard]]`)
  */
-constexpr bool operator!=(const dim_type lhs, const dim_type rhs) {
+constexpr bool operator!=(const dim_type &lhs, const dim_type &rhs) {
     return !(lhs == rhs);
 }
 
@@ -122,7 +122,7 @@ constexpr bool operator!=(const dim_type lhs, const dim_type rhs) {
  * @param[in] dim the dim_type
  * @return the output-stream
  */
-std::ostream &operator<<(std::ostream &out, dim_type dim);
+std::ostream &operator<<(std::ostream &out, const dim_type &dim);
 
 //*************************************************************************************************************************************//
 //                                                           execution_range                                                           //

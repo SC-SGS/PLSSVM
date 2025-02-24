@@ -61,7 +61,8 @@ if (PLSSVM_GENERATE_TEST_FILES)
         "${PROJECT_SOURCE_DIR}/tests/data/libsvm/classification/${PLSSVM_TEST_FILE_NUM_DATA_POINTS}x${PLSSVM_TEST_FILE_NUM_FEATURES}_${PLSSVM_TEST_FILE_NUM_CLASSES}.libsvm"
         CACHE STRING "Path including name of the classification test file" FORCE
     )
-    set(PLSSVM_REGRESSION_TEST_FILE "${PROJECT_SOURCE_DIR}/tests/data/libsvm/regression/${PLSSVM_TEST_FILE_NUM_DATA_POINTS}x${PLSSVM_TEST_FILE_NUM_FEATURES}.libsvm"
+    set(PLSSVM_REGRESSION_TEST_FILE
+        "${PROJECT_SOURCE_DIR}/tests/data/libsvm/regression/${PLSSVM_TEST_FILE_NUM_DATA_POINTS}x${PLSSVM_TEST_FILE_NUM_FEATURES}.libsvm"
         CACHE STRING "Path including name of the regression test file" FORCE
     )
 

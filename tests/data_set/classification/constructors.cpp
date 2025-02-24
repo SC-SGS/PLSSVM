@@ -918,7 +918,6 @@ TYPED_TEST(ClassificationDataSetRValueMatrixConstructors, construct_from_rvalue_
 TYPED_TEST(ClassificationDataSetRValueMatrixConstructors, construct_from_rvalue_matrix_with_label_wrong_padding) {
     using label_type = typename TestFixture::fixture_label_type;
 
-    const std::vector<label_type> different_labels = util::get_distinct_label<label_type>();
     std::vector<label_type> labels = util::get_correct_data_file_labels<label_type>();
     plssvm::soa_matrix<plssvm::real_type> data_points{ plssvm::shape{ labels.size(), 4 }, plssvm::shape{ 0, 0 } };
 

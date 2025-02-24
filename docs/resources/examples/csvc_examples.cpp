@@ -10,6 +10,7 @@
 
 #include "plssvm/core.hpp"
 
+#include <iostream>
 #include <string>
 #include <vector>
 
@@ -30,9 +31,7 @@ int main() {
 
     // score the learned model
     const double model_score = svc->score(model);
-
-    // score a new, unseen data set
-    const double score = svc->score(model, test_data);
+    std::cout << "model score: " << model_score << std::endl;
 
     //
     // Note: the model is NOT bound to a specific support vector machine
@@ -42,6 +41,9 @@ int main() {
 
     // predict labels
     const std::vector<int> predicted_labels = opencl_svc.predict(model, test_data);
+
+    // score data
+    std::cout << "prediction: " << plssvm::classification_report{ test_data.labels()->get(), predicted_labels } << std::endl;
 
     return 0;
 }

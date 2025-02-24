@@ -13,6 +13,7 @@ import re
 import ctypes
 from pathlib import Path
 import subprocess
+import shutil
 
 # parse command line arguments
 parser = argparse.ArgumentParser()
@@ -38,10 +39,12 @@ if not args.gpus_only:
         "sse4_2": False,
     }
 
-    proc = subprocess.Popen(["lscpu"], stdout=subprocess.PIPE, shell=True)
-    (out, err) = proc.communicate()
-    for simd_version in simd_version_support.keys():
-        if simd_version in str(out):
+    lscpu_path = shutil.which("lscpu")  # finds the safe, absolute path
+    if not lscpu_path:
+        raise FileNotFoundError("lscpu not found on system!")
+    result = subprocess.run([lscpu_path], capture_output=True, text=True, check=True)
+    for simd_version in simd_version_support:
+        if simd_version in str(result.stdout):
             simd_version_support[simd_version] = True
 
     cond_print("supported CPU SIMD flags: {}\n".format(simd_version_support))
@@ -75,7 +78,7 @@ try:
     if len(nvidia_gpus)>0:
         cond_print("Found {} NVIDIA GPU(s): [{}]\n".format(len(nvidia_gpus), ", ".join(nvidia_gpus)))
         plssvm_target_platforms.append("nvidia:" + ",".join(set(nvidia_gpus)))
-except:
+except Exception:
     pass
 
 # AMD GPU information
@@ -108,10 +111,14 @@ if len(amd_gpus)>0:
     plssvm_target_platforms.append("amd:" + ",".join(set(amd_gpus)))
 
 # Intel GPU information
+lspci_path = shutil.which("lspci")  # finds the safe, absolute path
+if not lspci_path:
+    raise FileNotFoundError("lspci not found on system!")
+pci_entry = subprocess.run([lspci_path, "-nn"], capture_output=True, text=True, check=True)
+output_lines = [line for line in pci_entry.stdout.splitlines() if "VGA" in line or "DISPLAY" in line]
+
 intel_gpus = []
-pci_entry = subprocess.Popen(["lspci -nn | grep  -Ei 'VGA|DISPLAY'"], stdout=subprocess.PIPE, shell=True)
-(out, err) = pci_entry.communicate()
-for vga in str(out).splitlines():
+for vga in output_lines:
     # check if the device is an Intel GPU
     if "Intel" in vga:
         # extract the architecture hex-value from the lspci line
