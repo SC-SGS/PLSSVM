@@ -957,9 +957,9 @@ int main() {
         std::cout << "model accuracy: " << model_accuracy << std::endl;
 
         // predict the labels
-        const std::vector<double> predicted_values = svc->predict(model, test_data);
+        const std::vector<plssvm::real_type> predicted_values = svc->predict(model, test_data);
         // output a more complete regression report
-        const std::vector<double> &correct_values = test_data.labels().value();
+        const std::vector<plssvm::real_type> &correct_values = test_data.labels().value();
         std::cout << plssvm::regression_report{ correct_label, predicted_label } << std::endl;
 
         // write model file to disk
@@ -974,6 +974,8 @@ int main() {
 }
 ```
 
+The `examples/cpp` directory also contains the same examples using MPI to support distributed memory systems.
+
 With a corresponding minimal CMake file:
 
 ```cmake
@@ -986,14 +988,26 @@ find_package(plssvm REQUIRED)
 # CMake's COMPONENTS mechanism can also be used if a specific library component is required, e.g.:
 # find_package(plssvm REQUIRED COMPONENTS CUDA)
 
+# classification executable example
 add_executable(classification main_classification.cpp)
+# classification executable example using MPI
+add_executable(classification_mpi main_classification_mpi.cpp)
+# regression executable example
 add_executable(regression main_regression.cpp)
+# regression executable example using MPI
+add_executable(regression_mpi main_regression_mpi.cpp)
 
-target_compile_features(prog PUBLIC cxx_std_17)
-target_link_libraries(prog PUBLIC plssvm::all)
+# link PLSSVM against executables
+foreach (target classification classification_mpi regression regression_mpi)
+    target_compile_features(${target} PUBLIC cxx_std_17)
+    target_link_libraries(${target} PUBLIC plssvm::plssvm-all)
+endforeach ()
 # can also only link against a single library component, e.g.:
 # target_link_libraries(prog PUBLIC plssvm::cuda)
 ```
+
+The `examples/python` directory contains the same examples using our PLSSVM Python bindings. 
+Additionally, it contains Python examples leveraging MPI to target distributed memory systems. 
 
 ### Example Using the `sklearn` like Python Bindings Available For PLSSVM
 

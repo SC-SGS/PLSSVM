@@ -10,6 +10,7 @@
 
 import plssvm
 from plssvm import regression_report
+from mpi4py import MPI
 import sys
 
 try:
@@ -18,27 +19,31 @@ try:
 
     # create two data sets: one with the training data scaled to [-1, 1]
     # and one with the test data scaled like the training data
-    train_data = plssvm.RegressionDataSet("train_file_reg.libsvm", scaler=plssvm.MinMaxScaler(-1.0, 1.0))
-    test_data = plssvm.RegressionDataSet("test_file_reg.libsvm", scaler=train_data.scaling_factors())
+    train_data = plssvm.RegressionDataSet("train_file_reg.libsvm", scaler=plssvm.MinMaxScaler(-1.0, 1.0, comm=MPI.COMM_WORLD), comm=MPI.COMM_WORLD)
+    test_data = plssvm.RegressionDataSet("test_file_reg.libsvm", scaler=train_data.scaling_factors(), comm=MPI.COMM_WORLD)
 
     # create C-SVR using the default backend and the previously defined parameter
-    svm = plssvm.CSVR(params)
+    svm = plssvm.CSVR(params, comm=MPI.COMM_WORLD)
 
     # fit using the training data, (optionally) set the termination criterion
     model = svm.fit(train_data, epsilon=1e-6)
 
+    # note: be sure to output results only on main rank
     # get accuracy of the trained model
     model_accuracy = svm.score(model)
-    print("model accuracy: {}".format(model_accuracy))
+    if MPI.COMM_WORLD.rank == 0:
+        print("model accuracy: {}".format(model_accuracy))
 
     # predict labels
     predicted_label = svm.predict(model, test_data)
     # output a more complete regression report
     correct_label = test_data.labels()
-    print(regression_report(correct_label, predicted_label))
+    if MPI.COMM_WORLD.rank == 0:
+        print(regression_report(correct_label, predicted_label))
 
     # write model file to disk
-    model.save("model_file.libsvm")
+    if MPI.COMM_WORLD.rank == 0:
+        model.save("model_file.libsvm")
 except plssvm.PLSSVMError as e:
     print(e)
     sys.exit(1)
