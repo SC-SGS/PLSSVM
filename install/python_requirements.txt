@@ -1,5 +1,8 @@
 ### optional and required python packages
 
+# for Python binding interoperability with MPI
+mpi4py
+
 ## for the data set generation (LIBSVM file format)
 scikit-learn
 humanize
