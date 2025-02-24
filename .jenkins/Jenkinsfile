@@ -393,6 +393,7 @@ pipeline {
                                             $([[ $BACKEND == OPENMP ]] && echo "+openmp" || echo "~openmp") \
                                             $([[ $BACKEND == HPX ]] && echo "+hpx" || echo "~hpx") \
                                             $([[ $BACKEND == KOKKOS ]] && echo "+kokkos" || echo "~kokkos") \
+                                            $([[ $BACKEND == KOKKOS ]] && echo "~lto") \
                                             $([[ $BACKEND == CUDA ]] && echo "+cuda" || echo "~cuda") \
                                             $([[ $BACKEND == HIP ]] && echo "+hip" || echo "~hip") \
                                             $([[ $BACKEND == OPENCL ]] && echo "+opencl" || echo "~opencl") \
@@ -502,6 +503,7 @@ pipeline {
                                 if [[ $BACKEND == "KOKKOS" ]] ; then
                                     export OMP_PROC_BIND=false
                                 fi
+                                export ACPP_DEBUG_LEVEL=4
 
                                 installpath=$(cat ${WORKSPACE}/plssvm/${BUILD_TYPE}-${BACKEND}-${ARCHITECTURE}.installpath)
 
