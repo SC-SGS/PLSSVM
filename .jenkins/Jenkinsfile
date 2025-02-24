@@ -443,6 +443,7 @@ pipeline {
                                                 $([[ $BACKEND == OPENMP ]] && echo "+openmp" || echo "~openmp") \
                                                 $([[ $BACKEND == HPX ]] && echo "+hpx" || echo "~hpx") \
                                                 $([[ $BACKEND == KOKKOS ]] && echo "+kokkos" || echo "~kokkos") \
+                                                $([[ $BACKEND == KOKKOS ]] && echo "~lto") \
                                                 $([[ $BACKEND == CUDA ]] && echo "+cuda" || echo "~cuda") \
                                                 $([[ $BACKEND == HIP ]] && echo "+hip" || echo "~hip") \
                                                 $([[ $BACKEND == OPENCL ]] && echo "+opencl" || echo "~opencl") \
@@ -563,6 +564,7 @@ pipeline {
                                 spack test-env --dirty "plssvm@develop$([[ $BACKEND == ADAPTIVECPP ]] && echo "%clang" ) \
 $([[ $BACKEND == HPX ]] && echo "+hpx" || echo "~hpx") \
 $([[ $BACKEND == KOKKOS ]] && echo "+kokkos" || echo "~kokkos") \
+$([[ $BACKEND == KOKKOS ]] && echo "~lto") \
 $([[ $BACKEND == OPENMP ]] && echo "+openmp" || echo "~openmp") \
 $([[ $BACKEND == CUDA ]] && echo "+cuda" || echo "~cuda") \
 $([[ $BACKEND == HIP ]] && echo "+hip" || echo "~hip") \
@@ -645,6 +647,7 @@ $([[ $BACKEND != OPENMP ]] && [[ $BACKEND == STDPAR-NVHPC ]] && [[ $BACKEND == S
                                 spack load "plssvm@develop $([[ $BACKEND == ADAPTIVECPP ]] && echo "%clang" )\
                                         $([[ $BACKEND == HPX ]] && echo "+hpx" || echo "~hpx") \
                                         $([[ $BACKEND == KOKKOS ]] && echo "+kokkos" || echo "~kokkos") \
+                                        $([[ $BACKEND == KOKKOS ]] && echo "~lto") \
                                         $([[ $BACKEND == OPENMP ]] && echo " +openmp" || echo "~openmp") \
                                         $([[ $BACKEND == CUDA ]] && echo "+cuda" || echo "~cuda") \
                                         $([[ $BACKEND == HIP ]] && echo "+hip" || echo "~hip") \
