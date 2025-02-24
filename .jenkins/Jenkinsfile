@@ -111,9 +111,9 @@ pipeline {
                         --header "authorization: Bearer ${gitlab_token}" \
                         --data "{
                             \\"state\\": \\"success\\",
-                            \\"context\\": \\"Jenkins CPU tests\\",
-                            \\"description\\": \\"Jenkins CI Job: Jenkins CPU tests\\",
-                            \\"target_url\\": \\"https:///jenkins-sim.informatik.uni-stuttgart.de/view/PLSSVM/job/PLSSVM/job/PLSSVM/job/${BRANCH_NAME}/$BUILD_NUMBER\\"
+                            \\"context\\": \\"Jenkins tests\\",
+                            \\"description\\": \\"Jenkins CI Job: Jenkins tests\\",
+                            \\"target_url\\": \\"https:///jenkins-sim.informatik.uni-stuttgart.de/blue/organizations/jenkins/PLSSVM/detail/${BRANCH_NAME}/$BUILD_NUMBER/pipeline\\"
                     }"
                 '''
                 }
@@ -853,7 +853,7 @@ $([[ $BACKEND != OPENMP ]] && [[ $BACKEND == STDPAR-NVHPC ]] && [[ $BACKEND == S
                         \\"state\\": \\"success\\",
                         \\"context\\": \\"Jenkins CPU tests\\",
                         \\"description\\": \\"Jenkins CI Job: Jenkins CPU tests\\",
-                        \\"target_url\\": \\"https:///jenkins-sim.informatik.uni-stuttgart.de/view/PLSSVM/job/PLSSVM/job/PLSSVM/job/${BRANCH_NAME}/$BUILD_NUMBER\\"
+                        \\"target_url\\": \\"https:///jenkins-sim.informatik.uni-stuttgart.de/blue/organizations/jenkins/PLSSVM/detail/${BRANCH_NAME}/$BUILD_NUMBER/pipeline\\"
                 }"
             '''
         }
@@ -872,7 +872,7 @@ $([[ $BACKEND != OPENMP ]] && [[ $BACKEND == STDPAR-NVHPC ]] && [[ $BACKEND == S
                         \\"state\\": \\"failure\\",
                         \\"context\\": \\"Jenkins CPU tests\\",
                         \\"description\\": \\"Jenkins CI Job: Jenkins CPU tests\\",
-                        \\"target_url\\": \\"https:///jenkins-sim.informatik.uni-stuttgart.de/view/PLSSVM/job/PLSSVM/job/PLSSVM/job/${BRANCH_NAME}/$BUILD_NUMBER\\"
+                        \\"target_url\\": \\"https:///jenkins-sim.informatik.uni-stuttgart.de/blue/organizations/jenkins/PLSSVM/detail/${BRANCH_NAME}/$BUILD_NUMBER/pipeline\\"
                 }"
             '''
         }
@@ -891,7 +891,7 @@ $([[ $BACKEND != OPENMP ]] && [[ $BACKEND == STDPAR-NVHPC ]] && [[ $BACKEND == S
                         \\"state\\": \\"error\\",
                         \\"context\\": \\"Jenkins CPU tests\\",
                         \\"description\\": \\"Jenkins CI Job: Jenkins CPU tests\\",
-                        \\"target_url\\": \\"https:///jenkins-sim.informatik.uni-stuttgart.de/view/PLSSVM/job/PLSSVM/job/PLSSVM/job/${BRANCH_NAME}/$BUILD_NUMBER\\"
+                        \\"target_url\\": \\"https:///jenkins-sim.informatik.uni-stuttgart.de/blue/organizations/jenkins/PLSSVM/detail/${BRANCH_NAME}/$BUILD_NUMBER/pipeline\\"
                 }"
             '''
         }
