@@ -406,7 +406,7 @@ pipeline {
                                             $([[ $BACKEND == STDPAR-ROC ]] && echo "stdparimplementation=roc" ) \
                                             $([[ $(hostname) != pcsgs03 ]] && [[ $ARCHITECTURE == NVIDIA ]] && echo "cuda_arch=86") \
                                             $([[ $(hostname) == pcsgs03 ]] && [[ $ARCHITECTURE == NVIDIA ]] && echo "cuda_arch=75") \
-                                            $([[ SET_NVIDIA_GPU_NONE == 1 ]] && echo "cuda_arch=none") \
+                                            $([[ $SET_NVIDIA_GPU_NONE == 1 ]] && echo "cuda_arch=none") \
                                             $([[ $ARCHITECTURE == AMD ]] && [[ $(hostname) == pcsgs13 ]] && echo "amdgpu_target=gfx1101") \
                                             $([[ $ARCHITECTURE == AMD ]] && [[ $(hostname) == simcl1n3 ]] && echo "amdgpu_target=gfx90a") \
                                             $([[ $ARCHITECTURE == AMD ]] && [[ $(hostname) == pcsgs09 ]] && echo "amdgpu_target=gfx906") \
@@ -433,7 +433,7 @@ pipeline {
                                                 $([[ $BACKEND == STDPAR-ROC ]] && echo "stdparimplementation=roc" ) \
                                                 $([[ $(hostname) != pcsgs03 ]] && [[ $ARCHITECTURE == NVIDIA ]] && echo "cuda_arch=86") \
                                                 $([[ $(hostname) == pcsgs03 ]] && [[ $ARCHITECTURE == NVIDIA ]] && echo "cuda_arch=75") \
-                                                $([[ SET_NVIDIA_GPU_NONE == 1 ]] && echo "cuda_arch=none") \
+                                                $([[ $SET_NVIDIA_GPU_NONE == 1 ]] && echo "cuda_arch=none") \
                                                 $([[ $ARCHITECTURE == AMD ]] && [[ $(hostname) == pcsgs13 ]] && echo "amdgpu_target=gfx1101") \
                                                 $([[ $ARCHITECTURE == AMD ]] && [[ $(hostname) == simcl1n3 ]] && echo "amdgpu_target=gfx90a") \
                                                 $([[ $ARCHITECTURE == AMD ]] && [[ $(hostname) == pcsgs09 ]] && echo "amdgpu_target=gfx906") \
@@ -485,6 +485,7 @@ pipeline {
                                     OPENCL|ADAPTIVECPP|DPCPP|STDPAR-NVHPC|STDPAR-DPCPP|STDPAR-ADAPTIVECPP|KOKKOS)
                                         if [ "$ARCHITECTURE" != NVIDIA ]; then
                                             SET_NVIDIA_GPU_NONE=1
+                                            export SET_NVIDIA_GPU_NONE=1
                                         fi
                                         ;;
                                     *) ;;
@@ -494,6 +495,7 @@ pipeline {
                                     OPENCL|ADAPTIVECPP|DPCPP|STDPAR-DPCPP|STDPAR-ADAPTIVECPP|KOKKOS)
                                         if [ "$ARCHITECTURE" != AMD ]; then
                                             SET_AMD_GPU_NONE=1
+                                            export SET_AMD_GPU_NONE=1
                                         fi
                                     ;;
                                     *) ;;
@@ -552,7 +554,7 @@ $([[ $BACKEND == STDPAR-NVHPC ]] && echo "stdparimplementation=nvhpc" ) \
 $([[ $BACKEND == STDPAR-ADAPTIVECPP ]] && echo "stdparimplementation=adaptivecpp" ) \
 $([[ $(hostname) != pcsgs03 ]] && [[ $ARCHITECTURE == NVIDIA ]] && echo "cuda_arch=86") \
 $([[ $(hostname) == pcsgs03 ]] && [[ $ARCHITECTURE == NVIDIA ]] && echo "cuda_arch=75") \
-$([[ SET_NVIDIA_GPU_NONE == 1 ]] && echo "cuda_arch=none") \
+$([[ $SET_NVIDIA_GPU_NONE == 1 ]] && echo "cuda_arch=none") \
 $([[ $ARCHITECTURE == AMD ]] && [[ $(hostname) == pcsgs13 ]] && echo "amdgpu_target=gfx1101") \
 $([[ $ARCHITECTURE == AMD ]] && [[ $(hostname) == simcl1n3 ]] && echo "amdgpu_target=gfx90a") \
 $([[ $ARCHITECTURE == AMD ]] && [[ $(hostname) == pcsgs09 ]] && echo "amdgpu_target=gfx906") \
