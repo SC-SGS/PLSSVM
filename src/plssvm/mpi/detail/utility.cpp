@@ -20,7 +20,7 @@
 
 namespace plssvm::mpi::detail {
 
-void mpi_error_check(const int err) {
+void mpi_error_check([[maybe_unused]] const int err) {
 #if defined(PLSSVM_HAS_MPI_ENABLED)
     if ((err) != MPI_SUCCESS) {
         std::string err_str(MPI_MAX_ERROR_STRING, '\0');

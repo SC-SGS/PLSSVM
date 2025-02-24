@@ -142,7 +142,7 @@ void communicator::set_load_balancing_weights(std::vector<std::size_t> weights) 
 }
 
 const std::optional<std::vector<std::size_t>> &communicator::get_load_balancing_weights() const noexcept {
-#if defined(PLSSVM_ENABLE_ASSERTS)
+#if defined(PLSSVM_ENABLE_ASSERTS) && defined(PLSSVM_HAS_MPI_ENABLED)
     // check if all MPI ranks have balancing weights
     bool has_weights = load_balancing_weights_.has_value();
     bool and_result{};
