@@ -97,6 +97,28 @@ pipeline {
     }
 
     stages{
+        stage('Set GitHub status to running'){
+            steps{
+                script {
+                buildbadge.setStatus('running')
+
+                sh '''
+                    gitlab_token=$(echo ${GITHUB_TOKEN} | cut -f2 -d':')
+                    curl --verbose\
+                        --request POST \
+                        --url "https://api.github.com/repos/SC-SGS/PLSSVM/statuses/$GIT_COMMIT" \
+                        --header "Content-Type: application/json" \
+                        --header "authorization: Bearer ${gitlab_token}" \
+                        --data "{
+                            \\"state\\": \\"success\\",
+                            \\"context\\": \\"Jenkins CPU tests\\",
+                            \\"description\\": \\"Jenkins CI Job: Jenkins CPU tests\\",
+                            \\"target_url\\": \\"https:///jenkins-sim.informatik.uni-stuttgart.de/view/PLSSVM/job/PLSSVM/job/PLSSVM/job/${BRANCH_NAME}/$BUILD_NUMBER\\"
+                    }"
+                '''
+                }
+            }
+        }
 
         stage('Dependency -- Spack')
         {
