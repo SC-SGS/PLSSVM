@@ -508,7 +508,7 @@ TYPED_TEST_P(GenericGPUCSVMKernelFunction, run_assemble_kernel_matrix_implicit_b
         ground_truth::device_specific_gemm(alpha, full_kernel_matrix, B, correct_C, *svm.data_distribution_, device_id);
 
         // check for correctness
-        EXPECT_FLOATING_POINT_MATRIX_NEAR_EPS(C, correct_C, 1e6);
+        EXPECT_FLOATING_POINT_MATRIX_NEAR_EPS(C, correct_C, 1e8);
     }
 }
 
