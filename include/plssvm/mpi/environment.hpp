@@ -58,6 +58,14 @@ void abort_world();
  */
 [[nodiscard]] bool is_active();
 
+/**
+ * @brief Returns `true` if the executable was started via `mpirun`.
+ * @details Checks for the existence of the environment variables: ``
+ * @note Will falsely return `true` if any of the environment variables is explicitly set by the user!
+ * @return `true` if the executable was started via `mpirun`, otherwise `false` (`[[nodiscard]]`)
+ */
+[[nodiscard]] bool is_executed_via_mpirun();
+
 }  // namespace plssvm::mpi
 
 #endif  // PLSSVM_MPI_ENVIRONMENT_HPP_

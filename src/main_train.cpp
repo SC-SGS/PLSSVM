@@ -16,6 +16,7 @@
                                                            // PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_HWS_ENTRY, PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_SET_REFERENCE_TIME
 #include "plssvm/detail/assert.hpp"                        // PLSSVM_ASSERT
 #include "plssvm/detail/utility.hpp"                       // PLSSVM_IS_DEFINED
+#include "plssvm/mpi/environment.hpp"                      // plssvm::mpi::is_executed_via_mpirun
 
 #if defined(PLSSVM_HARDWARE_SAMPLING_ENABLED)
     #include "hws/system_hardware_sampler.hpp"  // hws::system_hardware_sampler
@@ -86,6 +87,13 @@ int main(int argc, char *argv[]) {
                         comm,
                         "Using {} MPI rank(s) for our SVM.\n",
                         comm.size());
+#else
+    if (plssvm::mpi::is_executed_via_mpirun()) {
+        plssvm::detail::log(plssvm::verbosity_level::full | plssvm::verbosity_level::warning,
+                            comm,
+                            "WARNING: PLSSVM was built without MPI support, but plssvm-train was executed via mpirun! "
+                            "As a result, each MPI process will run the same code.\n");
+    }
 #endif
 
     // create std::unique_ptr containing a plssvm::scope_guard

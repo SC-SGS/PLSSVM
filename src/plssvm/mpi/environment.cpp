@@ -17,7 +17,7 @@
     #include "mpi.h"  // MPI_THREAD_FUNNELED, MPI_Init_thread, MPI_Finalize, MPI_Initialized, MPI_Finalized
 #endif
 
-#include <cstdlib>  // EXIT_FAILURE
+#include <cstdlib>  // EXIT_FAILURE, std::getenv
 
 namespace plssvm::mpi {
 
@@ -81,6 +81,12 @@ bool is_active() {
 #else
     return false;
 #endif
+}
+
+bool is_executed_via_mpirun() {
+    return std::getenv("OMPI_COMM_WORLD_SIZE") != nullptr ||  // OpenMPI
+           std::getenv("PMI_SIZE") != nullptr ||              // MPICH, IntelMPI, OpenMPI
+           std::getenv("SLURM_PROCID") != nullptr;            // SLURM
 }
 
 }  // namespace plssvm::mpi
