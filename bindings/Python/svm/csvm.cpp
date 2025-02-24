@@ -26,5 +26,6 @@ void init_csvm(py::module_ &pure_virtual) {
                 // convert kwargs to parameter and update csvm internal parameter
                 self.set_params(plssvm::bindings::python::util::convert_kwargs_to_parameter(args, self.get_params())); }, "update the hyper-parameters used for this C-SVM using keyword arguments")
         .def("get_target_platform", &plssvm::csvm::get_target_platform, "get the actual target platform this C-SVM runs on")
-        .def("num_available_devices", &plssvm::csvm::num_available_devices, "get the number of available devices for the current C-SVM");
+        .def("num_available_devices", &plssvm::csvm::num_available_devices, "get the number of available devices for the current C-SVM")
+        .def("communicator", &plssvm::csvm::communicator, "the associated MPI communicator");
 }

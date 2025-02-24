@@ -13,8 +13,10 @@
 #include "plssvm/detail/type_traits.hpp"       // plssvm::detail::remove_cvref_t
 #include "plssvm/file_format_types.hpp"        // plssvm::file_format_type
 #include "plssvm/matrix.hpp"                   // plssvm::soa_matrix
+#include "plssvm/mpi/communicator.hpp"         // plssvm::mpi::communicator
 
 #include "bindings/Python/data_set/variant_wrapper.hpp"                 // plssvm::bindings::python::util::regression_data_set_wrapper
+#include "bindings/Python/mpi/mpi_typecaster.hpp"                       // a custom Pybind11 type caster for a plssvm::mpi::communicator
 #include "bindings/Python/type_caster/label_vector_wrapper_caster.hpp"  // a custom Pybind11 type caster for a plssvm::bindings::python::util::label_vector_wrapper
 #include "bindings/Python/type_caster/matrix_type_caster.hpp"           // a custom Pybind11 type caster for a plssvm::matrix
 #include "bindings/Python/utility.hpp"                                  // plssvm::bindings::python::util::{create_instance, python_type_name_mapping, vector_to_pyarray}
@@ -38,18 +40,18 @@ void init_regression_data_set(py::module_ &m) {
     using plssvm::bindings::python::util::regression_data_set_wrapper;
 
     py::class_<regression_data_set_wrapper>(m, "RegressionDataSet", "Encapsulate all necessary data that is needed for training or predicting using an C-SVR.")
-        .def(py::init([](const std::string &filename, const std::optional<py::type> type, const plssvm::file_format_type format, const std::optional<plssvm::min_max_scaler> scaler) {
+        .def(py::init([](const std::string &filename, const std::optional<py::type> type, const plssvm::file_format_type format, const std::optional<plssvm::min_max_scaler> scaler, plssvm::mpi::communicator comm) {
                  if (type.has_value()) {
                      if (scaler.has_value()) {
-                         return std::make_unique<regression_data_set_wrapper>(plssvm::bindings::python::util::create_instance<plssvm::regression_data_set, typename regression_data_set_wrapper::possible_data_set_types>(type.value(), filename, format, scaler.value()));
+                         return std::make_unique<regression_data_set_wrapper>(plssvm::bindings::python::util::create_instance<plssvm::regression_data_set, typename regression_data_set_wrapper::possible_data_set_types>(type.value(), std::move(comm), filename, format, scaler.value()));
                      } else {
-                         return std::make_unique<regression_data_set_wrapper>(plssvm::bindings::python::util::create_instance<plssvm::regression_data_set, typename regression_data_set_wrapper::possible_data_set_types>(type.value(), filename, format));
+                         return std::make_unique<regression_data_set_wrapper>(plssvm::bindings::python::util::create_instance<plssvm::regression_data_set, typename regression_data_set_wrapper::possible_data_set_types>(type.value(), std::move(comm), filename, format));
                      }
                  } else {
                      if (scaler.has_value()) {
-                         return std::make_unique<regression_data_set_wrapper>(plssvm::regression_data_set<double>{ filename, format, scaler.value() });
+                         return std::make_unique<regression_data_set_wrapper>(plssvm::regression_data_set<double>{ std::move(comm), filename, format, scaler.value() });
                      } else {
-                         return std::make_unique<regression_data_set_wrapper>(plssvm::regression_data_set<double>{ filename, format });
+                         return std::make_unique<regression_data_set_wrapper>(plssvm::regression_data_set<double>{ std::move(comm), filename, format });
                      }
                  }
              }),
@@ -58,19 +60,20 @@ void init_regression_data_set(py::module_ &m) {
              py::pos_only(),
              py::arg("type") = std::nullopt,
              py::arg("format") = plssvm::file_format_type::libsvm,
-             py::arg("scaler") = std::nullopt)
-        .def(py::init([](plssvm::soa_matrix<plssvm::real_type> data, const std::optional<py::type> type, const std::optional<plssvm::min_max_scaler> scaler) {
+             py::arg("scaler") = std::nullopt,
+             py::arg("comm") = plssvm::mpi::communicator{})
+        .def(py::init([](plssvm::soa_matrix<plssvm::real_type> data, const std::optional<py::type> type, const std::optional<plssvm::min_max_scaler> scaler, plssvm::mpi::communicator comm) {
                  if (type.has_value()) {
                      if (scaler.has_value()) {
-                         return std::make_unique<regression_data_set_wrapper>(plssvm::bindings::python::util::create_instance<plssvm::regression_data_set, typename regression_data_set_wrapper::possible_data_set_types>(type.value(), std::move(data), scaler.value()));
+                         return std::make_unique<regression_data_set_wrapper>(plssvm::bindings::python::util::create_instance<plssvm::regression_data_set, typename regression_data_set_wrapper::possible_data_set_types>(type.value(), std::move(comm), std::move(data), scaler.value()));
                      } else {
-                         return std::make_unique<regression_data_set_wrapper>(plssvm::bindings::python::util::create_instance<plssvm::regression_data_set, typename regression_data_set_wrapper::possible_data_set_types>(type.value(), std::move(data)));
+                         return std::make_unique<regression_data_set_wrapper>(plssvm::bindings::python::util::create_instance<plssvm::regression_data_set, typename regression_data_set_wrapper::possible_data_set_types>(type.value(), std::move(comm), std::move(data)));
                      }
                  } else {
                      if (scaler.has_value()) {
-                         return std::make_unique<regression_data_set_wrapper>(plssvm::regression_data_set<double>{ std::move(data), scaler.value() });
+                         return std::make_unique<regression_data_set_wrapper>(plssvm::regression_data_set<double>{ std::move(comm), std::move(data), scaler.value() });
                      } else {
-                         return std::make_unique<regression_data_set_wrapper>(plssvm::regression_data_set<double>{ std::move(data) });
+                         return std::make_unique<regression_data_set_wrapper>(plssvm::regression_data_set<double>{ std::move(comm), std::move(data) });
                      }
                  }
              }),
@@ -78,14 +81,15 @@ void init_regression_data_set(py::module_ &m) {
              py::arg("X"),
              py::pos_only(),
              py::arg("type") = std::nullopt,
-             py::arg("scaler") = std::nullopt)
-        .def(py::init([](plssvm::soa_matrix<plssvm::real_type> data, plssvm::bindings::python::util::label_vector_wrapper<typename regression_data_set_wrapper::possible_vector_types> labels, const std::optional<plssvm::min_max_scaler> scaler) {
+             py::arg("scaler") = std::nullopt,
+             py::arg("comm") = plssvm::mpi::communicator{})
+        .def(py::init([](plssvm::soa_matrix<plssvm::real_type> data, plssvm::bindings::python::util::label_vector_wrapper<typename regression_data_set_wrapper::possible_vector_types> labels, const std::optional<plssvm::min_max_scaler> scaler, plssvm::mpi::communicator comm) {
                  return std::visit([&](auto &&labels_vector) {
                      using label_type = typename plssvm::detail::remove_cvref_t<decltype(labels_vector)>::value_type;
                      if (scaler.has_value()) {
-                         return std::make_unique<regression_data_set_wrapper>(plssvm::regression_data_set<label_type>(std::move(data), std::move(labels_vector), scaler.value()));
+                         return std::make_unique<regression_data_set_wrapper>(plssvm::regression_data_set<label_type>(std::move(comm), std::move(data), std::move(labels_vector), scaler.value()));
                      } else {
-                         return std::make_unique<regression_data_set_wrapper>(plssvm::regression_data_set<label_type>(std::move(data), std::move(labels_vector)));
+                         return std::make_unique<regression_data_set_wrapper>(plssvm::regression_data_set<label_type>(std::move(comm), std::move(data), std::move(labels_vector)));
                      }
                  },
                                    labels.labels);
@@ -94,7 +98,8 @@ void init_regression_data_set(py::module_ &m) {
              py::arg("X"),
              py::arg("y"),
              py::pos_only(),
-             py::arg("scaler") = std::nullopt)
+             py::arg("scaler") = std::nullopt,
+             py::arg("comm") = plssvm::mpi::communicator{})
         .def("save", [](const regression_data_set_wrapper &self, const std::string &filename, const plssvm::file_format_type format) { std::visit([&filename, format](auto &&data) { data.save(filename, format); }, self.data_set); }, "save the data set to a file using the provided file format type", py::arg("filename"), py::pos_only(), py::arg("format") = plssvm::file_format_type::libsvm)
         .def("data", [](const regression_data_set_wrapper &self) { return std::visit([](auto &&data) { return py::cast(data.data()); }, self.data_set); }, "the data saved as 2D vector")
         .def("has_labels", [](const regression_data_set_wrapper &self) { return std::visit([](auto &&data) { return data.has_labels(); }, self.data_set); }, "check whether the data set has labels")
@@ -118,6 +123,7 @@ void init_regression_data_set(py::module_ &m) {
                 return data.scaling_factors().value();
             } }, self.data_set); }, py::return_value_policy::reference_internal, "the factors used to scale this data set")
         // clang-format off
+        .def("communicator", [](const regression_data_set_wrapper &self) { return std::visit([](auto &&data) { return data.communicator(); }, self.data_set); }, "the associated MPI communicator")
         .def("__repr__", [](const regression_data_set_wrapper &self) {
             return std::visit([](auto &&data) {
                 std::string optional_repr{};

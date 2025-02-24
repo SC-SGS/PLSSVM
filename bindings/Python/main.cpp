@@ -7,9 +7,13 @@
  *          See the LICENSE.md file in the project root for full license information.
  */
 
-#include "plssvm/environment.hpp"            // plssvm::environment::{initialize, finalize}
-#include "plssvm/exceptions/exceptions.hpp"  // plssvm::exception
-#include "plssvm/version/version.hpp"        // plssvm::version::version
+#include "plssvm/detail/logging/mpi_log_untracked.hpp"  // plssvm::detail::log_untracked
+#include "plssvm/environment.hpp"                       // plssvm::environment::{initialize, finalize}
+#include "plssvm/exceptions/exceptions.hpp"             // plssvm::exception
+#include "plssvm/mpi/communicator.hpp"                  // plssvm::mpi::communicator
+#include "plssvm/mpi/environment.hpp"                   // plssvm::mpi::is_executed_via_mpirun
+#include "plssvm/verbosity_levels.hpp"                  // plssvm::verbosity_level
+#include "plssvm/version/version.hpp"                   // plssvm::version::version
 
 #include "pybind11/pybind11.h"  // PYBIND11_MODULE, py::module_, py::exception, py::register_exception_translator
 #include "pybind11/pytypes.h"   // py::set_error
@@ -63,6 +67,31 @@ PYBIND11_MODULE(plssvm, m) {
 
     // automatically initialize the environments
     plssvm::environment::initialize();
+
+    // issue a warning if PLSSVM was build without MPI support, but the Python code was run via mpirun
+#if !defined(PLSSVM_HAS_MPI_ENABLED)
+    if (plssvm::mpi::is_executed_via_mpirun()) {
+        plssvm::detail::log_untracked(plssvm::verbosity_level::full | plssvm::verbosity_level::warning,
+                                      plssvm::mpi::communicator{},
+                                      "WARNING: PLSSVM was built without MPI support, but is currently executed via mpirun! "
+                                      "As a result, each MPI process will run the same code.\n");
+    }
+#endif
+
+    // issue a warning if PLSSVM was build with MPI support and mpi4py wasn't found, but the Python code was still run via mpirun
+#if defined(PLSSVM_HAS_MPI_ENABLED)
+    if (plssvm::mpi::is_executed_via_mpirun()) {
+        try {
+            [[maybe_unused]] const py::module_ module = py::module_::import("mpi4py.MPI");
+            // it worked
+        } catch (const py::error_already_set &) {
+            // error loading mpi4py -> issue the warning
+            plssvm::detail::log_untracked(plssvm::verbosity_level::full | plssvm::verbosity_level::warning,
+                                          plssvm::mpi::communicator{},
+                                          "WARNING: PLSSVM was built without MPI support and the current code is executed via mpirun, but mpi4py wasn't found!\n");
+        }
+    }
+#endif
 
     // automatically finalize the environments
     m.add_object("_cleanup", py::capsule([]() {
