@@ -110,7 +110,7 @@ pipeline {
                         --header "Content-Type: application/json" \
                         --header "authorization: Bearer ${gitlab_token}" \
                         --data "{
-                            \\"state\\": \\"success\\",
+                            \\"state\\": \\"pending\\",
                             \\"context\\": \\"Jenkins tests\\",
                             \\"description\\": \\"Jenkins CI Job: Jenkins tests\\",
                             \\"target_url\\": \\"https:///jenkins-sim.informatik.uni-stuttgart.de/blue/organizations/jenkins/PLSSVM/detail/${BRANCH_NAME}/$BUILD_NUMBER/pipeline\\"
