@@ -12,6 +12,7 @@
 #include "plssvm/detail/cmd/data_set_variants.hpp"         // plssvm::detail::cmd::data_set_factory
 #include "plssvm/detail/cmd/parser_scale.hpp"              // plssvm::detail::cmd::parser_scale
 #include "plssvm/detail/logging/mpi_log.hpp"               // plssvm::detail::log
+#include "plssvm/detail/logging/mpi_log_untracked.hpp"     // plssvm::detail::log_untracked
 #include "plssvm/detail/tracking/performance_tracker.hpp"  // plssvm::detail::tracking::tracking_entry, PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_SAVE,
                                                            // PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_HWS_ENTRY, PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_SET_REFERENCE_TIME
 #include "plssvm/detail/utility.hpp"                       // PLSSVM_IS_DEFINED
@@ -64,10 +65,10 @@ int main(int argc, char *argv[]) {
 
         // send warning if the build type is release and assertions are enabled
         if constexpr (std::string_view{ PLSSVM_BUILD_TYPE } == "Release" && PLSSVM_IS_DEFINED(PLSSVM_ENABLE_ASSERTS)) {
-            plssvm::detail::log(plssvm::verbosity_level::full | plssvm::verbosity_level::warning,
-                                comm,
-                                "WARNING: The build type is set to Release, but assertions are enabled. "
-                                "This may result in a noticeable performance degradation in parts of PLSSVM!\n");
+            plssvm::detail::log_untracked(plssvm::verbosity_level::full | plssvm::verbosity_level::warning,
+                                          comm,
+                                          "WARNING: The build type is set to Release, but assertions are enabled. "
+                                          "This may result in a noticeable performance degradation in parts of PLSSVM!\n");
         }
 
         // output used parameter

@@ -13,6 +13,7 @@
 #include "plssvm/backends/stdpar/exceptions.hpp"            // plssvm::stdpar::backend_exception
 #include "plssvm/backends/stdpar/implementation_types.hpp"  // plssvm::stdpar::implementation_type
 #include "plssvm/detail/logging/log.hpp"                    // plssvm::detail::log
+#include "plssvm/detail/logging/log_untracked.hpp"          // plssvm::detail::log_untracked
 #include "plssvm/detail/tracking/performance_tracker.hpp"   // plssvm::detail::tracking::tracking_entry, PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY
 #include "plssvm/target_platforms.hpp"                      // plssvm::target_platform
 #include "plssvm/verbosity_levels.hpp"                      // plssvm::verbosity_level
@@ -77,11 +78,11 @@ csvm::csvm(const target_platform target) {
                         plssvm::detail::tracking::tracking_entry{ "backend", "target_platform", target_ });
 
     const std::string device_name = default_device.get_info<::sycl::info::device::name>();
-    plssvm::detail::log(verbosity_level::full, "  [0, {}]\n", device_name);
+    plssvm::detail::log_untracked(verbosity_level::full, "  [0, {}]\n", device_name);
     PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "backend", "device", device_name }));
 
-    plssvm::detail::log(verbosity_level::full | verbosity_level::timing,
-                        "\n");
+    plssvm::detail::log_untracked(verbosity_level::full | verbosity_level::timing,
+                                  "\n");
 }
 
 implementation_type csvm::get_implementation_type() const noexcept {

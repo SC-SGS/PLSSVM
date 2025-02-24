@@ -24,6 +24,7 @@
 #include "plssvm/detail/assert.hpp"                                                 // PLSSVM_ASSERT
 #include "plssvm/detail/data_distribution.hpp"                                      // plssvm::detail::{data_distribution, triangular_data_distribution, rectangular_data_distribution}
 #include "plssvm/detail/logging/log.hpp"                                            // plssvm::detail::log
+#include "plssvm/detail/logging/log_untracked.hpp"                                  // plssvm::detail::log_untracked
 #include "plssvm/detail/memory_size.hpp"                                            // plssvm::detail::memory_size
 #include "plssvm/detail/tracking/performance_tracker.hpp"                           // plssvm::detail::tracking::tracking_entry
 #include "plssvm/detail/utility.hpp"                                                // plssvm::detail::get_system_memory
@@ -91,8 +92,8 @@ void csvm::init(const target_platform target) {
         invocation_type_ = sycl::kernel_invocation_type::nd_range;
         if (target_ == target_platform::cpu) {
 #if !defined(__HIPSYCL_USE_ACCELERATED_CPU__) && defined(__HIPSYCL_ENABLE_OMPHOST_TARGET__)
-            plssvm::detail::log(verbosity_level::full | verbosity_level::warning,
-                                "WARNING: the AdaptiveCpp automatic target for the CPU is set to nd_range, but AdaptiveCpp hasn't been build with the \"omp.accelerated\" compilation flow resulting in major performance losses!\n");
+            plssvm::detail::log_untracked(verbosity_level::full | verbosity_level::warning,
+                                          "WARNING: the AdaptiveCpp automatic target for the CPU is set to nd_range, but AdaptiveCpp hasn't been build with the \"omp.accelerated\" compilation flow resulting in major performance losses!\n");
 #endif
         }
     }
@@ -103,9 +104,9 @@ void csvm::init(const target_platform target) {
                         plssvm::detail::tracking::tracking_entry{ "backend", "sycl_kernel_invocation_type", invocation_type_ });
     PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "dependencies", "adaptivecpp_version", detail::get_adaptivecpp_version() }));
     if (target == target_platform::automatic) {
-        plssvm::detail::log(verbosity_level::full,
-                            "Using {} as automatic target platform.\n",
-                            target_);
+        plssvm::detail::log_untracked(verbosity_level::full,
+                                      "Using {} as automatic target platform.\n",
+                                      target_);
     }
     PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "backend", "backend", plssvm::backend_type::sycl }));
     PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "backend", "sycl_implementation_type", plssvm::sycl::implementation_type::adaptivecpp }));
@@ -124,15 +125,15 @@ void csvm::init(const target_platform target) {
     device_names.reserve(devices_.size());
     for (typename std::vector<queue_type>::size_type device = 0; device < devices_.size(); ++device) {
         const std::string device_name = devices_[device].impl->sycl_queue.get_device().template get_info<::sycl::info::device::name>();
-        plssvm::detail::log(verbosity_level::full,
-                            "  [{}, {}]\n",
-                            device,
-                            device_name);
+        plssvm::detail::log_untracked(verbosity_level::full,
+                                      "  [{}, {}]\n",
+                                      device,
+                                      device_name);
         device_names.emplace_back(device_name);
     }
     PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "backend", "device", device_names }));
-    plssvm::detail::log(verbosity_level::full | verbosity_level::timing,
-                        "\n");
+    plssvm::detail::log_untracked(verbosity_level::full | verbosity_level::timing,
+                                  "\n");
 }
 
 csvm::~csvm() {
@@ -152,9 +153,9 @@ std::vector<::plssvm::detail::memory_size> csvm::get_device_memory() const {
     for (std::size_t device_id = 0; device_id < this->num_available_devices(); ++device_id) {
         const ::plssvm::detail::memory_size adaptivecpp_global_mem_size{ static_cast<unsigned long long>(devices_[device_id].impl->sycl_queue.get_device().get_info<::sycl::info::device::global_mem_size>()) };
         if (target_ == target_platform::cpu) {
-            plssvm::detail::log(verbosity_level::full | verbosity_level::warning,
-                                "WARNING: the returned 'global_mem_size' for AdaptiveCpp targeting the CPU device {} is nonsensical ('std::numeric_limits<std::size_t>::max()'). Using 'get_system_memory()' instead.\n",
-                                device_id);
+            plssvm::detail::log_untracked(verbosity_level::full | verbosity_level::warning,
+                                          "WARNING: the returned 'global_mem_size' for AdaptiveCpp targeting the CPU device {} is nonsensical ('std::numeric_limits<std::size_t>::max()'). Using 'get_system_memory()' instead.\n",
+                                          device_id);
             res[device_id] = std::min(adaptivecpp_global_mem_size, ::plssvm::detail::get_system_memory());
         } else {
             res[device_id] = adaptivecpp_global_mem_size;

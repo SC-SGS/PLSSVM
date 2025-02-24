@@ -24,6 +24,7 @@
 #include "plssvm/detail/assert.hpp"                                                 // PLSSVM_ASSERT
 #include "plssvm/detail/data_distribution.hpp"                                      // plssvm::detail::{data_distribution, triangular_data_distribution, rectangular_data_distribution}
 #include "plssvm/detail/logging/log.hpp"                                            // plssvm::detail::log
+#include "plssvm/detail/logging/log_untracked.hpp"                                  // plssvm::detail::log_untracked
 #include "plssvm/detail/memory_size.hpp"                                            // plssvm::detail::memory_size
 #include "plssvm/detail/tracking/performance_tracker.hpp"                           // plssvm::detail::tracking::tracking_entry
 #include "plssvm/exceptions/exceptions.hpp"                                         // plssvm::exception
@@ -96,9 +97,9 @@ void csvm::init(const target_platform target) {
                         plssvm::detail::tracking::tracking_entry{ "dependencies", "dpcpp_timestamp_version", detail::get_dpcpp_timestamp_version() },
                         plssvm::detail::tracking::tracking_entry{ "backend", "sycl_kernel_invocation_type", invocation_type_ });
     if (target == target_platform::automatic) {
-        plssvm::detail::log(verbosity_level::full,
-                            "Using {} as automatic target platform.\n",
-                            target_);
+        plssvm::detail::log_untracked(verbosity_level::full,
+                                      "Using {} as automatic target platform.\n",
+                                      target_);
     }
     PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "backend", "backend", plssvm::backend_type::sycl }));
     PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "backend", "sycl_implementation_type", plssvm::sycl::implementation_type::dpcpp }));
@@ -117,15 +118,15 @@ void csvm::init(const target_platform target) {
     device_names.reserve(devices_.size());
     for (typename std::vector<queue_type>::size_type device = 0; device < devices_.size(); ++device) {
         const std::string device_name = devices_[device].impl->sycl_queue.get_device().template get_info<::sycl::info::device::name>();
-        plssvm::detail::log(verbosity_level::full,
-                            "  [{}, {}]\n",
-                            device,
-                            device_name);
+        plssvm::detail::log_untracked(verbosity_level::full,
+                                      "  [{}, {}]\n",
+                                      device,
+                                      device_name);
         device_names.emplace_back(device_name);
     }
     PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "backend", "device", device_names }));
-    plssvm::detail::log(verbosity_level::full | verbosity_level::timing,
-                        "\n");
+    plssvm::detail::log_untracked(verbosity_level::full | verbosity_level::timing,
+                                  "\n");
 }
 
 csvm::~csvm() {

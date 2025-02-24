@@ -23,6 +23,7 @@
 #include "plssvm/detail/assert.hpp"                                                   // PLSSVM_ASSERT
 #include "plssvm/detail/data_distribution.hpp"                                        // plssvm::detail::triangular_data_distribution
 #include "plssvm/detail/logging/log.hpp"                                              // plssvm::detail::log
+#include "plssvm/detail/logging/log_untracked.hpp"                                    // plssvm::detail::log_untracked
 #include "plssvm/detail/memory_size.hpp"                                              // plssvm::detail::memory_size
 #include "plssvm/detail/tracking/performance_tracker.hpp"                             // plssvm::detail::tracking::tracking_entry
 #include "plssvm/detail/type_traits.hpp"                                              // plssvm::detail::remove_cvref_t
@@ -125,9 +126,9 @@ void csvm::init(const target_platform target) {
         }
 
         // output what we use as automatic Kokkos execution space
-        plssvm::detail::log(verbosity_level::full,
-                            "\nUsing {} as automatic Kokkos::ExecutionSpace.",
-                            space_);
+        plssvm::detail::log_untracked(verbosity_level::full,
+                                      "\nUsing {} as automatic Kokkos::ExecutionSpace.",
+                                      space_);
     } else {
         // execution space explicitly provided and potentially automatically determine the target platform
         if (target == target_platform::automatic) {
@@ -172,9 +173,9 @@ void csvm::init(const target_platform target) {
 
     // output automatic target platform information
     if (target == target_platform::automatic) {
-        plssvm::detail::log(verbosity_level::full,
-                            "Using {} as automatic target platform.\n",
-                            target_);
+        plssvm::detail::log_untracked(verbosity_level::full,
+                                      "Using {} as automatic target platform.\n",
+                                      target_);
     }
 
     // get all available devices wrt the requested target platform
@@ -195,15 +196,15 @@ void csvm::init(const target_platform target) {
     device_names.reserve(devices_.size());
     for (typename std::vector<queue_type>::size_type device = 0; device < devices_.size(); ++device) {
         const std::string device_name = detail::get_device_name(devices_[device]);
-        plssvm::detail::log(verbosity_level::full,
-                            "  [{}, {}]\n",
-                            device,
-                            device_name);
+        plssvm::detail::log_untracked(verbosity_level::full,
+                                      "  [{}, {}]\n",
+                                      device,
+                                      device_name);
         device_names.emplace_back(device_name);
     }
     PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "backend", "device", device_names }));
-    plssvm::detail::log(verbosity_level::full | verbosity_level::timing,
-                        "\n");
+    plssvm::detail::log_untracked(verbosity_level::full | verbosity_level::timing,
+                                  "\n");
 }
 
 csvm::~csvm() {

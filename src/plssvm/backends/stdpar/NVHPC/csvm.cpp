@@ -13,6 +13,7 @@
 #include "plssvm/backends/stdpar/exceptions.hpp"            // plssvm::stdpar::backend_exception
 #include "plssvm/backends/stdpar/implementation_types.hpp"  // plssvm::stdpar::implementation_type
 #include "plssvm/detail/logging/log.hpp"                    // plssvm::detail::log
+#include "plssvm/detail/logging/log_untracked.hpp"          // plssvm::detail::log_untracked
 #include "plssvm/detail/tracking/performance_tracker.hpp"   // plssvm::detail::tracking::tracking_entry, PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY
 #include "plssvm/target_platforms.hpp"                      // plssvm::target_platform
 #include "plssvm/verbosity_levels.hpp"                      // plssvm::verbosity_level
@@ -71,16 +72,16 @@ csvm::csvm(const target_platform target) {
 #if defined(PLSSVM_STDPAR_BACKEND_NVHPC_GPU)
     cudaDeviceProp prop{};
     cudaGetDeviceProperties(&prop, 0);
-    plssvm::detail::log(verbosity_level::full,
-                        "  [0, {}, {}.{}]\n",
-                        prop.name,
-                        prop.major,
-                        prop.minor);
+    plssvm::detail::log_untracked(verbosity_level::full,
+                                  "  [0, {}, {}.{}]\n",
+                                  prop.name,
+                                  prop.major,
+                                  prop.minor);
     PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "backend", "device", prop.name }));
 #endif
 
-    plssvm::detail::log(verbosity_level::full | verbosity_level::timing,
-                        "\n");
+    plssvm::detail::log_untracked(verbosity_level::full | verbosity_level::timing,
+                                  "\n");
 }
 
 implementation_type csvm::get_implementation_type() const noexcept {

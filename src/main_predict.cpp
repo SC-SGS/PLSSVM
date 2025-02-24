@@ -12,6 +12,7 @@
 #include "plssvm/detail/cmd/data_set_variants.hpp"         // plssvm::detail::cmd::data_set_factory
 #include "plssvm/detail/cmd/parser_predict.hpp"            // plssvm::detail::cmd::parser_predict
 #include "plssvm/detail/logging/mpi_log.hpp"               // plssvm::detail::log
+#include "plssvm/detail/logging/mpi_log_untracked.hpp"     // plssvm::detail::log_untracked
 #include "plssvm/detail/tracking/performance_tracker.hpp"  // plssvm::detail::tracking::tracking_entry, PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_SAVE,
                                                            // PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY, PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_HWS_ENTRY
                                                            // PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_SET_REFERENCE_TIME
@@ -50,16 +51,16 @@ int main(int argc, char *argv[]) {
     plssvm::mpi::communicator comm{};
 
 #if defined(PLSSVM_HAS_MPI_ENABLED)
-    plssvm::detail::log(plssvm::verbosity_level::full,
-                        comm,
-                        "Using {} MPI rank(s) for our SVM.\n",
-                        comm.size());
+    plssvm::detail::log_untracked(plssvm::verbosity_level::full,
+                                  comm,
+                                  "Using {} MPI rank(s) for our SVM.\n",
+                                  comm.size());
 #else
     if (plssvm::mpi::is_executed_via_mpirun()) {
-        plssvm::detail::log(plssvm::verbosity_level::full | plssvm::verbosity_level::warning,
-                            comm,
-                            "WARNING: PLSSVM was built without MPI support, but plssvm-predict was executed via mpirun! "
-                            "As a result, each MPI process will run the same code.\n");
+        plssvm::detail::log_untracked(plssvm::verbosity_level::full | plssvm::verbosity_level::warning,
+                                      comm,
+                                      "WARNING: PLSSVM was built without MPI support, but plssvm-predict was executed via mpirun! "
+                                      "As a result, each MPI process will run the same code.\n");
     }
 #endif
 
@@ -85,10 +86,10 @@ int main(int argc, char *argv[]) {
 
         // send warning if the build type is release and assertions are enabled
         if constexpr (std::string_view{ PLSSVM_BUILD_TYPE } == "Release" && PLSSVM_IS_DEFINED(PLSSVM_ENABLE_ASSERTS)) {
-            plssvm::detail::log(plssvm::verbosity_level::full | plssvm::verbosity_level::warning,
-                                comm,
-                                "WARNING: The build type is set to Release, but assertions are enabled. "
-                                "This may result in a noticeable performance degradation in parts of PLSSVM!\n");
+            plssvm::detail::log_untracked(plssvm::verbosity_level::full | plssvm::verbosity_level::warning,
+                                          comm,
+                                          "WARNING: The build type is set to Release, but assertions are enabled. "
+                                          "This may result in a noticeable performance degradation in parts of PLSSVM!\n");
         }
 
         // output used parameter
@@ -142,37 +143,37 @@ int main(int argc, char *argv[]) {
             // output parameter used to learn the model
             {
                 const plssvm::parameter params = model.get_params();
-                plssvm::detail::log(plssvm::verbosity_level::full,
-                                    comm,
-                                    "Parameter used to train the model:\n"
-                                    "  kernel_type: {} -> {}\n",
-                                    params.kernel_type,
-                                    plssvm::kernel_function_type_to_math_string(params.kernel_type));
+                plssvm::detail::log_untracked(plssvm::verbosity_level::full,
+                                              comm,
+                                              "Parameter used to train the model:\n"
+                                              "  kernel_type: {} -> {}\n",
+                                              params.kernel_type,
+                                              plssvm::kernel_function_type_to_math_string(params.kernel_type));
                 switch (params.kernel_type) {
                     case plssvm::kernel_function_type::linear:
                         break;
                     case plssvm::kernel_function_type::polynomial:
-                        plssvm::detail::log(plssvm::verbosity_level::full,
-                                            comm,
-                                            "  degree: {}\n"
-                                            "  gamma: {}\n"
-                                            "  coef0: {}\n",
-                                            params.degree,
-                                            plssvm::get_gamma_string(params.gamma),
-                                            params.coef0);
+                        plssvm::detail::log_untracked(plssvm::verbosity_level::full,
+                                                      comm,
+                                                      "  degree: {}\n"
+                                                      "  gamma: {}\n"
+                                                      "  coef0: {}\n",
+                                                      params.degree,
+                                                      plssvm::get_gamma_string(params.gamma),
+                                                      params.coef0);
                         break;
                     case plssvm::kernel_function_type::rbf:
                     case plssvm::kernel_function_type::laplacian:
                     case plssvm::kernel_function_type::chi_squared:
-                        plssvm::detail::log(plssvm::verbosity_level::full, comm, "  gamma: {}\n", plssvm::get_gamma_string(params.gamma));
+                        plssvm::detail::log_untracked(plssvm::verbosity_level::full, comm, "  gamma: {}\n", plssvm::get_gamma_string(params.gamma));
                         break;
                     case plssvm::kernel_function_type::sigmoid:
-                        plssvm::detail::log(plssvm::verbosity_level::full,
-                                            comm,
-                                            "  gamma: {}\n"
-                                            "  coef0: {}\n",
-                                            plssvm::get_gamma_string(params.gamma),
-                                            params.coef0);
+                        plssvm::detail::log_untracked(plssvm::verbosity_level::full,
+                                                      comm,
+                                                      "  gamma: {}\n"
+                                                      "  coef0: {}\n",
+                                                      plssvm::get_gamma_string(params.gamma),
+                                                      params.coef0);
                         break;
                 }
             }
@@ -208,9 +209,9 @@ int main(int argc, char *argv[]) {
                     const plssvm::classification_report report{ correct_labels, predicted_labels };
 
                     // print complete report
-                    plssvm::detail::log(plssvm::verbosity_level::full, comm, "\n{}\n", report);
+                    plssvm::detail::log_untracked(plssvm::verbosity_level::full, comm, "\n{}\n", report);
                     // print only accuracy for LIBSVM conformity
-                    plssvm::detail::log(plssvm::verbosity_level::libsvm, comm, "{} (classification)\n", report.accuracy());
+                    plssvm::detail::log_untracked(plssvm::verbosity_level::libsvm, comm, "{} (classification)\n", report.accuracy());
                     PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "accuracy", "achieved_accuracy", report.accuracy().achieved_accuracy }));
                     PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "accuracy", "num_correct", report.accuracy().num_correct }));
                     PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "accuracy", "num_total", report.accuracy().num_total }));
@@ -218,9 +219,13 @@ int main(int argc, char *argv[]) {
                     const plssvm::regression_report report{ correct_labels, predicted_labels };
 
                     // print complete report
-                    plssvm::detail::log(plssvm::verbosity_level::full, comm, "\n{}\n", report);
+                    plssvm::detail::log_untracked(plssvm::verbosity_level::full, comm, "\n{}\n", report);
                     // print only MSE and SCC for LIBSVM conformity
-                    plssvm::detail::log(plssvm::verbosity_level::libsvm, comm, "Mean squared error = {} (regression)\nSquared correlation coefficient = {} (regression)\n", report.loss().mean_squared_error, report.loss().squared_correlation_coefficient);
+                    plssvm::detail::log_untracked(plssvm::verbosity_level::libsvm,
+                                                  comm,
+                                                  "Mean squared error = {} (regression)\nSquared correlation coefficient = {} (regression)\n",
+                                                  report.loss().mean_squared_error,
+                                                  report.loss().squared_correlation_coefficient);
 
                     PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "loss", "explained_variance_score", report.loss().explained_variance_score }));
                     PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "loss", "mean_absolute_error", report.loss().mean_absolute_error }));

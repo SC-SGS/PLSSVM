@@ -21,6 +21,7 @@
 #include "plssvm/detail/assert.hpp"                                                    // PLSSVM_ASSERT
 #include "plssvm/detail/data_distribution.hpp"                                         // plssvm::detail::{data_distribution, triangular_data_distribution, rectangular_data_distribution}
 #include "plssvm/detail/logging/log.hpp"                                               // plssvm::detail::log
+#include "plssvm/detail/logging/log_untracked.hpp"                                     // plssvm::detail::log_untracked
 #include "plssvm/detail/memory_size.hpp"                                               // plssvm::detail::memory_size
 #include "plssvm/detail/tracking/performance_tracker.hpp"                              // plssvm::detail::tracking::tracking_entry
 #include "plssvm/exceptions/exceptions.hpp"                                            // plssvm::exception
@@ -100,17 +101,17 @@ csvm::csvm(const target_platform target) {
     for (const queue_type &device : devices_) {
         hipDeviceProp_t prop{};
         PLSSVM_HIP_ERROR_CHECK(hipGetDeviceProperties(&prop, device))
-        plssvm::detail::log(verbosity_level::full,
-                            "  [{}, {}, {}.{}]\n",
-                            device,
-                            prop.name,
-                            prop.major,
-                            prop.minor);
+        plssvm::detail::log_untracked(verbosity_level::full,
+                                      "  [{}, {}, {}.{}]\n",
+                                      device,
+                                      prop.name,
+                                      prop.major,
+                                      prop.minor);
         device_names.emplace_back(prop.name);
     }
     PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "backend", "device", device_names }));
-    plssvm::detail::log(verbosity_level::full | verbosity_level::timing,
-                        "\n");
+    plssvm::detail::log_untracked(verbosity_level::full | verbosity_level::timing,
+                                  "\n");
 }
 
 csvm::~csvm() {

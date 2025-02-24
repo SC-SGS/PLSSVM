@@ -15,7 +15,7 @@
 #include "plssvm/constants.hpp"                             // plssvm::{real_type, THREAD_BLOCK_SIZE, INTERNAL_BLOCK_SIZE, FEATURE_BLOCK_SIZE, PADDING_SIZE}
 #include "plssvm/detail/arithmetic_type_name.hpp"           // plssvm::detail::arithmetic_type_name
 #include "plssvm/detail/assert.hpp"                         // PLSSVM_ASSERT
-#include "plssvm/detail/logging/log.hpp"                    // plssvm::detail::log
+#include "plssvm/detail/logging/log_untracked.hpp"          // plssvm::detail::log_untracked
 #include "plssvm/detail/sha256.hpp"                         // plssvm::detail::sha256
 #include "plssvm/detail/string_conversion.hpp"              // plssvm::detail::extract_first_integer_from_string
 #include "plssvm/detail/string_utility.hpp"                 // plssvm::detail::replace_all, plssvm::detail::to_lower_case, plssvm::detail::contains
@@ -243,8 +243,8 @@ std::vector<command_queue> create_command_queues(const std::vector<context> &con
     const bool use_inline_assembly = ::plssvm::detail::contains(::plssvm::detail::as_lower_case(platform_vendor), "nvidia");
     if (use_inline_assembly) {
         compile_options += " -DPLSSVM_USE_NVIDIA_PTX_INLINE_ASSEMBLY";
-        plssvm::detail::log(verbosity_level::full,
-                            "Enabling atomicAdd acceleration using PTX inline assembly.\n");
+        plssvm::detail::log_untracked(verbosity_level::full,
+                                      "Enabling atomicAdd acceleration using PTX inline assembly.\n");
     }
     PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "opencl", "use_inline_assembly", use_inline_assembly }));
 #endif
@@ -420,9 +420,9 @@ std::vector<command_queue> create_command_queues(const std::vector<context> &con
     }
 
     if (use_cached_binaries != caching_status::success) {
-        plssvm::detail::log(verbosity_level::full,
-                            "Building OpenCL kernels from source (reason: {}).\n",
-                            caching_status_to_string(use_cached_binaries));
+        plssvm::detail::log_untracked(verbosity_level::full,
+                                      "Building OpenCL kernels from source (reason: {}).\n",
+                                      caching_status_to_string(use_cached_binaries));
 
         // create and build program
         cl_program program = clCreateProgramWithSource(contexts[0], 1, &kernel_src_ptr, nullptr, &err);
@@ -471,18 +471,18 @@ std::vector<command_queue> create_command_queues(const std::vector<context> &con
             std::ofstream out{ cache_dir_name / "processed_source.cl" };
             out << kernel_src_string;
         }
-        plssvm::detail::log(verbosity_level::full,
-                            "Cached OpenCL kernel binaries in {}.\n",
-                            cache_dir_name);
+        plssvm::detail::log_untracked(verbosity_level::full,
+                                      "Cached OpenCL kernel binaries in {}.\n",
+                                      cache_dir_name);
 
         // release resource
         if (program) {
             PLSSVM_OPENCL_ERROR_CHECK(clReleaseProgram(program), "error releasing OpenCL program resources")
         }
     } else {
-        plssvm::detail::log(verbosity_level::full,
-                            "Using cached OpenCL kernel binaries from {}.\n",
-                            cache_dir_name);
+        plssvm::detail::log_untracked(verbosity_level::full,
+                                      "Using cached OpenCL kernel binaries from {}.\n",
+                                      cache_dir_name);
 
         const auto common_read_file = [](const std::filesystem::path &file) -> std::pair<std::vector<unsigned char>, std::size_t> {
             std::ifstream f{ file };

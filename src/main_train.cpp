@@ -12,6 +12,7 @@
 #include "plssvm/detail/cmd/data_set_variants.hpp"         // plssvm::detail::cmd::data_set_factory
 #include "plssvm/detail/cmd/parser_train.hpp"              // plssvm::detail::cmd::parser_train
 #include "plssvm/detail/logging/mpi_log.hpp"               // plssvm::detail::log
+#include "plssvm/detail/logging/mpi_log_untracked.hpp"     // plssvm::detail::log_untracked
 #include "plssvm/detail/tracking/performance_tracker.hpp"  // plssvm::detail::tracking::tracking_entry, PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_SAVE,
                                                            // PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_HWS_ENTRY, PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_SET_REFERENCE_TIME
 #include "plssvm/detail/assert.hpp"                        // PLSSVM_ASSERT
@@ -83,16 +84,16 @@ int main(int argc, char *argv[]) {
     plssvm::mpi::communicator comm{};
 
 #if defined(PLSSVM_HAS_MPI_ENABLED)
-    plssvm::detail::log(plssvm::verbosity_level::full,
-                        comm,
-                        "Using {} MPI rank(s) for our SVM.\n",
-                        comm.size());
+    plssvm::detail::log_untracked(plssvm::verbosity_level::full,
+                                  comm,
+                                  "Using {} MPI rank(s) for our SVM.\n",
+                                  comm.size());
 #else
     if (plssvm::mpi::is_executed_via_mpirun()) {
-        plssvm::detail::log(plssvm::verbosity_level::full | plssvm::verbosity_level::warning,
-                            comm,
-                            "WARNING: PLSSVM was built without MPI support, but plssvm-train was executed via mpirun! "
-                            "As a result, each MPI process will run the same code.\n");
+        plssvm::detail::log_untracked(plssvm::verbosity_level::full | plssvm::verbosity_level::warning,
+                                      comm,
+                                      "WARNING: PLSSVM was built without MPI support, but plssvm-train was executed via mpirun! "
+                                      "As a result, each MPI process will run the same code.\n");
     }
 #endif
 
@@ -118,10 +119,10 @@ int main(int argc, char *argv[]) {
 
         // send warning if the build type is release and assertions are enabled
         if constexpr (std::string_view{ PLSSVM_BUILD_TYPE } == "Release" && PLSSVM_IS_DEFINED(PLSSVM_ENABLE_ASSERTS)) {
-            plssvm::detail::log(plssvm::verbosity_level::full | plssvm::verbosity_level::warning,
-                                comm,
-                                "WARNING: The build type is set to Release, but assertions are enabled. "
-                                "This may result in a noticeable performance degradation in parts of PLSSVM!\n");
+            plssvm::detail::log_untracked(plssvm::verbosity_level::full | plssvm::verbosity_level::warning,
+                                          comm,
+                                          "WARNING: The build type is set to Release, but assertions are enabled. "
+                                          "This may result in a noticeable performance degradation in parts of PLSSVM!\n");
         }
 
         // output used parameter

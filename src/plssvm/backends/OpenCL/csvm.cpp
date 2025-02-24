@@ -20,6 +20,7 @@
 #include "plssvm/detail/assert.hpp"                         // PLSSVM_ASSERT
 #include "plssvm/detail/data_distribution.hpp"              // plssvm::detail::{data_distribution, triangular_data_distribution, rectangular_data_distribution}
 #include "plssvm/detail/logging/log.hpp"                    // plssvm::detail::log
+#include "plssvm/detail/logging/log_untracked.hpp"          // plssvm::detail::log_untracked
 #include "plssvm/detail/memory_size.hpp"                    // plssvm::detail::memory_size
 #include "plssvm/detail/tracking/performance_tracker.hpp"   // plssvm::detail::tracking::tracking_entry
 #include "plssvm/detail/utility.hpp"                        // plssvm::detail::contains
@@ -107,9 +108,9 @@ csvm::csvm(const target_platform target) {
                         plssvm::detail::tracking::tracking_entry{ "dependencies", "opencl_target_version", detail::get_opencl_target_version() });
     PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "dependencies", "opencl_library", std::string{ PLSSVM_OPENCL_LIBRARY } }));
     if (target == target_platform::automatic) {
-        plssvm::detail::log(verbosity_level::full,
-                            "Using {} as automatic target platform.\n",
-                            target_);
+        plssvm::detail::log_untracked(verbosity_level::full,
+                                      "Using {} as automatic target platform.\n",
+                                      target_);
     }
     PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "backend", "backend", plssvm::backend_type::opencl }));
 
@@ -135,10 +136,10 @@ csvm::csvm(const target_platform target) {
     device_names.reserve(devices_.size());
     for (typename std::vector<queue_type>::size_type device = 0; device < devices_.size(); ++device) {
         const std::string device_name = detail::get_device_name(devices_[device]);
-        plssvm::detail::log(verbosity_level::full,
-                            "  [{}, {}]\n",
-                            device,
-                            device_name);
+        plssvm::detail::log_untracked(verbosity_level::full,
+                                      "  [{}, {}]\n",
+                                      device,
+                                      device_name);
         device_names.emplace_back(device_name);
 
         // get the target platform's driver version
@@ -146,8 +147,8 @@ csvm::csvm(const target_platform target) {
         PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "dependencies", "device_driver_version", driver_version }));
     }
     PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "backend", "device", device_names }));
-    plssvm::detail::log(verbosity_level::full | verbosity_level::timing,
-                        "\n");
+    plssvm::detail::log_untracked(verbosity_level::full | verbosity_level::timing,
+                                  "\n");
 
     // sanity checks for the number of the OpenCL kernels
     PLSSVM_ASSERT(std::all_of(devices_.begin(), devices_.end(), [](const queue_type &queue) { return queue.kernels.size() == 13; }),

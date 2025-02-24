@@ -11,6 +11,7 @@
 #include "plssvm/constants.hpp"                            // plssvm::real_type, plssvm::PADDING_SIZE
 #include "plssvm/detail/assert.hpp"                        // PLSSVM_ASSERT
 #include "plssvm/detail/logging/mpi_log.hpp"               // plssvm::detail::log
+#include "plssvm/detail/logging/mpi_log_untracked.hpp"     // plssvm::detail::log_untracked
 #include "plssvm/detail/move_only_any.hpp"                 // plssvm::detail::move_only_any
 #include "plssvm/detail/operators.hpp"                     // plssvm operator overloads for vectors
 #include "plssvm/detail/tracking/performance_tracker.hpp"  // PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY, PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_EVENT, plssvm::detail::tracking::tracking_entry
@@ -145,16 +146,16 @@ std::pair<soa_matrix<real_type>, std::vector<unsigned long long>> csvm::conjugat
         PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_EVENT(fmt::format("cg iter {} start", iter));
 
         const std::size_t max_residual_difference_idx = rhs_idx_max_residual_difference();
-        detail::log(verbosity_level::full | verbosity_level::timing,
-                    comm_,
-                    "Start Iteration {} (max: {}) with {}/{} converged rhs (max residual {} with target residual {} for rhs {}). ",
-                    iter + 1,
-                    max_cg_iter,
-                    num_rhs_converged(),
-                    num_rhs,
-                    delta[max_residual_difference_idx],
-                    eps * eps * delta0[max_residual_difference_idx],
-                    max_residual_difference_idx);
+        detail::log_untracked(verbosity_level::full | verbosity_level::timing,
+                              comm_,
+                              "Start Iteration {} (max: {}) with {}/{} converged rhs (max residual {} with target residual {} for rhs {}). ",
+                              iter + 1,
+                              max_cg_iter,
+                              num_rhs_converged(),
+                              num_rhs,
+                              delta[max_residual_difference_idx],
+                              eps * eps * delta0[max_residual_difference_idx],
+                              max_residual_difference_idx);
         const std::chrono::steady_clock::time_point iteration_start_time = std::chrono::steady_clock::now();
 
         // create mask for the residual -> only update X if the respective rhs did not already converge
@@ -195,10 +196,10 @@ std::pair<soa_matrix<real_type>, std::vector<unsigned long long>> csvm::conjugat
 
         const std::chrono::steady_clock::time_point iteration_end_time = std::chrono::steady_clock::now();
         const std::chrono::duration iteration_duration = std::chrono::duration_cast<std::chrono::milliseconds>(iteration_end_time - iteration_start_time);
-        detail::log(verbosity_level::full | verbosity_level::timing,
-                    comm_,
-                    "Done in {}.\n",
-                    iteration_duration);
+        detail::log_untracked(verbosity_level::full | verbosity_level::timing,
+                              comm_,
+                              "Done in {}.\n",
+                              iteration_duration);
         total_iteration_time += iteration_duration;
 
         // next CG iteration
@@ -221,10 +222,10 @@ std::pair<soa_matrix<real_type>, std::vector<unsigned long long>> csvm::conjugat
     PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((detail::tracking::tracking_entry{ "cg", "residuals", delta }));
     PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((detail::tracking::tracking_entry{ "cg", "target_residuals", eps * eps * delta0 }));
     PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((detail::tracking::tracking_entry{ "cg", "epsilon", eps }));
-    detail::log(verbosity_level::libsvm,
-                comm_,
-                "optimization finished, #iter = {}\n",
-                iter);
+    detail::log_untracked(verbosity_level::libsvm,
+                          comm_,
+                          "optimization finished, #iter = {}\n",
+                          iter);
 
     PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_EVENT("cg end");
 

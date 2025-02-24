@@ -19,6 +19,7 @@
 #include "plssvm/detail/assert.hpp"                        // PLSSVM_ASSERT
 #include "plssvm/detail/igor_utility.hpp"                  // plssvm::detail::{has_only_named_args_v, get_value_from_named_parameter}
 #include "plssvm/detail/logging/mpi_log.hpp"               // plssvm::detail::log
+#include "plssvm/detail/logging/mpi_log_untracked.hpp"     // plssvm::detail::log_untracked
 #include "plssvm/detail/tracking/performance_tracker.hpp"  // PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_EVENT, plssvm::detail::tracking::tracking_entry
 #include "plssvm/detail/utility.hpp"                       // plssvm::detail::contains
 #include "plssvm/exceptions/exceptions.hpp"                // plssvm::invalid_parameter_exception
@@ -159,11 +160,11 @@ class csvc : virtual public csvm {
         // start fitting the data set using a C-SVM
         const std::chrono::time_point start_time = std::chrono::steady_clock::now();
 
-        detail::log(verbosity_level::full,
-                    comm_,
-                    "Using {} ({}) as multi-class classification strategy.\n",
-                    used_classification,
-                    classification_type_to_full_string(used_classification));
+        detail::log_untracked(verbosity_level::full,
+                              comm_,
+                              "Using {} ({}) as multi-class classification strategy.\n",
+                              used_classification,
+                              classification_type_to_full_string(used_classification));
 
         // copy parameter and set gamma if necessary
         parameter params{ params_ };
@@ -201,11 +202,11 @@ class csvc : virtual public csvm {
 
             if (num_classes == 2) {
                 // special optimization for binary case (no temporary copies necessary)
-                detail::log(verbosity_level::full,
-                            comm_,
-                            "\nClassifying 0 vs 1 ({} vs {}) (1/1):\n",
-                            data.mapping_->get_label_by_mapped_index(0),
-                            data.mapping_->get_label_by_mapped_index(1));
+                detail::log_untracked(verbosity_level::full,
+                                      comm_,
+                                      "\nClassifying 0 vs 1 ({} vs {}) (1/1):\n",
+                                      data.mapping_->get_label_by_mapped_index(0),
+                                      data.mapping_->get_label_by_mapped_index(1));
 
                 // reduce the size of the rhs (y_ptr)
                 // -> consistent with the multi-class case as well as when reading the model from file in the model class constructor
@@ -245,15 +246,15 @@ class csvc : virtual public csvm {
                         }
 
                         // solve the minimization problem -> note that only a single rhs is present
-                        detail::log(verbosity_level::full,
-                                    comm_,
-                                    "\nClassifying {} vs {} ({} vs {}) ({}/{}):\n",
-                                    i,
-                                    j,
-                                    data.mapping_->get_label_by_mapped_index(i),
-                                    data.mapping_->get_label_by_mapped_index(j),
-                                    pos + 1,
-                                    calculate_number_of_classifiers(classification_type::oao, num_classes));
+                        detail::log_untracked(verbosity_level::full,
+                                              comm_,
+                                              "\nClassifying {} vs {} ({} vs {}) ({}/{}):\n",
+                                              i,
+                                              j,
+                                              data.mapping_->get_label_by_mapped_index(i),
+                                              data.mapping_->get_label_by_mapped_index(j),
+                                              pos + 1,
+                                              calculate_number_of_classifiers(classification_type::oao, num_classes));
                         const auto &[alpha, rho, num_iter] = this->solve_lssvm_system_of_linear_equations(binary_data, binary_y, params, std::forward<Args>(named_args)...);
                         (*csvc_model.alpha_ptr_)[pos] = std::move(alpha);
                         (*csvc_model.rho_ptr_)[pos] = rho.front();  // prevents std::tie
