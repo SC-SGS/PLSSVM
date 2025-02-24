@@ -570,6 +570,11 @@ $([[ $BACKEND != OPENMP ]] && [[ $BACKEND == STDPAR-NVHPC ]] && [[ $BACKEND == S
                         }
                     }
                     stage('test installed PLSSVM'){
+                        when{
+                            expression {
+                                return (env.BACKEND != 'STDPAR-NVHPC') // TODO: enable when nvhpc .so bug is fixed
+                            }
+                        }
                         steps{
                             sh ''' #!/bin/bash
                                 hostname
