@@ -439,7 +439,7 @@ pipeline {
 
                                         set -e -o pipefail
                                         for i in {1..3}; do
-                                            spack dev-build --fresh plssvm@develop$([[ $BACKEND == ADAPTIVECPP ]] && echo "%clang" ) \
+                                            spack dev-build plssvm@develop$([[ $BACKEND == ADAPTIVECPP ]] && echo "%clang" ) \
                                                 $([[ $BACKEND == OPENMP ]] && echo "+openmp" || echo "~openmp") \
                                                 $([[ $BACKEND == HPX ]] && echo "+hpx" || echo "~hpx") \
                                                 $([[ $BACKEND == KOKKOS ]] && echo "+kokkos" || echo "~kokkos") \
