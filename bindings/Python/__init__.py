@@ -6,3 +6,4 @@ from .plssvm import *  # noqa: F405
 # explicitly set the module level attributes
 __doc__ = plssvm.__doc__
 __version__ = plssvm.__version__
+__version_info__ = plssvm.__version_info__

@@ -13,9 +13,9 @@
 #include "plssvm/mpi/communicator.hpp"                  // plssvm::mpi::communicator
 #include "plssvm/mpi/environment.hpp"                   // plssvm::mpi::is_executed_via_mpirun
 #include "plssvm/verbosity_levels.hpp"                  // plssvm::verbosity_level
-#include "plssvm/version/version.hpp"                   // plssvm::version::version
+#include "plssvm/version/version.hpp"                   // plssvm::version::{version, major, minor, patch}
 
-#include "pybind11/pybind11.h"  // PYBIND11_MODULE, py::module_, py::exception, py::register_exception_translator
+#include "pybind11/pybind11.h"  // PYBIND11_MODULE, py::module_, py::exception, py::register_exception_translator, py::make_tuple
 #include "pybind11/pytypes.h"   // py::set_error
 
 #include <exception>  // std::exception_ptr, std::rethrow_exception
@@ -41,7 +41,6 @@ void init_regression_model(py::module_ &);
 void init_min_max_scaler(py::module_ &);
 void init_classification_data_set(py::module_ &);
 void init_regression_data_set(py::module_ &);
-void init_version(py::module_ &);
 void init_exceptions(py::module_ &, const py::exception<plssvm::exception> &);
 void init_regression_report(py::module_ &);
 void init_csvm(py::module_ &);
@@ -61,9 +60,7 @@ void init_sklearn_svr(py::module_ &);
 PYBIND11_MODULE(plssvm, m) {
     m.doc() = "PLSSVM - Parallel Least Squares Support Vector Machine";
     m.attr("__version__") = plssvm::version::version;
-
-    // create a pure-virtual module
-    py::module_ pure_virtual = m.def_submodule("__pure_virtual");
+    m.attr("__version_info__") = py::make_tuple(plssvm::version::major, plssvm::version::minor, plssvm::version::patch);
 
     // automatically initialize the environments
     plssvm::environment::initialize();
@@ -134,7 +131,6 @@ PYBIND11_MODULE(plssvm, m) {
     init_min_max_scaler(m);
     init_classification_data_set(m);
     init_regression_data_set(m);
-    init_version(m);
     init_exceptions(m, base_exception);
     init_regression_report(m);
     init_csvm(m);

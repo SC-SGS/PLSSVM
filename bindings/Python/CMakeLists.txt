@@ -31,22 +31,21 @@ endif ()
 
 # set source files that are always used
 set(PLSSVM_PYTHON_BINDINGS_SOURCES
-    ${CMAKE_CURRENT_LIST_DIR}/exceptions/exceptions.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/version/version.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/backend_types.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/classification_types.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/svm/csvm.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/svm/csvc.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/svm/csvr.cpp
     ${CMAKE_CURRENT_LIST_DIR}/data_set/classification_data_set.cpp
     ${CMAKE_CURRENT_LIST_DIR}/data_set/min_max_scaler.cpp
     ${CMAKE_CURRENT_LIST_DIR}/data_set/regression_data_set.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/exceptions/exceptions.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/model/classification_model.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/model/regression_model.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/svm/csvm.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/svm/csvc.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/svm/csvr.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/backend_types.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/classification_types.cpp
     ${CMAKE_CURRENT_LIST_DIR}/file_format_types.cpp
     ${CMAKE_CURRENT_LIST_DIR}/gamma.cpp
     ${CMAKE_CURRENT_LIST_DIR}/kernel_function_types.cpp
     ${CMAKE_CURRENT_LIST_DIR}/kernel_functions.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/model/classification_model.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/model/regression_model.cpp
     ${CMAKE_CURRENT_LIST_DIR}/parameter.cpp
     ${CMAKE_CURRENT_LIST_DIR}/regression_report.cpp
     ${CMAKE_CURRENT_LIST_DIR}/solver_types.cpp
