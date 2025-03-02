@@ -9,8 +9,8 @@
  * @brief Implements a custom type caster for a plssvm::mpi::communicator used with mpi4py.
  */
 
-#ifndef PLSSVM_BINDINGS_PYTHON_MPI_MPI_TYPE_CASTER_HPP_
-#define PLSSVM_BINDINGS_PYTHON_MPI_MPI_TYPE_CASTER_HPP_
+#ifndef PLSSVM_BINDINGS_PYTHON_TYPE_CASTER_MPI_TYPE_CASTER_HPP_
+#define PLSSVM_BINDINGS_PYTHON_TYPE_CASTER_MPI_TYPE_CASTER_HPP_
 #pragma once
 
 #include "plssvm/mpi/communicator.hpp"  // plssvm::mpi::communicator
@@ -64,7 +64,7 @@ struct type_caster<plssvm::mpi::communicator> {
      * @return `true` if the conversion was successful, `false` otherwise
      * @throws py::value_error if PLSSVM was built without MPI support, but a communicator was explicitly provided in Python
      */
-    bool load([[maybe_unused]] handle obj, bool) {
+    bool load([[maybe_unused]] py::handle obj, bool) {
 #if defined(PLSSVM_HAS_MPI_ENABLED)
         try {
             // check if we can find mpi4py
@@ -106,4 +106,4 @@ struct type_caster<plssvm::mpi::communicator> {
 
 }  // namespace pybind11::detail
 
-#endif  // PLSSVM_BINDINGS_PYTHON_MPI_MPI_TYPE_CASTER_HPP_
+#endif  // PLSSVM_BINDINGS_PYTHON_TYPE_CASTER_MPI_TYPE_CASTER_HPP_

@@ -289,7 +289,7 @@ struct type_caster<plssvm::bindings::python::util::label_vector_wrapper<Possible
      * @param[in] labels the labels vector to convert to a Python Numpy ndarray
      * @return a Pybind11 handle to the Numpy ndarray
      */
-    static handle cast(const label_vector_wrapper_type &labels, return_value_policy, handle) {
+    static py::handle cast(const label_vector_wrapper_type &labels, py::return_value_policy, py::handle) {
         // convert a generic std::vector to a Numpy ndarray
         return std::visit([](auto &&vec) { return plssvm::bindings::python::util::vector_to_pyarray(vec).release(); }, labels.labels);
     }
@@ -299,7 +299,7 @@ struct type_caster<plssvm::bindings::python::util::label_vector_wrapper<Possible
      * @param[in] obj the object to convert
      * @return `true` if the conversion was successful, `false` otherwise
      */
-    bool load(handle obj, bool) {
+    bool load(py::handle obj, bool) {
         if (py::isinstance<py::list>(obj)) {
             // provided obj is a Python list
             auto [labels, dtype] = plssvm::bindings::python::util::generic_pylist_to_vector<PossibleTypes>(py::cast<py::list>(obj));
