@@ -87,6 +87,7 @@ void init_min_max_scaler(py::module_ &m) {
                 } else {
                     return std::nullopt;
                 } }, "the scaling factors for each feature")
+        .def("communicator", &plssvm::min_max_scaler::communicator, "the associated MPI communicator")
         .def("__repr__", [](const plssvm::min_max_scaler &self) {
             std::string optional_repr{};
             const auto scaling_factors = self.scaling_factors();

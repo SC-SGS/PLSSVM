@@ -143,6 +143,14 @@ class min_max_scaler {
         }
     }
 
+    /**
+     * @brief Get the associated MPI communicator.
+     * @return the MPI communicator (`[[nodiscard]]`)
+     */
+    [[nodiscard]] const mpi::communicator &communicator() const noexcept {
+        return comm_;
+    }
+
   private:
     /// The user-provided scaling interval. After scaling, all feature values are scaled to [lower, upper].
     std::pair<real_type, real_type> scaling_interval_{};
