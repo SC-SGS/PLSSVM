@@ -12,6 +12,7 @@
 
 #include "plssvm/constants.hpp"           // plssvm::PADDING_SIZE
 #include "plssvm/detail/memory_size.hpp"  // plssvm::detail::memory_size
+#include "plssvm/mpi/communicator.hpp"    // plssvm::mpi::communicator
 
 #include "gtest/gtest.h"  // TEST, EXPECT_EQ, EXPECT_TRUE
 
@@ -27,7 +28,7 @@ using namespace plssvm::detail::literals;
 
 TEST(TriangularDataDistribution, construct) {
     // create a triangular data distribution
-    const plssvm::detail::triangular_data_distribution dist{ 1024, 4 };
+    const plssvm::detail::triangular_data_distribution dist{ plssvm::mpi::communicator{}, 1024, 4 };
 
     // test getter
     const std::vector<std::size_t> dist_vec = dist.distribution();
@@ -41,7 +42,7 @@ TEST(TriangularDataDistribution, construct) {
 
 TEST(TriangularDataDistribution, place_specific_num_rows) {
     // create a triangular data distribution
-    const plssvm::detail::triangular_data_distribution dist{ 1024, 4 };
+    const plssvm::detail::triangular_data_distribution dist{ plssvm::mpi::communicator{}, 1024, 4 };
 
     // check the place specific number of rows calculation for sanity
     for (std::size_t place = 0; place < dist.num_places(); ++place) {
@@ -51,7 +52,7 @@ TEST(TriangularDataDistribution, place_specific_num_rows) {
 
 TEST(TriangularDataDistribution, place_row_offset) {
     // create a triangular data distribution
-    const plssvm::detail::triangular_data_distribution dist{ 1024, 4 };
+    const plssvm::detail::triangular_data_distribution dist{ plssvm::mpi::communicator{}, 1024, 4 };
 
     // check the place specific row offset calculation
     for (std::size_t place = 0; place < dist.num_places(); ++place) {
@@ -62,7 +63,7 @@ TEST(TriangularDataDistribution, place_row_offset) {
 
 TEST(TriangularDataDistribution, distribution) {
     // create a triangular data distribution
-    const plssvm::detail::triangular_data_distribution dist{ 1024, 4 };
+    const plssvm::detail::triangular_data_distribution dist{ plssvm::mpi::communicator{}, 1024, 4 };
 
     // check the distribution for sanity
     const std::vector<std::size_t> dist_vec = dist.distribution();
@@ -74,7 +75,7 @@ TEST(TriangularDataDistribution, distribution) {
 
 TEST(TriangularDataDistribution, distribution_one_place) {
     // create a triangular data distribution
-    const plssvm::detail::triangular_data_distribution dist{ 1024, 1 };
+    const plssvm::detail::triangular_data_distribution dist{ plssvm::mpi::communicator{}, 1024, 1 };
 
     // check the distribution for sanity
     const std::vector<std::size_t> dist_vec = dist.distribution();
@@ -85,7 +86,7 @@ TEST(TriangularDataDistribution, distribution_one_place) {
 
 TEST(TriangularDataDistribution, distribution_fewer_rows_than_places) {
     // create a triangular data distribution
-    const plssvm::detail::triangular_data_distribution dist{ 6, 8 };
+    const plssvm::detail::triangular_data_distribution dist{ plssvm::mpi::communicator{}, 6, 8 };
 
     // check the distribution for sanity
     const std::vector<std::size_t> dist_vec = dist.distribution();
@@ -97,7 +98,7 @@ TEST(TriangularDataDistribution, distribution_fewer_rows_than_places) {
 
 TEST(TriangularDataDistribution, num_rows) {
     // create a triangular data distribution
-    const plssvm::detail::triangular_data_distribution dist{ 1024, 4 };
+    const plssvm::detail::triangular_data_distribution dist{ plssvm::mpi::communicator{}, 1024, 4 };
 
     // check the number of rows getter
     EXPECT_EQ(dist.num_rows(), 1024);
@@ -105,7 +106,7 @@ TEST(TriangularDataDistribution, num_rows) {
 
 TEST(TriangularDataDistribution, num_places) {
     // create a triangular data distribution
-    const plssvm::detail::triangular_data_distribution dist{ 1024, 4 };
+    const plssvm::detail::triangular_data_distribution dist{ plssvm::mpi::communicator{}, 1024, 4 };
 
     // check the number of places getter
     EXPECT_EQ(dist.num_places(), 4);
@@ -113,7 +114,7 @@ TEST(TriangularDataDistribution, num_places) {
 
 TEST(TriangularDataDistribution, calculate_explicit_kernel_matrix_num_entries_padded) {
     // create a triangular data distribution
-    const plssvm::detail::triangular_data_distribution dist{ 1024, 4 };
+    const plssvm::detail::triangular_data_distribution dist{ plssvm::mpi::communicator{}, 1024, 4 };
 
     // check the returned values
     for (std::size_t place = 0; place < dist.num_places(); ++place) {
@@ -124,7 +125,7 @@ TEST(TriangularDataDistribution, calculate_explicit_kernel_matrix_num_entries_pa
 
 TEST(TriangularDataDistribution, calculate_maximum_explicit_kernel_matrix_memory_needed_per_place) {
     // create a triangular data distribution
-    const plssvm::detail::triangular_data_distribution dist{ 1024, 4 };
+    const plssvm::detail::triangular_data_distribution dist{ plssvm::mpi::communicator{}, 1024, 4 };
 
     // check the returned values
     const std::vector<plssvm::detail::memory_size> ret = dist.calculate_maximum_explicit_kernel_matrix_memory_needed_per_place(128, 32);
@@ -135,7 +136,7 @@ TEST(TriangularDataDistribution, calculate_maximum_explicit_kernel_matrix_memory
 
 TEST(TriangularDataDistribution, calculate_maximum_explicit_kernel_matrix_memory_allocation_size_per_place) {
     // create a triangular data distribution
-    const plssvm::detail::triangular_data_distribution dist{ 1024, 4 };
+    const plssvm::detail::triangular_data_distribution dist{ plssvm::mpi::communicator{}, 1024, 4 };
 
     // check the returned values
     const std::vector<plssvm::detail::memory_size> ret = dist.calculate_maximum_explicit_kernel_matrix_memory_allocation_size_per_place(128, 32);
@@ -146,7 +147,7 @@ TEST(TriangularDataDistribution, calculate_maximum_explicit_kernel_matrix_memory
 
 TEST(TriangularDataDistribution, calculate_maximum_implicit_kernel_matrix_memory_needed_per_place) {
     // create a triangular data distribution
-    const plssvm::detail::triangular_data_distribution dist{ 1024, 4 };
+    const plssvm::detail::triangular_data_distribution dist{ plssvm::mpi::communicator{}, 1024, 4 };
 
     // check the returned values
     const std::vector<plssvm::detail::memory_size> ret = dist.calculate_maximum_implicit_kernel_matrix_memory_needed_per_place(128, 32);
@@ -157,7 +158,7 @@ TEST(TriangularDataDistribution, calculate_maximum_implicit_kernel_matrix_memory
 
 TEST(TriangularDataDistribution, calculate_maximum_implicit_kernel_matrix_memory_allocation_size_per_place) {
     // create a triangular data distribution
-    const plssvm::detail::triangular_data_distribution dist{ 1024, 4 };
+    const plssvm::detail::triangular_data_distribution dist{ plssvm::mpi::communicator{}, 1024, 4 };
 
     // check the returned values
     const std::vector<plssvm::detail::memory_size> ret = dist.calculate_maximum_implicit_kernel_matrix_memory_allocation_size_per_place(128, 32);
@@ -172,7 +173,7 @@ TEST(TriangularDataDistribution, calculate_maximum_implicit_kernel_matrix_memory
 
 TEST(RectangularDataDistribution, construct) {
     // create a triangular data distribution
-    const plssvm::detail::rectangular_data_distribution dist{ 1024, 4 };
+    const plssvm::detail::rectangular_data_distribution dist{ plssvm::mpi::communicator{}, 1024, 4 };
 
     // test getter
     const std::vector<std::size_t> dist_vec = dist.distribution();
@@ -186,7 +187,7 @@ TEST(RectangularDataDistribution, construct) {
 
 TEST(RectangularDataDistribution, place_specific_num_rows) {
     // create a triangular data distribution
-    const plssvm::detail::rectangular_data_distribution dist{ 1024, 4 };
+    const plssvm::detail::rectangular_data_distribution dist{ plssvm::mpi::communicator{}, 1024, 4 };
 
     // check the place specific number of rows calculation for sanity
     for (std::size_t place = 0; place < dist.num_places(); ++place) {
@@ -196,7 +197,7 @@ TEST(RectangularDataDistribution, place_specific_num_rows) {
 
 TEST(RectangularDataDistribution, place_row_offset) {
     // create a triangular data distribution
-    const plssvm::detail::rectangular_data_distribution dist{ 1024, 4 };
+    const plssvm::detail::rectangular_data_distribution dist{ plssvm::mpi::communicator{}, 1024, 4 };
 
     // check the place specific row offset calculation
     for (std::size_t place = 0; place < dist.num_places(); ++place) {
@@ -207,7 +208,7 @@ TEST(RectangularDataDistribution, place_row_offset) {
 
 TEST(RectangularDataDistribution, distribution) {
     // create a triangular data distribution
-    const plssvm::detail::rectangular_data_distribution dist{ 1024, 4 };
+    const plssvm::detail::rectangular_data_distribution dist{ plssvm::mpi::communicator{}, 1024, 4 };
 
     // check the distribution for sanity
     const std::vector<std::size_t> dist_vec = dist.distribution();
@@ -219,7 +220,7 @@ TEST(RectangularDataDistribution, distribution) {
 
 TEST(RectangularDataDistribution, distribution_one_place) {
     // create a triangular data distribution
-    const plssvm::detail::rectangular_data_distribution dist{ 1024, 1 };
+    const plssvm::detail::rectangular_data_distribution dist{ plssvm::mpi::communicator{}, 1024, 1 };
 
     // check the distribution for sanity
     const std::vector<std::size_t> dist_vec = dist.distribution();
@@ -230,7 +231,7 @@ TEST(RectangularDataDistribution, distribution_one_place) {
 
 TEST(RectangularDataDistribution, distribution_fewer_rows_than_places) {
     // create a triangular data distribution
-    const plssvm::detail::rectangular_data_distribution dist{ 6, 8 };
+    const plssvm::detail::rectangular_data_distribution dist{ plssvm::mpi::communicator{}, 6, 8 };
 
     // check the distribution for sanity
     const std::vector<std::size_t> dist_vec = dist.distribution();
@@ -242,7 +243,7 @@ TEST(RectangularDataDistribution, distribution_fewer_rows_than_places) {
 
 TEST(RectangularDataDistribution, num_rows) {
     // create a triangular data distribution
-    const plssvm::detail::rectangular_data_distribution dist{ 1024, 4 };
+    const plssvm::detail::rectangular_data_distribution dist{ plssvm::mpi::communicator{}, 1024, 4 };
 
     // check the number of rows getter
     EXPECT_EQ(dist.num_rows(), 1024);
@@ -250,7 +251,7 @@ TEST(RectangularDataDistribution, num_rows) {
 
 TEST(RectangularDataDistribution, num_places) {
     // create a triangular data distribution
-    const plssvm::detail::rectangular_data_distribution dist{ 1024, 4 };
+    const plssvm::detail::rectangular_data_distribution dist{ plssvm::mpi::communicator{}, 1024, 4 };
 
     // check the number of places getter
     EXPECT_EQ(dist.num_places(), 4);
