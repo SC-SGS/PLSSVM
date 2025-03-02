@@ -23,12 +23,15 @@
 #include "bindings/Python/type_caster/label_vector_wrapper_caster.hpp"  // a custom Pybind11 type caster for a plssvm::bindings::python::util::label_vector_wrapper
 #include "bindings/Python/type_caster/matrix_type_caster.hpp"           // a custom Pybind11 type caster for a plssvm::matrix
 #include "bindings/Python/type_caster/matrix_wrapper_type_caster.hpp"   // a custom Pybind11 type caster for a plssvm::bindings::python::util::matrix_wrapper
-#include "bindings/Python/utility.hpp"                                  // plssvm::bindings::python::util::{check_kwargs_for_correctness, convert_gamma_kwarg_to_variant, vector_to_pyarray}
+#include "bindings/Python/utility.hpp"                                  // plssvm::bindings::python::util::{check_kwargs_for_correctness, vector_to_pyarray}
 
 #include "fmt/format.h"          // fmt::format
+#include "fmt/ranges.h"          // fmt::join
+#include "pybind11/cast.h"       // py::cast
 #include "pybind11/numpy.h"      // support for STL types
 #include "pybind11/operators.h"  // support for operators
 #include "pybind11/pybind11.h"   // py::module_, py::class_, py::init, py::arg, py::return_value_policy, py::self, py::dynamic_attr, py::value_error, py::attribute_error
+#include "pybind11/pytypes.h"    // py::dict, py::kwargs, py::str
 #include "pybind11/stl.h"        // support for STL types
 
 #include <cstdint>   // std::int32_t
@@ -44,12 +47,41 @@
 namespace py = pybind11;
 
 // TODO: implement missing functionality (as far es possible)
+/*
+ * Currently missing:
+ * - shrinking constructor parameter (makes no sense for LS-SVMs)
+ * - cache_size constructor parameter (not applicable in PLSSVM)
+ * - epsilon constructor parameter (not applicable in PLSSVM since we implement a C-SVR and not an epsilon-SVR)
+ * - dual_coef_ attribute
+ * - get_metadata_routing function (no idea how to implement this function)
+ * - set_fit_request function (no idea how to implement this function)
+ * - set_score_request function (no idea how to implement this function)
+ * - sample_weight parameter for the fit function
+ * - sample_weight parameter for the score function
+ */
 
 // dummy
 struct svr {
     using possible_vector_types = typename plssvm::bindings::python::util::regression_data_set_wrapper::possible_vector_types;
     using possible_data_set_types = typename plssvm::bindings::python::util::regression_data_set_wrapper::possible_data_set_types;
     using possible_model_types = typename plssvm::bindings::python::util::regression_model_wrapper::possible_model_types;
+
+    /**
+     * @brief Construct a default svr wrapper doing nothing.
+     */
+    svr() :
+        svm_{ plssvm::make_csvr(plssvm::gamma = plssvm::gamma_coefficient_type::scale) } { }
+
+    /**
+     * @brief Construct a new svr wrapper with the provided parameters.
+     * @param[in] params the SVM hyper-parameters
+     * @param[in] epsilon the epsilon value for the CG termination criterion
+     * @param[in] max_iter the maximum number of CG iterations
+     */
+    svr(const plssvm::parameter params, const plssvm::real_type epsilon, const std::optional<unsigned long long> max_iter) :
+        svm_{ plssvm::make_csvr(params) },
+        epsilon_{ epsilon },
+        max_iter_{ max_iter } { }
 
     /**
      * @brief Get the w values used for the coef_ attribute from the currently learned linear model.
@@ -73,190 +105,90 @@ struct svr {
         // fill a Python dictionary with the supported keys and values
         py::dict py_params;
         py_params["C"] = params.cost;
-        py_params["cache_size"] = 0;
+        // py_params["epsilon"] = 0.1;
+        // py_params["cache_size"] = 0;
         py_params["coef0"] = params.coef0;
         py_params["degree"] = params.degree;
         if (std::holds_alternative<plssvm::real_type>(params.gamma)) {
             py_params["gamma"] = std::get<plssvm::real_type>(params.gamma);
         } else {
-            switch (std::get<plssvm::gamma_coefficient_type>(params.gamma)) {
-                case plssvm::gamma_coefficient_type::automatic:
-                    py_params["gamma"] = "auto";
-                    break;
-                case plssvm::gamma_coefficient_type::scale:
-                    py_params["gamma"] = "scale";
-                    break;
-            }
+            // can't use this for both or the numeric value would also be interpreted as a string like '0.001'
+            py_params["gamma"] = fmt::format("{}", params.gamma);
         }
         py_params["kernel"] = fmt::format("{}", params.kernel_type);
         py_params["max_iter"] = max_iter_.has_value() ? static_cast<long long>(max_iter_.value()) : -1;
-        py_params["shrinking"] = false;
-        py_params["tol"] = epsilon_.value_or(plssvm::real_type{ 1e-10 });
+        // py_params["shrinking"] = false;
+        py_params["tol"] = epsilon_;
         py_params["verbose"] = plssvm::verbosity != plssvm::verbosity_level::quiet;
 
         return py_params;
     }
 
-    py::dtype py_dtype_{};
-    std::optional<plssvm::real_type> epsilon_{};
+    /// Pointer to the the stored PLSSVM C-SVR instance.
+    std::unique_ptr<plssvm::csvr> svm_{};
+    /// The CG termination criterion if provided.
+    plssvm::real_type epsilon_{};
+    /// The maximum number of CG iterations if provided.
     std::optional<unsigned long long> max_iter_{};
 
-    std::unique_ptr<plssvm::csvr> svm_ = plssvm::make_csvr(plssvm::gamma = plssvm::gamma_coefficient_type::scale);
+    /// The data type of the labels.
+    py::dtype py_dtype_{};
+    /// Pointer to the regression data set wrapper (represents data sets with all possible label types).
     std::unique_ptr<possible_data_set_types> data_{};
+    /// Pointer to the regression model wrapper (represents models with all possible label types).
     std::unique_ptr<possible_model_types> model_{};
 
+    /// The name of the features. Can only be provided via a Pandas DataFrame.
     std::optional<std::vector<std::string>> feature_names_{};
 };
-
-namespace {
-
-void parse_provided_kwargs(svr &self, const py::kwargs &args) {
-    // check keyword arguments
-    plssvm::bindings::python::util::check_kwargs_for_correctness(args, { "C", "kernel", "degree", "gamma", "coef0", "shrinking", "tol", "cache_size", "verbose", "max_iter", "epsilon" });
-
-    if (args.contains("C")) {
-        self.svm_->set_params(plssvm::cost = args["C"].cast<plssvm::real_type>());
-    }
-    if (args.contains("kernel")) {
-        const auto kernel_str = args["kernel"].cast<std::string>();
-        plssvm::kernel_function_type kernel{};
-        if (kernel_str == "linear") {
-            kernel = plssvm::kernel_function_type::linear;
-        } else if (kernel_str == "poly" || kernel_str == "polynomial") {
-            kernel = plssvm::kernel_function_type::polynomial;
-        } else if (kernel_str == "rbf") {
-            kernel = plssvm::kernel_function_type::rbf;
-        } else if (kernel_str == "sigmoid") {
-            kernel = plssvm::kernel_function_type::sigmoid;
-        } else if (kernel_str == "laplacian") {
-            kernel = plssvm::kernel_function_type::laplacian;
-        } else if (kernel_str == "chi_squared" || kernel_str == "chi-squared") {
-            kernel = plssvm::kernel_function_type::chi_squared;
-        } else if (kernel_str == "precomputed") {
-            throw py::value_error{ R"(The "kernel = 'precomputed'" parameter for the 'SVR' is not implemented yet!)" };
-        } else {
-            throw py::value_error{ fmt::format("'{}' is not in list", kernel_str) };
-        }
-        self.svm_->set_params(plssvm::kernel_type = kernel);
-    }
-    if (args.contains("degree")) {
-        self.svm_->set_params(plssvm::degree = args["degree"].cast<int>());
-    }
-    if (args.contains("gamma")) {
-        const plssvm::gamma_type gamma = plssvm::bindings::python::util::convert_gamma_kwarg_to_variant(args);
-        if (std::holds_alternative<plssvm::real_type>(gamma)) {
-            self.svm_->set_params(plssvm::gamma = std::get<plssvm::real_type>(gamma));
-        } else {
-            self.svm_->set_params(plssvm::gamma = std::get<plssvm::gamma_coefficient_type>(gamma));
-        }
-    }
-    if (args.contains("coef0")) {
-        self.svm_->set_params(plssvm::coef0 = args["coef0"].cast<plssvm::real_type>());
-    }
-    if (args.contains("shrinking")) {
-        throw py::value_error{ "The 'shrinking' parameter for the 'SVR' is not implemented yet!" };
-    }
-    if (args.contains("tol")) {
-        self.epsilon_ = args["tol"].cast<plssvm::real_type>();
-    }
-    if (args.contains("cache_size")) {
-        throw py::value_error{ "The 'cache_size' parameter for the 'SVR' is not implemented yet!" };
-    }
-    if (args.contains("verbose")) {
-        if (args["verbose"].cast<bool>()) {
-            if (plssvm::verbosity == plssvm::verbosity_level::quiet) {
-                // if current verbosity is quiet, override with full verbosity, since 'verbose=TRUE' should never result in no output
-                plssvm::verbosity = plssvm::verbosity_level::full;
-            }
-            // otherwise: use currently active verbosity level
-        } else {
-            plssvm::verbosity = plssvm::verbosity_level::quiet;
-        }
-    }
-    if (args.contains("max_iter")) {
-        const auto max_iter = args["max_iter"].cast<long long>();
-        if (max_iter > 0) {
-            // use provided value
-            self.max_iter_ = static_cast<unsigned long long>(max_iter);
-        } else if (max_iter == -1) {
-            // default behavior in PLSSVM -> do nothing
-        } else {
-            // invalid max_iter provided
-            throw py::value_error{ fmt::format("max_iter must either be greater than zero or -1, got {}!", max_iter) };
-        }
-    }
-    if (args.contains("epsilon")) {
-        throw py::value_error{ "The 'epsilon' parameter for the 'SVR' is not implemented yet!" };
-    }
-}
-
-void fit(svr &self) {
-    // perform sanity checks
-    if (self.svm_->get_params().cost <= plssvm::real_type{ 0.0 }) {
-        throw py::value_error{ "C <= 0" };
-    }
-    if (self.svm_->get_params().degree < 0) {
-        throw py::value_error{ "degree of polynomial kernel < 0" };
-    }
-    if (self.epsilon_.has_value() && self.epsilon_.value() <= plssvm::real_type{ 0.0 }) {
-        throw py::value_error{ "eps <= 0" };
-    }
-
-    // fit the model using potentially provided keyword arguments
-    std::visit([&](auto &&data) {
-        using possible_model_types = typename svr::possible_model_types;
-
-        if (self.epsilon_.has_value() && self.max_iter_.has_value()) {
-            self.model_ = std::make_unique<possible_model_types>(self.svm_->fit(data,
-                                                                                plssvm::epsilon = self.epsilon_.value(),
-                                                                                plssvm::max_iter = self.max_iter_.value()));
-        } else if (self.epsilon_.has_value()) {
-            self.model_ = std::make_unique<possible_model_types>(self.svm_->fit(data,
-                                                                                plssvm::epsilon = self.epsilon_.value()));
-        } else if (self.max_iter_.has_value()) {
-            self.model_ = std::make_unique<possible_model_types>(self.svm_->fit(data,
-                                                                                plssvm::max_iter = self.max_iter_.value()));
-        } else {
-            self.model_ = std::make_unique<possible_model_types>(self.svm_->fit(data));
-        }
-    },
-               *self.data_);
-}
-
-}  // namespace
 
 void init_sklearn_svr(py::module_ &m) {
     // documentation based on sklearn.svm.SVR documentation
     py::class_<svr> py_svr(m, "SVR", py::dynamic_attr(), "A C-SVR implementation adhering to sklearn.svm.SVR using PLSSVM as backend.");
-    py_svr.def(py::init([](const py::kwargs &args) {
-                   // to silence constructor messages
-                   if (args.contains("verbose")) {
-                       if (args["verbose"].cast<bool>()) {
-                           if (plssvm::verbosity == plssvm::verbosity_level::quiet) {
-                               // if current verbosity is quiet, override with full verbosity, since 'verbose=TRUE' should never result in no output
-                               plssvm::verbosity = plssvm::verbosity_level::full;
-                           }
-                           // otherwise: use currently active verbosity level
-                       } else {
-                           plssvm::verbosity = plssvm::verbosity_level::quiet;
+    py_svr.def(py::init([](const plssvm::kernel_function_type kernel, const int degree, const plssvm::gamma_type gamma, const plssvm::real_type coef0, const plssvm::real_type tol, const plssvm::real_type C, const bool verbose, const long long max_iter) {
+                   // sanity check parameters
+                   if (max_iter < -1) {
+                       throw py::value_error{ fmt::format("max_iter must either be greater than zero or -1, got {}!", max_iter) };
+                   }
+
+                   // set verbosity
+                   if (verbose) {
+                       if (plssvm::verbosity == plssvm::verbosity_level::quiet) {
+                           // if current verbosity is quiet, override with full verbosity, since 'verbose=TRUE' should never result in no output
+                           plssvm::verbosity = plssvm::verbosity_level::full;
                        }
+                       // otherwise: use currently active verbosity level
                    } else {
-                       // sklearn default is quiet
                        plssvm::verbosity = plssvm::verbosity_level::quiet;
                    }
 
-                   // create SVR class
-                   auto self = std::make_unique<svr>();
-                   parse_provided_kwargs(*self, args);
-                   return self;
+                   // create plssvm::parameter struct
+                   const plssvm::parameter params{ kernel, degree, gamma, coef0, C };
+                   // we use an unsigned type for max_iter -> convert it to an optional to support -1
+                   const std::optional<unsigned long long> used_max_iter = max_iter == -1 ? std::nullopt : std::make_optional(static_cast<unsigned long long>(max_iter));
+                   // create SVC wrapper
+                   return svr{ params, tol, used_max_iter };
                }),
-               "Construct a new SVR classifier.");
+               "Construct a new SVC classifier.",
+               py::kw_only(),
+               py::arg("kernel") = plssvm::kernel_function_type::rbf,
+               py::arg("degree") = 3,
+               py::arg("gamma") = plssvm::gamma_coefficient_type::scale,
+               py::arg("coef0") = 0.0,
+               py::arg("tol") = 1e-10,
+               py::arg("C") = 1.0,
+               // py::arg("epsilon") = 0.1,
+               // py::arg("shrinking") = true,     // true
+               // py::arg("cache_size") = 200,  // 200
+               py::arg("verbose") = false,
+               py::arg("max_iter") = -1);
 
     //*************************************************************************************************************************************//
     //                                                             ATTRIBUTES                                                              //
     //*************************************************************************************************************************************//
     py_svr
         .def_property_readonly("coef_", [](const svr &self) -> py::array {
+            PLSSVM_ASSERT(self.svm_ != nullptr, "svm_ may not be a nullptr! Maybe you forgot to initialize it?");
             if (self.model_ == nullptr) {
                 throw py::attribute_error{ "'SVr' object has no attribute 'coef_'" };
             }
@@ -284,7 +216,7 @@ void init_sklearn_svr(py::module_ &m) {
             }
 
             return static_cast<int>(std::visit([](auto &&data) { return data.num_features(); }, *self.data_)); }, "Number of features seen during fit. int")
-        .def_property_readonly("feature_names_in_", [](const svr &self) {
+        .def_property_readonly("feature_names_in_", [](const svr &self) -> py::array {
             if (!self.feature_names_.has_value()) {
                 throw py::attribute_error{ "'SVR' object has no attribute 'feature_names_in_'" };
             }
@@ -319,6 +251,7 @@ void init_sklearn_svr(py::module_ &m) {
 
             return std::visit([](auto &&model) { return plssvm::bindings::python::util::vector_to_pyarray(std::vector<std::int32_t>{ static_cast<std::int32_t>(model.num_support_vectors()) }); }, *self.model_); }, "Number of support vectors for each class. ndarray of shape (1,), dtype=int32")
         .def_property_readonly("shape_fit_", [](const svr &self) {
+            PLSSVM_ASSERT(self.data_ != nullptr, "data_ may not be a nullptr! Maybe you forgot to initialize it?");
             if (self.model_ == nullptr) {
                 throw py::attribute_error{ "'SVR' object has no attribute 'shape_fit_'" };
             }
@@ -331,6 +264,7 @@ void init_sklearn_svr(py::module_ &m) {
     //*************************************************************************************************************************************//
     py_svr
         .def("fit", [](svr &self, plssvm::bindings::python::util::soa_matrix_wrapper<plssvm::real_type> data, plssvm::bindings::python::util::label_vector_wrapper<typename svr::possible_vector_types> labels, const std::optional<std::vector<plssvm::real_type>> &sample_weight) -> svr & {
+           PLSSVM_ASSERT(self.svm_ != nullptr, "svm_ may not be a nullptr! Maybe you forgot to initialize it?");
             if (sample_weight.has_value()) {
                 throw py::attribute_error{ "The 'sample_weight' parameter for a call to 'fit' is not implemented yet!" };
             }
@@ -346,17 +280,30 @@ void init_sklearn_svr(py::module_ &m) {
                 // get the label type and possible data set types
                 using label_type = typename plssvm::detail::remove_cvref_t<decltype(labels_vector)>::value_type;
                 using possible_data_set_types = typename svr::possible_data_set_types;
-                // create the data set to fit
-                self.data_ = std::make_unique<possible_data_set_types>(plssvm::regression_data_set<label_type>(std::move(data.matrix), std::move(labels_vector)));
-            },
-                       labels.labels);
+                using possible_model_types = typename svr::possible_model_types;
 
-            // fit the model using potentially provided keyword arguments
-            fit(self);
-            return self; }, "Fit the SVM model according to the given training data.", py::arg("X"), py::arg("y"), py::pos_only(), py::arg("sample_weight") = std::nullopt, py::return_value_policy::reference)
+                // create the data set to fit
+                plssvm::regression_data_set<label_type> train_data{ std::move(data.matrix), std::move(labels_vector) };
+
+                // fit the model using potentially provided keyword arguments
+                if (self.max_iter_.has_value()) {
+                    self.model_ = std::make_unique<possible_model_types>(self.svm_->fit(train_data,
+                                                                                        plssvm::epsilon = self.epsilon_,
+                                                                                        plssvm::max_iter = self.max_iter_.value()));
+                } else {
+                    self.model_ = std::make_unique<possible_model_types>(self.svm_->fit(train_data, plssvm::epsilon = self.epsilon_));
+                }
+
+                // store data set internally
+                self.data_ = std::make_unique<possible_data_set_types>(std::move(train_data));
+            },
+                      labels.labels);
+
+            return self; }, py::return_value_policy::reference, "Fit the SVM model according to the given training data.", py::arg("X"), py::arg("y"), py::pos_only(), py::arg("sample_weight") = std::nullopt)
         .def("get_metadata_routing", [](const svr &) { throw py::attribute_error{ "'SVR' object has no function 'get_metadata_routing' (not implemented)" }; }, "Get metadata routing of this object.")
         .def("get_params", &svr::get_params, "Get parameters for this estimator.", py::arg("deep") = true)
         .def("predict", [](svr &self, plssvm::soa_matrix<plssvm::real_type> data) -> py::array {
+            PLSSVM_ASSERT(self.svm_ != nullptr, "svm_ may not be a nullptr! Maybe you forgot to initialize it?");
             if (self.model_ == nullptr) {
                 throw py::attribute_error{ "This SVR instance is not fitted yet. Call 'fit' with appropriate arguments before using this estimator." };
             }
@@ -368,8 +315,9 @@ void init_sklearn_svr(py::module_ &m) {
                 const plssvm::regression_data_set<label_type> data_to_predict{ std::move(data) };
                 // predict the data
                 return plssvm::bindings::python::util::vector_to_pyarray(self.svm_->predict(model, data_to_predict));
-            }, *self.model_); }, "Perform classification on samples in X.")
+            }, *self.model_); }, "Perform classification on samples in X.", py::arg("X"))
         .def("score", [](svr &self, plssvm::soa_matrix<plssvm::real_type> data, plssvm::bindings::python::util::label_vector_wrapper<typename svr::possible_vector_types> labels, const std::optional<std::vector<plssvm::real_type>> &sample_weight) -> plssvm::real_type {
+            PLSSVM_ASSERT(self.svm_ != nullptr, "svm_ may not be a nullptr! Maybe you forgot to initialize it?");
             if (sample_weight.has_value()) {
                 throw py::attribute_error{ "The 'sample_weight' parameter for a call to 'fit' is not implemented yet!" };
             }
@@ -392,11 +340,65 @@ void init_sklearn_svr(py::module_ &m) {
             }, labels.labels); }, "Return the mean accuracy on the given test data and labels.", py::arg("X"), py::arg("y"), py::pos_only(), py::arg("sample_weight") = std::nullopt)
         .def("set_fit_request", [](const svr &) { throw py::attribute_error{ "'SVR' object has no function 'set_fit_request' (not implemented)" }; }, "Request metadata passed to the fit method.")
         .def("set_params", [](svr &self, const py::kwargs &args) -> svr & {
-            parse_provided_kwargs(self, args);
-            return self; }, "Set the parameters of this estimator.", py::return_value_policy::reference)
+            PLSSVM_ASSERT(self.svm_ != nullptr, "svm_ may not be a nullptr! Maybe you forgot to initialize it?");
+            // check keyword arguments
+            plssvm::bindings::python::util::check_kwargs_for_correctness(args, { "C", "kernel", "degree", "gamma", "coef0", "shrinking", "tol", "cache_size", "verbose", "max_iter", "epsilon" });
+
+            if (args.contains("kernel")) {
+                self.svm_->set_params(plssvm::kernel_type = args["kernel"].cast<plssvm::kernel_function_type>());
+            }
+            if (args.contains("degree")) {
+                self.svm_->set_params(plssvm::degree = args["degree"].cast<int>());
+            }
+            if (args.contains("gamma")) {
+                self.svm_->set_params(plssvm::gamma = args["gamma"].cast<plssvm::gamma_type>());
+            }
+            if (args.contains("coef0")) {
+                self.svm_->set_params(plssvm::coef0 = args["coef0"].cast<plssvm::real_type>());
+            }
+            if (args.contains("tol")) {
+                self.epsilon_ = args["tol"].cast<plssvm::real_type>();
+            }
+            if (args.contains("C")) {
+                self.svm_->set_params(plssvm::cost = args["C"].cast<plssvm::real_type>());
+            }
+            if (args.contains("epsilon")) {
+                throw py::value_error{ "The 'epsilon' parameter for the 'SVR' is not implemented yet!" };
+            }
+            if (args.contains("shrinking")) {
+                throw py::value_error{ "The 'shrinking' parameter for the 'SVR' is not implemented yet!" };
+            }
+            if (args.contains("cache_size")) {
+                throw py::value_error{ "The 'cache_size' parameter for the 'SVR' is not implemented yet!" };
+            }
+            if (args.contains("verbose")) {
+                if (args["verbose"].cast<bool>()) {
+                    if (plssvm::verbosity == plssvm::verbosity_level::quiet) {
+                        // if current verbosity is quiet, override with full verbosity, since 'verbose=TRUE' should never result in no output
+                        plssvm::verbosity = plssvm::verbosity_level::full;
+                    }
+                    // otherwise: use currently active verbosity level
+               } else {
+                    plssvm::verbosity = plssvm::verbosity_level::quiet;
+               }
+            }
+            if (args.contains("max_iter")) {
+                const auto max_iter = args["max_iter"].cast<long long>();
+                if (max_iter > 0) {
+                    // use provided value
+                    self.max_iter_ = static_cast<unsigned long long>(max_iter);
+                } else if (max_iter == -1) {
+                    // default behavior in PLSSVM -> do nothing
+                } else {
+                    // invalid max_iter provided
+                    throw py::value_error{ fmt::format("max_iter must either be greater than zero or -1, got {}!", max_iter) };
+                }
+            }
+            return self; }, py::return_value_policy::reference, "Set the parameters of this estimator.")
         .def("set_score_request", [](const svr &) { throw py::attribute_error{ "'SVR' object has no function 'set_score_request' (not implemented)" }; }, "Request metadata passed to the score method.")
         .def("__sklearn_is_fitted__", [](const svr &self) -> bool { return self.model_ != nullptr; }, "Return True if the estimator is fitted, False otherwise.")
         .def("__sklearn_clone__", [](const svr &self) -> svr {
+            PLSSVM_ASSERT(self.svm_ != nullptr, "svm_ may not be a nullptr! Maybe you forgot to initialize it?");
             // create a new SVR instance
             svr new_svr{};
             // copy the parameters
@@ -430,5 +432,5 @@ void init_sklearn_svr(py::module_ &m) {
                 }
             }
 
-            return fmt::format("plssvm.SVR({})", fmt::join(non_default_values, ", ")); }, "Print the SVR showing all non-default parameters.");
+            return fmt::format("plssvm.svm.SVR({})", fmt::join(non_default_values, ", ")); }, "Print the SVR showing all non-default parameters.");
 }

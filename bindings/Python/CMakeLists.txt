@@ -37,6 +37,8 @@ set(PLSSVM_PYTHON_BINDINGS_SOURCES
     ${CMAKE_CURRENT_LIST_DIR}/exceptions/exceptions.cpp
     ${CMAKE_CURRENT_LIST_DIR}/model/classification_model.cpp
     ${CMAKE_CURRENT_LIST_DIR}/model/regression_model.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/sklearn_like/svc.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/sklearn_like/svr.cpp
     ${CMAKE_CURRENT_LIST_DIR}/svm/csvm.cpp
     ${CMAKE_CURRENT_LIST_DIR}/svm/csvc.cpp
     ${CMAKE_CURRENT_LIST_DIR}/svm/csvr.cpp
@@ -52,8 +54,6 @@ set(PLSSVM_PYTHON_BINDINGS_SOURCES
     ${CMAKE_CURRENT_LIST_DIR}/svm_types.cpp
     ${CMAKE_CURRENT_LIST_DIR}/target_platforms.cpp
     ${CMAKE_CURRENT_LIST_DIR}/verbosity_levels.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/sklearn_svc.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/sklearn_svr.cpp
     ${CMAKE_CURRENT_LIST_DIR}/main.cpp
 )
 
