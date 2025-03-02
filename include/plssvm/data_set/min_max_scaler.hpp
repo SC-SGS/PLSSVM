@@ -82,7 +82,7 @@ class min_max_scaler {
     min_max_scaler(real_type lower, real_type upper);
     /**
      * @brief Create a new scaling class that can be used to scale all features of a data set to the interval [lower, upper].
-     * @param[in] comm the used MPI communicator (**note**: currently unused)
+     * @param[in] comm the used MPI communicator (**note**: current only used to restrict logging outputs to the main MPI rank)
      * @param[in] lower the lower bound value of all features
      * @param[in] upper the upper bound value of all features
      * @throws plssvm::data_set_exception if lower is greater or equal than upper
@@ -97,7 +97,7 @@ class min_max_scaler {
     min_max_scaler(const std::string &filename);  // can't be explicit due to the data_set_variant
     /**
      * @brief Read the scaling interval and factors from the provided file @p filename.
-     * @param[in] comm the used MPI communicator (**note**: currently unused)
+     * @param[in] comm the used MPI communicator (**note**: current only used to restrict logging outputs to the main MPI rank)
      * @param[in] filename the filename to read the scaling information from
      * @throws plssvm::invalid_file_format_exception all exceptions thrown by the plssvm::detail::io::parse_scaling_factors function
      */

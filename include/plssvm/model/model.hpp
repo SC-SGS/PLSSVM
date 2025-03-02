@@ -43,7 +43,7 @@ class model {
 
     /**
      * @brief Create a model with the provided MPI communicator.
-     * @param[in] comm the used MPI communicator (**note**: currently unused)
+     * @param[in] comm the used MPI communicator (**note**: current only used to restrict logging outputs to the main MPI rank)
      */
     explicit model(mpi::communicator comm);
 

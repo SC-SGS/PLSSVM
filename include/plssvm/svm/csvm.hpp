@@ -65,14 +65,14 @@ class csvm {
     /**
      * @brief Construct a C-SVM using the SVM parameter @p params.
      * @details Uses the default SVM parameter if none are provided.
-     * @param[in] comm the used MPI communicator (**note**: currently unused)
+     * @param[in] comm the used MPI communicator
      * @param[in] params the SVM parameter
      */
     explicit csvm(mpi::communicator comm, parameter params = {});
     /**
      * @brief Construct a C-SVM forwarding all parameters @p args to the plssvm::parameter constructor.
      * @tparam Args the type of the (named-)parameters
-     * @param[in] comm the used MPI communicator (**note**: currently unused)
+     * @param[in] comm the used MPI communicator
      * @param[in] args the parameters used to construct a plssvm::parameter
      */
     template <typename... Args>

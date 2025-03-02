@@ -96,7 +96,7 @@ class classification_data_set : public data_set<U> {
      * @brief Read the data points from the file @p filename.
      *        Automatically determines the plssvm::file_format_type based on the file extension.
      * @details If @p filename ends with `.arff` it uses the ARFF parser, otherwise the LIBSVM parser is used.
-     * @param[in] comm the used MPI communicator (**note**: currently unused)
+     * @param[in] comm the used MPI communicator (**note**: current only used to restrict logging outputs to the main MPI rank)
      * @param[in] filename the file to read the data points from
      * @throws plssvm::invalid_file_format_exception all exceptions thrown by plssvm::data_set::read_file
      */
@@ -114,7 +114,7 @@ class classification_data_set : public data_set<U> {
 
     /**
      * @brief Read the data points from the file @p filename assuming that the file is given in the @p plssvm::file_format_type.
-     * @param[in] comm the used MPI communicator (**note**: currently unused)
+     * @param[in] comm the used MPI communicator (**note**: current only used to restrict logging outputs to the main MPI rank)
      * @param[in] filename the file to read the data points from
      * @param[in] format the assumed file format used to parse the data points
      * @throws plssvm::invalid_file_format_exception all exceptions thrown by plssvm::data_set::read_file
@@ -138,7 +138,7 @@ class classification_data_set : public data_set<U> {
      * @brief Read the data points from the file @p filename and scale it using the provided @p scaler.
      *        Automatically determines the plssvm::file_format_type based on the file extension.
      * @details If @p filename ends with `.arff` it uses the ARFF parser, otherwise the LIBSVM parser is used.
-     * @param[in] comm the used MPI communicator (**note**: currently unused)
+     * @param[in] comm the used MPI communicator (**note**: current only used to restrict logging outputs to the main MPI rank)
      * @param[in] filename the file to read the data points from
      * @param[in] scaler the parameters used to scale the data set feature values to a given range
      * @throws plssvm::invalid_file_format_exception all exceptions thrown by plssvm::data_set::read_file
@@ -162,7 +162,7 @@ class classification_data_set : public data_set<U> {
     /**
      * @brief Read the data points from the file @p filename assuming that the file is given in the plssvm::file_format_type @p format and
      *        scale it using the provided @p scaler.
-     * @param[in] comm the used MPI communicator (**note**: currently unused)
+     * @param[in] comm the used MPI communicator (**note**: current only used to restrict logging outputs to the main MPI rank)
      * @param[in] filename the file to read the data points from
      * @param[in] format the assumed file format used to parse the data points
      * @param[in] scaler the parameters used to scale the data set feature values to a given range
@@ -186,7 +186,7 @@ class classification_data_set : public data_set<U> {
     /**
      * @brief Create a new data set by converting the provided @p data_points to a plssvm::matrix.
      * @details Since no labels are provided, this data set may **not** be used to a call to plssvm::csvc::fit/plssvm::csvr::fit!
-     * @param[in] comm the used MPI communicator (**note**: currently unused)
+     * @param[in] comm the used MPI communicator (**note**: current only used to restrict logging outputs to the main MPI rank)
      * @param[in] data_points the data points used in this data set
      * @throws plssvm::data_set_exception if the @p data_points vector is empty
      * @throws plssvm::data_set_exception if the data points in @p data_points have mismatching number of features
@@ -209,7 +209,7 @@ class classification_data_set : public data_set<U> {
 
     /**
      * @brief Create a new data set by converting the provided @p data_points to a plssvm::matrix and copying the @p labels.
-     * @param[in] comm the used MPI communicator (**note**: currently unused)
+     * @param[in] comm the used MPI communicator (**note**: current only used to restrict logging outputs to the main MPI rank)
      * @param[in] data_points the data points used in this data set
      * @param[in] labels the labels used in this data set
      * @throws plssvm::data_set_exception if the @p data_points vector is empty
@@ -234,7 +234,7 @@ class classification_data_set : public data_set<U> {
 
     /**
      * @brief Create a new data set  by converting the provided @p data_points to a plssvm::matrix and scale them using the provided @p scaler.
-     * @param[in] comm the used MPI communicator (**note**: currently unused)
+     * @param[in] comm the used MPI communicator (**note**: current only used to restrict logging outputs to the main MPI rank)
      * @param[in] data_points the data points used in this data set
      * @param[in] scaler the parameters used to scale the data set feature values to a given range
      * @throws plssvm::data_set_exception if the @p data_points vector is empty
@@ -261,7 +261,7 @@ class classification_data_set : public data_set<U> {
 
     /**
      * @brief Create a new data set  by converting the provided @p data_points to a plssvm::matrix and copying the @p labels and scale the @p data_points using the provided @p scaler.
-     * @param[in] comm the used MPI communicator (**note**: currently unused)
+     * @param[in] comm the used MPI communicator (**note**: current only used to restrict logging outputs to the main MPI rank)
      * @param[in] data_points the data points used in this data set
      * @param[in] labels the labels used in this data set
      * @param[in] scaler the parameters used to scale the data set feature values to a given range
@@ -293,7 +293,7 @@ class classification_data_set : public data_set<U> {
      * @details Since no labels are provided, this data set may **not** be used to a call to plssvm::csvc::fit/plssvm::csvr::fit!
      * @note If the provided matrix isn't padded, adds the necessary padding entries automatically.
      * @tparam layout the layout type of the input matrix
-     * @param[in] comm the used MPI communicator (**note**: currently unused)
+     * @param[in] comm the used MPI communicator (**note**: current only used to restrict logging outputs to the main MPI rank)
      * @param[in] data_points the data points used in this data set
      * @throws plssvm::data_set_exception if the @p data_points vector is empty
      * @throws plssvm::data_set_exception if the data points in @p data_points have mismatching number of features
@@ -322,7 +322,7 @@ class classification_data_set : public data_set<U> {
      * @brief Create a new data set from the provided @p data_points and @p labels.
      * @note If the provided matrix isn't padded, adds the necessary padding entries automatically.
      * @tparam layout the layout type of the input matrix
-     * @param[in] comm the used MPI communicator (**note**: currently unused)
+     * @param[in] comm the used MPI communicator (**note**: current only used to restrict logging outputs to the main MPI rank)
      * @param[in] data_points the data points used in this data set
      * @param[in] labels the labels used in this data set
      * @throws plssvm::data_set_exception if the @p data_points vector is empty
@@ -353,7 +353,7 @@ class classification_data_set : public data_set<U> {
      * @brief Create a new data set from the the provided @p data_points and scale them using the provided @p scaler.
      * @note If the provided matrix isn't padded, adds the necessary padding entries automatically.
      * @tparam layout the layout type of the input matrix
-     * @param[in] comm the used MPI communicator (**note**: currently unused)
+     * @param[in] comm the used MPI communicator (**note**: current only used to restrict logging outputs to the main MPI rank)
      * @param[in] data_points the data points used in this data set
      * @param[in] scaler the parameters used to scale the data set feature values to a given range
      * @throws plssvm::data_set_exception if the @p data_points vector is empty
@@ -386,7 +386,7 @@ class classification_data_set : public data_set<U> {
      * @brief Create a new data set from the the provided @p data_points and @p labels and scale the @p data_points using the provided @p scaler.
      * @note If the provided matrix isn't padded, adds the necessary padding entries automatically.
      * @tparam layout the layout type of the input matrix
-     * @param[in] comm the used MPI communicator (**note**: currently unused)
+     * @param[in] comm the used MPI communicator (**note**: current only used to restrict logging outputs to the main MPI rank)
      * @param[in] data_points the data points used in this data set
      * @param[in] labels the labels used in this data set
      * @param[in] scaler the parameters used to scale the data set feature values to a given range
@@ -417,7 +417,7 @@ class classification_data_set : public data_set<U> {
      * @brief Use the provided @p data_points in this data set.
      * @details Since no labels are provided, this data set may **not** be used to a call to plssvm::csvc::fit/plssvm::csvr::fit!
      * @note Moves the @p data_points into this data set. If @p data_points have the wrong padding, a runtime exception is thrown.
-     * @param[in] comm the used MPI communicator (**note**: currently unused)
+     * @param[in] comm the used MPI communicator (**note**: current only used to restrict logging outputs to the main MPI rank)
      * @param[in] data_points the data points used in this data set
      * @throws plssvm::data_set_exception if the @p data_points vector is empty
      * @throws plssvm::data_set_exception if the data points in @p data_points have mismatching number of features
@@ -444,7 +444,7 @@ class classification_data_set : public data_set<U> {
     /**
      * @brief Use the provided @p data_points and @p labels in this data set.
      * @note Moves the @p data_points and @p labels into this data set. If @p data_points have the wrong padding, a runtime exception is thrown.
-     * @param[in] comm the used MPI communicator (**note**: currently unused)
+     * @param[in] comm the used MPI communicator (**note**: current only used to restrict logging outputs to the main MPI rank)
      * @param[in] data_points the data points used in this data set
      * @param[in] labels the labels used in this data set
      * @throws plssvm::data_set_exception if the @p data_points vector is empty
@@ -475,7 +475,7 @@ class classification_data_set : public data_set<U> {
      * @brief Use the provided @p data_points in this data set and scale them using the provided @p scaler.
      * @details Since no labels are provided, this data set may **not** be used to a call to plssvm::csvc::fit/plssvm::csvr::fit!
      * @note Moves the @p data_points into this data set. If @p data_points have the wrong padding, a runtime exception is thrown.
-     * @param[in] comm the used MPI communicator (**note**: currently unused)
+     * @param[in] comm the used MPI communicator (**note**: current only used to restrict logging outputs to the main MPI rank)
      * @param[in] data_points the data points used in this data set
      * @param[in] scaler the parameters used to scale the data set feature values to a given range
      * @throws plssvm::data_set_exception if the @p data_points vector is empty
@@ -506,7 +506,7 @@ class classification_data_set : public data_set<U> {
     /**
      * @brief Use the provided @p data_points and @p labels in this data set and scale them using the provided @p scaler.
      * @note Moves the @p data_points and @p labels into this data set. If @p data_points have the wrong padding, a runtime exception is thrown.
-     * @param[in] comm the used MPI communicator (**note**: currently unused)
+     * @param[in] comm the used MPI communicator (**note**: current only used to restrict logging outputs to the main MPI rank)
      * @param[in] data_points the data points used in this data set
      * @param[in] labels the labels used in this data set
      * @param[in] scaler the parameters used to scale the data set feature values to a given range

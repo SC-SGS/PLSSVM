@@ -86,7 +86,7 @@ class regression_model : public model<U> {
 
     /**
      * @brief Read a previously learned model from the LIBSVM model file @p filename.
-     * @param[in] comm the used MPI communicator (**note**: currently unused)
+     * @param[in] comm the used MPI communicator (**note**: current only used to restrict logging outputs to the main MPI rank)
      * @param[in] filename the model file to read
      * @throws plssvm::invalid_file_format_exception all exceptions thrown by plssvm::detail::io::parse_libsvm_model_header and plssvm::detail::io::parse_libsvm_data
      */
