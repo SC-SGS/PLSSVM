@@ -16,9 +16,8 @@
 #include <string>  // std::string
 
 /**
- * @def PLSSVM_HAS_MPI_ENABLED
+ * @def PLSSVM_MPI_ERROR_CHECK
  * @brief Check the MPI error @p err. If @p err signals an error, throw a plssvm::mpi_exception.
- * @param[in] err the MPI error code to check
  * @throws plssvm::mpi_exception if the error code signals a failure
  */
 #if defined(PLSSVM_HAS_MPI_ENABLED)

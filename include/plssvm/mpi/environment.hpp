@@ -60,7 +60,7 @@ void abort_world();
 
 /**
  * @brief Returns `true` if the executable was started via `mpirun`.
- * @details Checks for the existence of the environment variables: ``
+ * @details Checks for the existence of the environment variables: `OMPI_COMM_WORLD_SIZE`, `PMI_SIZE`, or `SLURM_PROCID`.
  * @note Will falsely return `true` if any of the environment variables is explicitly set by the user!
  * @return `true` if the executable was started via `mpirun`, otherwise `false` (`[[nodiscard]]`)
  */

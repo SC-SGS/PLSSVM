@@ -64,6 +64,7 @@ class data_set {
      * @brief Read the data points from the file @p filename.
      *        Automatically determines the plssvm::file_format_type based on the file extension.
      * @details If @p filename ends with `.arff` it uses the ARFF parser, otherwise the LIBSVM parser is used.
+     * @param[in] comm the used MPI communicator (**note**: currently unused)
      * @param[in] filename the file to read the data points from
      * @throws plssvm::invalid_file_format_exception all exceptions thrown by plssvm::data_set::read_file
      */

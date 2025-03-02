@@ -61,7 +61,7 @@ endif ()
 
 # add doxygen as target
 doxygen_add_docs(
-    doc "${PROJECT_SOURCE_DIR}/include;${PROJECT_SOURCE_DIR}/docs/resources;${PROJECT_SOURCE_DIR}/README.md;${PROJECT_SOURCE_DIR}/bindings/Python/README.md"
+    doc "${PROJECT_SOURCE_DIR}/include;${PROJECT_SOURCE_DIR}/docs/resources;${PROJECT_SOURCE_DIR}/README.md;${PROJECT_SOURCE_DIR}/bindings/Python/README.md;${PROJECT_SOURCE_DIR}/examples/python/interactive/README.md"
     ALL # add to the default build target
     WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}" COMMENT "Generating API documentation with Doxygen"
 )
