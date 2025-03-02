@@ -9,6 +9,7 @@
 #include "plssvm/kernel_function_types.hpp"  // plssvm::kernel_function_type
 
 #include "pybind11/pybind11.h"  // py::module_, py::enum_
+#include "pybind11/pybind11.h"  // py::module_, py::enum_, py::arg
 
 namespace py = pybind11;
 
@@ -23,5 +24,5 @@ void init_kernel_function_types(py::module_ &m) {
         .value("CHI_SQUARED", plssvm::kernel_function_type::chi_squared, "chi-squared kernel function: exp(-gamma * sum_i (u[i] - v[i])^2 / (u[i] + v[i]))");
 
     // bind free functions
-    m.def("kernel_function_type_to_math_string", &plssvm::kernel_function_type_to_math_string, "return the mathematical representation of a KernelFunctionType");
+    m.def("kernel_function_type_to_math_string", &plssvm::kernel_function_type_to_math_string, "return the mathematical representation of a KernelFunctionType", py::arg("kernel_function"));
 }

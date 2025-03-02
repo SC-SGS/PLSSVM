@@ -9,6 +9,7 @@
 #include "plssvm/classification_types.hpp"  // plssvm::classification_type, plssvm::classification_type_to_full_string, plssvm::calculate_number_of_classifiers
 
 #include "pybind11/pybind11.h"  // py::module_, py::enum_
+#include "pybind11/pybind11.h"  // py::module_, py::enum_, py::arg
 
 #include <string>  // std::string
 
@@ -21,6 +22,6 @@ void init_classification_types(py::module_ &m) {
         .value("OAO", plssvm::classification_type::oao, "use the one vs. one classification strategy");
 
     // bind free functions
-    m.def("classification_type_to_full_string", &plssvm::classification_type_to_full_string, "convert the classification type to its full string representation");
-    m.def("calculate_number_of_classifiers", &plssvm::calculate_number_of_classifiers, "given the classification strategy and number of classes , calculates the number of necessary classifiers");
+    m.def("classification_type_to_full_string", &plssvm::classification_type_to_full_string, "convert the classification type to its full string representation", py::arg("classification"));
+    m.def("calculate_number_of_classifiers", &plssvm::calculate_number_of_classifiers, "given the classification strategy and number of classes , calculates the number of necessary classifiers", py::arg("classification"), py::arg("num_classes"));
 }

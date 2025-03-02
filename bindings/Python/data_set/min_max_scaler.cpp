@@ -11,8 +11,8 @@
 #include "plssvm/constants.hpp"         // plssvm::real_type
 #include "plssvm/mpi/communicator.hpp"  // plssvm::mpi::communicator
 
-#include "bindings/Python/mpi/mpi_typecaster.hpp"  // a custom Pybind11 type caster for a plssvm::mpi::communicator
-#include "bindings/Python/utility.hpp"             // plssvm::bindings::python::util::vector_to_pyarray
+#include "bindings/Python/type_caster/mpi_type_caster.hpp"  // a custom Pybind11 type caster for a plssvm::mpi::communicator
+#include "bindings/Python/utility.hpp"                      // plssvm::bindings::python::util::vector_to_pyarray
 
 #include "fmt/format.h"         // fmt::format
 #include "pybind11/numpy.h"     // py::array
@@ -52,14 +52,14 @@ void init_min_max_scaler(py::module_ &m) {
              "create new scaling factors for the range [lower, upper]",
              py::arg("lower"),
              py::arg("upper"),
-             py::pos_only(),
+             py::kw_only(),
              py::arg("comm") = plssvm::mpi::communicator{})
         .def(py::init([](const std::array<plssvm::real_type, 2> interval, plssvm::mpi::communicator comm) {
                  return plssvm::min_max_scaler{ std::move(comm), interval[0], interval[1] };
              }),
              "create new scaling factors for the range [lower, upper]",
              py::arg("interval"),
-             py::pos_only(),
+             py::kw_only(),
              py::arg("comm") = plssvm::mpi::communicator{})
         .def(py::init([](const py::tuple interval, plssvm::mpi::communicator comm) {
                  if (interval.size() != 2) {
@@ -69,16 +69,16 @@ void init_min_max_scaler(py::module_ &m) {
              }),
              "create new scaling factors for the range [lower, upper]",
              py::arg("interval"),
-             py::pos_only(),
+             py::kw_only(),
              py::arg("comm") = plssvm::mpi::communicator{})
         .def(py::init([](const std::string &filename, plssvm::mpi::communicator comm) {
                  return plssvm::min_max_scaler{ std::move(comm), filename };
              }),
              "read the scaling factors from the file",
              py::arg("filename"),
-             py::pos_only(),
+             py::kw_only(),
              py::arg("comm") = plssvm::mpi::communicator{})
-        .def("save", &plssvm::min_max_scaler::save, "save the scaling factors to a file")
+        .def("save", &plssvm::min_max_scaler::save, "save the scaling factors to a file", py::arg("filename"))
         .def("scaling_interval", &plssvm::min_max_scaler::scaling_interval, "the interval to which the data points are scaled")
         .def("scaling_factors", [](const plssvm::min_max_scaler &self) -> std::optional<py::array> {
                 const auto scaling_factors = self.scaling_factors();

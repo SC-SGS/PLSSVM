@@ -26,7 +26,7 @@ void init_events(py::module_ &m) {
 
     // bind a single event
     py::class_<event_type>(performance_tracker_module, "Event", "A class encapsulating a single event: name + timestamp where the event occurred.")
-        .def(py::init<decltype(event_type::time_point), decltype(event_type::name)>(), "construct a new event using a time point and a name")
+        .def(py::init<decltype(event_type::time_point), decltype(event_type::name)>(), "construct a new event using a time point and a name", py::arg("time_point"), py::arg("name"))
         .def_readonly("time_point", &event_type::time_point, "read the time point associated to this event")
         .def_readonly("name", &event_type::name, "read the name associated to this event")
         .def("__repr__", [](const event_type &self) {
@@ -36,8 +36,8 @@ void init_events(py::module_ &m) {
     // bind the events wrapper
     py::class_<plssvm::detail::tracking::events>(performance_tracker_module, "Events", "A class encapsulating all occurred events.")
         .def(py::init<>(), "construct an empty events wrapper")
-        .def("add_event", py::overload_cast<event_type>(&plssvm::detail::tracking::events::add_event), "add a new event")
-        .def("add_event", py::overload_cast<decltype(event_type::time_point), decltype(event_type::name)>(&plssvm::detail::tracking::events::add_event), "add a new event using a time point and a name")
+        .def("add_event", py::overload_cast<event_type>(&plssvm::detail::tracking::events::add_event), "add a new event", py::arg("event"))
+        .def("add_event", py::overload_cast<decltype(event_type::time_point), decltype(event_type::name)>(&plssvm::detail::tracking::events::add_event), "add a new event using a time point and a name", py::arg("time_point"), py::arg("name"))
         .def("at", &plssvm::detail::tracking::events::operator[], "get the i-th event")
         .def("num_events", &plssvm::detail::tracking::events::num_events, "get the number of events")
         .def("empty", &plssvm::detail::tracking::events::empty, "check whether there are any events")

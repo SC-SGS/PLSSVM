@@ -25,8 +25,12 @@ void init_gamma(py::module_ &m) {
         .value("SCALE", plssvm::gamma_coefficient_type::scale, "use a dynamic gamma value of 1 / (num_features * data.var()) for the kernel functions");
 
     // bind free functions
-    m.def("get_gamma_string", &plssvm::get_gamma_string, "get the gamma string based on the currently active variant member");
-    m.def("calculate_gamma_value", [](const plssvm::gamma_type &gamma, const plssvm::aos_matrix<plssvm::real_type> &data) {
-        return plssvm::calculate_gamma_value(gamma, data);
-    });
+    m.def("get_gamma_string", &plssvm::get_gamma_string, "get the gamma string based on the currently active variant member", py::arg("gamma"));
+    m.def(
+        "calculate_gamma_value", [](const plssvm::gamma_type &gamma, const plssvm::aos_matrix<plssvm::real_type> &data) {
+            return plssvm::calculate_gamma_value(gamma, data);
+        },
+        "get the real_type value of the provided gamma type",
+        py::arg("gamma"),
+        py::arg("matrix"));
 }

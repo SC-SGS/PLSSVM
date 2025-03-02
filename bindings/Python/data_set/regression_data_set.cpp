@@ -16,15 +16,15 @@
 #include "plssvm/mpi/communicator.hpp"         // plssvm::mpi::communicator
 
 #include "bindings/Python/data_set/variant_wrapper.hpp"                 // plssvm::bindings::python::util::regression_data_set_wrapper
-#include "bindings/Python/mpi/mpi_typecaster.hpp"                       // a custom Pybind11 type caster for a plssvm::mpi::communicator
 #include "bindings/Python/type_caster/label_vector_wrapper_caster.hpp"  // a custom Pybind11 type caster for a plssvm::bindings::python::util::label_vector_wrapper
 #include "bindings/Python/type_caster/matrix_type_caster.hpp"           // a custom Pybind11 type caster for a plssvm::matrix
+#include "bindings/Python/type_caster/mpi_type_caster.hpp"              // a custom Pybind11 type caster for a plssvm::mpi::communicator
 #include "bindings/Python/utility.hpp"                                  // plssvm::bindings::python::util::{create_instance, python_type_name_mapping, vector_to_pyarray}
 
 #include "fmt/format.h"         // fmt::format
 #include "fmt/ranges.h"         // fmt::join
 #include "pybind11/numpy.h"     // py::array_t, py::array
-#include "pybind11/pybind11.h"  // py::module_, py::class_, py::init, py::arg, py::pos_only, py::object, py::attribute_error
+#include "pybind11/pybind11.h"  // py::module_, py::class_, py::init, py::arg, py::kw_only, py::object, py::attribute_error
 #include "pybind11/pytypes.h"   // py::type
 #include "pybind11/stl.h"       // support for STL types
 
@@ -57,7 +57,7 @@ void init_regression_data_set(py::module_ &m) {
              }),
              "create a new data set from the provided file and additional optional parameters",
              py::arg("filename"),
-             py::pos_only(),
+             py::kw_only(),
              py::arg("type") = std::nullopt,
              py::arg("format") = plssvm::file_format_type::libsvm,
              py::arg("scaler") = std::nullopt,
@@ -79,7 +79,7 @@ void init_regression_data_set(py::module_ &m) {
              }),
              "create a new data set from the provided file and additional optional parameters",
              py::arg("X"),
-             py::pos_only(),
+             py::kw_only(),
              py::arg("type") = std::nullopt,
              py::arg("scaler") = std::nullopt,
              py::arg("comm") = plssvm::mpi::communicator{})
@@ -97,10 +97,10 @@ void init_regression_data_set(py::module_ &m) {
              "create a new data set from the provided file and additional optional parameters",
              py::arg("X"),
              py::arg("y"),
-             py::pos_only(),
+             py::kw_only(),
              py::arg("scaler") = std::nullopt,
              py::arg("comm") = plssvm::mpi::communicator{})
-        .def("save", [](const regression_data_set_wrapper &self, const std::string &filename, const plssvm::file_format_type format) { std::visit([&filename, format](auto &&data) { data.save(filename, format); }, self.data_set); }, "save the data set to a file using the provided file format type", py::arg("filename"), py::pos_only(), py::arg("format") = plssvm::file_format_type::libsvm)
+        .def("save", [](const regression_data_set_wrapper &self, const std::string &filename, const plssvm::file_format_type format) { std::visit([&filename, format](auto &&data) { data.save(filename, format); }, self.data_set); }, "save the data set to a file using the provided file format type", py::arg("filename"), py::kw_only(), py::arg("format") = plssvm::file_format_type::libsvm)
         .def("data", [](const regression_data_set_wrapper &self) { return std::visit([](auto &&data) { return py::cast(data.data()); }, self.data_set); }, "the data saved as 2D vector")
         .def("has_labels", [](const regression_data_set_wrapper &self) { return std::visit([](auto &&data) { return data.has_labels(); }, self.data_set); }, "check whether the data set has labels")
         // clang-format off

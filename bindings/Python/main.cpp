@@ -34,8 +34,8 @@ void init_gamma(py::module_ &);
 void init_classification_types(py::module_ &);
 void init_file_format_types(py::module_ &);
 void init_kernel_function_types(py::module_ &);
-void init_kernel_functions(py::module_ &);
 void init_parameter(py::module_ &);
+void init_kernel_functions(py::module_ &);
 void init_classification_model(py::module_ &);
 void init_regression_model(py::module_ &);
 void init_min_max_scaler(py::module_ &);
@@ -45,8 +45,8 @@ void init_version(py::module_ &);
 void init_exceptions(py::module_ &, const py::exception<plssvm::exception> &);
 void init_regression_report(py::module_ &);
 void init_csvm(py::module_ &);
-void init_csvc(py::module_ &, py::module_ &);
-void init_csvr(py::module_ &, py::module_ &);
+void init_csvc(py::module_ &);
+void init_csvr(py::module_ &);
 void init_openmp_csvm(py::module_ &, const py::exception<plssvm::exception> &);
 void init_hpx_csvm(py::module_ &, const py::exception<plssvm::exception> &);
 void init_stdpar_csvm(py::module_ &, const py::exception<plssvm::exception> &);
@@ -127,8 +127,8 @@ PYBIND11_MODULE(plssvm, m) {
     init_classification_types(m);
     init_file_format_types(m);
     init_kernel_function_types(m);
-    init_kernel_functions(m);
     init_parameter(m);
+    init_kernel_functions(m);
     init_classification_model(m);
     init_regression_model(m);
     init_min_max_scaler(m);
@@ -137,9 +137,9 @@ PYBIND11_MODULE(plssvm, m) {
     init_version(m);
     init_exceptions(m, base_exception);
     init_regression_report(m);
-    init_csvm(pure_virtual);
-    init_csvc(m, pure_virtual);
-    init_csvr(m, pure_virtual);
+    init_csvm(m);
+    init_csvc(m);
+    init_csvr(m);
 
     // init bindings for the specific backends ONLY if the backend has been enabled
 #if defined(PLSSVM_HAS_OPENMP_BACKEND)

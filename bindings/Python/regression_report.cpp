@@ -14,7 +14,7 @@
 #include "bindings/Python/type_caster/label_vector_wrapper_caster.hpp"  // a custom Pybind11 type caster for a plssvm::bindings::python::util::label_vector_wrapper
 
 #include "fmt/format.h"         // fmt::format
-#include "pybind11/pybind11.h"  // py::module_, py::init, py::arg, py::pos_only, py::value_error
+#include "pybind11/pybind11.h"  // py::module_, py::init, py::arg, py::kw_only, py::value_error
 #include "pybind11/pytypes.h"   // py::object
 #include "pybind11/stl.h"       // support for STL types
 
@@ -52,6 +52,5 @@ void init_regression_report(py::module_ &m) {
              } else {
                  return py::str(fmt::format("{}", report));
              }
-         },
-                           y_true.labels); }, "create a new regression report by calculating all metrics between the correct and predicted labels", py::arg("y_true"), py::arg("y_pred"), py::pos_only(), py::arg("force_finite") = true, py::arg("output_dict") = false);
+         }, y_true.labels); }, "create a new regression report by calculating all metrics between the correct and predicted labels", py::arg("y_true"), py::arg("y_pred"), py::kw_only(), py::arg("force_finite") = true, py::arg("output_dict") = false);
 }

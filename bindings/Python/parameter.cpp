@@ -12,8 +12,6 @@
 #include "plssvm/gamma.hpp"                  // plssvm::gamma_type
 #include "plssvm/kernel_function_types.hpp"  // plssvm::kernel_function_type
 
-#include "bindings/Python/utility.hpp"  // plssvm::bindings::python::util::{check_kwargs_for_correctness, convert_kwargs_to_parameter}
-
 #include "fmt/format.h"          // fmt::format
 #include "pybind11/operators.h"  // support for operators
 #include "pybind11/pybind11.h"   // py::module_, py::class_, py::init, py::return_value_policy, py::self
@@ -22,17 +20,19 @@
 namespace py = pybind11;
 
 void init_parameter(py::module_ &m) {
+    const plssvm::parameter default_params{};
+
     // bind parameter class
     py::class_<plssvm::parameter>(m, "Parameter", "A class for encapsulating all important C-SVM hyper-parameters.")
-        .def(py::init<>(), "default construct all hyper-parameters")
-        .def(py::init<plssvm::kernel_function_type, int, plssvm::real_type, plssvm::real_type, plssvm::real_type>(), "create a new Parameter object providing all hyper-parameters explicitly")
-        .def(py::init([](const py::kwargs &args) {
-                 // check for valid keys
-                 plssvm::bindings::python::util::check_kwargs_for_correctness(args, { "kernel_type", "degree", "gamma", "coef0", "cost" });
-                 // if one of the value named parameter is provided, set the respective value
-                 return plssvm::bindings::python::util::convert_kwargs_to_parameter(args);
+        .def(py::init([](const plssvm::kernel_function_type kernel_type, const int degree, const plssvm::gamma_type gamma, const plssvm::real_type coef0, const plssvm::real_type cost) {
+                 return plssvm::parameter{ kernel_type, degree, gamma, coef0, cost };
              }),
-             "create a new Parameter object with the optionally provided hyper-parameter values")
+             "create a new Parameter object with the optionally provided hyper-parameter values",
+             py::arg("kernel_type") = default_params.kernel_type,
+             py::arg("degree") = default_params.degree,
+             py::arg("gamma") = default_params.gamma,
+             py::arg("coef0") = default_params.coef0,
+             py::arg("cost") = default_params.cost)
         .def_property(
             "kernel_type",
             [](const plssvm::parameter &self) { return self.kernel_type; },
