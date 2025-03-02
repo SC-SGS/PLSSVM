@@ -163,6 +163,7 @@ PYBIND11_MODULE(plssvm, m) {
     init_kokkos_csvm(m, base_exception);
 #endif
 
-    init_sklearn_svc(m);
-    init_sklearn_svr(m);
+    py::module_ sklearn_like_svm_model = m.def_submodule("svm", "a module containing the sklearn like SVC and SVR implementations");
+    init_sklearn_svc(sklearn_like_svm_model);
+    init_sklearn_svr(sklearn_like_svm_model);
 }
