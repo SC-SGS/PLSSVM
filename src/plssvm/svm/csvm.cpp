@@ -15,8 +15,6 @@
 #include "plssvm/detail/move_only_any.hpp"                 // plssvm::detail::move_only_any
 #include "plssvm/detail/operators.hpp"                     // plssvm operator overloads for vectors
 #include "plssvm/detail/tracking/performance_tracker.hpp"  // PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY, PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_EVENT, plssvm::detail::tracking::tracking_entry
-#include "plssvm/detail/utility.hpp"                       // plssvm::detail::to_underlying
-#include "plssvm/exceptions/exceptions.hpp"                // plssvm::invalid_parameter_exception
 #include "plssvm/gamma.hpp"                                // plssvm::gamma_type
 #include "plssvm/kernel_function_types.hpp"                // plssvm::kernel_function_type
 #include "plssvm/kernel_functions.hpp"                     // plssvm::kernel_function
@@ -35,26 +33,10 @@
 #include <numeric>     // std::inner_product
 #include <utility>     // std::move
 #include <utility>     // std::pair, std::make_pair
-#include <variant>     // std::holds_alternative, std::get
+#include <variant>     // std::get
 #include <vector>      // std::vector
 
 namespace plssvm {
-
-void csvm::sanity_check_parameter() const {
-    // kernel: valid kernel function
-    const auto kernel_type_value = detail::to_underlying(params_.kernel_type);
-    if (kernel_type_value < 0 || kernel_type_value >= 6) {
-        throw invalid_parameter_exception{ fmt::format("Invalid kernel function with value {} given!", kernel_type_value) };
-    }
-
-    // gamma: must be greater than 0 IF explicitly provided as real_type (not for the linear kernel)
-    if (params_.kernel_type != kernel_function_type::linear && std::holds_alternative<real_type>(params_.gamma) && std::get<real_type>(params_.gamma) <= real_type{ 0.0 }) {
-        throw invalid_parameter_exception{ fmt::format("gamma must be greater than 0.0, but is {}!", std::get<real_type>(params_.gamma)) };
-    }
-    // degree: all allowed
-    // coef0: all allowed
-    // cost: all allowed
-}
 
 std::pair<soa_matrix<real_type>, std::vector<unsigned long long>> csvm::conjugate_gradients(const std::vector<detail::move_only_any> &A, const soa_matrix<real_type> &B, const real_type eps, const unsigned long long max_cg_iter, const solver_type cg_solver) const {
     using namespace plssvm::operators;

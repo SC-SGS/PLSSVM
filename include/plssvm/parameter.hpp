@@ -17,6 +17,8 @@
 #include "plssvm/detail/igor_utility.hpp"           // plssvm::detail::{has_only_named_args_v, get_value_from_named_parameter}
 #include "plssvm/detail/logging/log_untracked.hpp"  // plssvm::detail::log_untracked
 #include "plssvm/detail/type_traits.hpp"            // PLSSVM_REQUIRES, plssvm::detail::{remove_cvref_t, always_false_v}
+#include "plssvm/detail/utility.hpp"                // plssvm::detail::to_underlying
+#include "plssvm/exceptions/exceptions.hpp"         // plssvm::invalid_parameter_exception
 #include "plssvm/gamma.hpp"                         // plssvm::gamma_type
 #include "plssvm/kernel_function_types.hpp"         // plssvm::kernel_function_type, plssvm::kernel_function_type_to_math_string
 #include "plssvm/verbosity_levels.hpp"              // plssvm::verbosity_level, plssvm::verbosity
@@ -29,6 +31,7 @@
 #include <iosfwd>       // forward declare std::ostream and std::istream
 #include <string_view>  // std::string_view
 #include <utility>      // std::forward
+#include <variant>      // std::variant, std::holds_alternative, std::get
 
 namespace plssvm {
 
@@ -117,12 +120,14 @@ struct parameter {
      * @param[in] coef0_p the coef0 used in the polynomial kernel function
      * @param[in] cost_p the cost used in all kernel functions
      */
-    constexpr parameter(const kernel_function_type kernel_p, const int degree_p, const gamma_type gamma_p, const real_type coef0_p, const real_type cost_p) noexcept :
+    constexpr parameter(const kernel_function_type kernel_p, const int degree_p, const gamma_type gamma_p, const real_type coef0_p, const real_type cost_p) :
         kernel_type{ kernel_p },
         degree{ degree_p },
         gamma{ gamma_p },
         coef0{ coef0_p },
         cost{ cost_p } {
+        // sanity check the provided parameter values
+        this->sanity_check_parameter();
     }
 
     /**
@@ -135,6 +140,8 @@ struct parameter {
     constexpr explicit parameter(const parameter &params, Args &&...named_args) :
         parameter{ params } {
         this->set_named_arguments(std::forward<Args>(named_args)...);
+        // sanity check the provided parameter values
+        this->sanity_check_parameter();
     }
 
     /**
@@ -143,8 +150,10 @@ struct parameter {
      * @param[in] named_args the potential named-parameters
      */
     template <typename... Args, PLSSVM_REQUIRES(detail::has_only_named_args_v<Args...>)>
-    constexpr explicit parameter(Args &&...named_args) noexcept {
+    constexpr explicit parameter(Args &&...named_args) {
         this->set_named_arguments(std::forward<Args>(named_args)...);
+        // sanity check the provided parameter values
+        this->sanity_check_parameter();
     }
 
     /// The used kernel function: linear, polynomial, radial basis functions (rbf), sigmoid, laplacian, or chi-squared.
@@ -258,6 +267,36 @@ struct parameter {
         if constexpr (parser.has(plssvm::cost)) {
             // get the value of the provided named parameter
             cost = detail::get_value_from_named_parameter<decltype(cost)>(parser, plssvm::cost);
+        }
+    }
+
+    /**
+     * @brief Perform some sanity checks on the passed parameters.
+     * @throws plssvm::invalid_parameter_exception if the kernel function is invalid
+     * @throws plssvm::invalid_parameter_exception if the gamma value for the polynomial or radial basis function kernel is **not** greater than zero
+     */
+    void sanity_check_parameter() const {
+        // kernel: valid kernel function
+        const auto kernel_type_value = detail::to_underlying(kernel_type);
+        if (kernel_type_value < 0 || kernel_type_value >= 6) {
+            throw invalid_parameter_exception{ fmt::format("Invalid kernel function with value {} given!", kernel_type_value) };
+        }
+
+        // degree: must be greater or equal than 0
+        if (kernel_type == kernel_function_type::polynomial && degree < 0) {
+            throw invalid_parameter_exception{ fmt::format("degree must be non-negative, but is {}!", degree) };
+        }
+
+        // gamma: must be greater or equal than 0 IF explicitly provided as real_type (not for the linear kernel)
+        if (kernel_type != kernel_function_type::linear && std::holds_alternative<real_type>(gamma) && std::get<real_type>(gamma) < real_type{ 0.0 }) {
+            throw invalid_parameter_exception{ fmt::format("gamma must be non-negative, but is {}!", std::get<real_type>(gamma)) };
+        }
+
+        // coef0: all allowed
+
+        // cost:  must be greater than 0
+        if (cost <= real_type{ 0.0 }) {
+            throw invalid_parameter_exception{ fmt::format("cost must be strictly-positive, but is {}!", cost) };
         }
     }
 };

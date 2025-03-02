@@ -198,13 +198,6 @@ class csvm {
     [[nodiscard]] virtual aos_matrix<real_type> predict_values(const parameter &params, const soa_matrix<real_type> &support_vectors, const aos_matrix<real_type> &alpha, const std::vector<real_type> &rho, soa_matrix<real_type> &w, const soa_matrix<real_type> &predict_points) const = 0;
 
     /**
-     * @brief Perform some sanity checks on the passed SVM parameters.
-     * @throws plssvm::invalid_parameter_exception if the kernel function is invalid
-     * @throws plssvm::invalid_parameter_exception if the gamma value for the polynomial or radial basis function kernel is **not** greater than zero
-     */
-    void sanity_check_parameter() const;
-
-    /**
      * @brief Solve the system of linear equations `K * X = B` where `K` is the kernel matrix assembled from @p A using the @p params with potentially multiple right-hand sides.
      * @tparam Args the type of the potential additional parameters
      * @param[in] A the data used to create the kernel matrix
@@ -260,14 +253,12 @@ class csvm {
 inline csvm::csvm(mpi::communicator comm, parameter params) :
     params_{ params },
     comm_{ std::move(comm) } {
-    this->sanity_check_parameter();
 }
 
 template <typename... Args>
 csvm::csvm(mpi::communicator comm, Args &&...named_args) :
     params_{ std::forward<Args>(named_args)... },
     comm_{ std::move(comm) } {
-    this->sanity_check_parameter();
 }
 
 template <typename... Args, std::enable_if_t<detail::has_only_parameter_named_args_v<Args...>, bool>>
@@ -276,9 +267,6 @@ void csvm::set_params(Args &&...named_args) {
 
     // update the parameters
     params_.set_named_arguments(std::forward<Args>(named_args)...);
-
-    // check if the new parameters make sense
-    this->sanity_check_parameter();
 }
 
 //*************************************************************************************************************************************//

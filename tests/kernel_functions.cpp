@@ -61,7 +61,7 @@ class KernelFunctionVector : public ::testing::Test {
     std::vector<std::array<plssvm::real_type, 4>> param_values_{
         std::array{ plssvm::real_type{ 3.0 }, plssvm::real_type{ 0.05 }, plssvm::real_type{ 1.0 }, plssvm::real_type{ 1.0 } },
         std::array{ plssvm::real_type{ 1.0 }, plssvm::real_type{ 0.0 }, plssvm::real_type{ 0.0 }, plssvm::real_type{ 1.0 } },
-        std::array{ plssvm::real_type{ 4.0 }, plssvm::real_type{ -0.05 }, plssvm::real_type{ 1.5 }, plssvm::real_type{ 1.0 } },
+        std::array{ plssvm::real_type{ 4.0 }, plssvm::real_type{ 0.01 }, plssvm::real_type{ 1.5 }, plssvm::real_type{ 1.0 } },
         std::array{ plssvm::real_type{ 2.0 }, plssvm::real_type{ 0.025 }, plssvm::real_type{ -1.0 }, plssvm::real_type{ 0.5 } },
     };
 };
