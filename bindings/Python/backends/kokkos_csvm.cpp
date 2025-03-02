@@ -84,6 +84,20 @@ void init_kokkos_csvm(py::module_ &m, const py::exception<plssvm::exception> &ba
     py::module_ kokkos_module = m.def_submodule("kokkos", "a module containing all Kokkos backend specific functionality");
     const py::module_ kokkos_pure_virtual_module = kokkos_module.def_submodule("__pure_virtual", "a module containing all pure-virtual Kokkos backend specific functionality");
 
+    // bind the enum class
+    py::enum_<plssvm::kokkos::execution_space> py_enum(kokkos_module, "ExecutionSpace", "Enum class for all supported Kokkos execution spaces in PLSSVM.");
+    py_enum
+        .value("AUTOMATIC", plssvm::kokkos::execution_space::automatic, "automatically determine the used Kokkos execution space; note: this does not necessarily correspond to Kokkos::DefaultExecutionSpace!")
+        .value("CUDA", plssvm::kokkos::execution_space::cuda, "execution space representing execution on a CUDA device")
+        .value("HIP", plssvm::kokkos::execution_space::hip, "execution space representing execution on a device supported by HIP")
+        .value("SYCL", plssvm::kokkos::execution_space::sycl, "execution space representing execution on a device supported by SYCL")
+        .value("HPX", plssvm::kokkos::execution_space::hpx, "execution space representing execution with the HPX runtime system")
+        .value("OPENMP", plssvm::kokkos::execution_space::openmp, "execution space representing execution with the OpenMP runtime system")
+        .value("OPENMPTARGET", plssvm::kokkos::execution_space::openmp_target, "execution space representing execution using the target offloading feature of the OpenMP runtime system")
+        .value("OPENACC", plssvm::kokkos::execution_space::openacc, "execution space representing execution with the OpenACC runtime system")
+        .value("THREADS", plssvm::kokkos::execution_space::threads, "execution space representing parallel execution with std::threads")
+        .value("SERIAL", plssvm::kokkos::execution_space::serial, "execution space representing serial execution on the CPU. Should always be available");
+
     // bind the pure-virtual base Kokkos C-SVM
     [[maybe_unused]] const py::class_<plssvm::kokkos::csvm, plssvm::csvm> virtual_base_kokkos_csvm(m, "__pure_virtual_kokkos_CSVM", py::module_local());
 
