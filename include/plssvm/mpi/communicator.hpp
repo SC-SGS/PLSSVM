@@ -214,6 +214,22 @@ class communicator {
      */
     [[nodiscard]] const std::optional<std::vector<std::size_t>> &get_load_balancing_weights() const noexcept;
 
+    /**
+     * @brief Check whether @p lhs and @p rhs are equal, i.e., they are **at least** congruent to each other.
+     * @details Two MPI communicators are congruent if the underlying groups are identical in constituents and rank order.
+     * @param[in] lhs the first MPI communicator
+     * @param[in] rhs the second MPI communicator
+     * @return `true` if both communicators are **at least** congruent, otherwise `false` (`[[nodiscard]]`)
+     */
+    [[nodiscard]] friend bool operator==(const communicator &lhs, const communicator &rhs) noexcept;
+    /**
+     * @brief Check whether @p lhs and @p rhs are unequal, i.e., they are **not** congruent to each other.
+     * @param[in] lhs the first MPI communicator
+     * @param[in] rhs the second MPI communicator
+     * @return `true` if both communicators are **not** congruent, otherwise `false` (`[[nodiscard]]`)
+     */
+    [[nodiscard]] friend bool operator!=(const communicator &lhs, const communicator &rhs) noexcept;
+
   private:
 #if defined(PLSSVM_HAS_MPI_ENABLED)
     /// The wrapped MPI communicator. Only available if `PLSSVM_HAS_MPI_ENABLED` is defined!
