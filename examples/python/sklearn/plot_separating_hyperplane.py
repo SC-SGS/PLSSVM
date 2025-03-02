@@ -14,7 +14,7 @@ linear kernel.
 
 import matplotlib.pyplot as plt
 
-import plssvm as svm
+from plssvm import svm
 from sklearn.datasets import make_blobs
 from sklearn.inspection import DecisionBoundaryDisplay
 

@@ -23,7 +23,7 @@ try:
     test_data = plssvm.RegressionDataSet("test_file_reg.libsvm", scaler=train_data.scaling_factors(), comm=MPI.COMM_WORLD)
 
     # create C-SVR using the default backend and the previously defined parameter
-    svm = plssvm.CSVR(params, comm=MPI.COMM_WORLD)
+    svm = plssvm.CSVR(params=params, comm=MPI.COMM_WORLD)
 
     # fit using the training data, (optionally) set the termination criterion
     model = svm.fit(train_data, epsilon=1e-6)

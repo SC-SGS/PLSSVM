@@ -1,6 +1,6 @@
 import matplotlib.pyplot as plt
 
-import plssvm as svm
+from plssvm import svm
 from sklearn import datasets
 from sklearn.inspection import DecisionBoundaryDisplay
 

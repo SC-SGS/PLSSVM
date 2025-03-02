@@ -32,7 +32,7 @@ X = np.hstack((X, 2 * rng.random((X.shape[0], 36))))
 from sklearn.feature_selection import SelectPercentile, f_classif
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
-from plssvm import SVC
+from plssvm.svm import SVC
 
 # Create a feature-selection transform, a scaler and an instance of SVM that we
 # combine to have a full-blown estimator

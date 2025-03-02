@@ -4,7 +4,7 @@ from sklearn.datasets import fetch_california_housing
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 from plssvm import SVR
-import plssvm
+import plssvm.svm
 from sklearn.metrics import mean_squared_error, r2_score
 import time
 

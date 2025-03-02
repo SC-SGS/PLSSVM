@@ -23,7 +23,7 @@ try:
     test_data = plssvm.ClassificationDataSet("test_file.libsvm", type=np.int32, scaler=train_data.scaling_factors())
 
     # create C-SVC using the default backend and the previously defined parameter
-    svm = plssvm.CSVC(params)
+    svm = plssvm.CSVC(params=params)
 
     # fit using the training data, (optionally) set the termination criterion
     model = svm.fit(train_data, epsilon=1e-6)

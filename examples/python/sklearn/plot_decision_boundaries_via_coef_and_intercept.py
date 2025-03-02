@@ -45,7 +45,7 @@ sklearn_model = SVC(kernel="linear", decision_function_shape="ovr")
 test(sklearn_model, "sklearn.svm.SVC", ax[0])
 
 # train using PLSSVM
-from plssvm import SVC
+from plssvm.svm import SVC
 
 plssvm_model = SVC(kernel="linear", decision_function_shape="ovr")
 test(plssvm_model, "plssvm.SVC", ax[1])

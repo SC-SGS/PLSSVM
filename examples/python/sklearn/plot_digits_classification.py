@@ -17,7 +17,7 @@ import matplotlib.pyplot as plt
 # Import datasets, classifiers and performance metrics
 from sklearn import datasets, metrics
 from sklearn.model_selection import train_test_split
-import plssvm as svm
+from plssvm import svm
 
 ###############################################################################
 # Digits dataset
