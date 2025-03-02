@@ -8,71 +8,88 @@
 
 #include "plssvm/svm/csvr.hpp"  // plssvm::csvr
 
+#include "plssvm/backend_types.hpp"                 // plssvm::backend_type
 #include "plssvm/constants.hpp"                     // plssvm::real_type
 #include "plssvm/data_set/regression_data_set.hpp"  // plssvm::regression_data_set
+#include "plssvm/detail/type_traits.hpp"            // plssvm::detail::remove_cvref_t
+#include "plssvm/gamma.hpp"                         // plssvm::gamma_type
+#include "plssvm/kernel_function_types.hpp"         // plssvm::kernel_function_type
 #include "plssvm/model/regression_model.hpp"        // plssvm::regression_model
-#include "plssvm/parameter.hpp"                     // plssvm::parameter, named parameters
+#include "plssvm/mpi/communicator.hpp"              // plssvm::mpi::communicator
+#include "plssvm/parameter.hpp"                     // plssvm::parameter, named arguments
 #include "plssvm/solver_types.hpp"                  // plssvm::solver_type
+#include "plssvm/target_platforms.hpp"              // plssvm::target_platform
 
-#include "bindings/Python/data_set/variant_wrapper.hpp"  // plssvm::bindings::python::util::regression_data_set_wrapper
-#include "bindings/Python/model/variant_wrapper.hpp"     // plssvm::bindings::python::util::regression_model_wrapper
-#include "bindings/Python/svm/utility.hpp"               // plssvm::bindings::python::util::assemble_csvm
-#include "bindings/Python/utility.hpp"                   // plssvm::bindings::python::util::{check_kwargs_for_correctness, python_type_name_mapping, vector_to_pyarray}
+#include "bindings/Python/data_set/variant_wrapper.hpp"     // plssvm::bindings::python::util::regression_data_set_wrapper
+#include "bindings/Python/model/variant_wrapper.hpp"        // plssvm::bindings::python::util::regression_model_wrapper
+#include "bindings/Python/svm/utility.hpp"                  // plssvm::bindings::python::util::assemble_csvm
+#include "bindings/Python/type_caster/mpi_type_caster.hpp"  // a custom Pybind11 type caster for a plssvm::mpi::communicator
+#include "bindings/Python/utility.hpp"                      // plssvm::bindings::python::util::{python_type_name_mapping, vector_to_pyarray}
 
 #include "fmt/format.h"         // fmt::format
-#include "pybind11/pybind11.h"  // py::module_, py::class_, py::init, py::kwargs, py::value_error
-#include "pybind11/stl.h"       // support for STL types: std::vector
+#include "pybind11/pybind11.h"  // py::module_, py::class_, py::init, py::arg, py::kw_only, py::kwargs, py::value_error
+#include "pybind11/stl.h"       // support for STL types: std::optional
 
 #include <exception>    // std::exception
+#include <optional>     // std::optional, std::nullopt
 #include <string_view>  // std::string_view
+#include <utility>      // std::move
 #include <variant>      // std::visit, std::get
 
 namespace py = pybind11;
 
-void init_csvr(py::module_ &m, py::module_ &pure_virtual) {
+void init_csvr(py::module_ &m) {
     using plssvm::bindings::python::util::regression_data_set_wrapper;
     using plssvm::bindings::python::util::regression_model_wrapper;
 
-    const py::class_<plssvm::csvr> py_csvr(pure_virtual, "__pure_virtual_base_CSVR");
+    // the default parameters used
+    const plssvm::parameter default_params{};
 
     // bind plssvm::make_csvm factory functions to "generic" Python C-SVR class
-    py::class_<plssvm::csvr>(m, "CSVR", py_csvr, py::module_local(), "Base class for all backend C-SVR implementations.")
+    py::class_<plssvm::csvr, plssvm::csvm>(m, "CSVR", "Base class for all backend C-SVR implementations.")
         // IMPLICIT BACKEND
-        .def(py::init([](const py::kwargs &args) {
-                 return plssvm::bindings::python::util::assemble_csvm<plssvm::csvr>(args);
+        .def(py::init([](const plssvm::backend_type backend, const plssvm::target_platform target, const plssvm::parameter &params, plssvm::mpi::communicator comm, const py::kwargs &optional_args) {
+                 return plssvm::bindings::python::util::assemble_csvm<plssvm::csvr>(backend, target, params, std::move(comm), optional_args);
              }),
-             "create an C-SVR with the provided keyword arguments")
-        .def(py::init([](const plssvm::parameter &params, const py::kwargs &args) {
-                 return plssvm::bindings::python::util::assemble_csvm<plssvm::csvr>(args, params);
+             "create an C-SVR with the provided SVM parameter encapsulated in a plssvm.Parameter",
+             py::arg("backend") = plssvm::backend_type::automatic,
+             py::arg("target") = plssvm::target_platform::automatic,
+             py::kw_only(),
+             py::arg("params") = default_params,
+             py::arg("comm") = plssvm::mpi::communicator{})
+        .def(py::init([](const plssvm::backend_type backend, const plssvm::target_platform target, const plssvm::kernel_function_type kernel_type, const int degree, const plssvm::gamma_type gamma, const plssvm::real_type coef0, const plssvm::real_type cost, plssvm::mpi::communicator comm, const py::kwargs &optional_args) {
+                 const plssvm::parameter params{ kernel_type, degree, gamma, coef0, cost };
+                 return plssvm::bindings::python::util::assemble_csvm<plssvm::csvr>(backend, target, params, std::move(comm), optional_args);
              }),
-             "create an C-SVR with the provided parameters and keyword arguments; the values in params will be overwritten by the keyword arguments")
+             "create an C-SVR with the provided SVM parameter as separate keyword arguments",
+             py::arg("backend") = plssvm::backend_type::automatic,
+             py::arg("target") = plssvm::target_platform::automatic,
+             py::kw_only(),
+             py::arg("kernel_type") = default_params.kernel_type,
+             py::arg("degree") = default_params.degree,
+             py::arg("gamma") = default_params.gamma,
+             py::arg("coef0") = default_params.coef0,
+             py::arg("cost") = default_params.cost,
+             py::arg("comm") = plssvm::mpi::communicator{})
         // clang-format off
-        .def("fit", [](const plssvm::csvr &self, const regression_data_set_wrapper &data_set, const py::kwargs &args) {
+        .def("fit", [](const plssvm::csvr &self, const regression_data_set_wrapper &data_set, const plssvm::real_type epsilon, const std::optional<unsigned long long> max_iter, const plssvm::solver_type solver) {
                 return std::visit([&](auto &&data) {
-                    // check keyword arguments
-                    plssvm::bindings::python::util::check_kwargs_for_correctness(args, { "epsilon", "max_iter", "solver" });
-
-                    auto epsilon{ plssvm::real_type{ 1e-10 } };
-                    if (args.contains("epsilon")) {
-                        epsilon = args["epsilon"].cast<plssvm::real_type>();
-                    }
-
-                    plssvm::solver_type solver{ plssvm::solver_type::automatic };
-                    if (args.contains("solver")) {
-                        solver = args["solver"].cast<plssvm::solver_type>();
-                    }
-
-                    if (args.contains("max_iter")) {
+                    if (max_iter.has_value()) {
                         return regression_model_wrapper{ self.fit(data,
-                                                                  plssvm::epsilon = epsilon,
-                                                                  plssvm::max_iter = args["max_iter"].cast<unsigned long long>(),
-                                                                  plssvm::solver = solver) };
+                                                                      plssvm::epsilon = epsilon,
+                                                                      plssvm::max_iter = max_iter.value(),
+                                                                      plssvm::solver = solver) };
                     } else {
                         return regression_model_wrapper{ self.fit(data,
-                                                                  plssvm::epsilon = epsilon,
-                                                                  plssvm::solver = solver) };
+                                                                      plssvm::epsilon = epsilon,
+                                                                      plssvm::solver = solver) };
                     }
-                }, data_set.data_set); }, "fit a model using the current C-SVR on the provided data")
+                }, data_set.data_set); }, "fit a model using the current C-SVR on the provided data",
+                py::arg("data"),
+                py::kw_only(),
+                py::arg("epsilon") = plssvm::real_type{ 1e-10 },
+                py::arg("max_iter") = std::nullopt,
+                py::arg("solver") = plssvm::solver_type::automatic)
         .def("predict", [](const plssvm::csvr &self, const regression_model_wrapper &trained_model, const regression_data_set_wrapper &data_set) {
                 return std::visit([&](auto &&model) {
                     using label_type = typename plssvm::detail::remove_cvref_t<decltype(model)>::label_type;
@@ -85,11 +102,11 @@ void init_csvr(py::module_ &m, py::module_ &pure_virtual) {
                         }, data_set.data_set);
                         throw py::value_error{ fmt::format("Mismatching label types! Trained the model with {}, but tried to predict it with {}.", python_type_name_mapping<label_type>(), data_set_label_type) };
                     }
-                }, trained_model.model); }, "predict the labels for a data set using a previously learned model")
+                }, trained_model.model); }, "predict the labels for a data set using a previously learned model", py::arg("model"), py::arg("data"))
         .def("score", [](const plssvm::csvr &self, const regression_model_wrapper &trained_model) {
                 return std::visit([&](auto &&model) {
                     return self.score(model);
-                }, trained_model.model); }, "calculate the accuracy of the model")
+                }, trained_model.model); }, "calculate the accuracy of the model", py::arg("model"))
         .def("score", [](const plssvm::csvr &self, const regression_model_wrapper &trained_model, const regression_data_set_wrapper &data_set) {
                 return std::visit([&](auto &&model) {
                     using label_type = typename plssvm::detail::remove_cvref_t<decltype(model)>::label_type;
@@ -102,6 +119,6 @@ void init_csvr(py::module_ &m, py::module_ &pure_virtual) {
                         }, data_set.data_set);
                         throw py::value_error{ fmt::format("Mismatching label types! Trained the model with {}, but tried to score it with {}.", python_type_name_mapping<label_type>(), data_set_label_type) };
                     }
-                    }, trained_model.model); }, "calculate the accuracy of the model");
+                    }, trained_model.model); }, "calculate the accuracy of the model", py::arg("model"), py::arg("data"));
     // clang-format on
 }

@@ -10,21 +10,26 @@
 #include "plssvm/backends/stdpar/csvm.hpp"                  // plssvm::stdpar::csvm
 #include "plssvm/backends/stdpar/exceptions.hpp"            // plssvm::stdpar::backend_exception
 #include "plssvm/backends/stdpar/implementation_types.hpp"  // plssvm::stdpar::implementation_type
+#include "plssvm/constants.hpp"                             // plssvm::real_type
 #include "plssvm/exceptions/exceptions.hpp"                 // plssvm::exception
+#include "plssvm/gamma.hpp"                                 // plssvm::gamma
+#include "plssvm/kernel_function_types.hpp"                 // plssvm::kernel_function_type
+#include "plssvm/mpi/communicator.hpp"                      // plssvm::mpi::communicator
 #include "plssvm/parameter.hpp"                             // plssvm::parameter
 #include "plssvm/svm/csvc.hpp"                              // plssvm::csvc
 #include "plssvm/svm/csvm.hpp"                              // plssvm::csvm
 #include "plssvm/svm/csvr.hpp"                              // plssvm::csvr
 #include "plssvm/target_platforms.hpp"                      // plssvm::target_platform
 
-#include "bindings/Python/utility.hpp"  // plssvm::bindings::python::util::{check_kwargs_for_correctness, convert_kwargs_to_parameter, register_py_exception}
+#include "bindings/Python/utility.hpp"  // plssvm::bindings::python::util::{register_py_exception, register_implicit_str_enum_conversion}
 
 #include "fmt/format.h"         // fmt::format
-#include "pybind11/pybind11.h"  // py::module_, py::class_, py::init, py::exception
-#include "pybind11/pytypes.h"   // py::kwargs
+#include "pybind11/pybind11.h"  // py::module_, py::class_, py::init, py::arg, py::exception, py::module_local
+#include "pybind11/stl.h"       // support for STL types: std::variant
 
-#include <memory>  // std::make_unique
-#include <string>  // std::string
+#include <memory>   // std::make_unique
+#include <string>   // std::string
+#include <utility>  // std::move
 
 namespace py = pybind11;
 
@@ -34,34 +39,36 @@ template <typename csvm_type>
 void bind_stdpar_csvms(py::module_ &m, const std::string &csvm_name) {
     using backend_csvm_type = plssvm::stdpar::backend_csvm_type_t<csvm_type>;
 
+    // the default parameters used
+    const plssvm::parameter default_params{};
+
     // assemble docstrings
     const std::string class_docstring{ fmt::format("A {} using the stdpar backend.", csvm_name) };
-    const std::string param_docstring{ fmt::format("create an stdpar {} with the provided parameters", csvm_name) };
-    const std::string target_param_docstring{ fmt::format("create an stdpar {} with the provided target platform and parameters", csvm_name) };
-    const std::string kwargs_docstring{ fmt::format("create an stdpar {} with the provided keyword arguments", csvm_name) };
-    const std::string target_kwargs_docstring{ fmt::format("create an stdpar {} with the provided target platform and keyword arguments", csvm_name) };
+    const std::string params_constructor_docstring{ fmt::format("create an stdpar {} with the provided SVM parameter encapsulated in a plssvm.Parameter", csvm_name) };
+    const std::string keyword_args_constructor_docstring{ fmt::format("create an stdpar {} with the provided SVM parameter as separate keyword arguments", csvm_name) };
 
     py::class_<backend_csvm_type, plssvm::stdpar::csvm, csvm_type>(m, csvm_name.c_str())
-        .def(py::init<plssvm::parameter>(), param_docstring.c_str())
-        .def(py::init<plssvm::target_platform, plssvm::parameter>(), target_param_docstring.c_str())
-        .def(py::init([](const py::kwargs &args) {
-                 // check for valid keys
-                 plssvm::bindings::python::util::check_kwargs_for_correctness(args, { "kernel_type", "degree", "gamma", "coef0", "cost" });
-                 // if one of the value keyword parameter is provided, set the respective value
-                 const plssvm::parameter params = plssvm::bindings::python::util::convert_kwargs_to_parameter(args);
-                 // create C-SVM with the default target platform
-                 return std::make_unique<backend_csvm_type>(params);
+        .def(py::init([](const plssvm::target_platform target, const plssvm::parameter params, plssvm::mpi::communicator comm) {
+                 return std::make_unique<backend_csvm_type>(std::move(comm), target, params);
              }),
-             kwargs_docstring.c_str())
-        .def(py::init([](const plssvm::target_platform target, const py::kwargs &args) {
-                 // check for valid keys
-                 plssvm::bindings::python::util::check_kwargs_for_correctness(args, { "kernel_type", "degree", "gamma", "coef0", "cost" });
-                 // if one of the value keyword parameter is provided, set the respective value
-                 const plssvm::parameter params = plssvm::bindings::python::util::convert_kwargs_to_parameter(args);
-                 // create C-SVM with the provided target platform
-                 return std::make_unique<backend_csvm_type>(target, params);
+             params_constructor_docstring.c_str(),
+             py::arg("target") = plssvm::target_platform::automatic,
+             py::kw_only(),
+             py::arg("params") = default_params,
+             py::arg("comm") = plssvm::mpi::communicator{})
+        .def(py::init([](const plssvm::target_platform target, const plssvm::kernel_function_type kernel_type, const int degree, const plssvm::gamma_type gamma, const plssvm::real_type coef0, const plssvm::real_type cost, plssvm::mpi::communicator comm) {
+                 const plssvm::parameter params{ kernel_type, degree, gamma, coef0, cost };
+                 return std::make_unique<backend_csvm_type>(std::move(comm), target, params);
              }),
-             target_kwargs_docstring.c_str())
+             keyword_args_constructor_docstring.c_str(),
+             py::arg("target") = plssvm::target_platform::automatic,
+             py::kw_only(),
+             py::arg("kernel_type") = default_params.kernel_type,
+             py::arg("degree") = default_params.degree,
+             py::arg("gamma") = default_params.gamma,
+             py::arg("coef0") = default_params.coef0,
+             py::arg("cost") = default_params.cost,
+             py::arg("comm") = plssvm::mpi::communicator{})
         .def("get_implementation_type", &plssvm::stdpar::csvm::get_implementation_type, "get the stdpar implementation used in this stdpar C-SVM")
         .def("__repr__", [csvm_name](const backend_csvm_type &self) {
             return fmt::format("<plssvm.stdpar.{} with {{ #devices: {}, implementation_type: {} }}>", csvm_name, self.num_available_devices(), self.get_implementation_type());
@@ -73,7 +80,6 @@ void bind_stdpar_csvms(py::module_ &m, const std::string &csvm_name) {
 void init_stdpar_csvm(py::module_ &m, const py::exception<plssvm::exception> &base_exception) {
     // use its own submodule for the stdpar C-SVM bindings
     py::module_ stdpar_module = m.def_submodule("stdpar", "a module containing all stdpar backend specific functionality");
-    const py::module_ stdpar_pure_virtual_module = stdpar_module.def_submodule("__pure_virtual", "a module containing all pure-virtual stdpar backend specific functionality");
 
     // bind the enum class
     py::enum_<plssvm::stdpar::implementation_type>(stdpar_module, "ImplementationType", "Enum class for all supported stdpar implementations in PLSSVM.")
@@ -86,7 +92,7 @@ void init_stdpar_csvm(py::module_ &m, const py::exception<plssvm::exception> &ba
     stdpar_module.def("list_available_stdpar_implementations", &plssvm::stdpar::list_available_stdpar_implementations, "list all available stdpar implementations");
 
     // bind the pure-virtual base stdpar C-SVM
-    [[maybe_unused]] const py::class_<plssvm::stdpar::csvm, plssvm::csvm> virtual_base_stdpar_csvm(stdpar_pure_virtual_module, "__pure_virtual_stdpar_base_CSVM");
+    [[maybe_unused]] const py::class_<plssvm::stdpar::csvm, plssvm::csvm> virtual_base_stdpar_csvm(m, "__pure_virtual_stdpar_CSVM", py::module_local());
 
     // bind the specific stdpar C-SVC and C-SVR classes
     bind_stdpar_csvms<plssvm::csvc>(stdpar_module, "CSVC");
