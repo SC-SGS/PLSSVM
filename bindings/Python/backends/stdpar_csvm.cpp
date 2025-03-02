@@ -82,12 +82,16 @@ void init_stdpar_csvm(py::module_ &m, const py::exception<plssvm::exception> &ba
     py::module_ stdpar_module = m.def_submodule("stdpar", "a module containing all stdpar backend specific functionality");
 
     // bind the enum class
-    py::enum_<plssvm::stdpar::implementation_type>(stdpar_module, "ImplementationType", "Enum class for all supported stdpar implementations in PLSSVM.")
+    py::enum_<plssvm::stdpar::implementation_type> py_enum(stdpar_module, "ImplementationType", "Enum class for all supported stdpar implementations in PLSSVM.");
+    py_enum
         .value("NVHPC", plssvm::stdpar::implementation_type::nvhpc, "use NVIDIA's HPC SDK (NVHPC) compiler nvc++")
         .value("ROC_STDPAR", plssvm::stdpar::implementation_type::roc_stdpar, "use AMD's roc-stdpar compiler (patched LLVM)")
         .value("INTEL_LLVM", plssvm::stdpar::implementation_type::intel_llvm, "use Intel's LLVM compiler icpx")
         .value("ADAPTIVECPP", plssvm::stdpar::implementation_type::adaptivecpp, "use AdaptiveCpp (formerly known as hipSYCL)")
         .value("GNU_TBB", plssvm::stdpar::implementation_type::gnu_tbb, "use GNU GCC + Intel's TBB library");
+
+    // enable implicit conversion from string to enum
+    plssvm::bindings::python::util::register_implicit_str_enum_conversion<plssvm::stdpar::implementation_type>(py_enum);
 
     stdpar_module.def("list_available_stdpar_implementations", &plssvm::stdpar::list_available_stdpar_implementations, "list all available stdpar implementations");
 

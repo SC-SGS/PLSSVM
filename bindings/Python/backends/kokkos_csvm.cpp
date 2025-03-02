@@ -82,7 +82,6 @@ void bind_kokkos_csvms(py::module_ &m, const std::string &csvm_name) {
 void init_kokkos_csvm(py::module_ &m, const py::exception<plssvm::exception> &base_exception) {
     // use its own submodule for the Kokkos C-SVM bindings
     py::module_ kokkos_module = m.def_submodule("kokkos", "a module containing all Kokkos backend specific functionality");
-    const py::module_ kokkos_pure_virtual_module = kokkos_module.def_submodule("__pure_virtual", "a module containing all pure-virtual Kokkos backend specific functionality");
 
     // bind the enum class
     py::enum_<plssvm::kokkos::execution_space> py_enum(kokkos_module, "ExecutionSpace", "Enum class for all supported Kokkos execution spaces in PLSSVM.");
@@ -97,6 +96,9 @@ void init_kokkos_csvm(py::module_ &m, const py::exception<plssvm::exception> &ba
         .value("OPENACC", plssvm::kokkos::execution_space::openacc, "execution space representing execution with the OpenACC runtime system")
         .value("THREADS", plssvm::kokkos::execution_space::threads, "execution space representing parallel execution with std::threads")
         .value("SERIAL", plssvm::kokkos::execution_space::serial, "execution space representing serial execution on the CPU. Should always be available");
+
+    // enable implicit conversion from string to enum
+    plssvm::bindings::python::util::register_implicit_str_enum_conversion<plssvm::kokkos::execution_space>(py_enum);
 
     // bind the pure-virtual base Kokkos C-SVM
     [[maybe_unused]] const py::class_<plssvm::kokkos::csvm, plssvm::csvm> virtual_base_kokkos_csvm(m, "__pure_virtual_kokkos_CSVM", py::module_local());
