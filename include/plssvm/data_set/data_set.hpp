@@ -19,7 +19,7 @@
 #include "plssvm/detail/io/file_reader.hpp"     // plssvm::detail::io::file_reader
 #include "plssvm/detail/io/libsvm_parsing.hpp"  // plssvm::detail::io::write_arff_data
 #include "plssvm/detail/string_utility.hpp"     // plssvm::detail::ends_with
-#include "plssvm/exceptions/exceptions.hpp"     // plssvm::data_set_exception
+#include "plssvm/exceptions/exceptions.hpp"     // plssvm::data_set_exception, plssvm::mpi_exception
 #include "plssvm/file_format_types.hpp"         // plssvm::file_format_type
 #include "plssvm/matrix.hpp"                    // plssvm::soa_matrix
 #include "plssvm/mpi/communicator.hpp"          // plssvm::mpi::communicator
@@ -86,6 +86,7 @@ class data_set {
      * @param[in] scaler the parameters used to scale the data set feature values to a given range
      * @throws plssvm::invalid_file_format_exception all exceptions thrown by plssvm::data_set::read_file
      * @throws plssvm::min_max_scaler_exception all exceptions thrown by plssvm::min_max_scaler::scale
+     * @throws plssvm::mpi_exception if the MPI communicator @p comm and the MPI communicator in @p scaler are not identical
      */
     data_set(mpi::communicator comm, const std::string &filename, min_max_scaler scaler);
     /**
@@ -97,6 +98,7 @@ class data_set {
      * @param[in] scaler the parameters used to scale the data set feature values to a given range
      * @throws plssvm::invalid_file_format_exception all exceptions thrown by plssvm::data_set::read_file
      * @throws plssvm::min_max_scaler_exception all exceptions thrown by plssvm::min_max_scaler::scale
+     * @throws plssvm::mpi_exception if the MPI communicator @p comm and the MPI communicator in @p scaler are not identical
      */
     data_set(mpi::communicator comm, const std::string &filename, file_format_type format, min_max_scaler scaler);
 
@@ -130,6 +132,7 @@ class data_set {
      * @throws plssvm::data_set_exception if the data points in @p data_points have mismatching number of features
      * @throws plssvm::data_set_exception if any @p data_point has no features
      * @throws plssvm::min_max_scaler_exception all exceptions thrown by plssvm::min_max_scaler::scale
+     * @throws plssvm::mpi_exception if the MPI communicator @p comm and the MPI communicator in @p scaler are not identical
      */
     data_set(mpi::communicator comm, const std::vector<std::vector<real_type>> &data_points, min_max_scaler scaler);
     /**
@@ -143,6 +146,7 @@ class data_set {
      * @throws plssvm::data_set_exception if any @p data_point has no features
      * @throws plssvm::data_set_exception if the number of data points in @p data_points and number of @p labels mismatch
      * @throws plssvm::min_max_scaler_exception all exceptions thrown by plssvm::min_max_scaler::scale
+     * @throws plssvm::mpi_exception if the MPI communicator @p comm and the MPI communicator in @p scaler are not identical
      */
     data_set(mpi::communicator comm, const std::vector<std::vector<real_type>> &data_points, std::vector<label_type> labels, min_max_scaler scaler);
 
@@ -184,6 +188,7 @@ class data_set {
      * @throws plssvm::data_set_exception if the data points in @p data_points have mismatching number of features
      * @throws plssvm::data_set_exception if any @p data_point has no features
      * @throws plssvm::min_max_scaler_exception all exceptions thrown by plssvm::min_max_scaler::scale
+     * @throws plssvm::mpi_exception if the MPI communicator @p comm and the MPI communicator in @p scaler are not identical
      */
     template <layout_type layout>
     data_set(mpi::communicator comm, const matrix<real_type, layout> &data_points, min_max_scaler scaler);
@@ -200,6 +205,7 @@ class data_set {
      * @throws plssvm::data_set_exception if any @p data_point has no features
      * @throws plssvm::data_set_exception if the number of data points in @p data_points and number of @p labels mismatch
      * @throws plssvm::min_max_scaler_exception all exceptions thrown by plssvm::min_max_scaler::scale
+     * @throws plssvm::mpi_exception if the MPI communicator @p comm and the MPI communicator in @p scaler are not identical
      */
     template <layout_type layout>
     data_set(mpi::communicator comm, const matrix<real_type, layout> &data_points, std::vector<label_type> labels, min_max_scaler scaler);
@@ -241,6 +247,7 @@ class data_set {
      * @throws plssvm::data_set_exception if any @p data_point has no features
      * @throws plssvm::data_set_exception if the padding sizes of @p data_points are wrong
      * @throws plssvm::min_max_scaler_exception all exceptions thrown by plssvm::min_max_scaler::scale
+     * @throws plssvm::mpi_exception if the MPI communicator @p comm and the MPI communicator in @p scaler are not identical
      */
     data_set(mpi::communicator comm, soa_matrix<real_type> &&data_points, min_max_scaler scaler);
     /**
@@ -256,6 +263,7 @@ class data_set {
      * @throws plssvm::data_set_exception if the padding sizes of @p data_points are wrong
      * @throws plssvm::data_set_exception if the number of data points in @p data_points and number of @p labels mismatch
      * @throws plssvm::min_max_scaler_exception all exceptions thrown by plssvm::min_max_scaler::scale
+     * @throws plssvm::mpi_exception if the MPI communicator @p comm and the MPI communicator in @p scaler are not identical
      */
     data_set(mpi::communicator comm, soa_matrix<real_type> &&data_points, std::vector<label_type> &&labels, min_max_scaler scaler);
 
@@ -414,19 +422,29 @@ data_set<U>::data_set(mpi::communicator comm, const std::string &filename, const
 }
 
 template <typename U>
-data_set<U>::data_set(mpi::communicator comm, const std::string &filename, min_max_scaler scale_parameter) :
+data_set<U>::data_set(mpi::communicator comm, const std::string &filename, min_max_scaler scaler) :
     data_set{ std::move(comm), filename } {
+    // check whether the data set and scaler MPI communicators are identical
+    if (comm != scaler.communicator()) {
+        throw mpi_exception{ "The MPI communicators provided to the data set and scaler must be identical!" };
+    }
+
     // initialize scaling
-    scaler_ = std::make_shared<min_max_scaler>(std::move(scale_parameter));
+    scaler_ = std::make_shared<min_max_scaler>(std::move(scaler));
     // scale data set
     scaler_->scale(*data_ptr_);
 }
 
 template <typename U>
-data_set<U>::data_set(mpi::communicator comm, const std::string &filename, file_format_type format, min_max_scaler scale_parameter) :
+data_set<U>::data_set(mpi::communicator comm, const std::string &filename, file_format_type format, min_max_scaler scaler) :
     data_set{ std::move(comm), filename, format } {
+    // check whether the data set and scaler MPI communicators are identical
+    if (comm != scaler.communicator()) {
+        throw mpi_exception{ "The MPI communicators provided to the data set and scaler must be identical!" };
+    }
+
     // initialize scaling
-    scaler_ = std::make_shared<min_max_scaler>(std::move(scale_parameter));
+    scaler_ = std::make_shared<min_max_scaler>(std::move(scaler));
     // scale data set
     scaler_->scale(*data_ptr_);
 }
@@ -447,15 +465,15 @@ data_set<U>::data_set(mpi::communicator comm, const std::vector<std::vector<real
     }
 
 template <typename U>
-data_set<U>::data_set(mpi::communicator comm, const std::vector<std::vector<real_type>> &data_points, min_max_scaler scale_parameter) try :
-    data_set{ std::move(comm), soa_matrix<real_type>{ data_points, shape{ PADDING_SIZE, PADDING_SIZE } }, std::move(scale_parameter) } {}
+data_set<U>::data_set(mpi::communicator comm, const std::vector<std::vector<real_type>> &data_points, min_max_scaler scaler) try :
+    data_set{ std::move(comm), soa_matrix<real_type>{ data_points, shape{ PADDING_SIZE, PADDING_SIZE } }, std::move(scaler) } {}
     catch (const matrix_exception &e) {
         throw data_set_exception{ e.what() };
     }
 
 template <typename U>
-data_set<U>::data_set(mpi::communicator comm, const std::vector<std::vector<real_type>> &data_points, std::vector<label_type> labels, min_max_scaler scale_parameter) try :
-    data_set{ std::move(comm), soa_matrix<real_type>{ data_points, shape{ PADDING_SIZE, PADDING_SIZE } }, std::move(labels), std::move(scale_parameter) } {}
+data_set<U>::data_set(mpi::communicator comm, const std::vector<std::vector<real_type>> &data_points, std::vector<label_type> labels, min_max_scaler scaler) try :
+    data_set{ std::move(comm), soa_matrix<real_type>{ data_points, shape{ PADDING_SIZE, PADDING_SIZE } }, std::move(labels), std::move(scaler) } {}
     catch (const matrix_exception &e) {
         throw data_set_exception{ e.what() };
     }
@@ -501,20 +519,30 @@ data_set<U>::data_set(mpi::communicator comm, const matrix<real_type, layout> &d
 
 template <typename U>
 template <layout_type layout>
-data_set<U>::data_set(mpi::communicator comm, const matrix<real_type, layout> &data_points, min_max_scaler scale_parameter) :
+data_set<U>::data_set(mpi::communicator comm, const matrix<real_type, layout> &data_points, min_max_scaler scaler) :
     data_set{ std::move(comm), data_points } {
+    // check whether the data set and scaler MPI communicators are identical
+    if (comm != scaler.communicator()) {
+        throw mpi_exception{ "The MPI communicators provided to the data set and scaler must be identical!" };
+    }
+
     // initialize scaling
-    scaler_ = std::make_shared<min_max_scaler>(std::move(scale_parameter));
+    scaler_ = std::make_shared<min_max_scaler>(std::move(scaler));
     // scale data set
     scaler_->scale(*data_ptr_);
 }
 
 template <typename U>
 template <layout_type layout>
-data_set<U>::data_set(mpi::communicator comm, const matrix<real_type, layout> &data_points, std::vector<label_type> labels, min_max_scaler scale_parameter) :
+data_set<U>::data_set(mpi::communicator comm, const matrix<real_type, layout> &data_points, std::vector<label_type> labels, min_max_scaler scaler) :
     data_set{ std::move(comm), data_points, std::move(labels) } {
+    // check whether the data set and scaler MPI communicators are identical
+    if (comm != scaler.communicator()) {
+        throw mpi_exception{ "The MPI communicators provided to the data set and scaler must be identical!" };
+    }
+
     // initialize scaling
-    scaler_ = std::make_shared<min_max_scaler>(std::move(scale_parameter));
+    scaler_ = std::make_shared<min_max_scaler>(std::move(scaler));
     // scale data set
     scaler_->scale(*data_ptr_);
 }
@@ -563,19 +591,29 @@ data_set<U>::data_set(mpi::communicator comm, soa_matrix<real_type> &&data_point
 }
 
 template <typename U>
-data_set<U>::data_set(mpi::communicator comm, soa_matrix<real_type> &&data_points, min_max_scaler scale_parameter) :
+data_set<U>::data_set(mpi::communicator comm, soa_matrix<real_type> &&data_points, min_max_scaler scaler) :
     data_set{ std::move(comm), std::move(data_points) } {
+    // check whether the data set and scaler MPI communicators are identical
+    if (comm != scaler.communicator()) {
+        throw mpi_exception{ "The MPI communicators provided to the data set and scaler must be identical!" };
+    }
+
     // initialize scaling
-    scaler_ = std::make_shared<min_max_scaler>(std::move(scale_parameter));
+    scaler_ = std::make_shared<min_max_scaler>(std::move(scaler));
     // scale data set
     scaler_->scale(*data_ptr_);
 }
 
 template <typename U>
-data_set<U>::data_set(mpi::communicator comm, soa_matrix<real_type> &&data_points, std::vector<label_type> &&labels, min_max_scaler scale_parameter) :
+data_set<U>::data_set(mpi::communicator comm, soa_matrix<real_type> &&data_points, std::vector<label_type> &&labels, min_max_scaler scaler) :
     data_set{ std::move(comm), std::move(data_points), std::move(labels) } {
+    // check whether the data set and scaler MPI communicators are identical
+    if (comm != scaler.communicator()) {
+        throw mpi_exception{ "The MPI communicators provided to the data set and scaler must be identical!" };
+    }
+
     // initialize scaling
-    scaler_ = std::make_shared<min_max_scaler>(std::move(scale_parameter));
+    scaler_ = std::make_shared<min_max_scaler>(std::move(scaler));
     // scale data set
     scaler_->scale(*data_ptr_);
 }

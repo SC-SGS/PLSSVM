@@ -143,6 +143,7 @@ class classification_data_set : public data_set<U> {
      * @param[in] scaler the parameters used to scale the data set feature values to a given range
      * @throws plssvm::invalid_file_format_exception all exceptions thrown by plssvm::data_set::read_file
      * @throws plssvm::min_max_scaler_exception all exceptions thrown by plssvm::min_max_scaler::scale
+     * @throws plssvm::mpi_exception if the MPI communicator @p comm and the MPI communicator in @p scaler are not identical
      */
     classification_data_set(mpi::communicator comm, const std::string &filename, min_max_scaler scaler) :
         base_data_set{ std::move(comm), filename, std::move(scaler) } { this->init(); }
@@ -168,6 +169,7 @@ class classification_data_set : public data_set<U> {
      * @param[in] scaler the parameters used to scale the data set feature values to a given range
      * @throws plssvm::invalid_file_format_exception all exceptions thrown by plssvm::data_set::read_file
      * @throws plssvm::min_max_scaler_exception all exceptions thrown by plssvm::min_max_scaler::scale
+     * @throws plssvm::mpi_exception if the MPI communicator @p comm and the MPI communicator in @p scaler are not identical
      */
     classification_data_set(mpi::communicator comm, const std::string &filename, file_format_type format, min_max_scaler scaler) :
         base_data_set{ std::move(comm), filename, format, std::move(scaler) } { this->init(); }
@@ -241,6 +243,7 @@ class classification_data_set : public data_set<U> {
      * @throws plssvm::data_set_exception if the data points in @p data_points have mismatching number of features
      * @throws plssvm::data_set_exception if any @p data_point has no features
      * @throws plssvm::min_max_scaler_exception all exceptions thrown by plssvm::min_max_scaler::scale
+     * @throws plssvm::mpi_exception if the MPI communicator @p comm and the MPI communicator in @p scaler are not identical
      */
     classification_data_set(mpi::communicator comm, const std::vector<std::vector<real_type>> &data_points, min_max_scaler scaler) :
         base_data_set{ std::move(comm), data_points, std::move(scaler) } { this->init(); }
@@ -270,6 +273,7 @@ class classification_data_set : public data_set<U> {
      * @throws plssvm::data_set_exception if any @p data_point has no features
      * @throws plssvm::data_set_exception if the number of data points in @p data_points and number of @p labels mismatch
      * @throws plssvm::min_max_scaler_exception all exceptions thrown by plssvm::min_max_scaler::scale
+     * @throws plssvm::mpi_exception if the MPI communicator @p comm and the MPI communicator in @p scaler are not identical
      */
     classification_data_set(mpi::communicator comm, const std::vector<std::vector<real_type>> &data_points, std::vector<label_type> labels, min_max_scaler scaler) :
         base_data_set{ std::move(comm), data_points, std::move(labels), std::move(scaler) } { this->init(); }
@@ -360,6 +364,7 @@ class classification_data_set : public data_set<U> {
      * @throws plssvm::data_set_exception if the data points in @p data_points have mismatching number of features
      * @throws plssvm::data_set_exception if any @p data_point has no features
      * @throws plssvm::min_max_scaler_exception all exceptions thrown by plssvm::min_max_scaler::scale
+     * @throws plssvm::mpi_exception if the MPI communicator @p comm and the MPI communicator in @p scaler are not identical
      */
     template <layout_type layout>
     classification_data_set(mpi::communicator comm, const matrix<real_type, layout> &data_points, min_max_scaler scaler) :
@@ -395,6 +400,7 @@ class classification_data_set : public data_set<U> {
      * @throws plssvm::data_set_exception if any @p data_point has no features
      * @throws plssvm::data_set_exception if the number of data points in @p data_points and number of @p labels mismatch
      * @throws plssvm::min_max_scaler_exception all exceptions thrown by plssvm::min_max_scaler::scale
+     * @throws plssvm::mpi_exception if the MPI communicator @p comm and the MPI communicator in @p scaler are not identical
      */
     template <layout_type layout>
     classification_data_set(mpi::communicator comm, const matrix<real_type, layout> &data_points, std::vector<label_type> labels, min_max_scaler scaler) :
@@ -483,6 +489,7 @@ class classification_data_set : public data_set<U> {
      * @throws plssvm::data_set_exception if any @p data_point has no features
      * @throws plssvm::data_set_exception if the padding sizes of @p data_points are wrong
      * @throws plssvm::min_max_scaler_exception all exceptions thrown by plssvm::min_max_scaler::scale
+     * @throws plssvm::mpi_exception if the MPI communicator @p comm and the MPI communicator in @p scaler are not identical
      */
     classification_data_set(mpi::communicator comm, soa_matrix<real_type> &&data_points, min_max_scaler scaler) :
         base_data_set{ std::move(comm), std::move(data_points), std::move(scaler) } { this->init(); }
@@ -516,6 +523,7 @@ class classification_data_set : public data_set<U> {
      * @throws plssvm::data_set_exception if the padding sizes of @p data_points are wrong
      * @throws plssvm::data_set_exception if the number of data points in @p data_points and number of @p labels mismatch
      * @throws plssvm::min_max_scaler_exception all exceptions thrown by plssvm::min_max_scaler::scale
+     * @throws plssvm::mpi_exception if the MPI communicator @p comm and the MPI communicator in @p scaler are not identical
      */
     classification_data_set(mpi::communicator comm, soa_matrix<real_type> &&data_points, std::vector<label_type> &&labels, min_max_scaler scaler) :
         base_data_set{ std::move(comm), std::move(data_points), std::move(labels), std::move(scaler) } { this->init(); }
