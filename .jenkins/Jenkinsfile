@@ -174,8 +174,11 @@ pipeline {
                                     fi
 
                                     bash
+                                    spack install yq || true
+                                    spack load yq
                                     spack external find --scope system || true
-                                    spack external find --scope system cuda hip || true
+                                    spack external find --scope system cuda hip ||
+                                    yq -i 'del(.packages.curl)' $SPACK_SYSTEM_CONFIG_PATH/packages.yaml
 
                                     spack uninstall -a -y plssvm@develop || true
 
