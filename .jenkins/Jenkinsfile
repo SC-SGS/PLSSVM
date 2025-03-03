@@ -175,7 +175,7 @@ pipeline {
 
                                     bash
                                     spack install yq || true
-                                    spack load yq
+                                    spack load --first yq arch=$(spack arch)
                                     spack external find --scope system || true
                                     spack external find --scope system cuda hip ||
                                     yq -i 'del(.packages.curl)' $SPACK_SYSTEM_CONFIG_PATH/packages.yaml
