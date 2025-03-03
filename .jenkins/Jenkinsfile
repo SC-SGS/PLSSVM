@@ -174,7 +174,7 @@ pipeline {
                                     fi
 
                                     bash
-                                    spack install yq || true
+                                    spack install yq arch=$(spack arch) || true
                                     spack load --first yq arch=$(spack arch)
                                     spack external find --scope system || true
                                     spack external find --scope system cuda hip ||
