@@ -14,7 +14,7 @@
 #include "plssvm/mpi/detail/utility.hpp"       // PLSSVM_MPI_ERROR_CHECK
 
 #if defined(PLSSVM_HAS_MPI_ENABLED)
-    #include "mpi.h"  // MPI_Comm, MPI_Comm_size, MPI_Comm_rank, MPI_Barrier, MPI_Gatherv, MPI_Gather, MPI_Bcast, MPI_Comm_compare, MPI_IDENT, MPI_CONGRUENT
+    #include "mpi.h"  // MPI_Comm, MPI_Comm_size, MPI_Comm_rank, MPI_Barrier, MPI_Gatherv, MPI_Gather, MPI_Bcast, MPI_Comm_compare, MPI_IDENT
 #endif
 
 #include "fmt/format.h"  // fmt::format
@@ -174,11 +174,10 @@ const std::optional<std::vector<std::size_t>> &communicator::get_load_balancing_
 
 bool operator==(const communicator &lhs, const communicator &rhs) noexcept {
 #if defined(PLSSVM_HAS_MPI_ENABLED)
-    // check whether the two MPI communicators are equal
-    // it is enough that two communicators are CONGRUENT, i.e., the underlying groups are identical in constituents and rank order
+    // check whether the two MPI communicators are equal, i.e., their comparison result is MPI_IDENT
     int result{};
     MPI_Comm_compare(lhs.comm_, rhs.comm_, &result);
-    return result == MPI_IDENT || result == MPI_CONGRUENT;
+    return result == MPI_IDENT;
 #else
     // if no MPI is enabled, two communicators are always equal
     return true;
