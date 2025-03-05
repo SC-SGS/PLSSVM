@@ -483,7 +483,7 @@ pipeline {
                                                 $([[ $BACKEND == ADAPTIVECPP ]] && [[ $ARCHITECTURE == AMD ]] && echo "^llvm@18.1.8~gold~libomptarget") \
                                                 $([[ $BACKEND == ADAPTIVECPP ]] && [[ $ARCHITECTURE == NVIDIA ]] && echo "^llvm@18.1.8~gold~libomptarget") \
                                                 $([[ $BACKEND == STDPAR-ADAPTIVECPP ]] && [[ $ARCHITECTURE == AMD ]] && echo "^llvm@18.1.8~gold~libomptarget") \
-                                                $([[ $BACKEND == STDPAR-ADAPTIVECPP ]] && [[ $ARCHITECTURE == NVIDIA ]] && echo "^llvm@18.1.8~gold~libomptarget") \
+                                                $([[ $BACKEND == STDPAR-ADAPTIVECPP ]] && [[ $ARCHITECTURE == NVIDIA ]] && echo "^llvm@17.0.6~gold~libomptarget") \
                                                 $([[ $BACKEND == HPX ]] && echo "^hpx@1.9.1" ) \
                                                 > >(tee ${WORKSPACE}/plssvm/${BUILD_TYPE}-${BACKEND}-${ARCHITECTURE}.output) 2> >(tee ${WORKSPACE}/plssvm/${BUILD_TYPE}-${BACKEND}-${ARCHITECTURE}.error >&2) &&  tail -n 1 ${WORKSPACE}/plssvm/${BUILD_TYPE}-${BACKEND}-${ARCHITECTURE}.output | cut -d " " -f 2 > ${WORKSPACE}/plssvm/${BUILD_TYPE}-${BACKEND}-${ARCHITECTURE}.installpath  && s=0 && cat ${WORKSPACE}/plssvm/${BUILD_TYPE}-${BACKEND}-${ARCHITECTURE}.installpath && break || [[ "$i" != "3" ]] && tail -n 3  ${WORKSPACE}/plssvm/${BUILD_TYPE}-${BACKEND}-${ARCHITECTURE}.error | head -n 1 | xargs dirname | tee | xargs rm -rf && s=$?
                                             done
