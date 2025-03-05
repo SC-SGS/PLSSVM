@@ -155,6 +155,7 @@ class csvc : public ::plssvm::csvc,
     explicit csvc(const parameter params) :
         ::plssvm::csvm{ mpi::communicator{}, params },
         ::plssvm::cuda::csvm{} { }
+
     /**
      * @brief Construct a new C-SVC using the CUDA backend with the parameters given through @p params.
      * @param[in] comm the used MPI communicator
@@ -174,6 +175,7 @@ class csvc : public ::plssvm::csvc,
     csvc(const target_platform target, const parameter params) :
         ::plssvm::csvm{ mpi::communicator{}, params },
         ::plssvm::cuda::csvm{ target } { }
+
     /**
      * @brief Construct a new C-SVC using the CUDA backend on the @p target platform with the parameters given through @p params.
      * @param[in] comm the used MPI communicator
@@ -194,6 +196,7 @@ class csvc : public ::plssvm::csvc,
     explicit csvc(Args &&...named_args) :
         ::plssvm::csvm{ mpi::communicator{}, std::forward<Args>(named_args)... },
         ::plssvm::cuda::csvm{} { }
+
     /**
      * @brief Construct a new C-SVC using the CUDA backend and the optionally provided @p named_args.
      * @param[in] comm the used MPI communicator
@@ -215,6 +218,7 @@ class csvc : public ::plssvm::csvc,
     explicit csvc(const target_platform target, Args &&...named_args) :
         ::plssvm::csvm{ mpi::communicator{}, std::forward<Args>(named_args)... },
         ::plssvm::cuda::csvm{ target } { }
+
     /**
      * @brief Construct a new C-SVC using the CUDA backend on the @p target platform and the optionally provided @p named_args.
      * @param[in] comm the used MPI communicator
@@ -223,7 +227,7 @@ class csvc : public ::plssvm::csvc,
      * @throws plssvm::exception all exceptions thrown in the base class constructors
      */
     template <typename... Args, PLSSVM_REQUIRES(::plssvm::detail::has_only_parameter_named_args_v<Args...>)>
-    explicit csvc(mpi::communicator comm, const target_platform target, Args &&...named_args) :
+    csvc(mpi::communicator comm, const target_platform target, Args &&...named_args) :
         ::plssvm::csvm{ std::move(comm), std::forward<Args>(named_args)... },
         ::plssvm::cuda::csvm{ target } { }
 };
@@ -243,6 +247,7 @@ class csvr : public ::plssvm::csvr,
     explicit csvr(const parameter params) :
         ::plssvm::csvm{ mpi::communicator{}, params },
         ::plssvm::cuda::csvm{} { }
+
     /**
      * @brief Construct a new C-SVR using the CUDA backend with the parameters given through @p params.
      * @param[in] comm the used MPI communicator
@@ -262,6 +267,7 @@ class csvr : public ::plssvm::csvr,
     explicit csvr(const target_platform target, const parameter params) :
         ::plssvm::csvm{ mpi::communicator{}, params },
         ::plssvm::cuda::csvm{ target } { }
+
     /**
      * @brief Construct a new C-SVR using the CUDA backend on the @p target platform with the parameters given through @p params.
      * @param[in] comm the used MPI communicator
@@ -282,6 +288,7 @@ class csvr : public ::plssvm::csvr,
     explicit csvr(Args &&...named_args) :
         ::plssvm::csvm{ mpi::communicator{}, std::forward<Args>(named_args)... },
         ::plssvm::cuda::csvm{} { }
+
     /**
      * @brief Construct a new C-SVR using the CUDA backend and the optionally provided @p named_args.
      * @param[in] comm the used MPI communicator
@@ -303,6 +310,7 @@ class csvr : public ::plssvm::csvr,
     explicit csvr(const target_platform target, Args &&...named_args) :
         ::plssvm::csvm{ mpi::communicator{}, std::forward<Args>(named_args)... },
         ::plssvm::cuda::csvm{ target } { }
+
     /**
      * @brief Construct a new C-SVR using the CUDA backend on the @p target platform and the optionally provided @p named_args.
      * @param[in] comm the used MPI communicator
@@ -311,7 +319,7 @@ class csvr : public ::plssvm::csvr,
      * @throws plssvm::exception all exceptions thrown in the base class constructors
      */
     template <typename... Args, PLSSVM_REQUIRES(::plssvm::detail::has_only_parameter_named_args_v<Args...>)>
-    explicit csvr(mpi::communicator comm, const target_platform target, Args &&...named_args) :
+    csvr(mpi::communicator comm, const target_platform target, Args &&...named_args) :
         ::plssvm::csvm{ std::move(comm), std::forward<Args>(named_args)... },
         ::plssvm::cuda::csvm{ target } { }
 };
