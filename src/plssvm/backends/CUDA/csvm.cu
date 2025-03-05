@@ -84,7 +84,7 @@ csvm::csvm(const target_platform target) {
             device_names.emplace_back(prop.name);
         }
 
-        mpi::detail::gather_and_print_csvm_information(comm_, plssvm::backend_type::cuda, plssvm::target_platform::gpu_nvidia, device_names);
+        mpi::detail::gather_and_print_csvm_information(comm_, plssvm::backend_type::cuda, target_, device_names);
     } else {
         // use more detailed single rank command line output
         plssvm::detail::log_untracked(verbosity_level::full,
@@ -114,7 +114,7 @@ csvm::csvm(const target_platform target) {
 
     PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "dependencies", "cuda_runtime_version", detail::get_runtime_version() }));
     PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "backend", "backend", plssvm::backend_type::cuda }));
-    PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "backend", "target_platform", plssvm::target_platform::gpu_nvidia }));
+    PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "backend", "target_platform", target_ }));
     PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "backend", "num_devices", devices_.size() }));
     PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "backend", "device", device_names }));
 }
