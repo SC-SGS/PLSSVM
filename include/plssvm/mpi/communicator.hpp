@@ -218,16 +218,16 @@ class communicator {
      * @brief Check whether @p lhs and @p rhs are equal, i.e., they are identical to each other, otherwise no collective operations are supported.
      * @param[in] lhs the first MPI communicator
      * @param[in] rhs the second MPI communicator
-     * @return `true` if both communicators are identical, otherwise `false` (`[[nodiscard]]`)
+     * @return `true` if both communicators are identical, otherwise `false`
      */
-    [[nodiscard]] friend bool operator==(const communicator &lhs, const communicator &rhs) noexcept;
+    friend bool operator==(const communicator &lhs, const communicator &rhs) noexcept;
     /**
      * @brief Check whether @p lhs and @p rhs are unequal, i.e., they are **not** identical to each other.
      * @param[in] lhs the first MPI communicator
      * @param[in] rhs the second MPI communicator
-     * @return `true` if both communicators are **not** identical, otherwise `false` (`[[nodiscard]]`)
+     * @return `true` if both communicators are **not** identical, otherwise `false`
      */
-    [[nodiscard]] friend bool operator!=(const communicator &lhs, const communicator &rhs) noexcept;
+    friend bool operator!=(const communicator &lhs, const communicator &rhs) noexcept;
 
   private:
 #if defined(PLSSVM_HAS_MPI_ENABLED)
