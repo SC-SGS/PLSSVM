@@ -161,7 +161,7 @@ class csvc : public ::plssvm::csvc,
      * @param[in] params struct encapsulating all possible parameters
      * @throws plssvm::exception all exceptions thrown in the base class constructors
      */
-    explicit csvc(mpi::communicator comm, const parameter params) :
+    csvc(mpi::communicator comm, const parameter params) :
         ::plssvm::csvm{ std::move(comm), params },
         ::plssvm::cuda::csvm{} { }
 
@@ -171,7 +171,7 @@ class csvc : public ::plssvm::csvc,
      * @param[in] params struct encapsulating all possible SVM parameters
      * @throws plssvm::exception all exceptions thrown in the base class constructors
      */
-    explicit csvc(const target_platform target, const parameter params) :
+    csvc(const target_platform target, const parameter params) :
         ::plssvm::csvm{ mpi::communicator{}, params },
         ::plssvm::cuda::csvm{ target } { }
     /**
@@ -181,7 +181,7 @@ class csvc : public ::plssvm::csvc,
      * @param[in] params struct encapsulating all possible SVM parameters
      * @throws plssvm::exception all exceptions thrown in the base class constructors
      */
-    explicit csvc(mpi::communicator comm, const target_platform target, const parameter params) :
+    csvc(mpi::communicator comm, const target_platform target, const parameter params) :
         ::plssvm::csvm{ std::move(comm), params },
         ::plssvm::cuda::csvm{ target } { }
 
