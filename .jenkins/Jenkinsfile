@@ -442,7 +442,7 @@ pipeline {
 
                                         set -e -o pipefail
                                         for i in {1..3}; do
-                                            spack dev-build plssvm@develop$([[ $BACKEND == ADAPTIVECPP ]] && [[ $ARCHITECTURE == AMD ]]&& echo "%clang@18.1.8" )$([[ $BACKEND == ADAPTIVECPP ]] && [[ $ARCHITECTURE == AMD ]]&& echo "%clang@18.1.8" )$([[ $BACKEND == HPX ]] && echo "%gcc@9.4.0" ) \
+                                            spack dev-build plssvm@develop$([[ $BACKEND == ADAPTIVECPP ]] && [[ $ARCHITECTURE == AMD ]]&& echo "%clang@18.1.8" )$([[ $BACKEND == ADAPTIVECPP ]] && [[ $ARCHITECTURE == NVIDIA ]]&& echo "%clang@18.1.8" )$([[ $BACKEND == HPX ]] && echo "%gcc@9.4.0" ) \
                                                 $([[ $BACKEND == OPENMP ]] && echo "+openmp" || echo "~openmp") \
                                                 $([[ $BACKEND == HPX ]] && echo "+hpx" || echo "~hpx") \
                                                 $([[ $BACKEND == KOKKOS ]] && echo "+kokkos" || echo "~kokkos") \
