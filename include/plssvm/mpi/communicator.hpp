@@ -170,7 +170,7 @@ class communicator {
     template <typename T, layout_type layout>
     void allreduce_inplace([[maybe_unused]] plssvm::matrix<T, layout> &matr) const {
 #if defined(PLSSVM_HAS_MPI_ENABLED)
-        PLSSVM_MPI_ERROR_CHECK(MPI_Allreduce(MPI_IN_PLACE, matr.data(), matr.size_padded(), detail::mpi_datatype<T>(), MPI_SUM, comm_));
+        PLSSVM_MPI_ERROR_CHECK(MPI_Allreduce(MPI_IN_PLACE, matr.data(), static_cast<int>(matr.size_padded()), detail::mpi_datatype<T>(), MPI_SUM, comm_));
 #endif
     }
 
