@@ -8,6 +8,7 @@
 
 #include "plssvm/backends/Kokkos/csvm.hpp"
 
+#include "plssvm/backend_types.hpp"                                                   // plssvm::backend_type
 #include "plssvm/backends/execution_range.hpp"                                        // plssvm::detail::{execution_range, dim_type}
 #include "plssvm/backends/Kokkos/detail/conditional_execution.hpp"                    // PLSSVM_KOKKOS_BACKEND_INVOKE_RETURN_IF_*, PLSSVM_KOKKOS_BACKEND_INVOKE_IF_
 #include "plssvm/backends/Kokkos/detail/device_ptr.hpp"                               // plssvm::kokkos::detail::device_ptr
@@ -22,14 +23,16 @@
 #include "plssvm/constants.hpp"                                                       // plssvm::THREAD_BLOCK_SIZE, plssvm::INTERNAL_BLOCK_SIZE, plssvm::FEATURE_BLOCK_SIZE
 #include "plssvm/detail/assert.hpp"                                                   // PLSSVM_ASSERT
 #include "plssvm/detail/data_distribution.hpp"                                        // plssvm::detail::triangular_data_distribution
-#include "plssvm/detail/logging/log.hpp"                                              // plssvm::detail::log
 #include "plssvm/detail/logging/log_untracked.hpp"                                    // plssvm::detail::log_untracked
+#include "plssvm/detail/logging/mpi_log_untracked.hpp"                                // plssvm::detail::log_untracked
 #include "plssvm/detail/memory_size.hpp"                                              // plssvm::detail::memory_size
 #include "plssvm/detail/tracking/performance_tracker.hpp"                             // plssvm::detail::tracking::tracking_entry
 #include "plssvm/detail/type_traits.hpp"                                              // plssvm::detail::remove_cvref_t
 #include "plssvm/detail/utility.hpp"                                                  // plssvm::detail::{get_system_memory, unreachable}
 #include "plssvm/exceptions/exceptions.hpp"                                           // plssvm::exception
 #include "plssvm/kernel_function_types.hpp"                                           // plssvm::kernel_function_type
+#include "plssvm/mpi/communicator.hpp"                                                // plssvm::mpi::communicator
+#include "plssvm/mpi/detail/information.hpp"                                          // plssvm::mpi::detail::gather_and_print_csvm_information
 #include "plssvm/parameter.hpp"                                                       // plssvm::parameter
 #include "plssvm/target_platforms.hpp"                                                // plssvm::target_platform
 #include "plssvm/verbosity_levels.hpp"                                                // plssvm::verbosity_level
@@ -125,10 +128,13 @@ void csvm::init(const target_platform target) {
             }
         }
 
-        // output what we use as automatic Kokkos execution space
-        plssvm::detail::log_untracked(verbosity_level::full,
-                                      "\nUsing {} as automatic Kokkos::ExecutionSpace.",
-                                      space_);
+        if (comm_.size() == 1) {
+            // output what we use as automatic Kokkos execution space
+            plssvm::detail::log_untracked(verbosity_level::full,
+                                          comm_,
+                                          "\nUsing {} as automatic Kokkos::ExecutionSpace.",
+                                          space_);
+        }
     } else {
         // execution space explicitly provided and potentially automatically determine the target platform
         if (target == target_platform::automatic) {
@@ -157,6 +163,9 @@ void csvm::init(const target_platform target) {
         }
     }
 
+    // get all available devices wrt the requested target platform
+    devices_ = detail::get_device_list(space_, target_);
+
     // At this point, space_ may NEVER be execution_space::automatic!
     PLSSVM_ASSERT(space_ != execution_space::automatic, "At this point, the Kokkos execution space must be determined and must NOT be automatic!");
     PLSSVM_ASSERT(target_ != target_platform::automatic, "At this point, the target platform must be determined and must NOT be automatic!");
@@ -166,45 +175,60 @@ void csvm::init(const target_platform target) {
         throw backend_exception{ fmt::format("The Kokkos execution space {} is currently not supported!", space_) };
     }
 
-    plssvm::detail::log(verbosity_level::full,
-                        "\nUsing Kokkos ({}) as backend with the Kokkos::ExecutionSpace {}.\n",
-                        plssvm::detail::tracking::tracking_entry{ "dependencies", "kokkos_version", detail::get_kokkos_version() },
-                        plssvm::detail::tracking::tracking_entry{ "dependencies", "kokkos_default_execution_space", space_ });
-
-    // output automatic target platform information
-    if (target == target_platform::automatic) {
-        plssvm::detail::log_untracked(verbosity_level::full,
-                                      "Using {} as automatic target platform.\n",
-                                      target_);
-    }
-
-    // get all available devices wrt the requested target platform
-    devices_ = detail::get_device_list(space_, target_);
-
     // throw exception if no devices in the current execution space could be found
     if (devices_.empty()) {
         throw backend_exception{ fmt::format("No devices found for the Kokkos execution space {} with the target platform {}!", space_, target_) };
     }
 
-    // print found Kokkos devices
-    plssvm::detail::log(verbosity_level::full,
-                        "Found {} Kokkos device(s) for the target platform {}:\n",
-                        plssvm::detail::tracking::tracking_entry{ "backend", "num_devices", devices_.size() },
-                        plssvm::detail::tracking::tracking_entry{ "backend", "target_platform", target_ });
-
     std::vector<std::string> device_names{};
     device_names.reserve(devices_.size());
-    for (typename std::vector<queue_type>::size_type device = 0; device < devices_.size(); ++device) {
-        const std::string device_name = detail::get_device_name(devices_[device]);
+
+    if (comm_.size() > 1) {
+        // use MPI rank specific command line output
+        for (const queue_type &device : devices_) {
+            device_names.emplace_back(detail::get_device_name(device));
+        }
+
+        mpi::detail::gather_and_print_csvm_information(comm_, plssvm::backend_type::kokkos, target_, device_names);
+    } else {
+        // use more detailed single rank command line output
         plssvm::detail::log_untracked(verbosity_level::full,
-                                      "  [{}, {}]\n",
-                                      device,
-                                      device_name);
-        device_names.emplace_back(device_name);
+                                      comm_,
+                                      "\nUsing Kokkos ({}) as backend with the Kokkos::ExecutionSpace {}.\n",
+                                      detail::get_kokkos_version(),
+                                      space_);
+        if (target == target_platform::automatic) {
+            plssvm::detail::log_untracked(verbosity_level::full,
+                                          comm_,
+                                          "Using {} as automatic target platform.\n",
+                                          target_);
+        }
+        plssvm::detail::log_untracked(verbosity_level::full,
+                                      comm_,
+                                      "Found {} Kokkos device(s) for the target platform {}:\n",
+                                      devices_.size(),
+                                      target_);
+
+        for (typename std::vector<queue_type>::size_type device = 0; device < devices_.size(); ++device) {
+            const std::string device_name = detail::get_device_name(devices_[device]);
+            plssvm::detail::log_untracked(verbosity_level::full,
+                                          "  [{}, {}]\n",
+                                          device,
+                                          device_name);
+            device_names.emplace_back(device_name);
+        }
     }
-    PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "backend", "device", device_names }));
+
     plssvm::detail::log_untracked(verbosity_level::full | verbosity_level::timing,
+                                  comm_,
                                   "\n");
+
+    PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "dependencies", "kokkos_version", detail::get_kokkos_version() }));
+    PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "backend", "backend", plssvm::backend_type::kokkos }));
+    PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "dependencies", "kokkos_execution_space", space_ }));
+    PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "backend", "target_platform", target_ }));
+    PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "backend", "num_devices", devices_.size() }));
+    PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "backend", "device", device_names }));
 }
 
 csvm::~csvm() {
