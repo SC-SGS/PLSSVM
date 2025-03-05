@@ -25,12 +25,15 @@
 #include "plssvm/detail/data_distribution.hpp"                                      // plssvm::detail::{data_distribution, triangular_data_distribution, rectangular_data_distribution}
 #include "plssvm/detail/logging/log.hpp"                                            // plssvm::detail::log
 #include "plssvm/detail/logging/log_untracked.hpp"                                  // plssvm::detail::log_untracked
+#include "plssvm/detail/logging/mpi_log_untracked.hpp"                              // plssvm::detail::log_untracked
 #include "plssvm/detail/memory_size.hpp"                                            // plssvm::detail::memory_size
 #include "plssvm/detail/tracking/performance_tracker.hpp"                           // plssvm::detail::tracking::tracking_entry
 #include "plssvm/detail/utility.hpp"                                                // plssvm::detail::get_system_memory
 #include "plssvm/exceptions/exceptions.hpp"                                         // plssvm::exception
 #include "plssvm/gamma.hpp"                                                         // plssvm::gamma_type
 #include "plssvm/kernel_function_types.hpp"                                         // plssvm::kernel_type
+#include "plssvm/mpi/communicator.hpp"                                              // plssvm::mpi::communicator
+#include "plssvm/mpi/detail/information.hpp"                                        // plssvm::mpi::detail::gather_and_print_csvm_information
 #include "plssvm/parameter.hpp"                                                     // plssvm::parameter, plssvm::detail::parameter
 #include "plssvm/shape.hpp"                                                         // plssvm::shape
 #include "plssvm/target_platforms.hpp"                                              // plssvm::target_platform
@@ -86,54 +89,74 @@ void csvm::init(const target_platform target) {
     // At this point, target_ may NEVER be target_platform::automatic!
     PLSSVM_ASSERT(target_ != target_platform::automatic, "At this point, the target platform must be determined and must NOT be automatic!");
 
+    // throw exception if no devices for the requested target could be found
+    if (devices_.empty()) {
+        throw backend_exception{ fmt::format("SYCL backend selected but no devices for the target {} were found!", target_) };
+    }
+
     // set correct kernel invocation type if "automatic" has been provided
     if (invocation_type_ == sycl::kernel_invocation_type::automatic) {
         // always use nd_range for AdaptiveCpp
         invocation_type_ = sycl::kernel_invocation_type::nd_range;
         if (target_ == target_platform::cpu) {
-#if !defined(__HIPSYCL_USE_ACCELERATED_CPU__) && defined(__HIPSYCL_ENABLE_OMPHOST_TARGET__)
+#if !defined(__ACPP_USE_ACCELERATED_CPU__) && defined(__ACPP_ENABLE_OMPHOST_TARGET__)
             plssvm::detail::log_untracked(verbosity_level::full | verbosity_level::warning,
                                           "WARNING: the AdaptiveCpp automatic target for the CPU is set to nd_range, but AdaptiveCpp hasn't been build with the \"omp.accelerated\" compilation flow resulting in major performance losses!\n");
 #endif
         }
     }
 
-    plssvm::detail::log(verbosity_level::full,
-                        "\nUsing AdaptiveCpp ({}) as SYCL backend with the kernel invocation type \"{}\" for the svm_kernel.\n",
-                        detail::get_adaptivecpp_version_short(),
-                        plssvm::detail::tracking::tracking_entry{ "backend", "sycl_kernel_invocation_type", invocation_type_ });
-    PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "dependencies", "adaptivecpp_version", detail::get_adaptivecpp_version() }));
-    if (target == target_platform::automatic) {
+    std::vector<std::string> device_names{};
+    device_names.reserve(devices_.size());
+
+    if (comm_.size() > 1) {
+        // use MPI rank specific command line output
+        for (const queue_type &device : devices_) {
+            device_names.emplace_back(device.impl->sycl_queue.get_device().template get_info<::sycl::info::device::name>());
+        }
+
+        mpi::detail::gather_and_print_csvm_information(comm_, plssvm::backend_type::sycl, target_, device_names);
+    } else {
+        // use more detailed single rank command line output
         plssvm::detail::log_untracked(verbosity_level::full,
-                                      "Using {} as automatic target platform.\n",
+                                      comm_,
+                                      "\nUsing AdaptiveCpp ({}) as SYCL backend with the kernel invocation type \"{}\" for the svm_kernel.\n",
+                                      detail::get_adaptivecpp_version_short(),
+                                      invocation_type_);
+        if (target == target_platform::automatic) {
+            plssvm::detail::log_untracked(verbosity_level::full,
+                                          comm_,
+                                          "Using {} as automatic target platform.\n",
+                                          target_);
+        }
+        plssvm::detail::log_untracked(verbosity_level::full,
+                                      comm_,
+                                      "Found {} SYCL device(s) for the target platform {}:\n",
+                                      devices_.size(),
                                       target_);
+
+        for (typename std::vector<queue_type>::size_type device = 0; device < devices_.size(); ++device) {
+            const std::string device_name = devices_[device].impl->sycl_queue.get_device().template get_info<::sycl::info::device::name>();
+            plssvm::detail::log_untracked(verbosity_level::full,
+                                          comm_,
+                                          "  [{}, {}]\n",
+                                          device,
+                                          device_name);
+            device_names.emplace_back(device_name);
+        }
     }
+
+    plssvm::detail::log_untracked(verbosity_level::full | verbosity_level::timing,
+                                  comm_,
+                                  "\n");
+
+    PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "dependencies", "adaptivecpp_version", detail::get_adaptivecpp_version() }));
     PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "backend", "backend", plssvm::backend_type::sycl }));
     PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "backend", "sycl_implementation_type", plssvm::sycl::implementation_type::adaptivecpp }));
-
-    // throw exception if no devices for the requested target could be found
-    if (devices_.empty()) {
-        throw backend_exception{ fmt::format("SYCL backend selected but no devices for the target {} were found!", target_) };
-    }
-
-    // print found SYCL devices
-    plssvm::detail::log(verbosity_level::full,
-                        "Found {} SYCL device(s) for the target platform {}:\n",
-                        plssvm::detail::tracking::tracking_entry{ "backend", "num_devices", devices_.size() },
-                        plssvm::detail::tracking::tracking_entry{ "backend", "target_platform", target_ });
-    std::vector<std::string> device_names;
-    device_names.reserve(devices_.size());
-    for (typename std::vector<queue_type>::size_type device = 0; device < devices_.size(); ++device) {
-        const std::string device_name = devices_[device].impl->sycl_queue.get_device().template get_info<::sycl::info::device::name>();
-        plssvm::detail::log_untracked(verbosity_level::full,
-                                      "  [{}, {}]\n",
-                                      device,
-                                      device_name);
-        device_names.emplace_back(device_name);
-    }
+    PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "backend", "sycl_kernel_invocation_type", invocation_type_ }));
+    PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "backend", "target_platform", target_ }));
+    PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "backend", "num_devices", devices_.size() }));
     PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "backend", "device", device_names }));
-    plssvm::detail::log_untracked(verbosity_level::full | verbosity_level::timing,
-                                  "\n");
 }
 
 csvm::~csvm() {
