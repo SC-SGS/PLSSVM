@@ -18,8 +18,9 @@
 #include "plssvm/solver_types.hpp"      // plssvm::solver_type
 #include "plssvm/target_platforms.hpp"  // plssvm::target_platform
 
-#include <string>  // std::string
-#include <vector>  // std::vector
+#include <optional>  // std::optional, std::nullopt
+#include <string>    // std::string
+#include <vector>    // std::vector
 
 namespace plssvm::mpi::detail {
 
@@ -37,8 +38,9 @@ void gather_and_print_solver_information(const communicator &comm, solver_type r
  * @param[in] rank_backend the backend used on the current MPI rank, gathered on the main MPI rank
  * @param[in] rank_target the target platform used on the current MPI rank, gathered on the main MPI rank
  * @param[in] rank_devices the device (names) used on the current MPI rank, gathered on the main MPI rank
+ * @param[in] additional_info optional additional information used on the current MPI rank, gathered on the main MPI rank
  */
-void gather_and_print_csvm_information(const communicator &comm, backend_type rank_backend, target_platform rank_target, const std::vector<std::string> &rank_devices);
+void gather_and_print_csvm_information(const communicator &comm, backend_type rank_backend, target_platform rank_target, const std::vector<std::string> &rank_devices, const std::optional<std::string> &additional_info = std::nullopt);
 
 }  // namespace plssvm::mpi::detail
 

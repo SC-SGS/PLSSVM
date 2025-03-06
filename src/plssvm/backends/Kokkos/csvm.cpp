@@ -189,7 +189,7 @@ void csvm::init(const target_platform target) {
             device_names.emplace_back(detail::get_device_name(device));
         }
 
-        mpi::detail::gather_and_print_csvm_information(comm_, plssvm::backend_type::kokkos, target_, device_names);
+        mpi::detail::gather_and_print_csvm_information(comm_, plssvm::backend_type::kokkos, target_, device_names, fmt::format("{}", space_));
     } else {
         // use more detailed single rank command line output
         plssvm::detail::log_untracked(verbosity_level::full,

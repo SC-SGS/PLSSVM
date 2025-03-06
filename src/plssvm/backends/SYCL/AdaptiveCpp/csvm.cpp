@@ -115,7 +115,7 @@ void csvm::init(const target_platform target) {
             device_names.emplace_back(device.impl->sycl_queue.get_device().template get_info<::sycl::info::device::name>());
         }
 
-        mpi::detail::gather_and_print_csvm_information(comm_, plssvm::backend_type::sycl, target_, device_names);
+        mpi::detail::gather_and_print_csvm_information(comm_, plssvm::backend_type::sycl, target_, device_names, fmt::format("{}", invocation_type_));
     } else {
         // use more detailed single rank command line output
         plssvm::detail::log_untracked(verbosity_level::full,
