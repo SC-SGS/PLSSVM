@@ -11,11 +11,12 @@
 #include "plssvm/backends/OpenCL/detail/command_queue.hpp"  // plssvm::opencl::detail::command_queue
 #include "plssvm/backends/OpenCL/detail/context.hpp"        // plssvm::opencl::detail::context
 #include "plssvm/backends/OpenCL/detail/error_code.hpp"     // plssvm::opencl::detail::error_code
+#include "plssvm/backends/OpenCL/detail/jit_info.hpp"       // plssvm::opencl::detail::jit_info
 #include "plssvm/backends/OpenCL/detail/kernel.hpp"         // plssvm::opencl::detail::compute_kernel_name, plssvm::opencl::detail::kernel
 #include "plssvm/constants.hpp"                             // plssvm::{real_type, THREAD_BLOCK_SIZE, INTERNAL_BLOCK_SIZE, FEATURE_BLOCK_SIZE, PADDING_SIZE}
 #include "plssvm/detail/arithmetic_type_name.hpp"           // plssvm::detail::arithmetic_type_name
 #include "plssvm/detail/assert.hpp"                         // PLSSVM_ASSERT
-#include "plssvm/detail/logging/log_untracked.hpp"          // plssvm::detail::log_untracked
+#include "plssvm/detail/logging/mpi_log_untracked.hpp"      // plssvm::detail::log_untracked
 #include "plssvm/detail/sha256.hpp"                         // plssvm::detail::sha256
 #include "plssvm/detail/string_conversion.hpp"              // plssvm::detail::extract_first_integer_from_string
 #include "plssvm/detail/string_utility.hpp"                 // plssvm::detail::replace_all, plssvm::detail::to_lower_case, plssvm::detail::contains
@@ -23,6 +24,7 @@
 #include "plssvm/detail/utility.hpp"                        // plssvm::detail::erase_if
 #include "plssvm/exceptions/exceptions.hpp"                 // plssvm::platform_devices_empty
 #include "plssvm/kernel_function_types.hpp"                 // plssvm::kernel_function_type
+#include "plssvm/mpi/communicator.hpp"                      // plssvm::mpi::communicator
 #include "plssvm/target_platforms.hpp"                      // plssvm::target_platform
 #include "plssvm/verbosity_levels.hpp"                      // plssvm::verbosity_level
 
@@ -38,6 +40,7 @@
 
 #include <algorithm>     // std::count_if
 #include <array>         // std::array
+#include <chrono>        // std::chrono::{steady_clock, duration_cast, milliseconds}
 #include <cstddef>       // std::size_t
 #include <filesystem>    // std::filesystem::{path, temp_directory_path, exists, directory_iterator, directory_entry, begin, end}
 #include <fstream>       // std::ifstream, std::ofstream
@@ -208,14 +211,17 @@ std::vector<std::pair<compute_kernel_name, std::string>> kernel_type_to_function
     return kernels;
 }
 
-std::vector<command_queue> create_command_queues(const std::vector<context> &contexts, const kernel_function_type kernel_function, const std::vector<std::pair<compute_kernel_name, std::string>> &kernel_names) {
+std::pair<std::vector<command_queue>, jit_info> create_command_queues(const mpi::communicator &comm, const std::vector<context> &contexts, const kernel_function_type kernel_function) {
+    jit_info info{};
+    const auto jit_start_time = std::chrono::steady_clock::now();
+
     std::vector<command_queue> queues;
     for (std::vector<cl_device_id>::size_type device = 0; device < contexts[0].devices.size(); ++device) {
         queues.emplace_back(contexts[0], contexts[0].devices[device]);
     }
     PLSSVM_ASSERT(!queues.empty(), "At least one command queue must be available!");
 
-    const auto cl_build_program_error_message = [](cl_program prog, cl_device_id device, const std::size_t device_idx) {
+    const auto cl_build_program_error_message = [&comm](cl_program prog, cl_device_id device, const std::size_t device_idx) {
         // determine the size of the log
         std::size_t log_size{};
         PLSSVM_OPENCL_ERROR_CHECK(clGetProgramBuildInfo(prog, device, CL_PROGRAM_BUILD_LOG, 0, nullptr, &log_size), "error retrieving the program build log size")
@@ -225,7 +231,7 @@ std::vector<command_queue> create_command_queues(const std::vector<context> &con
             // get the log
             PLSSVM_OPENCL_ERROR_CHECK(clGetProgramBuildInfo(prog, device, CL_PROGRAM_BUILD_LOG, log_size, log.data(), nullptr), "error retrieving the program build log")
             // print the log
-            std::cerr << fmt::format("error building OpenCL program on device {}:\n{}", device_idx, log) << std::endl;
+            std::cerr << fmt::format("error building OpenCL program on device {} on MPI rank {}:\n{}", device_idx, comm.rank(), log) << std::endl;
         }
     };
 
@@ -244,8 +250,12 @@ std::vector<command_queue> create_command_queues(const std::vector<context> &con
     const bool use_inline_assembly = ::plssvm::detail::contains(::plssvm::detail::as_lower_case(platform_vendor), "nvidia");
     if (use_inline_assembly) {
         compile_options += " -DPLSSVM_USE_NVIDIA_PTX_INLINE_ASSEMBLY";
-        plssvm::detail::log_untracked(verbosity_level::full,
-                                      "Enabling atomicAdd acceleration using PTX inline assembly.\n");
+        if (comm.size() == 1) {
+            plssvm::detail::log_untracked(verbosity_level::full,
+                                          comm,
+                                          "Enabling atomicAdd acceleration using PTX inline assembly.\n");
+        }
+        info.use_ptx_inline = true;
     }
     PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "opencl", "use_inline_assembly", use_inline_assembly }));
 #endif
@@ -383,47 +393,33 @@ std::vector<command_queue> create_command_queues(const std::vector<context> &con
     std::vector<unsigned char *> binaries_ptr(binaries.size());
 
     // create caching folder in the temporary directory and change the permissions such that everybody has read/write access
-    const std::filesystem::path cache_dir_name = std::filesystem::temp_directory_path() / "plssvm_opencl_cache" / checksum;
-
-    // potential reasons why OpenCL caching could fail
-    enum class caching_status {
-        success,
-        error_no_cached_files,
-        error_invalid_number_of_cached_files,
-    };
-    // message associated with the failed caching reason
-    const auto caching_status_to_string = [](const caching_status status) {
-        switch (status) {
-            case caching_status::error_no_cached_files:
-                return "no cached files exist (checksum missmatch)";
-            case caching_status::error_invalid_number_of_cached_files:
-                return "invalid number of cached files";
-            default:
-                return "";
-        }
-    };
+    const std::filesystem::path cache_dir_name = std::filesystem::temp_directory_path() / "plssvm_opencl_cache" / checksum / fmt::format("rank_{}", comm.rank());
+    info.cache_dir = cache_dir_name;
 
     // assume caching was successful
-    caching_status use_cached_binaries = caching_status::success;
+    info.cache_state = jit_info::caching_status::success;
 
     // check if cache directory exists
     if (!std::filesystem::exists(cache_dir_name)) {
-        use_cached_binaries = caching_status::error_no_cached_files;
+        info.cache_state = jit_info::caching_status::error_no_cached_files;
     }
     // if the cache directory exists, check the number of files
-    if (use_cached_binaries == caching_status::success) {
+    if (info.cache_state == jit_info::caching_status::success) {
         // get directory iterator
         auto dirIter = std::filesystem::directory_iterator(cache_dir_name);
         // get files in directory -> account for stored preprocessed source file
         if (static_cast<std::size_t>(std::count_if(std::filesystem::begin(dirIter), std::filesystem::end(dirIter), [](const auto &entry) { return entry.is_regular_file(); })) != contexts[0].devices.size() + 1) {
-            use_cached_binaries = caching_status::error_invalid_number_of_cached_files;
+            info.cache_state = jit_info::caching_status::error_invalid_number_of_cached_files;
         }
     }
 
-    if (use_cached_binaries != caching_status::success) {
-        plssvm::detail::log_untracked(verbosity_level::full,
-                                      "Building OpenCL kernels from source (reason: {}).\n",
-                                      caching_status_to_string(use_cached_binaries));
+    if (info.cache_state != jit_info::caching_status::success) {
+        if (comm.size() == 1) {
+            plssvm::detail::log_untracked(verbosity_level::full,
+                                          comm,
+                                          "Building OpenCL kernels from source (reason: {}).\n",
+                                          info.cache_state);
+        }
 
         // create and build program
         cl_program program = clCreateProgramWithSource(contexts[0], 1, &kernel_src_ptr, nullptr, &err);
@@ -472,18 +468,25 @@ std::vector<command_queue> create_command_queues(const std::vector<context> &con
             std::ofstream out{ cache_dir_name / "processed_source.cl" };
             out << kernel_src_string;
         }
-        plssvm::detail::log_untracked(verbosity_level::full,
-                                      "Cached OpenCL kernel binaries in {}.\n",
-                                      cache_dir_name);
+
+        if (comm.size() == 1) {
+            plssvm::detail::log_untracked(verbosity_level::full,
+                                          comm,
+                                          "Cached OpenCL kernel binaries in {}.\n",
+                                          cache_dir_name);
+        }
 
         // release resource
         if (program) {
             PLSSVM_OPENCL_ERROR_CHECK(clReleaseProgram(program), "error releasing OpenCL program resources")
         }
     } else {
-        plssvm::detail::log_untracked(verbosity_level::full,
-                                      "Using cached OpenCL kernel binaries from {}.\n",
-                                      cache_dir_name);
+        if (comm.size() == 1) {
+            plssvm::detail::log_untracked(verbosity_level::full,
+                                          comm,
+                                          "Using cached OpenCL kernel binaries from {}.\n",
+                                          cache_dir_name);
+        }
 
         const auto common_read_file = [](const std::filesystem::path &file) -> std::pair<std::vector<unsigned char>, std::size_t> {
             std::ifstream f{ file };
@@ -531,7 +534,7 @@ std::vector<command_queue> create_command_queues(const std::vector<context> &con
 
     // build all kernels, one for each device
     for (std::vector<cl_device_id>::size_type device = 0; device < contexts[0].devices.size(); ++device) {
-        for (const std::pair<compute_kernel_name, std::string> &name : kernel_names) {
+        for (const std::pair<compute_kernel_name, std::string> &name : detail::kernel_type_to_function_names()) {
             // create kernel
             queues[device].add_kernel(name.first, kernel{ clCreateKernel(binary_program, name.second.c_str(), &err) });
             PLSSVM_OPENCL_ERROR_CHECK(err, fmt::format("error creating OpenCL kernel {} for device {}", name.second, device))
@@ -543,7 +546,9 @@ std::vector<command_queue> create_command_queues(const std::vector<context> &con
         PLSSVM_OPENCL_ERROR_CHECK(clReleaseProgram(binary_program), "error releasing OpenCL binary program resources")
     }
 
-    return queues;
+    const auto jit_end_time = std::chrono::steady_clock::now();
+    info.duration = std::chrono::duration_cast<std::chrono::milliseconds>(jit_end_time - jit_start_time);
+    return std::make_pair(std::move(queues), info);
 }
 
 }  // namespace plssvm::opencl::detail

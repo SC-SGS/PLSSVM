@@ -26,6 +26,7 @@ set(PLSSVM_OPENCL_SOURCES
     ${CMAKE_CURRENT_LIST_DIR}/detail/context.cpp
     ${CMAKE_CURRENT_LIST_DIR}/detail/device_ptr.cpp
     ${CMAKE_CURRENT_LIST_DIR}/detail/error_code.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/detail/jit_info.cpp
     ${CMAKE_CURRENT_LIST_DIR}/detail/kernel.cpp
     ${CMAKE_CURRENT_LIST_DIR}/detail/pinned_memory.cpp
     ${CMAKE_CURRENT_LIST_DIR}/detail/utility.cpp
