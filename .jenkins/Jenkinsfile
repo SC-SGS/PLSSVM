@@ -620,6 +620,7 @@ $([[ $BACKEND != OPENMP ]] && [[ $BACKEND == STDPAR-NVHPC ]] && [[ $BACKEND == S
                                     OPENCL|ADAPTIVECPP|DPCPP|STDPAR-NVHPC|STDPAR-DPCPP|STDPAR-ADAPTIVECPP|KOKKOS)
                                         if [ "$ARCHITECTURE" != NVIDIA ]; then
                                             SET_NVIDIA_GPU_NONE=1
+                                            export SET_NVIDIA_GPU_NONE=1
                                         fi
                                         ;;
                                     *) ;;
@@ -629,6 +630,7 @@ $([[ $BACKEND != OPENMP ]] && [[ $BACKEND == STDPAR-NVHPC ]] && [[ $BACKEND == S
                                     OPENCL|ADAPTIVECPP|DPCPP|STDPAR-DPCPP|STDPAR-ADAPTIVECPP|KOKKOS)
                                         if [ "$ARCHITECTURE" != AMD ]; then
                                             SET_AMD_GPU_NONE=1
+                                            export SET_AMD_GPU_NONE=1
                                         fi
                                     ;;
                                     *) ;;
@@ -837,7 +839,6 @@ $([[ $BACKEND != OPENMP ]] && [[ $BACKEND == STDPAR-NVHPC ]] && [[ $BACKEND == S
         always {
             // Process the CTest xml output with the xUnit plugin
             xunit (
-                testTimeMargin: '3000',
                 thresholdMode: 1,
                 thresholds: [
                     failed(failureThreshold: '0')
@@ -847,7 +848,7 @@ $([[ $BACKEND != OPENMP ]] && [[ $BACKEND == STDPAR-NVHPC ]] && [[ $BACKEND == S
                     deleteOutputFiles: true,
                     failIfNotNew: false,
                     skipNoTestFiles: true,
-                    stopProcessingIfError: true
+                    stopProcessingIfError: false
                 )]
             )
         }
