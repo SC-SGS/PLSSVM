@@ -592,7 +592,7 @@ $([[ $SET_NVIDIA_GPU_NONE == 1 ]] && echo "cuda_arch=none") \
 $([[ $ARCHITECTURE == AMD ]] && [[ $(hostname) == pcsgs13 ]] && echo "amdgpu_target=gfx1101") \
 $([[ $ARCHITECTURE == AMD ]] && [[ $(hostname) == simcl1n3 ]] && echo "amdgpu_target=gfx90a") \
 $([[ $ARCHITECTURE == AMD ]] && [[ $(hostname) == pcsgs09 ]] && echo "amdgpu_target=gfx906") \
-$([[ SET_AMD_GPU_NONE == 1 ]] && "amdgpu_target=none") \
+$([[ $SET_AMD_GPU_NONE == 1 ]] && "amdgpu_target=none") \
 ~dpcpp \
 build_type=$BUILD_TYPE \
 arch=$(spack arch)" \
@@ -676,7 +676,7 @@ $([[ $BACKEND != OPENMP ]] && [[ $BACKEND == STDPAR-NVHPC ]] && [[ $BACKEND == S
                                         $([[ $ARCHITECTURE == AMD ]] && [[ $(hostname) == pcsgs13 ]] && echo "amdgpu_target=gfx1101") \
                                         $([[ $ARCHITECTURE == AMD ]] && [[ $(hostname) == simcl1n3 ]] && echo "amdgpu_target=gfx90a") \
                                         $([[ $ARCHITECTURE == AMD ]] && [[ $(hostname) == pcsgs09 ]] && echo "amdgpu_target=gfx906") \
-                                        $([[ SET_AMD_GPU_NONE == 1 ]] && "amdgpu_target=none") \
+                                        $([[ $SET_AMD_GPU_NONE == 1 ]] && "amdgpu_target=none") \
                                         build_type=$BUILD_TYPE \
                                         arch=$(spack arch)"
 
