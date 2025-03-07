@@ -573,6 +573,8 @@ pipeline {
                                 export ACPP_VISIBILITY_MASK=${ACPP_VISIBILITY_MASK}
                                 export HIP_VISIBLE_DEVICES=0
                                 export CUDA_VISIBLE_DEVICES=0
+
+
                                 spack test-env --dirty "plssvm@develop$([[ $BACKEND == ADAPTIVECPP ]] && echo "%clang" ) \
 $([[ $BACKEND == HPX ]] && echo "+hpx" || echo "~hpx") \
 $([[ $BACKEND == KOKKOS ]] && echo "+kokkos" || echo "~kokkos") \
@@ -598,7 +600,7 @@ $([[ $SET_AMD_GPU_NONE == 1 ]] && echo "amdgpu_target=none") \
 ~dpcpp \
 build_type=$BUILD_TYPE \
 arch=$(spack arch)" \
-ctest -j8 --no-tests=error --output-junit --output-on-failure --timeout 1200 --no-compress-output -T Test \
+LD_LIBRARY_PATH=$(llvm-config --libdir)/x86_64-unknown-linux-gnu/:$LD_LIBRARY_PATH ctest -j8 --no-tests=error --output-junit --output-on-failure --timeout 1200 --no-compress-output -T Test \
 $([[ $BACKEND == STDPAR-DPCPP ]] && echo "-E \"Base*|Parser*/Parser*Help.parsing/h*|Parser*/Parser*Help.parsing/help*|Parser*/Parser*Version.parsing/v*|Parser*/Parser*Version.parsing/version*\" ") \
 $([[ $BACKEND == STDPAR-NVHPC ]] && echo "-E \"Base*|LIBSVMClassificationModelDataParseInvalid*\" ") \
 $([[ $BACKEND != OPENMP ]] && [[ $BACKEND == STDPAR-NVHPC ]] && [[ $BACKEND == STDPAR-DPCPP ]] &&   echo "-E \"Base*\"") # Exclude base tests for all backends except openmp
