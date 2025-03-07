@@ -511,7 +511,7 @@ pipeline {
                             sh ''' #!/bin/bash
                                 hostname
                                 source $SGSSCRATCH/spack/share/spack/setup-env.sh
-                                spack load --first cmake@3
+                                spack load --first cmake@3.31.5
                                 echo $hostname
 
                                 case $BACKEND in
