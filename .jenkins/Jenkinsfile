@@ -580,7 +580,7 @@ pipeline {
                                 else
                                     spack load --first llvm@18.1.8~gold~libomptarget arch=$(spack arch)
                                 fi
-                                export LD_LIBRARY_PATH=$(llvm-config --libdir)/x86_64-unknown-linux-gnu/:$LD_LIBRARY_PATH
+                                export LD_LIBRARY_PATH=$(llvm-config --libdir)/lib/x86_64-unknown-linux-gnu/:$(llvm-config --libdir)/lib:$LD_LIBRARY_PATH
                                 spack test-env --dirty "plssvm@develop$([[ $BACKEND == ADAPTIVECPP ]] && echo "%clang" ) \
 $([[ $BACKEND == HPX ]] && echo "+hpx" || echo "~hpx") \
 $([[ $BACKEND == KOKKOS ]] && echo "+kokkos" || echo "~kokkos") \
@@ -702,6 +702,8 @@ arch=$(spack arch)"
                                     export ONEAPI_DEVICE_SELECTOR=*:cpu
                                     export ACPP_VISIBILITY_MASK=omp
                                 fi
+
+                                 export LD_LIBRARY_PATH=$(llvm-config --libdir)/lib/x86_64-unknown-linux-gnu/:$(llvm-config --libdir)/lib:$LD_LIBRARY_PATH
 
                                 plssvm-scale --help
                                 plssvm-train -i 1 5x4.libsvm ${BACKEND}-${ARCHITECTURE}-${BUILD_TYPE}.model
