@@ -574,13 +574,34 @@ pipeline {
                                 export HIP_VISIBLE_DEVICES=0
                                 export CUDA_VISIBLE_DEVICES=0
 
+spack load --dirty "plssvm@develop$([[ $BACKEND == ADAPTIVECPP ]] && echo "%clang" ) \
+$([[ $BACKEND == HPX ]] && echo "+hpx" || echo "~hpx") \
+$([[ $BACKEND == KOKKOS ]] && echo "+kokkos" || echo "~kokkos") \
+$([[ $BACKEND == KOKKOS ]] && echo "~lto") \
+$([[ $BACKEND == OPENMP ]] && echo "+openmp" || echo "~openmp") \
+$([[ $BACKEND == CUDA ]] && echo "+cuda" || echo "~cuda") \
+$([[ $BACKEND == HIP ]] && echo "+hip" || echo "~hip") \
+$([[ $BACKEND == OPENCL ]] && echo "+opencl" || echo "~opencl") \
+$([[ $BACKEND == ADAPTIVECPP ]] && echo " +adaptivecpp" || echo "~adaptivecpp") \
+$([[ $BACKEND == DPCPP ]] && echo "+icpx" || echo "~icpx") \
+$([[ $BACKEND == *"STDPAR"* ]] && echo "+stdpar" || echo "~stdpar") \
+$([[ $BACKEND == STDPAR-GNU-TBB ]] && echo "stdparimplementation=gnu-tbb" ) \
+$([[ $BACKEND == STDPAR-DPCPP ]] && echo "stdparimplementation=icpx" ) \
+$([[ $BACKEND == STDPAR-NVHPC ]] && echo "stdparimplementation=nvhpc" ) \
+$([[ $BACKEND == STDPAR-ADAPTIVECPP ]] && echo "stdparimplementation=adaptivecpp" ) \
+$([[ $(hostname) != pcsgs03 ]] && [[ $ARCHITECTURE == NVIDIA ]] && echo "cuda_arch=86") \
+$([[ $(hostname) == pcsgs03 ]] && [[ $ARCHITECTURE == NVIDIA ]] && echo "cuda_arch=75") \
+$([[ $SET_NVIDIA_GPU_NONE == 1 ]] && echo "cuda_arch=none") \
+$([[ $ARCHITECTURE == AMD ]] && [[ $(hostname) == pcsgs13 ]] && echo "amdgpu_target=gfx1101") \
+$([[ $ARCHITECTURE == AMD ]] && [[ $(hostname) == simcl1n3 ]] && echo "amdgpu_target=gfx90a") \
+$([[ $ARCHITECTURE == AMD ]] && [[ $(hostname) == pcsgs09 ]] && echo "amdgpu_target=gfx906") \
+$([[ $SET_AMD_GPU_NONE == 1 ]] && echo "amdgpu_target=none") \
+~dpcpp \
+build_type=$BUILD_TYPE \
+arch=$(spack arch)" \
 
-                                if [[ $BACKEND == STDPAR-ADAPTIVECPP ]] && [[ $ARCHITECTURE == NVIDIA ]]; then
-                                    spack load --first llvm@17.0.6~gold~libomptarget arch=$(spack arch)
-                                else
-                                    spack load --first llvm@18.1.8~gold~libomptarget arch=$(spack arch)
-                                fi
-                                export LD_LIBRARY_PATH=$(llvm-config --libdir)/x86_64-unknown-linux-gnu/:$(llvm-config --libdir):$LD_LIBRARY_PATH
+
+                                export LD_LIBRARY_PATH=$(llvm-config --libdir)/x86_64-unknown-linux-gnu/:$LD_LIBRARY_PATH
                                 spack test-env --dirty "plssvm@develop$([[ $BACKEND == ADAPTIVECPP ]] && echo "%clang" ) \
 $([[ $BACKEND == HPX ]] && echo "+hpx" || echo "~hpx") \
 $([[ $BACKEND == KOKKOS ]] && echo "+kokkos" || echo "~kokkos") \
@@ -703,7 +724,7 @@ arch=$(spack arch)"
                                     export ACPP_VISIBILITY_MASK=omp
                                 fi
 
-                                 export LD_LIBRARY_PATH=$(llvm-config --libdir)/x86_64-unknown-linux-gnu/:$(llvm-config --libdir):$LD_LIBRARY_PATH
+                                 export LD_LIBRARY_PATH=$(llvm-config --libdir)/x86_64-unknown-linux-gnu/:$LD_LIBRARY_PATH
 
                                 plssvm-scale --help
                                 plssvm-train -i 1 5x4.libsvm ${BACKEND}-${ARCHITECTURE}-${BUILD_TYPE}.model
