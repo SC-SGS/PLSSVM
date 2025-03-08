@@ -23,13 +23,14 @@
 #include "plssvm/kernel_functions.hpp"                      // plssvm::kernel_function
 #include "plssvm/matrix.hpp"                                // aos_matrix
 
-#include <array>                                           // std::array
-#include <cmath>                                           // std::ceil
-#include <cstddef>                                         // std::size_t, std::sqrt
-#include <hpx/execution.hpp>                               // hpx::execution::par_unseq
-#include <hpx/parallel/segmented_algorithms/for_each.hpp>  // hpx::for_each
-#include <numeric>                                         // std::iota
-#include <vector>                                          // std::vector
+#include "hpx/execution.hpp"                               // hpx::execution::par_unseq
+#include "hpx/parallel/segmented_algorithms/for_each.hpp"  // hpx::for_each
+
+#include <array>    // std::array
+#include <cmath>    // std::ceil
+#include <cstddef>  // std::size_t, std::sqrt
+#include <numeric>  // std::iota
+#include <vector>   // std::vector
 
 namespace plssvm::hpx::detail {
 

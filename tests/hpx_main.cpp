@@ -16,7 +16,7 @@
 
 // Workaround as HPX runtime not working properly with Google Test
 // Run the entire main function in HPX runtime
-#include <hpx/hpx_main.hpp>
+#include "hpx/hpx_main.hpp"
 
 // silence GTest warnings/test errors
 

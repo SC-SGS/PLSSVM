@@ -29,6 +29,8 @@
 #include "plssvm/svm/csvm.hpp"                                                     // plssvm::csvm
 #include "plssvm/target_platforms.hpp"                                             // plssvm::target_platform
 
+#include "hpx/future.hpp"  // hpx::future, hpx::async
+
 #include <cstddef>  // std::size_t
 #include <tuple>    // std::tuple, std::make_tuple
 #include <utility>  // std::move

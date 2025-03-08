@@ -23,9 +23,9 @@
 #include "plssvm/mpi/environment.hpp"        // plssvm::mpi::{is_initialized, init, is_finalized, finalize}
 
 #if defined(PLSSVM_HAS_HPX_BACKEND)
-    #include <hpx/execution.hpp>  // ::hpx::post
-    #include <hpx/hpx_start.hpp>  // ::hpx::{start, stop, finalize}
-    #include <hpx/runtime.hpp>    // ::hpx::{is_running, is_stopped}
+    #include "hpx/execution.hpp"  // ::hpx::post
+    #include "hpx/hpx_start.hpp"  // ::hpx::{start, stop, finalize}
+    #include "hpx/runtime.hpp"    // ::hpx::{is_running, is_stopped}
 #endif
 #if defined(PLSSVM_HAS_KOKKOS_BACKEND)
     #include "Kokkos_Core.hpp"  // Kokkos::is_initialized, Kokkos::is_finalized, Kokkos::initialize, Kokkos::finalize
