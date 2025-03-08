@@ -51,37 +51,57 @@ csvm::csvm(const target_platform target) {
             break;
     }
 
+    // update the target platform
     if (target == target_platform::automatic) {
         target_ = determine_default_target_platform();
     } else {
         target_ = target;
     }
 
-    plssvm::detail::log(verbosity_level::full,
-                        "\nUsing stdpar ({}; {}) as backend.\n\n",
-                        plssvm::detail::tracking::tracking_entry{ "dependencies", "stdpar_implementation", this->get_implementation_type() },
-                        plssvm::detail::tracking::tracking_entry{ "dependencies", "stdpar_version", detail::get_stdpar_version() });
-    PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "backend", "backend", plssvm::backend_type::stdpar }));
+    std::vector<std::string> device_names{};
 
-    // print found stdpar devices
-    plssvm::detail::log(verbosity_level::full,
-                        "Found {} stdpar device(s) for the target platform {}:\n",
-                        plssvm::detail::tracking::tracking_entry{ "backend", "num_devices", this->num_available_devices() },
-                        plssvm::detail::tracking::tracking_entry{ "backend", "target_platform", target_ });
-
+    if (comm_.size() > 1) {
 #if defined(PLSSVM_STDPAR_BACKEND_NVHPC_GPU)
-    cudaDeviceProp prop{};
-    cudaGetDeviceProperties(&prop, 0);
-    plssvm::detail::log_untracked(verbosity_level::full,
-                                  "  [0, {}, {}.{}]\n",
-                                  prop.name,
-                                  prop.major,
-                                  prop.minor);
-    PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "backend", "device", prop.name }));
+        cudaDeviceProp prop{};
+        cudaGetDeviceProperties(&prop, 0);
+        device_names.emplace_back(prop.name);
 #endif
+        mpi::detail::gather_and_print_csvm_information(comm_, plssvm::backend_type::stdpar, target_, device_names, fmt::format("{}", this->get_implementation_type()));
+    } else {
+        // use more detailed single rank command line output
+        plssvm::detail::log_untracked(verbosity_level::full,
+                                      comm_,
+                                      "\nUsing stdpar ({}; {}) as backend.\n"
+                                      "Found {} stdpar device(s) for the target platform {}:\n",
+                                      this->get_implementation_type(),
+                                      detail::get_stdpar_version(),
+                                      this->num_available_devices(),
+                                      target_);
+#if defined(PLSSVM_STDPAR_BACKEND_NVHPC_GPU)
+        cudaDeviceProp prop{};
+        cudaGetDeviceProperties(&prop, 0);
+        device_names.emplace_back(prop.name);
+        plssvm::detail::log_untracked(verbosity_level::full,
+                                      comm_,
+                                      "  [0, {}, {}.{}]\n",
+                                      prop.name,
+                                      prop.major,
+                                      prop.minor);
+#endif
+    }
 
     plssvm::detail::log_untracked(verbosity_level::full | verbosity_level::timing,
+                                  comm_,
                                   "\n");
+
+    PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "dependencies", "stdpar_implementation", this->get_implementation_type() }));
+    PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "dependencies", "stdpar_version", detail::get_stdpar_version() }));
+    PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "backend", "backend", plssvm::backend_type::stdpar }));
+    PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "backend", "target_platform", target_ }));
+    PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "backend", "num_devices", this->num_available_devices() }));
+    if (!device_names.empty()) {
+        PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "backend", "device", device_names.front() }));
+    }
 }
 
 implementation_type csvm::get_implementation_type() const noexcept {
