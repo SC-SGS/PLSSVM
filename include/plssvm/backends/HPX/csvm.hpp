@@ -19,6 +19,7 @@
 #include "plssvm/detail/move_only_any.hpp"  // plssvm::detail::move_only_any
 #include "plssvm/detail/type_traits.hpp"    // PLSSVM_REQUIRES, plssvm::detail::is_one_type_of
 #include "plssvm/matrix.hpp"                // plssvm::aos_matrix
+#include "plssvm/mpi/communicator.hpp"      // plssvm::mpi::communicator
 #include "plssvm/parameter.hpp"             // plssvm::parameter, plssvm::detail::has_only_parameter_named_args_v
 #include "plssvm/solver_types.hpp"          // plssvm::solver_type
 #include "plssvm/svm/csvc.hpp"              // plssvm::csvc
@@ -133,7 +134,17 @@ class csvc : public ::plssvm::csvc,
      * @throws plssvm::exception all exceptions thrown in the base class constructors
      */
     explicit csvc(const parameter params) :
-        ::plssvm::csvm{ params },
+        ::plssvm::csvm{ mpi::communicator{}, params },
+        ::plssvm::hpx::csvm{} { }
+
+    /**
+     * @brief Construct a new C-SVC using the HPX backend with the parameters given through @p params.
+     * @param[in] comm the used MPI communicator
+     * @param[in] params struct encapsulating all possible parameters
+     * @throws plssvm::exception all exceptions thrown in the base class constructors
+     */
+    csvc(mpi::communicator comm, const parameter params) :
+        ::plssvm::csvm{ std::move(comm), params },
         ::plssvm::hpx::csvm{} { }
 
     /**
@@ -143,7 +154,18 @@ class csvc : public ::plssvm::csvc,
      * @throws plssvm::exception all exceptions thrown in the base class constructors
      */
     explicit csvc(const target_platform target, const parameter params) :
-        ::plssvm::csvm{ params },
+        ::plssvm::csvm{ mpi::communicator{}, params },
+        ::plssvm::hpx::csvm{ target } { }
+
+    /**
+     * @brief Construct a new C-SVC using the HPX backend on the @p target platform with the parameters given through @p params.
+     * @param[in] comm the used MPI communicator
+     * @param[in] target the target platform used for this C-SVC
+     * @param[in] params struct encapsulating all possible SVM parameters
+     * @throws plssvm::exception all exceptions thrown in the base class constructors
+     */
+    explicit csvc(mpi::communicator comm, const target_platform target, const parameter params) :
+        ::plssvm::csvm{ std::move(comm), params },
         ::plssvm::hpx::csvm{ target } { }
 
     /**
@@ -153,7 +175,18 @@ class csvc : public ::plssvm::csvc,
      */
     template <typename... Args, PLSSVM_REQUIRES(::plssvm::detail::has_only_parameter_named_args_v<Args...>)>
     explicit csvc(Args &&...named_args) :
-        ::plssvm::csvm{ std::forward<Args>(named_args)... },
+        ::plssvm::csvm{ mpi::communicator{}, std::forward<Args>(named_args)... },
+        ::plssvm::hpx::csvm{} { }
+
+    /**
+     * @brief Construct a new C-SVC using the HPX backend and the optionally provided @p named_args.
+     * @param[in] comm the used MPI communicator
+     * @param[in] named_args the additional optional named arguments
+     * @throws plssvm::exception all exceptions thrown in the base class constructors
+     */
+    template <typename... Args, PLSSVM_REQUIRES(::plssvm::detail::has_only_parameter_named_args_v<Args...>)>
+    explicit csvc(mpi::communicator comm, Args &&...named_args) :
+        ::plssvm::csvm{ std::move(comm), std::forward<Args>(named_args)... },
         ::plssvm::hpx::csvm{} { }
 
     /**
@@ -164,7 +197,19 @@ class csvc : public ::plssvm::csvc,
      */
     template <typename... Args, PLSSVM_REQUIRES(::plssvm::detail::has_only_parameter_named_args_v<Args...>)>
     explicit csvc(const target_platform target, Args &&...named_args) :
-        ::plssvm::csvm{ std::forward<Args>(named_args)... },
+        ::plssvm::csvm{ mpi::communicator{}, std::forward<Args>(named_args)... },
+        ::plssvm::hpx::csvm{ target } { }
+
+    /**
+     * @brief Construct a new C-SVC using the HPX backend on the @p target platform and the optionally provided @p named_args.
+     * @param[in] comm the used MPI communicator
+     * @param[in] target the target platform used for this C-SVC
+     * @param[in] named_args the additional optional named-parameters
+     * @throws plssvm::exception all exceptions thrown in the base class constructors
+     */
+    template <typename... Args, PLSSVM_REQUIRES(::plssvm::detail::has_only_parameter_named_args_v<Args...>)>
+    csvc(mpi::communicator comm, const target_platform target, Args &&...named_args) :
+        ::plssvm::csvm{ std::move(comm), std::forward<Args>(named_args)... },
         ::plssvm::hpx::csvm{ target } { }
 };
 
@@ -181,7 +226,17 @@ class csvr : public ::plssvm::csvr,
      * @throws plssvm::exception all exceptions thrown in the base class constructors
      */
     explicit csvr(const parameter params) :
-        ::plssvm::csvm{ params },
+        ::plssvm::csvm{ mpi::communicator{}, params },
+        ::plssvm::hpx::csvm{} { }
+
+    /**
+     * @brief Construct a new C-SVR using the HPX backend with the parameters given through @p params.
+     * @param[in] comm the used MPI communicator
+     * @param[in] params struct encapsulating all possible parameters
+     * @throws plssvm::exception all exceptions thrown in the base class constructors
+     */
+    csvr(mpi::communicator comm, const parameter params) :
+        ::plssvm::csvm{ std::move(comm), params },
         ::plssvm::hpx::csvm{} { }
 
     /**
@@ -190,8 +245,19 @@ class csvr : public ::plssvm::csvr,
      * @param[in] params struct encapsulating all possible SVM parameters
      * @throws plssvm::exception all exceptions thrown in the base class constructors
      */
-    explicit csvr(const target_platform target, const parameter params) :
-        ::plssvm::csvm{ params },
+    csvr(const target_platform target, const parameter params) :
+        ::plssvm::csvm{ mpi::communicator{}, params },
+        ::plssvm::hpx::csvm{ target } { }
+
+    /**
+     * @brief Construct a new C-SVR using the HPX backend on the @p target platform with the parameters given through @p params.
+     * @param[in] comm the used MPI communicator
+     * @param[in] target the target platform used for this C-SVR
+     * @param[in] params struct encapsulating all possible SVM parameters
+     * @throws plssvm::exception all exceptions thrown in the base class constructors
+     */
+    csvr(mpi::communicator comm, const target_platform target, const parameter params) :
+        ::plssvm::csvm{ std::move(comm), params },
         ::plssvm::hpx::csvm{ target } { }
 
     /**
@@ -201,7 +267,18 @@ class csvr : public ::plssvm::csvr,
      */
     template <typename... Args, PLSSVM_REQUIRES(::plssvm::detail::has_only_parameter_named_args_v<Args...>)>
     explicit csvr(Args &&...named_args) :
-        ::plssvm::csvm{ std::forward<Args>(named_args)... },
+        ::plssvm::csvm{ mpi::communicator{}, std::forward<Args>(named_args)... },
+        ::plssvm::hpx::csvm{} { }
+
+    /**
+     * @brief Construct a new C-SVR using the HPX backend and the optionally provided @p named_args.
+     * @param[in] comm the used MPI communicator
+     * @param[in] named_args the additional optional named arguments
+     * @throws plssvm::exception all exceptions thrown in the base class constructors
+     */
+    template <typename... Args, PLSSVM_REQUIRES(::plssvm::detail::has_only_parameter_named_args_v<Args...>)>
+    explicit csvr(mpi::communicator comm, Args &&...named_args) :
+        ::plssvm::csvm{ std::move(comm), std::forward<Args>(named_args)... },
         ::plssvm::hpx::csvm{} { }
 
     /**
@@ -212,7 +289,19 @@ class csvr : public ::plssvm::csvr,
      */
     template <typename... Args, PLSSVM_REQUIRES(::plssvm::detail::has_only_parameter_named_args_v<Args...>)>
     explicit csvr(const target_platform target, Args &&...named_args) :
-        ::plssvm::csvm{ std::forward<Args>(named_args)... },
+        ::plssvm::csvm{ mpi::communicator{}, std::forward<Args>(named_args)... },
+        ::plssvm::hpx::csvm{ target } { }
+
+    /**
+     * @brief Construct a new C-SVR using the HPX backend on the @p target platform and the optionally provided @p named_args.
+     * @param[in] comm the used MPI communicator
+     * @param[in] target the target platform used for this C-SVR
+     * @param[in] named_args the additional optional named-parameters
+     * @throws plssvm::exception all exceptions thrown in the base class constructors
+     */
+    template <typename... Args, PLSSVM_REQUIRES(::plssvm::detail::has_only_parameter_named_args_v<Args...>)>
+    csvr(mpi::communicator comm, const target_platform target, Args &&...named_args) :
+        ::plssvm::csvm{ std::move(comm), std::forward<Args>(named_args)... },
         ::plssvm::hpx::csvm{ target } { }
 };
 

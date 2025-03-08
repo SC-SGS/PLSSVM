@@ -10,6 +10,8 @@
  * @brief Contains the googletest main function. Sets the DeathTest to "threadsafe" execution instead of "fast".
  */
 
+#include "plssvm/environment.hpp"  // plssvm::environment::scope_guard
+
 #include "gtest/gtest.h"  // RUN_ALL_TESTS, ::testing::{InitGoogleTest, GTEST_FLAG},GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST definitions
 
 #include <cstdlib>  // std::atexit
@@ -48,6 +50,9 @@ GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(DevicePtrDeathTest);
 GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(Exception);
 
 int main(int argc, char **argv) {
+    // initialize MPI environment only via the plssvm::scope_guard (by explicitly specifying NO backend)
+    [[maybe_unused]] plssvm::environment::scope_guard mpi_guard{ {} };
+
     ::testing::InitGoogleTest(&argc, argv);
 
     // prevent problems with fork() in the presence of multiple threads

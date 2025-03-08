@@ -12,7 +12,7 @@
 #include "plssvm/backend_types.hpp"                                                // plssvm::csvm_to_backend_type_v
 #include "plssvm/backends/HPX/csvm.hpp"                                            // plssvm::hpx::{csvm, csvc, csvr}
 #include "plssvm/backends/HPX/exceptions.hpp"                                      // plssvm::hpx::backend_exception
-#include "plssvm/backends/HPX/kernel/cg_explicit/blas.hpp"                         // plssvm::hpx::device_kernel_symm
+#include "plssvm/backends/HPX/kernel/cg_explicit/blas.hpp"                         // plssvm::hpx::{device_kernel_symm, device_ce_kernel_symm_mirror}
 #include "plssvm/backends/HPX/kernel/cg_explicit/kernel_matrix_assembly.hpp"       // plssvm::hpx::device_kernel_assembly
 #include "plssvm/backends/HPX/kernel/cg_implicit/kernel_matrix_assembly_blas.hpp"  // plssvm::hpx::device_kernel_assembly_symm
 #include "plssvm/backends/HPX/kernel/predict_kernel.hpp"                           // plssvm::hpx::{device_kernel_w_linear, device_kernel_predict_linear, device_kernel_predict}
@@ -212,6 +212,7 @@ using plssvm::hpx::detail::device_kernel_assembly_symm;
 using plssvm::hpx::detail::device_kernel_predict;
 using plssvm::hpx::detail::device_kernel_predict_linear;
 using plssvm::hpx::detail::device_kernel_symm;
+using plssvm::hpx::detail::device_kernel_symm_mirror;
 using plssvm::hpx::detail::device_kernel_w_linear;
 #include "tests/backends/generic_csvm_tests.hpp"  // generic backend C-SVM tests to instantiate
 
