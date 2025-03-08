@@ -14,6 +14,7 @@
 #pragma once
 
 #include "plssvm/backends/OpenMP/csvm.hpp"  // plssvm::openmp::csvm
+#include "plssvm/mpi/communicator.hpp"      // plssvm::mpi::communicator
 #include "plssvm/svm/csvm.hpp"              // plssvm::csvm
 
 /**
@@ -25,7 +26,7 @@ class mock_openmp_csvm final : public plssvm::openmp::csvm {
   public:
     template <typename... Args>
     explicit mock_openmp_csvm(Args &&...args) :
-        plssvm::csvm{ std::forward<Args>(args)... },
+        plssvm::csvm{ plssvm::mpi::communicator{}, std::forward<Args>(args)... },
         base_type{} { }
 
     // make protected member functions public

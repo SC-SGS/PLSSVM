@@ -42,6 +42,16 @@ void gather_and_print_solver_information(const communicator &comm, solver_type r
  */
 void gather_and_print_csvm_information(const communicator &comm, backend_type rank_backend, target_platform rank_target, const std::vector<std::string> &rank_devices, const std::optional<std::string> &additional_info = std::nullopt);
 
+/**
+ * @brief Communicate the CSVM information, including the used backend, target platform, and device names, from each MPI rank in @p comm to @p comm's main rank and outputs the result to the console.
+ * @param[in] comm the communicator to gather the solver information from
+ * @param[in] rank_backend the backend used on the current MPI rank, gathered on the main MPI rank
+ * @param[in] rank_target the target platform used on the current MPI rank, gathered on the main MPI rank
+ * @param[in] additional_info optional additional information used on the current MPI rank, gathered on the main MPI rank
+ */
+void gather_and_print_csvm_information(const communicator &comm, backend_type rank_backend, target_platform rank_target, const std::optional<std::string> &additional_info = std::nullopt);
+
+
 }  // namespace plssvm::mpi::detail
 
 #endif  // PLSSVM_MPI_DETAIL_INFORMATION_HPP_

@@ -91,4 +91,27 @@ void gather_and_print_csvm_information(const communicator &comm, backend_type ra
     }
 }
 
+void gather_and_print_csvm_information(const communicator &comm, backend_type rank_backend, target_platform rank_target, const std::optional<std::string> &additional_info) {
+    // gather the information from all MPI ranks on the main MPI rank
+    const std::vector<backend_type> backends_per_ranks = comm.gather(rank_backend);
+    const std::vector<target_platform> targets_per_rank = comm.gather(rank_target);
+    // get the potentially additional information
+    const std::vector<std::string> additional_info_per_rank = comm.gather(additional_info.value_or(""));
+
+    // output the information (again, only on the main MPI rank)
+    ::plssvm::detail::log_untracked(verbosity_level::full,
+                                    comm,
+                                    "\nThe setup across {} MPI rank(s) is:\n",
+                                    comm.size());
+    for (std::size_t i = 0; i < comm.size(); ++i) {
+        ::plssvm::detail::log_untracked(verbosity_level::full,
+                                        comm,
+                                        "  - {}: {}{} for {}\n",
+                                        i,
+                                        backends_per_ranks[i],
+                                        additional_info_per_rank[i].empty() ? "" : fmt::format(" ({})", additional_info_per_rank[i]),
+                                        targets_per_rank[i]);
+    }
+}
+
 }  // namespace plssvm::mpi::detail
