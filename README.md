@@ -447,6 +447,8 @@ ctest
 
 **Note:** the stdpar tests may fail if executed in parallel via `ctest -j $(nproc)`.
 
+**Note:** our tests do not support the execution with more than one MPI process launched via `mpirun`.
+
 ### Generating Test Coverage Results
 
 To enable the generation of test coverage reports using `locv` the library must be compiled using the custom `Coverage` `CMAKE_BUILD_TYPE`.
