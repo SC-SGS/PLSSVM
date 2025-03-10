@@ -230,28 +230,28 @@ pipeline {
                 }
             }
         }
-        stage('install python requirements') {
-            steps {
-              script{
-                def labels = onlineNodes('sgs_workstation')
-                def builders = [: ]
-                for (x in labels){
-                    def label = x
-                        builders[label] = {
-                            node(label) {
-                              sh '''
-                              hostname
-                              cd ${WORKSPACE}/plssvm
-                              python3 -m pip install --user -r  install/python_requirements.txt
-                              '''
-                          }
-                      }
+        // stage('install python requirements') {
+        //     steps {
+        //       script{
+        //         def labels = onlineNodes('sgs_workstation')
+        //         def builders = [: ]
+        //         for (x in labels){
+        //             def label = x
+        //                 builders[label] = {
+        //                     node(label) {
+        //                       sh '''
+        //                       hostname
+        //                       cd ${WORKSPACE}/plssvm
+        //                       python3 -m pip install --user -r  install/python_requirements.txt
+        //                       '''
+        //                   }
+        //               }
 
-                  }
-                parallel builders
-                }
-            }
-        }
+        //           }
+        //         parallel builders
+        //         }
+        //     }
+        // }
 
 
         stage('Build and Test'){
