@@ -546,6 +546,7 @@ pipeline {
                                 ls -l
                                 ls -l build-$(spack arch)-$(echo ${installpath##*-}| cut -c1-7)
                                 cd build-$(spack arch)-$(echo ${installpath##*-}| cut -c1-7)/spack-build-$(echo ${installpath##*-}| cut -c1-7)
+                                export ACPP_RT_NO_JIT_CACHE_POPULATION=1
                                 export ACPP_APPDB_DIR=${WORKSPACE}/acpp/jit-${BACKEND}-${ARCHITECTURE}-${BUILD_TYPE}
 
 
