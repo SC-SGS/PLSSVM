@@ -120,7 +120,7 @@ struct parameter {
      * @param[in] coef0_p the coef0 used in the polynomial kernel function
      * @param[in] cost_p the cost used in all kernel functions
      */
-    constexpr parameter(const kernel_function_type kernel_p, const int degree_p, const gamma_type gamma_p, const real_type coef0_p, const real_type cost_p) :
+    parameter(const kernel_function_type kernel_p, const int degree_p, const gamma_type gamma_p, const real_type coef0_p, const real_type cost_p) :
         kernel_type{ kernel_p },
         degree{ degree_p },
         gamma{ gamma_p },
@@ -137,7 +137,7 @@ struct parameter {
      * @param[in] named_args the potential named-parameters
      */
     template <typename... Args, PLSSVM_REQUIRES(detail::has_only_named_args_v<Args...>)>
-    constexpr explicit parameter(const parameter &params, Args &&...named_args) :
+    explicit parameter(const parameter &params, Args &&...named_args) :
         parameter{ params } {
         this->set_named_arguments(std::forward<Args>(named_args)...);
         // sanity check the provided parameter values
