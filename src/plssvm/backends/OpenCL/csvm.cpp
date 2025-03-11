@@ -125,7 +125,7 @@ csvm::csvm(const target_platform target) {
         plssvm::detail::log_untracked(verbosity_level::full | verbosity_level::timing,
                                       comm_,
                                       "\nOpenCL kernel JIT compilation done in {}.\n",
-                                      jit_duration);
+                                      info.duration);
         plssvm::detail::log_untracked(verbosity_level::full,
                                       comm_,
                                       "\nUsing OpenCL (target version: {}) as backend.\n",
