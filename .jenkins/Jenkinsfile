@@ -151,17 +151,10 @@ pipeline {
                                         git pull || true
                                     fi
 
-                                    #if  [ ! -f $SPACK_SYSTEM_CONFIG_PATH/compilers.yaml ]; then
-                                    #    # TODO: check for existance of cxx and CC Compilers
-                                    #    spack compiler find --scope system || true
-                                    #    # rm broken compiler
-                                    #    spack compiler rm -a gcc@10.5.0 || true
-                                    #fi
-                                    # rm broken compiler
-                                    spack compiler rm -a gcc@10.5.0 || true
-                                    # if [[ -f ~/.spack/linux/compilers.yaml ]]; then
-                                    #     rm ~/.spack/linux/compilers.yaml
-                                    # fi
+
+
+                                    spack compiler rm -a clang@=18.1.3 || true
+                                    spack compiler rm -a clang@=18.1.8 || true
 
 
                                     if [ ! -f $SPACK_SYSTEM_CONFIG_PATH/config.yaml ]; then
