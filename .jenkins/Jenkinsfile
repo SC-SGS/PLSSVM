@@ -371,7 +371,7 @@ pipeline {
                 stages{
                     stage('Build PLSSVM'){
                         options{
-                            timeout(time: 2, unit: 'HOURS')
+                            timeout(time: 6, unit: 'HOURS')
                         }
                         steps{
                                 sh ''' #!/bin/bash
