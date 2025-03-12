@@ -171,8 +171,7 @@ pipeline {
                                     spack install yq arch=$(spack arch) || true
                                     spack install cmake@3.31.5 arch=$(spack arch) || true
                                     spack load --first yq arch=$(spack arch)
-                                    spack external find --scope system || true
-                                    spack external find --scope system cuda hip ||
+                                    spack external find --scope system hip ||
                                     yq -i 'del(.packages.curl)' $SPACK_SYSTEM_CONFIG_PATH/packages.yaml
 
                                     spack uninstall -a -y plssvm@develop || true
