@@ -409,9 +409,12 @@ Available configure presets:
   "acpp"                    - AdaptiveCpp SYCL backend
   "acpp_python"             - AdaptiveCpp SYCL backend + Python bindings
   "acpp_test"               - AdaptiveCpp SYCL backend tests
-  "dpcpp"                   - DPC++/icpx SYCL backend
-  "dpcpp_python"            - DPC++/icpx backend + Python bindings
-  "dpcpp_test"              - DPC++/icpx backend tests
+  "dpcpp"                   - DPC++ SYCL backend
+  "dpcpp_python"            - DPC++ backend + Python bindings
+  "dpcpp_test"              - DPC++ backend tests
+  "icpx"                    - icpx SYCL backend
+  "icpx_python"             - icpx backend + Python bindings
+  "icpx_test"               - icpx backend tests
   "kokkos"                  - Kokkos backend
   "kokkos_python"           - Kokkos backend + Python bindings
   "kokkos_test"             - Kokkos backend tests
@@ -430,6 +433,8 @@ cmake --workflow --preset cuda_test
 However, these additional options can be enabled using normal CMake options. 
 
 **Note**: the `all` presets always exclude the `stdpar` backend since it is currently not supported to enable them with any other backend.
+
+**Note**: the only difference between the dpcpp and icpx presets is the automatically set `CMAKE_CXX_COMPILER`. Internally, both presets use the same SYCL implementation.
 
 ### Running the Tests
 
