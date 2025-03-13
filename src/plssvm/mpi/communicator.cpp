@@ -172,7 +172,7 @@ const std::optional<std::vector<std::size_t>> &communicator::get_load_balancing_
     return load_balancing_weights_;
 }
 
-bool operator==(const communicator &lhs, const communicator &rhs) noexcept {
+bool operator==([[maybe_unused]] const communicator &lhs, [[maybe_unused]] const communicator &rhs) noexcept {
 #if defined(PLSSVM_HAS_MPI_ENABLED)
     // check whether the two MPI communicators are equal, i.e., their comparison result is MPI_IDENT
     int result{};
