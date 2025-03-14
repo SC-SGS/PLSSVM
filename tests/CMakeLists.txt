@@ -273,7 +273,7 @@ add_test(NAME MainScale/executable_save_scaling_factors
 )
 
 # add minimal run test for the classification task
-add_test(NAME MainTrainClassification/executable_minimal COMMAND ${PLSSVM_EXECUTABLE_TRAIN_NAME} "${PLSSVM_CLASSIFICATION_TEST_FILE}"
+add_test(NAME MainTrainClassification/executable_minimal COMMAND ${PLSSVM_EXECUTABLE_TRAIN_NAME} -s 0 "${PLSSVM_CLASSIFICATION_TEST_FILE}"
                                                                  "${CMAKE_CURRENT_BINARY_DIR}/test_classification.libsvm.model"
 )
 add_test(NAME MainPredictClassification/executable_minimal
@@ -282,7 +282,7 @@ add_test(NAME MainPredictClassification/executable_minimal
                  "${CMAKE_CURRENT_BINARY_DIR}/test_classification.libsvm.predict" # predict file (result)
 )
 # add minimal run test for the regression task
-add_test(NAME MainTrainRegression/executable_minimal COMMAND ${PLSSVM_EXECUTABLE_TRAIN_NAME} "${PLSSVM_REGRESSION_TEST_FILE}"
+add_test(NAME MainTrainRegression/executable_minimal COMMAND ${PLSSVM_EXECUTABLE_TRAIN_NAME} -s 1 "${PLSSVM_REGRESSION_TEST_FILE}"
                                                              "${CMAKE_CURRENT_BINARY_DIR}/test_regression.libsvm.model"
 )
 add_test(NAME MainPredictRegression/executable_minimal
