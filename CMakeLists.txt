@@ -281,10 +281,10 @@ if (uppercase_CMAKE_BUILD_TYPE MATCHES COVERAGE)
     add_custom_target(
         coverage
         COMMAND lcov --zerocounters --directory .
-        COMMAND lcov --capture -d . --initial --output-file test_base.info
+        COMMAND lcov --capture -d . --initial --output-file test_base.info --ignore-errors mismatch,gcov
         COMMAND mkdir -p coverage
         COMMAND ${CMAKE_MAKE_PROGRAM} test || true
-        COMMAND lcov --capture -d . --output-file test_test.info
+        COMMAND lcov --capture -d . --output-file test_test.info --ignore-errors mismatch,gcov
         COMMAND lcov --add-tracefile test_base.info --add-tracefile test_test.info -o test_total.info
         COMMAND lcov --remove test_total.info '/usr/*' '*/build/*' '*/tests/*' '*/_deps/*' -o test_clean.info
         COMMAND genhtml test_clean.info --output-directory coverage --title "PLSSVM Test Coverage" --show-details --legend
