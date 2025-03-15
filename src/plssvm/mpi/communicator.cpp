@@ -30,9 +30,6 @@
 
 namespace plssvm::mpi {
 
-communicator::communicator() :
-    load_balancing_weights_{ std::nullopt } { }
-
 communicator::communicator(std::vector<std::size_t> weights) {
     // set load balancing weights
     this->set_load_balancing_weights(std::move(weights));

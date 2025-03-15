@@ -42,7 +42,7 @@ class communicator {
      * @brief Default construct an MPI communicator wrapper using `MPI_COMM_WORLD`.
      * @details If `PLSSVM_HAS_MPI_ENABLED` is undefined, does nothing.
      */
-    communicator();
+    communicator() = default;
 
     /**
      * @brief Default construct an MPI communicator wrapper using `MPI_COMM_WORLD` and set the load balancing @p weights.
@@ -236,7 +236,7 @@ class communicator {
     MPI_Comm comm_{ MPI_COMM_WORLD };
 #endif
     /// The MPI load balancing weights. Always guaranteed to be the same size as the communicator size.
-    std::optional<std::vector<std::size_t>> load_balancing_weights_{};
+    std::optional<std::vector<std::size_t>> load_balancing_weights_{ std::nullopt };
 };
 
 }  // namespace plssvm::mpi
