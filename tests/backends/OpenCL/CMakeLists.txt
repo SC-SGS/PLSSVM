@@ -28,6 +28,26 @@ include(GoogleTest)
 include(${PROJECT_SOURCE_DIR}/cmake/discover_tests_with_death_test_filter.cmake)
 discover_tests_with_death_test_filter(${PLSSVM_OPENCL_TEST_NAME})
 
+# add minimal run test for the classification task with the OpenCL backend
+add_test(NAME MainTrainClassificationOpenCL/executable_minimal COMMAND ${PLSSVM_EXECUTABLE_TRAIN_NAME} -s 0 -b opencl "${PLSSVM_CLASSIFICATION_TEST_FILE}"
+         "${CMAKE_CURRENT_BINARY_DIR}/test_classification.libsvm.model"
+)
+add_test(NAME MainPredictClassificationOpenCL/executable_minimal
+         COMMAND ${PLSSVM_EXECUTABLE_PREDICT_NAME} -b opencl "${CMAKE_CURRENT_LIST_DIR}/../../data/libsvm/classification/5x4.libsvm" # test file
+         "${CMAKE_CURRENT_LIST_DIR}/../../data/model/classification/5x4.libsvm.model" # model file
+         "${CMAKE_CURRENT_BINARY_DIR}/test_classification.libsvm.predict" # predict file (result)
+)
+
+# add minimal run test for the regression task with the OpenCL backend
+add_test(NAME MainTrainRegressionOpenCL/executable_minimal COMMAND ${PLSSVM_EXECUTABLE_TRAIN_NAME} -s 1 -b opencl "${PLSSVM_REGRESSION_TEST_FILE}"
+         "${CMAKE_CURRENT_BINARY_DIR}/test_regression.libsvm.model"
+)
+add_test(NAME MainPredictRegressionOpenCL/executable_minimal
+         COMMAND ${PLSSVM_EXECUTABLE_PREDICT_NAME} -b opencl "${CMAKE_CURRENT_LIST_DIR}/../../data/libsvm/regression/5x4.libsvm" # test file
+         "${CMAKE_CURRENT_LIST_DIR}/../../data/model/regression/5x4.libsvm.model" # model file
+         "${CMAKE_CURRENT_BINARY_DIR}/test_regression.libsvm.predict" # predict file (result)
+)
+
 # add test as coverage dependency
 if (TARGET coverage)
     add_dependencies(coverage ${PLSSVM_OPENCL_TEST_NAME})
