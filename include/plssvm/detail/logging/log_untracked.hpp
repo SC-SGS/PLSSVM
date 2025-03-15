@@ -37,7 +37,7 @@ template <typename... Args>
 void log_untracked(const verbosity_level verb, const std::string_view msg, Args &&...args) {
     // if the verbosity level is quiet, nothing is logged
     // otherwise verb must contain the bit-flag set by plssvm::verbosity
-    if (verbosity != verbosity_level::quiet && (verb & verbosity) != verbosity_level::quiet) {
+    if (verbosity != verbosity_level::quiet && ((verb & verbosity) != verbosity_level::quiet || verbosity == plssvm::verbosity_level::full)) {
         if ((verb & verbosity_level::warning) != verbosity_level::quiet) {
             std::clog << fmt::format(fmt::fg(fmt::color::orange), fmt::runtime(msg), std::forward<Args>(args)...) << std::flush;
         } else {
