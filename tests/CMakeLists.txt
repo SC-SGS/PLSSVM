@@ -194,6 +194,8 @@ set(PLSSVM_BASE_TEST_SOURCES
     ${CMAKE_CURRENT_LIST_DIR}/detail/data_distribution.cpp
     ${CMAKE_CURRENT_LIST_DIR}/detail/logging/log.cpp
     ${CMAKE_CURRENT_LIST_DIR}/detail/logging/log_untracked.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/detail/logging/mpi_log.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/detail/logging/mpi_log_untracked.cpp
     ${CMAKE_CURRENT_LIST_DIR}/detail/memory_size.cpp
     ${CMAKE_CURRENT_LIST_DIR}/detail/move_only_any.cpp
     ${CMAKE_CURRENT_LIST_DIR}/detail/operators.cpp
