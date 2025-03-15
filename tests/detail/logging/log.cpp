@@ -9,10 +9,10 @@
  */
 
 #include "plssvm/detail/logging/log.hpp"
-#include "plssvm/detail/logging/log_untracked.hpp"
 
 #include "tests/utility.hpp"  // util::redirect_output
 
+#include "gmock/gmock.h"  // EXPECT_THAT, ::testing::HasSubstr
 #include "gtest/gtest.h"  // TEST_F, EXPECT_EQ, EXPECT_TRUE, ::testing::Test
 
 class Logger : public ::testing::Test,
@@ -72,4 +72,18 @@ TEST_F(Logger, mismatching_verbosity_level) {
 
     // there should not be any output
     EXPECT_TRUE(this->get_capture().empty());
+}
+
+class WarningLogger : public ::testing::Test,
+                      public util::redirect_output<&std::clog> { };
+
+TEST_F(WarningLogger, enabled_logging_warning) {
+    // explicitly enable logging
+    plssvm::verbosity = plssvm::verbosity_level::full;
+
+    // log a message
+    plssvm::detail::log(plssvm::verbosity_level::warning, "WARNING!");
+
+    // check captured output
+    EXPECT_THAT(this->get_capture(), ::testing::HasSubstr("WARNING!"));
 }
