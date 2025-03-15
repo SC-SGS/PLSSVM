@@ -315,6 +315,10 @@ if (uppercase_CMAKE_BUILD_TYPE MATCHES COVERAGE)
     # assertions must be available for a coverage analysis
     message(STATUS "Enabling assertions since they are necessary for the coverage analysis.")
     set(PLSSVM_ENABLE_ASSERTS ON CACHE BOOL "" FORCE)
+    # LTO must be disabled for a coverage analysis
+    message(STATUS "Disabling LTO since it may interfere with the coverage analysis.")
+    set(PLSSVM_ENABLE_LTO OFF CACHE BOOL "" FORCE)
+    
     # check that the necessary executables are available
     find_program(PLSSVM_LCOV lcov REQUIRED)
     find_program(PLSSVM_GENHTML genhtml REQUIRED)
