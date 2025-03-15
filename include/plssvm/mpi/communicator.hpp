@@ -162,20 +162,6 @@ class communicator {
     [[nodiscard]] std::vector<std::chrono::milliseconds> gather(const std::chrono::milliseconds &duration) const;
 
     /**
-     * @brief Reduce the @p matr on all MPI ranks by summing all elements elementwise.
-     * @details If `PLSSVM_HAS_MPI_ENABLED` is undefined, does not mutate `matr`.
-     * @tparam T the value type of the matrix
-     * @tparam layout the matrix layout
-     * @param[in,out] matr the matrix to reduce, changed inplace
-     */
-    template <typename T, layout_type layout>
-    void allreduce_inplace([[maybe_unused]] plssvm::matrix<T, layout> &matr) const {
-#if defined(PLSSVM_HAS_MPI_ENABLED)
-        PLSSVM_MPI_ERROR_CHECK(MPI_Allreduce(MPI_IN_PLACE, matr.data(), static_cast<int>(matr.size_padded()), detail::mpi_datatype<T>(), MPI_SUM, comm_));
-#endif
-    }
-
-    /**
      * @brief Gather the @p value from each MPI rank and distribute the result to all MPI ranks.
      * @details If `PLSSVM_HAS_MPI_ENABLED` is undefined, returns the provided @p value wrapped in a `std::vector`.
      * @tparam T the type of the values to gather
@@ -190,6 +176,20 @@ class communicator {
         return result;
 #else
         return { value };
+#endif
+    }
+
+    /**
+     * @brief Reduce the @p matr on all MPI ranks by summing all elements elementwise.
+     * @details If `PLSSVM_HAS_MPI_ENABLED` is undefined, does not mutate `matr`.
+     * @tparam T the value type of the matrix
+     * @tparam layout the matrix layout
+     * @param[in,out] matr the matrix to reduce, changed inplace
+     */
+    template <typename T, layout_type layout>
+    void allreduce_inplace([[maybe_unused]] plssvm::matrix<T, layout> &matr) const {
+#if defined(PLSSVM_HAS_MPI_ENABLED)
+        PLSSVM_MPI_ERROR_CHECK(MPI_Allreduce(MPI_IN_PLACE, matr.data(), static_cast<int>(matr.size_padded()), detail::mpi_datatype<T>(), MPI_SUM, comm_));
 #endif
     }
 
