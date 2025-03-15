@@ -298,6 +298,7 @@ list(
 ########################################################################################################################
 # coverage analysis only possible with the Coverage CMAKE_BUILD_TYPE
 if (uppercase_CMAKE_BUILD_TYPE MATCHES COVERAGE)
+    list(APPEND CMAKE_MESSAGE_INDENT "coverage:  ")
     # must be linux
     if (WIN32 OR APPLE)
         message(FATAL_ERROR "Only Linux is supported for the coverage analysis.")
@@ -306,6 +307,8 @@ if (uppercase_CMAKE_BUILD_TYPE MATCHES COVERAGE)
     if (NOT CMAKE_CXX_COMPILER_ID MATCHES "GNU")
         message(FATAL_ERROR "Only GCC is supported for the coverage analysis.")
     endif ()
+    message(STATUS "Enable code coverage analysis using lcov and genhtml.")
+    
     # tests must be available for a coverage analysis
     message(STATUS "Enabling tests since they are necessary for the coverage analysis.")
     set(PLSSVM_ENABLE_TESTING ON CACHE BOOL "" FORCE)
@@ -347,6 +350,7 @@ if (uppercase_CMAKE_BUILD_TYPE MATCHES COVERAGE)
         COMMAND ${CMAKE_MAKE_PROGRAM} clean
         COMMAND ${CMAKE_COMMAND} -P "${CMAKE_CURRENT_SOURCE_DIR}/cmake/delete_coverage_files.cmake" TARGET clean_coverage
     )
+    list(POP_BACK CMAKE_MESSAGE_INDENT)
 endif ()
 
 ########################################################################################################################
