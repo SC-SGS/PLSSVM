@@ -39,7 +39,7 @@ void log_untracked(const verbosity_level verb, const std::string_view msg, Args 
     // otherwise verb must contain the bit-flag set by plssvm::verbosity
     if (verbosity != verbosity_level::quiet && (verb & verbosity) != verbosity_level::quiet) {
         if ((verb & verbosity_level::warning) != verbosity_level::quiet) {
-            std::clog << fmt::format(fmt::runtime(msg), std::forward<Args>(args)...) << std::flush;
+            std::clog << fmt::format(fmt::fg(fmt::color::orange), fmt::runtime(msg), std::forward<Args>(args)...) << std::flush;
         } else {
             std::cout << fmt::format(fmt::runtime(msg), std::forward<Args>(args)...) << std::flush;
         }
