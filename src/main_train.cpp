@@ -204,8 +204,8 @@ int main(int argc, char *argv[]) {
 
 #if defined(PLSSVM_HAS_MPI_ENABLED)
         if (cmd_parser.performance_tracking_filename.empty()) {
-            // be sure that the output tracking results are correctly sequentialized
-            comm.sequentialize([&]() {
+            // be sure that the output tracking results are correctly serialized
+            comm.serialize([&]() {
                 PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_SAVE(cmd_parser.performance_tracking_filename);
             });
         } else {

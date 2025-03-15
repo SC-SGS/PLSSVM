@@ -110,11 +110,12 @@ class communicator {
 
     /**
      * @brief Execute the provided function @p f in a sequential manner across all MPI ranks in the current MPI communicator.
+     * @details The order is determined by the MPI ranks' values.
      * @tparam Func the type of the function
      * @param[in] f the function to execute
      */
     template <typename Func>
-    void sequentialize(Func f) const {
+    void serialize(Func f) const {
         // iterate over all potential MPI ranks in the current communicator
         for (std::size_t rank = 0; rank < this->size(); ++rank) {
             // call function only if MY rank matches the current iteration
