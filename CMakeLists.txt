@@ -315,8 +315,9 @@ if (uppercase_CMAKE_BUILD_TYPE MATCHES COVERAGE)
     # assertions must be available for a coverage analysis
     message(STATUS "Enabling assertions since they are necessary for the coverage analysis.")
     set(PLSSVM_ENABLE_ASSERTS ON CACHE BOOL "" FORCE)
-
-    message(STATUS "Enable code coverage analysis using lcov.")
+    # check that the necessary executables are available
+    find_program(PLSSVM_LCOV lcov REQUIRED)
+    find_program(PLSSVM_GENHTML genhtml REQUIRED)
 
     # Create the coverage target. Run coverage tests with 'make coverage'
     add_custom_target(
