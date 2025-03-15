@@ -17,7 +17,7 @@
     #include "mpi.h"  // MPI_THREAD_FUNNELED, MPI_Init_thread, MPI_Finalize, MPI_Initialized, MPI_Finalized
 #endif
 
-#include <cstdlib>  // EXIT_FAILURE, std::getenv
+#include <cstdlib>  // EXIT_FAILURE, std::getenv, std::abort
 
 namespace plssvm::mpi {
 
@@ -52,6 +52,8 @@ void finalize() {
 void abort_world() {
 #if defined(PLSSVM_HAS_MPI_ENABLED)
     PLSSVM_MPI_ERROR_CHECK(MPI_Abort(MPI_COMM_WORLD, EXIT_FAILURE));
+#else
+    std::abort();
 #endif
 }
 

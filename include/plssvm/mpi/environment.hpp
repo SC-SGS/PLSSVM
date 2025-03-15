@@ -35,7 +35,7 @@ void init(int &argc, char **argv);
 void finalize();
 /**
  * @brief Abort the MPI environment associated with `MPI_COMM_WORLD`.
- * @details If `PLSSVM_HAS_MPI_ENABLED` is undefined, does nothing.
+ * @details If `PLSSVM_HAS_MPI_ENABLED` is undefined, calls std::abort.
  */
 void abort_world();
 
