@@ -286,7 +286,7 @@ add_test(NAME MainScale/executable_save_scaling_factors
 )
 
 # add minimal run test for the classification task
-add_test(NAME MainTrainClassification/executable_minimal COMMAND ${PLSSVM_EXECUTABLE_TRAIN_NAME} -s 0 "${PLSSVM_CLASSIFICATION_TEST_FILE}"
+add_test(NAME MainTrainClassification/executable_minimal COMMAND ${PLSSVM_EXECUTABLE_TRAIN_NAME} -s 0 -i 10 "${PLSSVM_CLASSIFICATION_TEST_FILE}"
                                                                  "${CMAKE_CURRENT_BINARY_DIR}/test_classification.libsvm.model"
 )
 add_test(NAME MainPredictClassification/executable_minimal
@@ -304,6 +304,21 @@ add_test(NAME MainPredictRegression/executable_minimal
                  "${CMAKE_CURRENT_LIST_DIR}/data/model/regression/5x4.libsvm.model" # model file
                  "${CMAKE_CURRENT_BINARY_DIR}/test_regression.libsvm.predict" # predict file (result)
 )
+
+# if performance tracking is enabled, also add minimal run tests
+if (PLSSVM_ENABLE_PERFORMANCE_TRACKING)
+    add_test(NAME MainTrainPerformanceTracking/executable_minimal COMMAND ${PLSSVM_EXECUTABLE_TRAIN_NAME} -s 0
+             --performance_tracking "${CMAKE_CURRENT_BINARY_DIR}/track.yaml"
+             "${PLSSVM_CLASSIFICATION_TEST_FILE}" "${CMAKE_CURRENT_BINARY_DIR}/test_classification.libsvm.model"
+    )
+    add_test(NAME MainPredictPerformanceTracking/executable_minimal
+             COMMAND ${PLSSVM_EXECUTABLE_PREDICT_NAME}
+             --performance_tracking "${CMAKE_CURRENT_BINARY_DIR}/track.yaml"
+             "${CMAKE_CURRENT_LIST_DIR}/data/libsvm/classification/5x4.libsvm" # test file
+             "${CMAKE_CURRENT_LIST_DIR}/data/model/classification/5x4.libsvm.model" # model file
+             "${CMAKE_CURRENT_BINARY_DIR}/test_classification.libsvm.predict" # predict file (result)
+    )
+endif ()
 
 # add failing test (must return with a non-zero exit code)
 add_test(NAME MainTrain/executable_fail COMMAND ${PLSSVM_EXECUTABLE_TRAIN_NAME} " ")
