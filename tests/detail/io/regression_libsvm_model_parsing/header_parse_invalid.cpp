@@ -12,8 +12,9 @@
 #include "plssvm/detail/io/regression_libsvm_model_parsing.hpp"  // functions to test
 #include "plssvm/exceptions/exceptions.hpp"                      // plssvm::invalid_file_format_exception
 
-#include "tests/custom_test_macros.hpp"  // EXPECT_THROW_WHAT
+#include "tests/custom_test_macros.hpp"  // EXPECT_THROW_WHAT, EXPECT_THROW_WHAT_MATCHER
 
+#include "gmock/gmock.h"  // ::testing::HasSubstr
 #include "gtest/gtest.h"  // TEST
 
 #include <string>  // std::string
@@ -267,4 +268,24 @@ TEST(LIBSVMRegressionModelHeaderParseInvalid, too_many_sv_according_to_header) {
     EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_libsvm_model_header_regression(reader.lines())),
                       plssvm::invalid_file_format_exception,
                       "Found 7 support vectors, but it should be 6!");
+}
+
+TEST(LIBSVMRegressionModelHeaderParseInvalid, wrong_nr_class) {
+    // parse the LIBSVM file
+    const std::string filename = PLSSVM_TEST_PATH "/data/model/regression/invalid/wrong_nr_class.libsvm.model";
+    plssvm::detail::io::file_reader reader{ filename };
+    reader.read_lines('#');
+    EXPECT_THROW_WHAT_MATCHER(std::ignore = (plssvm::detail::io::parse_libsvm_model_header_regression(reader.lines())),
+                              plssvm::invalid_file_format_exception,
+                              ::testing::HasSubstr("The number of classes (nr_class) is 3, but must be 2!"));
+}
+
+TEST(LIBSVMRegressionModelHeaderParseInvalid, wrong_num_rho) {
+    // parse the LIBSVM file
+    const std::string filename = PLSSVM_TEST_PATH "/data/model/regression/invalid/wrong_num_rho.libsvm.model";
+    plssvm::detail::io::file_reader reader{ filename };
+    reader.read_lines('#');
+    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_libsvm_model_header_regression(reader.lines())),
+                      plssvm::invalid_file_format_exception,
+                      "Provided 2 rho values but only one is needed!");
 }

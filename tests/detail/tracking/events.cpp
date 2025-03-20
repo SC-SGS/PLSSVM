@@ -212,6 +212,17 @@ TEST_F(Events, generate_yaml_string) {
     EXPECT_EQ(yaml, correct_yaml);
 }
 
+TEST_F(Events, generate_yaml_string_no_events) {
+    // create events wrapper
+    plssvm::detail::tracking::events events{};
+
+    // get the YAML string
+    const std::string yaml = events.generate_yaml_string(std::chrono::steady_clock::now());
+
+    // check for equality
+    EXPECT_EQ(yaml, std::string{});
+}
+
 TEST_F(Events, output_operator) {
     const std::chrono::steady_clock::time_point time1 = std::chrono::steady_clock::now();
     const std::chrono::steady_clock::time_point time2 = std::chrono::steady_clock::now();

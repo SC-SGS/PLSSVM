@@ -206,6 +206,7 @@ TEST(Parameter, equivalent_member_function) {
     EXPECT_TRUE(params6.equivalent(params7));
     EXPECT_FALSE(params6.equivalent(params8));
     EXPECT_FALSE(params8.equivalent(params9));
+    EXPECT_TRUE(params8.equivalent(params8));
     EXPECT_FALSE(params4.equivalent(params10));
 }
 
@@ -240,6 +241,7 @@ TEST(Parameter, equivalent_free_function) {
     EXPECT_TRUE(plssvm::equivalent(params6, params7));
     EXPECT_FALSE(plssvm::equivalent(params6, params8));
     EXPECT_FALSE(plssvm::equivalent(params8, params9));
+    EXPECT_TRUE(plssvm::equivalent(params8, params8));
     EXPECT_FALSE(plssvm::equivalent(params4, params10));
 }
 

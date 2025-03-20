@@ -331,7 +331,7 @@ TEST_P(ParserPredictVerbosity, parsing) {
 }
 
 // clang-format off
-INSTANTIATE_TEST_SUITE_P(ParserTrain, ParserPredictVerbosity, ::testing::Combine(
+INSTANTIATE_TEST_SUITE_P(ParserPredict, ParserPredictVerbosity, ::testing::Combine(
                 ::testing::Values("--verbosity"),
                 ::testing::Values("quiet", "libsvm", "timing", "full")),
                 naming::pretty_print_parameter_flag_and_value<ParserPredictVerbosity>);

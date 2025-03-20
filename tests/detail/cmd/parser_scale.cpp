@@ -243,6 +243,34 @@ INSTANTIATE_TEST_SUITE_P(ParserScale, ParserScaleRestoreFilename, ::testing::Com
                 naming::pretty_print_parameter_flag_and_value<ParserScaleRestoreFilename>);
 // clang-format on
 
+class ParserScaleRestoreFilenameLowerUpper : public ParserScale,
+                                             public ::testing::WithParamInterface<std::tuple<std::string, std::string>> { };
+
+TEST_P(ParserScaleRestoreFilenameLowerUpper, parsing) {
+    util::redirect_output<&std::clog> clog_capture{};
+
+    // explicitly enable logging
+    plssvm::verbosity = plssvm::verbosity_level::full;
+
+    const auto &[flag, value] = GetParam();
+    // create artificial command line arguments in test fixture
+    this->CreateCMDArgs({ "./plssvm-scale", flag, value, "-l", "-1.0", "data.libsvm" });
+    // create parameter object
+    const plssvm::detail::cmd::parser_scale parser{ this->get_comm(), this->get_argc(), this->get_argv() };
+    // test for correctness
+    EXPECT_EQ(parser.restore_filename, value);
+
+    // check captured output for warning message
+    EXPECT_THAT(clog_capture.get_capture(), ::testing::HasSubstr("WARNING: provided -l (--lower) and/or -u (--upper) together with -r (--restore_filename); ignoring -l/-u"));
+}
+
+// clang-format off
+INSTANTIATE_TEST_SUITE_P(ParserScale, ParserScaleRestoreFilenameLowerUpper, ::testing::Combine(
+                ::testing::Values("-r", "--restore_filename"),
+                ::testing::Values("data.libsvm.weights", "output.txt")),
+                naming::pretty_print_parameter_flag_and_value<ParserScaleRestoreFilenameLowerUpper>);
+// clang-format on
+
 #if defined(PLSSVM_PERFORMANCE_TRACKER_ENABLED)
 
 class ParserScalePerformanceTrackingFilename : public ParserScale,

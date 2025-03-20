@@ -456,6 +456,8 @@ TEST_F(PerformanceTracker, save_entries_to_file) {
     tracker.add_tracking_entry(plssvm::detail::tracking::tracking_entry{ "foo", "mem", 1_KiB });
     tracker.add_tracking_entry(plssvm::detail::tracking::tracking_entry{ "", "foobar", 'a' });
     tracker.add_tracking_entry(plssvm::detail::tracking::tracking_entry{ "", "foobar", 'b' });
+    tracker.add_tracking_entry(plssvm::detail::tracking::tracking_entry{ "dependencies", "backend", "one" });
+    tracker.add_tracking_entry(plssvm::detail::tracking::tracking_entry{ "dependencies", "backend", "two" });
     tracker.save(tmp_file.filename);
 
     // the file must not be empty
@@ -471,9 +473,11 @@ TEST_F(PerformanceTracker, save_entries_to_file) {
     EXPECT_THAT(reader.buffer(), ::testing::HasSubstr("baz: 3.1415"));
     EXPECT_THAT(reader.buffer(), ::testing::HasSubstr("mem: 1024"));
     EXPECT_THAT(reader.buffer(), ::testing::HasSubstr("foobar: [a, b]"));
+    EXPECT_THAT(reader.buffer(), ::testing::HasSubstr("dependencies:"));
+    EXPECT_THAT(reader.buffer(), ::testing::ContainsRegex("backend: .*[one, two]"));
 
     // the tracking entries must not have changed
-    EXPECT_EQ(tracker.get_tracking_entries().size(), 2);
+    EXPECT_EQ(tracker.get_tracking_entries().size(), 3);
 }
 
 TEST_F(PerformanceTracker, save_entries_empty_file) {
@@ -486,6 +490,8 @@ TEST_F(PerformanceTracker, save_entries_empty_file) {
     tracker.add_tracking_entry(plssvm::detail::tracking::tracking_entry{ "foo", "mem", 1_KiB });
     tracker.add_tracking_entry(plssvm::detail::tracking::tracking_entry{ "", "foobar", 'a' });
     tracker.add_tracking_entry(plssvm::detail::tracking::tracking_entry{ "", "foobar", 'b' });
+    tracker.add_tracking_entry(plssvm::detail::tracking::tracking_entry{ "dependencies", "backend", "one" });
+    tracker.add_tracking_entry(plssvm::detail::tracking::tracking_entry{ "dependencies", "backend", "two" });
     // save to empty file, i.e., dump the performance tracking entries to std::clog
     tracker.save("");
 
@@ -498,9 +504,11 @@ TEST_F(PerformanceTracker, save_entries_empty_file) {
     EXPECT_THAT(this->get_capture(), ::testing::HasSubstr("baz: 3.1415"));
     EXPECT_THAT(this->get_capture(), ::testing::HasSubstr("mem: 1024"));
     EXPECT_THAT(this->get_capture(), ::testing::HasSubstr("foobar: [a, b]"));
+    EXPECT_THAT(this->get_capture(), ::testing::HasSubstr("dependencies:"));
+    EXPECT_THAT(this->get_capture(), ::testing::ContainsRegex("backend: .*[one, two]"));
 
     // the tracking entries must not have changed
-    EXPECT_EQ(tracker.get_tracking_entries().size(), 2);
+    EXPECT_EQ(tracker.get_tracking_entries().size(), 3);
 }
 
 TEST_F(PerformanceTracker, get_tracking_entries) {

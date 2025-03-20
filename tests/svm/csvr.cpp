@@ -472,6 +472,114 @@ TYPED_TEST(BaseCSVRFit, fit_no_label) {
                       "No labels given for training! Maybe the data is only usable for prediction?");
 }
 
+TYPED_TEST(BaseCSVRFit, fit_out_of_resources) {
+    using label_type = typename TestFixture::fixture_label_type;
+    constexpr plssvm::solver_type solver = TestFixture::fixture_solver;
+    constexpr plssvm::kernel_function_type kernel = TestFixture::fixture_kernel;
+    constexpr plssvm::classification_type classification = TestFixture::fixture_classification;
+
+    // this test is only really applicable for the automatic solver type
+    if constexpr (solver == plssvm::solver_type::automatic) {
+        // create C-SVC: must be done using the mock class since the csvr base class is pure virtual
+        const mock_csvr csvr{ plssvm::parameter{ plssvm::kernel_type = kernel } };
+
+        // override on call
+        using namespace plssvm::detail::literals;
+        ON_CALL(csvr, get_device_memory()).WillByDefault(::testing::Return(std::vector<plssvm::detail::memory_size>{ 512_MiB + 1_KiB, 512_MiB + 1_KiB }));
+
+        // clang-format off
+        EXPECT_CALL(csvr, get_device_memory()).Times(1);
+        EXPECT_CALL(csvr, num_available_devices()).Times(1);
+#if defined(PLSSVM_ENFORCE_MAX_MEM_ALLOC_SIZE)
+        EXPECT_CALL(csvr, get_max_mem_alloc_size()).Times(1);
+#endif
+        EXPECT_CALL(csvr, assemble_kernel_matrix(
+                                ::testing::An<plssvm::solver_type>(),
+                                ::testing::An<const plssvm::parameter &>(),
+                                ::testing::An<const plssvm::soa_matrix<plssvm::real_type> &>(),
+                                ::testing::An<const std::vector<plssvm::real_type> &>(),
+                                ::testing::An<plssvm::real_type>()))
+                            .Times(0);
+        EXPECT_CALL(csvr, blas_level_3(
+                                ::testing::An<plssvm::solver_type>(),
+                                ::testing::An<plssvm::real_type>(),
+                                ::testing::An<const std::vector<plssvm::detail::move_only_any> &>(),
+                                ::testing::An<const plssvm::soa_matrix<plssvm::real_type> &>(),
+                                ::testing::An<plssvm::real_type>(),
+                                ::testing::An<plssvm::soa_matrix<plssvm::real_type> &>()))
+                            .Times(0);
+        // clang-format on
+
+        // create data set
+        plssvm::classification_data_set<label_type> training_data{ this->get_data_filename() };
+        if constexpr (kernel == plssvm::kernel_function_type::chi_squared) {
+            // chi-squared is well-defined for non-negative values only
+            if (training_data.labels().has_value()) {
+                training_data = plssvm::classification_data_set<label_type>{ util::matrix_abs(training_data.data()), *training_data.labels() };
+            }
+        }
+
+        // call function -> should throw since we are out of resources
+        EXPECT_THROW_WHAT((std::ignore = csvr.fit(training_data, plssvm::solver = solver, plssvm::classification = classification)),
+                          plssvm::kernel_launch_resources,
+                          "Not enough device memory available on device(s) [0, 1] even for the cg_implicit solver!");
+    }
+}
+
+TYPED_TEST(BaseCSVRFit, fit_device_memory_too_small) {
+    using label_type = typename TestFixture::fixture_label_type;
+    constexpr plssvm::solver_type solver = TestFixture::fixture_solver;
+    constexpr plssvm::kernel_function_type kernel = TestFixture::fixture_kernel;
+    constexpr plssvm::classification_type classification = TestFixture::fixture_classification;
+
+    // this test is only really applicable for the automatic solver type
+    if constexpr (solver == plssvm::solver_type::automatic) {
+        // create C-SVC: must be done using the mock class since the csvr base class is pure virtual
+        const mock_csvr csvr{ plssvm::parameter{ plssvm::kernel_type = kernel } };
+
+        // override on call
+        using namespace plssvm::detail::literals;
+        ON_CALL(csvr, get_device_memory()).WillByDefault(::testing::Return(std::vector<plssvm::detail::memory_size>{ 1_KiB, 1_KiB }));
+
+        // clang-format off
+        EXPECT_CALL(csvr, get_device_memory()).Times(1);
+        EXPECT_CALL(csvr, num_available_devices()).Times(0);
+#if defined(PLSSVM_ENFORCE_MAX_MEM_ALLOC_SIZE)
+        EXPECT_CALL(csvr, get_max_mem_alloc_size()).Times(0);
+#endif
+        EXPECT_CALL(csvr, assemble_kernel_matrix(
+                                ::testing::An<plssvm::solver_type>(),
+                                ::testing::An<const plssvm::parameter &>(),
+                                ::testing::An<const plssvm::soa_matrix<plssvm::real_type> &>(),
+                                ::testing::An<const std::vector<plssvm::real_type> &>(),
+                                ::testing::An<plssvm::real_type>()))
+                            .Times(0);
+        EXPECT_CALL(csvr, blas_level_3(
+                                ::testing::An<plssvm::solver_type>(),
+                                ::testing::An<plssvm::real_type>(),
+                                ::testing::An<const std::vector<plssvm::detail::move_only_any> &>(),
+                                ::testing::An<const plssvm::soa_matrix<plssvm::real_type> &>(),
+                                ::testing::An<plssvm::real_type>(),
+                                ::testing::An<plssvm::soa_matrix<plssvm::real_type> &>()))
+                            .Times(0);
+        // clang-format on
+
+        // create data set
+        plssvm::classification_data_set<label_type> training_data{ this->get_data_filename() };
+        if constexpr (kernel == plssvm::kernel_function_type::chi_squared) {
+            // chi-squared is well-defined for non-negative values only
+            if (training_data.labels().has_value()) {
+                training_data = plssvm::classification_data_set<label_type>{ util::matrix_abs(training_data.data()), *training_data.labels() };
+            }
+        }
+
+        // call function -> should throw since we are out of resources
+        EXPECT_THROW_WHAT((std::ignore = csvr.fit(training_data, plssvm::solver = solver, plssvm::classification = classification)),
+                          plssvm::kernel_launch_resources,
+                          "At least 512.00 MiB of memory must be available, but available are only 1.00 KiB!");
+    }
+}
+
 template <typename T>
 class BaseCSVRPredict : public BaseCSVRMemberBase<T> { };
 

@@ -217,3 +217,7 @@ TEST(Utility, get_system_memory) {
     // the available system memory must be greater than 0!
     EXPECT_GT(plssvm::detail::get_system_memory().num_bytes(), 0ULL);
 }
+
+TEST(UtilityDeathTest, unreachable) {
+    EXPECT_DEATH(plssvm::detail::unreachable(), ".*");
+}

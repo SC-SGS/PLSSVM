@@ -169,3 +169,20 @@ INSTANTIATE_TEST_SUITE_P(DataSetFactory, DataSetFactory, ::testing::Values(
                 std::make_tuple(false, plssvm::svm_type::csvc, 0), std::make_tuple(true, plssvm::svm_type::csvc, 1), std::make_tuple(false, plssvm::svm_type::csvr, 2)),
                 naming::pretty_print_data_set_factory<DataSetFactory>);
 // clang-format on
+
+class DataSetFactoryDeathTest : public DataSetFactory { };
+
+TEST_F(DataSetFactoryDeathTest, data_set_factory_train_invalid) {
+    // assemble command line strings
+    std::vector<std::string> cmd_args = { "./plssvm-train", this->filename };
+    cmd_args.push_back(this->filename);
+
+    // create artificial command line arguments in test fixture
+    this->CreateCMDArgs(cmd_args);
+    // create parameter object
+    plssvm::detail::cmd::parser_train parser{ this->get_comm(), this->get_argc(), this->get_argv() };
+    // set invalid C-SVM type
+    parser.svm = static_cast<plssvm::svm_type>(2);
+
+    EXPECT_DEATH((plssvm::detail::cmd::data_set_factory(this->get_comm(), parser)), ".*");
+}

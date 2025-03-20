@@ -460,6 +460,17 @@ TYPED_TEST(ClassificationDataSetConstructors, construct_from_vector_with_label) 
     EXPECT_FALSE(data.scaling_factors().has_value());
 }
 
+TYPED_TEST(ClassificationDataSetConstructors, construct_from_empty_vector_and_labels) {
+    using label_type = typename TestFixture::fixture_label_type;
+
+    const std::vector<label_type> labels = util::get_correct_data_file_labels<label_type>();
+
+    // creating a data set from an empty vector is illegal
+    EXPECT_THROW_WHAT((plssvm::classification_data_set<label_type>{ std::vector<std::vector<plssvm::real_type>>{}, labels }),
+                      plssvm::data_set_exception,
+                      "Data vector is empty!");
+}
+
 TYPED_TEST(ClassificationDataSetConstructors, construct_from_vector_mismatching_num_data_points_and_labels) {
     using label_type = typename TestFixture::fixture_label_type;
 

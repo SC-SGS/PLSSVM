@@ -414,6 +414,24 @@ INSTANTIATE_TEST_SUITE_P(ParserTrain, ParserTrainMaxIter, ::testing::Combine(
                 naming::pretty_print_parameter_flag_and_value<ParserTrainMaxIter>);
 // clang-format on
 
+class ParserTrainMaxIterDeathTest : public ParserTrain,
+                                    public ::testing::WithParamInterface<std::tuple<std::string, long long int>> { };
+
+TEST_P(ParserTrainMaxIterDeathTest, max_iter_explicit_less_or_equal_to_zero) {
+    const auto &[flag, max_iter] = GetParam();
+    // create artificial command line arguments in test fixture
+    this->CreateCMDArgs({ "./plssvm-train", flag, fmt::format("{}", max_iter), "data.libsvm" });
+    // create parameter object
+    EXPECT_DEATH((plssvm::detail::cmd::parser_train{ this->get_comm(), this->get_argc(), this->get_argv() }), ::testing::HasSubstr(fmt::format("max_iter must be greater than 0, but is {}!", max_iter)));
+}
+
+// clang-format off
+INSTANTIATE_TEST_SUITE_P(ParserTrainDeathTest, ParserTrainMaxIterDeathTest, ::testing::Combine(
+                ::testing::Values("-i", "--max_iter"),
+                ::testing::Values(-100, -10, -1, 0)),
+                naming::pretty_print_parameter_flag_and_value<ParserTrainMaxIterDeathTest>);
+// clang-format on
+
 class ParserTrainSolver : public ParserTrain,
                           public ::testing::WithParamInterface<std::tuple<std::string, plssvm::solver_type>> { };
 
@@ -432,24 +450,6 @@ INSTANTIATE_TEST_SUITE_P(ParserTrain, ParserTrainSolver, ::testing::Combine(
                 ::testing::Values("-l", "--solver"),
                 ::testing::Values(plssvm::solver_type::automatic, plssvm::solver_type::cg_explicit, plssvm::solver_type::cg_implicit)),
                 naming::pretty_print_parameter_flag_and_value<ParserTrainSolver>);
-// clang-format on
-
-class ParserTrainMaxIterDeathTest : public ParserTrain,
-                                    public ::testing::WithParamInterface<std::tuple<std::string, long long int>> { };
-
-TEST_P(ParserTrainMaxIterDeathTest, max_iter_explicit_less_or_equal_to_zero) {
-    const auto &[flag, max_iter] = GetParam();
-    // create artificial command line arguments in test fixture
-    this->CreateCMDArgs({ "./plssvm-train", flag, fmt::format("{}", max_iter), "data.libsvm" });
-    // create parameter object
-    EXPECT_DEATH((plssvm::detail::cmd::parser_train{ this->get_comm(), this->get_argc(), this->get_argv() }), ::testing::HasSubstr(fmt::format("max_iter must be greater than 0, but is {}!", max_iter)));
-}
-
-// clang-format off
-INSTANTIATE_TEST_SUITE_P(ParserTrainDeathTest, ParserTrainMaxIterDeathTest, ::testing::Combine(
-                ::testing::Values("-i", "--max_iter"),
-                ::testing::Values(-100, -10, -1, 0)),
-                naming::pretty_print_parameter_flag_and_value<ParserTrainMaxIterDeathTest>);
 // clang-format on
 
 class ParserTrainClassification : public ParserTrain,
@@ -737,3 +737,65 @@ TEST_F(ParserTrainDeathTest, unrecognized_option) {
     this->CreateCMDArgs({ "./plssvm-train", "--foo", "bar" });
     EXPECT_DEATH((plssvm::detail::cmd::parser_train{ this->get_comm(), this->get_argc(), this->get_argv() }), "");
 }
+
+class ParserTrainOutput : public ParserTrain,
+                          public ::testing::WithParamInterface<std::string> { };
+
+TEST_P(ParserTrainOutput, parsing) {
+    const std::string &flag = GetParam();
+    // create artificial command line arguments in test fixture
+    this->CreateCMDArgs({ "./plssvm-train", "--kernel_type", flag, "data.libsvm" });
+    // create parameter object
+    const plssvm::detail::cmd::parser_train parser{ this->get_comm(), this->get_argc(), this->get_argv() };
+
+    const auto get_kernel_function_string = [](const plssvm::kernel_function_type kernel_type) {
+        switch (kernel_type) {
+            case plssvm::kernel_function_type::linear:
+                return "kernel_type: linear -> u'*v\n";
+            case plssvm::kernel_function_type::polynomial:
+                return "kernel_type: polynomial -> (gamma*u'*v+coef0)^degree\n"
+                       "degree: 3\n"
+                       "gamma: \"1 / num_features\"\n"
+                       "coef0: 0\n";
+            case plssvm::kernel_function_type::rbf:
+                return "kernel_type: rbf -> exp(-gamma*|u-v|^2)\n"
+                       "gamma: \"1 / num_features\"\n";
+            case plssvm::kernel_function_type::sigmoid:
+                return "kernel_type: sigmoid -> tanh(gamma*u'*v+coef0)\n"
+                       "gamma: \"1 / num_features\"\n"
+                       "coef0: 0\n";
+            case plssvm::kernel_function_type::laplacian:
+                return "kernel_type: laplacian -> exp(-gamma*|u-v|_1)\n"
+                       "gamma: \"1 / num_features\"\n";
+            case plssvm::kernel_function_type::chi_squared:
+                return "kernel_type: chi_squared -> exp(-gamma*sum_i((x[i]-y[i])^2/(x[i]+y[i])))\n"
+                       "gamma: \"1 / num_features\"\n";
+        }
+        return "unknown";
+    };
+
+    // test output string
+    std::string correct = fmt::format(
+        "svm_type: csvc\n"
+        "{}"
+        "cost: 1\n"
+        "epsilon: 1e-10\n"
+        "max_iter: num_data_points\n"
+        "backend: automatic\n"
+        "target platform: automatic\n"
+        "solver: automatic\n"
+        "SYCL implementation type: automatic\n"
+        "SYCL kernel invocation type: automatic\n"
+        "Kokkos execution space: automatic\n"
+        "classification_type: one vs. all\n"
+        "label_type: int\n"
+        "real_type: {}\n"
+        "input file (data set): 'data.libsvm'\n"
+        "output file (model): 'data.libsvm.model'\n",
+        get_kernel_function_string(parser.csvm_params.kernel_type),
+        std::is_same_v<plssvm::real_type, float> ? "float" : "double");
+
+    EXPECT_CONVERSION_TO_STRING(parser, correct);
+}
+
+INSTANTIATE_TEST_SUITE_P(ParserTrain, ParserTrainOutput, ::testing::Values("linear", "polynomial", "rbf", "sigmoid", "laplacian", "chi_squared"), naming::pretty_print_parameter_flag<ParserTrainOutput>);
