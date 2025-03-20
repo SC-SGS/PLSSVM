@@ -538,7 +538,6 @@ TYPED_TEST(BaseCSVRFit, fit_out_of_resources) {
     using label_type = typename TestFixture::fixture_label_type;
     constexpr plssvm::solver_type solver = TestFixture::fixture_solver;
     constexpr plssvm::kernel_function_type kernel = TestFixture::fixture_kernel;
-    constexpr plssvm::classification_type classification = TestFixture::fixture_classification;
 
     // this test is only really applicable for the automatic solver type
     if constexpr (solver == plssvm::solver_type::automatic) {
@@ -573,16 +572,16 @@ TYPED_TEST(BaseCSVRFit, fit_out_of_resources) {
         // clang-format on
 
         // create data set
-        plssvm::classification_data_set<label_type> training_data{ this->get_data_filename() };
+        plssvm::regression_data_set<label_type> training_data{ this->get_data_filename() };
         if constexpr (kernel == plssvm::kernel_function_type::chi_squared) {
             // chi-squared is well-defined for non-negative values only
             if (training_data.labels().has_value()) {
-                training_data = plssvm::classification_data_set<label_type>{ util::matrix_abs(training_data.data()), *training_data.labels() };
+                training_data = plssvm::regression_data_set<label_type>{ util::matrix_abs(training_data.data()), *training_data.labels() };
             }
         }
 
         // call function -> should throw since we are out of resources
-        EXPECT_THROW_WHAT((std::ignore = csvr.fit(training_data, plssvm::solver = solver, plssvm::classification = classification)),
+        EXPECT_THROW_WHAT((std::ignore = csvr.fit(training_data, plssvm::solver = solver)),
                           plssvm::kernel_launch_resources,
                           "Not enough device memory available on device(s) [0, 1] even for the cg_implicit solver!");
     }
@@ -592,7 +591,6 @@ TYPED_TEST(BaseCSVRFit, fit_device_memory_too_small) {
     using label_type = typename TestFixture::fixture_label_type;
     constexpr plssvm::solver_type solver = TestFixture::fixture_solver;
     constexpr plssvm::kernel_function_type kernel = TestFixture::fixture_kernel;
-    constexpr plssvm::classification_type classification = TestFixture::fixture_classification;
 
     // this test is only really applicable for the automatic solver type
     if constexpr (solver == plssvm::solver_type::automatic) {
@@ -627,16 +625,16 @@ TYPED_TEST(BaseCSVRFit, fit_device_memory_too_small) {
         // clang-format on
 
         // create data set
-        plssvm::classification_data_set<label_type> training_data{ this->get_data_filename() };
+        plssvm::regression_data_set<label_type> training_data{ this->get_data_filename() };
         if constexpr (kernel == plssvm::kernel_function_type::chi_squared) {
             // chi-squared is well-defined for non-negative values only
             if (training_data.labels().has_value()) {
-                training_data = plssvm::classification_data_set<label_type>{ util::matrix_abs(training_data.data()), *training_data.labels() };
+                training_data = plssvm::regression_data_set<label_type>{ util::matrix_abs(training_data.data()), *training_data.labels() };
             }
         }
 
         // call function -> should throw since we are out of resources
-        EXPECT_THROW_WHAT((std::ignore = csvr.fit(training_data, plssvm::solver = solver, plssvm::classification = classification)),
+        EXPECT_THROW_WHAT((std::ignore = csvr.fit(training_data, plssvm::solver = solver)),
                           plssvm::kernel_launch_resources,
                           "At least 512.00 MiB of memory must be available, but available are only 1.00 KiB!");
     }
