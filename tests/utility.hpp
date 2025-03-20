@@ -30,7 +30,7 @@
 #include "fmt/std.h"      // format std::vector<bool>::operator[] proxy type
 #include "gtest/gtest.h"  // FAIL
 
-#ifdef __unix__
+#if defined(__unix__)
     #include <cstdlib>  // mkstemp
 #endif
 
