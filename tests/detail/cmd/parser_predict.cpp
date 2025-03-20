@@ -94,6 +94,9 @@ TEST_F(ParserPredict, all_arguments) {
 #if defined(PLSSVM_PERFORMANCE_TRACKER_ENABLED)
     cmd_args.insert(cmd_args.end(), { "--performance_tracking", "tracking.yaml" });
 #endif
+#if defined(PLSSVM_HAS_MPI_ENABLED)
+    cmd_args.insert(cmd_args.end(), { "--mpi_load_balancing_weights", "2" });
+#endif
     cmd_args.insert(cmd_args.end(), { "data.libsvm", "data.libsvm.model", "data.libsvm.predict" });
     this->CreateCMDArgs(cmd_args);
 
@@ -122,6 +125,9 @@ TEST_F(ParserPredict, all_arguments) {
 #else
     EXPECT_EQ(parser.performance_tracking_filename, "");
 #endif
+#if defined(PLSSVM_HAS_MPI_ENABLED)
+    EXPECT_EQ(parser.mpi_load_balancing_weights, std::vector<std::size_t>{ 2 });
+#endif
 
     EXPECT_EQ(plssvm::verbosity, plssvm::verbosity_level::libsvm);
 }
@@ -138,6 +144,9 @@ TEST_F(ParserPredict, all_arguments_output) {
 #endif
 #if defined(PLSSVM_PERFORMANCE_TRACKER_ENABLED)
     cmd_args.insert(cmd_args.end(), { "--performance_tracking", "tracking.yaml" });
+#endif
+#if defined(PLSSVM_HAS_MPI_ENABLED)
+    cmd_args.insert(cmd_args.end(), { "--mpi_load_balancing_weights", "2" });
 #endif
     cmd_args.insert(cmd_args.end(), { "data1.libsvm", "data2.libsvm.model", "data3.libsvm.predict" });
     this->CreateCMDArgs(cmd_args);
@@ -169,6 +178,9 @@ TEST_F(ParserPredict, all_arguments_output) {
 
 #if defined(PLSSVM_PERFORMANCE_TRACKER_ENABLED)
     correct += "performance tracking file: 'tracking.yaml'\n";
+#endif
+#if defined(PLSSVM_HAS_MPI_ENABLED)
+    correct += "mpi load-balancing weights: [2]\n";
 #endif
 
     EXPECT_CONVERSION_TO_STRING(parser, correct);
@@ -265,7 +277,7 @@ TEST_P(ParserPredictKokkosExecutionSpace, parsing) {
 }
 
 // clang-format off
-INSTANTIATE_TEST_SUITE_P(ParserTrain, ParserPredictKokkosExecutionSpace, ::testing::Combine(
+INSTANTIATE_TEST_SUITE_P(ParserPredict, ParserPredictKokkosExecutionSpace, ::testing::Combine(
                 ::testing::Values("--kokkos_execution_space"),
                 ::testing::Values("automatic", "Cuda", "HIP", "SYCL", "HPX", "OpenMP", "OpenMPTarget", "OpenACC", "Threads", "Serial")),
                 naming::pretty_print_parameter_flag_and_value<ParserPredictKokkosExecutionSpace>);
@@ -296,6 +308,50 @@ INSTANTIATE_TEST_SUITE_P(ParserPredict, ParserPredictPerformanceTrackingFilename
 // clang-format on
 
 #endif  // PLSSVM_PERFORMANCE_TRACKER_ENABLED
+
+#if defined(PLSSVM_HAS_MPI_ENABLED)
+
+class ParserPredictMPILoadBalancingWeights : public ParserPredict,
+                                           public ::testing::WithParamInterface<std::tuple<std::string, std::string>> { };
+
+TEST_P(ParserPredictMPILoadBalancingWeights, parsing) {
+    const auto &[flag, value] = GetParam();
+    // convert string to std::vector
+    const std::vector<std::size_t> weights{ util::convert_from_string<std::size_t>(value) };
+    // create artificial command line arguments in test fixture
+    this->CreateCMDArgs({ "./plssvm-predict", flag, value, "data.libsvm", "data.libsvm.model" });
+    // create parameter object
+    const plssvm::detail::cmd::parser_predict parser{ this->get_comm(), this->get_argc(), this->get_argv() };
+    // test for correctness
+    EXPECT_EQ(parser.mpi_load_balancing_weights, weights);
+}
+
+// clang-format off
+INSTANTIATE_TEST_SUITE_P(ParserPredict, ParserPredictMPILoadBalancingWeights, ::testing::Combine(
+                ::testing::Values("--mpi_load_balancing_weights"),
+                ::testing::Values("1", "2")),
+                naming::pretty_print_parameter_flag_and_value<ParserPredictMPILoadBalancingWeights>);
+// clang-format on
+
+class ParserPredictMPILoadBalancingWeightsDeathTest : public ParserPredict,
+                                                    public ::testing::WithParamInterface<std::tuple<std::string, std::string>> { };
+
+TEST_P(ParserPredictMPILoadBalancingWeightsDeathTest, parsing) {
+    const auto &[flag, value] = GetParam();
+    // create artificial command line arguments in test fixture
+    this->CreateCMDArgs({ "./plssvm-predict", flag, value, "data.libsvm", "data.libsvm.model" });
+    // create parameter object
+    EXPECT_DEATH((plssvm::detail::cmd::parser_predict{ this->get_comm(), this->get_argc(), this->get_argv() }), ::testing::ContainsRegex("ERROR: the number of load balancing weights \\(.*\\) must match the number of MPI ranks \\(1\\)!"));
+}
+
+// clang-format off
+INSTANTIATE_TEST_SUITE_P(ParserPredict, ParserPredictMPILoadBalancingWeightsDeathTest, ::testing::Combine(
+                ::testing::Values("--mpi_load_balancing_weights"),
+                ::testing::Values("1,2", "1,2,3")),
+                naming::pretty_print_parameter_flag_and_value<ParserPredictMPILoadBalancingWeightsDeathTest>);
+// clang-format on
+
+#endif  // PLSSVM_HAS_MPI_ENABLED
 
 class ParserPredictUseStringsAsLabels : public ParserPredict,
                                         public ::testing::WithParamInterface<std::tuple<std::string, bool>> { };

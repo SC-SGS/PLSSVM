@@ -11,9 +11,10 @@
 #include "plssvm/constants.hpp"                     // plssvm::real_type, plssvm::PADDING_SIZE
 #include "plssvm/data_set/min_max_scaler.hpp"       // plssvm::min_max_scaler
 #include "plssvm/data_set/regression_data_set.hpp"  // data set class to test
-#include "plssvm/exceptions/exceptions.hpp"         // plssvm::data_set_exception
+#include "plssvm/exceptions/exceptions.hpp"         // plssvm::data_set_exception, plssvm::mpi_exception
 #include "plssvm/file_format_types.hpp"             // plssvm::file_format_type
 #include "plssvm/matrix.hpp"                        // plssvm::matrix, plssvm::layout_type
+#include "plssvm/mpi/communicator.hpp"              // plssvm::mpi::communicator
 #include "plssvm/shape.hpp"                         // plssvm::shape
 #include "plssvm/svm_types.hpp"                     // plssvm::svm_type
 
@@ -21,6 +22,10 @@
 #include "tests/naming.hpp"              // naming::test_parameter_to_name
 #include "tests/types_to_test.hpp"       // util::{regression_label_type_gtest, regression_label_type_layout_type_gtest, test_parameter_type_at_t, test_parameter_value_at_v}
 #include "tests/utility.hpp"             // util::{redirect_output, temporary_file, instantiate_template_file, get_distinct_label, get_correct_data_file_labels, generate_specific_matrix, scale}
+
+#if defined(PLSSVM_HAS_MPI_ENABLED)
+    #include "mpi.h"  // MPI_COMM_WORLD, MPI_Comm_dup, MPI_Comm_free
+#endif
 
 #include "gtest/gtest.h"  // TYPED_TEST, TYPED_TEST_SUITE, EXPECT_EQ, EXPECT_TRUE, EXPECT_FALSE; ASSERT_TRUE, FAIL, ::testing::{Test, StaticAssertTypeEq}
 
@@ -229,6 +234,26 @@ TYPED_TEST(RegressionDataSetConstructors, construct_scaled_arff_from_file) {
     }
 }
 
+#if defined(PLSSVM_HAS_MPI_ENABLED)
+
+TYPED_TEST(RegressionDataSetConstructors, construct_scaled_arff_from_file_comm_mismatch) {
+    using label_type = typename TestFixture::fixture_label_type;
+
+    // create a duplicated communicator
+    MPI_Comm duplicated_mpi_comm;
+    MPI_Comm_dup(MPI_COMM_WORLD, &duplicated_mpi_comm);
+    const plssvm::mpi::communicator comm{ duplicated_mpi_comm };
+
+    // create data set
+    EXPECT_THROW_WHAT((plssvm::regression_data_set<label_type>{ plssvm::mpi::communicator{}, PLSSVM_TEST_PATH "/data/arff/regression/6x4.arff", { comm, plssvm::real_type{ -1.0 }, plssvm::real_type{ 1.0 } } }),
+                      plssvm::mpi_exception,
+                      "The MPI communicators provided to the data set and scaler must be identical!");
+
+    MPI_Comm_free(&duplicated_mpi_comm);
+}
+
+#endif
+
 TYPED_TEST(RegressionDataSetConstructors, construct_scaled_libsvm_from_file) {
     using label_type = typename TestFixture::fixture_label_type;
 
@@ -258,6 +283,26 @@ TYPED_TEST(RegressionDataSetConstructors, construct_scaled_libsvm_from_file) {
         EXPECT_FLOATING_POINT_NEAR(factors.upper, std::get<2>(scaling_factors[i]));
     }
 }
+
+#if defined(PLSSVM_HAS_MPI_ENABLED)
+
+TYPED_TEST(RegressionDataSetConstructors, construct_scaled_libsvm_from_file_comm_mismatch) {
+    using label_type = typename TestFixture::fixture_label_type;
+
+    // create a duplicated communicator
+    MPI_Comm duplicated_mpi_comm;
+    MPI_Comm_dup(MPI_COMM_WORLD, &duplicated_mpi_comm);
+    const plssvm::mpi::communicator comm{ duplicated_mpi_comm };
+
+    // create data set
+    EXPECT_THROW_WHAT((plssvm::regression_data_set<label_type>{ plssvm::mpi::communicator{}, PLSSVM_TEST_PATH "/data/libsvm/regression/6x4.libsvm", { comm, plssvm::real_type{ -1.0 }, plssvm::real_type{ 1.0 } } }),
+                      plssvm::mpi_exception,
+                      "The MPI communicators provided to the data set and scaler must be identical!");
+
+    MPI_Comm_free(&duplicated_mpi_comm);
+}
+
+#endif
 
 TYPED_TEST(RegressionDataSetConstructors, construct_scaled_explicit_arff_from_file) {
     using label_type = typename TestFixture::fixture_label_type;
@@ -289,6 +334,26 @@ TYPED_TEST(RegressionDataSetConstructors, construct_scaled_explicit_arff_from_fi
     }
 }
 
+#if defined(PLSSVM_HAS_MPI_ENABLED)
+
+TYPED_TEST(RegressionDataSetConstructors, construct_scaled_explicit_arff_from_file_comm_mismatch) {
+    using label_type = typename TestFixture::fixture_label_type;
+
+    // create a duplicated communicator
+    MPI_Comm duplicated_mpi_comm;
+    MPI_Comm_dup(MPI_COMM_WORLD, &duplicated_mpi_comm);
+    const plssvm::mpi::communicator comm{ duplicated_mpi_comm };
+
+    // create data set
+    EXPECT_THROW_WHAT((plssvm::regression_data_set<label_type>{ plssvm::mpi::communicator{}, PLSSVM_TEST_PATH "/data/arff/regression/6x4.arff", plssvm::file_format_type::arff, { comm, plssvm::real_type{ -1.0 }, plssvm::real_type{ 1.0 } } }),
+                      plssvm::mpi_exception,
+                      "The MPI communicators provided to the data set and scaler must be identical!");
+
+    MPI_Comm_free(&duplicated_mpi_comm);
+}
+
+#endif
+
 TYPED_TEST(RegressionDataSetConstructors, construct_scaled_explicit_libsvm_from_file) {
     using label_type = typename TestFixture::fixture_label_type;
 
@@ -318,6 +383,26 @@ TYPED_TEST(RegressionDataSetConstructors, construct_scaled_explicit_libsvm_from_
         EXPECT_FLOATING_POINT_NEAR(factors.upper, std::get<2>(scaling_factors[i]));
     }
 }
+
+#if defined(PLSSVM_HAS_MPI_ENABLED)
+
+TYPED_TEST(RegressionDataSetConstructors, construct_scaled_explicit_libsvm_from_file_comm_mismatch) {
+    using label_type = typename TestFixture::fixture_label_type;
+
+    // create a duplicated communicator
+    MPI_Comm duplicated_mpi_comm;
+    MPI_Comm_dup(MPI_COMM_WORLD, &duplicated_mpi_comm);
+    const plssvm::mpi::communicator comm{ duplicated_mpi_comm };
+
+    // create data set
+    EXPECT_THROW_WHAT((plssvm::regression_data_set<label_type>{ plssvm::mpi::communicator{}, PLSSVM_TEST_PATH "/data/libsvm/regression/6x4.libsvm", plssvm::file_format_type::libsvm, { comm, plssvm::real_type{ -1.0 }, plssvm::real_type{ 1.0 } } }),
+                      plssvm::mpi_exception,
+                      "The MPI communicators provided to the data set and scaler must be identical!");
+
+    MPI_Comm_free(&duplicated_mpi_comm);
+}
+
+#endif
 
 //*************************************************************************************************************************************//
 //                                                      construct from 2D vector                                                       //
@@ -458,6 +543,27 @@ TYPED_TEST(RegressionDataSetConstructors, construct_scaled_from_vector_without_l
     }
 }
 
+#if defined(PLSSVM_HAS_MPI_ENABLED)
+
+TYPED_TEST(RegressionDataSetConstructors, construct_scaled_from_vector_without_label_comm_mismatch) {
+    using label_type = typename TestFixture::fixture_label_type;
+
+    // create a duplicated communicator
+    MPI_Comm duplicated_mpi_comm;
+    MPI_Comm_dup(MPI_COMM_WORLD, &duplicated_mpi_comm);
+    const plssvm::mpi::communicator comm{ duplicated_mpi_comm };
+
+    // create data points
+    const auto data_points = util::generate_specific_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ 4, 4 }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE });
+    EXPECT_THROW_WHAT((plssvm::regression_data_set<label_type>{ plssvm::mpi::communicator{}, data_points.to_2D_vector(), plssvm::min_max_scaler{ comm, plssvm::real_type{ -1.0 }, plssvm::real_type{ 1.0 } } }),
+                      plssvm::mpi_exception,
+                      "The MPI communicators provided to the data set and scaler must be identical!");
+
+    MPI_Comm_free(&duplicated_mpi_comm);
+}
+
+#endif
+
 TYPED_TEST(RegressionDataSetConstructors, construct_scaled_from_vector_with_label) {
     using label_type = typename TestFixture::fixture_label_type;
 
@@ -489,6 +595,29 @@ TYPED_TEST(RegressionDataSetConstructors, construct_scaled_from_vector_with_labe
         EXPECT_FLOATING_POINT_NEAR(factors.upper, std::get<2>(scaling_factors[i]));
     }
 }
+
+#if defined(PLSSVM_HAS_MPI_ENABLED)
+
+TYPED_TEST(RegressionDataSetConstructors, construct_scaled_from_vector_with_label_comm_mismatch) {
+    using label_type = typename TestFixture::fixture_label_type;
+
+    // create a duplicated communicator
+    MPI_Comm duplicated_mpi_comm;
+    MPI_Comm_dup(MPI_COMM_WORLD, &duplicated_mpi_comm);
+    const plssvm::mpi::communicator comm{ duplicated_mpi_comm };
+
+    // create data points
+    const std::vector<label_type> different_labels = util::get_distinct_label<label_type>();
+    const std::vector<label_type> labels = util::get_correct_data_file_labels<label_type>();
+    const auto correct_data_points = util::generate_specific_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ labels.size(), 4 }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE });
+    EXPECT_THROW_WHAT((plssvm::regression_data_set<label_type>{ plssvm::mpi::communicator{}, correct_data_points.to_2D_vector(), labels, plssvm::min_max_scaler{ comm, plssvm::real_type{ -1.0 }, plssvm::real_type{ 1.0 } } }),
+                      plssvm::mpi_exception,
+                      "The MPI communicators provided to the data set and scaler must be identical!");
+
+    MPI_Comm_free(&duplicated_mpi_comm);
+}
+
+#endif
 
 //*************************************************************************************************************************************//
 //                                                        construct from matrix                                                        //
@@ -653,6 +782,28 @@ TYPED_TEST(RegressionDataSetMatrixConstructors, construct_scaled_from_matrix_wit
     }
 }
 
+#if defined(PLSSVM_HAS_MPI_ENABLED)
+
+TYPED_TEST(RegressionDataSetMatrixConstructors, construct_scaled_from_matrix_without_label_no_padding_comm_mismatch) {
+    using label_type = typename TestFixture::fixture_label_type;
+    constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
+
+    // create a duplicated communicator
+    MPI_Comm duplicated_mpi_comm;
+    MPI_Comm_dup(MPI_COMM_WORLD, &duplicated_mpi_comm);
+    const plssvm::mpi::communicator comm{ duplicated_mpi_comm };
+
+    // create data points
+    const auto correct_data_points = util::generate_specific_matrix<plssvm::matrix<plssvm::real_type, layout>>(plssvm::shape{ 4, 4 });
+    EXPECT_THROW_WHAT((plssvm::regression_data_set<label_type>{ plssvm::mpi::communicator{}, correct_data_points, plssvm::min_max_scaler{ comm, plssvm::real_type{ -1.0 }, plssvm::real_type{ 1.0 } } }),
+                      plssvm::mpi_exception,
+                      "The MPI communicators provided to the data set and scaler must be identical!");
+
+    MPI_Comm_free(&duplicated_mpi_comm);
+}
+
+#endif
+
 TYPED_TEST(RegressionDataSetMatrixConstructors, construct_scaled_from_matrix_without_label) {
     using label_type = typename TestFixture::fixture_label_type;
     constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
@@ -683,6 +834,28 @@ TYPED_TEST(RegressionDataSetMatrixConstructors, construct_scaled_from_matrix_wit
         EXPECT_FLOATING_POINT_NEAR(factors.upper, std::get<2>(scaling_factors[i]));
     }
 }
+
+#if defined(PLSSVM_HAS_MPI_ENABLED)
+
+TYPED_TEST(RegressionDataSetMatrixConstructors, construct_scaled_from_matrix_without_label_comm_mismatch) {
+    using label_type = typename TestFixture::fixture_label_type;
+    constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
+
+    // create a duplicated communicator
+    MPI_Comm duplicated_mpi_comm;
+    MPI_Comm_dup(MPI_COMM_WORLD, &duplicated_mpi_comm);
+    const plssvm::mpi::communicator comm{ duplicated_mpi_comm };
+
+    // create data points
+    const auto data_points = util::generate_specific_matrix<plssvm::matrix<plssvm::real_type, layout>>(plssvm::shape{ 4, 4 }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE });
+    EXPECT_THROW_WHAT((plssvm::regression_data_set<label_type>{ plssvm::mpi::communicator{}, data_points, plssvm::min_max_scaler{ comm, plssvm::real_type{ -1.0 }, plssvm::real_type{ 1.0 } } }),
+                      plssvm::mpi_exception,
+                      "The MPI communicators provided to the data set and scaler must be identical!");
+
+    MPI_Comm_free(&duplicated_mpi_comm);
+}
+
+#endif
 
 TYPED_TEST(RegressionDataSetMatrixConstructors, construct_scaled_from_matrix_with_label_no_padding) {
     using label_type = typename TestFixture::fixture_label_type;
@@ -718,6 +891,29 @@ TYPED_TEST(RegressionDataSetMatrixConstructors, construct_scaled_from_matrix_wit
     }
 }
 
+#if defined(PLSSVM_HAS_MPI_ENABLED)
+
+TYPED_TEST(RegressionDataSetMatrixConstructors, construct_scaled_from_matrix_with_label_no_padding_comm_mismatch) {
+    using label_type = typename TestFixture::fixture_label_type;
+    constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
+
+    // create a duplicated communicator
+    MPI_Comm duplicated_mpi_comm;
+    MPI_Comm_dup(MPI_COMM_WORLD, &duplicated_mpi_comm);
+    const plssvm::mpi::communicator comm{ duplicated_mpi_comm };
+
+    // create data points and labels
+    const std::vector<label_type> different_labels = util::get_distinct_label<label_type>();
+    const std::vector<label_type> labels = util::get_correct_data_file_labels<label_type>();
+    const auto correct_data_points = util::generate_specific_matrix<plssvm::matrix<plssvm::real_type, layout>>(plssvm::shape{ labels.size(), 4 });
+    EXPECT_THROW_WHAT((plssvm::regression_data_set<label_type>{ plssvm::mpi::communicator{}, correct_data_points, labels, plssvm::min_max_scaler{ comm, plssvm::real_type{ -1.0 }, plssvm::real_type{ 1.0 } } }),
+                      plssvm::mpi_exception,
+                      "The MPI communicators provided to the data set and scaler must be identical!");
+
+    MPI_Comm_free(&duplicated_mpi_comm);
+}
+#endif
+
 TYPED_TEST(RegressionDataSetMatrixConstructors, construct_scaled_from_matrix_with_label) {
     using label_type = typename TestFixture::fixture_label_type;
     constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
@@ -750,6 +946,30 @@ TYPED_TEST(RegressionDataSetMatrixConstructors, construct_scaled_from_matrix_wit
         EXPECT_FLOATING_POINT_NEAR(factors.upper, std::get<2>(scaling_factors[i]));
     }
 }
+
+#if defined(PLSSVM_HAS_MPI_ENABLED)
+
+TYPED_TEST(RegressionDataSetMatrixConstructors, construct_scaled_from_matrix_with_label_comm_mismatch) {
+    using label_type = typename TestFixture::fixture_label_type;
+    constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
+
+    // create a duplicated communicator
+    MPI_Comm duplicated_mpi_comm;
+    MPI_Comm_dup(MPI_COMM_WORLD, &duplicated_mpi_comm);
+    const plssvm::mpi::communicator comm{ duplicated_mpi_comm };
+
+    // create data points and labels
+    const std::vector<label_type> different_labels = util::get_distinct_label<label_type>();
+    const std::vector<label_type> labels = util::get_correct_data_file_labels<label_type>();
+    const auto correct_data_points = util::generate_specific_matrix<plssvm::matrix<plssvm::real_type, layout>>(plssvm::shape{ labels.size(), 4 }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE });
+    EXPECT_THROW_WHAT((plssvm::regression_data_set<label_type>{ plssvm::mpi::communicator{}, correct_data_points, labels, plssvm::min_max_scaler{ comm, plssvm::real_type{ -1.0 }, plssvm::real_type{ 1.0 } } }),
+                      plssvm::mpi_exception,
+                      "The MPI communicators provided to the data set and scaler must be identical!");
+
+    MPI_Comm_free(&duplicated_mpi_comm);
+}
+
+#endif
 
 //*************************************************************************************************************************************//
 //                                                    construct from r-value matrix                                                    //
@@ -876,6 +1096,27 @@ TYPED_TEST(RegressionDataSetRValueMatrixConstructors, construct_scaled_from_rval
     }
 }
 
+#if defined(PLSSVM_HAS_MPI_ENABLED)
+
+TYPED_TEST(RegressionDataSetRValueMatrixConstructors, construct_scaled_from_rvalue_matrix_without_label_comm_mismatch) {
+    using label_type = typename TestFixture::fixture_label_type;
+
+    // create a duplicated communicator
+    MPI_Comm duplicated_mpi_comm;
+    MPI_Comm_dup(MPI_COMM_WORLD, &duplicated_mpi_comm);
+    const plssvm::mpi::communicator comm{ duplicated_mpi_comm };
+
+    // create data points
+    auto data_points = util::generate_specific_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ 4, 4 }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE });
+    EXPECT_THROW_WHAT((plssvm::regression_data_set<label_type>{ plssvm::mpi::communicator{}, std::move(data_points), plssvm::min_max_scaler{ comm, plssvm::real_type{ -1.0 }, plssvm::real_type{ 1.0 } } }),
+                      plssvm::mpi_exception,
+                      "The MPI communicators provided to the data set and scaler must be identical!");
+
+    MPI_Comm_free(&duplicated_mpi_comm);
+}
+
+#endif
+
 TYPED_TEST(RegressionDataSetRValueMatrixConstructors, construct_scaled_from_rvalue_matrix_with_label) {
     using label_type = typename TestFixture::fixture_label_type;
 
@@ -909,3 +1150,27 @@ TYPED_TEST(RegressionDataSetRValueMatrixConstructors, construct_scaled_from_rval
         EXPECT_FLOATING_POINT_NEAR(factors.upper, std::get<2>(scaling_factors[i]));
     }
 }
+
+#if defined(PLSSVM_HAS_MPI_ENABLED)
+
+TYPED_TEST(RegressionDataSetRValueMatrixConstructors, construct_scaled_from_rvalue_matrix_with_label_comm_mismatch) {
+    using label_type = typename TestFixture::fixture_label_type;
+
+    // create a duplicated communicator
+    MPI_Comm duplicated_mpi_comm;
+    MPI_Comm_dup(MPI_COMM_WORLD, &duplicated_mpi_comm);
+    const plssvm::mpi::communicator comm{ duplicated_mpi_comm };
+
+    // create data points and labels
+    const std::vector<label_type> different_labels = util::get_distinct_label<label_type>();
+    std::vector<label_type> labels = util::get_correct_data_file_labels<label_type>();
+    const std::vector<label_type> copied_labels = labels;
+    auto correct_data_points = util::generate_specific_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ labels.size(), 4 }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE });
+    EXPECT_THROW_WHAT((plssvm::regression_data_set<label_type>{ plssvm::mpi::communicator{}, std::move(correct_data_points), std::move(labels), plssvm::min_max_scaler{ comm, plssvm::real_type{ -1.0 }, plssvm::real_type{ 1.0 } } }),
+                      plssvm::mpi_exception,
+                      "The MPI communicators provided to the data set and scaler must be identical!");
+
+    MPI_Comm_free(&duplicated_mpi_comm);
+}
+
+#endif

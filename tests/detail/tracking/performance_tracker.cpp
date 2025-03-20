@@ -16,13 +16,14 @@
 #include "plssvm/detail/io/file_reader.hpp"      // plssvm::detail::io::file_reader
 #include "plssvm/detail/memory_size.hpp"         // plssvm::detail::memory_size (literals)
 #include "plssvm/detail/tracking/events.hpp"     // plssvm::detail::tracking::{events, event}
+#include "plssvm/mpi/communicator.hpp"           // plssvm::mpi::communicator
 
 #include "tests/naming.hpp"         // naming::test_parameter_to_name
 #include "tests/types_to_test.hpp"  // util::{label_type_gtest, test_parameter_type_at_t}
 #include "tests/utility.hpp"        // util::redirect_output
 
 #include "fmt/format.h"   // fmt::format
-#include "gmock/gmock.h"  // EXPECT_CALL, EXPECT_THAT, ::testing::{HasSubstr}
+#include "gmock/gmock.h"  // EXPECT_CALL, EXPECT_THAT, ::testing::{HasSubstr, ContainsRegex}
 #include "gtest/gtest.h"  // TEST, TYPED_TEST_SUITE, TYPED_TEST, EXPECT_EQ, EXPECT_TRUE, EXPECT_FALSE, ::testing::Test, ::testing::An
 
 #include <algorithm>   // std::transform
@@ -330,7 +331,7 @@ TEST_F(PerformanceTracker, add_parser_train_tracking_entry) {
     std::transform(input_argv.begin(), input_argv.end(), argv.begin(), [](std::string &str) { return str.data(); });
     const auto argc = static_cast<int>(argv.size());
 
-    const plssvm::detail::cmd::parser_train parser{ argc, argv.data() };
+    const plssvm::detail::cmd::parser_train parser{ plssvm::mpi::communicator{}, argc, argv.data() };
 
     // save cmd::parser_train entry
     tracker.add_tracking_entry(plssvm::detail::tracking::tracking_entry{ "parameter", "", parser });
@@ -354,7 +355,7 @@ TEST_F(PerformanceTracker, add_parser_predict_tracking_entry) {
     std::transform(input_argv.begin(), input_argv.end(), argv.begin(), [](std::string &str) { return str.data(); });
     const auto argc = static_cast<int>(argv.size());
 
-    const plssvm::detail::cmd::parser_predict parser{ argc, argv.data() };
+    const plssvm::detail::cmd::parser_predict parser{ plssvm::mpi::communicator{}, argc, argv.data() };
 
     // save cmd::parser_predict entry
     tracker.add_tracking_entry(plssvm::detail::tracking::tracking_entry{ "parameter", "", parser });
@@ -378,7 +379,7 @@ TEST_F(PerformanceTracker, add_parser_scale_tracking_entry) {
     std::transform(input_argv.begin(), input_argv.end(), argv.begin(), [](std::string &str) { return str.data(); });
     const auto argc = static_cast<int>(argv.size());
 
-    const plssvm::detail::cmd::parser_scale parser{ argc, argv.data() };
+    const plssvm::detail::cmd::parser_scale parser{ plssvm::mpi::communicator{}, argc, argv.data() };
 
     // save cmd::parser_scale entry
     tracker.add_tracking_entry(plssvm::detail::tracking::tracking_entry{ "parameter", "", parser });

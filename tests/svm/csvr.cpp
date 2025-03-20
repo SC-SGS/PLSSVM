@@ -28,6 +28,10 @@
 #include "tests/types_to_test.hpp"       // util::regression_label_type_classification_type_gtest
 #include "tests/utility.hpp"             // util::{redirect_output, temporary_file, instantiate_template_file, generate_random_matrix, get_correct_data_file_labels}
 
+#if defined(PLSSVM_HAS_MPI_ENABLED)
+    #include "mpi.h"  // MPI_COMM_WORLD, MPI_Comm_dup, MPI_Comm_free
+#endif
+
 #include "gmock/gmock.h"  // EXPECT_CALL, EXPECT_THAT, ::testing::{An, Between, Return, HasSubstr}
 #include "gtest/gtest.h"  // TEST, TYPED_TEST, TYPED_TEST_SUITE, EXPECT_EQ, EXPECT_TRUE, EXPECT_FALSE, EXPECT_THAT,
 
@@ -427,6 +431,64 @@ TYPED_TEST(BaseCSVRFit, fit_named_parameters_invalid_max_iter) {
                       "max_iter must be greater than 0, but is 0!");
 }
 
+#if defined(PLSSVM_HAS_MPI_ENABLED)
+
+TYPED_TEST(BaseCSVRFit, fit_communicator_mismatch) {
+    using label_type = typename TestFixture::fixture_label_type;
+    constexpr plssvm::solver_type solver = TestFixture::fixture_solver;
+    constexpr plssvm::kernel_function_type kernel = TestFixture::fixture_kernel;
+
+    // create C-SVR: must be done using the mock class since the csvr base class is pure virtual
+    const mock_csvr csvr{ plssvm::parameter{ plssvm::kernel_type = kernel } };
+
+    // since an exception should be triggered, the mocked function should never be called
+    // clang-format off
+    EXPECT_CALL(csvr, get_device_memory()).Times(0);
+    EXPECT_CALL(csvr, num_available_devices()).Times(0);
+#if defined(PLSSVM_ENFORCE_MAX_MEM_ALLOC_SIZE)
+    EXPECT_CALL(csvr, get_max_mem_alloc_size()).Times(0);
+#endif
+    EXPECT_CALL(csvr, assemble_kernel_matrix(
+                            ::testing::An<plssvm::solver_type>(),
+                            ::testing::An<const plssvm::parameter &>(),
+                            ::testing::An<const plssvm::soa_matrix<plssvm::real_type> &>(),
+                            ::testing::An<const std::vector<plssvm::real_type> &>(),
+                            ::testing::An<plssvm::real_type>()))
+                        .Times(0);
+    EXPECT_CALL(csvr, blas_level_3(
+                            ::testing::An<plssvm::solver_type>(),
+                            ::testing::An<plssvm::real_type>(),
+                            ::testing::An<const std::vector<plssvm::detail::move_only_any> &>(),
+                            ::testing::An<const plssvm::soa_matrix<plssvm::real_type> &>(),
+                            ::testing::An<plssvm::real_type>(),
+                            ::testing::An<plssvm::soa_matrix<plssvm::real_type> &>()))
+                        .Times(0);
+    // clang-format on
+
+    // create mismatching MPI communicator
+    MPI_Comm duplicated_mpi_comm;
+    MPI_Comm_dup(MPI_COMM_WORLD, &duplicated_mpi_comm);
+    const plssvm::mpi::communicator comm{ duplicated_mpi_comm };
+
+    // create data set
+    plssvm::regression_data_set<label_type> training_data{ comm, this->get_data_filename() };
+    if constexpr (kernel == plssvm::kernel_function_type::chi_squared) {
+        // chi-squared is well-defined for non-negative values only
+        if (training_data.labels().has_value()) {
+            training_data = plssvm::regression_data_set<label_type>{ comm, util::matrix_abs(training_data.data()), *training_data.labels() };
+        }
+    }
+
+    // calling the function with mismatching MPI communicators should throw
+    EXPECT_THROW_WHAT((std::ignore = csvr.fit(training_data, plssvm::solver = solver)),
+                      plssvm::mpi_exception,
+                      "The MPI communicators provided to the C-SVR and data set must be identical!");
+
+    MPI_Comm_free(&duplicated_mpi_comm);
+}
+
+#endif
+
 TYPED_TEST(BaseCSVRFit, fit_no_label) {
     using label_type = typename TestFixture::fixture_label_type;
     constexpr plssvm::solver_type solver = TestFixture::fixture_solver;
@@ -643,6 +705,49 @@ TYPED_TEST(BaseCSVRPredict, predict_num_feature_mismatch) {
                       "Number of features per data point (2) must match the number of features per support vector of the provided model (4)!");
 }
 
+#if defined(PLSSVM_HAS_MPI_ENABLED)
+
+TYPED_TEST(BaseCSVRPredict, predict_communicator_mismatch) {
+    using label_type = typename TestFixture::fixture_label_type;
+
+    // create C-SVR: must be done using the mock class since the csvr base class is pure virtual
+    const mock_csvr csvr{};
+
+    // mock the predict_values function -> since an exception should be triggered, the mocked function should never be called
+    // clang-format off
+    EXPECT_CALL(csvr, predict_values(
+                            ::testing::An<const plssvm::parameter &>(),
+                            ::testing::An<const plssvm::soa_matrix<plssvm::real_type> &>(),
+                            ::testing::An<const plssvm::aos_matrix<plssvm::real_type> &>(),
+                            ::testing::An<const std::vector<plssvm::real_type> &>(),
+                            ::testing::An<plssvm::soa_matrix<plssvm::real_type> &>(),
+                            ::testing::An<const plssvm::soa_matrix<plssvm::real_type> &>())).Times(0);
+    // clang-format on
+
+    // create mismatching MPI communicator
+    MPI_Comm duplicated_mpi_comm;
+    MPI_Comm_dup(MPI_COMM_WORLD, &duplicated_mpi_comm);
+    const plssvm::mpi::communicator comm{ duplicated_mpi_comm };
+
+    // create data set and previously learned model
+    const plssvm::regression_data_set<label_type> data_to_predict{ this->get_data_filename() };
+    const plssvm::regression_data_set<label_type> data_to_predict_wrong_comm{ comm, this->get_data_filename() };
+    const plssvm::regression_model<label_type> learned_model{ this->get_model_filename() };
+    const plssvm::regression_model<label_type> learned_model_wrong_comm{ comm, this->get_model_filename() };
+
+    // calling the function with mismatching MPI communicators should throw
+    EXPECT_THROW_WHAT(std::ignore = csvr.predict(learned_model_wrong_comm, data_to_predict),
+                      plssvm::mpi_exception,
+                      "The MPI communicators provided to the C-SVR and model must be identical!");
+    EXPECT_THROW_WHAT(std::ignore = csvr.predict(learned_model, data_to_predict_wrong_comm),
+                      plssvm::mpi_exception,
+                      "The MPI communicators provided to the C-SVR and data set must be identical!");
+
+    MPI_Comm_free(&duplicated_mpi_comm);
+}
+
+#endif
+
 template <typename T>
 class BaseCSVRScore : public BaseCSVRMemberBase<T> { };
 
@@ -796,3 +901,46 @@ TYPED_TEST(BaseCSVRScore, score_data_set_num_features_mismatch) {
                                   data.num_cols(),
                                   learned_model.num_features()));
 }
+
+#if defined(PLSSVM_HAS_MPI_ENABLED)
+
+TYPED_TEST(BaseCSVRScore, predict_communicator_mismatch) {
+    using label_type = typename TestFixture::fixture_label_type;
+
+    // create C-SVR: must be done using the mock class since the csvr base class is pure virtual
+    const mock_csvr csvr{};
+
+    // mock the predict_values function -> since an exception should be triggered, the mocked function should never be called
+    // clang-format off
+    EXPECT_CALL(csvr, predict_values(
+                            ::testing::An<const plssvm::parameter &>(),
+                            ::testing::An<const plssvm::soa_matrix<plssvm::real_type> &>(),
+                            ::testing::An<const plssvm::aos_matrix<plssvm::real_type> &>(),
+                            ::testing::An<const std::vector<plssvm::real_type> &>(),
+                            ::testing::An<plssvm::soa_matrix<plssvm::real_type> &>(),
+                            ::testing::An<const plssvm::soa_matrix<plssvm::real_type> &>())).Times(0);
+    // clang-format on
+
+    // create mismatching MPI communicator
+    MPI_Comm duplicated_mpi_comm;
+    MPI_Comm_dup(MPI_COMM_WORLD, &duplicated_mpi_comm);
+    const plssvm::mpi::communicator comm{ duplicated_mpi_comm };
+
+    // create data set and previously learned model
+    const plssvm::regression_data_set<label_type> data_to_predict{ this->get_data_filename() };
+    const plssvm::regression_data_set<label_type> data_to_predict_wrong_comm{ comm, this->get_data_filename() };
+    const plssvm::regression_model<label_type> learned_model{ this->get_model_filename() };
+    const plssvm::regression_model<label_type> learned_model_wrong_comm{ comm, this->get_model_filename() };
+
+    // calling the function with mismatching MPI communicators should throw
+    EXPECT_THROW_WHAT(std::ignore = csvr.score(learned_model_wrong_comm, data_to_predict),
+                      plssvm::mpi_exception,
+                      "The MPI communicators provided to the C-SVR and model must be identical!");
+    EXPECT_THROW_WHAT(std::ignore = csvr.score(learned_model, data_to_predict_wrong_comm),
+                      plssvm::mpi_exception,
+                      "The MPI communicators provided to the C-SVR and data set must be identical!");
+
+    MPI_Comm_free(&duplicated_mpi_comm);
+}
+
+#endif

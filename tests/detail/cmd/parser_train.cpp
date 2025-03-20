@@ -117,6 +117,9 @@ TEST_F(ParserTrain, all_arguments) {
 #if defined(PLSSVM_PERFORMANCE_TRACKER_ENABLED)
     cmd_args.insert(cmd_args.end(), { "--performance_tracking", "tracking.yaml" });
 #endif
+#if defined(PLSSVM_HAS_MPI_ENABLED)
+    cmd_args.insert(cmd_args.end(), { "--mpi_load_balancing_weights", "2" });
+#endif
     cmd_args.insert(cmd_args.end(), { "data.libsvm", "data.libsvm.model" });
     this->CreateCMDArgs(cmd_args);
 
@@ -156,6 +159,9 @@ TEST_F(ParserTrain, all_arguments) {
 #if defined(PLSSVM_PERFORMANCE_TRACKER_ENABLED)
     EXPECT_EQ(parser.performance_tracking_filename, "tracking.yaml");
 #endif
+#if defined(PLSSVM_HAS_MPI_ENABLED)
+    EXPECT_EQ(parser.mpi_load_balancing_weights, std::vector<std::size_t>{ 2 });
+#endif
 
     EXPECT_EQ(plssvm::verbosity, plssvm::verbosity_level::libsvm);
 }
@@ -172,6 +178,9 @@ TEST_F(ParserTrain, all_arguments_output) {
 #endif
 #if defined(PLSSVM_PERFORMANCE_TRACKER_ENABLED)
     cmd_args.insert(cmd_args.end(), { "--performance_tracking", "tracking.yaml" });
+#endif
+#if defined(PLSSVM_HAS_MPI_ENABLED)
+    cmd_args.insert(cmd_args.end(), { "--mpi_load_balancing_weights", "2" });
 #endif
     cmd_args.insert(cmd_args.end(), { "data.libsvm", "data.libsvm.model" });
     this->CreateCMDArgs(cmd_args);
@@ -213,6 +222,9 @@ TEST_F(ParserTrain, all_arguments_output) {
         std::is_same_v<plssvm::real_type, float> ? "float" : "double");
 #if defined(PLSSVM_PERFORMANCE_TRACKER_ENABLED)
     correct += "performance tracking file: 'tracking.yaml'\n";
+#endif
+#if defined(PLSSVM_HAS_MPI_ENABLED)
+    correct += "mpi load-balancing weights: [2]\n";
 #endif
     EXPECT_CONVERSION_TO_STRING(parser, correct);
 
@@ -613,6 +625,50 @@ INSTANTIATE_TEST_SUITE_P(ParserTrain, ParserTrainPerformanceTrackingFilename, ::
 // clang-format on
 
 #endif  // PLSSVM_PERFORMANCE_TRACKER_ENABLED
+
+#if defined(PLSSVM_HAS_MPI_ENABLED)
+
+class ParserTrainMPILoadBalancingWeights : public ParserTrain,
+                                           public ::testing::WithParamInterface<std::tuple<std::string, std::string>> { };
+
+TEST_P(ParserTrainMPILoadBalancingWeights, parsing) {
+    const auto &[flag, value] = GetParam();
+    // convert string to std::vector
+    const std::vector<std::size_t> weights{ util::convert_from_string<std::size_t>(value) };
+    // create artificial command line arguments in test fixture
+    this->CreateCMDArgs({ "./plssvm-train", flag, value, "data.libsvm" });
+    // create parameter object
+    const plssvm::detail::cmd::parser_train parser{ this->get_comm(), this->get_argc(), this->get_argv() };
+    // test for correctness
+    EXPECT_EQ(parser.mpi_load_balancing_weights, weights);
+}
+
+// clang-format off
+INSTANTIATE_TEST_SUITE_P(ParserTrain, ParserTrainMPILoadBalancingWeights, ::testing::Combine(
+                ::testing::Values("--mpi_load_balancing_weights"),
+                ::testing::Values("1", "2")),
+                naming::pretty_print_parameter_flag_and_value<ParserTrainMPILoadBalancingWeights>);
+// clang-format on
+
+class ParserTrainMPILoadBalancingWeightsDeathTest : public ParserTrain,
+                                                    public ::testing::WithParamInterface<std::tuple<std::string, std::string>> { };
+
+TEST_P(ParserTrainMPILoadBalancingWeightsDeathTest, parsing) {
+    const auto &[flag, value] = GetParam();
+    // create artificial command line arguments in test fixture
+    this->CreateCMDArgs({ "./plssvm-train", flag, value, "data.libsvm" });
+    // create parameter object
+    EXPECT_DEATH((plssvm::detail::cmd::parser_train{ this->get_comm(), this->get_argc(), this->get_argv() }), ::testing::ContainsRegex("ERROR: the number of load balancing weights \\(.*\\) must match the number of MPI ranks \\(1\\)!"));
+}
+
+// clang-format off
+INSTANTIATE_TEST_SUITE_P(ParserTrain, ParserTrainMPILoadBalancingWeightsDeathTest, ::testing::Combine(
+                ::testing::Values("--mpi_load_balancing_weights"),
+                ::testing::Values("1,2", "1,2,3")),
+                naming::pretty_print_parameter_flag_and_value<ParserTrainMPILoadBalancingWeightsDeathTest>);
+// clang-format on
+
+#endif  // PLSSVM_HAS_MPI_ENABLED
 
 class ParserTrainUseStringsAsLabels : public ParserTrain,
                                       public ::testing::WithParamInterface<std::tuple<std::string, bool>> { };
