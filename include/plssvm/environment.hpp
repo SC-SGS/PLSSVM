@@ -17,7 +17,6 @@
 
 #include "plssvm/backend_types.hpp"          // plssvm::backend_type, plssvm::list_available_backends
 #include "plssvm/detail/assert.hpp"          // PLSSVM_ASSERT
-#include "plssvm/detail/string_utility.hpp"  // plssvm::detail::to_lower_case
 #include "plssvm/detail/utility.hpp"         // plssvm::detail::{contains, unreachable}
 #include "plssvm/exceptions/exceptions.hpp"  // plssvm::environment_exception
 #include "plssvm/mpi/environment.hpp"        // plssvm::mpi::{is_initialized, init, is_finalized, finalize}
@@ -37,10 +36,7 @@
 #include "fmt/ranges.h"   // fmt::join
 
 #include <algorithm>  // std::remove_if
-#include <ios>        // std::ios::failbit
-#include <istream>    // std::istream
-#include <ostream>    // std::ostream
-#include <string>     // std::string
+#include <iosfwd>     // forward declare std::ostream and std::istream
 #include <utility>    // std::move
 #include <vector>     // std::vector
 
@@ -66,19 +62,7 @@ enum class status {
  * @param[in] s the environment status
  * @return the output-stream
  */
-inline std::ostream &operator<<(std::ostream &out, const status s) {
-    switch (s) {
-        case status::uninitialized:
-            return out << "uninitialized";
-        case status::initialized:
-            return out << "initialized";
-        case status::finalized:
-            return out << "finalized";
-        case status::unnecessary:
-            return out << "unnecessary";
-    }
-    return out << "unknown";
-}
+std::ostream &operator<<(std::ostream &out, status s);
 
 /**
  * @brief Use the input-stream @p in to initialize the environment status @p s.
@@ -86,24 +70,7 @@ inline std::ostream &operator<<(std::ostream &out, const status s) {
  * @param[in] s the environment status
  * @return the input-stream
  */
-inline std::istream &operator>>(std::istream &in, status &s) {
-    std::string str;
-    in >> str;
-    detail::to_lower_case(str);
-
-    if (str == "uninitialized") {
-        s = status::uninitialized;
-    } else if (str == "initialized") {
-        s = status::initialized;
-    } else if (str == "finalized") {
-        s = status::finalized;
-    } else if (str == "unnecessary") {
-        s = status::unnecessary;
-    } else {
-        in.setstate(std::ios::failbit);
-    }
-    return in;
-}
+std::istream &operator>>(std::istream &in, status &s);
 
 namespace detail {
 
