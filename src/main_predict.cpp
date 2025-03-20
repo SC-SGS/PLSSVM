@@ -53,7 +53,7 @@ int main(int argc, char *argv[]) {
 #if defined(PLSSVM_HAS_MPI_ENABLED)
     plssvm::detail::log_untracked(plssvm::verbosity_level::full,
                                   comm,
-                                  "Using {} MPI rank(s) for our SVM.\n",
+                                  "Using {} MPI rank(s) for our C-SVM.\n",
                                   comm.size());
 #else
     if (plssvm::mpi::is_executed_via_mpirun()) {
