@@ -45,8 +45,6 @@ int main(int argc, char *argv[]) {
         if (comm.is_main_rank()) {
             std::cerr << fmt::format("Currently, plssvm-scale only supports a single MPI process, but {} where used!", comm.size()) << std::endl;
         }
-        std::exit(EXIT_FAILURE);
-
         return EXIT_FAILURE;
     }
 
