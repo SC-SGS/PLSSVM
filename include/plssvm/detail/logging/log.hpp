@@ -42,7 +42,7 @@ template <typename... Args>
 void log(const verbosity_level verb, const std::string_view msg, Args &&...args) {
     // if the verbosity level is quiet, nothing is logged
     // otherwise verb must contain the bit-flag currently set by plssvm::verbosity
-    if (verbosity != verbosity_level::quiet && ((verb & verbosity) != verbosity_level::quiet || verbosity == plssvm::verbosity_level::full)) {
+    if (verbosity != verbosity_level::quiet && verb != verbosity_level::quiet && ((verb & verbosity) != verbosity_level::quiet || verbosity == plssvm::verbosity_level::full)) {
         // if the plssvm::verbosity_level is the warning level, output the message on stderr
         // otherwise output the message on stdout
         if ((verb & verbosity_level::warning) != verbosity_level::quiet) {
