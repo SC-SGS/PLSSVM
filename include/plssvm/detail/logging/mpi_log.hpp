@@ -39,7 +39,7 @@ void log(const verbosity_level verb, const mpi::communicator &comm, const std::s
         // only print on the main MPI rank
         log(verb, msg, std::forward<Args>(args)...);
     } else {
-        // set output to quiet otherwise
+        // set output to quiet otherwise (since all MPI ranks should track their args)
         log(verbosity_level::quiet, msg, std::forward<Args>(args)...);
     }
 }

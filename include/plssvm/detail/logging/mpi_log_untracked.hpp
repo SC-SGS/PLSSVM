@@ -37,7 +37,7 @@ void log_untracked(const verbosity_level verb, const mpi::communicator &comm, co
         // only print on the main MPI rank
         log_untracked(verb, msg, std::forward<Args>(args)...);
     }
-    // nothing to do on other MPI ranks
+    // nothing to do on other MPI ranks since nothing must be tracked
 }
 
 }  // namespace plssvm::detail
