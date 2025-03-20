@@ -207,6 +207,8 @@ set(PLSSVM_BASE_TEST_SOURCES
     ${CMAKE_CURRENT_LIST_DIR}/detail/utility.cpp
     ${CMAKE_CURRENT_LIST_DIR}/exceptions/exceptions.cpp
     ${CMAKE_CURRENT_LIST_DIR}/exceptions/source_location.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/model/classification_model.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/model/regression_model.cpp
     ${CMAKE_CURRENT_LIST_DIR}/mpi/detail/information.cpp
     ${CMAKE_CURRENT_LIST_DIR}/mpi/detail/mpi_datatype.cpp
     ${CMAKE_CURRENT_LIST_DIR}/mpi/detail/utility.cpp
@@ -219,7 +221,6 @@ set(PLSSVM_BASE_TEST_SOURCES
     ${CMAKE_CURRENT_LIST_DIR}/version/git_metadata/git_metadata.cpp
     ${CMAKE_CURRENT_LIST_DIR}/version/version.cpp
     ${CMAKE_CURRENT_LIST_DIR}/backend_types.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/classification_model.cpp
     ${CMAKE_CURRENT_LIST_DIR}/classification_report.cpp
     ${CMAKE_CURRENT_LIST_DIR}/classification_types.cpp
     ${CMAKE_CURRENT_LIST_DIR}/csvc_factory.cpp
@@ -230,7 +231,6 @@ set(PLSSVM_BASE_TEST_SOURCES
     ${CMAKE_CURRENT_LIST_DIR}/kernel_functions.cpp
     ${CMAKE_CURRENT_LIST_DIR}/matrix.cpp
     ${CMAKE_CURRENT_LIST_DIR}/parameter.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/regression_model.cpp
     ${CMAKE_CURRENT_LIST_DIR}/shape.cpp
     ${CMAKE_CURRENT_LIST_DIR}/solver_types.cpp
     ${CMAKE_CURRENT_LIST_DIR}/svm_types.cpp
