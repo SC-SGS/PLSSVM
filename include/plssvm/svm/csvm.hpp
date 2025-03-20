@@ -334,6 +334,9 @@ std::tuple<aos_matrix<real_type>, std::vector<real_type>, std::vector<unsigned l
         constexpr detail::memory_size minimal_safety_margin = 512_MiB;
         constexpr long double percentual_safety_margin = 0.05L;
         const auto reduce_total_memory = [=](const detail::memory_size total_memory) {
+            if (total_memory < 512_MiB) {
+                throw kernel_launch_resources{ fmt::format("At least {} of memory must be available, but available are only {}!", 512_MiB, total_memory) };
+            }
             return total_memory - std::max(total_memory * percentual_safety_margin, minimal_safety_margin);
         };
 
