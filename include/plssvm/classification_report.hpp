@@ -160,8 +160,6 @@ class classification_report {
 
     /// The number of floating point digits printed in the classification report output.
     int output_digits_{ 2 };
-    /// Flag, whether the micro average or the accuracy should be printed in the classification report output.
-    bool use_micro_average_{ false };
     /// The used zero division behavior.
     zero_division_behavior zero_div_{ zero_division_behavior::warn };
 };
