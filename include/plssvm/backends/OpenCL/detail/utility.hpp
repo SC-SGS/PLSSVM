@@ -124,6 +124,7 @@ void device_synchronize(const command_queue &queue);
  *          Additionally, adds the path to the currently used OpenCL library as a comment to the kernel source string (before the checksum calculation) to detect
  *          changes in the used OpenCL implementation and trigger a kernel rebuild.
  *
+ * @param[in] comm the MPI communicator
  * @param[in] contexts the used OpenCL contexts
  * @param[in] kernel_function the kernel function
  * @throws plssvm::invalid_file_format_exception if the file couldn't be read using [`std::ifstream::read`](https://en.cppreference.com/w/cpp/io/basic_istream/read)

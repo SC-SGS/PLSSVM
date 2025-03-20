@@ -543,6 +543,16 @@
  * @brief Directory containing implementation details for the SYCL backend using AdaptiveCpp as SYCL implementation.
  */
 
+/**
+ * @dir include/plssvm/data_set
+ * @author Alexander Van Craen
+ * @author Marcel Breyer
+ * @copyright 2018-today The PLSSVM project - All Rights Reserved
+ * @license This file is part of the PLSSVM project which is released under the MIT license.
+ *          See the LICENSE.md file in the project root for full license information.
+ *
+ * @brief Directory containing implementations for the different data sets.
+ */
 
 /**
  * @dir include/plssvm/detail
@@ -578,6 +588,17 @@
  */
 
 /**
+ * @dir include/plssvm/detail/logging
+ * @author Alexander Van Craen
+ * @author Marcel Breyer
+ * @copyright 2018-today The PLSSVM project - All Rights Reserved
+ * @license This file is part of the PLSSVM project which is released under the MIT license.
+ *          See the LICENSE.md file in the project root for full license information.
+ *
+ * @brief Directory containing implementation details regarding the different logging functions which **should not** be used by users.
+ */
+
+/**
  * @dir include/plssvm/detail/tracking
  * @author Alexander Van Craen
  * @author Marcel Breyer
@@ -600,6 +621,17 @@
  */
 
 /**
+ * @dir include/plssvm/model
+ * @author Alexander Van Craen
+ * @author Marcel Breyer
+ * @copyright 2018-today The PLSSVM project - All Rights Reserved
+ * @license This file is part of the PLSSVM project which is released under the MIT license.
+ *          See the LICENSE.md file in the project root for full license information.
+ *
+ * @brief Directory containing implementations for the different models.
+ */
+
+/**
  * @dir include/plssvm/mpi
  * @author Alexander Van Craen
  * @author Marcel Breyer
@@ -619,6 +651,17 @@
  *          See the LICENSE.md file in the project root for full license information.
  *
  * @brief Directory containing implementation details regarding the MPI wrapper functionality which **should not** be used by users.
+ */
+
+/**
+ * @dir include/plssvm/svm
+ * @author Alexander Van Craen
+ * @author Marcel Breyer
+ * @copyright 2018-today The PLSSVM project - All Rights Reserved
+ * @license This file is part of the PLSSVM project which is released under the MIT license.
+ *          See the LICENSE.md file in the project root for full license information.
+ *
+ * @brief Directory containing implementations for the different C-SVMs.
  */
 
 /**
