@@ -183,10 +183,12 @@ parser_scale::parser_scale(const mpi::communicator &comm, int argc, char **argv)
         restore_filename = result["restore_filename"].as<decltype(restore_filename)>();
     }
 
+#if defined(PLSSVM_PERFORMANCE_TRACKER_ENABLED)
     // parse performance tracking filename
     if (result.count("performance_tracking")) {
         performance_tracking_filename = result["performance_tracking"].as<decltype(performance_tracking_filename)>();
     }
+#endif
 }
 
 std::ostream &operator<<(std::ostream &out, const parser_scale &params) {

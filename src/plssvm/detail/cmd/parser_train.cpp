@@ -321,11 +321,14 @@ parser_train::parser_train(const mpi::communicator &comm, int argc, char **argv)
         model_filename = input_path.filename().string() + ".model";
     }
 
+#if defined(PLSSVM_PERFORMANCE_TRACKER_ENABLED)
     // parse performance tracking filename
     if (result.count("performance_tracking")) {
         performance_tracking_filename = result["performance_tracking"].as<decltype(performance_tracking_filename)>();
     }
+#endif
 
+#if defined(PLSSVM_HAS_MPI_ENABLED)
     // parse MPI load balancing factors
     if (result.count("mpi_load_balancing_weights")) {
         mpi_load_balancing_weights = result["mpi_load_balancing_weights"].as<decltype(mpi_load_balancing_weights)>();
@@ -339,6 +342,7 @@ parser_train::parser_train(const mpi::communicator &comm, int argc, char **argv)
             std::exit(EXIT_FAILURE);
         }
     }
+#endif
 }
 
 std::ostream &operator<<(std::ostream &out, const parser_train &params) {
@@ -409,9 +413,14 @@ std::ostream &operator<<(std::ostream &out, const parser_train &params) {
         std::is_same_v<real_type, float> ? "float" : "double",
         params.input_filename,
         params.model_filename);
+
     if (!params.performance_tracking_filename.empty()) {
         out << fmt::format("performance tracking file: '{}'\n", params.performance_tracking_filename);
     }
+    if (!params.mpi_load_balancing_weights.empty()) {
+        out << fmt::format("mpi load-balancing weights: [{}]\n", fmt::join(params.mpi_load_balancing_weights, ", "));
+    }
+
     return out;
 }
 
