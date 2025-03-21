@@ -13,6 +13,8 @@
 #include "gmock/gmock.h"  // ::testing::ContainsRegex
 #include "gtest/gtest.h"  // TEST, ASSERT_DEATH, EXPECT_DEATH
 
+#include <string>  // std::string
+
 // only test if assertions are enabled
 #if defined(PLSSVM_ENABLE_ASSERTS)
 
@@ -34,6 +36,14 @@ TEST(PLSSVMAssert, check_assertion_true) {
 }
 
 TEST(PLSSVMAssert, check_assertion_false) {
+    // test regex
+    const std::string regex = "Assertion '.*1 == 2.*' failed!\n"
+                              ".*\n"
+                              "  in file            .*\n"
+                              "  in function        .*\n"
+                              "  @ line             .*\n\n"
+                              ".*msg 1.*\n";
+
     // calling check assertion with false should abort
-    EXPECT_DEATH(plssvm::detail::check_assertion(false, "cond", plssvm::source_location::current(), "msg {}", 1), "cond");
+    EXPECT_DEATH(plssvm::detail::check_assertion(1 == 2, "1 == 2", plssvm::source_location::current(), "msg {}", 1), ::testing::ContainsRegex(regex));
 }
