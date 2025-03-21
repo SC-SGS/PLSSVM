@@ -750,6 +750,34 @@ TYPED_TEST(RegressionDataSetMatrixConstructors, construct_from_matrix_with_label
     EXPECT_FALSE(data.scaling_factors().has_value());
 }
 
+TYPED_TEST(RegressionDataSetMatrixConstructors, construct_from_empty_matrix_with_label) {
+    using label_type = typename TestFixture::fixture_label_type;
+    constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
+
+    // create data points and labels
+    const std::vector<label_type> labels = util::get_correct_data_file_labels<label_type>();
+    const plssvm::matrix<plssvm::real_type, layout> data_points{ plssvm::shape{ 0, 0 }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE } };
+
+    // creating a data set from an empty vector is illegal
+    EXPECT_THROW_WHAT((plssvm::regression_data_set<label_type>{ data_points, labels }),
+                      plssvm::data_set_exception,
+                      "Data vector is empty!");
+}
+
+TYPED_TEST(RegressionDataSetMatrixConstructors, construct_from_matrix_with_label_size_mismatch) {
+    using label_type = typename TestFixture::fixture_label_type;
+    constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
+
+    // create data points and labels
+    const std::vector<label_type> labels = util::get_correct_data_file_labels<label_type, plssvm::svm_type::csvr>();
+    const plssvm::matrix<plssvm::real_type, layout> data_points{ plssvm::shape{ labels.size() - 1, 4 }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE } };
+
+    // creating a data set from an empty vector is illegal
+    EXPECT_THROW_WHAT_MATCHER((plssvm::regression_data_set<label_type>{ data_points, labels }),
+                              plssvm::data_set_exception,
+                              ::testing::HasSubstr(fmt::format("Number of labels ({}) must match the number of data points ({})!", labels.size(), labels.size() - 1)));
+}
+
 TYPED_TEST(RegressionDataSetMatrixConstructors, construct_scaled_from_matrix_without_label_no_padding) {
     using label_type = typename TestFixture::fixture_label_type;
     constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
