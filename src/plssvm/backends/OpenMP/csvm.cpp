@@ -39,6 +39,7 @@
 
 #include <cmath>    // std::fma
 #include <cstddef>  // std::size_t
+#include <cstring>  // std::memset
 #include <tuple>    // std::tuple, std::make_tuple
 #include <utility>  // std::pair, std::make_pair, std::move
 #include <variant>  // std::get
@@ -126,7 +127,7 @@ std::vector<::plssvm::detail::move_only_any> csvm::assemble_kernel_matrix(const 
                     std::vector<real_type> kernel_matrix(dist.calculate_explicit_kernel_matrix_num_entries_padded(0));  // only explicitly store the upper triangular matrix
                     switch (params.kernel_type) {
                         case kernel_function_type::linear:
-                            detail::device_kernel_assembly<kernel_function_type::linear>(kernel_matrix, A,  device_specific_num_rows, row_offset, q_red, QA_cost, cost);
+                            detail::device_kernel_assembly<kernel_function_type::linear>(kernel_matrix, A, device_specific_num_rows, row_offset, q_red, QA_cost, cost);
                             break;
                         case kernel_function_type::polynomial:
                             detail::device_kernel_assembly<kernel_function_type::polynomial>(kernel_matrix, A, device_specific_num_rows, row_offset, q_red, QA_cost, cost, params.degree, std::get<real_type>(params.gamma), params.coef0);
@@ -179,7 +180,7 @@ void csvm::blas_level_3(const solver_type solver, const real_type alpha, const s
     if (dist.place_specific_num_rows(0) > std::size_t{ 0 }) {
         if (!comm_.is_main_rank()) {
             // MPI rank 0 always touches all values in C -> other MPI ranks do not need C
-            C *= real_type{ 0.0 };
+            std::memset(C.data(), 0, C.size_padded() * sizeof(real_type));
         }
 
         // calculate the number of data points this device is responsible for
