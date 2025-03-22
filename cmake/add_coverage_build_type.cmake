@@ -9,9 +9,6 @@ set(PLSSVM_COVERAGE_COMPILER_FLAGS "-O0 -g --coverage -fprofile-abs-path -fno-in
 set(PLSSVM_COVERAGE_LINKER_FLAGS "-O0 -g --coverage -fno-lto -lgcov")
 set(CMAKE_INTERPROCEDURAL_OPTIMIZATION OFF CACHE BOOL "" FORCE)
 
-# also enable code coverage for nvcc
-set(CMAKE_CUDA_FLAGS "-Xcompiler '-O0 -g --coverage'")
-
 # add new coverage build type
 set(CMAKE_CXX_FLAGS_COVERAGE "${CMAKE_CXX_FLAGS_DEBUG} ${PLSSVM_COVERAGE_COMPILER_FLAGS}" CACHE STRING "Flags used by the C++ compiler during coverage builds."
                                                                                              FORCE
