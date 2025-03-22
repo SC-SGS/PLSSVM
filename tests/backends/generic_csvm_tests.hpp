@@ -53,9 +53,11 @@ TYPED_TEST_P(GenericBackendCSVM, blas_level_3_kernel_explicit) {
     const plssvm::classification_data_set data{ PLSSVM_CLASSIFICATION_TEST_FILE };
     const auto [q_red, QA_cost] = ground_truth::perform_dimensional_reduction(params, data.data());
 
+    // emulate two devices to ensure device_kernel_symm_mirror is called
+    const std::size_t num_devices = 2;
+
     // create correct data distribution for the ground truth calculation
-    const plssvm::detail::triangular_data_distribution dist{ plssvm::mpi::communicator{}, data.num_data_points() - 1, 1 };
-    const std::vector<plssvm::real_type> kernel_matrix = ground_truth::assemble_device_specific_kernel_matrix(params, data.data(), q_red, QA_cost, dist, 0);
+    const plssvm::detail::triangular_data_distribution dist{ plssvm::mpi::communicator{}, data.num_data_points() - 1, num_devices };
 
     const auto B = util::generate_specific_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ data.num_data_points() - 1, data.num_data_points() - 1 }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE });
 
@@ -66,12 +68,26 @@ TYPED_TEST_P(GenericBackendCSVM, blas_level_3_kernel_explicit) {
     const std::size_t num_rhs = B.shape().x;
     const std::size_t num_rows = B.shape().y;
 
-    const std::size_t specific_num_rows = dist.place_specific_num_rows(0);
-    const std::size_t row_offset = dist.place_row_offset(0);
-    device_kernel_symm(num_rows, num_rhs, specific_num_rows, row_offset, alpha, kernel_matrix, B, beta, C);
-    const std::size_t num_mirror_rows = num_rows - row_offset - specific_num_rows;
-    if (num_mirror_rows > 0) {
-        device_kernel_symm_mirror(num_rows, num_rhs, num_mirror_rows, specific_num_rows, row_offset, alpha, kernel_matrix, B, beta, C);
+    plssvm::soa_matrix<plssvm::real_type> C_res{ C.shape(), plssvm::real_type{ 0.0 }, C.padding() };
+
+    for (std::size_t device = 0; device < num_devices; ++device) {
+        // create kernel matrix
+        const std::vector<plssvm::real_type> kernel_matrix = ground_truth::assemble_device_specific_kernel_matrix(params, data.data(), q_red, QA_cost, dist, device);
+
+        plssvm::soa_matrix<plssvm::real_type> C_temp{ C.shape(), plssvm::real_type{ 0.0 }, C.padding() };
+        if (device == 0) {
+            C_temp = C;
+        }
+
+        const std::size_t specific_num_rows = dist.place_specific_num_rows(device);
+        const std::size_t row_offset = dist.place_row_offset(device);
+        device_kernel_symm(num_rows, num_rhs, specific_num_rows, row_offset, alpha, kernel_matrix, B, beta, C_temp);
+        const std::size_t num_mirror_rows = num_rows - row_offset - specific_num_rows;
+        if (num_mirror_rows > 0) {
+            device_kernel_symm_mirror(num_rows, num_rhs, num_mirror_rows, specific_num_rows, row_offset, alpha, kernel_matrix, B, beta, C_temp);
+        }
+
+        C_res += C_temp;
     }
 
     // calculate correct results
@@ -79,7 +95,7 @@ TYPED_TEST_P(GenericBackendCSVM, blas_level_3_kernel_explicit) {
     ground_truth::gemm(alpha, kernel_matrix_gemm_padded, B, beta, ground_truth_C);
 
     // check C for correctness
-    EXPECT_FLOATING_POINT_MATRIX_NEAR(C, ground_truth_C);
+    EXPECT_FLOATING_POINT_MATRIX_NEAR(C_res, ground_truth_C);
 }
 
 TYPED_TEST_P(GenericBackendCSVM, calculate_w) {
