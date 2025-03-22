@@ -67,11 +67,8 @@ struct classification_model_wrapper {
 struct regression_model_wrapper {
     /// A std::variant containing all possible regression model types.
     using possible_model_types = std::variant<plssvm::regression_model<std::int16_t>,   // np.int16
-                                              plssvm::regression_model<std::uint16_t>,  // np.uint16
                                               plssvm::regression_model<std::int32_t>,   // np.int32
-                                              plssvm::regression_model<std::uint32_t>,  // np.uint32
                                               plssvm::regression_model<std::int64_t>,   // np.int64
-                                              plssvm::regression_model<std::uint64_t>,  // np.uint64
                                               plssvm::regression_model<float>,          // np.float32
                                               plssvm::regression_model<double>>;        // np.float64
 
