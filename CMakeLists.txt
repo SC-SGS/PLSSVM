@@ -314,6 +314,9 @@ if (uppercase_CMAKE_BUILD_TYPE MATCHES COVERAGE)
     # tests must be available for a coverage analysis
     message(STATUS "Enabling tests since they are necessary for the coverage analysis.")
     set(PLSSVM_ENABLE_TESTING ON CACHE BOOL "" FORCE)
+    # disable fast-math like it should be in the normal tests
+    message(STATUS "Disabling fast-math for the tests.")
+    set(PLSSVM_ENABLE_FAST_MATH OFF CACHE BOOL "" FORCE)
     # assertions must be available for a coverage analysis
     message(STATUS "Enabling assertions since they are necessary for the coverage analysis.")
     set(PLSSVM_ENABLE_ASSERTS ON CACHE BOOL "" FORCE)
@@ -324,23 +327,39 @@ if (uppercase_CMAKE_BUILD_TYPE MATCHES COVERAGE)
     # check that the necessary executables are available
     find_program(PLSSVM_LCOV lcov REQUIRED)
     find_program(PLSSVM_GENHTML genhtml REQUIRED)
+    find_program(PLSSVM_CPPFILT c++filt)
+    if (PLSSVM_CPPFILT)
+        set(PLSSVM_DEMANGLE_USING_CPPFILT --demangle-cpp)
+    endif ()
 
-    # Create the coverage target. Run coverage tests with 'make coverage'
+    # Create the coverage target. Run coverage tests with 'ctest --build . --target coverage'
+    set(PLSSVM_COVERAGE_REPORT_OUTPUT_DIRECTORY "coverage_report")
     add_custom_target(
         coverage
-        COMMAND lcov --zerocounters --directory .
-        COMMAND lcov --capture -d . --initial --output-file test_base.info
-        COMMAND mkdir -p coverage
-        COMMAND ${CMAKE_MAKE_PROGRAM} test || true
-        COMMAND lcov --capture -d . --output-file test_test.info
-        COMMAND lcov --add-tracefile test_base.info --add-tracefile test_test.info -o test_total.info
-        COMMAND lcov --remove test_total.info '/usr/*' '*/build/*' '*/tests/*' '*/_deps/*' -o test_clean.info
-        COMMAND genhtml test_clean.info --output-directory coverage --title "PLSSVM Test Coverage" --show-details --legend
-        BYPRODUCTS ${CMAKE_BINARY_DIR}/test_base.info
-                   ${CMAKE_BINARY_DIR}/test_test.info
-                   ${CMAKE_BINARY_DIR}/test_total.info
-                   ${CMAKE_BINARY_DIR}/test_clean.info
-                   ${CMAKE_BINARY_DIR}/coverage
+        COMMENT "Running tests and generating coverage report..."
+        # Cleanup previous coverage data
+        COMMAND ${PLSSVM_LCOV} --directory . --zerocounters
+        COMMAND ${CMAKE_COMMAND} -E remove -f coverage.info coverage_init.info coverage_tests.info "${PLSSVM_COVERAGE_REPORT_OUTPUT_DIRECTORY}"
+        # Capture initial zero coverage baseline (useful for untouched files)
+        COMMAND ${PLSSVM_LCOV} --directory . --capture --initial --rc geninfo_unexecuted_blocks=1 --include '*/PLSSVM/src/*' --include '*/PLSSVM/include/*' --output-file coverage_init.info
+        # Be sure the output directory exists
+        COMMAND mkdir -p "${PLSSVM_COVERAGE_REPORT_OUTPUT_DIRECTORY}"
+        # Run tests
+        COMMAND ${CMAKE_CTEST_COMMAND} --parallel 8 || true
+        # Capture coverage info
+        COMMAND ${PLSSVM_LCOV} --directory . --capture --rc geninfo_unexecuted_blocks=1 --include '*/PLSSVM/src/*' --include '*/PLSSVM/include/*' --output-file coverage_tests.info
+        # Combine coverage files (in case of multiple test runs)
+        COMMAND ${PLSSVM_LCOV} --add-tracefile coverage_init.info --add-tracefile coverage_tests.info --output-file coverage.info
+        # Generate HTML report
+        COMMAND ${PLSSVM_GENHTML} coverage.info --output-directory "${PLSSVM_COVERAGE_REPORT_OUTPUT_DIRECTORY}" --title "PLSSVM Test Coverage" --show-details --legend --frames ${PLSSVM_DEMANGLE_USING_CPPFILT}
+        # Summary message
+        COMMAND ${CMAKE_COMMAND} -E echo "Coverage report generated in: ${CMAKE_BINARY_DIR}/${PLSSVM_COVERAGE_REPORT_OUTPUT_DIRECTORY}"
+        # Specify byproducts for CMake
+        BYPRODUCTS "${CMAKE_BINARY_DIR}/coverage_init.info"
+                   "${CMAKE_BINARY_DIR}/coverage_tests.info"
+                   "${CMAKE_BINARY_DIR}/coverage.info"
+                   "${CMAKE_BINARY_DIR}/${PLSSVM_COVERAGE_REPORT_OUTPUT_DIRECTORY}"
+        # Set the working directory
         WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
     )
 
@@ -355,6 +374,7 @@ if (uppercase_CMAKE_BUILD_TYPE MATCHES COVERAGE)
         DEPENDS clean
         COMMENT "remove all coverage files"
         COMMAND ${CMAKE_MAKE_PROGRAM} clean
+        COMMAND ${CMAKE_COMMAND} -E remove -f coverage.info coverage_init.info coverage_tests.info ${PLSSVM_COVERAGE_REPORT_OUTPUT_DIRECTORY}
         COMMAND ${CMAKE_COMMAND} -P "${CMAKE_CURRENT_SOURCE_DIR}/cmake/delete_coverage_files.cmake" TARGET clean_coverage
     )
     list(POP_BACK CMAKE_MESSAGE_INDENT)
