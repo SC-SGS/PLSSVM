@@ -152,11 +152,6 @@ pipeline {
                                     fi
 
 
-
-                                    spack compiler rm -a clang@=18.1.3 || true
-                                    spack compiler rm -a clang@=18.1.8 || true
-
-
                                     if [ ! -f $SPACK_SYSTEM_CONFIG_PATH/config.yaml ]; then
                                         touch  $SPACK_SYSTEM_CONFIG_PATH/config.yaml
                                         echo "config:" >> $SPACK_SYSTEM_CONFIG_PATH/config.yaml
@@ -436,7 +431,7 @@ pipeline {
 
                                         set -e -o pipefail
                                         for i in {1..1}; do
-                                            spack dev-build plssvm@develop$([[ $BACKEND == ADAPTIVECPP ]]  && [[ $ARCHITECTURE == AMD ]] && echo "%clang@19.1.7" )$([[ $BACKEND == ADAPTIVECPP ]]  && [[ $ARCHITECTURE == NVIDIA ]] && echo "%clang@17.0.6" ) \
+                                            spack dev-build plssvm@develop$([[ $BACKEND == ADAPTIVECPP ]]  && [[ $ARCHITECTURE == AMD ]] && echo "" )$([[ $BACKEND == ADAPTIVECPP ]]  && [[ $ARCHITECTURE == NVIDIA ]] && echo "" ) \
                                                 $([[ $BACKEND == OPENMP ]] && echo "+openmp" || echo "~openmp") \
                                                 $([[ $BACKEND == HPX ]] && echo "+hpx" || echo "~hpx") \
                                                 $([[ $BACKEND == KOKKOS ]] && echo "+kokkos" || echo "~kokkos") \
