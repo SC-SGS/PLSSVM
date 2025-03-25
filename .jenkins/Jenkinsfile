@@ -436,7 +436,7 @@ pipeline {
 
                                         set -e -o pipefail
                                         for i in {1..1}; do
-                                            spack dev-build plssvm@develop$([[ $BACKEND == ADAPTIVECPP ]]  && [[ $ARCHITECTURE == AMD ]] && echo "%clang@19.1.7" )$([[ $BACKEND == ADAPTIVECPP ]]  && [[ $ARCHITECTURE == NVIDIA ]] && echo "%clang@19.1.7" ) \
+                                            spack dev-build plssvm@develop$([[ $BACKEND == ADAPTIVECPP ]]  && [[ $ARCHITECTURE == AMD ]] && echo "%clang@19.1.7" )$([[ $BACKEND == ADAPTIVECPP ]]  && [[ $ARCHITECTURE == NVIDIA ]] && echo "%clang@17.0.6" ) \
                                                 $([[ $BACKEND == OPENMP ]] && echo "+openmp" || echo "~openmp") \
                                                 $([[ $BACKEND == HPX ]] && echo "+hpx" || echo "~hpx") \
                                                 $([[ $BACKEND == KOKKOS ]] && echo "+kokkos" || echo "~kokkos") \
