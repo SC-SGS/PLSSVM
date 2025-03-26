@@ -50,17 +50,18 @@ inline void device_kernel_assembly_symm(const real_type alpha, const std::vector
     PLSSVM_ASSERT(B.num_cols() == q.size(), "The number of columns in B ({}) must be the same as the values in q ({})!", B.num_cols(), q.size());
 
     // calculate constants
-    const auto blocked_device_specific_num_rows = static_cast<std::size_t>(std::ceil(static_cast<real_type>(device_specific_num_rows) / INTERNAL_BLOCK_SIZE));
     const std::size_t num_rows = data.num_rows() - 1;
     const std::size_t num_features = data.num_cols();
     const std::size_t num_classes = B.num_rows();
+    const auto blocked_row_range = static_cast<std::size_t>(std::ceil(static_cast<real_type>(num_rows - row_offset) / INTERNAL_BLOCK_SIZE));
+    const auto blocked_device_specific_num_rows = static_cast<std::size_t>(std::ceil(static_cast<real_type>(device_specific_num_rows) / INTERNAL_BLOCK_SIZE));
 
     // cast all values to 64-bit unsigned long long to prevent potential 32-bit overflows
     const auto INTERNAL_BLOCK_SIZE_uz = static_cast<std::size_t>(INTERNAL_BLOCK_SIZE);
     const auto THREAD_BLOCK_SIZE_uz = static_cast<std::size_t>(THREAD_BLOCK_SIZE);
 
 #pragma omp parallel for collapse(2) schedule(dynamic)
-    for (std::size_t row = 0; row < blocked_device_specific_num_rows; row += THREAD_BLOCK_SIZE_uz) {
+    for (std::size_t row = 0; row < blocked_row_range; row += THREAD_BLOCK_SIZE_uz) {
         for (std::size_t col = 0; col < blocked_device_specific_num_rows; col += THREAD_BLOCK_SIZE_uz) {
             // perform operations on the current block
             for (std::size_t row_block = 0; row_block < THREAD_BLOCK_SIZE_uz; ++row_block) {

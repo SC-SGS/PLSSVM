@@ -48,9 +48,10 @@ void device_kernel_assembly(std::vector<real_type> &kernel_matrix, const soa_mat
     PLSSVM_ASSERT(cost != real_type{ 0.0 }, "cost must not be 0.0 since it is 1 / plssvm::cost!");
 
     // calculate constants
-    const auto blocked_device_specific_num_rows = static_cast<std::size_t>(std::ceil(static_cast<real_type>(device_specific_num_rows) / INTERNAL_BLOCK_SIZE));
     const std::size_t num_rows = data.num_rows() - 1;
     const std::size_t num_features = data.num_cols();
+    const auto blocked_row_range = static_cast<std::size_t>(std::ceil(static_cast<real_type>(num_rows - row_offset) / INTERNAL_BLOCK_SIZE));
+    const auto blocked_device_specific_num_rows = static_cast<std::size_t>(std::ceil(static_cast<real_type>(device_specific_num_rows) / INTERNAL_BLOCK_SIZE));
 
     // cast all values to 64-bit unsigned long long to prevent potential 32-bit overflows
     const auto INTERNAL_BLOCK_SIZE_uz = static_cast<std::size_t>(INTERNAL_BLOCK_SIZE);
@@ -58,7 +59,7 @@ void device_kernel_assembly(std::vector<real_type> &kernel_matrix, const soa_mat
     const auto PADDING_SIZE_uz = static_cast<std::size_t>(PADDING_SIZE);
 
 #pragma omp parallel for collapse(2) schedule(dynamic)
-    for (std::size_t row = 0; row < blocked_device_specific_num_rows; row += THREAD_BLOCK_SIZE_uz) {
+    for (std::size_t row = 0; row < blocked_row_range; row += THREAD_BLOCK_SIZE_uz) {
         for (std::size_t col = 0; col < blocked_device_specific_num_rows; col += THREAD_BLOCK_SIZE_uz) {
             // perform operations on the current block
             for (std::size_t row_block = 0; row_block < THREAD_BLOCK_SIZE_uz; ++row_block) {
