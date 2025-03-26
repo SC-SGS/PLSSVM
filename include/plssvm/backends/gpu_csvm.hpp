@@ -236,7 +236,7 @@ std::vector<::plssvm::detail::move_only_any> gpu_csvm<device_ptr_t, queue_t, pin
 
     // update the data distribution: only the upper triangular kernel matrix is used
     // note: account for the dimensional reduction
-    data_distribution_ = std::make_unique<detail::triangular_data_distribution>(comm_, A.num_rows() - 1, num_devices);
+    data_distribution_ = std::make_unique<detail::triangular_data_distribution>(comm_, num_rows_reduced, num_devices);
 
     // the final kernel matrix; multiple parts in case of multi-device execution
     std::vector<::plssvm::detail::move_only_any> kernel_matrices_parts(num_devices);
