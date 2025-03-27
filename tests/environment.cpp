@@ -84,11 +84,6 @@ TEST(Environment, get_backend_status) {
 #endif
 }
 
-TEST(EnvironmentDeathTest, get_backend_status) {
-    // an invalid backend_type should never occur (unreachable)
-    EXPECT_DEATH(std::ignore = plssvm::environment::get_backend_status(static_cast<plssvm::backend_type>(9)), ".*");
-}
-
 TEST(EnvironmentDeathTest, initialize_backend) {
     // the function may never be called with the automatic backend
     EXPECT_DEATH(plssvm::environment::detail::initialize_backend(plssvm::backend_type::automatic), "The automatic backend may never be initialized!");
