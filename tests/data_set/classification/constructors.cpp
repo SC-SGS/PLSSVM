@@ -837,7 +837,6 @@ TYPED_TEST(ClassificationDataSetMatrixConstructors, construct_from_empty_matrix_
     constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
 
     // create data points and labels
-    const std::vector<label_type> different_labels = util::get_distinct_label<label_type>();
     const std::vector<label_type> labels = util::get_correct_data_file_labels<label_type>();
     const plssvm::matrix<plssvm::real_type, layout> data_points{ plssvm::shape{ 0, 0 }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE } };
 
@@ -1300,7 +1299,6 @@ TYPED_TEST(ClassificationDataSetRValueMatrixConstructors, construct_scaled_from_
     // create data points and labels
     const std::vector<label_type> different_labels = util::get_distinct_label<label_type>();
     std::vector<label_type> labels = util::get_correct_data_file_labels<label_type>();
-    const std::vector<label_type> copied_labels = labels;
     auto correct_data_points = util::generate_specific_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ labels.size(), 4 }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE });
     EXPECT_THROW_WHAT((plssvm::classification_data_set<label_type>{ plssvm::mpi::communicator{}, std::move(correct_data_points), std::move(labels), plssvm::min_max_scaler{ comm, plssvm::real_type{ -1.0 }, plssvm::real_type{ 1.0 } } }),
                       plssvm::mpi_exception,
