@@ -17,8 +17,8 @@
         - [plssvm.CSVC and plssvm.CSVR](#plssvmcsvc-and-plssvmcsvr)
         - [The backend C-SVCs and C-SVRs](#the-backend-c-svcs-and-c-svrs)
         - [plssvm.ClassificationModel and plssvm.RegressionModel](#plssvmclassificationmodel-and-plssvmregressionmodel)
-        - [plssvm.detail.tracking.PerformanceTracker](#plssvmdetailtrackingperformancetracker)
-        - [plssvm.detail.tracking.Events](#plssvmdetailtrackingevent-plssvmdetailtrackingevents)
+        - [plssvm.performance_tracking](#plssvmperformance_tracking)
+        - [plssvm.performance_tracking.Events](#plssvmperformance_trackingevent-plssvmperformance_trackingevents)
     - [Free functions](#free-functions)
     - [Module Level Attributes](#module-level-attributes)
     - [Exceptions](#exceptions)
@@ -571,7 +571,7 @@ The following methods are **only** available for a `plssvm.ClassificationModel`:
 | `classes()`                 | Return the different classes.            |
 | `get_classification_type()` | Return the used classification strategy. |
 
-#### `plssvm.detail.tracking.PerformanceTracker`
+#### `plssvm.performance_tracking`
 
 A submodule used to track various performance statistics like runtimes, but also the used setup and hyperparameters.
 The tracked metrics can be saved to a YAML file for later post-processing.
@@ -592,12 +592,12 @@ The tracked metrics can be saved to a YAML file for later post-processing.
 | `get_events()`                                     | Return all previously recorded events.                                                 |
 | `clear_tracking_entries()`                         | Remove all currently tracked entries from the performance tracker.                     |
 
-#### `plssvm.detail.tracking.Event`, `plssvm.detail.tracking.Events`
+#### `plssvm.performance_tracking.Event`, `plssvm.performance_tracking.Events`
 
 Two rather similar classes.
 **Note**: both classes are only available if PLSSVM was built with `-DPLSSVM_ENABLE_PERFORMANCE_TRACKING=ON`!
 
-The `plssvm.detail.tracking.Event` class is a simple POD encapsulating the time point when
+The `plssvm.performance_tracking.Event` class is a simple POD encapsulating the time point when
 an event occurred and the respective event name.
 
 | constructors              | description            |
@@ -609,7 +609,7 @@ an event occurred and the respective event name.
 | `time_point : time` | The time point when this event occurred. |
 | `name : string`     | The name of this event.                  |
 
-The `plssvm.detail.tracking.Events` class stores multiple `plssvm.detail.tracking.Event`s.
+The `plssvm.performance_tracking.Events` class stores multiple `plssvm.performance_tracking.Event`s.
 
 | constructors | description                                 |
 |--------------|---------------------------------------------|

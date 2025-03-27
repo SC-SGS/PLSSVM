@@ -22,12 +22,10 @@ namespace py = pybind11;
 
 void init_performance_tracker(py::module_ &m) {
     // use a detail.tracking.PerformanceTracker submodule for the performance tracking bindings
-    py::module_ detail_module = m.def_submodule("detail", "a module containing detail functionality");
-    py::module_ tracking_module = detail_module.def_submodule("tracking", "a module containing performance tracking and hardware sampling functionality");
-    py::module_ performance_tracker_module = tracking_module.def_submodule("PerformanceTracker");
+    py::module_ tracking_module = m.def_submodule("performance_tracking", "a module containing performance tracking functionality");
 
     // bind the performance tracker functions
-    performance_tracker_module
+    tracking_module
         // clang-format off
         .def("add_string_tracking_entry", [](const std::string &category, const std::string &name, const std::string &value) {
             plssvm::detail::tracking::global_performance_tracker().add_tracking_entry(plssvm::detail::tracking::tracking_entry{ category, name, value });
