@@ -48,19 +48,19 @@ struct jit_info {
 };
 
 /**
- * @brief Create a JIT report from @p info to output if more than one MPI rank is active.
- * @param[in] info the JIT compilation information
- * @return the report string (`[[nodiscard]]`)
- */
-[[nodiscard]] std::string create_jit_report(const jit_info &info);
-
-/**
  * @brief Output the @p status to the given output-stream @p out.
  * @param[in,out] out the output-stream to write the JIT cache status type to
  * @param[in] status the JIT cache status
  * @return the output-stream
  */
 std::ostream &operator<<(std::ostream &out, jit_info::caching_status status);
+
+/**
+ * @brief Create a JIT report from @p info to output if more than one MPI rank is active.
+ * @param[in] info the JIT compilation information
+ * @return the report string (`[[nodiscard]]`)
+ */
+[[nodiscard]] std::string create_jit_report(const jit_info &info);
 
 }  // namespace plssvm::opencl::detail
 

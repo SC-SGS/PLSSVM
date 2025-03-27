@@ -17,15 +17,6 @@
 
 namespace plssvm::opencl::detail {
 
-std::string create_jit_report(const jit_info &info) {
-    std::string report = fmt::format("{}; ", info.duration);
-    if (info.use_ptx_inline) {
-        report += "PTX inline; ";
-    }
-    report += fmt::format("cache: {} ({})", info.cache_state, info.cache_dir);
-    return report;
-}
-
 std::ostream &operator<<(std::ostream &out, const jit_info::caching_status status) {
     switch (status) {
         case jit_info::caching_status::success:
@@ -36,6 +27,15 @@ std::ostream &operator<<(std::ostream &out, const jit_info::caching_status statu
             return out << "invalid number of cached files";
     }
     return out << "unknown";
+}
+
+std::string create_jit_report(const jit_info &info) {
+    std::string report = fmt::format("{}; ", info.duration);
+    if (info.use_ptx_inline) {
+        report += "PTX inline; ";
+    }
+    report += fmt::format("cache: {} ({})", info.cache_state, info.cache_dir);
+    return report;
 }
 
 }  // namespace plssvm::opencl::detail
