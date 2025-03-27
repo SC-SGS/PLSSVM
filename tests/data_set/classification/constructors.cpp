@@ -851,7 +851,6 @@ TYPED_TEST(ClassificationDataSetMatrixConstructors, construct_from_matrix_with_l
     constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
 
     // create data points and labels
-    const std::vector<label_type> different_labels = util::get_distinct_label<label_type>();
     const std::vector<label_type> labels = util::get_correct_data_file_labels<label_type>();
     const plssvm::matrix<plssvm::real_type, layout> data_points{ plssvm::shape{ labels.size() - 1, 4 }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE } };
 

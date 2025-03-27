@@ -930,7 +930,6 @@ TYPED_TEST(RegressionDataSetMatrixConstructors, construct_scaled_from_matrix_wit
     const plssvm::mpi::communicator comm{ duplicated_mpi_comm };
 
     // create data points and labels
-    const std::vector<label_type> different_labels = util::get_distinct_label<label_type>();
     const std::vector<label_type> labels = util::get_correct_data_file_labels<label_type>();
     const auto correct_data_points = util::generate_specific_matrix<plssvm::matrix<plssvm::real_type, layout>>(plssvm::shape{ labels.size(), 4 });
     EXPECT_THROW_WHAT((plssvm::regression_data_set<label_type>{ plssvm::mpi::communicator{}, correct_data_points, labels, plssvm::min_max_scaler{ comm, plssvm::real_type{ -1.0 }, plssvm::real_type{ 1.0 } } }),
