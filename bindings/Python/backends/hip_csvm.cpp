@@ -20,7 +20,8 @@
 #include "plssvm/svm/csvr.hpp"                 // plssvm::csvr
 #include "plssvm/target_platforms.hpp"         // plssvm::target_platform
 
-#include "bindings/Python/utility.hpp"  // plssvm::bindings::python::util::register_py_exception
+#include "bindings/Python/type_caster/mpi_type_caster.hpp"  // a custom Pybind11 type caster for a plssvm::mpi::communicator
+#include "bindings/Python/utility.hpp"                      // plssvm::bindings::python::util::register_py_exception
 
 #include "fmt/format.h"         // fmt::format
 #include "pybind11/pybind11.h"  // py::module_, py::class_, py::init, py::arg, py::exception, py::module_local
