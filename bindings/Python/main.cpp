@@ -8,6 +8,7 @@
  */
 
 #include "plssvm/detail/logging/mpi_log_untracked.hpp"  // plssvm::detail::log_untracked
+#include "plssvm/detail/utility.hpp"                    // PLSSVM_IS_DEFINED
 #include "plssvm/environment.hpp"                       // plssvm::environment::{initialize, finalize}
 #include "plssvm/exceptions/exceptions.hpp"             // plssvm::exception
 #include "plssvm/mpi/communicator.hpp"                  // plssvm::mpi::communicator
@@ -61,6 +62,7 @@ PYBIND11_MODULE(plssvm, m) {
     m.doc() = "PLSSVM - Parallel Least Squares Support Vector Machine";
     m.attr("__version__") = plssvm::version::version;
     m.attr("__version_info__") = py::make_tuple(plssvm::version::major, plssvm::version::minor, plssvm::version::patch);
+    m.attr("__has_mpi_support__") = PLSSVM_IS_DEFINED(PLSSVM_HAS_MPI_ENABLED);
 
     // automatically initialize the environments
     plssvm::environment::initialize();
