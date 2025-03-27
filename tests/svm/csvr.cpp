@@ -22,7 +22,7 @@
 #include "plssvm/parameter.hpp"                     // plssvm::parameter
 #include "plssvm/solver_types.hpp"                  // plssvm::solver_type
 
-#include "tests/custom_test_macros.hpp"  // EXPECT_THROW_WHAT, EXPECT_INCLUSIVE_RANGE
+#include "tests/custom_test_macros.hpp"  // EXPECT_THROW_WHAT, EXPECT_THROW_WHAT_MATCHER, EXPECT_INCLUSIVE_RANGE
 #include "tests/naming.hpp"              // naming::parameter_definition_to_name
 #include "tests/svm/mock_csvr.hpp"       // mock_csvr
 #include "tests/types_to_test.hpp"       // util::regression_label_type_classification_type_gtest
@@ -32,7 +32,7 @@
     #include "mpi.h"  // MPI_COMM_WORLD, MPI_Comm_dup, MPI_Comm_free
 #endif
 
-#include "gmock/gmock.h"  // EXPECT_CALL, EXPECT_THAT, ::testing::{An, Between, Return, HasSubstr}
+#include "gmock/gmock.h"  // EXPECT_CALL, EXPECT_THAT, ::testing::{An, Between, Return, HasSubstr, ContainsRegex}
 #include "gtest/gtest.h"  // TEST, TYPED_TEST, TYPED_TEST_SUITE, EXPECT_EQ, EXPECT_TRUE, EXPECT_FALSE, EXPECT_THAT,
 
 #include <cstddef>  // std::size_t
@@ -581,9 +581,9 @@ TYPED_TEST(BaseCSVRFit, fit_out_of_resources) {
         }
 
         // call function -> should throw since we are out of resources
-        EXPECT_THROW_WHAT((std::ignore = csvr.fit(training_data, plssvm::solver = solver)),
-                          plssvm::kernel_launch_resources,
-                          "Not enough device memory available on device(s) [0, 1] even for the cg_implicit solver!");
+        EXPECT_THROW_WHAT_MATCHER((std::ignore = csvr.fit(training_data, plssvm::solver = solver)),
+                                  plssvm::kernel_launch_resources,
+                                  ::testing::ContainsRegex("Not enough device memory available on device(s) .* even for the cg_implicit solver!"));
     }
 }
 

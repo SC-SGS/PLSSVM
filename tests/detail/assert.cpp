@@ -36,14 +36,17 @@ TEST(PLSSVMAssert, check_assertion_true) {
 }
 
 TEST(PLSSVMAssert, check_assertion_false) {
+    const auto loc = plssvm::source_location::current();
+
     // test regex
-    const std::string regex = "Assertion '.*1 == 2.*' failed!\n"
-                              ".*\n"
-                              "  in file            .*\n"
-                              "  in function        .*\n"
-                              "  @ line             .*\n\n"
-                              ".*msg 1.*\n";
+    const std::string regex = fmt::format("Assertion '.*1 == 2.*' failed!\n"
+                                          "{}"
+                                          "  in file            .*\n"
+                                          "  in function        .*\n"
+                                          "  @ line             .*\n\n"
+                                          ".*msg 1.*\n",
+                                          loc.world_rank().has_value() ? "  on MPI world rank  .*\n" : "");
 
     // calling check assertion with false should abort
-    EXPECT_DEATH(plssvm::detail::check_assertion(1 == 2, "1 == 2", plssvm::source_location::current(), "msg {}", 1), ::testing::ContainsRegex(regex));
+    EXPECT_DEATH(plssvm::detail::check_assertion(1 == 2, "1 == 2", loc, "msg {}", 1), ::testing::ContainsRegex(regex));
 }
