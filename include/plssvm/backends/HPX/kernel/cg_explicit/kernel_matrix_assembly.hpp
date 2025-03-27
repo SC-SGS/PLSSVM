@@ -53,61 +53,62 @@ void device_kernel_assembly(std::vector<real_type> &kernel_matrix, const soa_mat
     PLSSVM_ASSERT(cost != real_type{ 0.0 }, "cost must not be 0.0 since it is 1 / plssvm::cost!");
 
     // calculate constants
-    const auto blocked_device_specific_num_rows = static_cast<std::size_t>(std::ceil(static_cast<real_type>(device_specific_num_rows) / INTERNAL_BLOCK_SIZE));
     const std::size_t num_rows = data.num_rows() - 1;
     const std::size_t num_features = data.num_cols();
+    const auto blocked_row_range = static_cast<std::size_t>(std::ceil(static_cast<real_type>(num_rows - row_offset) / INTERNAL_BLOCK_SIZE));
+    const auto blocked_device_specific_num_rows = static_cast<std::size_t>(std::ceil(static_cast<real_type>(device_specific_num_rows) / INTERNAL_BLOCK_SIZE));
 
     // cast all values to 64-bit unsigned long long to prevent potential 32-bit overflows
     const auto INTERNAL_BLOCK_SIZE_uz = static_cast<std::size_t>(INTERNAL_BLOCK_SIZE);
     const auto PADDING_SIZE_uz = static_cast<std::size_t>(PADDING_SIZE);
 
-    // define range over which should be iterated
-    std::vector<std::size_t> range(blocked_device_specific_num_rows * (blocked_device_specific_num_rows + 1) / 2);
-    std::iota(range.begin(), range.end(), 0);
+    // count the number of entries in the final index list
+    std::vector<std::size_t> indices(blocked_row_range * blocked_device_specific_num_rows);  // define range over which should be iterated
+    std::iota(indices.begin(), indices.end(), 0);
 
-    ::hpx::for_each(::hpx::execution::par_unseq, range.begin(), range.end(), [&](const std::size_t idx) {
+    ::hpx::for_each(::hpx::execution::par_unseq, indices.cbegin(), indices.cend(), [&](const std::size_t idx) {
         // calculate the indices used in the current thread
-        const std::size_t col = static_cast<std::size_t>(static_cast<double>(blocked_device_specific_num_rows) + 0.5 - 0.5 * std::sqrt(4 * (blocked_device_specific_num_rows * blocked_device_specific_num_rows + blocked_device_specific_num_rows - 2 * idx) + 1));
-        const std::size_t row = static_cast<std::size_t>(0.5 * static_cast<double>(2 * (idx - col * blocked_device_specific_num_rows) + col * col + col));
+        const std::size_t row_idx = (idx / blocked_device_specific_num_rows) * INTERNAL_BLOCK_SIZE_uz;
+        const std::size_t col_idx = (idx % blocked_device_specific_num_rows) * INTERNAL_BLOCK_SIZE_uz;
 
-        const std::size_t row_idx = row * INTERNAL_BLOCK_SIZE_uz;
-        const std::size_t col_idx = col * INTERNAL_BLOCK_SIZE_uz;
+        // only calculate the upper triangular matrix
+        if (row_idx >= col_idx) {
+            // only calculate the upper triangular matrix -> done be only iterating over valid row <-> col pairs
+            // create a thread private array used for internal caching
+            std::array<std::array<real_type, INTERNAL_BLOCK_SIZE>, INTERNAL_BLOCK_SIZE> temp{};
 
-        // only calculate the upper triangular matrix -> done be only iterating over valid row <-> col pairs
-        // create a thread private array used for internal caching
-        std::array<std::array<real_type, INTERNAL_BLOCK_SIZE>, INTERNAL_BLOCK_SIZE> temp{};
+            // iterate over all features
+            for (std::size_t dim = 0; dim < num_features; ++dim) {
+                // perform the feature reduction calculation
+                for (unsigned internal_row = 0; internal_row < INTERNAL_BLOCK_SIZE; ++internal_row) {
+                    for (unsigned internal_col = 0; internal_col < INTERNAL_BLOCK_SIZE; ++internal_col) {
+                        const std::size_t global_row = row_offset + row_idx + static_cast<std::size_t>(internal_row);
+                        const std::size_t global_col = row_offset + col_idx + static_cast<std::size_t>(internal_col);
 
-        // iterate over all features
-        for (std::size_t dim = 0; dim < num_features; ++dim) {
-            // perform the feature reduction calculation
-            for (unsigned internal_row = 0; internal_row < INTERNAL_BLOCK_SIZE; ++internal_row) {
-                for (unsigned internal_col = 0; internal_col < INTERNAL_BLOCK_SIZE; ++internal_col) {
-                    const std::size_t global_row = row_offset + row_idx + static_cast<std::size_t>(internal_row);
-                    const std::size_t global_col = row_offset + col_idx + static_cast<std::size_t>(internal_col);
-
-                    temp[internal_row][internal_col] += detail::feature_reduce<kernel>(data(global_row, dim), data(global_col, dim));
+                        temp[internal_row][internal_col] += detail::feature_reduce<kernel>(data(global_row, dim), data(global_col, dim));
+                    }
                 }
             }
-        }
 
-        // apply the remaining part of the kernel function and store the value in the output kernel matrix
-        for (unsigned internal_row = 0; internal_row < INTERNAL_BLOCK_SIZE; ++internal_row) {
-            for (unsigned internal_col = 0; internal_col < INTERNAL_BLOCK_SIZE; ++internal_col) {
-                // calculate the indices to access the kernel matrix (the part stored on the current device)
-                const std::size_t device_global_row = row_idx + static_cast<std::size_t>(internal_row);
-                const std::size_t global_row = row_offset + row_idx + static_cast<std::size_t>(internal_row);
-                const std::size_t device_global_col = col_idx + static_cast<std::size_t>(internal_col);
-                const std::size_t global_col = row_offset + col_idx + static_cast<std::size_t>(internal_col);
+            // apply the remaining part of the kernel function and store the value in the output kernel matrix
+            for (unsigned internal_row = 0; internal_row < INTERNAL_BLOCK_SIZE; ++internal_row) {
+                for (unsigned internal_col = 0; internal_col < INTERNAL_BLOCK_SIZE; ++internal_col) {
+                    // calculate the indices to access the kernel matrix (the part stored on the current device)
+                    const std::size_t device_global_row = row_idx + static_cast<std::size_t>(internal_row);
+                    const std::size_t global_row = row_offset + row_idx + static_cast<std::size_t>(internal_row);
+                    const std::size_t device_global_col = col_idx + static_cast<std::size_t>(internal_col);
+                    const std::size_t global_col = row_offset + col_idx + static_cast<std::size_t>(internal_col);
 
-                // be sure to not perform out of bounds accesses for the kernel matrix (only using the upper triangular matrix)
-                if (device_global_row < (num_rows - row_offset) && device_global_col < device_specific_num_rows && global_row >= global_col) {
-                    real_type temp_ij = temp[internal_row][internal_col];
-                    temp_ij = detail::apply_kernel_function<kernel>(temp_ij, kernel_function_parameter...) + QA_cost - q[global_row] - q[global_col];
-                    // apply the cost on the diagonal
-                    if (global_row == global_col) {
-                        temp_ij += cost;
+                    // be sure to not perform out of bounds accesses for the kernel matrix (only using the upper triangular matrix)
+                    if (device_global_row < (num_rows - row_offset) && device_global_col < device_specific_num_rows && global_row >= global_col) {
+                        real_type temp_ij = temp[internal_row][internal_col];
+                        temp_ij = detail::apply_kernel_function<kernel>(temp_ij, kernel_function_parameter...) + QA_cost - q[global_row] - q[global_col];
+                        // apply the cost on the diagonal
+                        if (global_row == global_col) {
+                            temp_ij += cost;
+                        }
+                        kernel_matrix[device_global_col * (num_rows - row_offset + PADDING_SIZE_uz) - device_global_col * (device_global_col + std::size_t{ 1 }) / std::size_t{ 2 } + device_global_row] = temp_ij;
                     }
-                    kernel_matrix[device_global_col * (num_rows - row_offset + PADDING_SIZE_uz) - device_global_col * (device_global_col + std::size_t{ 1 }) / std::size_t{ 2 } + device_global_row] = temp_ij;
                 }
             }
         }

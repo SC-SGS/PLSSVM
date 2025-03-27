@@ -60,7 +60,7 @@ inline void device_kernel_w_linear(soa_matrix<real_type> &w, const aos_matrix<re
     std::vector<std::size_t> range(blocked_num_classes * blocked_num_features);
     std::iota(range.begin(), range.end(), 0);
 
-    ::hpx::for_each(::hpx::execution::par_unseq, range.begin(), range.end(), [&](const std::size_t idx) {
+    ::hpx::for_each(::hpx::execution::par_unseq, range.cbegin(), range.cend(), [&](const std::size_t idx) {
         // calculate the indices used in the current thread
         const std::size_t feature = idx / blocked_num_classes;
         const std::size_t c = idx % blocked_num_classes;
@@ -125,7 +125,7 @@ inline void device_kernel_predict_linear(aos_matrix<real_type> &prediction, cons
     std::vector<std::size_t> range(blocked_device_specific_num_predict_points * blocked_num_classes);
     std::iota(range.begin(), range.end(), 0);
 
-    ::hpx::for_each(::hpx::execution::par_unseq, range.begin(), range.end(), [&](const std::size_t idx) {
+    ::hpx::for_each(::hpx::execution::par_unseq, range.cbegin(), range.cend(), [&](const std::size_t idx) {
         // calculate the indices used in the current thread
         const std::size_t pp = idx / blocked_num_classes;
         const std::size_t c = idx % blocked_num_classes;
@@ -200,7 +200,7 @@ inline void device_kernel_predict(aos_matrix<real_type> &prediction, const aos_m
     std::vector<std::size_t> range(blocked_device_specific_num_predict_points * blocked_num_support_vectors);
     std::iota(range.begin(), range.end(), 0);
 
-    ::hpx::for_each(::hpx::execution::par_unseq, range.begin(), range.end(), [&](const std::size_t idx) {
+    ::hpx::for_each(::hpx::execution::par_unseq, range.cbegin(), range.cend(), [&](const std::size_t idx) {
         // calculate the indices used in the current thread
         const std::size_t pp = idx / blocked_num_support_vectors;
         const std::size_t sv = idx % blocked_num_support_vectors;

@@ -61,7 +61,7 @@ inline void device_kernel_symm(const std::size_t num_rows, const std::size_t num
     std::vector<std::size_t> range(blocked_num_rhs * blocked_device_specific_num_rows);  // define range over which should be iterated
     std::iota(range.begin(), range.end(), 0);
 
-    ::hpx::for_each(::hpx::execution::par_unseq, range.begin(), range.end(), [&](const std::size_t idx) {
+    ::hpx::for_each(::hpx::execution::par_unseq, range.cbegin(), range.cend(), [&](const std::size_t idx) {
         // calculate the indices used in the current thread
         const std::size_t rhs = idx / blocked_device_specific_num_rows;
         const std::size_t row = idx % blocked_device_specific_num_rows;
@@ -142,7 +142,7 @@ inline void device_kernel_symm_mirror(const std::size_t num_rows, const std::siz
     std::vector<std::size_t> range(blocked_num_rhs * blocked_num_mirror_rows);  // define range over which should be iterated
     std::iota(range.begin(), range.end(), 0);
 
-    ::hpx::for_each(::hpx::execution::par_unseq, range.begin(), range.end(), [&](const std::size_t idx) {
+    ::hpx::for_each(::hpx::execution::par_unseq, range.cbegin(), range.cend(), [&](const std::size_t idx) {
         // calculate the indices used in the current thread
         const std::size_t rhs = idx / blocked_num_mirror_rows;
         const std::size_t row = idx % blocked_num_mirror_rows;
