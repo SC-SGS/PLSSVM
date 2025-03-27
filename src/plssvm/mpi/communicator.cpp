@@ -53,7 +53,7 @@ std::size_t communicator::size() const {
     PLSSVM_MPI_ERROR_CHECK(MPI_Comm_size(comm_, &size));
     return static_cast<std::size_t>(size);
 #else
-    return std::size_t{ 0 };
+    return std::size_t{ 1 };
 #endif
 }
 

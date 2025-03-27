@@ -72,7 +72,7 @@ class communicator {
 
     /**
      * @brief Return the total number of MPI ranks in this communicator.
-     * @details If `PLSSVM_HAS_MPI_ENABLED` is undefined, returns `0`.
+     * @details If `PLSSVM_HAS_MPI_ENABLED` is undefined, returns `1`.
      * @return the number of MPI ranks in this communicator (`[[nodiscard]]`)
      */
     [[nodiscard]] std::size_t size() const;
