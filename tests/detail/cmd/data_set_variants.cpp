@@ -26,7 +26,7 @@
 
 #include <cstddef>  // std::size_t
 #include <string>   // std::string
-#include <tuple>    // std::tuple, std::make_tuple
+#include <tuple>    // std::tuple, std::make_tuple, std::ignore
 #include <vector>   // std::vector
 
 // the variant order is: classification<real_type, int> -> classification<real_type, std::string> -> regression<real_type, real_type>
@@ -184,5 +184,5 @@ TEST_F(DataSetFactoryDeathTest, data_set_factory_train_invalid) {
     // set invalid C-SVM type
     parser.svm = static_cast<plssvm::svm_type>(2);
 
-    EXPECT_DEATH((plssvm::detail::cmd::data_set_factory(this->get_comm(), parser)), ".*");
+    EXPECT_DEATH((std::ignore = plssvm::detail::cmd::data_set_factory(this->get_comm(), parser)), ".*");
 }
