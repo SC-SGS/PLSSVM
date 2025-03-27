@@ -21,6 +21,9 @@ jobs:
       - name: "Install Compiler"
         run: |
           sudo apt install g++ clang libomp-dev
+      - name: "Install MPI"
+        run: |
+          sudo apt install libopenmpi-dev
       - name: "Install cmake 3.31.0"
         uses: lukka/get-cmake@v3.31.0
       - name: "Clone the PLSSVM repository into PLSSVM/"
