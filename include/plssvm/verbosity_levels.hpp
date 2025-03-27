@@ -34,7 +34,7 @@ enum class verbosity_level {
     timing = 0b0010,
     /** Log all messages related to warnings. */
     warning = 0b0100,
-    /** Log all messages (i.e., timing, warning, and additional messages). */
+    /** Log all messages (i.e., timing, warning, and additional messages except LIBSVM specific messages). */
     full = 0b1000
 };
 

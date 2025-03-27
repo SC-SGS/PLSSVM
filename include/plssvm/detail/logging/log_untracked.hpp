@@ -29,19 +29,25 @@ namespace plssvm::detail {
  * @brief Output the message @p msg filling the {fmt} like placeholders with @p args to the standard output stream.
  * @details Only logs the message if the verbosity level matches the `plssvm::verbosity` level.
  * @tparam Args the types of the placeholder values
- * @param[in] verb the verbosity level of the message to log; must match the `plssvm::verbosity` level to log the message
+ * @param[in] msg_verbosity the verbosity level of the message to log
  * @param[in] msg the message to print on the standard output stream if requested (i.e., `plssvm::verbosity` isn't `plssvm::verbosity_level::quiet`)
  * @param[in] args the values to fill the {fmt}-like placeholders in @p msg
  */
 template <typename... Args>
-void log_untracked(const verbosity_level verb, const std::string_view msg, Args &&...args) {
-    // if the verbosity level is quiet, nothing is logged
-    // otherwise verb must contain the bit-flag set by plssvm::verbosity
-    if (verbosity != verbosity_level::quiet && verb != verbosity_level::quiet && ((verb & verbosity) != verbosity_level::quiet || verbosity == plssvm::verbosity_level::full)) {
-        if ((verb & verbosity_level::warning) != verbosity_level::quiet) {
-            std::clog << fmt::format(fmt::fg(fmt::color::orange), fmt::runtime(msg), std::forward<Args>(args)...) << std::flush;
-        } else {
-            std::cout << fmt::format(fmt::runtime(msg), std::forward<Args>(args)...) << std::flush;
+void log_untracked(const verbosity_level msg_verbosity, const std::string_view msg, Args &&...args) {
+    // verbosity = the currently active verbosity level
+    // msg_verbosity = the verbosity of the current message
+
+    // if the global verbosity or the message verbosity is 'plssvm::verbosity_level::quiet', nothing should be logged
+    if (!(verbosity == verbosity_level::quiet || msg_verbosity == verbosity_level::quiet)) {
+        // check whether the provided msg_verbosity is contained in the current active verbosity
+        if ((verbosity & msg_verbosity) != verbosity_level::quiet || (verbosity == verbosity_level::full && (msg_verbosity & verbosity_level::libsvm) == verbosity_level::quiet)) {
+            // check if it is a warning message, if yes, the output will be colored
+            if ((msg_verbosity & verbosity_level::warning) != verbosity_level::quiet) {
+                std::clog << fmt::format(fmt::fg(fmt::color::orange), fmt::runtime(msg), std::forward<Args>(args)...) << std::flush;
+            } else {
+                std::cout << fmt::format(fmt::runtime(msg), std::forward<Args>(args)...) << std::flush;
+            }
         }
     }
 }

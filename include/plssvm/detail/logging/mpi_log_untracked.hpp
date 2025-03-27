@@ -26,16 +26,16 @@ namespace plssvm::detail {
  * @brief Output the message @p msg filling the {fmt} like placeholders with @p args to the standard output stream if @p comm represents the current main MPI rank.
  * @details Only logs the message if the verbosity level matches the `plssvm::verbosity` level.
  * @tparam Args the types of the placeholder values
- * @param[in] verb the verbosity level of the message to log; must match the `plssvm::verbosity` level to log the message
+ * @param[in] msg_verbosity the verbosity level of the message to log
  * @param[in] comm the used MPI communicator
  * @param[in] msg the message to print on the standard output stream if requested (i.e., `plssvm::verbosity` isn't `plssvm::verbosity_level::quiet`)
  * @param[in] args the values to fill the {fmt}-like placeholders in @p msg
  */
 template <typename... Args>
-void log_untracked(const verbosity_level verb, const mpi::communicator &comm, const std::string_view msg, Args &&...args) {
+void log_untracked(const verbosity_level msg_verbosity, const mpi::communicator &comm, const std::string_view msg, Args &&...args) {
     if (comm.is_main_rank()) {
         // only print on the main MPI rank
-        log_untracked(verb, msg, std::forward<Args>(args)...);
+        log_untracked(msg_verbosity, msg, std::forward<Args>(args)...);
     }
     // nothing to do on other MPI ranks since nothing must be tracked
 }

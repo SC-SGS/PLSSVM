@@ -15,14 +15,9 @@
 
 #include "plssvm/detail/tracking/performance_tracker.hpp"  // plssvm::detail::tracking::is_tracking_entry_v,
                                                            // PLSSVM_PERFORMANCE_TRACKER_ENABLED, PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY
-#include "plssvm/verbosity_levels.hpp"                     // plssvm::verbosity_level, plssvm::verbosity, bitwise-operators on plssvm::verbosity_level
+#include "plssvm/detail/logging/log_untracked.hpp"         // plssvm::detail::log_untracked
+#include "plssvm/verbosity_levels.hpp"                     // plssvm::verbosity_level
 
-#include "fmt/base.h"    // fmt::runtime
-#include "fmt/chrono.h"  // format std::chrono types
-#include "fmt/color.h"   // fmt::fg, fmt::color
-#include "fmt/format.h"  // fmt::format
-
-#include <iostream>     // std::cout, std::clog, std::flush
 #include <string_view>  // std::string_view
 #include <utility>      // std::forward
 
@@ -34,23 +29,14 @@ namespace plssvm::detail {
  *          this is also added to the `plssvm::detail::performance_tracker`.
  *          Only logs the message if the verbosity level matches the `plssvm::verbosity` level.
  * @tparam Args the types of the placeholder values
- * @param[in] verb the verbosity level of the message to log; must match the `plssvm::verbosity` level to log the message
+ * @param[in] msg_verbosity the verbosity level of the message to log
  * @param[in] msg the message to print on the standard output stream if requested (i.e., `plssvm::verbosity` isn't `plssvm::verbosity_level::quiet`)
  * @param[in] args the values to fill the {fmt}-like placeholders in @p msg
  */
 template <typename... Args>
-void log(const verbosity_level verb, const std::string_view msg, Args &&...args) {
-    // if the verbosity level is quiet, nothing is logged
-    // otherwise verb must contain the bit-flag currently set by plssvm::verbosity
-    if (verbosity != verbosity_level::quiet && verb != verbosity_level::quiet && ((verb & verbosity) != verbosity_level::quiet || verbosity == plssvm::verbosity_level::full)) {
-        // if the plssvm::verbosity_level is the warning level, output the message on stderr
-        // otherwise output the message on stdout
-        if ((verb & verbosity_level::warning) != verbosity_level::quiet) {
-            std::clog << fmt::format(fmt::fg(fmt::color::orange), fmt::runtime(msg), args...) << std::flush;
-        } else {
-            std::cout << fmt::format(fmt::runtime(msg), args...) << std::flush;
-        }
-    }
+void log(const verbosity_level msg_verbosity, const std::string_view msg, Args &&...args) {
+    // first, log the message to the standard output without performance tracking
+    log_untracked(msg_verbosity, msg, args...);
 
     // if performance tracking has been enabled, add tracking entries
 #if defined(PLSSVM_PERFORMANCE_TRACKER_ENABLED)
