@@ -241,22 +241,22 @@ else ()
 endif ()
 
 ########################################################################################################################
-##                                              check for MPI (optional)                                              ##
+#                                              check for MPI (optional)                                              ##
 ########################################################################################################################
-## check for MPI
+# check for MPI
 set(PLSSVM_ENABLE_MPI AUTO CACHE STRING "Enable distributed memory support via MPI")
 set_property(CACHE PLSSVM_ENABLE_MPI PROPERTY STRINGS AUTO ON OFF)
 if (PLSSVM_ENABLE_MPI MATCHES "AUTO" OR PLSSVM_ENABLE_MPI)
     list(APPEND CMAKE_MESSAGE_INDENT "MPI:  ")
     message(CHECK_START "Checking for MPI")
-    
+
     # try finding MPI
     find_package(MPI)
-    
+
     if (MPI_FOUND)
         # MPI found
         message(CHECK_PASS "found ")
-        
+
         message(STATUS "Found MPI ${MPI_CXX_VERSION} for distributed memory support.")
         set(PLSSVM_FOUND_MPI ON)
         target_link_libraries(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC MPI::MPI_CXX)
@@ -268,7 +268,7 @@ if (PLSSVM_ENABLE_MPI MATCHES "AUTO" OR PLSSVM_ENABLE_MPI)
             message(SEND_ERROR "Cannot find requested MPI!")
         endif ()
     endif ()
-    
+
     list(POP_BACK CMAKE_MESSAGE_INDENT)
 endif ()
 
@@ -309,7 +309,7 @@ if (uppercase_CMAKE_BUILD_TYPE MATCHES COVERAGE)
         message(FATAL_ERROR "Only GCC is supported for the coverage analysis.")
     endif ()
     message(STATUS "Enable code coverage analysis using lcov and genhtml.")
-    
+
     # tests must be available for a coverage analysis
     message(STATUS "Enabling tests since they are necessary for the coverage analysis.")
     set(PLSSVM_ENABLE_TESTING ON CACHE BOOL "" FORCE)
@@ -322,10 +322,10 @@ if (uppercase_CMAKE_BUILD_TYPE MATCHES COVERAGE)
     # LTO must be disabled for a coverage analysis
     message(STATUS "Disabling LTO since it may interfere with the coverage analysis.")
     set(PLSSVM_ENABLE_LTO OFF CACHE BOOL "" FORCE)
-    
+
     # also enable code coverage for nvcc
     set(CMAKE_CUDA_FLAGS "-Xcompiler '-O0 -g --coverage'")
-    
+
     # check that the necessary executables are available
     find_program(PLSSVM_LCOV lcov REQUIRED)
     find_program(PLSSVM_GENHTML genhtml REQUIRED)
@@ -343,23 +343,24 @@ if (uppercase_CMAKE_BUILD_TYPE MATCHES COVERAGE)
         COMMAND ${PLSSVM_LCOV} --directory . --zerocounters
         COMMAND ${CMAKE_COMMAND} -E remove -f coverage.info coverage_init.info coverage_tests.info "${PLSSVM_COVERAGE_REPORT_OUTPUT_DIRECTORY}"
         # Capture initial zero coverage baseline (useful for untouched files)
-        COMMAND ${PLSSVM_LCOV} --directory . --capture --initial --rc geninfo_unexecuted_blocks=1 --include '*/PLSSVM/src/*' --include '*/PLSSVM/include/*' --output-file coverage_init.info
+        COMMAND ${PLSSVM_LCOV} --directory . --capture --initial --rc geninfo_unexecuted_blocks=1 --include '*/PLSSVM/src/*' --include '*/PLSSVM/include/*'
+                --output-file coverage_init.info
         # Be sure the output directory exists
         COMMAND mkdir -p "${PLSSVM_COVERAGE_REPORT_OUTPUT_DIRECTORY}"
         # Run tests
         COMMAND ${CMAKE_CTEST_COMMAND} --parallel 8 || true
         # Capture coverage info
-        COMMAND ${PLSSVM_LCOV} --directory . --capture --rc geninfo_unexecuted_blocks=1 --include '*/PLSSVM/src/*' --include '*/PLSSVM/include/*' --output-file coverage_tests.info
+        COMMAND ${PLSSVM_LCOV} --directory . --capture --rc geninfo_unexecuted_blocks=1 --include '*/PLSSVM/src/*' --include '*/PLSSVM/include/*' --output-file
+                coverage_tests.info
         # Combine coverage files (in case of multiple test runs)
         COMMAND ${PLSSVM_LCOV} --add-tracefile coverage_init.info --add-tracefile coverage_tests.info --output-file coverage.info
         # Generate HTML report
-        COMMAND ${PLSSVM_GENHTML} coverage.info --output-directory "${PLSSVM_COVERAGE_REPORT_OUTPUT_DIRECTORY}" --title "PLSSVM Test Coverage" --show-details --legend --frames ${PLSSVM_DEMANGLE_USING_CPPFILT}
+        COMMAND ${PLSSVM_GENHTML} coverage.info --output-directory "${PLSSVM_COVERAGE_REPORT_OUTPUT_DIRECTORY}" --title "PLSSVM Test Coverage" --show-details
+                --legend --frames ${PLSSVM_DEMANGLE_USING_CPPFILT}
         # Summary message
         COMMAND ${CMAKE_COMMAND} -E echo "Coverage report generated in: ${CMAKE_BINARY_DIR}/${PLSSVM_COVERAGE_REPORT_OUTPUT_DIRECTORY}"
         # Specify byproducts for CMake
-        BYPRODUCTS "${CMAKE_BINARY_DIR}/coverage_init.info"
-                   "${CMAKE_BINARY_DIR}/coverage_tests.info"
-                   "${CMAKE_BINARY_DIR}/coverage.info"
+        BYPRODUCTS "${CMAKE_BINARY_DIR}/coverage_init.info" "${CMAKE_BINARY_DIR}/coverage_tests.info" "${CMAKE_BINARY_DIR}/coverage.info"
                    "${CMAKE_BINARY_DIR}/${PLSSVM_COVERAGE_REPORT_OUTPUT_DIRECTORY}"
         # Set the working directory
         WORKING_DIRECTORY ${CMAKE_BINARY_DIR}

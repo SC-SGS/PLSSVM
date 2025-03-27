@@ -307,16 +307,17 @@ add_test(NAME MainPredictRegression/executable_minimal
 
 # if performance tracking is enabled, also add minimal run tests
 if (PLSSVM_ENABLE_PERFORMANCE_TRACKING)
-    add_test(NAME MainTrainPerformanceTracking/executable_minimal COMMAND ${PLSSVM_EXECUTABLE_TRAIN_NAME} -s 0
-             --performance_tracking "${CMAKE_CURRENT_BINARY_DIR}/track.yaml"
-             "${PLSSVM_CLASSIFICATION_TEST_FILE}" "${CMAKE_CURRENT_BINARY_DIR}/test_classification.libsvm.model"
+    add_test(NAME MainTrainPerformanceTracking/executable_minimal
+             COMMAND ${PLSSVM_EXECUTABLE_TRAIN_NAME} -s 0 --performance_tracking "${CMAKE_CURRENT_BINARY_DIR}/track.yaml" "${PLSSVM_CLASSIFICATION_TEST_FILE}"
+                     "${CMAKE_CURRENT_BINARY_DIR}/test_classification.libsvm.model"
     )
-    add_test(NAME MainPredictPerformanceTracking/executable_minimal
-             COMMAND ${PLSSVM_EXECUTABLE_PREDICT_NAME}
-             --performance_tracking "${CMAKE_CURRENT_BINARY_DIR}/track.yaml"
-             "${CMAKE_CURRENT_LIST_DIR}/data/libsvm/classification/5x4.libsvm" # test file
-             "${CMAKE_CURRENT_LIST_DIR}/data/model/classification/5x4.libsvm.model" # model file
-             "${CMAKE_CURRENT_BINARY_DIR}/test_classification.libsvm.predict" # predict file (result)
+    add_test(
+        NAME MainPredictPerformanceTracking/executable_minimal
+        COMMAND
+            ${PLSSVM_EXECUTABLE_PREDICT_NAME} --performance_tracking "${CMAKE_CURRENT_BINARY_DIR}/track.yaml"
+            "${CMAKE_CURRENT_LIST_DIR}/data/libsvm/classification/5x4.libsvm" # test file
+            "${CMAKE_CURRENT_LIST_DIR}/data/model/classification/5x4.libsvm.model" # model file
+            "${CMAKE_CURRENT_BINARY_DIR}/test_classification.libsvm.predict" # predict file (result)
     )
 endif ()
 
