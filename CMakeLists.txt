@@ -324,7 +324,7 @@ if (uppercase_CMAKE_BUILD_TYPE MATCHES COVERAGE)
     set(PLSSVM_ENABLE_LTO OFF CACHE BOOL "" FORCE)
 
     # also enable code coverage for nvcc
-    set(CMAKE_CUDA_FLAGS "-Xcompiler '-O0 -g --coverage'")
+    set(CMAKE_CUDA_FLAGS "-Xcompiler '-O0 -g --coverage -lgcov'")
 
     # check that the necessary executables are available
     find_program(PLSSVM_LCOV lcov REQUIRED)
