@@ -192,7 +192,7 @@ TEST(MinMaxScaler, scale_feature_index_too_big) {
     auto data = util::generate_specific_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ 10, 4 }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE });
 
     // invalid number of scaling factors
-    EXPECT_THROW_WHAT_MATCHER(scaler.scale(data), plssvm::min_max_scaler_exception, "The maximum scaling feature index most not be greater or equal than 4, but is 4!");
+    EXPECT_THROW_WHAT(scaler.scale(data), plssvm::min_max_scaler_exception, "The maximum scaling feature index most not be greater or equal than 4, but is 4!");
 }
 
 TEST(MinMaxScaler, scale_scaling_factor_more_than_once) {
@@ -203,5 +203,5 @@ TEST(MinMaxScaler, scale_scaling_factor_more_than_once) {
     auto data = util::generate_specific_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ 10, 4 }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE });
 
     // invalid number of scaling factors
-    EXPECT_THROW_WHAT_MATCHER(scaler.scale(data), plssvm::min_max_scaler_exception, "Found more than one scaling factor for the feature index 0!");
+    EXPECT_THROW_WHAT(scaler.scale(data), plssvm::min_max_scaler_exception, "Found more than one scaling factor for the feature index 0!");
 }
