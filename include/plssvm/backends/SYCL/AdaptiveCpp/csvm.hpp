@@ -292,6 +292,7 @@ class csvr : public ::plssvm::csvr,
     explicit csvr(const parameter params, Args &&...named_sycl_args) :
         ::plssvm::csvm{ mpi::communicator{}, params },
         ::plssvm::adaptivecpp::csvm(target_platform::automatic, std::forward<Args>(named_sycl_args)...) { }
+
     /**
      * @brief Construct a new C-SVR using the AdaptiveCpp backend with the parameters given through @p params.
      * @param[in] comm the used MPI communicator
@@ -315,6 +316,7 @@ class csvr : public ::plssvm::csvr,
     csvr(const target_platform target, const parameter params, Args &&...named_sycl_args) :
         ::plssvm::csvm{ mpi::communicator{}, params },
         ::plssvm::adaptivecpp::csvm(target, std::forward<Args>(named_sycl_args)...) { }
+
     /**
      * @brief Construct a new C-SVR using the AdaptiveCpp backend on the @p target platform with the parameters given through @p params.
      * @param[in] comm the used MPI communicator
@@ -337,6 +339,7 @@ class csvr : public ::plssvm::csvr,
     explicit csvr(Args &&...named_args) :
         ::plssvm::csvm{ mpi::communicator{}, named_args... },
         ::plssvm::adaptivecpp::csvm(target_platform::automatic, std::forward<Args>(named_args)...) { }
+
     /**
      * @brief Construct a new C-SVR using the AdaptiveCpp backend and the optionally provided @p named_args.
      * @param[in] comm the used MPI communicator
@@ -358,6 +361,7 @@ class csvr : public ::plssvm::csvr,
     explicit csvr(const target_platform target, Args &&...named_args) :
         ::plssvm::csvm{ mpi::communicator{}, named_args... },
         ::plssvm::adaptivecpp::csvm(target, std::forward<Args>(named_args)...) { }
+
     /**
      * @brief Construct a new C-SVR using the AdaptiveCpp backend on the @p target platform and the optionally provided @p named_args.
      * @param[in] comm the used MPI communicator

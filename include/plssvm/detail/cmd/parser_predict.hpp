@@ -24,7 +24,7 @@
 
 #include <iosfwd>  // forward declare std::ostream
 #include <string>  // std::string
-#include <vector>   // std::vector
+#include <vector>  // std::vector
 
 namespace plssvm::detail::cmd {
 

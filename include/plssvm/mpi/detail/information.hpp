@@ -51,7 +51,6 @@ void gather_and_print_csvm_information(const communicator &comm, backend_type ra
  */
 void gather_and_print_csvm_information(const communicator &comm, backend_type rank_backend, target_platform rank_target, const std::optional<std::string> &additional_info = std::nullopt);
 
-
 }  // namespace plssvm::mpi::detail
 
 #endif  // PLSSVM_MPI_DETAIL_INFORMATION_HPP_

@@ -81,18 +81,18 @@ struct classification_data_set_wrapper {
  */
 struct regression_data_set_wrapper {
     /// A std::variant containing all possible regression data set label types.
-    using possible_vector_types = std::variant<std::vector<std::int16_t>,   // np.int16
-                                               std::vector<std::int32_t>,   // np.int32
-                                               std::vector<std::int64_t>,   // np.int64
-                                               std::vector<float>,          // np.float32
-                                               std::vector<double>>;        // np.float64
+    using possible_vector_types = std::variant<std::vector<std::int16_t>,  // np.int16
+                                               std::vector<std::int32_t>,  // np.int32
+                                               std::vector<std::int64_t>,  // np.int64
+                                               std::vector<float>,         // np.float32
+                                               std::vector<double>>;       // np.float64
 
     /// A std::variant containing all possible regression data set types.
-    using possible_data_set_types = std::variant<plssvm::regression_data_set<std::int16_t>,   // np.int16
-                                                 plssvm::regression_data_set<std::int32_t>,   // np.int32
-                                                 plssvm::regression_data_set<std::int64_t>,   // np.int64
-                                                 plssvm::regression_data_set<float>,          // np.float32
-                                                 plssvm::regression_data_set<double>>;        // np.float64
+    using possible_data_set_types = std::variant<plssvm::regression_data_set<std::int16_t>,  // np.int16
+                                                 plssvm::regression_data_set<std::int32_t>,  // np.int32
+                                                 plssvm::regression_data_set<std::int64_t>,  // np.int64
+                                                 plssvm::regression_data_set<float>,         // np.float32
+                                                 plssvm::regression_data_set<double>>;       // np.float64
 
     /**
      * @brief Construct a new regression data set by setting the active std::variant member.

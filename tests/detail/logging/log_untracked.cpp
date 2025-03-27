@@ -77,7 +77,7 @@ TEST_F(LoggerUntracked, mismatching_verbosity_level) {
 }
 
 class WarningLoggerUntracked : public ::testing::Test,
-                      public util::redirect_output<&std::clog> { };
+                               public util::redirect_output<&std::clog> { };
 
 TEST_F(WarningLoggerUntracked, enabled_logging_warning) {
     // explicitly enable logging

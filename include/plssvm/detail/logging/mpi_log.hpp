@@ -13,9 +13,9 @@
 #define PLSSVM_DETAIL_LOGGING_MPI_LOG_HPP_
 #pragma once
 
-#include "plssvm/detail/logging/log.hpp"      // plssvm::detail::log
-#include "plssvm/mpi/communicator.hpp"        // plssvm::mpi::communicator
-#include "plssvm/verbosity_levels.hpp"        // plssvm::verbosity_level, plssvm::verbosity, bitwise-operators on plssvm::verbosity_level
+#include "plssvm/detail/logging/log.hpp"  // plssvm::detail::log
+#include "plssvm/mpi/communicator.hpp"    // plssvm::mpi::communicator
+#include "plssvm/verbosity_levels.hpp"    // plssvm::verbosity_level, plssvm::verbosity, bitwise-operators on plssvm::verbosity_level
 
 #include <string_view>  // std::string_view
 #include <utility>      // std::forward

@@ -312,7 +312,7 @@ INSTANTIATE_TEST_SUITE_P(ParserPredict, ParserPredictPerformanceTrackingFilename
 #if defined(PLSSVM_HAS_MPI_ENABLED)
 
 class ParserPredictMPILoadBalancingWeights : public ParserPredict,
-                                           public ::testing::WithParamInterface<std::tuple<std::string, std::string>> { };
+                                             public ::testing::WithParamInterface<std::tuple<std::string, std::string>> { };
 
 TEST_P(ParserPredictMPILoadBalancingWeights, parsing) {
     const auto &[flag, value] = GetParam();
@@ -334,7 +334,7 @@ INSTANTIATE_TEST_SUITE_P(ParserPredict, ParserPredictMPILoadBalancingWeights, ::
 // clang-format on
 
 class ParserPredictMPILoadBalancingWeightsDeathTest : public ParserPredict,
-                                                    public ::testing::WithParamInterface<std::tuple<std::string, std::string>> { };
+                                                      public ::testing::WithParamInterface<std::tuple<std::string, std::string>> { };
 
 TEST_P(ParserPredictMPILoadBalancingWeightsDeathTest, parsing) {
     const auto &[flag, value] = GetParam();
