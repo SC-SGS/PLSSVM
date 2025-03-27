@@ -67,7 +67,7 @@ enum class status {
  * @param[in] s the environment status
  * @return the output-stream
  */
-std::ostream &operator<<(std::ostream &out, const status s) {
+inline std::ostream &operator<<(std::ostream &out, const status s) {
     switch (s) {
         case status::uninitialized:
             return out << "uninitialized";
@@ -87,7 +87,7 @@ std::ostream &operator<<(std::ostream &out, const status s) {
  * @param[in] s the environment status
  * @return the input-stream
  */
-std::istream &operator>>(std::istream &in, status &s) {
+inline std::istream &operator>>(std::istream &in, status &s) {
     std::string str;
     in >> str;
     ::plssvm::detail::to_lower_case(str);
@@ -114,7 +114,7 @@ namespace detail {
  * @param is_finalized `true` if the respective environment has been finalized, `false` otherwise
  * @return the respective environment status (`[[nodiscard]]`)
  */
-[[nodiscard]] status determine_status_from_initialized_finalized_flags(const bool is_initialized, const bool is_finalized) {
+[[nodiscard]] inline status determine_status_from_initialized_finalized_flags(const bool is_initialized, const bool is_finalized) {
     if (!is_initialized) {
         // Note: ::hpx::is_stopped does return true even before calling finalize once
         return status::uninitialized;
@@ -150,7 +150,7 @@ template <auto is_initialized_function, auto is_finalized_function>
  * @throws plssvm::environment_exception if @p backend is the automatic backend
  * @return the environment status for the @p backend (`[[nodiscard]]`)
  */
-[[nodiscard]] status get_backend_status(const backend_type backend) {
+[[nodiscard]] inline status get_backend_status(const backend_type backend) {
     // Note: must be implemented for the backends that need environmental setup
     switch (backend) {
         case backend_type::automatic:
@@ -206,7 +206,7 @@ namespace detail {
  * @brief Initialize the @p backend.
  * @param[in] backend the backend to initialize
  */
-void initialize_backend([[maybe_unused]] const backend_type backend) {
+inline void initialize_backend([[maybe_unused]] const backend_type backend) {
     PLSSVM_ASSERT(backend != backend_type::automatic, "The automatic backend may never be initialized!");
     // Note: must be implemented for the backends that need environmental setup
     // only have to perform special initialization steps for the HPX backend
@@ -228,7 +228,7 @@ void initialize_backend([[maybe_unused]] const backend_type backend) {
  * @param[in,out] argc the number of command line arguments
  * @param[in,out] argv the command line arguments
  */
-void initialize_backend([[maybe_unused]] const backend_type backend, [[maybe_unused]] int &argc, [[maybe_unused]] char **argv) {
+inline void initialize_backend([[maybe_unused]] const backend_type backend, [[maybe_unused]] int &argc, [[maybe_unused]] char **argv) {
     PLSSVM_ASSERT(backend != backend_type::automatic, "The automatic backend may never be initialized!");
     // Note: must be implemented for the backends that need environmental setup
     // only have to perform special initialization steps for the HPX backend
@@ -248,7 +248,7 @@ void initialize_backend([[maybe_unused]] const backend_type backend, [[maybe_unu
  * @brief Finalize the @p backend.
  * @param[in] backend  the backend to finalize
  */
-void finalize_backend([[maybe_unused]] const backend_type backend) {
+inline void finalize_backend([[maybe_unused]] const backend_type backend) {
     PLSSVM_ASSERT(backend != backend_type::automatic, "The automatic backend may never be finalized!");
     // Note: must be implemented for the backends that need environmental setup
     // only have to perform special initialization steps for the HPX backend
@@ -323,7 +323,7 @@ inline void initialize_impl(const std::vector<backend_type> &backends, Args &...
  * @param[in,out] backends the backends to filter
  * @param[in] s the filter to use
  */
-void get_filtered_backends(std::vector<backend_type> &backends, const status s) {
+inline void get_filtered_backends(std::vector<backend_type> &backends, const status s) {
     backends.erase(std::remove_if(backends.begin(), backends.end(), [&s](const backend_type backend) {
                        if (backend == backend_type::automatic) {
                            // always remove the automatic backend
@@ -350,7 +350,7 @@ void get_filtered_backends(std::vector<backend_type> &backends, const status s) 
  * @throws plssvm::environment_exception if one of the provided @p backends has already been initialized
  * @throws plssvm::environment_exception if one of the provided @p backends has already been finalized
  */
-void initialize(const std::vector<backend_type> &backends) {
+inline void initialize(const std::vector<backend_type> &backends) {
     detail::initialize_impl(backends);
 }
 
@@ -359,7 +359,7 @@ void initialize(const std::vector<backend_type> &backends) {
  * @details Only initializes backends that are currently uninitialized.
  * @return the initialized backends (`[[nodiscard]]`)
  */
-std::vector<backend_type> initialize() {
+inline std::vector<backend_type> initialize() {
     // get all available backends
     std::vector<backend_type> backends = list_available_backends();
     // only initialize currently uninitialized backends; remove the automatic backend
@@ -379,7 +379,7 @@ std::vector<backend_type> initialize() {
  * @throws plssvm::environment_exception if one of the provided @p backends has already been initialized
  * @throws plssvm::environment_exception if one of the provided @p backends has already been finalized
  */
-void initialize(int &argc, char **argv, const std::vector<backend_type> &backends) {
+inline void initialize(int &argc, char **argv, const std::vector<backend_type> &backends) {
     detail::initialize_impl(backends, argc, argv);
 }
 
@@ -390,7 +390,7 @@ void initialize(int &argc, char **argv, const std::vector<backend_type> &backend
  * @param[in,out] argv the provided command line arguments
  * @return the initialized backends (`[[nodiscard]]`)
  */
-std::vector<backend_type> initialize(int &argc, char **argv) {
+inline std::vector<backend_type> initialize(int &argc, char **argv) {
     // get all available backends
     std::vector<backend_type> backends = list_available_backends();
     // only initialize currently uninitialized backends; remove the automatic backend
@@ -407,7 +407,7 @@ std::vector<backend_type> initialize(int &argc, char **argv) {
  * @throws plssvm::environment_exception if one of the provided @p backends hasn't been initialized yet
  * @throws plssvm::environment_exception if one of the provided @p backends has already been finalized
  */
-void finalize(const std::vector<backend_type> &backends) {
+inline void finalize(const std::vector<backend_type> &backends) {
     // if necessary, finalize MPI
     if (!mpi::is_finalized()) {
         mpi::finalize();
@@ -452,7 +452,7 @@ void finalize(const std::vector<backend_type> &backends) {
  * @details Only finalizes backends that are currently initialized.
  * @return the finalized backends (`[[nodiscard]]`)
  */
-std::vector<backend_type> finalize() {
+inline std::vector<backend_type> finalize() {
     // get all available backends
     std::vector<backend_type> backends = list_available_backends();
     // only finalize currently initialized backends; remove the automatic backend
