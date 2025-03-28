@@ -12,11 +12,11 @@
 
 #include "plssvm/exceptions/exceptions.hpp"  // plssvm::regression_report_exception
 
-#include "tests/custom_test_macros.hpp"  // EXPECT_THROW_WHAT, EXPECT_CONVERSION_TO_STRING
+#include "tests/custom_test_macros.hpp"  // EXPECT_THROW_WHAT, EXPECT_CONVERSION_TO_STRING, EXPECT_FLOATING_POINT_NEAR, EXPECT_FLOATING_POINT_NEAR_EPS
 #include "tests/utility.hpp"             // util::redirect_output
 
 #include "gmock/gmock.h"  // EXPECT_THAT, ::testing::ContainsRegex
-#include "gtest/gtest.h"  // TEST, TEST_F, EXPECT_EQ, EXPECT_TRUE, EXPECT_FALSE, ::testing::Test
+#include "gtest/gtest.h"  // TEST, TEST_F, ::testing::Test
 
 #include <iostream>  // std::cout
 #include <string>    // std::string
@@ -31,11 +31,11 @@ TEST(RegressionReportMetrics, construct_metric) {
     const plssvm::regression_report::metric m{ 0.1, 0.2, 0.3, 0.4, 0.5 };
 
     // check if values are set correctly
-    EXPECT_EQ(m.explained_variance_score, 0.1);
-    EXPECT_EQ(m.mean_absolute_error, 0.2);
-    EXPECT_EQ(m.mean_squared_error, 0.3);
-    EXPECT_EQ(m.r2_score, 0.4);
-    EXPECT_EQ(m.squared_correlation_coefficient, 0.5);
+    EXPECT_FLOATING_POINT_NEAR(m.explained_variance_score, 0.1);
+    EXPECT_FLOATING_POINT_NEAR(m.mean_absolute_error, 0.2);
+    EXPECT_FLOATING_POINT_NEAR(m.mean_squared_error, 0.3);
+    EXPECT_FLOATING_POINT_NEAR(m.r2_score, 0.4);
+    EXPECT_FLOATING_POINT_NEAR(m.squared_correlation_coefficient, 0.5);
 }
 
 TEST(RegressionReportMetrics, output_metric) {
@@ -93,11 +93,11 @@ TEST_F(RegressionReport, construct_perfect_prediction) {
 
     // check if values are set correctly
     const plssvm::regression_report::metric m = report.loss();
-    EXPECT_EQ(m.explained_variance_score, 1.0);
-    EXPECT_EQ(m.mean_absolute_error, 0.0);
-    EXPECT_EQ(m.mean_squared_error, 0.0);
-    EXPECT_EQ(m.r2_score, 1.0);
-    EXPECT_EQ(m.squared_correlation_coefficient, 1.0);
+    EXPECT_FLOATING_POINT_NEAR(m.explained_variance_score, 1.0);
+    EXPECT_FLOATING_POINT_NEAR(m.mean_absolute_error, 0.0);
+    EXPECT_FLOATING_POINT_NEAR(m.mean_squared_error, 0.0);
+    EXPECT_FLOATING_POINT_NEAR(m.r2_score, 1.0);
+    EXPECT_FLOATING_POINT_NEAR(m.squared_correlation_coefficient, 1.0);
 }
 
 TEST_F(RegressionReport, construct_force_finite) {
@@ -119,11 +119,11 @@ TEST_F(RegressionReport, construct_force_finite_perfect_prediction) {
 
     // check if values are set correctly
     const plssvm::regression_report::metric m = report.loss();
-    EXPECT_EQ(m.explained_variance_score, 1.0);
-    EXPECT_EQ(m.mean_absolute_error, 0.0);
-    EXPECT_EQ(m.mean_squared_error, 0.0);
-    EXPECT_EQ(m.r2_score, 1.0);
-    EXPECT_EQ(m.squared_correlation_coefficient, 1.0);
+    EXPECT_FLOATING_POINT_NEAR(m.explained_variance_score, 1.0);
+    EXPECT_FLOATING_POINT_NEAR(m.mean_absolute_error, 0.0);
+    EXPECT_FLOATING_POINT_NEAR(m.mean_squared_error, 0.0);
+    EXPECT_FLOATING_POINT_NEAR(m.r2_score, 1.0);
+    EXPECT_FLOATING_POINT_NEAR(m.squared_correlation_coefficient, 1.0);
 }
 
 TEST_F(RegressionReport, construct_empty_correct_label) {
