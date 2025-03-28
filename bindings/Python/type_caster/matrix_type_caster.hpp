@@ -102,12 +102,12 @@ struct type_caster<plssvm::matrix<T, layout>> {
         const std::size_t num_rows = arr.shape(0);
         const std::size_t num_cols = arr.shape(1);
 
-        // note: the conversions use OpenMP -> remove Python's Global Interpreter Lock
-        const py::gil_scoped_release release;
-
         // get the underlying raw memory
         py::buffer_info buffer = arr.request();
         const T *ptr = static_cast<T *>(buffer.ptr);
+
+        // note: the conversions use OpenMP -> remove Python's Global Interpreter Lock
+        const py::gil_scoped_release release;
 
         // check the memory layout of the Python Numpy array
         if constexpr (static_cast<bool>(Flags & py::array::c_style)) {
