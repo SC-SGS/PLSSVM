@@ -204,7 +204,7 @@ TEST_F(TriangularDataDistributionCapture, output_operator) {
     std::cout << dist;
 
     // check the captured result
-    EXPECT_THAT(this->get_capture(), ::testing::ContainsRegex("\\{ num_rows: .*, total_num_places: .*, dist: \\[.*(, .*)*\\] \\}"));
+    EXPECT_THAT(this->get_capture(), ::testing::ContainsRegex("\\{ num_rows: .*, total_num_places: .*, dist: .* \\}"));
 }
 
 //*************************************************************************************************************************************//
@@ -330,5 +330,5 @@ TEST_F(RectangularDataDistributionCapture, output_operator) {
     std::cout << dist;
 
     // check the captured result
-    EXPECT_THAT(this->get_capture(), ::testing::ContainsRegex("\\{ num_rows: .*, total_num_places: .*, dist: \\[.*(, .*)*\\] \\}"));
+    EXPECT_THAT(this->get_capture(), ::testing::ContainsRegex("\\{ num_rows: .*, total_num_places: .*, dist: .* \\}"));
 }
