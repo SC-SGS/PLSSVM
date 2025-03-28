@@ -606,7 +606,7 @@ TYPED_TEST(BaseCSVCFit, fit_out_of_resources) {
         // call function -> should throw since we are out of resources
         EXPECT_THROW_WHAT_MATCHER((std::ignore = csvc.fit(training_data, plssvm::solver = solver, plssvm::classification = classification)),
                                   plssvm::kernel_launch_resources,
-                                  ::testing::ContainsRegex("Not enough device memory available on device(s) .* even for the cg_implicit solver!"));
+                                  ::testing::ContainsRegex("Not enough device memory available on device.* even for the cg_implicit solver!"));
     }
 }
 
