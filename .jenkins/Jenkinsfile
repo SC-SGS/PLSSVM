@@ -468,12 +468,12 @@ pipeline {
                                                 +reducing_label_types \
                                                 $([[ $BACKEND == ADAPTIVECPP ]] && echo "^py-scipy%gcc" ) \
                                                 $([[ $BACKEND == ADAPTIVECPP ]] && echo "^openblas%gcc" ) \
-                                                $([[ $BACKEND == ADAPTIVECPP ]] && [[ $ARCHITECTURE == AMD ]] && echo "^llvm@17.0.6") \
-                                                $([[ $BACKEND == ADAPTIVECPP ]] && [[ $ARCHITECTURE == NVIDIA ]] && echo "^llvm@19.1.7") \
-                                                $([[ $BACKEND == STDPAR-ADAPTIVECPP ]] && [[ $ARCHITECTURE == AMD ]] && echo "^llvm17.0.6") \
-                                                $([[ $BACKEND == STDPAR-ADAPTIVECPP ]] && [[ $ARCHITECTURE == NVIDIA ]] && echo "^llvm@17.0.6") \
+                                                $([[ $BACKEND == ADAPTIVECPP ]] && [[ $ARCHITECTURE == AMD ]] && echo "") \
+                                                $([[ $BACKEND == ADAPTIVECPP ]] && [[ $ARCHITECTURE == NVIDIA ]] && echo "") \
+                                                $([[ $BACKEND == STDPAR-ADAPTIVECPP ]] && [[ $ARCHITECTURE == AMD ]] && echo "") \
+                                                $([[ $BACKEND == STDPAR-ADAPTIVECPP ]] && [[ $ARCHITECTURE == NVIDIA ]] && echo "") \
                                                 $([[ $BACKEND == HPX ]] && echo "^hpx@1.9.1" ) \
-                                                > >(tee ${WORKSPACE}/plssvm/${BUILD_TYPE}-${BACKEND}-${ARCHITECTURE}.output) 2> >(tee ${WORKSPACE}/plssvm/${BUILD_TYPE}-${BACKEND}-${ARCHITECTURE}.error >&2) &&  tail -n 1 ${WORKSPACE}/plssvm/${BUILD_TYPE}-${BACKEND}-${ARCHITECTURE}.output | cut -d " " -f 2 > ${WORKSPACE}/plssvm/${BUILD_TYPE}-${BACKEND}-${ARCHITECTURE}.installpath  && s=0 && cat ${WORKSPACE}/plssvm/${BUILD_TYPE}-${BACKEND}-${ARCHITECTURE}.installpath && break || [[ "$i" != "3" ]] && tail -n 3  ${WORKSPACE}/plssvm/${BUILD_TYPE}-${BACKEND}-${ARCHITECTURE}.error | head -n 1 | xargs dirname | tee | xargs rm -rf && s=$?
+                                                > >(tee ${WORKSPACE}/plssvm/${BUILD_TYPE}-${BACKEND}-${ARCHITECTURE}.output) 2> >(tee ${WORKSPACE}/plssvm/${BUILD_TYPE}-${BACKEND}-${ARCHITECTURE}.error >&2) &&  tail -n 1 ${WORKSPACE}/plssvm/${BUILD_TYPE}-${BACKEND}-${ARCHITECTURE}.output | cut -d " " -f 2 > ${WORKSPACE}/plssvm/${BUILD_TYPE}-${BACKEND}-${ARCHITECTURE}.installpath  && s=0 && cat ${WORKSPACE}/plssvm/${BUILD_TYPE}-${BACKEND}-${ARCHITECTURE}.installpath && break || [[ "$i" != "3" ]] && tail -n 3  ${WORKSPACE}/plssvm/${BUILD_TYPE}-${BACKEND}-${ARCHITECTURE}.error | head -n 1 | xargs dirname | tee | xargs echo && s=$?
                                             done
                                         if [ $s != 0 ]; then
                                             hostname
