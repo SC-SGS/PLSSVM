@@ -431,7 +431,7 @@ pipeline {
 
                                         set -e -o pipefail
                                         for i in {1..1}; do
-                                            spack dev-build plssvm@develop$([[ $BACKEND == ADAPTIVECPP ]]  && [[ $ARCHITECTURE == AMD ]] && echo "" )$([[ $BACKEND == ADAPTIVECPP ]]  && [[ $ARCHITECTURE == NVIDIA ]] && echo "" ) \
+                                            spack dev-build --fresh plssvm@develop$([[ $BACKEND == ADAPTIVECPP ]]  && [[ $ARCHITECTURE == AMD ]] && echo "" )$([[ $BACKEND == ADAPTIVECPP ]]  && [[ $ARCHITECTURE == NVIDIA ]] && echo "" ) \
                                                 $([[ $BACKEND == OPENMP ]] && echo "+openmp" || echo "~openmp") \
                                                 $([[ $BACKEND == HPX ]] && echo "+hpx" || echo "~hpx") \
                                                 $([[ $BACKEND == KOKKOS ]] && echo "+kokkos" || echo "~kokkos") \
@@ -473,6 +473,7 @@ pipeline {
                                                 $([[ $BACKEND == STDPAR-ADAPTIVECPP ]] && [[ $ARCHITECTURE == AMD ]] && echo "") \
                                                 $([[ $BACKEND == STDPAR-ADAPTIVECPP ]] && [[ $ARCHITECTURE == NVIDIA ]] && echo "") \
                                                 $([[ $BACKEND == HPX ]] && echo "^hpx@1.9.1" ) \
+                                                ^openblas%gcc@13.3.0 \
                                                 > >(tee ${WORKSPACE}/plssvm/${BUILD_TYPE}-${BACKEND}-${ARCHITECTURE}.output) 2> >(tee ${WORKSPACE}/plssvm/${BUILD_TYPE}-${BACKEND}-${ARCHITECTURE}.error >&2) &&  tail -n 1 ${WORKSPACE}/plssvm/${BUILD_TYPE}-${BACKEND}-${ARCHITECTURE}.output | cut -d " " -f 2 > ${WORKSPACE}/plssvm/${BUILD_TYPE}-${BACKEND}-${ARCHITECTURE}.installpath  && s=0 && cat ${WORKSPACE}/plssvm/${BUILD_TYPE}-${BACKEND}-${ARCHITECTURE}.installpath && break || [[ "$i" != "3" ]] && tail -n 3  ${WORKSPACE}/plssvm/${BUILD_TYPE}-${BACKEND}-${ARCHITECTURE}.error | head -n 1 | xargs dirname | tee | xargs echo && s=$?
                                             done
                                         if [ $s != 0 ]; then
