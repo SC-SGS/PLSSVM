@@ -40,6 +40,9 @@ if (Kokkos_ENABLE_SYCL)
     if (NOT ${CMAKE_CXX_COMPILER_ID} MATCHES "IntelLLVM")
         message(FATAL_ERROR "For Kokkos::SYCL to work, the compiler must be IntelLLVM, but is ${CMAKE_CXX_COMPILER}!")
     endif ()
+    
+    target_compile_options(${PLSSVM_KOKKOS_BACKEND_LIBRARY_NAME} PRIVATE -sycl-std=2020 -fsycl)
+    target_link_options(${PLSSVM_KOKKOS_BACKEND_LIBRARY_NAME} PRIVATE -fsycl)
 
     # set icpx specific compiler flags based on the provided PLSSVM_TARGET_PLATFORMS
     set(PLSSVM_KOKKOS_SYCL_FSYCL_TARGETS "")
@@ -64,15 +67,12 @@ if (Kokkos_ENABLE_SYCL)
         target_compile_options(${PLSSVM_KOKKOS_BACKEND_LIBRARY_NAME} PRIVATE -Xsycl-target-backend=amdgcn-amd-amdhsa --offload-arch=${PLSSVM_AMD_TARGET_ARCHS})
         target_link_options(${PLSSVM_KOKKOS_BACKEND_LIBRARY_NAME} PRIVATE -Xsycl-target-backend=amdgcn-amd-amdhsa --offload-arch=${PLSSVM_AMD_TARGET_ARCHS})
     endif ()
-    # intel targets
-    if (DEFINED PLSSVM_INTEL_TARGET_ARCHS)
-        # assemble -fsycl-targets
-        list(APPEND PLSSVM_KOKKOS_SYCL_FSYCL_TARGETS "spir64_gen")
-    endif ()
     # set -fsycl-targets
     list(JOIN PLSSVM_KOKKOS_SYCL_FSYCL_TARGETS "," PLSSVM_KOKKOS_SYCL_FSYCL_TARGETS_STRING)
-    target_compile_options(${PLSSVM_KOKKOS_BACKEND_LIBRARY_NAME} PRIVATE -sycl-std=2020 -fsycl -fsycl-targets=${PLSSVM_KOKKOS_SYCL_FSYCL_TARGETS_STRING})
-    target_link_options(${PLSSVM_KOKKOS_BACKEND_LIBRARY_NAME} PRIVATE -fsycl -fsycl-targets=${PLSSVM_KOKKOS_SYCL_FSYCL_TARGETS_STRING})
+    if (NOT PLSSVM_KOKKOS_SYCL_FSYCL_TARGETS STREQUAL "")
+        target_compile_options(${PLSSVM_KOKKOS_BACKEND_LIBRARY_NAME} PRIVATE -fsycl-targets=${PLSSVM_KOKKOS_SYCL_FSYCL_TARGETS_STRING})
+        target_link_options(${PLSSVM_KOKKOS_BACKEND_LIBRARY_NAME} PRIVATE -fsycl-targets=${PLSSVM_KOKKOS_SYCL_FSYCL_TARGETS_STRING})
+    endif ()
 
     # add option for IntelLLVM Ahead-of-Time (AOT) compilation
     option(PLSSVM_KOKKOS_BACKEND_INTEL_LLVM_ENABLE_AOT "Enables Ahead-of-Time compilation for the Kokkos::SYCL execution space using IntelLLVM." ON)
@@ -104,6 +104,8 @@ if (Kokkos_ENABLE_SYCL)
             )
         endif ()
         if (DEFINED PLSSVM_INTEL_TARGET_ARCHS)
+            target_compile_options(${PLSSVM_KOKKOS_BACKEND_LIBRARY_NAME} PRIVATE -fsycl-targets=spir64_gen)
+            target_link_options(${PLSSVM_KOKKOS_BACKEND_LIBRARY_NAME} PRIVATE -fsycl-targets=spir64_gen)
             # add Intel GPU target specific flags for AOT
             list(JOIN PLSSVM_INTEL_TARGET_ARCHS "," PLSSVM_INTEL_TARGET_ARCHS_STRING)
             target_compile_options(${PLSSVM_KOKKOS_BACKEND_LIBRARY_NAME} PRIVATE -Xsycl-target-backend=spir64_gen "-device ${PLSSVM_INTEL_TARGET_ARCHS_STRING}")
