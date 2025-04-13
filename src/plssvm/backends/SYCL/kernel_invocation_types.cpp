@@ -21,8 +21,14 @@ std::ostream &operator<<(std::ostream &out, const kernel_invocation_type invocat
     switch (invocation) {
         case kernel_invocation_type::automatic:
             return out << "automatic";
-        case kernel_invocation_type::nd_range:
-            return out << "nd_range";
+        case kernel_invocation_type::basic:
+            return out << "basic";
+        case kernel_invocation_type::work_group:
+            return out << "work_group";
+        case kernel_invocation_type::hierarchical:
+            return out << "hierarchical";
+        case kernel_invocation_type::scoped:
+            return out << "scoped";
     }
     return out << "unknown";
 }
@@ -34,8 +40,14 @@ std::istream &operator>>(std::istream &in, kernel_invocation_type &invocation) {
 
     if (str == "automatic" || str == "auto") {
         invocation = kernel_invocation_type::automatic;
-    } else if (str == "nd_range") {
-        invocation = kernel_invocation_type::nd_range;
+    } else if (str == "basic") {
+        invocation = kernel_invocation_type::basic;
+    } else if (str == "work_group" || str == "work-group" || str == "nd_range" || str == "nd-range") {
+        invocation = kernel_invocation_type::work_group;
+    } else if (str == "hierarchical") {
+        invocation = kernel_invocation_type::hierarchical;
+    } else if (str == "scoped") {
+        invocation = kernel_invocation_type::scoped;
     } else {
         in.setstate(std::ios::failbit);
     }

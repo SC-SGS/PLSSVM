@@ -96,12 +96,12 @@ void csvm::init(const target_platform target) {
 
     // set correct kernel invocation type if "automatic" has been provided
     if (invocation_type_ == sycl::kernel_invocation_type::automatic) {
-        // always use nd_range for AdaptiveCpp
-        invocation_type_ = sycl::kernel_invocation_type::nd_range;
-        if (target_ == target_platform::cpu) {
+        // always use work_group for AdaptiveCpp
+        invocation_type_ = sycl::kernel_invocation_type::work_group;
+        if (target_ == target_platform::cpu) {  // TODO: set to hierarchical or scoped?!
 #if !defined(__ACPP_USE_ACCELERATED_CPU__) && defined(__ACPP_ENABLE_OMPHOST_TARGET__)
             plssvm::detail::log_untracked(verbosity_level::full | verbosity_level::warning,
-                                          "WARNING: the AdaptiveCpp automatic target for the CPU is set to nd_range, but AdaptiveCpp hasn't been build with the \"omp.accelerated\" compilation flow resulting in major performance losses!\n");
+                                          "WARNING: the AdaptiveCpp automatic target for the CPU is set to work_group, but AdaptiveCpp hasn't been build with the \"omp.accelerated\" compilation flow resulting in major performance losses!\n");
 #endif
         }
     }

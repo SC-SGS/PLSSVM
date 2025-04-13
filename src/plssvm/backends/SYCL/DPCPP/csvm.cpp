@@ -94,8 +94,8 @@ void csvm::init(const target_platform target) {
 
     // set correct kernel invocation type if "automatic" has been provided
     if (invocation_type_ == sycl::kernel_invocation_type::automatic) {
-        // always use nd_range for DPC++
-        invocation_type_ = sycl::kernel_invocation_type::nd_range;
+        // always use work_group for DPC++
+        invocation_type_ = sycl::kernel_invocation_type::work_group;
     }
 
     std::vector<std::string> device_names{};

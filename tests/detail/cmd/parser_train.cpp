@@ -108,7 +108,7 @@ TEST_F(ParserTrain, all_arguments) {
     // create artificial command line arguments in test fixture
     std::vector<std::string> cmd_args = { "./plssvm-train", "--svm_type", "1", "--kernel_type", "1", "--degree", "2", "--gamma", "1.5", "--coef0", "-1.5", "--cost", "2", "--epsilon", "1e-12", "--max_iter", "100", "--classification", "oao", "--solver", "cg_implicit", "--backend", "cuda", "--target_platform", "gpu_nvidia", "--use_strings_as_labels", "--verbosity", "libsvm" };
 #if defined(PLSSVM_HAS_SYCL_BACKEND)
-    cmd_args.insert(cmd_args.end(), { "--sycl_kernel_invocation_type", "nd_range", "--sycl_implementation_type", "dpcpp" });
+    cmd_args.insert(cmd_args.end(), { "--sycl_kernel_invocation_type", "work_group", "--sycl_implementation_type", "dpcpp" });
 #endif
 #if defined(PLSSVM_HAS_KOKKOS_BACKEND)
     const plssvm::kokkos::execution_space space = plssvm::kokkos::list_available_execution_spaces()[1];  // [0] would be automatic
@@ -142,7 +142,7 @@ TEST_F(ParserTrain, all_arguments) {
     EXPECT_EQ(parser.target, plssvm::target_platform::gpu_nvidia);
     EXPECT_EQ(parser.solver, plssvm::solver_type::cg_implicit);
 #if defined(PLSSVM_HAS_SYCL_BACKEND)
-    EXPECT_EQ(parser.sycl_kernel_invocation_type, plssvm::sycl::kernel_invocation_type::nd_range);
+    EXPECT_EQ(parser.sycl_kernel_invocation_type, plssvm::sycl::kernel_invocation_type::work_group);
     EXPECT_EQ(parser.sycl_implementation_type, plssvm::sycl::implementation_type::dpcpp);
 #else
     EXPECT_EQ(parser.sycl_kernel_invocation_type, plssvm::sycl::kernel_invocation_type::automatic);
@@ -170,7 +170,7 @@ TEST_F(ParserTrain, all_arguments_output) {
     // create artificial command line arguments in test fixture
     std::vector<std::string> cmd_args = { "./plssvm-train", "--svm_type", "1", "--kernel_type", "1", "--degree", "2", "--gamma", "1.5", "--coef0", "-1.5", "--cost", "2", "--epsilon", "1e-12", "--max_iter", "100", "--classification", "oao", "--solver", "cg_implicit", "--backend", "automatic", "--target_platform", "gpu_nvidia", "--use_strings_as_labels", "--verbosity", "libsvm" };
 #if defined(PLSSVM_HAS_SYCL_BACKEND)
-    cmd_args.insert(cmd_args.end(), { "--sycl_kernel_invocation_type", "nd_range", "--sycl_implementation_type", "dpcpp" });
+    cmd_args.insert(cmd_args.end(), { "--sycl_kernel_invocation_type", "work_group", "--sycl_implementation_type", "dpcpp" });
 #endif
 #if defined(PLSSVM_HAS_KOKKOS_BACKEND)
     const std::string space = fmt::format("{}", plssvm::kokkos::list_available_execution_spaces()[1]);  // [0] would be automatic
@@ -203,7 +203,7 @@ TEST_F(ParserTrain, all_arguments_output) {
         "solver: cg_implicit\n";
 #if defined(PLSSVM_HAS_SYCL_BACKEND)
     correct += "SYCL implementation type: dpcpp\n"
-               "SYCL kernel invocation type: nd_range\n";
+               "SYCL kernel invocation type: work_group\n";
 #else
     correct += "SYCL implementation type: automatic\n"
                "SYCL kernel invocation type: automatic\n";
@@ -548,7 +548,7 @@ TEST_P(ParserTrainSYCLKernelInvocation, parsing) {
 // clang-format off
 INSTANTIATE_TEST_SUITE_P(ParserTrain, ParserTrainSYCLKernelInvocation, ::testing::Combine(
                 ::testing::Values("--sycl_kernel_invocation_type"),
-                ::testing::Values("automatic", "nd_range", "ND_RANGE")),
+                ::testing::Values("automatic", "auto", "basic", "nd_range", "work_group", "hierarchical", "scoped")),
                 naming::pretty_print_parameter_flag_and_value<ParserTrainSYCLKernelInvocation>);
 // clang-format on
 

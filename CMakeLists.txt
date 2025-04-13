@@ -887,7 +887,7 @@ choose the SYCL implementation to be used in the SYCL backend: ${PLSSVM_SYCL_BAC
         "
 .TP
 .B --sycl_kernel_invocation_type
-choose the kernel invocation type when using SYCL as backend: automatic|nd_range (default: automatic)
+choose the kernel invocation type when using SYCL as backend: automatic|basic|work_group|hierarchical|scoped (default: automatic)
 "
     )
 endif ()
