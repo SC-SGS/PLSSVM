@@ -13,11 +13,13 @@
 #define PLSSVM_BACKENDS_SYCL_DPCPP_DETAIL_UTILITY_HPP_
 #pragma once
 
-#include "plssvm/backends/execution_range.hpp"          // plssvm::detail::dim_type
-#include "plssvm/backends/SYCL/DPCPP/detail/queue.hpp"  // plssvm::dpcpp::detail::queue (PImpl)
-#include "plssvm/target_platforms.hpp"                  // plssvm::target_platform
+#include "plssvm/backends/execution_range.hpp"               // plssvm::detail::dim_type
+#include "plssvm/backends/SYCL/DPCPP/detail/queue.hpp"       // plssvm::dpcpp::detail::queue (PImpl)
+#include "plssvm/backends/SYCL/kernel_invocation_types.hpp"  // plssvm::sycl::kernel_invocation_type
+#include "plssvm/detail/utility.hpp"                         // plssvm::detail::unreachable
+#include "plssvm/target_platforms.hpp"                       // plssvm::target_platform
 
-#include "sycl/sycl.hpp"  // sycl::range
+#include "sycl/sycl.hpp"  // sycl::range, sycl::nd_range
 
 #include <cstddef>  // std::size_t
 #include <string>   // std::string
@@ -44,6 +46,30 @@ template <std::size_t I>
         return ::sycl::range<I>{ static_cast<std::size_t>(dims.z), static_cast<std::size_t>(dims.y), static_cast<std::size_t>(dims.x) };
     } else {
         static_assert(I != I, "Invalid number of native sycl::range dimension!");
+    }
+}
+
+/**
+ * @brief Convert the provided @p grid and @p block to the final SYCL execution range.
+ * @tparam invocation_type the SYCL kernel invocation type
+ * @param[in] grid the execution grid
+ * @param[in] block the execution block
+ * @return the SYCL native execution range
+ */
+template <sycl::kernel_invocation_type invocation_type>
+auto get_execution_range(const ::plssvm::detail::dim_type &grid, const ::plssvm::detail::dim_type &block) {
+    const ::sycl::range native_grid = detail::dim_type_to_native<2>(grid);
+    const ::sycl::range native_block = detail::dim_type_to_native<2>(block);
+
+    if constexpr (invocation_type == sycl::kernel_invocation_type::basic) {
+        return ::sycl::range<2>{ native_grid * native_block };
+    } else if constexpr (invocation_type == sycl::kernel_invocation_type::work_group) {
+        return ::sycl::nd_range<2>{ native_grid * native_block, native_block };
+    } else if constexpr (invocation_type == sycl::kernel_invocation_type::hierarchical || invocation_type == sycl::kernel_invocation_type::scoped) {
+        return ::sycl::nd_range<2>{ native_grid, native_block };
+    } else {
+        // can't be reached
+        ::plssvm::detail::unreachable();
     }
 }
 

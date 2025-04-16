@@ -6,23 +6,24 @@
  * @license This file is part of the PLSSVM project which is released under the MIT license.
  *          See the LICENSE.md file in the project root for full license information.
  *
- * @brief Functions for explicitly performing a BLAS GEMM like matrix-matrix multiplication using the SYCL backend.
+ * @brief Functions for explicitly performing a BLAS GEMM like matrix-matrix multiplication using the SYCL backend and the work-group data parallel kernels.
  */
 
-#ifndef PLSSVM_BACKENDS_SYCL_CG_EXPLICIT_BLAS_HPP_
-#define PLSSVM_BACKENDS_SYCL_CG_EXPLICIT_BLAS_HPP_
+#ifndef PLSSVM_BACKENDS_SYCL_CG_EXPLICIT_WORK_GROUP_BLAS_HPP_
+#define PLSSVM_BACKENDS_SYCL_CG_EXPLICIT_WORK_GROUP_BLAS_HPP_
 #pragma once
 
 #include "plssvm/constants.hpp"  // plssvm::{real_type, THREAD_BLOCK_SIZE, INTERNAL_BLOCK_SIZE, FEATURE_BLOCK_SIZE, PADDING_SIZE}
 
-#include "sycl/sycl.hpp"  // sycl::nd_item
+#include "sycl/sycl.hpp"  // sycl::handler, sycl::range, sycl::nd_item, sycl::local_accessor
 
 #include <cstddef>  // std::size_t
 
-namespace plssvm::sycl::detail {
+namespace plssvm::sycl::detail::work_group {
 
 /**
  * @brief Perform an explicit BLAS SYMM operation: `C = alpha * A * B + beta * C` where @p A is a `m x k` symmetric matrix (memory optimized), @p B is a `k x n` matrix, @p C is a `m x n` matrix, and @p alpha and @p beta are scalars.
+ * @details Uses SYCL's work-group data parallel kernels.
  */
 class device_kernel_symm {
   public:
@@ -87,20 +88,20 @@ class device_kernel_symm {
         real_type temp[INTERNAL_BLOCK_SIZE][INTERNAL_BLOCK_SIZE]{};
 
         // iterate over all features using blocking to be able to cache them for faster memory accesses
-        for (unsigned long long dim = 0; dim < (num_rows_ - row_offset_); dim += FEATURE_BLOCK_SIZE_uz) {
+        for (std::size_t dim = 0; dim < (num_rows_ - row_offset_); dim += FEATURE_BLOCK_SIZE_uz) {
             // load data into local memory
             for (unsigned internal = 0; internal < INTERNAL_BLOCK_SIZE; ++internal) {
                 const auto global_i = i_linear + static_cast<std::size_t>(internal) * THREAD_BLOCK_SIZE_uz;
                 const auto global_j = j_linear + static_cast<std::size_t>(internal) * THREAD_BLOCK_SIZE_uz;
 
                 // determine on which side of the diagonal we are located
-                if (dim + nd_idx.get_local_id(0) < global_j) {
+                if (dim + threadIdx_x < global_j) {
                     A_cache_[local_id_0][internal * THREAD_BLOCK_SIZE + local_id_1] = A_[(dim + threadIdx_x) * (num_rows_ - row_offset_ + PADDING_SIZE_uz) + global_j - (dim + threadIdx_x) * (dim + threadIdx_x + std::size_t{ 1 }) / std::size_t{ 2 }];
                 } else {
                     A_cache_[local_id_0][internal * THREAD_BLOCK_SIZE + local_id_1] = A_[global_j * (num_rows_ - row_offset_ + PADDING_SIZE_uz) + dim + threadIdx_x - global_j * (global_j + std::size_t{ 1 }) / std::size_t{ 2 }];
                 }
                 // determine on which side of the diagonal we are located
-                if (dim + nd_idx.get_local_id(0) + THREAD_BLOCK_SIZE < global_j) {
+                if (dim + threadIdx_x + THREAD_BLOCK_SIZE < global_j) {
                     A_cache_[local_id_0 + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + local_id_1] = A_[(dim + threadIdx_x + THREAD_BLOCK_SIZE_uz) * (num_rows_ - row_offset_ + PADDING_SIZE_uz) + global_j - (dim + threadIdx_x + THREAD_BLOCK_SIZE_uz) * (dim + threadIdx_x + THREAD_BLOCK_SIZE_uz + std::size_t{ 1 }) / std::size_t{ 2 }];
                 } else {
                     A_cache_[local_id_0 + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + local_id_1] = A_[global_j * (num_rows_ - row_offset_ + PADDING_SIZE_uz) + dim + threadIdx_x + THREAD_BLOCK_SIZE_uz - global_j * (global_j + std::size_t{ 1 }) / std::size_t{ 2 }];
@@ -161,6 +162,7 @@ class device_kernel_symm {
 /**
  * @brief Perform an explicit BLAS SYMM operation: `C = alpha * A * B + beta * C` where @p A is a `m x k` symmetric matrix (memory optimized), @p B is a `k x n` matrix, @p C is a `m x n` matrix, and @p alpha and @p beta are scalars.
  * @details In a multi-GPU setting, this function is responsible for mirroring down the columns this device is responsible for!
+ *          Uses SYCL's work-group data parallel kernels.
  */
 class device_kernel_symm_mirror {
   public:
@@ -234,8 +236,8 @@ class device_kernel_symm_mirror {
                 const auto global_j = j_linear + static_cast<std::size_t>(internal) * THREAD_BLOCK_SIZE_uz;
 
                 // FEATURE_BLOCK_SIZE = 2 * THREAD_BLOCK_SIZE -> store twice as many values in the local memory
-                A_cache_[local_id_0][internal * THREAD_BLOCK_SIZE + local_id_1] = A_[(dim + nd_idx.get_local_id(0)) * (num_rows_ - row_offset_ + PADDING_SIZE_uz) - (dim + threadIdx_x - std::size_t{ 1 }) * (dim + nd_idx.get_local_id(0)) / std::size_t{ 2 } + device_specific_num_rows_ - (dim + nd_idx.get_local_id(0)) + global_j];
-                A_cache_[local_id_0 + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + local_id_1] = A_[(dim + threadIdx_x + THREAD_BLOCK_SIZE_uz) * (num_rows_ - row_offset_ + PADDING_SIZE_uz) - (dim + nd_idx.get_local_id(0) + THREAD_BLOCK_SIZE_uz - std::size_t{ 1 }) * (dim + nd_idx.get_local_id(0) + THREAD_BLOCK_SIZE_uz) / std::size_t{ 2 } + device_specific_num_rows_ - (dim + nd_idx.get_local_id(0) + THREAD_BLOCK_SIZE_uz) + global_j];
+                A_cache_[local_id_0][internal * THREAD_BLOCK_SIZE + local_id_1] = A_[(dim + threadIdx_x) * (num_rows_ - row_offset_ + PADDING_SIZE_uz) - (dim + threadIdx_x - std::size_t{ 1 }) * (dim + threadIdx_x) / std::size_t{ 2 } + device_specific_num_rows_ - (dim + threadIdx_x) + global_j];
+                A_cache_[local_id_0 + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + local_id_1] = A_[(dim + threadIdx_x + THREAD_BLOCK_SIZE_uz) * (num_rows_ - row_offset_ + PADDING_SIZE_uz) - (dim + threadIdx_x + THREAD_BLOCK_SIZE_uz - std::size_t{ 1 }) * (dim + threadIdx_x + THREAD_BLOCK_SIZE_uz) / std::size_t{ 2 } + device_specific_num_rows_ - (dim + threadIdx_x + THREAD_BLOCK_SIZE_uz) + global_j];
 
                 B_cache_[local_id_0][internal * THREAD_BLOCK_SIZE + local_id_1] = B_[(dim + row_offset_ + threadIdx_x) * (num_rhs_ + PADDING_SIZE_uz) + global_i];
                 B_cache_[local_id_0 + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + local_id_1] = B_[(dim + row_offset_ + threadIdx_x + THREAD_BLOCK_SIZE_uz) * (num_rhs_ + PADDING_SIZE_uz) + global_i];
@@ -292,6 +294,7 @@ class device_kernel_symm_mirror {
 
 /**
  * @brief Perform a simple inplace matrix addition: lhs += rhs.
+ * @details Uses SYCL's work-group data parallel kernels.
  */
 class device_kernel_inplace_matrix_add {
   public:
@@ -351,6 +354,7 @@ class device_kernel_inplace_matrix_add {
 
 /**
  * @brief Perform a simple inplace matrix scale: lhs *= scalar.
+ * @details Uses SYCL's work-group data parallel kernels.
  */
 class device_kernel_inplace_matrix_scale {
   public:
@@ -408,6 +412,6 @@ class device_kernel_inplace_matrix_scale {
     /// @endcond
 };
 
-}  // namespace plssvm::sycl::detail
+}  // namespace plssvm::sycl::detail::work_group
 
-#endif  // PLSSVM_BACKENDS_SYCL_CG_EXPLICIT_BLAS_HPP_
+#endif  // PLSSVM_BACKENDS_SYCL_CG_EXPLICIT_WORK_GROUP_BLAS_HPP_

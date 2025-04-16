@@ -6,26 +6,27 @@
  * @license This file is part of the PLSSVM project which is released under the MIT license.
  *          See the LICENSE.md file in the project root for full license information.
  *
- * @brief Functions for explicitly assembling the kernel matrix using the SYCL backend.
+ * @brief Functions for explicitly assembling the kernel matrix using the SYCL backend and the work-group data parallel kernels.
  */
 
-#ifndef PLSSVM_BACKENDS_SYCL_CG_EXPLICIT_KERNEL_MATRIX_ASSEMBLY_HPP_
-#define PLSSVM_BACKENDS_SYCL_CG_EXPLICIT_KERNEL_MATRIX_ASSEMBLY_HPP_
+#ifndef PLSSVM_BACKENDS_SYCL_CG_EXPLICIT_WORK_GROUP_KERNEL_MATRIX_ASSEMBLY_HPP_
+#define PLSSVM_BACKENDS_SYCL_CG_EXPLICIT_WORK_GROUP_KERNEL_MATRIX_ASSEMBLY_HPP_
 #pragma once
 
 #include "plssvm/backends/SYCL/kernel/kernel_functions.hpp"  // plssvm::sycl::detail::{feature_reduce, apply_kernel_function}
 #include "plssvm/constants.hpp"                              // plssvm::{real_type, THREAD_BLOCK_SIZE, INTERNAL_BLOCK_SIZE, FEATURE_BLOCK_SIZE, PADDING_SIZE}
 #include "plssvm/kernel_function_types.hpp"                  // plssvm::kernel_function_type
 
-#include "sycl/sycl.hpp"  // sycl::nd_item
+#include "sycl/sycl.hpp"  // sycl::handler, sycl::range, sycl::nd_item, sycl::local_accessor
 
 #include <cstddef>  // std::size_t
 #include <tuple>    // std::tuple, std::make_tuple
 
-namespace plssvm::sycl::detail {
+namespace plssvm::sycl::detail::work_group {
 
 /**
  * @brief Create the explicit kernel matrix using the @p kernel_function.
+ * @details Uses SYCL's work-group data parallel kernels.
  * @tparam kernel_function the type of the used kernel function
  * @tparam Args the types of the parameters necessary for the specific kernel function; stored in a `std::tuple`
  */
@@ -171,6 +172,6 @@ class device_kernel_assembly {
     /// @endcond
 };
 
-}  // namespace plssvm::sycl::detail
+}  // namespace plssvm::sycl::detail::work_group
 
-#endif  // PLSSVM_BACKENDS_SYCL_CG_EXPLICIT_KERNEL_MATRIX_ASSEMBLY_HPP_
+#endif  // PLSSVM_BACKENDS_SYCL_CG_EXPLICIT_WORK_GROUP_KERNEL_MATRIX_ASSEMBLY_HPP_
