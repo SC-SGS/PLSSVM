@@ -65,7 +65,7 @@ auto get_execution_range(const ::plssvm::detail::dim_type &grid, const ::plssvm:
         return ::sycl::range<2>{ native_grid * native_block };
     } else if constexpr (invocation_type == sycl::kernel_invocation_type::work_group) {
         return ::sycl::nd_range<2>{ native_grid * native_block, native_block };
-    } else if constexpr (invocation_type == sycl::kernel_invocation_type::hierarchical || invocation_type == sycl::kernel_invocation_type::scoped) {
+    } else if constexpr (invocation_type == sycl::kernel_invocation_type::hierarchical) {
         return ::sycl::nd_range<2>{ native_grid, native_block };
     } else {
         // can't be reached

@@ -185,9 +185,12 @@ struct dpcpp_csvm_test_type {
 };
 
 // a tuple containing the test structs
-using dpcpp_csvm_test_tuple = std::tuple<dpcpp_csvm_test_type<false, plssvm::sycl::kernel_invocation_type::basic>,
-                                         dpcpp_csvm_test_type<false, plssvm::sycl::kernel_invocation_type::work_group>,
-                                         dpcpp_csvm_test_type<false, plssvm::sycl::kernel_invocation_type::hierarchical>>;
+using dpcpp_csvm_test_tuple = std::tuple<
+#if defined(PLSSVM_SYCL_HIERARCHICAL_AND_SCOPED_KERNELS_ENABLED)
+    dpcpp_csvm_test_type<false, plssvm::sycl::kernel_invocation_type::hierarchical>,
+#endif
+    dpcpp_csvm_test_type<false, plssvm::sycl::kernel_invocation_type::basic>,
+    dpcpp_csvm_test_type<false, plssvm::sycl::kernel_invocation_type::work_group>>;
 
 // the tests used in the instantiated GTest test suites
 // general test types
@@ -233,9 +236,13 @@ INSTANTIATE_TYPED_TEST_SUITE_P(DPCPPCSVM, GenericGPUCSVMKernelFunction, dpcpp_ke
 // generic GPU C-SVM DeathTests - correct grid sizes
 INSTANTIATE_TYPED_TEST_SUITE_P(DPCPPCSVMDeathTest, GenericGPUCSVMDeathTest, dpcpp_csvm_test_type_gtest, naming::test_parameter_to_name);
 
-using dpcpp_mock_csvm_test_tuple = std::tuple<dpcpp_csvm_test_type<true, plssvm::sycl::kernel_invocation_type::basic>,
-                                              dpcpp_csvm_test_type<true, plssvm::sycl::kernel_invocation_type::work_group>,
-                                              dpcpp_csvm_test_type<true, plssvm::sycl::kernel_invocation_type::hierarchical>>;
+using dpcpp_mock_csvm_test_tuple = std::tuple<
+#if defined(PLSSVM_SYCL_HIERARCHICAL_AND_SCOPED_KERNELS_ENABLED)
+    dpcpp_csvm_test_type<true, plssvm::sycl::kernel_invocation_type::hierarchical>,
+#endif
+    dpcpp_csvm_test_type<true, plssvm::sycl::kernel_invocation_type::basic>,
+    dpcpp_csvm_test_type<true, plssvm::sycl::kernel_invocation_type::work_group>>;
+
 using dpcpp_mock_csvm_test_type_list = util::cartesian_type_product_t<dpcpp_mock_csvm_test_tuple>;
 
 using dpcpp_mock_csvm_test_type_gtest = util::combine_test_parameters_gtest_t<dpcpp_mock_csvm_test_type_list>;

@@ -81,6 +81,12 @@ class csvm : public ::plssvm::detail::gpu_csvm<detail::device_ptr, detail::queue
             if (invocation_type_ == sycl::kernel_invocation_type::scoped) {
                 throw ::plssvm::invalid_parameter_exception{ "The provided sycl::kernel_invocation_type::scoped isn't supported by DPC++!" };
             }
+
+#if !defined(PLSSVM_SYCL_HIERARCHICAL_AND_SCOPED_KERNELS_ENABLED)
+            if (invocation_type_ == sycl::kernel_invocation_type::hierarchical) {
+                throw ::plssvm::invalid_parameter_exception{ "The provided sycl::kernel_invocation_type::hierarchical is disabled for the DPC++ SYCL backend!" };
+            }
+#endif
         }
         this->init(target);
     }

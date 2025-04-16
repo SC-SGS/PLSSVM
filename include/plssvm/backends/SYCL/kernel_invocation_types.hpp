@@ -17,6 +17,7 @@
 #include "fmt/ostream.h"  // fmt::ostream_formatter
 
 #include <iosfwd>  // forward declare std::ostream and std::istream
+#include <vector>  // std::vector
 
 namespace plssvm::sycl {
 
@@ -35,6 +36,13 @@ enum class kernel_invocation_type {
     /** Use the AdaptiveCpp specific [`scoped` parallelism](https://github.com/AdaptiveCpp/AdaptiveCpp/blob/develop/doc/scoped-parallelism.md). */
     scoped
 };
+
+/**
+ * @brief Return a list of all currently available SYCL kernel invocation types.
+ * @details SYCL's hierarchical and AdaptiveCpp's scoped kernel invocation type can be disabled during the CMake configuration.
+ * @return the available SYCL kernel invocation types (`[[nodiscard]]`)
+ */
+[[nodiscard]] std::vector<kernel_invocation_type> list_available_sycl_kernel_invocation_types();
 
 /**
  * @brief Output the @p invocation type to the given output-stream @p out.

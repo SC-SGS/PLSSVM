@@ -12,7 +12,8 @@
 
 #include "tests/custom_test_macros.hpp"  // EXPECT_CONVERSION_TO_STRING, EXPECT_CONVERSION_FROM_STRING
 
-#include "gtest/gtest.h"  // TEST, EXPECT_TRUE
+#include "gmock/gmock.h"  // EXPECT_THAT; ::testing::Contains
+#include "gtest/gtest.h"  // TEST, EXPECT_TRUE, EXPECT_GE
 
 #include <sstream>  // std::istringstream
 
@@ -56,4 +57,16 @@ TEST(SYCLKernelInvocationType, from_string_unknown) {
     plssvm::sycl::kernel_invocation_type invocation_type{};
     input >> invocation_type;
     EXPECT_TRUE(input.fail());
+}
+
+TEST(SYCLKernelInvocationType, minimal_available_sycl_kernel_invocation_types) {
+    const std::vector<plssvm::sycl::kernel_invocation_type> invocation_type = plssvm::sycl::list_available_sycl_kernel_invocation_types();
+
+    // at least three must be available (automatic, basic, and work_group)!
+    EXPECT_GE(invocation_type.size(), 3);
+
+    // check for the kernel invocation types that must always be present
+    EXPECT_THAT(invocation_type, ::testing::Contains(plssvm::sycl::kernel_invocation_type::automatic));
+    EXPECT_THAT(invocation_type, ::testing::Contains(plssvm::sycl::kernel_invocation_type::basic));
+    EXPECT_THAT(invocation_type, ::testing::Contains(plssvm::sycl::kernel_invocation_type::work_group));
 }

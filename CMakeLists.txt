@@ -883,11 +883,12 @@ if (TARGET ${PLSSVM_SYCL_BACKEND_LIBRARY_NAME})
 choose the SYCL implementation to be used in the SYCL backend: ${PLSSVM_SYCL_BACKEND_NAME_LIST} (default: automatic)
 "
     )
+    string(REPLACE ";" "|" PLSSVM_SYCL_KERNEL_INVOCATION_TYPE_NAME_LIST "${PLSSVM_SYCL_KERNEL_INVOCATION_TYPE_NAME_LIST}")
     set(PLSSVM_SYCL_KERNEL_INVOCATION_TYPE_MANPAGE_ENTRY
         "
 .TP
 .B --sycl_kernel_invocation_type
-choose the kernel invocation type when using SYCL as backend: automatic|basic|work_group|hierarchical|scoped (default: automatic)
+choose the kernel invocation type when using SYCL as backend: ${PLSSVM_SYCL_KERNEL_INVOCATION_TYPE_NAME_LIST} (default: automatic)
 "
     )
 endif ()

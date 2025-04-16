@@ -20,6 +20,12 @@ set(PLSSVM_SYCL_BACKEND_FOUND_IMPLEMENTATIONS "")
 #                                             check if SYCL can be enabled                                             #
 ########################################################################################################################
 
+# enable kernel invocation types
+option(PLSSVM_ENABLE_SYCL_HIERARCHICAL_AND_SCOPED_KERNELS "Enables SYCL's hierarchical and AdaptiveCpp's scoped kernel invocation types." ON)
+if (PLSSVM_ENABLE_SYCL_HIERARCHICAL_AND_SCOPED_KERNELS)
+    message(STATUS "Enable SYCL's hierarchical and AdaptiveCpp's scoped kernel invocation types.")
+endif ()
+
 # add AdaptiveCpp
 set(PLSSVM_ENABLE_SYCL_ADAPTIVECPP_BACKEND ${PLSSVM_ENABLE_SYCL_BACKEND} CACHE STRING "Enable AdaptiveCpp as SYCL Backend")
 set_property(CACHE PLSSVM_ENABLE_SYCL_ADAPTIVECPP_BACKEND PROPERTY STRINGS AUTO ON OFF)
@@ -108,6 +114,24 @@ if (TARGET ${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME})
     )
 endif ()
 
+# add kernel invocation type compile definitions
+if (PLSSVM_ENABLE_SYCL_HIERARCHICAL_AND_SCOPED_KERNELS)
+    target_compile_definitions(${PLSSVM_SYCL_BACKEND_LIBRARY_NAME} INTERFACE PLSSVM_SYCL_HIERARCHICAL_AND_SCOPED_KERNELS_ENABLED)
+    target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PRIVATE PLSSVM_SYCL_HIERARCHICAL_AND_SCOPED_KERNELS_ENABLED)
+    if (TARGET ${PLSSVM_SYCL_BACKEND_ADAPTIVECPP_LIBRARY_NAME})
+        target_compile_definitions(${PLSSVM_SYCL_BACKEND_ADAPTIVECPP_LIBRARY_NAME} PRIVATE PLSSVM_SYCL_HIERARCHICAL_AND_SCOPED_KERNELS_ENABLED)
+    endif ()
+    if (TARGET ${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME})
+        target_compile_definitions(${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME} PRIVATE PLSSVM_SYCL_HIERARCHICAL_AND_SCOPED_KERNELS_ENABLED)
+    endif ()
+    
+    # create name list
+    set(PLSSVM_SYCL_KERNEL_HIERARCHICAL_AND_SCOPED_NAME_LIST ";hierarchical")
+    if (TARGET ${PLSSVM_SYCL_BACKEND_ADAPTIVECPP_LIBRARY_NAME})
+        list(APPEND PLSSVM_SYCL_KERNEL_HIERARCHICAL_AND_SCOPED_NAME_LIST "scoped")
+    endif ()
+endif ()
+
 # link against interface library
 target_link_libraries(${PLSSVM_ALL_LIBRARY_NAME} INTERFACE ${PLSSVM_SYCL_BACKEND_LIBRARY_NAME})
 
@@ -117,8 +141,14 @@ target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PRIVATE PLSSVM_HAS_SYCL_B
 # mark backend library as install target
 append_local_and_parent(PLSSVM_TARGETS_TO_INSTALL ${PLSSVM_SYCL_BACKEND_LIBRARY_NAME})
 
-# set manpage string
+# set manpage strings
 set_local_and_parent(PLSSVM_SYCL_BACKEND_NAME_LIST "automatic;${PLSSVM_SYCL_BACKEND_FOUND_IMPLEMENTATIONS}")
+set_local_and_parent(PLSSVM_SYCL_KERNEL_INVOCATION_TYPE_NAME_LIST "automatic;basic;work_group${PLSSVM_SYCL_KERNEL_HIERARCHICAL_AND_SCOPED_NAME_LIST}")
+
+# populate transformed ACPP_TARGETS for tests
+if (TARGET ${PLSSVM_SYCL_BACKEND_ADAPTIVECPP_LIBRARY_NAME})
+    set_local_and_parent(ACPP_TARGETS "${ACPP_TARGETS}")
+endif ()
 
 # generate summary string
 include(${PROJECT_SOURCE_DIR}/cmake/assemble_summary_string.cmake)

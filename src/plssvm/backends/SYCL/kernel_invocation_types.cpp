@@ -14,8 +14,24 @@
 #include <istream>  // std::istream
 #include <ostream>  // std::ostream
 #include <string>   // std::string
+#include <vector>   // std::vector
 
 namespace plssvm::sycl {
+
+std::vector<kernel_invocation_type> list_available_sycl_kernel_invocation_types() {
+    std::vector<kernel_invocation_type> available_sycl_kernel_invocation_types = {
+        kernel_invocation_type::automatic,
+        kernel_invocation_type::basic,
+        kernel_invocation_type::work_group
+    };
+#if defined(PLSSVM_SYCL_HIERARCHICAL_AND_SCOPED_KERNELS_ENABLED)
+    available_sycl_kernel_invocation_types.push_back(kernel_invocation_type::hierarchical);
+    #if defined(PLSSVM_SYCL_BACKEND_HAS_ADAPTIVECPP)
+    available_sycl_kernel_invocation_types.push_back(kernel_invocation_type::scoped);
+    #endif
+#endif
+    return available_sycl_kernel_invocation_types;
+}
 
 std::ostream &operator<<(std::ostream &out, const kernel_invocation_type invocation) {
     switch (invocation) {

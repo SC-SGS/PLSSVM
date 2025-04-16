@@ -23,6 +23,7 @@
 #include "plssvm/detail/igor_utility.hpp"                             // plssvm::detail::get_value_from_named_parameter
 #include "plssvm/detail/memory_size.hpp"                              // plssvm::detail::memory_size
 #include "plssvm/detail/type_traits.hpp"                              // PLSSVM_REQUIRES, plssvm::detail::is_one_type_of
+#include "plssvm/exceptions/exceptions.hpp"                           // plssvm::invalid_parameter_exception
 #include "plssvm/mpi/communicator.hpp"                                // plssvm::mpi::communicator
 #include "plssvm/parameter.hpp"                                       // plssvm::parameter, plssvm::detail::{has_only_sycl_parameter_named_args_v, has_only_sycl_named_args_v}
 #include "plssvm/svm/csvc.hpp"                                        // plssvm::csvc
@@ -76,6 +77,14 @@ class csvm : public ::plssvm::detail::gpu_csvm<detail::device_ptr, detail::queue
         if constexpr (parser.has(sycl_kernel_invocation_type)) {
             // compile time check: the value must have the correct type
             invocation_type_ = ::plssvm::detail::get_value_from_named_parameter<sycl::kernel_invocation_type>(parser, sycl_kernel_invocation_type);
+
+#if !defined(PLSSVM_SYCL_HIERARCHICAL_AND_SCOPED_KERNELS_ENABLED)
+            if (invocation_type_ == sycl::kernel_invocation_type::hierarchical) {
+                throw ::plssvm::invalid_parameter_exception{ "The provided sycl::kernel_invocation_type::hierarchical is disabled for the AdaptiveCpp SYCL backend!" };
+            } else if (invocation_type_ == sycl::kernel_invocation_type::scoped) {
+                throw ::plssvm::invalid_parameter_exception{ "he provided sycl::kernel_invocation_type::scoped is disabled for the AdaptiveCpp SYCL backend!" };
+            }
+#endif
         }
         this->init(target);
     }

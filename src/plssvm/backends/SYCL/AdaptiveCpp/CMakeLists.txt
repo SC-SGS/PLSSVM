@@ -11,6 +11,11 @@ option(PLSSVM_SYCL_BACKEND_ADAPTIVECPP_USE_GENERIC_SSCP "Enables the generic SSC
 if (PLSSVM_SYCL_BACKEND_ADAPTIVECPP_USE_GENERIC_SSCP)
     message(STATUS "Using the new AdaptiveCpp SSCP compilation flow.")
     set(ACPP_TARGETS "generic" CACHE STRING "" FORCE)
+    if (PLSSVM_ENABLE_SYCL_HIERARCHICAL_AND_SCOPED_KERNELS)
+        message(WARNING "Enabled SYCL's hierarchical and AdapitveCpp's scoped kernels in AdaptiveCpp while using its SSCP compilation flow. "
+                        "SSCP, however, does currently not implement these kernel invocation types resulting in a runtime exception. "
+                        "If you wish to use them, set \"PLSSVM_SYCL_BACKEND_ADAPTIVECPP_USE_GENERIC_SSCP\" to \"OFF\" and use one of the legacy compilation flows. ")
+    endif ()
 else ()
     message(STATUS "Using the old AdaptiveCpp compilation flow.")
     # reformat PLSSVM_TARGET_PLATFORMS to be usable with ACPP_TARGETS
@@ -35,6 +40,7 @@ find_package(AdaptiveCpp CONFIG)
 if (AdaptiveCpp_FOUND)
     message(CHECK_PASS "found")
     message(STATUS "Setting ACPP_TARGETS to \"${ACPP_TARGETS}\".")
+    set_local_and_parent(ACPP_TARGETS "${ACPP_TARGETS}")
     append_local_and_parent(PLSSVM_SYCL_BACKEND_FOUND_IMPLEMENTATIONS "adaptivecpp")
 
     # set AdaptiveCpp specific targets

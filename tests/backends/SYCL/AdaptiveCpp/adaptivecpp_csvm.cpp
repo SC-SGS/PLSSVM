@@ -185,9 +185,13 @@ struct adaptivecpp_csvm_test_type {
 };
 
 // a tuple containing the test structs
-using adaptivecpp_csvm_test_tuple = std::tuple<adaptivecpp_csvm_test_type<false, plssvm::sycl::kernel_invocation_type::basic>,
-                                               adaptivecpp_csvm_test_type<false, plssvm::sycl::kernel_invocation_type::work_group>,
-                                               adaptivecpp_csvm_test_type<false, plssvm::sycl::kernel_invocation_type::hierarchical>>;
+using adaptivecpp_csvm_test_tuple = std::tuple<
+#if defined(PLSSVM_SYCL_HIERARCHICAL_AND_SCOPED_KERNELS_ENABLED)
+    adaptivecpp_csvm_test_type<false, plssvm::sycl::kernel_invocation_type::hierarchical>,
+    adaptivecpp_csvm_test_type<false, plssvm::sycl::kernel_invocation_type::scoped>,
+#endif
+    adaptivecpp_csvm_test_type<false, plssvm::sycl::kernel_invocation_type::basic>,
+    adaptivecpp_csvm_test_type<false, plssvm::sycl::kernel_invocation_type::work_group>>;
 
 // the tests used in the instantiated GTest test suites
 // general test types
@@ -233,9 +237,14 @@ INSTANTIATE_TYPED_TEST_SUITE_P(AdaptiveCppCSVM, GenericGPUCSVMKernelFunction, ad
 // generic GPU C-SVM DeathTests - correct grid sizes
 INSTANTIATE_TYPED_TEST_SUITE_P(AdaptiveCppCSVMDeathTest, GenericGPUCSVMDeathTest, adaptivecpp_csvm_test_type_gtest, naming::test_parameter_to_name);
 
-using adaptivecpp_mock_csvm_test_tuple = std::tuple<adaptivecpp_csvm_test_type<true, plssvm::sycl::kernel_invocation_type::basic>,
-                                                    adaptivecpp_csvm_test_type<true, plssvm::sycl::kernel_invocation_type::work_group>,
-                                                    adaptivecpp_csvm_test_type<true, plssvm::sycl::kernel_invocation_type::hierarchical>>;
+using adaptivecpp_mock_csvm_test_tuple = std::tuple<
+#if defined(PLSSVM_SYCL_HIERARCHICAL_AND_SCOPED_KERNELS_ENABLED)
+    adaptivecpp_csvm_test_type<true, plssvm::sycl::kernel_invocation_type::hierarchical>,
+    adaptivecpp_csvm_test_type<true, plssvm::sycl::kernel_invocation_type::scoped>,
+#endif
+    adaptivecpp_csvm_test_type<true, plssvm::sycl::kernel_invocation_type::basic>,
+    adaptivecpp_csvm_test_type<true, plssvm::sycl::kernel_invocation_type::work_group>>;
+
 using adaptivecpp_mock_csvm_test_type_list = util::cartesian_type_product_t<adaptivecpp_mock_csvm_test_tuple>;
 
 using adaptivecpp_mock_csvm_test_type_gtest = util::combine_test_parameters_gtest_t<adaptivecpp_mock_csvm_test_type_list>;

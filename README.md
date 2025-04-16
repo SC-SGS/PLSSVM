@@ -339,6 +339,8 @@ If the SYCL backend is available, additional options can be set.
   - `AUTO`: check for DPC++/icpx as implementation for the SYCL backend but **do not** fail if not available
   - `OFF`: do not check for DPC++/icpx as implementation for the SYCL backend
 
+- `PLSSVM_ENABLE_SYCL_HIERARCHICAL_AND_SCOPED_KERNELS` (default: `ON`): enable SYCL's `hierarchical` and AdaptiveCpp's `scoped` kernel invocation types
+
 To use DPC++/icpx for SYCL, simply set the `CMAKE_CXX_COMPILER` to the respective DPC++/icpx clang executable during CMake invocation.
 
 If the SYCL implementation is DPC++/icpx the following additional options are available:

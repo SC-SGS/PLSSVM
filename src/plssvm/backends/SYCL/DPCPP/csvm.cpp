@@ -255,10 +255,14 @@ auto csvm::run_assemble_kernel_matrix_explicit(const std::size_t device_id, cons
                         });
                         break;
                     case sycl::kernel_invocation_type::hierarchical:
+#if defined(PLSSVM_SYCL_HIERARCHICAL_AND_SCOPED_KERNELS_ENABLED)
                         device.impl->sycl_queue.submit([&, &partial_grid_ref = partial_grid, &offsets_ref = offsets](::sycl::handler &cgh) {
                             const auto exec_range = detail::get_execution_range<sycl::kernel_invocation_type::hierarchical>(partial_grid_ref, exec.block);
                             cgh.parallel_for_work_group(exec_range.get_global_range(), exec_range.get_local_range(), sycl::detail::hierarchical::device_kernel_assembly<kernel_function_type::linear>{ kernel_matrix_d.get(), data_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, q_red_d.get(), QA_cost, cost_factor, offsets_ref.y, offsets_ref.x });
                         });
+#else
+                        throw backend_exception{ "Support for sycl::kernel_invocation_type::hierarchical was disabled!" };
+#endif
                         break;
                     case sycl::kernel_invocation_type::scoped:
                         throw backend_exception{ "Can't use the sycl::kernel_invocation_type::scoped with DPC++!" };
@@ -286,11 +290,15 @@ auto csvm::run_assemble_kernel_matrix_explicit(const std::size_t device_id, cons
                         });
                         break;
                     case sycl::kernel_invocation_type::hierarchical:
+#if defined(PLSSVM_SYCL_HIERARCHICAL_AND_SCOPED_KERNELS_ENABLED)
                         device.impl->sycl_queue.submit([&, &partial_grid_ref = partial_grid, &offsets_ref = offsets](::sycl::handler &cgh) {
                             using functor_type = sycl::detail::hierarchical::device_kernel_assembly<kernel_function_type::polynomial, decltype(params.degree), real_type, decltype(params.coef0)>;
                             const auto exec_range = detail::get_execution_range<sycl::kernel_invocation_type::hierarchical>(partial_grid_ref, exec.block);
                             cgh.parallel_for_work_group(exec_range.get_global_range(), exec_range.get_local_range(), functor_type{ kernel_matrix_d.get(), data_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, q_red_d.get(), QA_cost, cost_factor, offsets_ref.y, offsets_ref.x, params.degree, std::get<real_type>(params.gamma), params.coef0 });
                         });
+#else
+                        throw backend_exception{ "Support for sycl::kernel_invocation_type::hierarchical was disabled!" };
+#endif
                         break;
                     case sycl::kernel_invocation_type::scoped:
                         throw backend_exception{ "Can't use the sycl::kernel_invocation_type::scoped with DPC++!" };
@@ -318,11 +326,15 @@ auto csvm::run_assemble_kernel_matrix_explicit(const std::size_t device_id, cons
                         });
                         break;
                     case sycl::kernel_invocation_type::hierarchical:
+#if defined(PLSSVM_SYCL_HIERARCHICAL_AND_SCOPED_KERNELS_ENABLED)
                         device.impl->sycl_queue.submit([&, &partial_grid_ref = partial_grid, &offsets_ref = offsets](::sycl::handler &cgh) {
                             using functor_type = sycl::detail::hierarchical::device_kernel_assembly<kernel_function_type::rbf, real_type>;
                             const auto exec_range = detail::get_execution_range<sycl::kernel_invocation_type::hierarchical>(partial_grid_ref, exec.block);
                             cgh.parallel_for_work_group(exec_range.get_global_range(), exec_range.get_local_range(), functor_type{ kernel_matrix_d.get(), data_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, q_red_d.get(), QA_cost, cost_factor, offsets_ref.y, offsets_ref.x, std::get<real_type>(params.gamma) });
                         });
+#else
+                        throw backend_exception{ "Support for sycl::kernel_invocation_type::hierarchical was disabled!" };
+#endif
                         break;
                     case sycl::kernel_invocation_type::scoped:
                         throw backend_exception{ "Can't use the sycl::kernel_invocation_type::scoped with DPC++!" };
@@ -350,11 +362,15 @@ auto csvm::run_assemble_kernel_matrix_explicit(const std::size_t device_id, cons
                         });
                         break;
                     case sycl::kernel_invocation_type::hierarchical:
+#if defined(PLSSVM_SYCL_HIERARCHICAL_AND_SCOPED_KERNELS_ENABLED)
                         device.impl->sycl_queue.submit([&, &partial_grid_ref = partial_grid, &offsets_ref = offsets](::sycl::handler &cgh) {
                             using functor_type = sycl::detail::hierarchical::device_kernel_assembly<kernel_function_type::sigmoid, real_type, decltype(params.coef0)>;
                             const auto exec_range = detail::get_execution_range<sycl::kernel_invocation_type::hierarchical>(partial_grid_ref, exec.block);
                             cgh.parallel_for_work_group(exec_range.get_global_range(), exec_range.get_local_range(), functor_type{ kernel_matrix_d.get(), data_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, q_red_d.get(), QA_cost, cost_factor, offsets_ref.y, offsets_ref.x, std::get<real_type>(params.gamma), params.coef0 });
                         });
+#else
+                        throw backend_exception{ "Support for sycl::kernel_invocation_type::hierarchical was disabled!" };
+#endif
                         break;
                     case sycl::kernel_invocation_type::scoped:
                         throw backend_exception{ "Can't use the sycl::kernel_invocation_type::scoped with DPC++!" };
@@ -382,11 +398,15 @@ auto csvm::run_assemble_kernel_matrix_explicit(const std::size_t device_id, cons
                         });
                         break;
                     case sycl::kernel_invocation_type::hierarchical:
+#if defined(PLSSVM_SYCL_HIERARCHICAL_AND_SCOPED_KERNELS_ENABLED)
                         device.impl->sycl_queue.submit([&, &partial_grid_ref = partial_grid, &offsets_ref = offsets](::sycl::handler &cgh) {
                             using functor_type = sycl::detail::hierarchical::device_kernel_assembly<kernel_function_type::laplacian, real_type>;
                             const auto exec_range = detail::get_execution_range<sycl::kernel_invocation_type::hierarchical>(partial_grid_ref, exec.block);
                             cgh.parallel_for_work_group(exec_range.get_global_range(), exec_range.get_local_range(), functor_type{ kernel_matrix_d.get(), data_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, q_red_d.get(), QA_cost, cost_factor, offsets_ref.y, offsets_ref.x, std::get<real_type>(params.gamma) });
                         });
+#else
+                        throw backend_exception{ "Support for sycl::kernel_invocation_type::hierarchical was disabled!" };
+#endif
                         break;
                     case sycl::kernel_invocation_type::scoped:
                         throw backend_exception{ "Can't use the sycl::kernel_invocation_type::scoped with DPC++!" };
@@ -414,11 +434,15 @@ auto csvm::run_assemble_kernel_matrix_explicit(const std::size_t device_id, cons
                         });
                         break;
                     case sycl::kernel_invocation_type::hierarchical:
+#if defined(PLSSVM_SYCL_HIERARCHICAL_AND_SCOPED_KERNELS_ENABLED)
                         device.impl->sycl_queue.submit([&, &partial_grid_ref = partial_grid, &offsets_ref = offsets](::sycl::handler &cgh) {
                             using functor_type = sycl::detail::hierarchical::device_kernel_assembly<kernel_function_type::chi_squared, real_type>;
                             const auto exec_range = detail::get_execution_range<sycl::kernel_invocation_type::hierarchical>(partial_grid_ref, exec.block);
                             cgh.parallel_for_work_group(exec_range.get_global_range(), exec_range.get_local_range(), functor_type{ kernel_matrix_d.get(), data_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, q_red_d.get(), QA_cost, cost_factor, offsets_ref.y, offsets_ref.x, std::get<real_type>(params.gamma) });
                         });
+#else
+                        throw backend_exception{ "Support for sycl::kernel_invocation_type::hierarchical was disabled!" };
+#endif
                         break;
                     case sycl::kernel_invocation_type::scoped:
                         throw backend_exception{ "Can't use the sycl::kernel_invocation_type::scoped with DPC++!" };
@@ -458,10 +482,14 @@ void csvm::run_blas_level_3_kernel_explicit(const std::size_t device_id, const :
                 });
                 break;
             case sycl::kernel_invocation_type::hierarchical:
+#if defined(PLSSVM_SYCL_HIERARCHICAL_AND_SCOPED_KERNELS_ENABLED)
                 device.impl->sycl_queue.submit([&, &partial_grid_ref = partial_grid, &offsets_ref = offsets](::sycl::handler &cgh) {
                     const auto exec_range = detail::get_execution_range<sycl::kernel_invocation_type::hierarchical>(partial_grid_ref, exec.block);
                     cgh.parallel_for_work_group(exec_range.get_global_range(), exec_range.get_local_range(), sycl::detail::hierarchical::device_kernel_symm{ num_rows, num_rhs, device_specific_num_rows, row_offset, alpha, A_d.get(), B_d.get(), beta, C_d.get(), offsets_ref.y, offsets_ref.x });
                 });
+#else
+                throw backend_exception{ "Support for sycl::kernel_invocation_type::hierarchical was disabled!" };
+#endif
                 break;
             case sycl::kernel_invocation_type::scoped:
                 throw backend_exception{ "Can't use the sycl::kernel_invocation_type::scoped with DPC++!" };
@@ -488,10 +516,14 @@ void csvm::run_blas_level_3_kernel_explicit(const std::size_t device_id, const :
                     });
                     break;
                 case sycl::kernel_invocation_type::hierarchical:
+#if defined(PLSSVM_SYCL_HIERARCHICAL_AND_SCOPED_KERNELS_ENABLED)
                     device.impl->sycl_queue.submit([&, &partial_grid_ref = partial_grid, &offsets_ref = offsets](::sycl::handler &cgh) {
                         const auto exec_range = detail::get_execution_range<sycl::kernel_invocation_type::hierarchical>(partial_grid_ref, mirror_exec.block);
                         cgh.parallel_for_work_group(exec_range.get_global_range(), exec_range.get_local_range(), sycl::detail::hierarchical::device_kernel_symm_mirror{ num_rows, num_rhs, num_mirror_rows, device_specific_num_rows, row_offset, alpha, A_d.get(), B_d.get(), beta, C_d.get(), offsets_ref.y, offsets_ref.x });
                     });
+#else
+                    throw backend_exception{ "Support for sycl::kernel_invocation_type::hierarchical was disabled!" };
+#endif
                     break;
                 case sycl::kernel_invocation_type::scoped:
                     throw backend_exception{ "Can't use the sycl::kernel_invocation_type::scoped with DPC++!" };
@@ -522,10 +554,14 @@ void csvm::run_inplace_matrix_addition(const std::size_t device_id, const ::plss
                 });
                 break;
             case sycl::kernel_invocation_type::hierarchical:
+#if defined(PLSSVM_SYCL_HIERARCHICAL_AND_SCOPED_KERNELS_ENABLED)
                 device.impl->sycl_queue.submit([&, &partial_grid_ref = partial_grid, &offsets_ref = offsets](::sycl::handler &cgh) {
                     const auto exec_range = detail::get_execution_range<sycl::kernel_invocation_type::hierarchical>(partial_grid_ref, exec.block);
                     cgh.parallel_for_work_group(exec_range.get_global_range(), exec_range.get_local_range(), sycl::detail::hierarchical::device_kernel_inplace_matrix_add{ num_rhs, lhs_d.get(), rhs_d.get(), offsets_ref.y, offsets_ref.x });
                 });
+#else
+                throw backend_exception{ "Support for sycl::kernel_invocation_type::hierarchical was disabled!" };
+#endif
                 break;
             case sycl::kernel_invocation_type::scoped:
                 throw backend_exception{ "Can't use the sycl::kernel_invocation_type::scoped with DPC++!" };
@@ -555,10 +591,14 @@ void csvm::run_inplace_matrix_scale(const std::size_t device_id, const ::plssvm:
                 });
                 break;
             case sycl::kernel_invocation_type::hierarchical:
+#if defined(PLSSVM_SYCL_HIERARCHICAL_AND_SCOPED_KERNELS_ENABLED)
                 device.impl->sycl_queue.submit([&, &partial_grid_ref = partial_grid, &offsets_ref = offsets](::sycl::handler &cgh) {
                     const auto exec_range = detail::get_execution_range<sycl::kernel_invocation_type::hierarchical>(partial_grid_ref, exec.block);
                     cgh.parallel_for_work_group(exec_range.get_global_range(), exec_range.get_local_range(), sycl::detail::hierarchical::device_kernel_inplace_matrix_scale{ num_rhs, lhs_d.get(), scale, offsets_ref.y, offsets_ref.x });
                 });
+#else
+                throw backend_exception{ "Support for sycl::kernel_invocation_type::hierarchical was disabled!" };
+#endif
                 break;
             case sycl::kernel_invocation_type::scoped:
                 throw backend_exception{ "Can't use the sycl::kernel_invocation_type::scoped with DPC++!" };
