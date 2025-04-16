@@ -324,7 +324,7 @@ auto csvm::run_assemble_kernel_matrix_explicit(const std::size_t device_id, cons
                     case sycl::kernel_invocation_type::scoped:
 #if defined(PLSSVM_SYCL_HIERARCHICAL_AND_SCOPED_KERNELS_ENABLED)
                         device.impl->sycl_queue.submit([&, &partial_grid_ref = partial_grid, &offsets_ref = offsets](::sycl::handler &cgh) {
-                            using functor_type = sycl::detail::scoped::device_kernel_assembly<kernel_function_type::chi_squared, decltype(params.degree), real_type, decltype(params.coef0)>;
+                            using functor_type = sycl::detail::scoped::device_kernel_assembly<kernel_function_type::polynomial, decltype(params.degree), real_type, decltype(params.coef0)>;
                             const auto exec_range = detail::get_execution_range<sycl::kernel_invocation_type::scoped>(partial_grid_ref, exec.block);
                             cgh.parallel(exec_range.get_global_range(), exec_range.get_local_range(), functor_type{ kernel_matrix_d.get(), data_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, q_red_d.get(), QA_cost, cost_factor, offsets_ref.y, offsets_ref.x, params.degree, std::get<real_type>(params.gamma), params.coef0 });
                         });
