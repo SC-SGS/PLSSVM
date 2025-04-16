@@ -69,7 +69,7 @@ class device_kernel_assembly {
      */
     void operator()(::sycl::group<2> group) const {
         // allocate shared memory
-        real_type data_cache_i[FEATURE_BLOCK_SIZE][INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE]; // TODO: 2D std::array?
+        real_type data_cache_i[FEATURE_BLOCK_SIZE][INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE];
         real_type data_cache_j[FEATURE_BLOCK_SIZE][INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE];
 
         // calculate the indices used in the current work-item
