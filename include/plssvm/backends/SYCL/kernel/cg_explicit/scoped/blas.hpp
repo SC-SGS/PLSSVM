@@ -15,7 +15,7 @@
 
 #include "plssvm/constants.hpp"  // plssvm::{real_type, THREAD_BLOCK_SIZE, INTERNAL_BLOCK_SIZE, FEATURE_BLOCK_SIZE, PADDING_SIZE}
 
-#include "sycl/sycl.hpp"  //
+#include "sycl/sycl.hpp"  // sycl::memory_environment, sycl::require_local_mem, sycl::require_private_mem, sycl::distribute_items_and_wait, sycl::s_item
 
 #include <cstddef>  // std::size_t
 
@@ -64,10 +64,10 @@ class device_kernel_symm {
         ::sycl::memory_environment(group,
                                    ::sycl::require_local_mem<real_type[FEATURE_BLOCK_SIZE][INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE]>(),
                                    ::sycl::require_local_mem<real_type[FEATURE_BLOCK_SIZE][INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE]>(),
-                                   ::sycl::require_private_mem<unsigned long long>(),
-                                   ::sycl::require_private_mem<unsigned long long>(),
-                                   ::sycl::require_private_mem<unsigned long long>(),
-                                   ::sycl::require_private_mem<unsigned long long>(),
+                                   ::sycl::require_private_mem<std::size_t>(),
+                                   ::sycl::require_private_mem<std::size_t>(),
+                                   ::sycl::require_private_mem<std::size_t>(),
+                                   ::sycl::require_private_mem<std::size_t>(),
                                    ::sycl::require_private_mem<std::array<std::array<real_type, INTERNAL_BLOCK_SIZE>, INTERNAL_BLOCK_SIZE>>({}),
                                    [&](auto &A_cache, auto &B_cache, auto &i, auto &i_linear, auto &j, auto &j_linear, auto &temp) {
                                        // initialize private and local variables
@@ -217,10 +217,10 @@ class device_kernel_symm_mirror {
         ::sycl::memory_environment(group,
                                    ::sycl::require_local_mem<real_type[FEATURE_BLOCK_SIZE][INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE]>(),
                                    ::sycl::require_local_mem<real_type[FEATURE_BLOCK_SIZE][INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE]>(),
-                                   ::sycl::require_private_mem<unsigned long long>(),
-                                   ::sycl::require_private_mem<unsigned long long>(),
-                                   ::sycl::require_private_mem<unsigned long long>(),
-                                   ::sycl::require_private_mem<unsigned long long>(),
+                                   ::sycl::require_private_mem<std::size_t>(),
+                                   ::sycl::require_private_mem<std::size_t>(),
+                                   ::sycl::require_private_mem<std::size_t>(),
+                                   ::sycl::require_private_mem<std::size_t>(),
                                    ::sycl::require_private_mem<std::array<std::array<real_type, INTERNAL_BLOCK_SIZE>, INTERNAL_BLOCK_SIZE>>({}),
                                    [&](auto &A_cache, auto &B_cache, auto &i, auto &i_linear, auto &j, auto &j_linear, auto &temp) {
                                        // initialize private and local variables

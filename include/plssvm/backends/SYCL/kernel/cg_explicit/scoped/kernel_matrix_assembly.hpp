@@ -73,10 +73,10 @@ class device_kernel_assembly {
         ::sycl::memory_environment(group,
                                    ::sycl::require_local_mem<real_type[FEATURE_BLOCK_SIZE][INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE]>(),
                                    ::sycl::require_local_mem<real_type[FEATURE_BLOCK_SIZE][INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE]>(),
-                                   ::sycl::require_private_mem<unsigned long long>(),
-                                   ::sycl::require_private_mem<unsigned long long>(),
-                                   ::sycl::require_private_mem<unsigned long long>(),
-                                   ::sycl::require_private_mem<unsigned long long>(),
+                                   ::sycl::require_private_mem<std::size_t>(),
+                                   ::sycl::require_private_mem<std::size_t>(),
+                                   ::sycl::require_private_mem<std::size_t>(),
+                                   ::sycl::require_private_mem<std::size_t>(),
                                    ::sycl::require_private_mem<std::array<std::array<real_type, INTERNAL_BLOCK_SIZE>, INTERNAL_BLOCK_SIZE>>({}),
                                    [&](auto &data_cache_i, auto &data_cache_j, auto &i, auto &i_linear, auto &j, auto &j_linear, auto &temp) {
                                        // initialize private and local variables
