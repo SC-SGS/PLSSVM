@@ -8,16 +8,17 @@
 
 #include "plssvm/detail/cmd/parser_predict.hpp"
 
-#include "plssvm/backend_types.hpp"                       // plssvm::list_available_backends
-#include "plssvm/backends/Kokkos/execution_space.hpp"     // plssvm::kokkos::list_available_execution_spaces
-#include "plssvm/backends/SYCL/implementation_types.hpp"  // plssvm::sycl::list_available_sycl_implementations
-#include "plssvm/constants.hpp"                           // plssvm::real_type
-#include "plssvm/detail/assert.hpp"                       // PLSSVM_ASSERT
-#include "plssvm/detail/logging/mpi_log_untracked.hpp"    // plssvm::detail::log_untracked
-#include "plssvm/mpi/communicator.hpp"                    // plssvm::mpi::communicator
-#include "plssvm/target_platforms.hpp"                    // plssvm::list_available_target_platforms
-#include "plssvm/verbosity_levels.hpp"                    // plssvm::verbosity, plssvm::verbosity_level
-#include "plssvm/version/version.hpp"                     // plssvm::version::detail::get_version_info
+#include "plssvm/backend_types.hpp"                          // plssvm::list_available_backends
+#include "plssvm/backends/Kokkos/execution_space.hpp"        // plssvm::kokkos::list_available_execution_spaces
+#include "plssvm/backends/SYCL/implementation_types.hpp"     // plssvm::sycl::{list_available_sycl_implementations, implementation_type}
+#include "plssvm/backends/SYCL/kernel_invocation_types.hpp"  // plssvm::sycl::{list_available_sycl_kernel_invocation_types, kernel_invocation_type}
+#include "plssvm/constants.hpp"                              // plssvm::real_type
+#include "plssvm/detail/assert.hpp"                          // PLSSVM_ASSERT
+#include "plssvm/detail/logging/mpi_log_untracked.hpp"       // plssvm::detail::log_untracked
+#include "plssvm/mpi/communicator.hpp"                       // plssvm::mpi::communicator
+#include "plssvm/target_platforms.hpp"                       // plssvm::list_available_target_platforms
+#include "plssvm/verbosity_levels.hpp"                       // plssvm::verbosity, plssvm::verbosity_level
+#include "plssvm/version/version.hpp"                        // plssvm::version::detail::get_version_info
 
 #include "cxxopts.hpp"   // cxxopts::{Options, value, ParseResult}
 #include "fmt/color.h"   // fmt::fg, fmt::color::orange
@@ -58,6 +59,7 @@ parser_predict::parser_predict(const mpi::communicator &comm, int argc, char **a
             ("b,backend", fmt::format("choose the backend: {}", fmt::join(list_available_backends(), "|")), cxxopts::value<backend_type>()->default_value(fmt::format("{}", backend)))
             ("p,target_platform", fmt::format("choose the target platform: {}", fmt::join(list_available_target_platforms(), "|")), cxxopts::value<target_platform>()->default_value(fmt::format("{}", target)))
 #if defined(PLSSVM_HAS_SYCL_BACKEND)
+            ("sycl_kernel_invocation_type", fmt::format("choose the kernel invocation type when using SYCL as backend: {}", fmt::join(sycl::list_available_sycl_kernel_invocation_types(), "|")), cxxopts::value<decltype(sycl_kernel_invocation_type)>()->default_value(fmt::format("{}", sycl_kernel_invocation_type)))
             ("sycl_implementation_type", fmt::format("choose the SYCL implementation to be used in the SYCL backend: {}", fmt::join(sycl::list_available_sycl_implementations(), "|")), cxxopts::value<sycl::implementation_type>()->default_value(fmt::format("{}", sycl_implementation_type)))
 #endif
 #if defined(PLSSVM_HAS_KOKKOS_BACKEND)
@@ -125,12 +127,23 @@ parser_predict::parser_predict(const mpi::communicator &comm, int argc, char **a
 
 #if defined(PLSSVM_HAS_SYCL_BACKEND)
     {
-        // parse SYCL implementation used in the SYCL backend
-        sycl_implementation_type = result["sycl_implementation_type"].as<decltype(sycl_implementation_type)>();
+        // parse kernel invocation type when using SYCL as backend
+        sycl_kernel_invocation_type = result["sycl_kernel_invocation_type"].as<decltype(sycl_kernel_invocation_type)>();
 
-        // assembly warning condition
+        // assemble warning condition
         const std::vector<plssvm::target_platform> target_platforms = { target == target_platform::automatic ? determine_default_target_platform() : target };
         const bool sycl_backend_is_used = backend == backend_type::sycl || (backend == backend_type::automatic && determine_default_backend(list_available_backends(), target_platforms) == backend_type::sycl);
+
+        // warn if kernel invocation type is explicitly set but SYCL isn't the current (automatic) backend
+        if (!sycl_backend_is_used && sycl_kernel_invocation_type != sycl::kernel_invocation_type::automatic) {
+            detail::log_untracked(verbosity_level::full | verbosity_level::warning,
+                                  comm,
+                                  "WARNING: explicitly set a SYCL kernel invocation type but the current backend isn't SYCL; ignoring --sycl_kernel_invocation_type={}\n",
+                                  sycl_kernel_invocation_type);
+        }
+
+        // parse SYCL implementation used in the SYCL backend
+        sycl_implementation_type = result["sycl_implementation_type"].as<decltype(sycl_implementation_type)>();
 
         // warn if a SYCL implementation type is explicitly set but SYCL isn't the current (automatic) backend
         if (!sycl_backend_is_used && sycl_implementation_type != sycl::implementation_type::automatic) {
@@ -243,7 +256,11 @@ std::ostream &operator<<(std::ostream &out, const parser_predict &params) {
         params.target);
 
     if (params.backend == backend_type::sycl || params.backend == backend_type::automatic) {
-        out << fmt::format("SYCL implementation type: {}\n", params.sycl_implementation_type);
+        out << fmt::format(
+            "SYCL implementation type: {}\n"
+            "SYCL kernel invocation type: {}\n",
+            params.sycl_implementation_type,
+            params.sycl_kernel_invocation_type);
     }
 
     if (params.backend == backend_type::kokkos || params.backend == backend_type::automatic) {

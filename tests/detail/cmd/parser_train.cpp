@@ -64,6 +64,7 @@ TEST_F(ParserTrain, minimal) {
     EXPECT_EQ(parser.solver, plssvm::solver_type::automatic);
     EXPECT_EQ(parser.sycl_kernel_invocation_type, plssvm::sycl::kernel_invocation_type::automatic);
     EXPECT_EQ(parser.sycl_implementation_type, plssvm::sycl::implementation_type::automatic);
+    EXPECT_EQ(parser.kokkos_execution_space, plssvm::kokkos::execution_space::automatic);
     EXPECT_FALSE(parser.strings_as_labels);
     EXPECT_EQ(parser.input_filename, "data.libsvm");
     EXPECT_EQ(parser.model_filename, "data.libsvm.model");

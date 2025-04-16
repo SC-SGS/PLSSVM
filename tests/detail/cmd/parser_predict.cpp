@@ -10,12 +10,13 @@
 
 #include "plssvm/detail/cmd/parser_predict.hpp"
 
-#include "plssvm/backend_types.hpp"                       // plssvm::backend_type
-#include "plssvm/backends/Kokkos/execution_space.hpp"     // plssvm::kokkos::execution_space
-#include "plssvm/backends/SYCL/implementation_types.hpp"  // plssvm::sycl::implementation_type
-#include "plssvm/constants.hpp"                           // plssvm::real_type
-#include "plssvm/target_platforms.hpp"                    // plssvm::target_platform
-#include "plssvm/verbosity_levels.hpp"                    // plssvm::verbosity
+#include "plssvm/backend_types.hpp"                          // plssvm::backend_type
+#include "plssvm/backends/Kokkos/execution_space.hpp"        // plssvm::kokkos::execution_space
+#include "plssvm/backends/SYCL/implementation_types.hpp"     // plssvm::sycl::implementation_type
+#include "plssvm/backends/SYCL/kernel_invocation_types.hpp"  // plssvm::sycl::kernel_invocation_type
+#include "plssvm/constants.hpp"                              // plssvm::real_type
+#include "plssvm/target_platforms.hpp"                       // plssvm::target_platform
+#include "plssvm/verbosity_levels.hpp"                       // plssvm::verbosity
 
 #include "tests/custom_test_macros.hpp"      // EXPECT_CONVERSION_TO_STRING
 #include "tests/detail/cmd/cmd_utility.hpp"  // util::ParameterBase
@@ -46,7 +47,9 @@ TEST_F(ParserPredict, minimal) {
     // check parsed values
     EXPECT_EQ(parser.backend, plssvm::backend_type::automatic);
     EXPECT_EQ(parser.target, plssvm::target_platform::automatic);
+    EXPECT_EQ(parser.sycl_kernel_invocation_type, plssvm::sycl::kernel_invocation_type::automatic);
     EXPECT_EQ(parser.sycl_implementation_type, plssvm::sycl::implementation_type::automatic);
+    EXPECT_EQ(parser.kokkos_execution_space, plssvm::kokkos::execution_space::automatic);
     EXPECT_FALSE(parser.strings_as_labels);
     EXPECT_EQ(parser.input_filename, "data.libsvm");
     EXPECT_EQ(parser.model_filename, "data.libsvm.model");
@@ -68,6 +71,7 @@ TEST_F(ParserPredict, minimal_output) {
         "backend: automatic\n"
         "target platform: automatic\n"
         "SYCL implementation type: automatic\n"
+        "SYCL kernel invocation type: automatic\n"
         "Kokkos execution space: automatic\n"
         "label_type: int (default)\n"
         "real_type: {}\n"
@@ -85,7 +89,7 @@ TEST_F(ParserPredict, all_arguments) {
     // create artificial command line arguments in test fixture
     std::vector<std::string> cmd_args = { "./plssvm-predict", "--backend", "cuda", "--target_platform", "gpu_nvidia", "--use_strings_as_labels", "--verbosity", "libsvm" };
 #if defined(PLSSVM_HAS_SYCL_BACKEND)
-    cmd_args.insert(cmd_args.end(), { "--sycl_implementation_type", "dpcpp" });
+    cmd_args.insert(cmd_args.end(), { "--sycl_kernel_invocation_type", "work_group", "--sycl_implementation_type", "dpcpp" });
 #endif
 #if defined(PLSSVM_HAS_KOKKOS_BACKEND)
     const plssvm::kokkos::execution_space space = plssvm::kokkos::list_available_execution_spaces()[1];  // [0] would be automatic
@@ -107,8 +111,10 @@ TEST_F(ParserPredict, all_arguments) {
     EXPECT_EQ(parser.backend, plssvm::backend_type::cuda);
     EXPECT_EQ(parser.target, plssvm::target_platform::gpu_nvidia);
 #if defined(PLSSVM_HAS_SYCL_BACKEND)
+    EXPECT_EQ(parser.sycl_kernel_invocation_type, plssvm::sycl::kernel_invocation_type::work_group);
     EXPECT_EQ(parser.sycl_implementation_type, plssvm::sycl::implementation_type::dpcpp);
 #else
+    EXPECT_EQ(parser.sycl_kernel_invocation_type, plssvm::sycl::kernel_invocation_type::automatic);
     EXPECT_EQ(parser.sycl_implementation_type, plssvm::sycl::implementation_type::automatic);
 #endif
 #if defined(PLSSVM_HAS_KOKKOS_BACKEND)
@@ -136,7 +142,7 @@ TEST_F(ParserPredict, all_arguments_output) {
     // create artificial command line arguments in test fixture
     std::vector<std::string> cmd_args = { "./plssvm-predict", "--backend", "automatic", "--target_platform", "gpu_nvidia", "--use_strings_as_labels", "--verbosity", "libsvm" };
 #if defined(PLSSVM_HAS_SYCL_BACKEND)
-    cmd_args.insert(cmd_args.end(), { "--sycl_implementation_type", "dpcpp" });
+    cmd_args.insert(cmd_args.end(), { "--sycl_kernel_invocation_type", "work_group", "--sycl_implementation_type", "dpcpp" });
 #endif
 #if defined(PLSSVM_HAS_KOKKOS_BACKEND)
     const plssvm::kokkos::execution_space space = plssvm::kokkos::list_available_execution_spaces()[1];  // [0] would be automatic
@@ -160,9 +166,11 @@ TEST_F(ParserPredict, all_arguments_output) {
         "target platform: gpu_nvidia\n"
     };
 #if defined(PLSSVM_HAS_SYCL_BACKEND)
-    correct += "SYCL implementation type: dpcpp\n";
+    correct += "SYCL implementation type: dpcpp\n"
+               "SYCL kernel invocation type: work_group\n";
 #else
-    correct += "SYCL implementation type: automatic\n";
+    correct += "SYCL implementation type: automatic\n"
+               "SYCL kernel invocation type: automatic\n";
 #endif
 #if defined(PLSSVM_HAS_KOKKOS_BACKEND)
     correct += fmt::format("Kokkos execution space: {}\n", space);
@@ -234,6 +242,28 @@ INSTANTIATE_TEST_SUITE_P(ParserPredict, ParserPredictTargetPlatform, ::testing::
 // clang-format on
 
 #if defined(PLSSVM_HAS_SYCL_BACKEND)
+
+class ParserPredictSYCLKernelInvocation : public ParserPredict,
+                                          public ::testing::WithParamInterface<std::tuple<std::string, std::string>> { };
+
+TEST_P(ParserPredictSYCLKernelInvocation, parsing) {
+    const auto &[flag, value] = GetParam();
+    // convert string to sycl::kernel_invocation_type
+    const auto sycl_kernel_invocation_type = util::convert_from_string<plssvm::sycl::kernel_invocation_type>(value);
+    // create artificial command line arguments in test fixture
+    this->CreateCMDArgs({ "./plssvm-predict", flag, value, "data.libsvm" });
+    // create parameter object
+    const plssvm::detail::cmd::parser_predict parser{ this->get_comm(), this->get_argc(), this->get_argv() };
+    // test for correctness
+    EXPECT_EQ(parser.sycl_kernel_invocation_type, sycl_kernel_invocation_type);
+}
+
+// clang-format off
+INSTANTIATE_TEST_SUITE_P(ParserPredict, ParserPredictSYCLKernelInvocation, ::testing::Combine(
+                ::testing::Values("--sycl_kernel_invocation_type"),
+                ::testing::Values("automatic", "auto", "basic", "nd_range", "work_group", "hierarchical", "scoped")),
+                naming::pretty_print_parameter_flag_and_value<ParserPredictSYCLKernelInvocation>);
+// clang-format on
 
 class ParserPredictSYCLImplementation : public ParserPredict,
                                         public ::testing::WithParamInterface<std::tuple<std::string, std::string>> { };

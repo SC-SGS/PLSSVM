@@ -917,8 +917,6 @@ endif ()
 
 # configure the manpage files
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/docs/plssvm-train.1.in ${CMAKE_CURRENT_SOURCE_DIR}/docs/plssvm-train.1 @ONLY)
-# update manpage entry since plssvm-predict can't recognize the SYCL kernel invocation type
-set(PLSSVM_SYCL_MANPAGE_ENTRY "${PLSSVM_SYCL_IMPLEMENTATION_TYPE_MANPAGE_ENTRY}")
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/docs/plssvm-predict.1.in ${CMAKE_CURRENT_SOURCE_DIR}/docs/plssvm-predict.1 @ONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/docs/plssvm-scale.1.in ${CMAKE_CURRENT_SOURCE_DIR}/docs/plssvm-scale.1 @ONLY)
 

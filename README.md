@@ -779,6 +779,8 @@ Usage:
 
   -b, --backend arg             choose the backend: automatic|openmp|hpx|cuda|hip|opencl|sycl|kokkos|stdpar (default: automatic)
   -p, --target_platform arg     choose the target platform: automatic|cpu|gpu_nvidia|gpu_amd|gpu_intel (default: automatic)
+      --sycl_kernel_invocation_type arg
+                                choose the kernel invocation type when using SYCL as backend: automatic|basic|work_group|hierarchical|scoped (default: automatic)
       --sycl_implementation_type arg
                                 choose the SYCL implementation to be used in the SYCL backend: automatic|dpcpp|adaptivecpp (default: automatic)
       --kokkos_execution_space arg
