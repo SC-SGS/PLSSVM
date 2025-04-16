@@ -10,10 +10,11 @@
 
 #include "plssvm/backends/SYCL/DPCPP/detail/utility.hpp"
 
-#include "plssvm/backends/execution_range.hpp"  // plssvm::detail::dim_type
-#include "plssvm/target_platforms.hpp"          // plssvm::target_platform
+#include "plssvm/backends/execution_range.hpp"               // plssvm::detail::dim_type
+#include "plssvm/backends/SYCL/kernel_invocation_types.hpp"  // plssvm::sycl::kernel_invocation_type
+#include "plssvm/target_platforms.hpp"                       // plssvm::target_platform
 
-#include "sycl/sycl.hpp"  // sycl::range
+#include "sycl/sycl.hpp"  // sycl::range, sycl::nd_range
 
 #include "gtest/gtest.h"  // TEST, EXPECT_NE, EXPECT_FALSE
 
@@ -59,6 +60,39 @@ TEST(DPCPPUtility, dim_type_to_native_3) {
     EXPECT_EQ(native_dim[2], dim.x);
 }
 
+TEST(DPCPPUtility, get_execution_range_basic) {
+    // create a grid
+    const plssvm::detail::dim_type grid{ 64ull, 64ull };
+    const plssvm::detail::dim_type block{ 8ull, 8ull };
+
+    // calculate the SYCL execution range
+    const ::sycl::range exec = plssvm::dpcpp::detail::get_execution_range<plssvm::sycl::kernel_invocation_type::basic>(grid, block);
+
+    EXPECT_EQ(exec, (sycl::range<2>{ 512ull, 512ull }));
+}
+
+TEST(DPCPPUtility, get_execution_range_work_group) {
+    // create a grid
+    const plssvm::detail::dim_type grid{ 64ull, 64ull };
+    const plssvm::detail::dim_type block{ 8ull, 8ull };
+
+    // calculate the SYCL execution range
+    const ::sycl::nd_range exec = plssvm::dpcpp::detail::get_execution_range<plssvm::sycl::kernel_invocation_type::work_group>(grid, block);
+
+    EXPECT_EQ(exec, (::sycl::nd_range<2>{ ::sycl::range<2>{ 512ull, 512ull }, ::sycl::range<2>{ 8ull, 8ull } }));
+}
+
+TEST(DPCPPUtility, get_execution_range_hierarchical) {
+    // create a grid
+    const plssvm::detail::dim_type grid{ 64ull, 64ull };
+    const plssvm::detail::dim_type block{ 8ull, 8ull };
+
+    // calculate the SYCL execution range
+    const ::sycl::nd_range exec = plssvm::dpcpp::detail::get_execution_range<plssvm::sycl::kernel_invocation_type::hierarchical>(grid, block);
+
+    EXPECT_EQ(exec, (::sycl::nd_range<2>{ ::sycl::range<2>{ 64ull, 64ull }, ::sycl::range<2>{ 8ull, 8ull } }));
+}
+
 TEST(DPCPPUtility, get_device_list) {
     const auto &[queues, actual_target] = plssvm::dpcpp::detail::get_device_list(plssvm::target_platform::automatic);
     // at least one queue must be provided
@@ -67,12 +101,12 @@ TEST(DPCPPUtility, get_device_list) {
     EXPECT_NE(actual_target, plssvm::target_platform::automatic);
 }
 
-TEST(AdaptiveCppUtility, get_dpcpp_version) {
+TEST(DPCPPUtility, get_dpcpp_version) {
     const std::regex reg{ "[0-9]+\\.[0-9]+\\.[0-9]+", std::regex::extended };
     EXPECT_TRUE(std::regex_match(plssvm::dpcpp::detail::get_dpcpp_version(), reg));
 }
 
-TEST(AdaptiveCppUtility, get_dpcpp_timestamp_version) {
+TEST(DPCPPUtility, get_dpcpp_timestamp_version) {
     const std::string version = plssvm::dpcpp::detail::get_dpcpp_timestamp_version();
     EXPECT_FALSE(version.empty());
 }
