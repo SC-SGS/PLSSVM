@@ -120,8 +120,9 @@ void csvm::init(const target_platform target) {
         // use more detailed single rank command line output
         plssvm::detail::log_untracked(verbosity_level::full,
                                       comm_,
-                                      "\nUsing AdaptiveCpp ({}) as SYCL backend with the kernel invocation type \"{}\" for the svm_kernel.\n",
+                                      "\nUsing AdaptiveCpp ({}; {}) as SYCL backend with the kernel invocation type \"{}\" for the svm_kernel.\n",
                                       detail::get_adaptivecpp_version_short(),
+                                      PLSSVM_ACPP_TARGETS,
                                       invocation_type_);
         if (target == target_platform::automatic) {
             plssvm::detail::log_untracked(verbosity_level::full,
@@ -157,6 +158,7 @@ void csvm::init(const target_platform target) {
     PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "backend", "target_platform", target_ }));
     PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "backend", "num_devices", devices_.size() }));
     PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "backend", "device", device_names }));
+    PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "backend", "acpp_targets", PLSSVM_ACPP_TARGETS }));
 }
 
 csvm::~csvm() {
