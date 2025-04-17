@@ -174,7 +174,7 @@ inline void device_kernel_symm_mirror(const std::size_t num_rows, const std::siz
 
                 // be sure to not perform out of bounds accesses
                 if (global_rhs < num_rhs && partial_global_row < num_mirror_rows) {
-                    C_ptr[global_row * (num_rhs + PADDING_SIZE_uz) + global_rhs] = alpha * temp[internal_i][internal_j] + beta * C[global_row * (num_rhs + PADDING_SIZE_uz) + global_rhs];
+                    C_ptr[global_row * (num_rhs + PADDING_SIZE_uz) + global_rhs] = alpha * temp[internal_i][internal_j] + beta * C_ptr[global_row * (num_rhs + PADDING_SIZE_uz) + global_rhs];
                 }
             }
         }
