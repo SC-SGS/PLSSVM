@@ -313,7 +313,7 @@ void performance_tracker::save(std::ostream &out) {
 #if defined(PLSSVM_SYCL_BACKEND_HAS_ADAPTIVECPP)
     // check whether AdaptiveCpp's new SSCP has been enabled
     constexpr bool adaptivecpp_sscp = PLSSVM_IS_DEFINED(PLSSVM_SYCL_BACKEND_ADAPTIVECPP_USE_GENERIC_SSCP);
-    constexpr bool adaptivecpp_accelerated_cpu = PLSSVM_IS_DEFINED(__HIPSYCL_USE_ACCELERATED_CPU__);
+    constexpr bool adaptivecpp_accelerated_cpu = PLSSVM_IS_DEFINED(__ACPP_USE_ACCELERATED_CPU__);
 
     out << fmt::format(
         "  ADAPTIVECPP_with_generic_SSCP:     {}\n"
