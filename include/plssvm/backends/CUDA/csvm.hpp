@@ -18,10 +18,12 @@
 #include "plssvm/backends/execution_range.hpp"            // plssvm::detail::{dim_type, execution_range}
 #include "plssvm/backends/gpu_csvm.hpp"                   // plssvm::detail::gpu_csvm
 #include "plssvm/constants.hpp"                           // plssvm::real_type
-#include "plssvm/csvm.hpp"                                // plssvm::detail::csvm_backend_exists
 #include "plssvm/detail/memory_size.hpp"                  // plssvm::detail::memory_size
-#include "plssvm/detail/type_traits.hpp"                  // PLSSVM_REQUIRES
-#include "plssvm/parameter.hpp"                           // plssvm::parameter
+#include "plssvm/detail/type_traits.hpp"                  // PLSSVM_REQUIRES, plssvm::detail::is_one_type_of
+#include "plssvm/parameter.hpp"                           // plssvm::parameter, plssvm::detail::has_only_parameter_named_args_v
+#include "plssvm/svm/csvc.hpp"                            // plssvm::csvc
+#include "plssvm/svm/csvm.hpp"                            // plssvm::detail::csvm_backend_exists
+#include "plssvm/svm/csvr.hpp"                            // plssvm::csvr
 #include "plssvm/target_platforms.hpp"                    // plssvm::target_platform
 
 #include <cstddef>      // std::size_t
@@ -51,51 +53,14 @@ class csvm : public ::plssvm::detail::gpu_csvm<detail::device_ptr, int, detail::
     using typename base_type::queue_type;
 
     /**
-     * @brief Construct a new C-SVM using the CUDA backend with the parameters given through @p params.
-     * @param[in] params struct encapsulating all possible parameters
-     * @throws plssvm::exception all exceptions thrown in the base class constructor
-     * @throws plssvm::cuda::backend_exception if the target platform isn't plssvm::target_platform::automatic or plssvm::target_platform::gpu_nvidia
-     * @throws plssvm::cuda::backend_exception if the plssvm::target_platform::gpu_nvidia target isn't available
-     * @throws plssvm::cuda::backend_exception if no CUDA capable devices could be found
-     */
-    explicit csvm(parameter params = {});
-    /**
-     * @brief Construct a new C-SVM using the CUDA backend on the @p target platform with the parameters given through @p params.
+     * @brief Construct a new C-SVM using the CUDA backend on the @p target platform.
      * @param[in] target the target platform used for this C-SVM
-     * @param[in] params struct encapsulating all possible SVM parameters
      * @throws plssvm::exception all exceptions thrown in the base class constructor
      * @throws plssvm::cuda::backend_exception if the target platform isn't plssvm::target_platform::automatic or plssvm::target_platform::gpu_nvidia
      * @throws plssvm::cuda::backend_exception if the plssvm::target_platform::gpu_nvidia target isn't available
      * @throws plssvm::cuda::backend_exception if no CUDA capable devices could be found
      */
-    explicit csvm(target_platform target, parameter params = {});
-
-    /**
-     * @brief Construct a new C-SVM using the CUDA backend and the optionally provided @p named_args.
-     * @param[in] named_args the additional optional named arguments
-     * @throws plssvm::exception all exceptions thrown in the base class constructor
-     * @throws plssvm::cuda::backend_exception if the target platform isn't plssvm::target_platform::automatic or plssvm::target_platform::gpu_nvidia
-     * @throws plssvm::cuda::backend_exception if the plssvm::target_platform::gpu_nvidia target isn't available
-     * @throws plssvm::cuda::backend_exception if no CUDA capable devices could be found
-     */
-    template <typename... Args, PLSSVM_REQUIRES(::plssvm::detail::has_only_parameter_named_args_v<Args...>)>
-    explicit csvm(Args &&...named_args) :
-        csvm{ plssvm::target_platform::automatic, std::forward<Args>(named_args)... } { }
-
-    /**
-     * @brief Construct a new C-SVM using the CUDA backend on the @p target platform and the optionally provided @p named_args.
-     * @param[in] target the target platform used for this C-SVM
-     * @param[in] named_args the additional optional named-parameters
-     * @throws plssvm::exception all exceptions thrown in the base class constructor
-     * @throws plssvm::cuda::backend_exception if the target platform isn't plssvm::target_platform::automatic or plssvm::target_platform::gpu_nvidia
-     * @throws plssvm::cuda::backend_exception if the plssvm::target_platform::gpu_nvidia target isn't available
-     * @throws plssvm::cuda::backend_exception if no CUDA capable devices could be found
-     */
-    template <typename... Args, PLSSVM_REQUIRES(::plssvm::detail::has_only_parameter_named_args_v<Args...>)>
-    explicit csvm(const target_platform target, Args &&...named_args) :
-        base_type{ std::forward<Args>(named_args)... } {
-        this->init(target);
-    }
+    explicit csvm(target_platform target = target_platform::automatic);
 
     /**
      * @copydoc plssvm::csvm::csvm(const plssvm::csvm &)
@@ -117,18 +82,9 @@ class csvm : public ::plssvm::detail::gpu_csvm<detail::device_ptr, int, detail::
      * @brief Wait for all operations on all CUDA devices to finish.
      * @details Terminates the program, if any exception is thrown.
      */
-    ~csvm() override;
+    ~csvm() override = 0;
 
   protected:
-    /**
-     * @brief Initialize all important states related to the CUDA backend.
-     * @param[in] target the target platform to use
-     * @throws plssvm::cuda::backend_exception if the target platform isn't plssvm::target_platform::automatic or plssvm::target_platform::gpu_nvidia
-     * @throws plssvm::cuda::backend_exception if the plssvm::target_platform::gpu_nvidia target isn't available
-     * @throws plssvm::cuda::backend_exception if no CUDA capable devices could be found
-     */
-    void init(target_platform target);
-
     /**
      * @copydoc plssvm::csvm::get_device_memory
      */
@@ -183,15 +139,111 @@ class csvm : public ::plssvm::detail::gpu_csvm<detail::device_ptr, int, detail::
     [[nodiscard]] device_ptr_type run_predict_kernel(std::size_t device_id, const ::plssvm::detail::execution_range &exec, const parameter &params, const device_ptr_type &alpha_d, const device_ptr_type &rho_d, const device_ptr_type &sv_or_w_d, const device_ptr_type &predict_points_d) const final;
 };
 
+/**
+ * @brief Create a C-SVC using the CUDA backend.
+ * @details Inherits all functionality either from the `plssvm::csvc` or `plssvm::cuda::csvm` classes.
+ */
+class csvc : public ::plssvm::csvc,
+             public ::plssvm::cuda::csvm {
+  public:
+    /**
+     * @brief Construct a new C-SVC using the CUDA backend with the parameters given through @p params.
+     * @param[in] params struct encapsulating all possible parameters
+     * @throws plssvm::exception all exceptions thrown in the base class constructors
+     */
+    explicit csvc(const parameter params) :
+        ::plssvm::csvm{ params },
+        ::plssvm::cuda::csvm{} { }
+
+    /**
+     * @brief Construct a new C-SVC using the CUDA backend on the @p target platform with the parameters given through @p params.
+     * @param[in] target the target platform used for this C-SVC
+     * @param[in] params struct encapsulating all possible SVM parameters
+     * @throws plssvm::exception all exceptions thrown in the base class constructors
+     */
+    explicit csvc(const target_platform target, const parameter params) :
+        ::plssvm::csvm{ params },
+        ::plssvm::cuda::csvm{ target } { }
+
+    /**
+     * @brief Construct a new C-SVC using the CUDA backend and the optionally provided @p named_args.
+     * @param[in] named_args the additional optional named arguments
+     * @throws plssvm::exception all exceptions thrown in the base class constructors
+     */
+    template <typename... Args, PLSSVM_REQUIRES(::plssvm::detail::has_only_parameter_named_args_v<Args...>)>
+    explicit csvc(Args &&...named_args) :
+        ::plssvm::csvm{ std::forward<Args>(named_args)... },
+        ::plssvm::cuda::csvm{} { }
+
+    /**
+     * @brief Construct a new C-SVC using the CUDA backend on the @p target platform and the optionally provided @p named_args.
+     * @param[in] target the target platform used for this C-SVC
+     * @param[in] named_args the additional optional named-parameters
+     * @throws plssvm::exception all exceptions thrown in the base class constructors
+     */
+    template <typename... Args, PLSSVM_REQUIRES(::plssvm::detail::has_only_parameter_named_args_v<Args...>)>
+    explicit csvc(const target_platform target, Args &&...named_args) :
+        ::plssvm::csvm{ std::forward<Args>(named_args)... },
+        ::plssvm::cuda::csvm{ target } { }
+};
+
+/**
+ * @brief Create a C-SVR using the CUDA backend.
+ * @details Inherits all functionality either from the `plssvm::csvr` or `plssvm::cuda::csvm` classes.
+ */
+class csvr : public ::plssvm::csvr,
+             public ::plssvm::cuda::csvm {
+  public:
+    /**
+     * @brief Construct a new C-SVR using the CUDA backend with the parameters given through @p params.
+     * @param[in] params struct encapsulating all possible parameters
+     * @throws plssvm::exception all exceptions thrown in the base class constructors
+     */
+    explicit csvr(const parameter params) :
+        ::plssvm::csvm{ params },
+        ::plssvm::cuda::csvm{} { }
+
+    /**
+     * @brief Construct a new C-SVR using the CUDA backend on the @p target platform with the parameters given through @p params.
+     * @param[in] target the target platform used for this C-SVR
+     * @param[in] params struct encapsulating all possible SVM parameters
+     * @throws plssvm::exception all exceptions thrown in the base class constructors
+     */
+    explicit csvr(const target_platform target, const parameter params) :
+        ::plssvm::csvm{ params },
+        ::plssvm::cuda::csvm{ target } { }
+
+    /**
+     * @brief Construct a new C-SVR using the CUDA backend and the optionally provided @p named_args.
+     * @param[in] named_args the additional optional named arguments
+     * @throws plssvm::exception all exceptions thrown in the base class constructors
+     */
+    template <typename... Args, PLSSVM_REQUIRES(::plssvm::detail::has_only_parameter_named_args_v<Args...>)>
+    explicit csvr(Args &&...named_args) :
+        ::plssvm::csvm{ std::forward<Args>(named_args)... },
+        ::plssvm::cuda::csvm{} { }
+
+    /**
+     * @brief Construct a new C-SVR using the CUDA backend on the @p target platform and the optionally provided @p named_args.
+     * @param[in] target the target platform used for this C-SVR
+     * @param[in] named_args the additional optional named-parameters
+     * @throws plssvm::exception all exceptions thrown in the base class constructors
+     */
+    template <typename... Args, PLSSVM_REQUIRES(::plssvm::detail::has_only_parameter_named_args_v<Args...>)>
+    explicit csvr(const target_platform target, Args &&...named_args) :
+        ::plssvm::csvm{ std::forward<Args>(named_args)... },
+        ::plssvm::cuda::csvm{ target } { }
+};
+
 }  // namespace cuda
 
 namespace detail {
 
 /**
- * @brief Sets the `value` to `true` since C-SVMs using the CUDA backend are available.
+ * @brief Sets the `value` to `true` since C-SVMs (C-SVCs, C-SVRs) using the CUDA backend are available.
  */
-template <>
-struct csvm_backend_exists<cuda::csvm> : std::true_type { };
+template <typename T>
+struct csvm_backend_exists<T, std::enable_if_t<is_one_type_of_v<T, cuda::csvm, cuda::csvc, cuda::csvr>>> : std::true_type { };
 
 }  // namespace detail
 

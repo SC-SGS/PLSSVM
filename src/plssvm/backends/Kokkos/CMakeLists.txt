@@ -37,7 +37,7 @@ target_link_libraries(${PLSSVM_KOKKOS_BACKEND_LIBRARY_NAME} PUBLIC Kokkos::kokko
 
 if (Kokkos_ENABLE_SYCL)
     # set SYCL (icpx) specific compilation flags
-    if (NOT ${CMAKE_CXX_COMPILER_ID} MATCHES "IntelLLVM")
+    if (NOT CMAKE_CXX_COMPILER_ID STREQUAL "IntelLLVM")
         message(FATAL_ERROR "For Kokkos::SYCL to work, the compiler must be IntelLLVM, but is ${CMAKE_CXX_COMPILER}!")
     endif ()
     

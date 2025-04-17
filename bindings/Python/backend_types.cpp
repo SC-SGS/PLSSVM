@@ -18,7 +18,7 @@ namespace py = pybind11;
 
 void init_backend_types(py::module_ &m) {
     // bind enum class
-    py::enum_<plssvm::backend_type>(m, "BackendType")
+    py::enum_<plssvm::backend_type>(m, "BackendType", "Enum class for all possible backend types, all different SYCL implementations have the same backend type \"sycl\".")
         .value("AUTOMATIC", plssvm::backend_type::automatic, "the default backend; depends on the specified target platform")
         .value("OPENMP", plssvm::backend_type::openmp, "OpenMP to target CPUs only (currently no OpenMP target offloading support)")
         .value("HPX", plssvm::backend_type::hpx, "HPX to target CPUs only (currently no GPU executor support)")

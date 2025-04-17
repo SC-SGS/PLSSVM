@@ -1,4 +1,4 @@
-![![PLSSVM](../resources/logo_245x150.png)](docs/resources/logo_245x150.png)
+![PLSSVM](https://github.com/SC-SGS/PLSSVM/raw/main/docs/resources/logo_245x150.png)
 
 # PLSSVM - Parallel Least Squares Support Vector Machine
 
@@ -12,6 +12,7 @@
   - [Building PLSSVM](#building-plssvm)
   - [Running the Tests](#running-the-tests)
   - [Generating Test Coverage Results](#generating-test-coverage-results)
+  - [Automatic Source File Formatting](#automatic-source-file-formatting)
   - [Creating the Documentation](#creating-the-documentation)
   - [Installing](#installing)
 - [Usage](#usage)
@@ -20,7 +21,7 @@
   - [Predicting using `plssvm-predict`](#predicting-using-plssvm-predict)
   - [Data Scaling using `plssvm-scale`](#data-scaling-using-plssvm-scale)
   - [Example Code for PLSSVM Used as a Library](#example-code-for-plssvm-used-as-a-library)
-  - [Example Using the Python Bindings Available For PLSSVM](#example-using-the-python-bindings-available-for-plssvm)
+  - [Example Using the `sklearn` Python Bindings Available For PLSSVM](#example-using-the-sklearn-like-python-bindings-available-for-plssvm)
 - [Citing PLSSVM](#citing-plssvm)
 - [License](#license)
 
@@ -34,7 +35,7 @@ To predict to which class a new, unseen data point belongs, the SVM simply has t
 This is very efficient since it only involves a single scalar product of the size corresponding to the numer of features of the data set.
 
 <p align="center">
-  <img alt="Basic idea of an Support Vector Machine as classification model." src=".figures/support_vector_machine.png" width="50%">
+  <img alt="Basic idea of an Support Vector Machine as classification model." src="https://github.com/SC-SGS/PLSSVM/raw/main/.figures/support_vector_machine.png" width="50%">
 </p>
 
 However, normal SVMs suffer in their potential parallelizability.
@@ -79,9 +80,12 @@ The main highlights of our SVM implementations are:
 5. Multi-class classification available via one vs. all (also one vs. rest or OAA) and one vs. one (also OAO):
    - OAA: one huge classification task where our CG algorithm solves a system of linear equations with multiple right-hand sides. The resulting model file is **not** compatible with LIBSVM.
    - OAO: constructs many but smaller binary classifications. The resulting model file is **fully** compatible with LIBSVM.
-6. Multi-GPU support for **all** kernel functions and GPU backends for `fit` as well as `predict/score` (**note**: no multi-GPU support for the stdpar backend even if run on a GPU!).
-7. Python bindings as drop-in replacement for `sklearn.SVC` (some features currently not implemented).
+6. Also, support for the regression task.
+7. Multi-GPU support for **all** kernel functions and GPU backends for `fit` as well as `predict/score` (**note**: no multi-GPU support for the stdpar backend even if run on a GPU!).
+8. Python bindings as drop-in replacement for `sklearn.SVC` and `sklearn.SVR` (some features currently not implemented).
 
+To see the full power of Support Vector Machines, have a look at our live visualization examples in 
+[examples/python/interactive](examples/python/interactive/README.md).
 
 ## Getting Started
 
@@ -144,7 +148,7 @@ Additional dependencies for the stdpar backend:
     - `AdaptiveCpp`: Intel's [TBB](https://github.com/wjakob/tbb) library
     - `GNU GCC`: [Boost ≥ 1.73.0](https://www.boost.org/) with the `atomic` library enabled and Intel's [TBB](https://github.com/wjakob/tbb) library
 
-Additional dependencies if `PLSSVM_ENABLE_TESTING` and `PLSSVM_GENERATE_TEST_FILE` are both set to `ON`:
+Additional dependencies if `PLSSVM_ENABLE_TESTING` and `PLSSVM_GENERATE_TEST_FILES` are both set to `ON`:
 
 - [Python3](https://www.python.org/) with the [`argparse`](https://docs.python.org/3/library/argparse.html), [`timeit`](https://docs.python.org/3/library/timeit.html), [`sklearn`](https://scikit-learn.org/stable/), and [`humanize`](https://pypi.org/project/humanize/) modules
 
@@ -186,13 +190,9 @@ Valid targets are:
 - `intel`: compile for Intel GPUs; **at least one** architectural specification is necessary, e.g., `intel:skl`
 
 At least one of the above targets must be present. If the option `PLSSVM_TARGET_PLATFORMS` is not present, the targets 
-are automatically determined using the Python3 `utility_scripts/plssvm_target_platforms.py` script (required Python3 dependencies:
-[`argparse`](https://docs.python.org/3/library/argparse.html), [`py-cpuinfo`](https://pypi.org/project/py-cpuinfo/),
-[`GPUtil`](https://pypi.org/project/GPUtil/), [`pyamdgpuinfo`](https://pypi.org/project/pyamdgpuinfo/), and
-[`pylspci`](https://pypi.org/project/pylspci/)).
+are automatically determined using the Python3 `utility_scripts/plssvm_target_platforms.py` script.
 
-Note that when using DPC++/icpx only a single architectural specification for `cpu`, `nvidia` or `amd` is allowed and that
-automatically retrieving AMD GPU information on Windows is currently not supported due to `pyamdgpuinfo` limitations.
+Note that when using DPC++/icpx only a single architectural specification for `cpu`, `nvidia` or `amd` is allowed.
 
 
 ```bash
@@ -202,8 +202,9 @@ python3 utility_scripts/plssvm_target_platforms.py --help
 usage: plssvm_target_platforms.py [-h] [--quiet]
 
 optional arguments:
-  -h, --help  show this help message and exit
-  --quiet     only output the final PLSSVM_TARGET_PLATFORMS string
+  -h, --help   show this help message and exit
+  --quiet      only output the final PLSSVM_TARGET_PLATFORMS string
+  --gpus_only  only output gpu architectures to the final PLSSVM_TARGET_PLATFORMS string
 ```
 
 Example invocation:
@@ -212,10 +213,9 @@ Example invocation:
 python3 utility_scripts/plssvm_target_platforms.py
 ```
 ```
-Intel(R) Core(TM) i9-10980XE CPU @ 3.00GHz: {'avx512': True, 'avx2': True, 'avx': True, 'sse4_2': True}
+supported CPU SIMD flags: {'avx512': True, 'avx2': True, 'avx': True, 'sse4_2': True}
 
-Found 1 NVIDIA GPU(s):
-  1x NVIDIA GeForce RTX 3080: sm_86
+Found 1 NVIDIA GPU(s): [sm_86]
 
 Possible -DPLSSVM_TARGET_PLATFORMS entries:
 cpu:avx512;nvidia:sm_86
@@ -229,13 +229,11 @@ or with the `--quiet` flag provided:
 python3 utility_scripts/plssvm_target_platforms.py --quiet
 ```
 ```
-cpu:avx512;intel:dg1
+cpu:avx512;nvidia:sm_86
 ```
 
 If the architectural information for the requested GPU could not be retrieved, one option would be to have a look at:
 
-- for NVIDIA GPUs:  [Your GPU Compute Capability](https://developer.nvidia.com/cuda-gpus)
-- for AMD GPUs: [clang AMDGPU backend usage](https://llvm.org/docs/AMDGPUUsage.html)
 - for Intel GPUs and CPUs: [Ahead of Time Compilation](https://www.intel.com/content/www/us/en/develop/documentation/oneapi-dpcpp-cpp-compiler-dev-guide-and-reference/top/compilation/ahead-of-time-compilation.html) and [Intel graphics processor table](https://dgpu-docs.intel.com/devices/hardware-table.html)
 
 
@@ -301,9 +299,9 @@ The `[optional_options]` can be one or multiple of:
 
 If `PLSSVM_ENABLE_TESTING` is set to `ON`, the following option can also be set:
 
-- `PLSSVM_GENERATE_TEST_FILE=ON|OFF` (default: `ON`): automatically generate test files
+- `PLSSVM_GENERATE_TEST_FILES=ON|OFF` (default: `ON`): automatically generate test files
 
-If `PLSSVM_GENERATE_TEST_FILE` is set to `ON`, the following options can also be set:
+If `PLSSVM_GENERATE_TEST_FILES` is set to `ON`, the following options can also be set:
 
 - `PLSSVM_TEST_FILE_NUM_DATA_POINTS` (default: `5000`): the number of data points in the test file
 - `PLSSVM_TEST_FILE_NUM_FEATURES` (default: `2000`): the number of features per data point in the test file
@@ -321,10 +319,6 @@ If `PLSSVM_ENABLE_HARDWARE_SAMPLING` is set to `ON`, the following options can a
 If `PLSSVM_ENABLE_LANGUAGE_BINDINGS` is set to `ON`, the following option can also be set:
 
 - `PLSSVM_ENABLE_PYTHON_BINDINGS=ON|OFF` (default: `PLSSVM_ENABLE_LANGUAGE_BINDINGS`): enable Python bindings using Pybind11; **note:** `PLSSVM_ENABLE_LANGUAGE_BINDINGS` must be set that this option has any effect
-
-If `PLSSVM_ENABLE_PYTHON_BINDINGS` is set to `ON`, the following options can also be set:
-
-- `PLSSVM_PYTHON_BINDINGS_PREFERRED_LABEL_TYPE` (default: `std::string`): the default `label_type` used if the generic `plssvm.Model` and `plssvm.DataSet` Python classes are used
 
 If the OpenCL backend is available and NVIDIA GPUs should be targeted, an additional option can be set.
 
@@ -500,6 +494,8 @@ The documentation of the current state of the main branch can be found [here](ht
 
 ### Installing
 
+#### Install via CMake
+
 The library supports the `install` target:
 
 ```bash
@@ -517,6 +513,48 @@ export LD_LIBRARY_PATH=${CMAKE_INSTALL_PREFIX}/lib:${CMAKE_INSTALL_PREFIX}/lib64
 export CPLUS_INCLUDE_PATH=${CMAKE_INSTALL_PREFIX}/include:${CPLUS_INCLUDE_PATH}
 ```
 
+If our library was built with the Python bindings enabled, the `PYTHONPATH` must additionally be set:
+
+```bash
+export PYTHONPATH=${CMAKE_INSTALL_PREFIX}/lib:${CMAKE_INSTALL_PREFIX}/lib64:${PYTHONPATH}
+```
+
+#### Install via pip
+
+We also support a pip packages that can be used to install our library: 
+
+```bash
+pip install plssvm
+```
+
+This pip install behaves **as if** the CMake `all_python` preset is used. 
+This means that the `PLSSVM_TARGET_PLATFORMS` are automatically determined and PLSSVM is build with all supported 
+backends that available on the target machine at the point of the `pip install plssvm` invocation. 
+To check the installation, including, e.g., the installed backends, we provide the `plssvm-install-check` command after 
+PLSSVM has been installed via pip. 
+An example output of this command can look like: 
+
+```text
+PLSSVM - Parallel Least Squares Support Vector Machine (3.0.0)
+
+Copyright(C) 2018-today The PLSSVM project - All Rights Reserved
+This is free software distributed under the MIT license.
+
+Available target platforms: TargetPlatform.AUTOMATIC, TargetPlatform.GPU_NVIDIA, TargetPlatform.CPU
+Default target platform: TargetPlatform.GPU_NVIDIA
+
+Available backends: BackendType.AUTOMATIC, BackendType.OPENMP, BackendType.CUDA, BackendType.OPENCL, BackendType.SYCL
+Default backend for target platform TargetPlatform.GPU_NVIDIA: BackendType.CUDA
+Default backend for target platform TargetPlatform.CPU: BackendType.SYCL
+
+Available SYCL implementations: ImplementationType.AUTOMATIC, ImplementationType.ADAPTIVECPP
+
+
+Repository: https://github.com/SC-SGS/PLSSVM.git
+Documentation: https://sc-sgs.github.io/PLSSVM
+Issues: https://github.com/SC-SGS/PLSSVM/issues
+```
+
 ## Usage
 
 PLSSVM provides three executables: `plssvm-train`, `plssvm-predict`, and `plssvm-scale`.
@@ -525,7 +563,7 @@ For more information, see the respective `man` pages which are installed via `cm
 
 ### Generating Artificial Data
 
-The repository comes with a Python3 script (in the `utility_scripts/` directory) to simply generate arbitrarily large data sets.
+The repository comes with a Python3 script (in the `utility_scripts/` directory) to simply generate arbitrarily large classification and regression data sets.
 
 In order to use all functionality, the following Python3 modules must be installed:
 [`argparse`](https://docs.python.org/3/library/argparse.html), [`timeit`](https://docs.python.org/3/library/timeit.html), 
@@ -535,26 +573,58 @@ In order to use all functionality, the following Python3 modules must be install
 and [`humanize`](https://pypi.org/project/humanize/).
 
 ```
-usage: generate_data.py [-h] [--output OUTPUT] [--format FORMAT] [--problem PROBLEM] --samples SAMPLES [--test_samples TEST_SAMPLES] --features FEATURES [--classes CLASSES] [--plot]
+usage: generate_data.py [-h] [--output OUTPUT] [--format FORMAT] --samples SAMPLES [--test_samples TEST_SAMPLES] --features FEATURES [--scale SCALE SCALE] [--plot] {classification,regression} ...
 
-options:
-  -h, --help            show this help message and exit
+positional arguments:
+  {classification,regression}
+    classification      create a classification data set
+    regression          create regression data set
+
+optional arguments:
+  -h, -?, --help        show this help message and exit
   --output OUTPUT       the output file to write the samples to (without extension)
   --format FORMAT       the file format; either arff, libsvm, or csv
-  --problem PROBLEM     the problem to solve; one of: blobs, blobs_merged, planes, ball
   --samples SAMPLES     the number of training samples to generate
   --test_samples TEST_SAMPLES
                         the number of test samples to generate; default: 0
   --features FEATURES   the number of features per data point
-  --classes CLASSES     the number of classes to generate; default: 2
+  --scale SCALE SCALE   scale the features to the provided range
   --plot                plot training samples; only possible if 0 < samples <= 2000 and 1 < features <= 3
+
+
+classification specific arguments:
+
+usage: generate_data.py classification [-h] [--problem {blobs,blobs_merged,planes,ball}] [--classes CLASSES]
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --problem {blobs,blobs_merged,planes,ball}
+                        the problem to solve
+  --classes CLASSES     the number of classes to generate; default: 2
+
+
+regression specific arguments:
+
+usage: generate_data.py regression [-h] [--problem {linear,linear_noisy,friedman1}]
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --problem {linear,linear_noisy,friedman1}
+                        the problem to solve
+
 ```
 
-An example invocation generating a data set consisting of blobs with 1000 data points with 200 features each and 
+An example invocation generating a classification data set consisting of blobs with 1000 data points with 200 features each and 
 4 classes could look like:
 
 ```bash
-python3 generate_data.py --output data_file --format libsvm --problem blobs --samples 1000 --features 200 --classes 4
+python3 generate_data.py --output data_file --format libsvm --problem blobs --samples 1000 --features 200 classification --classes 4
+```
+
+An example invocation generating a linear regression data set consisting of 1000 data points with 200 features each could look like:
+
+```bash
+python3 generate_data.py --output data_file --format libsvm --problem linear --samples 1000 --features 200 regression
 ```
 
 ### Training using `plssvm-train`
@@ -567,6 +637,9 @@ LS-SVM with multiple (GPU-)backends
 Usage:
   ./plssvm-train [OPTION...] training_set_file [model_file]
 
+  -s, --svm_type arg            set type of SVM
+                                         0 -- C-SVC
+                                         1 -- C-SVR (default: 0)
   -t, --kernel_type arg         set type of kernel function. 
                                          0 -- linear: u'*v
                                          1 -- polynomial: (gamma*u'*v+coef0)^degree
@@ -575,10 +648,10 @@ Usage:
                                          4 -- laplacian: exp(-gamma*|u-v|_1)
                                          5 -- chi_squared: exp(-gamma*sum_i((x[i]-y[i])^2/(x[i]+y[i]))) (default: 2)
   -d, --degree arg              set degree in kernel function (default: 3)
-  -g, --gamma arg               set gamma in kernel function (default: automatic)
+  -g, --gamma arg               set gamma in kernel function (default: "1 / num_features")
   -r, --coef0 arg               set coef0 in kernel function (default: 0)
   -c, --cost arg                set the parameter C (default: 1)
-  -e, --epsilon arg             set the tolerance of termination criterion (default: 0.001)
+  -e, --epsilon arg             set the tolerance of termination criterion (default: 1e-10)
   -i, --max_iter arg            set the maximum number of CG iterations (default: num_features)
   -l, --solver arg              choose the solver: automatic|cg_explicit|cg_implicit (default: automatic)
   -a, --classification arg      the classification strategy to use for multi-class classification: oaa|oao (default: oaa)
@@ -651,7 +724,36 @@ If the `--kokkos_execution_space` is `automatic`, uses the best fitting executio
 ### Predicting using `plssvm-predict`
 
 Our predict utility is fully conform to LIBSVM's model files. 
-This means that our `plssvm-predict` can be used on model files learned with, e.g., LIBSVM's `svm-train`.
+This means that our `plssvm-predict` can be used on model files learned with, e.g., LIBSVM's `svm-train`. 
+Note: this is not the case for the regression task since the `svm_type` filed mismatch between LIBSVM (`epsilon_svr`) 
+and PLSSVM (`c_svr`). To automatically convert between the two, simply use the `convert_model.py` script 
+(in the `utility_scripts/` directory) which simply replaces these fields with the respectively expected one 
+(note that for large files doing that manually may be faster):
+
+```bash
+usage: convert_model.py [-h] [-o OUTPUT] [--to_plssvm] [--to_libsvm] model_file
+
+positional arguments:
+  model_file            the regression model file to convert
+
+options:
+  -h, --help            show this help message and exit
+  -o OUTPUT, --output OUTPUT
+                        output the regression model to the new file, otherwise the regression model us updated inplace
+  --to_plssvm           convert the regression model to a PLSSVM conform model file
+  --to_libsvm           convert the regression model to a LIBSVM conform model file
+```
+
+An example invocation could look like:
+
+```bash
+python3 convert_model.py --to_libsvm -o 5x4_libsvm.libsvm.model 5x4.libsvm.model
+```
+```
+Converting a PLSSVM model file to a LIBSVM model file.
+```
+
+After a correct model file exists, predict works as follows:
 
 ```bash
 ./plssvm-predict --help
@@ -734,7 +836,7 @@ An example invocation to scale a train and test file in the same way looks like:
 
 ### Example Code for PLSSVM Used as a Library
 
-A simple C++ program (`main.cpp`) using PLSSVM as library could look like:
+A simple C++ program (`main_classification.cpp`) using PLSSVM as library for classification could look like:
 
 ```cpp
 #include "plssvm/core.hpp"
@@ -748,26 +850,26 @@ int main() {
     plssvm::environment::scope_guard environment_guard{};
     
     try {
-        // create a new C-SVM parameter set, explicitly overriding the default kernel function
+        // create a new C-SVC parameter set, explicitly overriding the default kernel function
         const plssvm::parameter params{ plssvm::kernel_type = plssvm::kernel_function_type::polynomial };
 
         // create two data sets: one with the training data scaled to [-1, 1] 
         // and one with the test data scaled like the training data
-        const plssvm::data_set train_data{ "train_file.libsvm", { -1.0, 1.0 } };
-        const plssvm::data_set test_data{ "test_file.libsvm", train_data.scaling_factors()->get() };
+        const plssvm::classification_data_set train_data{ "train_file.libsvm", { -1.0, 1.0 } };
+        const plssvm::classification_data_set test_data{ "test_file.libsvm", train_data.scaling_factors()->get() };
 
-        // create C-SVM using the default backend and the previously defined parameter
-        const auto svm = plssvm::make_csvm(params);
+        // create C-SVC using the default backend and the previously defined parameter
+        const auto svc = plssvm::make_csvc(params);
 
         // fit using the training data, (optionally) set the termination criterion
-        const plssvm::model model = svm->fit(train_data, plssvm::epsilon = 10e-6);
+        const plssvm::classification_model model = svc->fit(train_data, plssvm::epsilon = 1e-6);
 
         // get accuracy of the trained model
-        const double model_accuracy = svm->score(model);
+        const double model_accuracy = svc->score(model);
         std::cout << "model accuracy: " << model_accuracy << std::endl;
 
         // predict the labels
-        const std::vector<int> predicted_label = svm->predict(model, test_data);
+        const std::vector<int> predicted_label = svc->predict(model, test_data);
         // output a more complete classification report
         const std::vector<int> &correct_label = test_data.labels().value();
         std::cout << plssvm::classification_report{ correct_label, predicted_label } << std::endl;
@@ -784,10 +886,60 @@ int main() {
 }
 ```
 
+A simple C++ program (`main_regression.cpp`) using PLSSVM as library for regression could look like:
+
+```cpp
+#include "plssvm/core.hpp"
+
+#include <exception>
+#include <iostream>
+#include <vector>
+
+int main() {
+    // correctly initialize and finalize environments
+    plssvm::environment::scope_guard environment_guard{};
+    
+    try {
+        // create a new C-SVR parameter set, explicitly overriding the default kernel function
+        const plssvm::parameter params{ plssvm::kernel_type = plssvm::kernel_function_type::polynomial };
+
+        // create two data sets: one with the training data scaled to [-1, 1] 
+        // and one with the test data scaled like the training data
+        const plssvm::regression_data_set train_data{ "train_file.libsvm", { -1.0, 1.0 } };
+        const plssvm::regression_data_set test_data{ "test_file.libsvm", train_data.scaling_factors()->get() };
+
+        // create C-SVR using the default backend and the previously defined parameter
+        const auto svr = plssvm::make_csvr(params);
+
+        // fit using the training data, (optionally) set the termination criterion
+        const plssvm::regression_model model = svr->fit(train_data, plssvm::epsilon = 1e-6);
+
+        // get accuracy of the trained model
+        const double model_accuracy = svr->score(model);
+        std::cout << "model accuracy: " << model_accuracy << std::endl;
+
+        // predict the labels
+        const std::vector<double> predicted_values = svc->predict(model, test_data);
+        // output a more complete regression report
+        const std::vector<double> &correct_values = test_data.labels().value();
+        std::cout << plssvm::regression_report{ correct_label, predicted_label } << std::endl;
+
+        // write model file to disk
+        model.save("model_file.libsvm");
+    } catch (const plssvm::exception &e) {
+        std::cerr << e.what_with_loc() << std::endl;
+    } catch (const std::exception &e) {
+        std::cerr << e.what() << std::endl;
+    }
+
+    return 0;
+}
+```
+
 With a corresponding minimal CMake file:
 
 ```cmake
-cmake_minimum_required(VERSION 3.16)
+cmake_minimum_required(VERSION 3.25)
 
 project(LibraryUsageExample
         LANGUAGES CXX)
@@ -796,7 +948,8 @@ find_package(plssvm REQUIRED)
 # CMake's COMPONENTS mechanism can also be used if a specific library component is required, e.g.:
 # find_package(plssvm REQUIRED COMPONENTS CUDA)
 
-add_executable(prog main.cpp)
+add_executable(classification main_classification.cpp)
+add_executable(regression main_regression.cpp)
 
 target_compile_features(prog PUBLIC cxx_std_17)
 target_link_libraries(prog PUBLIC plssvm::all)
@@ -804,57 +957,156 @@ target_link_libraries(prog PUBLIC plssvm::all)
 # target_link_libraries(prog PUBLIC plssvm::cuda)
 ```
 
-### Example Using the Python Bindings Available For PLSSVM
+### Example Using the `sklearn` like Python Bindings Available For PLSSVM
 
-Roughly the same can be achieved using our Python bindings with the following Python script (note: needs [`sklearn`](https://scikit-learn.org/stable/)):
+A classification example using PLSSVM's `SVC` Python binding and sklearn's breast cancer data set:
 
 ```python
-import plssvm
-from sklearn.metrics import classification_report
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 
-try:
-    # create a new C-SVM parameter set, explicitly overriding the default kernel function
-    params = plssvm.Parameter(kernel_type=plssvm.KernelFunctionType.POLYNOMIAL)
-  
-    # create two data sets: one with the training data scaled to [-1, 1]
-    # and one with the test data scaled like the training data
-    train_data = plssvm.DataSet("train_data.libsvm", scaling=(-1.0, 1.0))
-    test_data = plssvm.DataSet("test_data.libsvm", scaling=train_data.scaling_factors())
-  
-    # create C-SVM using the default backend and the previously defined parameter
-    svm = plssvm.CSVM(params)
-  
-    # fit using the training data, (optionally) set the termination criterion
-    model = svm.fit(train_data, epsilon=10e-6)
-  
-    # get accuracy of the trained model
-    model_accuracy = svm.score(model)
-    print("model accuracy: {}".format(model_accuracy))
-  
-    # predict labels
-    predicted_label = svm.predict(model, test_data)
-    # output a more complete classification report
-    correct_label = test_data.labels()
-    print(classification_report(correct_label, predicted_label))
-  
-    # write model file to disk
-    model.save("model_file.libsvm")
-except plssvm.PLSSVMError as e:
-    print(e)
-except RuntimeError as e:
-    print(e)
+########################################################################################################################
+# Authors: Alexander Van Craen, Marcel Breyer                                                                          #
+# Copyright (C): 2018-today The PLSSVM project - All Rights Reserved                                                   #
+# License: This file is part of the PLSSVM project which is released under the MIT license.                            #
+#          See the LICENSE.md file in the project root for full license information.                                   #
+########################################################################################################################
+
+import matplotlib.pyplot as plt
+import sklearn.datasets
+import sklearn.metrics
+import sklearn.inspection
+import numpy as np
+from plssvm import SVC  # identical to from sklearn.svm import SVC
+
+# load the breast cancer datasets
+cancer = sklearn.datasets.load_breast_cancer()
+X = cancer.data[:, :2]
+y = cancer.target
+y_label = cancer.target_names
+
+# build the SVC model
+svm = SVC(kernel="rbf", gamma=0.5, C=1.0).fit(X, y)
+
+# score the model
+print(sklearn.metrics.classification_report(y, svm.predict(X)))
+print("Score: {:.2f}%".format(svm.score(X, y) * 100))
+
+# plot the decision boundary
+sklearn.inspection.DecisionBoundaryDisplay.from_estimator(
+    svm,
+    X,
+    response_method="predict",
+    cmap=plt.cm.Spectral,
+    alpha=0.8,
+    xlabel=cancer.feature_names[0],
+    ylabel=cancer.feature_names[1],
+)
+
+# scatter plot the decision boundary
+viridis = plt.cm.get_cmap('viridis', len(np.unique(y)))
+plt.scatter(X[:, 0], X[:, 1],
+            cmap=viridis,
+            c=y,
+            s=20, edgecolors="k")
+
+# generate legend handles and add handle
+legend_handles = [plt.scatter([], [], color=viridis(color), label=f'{label}')
+                  for label, color in zip(y_label, np.unique(y))]
+plt.legend(handles=legend_handles)
+
+plt.title("SVC classifier on breast cancer dataset")
+plt.show()
 ```
+with an example output:
+```text
+              precision    recall  f1-score   support
 
-**Note:** it may be necessary to set the environment variable `PYTHONPATH` to the `lib` folder in the PLSSVM install path.
+           0       0.91      0.85      0.88       212
+           1       0.91      0.95      0.93       357
 
-```bash
-export PYTHONPATH=${CMAKE_INSTALL_PREFIX}/lib:${CMAKE_INSTALL_PREFIX}/lib64:${PYTHONPATH}
+    accuracy                           0.91       569
+   macro avg       0.91      0.90      0.91       569
+weighted avg       0.91      0.91      0.91       569
+
+Score: 91.39%
 ```
+<p align="center">
+  <img alt="Example classification task breast cancer decision boundary output." src="https://github.com/SC-SGS/PLSSVM/raw/regression/.figures/classification_example.png" width="80%">
+</p>
 
-We also provide Python bindings for a `plssvm.SVC` class that offers the same interface as the [`sklearn.svm.SVC`](https://scikit-learn.org/stable/modules/generated/sklearn.svm.SVC.html) class.
-Note that currently not all functionality has been implemented in PLSSVM.
+A regression example comparing PLSSVM's `SVR` Python binding and `sklearn.SVR` using a sine curve:
+
+```python
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+########################################################################################################################
+# Authors: Alexander Van Craen, Marcel Breyer                                                                          #
+# Copyright (C): 2018-today The PLSSVM project - All Rights Reserved                                                   #
+# License: This file is part of the PLSSVM project which is released under the MIT license.                            #
+#          See the LICENSE.md file in the project root for full license information.                                   #
+########################################################################################################################
+
+import numpy as np
+import matplotlib.pyplot as plt
+
+# generate sample data (sine curve with noise)
+X = np.sort(5 * np.random.rand(40, 1), axis=0)
+y = np.sin(X).ravel()
+
+# add noise to targets
+y[::5] += 3 * (0.5 - np.random.rand(8))
+
+plt.scatter(X, y, color='darkorange', label='data')
+
+# fit the sklearn regression model
+from sklearn.svm import SVR
+
+sklearn_svr_lin = SVR(kernel='linear', C=100, epsilon=0.1)
+y_lin_sklearn = sklearn_svr_lin.fit(X, y).predict(X)
+plt.plot(X, y_lin_sklearn, lw=2, linestyle='dashed', label='Linear model sklearn')
+
+sklearn_svr_poly = SVR(kernel='poly', C=100, degree=3, epsilon=0.1, coef0=1)
+y_poly_sklearn = sklearn_svr_poly.fit(X, y).predict(X)
+plt.plot(X, y_poly_sklearn, lw=2, linestyle='dashed', label='Polynomial model sklearn')
+
+sklearn_svr_rbf = SVR(kernel='rbf', C=100, gamma=0.1, epsilon=0.1)
+y_rbf_sklearn = sklearn_svr_rbf.fit(X, y).predict(X)
+plt.plot(X, y_rbf_sklearn, lw=2, linestyle='dashed', label='RBF model sklearn')
+
+# fit the PLSSVM regression model
+from plssvm import SVR
+
+plssvm_svr_lin = SVR(kernel='linear', C=100)
+y_lin_plssvm = plssvm_svr_lin.fit(X, y).predict(X)
+plt.plot(X, y_lin_plssvm, lw=2, label='Linear model plssvm')
+
+plssvm_svr_poly = SVR(kernel='poly', C=100, degree=3, coef0=1)
+y_poly_plssvm = plssvm_svr_poly.fit(X, y).predict(X)
+plt.plot(X, y_poly_plssvm, lw=2, label='Polynomial model plssvm')
+
+plssvm_svr_rbf = SVR(kernel='rbf', C=100, gamma=0.1)
+y_rbf_plssvm = plssvm_svr_rbf.fit(X, y).predict(X)
+plt.plot(X, y_rbf_plssvm, lw=2, label='RBF model plssvm')
+
+# show the result plots
+plt.xlabel('data')
+plt.ylabel('target')
+plt.title('Support Vector Regression')
+plt.legend()
+plt.show()
+```
+with an example output:
+<p align="center">
+  <img alt="Example regression output using a sine curve." src="https://github.com/SC-SGS/PLSSVM/raw/regression/.figures/regression_example.png" width="80%">
+</p>
+
+Note that currently not all sklearn `SVC` and `SVR` functionality has been implemented in PLSSVM.
 The respective functions will throw a Python `AttributeError` if called.
 For a detailed overview of the functions that are currently implemented, see [our API documentation](bindings/Python/README.md).
+
+There are more examples located in the `examples/python/sklearn` directory that are copied from the sklearn repository and slightly changed for PLSSVM.
 
 ## Citing PLSSVM
 

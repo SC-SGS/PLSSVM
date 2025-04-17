@@ -15,6 +15,7 @@
 
 #include "plssvm/backends/execution_range.hpp"  // plssvm::detail::dim_type
 #include "plssvm/backends/OpenCL/csvm.hpp"      // plssvm::opencl::csvm
+#include "plssvm/svm/csvm.hpp"                  // plssvm::csvm
 
 #include "gmock/gmock.h"  // MOCK_METHOD, ON_CALL, ::testing::Return
 
@@ -22,7 +23,7 @@
 #include <utility>  // std::forward
 
 /**
- * @brief GTest mock class for the OpenCL CSVM.
+ * @brief GTest mock class for the OpenCL C-SVM.
  * @tparam mock_grid_size `true` if the `plssvm::opencl::csvm::get_max_grid_size()` function should be mocked, otherwise `false`
  */
 template <bool mock_grid_size>
@@ -34,7 +35,8 @@ class mock_opencl_csvm : public plssvm::opencl::csvm {
 
     template <typename... Args>
     explicit mock_opencl_csvm(Args &&...args) :
-        base_type{ std::forward<Args>(args)... } {
+        plssvm::csvm{ std::forward<Args>(args)... },
+        base_type{} {
         this->fake_functions();
     }
 

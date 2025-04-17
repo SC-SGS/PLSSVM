@@ -93,20 +93,22 @@ set(PLSSVM_BASE_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/string_utility.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/utility.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/exceptions/exceptions.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/svm/csvm.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/version/version.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/version/git_metadata/git_metadata.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/backend_types.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/classification_report.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/classification_types.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/csvm.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/file_format_types.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/gamma.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/kernel_function_types.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/matrix.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/parameter.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/regression_report.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/shape.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/solver_types.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/target_platforms.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/svm_types.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/verbosity_levels.cpp
 )
 
@@ -166,7 +168,9 @@ target_compile_options(
            /wd4005
            /wd4702
            /wd4849
-           /wd4127>
+           /wd4127
+           /wd4250 # disable multiple-inheritance dominance warning
+           /wd4589> # disable constructor inheritance warning
            # /wd4849: ignore "OpenMP 'reduction' clause ignored in 'simd' directive" -> no SIMD clause currently effective in MSVC /wd4127: ignore "conditional
            # expression is constant" from {fmt} ranges.h header
 )
@@ -211,11 +215,11 @@ endif ()
 ########################################################################################################################
 #                                       check for OpenMP (not for the backend!)                                        #
 ########################################################################################################################
-find_package(OpenMP 4.0 QUIET)
+find_package(OpenMP QUIET)
 if (OpenMP_FOUND)
     message(STATUS "Found OpenMP ${OpenMP_CXX_VERSION} to speed-up library utilities (like file parsing).")
     set(PLSSVM_FOUND_OPENMP_FOR_UTILITY ON)
-    if (${CMAKE_CXX_COMPILER_ID} MATCHES "MSVC")
+    if (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
         target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC -openmp:llvm -openmp:experimental)
     else ()
         target_link_libraries(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC OpenMP::OpenMP_CXX)
@@ -325,17 +329,6 @@ else ()
                 "Can't find Python3. Please manually specify PLSSVM_TARGET_PLATFORMS (e.g. -DPLSSVM_TARGET_PLATFORMS=\"cpu;nvidia:sm_70,sm_86;amd:gfx906;intel:skl\"!"
         )
     endif ()
-
-    include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/check_python_libs.cmake)
-    set(PLSSVM_TARGET_PLATFORMS_PYTHON_SCRIPT_REQUIRED_LIBS cpuinfo GPUtil pyamdgpuinfo pylspci)
-    message(
-        STATUS
-            "Checking required Python3 libraries (${PLSSVM_TARGET_PLATFORMS_PYTHON_SCRIPT_REQUIRED_LIBS}) to automatically determine the PLSSVM_TARGET_PLATFORMS."
-    )
-    set(PLSSVM_TARGET_PLATFORMS_PYTHON_SCRIPT_REQUIRED_LIBS_ERROR_MESSAGE
-        "or manually define PLSSVM_TARGET_PLATFORMS (e.g. -DPLSSVM_TARGET_PLATFORMS=\"cpu;nvidia:sm_70,sm_86;amd:gfx906;intel:skl\"!"
-    )
-    check_python_libs(${PLSSVM_TARGET_PLATFORMS_PYTHON_SCRIPT_REQUIRED_LIBS} ${PLSSVM_TARGET_PLATFORMS_PYTHON_SCRIPT_REQUIRED_LIBS_ERROR_MESSAGE})
 
     # run our `plssvm_target_platforms.py` script to determine the PLSSVM_TARGET_PLATFORMS string
     execute_process(

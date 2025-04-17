@@ -15,9 +15,10 @@
 #pragma once
 
 #include "plssvm/backends/HPX/csvm.hpp"  // plssvm::hpx::csvm
+#include "plssvm/svm/csvm.hpp"           // plssvm::csvm
 
 /**
- * @brief GTest mock class for the HPX CSVM.
+ * @brief GTest mock class for the HPX C-SVM.
  */
 class mock_hpx_csvm final : public plssvm::hpx::csvm {
     using base_type = plssvm::hpx::csvm;
@@ -25,7 +26,8 @@ class mock_hpx_csvm final : public plssvm::hpx::csvm {
   public:
     template <typename... Args>
     explicit mock_hpx_csvm(Args &&...args) :
-        base_type{ std::forward<Args>(args)... } { }
+        plssvm::csvm{ std::forward<Args>(args)... },
+        base_type{} { }
 
     // make protected member functions public
     using base_type::assemble_kernel_matrix;

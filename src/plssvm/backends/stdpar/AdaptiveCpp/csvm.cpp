@@ -23,7 +23,7 @@
 
 namespace plssvm::stdpar {
 
-void csvm::init(const target_platform target) {
+csvm::csvm(const target_platform target) {
     // check whether the requested target platform has been enabled
     switch (target) {
         case target_platform::automatic:

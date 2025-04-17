@@ -15,7 +15,6 @@
 #include "plssvm/backends/HPX/kernel/cg_implicit/kernel_matrix_assembly_blas.hpp"  // plssvm::hpx::detail::device_kernel_assembly_symm
 #include "plssvm/backends/HPX/kernel/predict_kernel.hpp"                           // plssvm::hpx::detail::{device_kernel_w_linear, device_kernel_predict_linear, device_kernel_predict}
 #include "plssvm/constants.hpp"                                                    // plssvm::real_type
-#include "plssvm/csvm.hpp"                                                         // plssvm::csvm
 #include "plssvm/detail/assert.hpp"                                                // PLSSVM_ASSERT
 #include "plssvm/detail/data_distribution.hpp"                                     // plssvm::detail::{data_distribution, triangular_data_distribution, rectangular_data_distribution}
 #include "plssvm/detail/memory_size.hpp"                                           // plssvm::detail::memory_size
@@ -26,6 +25,7 @@
 #include "plssvm/parameter.hpp"                                                    // plssvm::parameter
 #include "plssvm/shape.hpp"                                                        // plssvm::shape
 #include "plssvm/solver_types.hpp"                                                 // plssvm::solver_type
+#include "plssvm/svm/csvm.hpp"                                                     // plssvm::csvm
 #include "plssvm/target_platforms.hpp"                                             // plssvm::target_platform
 
 #include <cstddef>  // std::size_t
@@ -35,15 +35,7 @@
 
 namespace plssvm::hpx {
 
-csvm::csvm(parameter params) :
-    csvm{ plssvm::target_platform::automatic, params } { }
-
-csvm::csvm(const target_platform target, parameter params) :
-    ::plssvm::csvm{ params } {
-    this->init(target);
-}
-
-void csvm::init(const target_platform target) {
+csvm::csvm(const target_platform target) {
     // check if supported target platform has been selected
     if (target != target_platform::automatic && target != target_platform::cpu) {
         throw backend_exception{ fmt::format("Invalid target platform '{}' for the HPX backend!", target) };
@@ -63,6 +55,8 @@ void csvm::init(const target_platform target) {
     // update the target platform
     target_ = plssvm::target_platform::cpu;
 }
+
+csvm::~csvm() = default;
 
 std::vector<::plssvm::detail::memory_size> csvm::get_device_memory() const {
     return { ::plssvm::detail::get_system_memory() };

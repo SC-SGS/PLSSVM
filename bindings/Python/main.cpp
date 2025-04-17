@@ -9,6 +9,7 @@
 
 #include "plssvm/environment.hpp"            // plssvm::environment::{initialize, finalize}
 #include "plssvm/exceptions/exceptions.hpp"  // plssvm::exception
+#include "plssvm/version/version.hpp"        // plssvm::version::version
 
 #include "pybind11/pybind11.h"  // PYBIND11_MODULE, py::module_, py::exception, py::register_exception_translator
 #include "pybind11/pytypes.h"   // py::set_error
@@ -23,6 +24,7 @@ void init_performance_tracker(py::module_ &);
 void init_events(py::module_ &);
 void init_target_platforms(py::module_ &);
 void init_solver_types(py::module_ &);
+void init_svm_types(py::module_ &);
 void init_backend_types(py::module_ &);
 void init_gamma(py::module_ &);
 void init_classification_types(py::module_ &);
@@ -30,11 +32,17 @@ void init_file_format_types(py::module_ &);
 void init_kernel_function_types(py::module_ &);
 void init_kernel_functions(py::module_ &);
 void init_parameter(py::module_ &);
-void init_model(py::module_ &);
-void init_data_set(py::module_ &);
+void init_classification_model(py::module_ &);
+void init_regression_model(py::module_ &);
+void init_min_max_scaler(py::module_ &);
+void init_classification_data_set(py::module_ &);
+void init_regression_data_set(py::module_ &);
 void init_version(py::module_ &);
 void init_exceptions(py::module_ &, const py::exception<plssvm::exception> &);
+void init_regression_report(py::module_ &);
 void init_csvm(py::module_ &);
+void init_csvc(py::module_ &, py::module_ &);
+void init_csvr(py::module_ &, py::module_ &);
 void init_openmp_csvm(py::module_ &, const py::exception<plssvm::exception> &);
 void init_hpx_csvm(py::module_ &, const py::exception<plssvm::exception> &);
 void init_stdpar_csvm(py::module_ &, const py::exception<plssvm::exception> &);
@@ -43,10 +51,15 @@ void init_hip_csvm(py::module_ &, const py::exception<plssvm::exception> &);
 void init_opencl_csvm(py::module_ &, const py::exception<plssvm::exception> &);
 void init_sycl(py::module_ &, const py::exception<plssvm::exception> &);
 void init_kokkos_csvm(py::module_ &, const py::exception<plssvm::exception> &);
-void init_sklearn(py::module_ &);
+void init_sklearn_svc(py::module_ &);
+void init_sklearn_svr(py::module_ &);
 
 PYBIND11_MODULE(plssvm, m) {
-    m.doc() = "Parallel Least Squares Support Vector Machine";
+    m.doc() = "PLSSVM - Parallel Least Squares Support Vector Machine";
+    m.attr("__version__") = plssvm::version::version;
+
+    // create a pure-virtual module
+    py::module_ pure_virtual = m.def_submodule("__pure_virtual");
 
     // automatically initialize the environments
     plssvm::environment::initialize();
@@ -79,6 +92,7 @@ PYBIND11_MODULE(plssvm, m) {
 
     init_target_platforms(m);
     init_solver_types(m);
+    init_svm_types(m);
     init_backend_types(m);
     init_gamma(m);
     init_classification_types(m);
@@ -86,11 +100,17 @@ PYBIND11_MODULE(plssvm, m) {
     init_kernel_function_types(m);
     init_kernel_functions(m);
     init_parameter(m);
-    init_model(m);
-    init_data_set(m);
+    init_classification_model(m);
+    init_regression_model(m);
+    init_min_max_scaler(m);
+    init_classification_data_set(m);
+    init_regression_data_set(m);
     init_version(m);
     init_exceptions(m, base_exception);
-    init_csvm(m);
+    init_regression_report(m);
+    init_csvm(pure_virtual);
+    init_csvc(m, pure_virtual);
+    init_csvr(m, pure_virtual);
 
     // init bindings for the specific backends ONLY if the backend has been enabled
 #if defined(PLSSVM_HAS_OPENMP_BACKEND)
@@ -118,5 +138,6 @@ PYBIND11_MODULE(plssvm, m) {
     init_kokkos_csvm(m, base_exception);
 #endif
 
-    init_sklearn(m);
+    init_sklearn_svc(m);
+    init_sklearn_svr(m);
 }

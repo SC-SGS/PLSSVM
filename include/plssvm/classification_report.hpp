@@ -6,7 +6,7 @@
  * @license This file is part of the PLSSVM project which is released under the MIT license.
  *          See the LICENSE.md file in the project root for full license information.
  *
- * @brief Implements a classification report returned in the `plssvm::csvm::score` functions.
+ * @brief Implements a classification report returned in the `plssvm::csvc::score` functions.
  */
 
 #ifndef PLSSVM_CLASSIFICATION_REPORT_HPP_
@@ -36,7 +36,7 @@
 namespace plssvm {
 
 /**
- * @brief Class calculating a classification report (overall accuracy and precision, recall, f1 score, and support per class.
+ * @brief Class calculating a classification report (overall accuracy and precision, recall, f1 score, and support per class).
  * @details Calculates the values using an explicit confusion matrix.
  */
 class classification_report {
@@ -101,6 +101,7 @@ class classification_report {
     /**
      * @brief Calculates the confusion matrix, classification metrics per class, and global accuracy.
      * @tparam label_type the type of the labels
+     * @tparam Args the types of the named arguments
      * @param[in] correct_label the list of correct labels
      * @param[in] predicted_label the list of predicted labels
      * @param[in] named_args the potential name arguments (digits, zero_division, target_names)
@@ -143,7 +144,7 @@ class classification_report {
     /**
      * @brief Output the classification @p report to the given output-stream @p out.
      * @details Outputs the metrics in a tabular format.
-     * @param[in,out] out the output-stream to write the backend type to
+     * @param[in,out] out the output-stream to write the report to
      * @param[in] report the classification_report
      * @return the output-stream
      */
@@ -285,7 +286,7 @@ classification_report::classification_report(const std::vector<label_type> &corr
 }
 
 /**
- * @brief Output the metric @p m to the given output-stream @p out.
+ * @brief Output the @p metric to the given output-stream @p out.
  * @param[in,out] out the output-stream to write the metric to
  * @param[in] metric the metric
  * @return the output-stream

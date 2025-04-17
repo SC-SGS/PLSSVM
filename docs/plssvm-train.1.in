@@ -40,7 +40,7 @@ set the parameter C (default: 1)
 
 .TP
 .B -e, --epsilon arg
-set the tolerance of termination criterion (default: 0.001)
+set the tolerance of termination criterion (default: 1e-10)
 
 .TP
 .B -i, --max_iter arg

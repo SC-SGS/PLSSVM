@@ -76,10 +76,22 @@ template <typename... Args>
 constexpr bool has_only_sycl_parameter_named_args_v = !igor::has_other_than<Args...>(plssvm::kernel_type, plssvm::gamma, plssvm::degree, plssvm::coef0, plssvm::cost, plssvm::sycl_implementation_type, plssvm::sycl_kernel_invocation_type);
 
 /**
+ * @brief Trait to check whether @p Args only contains SYCL specific named-parameters.
+ */
+template <typename... Args>
+constexpr bool has_only_sycl_named_args_v = !igor::has_other_than<Args...>(plssvm::sycl_implementation_type, plssvm::sycl_kernel_invocation_type);
+
+/**
  * @brief Trait to check whether @p Args only contains named-parameter that can be used to initialize a `plssvm::parameter` struct including Kokkos specific named-parameters.
  */
 template <typename... Args>
 constexpr bool has_only_kokkos_parameter_named_args_v = !igor::has_other_than<Args...>(plssvm::kernel_type, plssvm::gamma, plssvm::degree, plssvm::coef0, plssvm::cost, plssvm::kokkos_execution_space);
+
+/**
+ * @brief Trait to check whether @p Args only contains Kokkos specific named-parameters.
+ */
+template <typename... Args>
+constexpr bool has_only_kokkos_named_args_v = !igor::has_other_than<Args...>(plssvm::kokkos_execution_space);
 
 }  // namespace detail
 
@@ -177,6 +189,7 @@ struct parameter {
     }
 
   private:
+    // befriend C-SVM class: necessary to access the private `set_named_arguments` function
     friend class csvm;
 
     /**
