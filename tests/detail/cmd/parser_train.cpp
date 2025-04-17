@@ -738,10 +738,10 @@ TEST_F(ParserTrainVerbosityAndQuiet, parsing) {
     EXPECT_EQ(plssvm::verbosity, plssvm::verbosity_level::quiet);
 }
 
-class ParserTrainHelp : public ParserTrain,
-                        public ::testing::WithParamInterface<std::string> { };
+class ParserTrainHelpDeathTest : public ParserTrain,
+                                 public ::testing::WithParamInterface<std::string> { };
 
-TEST_P(ParserTrainHelp, parsing) {
+TEST_P(ParserTrainHelpDeathTest, parsing) {
     const std::string &flag = GetParam();
     // create artificial command line arguments in test fixture
     this->CreateCMDArgs({ "./plssvm-train", flag });
@@ -749,12 +749,12 @@ TEST_P(ParserTrainHelp, parsing) {
     EXPECT_EXIT((plssvm::detail::cmd::parser_train{ this->get_comm(), this->get_argc(), this->get_argv() }), ::testing::ExitedWithCode(EXIT_SUCCESS), "");
 }
 
-INSTANTIATE_TEST_SUITE_P(ParserTrain, ParserTrainHelp, ::testing::Values("-h", "--help"), naming::pretty_print_parameter_flag<ParserTrainHelp>);
+INSTANTIATE_TEST_SUITE_P(ParserTrain, ParserTrainHelpDeathTest, ::testing::Values("-h", "--help"), naming::pretty_print_parameter_flag<ParserTrainHelpDeathTest>);
 
-class ParserTrainVersion : public ParserTrain,
-                           public ::testing::WithParamInterface<std::string> { };
+class ParserTrainVersionDeathTest : public ParserTrain,
+                                    public ::testing::WithParamInterface<std::string> { };
 
-TEST_P(ParserTrainVersion, parsing) {
+TEST_P(ParserTrainVersionDeathTest, parsing) {
     const std::string &flag = GetParam();
     // create artificial command line arguments in test fixture
     this->CreateCMDArgs({ "./plssvm-train", flag });
@@ -762,7 +762,7 @@ TEST_P(ParserTrainVersion, parsing) {
     EXPECT_EXIT((plssvm::detail::cmd::parser_train{ this->get_comm(), this->get_argc(), this->get_argv() }), ::testing::ExitedWithCode(EXIT_SUCCESS), "");
 }
 
-INSTANTIATE_TEST_SUITE_P(ParserTrain, ParserTrainVersion, ::testing::Values("-v", "--version"), naming::pretty_print_parameter_flag<ParserTrainVersion>);
+INSTANTIATE_TEST_SUITE_P(ParserTrain, ParserTrainVersionDeathTest, ::testing::Values("-v", "--version"), naming::pretty_print_parameter_flag<ParserTrainVersionDeathTest>);
 
 TEST_F(ParserTrainDeathTest, no_positional_argument) {
     this->CreateCMDArgs({ "./plssvm-train" });

@@ -20,12 +20,12 @@ if (TARGET plssvm::plssvm-stdpar)
             return()
         endif ()
     elseif (PLSSVM_STDPAR_BACKEND MATCHES "roc-stdpar")
-        check_cxx_compiler_flag("-hipstdpar --hipstdpar-path=${PLSSVM_STDPAR_BACKEND_HIPSTDPAR_PATH}" PLSSVM_HAS_HIPSTDPAR_STDPAR_FLAG)
+        check_cxx_compiler_flag("--hipstdpar" PLSSVM_HAS_HIPSTDPAR_STDPAR_FLAG)
         if (NOT PLSSVM_HAS_HIPSTDPAR_STDPAR_FLAG)
             set(plssvm_FOUND OFF)
             set(plssvm_stdpar_FOUND OFF)
             set(plssvm_NOT_FOUND_MESSAGE
-                "The CMAKE_CXX_COMPILER must be set to the hipstdpar patched LLVM compiler (acpp) in user code in order to use plssvm::stdpar!"
+                "The CMAKE_CXX_COMPILER must be set to a compatible LLVM (version 18 or newer) in user code in order to use plssvm::stdpar!"
             )
             return()
         endif ()
