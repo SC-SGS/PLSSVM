@@ -6,11 +6,11 @@
  * @license This file is part of the PLSSVM project which is released under the MIT license.
  *          See the LICENSE.md file in the project root for full license information.
  *
- * @brief Defines the functions used for prediction for the C-SVM using the SYCL backend.
+ * @brief Defines the functions used for prediction for the C-SVM using the SYCL backend and the work-group data parallel kernels.
  */
 
-#ifndef PLSSVM_BACKENDS_SYCL_PREDICT_KERNEL_HPP_
-#define PLSSVM_BACKENDS_SYCL_PREDICT_KERNEL_HPP_
+#ifndef PLSSVM_BACKENDS_SYCL_KERNEL_PREDICT_WORK_GROUP_PREDICT_KERNEL_HPP_
+#define PLSSVM_BACKENDS_SYCL_KERNEL_PREDICT_WORK_GROUP_PREDICT_KERNEL_HPP_
 #pragma once
 
 #include "plssvm/backends/SYCL/detail/atomics.hpp"           // plssvm::sycl::detail::atomic_op
@@ -18,15 +18,16 @@
 #include "plssvm/constants.hpp"                              // plssvm::{real_type, THREAD_BLOCK_SIZE, INTERNAL_BLOCK_SIZE, FEATURE_BLOCK_SIZE, PADDING_SIZE}
 #include "plssvm/kernel_function_types.hpp"                  // plssvm::kernel_function_type
 
-#include "sycl/sycl.hpp"  // sycl::item
+#include "sycl/sycl.hpp"  // sycl::handler, sycl::range, sycl::nd_item, sycl::local_accessor
 
 #include <cstddef>  // std::size_t
 #include <tuple>    // std::tuple, std::make_tuple
 
-namespace plssvm::sycl::detail {
+namespace plssvm::sycl::detail::work_group {
 
 /**
  * @brief Calculate the `q` vector used to speedup the prediction using the linear kernel function.
+ * @details Uses SYCL's work-group data parallel kernels.
  */
 class device_kernel_w_linear {
   public:
@@ -140,6 +141,7 @@ class device_kernel_w_linear {
 
 /**
  * @brief Predict the @p predict_points_d using the linear kernel speeding up the calculation using the @p w_d vector.
+ * @details Uses SYCL's work-group data parallel kernels.
  */
 class device_kernel_predict_linear {
   public:
@@ -257,6 +259,7 @@ class device_kernel_predict_linear {
 
 /**
  * @brief Predict the @p predict_points_d using the @p kernel_function.
+ * @details Uses SYCL's work-group data parallel kernels.
  * @tparam kernel_function the type of the used kernel function
  * @tparam Args the types of the parameters necessary for the specific kernel function; stored in a `std::tuple`
  */
@@ -430,6 +433,6 @@ class device_kernel_predict {
     /// @endcond
 };
 
-}  // namespace plssvm::sycl::detail
+}  // namespace plssvm::sycl::detail::work_group
 
-#endif  // PLSSVM_BACKENDS_SYCL_PREDICT_KERNEL_HPP_
+#endif  // PLSSVM_BACKENDS_SYCL_KERNEL_PREDICT_WORK_GROUP_PREDICT_KERNEL_HPP_

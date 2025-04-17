@@ -24,7 +24,9 @@
 #include "plssvm/backends/SYCL/kernel/cg_implicit/basic/kernel_matrix_assembly_blas.hpp"         // plssvm::sycl::detail::basic::device_kernel_assembly_symm
 #include "plssvm/backends/SYCL/kernel/cg_implicit/hierarchical/kernel_matrix_assembly_blas.hpp"  // plssvm::sycl::detail::hierarchical::device_kernel_assembly_symm
 #include "plssvm/backends/SYCL/kernel/cg_implicit/work_group/kernel_matrix_assembly_blas.hpp"    // plssvm::sycl::detail::work_group::device_kernel_assembly_symm
-#include "plssvm/backends/SYCL/kernel/predict_kernel.hpp"                                        // plssvm::sycl::detail::{device_kernel_w_linear, device_kernel_predict_linear, device_kernel_predict}
+#include "plssvm/backends/SYCL/kernel/predict/basic/predict_kernel.hpp"                          // plssvm::sycl::detail::basic::{device_kernel_w_linear, device_kernel_predict_linear, device_kernel_predict}
+#include "plssvm/backends/SYCL/kernel/predict/hierarchical/predict_kernel.hpp"                   // plssvm::sycl::detail::hierarchical::{device_kernel_w_linear, device_kernel_predict_linear, device_kernel_predict}
+#include "plssvm/backends/SYCL/kernel/predict/work_group/predict_kernel.hpp"                     // plssvm::sycl::detail::work_group::{device_kernel_w_linear, device_kernel_predict_linear, device_kernel_predict}
 #include "plssvm/backends/SYCL/kernel_invocation_types.hpp"                                      // plssvm::kernel_invocation_type
 #include "plssvm/constants.hpp"                                                                  // plssvm::{real_type, THREAD_BLOCK_SIZE, INTERNAL_BLOCK_SIZE, PADDING_SIZE}
 #include "plssvm/detail/assert.hpp"                                                              // PLSSVM_ASSERT
@@ -858,18 +860,35 @@ auto csvm::run_w_kernel(const std::size_t device_id, const ::plssvm::detail::exe
 
     device_ptr_type w_d{ shape{ num_classes, num_features }, shape{ PADDING_SIZE, PADDING_SIZE }, device };
 
-    // convert execution range block to SYCL's native range<2>
-    const ::sycl::range native_block = detail::dim_type_to_native<2>(exec.block);
-
     for (const auto &[partial_grid, offsets] : exec.grids) {
-        // convert execution range partial_grid to SYCL's native range<2>
-        const ::sycl::range native_partial_grid = detail::dim_type_to_native<2>(partial_grid) * native_block;
-
-        const ::sycl::nd_range native_exec{ native_partial_grid, native_block };
-
-        device.impl->sycl_queue.submit([&, &offsets_ref = offsets](::sycl::handler &cgh) {
-            cgh.parallel_for(native_exec, sycl::detail::device_kernel_w_linear{ cgh, w_d.get(), alpha_d.get(), sv_d.get(), num_classes, num_sv, device_specific_num_sv, sv_offset, offsets_ref.y, offsets_ref.x });
-        });
+        switch (invocation_type_) {
+            case sycl::kernel_invocation_type::automatic:
+                throw backend_exception{ "Can't determine the sycl::kernel_invocation_type!" };
+            case sycl::kernel_invocation_type::basic:
+                device.impl->sycl_queue.submit([&, &partial_grid_ref = partial_grid, &offsets_ref = offsets](::sycl::handler &cgh) {
+                    cgh.parallel_for(detail::get_execution_range<sycl::kernel_invocation_type::basic>(partial_grid_ref, exec.block),
+                                     sycl::detail::basic::device_kernel_w_linear{ w_d.get(), alpha_d.get(), sv_d.get(), num_classes, num_sv, device_specific_num_sv, sv_offset, offsets_ref.y, offsets_ref.x });
+                });
+                break;
+            case sycl::kernel_invocation_type::work_group:
+                device.impl->sycl_queue.submit([&, &partial_grid_ref = partial_grid, &offsets_ref = offsets](::sycl::handler &cgh) {
+                    cgh.parallel_for(detail::get_execution_range<sycl::kernel_invocation_type::work_group>(partial_grid_ref, exec.block),
+                                     sycl::detail::work_group::device_kernel_w_linear{ cgh, w_d.get(), alpha_d.get(), sv_d.get(), num_classes, num_sv, device_specific_num_sv, sv_offset, offsets_ref.y, offsets_ref.x });
+                });
+                break;
+            case sycl::kernel_invocation_type::hierarchical:
+#if defined(PLSSVM_SYCL_HIERARCHICAL_AND_SCOPED_KERNELS_ENABLED)
+                device.impl->sycl_queue.submit([&, &partial_grid_ref = partial_grid, &offsets_ref = offsets](::sycl::handler &cgh) {
+                    const auto exec_range = detail::get_execution_range<sycl::kernel_invocation_type::hierarchical>(partial_grid_ref, exec.block);
+                    cgh.parallel_for_work_group(exec_range.get_global_range(), exec_range.get_local_range(), sycl::detail::hierarchical::device_kernel_w_linear{ w_d.get(), alpha_d.get(), sv_d.get(), num_classes, num_sv, device_specific_num_sv, sv_offset, offsets_ref.y, offsets_ref.x });
+                });
+#else
+                throw backend_exception{ "Support for sycl::kernel_invocation_type::hierarchical was disabled!" };
+#endif
+                break;
+            case sycl::kernel_invocation_type::scoped:
+                throw backend_exception{ "Can't use the sycl::kernel_invocation_type::scoped with DPC++!" };
+        }
     }
     detail::device_synchronize(device);
 
@@ -885,50 +904,220 @@ auto csvm::run_predict_kernel(const std::size_t device_id, const ::plssvm::detai
 
     device_ptr_type out_d{ shape{ num_predict_points, num_classes }, shape{ PADDING_SIZE, PADDING_SIZE }, device };
 
-    // convert execution range block to SYCL's native range<2>
-    const ::sycl::range native_block = detail::dim_type_to_native<2>(exec.block);
-
     for (const auto &[partial_grid, offsets] : exec.grids) {
-        // convert execution range partial_grid to SYCL's native range<2>
-        const ::sycl::range native_partial_grid = detail::dim_type_to_native<2>(partial_grid) * native_block;
-
-        const ::sycl::nd_range native_exec{ native_partial_grid, native_block };
-
         switch (params.kernel_type) {
+            //***************************************************//
+            //               linear kernel function              //
+            //***************************************************//
             case kernel_function_type::linear:
-                device.impl->sycl_queue.submit([&, &offsets_ref = offsets](::sycl::handler &cgh) {
-                    cgh.parallel_for(native_exec, sycl::detail::device_kernel_predict_linear{ cgh, out_d.get(), sv_or_w_d.get(), rho_d.get(), predict_points_d.get(), num_classes, num_predict_points, num_features, offsets_ref.y, offsets_ref.x });
-                });
+                switch (invocation_type_) {
+                    case sycl::kernel_invocation_type::automatic:
+                        throw backend_exception{ "Can't determine the sycl::kernel_invocation_type!" };
+                    case sycl::kernel_invocation_type::basic:
+                        device.impl->sycl_queue.submit([&, &partial_grid_ref = partial_grid, &offsets_ref = offsets](::sycl::handler &cgh) {
+                            cgh.parallel_for(detail::get_execution_range<sycl::kernel_invocation_type::basic>(partial_grid_ref, exec.block),
+                                             sycl::detail::basic::device_kernel_predict_linear{ out_d.get(), sv_or_w_d.get(), rho_d.get(), predict_points_d.get(), num_classes, num_predict_points, num_features, offsets_ref.y, offsets_ref.x });
+                        });
+                        break;
+                    case sycl::kernel_invocation_type::work_group:
+                        device.impl->sycl_queue.submit([&, &partial_grid_ref = partial_grid, &offsets_ref = offsets](::sycl::handler &cgh) {
+                            cgh.parallel_for(detail::get_execution_range<sycl::kernel_invocation_type::work_group>(partial_grid_ref, exec.block),
+                                             sycl::detail::work_group::device_kernel_predict_linear{ cgh, out_d.get(), sv_or_w_d.get(), rho_d.get(), predict_points_d.get(), num_classes, num_predict_points, num_features, offsets_ref.y, offsets_ref.x });
+                        });
+                        break;
+                    case sycl::kernel_invocation_type::hierarchical:
+#if defined(PLSSVM_SYCL_HIERARCHICAL_AND_SCOPED_KERNELS_ENABLED)
+                        device.impl->sycl_queue.submit([&, &partial_grid_ref = partial_grid, &offsets_ref = offsets](::sycl::handler &cgh) {
+                            const auto exec_range = detail::get_execution_range<sycl::kernel_invocation_type::hierarchical>(partial_grid_ref, exec.block);
+                            cgh.parallel_for_work_group(exec_range.get_global_range(), exec_range.get_local_range(), sycl::detail::hierarchical::device_kernel_predict_linear{ out_d.get(), sv_or_w_d.get(), rho_d.get(), predict_points_d.get(), num_classes, num_predict_points, num_features, offsets_ref.y, offsets_ref.x });
+                        });
+#else
+                        throw backend_exception{ "Support for sycl::kernel_invocation_type::hierarchical was disabled!" };
+#endif
+                        break;
+                    case sycl::kernel_invocation_type::scoped:
+                        throw backend_exception{ "Can't use the sycl::kernel_invocation_type::scoped with DPC++!" };
+                }
                 break;
+            //***************************************************//
+            //             polynomial kernel function            //
+            //***************************************************//
             case kernel_function_type::polynomial:
-                device.impl->sycl_queue.submit([&, &offsets_ref = offsets](::sycl::handler &cgh) {
-                    using functor_type = sycl::detail::device_kernel_predict<kernel_function_type::polynomial, decltype(params.degree), real_type, decltype(params.coef0)>;
-                    cgh.parallel_for(native_exec, functor_type{ cgh, out_d.get(), alpha_d.get(), rho_d.get(), sv_or_w_d.get(), predict_points_d.get(), num_classes, num_sv, num_predict_points, num_features, offsets_ref.y, offsets_ref.x, params.degree, std::get<real_type>(params.gamma), params.coef0 });
-                });
+                switch (invocation_type_) {
+                    case sycl::kernel_invocation_type::automatic:
+                        throw backend_exception{ "Can't determine the sycl::kernel_invocation_type!" };
+                    case sycl::kernel_invocation_type::basic:
+                        device.impl->sycl_queue.submit([&, &partial_grid_ref = partial_grid, &offsets_ref = offsets](::sycl::handler &cgh) {
+                            using functor_type = sycl::detail::basic::device_kernel_predict<kernel_function_type::polynomial, decltype(params.degree), real_type, decltype(params.coef0)>;
+                            cgh.parallel_for(detail::get_execution_range<sycl::kernel_invocation_type::basic>(partial_grid_ref, exec.block),
+                                             functor_type{ out_d.get(), alpha_d.get(), rho_d.get(), sv_or_w_d.get(), predict_points_d.get(), num_classes, num_sv, num_predict_points, num_features, offsets_ref.y, offsets_ref.x, params.degree, std::get<real_type>(params.gamma), params.coef0 });
+                        });
+                        break;
+                    case sycl::kernel_invocation_type::work_group:
+                        device.impl->sycl_queue.submit([&, &partial_grid_ref = partial_grid, &offsets_ref = offsets](::sycl::handler &cgh) {
+                            using functor_type = sycl::detail::work_group::device_kernel_predict<kernel_function_type::polynomial, decltype(params.degree), real_type, decltype(params.coef0)>;
+                            cgh.parallel_for(detail::get_execution_range<sycl::kernel_invocation_type::work_group>(partial_grid_ref, exec.block),
+                                             functor_type{ cgh, out_d.get(), alpha_d.get(), rho_d.get(), sv_or_w_d.get(), predict_points_d.get(), num_classes, num_sv, num_predict_points, num_features, offsets_ref.y, offsets_ref.x, params.degree, std::get<real_type>(params.gamma), params.coef0 });
+                        });
+                        break;
+                    case sycl::kernel_invocation_type::hierarchical:
+#if defined(PLSSVM_SYCL_HIERARCHICAL_AND_SCOPED_KERNELS_ENABLED)
+                        device.impl->sycl_queue.submit([&, &partial_grid_ref = partial_grid, &offsets_ref = offsets](::sycl::handler &cgh) {
+                            using functor_type = sycl::detail::hierarchical::device_kernel_predict<kernel_function_type::polynomial, decltype(params.degree), real_type, decltype(params.coef0)>;
+                            const auto exec_range = detail::get_execution_range<sycl::kernel_invocation_type::hierarchical>(partial_grid_ref, exec.block);
+                            cgh.parallel_for_work_group(exec_range.get_global_range(), exec_range.get_local_range(), functor_type{ out_d.get(), alpha_d.get(), rho_d.get(), sv_or_w_d.get(), predict_points_d.get(), num_classes, num_sv, num_predict_points, num_features, offsets_ref.y, offsets_ref.x, params.degree, std::get<real_type>(params.gamma), params.coef0 });
+                        });
+#else
+                        throw backend_exception{ "Support for sycl::kernel_invocation_type::hierarchical was disabled!" };
+#endif
+                        break;
+                    case sycl::kernel_invocation_type::scoped:
+                        throw backend_exception{ "Can't use the sycl::kernel_invocation_type::scoped with DPC++!" };
+                }
                 break;
+            //***************************************************//
+            //            radial-basis kernel function           //
+            //***************************************************//
             case kernel_function_type::rbf:
-                device.impl->sycl_queue.submit([&, &offsets_ref = offsets](::sycl::handler &cgh) {
-                    using functor_type = sycl::detail::device_kernel_predict<kernel_function_type::rbf, real_type>;
-                    cgh.parallel_for(native_exec, functor_type{ cgh, out_d.get(), alpha_d.get(), rho_d.get(), sv_or_w_d.get(), predict_points_d.get(), num_classes, num_sv, num_predict_points, num_features, offsets_ref.y, offsets_ref.x, std::get<real_type>(params.gamma) });
-                });
+                switch (invocation_type_) {
+                    case sycl::kernel_invocation_type::automatic:
+                        throw backend_exception{ "Can't determine the sycl::kernel_invocation_type!" };
+                    case sycl::kernel_invocation_type::basic:
+                        device.impl->sycl_queue.submit([&, &partial_grid_ref = partial_grid, &offsets_ref = offsets](::sycl::handler &cgh) {
+                            using functor_type = sycl::detail::basic::device_kernel_predict<kernel_function_type::rbf, real_type>;
+                            cgh.parallel_for(detail::get_execution_range<sycl::kernel_invocation_type::basic>(partial_grid_ref, exec.block),
+                                             functor_type{ out_d.get(), alpha_d.get(), rho_d.get(), sv_or_w_d.get(), predict_points_d.get(), num_classes, num_sv, num_predict_points, num_features, offsets_ref.y, offsets_ref.x, std::get<real_type>(params.gamma) });
+                        });
+                        break;
+                    case sycl::kernel_invocation_type::work_group:
+                        device.impl->sycl_queue.submit([&, &partial_grid_ref = partial_grid, &offsets_ref = offsets](::sycl::handler &cgh) {
+                            using functor_type = sycl::detail::work_group::device_kernel_predict<kernel_function_type::rbf, real_type>;
+                            cgh.parallel_for(detail::get_execution_range<sycl::kernel_invocation_type::work_group>(partial_grid_ref, exec.block),
+                                             functor_type{ cgh, out_d.get(), alpha_d.get(), rho_d.get(), sv_or_w_d.get(), predict_points_d.get(), num_classes, num_sv, num_predict_points, num_features, offsets_ref.y, offsets_ref.x, std::get<real_type>(params.gamma) });
+                        });
+                        break;
+                    case sycl::kernel_invocation_type::hierarchical:
+#if defined(PLSSVM_SYCL_HIERARCHICAL_AND_SCOPED_KERNELS_ENABLED)
+                        device.impl->sycl_queue.submit([&, &partial_grid_ref = partial_grid, &offsets_ref = offsets](::sycl::handler &cgh) {
+                            using functor_type = sycl::detail::hierarchical::device_kernel_predict<kernel_function_type::rbf, real_type>;
+                            const auto exec_range = detail::get_execution_range<sycl::kernel_invocation_type::hierarchical>(partial_grid_ref, exec.block);
+                            cgh.parallel_for_work_group(exec_range.get_global_range(), exec_range.get_local_range(), functor_type{ out_d.get(), alpha_d.get(), rho_d.get(), sv_or_w_d.get(), predict_points_d.get(), num_classes, num_sv, num_predict_points, num_features, offsets_ref.y, offsets_ref.x, std::get<real_type>(params.gamma) });
+                        });
+#else
+                        throw backend_exception{ "Support for sycl::kernel_invocation_type::hierarchical was disabled!" };
+#endif
+                        break;
+                    case sycl::kernel_invocation_type::scoped:
+                        throw backend_exception{ "Can't use the sycl::kernel_invocation_type::scoped with DPC++!" };
+                }
                 break;
+            //***************************************************//
+            //              sigmoid kernel function              //
+            //***************************************************//
             case kernel_function_type::sigmoid:
-                device.impl->sycl_queue.submit([&, &offsets_ref = offsets](::sycl::handler &cgh) {
-                    using functor_type = sycl::detail::device_kernel_predict<kernel_function_type::sigmoid, real_type, decltype(params.coef0)>;
-                    cgh.parallel_for(native_exec, functor_type{ cgh, out_d.get(), alpha_d.get(), rho_d.get(), sv_or_w_d.get(), predict_points_d.get(), num_classes, num_sv, num_predict_points, num_features, offsets_ref.y, offsets_ref.x, std::get<real_type>(params.gamma), params.coef0 });
-                });
+                switch (invocation_type_) {
+                    case sycl::kernel_invocation_type::automatic:
+                        throw backend_exception{ "Can't determine the sycl::kernel_invocation_type!" };
+                    case sycl::kernel_invocation_type::basic:
+                        device.impl->sycl_queue.submit([&, &partial_grid_ref = partial_grid, &offsets_ref = offsets](::sycl::handler &cgh) {
+                            using functor_type = sycl::detail::basic::device_kernel_predict<kernel_function_type::sigmoid, real_type, decltype(params.coef0)>;
+                            cgh.parallel_for(detail::get_execution_range<sycl::kernel_invocation_type::basic>(partial_grid_ref, exec.block),
+                                             functor_type{ out_d.get(), alpha_d.get(), rho_d.get(), sv_or_w_d.get(), predict_points_d.get(), num_classes, num_sv, num_predict_points, num_features, offsets_ref.y, offsets_ref.x, std::get<real_type>(params.gamma), params.coef0 });
+                        });
+                        break;
+                    case sycl::kernel_invocation_type::work_group:
+                        device.impl->sycl_queue.submit([&, &partial_grid_ref = partial_grid, &offsets_ref = offsets](::sycl::handler &cgh) {
+                            using functor_type = sycl::detail::work_group::device_kernel_predict<kernel_function_type::sigmoid, real_type, decltype(params.coef0)>;
+                            cgh.parallel_for(detail::get_execution_range<sycl::kernel_invocation_type::work_group>(partial_grid_ref, exec.block),
+                                             functor_type{ cgh, out_d.get(), alpha_d.get(), rho_d.get(), sv_or_w_d.get(), predict_points_d.get(), num_classes, num_sv, num_predict_points, num_features, offsets_ref.y, offsets_ref.x, std::get<real_type>(params.gamma), params.coef0 });
+                        });
+                        break;
+                    case sycl::kernel_invocation_type::hierarchical:
+#if defined(PLSSVM_SYCL_HIERARCHICAL_AND_SCOPED_KERNELS_ENABLED)
+                        device.impl->sycl_queue.submit([&, &partial_grid_ref = partial_grid, &offsets_ref = offsets](::sycl::handler &cgh) {
+                            using functor_type = sycl::detail::hierarchical::device_kernel_predict<kernel_function_type::sigmoid, real_type, decltype(params.coef0)>;
+                            const auto exec_range = detail::get_execution_range<sycl::kernel_invocation_type::hierarchical>(partial_grid_ref, exec.block);
+                            cgh.parallel_for_work_group(exec_range.get_global_range(), exec_range.get_local_range(), functor_type{ out_d.get(), alpha_d.get(), rho_d.get(), sv_or_w_d.get(), predict_points_d.get(), num_classes, num_sv, num_predict_points, num_features, offsets_ref.y, offsets_ref.x, std::get<real_type>(params.gamma), params.coef0 });
+                        });
+#else
+                        throw backend_exception{ "Support for sycl::kernel_invocation_type::hierarchical was disabled!" };
+#endif
+                        break;
+                    case sycl::kernel_invocation_type::scoped:
+                        throw backend_exception{ "Can't use the sycl::kernel_invocation_type::scoped with DPC++!" };
+                }
                 break;
+            //***************************************************//
+            //             laplacian kernel function             //
+            //***************************************************//
             case kernel_function_type::laplacian:
-                device.impl->sycl_queue.submit([&, &offsets_ref = offsets](::sycl::handler &cgh) {
-                    using functor_type = sycl::detail::device_kernel_predict<kernel_function_type::laplacian, real_type>;
-                    cgh.parallel_for(native_exec, functor_type{ cgh, out_d.get(), alpha_d.get(), rho_d.get(), sv_or_w_d.get(), predict_points_d.get(), num_classes, num_sv, num_predict_points, num_features, offsets_ref.y, offsets_ref.x, std::get<real_type>(params.gamma) });
-                });
+                switch (invocation_type_) {
+                    case sycl::kernel_invocation_type::automatic:
+                        throw backend_exception{ "Can't determine the sycl::kernel_invocation_type!" };
+                    case sycl::kernel_invocation_type::basic:
+                        device.impl->sycl_queue.submit([&, &partial_grid_ref = partial_grid, &offsets_ref = offsets](::sycl::handler &cgh) {
+                            using functor_type = sycl::detail::basic::device_kernel_predict<kernel_function_type::laplacian, real_type>;
+                            cgh.parallel_for(detail::get_execution_range<sycl::kernel_invocation_type::basic>(partial_grid_ref, exec.block),
+                                             functor_type{ out_d.get(), alpha_d.get(), rho_d.get(), sv_or_w_d.get(), predict_points_d.get(), num_classes, num_sv, num_predict_points, num_features, offsets_ref.y, offsets_ref.x, std::get<real_type>(params.gamma) });
+                        });
+                        break;
+                    case sycl::kernel_invocation_type::work_group:
+                        device.impl->sycl_queue.submit([&, &partial_grid_ref = partial_grid, &offsets_ref = offsets](::sycl::handler &cgh) {
+                            using functor_type = sycl::detail::work_group::device_kernel_predict<kernel_function_type::laplacian, real_type>;
+                            cgh.parallel_for(detail::get_execution_range<sycl::kernel_invocation_type::work_group>(partial_grid_ref, exec.block),
+                                             functor_type{ cgh, out_d.get(), alpha_d.get(), rho_d.get(), sv_or_w_d.get(), predict_points_d.get(), num_classes, num_sv, num_predict_points, num_features, offsets_ref.y, offsets_ref.x, std::get<real_type>(params.gamma) });
+                        });
+                        break;
+                    case sycl::kernel_invocation_type::hierarchical:
+#if defined(PLSSVM_SYCL_HIERARCHICAL_AND_SCOPED_KERNELS_ENABLED)
+                        device.impl->sycl_queue.submit([&, &partial_grid_ref = partial_grid, &offsets_ref = offsets](::sycl::handler &cgh) {
+                            using functor_type = sycl::detail::hierarchical::device_kernel_predict<kernel_function_type::laplacian, real_type>;
+                            const auto exec_range = detail::get_execution_range<sycl::kernel_invocation_type::hierarchical>(partial_grid_ref, exec.block);
+                            cgh.parallel_for_work_group(exec_range.get_global_range(), exec_range.get_local_range(), functor_type{ out_d.get(), alpha_d.get(), rho_d.get(), sv_or_w_d.get(), predict_points_d.get(), num_classes, num_sv, num_predict_points, num_features, offsets_ref.y, offsets_ref.x, std::get<real_type>(params.gamma) });
+                        });
+#else
+                        throw backend_exception{ "Support for sycl::kernel_invocation_type::hierarchical was disabled!" };
+#endif
+                        break;
+                    case sycl::kernel_invocation_type::scoped:
+                        throw backend_exception{ "Can't use the sycl::kernel_invocation_type::scoped with DPC++!" };
+                }
                 break;
+            //***************************************************//
+            //            chi-squared kernel function            //
+            //***************************************************//
             case kernel_function_type::chi_squared:
-                device.impl->sycl_queue.submit([&, &offsets_ref = offsets](::sycl::handler &cgh) {
-                    using functor_type = sycl::detail::device_kernel_predict<kernel_function_type::chi_squared, real_type>;
-                    cgh.parallel_for(native_exec, functor_type{ cgh, out_d.get(), alpha_d.get(), rho_d.get(), sv_or_w_d.get(), predict_points_d.get(), num_classes, num_sv, num_predict_points, num_features, offsets_ref.y, offsets_ref.x, std::get<real_type>(params.gamma) });
-                });
+                switch (invocation_type_) {
+                    case sycl::kernel_invocation_type::automatic:
+                        throw backend_exception{ "Can't determine the sycl::kernel_invocation_type!" };
+                    case sycl::kernel_invocation_type::basic:
+                        device.impl->sycl_queue.submit([&, &partial_grid_ref = partial_grid, &offsets_ref = offsets](::sycl::handler &cgh) {
+                            using functor_type = sycl::detail::basic::device_kernel_predict<kernel_function_type::chi_squared, real_type>;
+                            cgh.parallel_for(detail::get_execution_range<sycl::kernel_invocation_type::basic>(partial_grid_ref, exec.block),
+                                             functor_type{ out_d.get(), alpha_d.get(), rho_d.get(), sv_or_w_d.get(), predict_points_d.get(), num_classes, num_sv, num_predict_points, num_features, offsets_ref.y, offsets_ref.x, std::get<real_type>(params.gamma) });
+                        });
+                        break;
+                    case sycl::kernel_invocation_type::work_group:
+                        device.impl->sycl_queue.submit([&, &partial_grid_ref = partial_grid, &offsets_ref = offsets](::sycl::handler &cgh) {
+                            using functor_type = sycl::detail::work_group::device_kernel_predict<kernel_function_type::chi_squared, real_type>;
+                            cgh.parallel_for(detail::get_execution_range<sycl::kernel_invocation_type::work_group>(partial_grid_ref, exec.block),
+                                             functor_type{ cgh, out_d.get(), alpha_d.get(), rho_d.get(), sv_or_w_d.get(), predict_points_d.get(), num_classes, num_sv, num_predict_points, num_features, offsets_ref.y, offsets_ref.x, std::get<real_type>(params.gamma) });
+                        });
+                        break;
+                    case sycl::kernel_invocation_type::hierarchical:
+#if defined(PLSSVM_SYCL_HIERARCHICAL_AND_SCOPED_KERNELS_ENABLED)
+                        device.impl->sycl_queue.submit([&, &partial_grid_ref = partial_grid, &offsets_ref = offsets](::sycl::handler &cgh) {
+                            using functor_type = sycl::detail::hierarchical::device_kernel_predict<kernel_function_type::chi_squared, real_type>;
+                            const auto exec_range = detail::get_execution_range<sycl::kernel_invocation_type::hierarchical>(partial_grid_ref, exec.block);
+                            cgh.parallel_for_work_group(exec_range.get_global_range(), exec_range.get_local_range(), functor_type{ out_d.get(), alpha_d.get(), rho_d.get(), sv_or_w_d.get(), predict_points_d.get(), num_classes, num_sv, num_predict_points, num_features, offsets_ref.y, offsets_ref.x, std::get<real_type>(params.gamma) });
+                        });
+#else
+                        throw backend_exception{ "Support for sycl::kernel_invocation_type::hierarchical was disabled!" };
+#endif
+                        break;
+                    case sycl::kernel_invocation_type::scoped:
+                        throw backend_exception{ "Can't use the sycl::kernel_invocation_type::scoped with DPC++!" };
+                }
                 break;
         }
     }
