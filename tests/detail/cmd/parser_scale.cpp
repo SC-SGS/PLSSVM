@@ -334,10 +334,10 @@ TEST_F(ParserScaleVerbosityAndQuiet, parsing) {
     EXPECT_EQ(plssvm::verbosity, plssvm::verbosity_level::quiet);
 }
 
-class ParserScaleHelp : public ParserScale,
-                        public ::testing::WithParamInterface<std::string> { };
+class ParserScaleHelpDeathTest : public ParserScale,
+                                 public ::testing::WithParamInterface<std::string> { };
 
-TEST_P(ParserScaleHelp, parsing) {
+TEST_P(ParserScaleHelpDeathTest, parsing) {
     const std::string &flag = GetParam();
     // create artificial command line arguments in test fixture
     this->CreateCMDArgs({ "./plssvm-scale", flag });
@@ -345,12 +345,12 @@ TEST_P(ParserScaleHelp, parsing) {
     EXPECT_EXIT((plssvm::detail::cmd::parser_scale{ this->get_argc(), this->get_argv() }), ::testing::ExitedWithCode(EXIT_SUCCESS), "");
 }
 
-INSTANTIATE_TEST_SUITE_P(ParserScale, ParserScaleHelp, ::testing::Values("-h", "--help"), naming::pretty_print_parameter_flag<ParserScaleHelp>);
+INSTANTIATE_TEST_SUITE_P(ParserScale, ParserScaleHelpDeathTest, ::testing::Values("-h", "--help"), naming::pretty_print_parameter_flag<ParserScaleHelpDeathTest>);
 
-class ParserScaleVersion : public ParserScale,
-                           public ::testing::WithParamInterface<std::string> { };
+class ParserScaleVersionDeathTest : public ParserScale,
+                                    public ::testing::WithParamInterface<std::string> { };
 
-TEST_P(ParserScaleVersion, parsing) {
+TEST_P(ParserScaleVersionDeathTest, parsing) {
     const std::string &flag = GetParam();
     // create artificial command line arguments in test fixture
     this->CreateCMDArgs({ "./plssvm-scale", flag });
@@ -358,7 +358,7 @@ TEST_P(ParserScaleVersion, parsing) {
     EXPECT_EXIT((plssvm::detail::cmd::parser_scale{ this->get_argc(), this->get_argv() }), ::testing::ExitedWithCode(EXIT_SUCCESS), "");
 }
 
-INSTANTIATE_TEST_SUITE_P(ParserScale, ParserScaleVersion, ::testing::Values("-v", "--version"), naming::pretty_print_parameter_flag<ParserScaleVersion>);
+INSTANTIATE_TEST_SUITE_P(ParserScale, ParserScaleVersionDeathTest, ::testing::Values("-v", "--version"), naming::pretty_print_parameter_flag<ParserScaleVersionDeathTest>);
 
 class ParserScaleDeathTest : public ParserScale { };
 

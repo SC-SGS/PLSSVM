@@ -104,15 +104,12 @@ if (PLSSVM_SYCL_BACKEND_CHECK_FOR_DPCPP_COMPILER)
         )
         target_link_options(${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME} PRIVATE -Xsycl-target-backend=amdgcn-amd-amdhsa --offload-arch=${PLSSVM_AMD_TARGET_ARCHS})
     endif ()
-    # intel targets
-    if (DEFINED PLSSVM_INTEL_TARGET_ARCHS)
-        # assemble -fsycl-targets
-        list(APPEND PLSSVM_DPCPP_FSYCL_TARGETS "spir64_gen")
-    endif ()
     # set -fsycl-targets
     list(JOIN PLSSVM_DPCPP_FSYCL_TARGETS "," PLSSVM_DPCPP_FSYCL_TARGETS_STRING)
-    target_compile_options(${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME} PRIVATE -fsycl-targets=${PLSSVM_DPCPP_FSYCL_TARGETS_STRING})
-    target_link_options(${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME} PRIVATE -fsycl-targets=${PLSSVM_DPCPP_FSYCL_TARGETS_STRING})
+    if (NOT PLSSVM_DPCPP_FSYCL_TARGETS_STRING STREQUAL "")
+        target_compile_options(${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME} PRIVATE -fsycl-targets=${PLSSVM_DPCPP_FSYCL_TARGETS_STRING})
+        target_link_options(${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME} PRIVATE -fsycl-targets=${PLSSVM_DPCPP_FSYCL_TARGETS_STRING})
+    endif ()
 
     # add option for DPC++ Ahead-of-Time (AOT) compilation
     option(PLSSVM_SYCL_BACKEND_DPCPP_ENABLE_AOT "Enables Ahead-of-Time compilation for DPC++." ON)
@@ -148,6 +145,8 @@ if (PLSSVM_SYCL_BACKEND_CHECK_FOR_DPCPP_COMPILER)
         endif ()
         # intel targets
         if (DEFINED PLSSVM_INTEL_TARGET_ARCHS)
+            target_compile_options(${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME} PRIVATE -fsycl-targets=spir64_gen)
+            target_link_options(${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME} PRIVATE -fsycl-targets=spir64_gen)
             # add target specific flags for AOT
             list(JOIN PLSSVM_INTEL_TARGET_ARCHS "," PLSSVM_INTEL_TARGET_ARCHS_STRING)
             target_compile_options(

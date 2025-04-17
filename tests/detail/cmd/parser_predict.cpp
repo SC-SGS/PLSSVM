@@ -365,10 +365,10 @@ TEST_F(ParserPredictVerbosityAndQuiet, parsing) {
     EXPECT_EQ(plssvm::verbosity, plssvm::verbosity_level::quiet);
 }
 
-class ParserPredictHelp : public ParserPredict,
-                          public ::testing::WithParamInterface<std::string> { };
+class ParserPredictHelpDeathTest : public ParserPredict,
+                                   public ::testing::WithParamInterface<std::string> { };
 
-TEST_P(ParserPredictHelp, parsing) {
+TEST_P(ParserPredictHelpDeathTest, parsing) {
     const std::string &flag = GetParam();
     // create artificial command line arguments in test fixture
     this->CreateCMDArgs({ "./plssvm-predict", flag });
@@ -376,12 +376,12 @@ TEST_P(ParserPredictHelp, parsing) {
     EXPECT_EXIT((plssvm::detail::cmd::parser_predict{ this->get_argc(), this->get_argv() }), ::testing::ExitedWithCode(EXIT_SUCCESS), "");
 }
 
-INSTANTIATE_TEST_SUITE_P(ParserPredict, ParserPredictHelp, ::testing::Values("-h", "--help"), naming::pretty_print_parameter_flag<ParserPredictHelp>);
+INSTANTIATE_TEST_SUITE_P(ParserPredict, ParserPredictHelpDeathTest, ::testing::Values("-h", "--help"), naming::pretty_print_parameter_flag<ParserPredictHelpDeathTest>);
 
-class ParserPredictVersion : public ParserPredict,
-                             public ::testing::WithParamInterface<std::string> { };
+class ParserPredictVersionDeathTest : public ParserPredict,
+                                      public ::testing::WithParamInterface<std::string> { };
 
-TEST_P(ParserPredictVersion, parsing) {
+TEST_P(ParserPredictVersionDeathTest, parsing) {
     const std::string &flag = GetParam();
     // create artificial command line arguments in test fixture
     this->CreateCMDArgs({ "./plssvm-predict", flag });
@@ -389,7 +389,7 @@ TEST_P(ParserPredictVersion, parsing) {
     EXPECT_EXIT((plssvm::detail::cmd::parser_predict{ this->get_argc(), this->get_argv() }), ::testing::ExitedWithCode(EXIT_SUCCESS), "");
 }
 
-INSTANTIATE_TEST_SUITE_P(ParserPredict, ParserPredictVersion, ::testing::Values("-v", "--version"), naming::pretty_print_parameter_flag<ParserPredictHelp>);
+INSTANTIATE_TEST_SUITE_P(ParserPredict, ParserPredictVersionDeathTest, ::testing::Values("-v", "--version"), naming::pretty_print_parameter_flag<ParserPredictVersionDeathTest>);
 
 class ParserPredictDeathTest : public ParserPredict { };
 
