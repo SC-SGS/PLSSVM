@@ -345,7 +345,6 @@ If the SYCL implementation is DPC++/icpx the following additional options are av
 
 - `PLSSVM_SYCL_BACKEND_DPCPP_ENABLE_AOT` (default: `ON`): enable Ahead-of-Time (AOT) compilation for the specified target platforms
 - `PLSSVM_SYCL_BACKEND_DPCPP_USE_LEVEL_ZERO` (default: `ON`): use DPC++/icpx's Level-Zero backend instead of its OpenCL backend **(only available if a CPU or Intel GPU is targeted)**
-- `PLSSVM_SYCL_BACKEND_DPCPP_GPU_AMD_USE_HIP` (default: `ON`): use DPC++/icpx's HIP backend instead of its OpenCL backend for AMD GPUs **(only available if an AMD GPU is targeted)**
 
 If the SYCL implementation is AdaptiveCpp the following additional option is available:
 

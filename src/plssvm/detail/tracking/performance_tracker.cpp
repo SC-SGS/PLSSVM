@@ -304,10 +304,8 @@ void performance_tracker::save(std::ostream &out) {
 
     out << fmt::format(
         "  DPCPP_backend_type:                {}\n"
-        "  DPCPP_amd_gpu_backend_type:        {}\n"
         "  DPCPP_with_aot:                    {}\n",
         PLSSVM_SYCL_BACKEND_DPCPP_BACKEND_TYPE,
-        PLSSVM_SYCL_BACKEND_DPCPP_GPU_AMD_BACKEND_TYPE,
         dpcpp_aot);
 #endif
 #if defined(PLSSVM_SYCL_BACKEND_HAS_ADAPTIVECPP)
