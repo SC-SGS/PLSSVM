@@ -616,7 +616,7 @@ endif ()
 #                                           check for Link Time Optimization                                           #
 ########################################################################################################################
 # enable Link Time Optimization (LTO)
-option(PLSSVM_ENABLE_LTO "Enable Link Time Optimizations." ON)
+option(PLSSVM_ENABLE_LTO "Enable Link Time Optimizations." OFF)
 if (PLSSVM_ENABLE_LTO)
     include(CheckIPOSupported)
     check_ipo_supported(RESULT PLSSVM_LTO_SUPPORTED LANGUAGES CXX)
