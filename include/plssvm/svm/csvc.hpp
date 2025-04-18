@@ -38,7 +38,7 @@
 #include <chrono>       // std::chrono::{time_point, steady_clock, duration_cast, milliseconds}
 #include <cstddef>      // std::size_t
 #include <limits>       // std::numeric_limits::lowest
-#include <memory>       // std::make_shared, std::dynamic_pointer_cast, std::addressof
+#include <memory>       // std::make_shared, std::addressof
 #include <optional>     // std::make_optional
 #include <tuple>        // std::tie
 #include <type_traits>  // std::is_same_v
@@ -358,8 +358,11 @@ class csvc : virtual public csvm {
             PLSSVM_ASSERT(votes.num_rows() == data.num_data_points(), "The number of votes ({}) must be equal the number of data points ({})!", votes.num_rows(), data.num_data_points());
             PLSSVM_ASSERT(votes.num_cols() == calculate_number_of_classifiers(classification_type::oaa, model.num_classes()), "The votes contain {} values, but must contain {} values!", votes.num_cols(), calculate_number_of_classifiers(classification_type::oaa, model.num_classes()));
 
+            // extract mapping
+            const auto &mapping = *dynamic_cast<const classification_data_set<label_type> &>(*model.data_).mapping_;
+
 // use voting
-#pragma omp parallel for default(none) shared(predicted_labels, votes, model) if (!std::is_same_v<label_type, bool>)
+#pragma omp parallel for default(none) shared(predicted_labels, votes, mapping) if (!std::is_same_v<label_type, bool>)
             for (std::size_t i = 0; i < predicted_labels.size(); ++i) {
                 std::size_t argmax = 0;
                 real_type max = std::numeric_limits<real_type>::lowest();
@@ -369,7 +372,7 @@ class csvc : virtual public csvm {
                         max = votes(i, v);
                     }
                 }
-                predicted_labels[i] = std::dynamic_pointer_cast<classification_data_set<label_type>>(model.data_)->mapping_->get_label_by_mapped_index(argmax);
+                predicted_labels[i] = mapping.get_label_by_mapped_index(argmax);
             }
         } else if (model.get_classification_type() == classification_type::oao) {
             PLSSVM_ASSERT(model.index_sets_ptr_ != nullptr, "The index_sets_ptr_ may never be a nullptr!");
@@ -476,8 +479,11 @@ class csvc : virtual public csvm {
                 }
             }
 
+            // extract mapping
+            const auto &mapping = *dynamic_cast<const classification_data_set<label_type> &>(*model.data_).mapping_;
+
 // map majority vote to predicted class
-#pragma omp parallel for default(none) shared(predicted_labels, class_votes, model) if (!std::is_same_v<label_type, bool>)
+#pragma omp parallel for default(none) shared(predicted_labels, class_votes, mapping) if (!std::is_same_v<label_type, bool>)
             for (std::size_t i = 0; i < predicted_labels.size(); ++i) {
                 std::size_t argmax = 0;
                 std::size_t max = 0;
@@ -487,7 +493,7 @@ class csvc : virtual public csvm {
                         max = class_votes(i, v);
                     }
                 }
-                predicted_labels[i] = std::dynamic_pointer_cast<classification_data_set<label_type>>(model.data_)->mapping_->get_label_by_mapped_index(argmax);
+                predicted_labels[i] = mapping.get_label_by_mapped_index(argmax);
             }
         }
 
