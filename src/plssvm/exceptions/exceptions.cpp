@@ -39,6 +39,10 @@ std::string exception::what_with_loc() const {
         loc_.line());
 }
 
+cmd_parser_exit::cmd_parser_exit(const int exit_code, source_location loc) :
+    exception{ fmt::format("exit code: {}", exit_code), "cmd_parser_exit", loc },
+    exit_code_{ exit_code } { }
+
 invalid_parameter_exception::invalid_parameter_exception(const std::string &msg, source_location loc) :
     exception{ msg, "invalid_parameter_exception", loc } { }
 

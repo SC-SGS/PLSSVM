@@ -14,6 +14,7 @@
 #include "plssvm/constants.hpp"                           // plssvm::real_type
 #include "plssvm/detail/assert.hpp"                       // PLSSVM_ASSERT
 #include "plssvm/detail/logging/mpi_log_untracked.hpp"    // plssvm::detail::log_untracked
+#include "plssvm/exceptions/exceptions.hpp"               // plssvm::cmd_parser_exit
 #include "plssvm/mpi/communicator.hpp"                    // plssvm::mpi::communicator
 #include "plssvm/target_platforms.hpp"                    // plssvm::list_available_target_platforms
 #include "plssvm/verbosity_levels.hpp"                    // plssvm::verbosity, plssvm::verbosity_level
@@ -24,7 +25,7 @@
 #include "fmt/format.h"  // fmt::format
 #include "fmt/ranges.h"  // fmt::join
 
-#include <cstdlib>      // std::exit, EXIT_SUCCESS, EXIT_FAILURE, std::atexit
+#include <cstdlib>      // EXIT_SUCCESS, EXIT_FAILURE
 #include <exception>    // std::exception
 #include <filesystem>   // std::filesystem::path
 #include <iostream>     // std::cout, std::cerr, std::endl
@@ -37,13 +38,6 @@ parser_predict::parser_predict(const mpi::communicator &comm, int argc, char **a
     // check for basic argc and argv correctness
     PLSSVM_ASSERT(argc >= 1, fmt::format("At least one argument is always given (the executable name), but argc is {}!", argc));
     PLSSVM_ASSERT(argv != nullptr, "At least one argument is always given (the executable name), but argv is a nullptr!");
-
-    // register a std::atexit handler since our parser may directly call std::exit
-    std::atexit([]() {
-        if (mpi::is_active()) {
-            mpi::finalize();
-        }
-    });
 
     // setup command line parser with all available options
     cxxopts::Options options("plssvm-predict", "LS-SVM with multiple (GPU-)backends");
@@ -89,7 +83,7 @@ parser_predict::parser_predict(const mpi::communicator &comm, int argc, char **a
             std::cerr << fmt::format(fmt::fg(fmt::color::red), "ERROR: {}\n", e.what()) << std::endl;
             std::cout << options.help() << std::endl;
         }
-        std::exit(EXIT_FAILURE);
+        throw cmd_parser_exit{ EXIT_FAILURE };
     }
 
     // print help message and exit
@@ -97,7 +91,7 @@ parser_predict::parser_predict(const mpi::communicator &comm, int argc, char **a
         if (comm.is_main_rank()) {
             std::cout << options.help() << std::endl;
         }
-        std::exit(EXIT_SUCCESS);
+        throw cmd_parser_exit{ EXIT_SUCCESS };
     }
 
     // print version info
@@ -105,7 +99,7 @@ parser_predict::parser_predict(const mpi::communicator &comm, int argc, char **a
         if (comm.is_main_rank()) {
             std::cout << version::detail::get_version_info("plssvm-predict") << std::endl;
         }
-        std::exit(EXIT_SUCCESS);
+        throw cmd_parser_exit{ EXIT_SUCCESS };
     }
 
     // check if the number of positional arguments is not too large
@@ -114,7 +108,7 @@ parser_predict::parser_predict(const mpi::communicator &comm, int argc, char **a
             std::cerr << fmt::format(fmt::fg(fmt::color::red), "ERROR: only up to three positional options may be given, but {} (\"{}\") additional option(s) where provided!", result.unmatched().size(), fmt::join(result.unmatched(), " ")) << std::endl;
             std::cout << options.help() << std::endl;
         }
-        std::exit(EXIT_FAILURE);
+        throw cmd_parser_exit{ EXIT_FAILURE };
     }
 
     // parse backend_type and cast the value to the respective enum
@@ -189,7 +183,7 @@ parser_predict::parser_predict(const mpi::communicator &comm, int argc, char **a
             std::cerr << fmt::format(fmt::fg(fmt::color::red), "ERROR: missing test file!\n") << std::endl;
             std::cout << options.help() << std::endl;
         }
-        std::exit(EXIT_FAILURE);
+        throw cmd_parser_exit{ EXIT_FAILURE };
     }
     input_filename = result["test"].as<decltype(input_filename)>();
 
@@ -199,7 +193,7 @@ parser_predict::parser_predict(const mpi::communicator &comm, int argc, char **a
             std::cerr << fmt::format(fmt::fg(fmt::color::red), "ERROR: missing model file!\n") << std::endl;
             std::cout << options.help() << std::endl;
         }
-        std::exit(EXIT_FAILURE);
+        throw cmd_parser_exit{ EXIT_FAILURE };
     }
     model_filename = result["model"].as<decltype(model_filename)>();
 
@@ -229,7 +223,7 @@ parser_predict::parser_predict(const mpi::communicator &comm, int argc, char **a
                 std::cerr << fmt::format(fmt::fg(fmt::color::red), "ERROR: the number of load balancing weights ({}) must match the number of MPI ranks ({})!\n", mpi_load_balancing_weights.size(), comm.size()) << std::endl;
                 std::cout << options.help() << std::endl;
             }
-            std::exit(EXIT_FAILURE);
+            throw cmd_parser_exit{ EXIT_FAILURE };
         }
     }
 #endif
