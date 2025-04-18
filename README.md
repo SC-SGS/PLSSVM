@@ -316,7 +316,6 @@ If `PLSSVM_ENABLE_PERFORMANCE_TRACKING` is set to `ON`, the following option can
 
 If `PLSSVM_ENABLE_HARDWARE_SAMPLING` is set to `ON`, the following options can also be set:
 
-- `PLSSVM_HARDWARE_SAMPLING_ENABLE_ERROR_CHECKS=ON|OFF` (default: `OFF`): enable some runtime error checks for the hardware sampling libraries
 - `PLSSVM_HARDWARE_SAMPLING_INTERVAL` (default: `100`): the sampling interval for the `plssvm-train`, `plssvm-predict`, and `plssvm-scale` executables in **milliseconds**
 
 If `PLSSVM_ENABLE_LANGUAGE_BINDINGS` is set to `ON`, the following option can also be set:
