@@ -120,6 +120,11 @@ append_local_and_parent(PLSSVM_TARGETS_TO_INSTALL ${PLSSVM_SYCL_BACKEND_LIBRARY_
 # set manpage string
 set_local_and_parent(PLSSVM_SYCL_BACKEND_NAME_LIST "automatic;${PLSSVM_SYCL_BACKEND_FOUND_IMPLEMENTATIONS}")
 
+# populate transformed ACPP_TARGETS for tests
+if (TARGET ${PLSSVM_SYCL_BACKEND_ADAPTIVECPP_LIBRARY_NAME})
+    set_local_and_parent(ACPP_TARGETS "${ACPP_TARGETS}")
+endif ()
+
 # generate summary string
 include(${PROJECT_SOURCE_DIR}/cmake/assemble_summary_string.cmake)
 set(PLSSVM_SYCL_BACKEND_SUMMARY_STRINGS "")

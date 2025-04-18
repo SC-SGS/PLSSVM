@@ -35,6 +35,7 @@ find_package(AdaptiveCpp CONFIG)
 if (AdaptiveCpp_FOUND)
     message(CHECK_PASS "found")
     message(STATUS "Setting ACPP_TARGETS to \"${ACPP_TARGETS}\".")
+    set_local_and_parent(ACPP_TARGETS "${ACPP_TARGETS}")
     append_local_and_parent(PLSSVM_SYCL_BACKEND_FOUND_IMPLEMENTATIONS "adaptivecpp")
 
     # set AdaptiveCpp specific targets
