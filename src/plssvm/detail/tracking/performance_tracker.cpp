@@ -32,11 +32,12 @@
     #include "hws/version.hpp"                  // hws::version::version
 #endif
 
-#include "cxxopts.hpp"   // CXXOPTS__VERSION_MAJOR, CXXOPTS__VERSION_MINOR, CXXOPTS__VERSION_MINOR
-#include "fmt/base.h"    // FMT_VERSION
-#include "fmt/chrono.h"  // format std::chrono types
-#include "fmt/format.h"  // fmt::format
-#include "fmt/ranges.h"  // fmt::join
+#include "cxxopts.hpp"                // CXXOPTS__VERSION_MAJOR, CXXOPTS__VERSION_MINOR, CXXOPTS__VERSION_MINOR
+#include "fast_float/float_common.h"  // FASTFLOAT_VERSION_MAJOR, FASTFLOAT_VERSION_MINOR, FASTFLOAT_VERSION_PATCH
+#include "fmt/base.h"                 // FMT_VERSION
+#include "fmt/chrono.h"               // format std::chrono types
+#include "fmt/format.h"               // fmt::format
+#include "fmt/ranges.h"               // fmt::join
 
 #if __has_include(<unistd.h>)
     #include <unistd.h>  // gethostname, getlogin_r, sysconf, _SC_HOST_NAME_MAX, _SC_LOGIN_NAME_MAX
@@ -340,11 +341,7 @@ void performance_tracker::save(std::ostream &out) {
     constexpr int fmt_version_patch = FMT_VERSION % 10;
     const std::string fmt_version{ fmt::format("{}.{}.{}", fmt_version_major, fmt_version_minor, fmt_version_patch) };
     // fast float version
-#if defined(PLSSVM_fast_float_VERSION)
-    const std::string fast_float_version{ PLSSVM_fast_float_VERSION };
-#else
-    const std::string fast_float_version{ "unknown/external" };
-#endif
+    const std::string fast_float_version{ fmt::format("{}.{}.{}", FASTFLOAT_VERSION_MAJOR, FASTFLOAT_VERSION_MINOR, FASTFLOAT_VERSION_PATCH) };
     // igor version
 #if defined(PLSSVM_igor_VERSION)
     const std::string igor_version{ PLSSVM_igor_VERSION };

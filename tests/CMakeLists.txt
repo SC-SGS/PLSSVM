@@ -7,8 +7,8 @@
 list(APPEND CMAKE_MESSAGE_INDENT "Tests:  ")
 
 # setup testing wit GoogleTest
-set(PLSSVM_googletest_VERSION v1.15.2)
-find_package(GTest 1.15.2 QUIET)
+set(PLSSVM_googletest_VERSION v1.16.0)
+find_package(GTest 1.16.0 QUIET)
 if (GTEST_FOUND)
     message(STATUS "Found package GTest.")
 else ()

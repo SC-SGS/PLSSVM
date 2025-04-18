@@ -663,14 +663,13 @@ else ()
 endif ()
 
 # try finding fast_float
-set(PLSSVM_fast_float_VERSION v6.1.3)
-find_package(fast_float QUIET)
+set(PLSSVM_fast_float_VERSION v8.0.2)
+find_package(fast_float 8.0.0 QUIET)
 if (fast_float_FOUND)
     message(STATUS "Found package fast_float.")
     target_include_directories(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC ${fast_float_INCLUDE_DIR})
 else ()
     message(STATUS "Couldn't find package fast_float. Building version ${PLSSVM_fast_float_VERSION} from source.")
-    target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PRIVATE PLSSVM_fast_float_VERSION="${PLSSVM_fast_float_VERSION}")
     # set options for fast_float
     set(FASTFLOAT_TEST OFF CACHE INTERNAL "" FORCE)
     set(FASTFLOAT_SANITIZE OFF CACHE INTERNAL "" FORCE)
@@ -711,8 +710,8 @@ else ()
 endif ()
 
 # try finding fmt
-set(PLSSVM_fmt_VERSION 11.0.2)
-find_package(fmt 11.0.2 QUIET)
+set(PLSSVM_fmt_VERSION 11.1.4)
+find_package(fmt 11.1.4 QUIET)
 if (fmt_FOUND)
     message(STATUS "Found package fmt.")
 else ()
