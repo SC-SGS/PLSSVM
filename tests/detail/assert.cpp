@@ -27,15 +27,7 @@ TEST(PLSSVMAssert, assert_false) {
     ASSERT_DEATH(PLSSVM_ASSERT(false, "FALSE"), ::testing::ContainsRegex("Assertion '.*false.*' failed!"));
 }
 
-#endif
-
-// check the internal check_assertion function
-TEST(PLSSVMAssert, check_assertion_true) {
-    // calling check assertion with true shouldn't do anything
-    plssvm::detail::check_assertion(true, "", plssvm::source_location::current(), "");
-}
-
-TEST(PLSSVMAssert, check_assertion_false) {
+TEST(PLSSVMAssertDeathTest, check_assertion_false) {
     const auto loc = plssvm::source_location::current();
 
     // test regex
@@ -49,4 +41,12 @@ TEST(PLSSVMAssert, check_assertion_false) {
 
     // calling check assertion with false should abort
     EXPECT_DEATH(plssvm::detail::check_assertion(1 == 2, "1 == 2", loc, "msg {}", 1), ::testing::ContainsRegex(regex));
+}
+
+#endif
+
+// check the internal check_assertion function
+TEST(PLSSVMAssert, check_assertion_true) {
+    // calling check assertion with true shouldn't do anything
+    plssvm::detail::check_assertion(true, "", plssvm::source_location::current(), "");
 }
