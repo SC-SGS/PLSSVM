@@ -77,7 +77,7 @@ else ()
             ${PLSSVM_STDPAR_BACKEND_COMPILER_FLAG}
             -fsycl-targets=spir64_gen
             -Xsycl-target-backend=spir64_gen
-            "-device ${PLSSVM_INTEL_TARGET_ARCHS}"
+            \"-device ${PLSSVM_INTEL_TARGET_ARCHS}\"
         )
     endif ()
 endif ()
