@@ -73,7 +73,7 @@ if (NOT CMAKE_${PLSSVM_HIP_BACKEND_GPU_RUNTIME}_COMPILER)
 endif ()
 
 enable_language(${PLSSVM_HIP_BACKEND_GPU_RUNTIME})
-find_package(HIP REQUIRED)
+find_package(HIP)
 if (NOT HIP_FOUND)
     if (PLSSVM_ENABLE_HIP_BACKEND MATCHES "ON")
         message(SEND_ERROR "Cannot find requested backend: HIP!")
