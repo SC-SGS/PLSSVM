@@ -16,12 +16,9 @@
 #include "plssvm/constants.hpp"              // plssvm::real_type
 #include "plssvm/kernel_function_types.hpp"  // plssvm::kernel_function_type
 
-#if defined(PLSSVM_STDPAR_BACKEND_HAS_INTEL_LLVM)  // TODO: remove after linker error is fixed on AMD GPUs
+// to prevent major headaches on various different platforms with different SYCL compilers, ALWAYS use the SYCL math functions in stdpar kernels
+#if defined(PLSSVM_STDPAR_BACKEND_HAS_INTEL_LLVM) || defined(PLSSVM_STDPAR_BACKEND_HAS_ACPP)
     #include "sycl/sycl.hpp"                       // override std::* math functions
-#endif
-
-#if defined(PLSSVM_STDPAR_BACKEND_HAS_ACPP) && !defined(PLSSVM_STDPAR_BACKEND_ACPP_USE_GENERIC_SSCP)
-    #include "sycl/sycl.hpp"  // override std::* math functions -> std:: math functions only work with the generic SSCP compiler
 #endif
 
 #if defined(PLSSVM_STDPAR_BACKEND_HAS_HIPSTDPAR)
@@ -70,7 +67,7 @@ template <>
  */
 template <>
 [[nodiscard]] inline PLSSVM_STDPAR_KERNEL_FUNCTION real_type feature_reduce<kernel_function_type::laplacian>(const real_type val1, const real_type val2) {
-#if defined(PLSSVM_STDPAR_BACKEND_HAS_INTEL_LLVM) || (defined(PLSSVM_STDPAR_BACKEND_HAS_ACPP) && !defined(PLSSVM_STDPAR_BACKEND_ACPP_USE_GENERIC_SSCP))
+#if defined(PLSSVM_STDPAR_BACKEND_HAS_INTEL_LLVM) || defined(PLSSVM_STDPAR_BACKEND_HAS_ACPP)
     return ::sycl::fabs(val1 - val2);
 #else
     return std::abs(val1 - val2);
@@ -121,7 +118,7 @@ template <>
  */
 template <>
 [[nodiscard]] inline PLSSVM_STDPAR_KERNEL_FUNCTION real_type apply_kernel_function<kernel_function_type::polynomial>(const real_type value, const int degree, const real_type gamma, const real_type coef0) {
-#if defined(PLSSVM_STDPAR_BACKEND_HAS_INTEL_LLVM) || (defined(PLSSVM_STDPAR_BACKEND_HAS_ACPP) && !defined(PLSSVM_STDPAR_BACKEND_ACPP_USE_GENERIC_SSCP))
+#if defined(PLSSVM_STDPAR_BACKEND_HAS_INTEL_LLVM) || defined(PLSSVM_STDPAR_BACKEND_HAS_ACPP)
     return ::sycl::pow(gamma * value + coef0, (real_type) degree);
 #else
     return std::pow(gamma * value + coef0, (real_type) degree);
@@ -136,7 +133,7 @@ template <>
  */
 template <>
 [[nodiscard]] inline PLSSVM_STDPAR_KERNEL_FUNCTION real_type apply_kernel_function<kernel_function_type::rbf>(const real_type value, const real_type gamma) {
-#if defined(PLSSVM_STDPAR_BACKEND_HAS_INTEL_LLVM) || (defined(PLSSVM_STDPAR_BACKEND_HAS_ACPP) && !defined(PLSSVM_STDPAR_BACKEND_ACPP_USE_GENERIC_SSCP))
+#if defined(PLSSVM_STDPAR_BACKEND_HAS_INTEL_LLVM) || defined(PLSSVM_STDPAR_BACKEND_HAS_ACPP)
     return ::sycl::exp(-gamma * value);
 #else
     return std::exp(-gamma * value);
@@ -152,7 +149,7 @@ template <>
  */
 template <>
 [[nodiscard]] inline PLSSVM_STDPAR_KERNEL_FUNCTION real_type apply_kernel_function<kernel_function_type::sigmoid>(const real_type value, const real_type gamma, const real_type coef0) {
-#if defined(PLSSVM_STDPAR_BACKEND_HAS_INTEL_LLVM) || (defined(PLSSVM_STDPAR_BACKEND_HAS_ACPP) && !defined(PLSSVM_STDPAR_BACKEND_ACPP_USE_GENERIC_SSCP))
+#if defined(PLSSVM_STDPAR_BACKEND_HAS_INTEL_LLVM) || defined(PLSSVM_STDPAR_BACKEND_HAS_ACPP)
     return ::sycl::tanh(gamma * value + coef0);
 #else
     return std::tanh(gamma * value + coef0);
@@ -167,7 +164,7 @@ template <>
  */
 template <>
 [[nodiscard]] inline PLSSVM_STDPAR_KERNEL_FUNCTION real_type apply_kernel_function<kernel_function_type::laplacian>(const real_type value, const real_type gamma) {
-#if defined(PLSSVM_STDPAR_BACKEND_HAS_INTEL_LLVM) || (defined(PLSSVM_STDPAR_BACKEND_HAS_ACPP) && !defined(PLSSVM_STDPAR_BACKEND_ACPP_USE_GENERIC_SSCP))
+#if defined(PLSSVM_STDPAR_BACKEND_HAS_INTEL_LLVM) || defined(PLSSVM_STDPAR_BACKEND_HAS_ACPP)
     return ::sycl::exp(-gamma * value);
 #else
     return std::exp(-gamma * value);
@@ -182,7 +179,7 @@ template <>
  */
 template <>
 [[nodiscard]] inline PLSSVM_STDPAR_KERNEL_FUNCTION real_type apply_kernel_function<kernel_function_type::chi_squared>(const real_type value, const real_type gamma) {
-#if defined(PLSSVM_STDPAR_BACKEND_HAS_INTEL_LLVM) || (defined(PLSSVM_STDPAR_BACKEND_HAS_ACPP) && !defined(PLSSVM_STDPAR_BACKEND_ACPP_USE_GENERIC_SSCP))
+#if defined(PLSSVM_STDPAR_BACKEND_HAS_INTEL_LLVM) || defined(PLSSVM_STDPAR_BACKEND_HAS_ACPP)
     return ::sycl::exp(-gamma * value);
 #else
     return std::exp(-gamma * value);
