@@ -362,6 +362,10 @@ If the stdpar backend is available, an additional options can be set.
 
 - `PLSSVM_STDPAR_BACKEND_IMPLEMENTATION` (default: `AUTO`): explicitly specify the used stdpar implementation; must be one of: `AUTO`, `NVHPC`, `roc-stdpar`, `IntelLLVM`, `ACPP`, `GNU_TBB`.
 
+If the stdpar implementation is AdaptiveCpp, the following additional option is available:
+
+- `PLSSVM_STDPAR_BACKEND_ADAPTIVECPP_USE_GENERIC_SSCP` (default: `ON`): use AdaptiveCpp's new SSCP compilation flow
+
 #### CMake presets
 
 We also provide a number of basic CMake presets. We currently have `configure`, `build`, `test`, and `workflow` presets. 
