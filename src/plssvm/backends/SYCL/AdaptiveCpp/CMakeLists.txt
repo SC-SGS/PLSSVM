@@ -7,7 +7,7 @@
 message(CHECK_START "Checking for AdaptiveCpp as SYCL implementation")
 
 # we ignore ACPP_TARGETS and overwrite it with our own values
-if (DEFINED ENV{ACPP_TARGETS})
+if (DEFINED ENV{ACPP_TARGETS} OR DEFINED ACPP_TARGETS)
     message(WARNING "The environment variable \"ACPP_TARGETS\" is set but will be ignored and overwritten by the values provided via \"PLSSVM_TARGET_PLATFORMS\".")
 endif ()
 
