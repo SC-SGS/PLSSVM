@@ -775,7 +775,7 @@ template <typename T, typename Tuple>
 
 /**
  * @brief Call the function @p func for each type in the @p Variant.
- * @brief The function @p func must have a templated overload of the `operator()()` function.
+ * @details The function @p func must have a templated overload of the `operator()()` function.
  * @tparam Variant the type of the std::variant
  * @tparam Func the type of the function to apply
  * @tparam Index the current index of the type the function should be applied to
