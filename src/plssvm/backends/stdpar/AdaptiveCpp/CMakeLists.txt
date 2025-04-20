@@ -33,6 +33,11 @@ else ()
     return()
 endif ()
 
+# we ignore ACPP_TARGETS and overwrite it with our own values
+if (DEFINED ENV{ACPP_TARGETS})
+    message(WARNING "The environment variable \"ACPP_TARGETS\" is set but will be ignored and overwritten by the values provided via \"PLSSVM_TARGET_PLATFORMS\".")
+endif ()
+
 option(PLSSVM_STDPAR_BACKEND_ACPP_USE_GENERIC_SSCP "Enables the generic SSCP target for new AdaptiveCpp versions." ON)
 
 if (PLSSVM_STDPAR_BACKEND_ACPP_USE_GENERIC_SSCP)
