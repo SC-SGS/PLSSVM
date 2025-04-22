@@ -801,10 +801,7 @@ INSTANTIATE_TYPED_TEST_SUITE_P(KokkosCSVM, GenericCSVMSolverKernelFunction, kokk
 // generic C-SVC tests
 INSTANTIATE_TYPED_TEST_SUITE_P(KokkosCSVC, GenericCSVC, kokkos_csvm_test_type_gtest, naming::test_parameter_to_name);
 INSTANTIATE_TYPED_TEST_SUITE_P(KokkosCSVC, GenericCSVCKernelFunctionClassification, kokkos_classification_label_type_kernel_function_and_classification_type_gtest, naming::test_parameter_to_name);
-#if !defined(KOKKOS_ENABLE_CUDA)
-// testcase doesn't compile with Kokkos::Cuda's nvcc due to template instantiation limits
 INSTANTIATE_TYPED_TEST_SUITE_P(KokkosCSVC, GenericCSVCSolverKernelFunctionClassification, kokkos_classification_label_type_solver_kernel_function_and_classification_type_gtest, naming::test_parameter_to_name);
-#endif
 // generic C-SVR tests
 INSTANTIATE_TYPED_TEST_SUITE_P(KokkosCSVR, GenericCSVR, kokkos_csvm_test_type_gtest, naming::test_parameter_to_name);
 INSTANTIATE_TYPED_TEST_SUITE_P(KokkosCSVR, GenericCSVRKernelFunction, kokkos_regression_label_type_and_kernel_function_type_gtest, naming::test_parameter_to_name);

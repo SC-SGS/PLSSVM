@@ -26,13 +26,10 @@ find_package(Kokkos REQUIRED)
 # add test executable
 add_executable(${PLSSVM_KOKKOS_TEST_NAME} ${CMAKE_CURRENT_LIST_DIR}/../../main.cpp ${PLSSVM_KOKKOS_TEST_SOURCES})
 
-if (Kokkos_ENABLE_CUDA)
-    # fix template limit when using Kokkos::Cuda
-    target_compile_options(${PLSSVM_KOKKOS_TEST_NAME} PRIVATE -Xcudafe --pending_instantiations=0)
-
+if (Kokkos_ENABLE_CUDA AND NOT CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
     # tests won't compile with nvcc
     if (NOT PLSSVM_TEST_WITH_REDUCED_LABEL_TYPES)
-        message(FATAL_ERROR "Due to template instantiation limits within nvcc, only reduced label type tests are currently supported!")
+        message(FATAL_ERROR "Due to template instantiation limits within nvcc, only reduced label type tests are currently supported! Alternatively, compile Kokkos CUDA with clang. ")
     endif ()
 endif ()
 
