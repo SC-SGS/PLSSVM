@@ -97,10 +97,10 @@ if (Kokkos_ENABLE_SYCL)
                 )
             endif ()
             target_compile_options(
-                ${PLSSVM_KOKKOS_BACKEND_LIBRARY_NAME} PRIVATE -Xsycl-target-backend=nvptx64-nvidia-cuda --offload-arch=${PLSSVM_NVIDIA_TARGET_ARCHS}
+                ${PLSSVM_KOKKOS_BACKEND_LIBRARY_NAME} PRIVATE -Xsycl-target-backend=nvptx64-nvidia-cuda --cuda-gpu-arch=${PLSSVM_NVIDIA_TARGET_ARCHS}
             )
             target_link_options(
-                ${PLSSVM_KOKKOS_BACKEND_LIBRARY_NAME} PRIVATE -Xsycl-target-backend=nvptx64-nvidia-cuda --offload-arch=${PLSSVM_NVIDIA_TARGET_ARCHS}
+                ${PLSSVM_KOKKOS_BACKEND_LIBRARY_NAME} PRIVATE -Xsycl-target-backend=nvptx64-nvidia-cuda --cuda-gpu-arch=${PLSSVM_NVIDIA_TARGET_ARCHS}
             )
         endif ()
         if (DEFINED PLSSVM_INTEL_TARGET_ARCHS)
