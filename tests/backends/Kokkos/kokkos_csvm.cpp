@@ -210,7 +210,13 @@ TYPED_TEST(KokkosCSVMConstructor, construct_execution_space_and_parameter) {  //
 
 #if defined(KOKKOS_ENABLE_SYCL)
     // explicitly providing the SYCL execution space should work
-    EXPECT_NO_THROW((csvm_type{ params, plssvm::kokkos_execution_space = plssvm::kokkos::execution_space::sycl }));
+    if (target_is_available(plssvm::target_platform::gpu_nvidia) || target_is_available(plssvm::target_platform::gpu_amd) || target_is_available(plssvm::target_platform::gpu_intel)) {
+        EXPECT_NO_THROW((csvm_type{ params, plssvm::kokkos_execution_space = plssvm::kokkos::execution_space::sycl }));
+    } else {
+        EXPECT_THROW_WHAT((csvm_type{ params, plssvm::kokkos_execution_space = plssvm::kokkos::execution_space::sycl }),
+                          plssvm::kokkos::backend_exception,
+                          "Couldn't find a valid target_platform for the Kokkos::ExecutionSpace SYCL!");
+    }
 #else
     EXPECT_THROW_WHAT((csvm_type{ params, plssvm::kokkos_execution_space = plssvm::kokkos::execution_space::sycl }),
                       plssvm::kokkos::backend_exception,
@@ -549,7 +555,13 @@ TYPED_TEST(KokkosCSVMConstructor, construct_execution_space_and_named_args) {  /
 
 #if defined(KOKKOS_ENABLE_SYCL)
     // explicitly providing the SYCL execution space should work
-    EXPECT_NO_THROW((csvm_type{ plssvm::kernel_type = plssvm::kernel_function_type::linear, plssvm::cost = 2.0, plssvm::kokkos_execution_space = plssvm::kokkos::execution_space::sycl }));
+    if (target_is_available(plssvm::target_platform::gpu_nvidia) || target_is_available(plssvm::target_platform::gpu_amd) || target_is_available(plssvm::target_platform::gpu_intel)) {
+        EXPECT_NO_THROW((csvm_type{ plssvm::kernel_type = plssvm::kernel_function_type::linear, plssvm::cost = 2.0, plssvm::kokkos_execution_space = plssvm::kokkos::execution_space::sycl }));
+    } else {
+        EXPECT_THROW_WHAT((csvm_type{ plssvm::kernel_type = plssvm::kernel_function_type::linear, plssvm::cost = 2.0, plssvm::kokkos_execution_space = plssvm::kokkos::execution_space::sycl }),
+                          plssvm::kokkos::backend_exception,
+                          "Couldn't find a valid target_platform for the Kokkos::ExecutionSpace SYCL!");
+    }
 #else
     EXPECT_THROW_WHAT((csvm_type{ plssvm::kernel_type = plssvm::kernel_function_type::linear, plssvm::cost = 2.0, plssvm::kokkos_execution_space = plssvm::kokkos::execution_space::sycl }),
                       plssvm::kokkos::backend_exception,

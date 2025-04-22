@@ -79,9 +79,7 @@ std::vector<device_wrapper> get_device_list(const execution_space space, [[maybe
                 for (const auto &platform : ::sycl::platform::get_platforms()) {
                     for (const auto &device : platform.get_devices()) {
                         // Note: Kokkos is IntelLLVM/DPC++/icpx only
-                        if (device.is_cpu() && target == target_platform::cpu) {
-                            devices.emplace_back(Kokkos::SYCL{ ::sycl::queue{ device, props } });
-                        } else if (device.is_gpu()) {
+                        if (device.is_gpu()) {
                             // the current device is a GPU
                             // get vendor string and convert it to all lower case
                             const std::string vendor_string = ::plssvm::detail::as_lower_case(device.get_info<::sycl::info::device::vendor>());
