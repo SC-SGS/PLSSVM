@@ -365,6 +365,13 @@ If the stdpar backend is available, an additional options can be set.
 If the stdpar implementation is AdaptiveCpp, the following additional option is available:
 
 - `PLSSVM_STDPAR_BACKEND_ADAPTIVECPP_USE_GENERIC_SSCP` (default: `ON`): use AdaptiveCpp's new SSCP compilation flow
+- 
+If the stdpar implementation is roc-stdpar, the following additional option is available:
+
+- `PLSSVM_STDPAR_BACKEND_ROCSTDPAR_USE_INTERPOSE_ALLOC=ON|OFF|AUTO` (default: `AUTO`):
+    - `ON`: always set the `--hipstdpar-interpose-alloc` compiler flag
+    - `AUTO`: only set the `--hipstdpar-interpose-alloc` compiler flag if the environment variable `HSA_XNACK` is not defined or set to `0`
+    - `OFF`: never set the `--hipstdpar-interpose-alloc` compiler flag
 
 #### CMake presets
 
