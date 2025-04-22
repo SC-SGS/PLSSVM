@@ -59,6 +59,11 @@ if ((PLSSVM_STDPAR_BACKEND_ROCSTDPAR_USE_INTERPOSE_ALLOC MATCHES "AUTO" AND PLSS
     message(STATUS "Using the --hipstdpar-interpose-alloc compiler flag. "
             "Note: this may result in the test not being able to run!")
     set_local_and_parent(PLSSVM_STDPAR_BACKEND_COMPILER_FLAG "${PLSSVM_STDPAR_BACKEND_COMPILER_FLAG} --hipstdpar-interpose-alloc")
+    
+    # the --hipstdpar-interpose-alloc is not supported together with hardware sampling
+    if (PLSSVM_ENABLE_HARDWARE_SAMPLING)
+        message(WARNING "Hardware sampling is enabled together with the --hipstdpar-interpose-alloc compiler flag. This will most likely result in runtime errors. Either disable hardware sampling or the interpose alloc compiler flag!")
+    endif ()
 endif ()
 
 if (PLSSVM_ENABLE_FAST_MATH)
