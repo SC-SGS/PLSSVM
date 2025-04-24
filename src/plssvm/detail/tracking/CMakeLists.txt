@@ -34,7 +34,6 @@ if (PLSSVM_ENABLE_HARDWARE_SAMPLING)
     if (hws_FOUND)
         message(STATUS "Found package hws.")
     else ()
-        set(PLSSVM_)
         message(STATUS "Couldn't find package hws. Building version ${PLSSVM_hws_VERSION} from source.")
         # always try to sample CPU information
         set(HWS_ENABLE_CPU_SAMPLING AUTO CACHE INTERNAL "" FORCE)
