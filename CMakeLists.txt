@@ -952,7 +952,7 @@ write_basic_package_version_file(
     COMPATIBILITY SameMajorVersion
 )
 
-# generate configuration file
+# generate configuration files
 configure_package_config_file(
     "${CMAKE_CURRENT_SOURCE_DIR}/cmake/plssvm/plssvmConfig.cmake.in" "${PROJECT_BINARY_DIR}/plssvmConfig.cmake"
     INSTALL_DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/plssvm/cmake
@@ -960,6 +960,15 @@ configure_package_config_file(
 configure_package_config_file(
     "${CMAKE_CURRENT_SOURCE_DIR}/cmake/plssvm/plssvmHIPTargets.cmake.in" "${PROJECT_BINARY_DIR}/plssvmHIPTargets.cmake"
     INSTALL_DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/plssvm/cmake
+)
+configure_package_config_file(
+        "${CMAKE_CURRENT_SOURCE_DIR}/cmake/plssvm/plssvmAdaptiveCppTargets.cmake.in" "${PROJECT_BINARY_DIR}/plssvmAdaptiveCppTargets.cmake"
+        INSTALL_DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/plssvm/cmake
+)
+string(REPLACE "\"" "\\\"" PLSSVM_ESCAPED_CXX_FLAGS "${CMAKE_CXX_FLAGS}") # necessary to correctly escape quotes
+configure_package_config_file(
+        "${CMAKE_CURRENT_SOURCE_DIR}/cmake/plssvm/plssvmstdparTargets.cmake.in" "${PROJECT_BINARY_DIR}/plssvmstdparTargets.cmake"
+        INSTALL_DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/plssvm/cmake
 )
 
 # create and copy install-targets file
@@ -979,9 +988,9 @@ install(
           "${CMAKE_CURRENT_SOURCE_DIR}/cmake/plssvm/plssvmOpenCLTargets.cmake"
           "${CMAKE_CURRENT_SOURCE_DIR}/cmake/plssvm/plssvmOpenMPTargets.cmake"
           "${CMAKE_CURRENT_SOURCE_DIR}/cmake/plssvm/plssvmHPXTargets.cmake"
-          "${CMAKE_CURRENT_SOURCE_DIR}/cmake/plssvm/plssvmAdaptiveCppTargets.cmake"
+          "${PROJECT_BINARY_DIR}/plssvmAdaptiveCppTargets.cmake"
           "${CMAKE_CURRENT_SOURCE_DIR}/cmake/plssvm/plssvmDPCPPTargets.cmake"
           "${CMAKE_CURRENT_SOURCE_DIR}/cmake/plssvm/plssvmKokkosTargets.cmake"
-          "${CMAKE_CURRENT_SOURCE_DIR}/cmake/plssvm/plssvmstdparTargets.cmake"
+          "${PROJECT_BINARY_DIR}/plssvmstdparTargets.cmake"
     DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/plssvm/cmake
 )

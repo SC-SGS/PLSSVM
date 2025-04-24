@@ -10,6 +10,9 @@ include(CMakeFindDependencyMacro)
 if (TARGET plssvm::plssvm-SYCL_adaptivecpp)
     # enable AdaptiveCpp
     find_dependency(AdaptiveCpp CONFIG)
+    # set ACPP_TARGETS
+    set(ACPP_TARGETS "@ACPP_TARGETS@")
+    message(STATUS "Setting ACPP_TARGETS to \"${ACPP_TARGETS}\"")
     # set alias targets
     add_library(plssvm::AdaptiveCpp ALIAS plssvm::plssvm-SYCL_adaptivecpp)
     add_library(plssvm::adaptivecpp ALIAS plssvm::plssvm-SYCL_adaptivecpp)
