@@ -26,7 +26,8 @@ int main() {
         // predict the labels
         const std::vector<plssvm::real_type> predicted_label = svr->predict(model, test_data);
         // output a more complete regression report
-        const std::vector<plssvm::real_type> &correct_label = test_data.labels().value();
+        const auto &labels_opt = test_data.labels();  // std::optional<std::reference_wrapper<std::vector<label_type>>>
+        const std::vector<plssvm::real_type> &correct_label = labels_opt.value().get();
         std::cout << plssvm::regression_report{ correct_label, predicted_label } << std::endl;
 
         // write model file to disk
