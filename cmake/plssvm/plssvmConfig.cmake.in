@@ -7,6 +7,24 @@
 @PACKAGE_INIT@
 
 include(CMakeFindDependencyMacro)
+    # output the available PLSSVM target platforms
+    message(STATUS "The available PLSSVM_TARGET_PLATFORMS are: @PLSSVM_TARGET_PLATFORMS@.")
+    
+    # output the available PLSSVM backends
+    message(STATUS "The available PLSSVM backends are: @PLSSVM_BACKEND_NAME_LIST@.")
+    
+    # output the PLSSVM build type
+    message(STATUS "The PLSSVM library was built in @CMAKE_BUILD_TYPE@ mode.")
+    
+    # output if assertions are enabled
+    if (@PLSSVM_ENABLE_ASSERTS@)
+        message(STATUS "The PLSSVM library was built with asserts enabled.")
+    endif ()
+    
+    # output if performance tracking is enabled
+    if (@PLSSVM_ENABLE_PERFORMANCE_TRACKING@)
+        message(STATUS "The PLSSVM library was built with performance tracking enabled.")
+    endif ()
 
 # check if the OpenMP library is required for the library utilities
 set(PLSSVM_HAS_OPENMP_UTILITY @PLSSVM_FOUND_OPENMP_FOR_UTILITY@)
@@ -24,7 +42,9 @@ endif ()
 set(PLSSVM_HAS_HWS @PLSSVM_ENABLE_HARDWARE_SAMPLING@)
 if (PLSSVM_HAS_HWS)
     find_dependency(hws)
-    message(STATUS "Found hws: TRUE (found version ${hws_VERSION})")
+    if (NOT plssvm_FIND_QUIETLY)
+        message(STATUS "Found hws: TRUE (found version ${hws_VERSION})")
+    endif ()
 endif ()
 
 # always try finding {fmt}
