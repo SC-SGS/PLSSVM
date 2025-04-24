@@ -67,7 +67,7 @@ append_local_and_parent(PLSSVM_STDPAR_SOURCES ${CMAKE_CURRENT_LIST_DIR}/csvm.cpp
 append_local_and_parent(PLSSVM_STDPAR_SOURCES ${CMAKE_CURRENT_LIST_DIR}/../../SYCL/AdaptiveCpp/detail/utility.cpp)
 
 # set global AdaptiveCpp compiler flags
-set_local_and_parent(PLSSVM_STDPAR_BACKEND_COMPILER_FLAG --acpp-stdpar --acpp-targets="${ACPP_TARGETS}" --acpp-stdpar-unconditional-offload)
+set_local_and_parent(PLSSVM_STDPAR_BACKEND_COMPILER_FLAG --acpp-stdpar --acpp-targets=\"${ACPP_TARGETS}\" --acpp-stdpar-unconditional-offload)
 # add flag improving CPU performance if only the CPU target is present
 if (DEFINED PLSSVM_CPU_TARGET_ARCHS AND NOT (DEFINED PLSSVM_NVIDIA_TARGET_ARCHS OR DEFINED PLSSVM_AMD_TARGET_ARCHS OR DEFINED PLSSVM_INTEL_TARGET_ARCHS))
     set_local_and_parent(PLSSVM_STDPAR_BACKEND_COMPILER_FLAG ${PLSSVM_STDPAR_BACKEND_COMPILER_FLAG} --acpp-stdpar-system-usm)
