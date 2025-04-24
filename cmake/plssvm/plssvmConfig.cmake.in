@@ -7,6 +7,8 @@
 @PACKAGE_INIT@
 
 include(CMakeFindDependencyMacro)
+
+if (NOT plssvm_FIND_QUIETLY)
     # output the available PLSSVM target platforms
     message(STATUS "The available PLSSVM_TARGET_PLATFORMS are: @PLSSVM_TARGET_PLATFORMS@.")
     
@@ -25,6 +27,8 @@ include(CMakeFindDependencyMacro)
     if (@PLSSVM_ENABLE_PERFORMANCE_TRACKING@)
         message(STATUS "The PLSSVM library was built with performance tracking enabled.")
     endif ()
+endif()
+
 
 # check if the OpenMP library is required for the library utilities
 set(PLSSVM_HAS_OPENMP_UTILITY @PLSSVM_FOUND_OPENMP_FOR_UTILITY@)
