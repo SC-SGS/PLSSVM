@@ -56,6 +56,8 @@ if (TARGET plssvm::plssvm-stdpar)
             set(plssvm_NOT_FOUND_MESSAGE "The CMAKE_CXX_COMPILER must be set to GNU GCC in user code in order to use plssvm::stdpar!")
             return()
         endif ()
+    else ()
+        message(FATAL_ERROR "Unrecognized stdpar implementation!")
     endif ()
 
     # set alias targets
