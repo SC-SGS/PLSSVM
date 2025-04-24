@@ -24,6 +24,7 @@ endif ()
 set(PLSSVM_HAS_HWS @PLSSVM_ENABLE_HARDWARE_SAMPLING@)
 if (PLSSVM_HAS_HWS)
     find_dependency(hws)
+    message(STATUS "Found hws: TRUE (found version ${hws_VERSION})")
 endif ()
 
 # always try finding {fmt}
