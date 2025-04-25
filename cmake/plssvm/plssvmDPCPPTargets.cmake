@@ -14,7 +14,7 @@ if (TARGET plssvm::plssvm-SYCL_DPCPP)
     # set alias targets
     add_library(plssvm::DPCPP ALIAS plssvm::plssvm-SYCL_DPCPP)
     add_library(plssvm::dpcpp ALIAS plssvm::plssvm-SYCL_DPCPP)
-    
+
     # set COMPONENT to be found
     set(plssvm_DPCPP_FOUND ON)
     if (NOT plssvm_FIND_QUIETLY)
@@ -31,7 +31,7 @@ else ()
     if (NOT plssvm_FIND_OPTIONAL_DPCPP)
         set(plssvm_FOUND OFF)
     endif ()
-    
+
     # if REQUIRED was set in the find_package call, fail
     if (plssvm_FIND_REQUIRED AND NOT plssvm_FIND_OPTIONAL_DPCPP)
         set(plssvm_NOT_FOUND_MESSAGE "Couldn't find required component \"DPCPP\".")

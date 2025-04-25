@@ -29,7 +29,10 @@ add_executable(${PLSSVM_KOKKOS_TEST_NAME} ${CMAKE_CURRENT_LIST_DIR}/../../main.c
 if (Kokkos_ENABLE_CUDA AND NOT CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
     # tests won't compile with nvcc
     if (NOT PLSSVM_TEST_WITH_REDUCED_LABEL_TYPES)
-        message(FATAL_ERROR "Due to template instantiation limits within nvcc, only reduced label type tests are currently supported! Alternatively, compile Kokkos CUDA with clang. ")
+        message(
+            FATAL_ERROR
+                "Due to template instantiation limits within nvcc, only reduced label type tests are currently supported! Alternatively, compile Kokkos CUDA with clang. "
+        )
     endif ()
 endif ()
 

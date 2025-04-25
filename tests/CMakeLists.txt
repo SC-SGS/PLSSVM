@@ -130,10 +130,12 @@ if (PLSSVM_TEST_WITH_REDUCED_LABEL_TYPES)
     message(STATUS "Reducing the number of tested label types.")
     target_compile_definitions(${PLSSVM_BASE_TEST_LIBRARY_NAME} PUBLIC PLSSVM_TEST_WITH_REDUCED_LABEL_TYPES)
 else ()
-    # use all possible label types
-    # currently not supported if nvc++ is the CMAKE_CXX_COMPILER
+    # use all possible label types currently not supported if nvc++ is the CMAKE_CXX_COMPILER
     if (CMAKE_CXX_COMPILER_ID STREQUAL "NVHPC")
-        message(FATAL_ERROR "Full label type test currently not supported with nvc++ as CMAKE_CXX_COMPILER. Please set \"PLSSVM_TEST_WITH_REDUCED_LABEL_TYPES=OFF\" or use another compiler!")
+        message(
+            FATAL_ERROR
+                "Full label type test currently not supported with nvc++ as CMAKE_CXX_COMPILER. Please set \"PLSSVM_TEST_WITH_REDUCED_LABEL_TYPES=OFF\" or use another compiler!"
+        )
     endif ()
 endif ()
 

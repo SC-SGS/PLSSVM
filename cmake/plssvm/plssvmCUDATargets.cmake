@@ -14,11 +14,11 @@ if (TARGET plssvm::plssvm-CUDA)
     # enable CUDA
     enable_language(CUDA)
     find_dependency(CUDAToolkit)
-    
+
     # set alias targets
     add_library(plssvm::CUDA ALIAS plssvm::plssvm-CUDA)
     add_library(plssvm::cuda ALIAS plssvm::plssvm-CUDA)
-    
+
     # set COMPONENT to be found
     set(plssvm_CUDA_FOUND ON)
     if (NOT plssvm_FIND_QUIETLY)
@@ -35,7 +35,7 @@ else ()
     if (NOT plssvm_FIND_OPTIONAL_CUDA)
         set(plssvm_FOUND OFF)
     endif ()
-    
+
     # if REQUIRED was set in the find_package call, fail
     if (plssvm_FIND_REQUIRED AND NOT plssvm_FIND_OPTIONAL_CUDA)
         set(plssvm_NOT_FOUND_MESSAGE "Couldn't find required component \"CUDA\".")

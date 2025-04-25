@@ -13,11 +13,11 @@ is_component_optional(HPX)
 if (TARGET plssvm::plssvm-HPX)
     # enable HPX
     find_dependency(HPX)
-    
+
     # set alias targets
     add_library(plssvm::HPX ALIAS plssvm::plssvm-HPX)
     add_library(plssvm::hpx ALIAS plssvm::plssvm-HPX)
-    
+
     # set COMPONENT to be found
     set(plssvm_HPX_FOUND ON)
     if (NOT plssvm_FIND_QUIETLY)
@@ -34,7 +34,7 @@ else ()
     if (NOT plssvm_FIND_OPTIONAL_HPX)
         set(plssvm_FOUND OFF)
     endif ()
-    
+
     # if REQUIRED was set in the find_package call, fail
     if (plssvm_FIND_REQUIRED AND NOT plssvm_FIND_OPTIONAL_HPX)
         set(plssvm_NOT_FOUND_MESSAGE "Couldn't find required component \"HPX\".")

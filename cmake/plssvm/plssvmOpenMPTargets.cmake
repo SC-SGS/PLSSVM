@@ -13,11 +13,11 @@ is_component_optional(OpenMP)
 if (TARGET plssvm::plssvm-OpenMP)
     # enable OpenMP
     find_dependency(OpenMP)
-    
+
     # set alias targets
     add_library(plssvm::OpenMP ALIAS plssvm::plssvm-OpenMP)
     add_library(plssvm::openmp ALIAS plssvm::plssvm-OpenMP)
-    
+
     # set COMPONENT to be found
     set(plssvm_OpenMP_FOUND ON)
     if (NOT plssvm_FIND_QUIETLY)
@@ -34,7 +34,7 @@ else ()
     if (NOT plssvm_FIND_OPTIONAL_OpenMP)
         set(plssvm_FOUND OFF)
     endif ()
-    
+
     # if REQUIRED was set in the find_package call, fail
     if (plssvm_FIND_REQUIRED AND NOT plssvm_FIND_OPTIONAL_OpenMP)
         set(plssvm_NOT_FOUND_MESSAGE "Couldn't find required component \"OpenMP\".")

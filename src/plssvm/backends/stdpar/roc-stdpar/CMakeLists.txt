@@ -40,9 +40,7 @@ endif ()
 append_local_and_parent(PLSSVM_STDPAR_SOURCES ${CMAKE_CURRENT_LIST_DIR}/csvm.cpp)
 
 # set global roc-stdpar compiler flags
-set_local_and_parent(
-        PLSSVM_STDPAR_BACKEND_COMPILER_FLAG --hipstdpar --offload-arch=${PLSSVM_AMD_TARGET_ARCHS}
-)
+set_local_and_parent(PLSSVM_STDPAR_BACKEND_COMPILER_FLAG --hipstdpar --offload-arch=${PLSSVM_AMD_TARGET_ARCHS})
 
 # be able to set --hipstdpar-interpose-alloc if necessary
 set(PLSSVM_STDPAR_BACKEND_ROCSTDPAR_USE_INTERPOSE_ALLOC AUTO CACHE STRING "Use the --hipstdpar-interpose-alloc compiler flag")
@@ -55,14 +53,18 @@ elseif ($ENV{HSA_XNACK} EQUAL 0)
     set(PLSSVM_IS_HSA_XNACK_DISABLED ON)
 endif ()
 # set compiler flag accordingly
-if ((PLSSVM_STDPAR_BACKEND_ROCSTDPAR_USE_INTERPOSE_ALLOC MATCHES "AUTO" AND PLSSVM_IS_HSA_XNACK_DISABLED) OR PLSSVM_STDPAR_BACKEND_ROCSTDPAR_USE_INTERPOSE_ALLOC MATCHES "ON")
-    message(STATUS "Using the --hipstdpar-interpose-alloc compiler flag. "
-            "Note: this may result in the test not being able to run!")
+if ((PLSSVM_STDPAR_BACKEND_ROCSTDPAR_USE_INTERPOSE_ALLOC MATCHES "AUTO" AND PLSSVM_IS_HSA_XNACK_DISABLED) OR PLSSVM_STDPAR_BACKEND_ROCSTDPAR_USE_INTERPOSE_ALLOC
+                                                                                                             MATCHES "ON"
+)
+    message(STATUS "Using the --hipstdpar-interpose-alloc compiler flag. " "Note: this may result in the test not being able to run!")
     set_local_and_parent(PLSSVM_STDPAR_BACKEND_COMPILER_FLAG "${PLSSVM_STDPAR_BACKEND_COMPILER_FLAG} --hipstdpar-interpose-alloc")
-    
+
     # the --hipstdpar-interpose-alloc is not supported together with hardware sampling
     if (PLSSVM_ENABLE_HARDWARE_SAMPLING)
-        message(WARNING "Hardware sampling is enabled together with the --hipstdpar-interpose-alloc compiler flag. This will most likely result in runtime errors. Either disable hardware sampling or the interpose alloc compiler flag!")
+        message(
+            WARNING
+                "Hardware sampling is enabled together with the --hipstdpar-interpose-alloc compiler flag. This will most likely result in runtime errors. Either disable hardware sampling or the interpose alloc compiler flag!"
+        )
     endif ()
 endif ()
 

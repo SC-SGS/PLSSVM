@@ -13,11 +13,11 @@ is_component_optional(OpenCL)
 if (TARGET plssvm::plssvm-OpenCL)
     # enable OpenCL
     find_dependency(OpenCL)
-    
+
     # set alias targets
     add_library(plssvm::OpenCL ALIAS plssvm::plssvm-OpenCL)
     add_library(plssvm::opencl ALIAS plssvm::plssvm-OpenCL)
-    
+
     # set COMPONENT to be found
     set(plssvm_OpenCL_FOUND ON)
     if (NOT plssvm_FIND_QUIETLY)
@@ -34,7 +34,7 @@ else ()
     if (NOT plssvm_FIND_OPTIONAL_OpenCL)
         set(plssvm_FOUND OFF)
     endif ()
-    
+
     # if REQUIRED was set in the find_package call, fail
     if (plssvm_FIND_REQUIRED AND NOT plssvm_FIND_OPTIONAL_OpenCL)
         set(plssvm_NOT_FOUND_MESSAGE "Couldn't find required component \"OpenCL\".")

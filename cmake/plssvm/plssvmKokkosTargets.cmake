@@ -13,11 +13,11 @@ is_component_optional(Kokkos)
 if (TARGET plssvm::plssvm-Kokkos)
     # enable Kokkos
     find_dependency(Kokkos CONFIG)
-    
+
     # set alias targets
     add_library(plssvm::Kokkos ALIAS plssvm::plssvm-Kokkos)
     add_library(plssvm::kokkos ALIAS plssvm::plssvm-Kokkos)
-    
+
     # set COMPONENT to be found
     set(plssvm_Kokkos_FOUND ON)
     if (NOT plssvm_FIND_QUIETLY)
@@ -34,7 +34,7 @@ else ()
     if (NOT plssvm_FIND_OPTIONAL_Kokkos)
         set(plssvm_FOUND OFF)
     endif ()
-    
+
     # if REQUIRED was set in the find_package call, fail
     if (plssvm_FIND_REQUIRED AND NOT plssvm_FIND_OPTIONAL_Kokkos)
         set(plssvm_NOT_FOUND_MESSAGE "Couldn't find required component \"Kokkos\".")

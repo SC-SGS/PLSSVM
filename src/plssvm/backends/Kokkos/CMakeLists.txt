@@ -40,7 +40,7 @@ if (Kokkos_ENABLE_SYCL)
     if (NOT CMAKE_CXX_COMPILER_ID STREQUAL "IntelLLVM")
         message(FATAL_ERROR "For Kokkos::SYCL to work, the compiler must be IntelLLVM, but is ${CMAKE_CXX_COMPILER}!")
     endif ()
-    
+
     target_compile_options(${PLSSVM_KOKKOS_BACKEND_LIBRARY_NAME} PRIVATE -sycl-std=2020 -fsycl)
     target_link_options(${PLSSVM_KOKKOS_BACKEND_LIBRARY_NAME} PRIVATE -fsycl)
 

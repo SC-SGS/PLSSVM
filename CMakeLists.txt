@@ -962,13 +962,13 @@ configure_package_config_file(
     INSTALL_DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/plssvm/cmake
 )
 configure_package_config_file(
-        "${CMAKE_CURRENT_SOURCE_DIR}/cmake/plssvm/plssvmAdaptiveCppTargets.cmake.in" "${PROJECT_BINARY_DIR}/plssvmAdaptiveCppTargets.cmake"
-        INSTALL_DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/plssvm/cmake
+    "${CMAKE_CURRENT_SOURCE_DIR}/cmake/plssvm/plssvmAdaptiveCppTargets.cmake.in" "${PROJECT_BINARY_DIR}/plssvmAdaptiveCppTargets.cmake"
+    INSTALL_DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/plssvm/cmake
 )
 string(REPLACE "\"" "\\\"" PLSSVM_ESCAPED_CXX_FLAGS "${CMAKE_CXX_FLAGS}") # necessary to correctly escape quotes
 configure_package_config_file(
-        "${CMAKE_CURRENT_SOURCE_DIR}/cmake/plssvm/plssvmstdparTargets.cmake.in" "${PROJECT_BINARY_DIR}/plssvmstdparTargets.cmake"
-        INSTALL_DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/plssvm/cmake
+    "${CMAKE_CURRENT_SOURCE_DIR}/cmake/plssvm/plssvmstdparTargets.cmake.in" "${PROJECT_BINARY_DIR}/plssvmstdparTargets.cmake"
+    INSTALL_DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/plssvm/cmake
 )
 
 # create and copy install-targets file
