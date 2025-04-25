@@ -6,6 +6,9 @@
 
 include(CMakeFindDependencyMacro)
 
+# check if stdpar is an optional component
+is_component_optional(stdpar)
+
 # check if the stdpar backend is available
 if (TARGET plssvm::plssvm-stdpar)
     # configure variables
@@ -72,10 +75,35 @@ if (TARGET plssvm::plssvm-stdpar)
     endif ()
 
     # set alias targets
+    add_library(plssvm::STDPAR ALIAS plssvm::plssvm-stdpar)
     add_library(plssvm::stdpar ALIAS plssvm::plssvm-stdpar)
+    
     # set COMPONENT to be found
     set(plssvm_stdpar_FOUND ON)
+    if (NOT plssvm_FIND_QUIETLY)
+        if (plssvm_FIND_OPTIONAL_stdpar)
+            message(STATUS "Found optional component \"stdpar\".")
+        else ()
+            message(STATUS "Found component \"stdpar\".")
+        endif ()
+    endif ()
 else ()
     # set COMPONENT to be NOT found
     set(plssvm_stdpar_FOUND OFF)
+    # PLSSVM is only not found if stdpar is NOT an optional component
+    if (NOT plssvm_FIND_OPTIONAL_stdpar)
+        set(plssvm_FOUND OFF)
+    endif ()
+    
+    # if REQUIRED was set in the find_package call, fail
+    if (plssvm_FIND_REQUIRED AND NOT plssvm_FIND_OPTIONAL_stdpar)
+        set(plssvm_NOT_FOUND_MESSAGE "Couldn't find required component \"stdpar\".")
+        return()
+    elseif (NOT plssvm_FIND_QUIETLY)
+        if (plssvm_FIND_OPTIONAL_stdpar)
+            message(STATUS "Couldn't find optional component \"stdpar\".")
+        else ()
+            message(STATUS "Couldn't find component \"stdpar\".")
+        endif ()
+    endif ()
 endif ()
