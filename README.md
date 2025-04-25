@@ -997,10 +997,9 @@ With a corresponding minimal CMake file:
 ```cmake
 cmake_minimum_required(VERSION 3.25)
 
-project(LibraryUsageExample
-        LANGUAGES CXX)
+project(LibraryUsageExample LANGUAGES CXX)
 
-find_package(plssvm REQUIRED)
+find_package(plssvm CONFIG REQUIRED)
 # CMake's COMPONENTS mechanism can also be used if a specific library component is required, e.g.:
 # find_package(plssvm REQUIRED COMPONENTS CUDA)
 
@@ -1016,10 +1015,10 @@ add_executable(regression_mpi main_regression_mpi.cpp)
 # link PLSSVM against executables
 foreach (target classification classification_mpi regression regression_mpi)
     target_compile_features(${target} PUBLIC cxx_std_17)
-    target_link_libraries(${target} PUBLIC plssvm::plssvm-all)
+    target_link_libraries(${target} PUBLIC plssvm::plssvm)
+    # can also only link against a single library component, e.g.:
+    # target_link_libraries(${target} PUBLIC plssvm::cuda)
 endforeach ()
-# can also only link against a single library component, e.g.:
-# target_link_libraries(prog PUBLIC plssvm::cuda)
 ```
 
 The `examples/python` directory contains the same examples using our PLSSVM Python bindings. 
