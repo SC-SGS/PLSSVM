@@ -477,7 +477,7 @@ template <typename matrix_type, typename real_type = typename matrix_type::value
  * @return the randomly generated matrix (`[[nodiscard]]`)
  */
 template <typename matrix_type, typename real_type = typename matrix_type::value_type>
-[[nodiscard]] inline matrix_type generate_random_matrix(const plssvm::shape shape, const plssvm::shape padding, const std::pair<real_type, real_type> range = { static_cast<real_type>(-1.0), static_cast<real_type>(1.0)  }) {
+[[nodiscard]] inline matrix_type generate_random_matrix(const plssvm::shape shape, const plssvm::shape padding, const std::pair<real_type, real_type> range = { static_cast<real_type>(-1.0), static_cast<real_type>(1.0) }) {
     return matrix_type{ generate_random_matrix<matrix_type>(shape, range), padding };
 }
 

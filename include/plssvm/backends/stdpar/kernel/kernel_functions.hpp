@@ -18,7 +18,7 @@
 
 // to prevent major headaches on various different platforms with different SYCL compilers, ALWAYS use the SYCL math functions in stdpar kernels
 #if defined(PLSSVM_STDPAR_BACKEND_HAS_INTEL_LLVM) || defined(PLSSVM_STDPAR_BACKEND_HAS_ACPP)
-    #include "sycl/sycl.hpp"                       // override std::* math functions
+    #include "sycl/sycl.hpp"  // override std::* math functions
 #endif
 
 #if defined(PLSSVM_STDPAR_BACKEND_HAS_HIPSTDPAR)

@@ -48,8 +48,8 @@ TEST(MPIDataTypes, mpi_datatype) {
     EXPECT_EQ(plssvm::mpi::detail::mpi_datatype<std::complex<long double>>(), MPI_C_LONG_DOUBLE_COMPLEX);
 }
 
-enum class dummy1 : int {};
-enum class dummy2 : char {};
+enum class dummy1 : int { };
+enum class dummy2 : char { };
 
 TEST(MPIDataTypes, mpi_datatype_from_enum) {
     // check type conversions from enum's underlying type
