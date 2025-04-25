@@ -7,10 +7,11 @@
 include(CMakeFindDependencyMacro)
 
 # check if the AdaptiveCpp backend is available
-if (TARGET plssvm::plssvm-SYCL_dpcpp)
+if (TARGET plssvm::plssvm-SYCL_DPCPP)
     # set alias targets
-    add_library(plssvm::DPCPP ALIAS plssvm::plssvm-SYCL_dpcpp)
-    add_library(plssvm::dpcpp ALIAS plssvm::plssvm-SYCL_dpcpp)
+    add_library(plssvm::DPCPP ALIAS plssvm::plssvm-SYCL_DPCPP)
+    add_library(plssvm::dpcpp ALIAS plssvm::plssvm-SYCL_DPCPP)
+    
     # set COMPONENT to be found
     set(plssvm_DPCPP_FOUND ON)
 else ()
