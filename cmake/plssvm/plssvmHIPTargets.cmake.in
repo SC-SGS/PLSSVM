@@ -16,7 +16,9 @@ if (TARGET plssvm::plssvm-HIP)
         message(STATUS "Using @PLSSVM_HIP_BACKEND_GPU_RUNTIME@ as HIP runtime.")
     endif ()
     enable_language(@PLSSVM_HIP_BACKEND_GPU_RUNTIME@)
-    find_dependency(HIP REQUIRED)
+    if (@PLSSVM_HIP_BACKEND_GPU_RUNTIME@ STREQUAL "HIP")
+        find_dependency(HIP REQUIRED)
+    endif ()
     
     # set alias targets
     add_library(plssvm::HIP ALIAS plssvm::plssvm-HIP)

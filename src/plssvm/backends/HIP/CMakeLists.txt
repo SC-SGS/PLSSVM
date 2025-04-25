@@ -73,6 +73,7 @@ if (NOT CMAKE_${PLSSVM_HIP_BACKEND_GPU_RUNTIME}_COMPILER)
 endif ()
 
 enable_language(${PLSSVM_HIP_BACKEND_GPU_RUNTIME})
+# always necessary (also with HIP_PLATFORM nvidia) in order to be able to link against hip:: targets
 find_package(HIP)
 if (NOT HIP_FOUND)
     if (PLSSVM_ENABLE_HIP_BACKEND MATCHES "ON")
