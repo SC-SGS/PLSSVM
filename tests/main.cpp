@@ -15,6 +15,11 @@
 
 #include <cstdlib>  // std::atexit
 
+#ifdef __clang__
+    #pragma clang diagnostic push
+    #pragma clang diagnostic ignored "-Wunused-variable"
+#endif
+
 // silence GTest warnings/test errors
 
 // generic C-SVM tests
@@ -50,6 +55,10 @@ GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(DevicePtrLayout);
 GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(DevicePtrDeathTest);
 // exception tests
 GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(Exception);
+
+#ifdef __clang__
+    #pragma clang diagnostic pop
+#endif
 
 static void ensure_finalization() {
     plssvm::environment::finalize();
