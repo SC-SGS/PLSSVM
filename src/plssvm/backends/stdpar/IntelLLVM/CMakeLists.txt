@@ -45,43 +45,20 @@ append_local_and_parent(PLSSVM_STDPAR_SOURCES ${CMAKE_CURRENT_LIST_DIR}/../../SY
 # set global IntelLLVM compiler flags
 if (DEFINED PLSSVM_CPU_TARGET_ARCHS)
     message(STATUS "CPU target platform provided, setting: \"-fsycl-pstl-offload=cpu\"")
-    set_local_and_parent(PLSSVM_STDPAR_BACKEND_COMPILER_FLAG -fsycl -fsycl-pstl-offload=cpu -fsycl-targets=spir64_x86_64)
-    if (PLSSVM_NUM_CPU_TARGET_ARCHS EQUAL 1)
-        set_local_and_parent(
-            PLSSVM_STDPAR_BACKEND_COMPILER_FLAG ${PLSSVM_STDPAR_BACKEND_COMPILER_FLAG} -Xsycl-target-backend=spir64_x86_64 "-march=${PLSSVM_CPU_TARGET_ARCHS}"
-        )
-    endif ()
+    set_local_and_parent(PLSSVM_STDPAR_BACKEND_COMPILER_FLAG -fsycl -fsycl-pstl-offload=cpu)
 else ()
     message(STATUS "A GPU target platform provided, setting: \"-fsycl-pstl-offload=gpu\"")
     set_local_and_parent(PLSSVM_STDPAR_BACKEND_COMPILER_FLAG -fsycl -fsycl-pstl-offload=gpu)
-
-    if (DEFINED PLSSVM_NVIDIA_TARGET_ARCHS)
-        set_local_and_parent(
-            PLSSVM_STDPAR_BACKEND_COMPILER_FLAG
-            ${PLSSVM_STDPAR_BACKEND_COMPILER_FLAG}
-            -fsycl-targets=nvptx64-nvidia-cuda
-            -Xsycl-target-backend=nvptx64-nvidia-cuda
-            --offload-arch=${PLSSVM_NVIDIA_TARGET_ARCHS}
-        )
-    elseif (DEFINED PLSSVM_AMD_TARGET_ARCHS)
-        set_local_and_parent(
-            PLSSVM_STDPAR_BACKEND_COMPILER_FLAG
-            ${PLSSVM_STDPAR_BACKEND_COMPILER_FLAG}
-            -fsycl-targets=amdgcn-amd-amdhsa
-            -Xsycl-target-backend=amdgcn-amd-amdhsa
-            --offload-arch=${PLSSVM_AMD_TARGET_ARCHS}
-        )
-    elseif (DEFINED PLSSVM_INTEL_TARGET_ARCHS)
-        set_local_and_parent(
-            PLSSVM_STDPAR_BACKEND_COMPILER_FLAG
-            ${PLSSVM_STDPAR_BACKEND_COMPILER_FLAG}
-            -fsycl-targets=spir64_gen
-            -Xsycl-target-backend=spir64_gen
-            \"-device
-            ${PLSSVM_INTEL_TARGET_ARCHS}\"
-        )
-    endif ()
 endif ()
+
+# assemble the icpx specific compiler flags and add them to the dummy target -> later used to retrieve them
+include(${PROJECT_SOURCE_DIR}/cmake/assemble_icpx_sycl_target_flags.cmake)
+set(PLSSVM_STDPAR_BACKEND_DUMMY_TARGET plssvm-stdpar-intel_llvm-dummy)
+add_library(${PLSSVM_STDPAR_BACKEND_DUMMY_TARGET} INTERFACE)
+assemble_icpx_sycl_target_flags(${PLSSVM_STDPAR_BACKEND_DUMMY_TARGET} INTERFACE)
+get_target_property(PLSSVM_STDPAR_BACKEND_INTELLLVM_COMPILER_FLAG ${PLSSVM_STDPAR_BACKEND_DUMMY_TARGET} INTERFACE_COMPILE_OPTIONS)
+set_local_and_parent(PLSSVM_STDPAR_BACKEND_COMPILER_FLAG ${PLSSVM_STDPAR_BACKEND_COMPILER_FLAG} ${PLSSVM_STDPAR_BACKEND_INTELLLVM_COMPILER_FLAG})
+
 if (PLSSVM_ENABLE_FAST_MATH)
     set_local_and_parent(PLSSVM_STDPAR_BACKEND_COMPILER_FLAG ${PLSSVM_STDPAR_BACKEND_COMPILER_FLAG} -ffast-math)
 else ()

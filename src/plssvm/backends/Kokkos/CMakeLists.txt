@@ -41,77 +41,20 @@ if (Kokkos_ENABLE_SYCL)
         message(FATAL_ERROR "For Kokkos::SYCL to work, the compiler must be IntelLLVM, but is ${CMAKE_CXX_COMPILER}!")
     endif ()
 
+    if (PLSSVM_ENABLE_FAST_MATH)
+        target_compile_options(PLSSVM_KOKKOS_BACKEND_LIBRARY_NAME PRIVATE -ffast-math)
+    else ()
+        # icpx does compile with fast-math by default -> explicitly disable it if not requested otherwise!
+        target_compile_options(PLSSVM_KOKKOS_BACKEND_LIBRARY_NAME PRIVATE -fno-fast-math)
+    endif ()
+
     target_compile_options(${PLSSVM_KOKKOS_BACKEND_LIBRARY_NAME} PRIVATE -sycl-std=2020 -fsycl)
     target_link_options(${PLSSVM_KOKKOS_BACKEND_LIBRARY_NAME} PRIVATE -fsycl)
-
-    # set icpx specific compiler flags based on the provided PLSSVM_TARGET_PLATFORMS
-    set(PLSSVM_KOKKOS_SYCL_FSYCL_TARGETS "")
-    # cpu targets
-    if (DEFINED PLSSVM_CPU_TARGET_ARCHS)
-        # assemble -fsycl-targets
-        list(APPEND PLSSVM_KOKKOS_SYCL_FSYCL_TARGETS "spir64_x86_64")
-    endif ()
-    # nvidia targets
-    if (DEFINED PLSSVM_NVIDIA_TARGET_ARCHS)
-        # assemble -fsycl-targets
-        list(APPEND PLSSVM_KOKKOS_SYCL_FSYCL_TARGETS "nvptx64-nvidia-cuda")
-    endif ()
-    # amd targets
-    if (DEFINED PLSSVM_AMD_TARGET_ARCHS)
-        # assemble -fsycl-targets
-        list(APPEND PLSSVM_KOKKOS_SYCL_FSYCL_TARGETS "amdgcn-amd-amdhsa")
-        # add target specific flags for AOT -> must always be specified von amd targets
-        if (NOT PLSSVM_NUM_AMD_TARGET_ARCHS EQUAL 1)
-            message(SEND_ERROR "IntelLLVM currently only supports a single AMD architecture specification but ${PLSSVM_NUM_AMD_TARGET_ARCHS} were provided!")
-        endif ()
-        target_compile_options(${PLSSVM_KOKKOS_BACKEND_LIBRARY_NAME} PRIVATE -Xsycl-target-backend=amdgcn-amd-amdhsa --offload-arch=${PLSSVM_AMD_TARGET_ARCHS})
-        target_link_options(${PLSSVM_KOKKOS_BACKEND_LIBRARY_NAME} PRIVATE -Xsycl-target-backend=amdgcn-amd-amdhsa --offload-arch=${PLSSVM_AMD_TARGET_ARCHS})
-    endif ()
-    # set -fsycl-targets
-    list(JOIN PLSSVM_KOKKOS_SYCL_FSYCL_TARGETS "," PLSSVM_KOKKOS_SYCL_FSYCL_TARGETS_STRING)
-    if (NOT PLSSVM_KOKKOS_SYCL_FSYCL_TARGETS STREQUAL "")
-        target_compile_options(${PLSSVM_KOKKOS_BACKEND_LIBRARY_NAME} PRIVATE -fsycl-targets=${PLSSVM_KOKKOS_SYCL_FSYCL_TARGETS_STRING})
-        target_link_options(${PLSSVM_KOKKOS_BACKEND_LIBRARY_NAME} PRIVATE -fsycl-targets=${PLSSVM_KOKKOS_SYCL_FSYCL_TARGETS_STRING})
-    endif ()
-
-    # add option for IntelLLVM Ahead-of-Time (AOT) compilation
-    option(PLSSVM_KOKKOS_BACKEND_INTEL_LLVM_ENABLE_AOT "Enables Ahead-of-Time compilation for the Kokkos::SYCL execution space using IntelLLVM." ON)
-    if (PLSSVM_KOKKOS_BACKEND_INTEL_LLVM_ENABLE_AOT)
-        message(STATUS "Enabled Ahead-of-Time (AOT) compilation for the Kokkos::SYCL execution space using IntelLLVM.")
-        target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PRIVATE PLSSVM_KOKKOS_BACKEND_INTEL_LLVM_ENABLE_AOT)
-        target_compile_definitions(${PLSSVM_KOKKOS_BACKEND_LIBRARY_NAME} PUBLIC PLSSVM_KOKKOS_BACKEND_INTEL_LLVM_ENABLE_AOT)
-        # set AOT compiler flags
-        if (DEFINED PLSSVM_CPU_TARGET_ARCHS)
-            # add CPU target specific flags for AOT
-            if (PLSSVM_NUM_CPU_TARGET_ARCHS EQUAL 1)
-                target_compile_options(${PLSSVM_KOKKOS_BACKEND_LIBRARY_NAME} PRIVATE -Xsycl-target-backend=spir64_x86_64 "-march=${PLSSVM_CPU_TARGET_ARCHS}")
-                target_link_options(${PLSSVM_KOKKOS_BACKEND_LIBRARY_NAME} PRIVATE -Xsycl-target-backend=spir64_x86_64 "-march=${PLSSVM_CPU_TARGET_ARCHS}")
-            endif ()
-        endif ()
-        if (DEFINED PLSSVM_NVIDIA_TARGET_ARCHS)
-            # add NVIDIA GPU target specific flags for AOT
-            if (NOT PLSSVM_NUM_NVIDIA_TARGET_ARCHS EQUAL 1)
-                message(
-                    SEND_ERROR
-                        "IntelLLVM currently only supports a single NVIDIA architecture specification for AOT but ${PLSSVM_NUM_NVIDIA_TARGET_ARCHS} were provided!"
-                )
-            endif ()
-            target_compile_options(
-                ${PLSSVM_KOKKOS_BACKEND_LIBRARY_NAME} PRIVATE -Xsycl-target-backend=nvptx64-nvidia-cuda --cuda-gpu-arch=${PLSSVM_NVIDIA_TARGET_ARCHS}
-            )
-            target_link_options(
-                ${PLSSVM_KOKKOS_BACKEND_LIBRARY_NAME} PRIVATE -Xsycl-target-backend=nvptx64-nvidia-cuda --cuda-gpu-arch=${PLSSVM_NVIDIA_TARGET_ARCHS}
-            )
-        endif ()
-        if (DEFINED PLSSVM_INTEL_TARGET_ARCHS)
-            target_compile_options(${PLSSVM_KOKKOS_BACKEND_LIBRARY_NAME} PRIVATE -fsycl-targets=spir64_gen)
-            target_link_options(${PLSSVM_KOKKOS_BACKEND_LIBRARY_NAME} PRIVATE -fsycl-targets=spir64_gen)
-            # add Intel GPU target specific flags for AOT
-            list(JOIN PLSSVM_INTEL_TARGET_ARCHS "," PLSSVM_INTEL_TARGET_ARCHS_STRING)
-            target_compile_options(${PLSSVM_KOKKOS_BACKEND_LIBRARY_NAME} PRIVATE -Xsycl-target-backend=spir64_gen "-device ${PLSSVM_INTEL_TARGET_ARCHS_STRING}")
-            target_link_options(${PLSSVM_KOKKOS_BACKEND_LIBRARY_NAME} PRIVATE -Xsycl-target-backend=spir64_gen "-device ${PLSSVM_INTEL_TARGET_ARCHS_STRING}")
-        endif ()
-    endif ()
+    
+    # assemble the icpx specific compiler flags and add them to the Kokkos backend target
+    # -> Kokkos sets the values for NVIDIA and AMD correctly, but does NOT set AOT for Intel GPUs!
+    include(${PROJECT_SOURCE_DIR}/cmake/assemble_icpx_sycl_target_flags.cmake)
+    assemble_icpx_sycl_target_flags(${PLSSVM_KOKKOS_BACKEND_LIBRARY_NAME} PRIVATE)
 endif ()
 
 # link base library against Kokkos library

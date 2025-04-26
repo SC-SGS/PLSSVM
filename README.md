@@ -350,7 +350,6 @@ To use DPC++/icpx for SYCL, simply set the `CMAKE_CXX_COMPILER` to the respectiv
 
 If the SYCL implementation is DPC++/icpx the following additional options are available:
 
-- `PLSSVM_SYCL_BACKEND_DPCPP_ENABLE_AOT` (default: `ON`): enable Ahead-of-Time (AOT) compilation for the specified target platforms
 - `PLSSVM_SYCL_BACKEND_DPCPP_USE_LEVEL_ZERO` (default: `ON`): use DPC++/icpx's Level-Zero backend instead of its OpenCL backend **(only available if a CPU or Intel GPU is targeted)**
 
 If the SYCL implementation is AdaptiveCpp the following additional option is available:
@@ -361,10 +360,6 @@ If more than one SYCL implementation is available the environment variables `PLS
 **must** be set to the respective SYCL include paths. Note that those paths **must not** be present in the `CPLUS_INCLUDE_PATH` environment variable or compilation will fail.
 
 - `PLSSVM_SYCL_BACKEND_PREFERRED_IMPLEMENTATION` (`dpcpp`|`adaptivecpp`): specify the preferred SYCL implementation if the `sycl_implementation_type` option is set to `automatic`; additional the specified SYCL implementation is used in the `plssvm::sycl` namespace, the other implementations are available in the `plssvm::dpcpp` and `plssvm::adaptivecpp` namespace respectively
-
-If the Kokkos backend is available the following additional option is available (**note**: this option takes only effect if the Kokkos SYCL execution space is available):
-
-- `PLSSVM_KOKKOS_BACKEND_INTEL_LLVM_ENABLE_AOT` (default: `ON`): enable Ahead-of-Time (AOT) compilation for the specified target platforms
 
 If the stdpar backend is available, an additional options can be set.
 

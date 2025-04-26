@@ -300,14 +300,9 @@ void performance_tracker::save(std::ostream &out) {
         PADDING_SIZE);
 
 #if defined(PLSSVM_SYCL_BACKEND_HAS_DPCPP)
-    // check whether DPC++ AOT has been enabled
-    constexpr bool dpcpp_aot = PLSSVM_IS_DEFINED(PLSSVM_SYCL_BACKEND_DPCPP_ENABLE_AOT);
-
     out << fmt::format(
-        "  DPCPP_backend_type:                {}\n"
-        "  DPCPP_with_aot:                    {}\n",
-        PLSSVM_SYCL_BACKEND_DPCPP_BACKEND_TYPE,
-        dpcpp_aot);
+        "  DPCPP_backend_type:                {}\n",
+        PLSSVM_SYCL_BACKEND_DPCPP_BACKEND_TYPE);
 #endif
 #if defined(PLSSVM_SYCL_BACKEND_HAS_ADAPTIVECPP)
     // check whether AdaptiveCpp's new SSCP has been enabled
@@ -319,14 +314,6 @@ void performance_tracker::save(std::ostream &out) {
         "  ADAPTIVECPP_with_accelerated_CPU:  {}\n",
         adaptivecpp_sscp,
         adaptivecpp_accelerated_cpu);
-#endif
-#if defined(PLSSVM_HAS_KOKKOS_BACKEND)
-    // check whether Kokkos::SYCL AOT has been enabled
-    constexpr bool kokkos_sycl_aot = PLSSVM_IS_DEFINED(PLSSVM_KOKKOS_BACKEND_INTEL_LLVM_ENABLE_AOT);
-
-    out << fmt::format(
-        "  KOKKOS_sycl_intel_llvm_with_aot:   {}\n",
-        kokkos_sycl_aot);
 #endif
     out << "\n";
 
