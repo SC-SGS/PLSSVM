@@ -59,15 +59,22 @@ The main highlights of our SVM implementations are:
 1. Drop-in replacement for LIBSVM's `svm-train`, `svm-predict`, and `svm-scale` (some features currently not implemented).
 2. Support of multiple different programming frameworks for parallelization (also called backends in our PLSSVM implementation) which allows us to target GPUs and CPUs from different vendors like NVIDIA, AMD, or Intel:
    - [OpenMP](https://www.openmp.org/)
-   - [HPX](https://hpx.stellar-group.org/)
-   - [stdpar](https://en.cppreference.com/w/cpp/algorithm) (supported implementations are [nvc++](https://developer.nvidia.com/hpc-sdk) from NVIDIA's HPC SDK, [roc-stdpar](https://github.com/ROCm/roc-stdpar) as a patched LLVM, [icpx](https://www.intel.com/content/www/us/en/developer/tools/oneapi/dpc-compiler.html) as Intel's oneAPI compiler, [AdaptiveCpp](https://github.com/AdaptiveCpp/AdaptiveCpp), and [GNU GCC](https://gcc.gnu.org/) using TBB). <br>
+   - [HPX](https://hpx.stellar-group.org/) (tested with current master)
+   - C++ 17's standard parallelism [stdpar](https://en.cppreference.com/w/cpp/algorithm):<br>
      **Note**: due to the nature of the used USM mechanics in the `stdpar` implementations, the `stdpar` backend **can't** be enabled together with **any** other backend! <br>
-     **Note**: since every translation units need to be compiled with the same flag, we currently globally set `CMAKE_CXX_FLAGS` although it's discouraged in favor of `target_compile_options`.
-   - [CUDA](https://developer.nvidia.com/cuda-zone)
-   - [HIP](https://github.com/ROCm-Developer-Tools/HIP)
-   - [OpenCL](https://www.khronos.org/opencl/)
-   - [SYCL](https://www.khronos.org/sycl/) (supported implementations are Intel's [DPC++/icpx](https://github.com/intel/llvm) and [AdaptiveCpp](https://github.com/AdaptiveCpp/AdaptiveCpp) (formerly known as hipSYCL); specifically the versions [intel-oneapi-compilers@2025.0.0](https://github.com/spack/spack) (via spack) and AdaptiveCpp release [v24.06.0](https://github.com/AdaptiveCpp/AdaptiveCpp/releases/tag/v23.10.0))
-   - [Kokkos](https://github.com/kokkos/kokkos) (all execution spaces supported except `OpenMPTarget` and `OpenACC`); specifically the version [4.5.00](https://github.com/kokkos/kokkos/releases/tag/4.5.00)
+     **Note**: since every translation units need to be compiled with the same flag, we currently globally set `CMAKE_CXX_FLAGS` although it's discouraged.
+     - [nvc++](https://developer.nvidia.com/hpc-sdk) from NVIDIA's HPC SDK (tested with version [25.3](https://docs.nvidia.com/hpc-sdk/hpc-sdk-release-notes/index.html))
+     - [roc-stdpar](https://github.com/ROCm/roc-stdpar) merged into upstream LLVM starting with version 18 (tested with version [18](https://releases.llvm.org/))
+     - [icpx](https://www.intel.com/content/www/us/en/developer/tools/oneapi/dpc-compiler.html) as Intel's oneAPI compiler (tested with version [2025.0.0](https://www.intel.com/content/www/us/en/developer/articles/release-notes/oneapi-dpcpp/2025.html))
+     - [AdaptiveCpp](https://github.com/AdaptiveCpp/AdaptiveCpp) (tested with version [v24.10.0](https://github.com/AdaptiveCpp/AdaptiveCpp/releases/tag/v24.10.0))
+     - [GNU GCC](https://gcc.gnu.org/) using TBB (tested with version GCC [14.2.0](https://gcc.gnu.org/onlinedocs/14.2.0/)) 
+   - [CUDA](https://developer.nvidia.com/cuda-zone) (tested with version [12.6.3](https://developer.nvidia.com/cuda-12-6-3-download-archive))
+   - [HIP](https://github.com/ROCm-Developer-Tools/HIP) (tested with version [6.3.3](https://rocm.docs.amd.com/projects/HIP/en/docs-6.3.3/))
+   - [OpenCL](https://www.khronos.org/opencl/) (tested with CUDA and ROCm provided OpenCL implementations as well as [PoCL](https://github.com/pocl/pocl) version [v6.0](https://github.com/pocl/pocl/releases/tag/v6.0))
+   - [SYCL](https://www.khronos.org/sycl/):
+     - [DPC++/icpx](https://github.com/intel/llvm) as Intel's oneAPI compiler (tested with version [2025.0.0](https://www.intel.com/content/www/us/en/developer/articles/release-notes/oneapi-dpcpp/2025.html))
+     - [AdaptiveCpp](https://github.com/AdaptiveCpp/AdaptiveCpp), formerly known as hipSYCL (tested with version [v24.10.0](https://github.com/AdaptiveCpp/AdaptiveCpp/releases/tag/v24.10.0))
+   - [Kokkos](https://github.com/kokkos/kokkos) (all execution spaces supported except `OpenMPTarget` and `OpenACC`) (tested with version [4.6.00](https://github.com/kokkos/kokkos/releases/tag/4.6.00))
 3. Six different kernel functions to be able to classify a large variety of different problems:
    - linear: $\vec{u}^T$ $\cdot$ $\vec{v}$
    - polynomial: $(\gamma$ $\cdot$ $\vec{u}^T$ $\cdot$ $\vec{v}$ $+$ $coef0)^{d}$
@@ -97,8 +104,8 @@ General dependencies:
 
 - a C++17 capable compiler (e.g. [`gcc`](https://gcc.gnu.org/) or [`clang`](https://clang.llvm.org/))
 - [CMake](https://cmake.org/) 3.25 or newer
-- [cxxopts ≥ v3.2.0](https://github.com/jarro2783/cxxopts), [fast_float ≥ v8.0.2](https://github.com/fastfloat/fast_float), [{fmt} ≥ v11.1.4](https://github.com/fmtlib/fmt), and [igor](https://github.com/bluescarni/igor) (all four are automatically build during the CMake configuration if they couldn't be found using the respective `find_package` call)
-- [GoogleTest ≥ v1.15.2](https://github.com/google/googletest) if testing is enabled (automatically build during the CMake configuration if `find_package(GTest)` wasn't successful)
+- [cxxopts ≥ v3.2.0](https://github.com/jarro2783/cxxopts), [fast_float ≥ v8.0.2](https://github.com/fastfloat/fast_float), [{fmt} ≥ v11.0.2](https://github.com/fmtlib/fmt), and [igor](https://github.com/bluescarni/igor) (all four are automatically build during the CMake configuration if they couldn't be found using the respective `find_package` call)
+- [GoogleTest ≥ v1.16.0](https://github.com/google/googletest) if testing is enabled (automatically build during the CMake configuration if `find_package(GTest)` wasn't successful)
 - [doxygen](https://www.doxygen.nl/index.html) if documentation generation is enabled
 - [Pybind11 ≥ v2.13.6](https://github.com/pybind/pybind11) if Python bindings are enabled
 - [OpenMP](https://www.openmp.org/) 4.0 or newer (optional) to speed-up library utilities (like file parsing)
@@ -116,12 +123,12 @@ Additional dependencies for the stdpar backend:
 
 Additional dependencies for the HPX backend:
 
-- [HPX ≥ v1.9.0](https://hpx.stellar-group.org/)
+- [HPX @ current master](https://hpx.stellar-group.org/)
 
 Additional dependencies for the CUDA backend:
 
 - CUDA SDK
-- either NVIDIA [`nvcc`](https://docs.nvidia.com/cuda/cuda-compiler-driver-nvcc/index.html) or [`clang` with CUDA support enabled](https://llvm.org/docs/CompileCudaWithLLVM.html)
+- either NVIDIA [`nvcc`](https://docs.nvidia.com/cuda/cuda-compiler-driver-nvcc/index.html), [`nvc++`](https://developer.nvidia.com/hpc-sdk) or [`clang` with CUDA support enabled](https://llvm.org/docs/CompileCudaWithLLVM.html)
 
 Additional dependencies for the HIP backend:
 
@@ -131,6 +138,7 @@ Additional dependencies for the HIP backend:
 Additional dependencies for the OpenCL backend:
 
 - OpenCL runtime and header files
+- e.g., the CUDA or ROCm provided OpenCL runtimes or [PoCL](https://github.com/pocl/pocl)
 
 Additional dependencies for the SYCL backend:
 
