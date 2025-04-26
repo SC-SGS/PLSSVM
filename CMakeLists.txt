@@ -90,7 +90,6 @@ set(PLSSVM_BASE_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/data_distribution.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/memory_size.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/sha256.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/string_conversion.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/string_utility.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/utility.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/exceptions/exceptions.cpp
@@ -663,11 +662,15 @@ else ()
 endif ()
 
 # try finding fast_float
+# note: We have to wrap fast_float into a small wrapper library to ensure that fast-math is never enabled.
+#       Otherwise, the fast_float usage of std::numeric_limits<>::infinity() results in UB...
+set(PLSSVM_FAST_FLOAT_WRAPPER_LIBRARY_NAME plssvm-fast_float-wrapper)
+add_library(${PLSSVM_FAST_FLOAT_WRAPPER_LIBRARY_NAME} SHARED ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/fast_float_wrapper.cpp)
 set(PLSSVM_fast_float_VERSION v8.0.2)
 find_package(fast_float 8.0.0 QUIET)
 if (fast_float_FOUND)
     message(STATUS "Found package fast_float.")
-    target_include_directories(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC ${fast_float_INCLUDE_DIR})
+    target_include_directories(${PLSSVM_FAST_FLOAT_WRAPPER_LIBRARY_NAME} PUBLIC ${fast_float_INCLUDE_DIR})
 else ()
     message(STATUS "Couldn't find package fast_float. Building version ${PLSSVM_fast_float_VERSION} from source.")
     # set options for fast_float
@@ -681,9 +684,17 @@ else ()
         QUIET
     )
     FetchContent_MakeAvailable(fast_float)
-    add_dependencies(${PLSSVM_BASE_LIBRARY_NAME} fast_float)
-    target_include_directories(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC $<BUILD_INTERFACE:${fast_float_SOURCE_DIR}/include> $<INSTALL_INTERFACE:include>)
+    add_dependencies(${PLSSVM_FAST_FLOAT_WRAPPER_LIBRARY_NAME} fast_float)
+    target_include_directories(${PLSSVM_FAST_FLOAT_WRAPPER_LIBRARY_NAME} PUBLIC $<BUILD_INTERFACE:${fast_float_SOURCE_DIR}/include> $<INSTALL_INTERFACE:include>)
 endif ()
+# ensure that fast-math is ALWAYS of
+target_compile_options(
+        ${PLSSVM_FAST_FLOAT_WRAPPER_LIBRARY_NAME} PRIVATE $<$<COMPILE_LANG_AND_ID:CXX,GNU,Clang,IntelLLVM>:-fno-fast-math> $<$<COMPILE_LANG_AND_ID:CXX,MSVC>:/fp:precise>
+)
+target_include_directories(${PLSSVM_FAST_FLOAT_WRAPPER_LIBRARY_NAME} PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include> $<INSTALL_INTERFACE:include>)
+# link wrapper library against base library
+target_link_libraries(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC ${PLSSVM_FAST_FLOAT_WRAPPER_LIBRARY_NAME})
+list(APPEND PLSSVM_TARGETS_TO_INSTALL "${PLSSVM_FAST_FLOAT_WRAPPER_LIBRARY_NAME}")
 
 # try finding igor
 set(PLSSVM_igor_VERSION a5224c60d266974d3f407191583fe266cbe1c93d)
