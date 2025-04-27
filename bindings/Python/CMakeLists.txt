@@ -120,9 +120,7 @@ target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC -fPIC)
 
 include(GNUInstallDirs)
 # install Python library
-install(
-        TARGETS ${PLSSVM_PYTHON_BINDINGS_LIBRARY_NAME}
-        LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}" # all shared lib files
+install(TARGETS ${PLSSVM_PYTHON_BINDINGS_LIBRARY_NAME} LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}" # all shared lib files
 )
 
 # install necessary Python files to make pip install plssvm work correctly:

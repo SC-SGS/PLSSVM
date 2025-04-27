@@ -661,9 +661,10 @@ else ()
     target_include_directories(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC $<BUILD_INTERFACE:${cxxopts_SOURCE_DIR}/include> $<INSTALL_INTERFACE:include>)
 endif ()
 
-# try finding fast_float
-# note: We have to wrap fast_float into a small wrapper library to ensure that fast-math is never enabled.
-#       Otherwise, the fast_float usage of std::numeric_limits<>::infinity() results in UB...
+# ~~~
+# try finding fast_float note: We have to wrap fast_float into a small wrapper library to ensure that fast-math is never enabled.
+# Otherwise, the fast_float usage of std::numeric_limits<>::infinity() results in UB...
+# ~~~
 set(PLSSVM_FAST_FLOAT_WRAPPER_LIBRARY_NAME plssvm-fast_float-wrapper)
 add_library(${PLSSVM_FAST_FLOAT_WRAPPER_LIBRARY_NAME} SHARED ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/fast_float_wrapper.cpp)
 set(PLSSVM_fast_float_VERSION v8.0.2)
@@ -685,13 +686,18 @@ else ()
     )
     FetchContent_MakeAvailable(fast_float)
     add_dependencies(${PLSSVM_FAST_FLOAT_WRAPPER_LIBRARY_NAME} fast_float)
-    target_include_directories(${PLSSVM_FAST_FLOAT_WRAPPER_LIBRARY_NAME} PUBLIC $<BUILD_INTERFACE:${fast_float_SOURCE_DIR}/include> $<INSTALL_INTERFACE:include>)
+    target_include_directories(
+        ${PLSSVM_FAST_FLOAT_WRAPPER_LIBRARY_NAME} PUBLIC $<BUILD_INTERFACE:${fast_float_SOURCE_DIR}/include> $<INSTALL_INTERFACE:include>
+    )
 endif ()
 # ensure that fast-math is ALWAYS of
 target_compile_options(
-        ${PLSSVM_FAST_FLOAT_WRAPPER_LIBRARY_NAME} PRIVATE $<$<COMPILE_LANG_AND_ID:CXX,GNU,Clang,IntelLLVM>:-fno-fast-math> $<$<COMPILE_LANG_AND_ID:CXX,MSVC>:/fp:precise>
+    ${PLSSVM_FAST_FLOAT_WRAPPER_LIBRARY_NAME} PRIVATE $<$<COMPILE_LANG_AND_ID:CXX,GNU,Clang,IntelLLVM>:-fno-fast-math>
+                                                      $<$<COMPILE_LANG_AND_ID:CXX,MSVC>:/fp:precise>
 )
-target_include_directories(${PLSSVM_FAST_FLOAT_WRAPPER_LIBRARY_NAME} PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include> $<INSTALL_INTERFACE:include>)
+target_include_directories(
+    ${PLSSVM_FAST_FLOAT_WRAPPER_LIBRARY_NAME} PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include> $<INSTALL_INTERFACE:include>
+)
 target_compile_features(${PLSSVM_FAST_FLOAT_WRAPPER_LIBRARY_NAME} PUBLIC cxx_std_17)
 if (PLSSVM_ENABLE_STL_DEBUG_MODE)
     target_compile_definitions(${PLSSVM_FAST_FLOAT_WRAPPER_LIBRARY_NAME} PUBLIC ${PLSSVM_STL_DEBUG_MODE_FLAGS})

@@ -50,9 +50,11 @@ if (Kokkos_ENABLE_SYCL)
 
     target_compile_options(${PLSSVM_KOKKOS_BACKEND_LIBRARY_NAME} PRIVATE -sycl-std=2020 -fsycl)
     target_link_options(${PLSSVM_KOKKOS_BACKEND_LIBRARY_NAME} PRIVATE -fsycl)
-    
+
+    # ~~~
     # assemble the icpx specific compiler flags and add them to the Kokkos backend target
     # -> Kokkos sets the values for NVIDIA and AMD correctly, but does NOT set AOT for Intel GPUs!
+    # ~~~
     include(${PROJECT_SOURCE_DIR}/cmake/assemble_icpx_sycl_target_flags.cmake)
     assemble_icpx_sycl_target_flags(${PLSSVM_KOKKOS_BACKEND_LIBRARY_NAME} PRIVATE)
 endif ()

@@ -75,7 +75,7 @@ if (PLSSVM_SYCL_BACKEND_CHECK_FOR_DPCPP_COMPILER)
                 -Wuninitialized
                 -Wno-ctor-dtor-privacy
     )
-    
+
     # assemble the icpx specific compiler flags and add them to the DPCPP backend target
     include(${PROJECT_SOURCE_DIR}/cmake/assemble_icpx_sycl_target_flags.cmake)
     assemble_icpx_sycl_target_flags(${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME} PRIVATE)
