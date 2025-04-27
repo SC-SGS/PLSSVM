@@ -42,10 +42,10 @@ if (Kokkos_ENABLE_SYCL)
     endif ()
 
     if (PLSSVM_ENABLE_FAST_MATH)
-        target_compile_options(PLSSVM_KOKKOS_BACKEND_LIBRARY_NAME PRIVATE -ffast-math)
+        target_compile_options(${PLSSVM_KOKKOS_BACKEND_LIBRARY_NAME} PRIVATE -ffast-math)
     else ()
         # icpx does compile with fast-math by default -> explicitly disable it if not requested otherwise!
-        target_compile_options(PLSSVM_KOKKOS_BACKEND_LIBRARY_NAME PRIVATE -fno-fast-math)
+        target_compile_options(${PLSSVM_KOKKOS_BACKEND_LIBRARY_NAME} PRIVATE -fno-fast-math)
     endif ()
 
     target_compile_options(${PLSSVM_KOKKOS_BACKEND_LIBRARY_NAME} PRIVATE -sycl-std=2020 -fsycl)
