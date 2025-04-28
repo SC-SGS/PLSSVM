@@ -361,7 +361,11 @@ If more than one SYCL implementation is available the environment variables `PLS
 
 - `PLSSVM_SYCL_BACKEND_PREFERRED_IMPLEMENTATION` (`dpcpp`|`adaptivecpp`): specify the preferred SYCL implementation if the `sycl_implementation_type` option is set to `automatic`; additional the specified SYCL implementation is used in the `plssvm::sycl` namespace, the other implementations are available in the `plssvm::dpcpp` and `plssvm::adaptivecpp` namespace respectively
 
-If the stdpar backend is available, an additional options can be set.
+If the Kokkos backend is available, an additional option can be set.
+
+- `PLSSVM_KOKKOS_BACKEND_SYCL_ENABLE_MULTI_GPU` (default: `OFF`): enable multi-GPU support for the Kokkos::SYCL execution space; broken in Kokkos as of version 4.6.00!
+
+If the stdpar backend is available, an additional option can be set.
 
 - `PLSSVM_STDPAR_BACKEND_IMPLEMENTATION` (default: `AUTO`): explicitly specify the used stdpar implementation; must be one of: `AUTO`, `NVHPC`, `roc-stdpar`, `IntelLLVM`, `ACPP`, `GNU_TBB`.
 

@@ -15,6 +15,7 @@
 #include "plssvm/backends/Kokkos/detail/constexpr_available_execution_spaces.hpp"  // plssvm::kokkos::detail::constexpr_available_execution_spaces
 #include "plssvm/backends/Kokkos/execution_space.hpp"                              // plssvm::kokkos::execution_space
 #include "plssvm/backends/Kokkos/execution_space_type_traits.hpp"                  // plssvm::kokkos::execution_space_to_kokkos_type_t
+#include "plssvm/mpi/communicator.hpp"                                             // plssvm::mpi::communicator
 #include "plssvm/target_platforms.hpp"                                             // plssvm::target_platform
 
 #include <array>       // std::array
@@ -190,9 +191,10 @@ class device_wrapper {
  * @brief Get a list of all available devices in the execution @p space that are supported by the @p target platform.
  * @param[in] space the Kokkos::ExecutionSpace to retrieve the devices from
  * @param[in] target the target platform that must be supported
+ * @param[in] comm the used MPI communicator
  * @return all devices for the @p target in the Kokkos::ExecutionSpace @p space (`[[nodiscard]]`)
  */
-[[nodiscard]] std::vector<device_wrapper> get_device_list(execution_space space, target_platform target);
+[[nodiscard]] std::vector<device_wrapper> get_device_list(execution_space space, target_platform target, const mpi::communicator &comm);
 
 }  // namespace plssvm::kokkos::detail
 

@@ -164,7 +164,7 @@ void csvm::init(const target_platform target) {
     }
 
     // get all available devices wrt the requested target platform
-    devices_ = detail::get_device_list(space_, target_);
+    devices_ = detail::get_device_list(space_, target_, comm_);
 
     // At this point, space_ may NEVER be execution_space::automatic!
     PLSSVM_ASSERT(space_ != execution_space::automatic, "At this point, the Kokkos execution space must be determined and must NOT be automatic!");

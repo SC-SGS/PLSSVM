@@ -57,6 +57,13 @@ if (Kokkos_ENABLE_SYCL)
     # ~~~
     include(${PROJECT_SOURCE_DIR}/cmake/assemble_icpx_sycl_target_flags.cmake)
     assemble_icpx_sycl_target_flags(${PLSSVM_KOKKOS_BACKEND_LIBRARY_NAME} PRIVATE)
+    
+    # add option to enable multi-GPU support with Kokkos::SYCL -> currently broken, but maybe possible in a feature release
+    option(PLSSVM_KOKKOS_BACKEND_SYCL_ENABLE_MULTI_GPU "Enables multi-GPU support for the Kokkos::SYCL execution space (which is broken on the Kokkos side as of Kokkos 4.6.00)." OFF)
+    if (PLSSVM_KOKKOS_BACKEND_SYCL_ENABLE_MULTI_GPU)
+        message(STATUS "Enabled multi-GPU support for the Kokkos::SYCL execution space.")
+        target_compile_definitions(${PLSSVM_KOKKOS_BACKEND_LIBRARY_NAME} PRIVATE PLSSVM_KOKKOS_BACKEND_SYCL_ENABLE_MULTI_GPU)
+    endif ()
 endif ()
 
 # link base library against Kokkos library
