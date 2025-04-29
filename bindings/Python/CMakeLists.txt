@@ -11,8 +11,8 @@ message(STATUS "Building Python language bindings for PLSSVM.")
 find_package(Python COMPONENTS Interpreter Development)
 
 # try finding pybind11
-set(PLSSVM_pybind11_VERSION v2.13.3)
-find_package(pybind11 2.13.3 QUIET)
+set(PLSSVM_pybind11_VERSION v2.13.6)
+find_package(pybind11 2.13.6 QUIET)
 if (pybind11_FOUND)
     message(STATUS "Found package pybind11.")
 else ()
@@ -118,15 +118,16 @@ target_compile_definitions(${PLSSVM_PYTHON_BINDINGS_LIBRARY_NAME} PRIVATE PYBIND
 target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC $<$<COMPILE_LANG_AND_ID:CXX,Clang,IntelLLVM>:-Wno-self-assign-overloaded>)
 target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC -fPIC)
 
-# append pybind11 bindings library to installed targets
-append_local_and_parent(PLSSVM_TARGETS_TO_INSTALL ${PLSSVM_PYTHON_BINDINGS_LIBRARY_NAME})
+include(GNUInstallDirs)
+# install Python library
+install(TARGETS ${PLSSVM_PYTHON_BINDINGS_LIBRARY_NAME} LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}" # all shared lib files
+)
 
 # install necessary Python files to make pip install plssvm work correctly:
 #
 # - __init__.py: PLSSVM is correctly recognized as Python package
 # - __cli__.py: PLSSVM's executables are correctly usable
 # - __install_check__.py: custom script outputting some PLSSVM build information
-include(GNUInstallDirs)
 install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/__init__.py" "${CMAKE_CURRENT_SOURCE_DIR}/__cli__.py" "${CMAKE_CURRENT_SOURCE_DIR}/__install_check__.py"
         DESTINATION "${CMAKE_INSTALL_LIBDIR}"
 )

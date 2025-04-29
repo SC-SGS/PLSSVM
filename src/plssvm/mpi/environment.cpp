@@ -87,8 +87,7 @@ bool is_active() {
 
 bool is_executed_via_mpirun() {
     return std::getenv("OMPI_COMM_WORLD_SIZE") != nullptr ||  // OpenMPI
-           std::getenv("PMI_SIZE") != nullptr ||              // MPICH, IntelMPI, OpenMPI
-           std::getenv("SLURM_PROCID") != nullptr;            // SLURM
+           std::getenv("PMI_SIZE") != nullptr;                // MPICH, IntelMPI, OpenMPI
 }
 
 }  // namespace plssvm::mpi

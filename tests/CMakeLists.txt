@@ -7,8 +7,8 @@
 list(APPEND CMAKE_MESSAGE_INDENT "Tests:  ")
 
 # setup testing wit GoogleTest
-set(PLSSVM_googletest_VERSION v1.15.2)
-find_package(GTest 1.15.2 QUIET)
+set(PLSSVM_googletest_VERSION v1.16.0)
+find_package(GTest 1.16.0 QUIET)
 if (GTEST_FOUND)
     message(STATUS "Found package GTest.")
 else ()
@@ -129,6 +129,14 @@ option(PLSSVM_TEST_WITH_REDUCED_LABEL_TYPES "Reduce the number of tested label t
 if (PLSSVM_TEST_WITH_REDUCED_LABEL_TYPES)
     message(STATUS "Reducing the number of tested label types.")
     target_compile_definitions(${PLSSVM_BASE_TEST_LIBRARY_NAME} PUBLIC PLSSVM_TEST_WITH_REDUCED_LABEL_TYPES)
+else ()
+    # use all possible label types currently not supported if nvc++ is the CMAKE_CXX_COMPILER
+    if (CMAKE_CXX_COMPILER_ID STREQUAL "NVHPC")
+        message(
+            FATAL_ERROR
+                "Full label type test currently not supported with nvc++ as CMAKE_CXX_COMPILER. Please set \"PLSSVM_TEST_WITH_REDUCED_LABEL_TYPES=OFF\" or use another compiler!"
+        )
+    endif ()
 endif ()
 
 # set necessary include directories

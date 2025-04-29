@@ -22,7 +22,8 @@
 #include <vector>     // std::vector
 
 TEST(BadMoveOnlyCastException, exception) {
-    EXPECT_THROW_WHAT(throw plssvm::detail::bad_move_only_any_cast{}, plssvm::detail::bad_move_only_any_cast, "plssvm::detail::bad_move_only_any_cast");
+    const auto dummy = []() { throw plssvm::detail::bad_move_only_any_cast{}; };
+    EXPECT_THROW_WHAT(dummy(), plssvm::detail::bad_move_only_any_cast, "plssvm::detail::bad_move_only_any_cast");
 }
 
 TEST(MoveOnlyAny, default_construct) {

@@ -90,7 +90,6 @@ set(PLSSVM_BASE_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/data_distribution.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/memory_size.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/sha256.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/string_conversion.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/string_utility.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/utility.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/exceptions/exceptions.cpp
@@ -616,7 +615,7 @@ endif ()
 #                                           check for Link Time Optimization                                           #
 ########################################################################################################################
 # enable Link Time Optimization (LTO)
-option(PLSSVM_ENABLE_LTO "Enable Link Time Optimizations." ON)
+option(PLSSVM_ENABLE_LTO "Enable Link Time Optimizations." OFF)
 if (PLSSVM_ENABLE_LTO)
     include(CheckIPOSupported)
     check_ipo_supported(RESULT PLSSVM_LTO_SUPPORTED LANGUAGES CXX)
@@ -662,15 +661,19 @@ else ()
     target_include_directories(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC $<BUILD_INTERFACE:${cxxopts_SOURCE_DIR}/include> $<INSTALL_INTERFACE:include>)
 endif ()
 
-# try finding fast_float
-set(PLSSVM_fast_float_VERSION v6.1.3)
-find_package(fast_float QUIET)
+# ~~~
+# try finding fast_float note: We have to wrap fast_float into a small wrapper library to ensure that fast-math is never enabled.
+# Otherwise, the fast_float usage of std::numeric_limits<>::infinity() results in UB...
+# ~~~
+set(PLSSVM_FAST_FLOAT_WRAPPER_LIBRARY_NAME plssvm-fast_float-wrapper)
+add_library(${PLSSVM_FAST_FLOAT_WRAPPER_LIBRARY_NAME} SHARED ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/fast_float_wrapper.cpp)
+set(PLSSVM_fast_float_VERSION v8.0.2)
+find_package(fast_float 8.0.0 QUIET)
 if (fast_float_FOUND)
     message(STATUS "Found package fast_float.")
-    target_include_directories(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC ${fast_float_INCLUDE_DIR})
+    target_include_directories(${PLSSVM_FAST_FLOAT_WRAPPER_LIBRARY_NAME} PUBLIC ${fast_float_INCLUDE_DIR})
 else ()
     message(STATUS "Couldn't find package fast_float. Building version ${PLSSVM_fast_float_VERSION} from source.")
-    target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PRIVATE PLSSVM_fast_float_VERSION="${PLSSVM_fast_float_VERSION}")
     # set options for fast_float
     set(FASTFLOAT_TEST OFF CACHE INTERNAL "" FORCE)
     set(FASTFLOAT_SANITIZE OFF CACHE INTERNAL "" FORCE)
@@ -682,9 +685,26 @@ else ()
         QUIET
     )
     FetchContent_MakeAvailable(fast_float)
-    add_dependencies(${PLSSVM_BASE_LIBRARY_NAME} fast_float)
-    target_include_directories(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC $<BUILD_INTERFACE:${fast_float_SOURCE_DIR}/include> $<INSTALL_INTERFACE:include>)
+    add_dependencies(${PLSSVM_FAST_FLOAT_WRAPPER_LIBRARY_NAME} fast_float)
+    target_include_directories(
+        ${PLSSVM_FAST_FLOAT_WRAPPER_LIBRARY_NAME} PUBLIC $<BUILD_INTERFACE:${fast_float_SOURCE_DIR}/include> $<INSTALL_INTERFACE:include>
+    )
 endif ()
+# ensure that fast-math is ALWAYS of
+target_compile_options(
+    ${PLSSVM_FAST_FLOAT_WRAPPER_LIBRARY_NAME} PRIVATE $<$<COMPILE_LANG_AND_ID:CXX,GNU,Clang,IntelLLVM>:-fno-fast-math>
+                                                      $<$<COMPILE_LANG_AND_ID:CXX,MSVC>:/fp:precise>
+)
+target_include_directories(
+    ${PLSSVM_FAST_FLOAT_WRAPPER_LIBRARY_NAME} PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include> $<INSTALL_INTERFACE:include>
+)
+target_compile_features(${PLSSVM_FAST_FLOAT_WRAPPER_LIBRARY_NAME} PUBLIC cxx_std_17)
+if (PLSSVM_ENABLE_STL_DEBUG_MODE)
+    target_compile_definitions(${PLSSVM_FAST_FLOAT_WRAPPER_LIBRARY_NAME} PUBLIC ${PLSSVM_STL_DEBUG_MODE_FLAGS})
+endif ()
+# link wrapper library against base library
+target_link_libraries(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC ${PLSSVM_FAST_FLOAT_WRAPPER_LIBRARY_NAME})
+list(APPEND PLSSVM_TARGETS_TO_INSTALL "${PLSSVM_FAST_FLOAT_WRAPPER_LIBRARY_NAME}")
 
 # try finding igor
 set(PLSSVM_igor_VERSION a5224c60d266974d3f407191583fe266cbe1c93d)
@@ -952,13 +972,22 @@ write_basic_package_version_file(
     COMPATIBILITY SameMajorVersion
 )
 
-# generate configuration file
+# generate configuration files
 configure_package_config_file(
     "${CMAKE_CURRENT_SOURCE_DIR}/cmake/plssvm/plssvmConfig.cmake.in" "${PROJECT_BINARY_DIR}/plssvmConfig.cmake"
     INSTALL_DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/plssvm/cmake
 )
 configure_package_config_file(
     "${CMAKE_CURRENT_SOURCE_DIR}/cmake/plssvm/plssvmHIPTargets.cmake.in" "${PROJECT_BINARY_DIR}/plssvmHIPTargets.cmake"
+    INSTALL_DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/plssvm/cmake
+)
+configure_package_config_file(
+    "${CMAKE_CURRENT_SOURCE_DIR}/cmake/plssvm/plssvmAdaptiveCppTargets.cmake.in" "${PROJECT_BINARY_DIR}/plssvmAdaptiveCppTargets.cmake"
+    INSTALL_DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/plssvm/cmake
+)
+string(REPLACE "\"" "\\\"" PLSSVM_ESCAPED_CXX_FLAGS "${CMAKE_CXX_FLAGS}") # necessary to correctly escape quotes
+configure_package_config_file(
+    "${CMAKE_CURRENT_SOURCE_DIR}/cmake/plssvm/plssvmstdparTargets.cmake.in" "${PROJECT_BINARY_DIR}/plssvmstdparTargets.cmake"
     INSTALL_DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/plssvm/cmake
 )
 
@@ -979,9 +1008,9 @@ install(
           "${CMAKE_CURRENT_SOURCE_DIR}/cmake/plssvm/plssvmOpenCLTargets.cmake"
           "${CMAKE_CURRENT_SOURCE_DIR}/cmake/plssvm/plssvmOpenMPTargets.cmake"
           "${CMAKE_CURRENT_SOURCE_DIR}/cmake/plssvm/plssvmHPXTargets.cmake"
-          "${CMAKE_CURRENT_SOURCE_DIR}/cmake/plssvm/plssvmAdaptiveCppTargets.cmake"
+          "${PROJECT_BINARY_DIR}/plssvmAdaptiveCppTargets.cmake"
           "${CMAKE_CURRENT_SOURCE_DIR}/cmake/plssvm/plssvmDPCPPTargets.cmake"
           "${CMAKE_CURRENT_SOURCE_DIR}/cmake/plssvm/plssvmKokkosTargets.cmake"
-          "${CMAKE_CURRENT_SOURCE_DIR}/cmake/plssvm/plssvmstdparTargets.cmake"
+          "${PROJECT_BINARY_DIR}/plssvmstdparTargets.cmake"
     DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/plssvm/cmake
 )

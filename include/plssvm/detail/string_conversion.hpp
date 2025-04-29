@@ -14,6 +14,7 @@
 #pragma once
 
 #include "plssvm/detail/arithmetic_type_name.hpp"  // plssvm::detail::arithmetic_type_name
+#include "plssvm/detail/fast_float_wrapper.hpp"    // plssvm::detail::convert_to_floating_point
 #include "plssvm/detail/string_utility.hpp"        // plssvm::detail::{trim, trim_left, as_lower_case}
 #include "plssvm/detail/type_traits.hpp"           // PLSSVM_REQUIRES, plssvm::detail::remove_cvref_t
 #include "plssvm/detail/utility.hpp"               // plssvm::detail::unreachable
@@ -30,17 +31,6 @@
 #include <vector>        // std::vector
 
 namespace plssvm::detail {
-
-/**
- * @brief Converts the string @p str to a floating point value of type @p T.
- * @details If @p T is a `long double` [`std::stold`](https://en.cppreference.com/w/cpp/string/basic_string/stof) is used since fast_float doesn't support long double,
- *          otherwise [`float_fast::from_chars`](https://github.com/fastfloat/fast_float) is used.
- * @tparam T the type to convert the value of @p str to, must be a floating point type
- * @param[in] str the string to convert
- * @return the value of type @p T denoted by @p str and the potential error code if the @p str couldn't be converted to the type @p T (`[[nodiscard]]`)
- */
-template <typename T>
-[[nodiscard]] std::pair<T, std::errc> convert_to_floating_point(std::string_view str);
 
 /**
  * @brief Converts the string @p str to a value of type @p T.

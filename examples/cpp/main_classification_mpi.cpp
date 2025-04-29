@@ -36,7 +36,8 @@ int main() {
         // predict the labels
         const std::vector<int> predicted_label = svc->predict(model, test_data);
         // output a more complete classification report
-        const std::vector<int> &correct_label = test_data.labels().value();
+        const auto &labels_opt = test_data.labels();  // std::optional<std::reference_wrapper<std::vector<label_type>>>
+        const std::vector<int> &correct_label = labels_opt.value().get();
         if (comm.is_main_rank()) {
             std::cout << plssvm::classification_report{ correct_label, predicted_label } << std::endl;
         }

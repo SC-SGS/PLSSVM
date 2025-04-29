@@ -13,6 +13,7 @@
 #include "plssvm/backends/Kokkos/detail/utility.hpp"   // plssvm::kokkos::detail::available_target_platform_to_execution_space_mapping
 #include "plssvm/backends/Kokkos/execution_space.hpp"  // plssvm::kokkos::{execution_space, kokkos_type_to_execution_space_v}
 #include "plssvm/detail/utility.hpp"                   // plssvm::detail::contains
+#include "plssvm/mpi/communicator.hpp"                 // plssvm::mpi::communicator
 #include "plssvm/target_platforms.hpp"                 // plssvm::target_platform
 
 #include "Kokkos_Core.hpp"  // Kokkos::DefaultExecutionSpace
@@ -95,7 +96,7 @@ struct device_list_test {
                 break;
             }
         }
-        const std::vector<plssvm::kokkos::detail::device_wrapper> devices = plssvm::kokkos::detail::get_device_list(space, default_target);
+        const std::vector<plssvm::kokkos::detail::device_wrapper> devices = plssvm::kokkos::detail::get_device_list(space, default_target, plssvm::mpi::communicator{});
 
         // check the number of returned devices
         if (space == plssvm::kokkos::execution_space::cuda || space == plssvm::kokkos::execution_space::hip || space == plssvm::kokkos::execution_space::sycl) {

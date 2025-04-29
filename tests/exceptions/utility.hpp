@@ -41,6 +41,7 @@ template <typename T>
 
 // create exception type -> string mapping for all custom exception types
 PLSSVM_CREATE_EXCEPTION_TYPE_NAME(exception)
+PLSSVM_CREATE_EXCEPTION_TYPE_NAME(cmd_parser_exit)
 PLSSVM_CREATE_EXCEPTION_TYPE_NAME(invalid_parameter_exception)
 PLSSVM_CREATE_EXCEPTION_TYPE_NAME(file_reader_exception)
 PLSSVM_CREATE_EXCEPTION_TYPE_NAME(data_set_exception)

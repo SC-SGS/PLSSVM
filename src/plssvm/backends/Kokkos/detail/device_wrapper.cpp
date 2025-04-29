@@ -13,8 +13,10 @@
 #include "plssvm/backends/Kokkos/execution_space.hpp"               // plssvm::kokkos::execution_space
 #include "plssvm/detail/assert.hpp"                                 // PLSSVM_ASSERT
 #include "plssvm/detail/logging/log_untracked.hpp"                  // plssvm::detail::log_untracked
+#include "plssvm/detail/logging/mpi_log_untracked.hpp"              // plssvm::detail::log_untracked
 #include "plssvm/detail/string_utility.hpp"                         // plssvm::detail::as_lower_case
 #include "plssvm/detail/utility.hpp"                                // plssvm::detail::contains
+#include "plssvm/mpi/communicator.hpp"                              // plssvm::mpi::communicator
 #include "plssvm/target_platforms.hpp"                              // plssvm::target_platform
 #include "plssvm/verbosity_levels.hpp"                              // plssvm::verbosity_level
 
@@ -38,7 +40,7 @@
 
 namespace plssvm::kokkos::detail {
 
-std::vector<device_wrapper> get_device_list(const execution_space space, [[maybe_unused]] const target_platform target) {
+std::vector<device_wrapper> get_device_list(const execution_space space, [[maybe_unused]] const target_platform target, [[maybe_unused]] const mpi::communicator &comm) {
     PLSSVM_ASSERT(space != execution_space::automatic, "The automatic execution_space may not be provided to this function!");
 
     std::vector<device_wrapper> devices{};
@@ -79,9 +81,7 @@ std::vector<device_wrapper> get_device_list(const execution_space space, [[maybe
                 for (const auto &platform : ::sycl::platform::get_platforms()) {
                     for (const auto &device : platform.get_devices()) {
                         // Note: Kokkos is IntelLLVM/DPC++/icpx only
-                        if (device.is_cpu() && target == target_platform::cpu) {
-                            devices.emplace_back(Kokkos::SYCL{ ::sycl::queue{ device, props } });
-                        } else if (device.is_gpu()) {
+                        if (device.is_gpu()) {
                             // the current device is a GPU
                             // get vendor string and convert it to all lower case
                             const std::string vendor_string = ::plssvm::detail::as_lower_case(device.get_info<::sycl::info::device::vendor>());
@@ -99,6 +99,17 @@ std::vector<device_wrapper> get_device_list(const execution_space space, [[maybe
                         }
                     }
                 }
+
+#if !defined(PLSSVM_KOKKOS_BACKEND_SYCL_ENABLE_MULTI_GPU)
+                if (devices.size() > 1) {
+                    ::plssvm::detail::log_untracked(plssvm::verbosity_level::full | plssvm::verbosity_level::warning,
+                                                    "\nFound {} devices on MPI rank {} for the Kokkos::SYCL execution space, but multi-GPU support is disabled. Using only device 1.",
+                                                    devices.size(),
+                                                    comm.rank());
+                    // only use the first GPU found (which most likely is the default device)
+                    devices.resize(1);
+                }
+#endif
             }));
             break;
         case execution_space::hpx:
@@ -111,6 +122,7 @@ std::vector<device_wrapper> get_device_list(const execution_space space, [[maybe
                 // Note: if OpenMP should be used as device  must be set in order for it to work!
                 if (omp_get_nested() == 0) {
                     ::plssvm::detail::log_untracked(verbosity_level::full | verbosity_level::warning,
+                                                    comm,
                                                     "WARNING: In order for Kokkos::OpenMP to work properly, we have to set \"omp_set_nested(1)\"!\n");
                     // enable OMP_NESTED support
                     // Note: function is officially deprecated but still necessary for Kokkos::OpenMP to work properly

@@ -123,7 +123,7 @@ for vga in output_lines:
     if "Intel" in vga:
         # extract the architecture hex-value from the lspci line
         regex_pattern = r"\[[0-9]+:(.*?)\]"
-        pci_value = re.search("\[[0-9]+:(.*?)\]", vga)
+        pci_value = re.search(regex_pattern, vga)
         if pci_value:
             value = pci_value.group(1)
             intel_gpus.append("0x{}".format(value))

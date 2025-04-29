@@ -59,7 +59,7 @@ struct py_type_equal {
 /**
  * @brief Convert a Python Numpy array to a `std::vector<T>`.
  * @tparam T the type in the array
- * @param[in] vec the Python Numpy array to convert
+ * @param[in] arr the Python Numpy array to convert
  * @return the `std::vector<T>` (`[[nodiscard]]`)
  */
 template <typename T>
@@ -92,7 +92,7 @@ template <typename T>
 
 /**
  * @brief Convert a generic Python Numpy array to a `std::vector<T>`.
- * @param[in] vec the generic Python Numpy array to convert
+ * @param[in] arr the generic Python Numpy array to convert
  * @return a `std::variant` containing the converted `std::vector` (`[[nodiscard]]`)
  */
 template <typename possible_vector_types>
@@ -272,8 +272,7 @@ namespace pybind11::detail {
 
 /**
  * @brief A custom Pybind11 type caster to convert Python object from and to a plssvm::bindings::python::util::label_vector_wrapper.
- * @tparam T the value type of the PLSSVM matrix
- * @tparam layout the memory layout type of the PLSSVM matrix
+ * @tparam PossibleTypes the possible label vector types
  */
 template <typename PossibleTypes>
 struct type_caster<plssvm::bindings::python::util::label_vector_wrapper<PossibleTypes>> {

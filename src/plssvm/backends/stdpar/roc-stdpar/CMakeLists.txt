@@ -6,21 +6,11 @@
 
 message(CHECK_START "searching for roc-stdpar")
 
-# check whether the roc-stdpar include path has been provided
-if (DEFINED PLSSVM_STDPAR_BACKEND_HIPSTDPAR_PATH)
-    set(PLSSVM_STDPAR_BACKEND_HIPSTDPAR_PATH ${PLSSVM_STDPAR_BACKEND_HIPSTDPAR_PATH}
-        CACHE STRING "The roc-stdpar path (--hipstdpar-path) necessary to compile the roc-stdpar backend." FORCE
-    )
-elseif (DEFINED ENV{PLSSVM_STDPAR_BACKEND_HIPSTDPAR_PATH})
-    set(PLSSVM_STDPAR_BACKEND_HIPSTDPAR_PATH $ENV{PLSSVM_STDPAR_BACKEND_HIPSTDPAR_PATH}
-        CACHE STRING "The roc-stdpar path (--hipstdpar-path) necessary to compile the roc-stdpar backend." FORCE
-    )
-endif ()
-
-if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND PLSSVM_STDPAR_BACKEND_HIPSTDPAR_PATH)
-    # check for AMD's roc-stdpar enabled compiler -> only possible with the provided path
+# check whether the roc-stdpar compiler is available
+if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+    # check for AMD's roc-stdpar enabled compiler
     include(CheckCXXCompilerFlag)
-    check_cxx_compiler_flag("-hipstdpar --hipstdpar-path=${PLSSVM_STDPAR_BACKEND_HIPSTDPAR_PATH}" PLSSVM_HAS_HIPSTDPAR_STDPAR_FLAG)
+    check_cxx_compiler_flag("--hipstdpar" PLSSVM_HAS_HIPSTDPAR_STDPAR_FLAG)
     if (NOT PLSSVM_HAS_HIPSTDPAR_STDPAR_FLAG)
         # the target offload flag couldn't be found!
         if (PLSSVM_ENABLE_STDPAR_BACKEND MATCHES "ON")
@@ -44,22 +34,39 @@ if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND PLSSVM_STDPAR_BACKEND_HIPSTDPAR_P
     # roc-stdpar found
     message(CHECK_PASS "found")
     set_local_and_parent(PLSSVM_STDPAR_BACKEND "roc-stdpar")
-else ()
-    if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND NOT PLSSVM_STDPAR_BACKEND_HIPSTDPAR_PATH)
-        message(STATUS "Try checking for the roc-stdpar backend but the roc-stdpar include path wasn't provided via \"PLSSVM_STDPAR_BACKEND_HIPSTDPAR_PATH\"!")
-    endif ()
-    message(CHECK_FAIL "skipped")
-    return()
 endif ()
 
 # add stdpar implementation specific source file to library
 append_local_and_parent(PLSSVM_STDPAR_SOURCES ${CMAKE_CURRENT_LIST_DIR}/csvm.cpp)
 
 # set global roc-stdpar compiler flags
-set_local_and_parent(
-    PLSSVM_STDPAR_BACKEND_COMPILER_FLAG -hipstdpar --hipstdpar-path=${PLSSVM_STDPAR_BACKEND_HIPSTDPAR_PATH} --offload-arch=${PLSSVM_AMD_TARGET_ARCHS}
+set_local_and_parent(PLSSVM_STDPAR_BACKEND_COMPILER_FLAG --hipstdpar --offload-arch=${PLSSVM_AMD_TARGET_ARCHS})
+
+# be able to set --hipstdpar-interpose-alloc if necessary
+set(PLSSVM_STDPAR_BACKEND_ROCSTDPAR_USE_INTERPOSE_ALLOC AUTO CACHE STRING "Use the --hipstdpar-interpose-alloc compiler flag")
+set_property(CACHE PLSSVM_STDPAR_BACKEND_ROCSTDPAR_USE_INTERPOSE_ALLOC PROPERTY STRINGS AUTO ON OFF)
+# check whether HSA_XNACK is enabled via an environment variable
+set(PLSSVM_IS_HSA_XNACK_DISABLED OFF)
+if (NOT DEFINED ENV{HSA_XNACK})
+    set(PLSSVM_IS_HSA_XNACK_DISABLED ON)
+elseif ($ENV{HSA_XNACK} EQUAL 0)
+    set(PLSSVM_IS_HSA_XNACK_DISABLED ON)
+endif ()
+# set compiler flag accordingly
+if ((PLSSVM_STDPAR_BACKEND_ROCSTDPAR_USE_INTERPOSE_ALLOC MATCHES "AUTO" AND PLSSVM_IS_HSA_XNACK_DISABLED) OR PLSSVM_STDPAR_BACKEND_ROCSTDPAR_USE_INTERPOSE_ALLOC
+                                                                                                             MATCHES "ON"
 )
-# TODO: The flag "--hipstdpar-interpose-alloc" may be necessary for older AMD GPUs
+    message(STATUS "Using the --hipstdpar-interpose-alloc compiler flag. " "Note: this may result in the test not being able to run!")
+    set_local_and_parent(PLSSVM_STDPAR_BACKEND_COMPILER_FLAG "${PLSSVM_STDPAR_BACKEND_COMPILER_FLAG} --hipstdpar-interpose-alloc")
+
+    # the --hipstdpar-interpose-alloc is not supported together with hardware sampling
+    if (PLSSVM_ENABLE_HARDWARE_SAMPLING)
+        message(
+            WARNING
+                "Hardware sampling is enabled together with the --hipstdpar-interpose-alloc compiler flag. This will most likely result in runtime errors. Either disable hardware sampling or the interpose alloc compiler flag!"
+        )
+    endif ()
+endif ()
 
 if (PLSSVM_ENABLE_FAST_MATH)
     set_local_and_parent(PLSSVM_STDPAR_BACKEND_COMPILER_FLAG ${PLSSVM_STDPAR_BACKEND_COMPILER_FLAG} -ffast-math)

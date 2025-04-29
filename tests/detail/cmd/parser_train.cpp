@@ -16,6 +16,7 @@
 #include "plssvm/backends/SYCL/kernel_invocation_types.hpp"  // plssvm::sycl::kernel_invocation_type
 #include "plssvm/classification_types.hpp"                   // plssvm::classification_type
 #include "plssvm/constants.hpp"                              // plssvm::real_type
+#include "plssvm/exceptions/exceptions.hpp"                  // plssvm::cmd_parser_exit
 #include "plssvm/gamma.hpp"                                  // plssvm::gamma_type
 #include "plssvm/kernel_function_types.hpp"                  // plssvm::kernel_function_type
 #include "plssvm/solver_types.hpp"                           // plssvm::solver_type
@@ -23,7 +24,7 @@
 #include "plssvm/target_platforms.hpp"                       // plssvm::target_platform
 #include "plssvm/verbosity_levels.hpp"                       // plssvm::verbosity
 
-#include "tests/custom_test_macros.hpp"      // EXPECT_CONVERSION_TO_STRING
+#include "tests/custom_test_macros.hpp"      // EXPECT_CONVERSION_TO_STRING, EXPECT_THROW_WHAT
 #include "tests/detail/cmd/cmd_utility.hpp"  // util::ParameterBase
 #include "tests/naming.hpp"                  // naming::{pretty_print_parameter_flag_and_value, pretty_print_parameter_flag}
 #include "tests/utility.hpp"                 // util::{convert_from_string, redirect_output}
@@ -43,8 +44,6 @@
 #include <vector>       // std::vector
 
 class ParserTrain : public util::ParameterBase { };
-
-class ParserTrainDeathTest : public ParserTrain { };
 
 TEST_F(ParserTrain, minimal) {
     // create artificial command line arguments in test fixture
@@ -326,22 +325,22 @@ INSTANTIATE_TEST_SUITE_P(ParserTrain, ParserTrainGamma,
                 naming::pretty_print_parameter_flag_and_value<ParserTrainGamma>);
 // clang-format on
 
-class ParserTrainGammaDeathTest : public ParserTrain,
-                                  public ::testing::WithParamInterface<std::tuple<std::string, plssvm::real_type>> { };
+class ParserTrainGammaInvalid : public ParserTrain,
+                                public ::testing::WithParamInterface<std::tuple<std::string, plssvm::real_type>> { };
 
-TEST_P(ParserTrainGammaDeathTest, gamma_explicit_less_or_equal_to_zero) {
+TEST_P(ParserTrainGammaInvalid, gamma_explicit_less_or_equal_to_zero) {
     const auto &[flag, gamma] = GetParam();
     // create artificial command line arguments in test fixture
     this->CreateCMDArgs({ "./plssvm-train", flag, fmt::format("{}", gamma), "data.libsvm" });
     // create parser_train object
-    EXPECT_DEATH((plssvm::detail::cmd::parser_train{ this->get_comm(), this->get_argc(), this->get_argv() }), ::testing::HasSubstr(fmt::format("gamma must be greater than 0.0, but is {}!", gamma)));
+    EXPECT_THROW_WHAT((plssvm::detail::cmd::parser_train{ this->get_comm(), this->get_argc(), this->get_argv() }), plssvm::cmd_parser_exit, fmt::format("exit code: {}", EXIT_FAILURE));
 }
 
 // clang-format off
-INSTANTIATE_TEST_SUITE_P(ParserTrainDeathTest, ParserTrainGammaDeathTest, ::testing::Combine(
+INSTANTIATE_TEST_SUITE_P(ParserTrain, ParserTrainGammaInvalid, ::testing::Combine(
                 ::testing::Values("-g", "--gamma"),
                 ::testing::Values(plssvm::real_type{ -2 }, plssvm::real_type{ -1.5 }, plssvm::real_type{ 0.0 })),
-                naming::pretty_print_parameter_flag_and_value<ParserTrainGammaDeathTest>);
+                naming::pretty_print_parameter_flag_and_value<ParserTrainGammaInvalid>);
 // clang-format on
 
 class ParserTrainCoef0 : public ParserTrain,
@@ -427,22 +426,22 @@ INSTANTIATE_TEST_SUITE_P(ParserTrain, ParserTrainMaxIter, ::testing::Combine(
                 naming::pretty_print_parameter_flag_and_value<ParserTrainMaxIter>);
 // clang-format on
 
-class ParserTrainMaxIterDeathTest : public ParserTrain,
-                                    public ::testing::WithParamInterface<std::tuple<std::string, long long int>> { };
+class ParserTrainMaxIterInvalid : public ParserTrain,
+                                  public ::testing::WithParamInterface<std::tuple<std::string, long long int>> { };
 
-TEST_P(ParserTrainMaxIterDeathTest, max_iter_explicit_less_or_equal_to_zero) {
+TEST_P(ParserTrainMaxIterInvalid, max_iter_explicit_less_or_equal_to_zero) {
     const auto &[flag, max_iter] = GetParam();
     // create artificial command line arguments in test fixture
     this->CreateCMDArgs({ "./plssvm-train", flag, fmt::format("{}", max_iter), "data.libsvm" });
     // create parameter object
-    EXPECT_DEATH((plssvm::detail::cmd::parser_train{ this->get_comm(), this->get_argc(), this->get_argv() }), ::testing::HasSubstr(fmt::format("max_iter must be greater than 0, but is {}!", max_iter)));
+    EXPECT_THROW_WHAT((plssvm::detail::cmd::parser_train{ this->get_comm(), this->get_argc(), this->get_argv() }), plssvm::cmd_parser_exit, fmt::format("exit code: {}", EXIT_FAILURE));
 }
 
 // clang-format off
-INSTANTIATE_TEST_SUITE_P(ParserTrainDeathTest, ParserTrainMaxIterDeathTest, ::testing::Combine(
+INSTANTIATE_TEST_SUITE_P(ParserTrain, ParserTrainMaxIterInvalid, ::testing::Combine(
                 ::testing::Values("-i", "--max_iter"),
                 ::testing::Values(-100, -10, -1, 0)),
-                naming::pretty_print_parameter_flag_and_value<ParserTrainMaxIterDeathTest>);
+                naming::pretty_print_parameter_flag_and_value<ParserTrainMaxIterInvalid>);
 // clang-format on
 
 class ParserTrainSolver : public ParserTrain,
@@ -651,22 +650,22 @@ INSTANTIATE_TEST_SUITE_P(ParserTrain, ParserTrainMPILoadBalancingWeights, ::test
                 naming::pretty_print_parameter_flag_and_value<ParserTrainMPILoadBalancingWeights>);
 // clang-format on
 
-class ParserTrainMPILoadBalancingWeightsDeathTest : public ParserTrain,
-                                                    public ::testing::WithParamInterface<std::tuple<std::string, std::string>> { };
+class ParserTrainMPILoadBalancingWeightsInvalid : public ParserTrain,
+                                                  public ::testing::WithParamInterface<std::tuple<std::string, std::string>> { };
 
-TEST_P(ParserTrainMPILoadBalancingWeightsDeathTest, parsing) {
+TEST_P(ParserTrainMPILoadBalancingWeightsInvalid, parsing) {
     const auto &[flag, value] = GetParam();
     // create artificial command line arguments in test fixture
     this->CreateCMDArgs({ "./plssvm-train", flag, value, "data.libsvm" });
     // create parameter object
-    EXPECT_DEATH((plssvm::detail::cmd::parser_train{ this->get_comm(), this->get_argc(), this->get_argv() }), ::testing::ContainsRegex("ERROR: the number of load balancing weights \\(.*\\) must match the number of MPI ranks \\(1\\)!"));
+    EXPECT_THROW_WHAT((plssvm::detail::cmd::parser_train{ this->get_comm(), this->get_argc(), this->get_argv() }), plssvm::cmd_parser_exit, fmt::format("exit code: {}", EXIT_FAILURE));
 }
 
 // clang-format off
-INSTANTIATE_TEST_SUITE_P(ParserTrain, ParserTrainMPILoadBalancingWeightsDeathTest, ::testing::Combine(
+INSTANTIATE_TEST_SUITE_P(ParserTrain, ParserTrainMPILoadBalancingWeightsInvalid, ::testing::Combine(
                 ::testing::Values("--mpi_load_balancing_weights"),
                 ::testing::Values("1,2", "1,2,3")),
-                naming::pretty_print_parameter_flag_and_value<ParserTrainMPILoadBalancingWeightsDeathTest>);
+                naming::pretty_print_parameter_flag_and_value<ParserTrainMPILoadBalancingWeightsInvalid>);
 // clang-format on
 
 #endif  // PLSSVM_HAS_MPI_ENABLED
@@ -747,7 +746,7 @@ TEST_P(ParserTrainHelp, parsing) {
     // create artificial command line arguments in test fixture
     this->CreateCMDArgs({ "./plssvm-train", flag });
     // create parameter object
-    EXPECT_EXIT((plssvm::detail::cmd::parser_train{ this->get_comm(), this->get_argc(), this->get_argv() }), ::testing::ExitedWithCode(EXIT_SUCCESS), "");
+    EXPECT_THROW_WHAT((plssvm::detail::cmd::parser_train{ this->get_comm(), this->get_argc(), this->get_argv() }), plssvm::cmd_parser_exit, fmt::format("exit code: {}", EXIT_SUCCESS));
 }
 
 INSTANTIATE_TEST_SUITE_P(ParserTrain, ParserTrainHelp, ::testing::Values("-h", "--help"), naming::pretty_print_parameter_flag<ParserTrainHelp>);
@@ -760,39 +759,24 @@ TEST_P(ParserTrainVersion, parsing) {
     // create artificial command line arguments in test fixture
     this->CreateCMDArgs({ "./plssvm-train", flag });
     // create parameter object
-    EXPECT_EXIT((plssvm::detail::cmd::parser_train{ this->get_comm(), this->get_argc(), this->get_argv() }), ::testing::ExitedWithCode(EXIT_SUCCESS), "");
+    EXPECT_THROW_WHAT((plssvm::detail::cmd::parser_train{ this->get_comm(), this->get_argc(), this->get_argv() }), plssvm::cmd_parser_exit, fmt::format("exit code: {}", EXIT_SUCCESS));
 }
 
 INSTANTIATE_TEST_SUITE_P(ParserTrain, ParserTrainVersion, ::testing::Values("-v", "--version"), naming::pretty_print_parameter_flag<ParserTrainVersion>);
 
-TEST_F(ParserTrainDeathTest, no_positional_argument) {
+TEST_F(ParserTrain, no_positional_argument) {
     this->CreateCMDArgs({ "./plssvm-train" });
-    EXPECT_EXIT((plssvm::detail::cmd::parser_train{ this->get_comm(), this->get_argc(), this->get_argv() }),
-                ::testing::ExitedWithCode(EXIT_FAILURE),
-                ::testing::HasSubstr("ERROR: missing input file!"));
+    EXPECT_THROW_WHAT((plssvm::detail::cmd::parser_train{ this->get_comm(), this->get_argc(), this->get_argv() }), plssvm::cmd_parser_exit, fmt::format("exit code: {}", EXIT_FAILURE));
 }
 
-TEST_F(ParserTrainDeathTest, too_many_positional_arguments) {
+TEST_F(ParserTrain, too_many_positional_arguments) {
     this->CreateCMDArgs({ "./plssvm-train", "p1", "p2", "p3", "p4" });
-    EXPECT_EXIT((plssvm::detail::cmd::parser_train{ this->get_comm(), this->get_argc(), this->get_argv() }),
-                ::testing::ExitedWithCode(EXIT_FAILURE),
-                ::testing::HasSubstr(R"(ERROR: only up to two positional options may be given, but 2 ("p3 p4") additional option(s) where provided!)"));
+    EXPECT_THROW_WHAT((plssvm::detail::cmd::parser_train{ this->get_comm(), this->get_argc(), this->get_argv() }), plssvm::cmd_parser_exit, fmt::format("exit code: {}", EXIT_FAILURE));
 }
 
-// test whether nonsensical cmd arguments trigger the assertions
-TEST_F(ParserTrainDeathTest, too_few_argc) {
-    EXPECT_DEATH((plssvm::detail::cmd::parser_train{ this->get_comm(), 0, nullptr }),
-                 ::testing::HasSubstr("At least one argument is always given (the executable name), but argc is 0!"));
-}
-
-TEST_F(ParserTrainDeathTest, nullptr_argv) {
-    EXPECT_DEATH((plssvm::detail::cmd::parser_train{ this->get_comm(), 1, nullptr }),
-                 ::testing::HasSubstr("At least one argument is always given (the executable name), but argv is a nullptr!"));
-}
-
-TEST_F(ParserTrainDeathTest, unrecognized_option) {
+TEST_F(ParserTrain, unrecognized_option) {
     this->CreateCMDArgs({ "./plssvm-train", "--foo", "bar" });
-    EXPECT_DEATH((plssvm::detail::cmd::parser_train{ this->get_comm(), this->get_argc(), this->get_argv() }), "");
+    EXPECT_THROW_WHAT((plssvm::detail::cmd::parser_train{ this->get_comm(), this->get_argc(), this->get_argv() }), plssvm::cmd_parser_exit, fmt::format("exit code: {}", EXIT_FAILURE));
 }
 
 class ParserTrainOutput : public ParserTrain,
@@ -856,3 +840,16 @@ TEST_P(ParserTrainOutput, parsing) {
 }
 
 INSTANTIATE_TEST_SUITE_P(ParserTrain, ParserTrainOutput, ::testing::Values("linear", "polynomial", "rbf", "sigmoid", "laplacian", "chi_squared"), naming::pretty_print_parameter_flag<ParserTrainOutput>);
+
+class ParserTrainDeathTest : public ParserTrain { };
+
+// test whether nonsensical cmd arguments trigger the assertions
+TEST_F(ParserTrainDeathTest, too_few_argc) {
+    EXPECT_DEATH((plssvm::detail::cmd::parser_train{ this->get_comm(), 0, nullptr }),
+                 ::testing::HasSubstr("At least one argument is always given (the executable name), but argc is 0!"));
+}
+
+TEST_F(ParserTrainDeathTest, nullptr_argv) {
+    EXPECT_DEATH((plssvm::detail::cmd::parser_train{ this->get_comm(), 1, nullptr }),
+                 ::testing::HasSubstr("At least one argument is always given (the executable name), but argv is a nullptr!"));
+}

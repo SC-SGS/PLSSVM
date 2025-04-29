@@ -9,6 +9,7 @@
 #include "plssvm/backends/stdpar/csvm.hpp"
 
 #include "plssvm/backend_types.hpp"                         // plssvm::backend_type
+#include "plssvm/backends/stdpar/detail/utility.hpp"        // plssvm::stdpar::detail::get_stdpar_version
 #include "plssvm/backends/stdpar/exceptions.hpp"            // plssvm::stdpar::backend_exception
 #include "plssvm/backends/stdpar/implementation_types.hpp"  // plssvm::stdpar::implementation_type
 #include "plssvm/detail/logging/log.hpp"                    // plssvm::detail::log
@@ -43,13 +44,13 @@ csvm::csvm(const target_platform target) {
 
     if (comm_.size() > 1) {
         hipDeviceProp_t prop{};
-        hipGetDeviceProperties(&prop, 0);
+        [[maybe_unused]] hipError_t err = hipGetDeviceProperties(&prop, 0);
         device_names.emplace_back(prop.name);
         mpi::detail::gather_and_print_csvm_information(comm_, plssvm::backend_type::stdpar, target_, device_names, fmt::format("{}", this->get_implementation_type()));
     } else {
         // use more detailed single rank command line output
         hipDeviceProp_t prop{};
-        hipGetDeviceProperties(&prop, 0);
+        [[maybe_unused]] hipError_t err = hipGetDeviceProperties(&prop, 0);
         device_names.emplace_back(prop.name);
         plssvm::detail::log_untracked(verbosity_level::full,
                                       comm_,

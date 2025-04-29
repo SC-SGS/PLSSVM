@@ -75,11 +75,12 @@ csvm::csvm(const target_platform target) {
         // use more detailed single rank command line output
         plssvm::detail::log_untracked(verbosity_level::full,
                                       comm_,
-                                      "\nUsing stdpar ({}; {}) as backend.\n"
+                                      "\nUsing stdpar ({}; {}; {}) as backend.\n"
                                       "Found {} stdpar device(s) for the target platform {}:\n"
                                       "  [0, {}]\n",
                                       this->get_implementation_type(),
                                       detail::get_stdpar_version(),
+                                      PLSSVM_ACPP_TARGETS,
                                       this->num_available_devices(),
                                       target_,
                                       device_names.front());
@@ -95,6 +96,7 @@ csvm::csvm(const target_platform target) {
     PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "backend", "target_platform", target_ }));
     PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "backend", "num_devices", this->num_available_devices() }));
     PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "backend", "device", device_names.front() }));
+    PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "backend", "acpp_targets", PLSSVM_ACPP_TARGETS }));
 }
 
 implementation_type csvm::get_implementation_type() const noexcept {

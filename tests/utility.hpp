@@ -388,7 +388,7 @@ template <typename T>
  * @return the randomly generated vector (`[[nodiscard]]`)
  */
 template <typename T, PLSSVM_REQUIRES(std::is_floating_point_v<T>)>
-[[nodiscard]] inline std::vector<T> generate_random_vector(const std::size_t size, const std::pair<T, T> range = { T{ -1.0 }, T{ 1.0 } }) {
+[[nodiscard]] inline std::vector<T> generate_random_vector(const std::size_t size, const std::pair<T, T> range = { static_cast<T>(-1.0), static_cast<T>(1.0) }) {
     std::vector<T> vec(size);
 
     // fill vectors with random values
@@ -449,7 +449,7 @@ template <typename T, PLSSVM_REQUIRES(std::is_integral_v<T> &&std::is_signed_v<T
  * @return the randomly generated matrix (`[[nodiscard]]`)
  */
 template <typename matrix_type, typename real_type = typename matrix_type::value_type>
-[[nodiscard]] inline matrix_type generate_random_matrix(const plssvm::shape shape, const std::pair<real_type, real_type> range = { real_type{ -1.0 }, real_type{ 1.0 } }) {
+[[nodiscard]] inline matrix_type generate_random_matrix(const plssvm::shape shape, const std::pair<real_type, real_type> range = { static_cast<real_type>(-1.0), static_cast<real_type>(1.0) }) {
     static_assert(std::is_floating_point_v<real_type>, "Only floating point types are allowed!");
 
     // create random number generator
@@ -477,7 +477,7 @@ template <typename matrix_type, typename real_type = typename matrix_type::value
  * @return the randomly generated matrix (`[[nodiscard]]`)
  */
 template <typename matrix_type, typename real_type = typename matrix_type::value_type>
-[[nodiscard]] inline matrix_type generate_random_matrix(const plssvm::shape shape, const plssvm::shape padding, const std::pair<real_type, real_type> range = { real_type{ -1.0 }, real_type{ 1.0 } }) {
+[[nodiscard]] inline matrix_type generate_random_matrix(const plssvm::shape shape, const plssvm::shape padding, const std::pair<real_type, real_type> range = { static_cast<real_type>(-1.0), static_cast<real_type>(1.0) }) {
     return matrix_type{ generate_random_matrix<matrix_type>(shape, range), padding };
 }
 
@@ -775,7 +775,7 @@ template <typename T, typename Tuple>
 
 /**
  * @brief Call the function @p func for each type in the @p Variant.
- * @brief The function @p func must have a templated overload of the `operator()()` function.
+ * @details The function @p func must have a templated overload of the `operator()()` function.
  * @tparam Variant the type of the std::variant
  * @tparam Func the type of the function to apply
  * @tparam Index the current index of the type the function should be applied to

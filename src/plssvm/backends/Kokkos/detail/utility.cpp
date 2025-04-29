@@ -63,9 +63,7 @@ std::map<target_platform, std::vector<execution_space>> available_target_platfor
                     for (const auto &platform : ::sycl::platform::get_platforms()) {
                         for (const auto &device : platform.get_devices()) {
                             // Note: Kokkos is Intel LLVM/DPC++/icpx only
-                            if (device.is_cpu()) {
-                                targets.insert(target_platform::cpu);
-                            } else if (device.is_gpu()) {
+                            if (device.is_gpu()) {
                                 // the current device is a GPU
                                 // get vendor string and convert it to all lower case
                                 const std::string vendor_string = ::plssvm::detail::as_lower_case(device.get_info<::sycl::info::device::vendor>());

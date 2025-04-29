@@ -25,7 +25,7 @@
 
 #include <chrono>     // std::chrono::{steady_clock, duration}, std::chrono_literals namespace
 #include <cstddef>    // std::size_t
-#include <cstdlib>    // std::exit, EXIT_SUCCESS, EXIT_FAILURE
+#include <cstdlib>    // EXIT_SUCCESS, EXIT_FAILURE
 #include <exception>  // std::exception
 #include <iostream>   // std::cerr, std::endl
 #include <variant>    // std::visit
@@ -121,6 +121,10 @@ int main(int argc, char *argv[]) {
 
         PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_SAVE(cmd_parser.performance_tracking_filename);
 
+    } catch (const plssvm::cmd_parser_exit &e) {
+        // something inside the cmd parser went wrong
+        // -> don't call std::exit directly to gracefully tear down the environment
+        return e.exit_code();
     } catch (const plssvm::exception &e) {
         std::cerr << fmt::format("An exception occurred on MPI rank {}!: {}", comm.rank(), e.what_with_loc()) << std::endl;
         return EXIT_FAILURE;

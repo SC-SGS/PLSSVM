@@ -6,6 +6,13 @@
 
 message(CHECK_START "Checking for AdaptiveCpp as SYCL implementation")
 
+# we ignore ACPP_TARGETS and overwrite it with our own values
+if (DEFINED ENV{ACPP_TARGETS})
+    message(
+        WARNING "The environment variable \"ACPP_TARGETS\" is set but will be ignored and overwritten by the values provided via \"PLSSVM_TARGET_PLATFORMS\"."
+    )
+endif ()
+
 option(PLSSVM_SYCL_BACKEND_ADAPTIVECPP_USE_GENERIC_SSCP "Enables the generic SSCP target for new AdaptiveCpp versions." ON)
 
 if (PLSSVM_SYCL_BACKEND_ADAPTIVECPP_USE_GENERIC_SSCP)
@@ -23,15 +30,13 @@ else ()
     list(TRANSFORM ACPP_TARGETS REPLACE "cpu" "omp.accelerated")
     list(TRANSFORM ACPP_TARGETS REPLACE "nvidia" "cuda")
     list(TRANSFORM ACPP_TARGETS REPLACE "amd" "hip")
-    list(TRANSFORM ACPP_TARGETS REPLACE "intel" "spirv")
     # remove CPU and Intel GPU target architectures since they are not supported when using AdaptiveCpp
     if (DEFINED PLSSVM_CPU_TARGET_ARCHS AND PLSSVM_NUM_CPU_TARGET_ARCHS GREATER 0)
         string(REPLACE ";" "," PLSSVM_CPU_TARGET_ARCHS_COMMA "${PLSSVM_CPU_TARGET_ARCHS}")
         string(REPLACE ":${PLSSVM_CPU_TARGET_ARCHS_COMMA}" "" ACPP_TARGETS "${ACPP_TARGETS}")
     endif ()
     if (DEFINED PLSSVM_INTEL_TARGET_ARCHS)
-        string(REPLACE ";" "," PLSSVM_INTEL_TARGET_ARCHS_COMMA "${PLSSVM_INTEL_TARGET_ARCHS}")
-        string(REPLACE ":${PLSSVM_INTEL_TARGET_ARCHS_COMMA}" "" ACPP_TARGETS "${ACPP_TARGETS}")
+        message(FATAL_ERROR "Intel GPUs not supported with AdaptiveCpp's old compilation flow.")
     endif ()
 endif ()
 
@@ -49,7 +54,7 @@ if (AdaptiveCpp_FOUND)
     )
 
     # set target properties
-    set(PLSSVM_SYCL_BACKEND_ADAPTIVECPP_LIBRARY_NAME plssvm-SYCL_adaptivecpp CACHE INTERNAL "")
+    set(PLSSVM_SYCL_BACKEND_ADAPTIVECPP_LIBRARY_NAME plssvm-SYCL_AdaptiveCpp CACHE INTERNAL "")
     add_library(${PLSSVM_SYCL_BACKEND_ADAPTIVECPP_LIBRARY_NAME} SHARED ${PLSSVM_SYCL_SOURCES} ${PLSSVM_SYCL_ADAPTIVECPP_SOURCES})
     append_local_and_parent(PLSSVM_TARGETS_TO_INSTALL "${PLSSVM_SYCL_BACKEND_ADAPTIVECPP_LIBRARY_NAME}")
 
@@ -65,6 +70,7 @@ if (AdaptiveCpp_FOUND)
     target_compile_definitions(${PLSSVM_SYCL_BACKEND_ADAPTIVECPP_LIBRARY_NAME} PUBLIC PLSSVM_SYCL_BACKEND_HAS_ADAPTIVECPP)
     target_compile_definitions(${PLSSVM_SYCL_BACKEND_ADAPTIVECPP_LIBRARY_NAME} PRIVATE PLSSVM_SYCL_BACKEND_COMPILER=1)
     target_compile_definitions(${PLSSVM_SYCL_BACKEND_ADAPTIVECPP_LIBRARY_NAME} PRIVATE PLSSVM_SYCL_BACKEND_COMPILER_NAME="AdaptiveCpp")
+    target_compile_definitions(${PLSSVM_SYCL_BACKEND_ADAPTIVECPP_LIBRARY_NAME} PRIVATE PLSSVM_ACPP_TARGETS="${ACPP_TARGETS}")
 
     if (PLSSVM_SYCL_BACKEND_ADAPTIVECPP_USE_GENERIC_SSCP)
         target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PRIVATE PLSSVM_SYCL_BACKEND_ADAPTIVECPP_USE_GENERIC_SSCP)

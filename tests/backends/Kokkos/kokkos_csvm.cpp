@@ -210,7 +210,13 @@ TYPED_TEST(KokkosCSVMConstructor, construct_execution_space_and_parameter) {  //
 
 #if defined(KOKKOS_ENABLE_SYCL)
     // explicitly providing the SYCL execution space should work
-    EXPECT_NO_THROW((csvm_type{ params, plssvm::kokkos_execution_space = plssvm::kokkos::execution_space::sycl }));
+    if (target_is_available(plssvm::target_platform::gpu_nvidia) || target_is_available(plssvm::target_platform::gpu_amd) || target_is_available(plssvm::target_platform::gpu_intel)) {
+        EXPECT_NO_THROW((csvm_type{ params, plssvm::kokkos_execution_space = plssvm::kokkos::execution_space::sycl }));
+    } else {
+        EXPECT_THROW_WHAT((csvm_type{ params, plssvm::kokkos_execution_space = plssvm::kokkos::execution_space::sycl }),
+                          plssvm::kokkos::backend_exception,
+                          "Couldn't find a valid target_platform for the Kokkos::ExecutionSpace SYCL!");
+    }
 #else
     EXPECT_THROW_WHAT((csvm_type{ params, plssvm::kokkos_execution_space = plssvm::kokkos::execution_space::sycl }),
                       plssvm::kokkos::backend_exception,
@@ -549,7 +555,13 @@ TYPED_TEST(KokkosCSVMConstructor, construct_execution_space_and_named_args) {  /
 
 #if defined(KOKKOS_ENABLE_SYCL)
     // explicitly providing the SYCL execution space should work
-    EXPECT_NO_THROW((csvm_type{ plssvm::kernel_type = plssvm::kernel_function_type::linear, plssvm::cost = 2.0, plssvm::kokkos_execution_space = plssvm::kokkos::execution_space::sycl }));
+    if (target_is_available(plssvm::target_platform::gpu_nvidia) || target_is_available(plssvm::target_platform::gpu_amd) || target_is_available(plssvm::target_platform::gpu_intel)) {
+        EXPECT_NO_THROW((csvm_type{ plssvm::kernel_type = plssvm::kernel_function_type::linear, plssvm::cost = 2.0, plssvm::kokkos_execution_space = plssvm::kokkos::execution_space::sycl }));
+    } else {
+        EXPECT_THROW_WHAT((csvm_type{ plssvm::kernel_type = plssvm::kernel_function_type::linear, plssvm::cost = 2.0, plssvm::kokkos_execution_space = plssvm::kokkos::execution_space::sycl }),
+                          plssvm::kokkos::backend_exception,
+                          "Couldn't find a valid target_platform for the Kokkos::ExecutionSpace SYCL!");
+    }
 #else
     EXPECT_THROW_WHAT((csvm_type{ plssvm::kernel_type = plssvm::kernel_function_type::linear, plssvm::cost = 2.0, plssvm::kokkos_execution_space = plssvm::kokkos::execution_space::sycl }),
                       plssvm::kokkos::backend_exception,
@@ -801,10 +813,7 @@ INSTANTIATE_TYPED_TEST_SUITE_P(KokkosCSVM, GenericCSVMSolverKernelFunction, kokk
 // generic C-SVC tests
 INSTANTIATE_TYPED_TEST_SUITE_P(KokkosCSVC, GenericCSVC, kokkos_csvm_test_type_gtest, naming::test_parameter_to_name);
 INSTANTIATE_TYPED_TEST_SUITE_P(KokkosCSVC, GenericCSVCKernelFunctionClassification, kokkos_classification_label_type_kernel_function_and_classification_type_gtest, naming::test_parameter_to_name);
-#if !defined(KOKKOS_ENABLE_CUDA)
-// testcase doesn't compile with Kokkos::Cuda's nvcc due to template instantiation limits
 INSTANTIATE_TYPED_TEST_SUITE_P(KokkosCSVC, GenericCSVCSolverKernelFunctionClassification, kokkos_classification_label_type_solver_kernel_function_and_classification_type_gtest, naming::test_parameter_to_name);
-#endif
 // generic C-SVR tests
 INSTANTIATE_TYPED_TEST_SUITE_P(KokkosCSVR, GenericCSVR, kokkos_csvm_test_type_gtest, naming::test_parameter_to_name);
 INSTANTIATE_TYPED_TEST_SUITE_P(KokkosCSVR, GenericCSVRKernelFunction, kokkos_regression_label_type_and_kernel_function_type_gtest, naming::test_parameter_to_name);

@@ -59,15 +59,22 @@ The main highlights of our SVM implementations are:
 1. Drop-in replacement for LIBSVM's `svm-train`, `svm-predict`, and `svm-scale` (some features currently not implemented).
 2. Support of multiple different programming frameworks for parallelization (also called backends in our PLSSVM implementation) which allows us to target GPUs and CPUs from different vendors like NVIDIA, AMD, or Intel:
    - [OpenMP](https://www.openmp.org/)
-   - [HPX](https://hpx.stellar-group.org/)
-   - [stdpar](https://en.cppreference.com/w/cpp/algorithm) (supported implementations are [nvc++](https://developer.nvidia.com/hpc-sdk) from NVIDIA's HPC SDK, [roc-stdpar](https://github.com/ROCm/roc-stdpar) as a patched LLVM, [icpx](https://www.intel.com/content/www/us/en/developer/tools/oneapi/dpc-compiler.html) as Intel's oneAPI compiler, [AdaptiveCpp](https://github.com/AdaptiveCpp/AdaptiveCpp), and [GNU GCC](https://gcc.gnu.org/) using TBB). <br>
+   - [HPX](https://hpx.stellar-group.org/) (tested with current master)
+   - C++ 17's standard parallelism [stdpar](https://en.cppreference.com/w/cpp/algorithm):<br>
      **Note**: due to the nature of the used USM mechanics in the `stdpar` implementations, the `stdpar` backend **can't** be enabled together with **any** other backend! <br>
-     **Note**: since every translation units need to be compiled with the same flag, we currently globally set `CMAKE_CXX_FLAGS` although it's discouraged in favor of `target_compile_options`.
-   - [CUDA](https://developer.nvidia.com/cuda-zone)
-   - [HIP](https://github.com/ROCm-Developer-Tools/HIP)
-   - [OpenCL](https://www.khronos.org/opencl/)
-   - [SYCL](https://www.khronos.org/sycl/) (supported implementations are Intel's [DPC++/icpx](https://github.com/intel/llvm) and [AdaptiveCpp](https://github.com/AdaptiveCpp/AdaptiveCpp) (formerly known as hipSYCL); specifically the versions [intel-oneapi-compilers@2025.0.0](https://github.com/spack/spack) (via spack) and AdaptiveCpp release [v24.06.0](https://github.com/AdaptiveCpp/AdaptiveCpp/releases/tag/v23.10.0))
-   - [Kokkos](https://github.com/kokkos/kokkos) (all execution spaces supported except `OpenMPTarget` and `OpenACC`); specifically the version [4.5.00](https://github.com/kokkos/kokkos/releases/tag/4.5.00)
+     **Note**: since every translation units need to be compiled with the same flag, we currently globally set `CMAKE_CXX_FLAGS` although it's discouraged.
+     - [nvc++](https://developer.nvidia.com/hpc-sdk) from NVIDIA's HPC SDK (tested with version [25.3](https://docs.nvidia.com/hpc-sdk/hpc-sdk-release-notes/index.html))
+     - [roc-stdpar](https://github.com/ROCm/roc-stdpar) merged into upstream LLVM starting with version 18 (tested with version [18](https://releases.llvm.org/))
+     - [icpx](https://www.intel.com/content/www/us/en/developer/tools/oneapi/dpc-compiler.html) as Intel's oneAPI compiler (tested with version [2025.0.0](https://www.intel.com/content/www/us/en/developer/articles/release-notes/oneapi-dpcpp/2025.html))
+     - [AdaptiveCpp](https://github.com/AdaptiveCpp/AdaptiveCpp) (tested with version [v24.10.0](https://github.com/AdaptiveCpp/AdaptiveCpp/releases/tag/v24.10.0))
+     - [GNU GCC](https://gcc.gnu.org/) using TBB (tested with version GCC [14.2.0](https://gcc.gnu.org/onlinedocs/14.2.0/)) 
+   - [CUDA](https://developer.nvidia.com/cuda-zone) (tested with version [12.6.3](https://developer.nvidia.com/cuda-12-6-3-download-archive))
+   - [HIP](https://github.com/ROCm-Developer-Tools/HIP) (tested with version [6.3.3](https://rocm.docs.amd.com/projects/HIP/en/docs-6.3.3/))
+   - [OpenCL](https://www.khronos.org/opencl/) (tested with CUDA and ROCm provided OpenCL implementations as well as [PoCL](https://github.com/pocl/pocl) version [v6.0](https://github.com/pocl/pocl/releases/tag/v6.0))
+   - [SYCL](https://www.khronos.org/sycl/):
+     - [DPC++/icpx](https://github.com/intel/llvm) as Intel's oneAPI compiler (tested with version [2025.0.0](https://www.intel.com/content/www/us/en/developer/articles/release-notes/oneapi-dpcpp/2025.html))
+     - [AdaptiveCpp](https://github.com/AdaptiveCpp/AdaptiveCpp), formerly known as hipSYCL (tested with version [v24.10.0](https://github.com/AdaptiveCpp/AdaptiveCpp/releases/tag/v24.10.0))
+   - [Kokkos](https://github.com/kokkos/kokkos) (all execution spaces supported except `OpenMPTarget` and `OpenACC`) (tested with version [4.6.00](https://github.com/kokkos/kokkos/releases/tag/4.6.00))
 3. Six different kernel functions to be able to classify a large variety of different problems:
    - linear: $\vec{u}^T$ $\cdot$ $\vec{v}$
    - polynomial: $(\gamma$ $\cdot$ $\vec{u}^T$ $\cdot$ $\vec{v}$ $+$ $coef0)^{d}$
@@ -97,10 +104,10 @@ General dependencies:
 
 - a C++17 capable compiler (e.g. [`gcc`](https://gcc.gnu.org/) or [`clang`](https://clang.llvm.org/))
 - [CMake](https://cmake.org/) 3.25 or newer
-- [cxxopts ≥ v3.2.0](https://github.com/jarro2783/cxxopts), [fast_float ≥ v6.1.3](https://github.com/fastfloat/fast_float), [{fmt} ≥ v11.0.2](https://github.com/fmtlib/fmt), and [igor](https://github.com/bluescarni/igor) (all four are automatically build during the CMake configuration if they couldn't be found using the respective `find_package` call)
-- [GoogleTest ≥ v1.15.2](https://github.com/google/googletest) if testing is enabled (automatically build during the CMake configuration if `find_package(GTest)` wasn't successful)
+- [cxxopts ≥ v3.2.0](https://github.com/jarro2783/cxxopts), [fast_float ≥ v8.0.2](https://github.com/fastfloat/fast_float), [{fmt} ≥ v11.0.2](https://github.com/fmtlib/fmt), and [igor](https://github.com/bluescarni/igor) (all four are automatically build during the CMake configuration if they couldn't be found using the respective `find_package` call)
+- [GoogleTest ≥ v1.16.0](https://github.com/google/googletest) if testing is enabled (automatically build during the CMake configuration if `find_package(GTest)` wasn't successful)
 - [doxygen](https://www.doxygen.nl/index.html) if documentation generation is enabled
-- [Pybind11 ≥ v2.13.3](https://github.com/pybind/pybind11) if Python bindings are enabled
+- [Pybind11 ≥ v2.13.6](https://github.com/pybind/pybind11) if Python bindings are enabled
 - [OpenMP](https://www.openmp.org/) 4.0 or newer (optional) to speed-up library utilities (like file parsing)
 - [MPI](https://www.mpi-forum.org/) if distributed memory systems should be supported; [mpi4py](https://mpi4py.readthedocs.io/en/stable/) to enable interoperability in our Python bindings
 - [Format.cmake](https://github.com/TheLartians/Format.cmake) if auto formatting via cmake-format and clang-format is enabled; also requires at least clang-format-18 and git, additionally, needs our custom [cmake-format fork](https://github.com/vancraar/cmake_format) incorporating some patches
@@ -116,12 +123,12 @@ Additional dependencies for the stdpar backend:
 
 Additional dependencies for the HPX backend:
 
-- [HPX ≥ v1.9.0](https://hpx.stellar-group.org/)
+- [HPX @ current master](https://hpx.stellar-group.org/)
 
 Additional dependencies for the CUDA backend:
 
 - CUDA SDK
-- either NVIDIA [`nvcc`](https://docs.nvidia.com/cuda/cuda-compiler-driver-nvcc/index.html) or [`clang` with CUDA support enabled](https://llvm.org/docs/CompileCudaWithLLVM.html)
+- either NVIDIA [`nvcc`](https://docs.nvidia.com/cuda/cuda-compiler-driver-nvcc/index.html), [`nvc++`](https://developer.nvidia.com/hpc-sdk) or [`clang` with CUDA support enabled](https://llvm.org/docs/CompileCudaWithLLVM.html)
 
 Additional dependencies for the HIP backend:
 
@@ -131,6 +138,7 @@ Additional dependencies for the HIP backend:
 Additional dependencies for the OpenCL backend:
 
 - OpenCL runtime and header files
+- e.g., the CUDA or ROCm provided OpenCL runtimes or [PoCL](https://github.com/pocl/pocl)
 
 Additional dependencies for the SYCL backend:
 
@@ -142,7 +150,7 @@ Additional dependencies for the Kokkos backend:
 
 Additional dependencies for the stdpar backend:
 
-- the code must be compiled with a stdpar capable compiler; currently supported are [nvc++](https://developer.nvidia.com/hpc-sdk), [roc-stdpar](https://github.com/ROCm/roc-stdpar), [icpx](https://www.intel.com/content/www/us/en/developer/tools/oneapi/dpc-compiler.html), [AdaptiveCpp](https://github.com/AdaptiveCpp/AdaptiveCpp), and [GNU GCC](https://gcc.gnu.org/))
+- the code must be compiled with a stdpar capable compiler; currently supported are [nvc++](https://developer.nvidia.com/hpc-sdk), [roc-stdpar](https://github.com/llvm/llvm-project) (merged into upstream LLVM starting with version 18), [icpx](https://www.intel.com/content/www/us/en/developer/tools/oneapi/dpc-compiler.html), [AdaptiveCpp](https://github.com/AdaptiveCpp/AdaptiveCpp), and [GNU GCC](https://gcc.gnu.org/))
 - depending on the used stdpar implementation, additional dependencies are required:
     
     - `nvc++`: a CUDA SDK
@@ -291,7 +299,7 @@ The `[optional_options]` can be one or multiple of:
 - `PLSSVM_USE_FLOAT_AS_REAL_TYPE=ON|OFF` (default: `OFF`): use `float` as real_type instead of `double`
 - `PLSSVM_THREAD_BLOCK_SIZE` (default: `8`): set a specific thread block size used in the GPU kernels (for fine-tuning optimizations)
 - `PLSSVM_INTERNAL_BLOCK_SIZE` (default: `4`): set a specific internal block size used in the GPU kernels (for fine-tuning optimizations)
-- `PLSSVM_ENABLE_LTO=ON|OFF` (default: `ON`): enable interprocedural optimization (IPO/LTO) if supported by the compiler
+- `PLSSVM_ENABLE_LTO=ON|OFF` (default: `OFF`): enable interprocedural optimization (IPO/LTO) if supported by the compiler
 - `PLSSVM_ENFORCE_MAX_MEM_ALLOC_SIZE=ON|OFF` (default: `ON`): enforce the maximum (device) memory allocation size for the plssvm::solver_type::automatic solver
 - `PLSSVM_ENABLE_DOCUMENTATION=ON|OFF` (default: `OFF`): enable the `doc` target using doxygen
 - `PLSSVM_ENABLE_PERFORMANCE_TRACKING=ON|OFF` (default: `OFF`): enable gathering performance characteristics for the three executables using YAML files; example Python3 scripts to perform performance measurements and to process the resulting YAML files can be found in the `utility_scripts/` directory (requires the Python3 modules [wrapt-timeout-decorator](https://pypi.org/project/wrapt-timeout-decorator/), [`pyyaml`](https://pyyaml.org/), and [`pint`](https://pint.readthedocs.io/en/stable/))
@@ -316,7 +324,6 @@ If `PLSSVM_ENABLE_PERFORMANCE_TRACKING` is set to `ON`, the following option can
 
 If `PLSSVM_ENABLE_HARDWARE_SAMPLING` is set to `ON`, the following options can also be set:
 
-- `PLSSVM_HARDWARE_SAMPLING_ENABLE_ERROR_CHECKS=ON|OFF` (default: `OFF`): enable some runtime error checks for the hardware sampling libraries
 - `PLSSVM_HARDWARE_SAMPLING_INTERVAL` (default: `100`): the sampling interval for the `plssvm-train`, `plssvm-predict`, and `plssvm-scale` executables in **milliseconds**
 
 If `PLSSVM_ENABLE_LANGUAGE_BINDINGS` is set to `ON`, the following option can also be set:
@@ -345,9 +352,7 @@ To use DPC++/icpx for SYCL, simply set the `CMAKE_CXX_COMPILER` to the respectiv
 
 If the SYCL implementation is DPC++/icpx the following additional options are available:
 
-- `PLSSVM_SYCL_BACKEND_DPCPP_ENABLE_AOT` (default: `ON`): enable Ahead-of-Time (AOT) compilation for the specified target platforms
 - `PLSSVM_SYCL_BACKEND_DPCPP_USE_LEVEL_ZERO` (default: `ON`): use DPC++/icpx's Level-Zero backend instead of its OpenCL backend **(only available if a CPU or Intel GPU is targeted)**
-- `PLSSVM_SYCL_BACKEND_DPCPP_GPU_AMD_USE_HIP` (default: `ON`): use DPC++/icpx's HIP backend instead of its OpenCL backend for AMD GPUs **(only available if an AMD GPU is targeted)**
 
 If the SYCL implementation is AdaptiveCpp the following additional option is available:
 
@@ -358,13 +363,24 @@ If more than one SYCL implementation is available the environment variables `PLS
 
 - `PLSSVM_SYCL_BACKEND_PREFERRED_IMPLEMENTATION` (`dpcpp`|`adaptivecpp`): specify the preferred SYCL implementation if the `sycl_implementation_type` option is set to `automatic`; additional the specified SYCL implementation is used in the `plssvm::sycl` namespace, the other implementations are available in the `plssvm::dpcpp` and `plssvm::adaptivecpp` namespace respectively
 
-If the Kokkos backend is available the following additional option is available (**note**: this option takes only effect if the Kokkos SYCL execution space is available):
+If the Kokkos backend is available, an additional option can be set.
 
-- `PLSSVM_KOKKOS_BACKEND_INTEL_LLVM_ENABLE_AOT` (default: `ON`): enable Ahead-of-Time (AOT) compilation for the specified target platforms
+- `PLSSVM_KOKKOS_BACKEND_SYCL_ENABLE_MULTI_GPU` (default: `OFF`): enable multi-GPU support for the Kokkos::SYCL execution space; broken in Kokkos as of version 4.6.00!
 
-If the stdpar backend is available, an additional options can be set.
+If the stdpar backend is available, an additional option can be set.
 
 - `PLSSVM_STDPAR_BACKEND_IMPLEMENTATION` (default: `AUTO`): explicitly specify the used stdpar implementation; must be one of: `AUTO`, `NVHPC`, `roc-stdpar`, `IntelLLVM`, `ACPP`, `GNU_TBB`.
+
+If the stdpar implementation is AdaptiveCpp, the following additional option is available:
+
+- `PLSSVM_STDPAR_BACKEND_ACPP_USE_GENERIC_SSCP` (default: `ON`): use AdaptiveCpp's new SSCP compilation flow
+- 
+If the stdpar implementation is roc-stdpar, the following additional option is available:
+
+- `PLSSVM_STDPAR_BACKEND_ROCSTDPAR_USE_INTERPOSE_ALLOC=ON|OFF|AUTO` (default: `AUTO`):
+    - `ON`: always set the `--hipstdpar-interpose-alloc` compiler flag
+    - `AUTO`: only set the `--hipstdpar-interpose-alloc` compiler flag if the environment variable `HSA_XNACK` is not defined or set to `0`
+    - `OFF`: never set the `--hipstdpar-interpose-alloc` compiler flag
 
 #### CMake presets
 
@@ -992,10 +1008,9 @@ With a corresponding minimal CMake file:
 ```cmake
 cmake_minimum_required(VERSION 3.25)
 
-project(LibraryUsageExample
-        LANGUAGES CXX)
+project(LibraryUsageExample LANGUAGES CXX)
 
-find_package(plssvm REQUIRED)
+find_package(plssvm CONFIG REQUIRED)
 # CMake's COMPONENTS mechanism can also be used if a specific library component is required, e.g.:
 # find_package(plssvm REQUIRED COMPONENTS CUDA)
 
@@ -1011,10 +1026,10 @@ add_executable(regression_mpi main_regression_mpi.cpp)
 # link PLSSVM against executables
 foreach (target classification classification_mpi regression regression_mpi)
     target_compile_features(${target} PUBLIC cxx_std_17)
-    target_link_libraries(${target} PUBLIC plssvm::plssvm-all)
+    target_link_libraries(${target} PUBLIC plssvm::plssvm)
+    # can also only link against a single library component, e.g.:
+    # target_link_libraries(${target} PUBLIC plssvm::cuda)
 endforeach ()
-# can also only link against a single library component, e.g.:
-# target_link_libraries(prog PUBLIC plssvm::cuda)
 ```
 
 The `examples/python` directory contains the same examples using our PLSSVM Python bindings. 

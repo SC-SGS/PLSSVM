@@ -17,6 +17,7 @@
 #include "plssvm/detail/assert.hpp"                          // PLSSVM_ASSERT
 #include "plssvm/detail/logging/mpi_log_untracked.hpp"       // plssvm::detail::log_untracked
 #include "plssvm/detail/utility.hpp"                         // plssvm::detail::to_underlying
+#include "plssvm/exceptions/exceptions.hpp"                  // plssvm::cmd_parser_exit
 #include "plssvm/gamma.hpp"                                  // plssvm::get_gamma_string
 #include "plssvm/kernel_function_types.hpp"                  // plssvm::kernel_type_to_math_string
 #include "plssvm/mpi/communicator.hpp"                       // plssvm::mpi::communicator
@@ -31,7 +32,7 @@
 #include "fmt/format.h"  // fmt::format
 #include "fmt/ranges.h"  // fmt::join
 
-#include <cstdlib>      // std::exit, EXIT_SUCCESS, EXIT_FAILURE, std::atexit
+#include <cstdlib>      // EXIT_SUCCESS, EXIT_FAILURE
 #include <exception>    // std::exception
 #include <filesystem>   // std::filesystem::path
 #include <iostream>     // std::cout, std::cerr, std::endl
@@ -46,13 +47,6 @@ parser_train::parser_train(const mpi::communicator &comm, int argc, char **argv)
     // check for basic argc and argv correctness
     PLSSVM_ASSERT(argc >= 1, fmt::format("At least one argument is always given (the executable name), but argc is {}!", argc));
     PLSSVM_ASSERT(argv != nullptr, "At least one argument is always given (the executable name), but argv is a nullptr!");
-
-    // register a std::atexit handler since our parser may directly call std::exit
-    std::atexit([]() {
-        if (mpi::is_active()) {
-            mpi::finalize();
-        }
-    });
 
     // create the help message for the kernel function type
     const auto kernel_type_to_help_entry = [](const kernel_function_type kernel) {
@@ -117,7 +111,7 @@ parser_train::parser_train(const mpi::communicator &comm, int argc, char **argv)
             std::cerr << fmt::format(fmt::fg(fmt::color::red), "ERROR: {}\n", e.what()) << std::endl;
             std::cout << options.help() << std::endl;
         }
-        std::exit(EXIT_FAILURE);
+        throw cmd_parser_exit{ EXIT_FAILURE };
     }
 
     // print help message and exit
@@ -125,7 +119,7 @@ parser_train::parser_train(const mpi::communicator &comm, int argc, char **argv)
         if (comm.is_main_rank()) {
             std::cout << options.help() << std::endl;
         }
-        std::exit(EXIT_SUCCESS);
+        throw cmd_parser_exit{ EXIT_SUCCESS };
     }
 
     // print version info
@@ -133,7 +127,7 @@ parser_train::parser_train(const mpi::communicator &comm, int argc, char **argv)
         if (comm.is_main_rank()) {
             std::cout << version::detail::get_version_info("plssvm-train") << std::endl;
         }
-        std::exit(EXIT_SUCCESS);
+        throw cmd_parser_exit{ EXIT_SUCCESS };
     }
 
     // check if the number of positional arguments is not too large
@@ -142,7 +136,7 @@ parser_train::parser_train(const mpi::communicator &comm, int argc, char **argv)
             std::cerr << fmt::format(fmt::fg(fmt::color::red), "ERROR: only up to two positional options may be given, but {} (\"{}\") additional option(s) where provided!\n", result.unmatched().size(), fmt::join(result.unmatched(), " ")) << std::endl;
             std::cout << options.help() << std::endl;
         }
-        std::exit(EXIT_FAILURE);
+        throw cmd_parser_exit{ EXIT_FAILURE };
     }
 
     // parse svm_type and cast the value to the respective enum
@@ -169,7 +163,7 @@ parser_train::parser_train(const mpi::communicator &comm, int argc, char **argv)
                 std::cerr << fmt::format(fmt::fg(fmt::color::red), "ERROR: gamma must be greater than 0.0, but is {}!\n", std::get<real_type>(gamma_input)) << std::endl;
                 std::cout << options.help() << std::endl;
             }
-            std::exit(EXIT_FAILURE);
+            throw cmd_parser_exit{ EXIT_FAILURE };
         }
         // provided gamma was legal -> override default value
         csvm_params.gamma = gamma_input;
@@ -199,7 +193,7 @@ parser_train::parser_train(const mpi::communicator &comm, int argc, char **argv)
                 std::cerr << fmt::format(fmt::fg(fmt::color::red), "ERROR: max_iter must be greater than 0, but is {}!\n", max_iter_input) << std::endl;
                 std::cout << options.help() << std::endl;
             }
-            std::exit(EXIT_FAILURE);
+            throw cmd_parser_exit{ EXIT_FAILURE };
         }
         // provided max_iter was legal -> override default value
         max_iter = static_cast<decltype(max_iter)>(max_iter_input);
@@ -309,7 +303,7 @@ parser_train::parser_train(const mpi::communicator &comm, int argc, char **argv)
             std::cerr << fmt::format(fmt::fg(fmt::color::red), "ERROR: missing input file!\n") << std::endl;
             std::cout << options.help() << std::endl;
         }
-        std::exit(EXIT_FAILURE);
+        throw cmd_parser_exit{ EXIT_FAILURE };
     }
     input_filename = result["input"].as<decltype(input_filename)>();
 
@@ -339,7 +333,7 @@ parser_train::parser_train(const mpi::communicator &comm, int argc, char **argv)
                 std::cerr << fmt::format(fmt::fg(fmt::color::red), "ERROR: the number of load balancing weights ({}) must match the number of MPI ranks ({})!\n", mpi_load_balancing_weights.size(), comm.size()) << std::endl;
                 std::cout << options.help() << std::endl;
             }
-            std::exit(EXIT_FAILURE);
+            throw cmd_parser_exit{ EXIT_FAILURE };
         }
     }
 #endif

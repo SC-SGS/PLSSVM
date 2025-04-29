@@ -91,3 +91,46 @@ TYPED_TEST(Exceptions, exception_what_with_source_location) {
     EXPECT_THAT(std::string{ what_lines[3] }, ::testing::ContainsRegex("  in function  .*dummy.*"));
     EXPECT_THAT(std::string{ what_lines[4] }, ::testing::StartsWith("  @ line       "));  // attention: some line must be given, hardcoded value not feasible
 }
+
+// helper function returning an exception used to be able to name the source location function
+plssvm::cmd_parser_exit dummy_exit(const int exit_code) {
+    return plssvm::cmd_parser_exit{ exit_code };
+}
+
+// check whether throwing exceptions works as intended
+TEST(CMDParserExitException, throwing_excpetion) {
+    // throw the specified exception
+    const auto dummy_exit = []() { throw plssvm::cmd_parser_exit{ 1 }; };
+    EXPECT_THROW_WHAT(dummy_exit(), plssvm::cmd_parser_exit, "exit code: 1");
+}
+
+// check whether the source location information are populated correctly
+TEST(CMDParserExitException, exception_source_location) {
+    const auto exc = dummy_exit(2);
+
+    EXPECT_EQ(exc.loc().file_name(), std::string{ __builtin_FILE() });
+    EXPECT_THAT(exc.loc().function_name(), ::testing::HasSubstr("dummy_exit"));
+    EXPECT_GT(exc.loc().line(), std::uint_least32_t{ 0 });    // attention: some line must be given, hardcoded value not feasible
+    EXPECT_EQ(exc.loc().column(), std::uint_least32_t{ 0 });  // attention: always 0!
+    EXPECT_EQ(exc.exit_code(), 2);
+}
+
+// check whether what message including the source location information is assembled correctly
+TEST(CMDParserExitException, exception_what_with_source_location) {
+    const auto exc = dummy_exit(0);
+
+    // get exception message with source location information split into a vector of separate lines
+    const std::string what = exc.what_with_loc();
+    const std::vector<std::string_view> what_lines = plssvm::detail::split(what, '\n');
+
+    // check the number of lines in the "what" message
+    ASSERT_EQ(what_lines.size(), 5);
+
+    // check the "what" message content
+    EXPECT_EQ(what_lines[0], std::string{ "exit code: 0" });
+    EXPECT_EQ(what_lines[1], fmt::format("{} thrown:", util::exception_type_name<plssvm::cmd_parser_exit>()));
+    EXPECT_EQ(what_lines[2], fmt::format("  in file      {}", __builtin_FILE()));
+    EXPECT_THAT(std::string{ what_lines[3] }, ::testing::ContainsRegex("  in function  .*dummy_exit.*"));
+    EXPECT_THAT(std::string{ what_lines[4] }, ::testing::StartsWith("  @ line       "));  // attention: some line must be given, hardcoded value not feasible
+    EXPECT_EQ(exc.exit_code(), 0);
+}
