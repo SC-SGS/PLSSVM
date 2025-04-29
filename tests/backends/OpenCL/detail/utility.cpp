@@ -91,7 +91,7 @@ TEST(OpenCLUtility, get_opencl_target_version) {
 TEST(OpenCLUtility, get_driver_version) {
     // create a valid command queue
     const std::vector<plssvm::opencl::detail::context> contexts{ plssvm::opencl::detail::get_contexts(plssvm::target_platform::automatic).first };
-    const plssvm::opencl::detail::command_queue queue{ contexts[0], contexts[0].devices[0] };
+    const plssvm::opencl::detail::command_queue queue{ contexts[0], contexts[0].device };
     // the device name should not be empty
     const std::string driver_version = plssvm::opencl::detail::get_driver_version(queue);
     EXPECT_FALSE(driver_version.empty());
@@ -100,7 +100,7 @@ TEST(OpenCLUtility, get_driver_version) {
 TEST(OpenCLUtility, get_device_name) {
     // create a valid command queue
     const std::vector<plssvm::opencl::detail::context> contexts{ plssvm::opencl::detail::get_contexts(plssvm::target_platform::automatic).first };
-    const plssvm::opencl::detail::command_queue queue{ contexts[0], contexts[0].devices[0] };
+    const plssvm::opencl::detail::command_queue queue{ contexts[0], contexts[0].device };
     // the device name should not be empty
     const std::string name = plssvm::opencl::detail::get_device_name(queue);
     EXPECT_FALSE(name.empty());

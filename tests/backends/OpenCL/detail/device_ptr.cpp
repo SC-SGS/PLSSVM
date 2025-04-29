@@ -30,7 +30,7 @@ struct opencl_device_ptr_test_type {
 
     static const queue_type &default_queue() {
         static const std::vector<plssvm::opencl::detail::context> contexts{ plssvm::opencl::detail::get_contexts(plssvm::target_platform::automatic).first };
-        static const plssvm::opencl::detail::command_queue queue{ contexts[0], contexts[0].devices[0] };
+        static const plssvm::opencl::detail::command_queue queue{ contexts[0], contexts[0].device };
         return queue;
     }
 };

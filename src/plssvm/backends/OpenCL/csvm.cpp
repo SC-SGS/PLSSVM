@@ -90,16 +90,9 @@ csvm::csvm(const target_platform target) {
     // At this point, target_ may NEVER be target_platform::automatic!
     PLSSVM_ASSERT(target_ != target_platform::automatic, "At this point, the target platform must be determined and must NOT be automatic!");
 
-    // currently, only EXACTLY one OpenCL context is allowed
+    // at least one OpenCL context must be created
     if (contexts_.empty()) {
         throw backend_exception{ fmt::format("No OpenCL context for the target {} could be found!", target_) };
-    } else if (contexts_.size() > 1) {
-        throw backend_exception{ fmt::format("Currently only a single OpenCL context is allowed, but {} were found for the target {}!", contexts_.size(), target_) };
-    }
-
-    // throw exception if no devices for the requested target could be found
-    if (contexts_[0].devices.empty()) {
-        throw backend_exception{ fmt::format("OpenCL backend selected but no devices for the target {} were found!", target) };
     }
 
     // create command_queues and JIT compile OpenCL kernels; compile all kernels for float and double
