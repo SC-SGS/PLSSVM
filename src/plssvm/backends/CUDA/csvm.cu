@@ -20,12 +20,14 @@
 #include "plssvm/constants.hpp"                                                     // plssvm::{real_type, THREAD_BLOCK_SIZE, INTERNAL_BLOCK_SIZE, PADDING_SIZE}
 #include "plssvm/detail/assert.hpp"                                                 // PLSSVM_ASSERT
 #include "plssvm/detail/data_distribution.hpp"                                      // plssvm::detail::{data_distribution, triangular_data_distribution, rectangular_data_distribution}
-#include "plssvm/detail/logging.hpp"                                                // plssvm::detail::log
+#include "plssvm/detail/logging/mpi_log_untracked.hpp"                              // plssvm::detail::log_untracked
 #include "plssvm/detail/memory_size.hpp"                                            // plssvm::detail::memory_size
 #include "plssvm/detail/tracking/performance_tracker.hpp"                           // plssvm::detail::tracking::tracking_entry, PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY
 #include "plssvm/exceptions/exceptions.hpp"                                         // plssvm::exception
 #include "plssvm/gamma.hpp"                                                         // plssvm::gamma_type
 #include "plssvm/kernel_function_types.hpp"                                         // plssvm::kernel_function_type
+#include "plssvm/mpi/communicator.hpp"                                              // plssvm::mpi::communicator
+#include "plssvm/mpi/detail/information.hpp"                                        // plssvm::mpi::detail::gather_and_print_csvm_information
 #include "plssvm/parameter.hpp"                                                     // plssvm::parameter
 #include "plssvm/shape.hpp"                                                         // plssvm::shape
 #include "plssvm/target_platforms.hpp"                                              // plssvm::target_platform
@@ -43,6 +45,7 @@
 #include <iostream>   // std::cout, std::endl
 #include <numeric>    // std::iota
 #include <string>     // std::string
+#include <utility>    // std::move
 #include <variant>    // std::get
 #include <vector>     // std:vector
 
@@ -58,12 +61,6 @@ csvm::csvm(const target_platform target) {
 #endif
     }
 
-    plssvm::detail::log(verbosity_level::full,
-                        "\nUsing CUDA ({}) as backend.\n",
-                        plssvm::detail::tracking::tracking_entry{ "dependencies", "cuda_runtime_version", detail::get_runtime_version() });
-    PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "backend", "backend", plssvm::backend_type::cuda }));
-    PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "backend", "target_platform", plssvm::target_platform::gpu_nvidia }));
-
     // update the target platform
     target_ = plssvm::target_platform::gpu_nvidia;
 
@@ -76,26 +73,50 @@ csvm::csvm(const target_platform target) {
         throw backend_exception{ "CUDA backend selected but no CUDA capable devices were found!" };
     }
 
-    // print found CUDA devices
-    plssvm::detail::log(verbosity_level::full,
-                        "Found {} CUDA device(s):\n",
-                        plssvm::detail::tracking::tracking_entry{ "backend", "num_devices", devices_.size() });
-    std::vector<std::string> device_names;
+    std::vector<std::string> device_names{};
     device_names.reserve(devices_.size());
-    for (const queue_type &device : devices_) {
-        cudaDeviceProp prop{};
-        PLSSVM_CUDA_ERROR_CHECK(cudaGetDeviceProperties(&prop, device))
-        plssvm::detail::log(verbosity_level::full,
-                            "  [{}, {}, {}.{}]\n",
-                            device,
-                            prop.name,
-                            prop.major,
-                            prop.minor);
-        device_names.emplace_back(prop.name);
+
+    if (comm_.size() > 1) {
+        // use MPI rank specific command line output
+        for (const queue_type &device : devices_) {
+            cudaDeviceProp prop{};
+            PLSSVM_CUDA_ERROR_CHECK(cudaGetDeviceProperties(&prop, device))
+            device_names.emplace_back(prop.name);
+        }
+
+        mpi::detail::gather_and_print_csvm_information(comm_, plssvm::backend_type::cuda, target_, device_names);
+    } else {
+        // use more detailed single rank command line output
+        plssvm::detail::log_untracked(verbosity_level::full,
+                                      comm_,
+                                      "\nUsing CUDA ({}) as backend.\n"
+                                      "Found {} CUDA device(s):\n",
+                                      detail::get_runtime_version(),
+                                      devices_.size());
+
+        for (const queue_type &device : devices_) {
+            cudaDeviceProp prop{};
+            PLSSVM_CUDA_ERROR_CHECK(cudaGetDeviceProperties(&prop, device))
+            plssvm::detail::log_untracked(verbosity_level::full,
+                                          comm_,
+                                          "  [{}, {}, {}.{}]\n",
+                                          device,
+                                          prop.name,
+                                          prop.major,
+                                          prop.minor);
+            device_names.emplace_back(prop.name);
+        }
     }
+
+    plssvm::detail::log_untracked(verbosity_level::full | verbosity_level::timing,
+                                  comm_,
+                                  "\n");
+
+    PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "dependencies", "cuda_runtime_version", detail::get_runtime_version() }));
+    PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "backend", "backend", plssvm::backend_type::cuda }));
+    PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "backend", "target_platform", target_ }));
+    PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "backend", "num_devices", devices_.size() }));
     PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "backend", "device", device_names }));
-    plssvm::detail::log(verbosity_level::full | verbosity_level::timing,
-                        "\n");
 }
 
 csvm::~csvm() {

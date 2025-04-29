@@ -18,10 +18,11 @@
 #include "plssvm/data_set/classification_data_set.hpp"     // plssvm::classification_data_set
 #include "plssvm/detail/assert.hpp"                        // PLSSVM_ASSERT
 #include "plssvm/detail/igor_utility.hpp"                  // plssvm::detail::{has_only_named_args_v, get_value_from_named_parameter}
-#include "plssvm/detail/logging.hpp"                       // plssvm::detail::log
+#include "plssvm/detail/logging/mpi_log.hpp"               // plssvm::detail::log
+#include "plssvm/detail/logging/mpi_log_untracked.hpp"     // plssvm::detail::log_untracked
 #include "plssvm/detail/tracking/performance_tracker.hpp"  // PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_EVENT, plssvm::detail::tracking::tracking_entry
 #include "plssvm/detail/utility.hpp"                       // plssvm::detail::contains
-#include "plssvm/exceptions/exceptions.hpp"                // plssvm::invalid_parameter_exception
+#include "plssvm/exceptions/exceptions.hpp"                // plssvm::invalid_parameter_exception, plssvm::mpi_exception
 #include "plssvm/gamma.hpp"                                // plssvm::calculate_gamma_value
 #include "plssvm/kernel_function_types.hpp"                // plssvm::kernel_function_type
 #include "plssvm/matrix.hpp"                               // plssvm::aos_matrix, plssvm::soa_matrix
@@ -37,7 +38,7 @@
 #include <chrono>       // std::chrono::{time_point, steady_clock, duration_cast, milliseconds}
 #include <cstddef>      // std::size_t
 #include <limits>       // std::numeric_limits::lowest
-#include <memory>       // std::make_shared, std::dynamic_pointer_cast, std::addressof
+#include <memory>       // std::make_shared, std::addressof
 #include <optional>     // std::make_optional
 #include <tuple>        // std::tie
 #include <type_traits>  // std::is_same_v
@@ -114,6 +115,7 @@ class csvc : virtual public csvm {
      * @throws plssvm::invlaid_parameter_exception if the provided maximum number of iterations is less or equal than zero
      * @throws plssvm::invalid_parameter_exception if the training @p data does **not** include labels
      * @throws plssvm::exception any exception thrown in the respective backend's implementation of `plssvm::csvm::solve_lssvm_system_of_linear_equations`
+     * @throws plssvm::mpi_exception if the MPI communicator of the C-SVC and the MPI communicator of the @p data set are not identical
      * @note For binary classification **always** one vs. all is used regardless of the provided parameter!
      * @return the learned model (`[[nodiscard]]`)
      */
@@ -133,6 +135,10 @@ class csvc : virtual public csvm {
 
         if (!data.has_labels()) {
             throw invalid_parameter_exception{ "No labels given for training! Maybe the data is only usable for prediction?" };
+        }
+        // check whether the C-SVC and data set MPI communicators are identical
+        if (comm_ != data.communicator()) {
+            throw mpi_exception{ "The MPI communicators provided to the C-SVC and data set must be identical!" };
         }
 
         PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_EVENT("fit start");
@@ -159,10 +165,11 @@ class csvc : virtual public csvm {
         // start fitting the data set using a C-SVM
         const std::chrono::time_point start_time = std::chrono::steady_clock::now();
 
-        detail::log(verbosity_level::full,
-                    "Using {} ({}) as multi-class classification strategy.\n",
-                    used_classification,
-                    classification_type_to_full_string(used_classification));
+        detail::log_untracked(verbosity_level::full,
+                              comm_,
+                              "Using {} ({}) as multi-class classification strategy.\n",
+                              used_classification,
+                              classification_type_to_full_string(used_classification));
 
         // copy parameter and set gamma if necessary
         parameter params{ params_ };
@@ -200,10 +207,11 @@ class csvc : virtual public csvm {
 
             if (num_classes == 2) {
                 // special optimization for binary case (no temporary copies necessary)
-                detail::log(verbosity_level::full,
-                            "\nClassifying 0 vs 1 ({} vs {}) (1/1):\n",
-                            data.mapping_->get_label_by_mapped_index(0),
-                            data.mapping_->get_label_by_mapped_index(1));
+                detail::log_untracked(verbosity_level::full,
+                                      comm_,
+                                      "\nClassifying 0 vs 1 ({} vs {}) (1/1):\n",
+                                      data.mapping_->get_label_by_mapped_index(0),
+                                      data.mapping_->get_label_by_mapped_index(1));
 
                 // reduce the size of the rhs (y_ptr)
                 // -> consistent with the multi-class case as well as when reading the model from file in the model class constructor
@@ -243,14 +251,15 @@ class csvc : virtual public csvm {
                         }
 
                         // solve the minimization problem -> note that only a single rhs is present
-                        detail::log(verbosity_level::full,
-                                    "\nClassifying {} vs {} ({} vs {}) ({}/{}):\n",
-                                    i,
-                                    j,
-                                    data.mapping_->get_label_by_mapped_index(i),
-                                    data.mapping_->get_label_by_mapped_index(j),
-                                    pos + 1,
-                                    calculate_number_of_classifiers(classification_type::oao, num_classes));
+                        detail::log_untracked(verbosity_level::full,
+                                              comm_,
+                                              "\nClassifying {} vs {} ({} vs {}) ({}/{}):\n",
+                                              i,
+                                              j,
+                                              data.mapping_->get_label_by_mapped_index(i),
+                                              data.mapping_->get_label_by_mapped_index(j),
+                                              pos + 1,
+                                              calculate_number_of_classifiers(classification_type::oao, num_classes));
                         const auto &[alpha, rho, num_iter] = this->solve_lssvm_system_of_linear_equations(binary_data, binary_y, params, std::forward<Args>(named_args)...);
                         (*csvc_model.alpha_ptr_)[pos] = std::move(alpha);
                         (*csvc_model.rho_ptr_)[pos] = rho.front();  // prevents std::tie
@@ -270,6 +279,7 @@ class csvc : virtual public csvm {
 
         const std::chrono::time_point end_time = std::chrono::steady_clock::now();
         detail::log(verbosity_level::full | verbosity_level::timing,
+                    comm_,
                     "\nLearned the SVC classifier for {} multi-class classification in {}.\n\n",
                     classification_type_to_full_string(used_classification),
                     detail::tracking::tracking_entry{ "cg", "total_runtime", std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time) });
@@ -290,6 +300,8 @@ class csvc : virtual public csvm {
      * @param[in] data the data to predict the labels for
      * @throws plssvm::invalid_parameter_exception if the number of features in the @p model's support vectors don't match the number of features in the @p data set
      * @throws plssvm::exception any exception thrown in the respective backend's implementation of `plssvm::csvm::predict_values`
+     * @throws plssvm::mpi_exception if the MPI communicator of the C-SVC and the MPI communicator of the @p model set are not identical
+     * @throws plssvm::mpi_exception if the MPI communicator of the C-SVC and the MPI communicator of the @p data set are not identical
      * @return the predicted labels (`[[nodiscard]]`)
      */
     template <typename label_type>
@@ -313,6 +325,14 @@ class csvc : virtual public csvm {
 
         if (model.num_features() != data.num_features()) {
             throw invalid_parameter_exception{ fmt::format("Number of features per data point ({}) must match the number of features per support vector of the provided model ({})!", data.num_features(), model.num_features()) };
+        }
+        // check whether the C-SVC and model MPI communicators are identical
+        if (comm_ != model.communicator()) {
+            throw mpi_exception{ "The MPI communicators provided to the C-SVC and model must be identical!" };
+        }
+        // check whether the C-SVC and data set MPI communicators are identical
+        if (comm_ != data.communicator()) {
+            throw mpi_exception{ "The MPI communicators provided to the C-SVC and data set must be identical!" };
         }
 
         PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_EVENT("predict start");
@@ -338,8 +358,11 @@ class csvc : virtual public csvm {
             PLSSVM_ASSERT(votes.num_rows() == data.num_data_points(), "The number of votes ({}) must be equal the number of data points ({})!", votes.num_rows(), data.num_data_points());
             PLSSVM_ASSERT(votes.num_cols() == calculate_number_of_classifiers(classification_type::oaa, model.num_classes()), "The votes contain {} values, but must contain {} values!", votes.num_cols(), calculate_number_of_classifiers(classification_type::oaa, model.num_classes()));
 
+            // extract mapping
+            const auto &mapping = *dynamic_cast<const classification_data_set<label_type> &>(*model.data_).mapping_;
+
 // use voting
-#pragma omp parallel for default(none) shared(predicted_labels, votes, model) if (!std::is_same_v<label_type, bool>)
+#pragma omp parallel for default(none) shared(predicted_labels, votes, mapping) if (!std::is_same_v<label_type, bool>)
             for (std::size_t i = 0; i < predicted_labels.size(); ++i) {
                 std::size_t argmax = 0;
                 real_type max = std::numeric_limits<real_type>::lowest();
@@ -349,7 +372,7 @@ class csvc : virtual public csvm {
                         max = votes(i, v);
                     }
                 }
-                predicted_labels[i] = std::dynamic_pointer_cast<classification_data_set<label_type>>(model.data_)->mapping_->get_label_by_mapped_index(argmax);
+                predicted_labels[i] = mapping.get_label_by_mapped_index(argmax);
             }
         } else if (model.get_classification_type() == classification_type::oao) {
             PLSSVM_ASSERT(model.index_sets_ptr_ != nullptr, "The index_sets_ptr_ may never be a nullptr!");
@@ -456,8 +479,11 @@ class csvc : virtual public csvm {
                 }
             }
 
+            // extract mapping
+            const auto &mapping = *dynamic_cast<const classification_data_set<label_type> &>(*model.data_).mapping_;
+
 // map majority vote to predicted class
-#pragma omp parallel for default(none) shared(predicted_labels, class_votes, model) if (!std::is_same_v<label_type, bool>)
+#pragma omp parallel for default(none) shared(predicted_labels, class_votes, mapping) if (!std::is_same_v<label_type, bool>)
             for (std::size_t i = 0; i < predicted_labels.size(); ++i) {
                 std::size_t argmax = 0;
                 std::size_t max = 0;
@@ -467,7 +493,7 @@ class csvc : virtual public csvm {
                         max = class_votes(i, v);
                     }
                 }
-                predicted_labels[i] = std::dynamic_pointer_cast<classification_data_set<label_type>>(model.data_)->mapping_->get_label_by_mapped_index(argmax);
+                predicted_labels[i] = mapping.get_label_by_mapped_index(argmax);
             }
         }
 
@@ -482,6 +508,7 @@ class csvc : virtual public csvm {
      * @tparam label_type the type of the label (an arithmetic type or `std::string`)
      * @param[in] model a previously learned model
      * @throws plssvm::exception any exception thrown in the respective backend's implementation of `plssvm::csvm::predict_values`
+     * @throws plssvm::mpi_exception if the MPI communicator of the C-SVC and the MPI communicator of the @p model set are not identical
      * @return the accuracy of the model (`[[nodiscard]]`)
      */
     template <typename label_type>
@@ -498,6 +525,8 @@ class csvc : virtual public csvm {
      * @throws plssvm::invalid_parameter_exception if the @p data to score has no labels
      * @throws plssvm::invalid_parameter_exception if the number of features in the @p model's support vectors don't match the number of features in the @p data set
      * @throws plssvm::exception any exception thrown in the respective backend's implementation of `plssvm::csvm::predict_values`
+     * @throws plssvm::mpi_exception if the MPI communicator of the C-SVC and the MPI communicator of the @p model set are not identical
+     * @throws plssvm::mpi_exception if the MPI communicator of the C-SVC and the MPI communicator of the @p data set are not identical
      * @return the accuracy of the labeled @p data (`[[nodiscard]]`)
      */
     template <typename label_type>
@@ -509,6 +538,14 @@ class csvc : virtual public csvm {
         // the number of features must be equal
         if (model.num_features() != data.num_features()) {
             throw invalid_parameter_exception{ fmt::format("Number of features per data point ({}) must match the number of features per support vector of the provided model ({})!", data.num_features(), model.num_features()) };
+        }
+        // check whether the C-SVC and model MPI communicators are identical
+        if (comm_ != model.communicator()) {
+            throw mpi_exception{ "The MPI communicators provided to the C-SVC and model must be identical!" };
+        }
+        // check whether the C-SVC and data set MPI communicators are identical
+        if (comm_ != data.communicator()) {
+            throw mpi_exception{ "The MPI communicators provided to the C-SVC and data set must be identical!" };
         }
 
         // predict labels

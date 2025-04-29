@@ -22,7 +22,8 @@
 #include <vector>     // std::vector
 
 TEST(BadMoveOnlyCastException, exception) {
-    EXPECT_THROW_WHAT(throw plssvm::detail::bad_move_only_any_cast{}, plssvm::detail::bad_move_only_any_cast, "plssvm::detail::bad_move_only_any_cast");
+    const auto dummy = []() { throw plssvm::detail::bad_move_only_any_cast{}; };
+    EXPECT_THROW_WHAT(dummy(), plssvm::detail::bad_move_only_any_cast, "plssvm::detail::bad_move_only_any_cast");
 }
 
 TEST(MoveOnlyAny, default_construct) {
@@ -231,6 +232,12 @@ TEST(MoveOnlyAny, cast_const_pointer) {
     EXPECT_EQ(*ptr, 42);
 }
 
+TEST(MoveOnlyAny, cast_const_nullptr_pointer) {
+    // casting a nullptr should return a nullptr
+    const plssvm::detail::move_only_any *a{ nullptr };
+    EXPECT_EQ(plssvm::detail::move_only_any_cast<const int>(a), nullptr);
+}
+
 TEST(MoveOnlyAny, cast_const_pointer_wrong_type) {
     // create const move_only_any object
     const plssvm::detail::move_only_any a{ 42 };
@@ -244,6 +251,12 @@ TEST(MoveOnlyAny, cast_pointer) {
     // retrieve the contained value and check for correctness
     EXPECT_EQ(*plssvm::detail::move_only_any_cast<int>(&a), 42);
     EXPECT_EQ(*plssvm::detail::move_only_any_cast<const int>(&a), 42);
+}
+
+TEST(MoveOnlyAny, cast_nullptr_pointer) {
+    // casting a nullptr should return a nullptr
+    plssvm::detail::move_only_any *a{ nullptr };
+    EXPECT_EQ(plssvm::detail::move_only_any_cast<int>(a), nullptr);
 }
 
 TEST(MoveOnlyAny, cast_pointer_wrong_type) {

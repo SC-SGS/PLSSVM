@@ -82,6 +82,7 @@ set(PLSSVM_BASE_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/backends/SYCL/kernel_invocation_types.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/backends/stdpar/implementation_types.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/backends/execution_range.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/data_set/min_max_scaler.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/cmd/parser_predict.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/cmd/parser_scale.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/cmd/parser_train.cpp
@@ -89,10 +90,15 @@ set(PLSSVM_BASE_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/data_distribution.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/memory_size.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/sha256.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/string_conversion.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/string_utility.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/utility.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/exceptions/exceptions.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/exceptions/source_location.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/mpi/detail/information.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/mpi/detail/utility.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/mpi/detail/version.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/mpi/communicator.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/mpi/environment.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/svm/csvm.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/version/version.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/version/git_metadata/git_metadata.cpp
@@ -234,6 +240,38 @@ else ()
 endif ()
 
 ########################################################################################################################
+#                                              check for MPI (optional)                                              ##
+########################################################################################################################
+# check for MPI
+set(PLSSVM_ENABLE_MPI AUTO CACHE STRING "Enable distributed memory support via MPI")
+set_property(CACHE PLSSVM_ENABLE_MPI PROPERTY STRINGS AUTO ON OFF)
+if (PLSSVM_ENABLE_MPI MATCHES "AUTO" OR PLSSVM_ENABLE_MPI)
+    list(APPEND CMAKE_MESSAGE_INDENT "MPI:  ")
+    message(CHECK_START "Checking for MPI")
+
+    # try finding MPI
+    find_package(MPI)
+
+    if (MPI_FOUND)
+        # MPI found
+        message(CHECK_PASS "found ")
+
+        message(STATUS "Found MPI ${MPI_CXX_VERSION} for distributed memory support.")
+        set(PLSSVM_FOUND_MPI ON)
+        target_link_libraries(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC MPI::MPI_CXX)
+        target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC PLSSVM_HAS_MPI_ENABLED)
+    else ()
+        # MPI not found
+        message(CHECK_FAIL "not found")
+        if (PLSSVM_ENABLE_MPI MATCHES "ON")
+            message(SEND_ERROR "Cannot find requested MPI!")
+        endif ()
+    endif ()
+
+    list(POP_BACK CMAKE_MESSAGE_INDENT)
+endif ()
+
+########################################################################################################################
 #                                                  create executables                                                  #
 ########################################################################################################################
 # create train executable
@@ -260,6 +298,7 @@ list(
 ########################################################################################################################
 # coverage analysis only possible with the Coverage CMAKE_BUILD_TYPE
 if (uppercase_CMAKE_BUILD_TYPE MATCHES COVERAGE)
+    list(APPEND CMAKE_MESSAGE_INDENT "coverage:  ")
     # must be linux
     if (WIN32 OR APPLE)
         message(FATAL_ERROR "Only Linux is supported for the coverage analysis.")
@@ -268,31 +307,61 @@ if (uppercase_CMAKE_BUILD_TYPE MATCHES COVERAGE)
     if (NOT CMAKE_CXX_COMPILER_ID MATCHES "GNU")
         message(FATAL_ERROR "Only GCC is supported for the coverage analysis.")
     endif ()
+    message(STATUS "Enable code coverage analysis using lcov and genhtml.")
+
     # tests must be available for a coverage analysis
     message(STATUS "Enabling tests since they are necessary for the coverage analysis.")
     set(PLSSVM_ENABLE_TESTING ON CACHE BOOL "" FORCE)
+    # disable fast-math like it should be in the normal tests
+    message(STATUS "Disabling fast-math for the tests.")
+    set(PLSSVM_ENABLE_FAST_MATH OFF CACHE BOOL "" FORCE)
     # assertions must be available for a coverage analysis
     message(STATUS "Enabling assertions since they are necessary for the coverage analysis.")
     set(PLSSVM_ENABLE_ASSERTS ON CACHE BOOL "" FORCE)
+    # LTO must be disabled for a coverage analysis
+    message(STATUS "Disabling LTO since it may interfere with the coverage analysis.")
+    set(PLSSVM_ENABLE_LTO OFF CACHE BOOL "" FORCE)
 
-    message(STATUS "Enable code coverage analysis using lcov.")
+    # also enable code coverage for nvcc
+    set(CMAKE_CUDA_FLAGS "-Xcompiler '-O0 -g --coverage -lgcov'")
 
-    # Create the coverage target. Run coverage tests with 'make coverage'
+    # check that the necessary executables are available
+    find_program(PLSSVM_LCOV lcov REQUIRED)
+    find_program(PLSSVM_GENHTML genhtml REQUIRED)
+    find_program(PLSSVM_CPPFILT c++filt)
+    if (PLSSVM_CPPFILT)
+        set(PLSSVM_DEMANGLE_USING_CPPFILT --demangle-cpp)
+    endif ()
+
+    # Create the coverage target. Run coverage tests with 'ctest --build . --target coverage'
+    set(PLSSVM_COVERAGE_REPORT_OUTPUT_DIRECTORY "coverage_report")
     add_custom_target(
         coverage
-        COMMAND lcov --zerocounters --directory .
-        COMMAND lcov --capture -d . --initial --output-file test_base.info
-        COMMAND mkdir -p coverage
-        COMMAND ${CMAKE_MAKE_PROGRAM} test || true
-        COMMAND lcov --capture -d . --output-file test_test.info
-        COMMAND lcov --add-tracefile test_base.info --add-tracefile test_test.info -o test_total.info
-        COMMAND lcov --remove test_total.info '/usr/*' '*/build/*' '*/tests/*' '*/_deps/*' -o test_clean.info
-        COMMAND genhtml test_clean.info --output-directory coverage --title "PLSSVM Test Coverage" --show-details --legend
-        BYPRODUCTS ${CMAKE_BINARY_DIR}/test_base.info
-                   ${CMAKE_BINARY_DIR}/test_test.info
-                   ${CMAKE_BINARY_DIR}/test_total.info
-                   ${CMAKE_BINARY_DIR}/test_clean.info
-                   ${CMAKE_BINARY_DIR}/coverage
+        COMMENT "Running tests and generating coverage report..."
+        # Cleanup previous coverage data
+        COMMAND ${PLSSVM_LCOV} --directory . --zerocounters
+        COMMAND ${CMAKE_COMMAND} -E remove -f coverage.info coverage_init.info coverage_tests.info "${PLSSVM_COVERAGE_REPORT_OUTPUT_DIRECTORY}"
+        # Capture initial zero coverage baseline (useful for untouched files)
+        COMMAND ${PLSSVM_LCOV} --directory . --capture --initial --rc geninfo_unexecuted_blocks=1 --include '*/PLSSVM/src/*' --include '*/PLSSVM/include/*'
+                --output-file coverage_init.info
+        # Be sure the output directory exists
+        COMMAND mkdir -p "${PLSSVM_COVERAGE_REPORT_OUTPUT_DIRECTORY}"
+        # Run tests
+        COMMAND ${CMAKE_CTEST_COMMAND} --parallel 8 || true
+        # Capture coverage info
+        COMMAND ${PLSSVM_LCOV} --directory . --capture --rc geninfo_unexecuted_blocks=1 --include '*/PLSSVM/src/*' --include '*/PLSSVM/include/*' --output-file
+                coverage_tests.info
+        # Combine coverage files (in case of multiple test runs)
+        COMMAND ${PLSSVM_LCOV} --add-tracefile coverage_init.info --add-tracefile coverage_tests.info --output-file coverage.info
+        # Generate HTML report
+        COMMAND ${PLSSVM_GENHTML} coverage.info --output-directory "${PLSSVM_COVERAGE_REPORT_OUTPUT_DIRECTORY}" --title "PLSSVM Test Coverage" --show-details
+                --legend --frames ${PLSSVM_DEMANGLE_USING_CPPFILT}
+        # Summary message
+        COMMAND ${CMAKE_COMMAND} -E echo "Coverage report generated in: ${CMAKE_BINARY_DIR}/${PLSSVM_COVERAGE_REPORT_OUTPUT_DIRECTORY}"
+        # Specify byproducts for CMake
+        BYPRODUCTS "${CMAKE_BINARY_DIR}/coverage_init.info" "${CMAKE_BINARY_DIR}/coverage_tests.info" "${CMAKE_BINARY_DIR}/coverage.info"
+                   "${CMAKE_BINARY_DIR}/${PLSSVM_COVERAGE_REPORT_OUTPUT_DIRECTORY}"
+        # Set the working directory
         WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
     )
 
@@ -307,8 +376,10 @@ if (uppercase_CMAKE_BUILD_TYPE MATCHES COVERAGE)
         DEPENDS clean
         COMMENT "remove all coverage files"
         COMMAND ${CMAKE_MAKE_PROGRAM} clean
+        COMMAND ${CMAKE_COMMAND} -E remove -f coverage.info coverage_init.info coverage_tests.info ${PLSSVM_COVERAGE_REPORT_OUTPUT_DIRECTORY}
         COMMAND ${CMAKE_COMMAND} -P "${CMAKE_CURRENT_SOURCE_DIR}/cmake/delete_coverage_files.cmake" TARGET clean_coverage
     )
+    list(POP_BACK CMAKE_MESSAGE_INDENT)
 endif ()
 
 ########################################################################################################################
@@ -544,7 +615,7 @@ endif ()
 #                                           check for Link Time Optimization                                           #
 ########################################################################################################################
 # enable Link Time Optimization (LTO)
-option(PLSSVM_ENABLE_LTO "Enable Link Time Optimizations." ON)
+option(PLSSVM_ENABLE_LTO "Enable Link Time Optimizations." OFF)
 if (PLSSVM_ENABLE_LTO)
     include(CheckIPOSupported)
     check_ipo_supported(RESULT PLSSVM_LTO_SUPPORTED LANGUAGES CXX)
@@ -590,15 +661,19 @@ else ()
     target_include_directories(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC $<BUILD_INTERFACE:${cxxopts_SOURCE_DIR}/include> $<INSTALL_INTERFACE:include>)
 endif ()
 
-# try finding fast_float
-set(PLSSVM_fast_float_VERSION v6.1.3)
-find_package(fast_float QUIET)
+# ~~~
+# try finding fast_float note: We have to wrap fast_float into a small wrapper library to ensure that fast-math is never enabled.
+# Otherwise, the fast_float usage of std::numeric_limits<>::infinity() results in UB...
+# ~~~
+set(PLSSVM_FAST_FLOAT_WRAPPER_LIBRARY_NAME plssvm-fast_float-wrapper)
+add_library(${PLSSVM_FAST_FLOAT_WRAPPER_LIBRARY_NAME} SHARED ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/fast_float_wrapper.cpp)
+set(PLSSVM_fast_float_VERSION v8.0.2)
+find_package(fast_float 8.0.0 QUIET)
 if (fast_float_FOUND)
     message(STATUS "Found package fast_float.")
-    target_include_directories(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC ${fast_float_INCLUDE_DIR})
+    target_include_directories(${PLSSVM_FAST_FLOAT_WRAPPER_LIBRARY_NAME} PUBLIC ${fast_float_INCLUDE_DIR})
 else ()
     message(STATUS "Couldn't find package fast_float. Building version ${PLSSVM_fast_float_VERSION} from source.")
-    target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PRIVATE PLSSVM_fast_float_VERSION="${PLSSVM_fast_float_VERSION}")
     # set options for fast_float
     set(FASTFLOAT_TEST OFF CACHE INTERNAL "" FORCE)
     set(FASTFLOAT_SANITIZE OFF CACHE INTERNAL "" FORCE)
@@ -610,9 +685,26 @@ else ()
         QUIET
     )
     FetchContent_MakeAvailable(fast_float)
-    add_dependencies(${PLSSVM_BASE_LIBRARY_NAME} fast_float)
-    target_include_directories(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC $<BUILD_INTERFACE:${fast_float_SOURCE_DIR}/include> $<INSTALL_INTERFACE:include>)
+    add_dependencies(${PLSSVM_FAST_FLOAT_WRAPPER_LIBRARY_NAME} fast_float)
+    target_include_directories(
+        ${PLSSVM_FAST_FLOAT_WRAPPER_LIBRARY_NAME} PUBLIC $<BUILD_INTERFACE:${fast_float_SOURCE_DIR}/include> $<INSTALL_INTERFACE:include>
+    )
 endif ()
+# ensure that fast-math is ALWAYS of
+target_compile_options(
+    ${PLSSVM_FAST_FLOAT_WRAPPER_LIBRARY_NAME} PRIVATE $<$<COMPILE_LANG_AND_ID:CXX,GNU,Clang,IntelLLVM>:-fno-fast-math>
+                                                      $<$<COMPILE_LANG_AND_ID:CXX,MSVC>:/fp:precise>
+)
+target_include_directories(
+    ${PLSSVM_FAST_FLOAT_WRAPPER_LIBRARY_NAME} PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include> $<INSTALL_INTERFACE:include>
+)
+target_compile_features(${PLSSVM_FAST_FLOAT_WRAPPER_LIBRARY_NAME} PUBLIC cxx_std_17)
+if (PLSSVM_ENABLE_STL_DEBUG_MODE)
+    target_compile_definitions(${PLSSVM_FAST_FLOAT_WRAPPER_LIBRARY_NAME} PUBLIC ${PLSSVM_STL_DEBUG_MODE_FLAGS})
+endif ()
+# link wrapper library against base library
+target_link_libraries(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC ${PLSSVM_FAST_FLOAT_WRAPPER_LIBRARY_NAME})
+list(APPEND PLSSVM_TARGETS_TO_INSTALL "${PLSSVM_FAST_FLOAT_WRAPPER_LIBRARY_NAME}")
 
 # try finding igor
 set(PLSSVM_igor_VERSION a5224c60d266974d3f407191583fe266cbe1c93d)
@@ -881,13 +973,22 @@ write_basic_package_version_file(
     COMPATIBILITY SameMajorVersion
 )
 
-# generate configuration file
+# generate configuration files
 configure_package_config_file(
     "${CMAKE_CURRENT_SOURCE_DIR}/cmake/plssvm/plssvmConfig.cmake.in" "${PROJECT_BINARY_DIR}/plssvmConfig.cmake"
     INSTALL_DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/plssvm/cmake
 )
 configure_package_config_file(
     "${CMAKE_CURRENT_SOURCE_DIR}/cmake/plssvm/plssvmHIPTargets.cmake.in" "${PROJECT_BINARY_DIR}/plssvmHIPTargets.cmake"
+    INSTALL_DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/plssvm/cmake
+)
+configure_package_config_file(
+    "${CMAKE_CURRENT_SOURCE_DIR}/cmake/plssvm/plssvmAdaptiveCppTargets.cmake.in" "${PROJECT_BINARY_DIR}/plssvmAdaptiveCppTargets.cmake"
+    INSTALL_DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/plssvm/cmake
+)
+string(REPLACE "\"" "\\\"" PLSSVM_ESCAPED_CXX_FLAGS "${CMAKE_CXX_FLAGS}") # necessary to correctly escape quotes
+configure_package_config_file(
+    "${CMAKE_CURRENT_SOURCE_DIR}/cmake/plssvm/plssvmstdparTargets.cmake.in" "${PROJECT_BINARY_DIR}/plssvmstdparTargets.cmake"
     INSTALL_DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/plssvm/cmake
 )
 
@@ -908,9 +1009,9 @@ install(
           "${CMAKE_CURRENT_SOURCE_DIR}/cmake/plssvm/plssvmOpenCLTargets.cmake"
           "${CMAKE_CURRENT_SOURCE_DIR}/cmake/plssvm/plssvmOpenMPTargets.cmake"
           "${CMAKE_CURRENT_SOURCE_DIR}/cmake/plssvm/plssvmHPXTargets.cmake"
-          "${CMAKE_CURRENT_SOURCE_DIR}/cmake/plssvm/plssvmAdaptiveCppTargets.cmake"
+          "${PROJECT_BINARY_DIR}/plssvmAdaptiveCppTargets.cmake"
           "${CMAKE_CURRENT_SOURCE_DIR}/cmake/plssvm/plssvmDPCPPTargets.cmake"
           "${CMAKE_CURRENT_SOURCE_DIR}/cmake/plssvm/plssvmKokkosTargets.cmake"
-          "${CMAKE_CURRENT_SOURCE_DIR}/cmake/plssvm/plssvmstdparTargets.cmake"
+          "${PROJECT_BINARY_DIR}/plssvmstdparTargets.cmake"
     DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/plssvm/cmake
 )

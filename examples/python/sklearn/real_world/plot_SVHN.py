@@ -1,5 +1,5 @@
 import matplotlib.pyplot as plt
-from plssvm import SVC
+from plssvm.svm import SVC
 import seaborn as sns
 from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
 from sklearn.datasets import load_svmlight_file

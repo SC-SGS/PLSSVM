@@ -106,7 +106,7 @@ plt.show()
 # Finally, the support vectors used during training (which always lay on the
 # margins) are identified by means of the `support_vectors_` attribute of
 # the trained SVCs, and plotted as well.
-import plssvm as svm
+from plssvm import svm
 from sklearn.inspection import DecisionBoundaryDisplay
 import matplotlib as mpl
 

@@ -131,6 +131,19 @@ TEST(GammaType, calculate_gamma_value_gamma_coefficient_type_scale) {
     EXPECT_FLOATING_POINT_NEAR(plssvm::calculate_gamma_value(gamma_value, matr), plssvm::real_type{ 0.047505938242280283668 });
 }
 
+TEST(GammaType, calculate_gamma_value_invalid_gamma_coefficient_type) {
+    // create a gamma_type with a real_type value
+    const plssvm::gamma_type gamma_value = static_cast<plssvm::gamma_coefficient_type>(2);
+
+    // create a dummy matrix representing the actual data
+    const auto matr = util::generate_specific_matrix<plssvm::aos_matrix<plssvm::real_type>>(plssvm::shape{ 8, 4 });
+
+    // the std::variant must hold the gamma_coefficient_type member
+    ASSERT_TRUE(std::holds_alternative<plssvm::gamma_coefficient_type>(gamma_value));
+    // check the variant value -> must be 1.0 for invalid gamma values
+    EXPECT_EQ(plssvm::calculate_gamma_value(gamma_value, matr), plssvm::real_type{ 1.0 });
+}
+
 TEST(GammaType, get_gamma_string_real_type) {
     // create a gamma_type with a real_type value
     const plssvm::gamma_type gamma_value = plssvm::real_type{ 1.5 };
@@ -145,7 +158,7 @@ TEST(GammaType, get_gamma_string_gamma_coefficient_type_automatic) {
     // create a gamma_type with a real_type value
     const plssvm::gamma_type gamma_value = plssvm::gamma_coefficient_type::automatic;
 
-    // the std::variant must hold the real_type member
+    // the std::variant must hold the gamma_coefficient_type member
     ASSERT_TRUE(std::holds_alternative<plssvm::gamma_coefficient_type>(gamma_value));
     // check the variant string
     EXPECT_EQ(plssvm::get_gamma_string(gamma_value), std::string{ "\"1 / num_features\"" });
@@ -155,8 +168,18 @@ TEST(GammaType, get_gamma_string_gamma_coefficient_type_scale) {
     // create a gamma_type with a real_type value
     const plssvm::gamma_type gamma_value = plssvm::gamma_coefficient_type::scale;
 
-    // the std::variant must hold the real_type member
+    // the std::variant must hold the gamma_coefficient_type member
     ASSERT_TRUE(std::holds_alternative<plssvm::gamma_coefficient_type>(gamma_value));
     // check the variant string
     EXPECT_EQ(plssvm::get_gamma_string(gamma_value), std::string{ "\"1 / (num_features * variance(input_data))\"" });
+}
+
+TEST(GammaType, get_gamma_string_invalid_gamma_coefficient_type) {
+    // create a gamma_type with a real_type value
+    const plssvm::gamma_type gamma_value = static_cast<plssvm::gamma_coefficient_type>(2);
+
+    // the std::variant must hold the gamma_coefficient_type member
+    ASSERT_TRUE(std::holds_alternative<plssvm::gamma_coefficient_type>(gamma_value));
+    // check the variant string
+    EXPECT_EQ(plssvm::get_gamma_string(gamma_value), std::string{ "unknown" });
 }

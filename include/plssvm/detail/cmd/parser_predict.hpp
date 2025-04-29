@@ -16,6 +16,7 @@
 #include "plssvm/backend_types.hpp"                       // plssvm::backend_type
 #include "plssvm/backends/Kokkos/execution_space.hpp"     // plssvm::kokkos::execution_space
 #include "plssvm/backends/SYCL/implementation_types.hpp"  // plssvm::sycl::implementation_type
+#include "plssvm/mpi/communicator.hpp"                    // plssvm::mpi::communicator
 #include "plssvm/target_platforms.hpp"                    // plssvm::target_platform
 
 #include "fmt/base.h"     // fmt::formatter
@@ -23,6 +24,7 @@
 
 #include <iosfwd>  // forward declare std::ostream
 #include <string>  // std::string
+#include <vector>  // std::vector
 
 namespace plssvm::detail::cmd {
 
@@ -33,10 +35,11 @@ struct parser_predict {
     /**
      * @brief Parse the command line arguments @p argv using [`cxxopts`](https://github.com/jarro2783/cxxopts) and set the predict parameters accordingly.
      * @details If no output filename is given, uses the input filename and appends a ".predict". The output file is than saved in the current working directory.
+     * @param[in] comm the MPI communicator wrapper
      * @param[in] argc the number of passed command line arguments
      * @param[in] argv the command line arguments
      */
-    parser_predict(int argc, char **argv);
+    parser_predict(const mpi::communicator &comm, int argc, char **argv);
 
     /// The used backend: automatic (depending on the specified target_platforms), OpenMP, HPX, stdpar, CUDA, HIP, OpenCL, SYCL, or Kokkos.
     backend_type backend{ backend_type::automatic };
@@ -51,6 +54,10 @@ struct parser_predict {
 
     /// `true` if `std::string` should be used as label type instead of the default type `ìnt`.
     bool strings_as_labels{ false };
+
+    /// Load balancing weights for MPI used if different hardware per MPI process is used. The number must match the number of spawned MPI processes.
+    /// Providing [1, 1] means every process gets the same amount of work, providing [1, 3] means that the second process has three times the work to do compared to process zero.
+    std::vector<std::size_t> mpi_load_balancing_weights{};
 
     /// The name of the data file to predict.
     std::string input_filename{};

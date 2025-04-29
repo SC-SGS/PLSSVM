@@ -14,12 +14,14 @@
 #pragma once
 
 #include "plssvm/exceptions/source_location.hpp"  // plssvm::source_location
+#include "plssvm/mpi/environment.hpp"             // plssvm::mpi::{is_active, abort_world}
 
 #include "fmt/color.h"   // fmt::emphasis, fmt::fg, fmt::color
 #include "fmt/format.h"  // fmt::format
 
 #include <cstdlib>      // std::abort
 #include <iostream>     // std::cerr, std::endl
+#include <string>       // std::string
 #include <string_view>  // std::string_view
 #include <utility>      // std::forward
 
@@ -42,19 +44,25 @@ inline void check_assertion(const bool cond, const std::string_view cond_str, co
         // print assertion error message
         std::cerr << fmt::format(
             "Assertion '{}' failed!\n"
-            "  in file      {}\n"
-            "  in function  {}\n"
-            "  @ line       {}\n\n"
+            "{}"
+            "  in file            {}\n"
+            "  in function        {}\n"
+            "  @ line             {}\n\n"
             "{}\n",
             fmt::format(fmt::emphasis::bold | fmt::fg(fmt::color::green), "{}", cond_str),
+            loc.world_rank().has_value() ? fmt::format("  on MPI world rank  {}\n", loc.world_rank().value()) : std::string{},
             loc.file_name(),
             loc.function_name(),
             loc.line(),
             fmt::format(fmt::emphasis::bold | fmt::fg(fmt::color::red), msg, std::forward<Args>(args)...))
                   << std::endl;
 
-        // abort further execution
-        std::abort();
+        // abort further execution -> call MPI_Abort if in an MPI environment
+        if (mpi::is_active()) {
+            mpi::abort_world();
+        } else {
+            std::abort();
+        }
     }
 }
 

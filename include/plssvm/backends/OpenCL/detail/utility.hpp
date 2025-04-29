@@ -17,10 +17,12 @@
 #include "plssvm/backends/OpenCL/detail/command_queue.hpp"  // plssvm::opencl::detail::command_queue
 #include "plssvm/backends/OpenCL/detail/context.hpp"        // plssvm::opencl::detail::context
 #include "plssvm/backends/OpenCL/detail/error_code.hpp"     // plssvm::opencl::detail::error_code
+#include "plssvm/backends/OpenCL/detail/jit_info.hpp"       // plssvm::opencl::detail::jit_info
 #include "plssvm/backends/OpenCL/detail/kernel.hpp"         // plssvm::opencl::detail::compute_kernel_name
 #include "plssvm/backends/OpenCL/exceptions.hpp"            // plssvm::opencl::backend_exception
 #include "plssvm/detail/assert.hpp"                         // PLSSVM_ASSERT
 #include "plssvm/kernel_function_types.hpp"                 // plssvm::kernel_function_type
+#include "plssvm/mpi/communicator.hpp"                      // plssvm::mpi::communicator
 #include "plssvm/target_platforms.hpp"                      // plssvm::target_platform
 
 #include "CL/cl.h"  // cl_uint, cl_int, clSetKernelArg, clEnqueueNDRangeKernel, clFinish
@@ -122,13 +124,13 @@ void device_synchronize(const command_queue &queue);
  *          Additionally, adds the path to the currently used OpenCL library as a comment to the kernel source string (before the checksum calculation) to detect
  *          changes in the used OpenCL implementation and trigger a kernel rebuild.
  *
+ * @param[in] comm the MPI communicator
  * @param[in] contexts the used OpenCL contexts
  * @param[in] kernel_function the kernel function
- * @param[in] kernel_names all kernel name for which an OpenCL cl_kernel should be build
  * @throws plssvm::invalid_file_format_exception if the file couldn't be read using [`std::ifstream::read`](https://en.cppreference.com/w/cpp/io/basic_istream/read)
- * @return the command queues with all necessary kernels (`[[nodiscard]]`)
+ * @return [the command queues with all necessary kernels; information regarding the JIT compilation] (`[[nodiscard]]`)
  */
-[[nodiscard]] std::vector<command_queue> create_command_queues(const std::vector<context> &contexts, kernel_function_type kernel_function, const std::vector<std::pair<compute_kernel_name, std::string>> &kernel_names);
+[[nodiscard]] std::pair<std::vector<command_queue>, jit_info> create_command_queues(const mpi::communicator &comm, const std::vector<context> &contexts, kernel_function_type kernel_function);
 
 /**
  * @brief Set all arguments in the parameter pack @p args for the kernel @p kernel.

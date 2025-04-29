@@ -6,17 +6,50 @@
 
 include(CMakeFindDependencyMacro)
 
+# check if HIP is an optional component
+is_component_optional(HIP)
+
 # check if the HIP backend is available
 if (TARGET plssvm::plssvm-HIP)
     # enable HIP or CUDA
+    if (NOT plssvm_FIND_QUIETLY)
+        message(STATUS "Using @PLSSVM_HIP_BACKEND_GPU_RUNTIME@ as HIP runtime.")
+    endif ()
     enable_language(@PLSSVM_HIP_BACKEND_GPU_RUNTIME@)
-    find_dependency(HIP REQUIRED)
+    if (@PLSSVM_HIP_BACKEND_GPU_RUNTIME@ STREQUAL "HIP")
+        find_dependency(HIP REQUIRED)
+    endif ()
+    
     # set alias targets
     add_library(plssvm::HIP ALIAS plssvm::plssvm-HIP)
     add_library(plssvm::hip ALIAS plssvm::plssvm-HIP)
+    
     # set COMPONENT to be found
     set(plssvm_HIP_FOUND ON)
+    if (NOT plssvm_FIND_QUIETLY)
+        if (plssvm_FIND_OPTIONAL_HIP)
+            message(STATUS "Found optional component \"HIP\".")
+        else ()
+            message(STATUS "Found component \"HIP\".")
+        endif ()
+    endif ()
 else ()
     # set COMPONENT to be NOT found
     set(plssvm_HIP_FOUND OFF)
+    # PLSSVM is only not found if HIP is NOT an optional component
+    if (NOT plssvm_FIND_OPTIONAL_HIP)
+        set(plssvm_FOUND OFF)
+    endif ()
+    
+    # if REQUIRED was set in the find_package call, fail
+    if (plssvm_FIND_REQUIRED AND NOT plssvm_FIND_OPTIONAL_HIP)
+        set(plssvm_NOT_FOUND_MESSAGE "Couldn't find required component \"HIP\".")
+        return()
+    elseif (NOT plssvm_FIND_QUIETLY)
+        if (plssvm_FIND_OPTIONAL_HIP)
+            message(STATUS "Couldn't find optional component \"HIP\".")
+        else ()
+            message(STATUS "Couldn't find component \"HIP\".")
+        endif ()
+    endif ()
 endif ()

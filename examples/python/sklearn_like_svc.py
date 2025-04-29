@@ -13,7 +13,7 @@ import sklearn.datasets
 import sklearn.metrics
 import sklearn.inspection
 import numpy as np
-from plssvm import SVC
+from plssvm.svm import SVC
 
 # load the breast cancer datasets
 cancer = sklearn.datasets.load_breast_cancer()

@@ -4,7 +4,7 @@ import seaborn as sns
 from tensorflow.keras.datasets import fashion_mnist
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
-from plssvm import SVC
+from plssvm.svm import SVC
 from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
 import time
 

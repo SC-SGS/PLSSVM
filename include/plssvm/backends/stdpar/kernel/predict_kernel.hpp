@@ -36,16 +36,20 @@ namespace plssvm::stdpar::detail {
  * @param[out] w the vector to speedup the linear prediction
  * @param[in] alpha the previously learned weights
  * @param[in] support_vectors the support vectors
+ * @param[in] device_specific_num_sv the number of support vectors the current device is responsible for
+ * @param[in] sv_offset the first row in @p support_vectors the current device is responsible for
  */
-inline void device_kernel_w_linear(soa_matrix<real_type> &w, const aos_matrix<real_type> &alpha, const soa_matrix<real_type> &support_vectors) {
+inline void device_kernel_w_linear(soa_matrix<real_type> &w, const aos_matrix<real_type> &alpha, const soa_matrix<real_type> &support_vectors, const std::size_t device_specific_num_sv, const std::size_t sv_offset) {
     PLSSVM_ASSERT(alpha.num_cols() == support_vectors.num_rows(), "Size mismatch: {} vs {}!", alpha.num_cols(), support_vectors.num_rows());
     PLSSVM_ASSERT(w.shape() == (plssvm::shape{ alpha.num_rows(), support_vectors.num_cols() }), "Shape mismatch: {} vs {}!", w.shape(), (plssvm::shape{ alpha.num_rows(), support_vectors.num_cols() }));
+    PLSSVM_ASSERT(support_vectors.num_rows() >= device_specific_num_sv, "The number of place specific sv ({}) cannot be greater the the total number of sv ({})!", device_specific_num_sv, support_vectors.num_rows());
+    PLSSVM_ASSERT(support_vectors.num_rows() >= sv_offset, "The sv offset ({}) cannot be greater the the total number of sv ({})!", sv_offset, support_vectors.num_rows());
 
     // calculate constants
-    const std::size_t num_features = support_vectors.num_cols();
-    const auto blocked_num_features = static_cast<std::size_t>(std::ceil(static_cast<real_type>(num_features) / INTERNAL_BLOCK_SIZE));
     const std::size_t num_classes = alpha.num_rows();
     const auto blocked_num_classes = static_cast<std::size_t>(std::ceil(static_cast<real_type>(num_classes) / INTERNAL_BLOCK_SIZE));
+    const std::size_t num_features = support_vectors.num_cols();
+    const auto blocked_num_features = static_cast<std::size_t>(std::ceil(static_cast<real_type>(num_features) / INTERNAL_BLOCK_SIZE));
     const std::size_t num_support_vectors = support_vectors.num_rows();
 
     // cast all values to 64-bit unsigned long long to prevent potential 32-bit overflows
@@ -53,7 +57,7 @@ inline void device_kernel_w_linear(soa_matrix<real_type> &w, const aos_matrix<re
     const auto PADDING_SIZE_uz = static_cast<std::size_t>(PADDING_SIZE);
 
     // define range over which should be iterated
-    std::vector<std::size_t> range(blocked_num_features * blocked_num_classes);
+    std::vector<std::size_t> range(blocked_num_classes * blocked_num_features);
     std::iota(range.begin(), range.end(), 0);
 
     std::for_each(std::execution::par_unseq, range.begin(), range.end(), [=, w_ptr = w.data(), alpha_ptr = alpha.data(), sv_ptr = support_vectors.data()](const std::size_t idx) {
@@ -68,14 +72,14 @@ inline void device_kernel_w_linear(soa_matrix<real_type> &w, const aos_matrix<re
         std::array<std::array<real_type, INTERNAL_BLOCK_SIZE>, INTERNAL_BLOCK_SIZE> temp{};
 
         // iterate over all features
-        for (std::size_t sv = 0; sv < num_support_vectors; ++sv) {
+        for (std::size_t sv = 0; sv < device_specific_num_sv; ++sv) {
             // perform the feature reduction calculation
             for (unsigned internal_feature = 0; internal_feature < INTERNAL_BLOCK_SIZE; ++internal_feature) {
                 for (unsigned internal_class = 0; internal_class < INTERNAL_BLOCK_SIZE; ++internal_class) {
                     const std::size_t global_feature_idx = feature_idx + static_cast<std::size_t>(internal_feature);
                     const std::size_t global_class_idx = class_idx + static_cast<std::size_t>(internal_class);
 
-                    temp[internal_feature][internal_class] += alpha_ptr[global_class_idx * (num_support_vectors + PADDING_SIZE_uz) + sv] * sv_ptr[global_feature_idx * (num_support_vectors + PADDING_SIZE_uz) + sv];
+                    temp[internal_feature][internal_class] += alpha_ptr[global_class_idx * (num_support_vectors + PADDING_SIZE_uz) + sv_offset + sv] * sv_ptr[global_feature_idx * (num_support_vectors + PADDING_SIZE_uz) + sv_offset + sv];
                 }
             }
         }
@@ -98,15 +102,19 @@ inline void device_kernel_w_linear(soa_matrix<real_type> &w, const aos_matrix<re
  * @param[in] w the vector to speedup the calculations
  * @param[in] rho the previously learned bias
  * @param[in] predict_points the data points to predict
+ * @param[in] device_specific_num_predict_points the number of predict points the current device is responsible for
+ * @param[in] row_offset the first row in @p predict_points the current device is responsible for
  */
-inline void device_kernel_predict_linear(aos_matrix<real_type> &prediction, const soa_matrix<real_type> &w, const std::vector<real_type> &rho, const soa_matrix<real_type> &predict_points) {
+inline void device_kernel_predict_linear(aos_matrix<real_type> &prediction, const soa_matrix<real_type> &w, const std::vector<real_type> &rho, const soa_matrix<real_type> &predict_points, const std::size_t device_specific_num_predict_points, const std::size_t row_offset) {
     PLSSVM_ASSERT(w.num_rows() == rho.size(), "Size mismatch: {} vs {}!", w.num_rows(), rho.size());
     PLSSVM_ASSERT(w.num_cols() == predict_points.num_cols(), "Size mismatch: {} vs {}!", w.num_cols(), predict_points.num_cols());
     PLSSVM_ASSERT(prediction.shape() == (plssvm::shape{ predict_points.num_rows(), w.num_rows() }), "Shape mismatch: {} vs {}!", prediction.shape(), (plssvm::shape{ predict_points.num_rows(), w.num_rows() }));
+    PLSSVM_ASSERT(predict_points.num_rows() >= device_specific_num_predict_points, "The number of place specific predict points ({}) cannot be greater the the total number of predict points ({})!", device_specific_num_predict_points, predict_points.num_rows());
+    PLSSVM_ASSERT(predict_points.num_rows() >= row_offset, "The row offset ({}) cannot be greater the the total number of predict points ({})!", row_offset, predict_points.num_rows());
 
     // calculate constants
     const std::size_t num_predict_points = predict_points.num_rows();
-    const auto blocked_num_predict_points = static_cast<std::size_t>(std::ceil(static_cast<real_type>(num_predict_points) / INTERNAL_BLOCK_SIZE));
+    const auto blocked_device_specific_num_predict_points = static_cast<std::size_t>(std::ceil(static_cast<real_type>(device_specific_num_predict_points) / INTERNAL_BLOCK_SIZE));
     const std::size_t num_classes = prediction.num_cols();
     const auto blocked_num_classes = static_cast<std::size_t>(std::ceil(static_cast<real_type>(num_classes) / INTERNAL_BLOCK_SIZE));
     const std::size_t num_features = predict_points.num_cols();
@@ -116,7 +124,7 @@ inline void device_kernel_predict_linear(aos_matrix<real_type> &prediction, cons
     const auto PADDING_SIZE_uz = static_cast<std::size_t>(PADDING_SIZE);
 
     // define range over which should be iterated
-    std::vector<std::size_t> range(blocked_num_predict_points * blocked_num_classes);
+    std::vector<std::size_t> range(blocked_device_specific_num_predict_points * blocked_num_classes);
     std::iota(range.begin(), range.end(), 0);
 
     std::for_each(std::execution::par_unseq, range.begin(), range.end(), [=, prediction_ptr = prediction.data(), w_ptr = w.data(), rho_ptr = rho.data(), pp_ptr = predict_points.data()](const std::size_t idx) {
@@ -135,7 +143,7 @@ inline void device_kernel_predict_linear(aos_matrix<real_type> &prediction, cons
             // perform the feature reduction calculation
             for (unsigned internal_pp = 0; internal_pp < INTERNAL_BLOCK_SIZE; ++internal_pp) {
                 for (unsigned internal_class = 0; internal_class < INTERNAL_BLOCK_SIZE; ++internal_class) {
-                    const std::size_t global_pp_idx = pp_idx + static_cast<std::size_t>(internal_pp);
+                    const std::size_t global_pp_idx = row_offset + pp_idx + static_cast<std::size_t>(internal_pp);
                     const std::size_t global_class_idx = class_idx + static_cast<std::size_t>(internal_class);
 
                     temp[internal_pp][internal_class] += w_ptr[dim * (num_classes + PADDING_SIZE_uz) + global_class_idx] * pp_ptr[dim * (num_predict_points + PADDING_SIZE_uz) + global_pp_idx];
@@ -146,10 +154,11 @@ inline void device_kernel_predict_linear(aos_matrix<real_type> &prediction, cons
         // perform the dot product calculation
         for (unsigned internal_pp = 0; internal_pp < INTERNAL_BLOCK_SIZE; ++internal_pp) {
             for (unsigned internal_class = 0; internal_class < INTERNAL_BLOCK_SIZE; ++internal_class) {
-                const std::size_t global_pp_idx = pp_idx + static_cast<std::size_t>(internal_pp);
+                const std::size_t device_global_pp_idx = pp_idx + static_cast<std::size_t>(internal_pp);
+                const std::size_t global_pp_idx = row_offset + pp_idx + static_cast<std::size_t>(internal_pp);
                 const std::size_t global_class_idx = class_idx + static_cast<std::size_t>(internal_class);
 
-                if (global_pp_idx < num_predict_points && global_class_idx < num_classes) {
+                if (device_global_pp_idx < device_specific_num_predict_points && global_class_idx < num_classes) {
                     prediction_ptr[global_pp_idx * (num_classes + PADDING_SIZE_uz) + global_class_idx] = temp[internal_pp][internal_class] - rho_ptr[global_class_idx];
                 }
             }
@@ -166,21 +175,25 @@ inline void device_kernel_predict_linear(aos_matrix<real_type> &prediction, cons
  * @param[in] rho the previously learned bias
  * @param[in] support_vectors the support vectors
  * @param[in] predict_points the data points to predict
+ * @param[in] device_specific_num_predict_points the number of predict points the current device is responsible for
+ * @param[in] row_offset the first row in @p predict_points the current device is responsible for
  * @param[in] kernel_function_parameter the parameters necessary to apply the @p kernel_function
  */
 template <kernel_function_type kernel, typename... Args>
-inline void device_kernel_predict(aos_matrix<real_type> &prediction, const aos_matrix<real_type> &alpha, const std::vector<real_type> &rho, const soa_matrix<real_type> &support_vectors, const soa_matrix<real_type> &predict_points, Args... kernel_function_parameter) {
+inline void device_kernel_predict(aos_matrix<real_type> &prediction, const aos_matrix<real_type> &alpha, const std::vector<real_type> &rho, const soa_matrix<real_type> &support_vectors, const soa_matrix<real_type> &predict_points, const std::size_t device_specific_num_predict_points, const std::size_t row_offset, Args... kernel_function_parameter) {
     PLSSVM_ASSERT(alpha.num_rows() == rho.size(), "Size mismatch: {} vs {}!", alpha.num_rows(), rho.size());
     PLSSVM_ASSERT(alpha.num_cols() == support_vectors.num_rows(), "Size mismatch: {} vs {}!", alpha.num_cols(), support_vectors.num_rows());
     PLSSVM_ASSERT(support_vectors.num_cols() == predict_points.num_cols(), "Size mismatch: {} vs {}!", support_vectors.num_cols(), predict_points.num_cols());
     PLSSVM_ASSERT(prediction.shape() == (plssvm::shape{ predict_points.num_rows(), alpha.num_rows() }), "Shape mismatch: {} vs {}!", prediction.shape(), (plssvm::shape{ predict_points.num_rows(), alpha.num_rows() }));
+    PLSSVM_ASSERT(predict_points.num_rows() >= device_specific_num_predict_points, "The number of place specific predict points ({}) cannot be greater the the total number of predict points ({})!", device_specific_num_predict_points, predict_points.num_rows());
+    PLSSVM_ASSERT(predict_points.num_rows() >= row_offset, "The row offset ({}) cannot be greater the the total number of predict points ({})!", row_offset, predict_points.num_rows());
 
     // calculate constants
     const std::size_t num_classes = alpha.num_rows();
     const std::size_t num_support_vectors = support_vectors.num_rows();
     const auto blocked_num_support_vectors = static_cast<std::size_t>(std::ceil(static_cast<real_type>(num_support_vectors) / INTERNAL_BLOCK_SIZE));
     const std::size_t num_predict_points = predict_points.num_rows();
-    const auto blocked_num_predict_points = static_cast<std::size_t>(std::ceil(static_cast<real_type>(num_predict_points) / INTERNAL_BLOCK_SIZE));
+    const auto blocked_device_specific_num_predict_points = static_cast<std::size_t>(std::ceil(static_cast<real_type>(device_specific_num_predict_points) / INTERNAL_BLOCK_SIZE));
     const std::size_t num_features = predict_points.num_cols();
 
     // cast all values to 64-bit unsigned long long to prevent potential 32-bit overflows
@@ -188,7 +201,7 @@ inline void device_kernel_predict(aos_matrix<real_type> &prediction, const aos_m
     const auto PADDING_SIZE_uz = static_cast<std::size_t>(PADDING_SIZE);
 
     // define range over which should be iterated
-    std::vector<std::size_t> range(blocked_num_predict_points * blocked_num_support_vectors);
+    std::vector<std::size_t> range(blocked_device_specific_num_predict_points * blocked_num_support_vectors);
     std::iota(range.begin(), range.end(), 0);
 
     std::for_each(std::execution::par_unseq, range.begin(), range.end(), [=, prediction_ptr = prediction.data(), alpha_ptr = alpha.data(), rho_ptr = rho.data(), sv_ptr = support_vectors.data(), pp_ptr = predict_points.data()](const std::size_t idx) {
@@ -207,7 +220,7 @@ inline void device_kernel_predict(aos_matrix<real_type> &prediction, const aos_m
             // perform the feature reduction calculation
             for (unsigned internal_pp = 0; internal_pp < INTERNAL_BLOCK_SIZE; ++internal_pp) {
                 for (unsigned internal_sv = 0; internal_sv < INTERNAL_BLOCK_SIZE; ++internal_sv) {
-                    const std::size_t global_pp_idx = pp_idx + static_cast<std::size_t>(internal_pp);
+                    const std::size_t global_pp_idx = row_offset + pp_idx + static_cast<std::size_t>(internal_pp);
                     const std::size_t global_sv_idx = sv_idx + static_cast<std::size_t>(internal_sv);
 
                     temp[internal_pp][internal_sv] += detail::feature_reduce<kernel>(sv_ptr[dim * (num_support_vectors + PADDING_SIZE_uz) + global_sv_idx],
@@ -227,11 +240,12 @@ inline void device_kernel_predict(aos_matrix<real_type> &prediction, const aos_m
         for (std::size_t a = 0; a < num_classes; ++a) {
             for (unsigned internal_pp = 0; internal_pp < INTERNAL_BLOCK_SIZE; ++internal_pp) {
                 for (unsigned internal_sv = 0; internal_sv < INTERNAL_BLOCK_SIZE; ++internal_sv) {
-                    const std::size_t global_pp_idx = pp_idx + static_cast<std::size_t>(internal_pp);
+                    const std::size_t device_global_pp_idx = pp_idx + static_cast<std::size_t>(internal_pp);
+                    const std::size_t global_pp_idx = row_offset + pp_idx + static_cast<std::size_t>(internal_pp);
                     const std::size_t global_sv_idx = sv_idx + static_cast<std::size_t>(internal_sv);
 
                     // be sure to not perform out of bounds accesses
-                    if (global_pp_idx < num_predict_points && global_sv_idx < num_support_vectors) {
+                    if (device_global_pp_idx < device_specific_num_predict_points && global_sv_idx < num_support_vectors) {
                         if (global_sv_idx == 0) {
                             atomic_ref<real_type>{ prediction_ptr[global_pp_idx * (num_classes + PADDING_SIZE_uz) + a] } += -rho_ptr[a];
                         }

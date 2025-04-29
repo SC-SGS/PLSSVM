@@ -12,8 +12,10 @@
 #include "plssvm/backends/stdpar/detail/utility.hpp"        // plssvm::stdpar::detail::{get_stdpar_version, default_device_equals_target}
 #include "plssvm/backends/stdpar/exceptions.hpp"            // plssvm::stdpar::backend_exception
 #include "plssvm/backends/stdpar/implementation_types.hpp"  // plssvm::stdpar::implementation_type
-#include "plssvm/detail/logging.hpp"                        // plssvm::detail::log
+#include "plssvm/detail/logging/mpi_log_untracked.hpp"      // plssvm::detail::log_untracked
 #include "plssvm/detail/tracking/performance_tracker.hpp"   // plssvm::detail::tracking::tracking_entry, PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY
+#include "plssvm/mpi/communicator.hpp"                      // plssvm::mpi::communicator
+#include "plssvm/mpi/detail/information.hpp"                // plssvm::mpi::detail::gather_and_print_csvm_information
 #include "plssvm/target_platforms.hpp"                      // plssvm::target_platform
 #include "plssvm/verbosity_levels.hpp"                      // plssvm::verbosity_level
 
@@ -50,17 +52,12 @@ csvm::csvm(const target_platform target) {
             break;
     }
 
+    // update the target platform
     if (target == target_platform::automatic) {
         target_ = determine_default_target_platform();
     } else {
         target_ = target;
     }
-
-    plssvm::detail::log(verbosity_level::full,
-                        "\nUsing stdpar ({}; {}) as backend.\n\n",
-                        plssvm::detail::tracking::tracking_entry{ "dependencies", "stdpar_implementation", this->get_implementation_type() },
-                        plssvm::detail::tracking::tracking_entry{ "dependencies", "stdpar_version", detail::get_stdpar_version() });
-    PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "backend", "backend", plssvm::backend_type::stdpar }));
 
     // AdaptiveCpp's stdpar per default uses the sycl default device
     const ::sycl::device default_device{};
@@ -70,18 +67,36 @@ csvm::csvm(const target_platform target) {
                                              target_) };
     }
 
-    // print found stdpar devices
-    plssvm::detail::log(verbosity_level::full,
-                        "Found {} stdpar device(s) for the target platform {}:\n",
-                        plssvm::detail::tracking::tracking_entry{ "backend", "num_devices", this->num_available_devices() },
-                        plssvm::detail::tracking::tracking_entry{ "backend", "target_platform", target_ });
+    const std::vector<std::string> device_names{ default_device.get_info<::sycl::info::device::name>() };
 
-    const std::string device_name = default_device.get_info<::sycl::info::device::name>();
-    plssvm::detail::log(verbosity_level::full, "  [0, {}]\n", device_name);
-    PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "backend", "device", device_name }));
+    if (comm_.size() > 1) {
+        mpi::detail::gather_and_print_csvm_information(comm_, plssvm::backend_type::stdpar, target_, device_names, fmt::format("{}", this->get_implementation_type()));
+    } else {
+        // use more detailed single rank command line output
+        plssvm::detail::log_untracked(verbosity_level::full,
+                                      comm_,
+                                      "\nUsing stdpar ({}; {}; {}) as backend.\n"
+                                      "Found {} stdpar device(s) for the target platform {}:\n"
+                                      "  [0, {}]\n",
+                                      this->get_implementation_type(),
+                                      detail::get_stdpar_version(),
+                                      PLSSVM_ACPP_TARGETS,
+                                      this->num_available_devices(),
+                                      target_,
+                                      device_names.front());
+    }
 
-    plssvm::detail::log(verbosity_level::full | verbosity_level::timing,
-                        "\n");
+    plssvm::detail::log_untracked(verbosity_level::full | verbosity_level::timing,
+                                  comm_,
+                                  "\n");
+
+    PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "dependencies", "stdpar_implementation", this->get_implementation_type() }));
+    PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "dependencies", "stdpar_version", detail::get_stdpar_version() }));
+    PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "backend", "backend", plssvm::backend_type::stdpar }));
+    PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "backend", "target_platform", target_ }));
+    PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "backend", "num_devices", this->num_available_devices() }));
+    PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "backend", "device", device_names.front() }));
+    PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "backend", "acpp_targets", PLSSVM_ACPP_TARGETS }));
 }
 
 implementation_type csvm::get_implementation_type() const noexcept {

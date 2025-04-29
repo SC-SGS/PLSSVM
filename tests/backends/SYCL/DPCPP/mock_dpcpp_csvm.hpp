@@ -15,7 +15,9 @@
 
 #include "plssvm/backends/execution_range.hpp"  // plssvm::detail::dim_type
 #include "plssvm/backends/SYCL/DPCPP/csvm.hpp"  // plssvm::dpcpp::csvm
+#include "plssvm/mpi/communicator.hpp"          // plssvm::mpi::communicator
 #include "plssvm/svm/csvm.hpp"                  // plssvm::csvm
+#include "plssvm/target_platforms.hpp"          // plssvm::target_platform
 
 #include "gmock/gmock.h"  // MOCK_METHOD, ON_CALL, ::testing::Return
 
@@ -35,7 +37,7 @@ class mock_dpcpp_csvm final : public plssvm::dpcpp::csvm {
 
     template <typename... Args>
     explicit mock_dpcpp_csvm(Args &&...args) :
-        plssvm::csvm{ args... },
+        plssvm::csvm{ plssvm::mpi::communicator{}, args... },
         base_type(plssvm::target_platform::automatic, std::forward<Args>(args)...) {
         this->fake_functions();
     }

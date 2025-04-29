@@ -14,7 +14,7 @@
 #include "plssvm/backends/stdpar/kernel/predict_kernel.hpp"                           // plssvm::stdpar::detail::{device_kernel_w_linear, device_kernel_predict_linear, device_kernel_predict}
 #include "plssvm/constants.hpp"                                                       // plssvm::real_type
 #include "plssvm/detail/assert.hpp"                                                   // PLSSVM_ASSERT
-#include "plssvm/detail/data_distribution.hpp"                                        // plssvm::detail::{data_distribution, triangular_data_distribution, rectangular_data_distribution}
+#include "plssvm/detail/data_distribution.hpp"                                        // plssvm::detail::triangular_data_distribution
 #include "plssvm/detail/memory_size.hpp"                                              // plssvm::detail::memory_size
 #include "plssvm/detail/move_only_any.hpp"                                            // plssvm::detail::{move_only_any, move_only_any_cast}
 #include "plssvm/detail/utility.hpp"                                                  // plssvm::detail::{get_system_memory, unreachable}
@@ -54,47 +54,60 @@ std::vector<::plssvm::detail::move_only_any> csvm::assemble_kernel_matrix(const 
     PLSSVM_ASSERT(!q_red.empty(), "The q_red vector must not be empty!");
     PLSSVM_ASSERT(q_red.size() == A.num_rows() - 1, "The q_red size ({}) mismatches the number of data points after dimensional reduction ({})!", q_red.size(), A.num_rows() - 1);
 
+    // update the data distribution: only the upper triangular kernel matrix is used
+    // note: account for the dimensional reduction
+    data_distribution_ = std::make_unique<::plssvm::detail::triangular_data_distribution>(comm_, A.num_rows() - 1, this->num_available_devices());
+    // get the triangular data distribution
+    const ::plssvm::detail::triangular_data_distribution &dist = dynamic_cast<::plssvm::detail::triangular_data_distribution &>(*data_distribution_);
+
     std::vector<::plssvm::detail::move_only_any> kernel_matrices_parts(this->num_available_devices());
     const real_type cost = real_type{ 1.0 } / params.cost;
 
-    switch (solver) {
-        case solver_type::automatic:
-            // unreachable
-            break;
-        case solver_type::cg_explicit:
-            {
-                const plssvm::detail::triangular_data_distribution dist{ A.num_rows() - 1, this->num_available_devices() };
-                std::vector<real_type> kernel_matrix(dist.calculate_explicit_kernel_matrix_num_entries_padded(0));  // only explicitly store the upper triangular matrix
-                switch (params.kernel_type) {
-                    case kernel_function_type::linear:
-                        detail::device_kernel_assembly<kernel_function_type::linear>(q_red, kernel_matrix, A, QA_cost, cost);
-                        break;
-                    case kernel_function_type::polynomial:
-                        detail::device_kernel_assembly<kernel_function_type::polynomial>(q_red, kernel_matrix, A, QA_cost, cost, params.degree, std::get<real_type>(params.gamma), params.coef0);
-                        break;
-                    case kernel_function_type::rbf:
-                        detail::device_kernel_assembly<kernel_function_type::rbf>(q_red, kernel_matrix, A, QA_cost, cost, std::get<real_type>(params.gamma));
-                        break;
-                    case kernel_function_type::sigmoid:
-                        detail::device_kernel_assembly<kernel_function_type::sigmoid>(q_red, kernel_matrix, A, QA_cost, cost, std::get<real_type>(params.gamma), params.coef0);
-                        break;
-                    case kernel_function_type::laplacian:
-                        detail::device_kernel_assembly<kernel_function_type::laplacian>(q_red, kernel_matrix, A, QA_cost, cost, std::get<real_type>(params.gamma));
-                        break;
-                    case kernel_function_type::chi_squared:
-                        detail::device_kernel_assembly<kernel_function_type::chi_squared>(q_red, kernel_matrix, A, QA_cost, cost, std::get<real_type>(params.gamma));
-                        break;
-                }
+    if (dist.place_specific_num_rows(0) > std::size_t{ 0 }) {
+        switch (solver) {
+            case solver_type::automatic:
+                // unreachable
+                break;
+            case solver_type::cg_explicit:
+                {
+                    // calculate the number of data points this device is responsible for
+                    const std::size_t device_specific_num_rows = dist.place_specific_num_rows(0);
 
-                kernel_matrices_parts[0] = ::plssvm::detail::move_only_any{ std::move(kernel_matrix) };
-            }
-            break;
-        case solver_type::cg_implicit:
-            {
-                // simply return data since in implicit we don't assembly the kernel matrix here!
-                kernel_matrices_parts[0] = ::plssvm::detail::move_only_any{ std::make_tuple(std::move(A), params, std::move(q_red), QA_cost) };
-            }
-            break;
+                    // get the offset of the data points this device is responsible for
+                    const std::size_t row_offset = dist.place_row_offset(0);
+
+                    std::vector<real_type> kernel_matrix(dist.calculate_explicit_kernel_matrix_num_entries_padded(0));  // only explicitly store the upper triangular matrix
+                    switch (params.kernel_type) {
+                        case kernel_function_type::linear:
+                            detail::device_kernel_assembly<kernel_function_type::linear>(kernel_matrix, A, device_specific_num_rows, row_offset, q_red, QA_cost, cost);
+                            break;
+                        case kernel_function_type::polynomial:
+                            detail::device_kernel_assembly<kernel_function_type::polynomial>(kernel_matrix, A, device_specific_num_rows, row_offset, q_red, QA_cost, cost, params.degree, std::get<real_type>(params.gamma), params.coef0);
+                            break;
+                        case kernel_function_type::rbf:
+                            detail::device_kernel_assembly<kernel_function_type::rbf>(kernel_matrix, A, device_specific_num_rows, row_offset, q_red, QA_cost, cost, std::get<real_type>(params.gamma));
+                            break;
+                        case kernel_function_type::sigmoid:
+                            detail::device_kernel_assembly<kernel_function_type::sigmoid>(kernel_matrix, A, device_specific_num_rows, row_offset, q_red, QA_cost, cost, std::get<real_type>(params.gamma), params.coef0);
+                            break;
+                        case kernel_function_type::laplacian:
+                            detail::device_kernel_assembly<kernel_function_type::laplacian>(kernel_matrix, A, device_specific_num_rows, row_offset, q_red, QA_cost, cost, std::get<real_type>(params.gamma));
+                            break;
+                        case kernel_function_type::chi_squared:
+                            detail::device_kernel_assembly<kernel_function_type::chi_squared>(kernel_matrix, A, device_specific_num_rows, row_offset, q_red, QA_cost, cost, std::get<real_type>(params.gamma));
+                            break;
+                    }
+
+                    kernel_matrices_parts[0] = ::plssvm::detail::move_only_any{ std::move(kernel_matrix) };
+                }
+                break;
+            case solver_type::cg_implicit:
+                {
+                    // simply return data since in implicit we don't assembly the kernel matrix here!
+                    kernel_matrices_parts[0] = ::plssvm::detail::move_only_any{ std::make_tuple(std::move(A), params, std::move(q_red), QA_cost) };
+                }
+                break;
+        }
     }
 
     return kernel_matrices_parts;
@@ -110,50 +123,79 @@ void csvm::blas_level_3(const solver_type solver, const real_type alpha, const s
     PLSSVM_ASSERT(B.shape() == C.shape(), "The B ({}) and C ({}) matrices must have the same shape!", B.shape(), C.shape());
     PLSSVM_ASSERT(B.padding() == C.padding(), "The B ({}) and C ({}) matrices must have the same padding!", B.padding(), C.padding());
 
-    switch (solver) {
-        case solver_type::automatic:
-            // unreachable
-            break;
-        case solver_type::cg_explicit:
-            {
-                const std::size_t num_rhs = B.shape().x;
-                const std::size_t num_rows = B.shape().y;
+    using namespace operators;
 
-                const auto &explicit_A = ::plssvm::detail::move_only_any_cast<const std::vector<real_type> &>(A.front());
-                PLSSVM_ASSERT(!explicit_A.empty(), "The A matrix must not be empty!");
+    // get the triangular data distribution
+    const ::plssvm::detail::triangular_data_distribution &dist = dynamic_cast<::plssvm::detail::triangular_data_distribution &>(*data_distribution_);
 
-                detail::device_kernel_symm(num_rows, num_rhs, alpha, explicit_A, B, beta, C);
-            }
-            break;
-        case solver_type::cg_implicit:
-            {
-                const auto &[matr_A, params, q_red, QA_cost] = ::plssvm::detail::move_only_any_cast<const std::tuple<soa_matrix<real_type>, parameter, std::vector<real_type>, real_type> &>(A.front());
-                PLSSVM_ASSERT(!matr_A.empty(), "The A matrix must not be empty!");
-                PLSSVM_ASSERT(!q_red.empty(), "The q_red vector must not be empty!");
-                const real_type cost = real_type{ 1.0 } / params.cost;
+    // check whether the current device is responsible for at least one data point!
+    if (dist.place_specific_num_rows(0) > std::size_t{ 0 }) {
+        if (!comm_.is_main_rank()) {
+            // MPI rank 0 always touches all values in C -> other MPI ranks do not need C
+            C *= real_type{ 0.0 };
+        }
 
-                switch (params.kernel_type) {
-                    case kernel_function_type::linear:
-                        detail::device_kernel_assembly_symm<kernel_function_type::linear>(alpha, q_red, matr_A, QA_cost, cost, B, beta, C);
-                        break;
-                    case kernel_function_type::polynomial:
-                        detail::device_kernel_assembly_symm<kernel_function_type::polynomial>(alpha, q_red, matr_A, QA_cost, cost, B, beta, C, params.degree, std::get<real_type>(params.gamma), params.coef0);
-                        break;
-                    case kernel_function_type::rbf:
-                        detail::device_kernel_assembly_symm<kernel_function_type::rbf>(alpha, q_red, matr_A, QA_cost, cost, B, beta, C, std::get<real_type>(params.gamma));
-                        break;
-                    case kernel_function_type::sigmoid:
-                        detail::device_kernel_assembly_symm<kernel_function_type::sigmoid>(alpha, q_red, matr_A, QA_cost, cost, B, beta, C, std::get<real_type>(params.gamma), params.coef0);
-                        break;
-                    case kernel_function_type::laplacian:
-                        detail::device_kernel_assembly_symm<kernel_function_type::laplacian>(alpha, q_red, matr_A, QA_cost, cost, B, beta, C, std::get<real_type>(params.gamma));
-                        break;
-                    case kernel_function_type::chi_squared:
-                        detail::device_kernel_assembly_symm<kernel_function_type::chi_squared>(alpha, q_red, matr_A, QA_cost, cost, B, beta, C, std::get<real_type>(params.gamma));
-                        break;
+        // calculate the number of data points this device is responsible for
+        const std::size_t device_specific_num_rows = dist.place_specific_num_rows(0);
+        // get the offset of the data points this device is responsible for
+        const std::size_t row_offset = dist.place_row_offset(0);
+
+        const std::size_t num_rhs = B.shape().x;
+        const std::size_t num_rows = B.shape().y;
+
+        switch (solver) {
+            case solver_type::automatic:
+                // unreachable
+                break;
+            case solver_type::cg_explicit:
+                {
+                    const auto &explicit_A = ::plssvm::detail::move_only_any_cast<const std::vector<real_type> &>(A.front());
+                    PLSSVM_ASSERT(!explicit_A.empty(), "The A matrix must not be empty!");
+
+                    detail::device_kernel_symm(num_rows, num_rhs, device_specific_num_rows, row_offset, alpha, explicit_A, B, beta, C);
+
+                    const std::size_t num_mirror_rows = num_rows - row_offset - device_specific_num_rows;
+                    if (num_mirror_rows > std::size_t{ 0 }) {
+                        detail::device_kernel_symm_mirror(num_rows, num_rhs, num_mirror_rows, device_specific_num_rows, row_offset, alpha, explicit_A, B, beta, C);
+                    }
                 }
-            }
-            break;
+                break;
+            case solver_type::cg_implicit:
+                {
+                    const auto &[matr_A, params, q_red, QA_cost] = ::plssvm::detail::move_only_any_cast<const std::tuple<soa_matrix<real_type>, parameter, std::vector<real_type>, real_type> &>(A.front());
+                    PLSSVM_ASSERT(!matr_A.empty(), "The A matrix must not be empty!");
+                    PLSSVM_ASSERT(!q_red.empty(), "The q_red vector must not be empty!");
+                    const real_type cost = real_type{ 1.0 } / params.cost;
+
+                    if (comm_.is_main_rank()) {
+                        // we do not perform the beta scale in C in the cg_implicit device kernel
+                        // -> calculate it using a separate kernel (always on device 0 and MPI rank 0!)
+                        C *= beta;
+                    }
+
+                    switch (params.kernel_type) {
+                        case kernel_function_type::linear:
+                            detail::device_kernel_assembly_symm<kernel_function_type::linear>(alpha, q_red, matr_A, device_specific_num_rows, row_offset, QA_cost, cost, B, C);
+                            break;
+                        case kernel_function_type::polynomial:
+                            detail::device_kernel_assembly_symm<kernel_function_type::polynomial>(alpha, q_red, matr_A, device_specific_num_rows, row_offset, QA_cost, cost, B, C, params.degree, std::get<real_type>(params.gamma), params.coef0);
+                            break;
+                        case kernel_function_type::rbf:
+                            detail::device_kernel_assembly_symm<kernel_function_type::rbf>(alpha, q_red, matr_A, device_specific_num_rows, row_offset, QA_cost, cost, B, C, std::get<real_type>(params.gamma));
+                            break;
+                        case kernel_function_type::sigmoid:
+                            detail::device_kernel_assembly_symm<kernel_function_type::sigmoid>(alpha, q_red, matr_A, device_specific_num_rows, row_offset, QA_cost, cost, B, C, std::get<real_type>(params.gamma), params.coef0);
+                            break;
+                        case kernel_function_type::laplacian:
+                            detail::device_kernel_assembly_symm<kernel_function_type::laplacian>(alpha, q_red, matr_A, device_specific_num_rows, row_offset, QA_cost, cost, B, C, std::get<real_type>(params.gamma));
+                            break;
+                        case kernel_function_type::chi_squared:
+                            detail::device_kernel_assembly_symm<kernel_function_type::chi_squared>(alpha, q_red, matr_A, device_specific_num_rows, row_offset, QA_cost, cost, B, C, std::get<real_type>(params.gamma));
+                            break;
+                    }
+                }
+                break;
+        }
     }
 }
 
@@ -182,6 +224,7 @@ aos_matrix<real_type> csvm::predict_values(const parameter &params,
 
     // defined sizes
     const std::size_t num_classes = alpha.num_rows();
+    const std::size_t num_sv = support_vectors.num_rows();
     const std::size_t num_predict_points = predict_points.num_rows();
     const std::size_t num_features = predict_points.num_cols();
 
@@ -191,33 +234,51 @@ aos_matrix<real_type> csvm::predict_values(const parameter &params,
     if (params.kernel_type == kernel_function_type::linear) {
         // special optimization for the linear kernel function
         if (w.empty()) {
+            // update the data distribution to account for the support vectors
+            data_distribution_ = std::make_unique<::plssvm::detail::rectangular_data_distribution>(comm_, num_sv, this->num_available_devices());
+
             // fill w vector
             w = soa_matrix<real_type>{ plssvm::shape{ num_classes, num_features }, plssvm::shape{ PADDING_SIZE, PADDING_SIZE } };
-            detail::device_kernel_w_linear(w, alpha, support_vectors);
+
+            if (data_distribution_->place_specific_num_rows(0) > std::size_t{ 0 }) {
+                const std::size_t device_specific_num_sv = data_distribution_->place_specific_num_rows(0);
+                const std::size_t sv_offset = data_distribution_->place_row_offset(0);
+
+                detail::device_kernel_w_linear(w, alpha, support_vectors, device_specific_num_sv, sv_offset);
+            }
+
+            // reduce w on all MPI ranks
+            comm_.allreduce_inplace(w);
         }
     }
 
-    // call the predict kernels
-    switch (params.kernel_type) {
-        case kernel_function_type::linear:
-            // predict the values using the w vector
-            detail::device_kernel_predict_linear(out, w, rho, predict_points);
-            break;
-        case kernel_function_type::polynomial:
-            detail::device_kernel_predict<kernel_function_type::polynomial>(out, alpha, rho, support_vectors, predict_points, params.degree, std::get<real_type>(params.gamma), params.coef0);
-            break;
-        case kernel_function_type::rbf:
-            detail::device_kernel_predict<kernel_function_type::rbf>(out, alpha, rho, support_vectors, predict_points, std::get<real_type>(params.gamma));
-            break;
-        case kernel_function_type::sigmoid:
-            detail::device_kernel_predict<kernel_function_type::sigmoid>(out, alpha, rho, support_vectors, predict_points, std::get<real_type>(params.gamma), params.coef0);
-            break;
-        case kernel_function_type::laplacian:
-            detail::device_kernel_predict<kernel_function_type::laplacian>(out, alpha, rho, support_vectors, predict_points, std::get<real_type>(params.gamma));
-            break;
-        case kernel_function_type::chi_squared:
-            detail::device_kernel_predict<kernel_function_type::chi_squared>(out, alpha, rho, support_vectors, predict_points, std::get<real_type>(params.gamma));
-            break;
+    data_distribution_ = std::make_unique<::plssvm::detail::rectangular_data_distribution>(comm_, num_predict_points, this->num_available_devices());
+    const std::size_t device_specific_num_predict_points = data_distribution_->place_specific_num_rows(0);
+    const std::size_t row_offset = data_distribution_->place_row_offset(0);
+
+    if (data_distribution_->place_specific_num_rows(0) > std::size_t{ 0 }) {
+        // call the predict kernels
+        switch (params.kernel_type) {
+            case kernel_function_type::linear:
+                // predict the values using the w vector
+                detail::device_kernel_predict_linear(out, w, rho, predict_points, device_specific_num_predict_points, row_offset);
+                break;
+            case kernel_function_type::polynomial:
+                detail::device_kernel_predict<kernel_function_type::polynomial>(out, alpha, rho, support_vectors, predict_points, device_specific_num_predict_points, row_offset, params.degree, std::get<real_type>(params.gamma), params.coef0);
+                break;
+            case kernel_function_type::rbf:
+                detail::device_kernel_predict<kernel_function_type::rbf>(out, alpha, rho, support_vectors, predict_points, device_specific_num_predict_points, row_offset, std::get<real_type>(params.gamma));
+                break;
+            case kernel_function_type::sigmoid:
+                detail::device_kernel_predict<kernel_function_type::sigmoid>(out, alpha, rho, support_vectors, predict_points, device_specific_num_predict_points, row_offset, std::get<real_type>(params.gamma), params.coef0);
+                break;
+            case kernel_function_type::laplacian:
+                detail::device_kernel_predict<kernel_function_type::laplacian>(out, alpha, rho, support_vectors, predict_points, device_specific_num_predict_points, row_offset, std::get<real_type>(params.gamma));
+                break;
+            case kernel_function_type::chi_squared:
+                detail::device_kernel_predict<kernel_function_type::chi_squared>(out, alpha, rho, support_vectors, predict_points, device_specific_num_predict_points, row_offset, std::get<real_type>(params.gamma));
+                break;
+        }
     }
 
     return out;

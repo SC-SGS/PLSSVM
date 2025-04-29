@@ -13,6 +13,8 @@
 #include "gmock/gmock.h"  // ::testing::ContainsRegex
 #include "gtest/gtest.h"  // TEST, ASSERT_DEATH, EXPECT_DEATH
 
+#include <string>  // std::string
+
 // only test if assertions are enabled
 #if defined(PLSSVM_ENABLE_ASSERTS)
 
@@ -25,15 +27,26 @@ TEST(PLSSVMAssert, assert_false) {
     ASSERT_DEATH(PLSSVM_ASSERT(false, "FALSE"), ::testing::ContainsRegex("Assertion '.*false.*' failed!"));
 }
 
+TEST(PLSSVMAssertDeathTest, check_assertion_false) {
+    const auto loc = plssvm::source_location::current();
+
+    // test regex
+    const std::string regex = fmt::format("Assertion '.*1 == 2.*' failed!\n"
+                                          "{}"
+                                          "  in file            .*\n"
+                                          "  in function        .*\n"
+                                          "  @ line             .*\n\n"
+                                          ".*msg 1.*\n",
+                                          loc.world_rank().has_value() ? "  on MPI world rank  .*\n" : "");
+
+    // calling check assertion with false should abort
+    EXPECT_DEATH(plssvm::detail::check_assertion(1 == 2, "1 == 2", loc, "msg {}", 1), ::testing::ContainsRegex(regex));
+}
+
 #endif
 
 // check the internal check_assertion function
 TEST(PLSSVMAssert, check_assertion_true) {
     // calling check assertion with true shouldn't do anything
     plssvm::detail::check_assertion(true, "", plssvm::source_location::current(), "");
-}
-
-TEST(PLSSVMAssert, check_assertion_false) {
-    // calling check assertion with false should abort
-    EXPECT_DEATH(plssvm::detail::check_assertion(false, "cond", plssvm::source_location::current(), "msg {}", 1), "cond");
 }

@@ -12,7 +12,7 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import GridSearchCV, train_test_split
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import KBinsDiscretizer, StandardScaler
-from plssvm import SVC
+from plssvm.svm import SVC
 from sklearn.utils._testing import ignore_warnings
 
 h = 0.02  # step size in the mesh

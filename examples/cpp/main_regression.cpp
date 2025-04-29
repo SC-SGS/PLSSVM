@@ -14,8 +14,8 @@ int main() {
 
         // create two data sets: one with the training data scaled to [-1, 1]
         // and one with the test data scaled like the training data
-        const plssvm::regression_data_set train_data{ "train_file.libsvm", { -1.0, 1.0 } };
-        const plssvm::regression_data_set test_data{ "test_file.libsvm", train_data.scaling_factors()->get() };
+        const plssvm::regression_data_set train_data{ "train_file_reg.libsvm", { -1.0, 1.0 } };
+        const plssvm::regression_data_set test_data{ "test_file_reg.libsvm", train_data.scaling_factors()->get() };
 
         // create C-SVR using the default backend and the previously defined parameter
         const auto svr = plssvm::make_csvr(params);
@@ -26,7 +26,8 @@ int main() {
         // predict the labels
         const std::vector<plssvm::real_type> predicted_label = svr->predict(model, test_data);
         // output a more complete regression report
-        const std::vector<plssvm::real_type> &correct_label = test_data.labels().value();
+        const auto &labels_opt = test_data.labels();  // std::optional<std::reference_wrapper<std::vector<label_type>>>
+        const std::vector<plssvm::real_type> &correct_label = labels_opt.value().get();
         std::cout << plssvm::regression_report{ correct_label, predicted_label } << std::endl;
 
         // write model file to disk

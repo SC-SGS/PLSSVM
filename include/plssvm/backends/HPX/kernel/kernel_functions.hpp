@@ -17,8 +17,6 @@
 #include "plssvm/constants.hpp"              // plssvm::real_type
 #include "plssvm/kernel_function_types.hpp"  // plssvm::kernel_function_type
 
-#define PLSSVM_HPX_KERNEL_FUNCTION
-
 #include <cmath>   // std::abs, std::pow, std::exp, std::tanh
 #include <limits>  // std::numeric_limits::min
 
@@ -35,7 +33,7 @@ namespace plssvm::hpx::detail {
  * @return the reduced value (`[[nodiscard]]`)
  */
 template <kernel_function_type kernel_function>
-[[nodiscard]] inline PLSSVM_HPX_KERNEL_FUNCTION real_type feature_reduce(const real_type val1, const real_type val2) {
+[[nodiscard]] inline real_type feature_reduce(const real_type val1, const real_type val2) {
     return val1 * val2;
 }
 
@@ -46,7 +44,7 @@ template <kernel_function_type kernel_function>
  * @return the reduced value (`[[nodiscard]]`)
  */
 template <>
-[[nodiscard]] inline PLSSVM_HPX_KERNEL_FUNCTION real_type feature_reduce<kernel_function_type::rbf>(const real_type val1, const real_type val2) {
+[[nodiscard]] inline real_type feature_reduce<kernel_function_type::rbf>(const real_type val1, const real_type val2) {
     const real_type d = val1 - val2;
     return d * d;
 }
@@ -58,7 +56,7 @@ template <>
  * @return the reduced value (`[[nodiscard]]`)
  */
 template <>
-[[nodiscard]] inline PLSSVM_HPX_KERNEL_FUNCTION real_type feature_reduce<kernel_function_type::laplacian>(const real_type val1, const real_type val2) {
+[[nodiscard]] inline real_type feature_reduce<kernel_function_type::laplacian>(const real_type val1, const real_type val2) {
     return std::abs(val1 - val2);
 }
 
@@ -70,7 +68,7 @@ template <>
  * @return the reduced value (`[[nodiscard]]`)
  */
 template <>
-[[nodiscard]] inline PLSSVM_HPX_KERNEL_FUNCTION real_type feature_reduce<kernel_function_type::chi_squared>(const real_type val1, const real_type val2) {
+[[nodiscard]] inline real_type feature_reduce<kernel_function_type::chi_squared>(const real_type val1, const real_type val2) {
     const real_type d = val1 - val2;
     return (real_type{ 1.0 } / (val1 + val2 + std::numeric_limits<real_type>::min())) * d * d;
 }
@@ -84,7 +82,7 @@ template <>
  * @return the result value (`[[nodiscard]]`)
  */
 template <kernel_function_type, typename... Args>
-[[nodiscard]] inline PLSSVM_HPX_KERNEL_FUNCTION real_type apply_kernel_function(real_type, Args...);
+[[nodiscard]] inline real_type apply_kernel_function(real_type, Args...);
 
 /**
  * @brief Compute the linear kernel function using @p value.
@@ -92,7 +90,7 @@ template <kernel_function_type, typename... Args>
  * @return the result value (`[[nodiscard]]`)
  */
 template <>
-[[nodiscard]] inline PLSSVM_HPX_KERNEL_FUNCTION real_type apply_kernel_function<kernel_function_type::linear>(const real_type value) {
+[[nodiscard]] inline real_type apply_kernel_function<kernel_function_type::linear>(const real_type value) {
     return value;
 }
 
@@ -105,7 +103,7 @@ template <>
  * @return the result value (`[[nodiscard]]`)
  */
 template <>
-[[nodiscard]] inline PLSSVM_HPX_KERNEL_FUNCTION real_type apply_kernel_function<kernel_function_type::polynomial>(const real_type value, const int degree, const real_type gamma, const real_type coef0) {
+[[nodiscard]] inline real_type apply_kernel_function<kernel_function_type::polynomial>(const real_type value, const int degree, const real_type gamma, const real_type coef0) {
     return std::pow(gamma * value + coef0, (real_type) degree);
 }
 
@@ -116,7 +114,7 @@ template <>
  * @return the result value (`[[nodiscard]]`)
  */
 template <>
-[[nodiscard]] inline PLSSVM_HPX_KERNEL_FUNCTION real_type apply_kernel_function<kernel_function_type::rbf>(const real_type value, const real_type gamma) {
+[[nodiscard]] inline real_type apply_kernel_function<kernel_function_type::rbf>(const real_type value, const real_type gamma) {
     return std::exp(-gamma * value);
 }
 
@@ -128,7 +126,7 @@ template <>
  * @return the result value (`[[nodiscard]]`)
  */
 template <>
-[[nodiscard]] inline PLSSVM_HPX_KERNEL_FUNCTION real_type apply_kernel_function<kernel_function_type::sigmoid>(const real_type value, const real_type gamma, const real_type coef0) {
+[[nodiscard]] inline real_type apply_kernel_function<kernel_function_type::sigmoid>(const real_type value, const real_type gamma, const real_type coef0) {
     return std::tanh(gamma * value + coef0);
 }
 
@@ -139,7 +137,7 @@ template <>
  * @return the result value (`[[nodiscard]]`)
  */
 template <>
-[[nodiscard]] inline PLSSVM_HPX_KERNEL_FUNCTION real_type apply_kernel_function<kernel_function_type::laplacian>(const real_type value, const real_type gamma) {
+[[nodiscard]] inline real_type apply_kernel_function<kernel_function_type::laplacian>(const real_type value, const real_type gamma) {
     return std::exp(-gamma * value);
 }
 
@@ -150,7 +148,7 @@ template <>
  * @return the result value (`[[nodiscard]]`)
  */
 template <>
-[[nodiscard]] inline PLSSVM_HPX_KERNEL_FUNCTION real_type apply_kernel_function<kernel_function_type::chi_squared>(const real_type value, const real_type gamma) {
+[[nodiscard]] inline real_type apply_kernel_function<kernel_function_type::chi_squared>(const real_type value, const real_type gamma) {
     return std::exp(-gamma * value);
 }
 

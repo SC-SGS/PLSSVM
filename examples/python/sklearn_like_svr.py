@@ -36,7 +36,7 @@ y_rbf_sklearn = sklearn_svr_rbf.fit(X, y).predict(X)
 plt.plot(X, y_rbf_sklearn, lw=2, linestyle='dashed', label='RBF model sklearn')
 
 # fit the PLSSVM regression model
-from plssvm import SVR
+from plssvm.svm import SVR
 
 plssvm_svr_lin = SVR(kernel='linear', C=100)
 y_lin_plssvm = plssvm_svr_lin.fit(X, y).predict(X)

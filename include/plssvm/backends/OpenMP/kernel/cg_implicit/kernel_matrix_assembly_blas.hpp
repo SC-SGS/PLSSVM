@@ -15,7 +15,6 @@
 
 #include "plssvm/constants.hpp"              // plssvm::real_type, plssvm::THREAD_BLOCK_SIZE, plssvm::INTERNAL_BLOCK_SIZE
 #include "plssvm/detail/assert.hpp"          // PLSSVM_ASSERT
-#include "plssvm/detail/operators.hpp"       // overloaded arithmetic operations for a plssvm::matrix
 #include "plssvm/kernel_function_types.hpp"  // plssvm::kernel_function_type
 #include "plssvm/matrix.hpp"                 // aos_matrix
 
@@ -33,38 +32,37 @@ namespace plssvm::openmp::detail {
  * @param[in] alpha the scalar alpha value
  * @param[in] q the `q` vector
  * @param[in] data the data matrix
+ * @param[in] device_specific_num_rows the number of rows the current device is responsible for
+ * @param[in] row_offset the first row in @p data the current device is responsible for
  * @param[in] QA_cost he bottom right matrix entry multiplied by cost
  * @param[in] cost 1 / the cost parameter in the C-SVM
  * @param[in] B the matrix @p B
- * @param[in] beta the beta alpha value
  * @param[in,out] C the matrix @p C
  * @param[in] kernel_function_parameter the potential additional arguments for the @p kernel function
  */
 template <kernel_function_type kernel, typename... Args>
-inline void device_kernel_assembly_symm(const real_type alpha, const std::vector<real_type> &q, const soa_matrix<real_type> &data, const real_type QA_cost, const real_type cost, const soa_matrix<real_type> &B, const real_type beta, soa_matrix<real_type> &C, Args... kernel_function_parameter) {
+inline void device_kernel_assembly_symm(const real_type alpha, const std::vector<real_type> &q, const soa_matrix<real_type> &data, const std::size_t device_specific_num_rows, const std::size_t row_offset, const real_type QA_cost, const real_type cost, const soa_matrix<real_type> &B, soa_matrix<real_type> &C, Args... kernel_function_parameter) {
     PLSSVM_ASSERT(q.size() == data.num_rows() - 1, "Sizes mismatch!: {} != {}", q.size(), data.num_rows() - 1);
+    PLSSVM_ASSERT(q.size() >= device_specific_num_rows, "The number of place specific rows ({}) cannot be greater the the total number of rows ({})!", device_specific_num_rows, q.size());
+    PLSSVM_ASSERT(q.size() >= row_offset, "The row offset ({}) cannot be greater the the total number of rows ({})!", row_offset, q.size());
     PLSSVM_ASSERT(cost != real_type{ 0.0 }, "cost must not be 0.0 since it is 1 / plssvm::cost!");
     PLSSVM_ASSERT(B.shape() == C.shape(), "The matrices B and C must have the same shape!");
     PLSSVM_ASSERT(B.num_cols() == q.size(), "The number of columns in B ({}) must be the same as the values in q ({})!", B.num_cols(), q.size());
 
-    using namespace operators;
-
-    // alpha * A * B + beta * C
-    C *= beta;
-
     // calculate constants
-    const std::size_t dept = q.size();
-    const auto blocked_dept = static_cast<std::size_t>(std::ceil(static_cast<real_type>(dept) / INTERNAL_BLOCK_SIZE));
+    const std::size_t num_rows = data.num_rows() - 1;
     const std::size_t num_features = data.num_cols();
     const std::size_t num_classes = B.num_rows();
+    const auto blocked_row_range = static_cast<std::size_t>(std::ceil(static_cast<real_type>(num_rows - row_offset) / INTERNAL_BLOCK_SIZE));
+    const auto blocked_device_specific_num_rows = static_cast<std::size_t>(std::ceil(static_cast<real_type>(device_specific_num_rows) / INTERNAL_BLOCK_SIZE));
 
     // cast all values to 64-bit unsigned long long to prevent potential 32-bit overflows
     const auto INTERNAL_BLOCK_SIZE_uz = static_cast<std::size_t>(INTERNAL_BLOCK_SIZE);
     const auto THREAD_BLOCK_SIZE_uz = static_cast<std::size_t>(THREAD_BLOCK_SIZE);
 
 #pragma omp parallel for collapse(2) schedule(dynamic)
-    for (std::size_t row = 0; row < blocked_dept; row += THREAD_BLOCK_SIZE_uz) {
-        for (std::size_t col = 0; col < blocked_dept; col += THREAD_BLOCK_SIZE_uz) {
+    for (std::size_t row = 0; row < blocked_row_range; row += THREAD_BLOCK_SIZE_uz) {
+        for (std::size_t col = 0; col < blocked_device_specific_num_rows; col += THREAD_BLOCK_SIZE_uz) {
             // perform operations on the current block
             for (std::size_t row_block = 0; row_block < THREAD_BLOCK_SIZE_uz; ++row_block) {
                 for (std::size_t col_block = 0; col_block < THREAD_BLOCK_SIZE_uz; ++col_block) {
@@ -81,8 +79,8 @@ inline void device_kernel_assembly_symm(const real_type alpha, const std::vector
                         for (std::size_t dim = 0; dim < num_features; ++dim) {
                             for (unsigned internal_row = 0; internal_row < INTERNAL_BLOCK_SIZE; ++internal_row) {
                                 for (unsigned internal_col = 0; internal_col < INTERNAL_BLOCK_SIZE; ++internal_col) {
-                                    const std::size_t global_row = row_idx + static_cast<std::size_t>(internal_row);
-                                    const std::size_t global_col = col_idx + static_cast<std::size_t>(internal_col);
+                                    const std::size_t global_row = row_offset + row_idx + static_cast<std::size_t>(internal_row);
+                                    const std::size_t global_col = row_offset + col_idx + static_cast<std::size_t>(internal_col);
 
                                     temp[internal_row][internal_col] += detail::feature_reduce<kernel>(data(global_row, dim), data(global_col, dim));
                                 }
@@ -92,11 +90,13 @@ inline void device_kernel_assembly_symm(const real_type alpha, const std::vector
                         // apply the remaining part of the kernel function and store the value in the output kernel matrix
                         for (unsigned internal_row = 0; internal_row < INTERNAL_BLOCK_SIZE; ++internal_row) {
                             for (unsigned internal_col = 0; internal_col < INTERNAL_BLOCK_SIZE; ++internal_col) {
-                                const std::size_t global_row = row_idx + static_cast<std::size_t>(internal_row);
-                                const std::size_t global_col = col_idx + static_cast<std::size_t>(internal_col);
+                                const std::size_t device_global_row = row_idx + static_cast<std::size_t>(internal_row);
+                                const std::size_t global_row = row_offset + row_idx + static_cast<std::size_t>(internal_row);
+                                const std::size_t device_global_col = col_idx + static_cast<std::size_t>(internal_col);
+                                const std::size_t global_col = row_offset + col_idx + static_cast<std::size_t>(internal_col);
 
                                 // be sure to not perform out of bounds accesses for the kernel matrix (only using the upper triangular matrix)
-                                if (global_row < dept && global_col < dept && global_row >= global_col) {
+                                if (device_global_row < (num_rows - row_offset) && device_global_col < device_specific_num_rows && global_row >= global_col) {
                                     real_type temp_ij = temp[internal_row][internal_col];
                                     temp_ij = detail::apply_kernel_function<kernel>(temp_ij, kernel_function_parameter...) + QA_cost - q[global_row] - q[global_col];
                                     // apply the cost on the diagonal

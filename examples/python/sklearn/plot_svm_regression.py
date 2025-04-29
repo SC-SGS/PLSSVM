@@ -13,7 +13,7 @@ Toy example of 1D regression using linear, polynomial and RBF kernels.
 import matplotlib.pyplot as plt
 import numpy as np
 
-from plssvm import SVR
+from plssvm.svm import SVR
 
 
 def one_div_x(data):

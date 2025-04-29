@@ -68,10 +68,10 @@ try:
 
     # create the data set
     train_data = plssvm.ClassificationDataSet(samples, labels, scaler=plssvm.MinMaxScaler(-1.0, 1.0))
-    train_data.save(args.intermediate_train_file, plssvm.FileFormatType.LIBSVM)
+    train_data.save(args.intermediate_train_file, format=plssvm.FileFormatType.LIBSVM)
 
     # create a C-SVM using the provided parameters and the default, i.e., fastest backend and target platform
-    svm = plssvm.CSVC(params)
+    svm = plssvm.CSVC(params=params)
 
     plssvm.quiet()
 

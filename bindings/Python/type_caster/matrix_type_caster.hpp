@@ -57,7 +57,7 @@ struct type_caster<plssvm::matrix<T, layout>> {
      * @param[in] matr the PLSSVM matrix to convert to a Numpy ndarray
      * @return a Pybind11 handle to the Numpy ndarray
      */
-    static handle cast(const matrix_type &matr, return_value_policy, handle) {
+    static py::handle cast(const matrix_type &matr, py::return_value_policy, py::handle) {
         const std::size_t num_data_points = matr.num_rows();
         const std::size_t num_features = matr.num_cols();
 
@@ -102,12 +102,12 @@ struct type_caster<plssvm::matrix<T, layout>> {
         const std::size_t num_rows = arr.shape(0);
         const std::size_t num_cols = arr.shape(1);
 
-        // note: the conversions use OpenMP -> remove Python's Global Interpreter Lock
-        const py::gil_scoped_release release;
-
         // get the underlying raw memory
         py::buffer_info buffer = arr.request();
         const T *ptr = static_cast<T *>(buffer.ptr);
+
+        // note: the conversions use OpenMP -> remove Python's Global Interpreter Lock
+        const py::gil_scoped_release release;
 
         // check the memory layout of the Python Numpy array
         if constexpr (static_cast<bool>(Flags & py::array::c_style)) {
@@ -167,7 +167,7 @@ struct type_caster<plssvm::matrix<T, layout>> {
      * @throws py::value_error if @p obj is not a Numpy ndarray, Pandas DataFrame, SciPy sparse matrix, or Python 2D list
      * @throws py::value_error if the Numpy ndarray doesn't have a two-dimensional shape
      */
-    bool load(handle obj, bool) {
+    bool load(py::handle obj, bool) {
         // special case py::list
         if (py::isinstance<py::list>(obj)) {
             // provided obj is a Python list -> check if it is a correct py::list of py::list

@@ -11,7 +11,7 @@
 #include "plssvm/backend_types.hpp"                                                   // plssvm::csvm_to_backend_type_v
 #include "plssvm/backends/OpenMP/csvm.hpp"                                            // plssvm::openmp::{csvm, csvc, csvr}
 #include "plssvm/backends/OpenMP/exceptions.hpp"                                      // plssvm::openmp::backend_exception
-#include "plssvm/backends/OpenMP/kernel/cg_explicit/blas.hpp"                         // plssvm::openmp::device_kernel_symm
+#include "plssvm/backends/OpenMP/kernel/cg_explicit/blas.hpp"                         // plssvm::openmp::{device_kernel_symm, device_ce_kernel_symm_mirror}
 #include "plssvm/backends/OpenMP/kernel/cg_explicit/kernel_matrix_assembly.hpp"       // plssvm::openmp::device_kernel_assembly
 #include "plssvm/backends/OpenMP/kernel/cg_implicit/kernel_matrix_assembly_blas.hpp"  // plssvm::openmp::device_kernel_assembly_symm
 #include "plssvm/backends/OpenMP/kernel/predict_kernel.hpp"                           // plssvm::openmp::{device_kernel_w_linear, device_kernel_predict_linear, device_kernel_predict}
@@ -214,6 +214,7 @@ using plssvm::openmp::detail::device_kernel_assembly_symm;
 using plssvm::openmp::detail::device_kernel_predict;
 using plssvm::openmp::detail::device_kernel_predict_linear;
 using plssvm::openmp::detail::device_kernel_symm;
+using plssvm::openmp::detail::device_kernel_symm_mirror;
 using plssvm::openmp::detail::device_kernel_w_linear;
 #include "tests/backends/generic_csvm_tests.hpp"  // generic backend C-SVM tests to instantiate
 

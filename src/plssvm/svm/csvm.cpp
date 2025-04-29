@@ -10,12 +10,11 @@
 
 #include "plssvm/constants.hpp"                            // plssvm::real_type, plssvm::PADDING_SIZE
 #include "plssvm/detail/assert.hpp"                        // PLSSVM_ASSERT
-#include "plssvm/detail/logging.hpp"                       // plssvm::detail::log
+#include "plssvm/detail/logging/mpi_log.hpp"               // plssvm::detail::log
+#include "plssvm/detail/logging/mpi_log_untracked.hpp"     // plssvm::detail::log_untracked
 #include "plssvm/detail/move_only_any.hpp"                 // plssvm::detail::move_only_any
 #include "plssvm/detail/operators.hpp"                     // plssvm operator overloads for vectors
 #include "plssvm/detail/tracking/performance_tracker.hpp"  // PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY, PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_EVENT, plssvm::detail::tracking::tracking_entry
-#include "plssvm/detail/utility.hpp"                       // plssvm::detail::to_underlying
-#include "plssvm/exceptions/exceptions.hpp"                // plssvm::invalid_parameter_exception
 #include "plssvm/gamma.hpp"                                // plssvm::gamma_type
 #include "plssvm/kernel_function_types.hpp"                // plssvm::kernel_function_type
 #include "plssvm/kernel_functions.hpp"                     // plssvm::kernel_function
@@ -34,26 +33,10 @@
 #include <numeric>     // std::inner_product
 #include <utility>     // std::move
 #include <utility>     // std::pair, std::make_pair
-#include <variant>     // std::holds_alternative, std::get
+#include <variant>     // std::get
 #include <vector>      // std::vector
 
 namespace plssvm {
-
-void csvm::sanity_check_parameter() const {
-    // kernel: valid kernel function
-    const auto kernel_type_value = detail::to_underlying(params_.kernel_type);
-    if (kernel_type_value < 0 || kernel_type_value >= 6) {
-        throw invalid_parameter_exception{ fmt::format("Invalid kernel function with value {} given!", kernel_type_value) };
-    }
-
-    // gamma: must be greater than 0 IF explicitly provided as real_type (not for the linear kernel)
-    if (params_.kernel_type != kernel_function_type::linear && std::holds_alternative<real_type>(params_.gamma) && std::get<real_type>(params_.gamma) <= real_type{ 0.0 }) {
-        throw invalid_parameter_exception{ fmt::format("gamma must be greater than 0.0, but is {}!", std::get<real_type>(params_.gamma)) };
-    }
-    // degree: all allowed
-    // coef0: all allowed
-    // cost: all allowed
-}
 
 std::pair<soa_matrix<real_type>, std::vector<unsigned long long>> csvm::conjugate_gradients(const std::vector<detail::move_only_any> &A, const soa_matrix<real_type> &B, const real_type eps, const unsigned long long max_cg_iter, const solver_type cg_solver) const {
     using namespace plssvm::operators;
@@ -84,6 +67,8 @@ std::pair<soa_matrix<real_type>, std::vector<unsigned long long>> csvm::conjugat
     // R = B - A * X
     soa_matrix<real_type> R{ B, shape{ PADDING_SIZE, PADDING_SIZE } };
     blas_level_3_times.push_back(this->run_blas_level_3(cg_solver, real_type{ -1.0 }, A, X, real_type{ 1.0 }, R));
+    // reduce R matrix on all MPI ranks
+    comm_.allreduce_inplace(R);
 
     // delta = R.T * R
     std::vector<real_type> delta = rowwise_dot(R, R);
@@ -143,15 +128,16 @@ std::pair<soa_matrix<real_type>, std::vector<unsigned long long>> csvm::conjugat
         PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_EVENT(fmt::format("cg iter {} start", iter));
 
         const std::size_t max_residual_difference_idx = rhs_idx_max_residual_difference();
-        detail::log(verbosity_level::full | verbosity_level::timing,
-                    "Start Iteration {} (max: {}) with {}/{} converged rhs (max residual {} with target residual {} for rhs {}). ",
-                    iter + 1,
-                    max_cg_iter,
-                    num_rhs_converged(),
-                    num_rhs,
-                    delta[max_residual_difference_idx],
-                    eps * eps * delta0[max_residual_difference_idx],
-                    max_residual_difference_idx);
+        detail::log_untracked(verbosity_level::full | verbosity_level::timing,
+                              comm_,
+                              "Start Iteration {} (max: {}) with {}/{} converged rhs (max residual {} with target residual {} for rhs {}). ",
+                              iter + 1,
+                              max_cg_iter,
+                              num_rhs_converged(),
+                              num_rhs,
+                              delta[max_residual_difference_idx],
+                              eps * eps * delta0[max_residual_difference_idx],
+                              max_residual_difference_idx);
         const std::chrono::steady_clock::time_point iteration_start_time = std::chrono::steady_clock::now();
 
         // create mask for the residual -> only update X if the respective rhs did not already converge
@@ -160,6 +146,8 @@ std::pair<soa_matrix<real_type>, std::vector<unsigned long long>> csvm::conjugat
         // Q = A * D
         soa_matrix<real_type> Q{ shape{ D.num_rows(), D.num_cols() }, shape{ PADDING_SIZE, PADDING_SIZE } };
         blas_level_3_times.push_back(this->run_blas_level_3(cg_solver, real_type{ 1.0 }, A, D, real_type{ 0.0 }, Q));
+        // reduce Q matrix on all MPI ranks
+        comm_.allreduce_inplace(Q);
 
         // alpha = delta_new / (D^T * Q))
         const std::vector<real_type> alpha = delta / rowwise_dot(D, Q);
@@ -172,6 +160,8 @@ std::pair<soa_matrix<real_type>, std::vector<unsigned long long>> csvm::conjugat
             // R = B - A * X
             R = soa_matrix<real_type>{ B, shape{ PADDING_SIZE, PADDING_SIZE } };
             blas_level_3_times.push_back(this->run_blas_level_3(cg_solver, real_type{ -1.0 }, A, X, real_type{ 1.0 }, R));
+            // reduce R matrix on all MPI ranks
+            comm_.allreduce_inplace(R);
         } else {
             // R = R - alpha * Q
             R -= rowwise_scale(alpha, Q);
@@ -188,9 +178,10 @@ std::pair<soa_matrix<real_type>, std::vector<unsigned long long>> csvm::conjugat
 
         const std::chrono::steady_clock::time_point iteration_end_time = std::chrono::steady_clock::now();
         const std::chrono::duration iteration_duration = std::chrono::duration_cast<std::chrono::milliseconds>(iteration_end_time - iteration_start_time);
-        detail::log(verbosity_level::full | verbosity_level::timing,
-                    "Done in {}.\n",
-                    iteration_duration);
+        detail::log_untracked(verbosity_level::full | verbosity_level::timing,
+                              comm_,
+                              "Done in {}.\n",
+                              iteration_duration);
         total_iteration_time += iteration_duration;
 
         // next CG iteration
@@ -199,6 +190,7 @@ std::pair<soa_matrix<real_type>, std::vector<unsigned long long>> csvm::conjugat
     }
     const std::size_t max_residual_difference_idx = rhs_idx_max_residual_difference();
     detail::log(verbosity_level::full | verbosity_level::timing,
+                comm_,
                 "Finished after {}/{} iterations with {}/{} converged rhs (max residual {} with target residual {} for rhs {}) and an average iteration time of {}.\n",
                 detail::tracking::tracking_entry{ "cg", "iterations", iter },
                 detail::tracking::tracking_entry{ "cg", "max_iterations", max_cg_iter },
@@ -212,9 +204,10 @@ std::pair<soa_matrix<real_type>, std::vector<unsigned long long>> csvm::conjugat
     PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((detail::tracking::tracking_entry{ "cg", "residuals", delta }));
     PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((detail::tracking::tracking_entry{ "cg", "target_residuals", eps * eps * delta0 }));
     PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((detail::tracking::tracking_entry{ "cg", "epsilon", eps }));
-    detail::log(verbosity_level::libsvm,
-                "optimization finished, #iter = {}\n",
-                iter);
+    detail::log_untracked(verbosity_level::libsvm,
+                          comm_,
+                          "optimization finished, #iter = {}\n",
+                          iter);
 
     PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_EVENT("cg end");
 
@@ -271,6 +264,7 @@ std::pair<std::vector<real_type>, real_type> csvm::perform_dimensional_reduction
     const real_type QA_cost = kernel_function(A, num_rows_reduced, A, num_rows_reduced, params) + real_type{ 1.0 } / params.cost;
     const std::chrono::steady_clock::time_point dimension_reduction_end_time = std::chrono::steady_clock::now();
     detail::log(verbosity_level::full | verbosity_level::timing,
+                comm_,
                 "Performed dimensional reduction in {}.\n",
                 detail::tracking::tracking_entry{ "cg", "dimensional_reduction", std::chrono::duration_cast<std::chrono::milliseconds>(dimension_reduction_end_time - dimension_reduction_start_time) });
 
@@ -292,10 +286,12 @@ std::chrono::duration<long, std::milli> csvm::run_blas_level_3(const solver_type
 aos_matrix<real_type> csvm::run_predict_values(const parameter &params, const soa_matrix<real_type> &support_vectors, const aos_matrix<real_type> &alpha, const std::vector<real_type> &rho, soa_matrix<real_type> &w, const soa_matrix<real_type> &predict_points) const {
     const std::chrono::steady_clock::time_point start_time = std::chrono::steady_clock::now();
 
-    decltype(auto) res = this->predict_values(params, support_vectors, alpha, rho, w, predict_points);
+    aos_matrix<real_type> res = this->predict_values(params, support_vectors, alpha, rho, w, predict_points);
+    comm_.allreduce_inplace(res);
 
     const std::chrono::steady_clock::time_point end_time = std::chrono::steady_clock::now();
     detail::log(verbosity_level::full | verbosity_level::timing,
+                comm_,
                 "Predicted the values of {} predict points using {} support vectors with {} features each in {}.\n",
                 predict_points.num_rows(),
                 support_vectors.num_rows(),

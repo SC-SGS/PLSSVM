@@ -19,6 +19,7 @@
 #include "plssvm/backends/SYCL/kernel_invocation_types.hpp"  // plssvm::sycl::kernel_invocation_type
 #include "plssvm/classification_types.hpp"                   // plssvm::classification_type
 #include "plssvm/constants.hpp"                              // plssvm::real_type
+#include "plssvm/mpi/communicator.hpp"                       // plssvm::mpi::communicator
 #include "plssvm/parameter.hpp"                              // plssvm::parameter
 #include "plssvm/solver_types.hpp"                           // plssvm::solving_type
 #include "plssvm/svm_types.hpp"                              // plssvm::svm_type
@@ -30,6 +31,7 @@
 #include <cstddef>  // std::size_t
 #include <iosfwd>   // forward declare std::ostream
 #include <string>   // std::string
+#include <vector>   // std::vector
 
 namespace plssvm::detail::cmd {
 
@@ -40,10 +42,11 @@ struct parser_train {
     /**
      * @brief Parse the command line arguments @p argv using [`cxxopts`](https://github.com/jarro2783/cxxopts) and set the training parameters accordingly.
      * @details If no model filename is given, uses the input filename and appends a ".model". The model file is than saved in the current working directory.
+     * @param[in] comm the MPI communicator wrapper
      * @param[in] argc the number of passed command line arguments
      * @param[in] argv the command line arguments
      */
-    parser_train(int argc, char **argv);
+    parser_train(const mpi::communicator &comm, int argc, char **argv);
 
     /// Other base C-SVM parameters
     plssvm::parameter csvm_params{};
@@ -75,6 +78,10 @@ struct parser_train {
     /// `true` if `std::string` should be used as label type for the classification task instead of the default type `ìnt`.
     /// For the regression task, this parameter is ignored and `real_type` is always used.
     bool strings_as_labels{ false };
+
+    /// Load balancing weights for MPI used if different hardware per MPI process is used. The number must match the number of spawned MPI processes.
+    /// Providing [1, 1] means every process gets the same amount of work, providing [1, 3] means that the second process has three times the work to do compared to process zero.
+    std::vector<std::size_t> mpi_load_balancing_weights{};
 
     /// The name of the data/test file to parse.
     std::string input_filename{};

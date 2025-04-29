@@ -17,6 +17,9 @@
 #include "plssvm/detail/string_utility.hpp"              // plssvm::detail::replace_all
 #include "plssvm/detail/utility.hpp"                     // plssvm::detail::current_date_time, PLSSVM_IS_DEFINED
 #include "plssvm/gamma.hpp"                              // plssvm::get_gamma_string
+#include "plssvm/mpi/communicator.hpp"                   // plssvm::mpi::communicator
+#include "plssvm/mpi/detail/utility.hpp"                 // plssvm::mpi::detail::node_name
+#include "plssvm/mpi/detail/version.hpp"                 // plssvm::mpi::detail::{mpi_library_version, mpi_version}
 #include "plssvm/parameter.hpp"                          // plssvm::parameter
 #include "plssvm/version/git_metadata/git_metadata.hpp"  // plssvm::version::git_metadata::commit_sha1
 #include "plssvm/version/version.hpp"                    // plssvm::version::{version, detail::target_platforms}
@@ -29,11 +32,12 @@
     #include "hws/version.hpp"                  // hws::version::version
 #endif
 
-#include "cxxopts.hpp"   // CXXOPTS__VERSION_MAJOR, CXXOPTS__VERSION_MINOR, CXXOPTS__VERSION_MINOR
-#include "fmt/base.h"    // FMT_VERSION
-#include "fmt/chrono.h"  // format std::chrono types
-#include "fmt/format.h"  // fmt::format
-#include "fmt/ranges.h"  // fmt::join
+#include "cxxopts.hpp"                // CXXOPTS__VERSION_MAJOR, CXXOPTS__VERSION_MINOR, CXXOPTS__VERSION_MINOR
+#include "fast_float/float_common.h"  // FASTFLOAT_VERSION_MAJOR, FASTFLOAT_VERSION_MINOR, FASTFLOAT_VERSION_PATCH
+#include "fmt/base.h"                 // FMT_VERSION
+#include "fmt/chrono.h"               // format std::chrono types
+#include "fmt/format.h"               // fmt::format
+#include "fmt/ranges.h"               // fmt::join
 
 #if __has_include(<unistd.h>)
     #include <unistd.h>  // gethostname, getlogin_r, sysconf, _SC_HOST_NAME_MAX, _SC_LOGIN_NAME_MAX
@@ -95,6 +99,24 @@ void performance_tracker::add_tracking_entry(const tracking_entry<plssvm::parame
         tracking_entries_["parameter"].emplace("cost", std::vector<std::string>{ fmt::format("{}", entry.entry_value.cost) });
         tracking_entries_["parameter"].emplace("real_type", std::vector<std::string>{ std::string{ arithmetic_type_name<real_type>() } });
     }
+}
+
+void performance_tracker::add_tracking_entry([[maybe_unused]] const tracking_entry<mpi::communicator> &entry) {
+    // track MPI only if available
+#if defined(PLSSVM_HAS_MPI_ENABLED)
+    // check whether entries should currently be tracked
+    if (this->is_tracking()) {
+        // create category
+        tracking_entries_.emplace(entry.entry_category, std::map<std::string, std::vector<std::string>>{});
+        // fill category with value
+        tracking_entries_["mpi"].emplace("comm_size", std::vector<std::string>{ fmt::format("{}", entry.entry_value.size()) });
+        tracking_entries_["mpi"].emplace("comm_rank", std::vector<std::string>{ fmt::format("{}", entry.entry_value.rank()) });
+        tracking_entries_["mpi"].emplace("is_main_rank", std::vector<std::string>{ fmt::format("{}", entry.entry_value.is_main_rank()) });
+        tracking_entries_["mpi"].emplace("library_version", std::vector<std::string>{ fmt::format("\"{}\"", mpi::detail::mpi_library_version()) });
+        tracking_entries_["mpi"].emplace("version", std::vector<std::string>{ fmt::format("\"{}\"", mpi::detail::mpi_version()) });
+        tracking_entries_["mpi"].emplace("node_name", std::vector<std::string>{ fmt::format("\"{}\"", mpi::detail::node_name()) });
+    }
+#endif
 }
 
 void performance_tracker::add_tracking_entry(const tracking_entry<cmd::parser_train> &entry) {
@@ -278,35 +300,20 @@ void performance_tracker::save(std::ostream &out) {
         PADDING_SIZE);
 
 #if defined(PLSSVM_SYCL_BACKEND_HAS_DPCPP)
-    // check whether DPC++ AOT has been enabled
-    constexpr bool dpcpp_aot = PLSSVM_IS_DEFINED(PLSSVM_SYCL_BACKEND_DPCPP_ENABLE_AOT);
-
     out << fmt::format(
-        "  DPCPP_backend_type:                {}\n"
-        "  DPCPP_amd_gpu_backend_type:        {}\n"
-        "  DPCPP_with_aot:                    {}\n",
-        PLSSVM_SYCL_BACKEND_DPCPP_BACKEND_TYPE,
-        PLSSVM_SYCL_BACKEND_DPCPP_GPU_AMD_BACKEND_TYPE,
-        dpcpp_aot);
+        "  DPCPP_backend_type:                {}\n",
+        PLSSVM_SYCL_BACKEND_DPCPP_BACKEND_TYPE);
 #endif
 #if defined(PLSSVM_SYCL_BACKEND_HAS_ADAPTIVECPP)
     // check whether AdaptiveCpp's new SSCP has been enabled
     constexpr bool adaptivecpp_sscp = PLSSVM_IS_DEFINED(PLSSVM_SYCL_BACKEND_ADAPTIVECPP_USE_GENERIC_SSCP);
-    constexpr bool adaptivecpp_accelerated_cpu = PLSSVM_IS_DEFINED(__HIPSYCL_USE_ACCELERATED_CPU__);
+    constexpr bool adaptivecpp_accelerated_cpu = PLSSVM_IS_DEFINED(__ACPP_USE_ACCELERATED_CPU__);
 
     out << fmt::format(
         "  ADAPTIVECPP_with_generic_SSCP:     {}\n"
         "  ADAPTIVECPP_with_accelerated_CPU:  {}\n",
         adaptivecpp_sscp,
         adaptivecpp_accelerated_cpu);
-#endif
-#if defined(PLSSVM_HAS_KOKKOS_BACKEND)
-    // check whether Kokkos::SYCL AOT has been enabled
-    constexpr bool kokkos_sycl_aot = PLSSVM_IS_DEFINED(PLSSVM_KOKKOS_BACKEND_INTEL_LLVM_ENABLE_AOT);
-
-    out << fmt::format(
-        "  KOKKOS_sycl_intel_llvm_with_aot:   {}\n",
-        kokkos_sycl_aot);
 #endif
     out << "\n";
 
@@ -321,11 +328,7 @@ void performance_tracker::save(std::ostream &out) {
     constexpr int fmt_version_patch = FMT_VERSION % 10;
     const std::string fmt_version{ fmt::format("{}.{}.{}", fmt_version_major, fmt_version_minor, fmt_version_patch) };
     // fast float version
-#if defined(PLSSVM_fast_float_VERSION)
-    const std::string fast_float_version{ PLSSVM_fast_float_VERSION };
-#else
-    const std::string fast_float_version{ "unknown/external" };
-#endif
+    const std::string fast_float_version{ fmt::format("{}.{}.{}", FASTFLOAT_VERSION_MAJOR, FASTFLOAT_VERSION_MINOR, FASTFLOAT_VERSION_PATCH) };
     // igor version
 #if defined(PLSSVM_igor_VERSION)
     const std::string igor_version{ PLSSVM_igor_VERSION };

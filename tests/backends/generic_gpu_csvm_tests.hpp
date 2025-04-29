@@ -18,6 +18,7 @@
 #include "plssvm/detail/data_distribution.hpp"          // plssvm::detail::{triangular_data_distribution, rectangular_data_distribution}
 #include "plssvm/kernel_function_types.hpp"             // plssvm::kernel_function_type
 #include "plssvm/matrix.hpp"                            // plssvm::aos_matrix
+#include "plssvm/mpi/communicator.hpp"                  // plssvm::mpi::communicator
 #include "plssvm/parameter.hpp"                         // plssvm::parameter
 #include "plssvm/shape.hpp"                             // plssvm::shape
 
@@ -86,7 +87,7 @@ TYPED_TEST_P(GenericGPUCSVM, run_blas_level_3_kernel_explicit) {
     const mock_csvm_type svm = util::construct_from_tuple<mock_csvm_type>(csvm_test_type::additional_arguments);
     const std::size_t num_devices = svm.num_available_devices();
     // be sure to use the correct data distribution
-    svm.data_distribution_ = std::make_unique<plssvm::detail::triangular_data_distribution>(data.num_data_points() - 1, num_devices);
+    svm.data_distribution_ = std::make_unique<plssvm::detail::triangular_data_distribution>(plssvm::mpi::communicator{}, data.num_data_points() - 1, num_devices);
 
     const plssvm::real_type alpha{ 1.0 };
     const auto [q_red, QA_cost] = ground_truth::perform_dimensional_reduction(params, data.data());
@@ -176,7 +177,7 @@ TYPED_TEST_P(GenericGPUCSVM, run_w_kernel) {
     const mock_csvm_type svm = util::construct_from_tuple<mock_csvm_type>(csvm_test_type::additional_arguments);
     const std::size_t num_devices = svm.num_available_devices();
     // be sure to use the correct data distribution
-    svm.data_distribution_ = std::make_unique<plssvm::detail::rectangular_data_distribution>(data.num_data_points(), num_devices);
+    svm.data_distribution_ = std::make_unique<plssvm::detail::rectangular_data_distribution>(plssvm::mpi::communicator{}, data.num_data_points(), num_devices);
 
     for (std::size_t device_id = 0; device_id < num_devices; ++device_id) {
         SCOPED_TRACE(fmt::format("device_id {} ({}/{})", device_id, device_id + 1, num_devices));
@@ -370,7 +371,7 @@ TYPED_TEST_P(GenericGPUCSVMKernelFunction, run_assemble_kernel_matrix_explicit) 
     const mock_csvm_type svm = util::construct_from_tuple<mock_csvm_type>(params, csvm_test_type::additional_arguments);
     const std::size_t num_devices = svm.num_available_devices();
     // be sure to use the correct data distribution
-    svm.data_distribution_ = std::make_unique<plssvm::detail::triangular_data_distribution>(data.num_data_points() - 1, num_devices);
+    svm.data_distribution_ = std::make_unique<plssvm::detail::triangular_data_distribution>(plssvm::mpi::communicator{}, data.num_data_points() - 1, num_devices);
 
     // perform dimensional reduction
     const auto [q_red, QA_cost] = ground_truth::perform_dimensional_reduction(params, data_matr);
@@ -445,7 +446,7 @@ TYPED_TEST_P(GenericGPUCSVMKernelFunction, run_assemble_kernel_matrix_implicit_b
     const mock_csvm_type svm = util::construct_from_tuple<mock_csvm_type>(params, csvm_test_type::additional_arguments);
     const std::size_t num_devices = svm.num_available_devices();
     // be sure to use the correct data distribution
-    svm.data_distribution_ = std::make_unique<plssvm::detail::triangular_data_distribution>(data.num_data_points() - 1, num_devices);
+    svm.data_distribution_ = std::make_unique<plssvm::detail::triangular_data_distribution>(plssvm::mpi::communicator{}, data.num_data_points() - 1, num_devices);
 
     // perform dimensional reduction
     const auto [q_red, QA_cost] = ground_truth::perform_dimensional_reduction(params, data_matr);
@@ -539,7 +540,7 @@ TYPED_TEST_P(GenericGPUCSVMKernelFunction, run_predict_kernel) {
     const mock_csvm_type svm = util::construct_from_tuple<mock_csvm_type>(params, csvm_test_type::additional_arguments);
     const std::size_t num_devices = svm.num_available_devices();
     // be sure to use the correct data distribution
-    svm.data_distribution_ = std::make_unique<plssvm::detail::rectangular_data_distribution>(predict_points.num_rows(), num_devices);
+    svm.data_distribution_ = std::make_unique<plssvm::detail::rectangular_data_distribution>(plssvm::mpi::communicator{}, predict_points.num_rows(), num_devices);
 
     for (std::size_t device_id = 0; device_id < num_devices; ++device_id) {
         SCOPED_TRACE(fmt::format("device_id {} ({}/{})", device_id, device_id + 1, num_devices));

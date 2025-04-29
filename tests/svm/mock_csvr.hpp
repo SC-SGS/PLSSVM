@@ -13,8 +13,9 @@
 #define PLSSVM_TESTS_MOCK_CSVR_HPP_
 #pragma once
 
-#include "plssvm/svm/csvm.hpp"  // plssvm::csvm
-#include "plssvm/svm/csvr.hpp"  // plssvm::csvr
+#include "plssvm/mpi/communicator.hpp"  // plssvm::mpi::communicator
+#include "plssvm/svm/csvm.hpp"          // plssvm::csvm
+#include "plssvm/svm/csvr.hpp"          // plssvm::csvr
 
 #include "tests/svm/mock_csvm.hpp"  // mock_csvm
 
@@ -26,7 +27,7 @@ class mock_csvr final : virtual public plssvm::csvr,
   public:
     template <typename... Args>
     explicit mock_csvr(Args... args) :
-        plssvm::csvm{ args... },
+        plssvm::csvm{ plssvm::mpi::communicator{}, args... },
         mock_csvm{ args... } { }
 };
 

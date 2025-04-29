@@ -1,6 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-import sklearn
+import sklearn.svm
 import plssvm
 from sklearn.datasets import make_classification
 from sklearn.preprocessing import StandardScaler
@@ -57,10 +57,10 @@ def create_plot(clf, axis):
         Z_confidence = Z_confidence.reshape(xx.shape)
 
         # plot the decision boundaries (class regions)
-        axis[ax_idx].pcolormesh(xx, yy, Z_pred, alpha=0.3)
+        axis[ax_idx].pcolormesh(xx, yy, Z_pred, alpha=0.3, shading="auto")
 
         # overlay confidence as a grayscale gradient
-        cb_values = axis[ax_idx].pcolormesh(xx, yy, Z_confidence, cmap="Greys", alpha=0.45)
+        cb_values = axis[ax_idx].pcolormesh(xx, yy, Z_confidence, cmap="Greys", alpha=0.45, shading="auto")
         fig.colorbar(cb_values, ax=axis[ax_idx], label="confidence")
 
         # plot training data points
@@ -78,7 +78,7 @@ sklearn_svc = sklearn.svm.SVC(kernel='rbf', C=10)
 create_plot(sklearn_svc, ax[0, :])
 
 # fit PLSSVM
-plssvm_svc = plssvm.SVC(kernel='rbf', C=10)
+plssvm_svc = plssvm.svm.SVC(kernel='rbf', C=10)
 create_plot(plssvm_svc, ax[1, :])
 
 plt.tight_layout()

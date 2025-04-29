@@ -36,7 +36,18 @@
 template <typename T>
 class LIBSVMClassificationModelDataWrite : public ::testing::Test,
                                            private util::redirect_output<>,
-                                           protected util::temporary_file { };
+                                           protected util::temporary_file {
+  public:
+    /**
+     * @brief Return the used MPI communicator.
+     * @return the MPI communicator (`[[nodiscard]]`)
+     */
+    [[nodiscard]] const plssvm::mpi::communicator get_comm() const noexcept { return comm_; }
+
+  private:
+    /// The MPI communicator (unused during testing since we do not support MPI runtime tests).
+    plssvm::mpi::communicator comm_{};
+};
 
 TYPED_TEST_SUITE(LIBSVMClassificationModelDataWrite, util::classification_label_type_classification_type_gtest, naming::test_parameter_to_name);
 
@@ -95,7 +106,7 @@ TYPED_TEST(LIBSVMClassificationModelDataWrite, write) {
     const plssvm::classification_data_set<label_type> data_set{ data, std::vector<label_type>{ label } };
 
     // write the LIBSVM model file
-    plssvm::detail::io::write_libsvm_model_data_classification(this->filename, params, classification, rho, alpha, index_sets, data_set);
+    plssvm::detail::io::write_libsvm_model_data_classification(this->filename, this->get_comm(), params, classification, rho, alpha, index_sets, data_set);
 
     // read the written file
     plssvm::detail::io::file_reader reader{ this->filename };
@@ -315,7 +326,7 @@ TYPED_TEST(LIBSVMClassificationModelDataWriteDeathTest, empty_filename) {
     constexpr plssvm::classification_type classification = TestFixture::fixture_classification;
 
     // try writing the LIBSVM model header
-    EXPECT_DEATH((plssvm::detail::io::write_libsvm_model_data_classification("", this->get_params(), classification, this->get_rho(), this->get_alpha(), this->get_index_sets(), this->get_data_set())),
+    EXPECT_DEATH((plssvm::detail::io::write_libsvm_model_data_classification("", this->get_comm(), this->get_params(), classification, this->get_rho(), this->get_alpha(), this->get_index_sets(), this->get_data_set())),
                  "The provided model filename must not be empty!");
 }
 
@@ -327,7 +338,7 @@ TYPED_TEST(LIBSVMClassificationModelDataWriteDeathTest, missing_labels) {
     const plssvm::classification_data_set<label_type> data_set{ util::generate_random_matrix<plssvm::aos_matrix<plssvm::real_type>>(plssvm::shape{ 4, 2 }) };
 
     // try writing the LIBSVM model header
-    EXPECT_DEATH((plssvm::detail::io::write_libsvm_model_data_classification(this->filename, this->get_params(), classification, this->get_rho(), this->get_alpha(), this->get_index_sets(), data_set)),
+    EXPECT_DEATH((plssvm::detail::io::write_libsvm_model_data_classification(this->filename, this->get_comm(), this->get_params(), classification, this->get_rho(), this->get_alpha(), this->get_index_sets(), data_set)),
                  "Cannot write a model file that does not include labels!");
 }
 
@@ -338,7 +349,7 @@ TYPED_TEST(LIBSVMClassificationModelDataWriteDeathTest, invalid_number_of_rho_va
     const std::vector<plssvm::real_type> rho = util::generate_random_vector<plssvm::real_type>(42);
 
     // try writing the LIBSVM model header
-    EXPECT_DEATH((plssvm::detail::io::write_libsvm_model_data_classification(this->filename, this->get_params(), classification, rho, this->get_alpha(), this->get_index_sets(), this->get_data_set())),
+    EXPECT_DEATH((plssvm::detail::io::write_libsvm_model_data_classification(this->filename, this->get_comm(), this->get_params(), classification, rho, this->get_alpha(), this->get_index_sets(), this->get_data_set())),
                  ::testing::HasSubstr(fmt::format("The number of rho values is 42 but must be {} ({})!", this->num_classifiers(), classification)));
 }
 
@@ -349,33 +360,33 @@ TYPED_TEST(LIBSVMClassificationModelDataWriteDeathTest, invalid_alpha_vector) {
         {
             // alpha vector too large
             const std::vector<plssvm::aos_matrix<plssvm::real_type>> alpha(2);
-            EXPECT_DEATH((plssvm::detail::io::write_libsvm_model_data_classification(this->filename, this->get_params(), classification, this->get_rho(), alpha, this->get_index_sets(), this->get_data_set())),
+            EXPECT_DEATH((plssvm::detail::io::write_libsvm_model_data_classification(this->filename, this->get_comm(), this->get_params(), classification, this->get_rho(), alpha, this->get_index_sets(), this->get_data_set())),
                          "In case of OAA, the alpha vector may only contain one matrix as entry, but has 2!");
         }
         {
             // invalid number of rows in matrix
             const std::vector<plssvm::aos_matrix<plssvm::real_type>> alpha{ plssvm::aos_matrix<plssvm::real_type>{ plssvm::shape{ 42, 6 } } };
-            EXPECT_DEATH((plssvm::detail::io::write_libsvm_model_data_classification(this->filename, this->get_params(), classification, this->get_rho(), alpha, this->get_index_sets(), this->get_data_set())),
+            EXPECT_DEATH((plssvm::detail::io::write_libsvm_model_data_classification(this->filename, this->get_comm(), this->get_params(), classification, this->get_rho(), alpha, this->get_index_sets(), this->get_data_set())),
                          fmt::format("The number of rows in the matrix must be {}, but is 42!", this->num_classifiers(), classification));
         }
         {
             // invalid number of columns in matrix
             const std::vector<plssvm::aos_matrix<plssvm::real_type>> alpha{ plssvm::aos_matrix<plssvm::real_type>{ plssvm::shape{ this->num_classifiers(), 42 } } };
-            EXPECT_DEATH((plssvm::detail::io::write_libsvm_model_data_classification(this->filename, this->get_params(), classification, this->get_rho(), alpha, this->get_index_sets(), this->get_data_set())),
+            EXPECT_DEATH((plssvm::detail::io::write_libsvm_model_data_classification(this->filename, this->get_comm(), this->get_params(), classification, this->get_rho(), alpha, this->get_index_sets(), this->get_data_set())),
                          ::testing::HasSubstr("The number of weights (42) must be equal to the number of support vectors (6)!"));
         }
     } else if constexpr (classification == plssvm::classification_type::oao) {
         {
             // alpha vector too large
             const std::vector<plssvm::aos_matrix<plssvm::real_type>> alpha(42);
-            EXPECT_DEATH((plssvm::detail::io::write_libsvm_model_data_classification(this->filename, this->get_params(), classification, this->get_rho(), alpha, this->get_index_sets(), this->get_data_set())),
+            EXPECT_DEATH((plssvm::detail::io::write_libsvm_model_data_classification(this->filename, this->get_comm(), this->get_params(), classification, this->get_rho(), alpha, this->get_index_sets(), this->get_data_set())),
                          fmt::format("The number of matrices in the alpha vector must contain {} entries, but contains 42 entries!", this->num_classifiers()));
         }
         {
             // invalid matrix shape
             std::vector<plssvm::aos_matrix<plssvm::real_type>> alpha(this->get_alpha());
             alpha.back() = plssvm::aos_matrix<plssvm::real_type>{ plssvm::shape{ 3, 2 } };
-            EXPECT_DEATH((plssvm::detail::io::write_libsvm_model_data_classification(this->filename, this->get_params(), classification, this->get_rho(), alpha, this->get_index_sets(), this->get_data_set())),
+            EXPECT_DEATH((plssvm::detail::io::write_libsvm_model_data_classification(this->filename, this->get_comm(), this->get_params(), classification, this->get_rho(), alpha, this->get_index_sets(), this->get_data_set())),
                          "In case of OAO, each matrix may only contain one row!");
         }
     } else {
@@ -392,10 +403,10 @@ TYPED_TEST(LIBSVMClassificationModelDataWriteDeathTest, invalid_number_of_index_
 
     // try writing the LIBSVM model header
     if constexpr (classification == plssvm::classification_type::oaa) {
-        EXPECT_DEATH((plssvm::detail::io::write_libsvm_model_data_classification(this->filename, this->get_params(), classification, this->get_rho(), this->get_alpha(), index_sets, this->get_data_set())),
+        EXPECT_DEATH((plssvm::detail::io::write_libsvm_model_data_classification(this->filename, this->get_comm(), this->get_params(), classification, this->get_rho(), this->get_alpha(), index_sets, this->get_data_set())),
                      fmt::format("There shouldn't be any index sets for the OAA classification, but {} were found!", this->get_index_sets().size() - 1));
     } else if constexpr (classification == plssvm::classification_type::oao) {
-        EXPECT_DEATH((plssvm::detail::io::write_libsvm_model_data_classification(this->filename, this->get_params(), classification, this->get_rho(), this->get_alpha(), index_sets, this->get_data_set())),
+        EXPECT_DEATH((plssvm::detail::io::write_libsvm_model_data_classification(this->filename, this->get_comm(), this->get_params(), classification, this->get_rho(), this->get_alpha(), index_sets, this->get_data_set())),
                      ::testing::HasSubstr(fmt::format("The number of index sets ({}) must be equal to the number of different classes ({})!", index_sets.size(), this->get_index_sets().size())));
     } else {
         FAIL() << "Invalid classification_type!";
@@ -411,10 +422,10 @@ TYPED_TEST(LIBSVMClassificationModelDataWriteDeathTest, invalid_number_of_indice
 
     // try writing the LIBSVM model header
     if constexpr (classification == plssvm::classification_type::oaa) {
-        EXPECT_DEATH((plssvm::detail::io::write_libsvm_model_data_classification(this->filename, this->get_params(), classification, this->get_rho(), this->get_alpha(), index_sets, this->get_data_set())),
+        EXPECT_DEATH((plssvm::detail::io::write_libsvm_model_data_classification(this->filename, this->get_comm(), this->get_params(), classification, this->get_rho(), this->get_alpha(), index_sets, this->get_data_set())),
                      fmt::format("There shouldn't be any index sets for the OAA classification, but {} were found!", this->get_index_sets().size()));
     } else if constexpr (classification == plssvm::classification_type::oao) {
-        EXPECT_DEATH((plssvm::detail::io::write_libsvm_model_data_classification(this->filename, this->get_params(), classification, this->get_rho(), this->get_alpha(), index_sets, this->get_data_set())),
+        EXPECT_DEATH((plssvm::detail::io::write_libsvm_model_data_classification(this->filename, this->get_comm(), this->get_params(), classification, this->get_rho(), this->get_alpha(), index_sets, this->get_data_set())),
                      "Each data point must have exactly one entry in the index set!");
     } else {
         FAIL() << "Invalid classification_type!";
@@ -430,10 +441,10 @@ TYPED_TEST(LIBSVMClassificationModelDataWriteDeathTest, indices_not_sorted) {
 
     // try writing the LIBSVM model header
     if constexpr (classification == plssvm::classification_type::oaa) {
-        EXPECT_DEATH((plssvm::detail::io::write_libsvm_model_data_classification(this->filename, this->get_params(), classification, this->get_rho(), this->get_alpha(), index_sets, this->get_data_set())),
+        EXPECT_DEATH((plssvm::detail::io::write_libsvm_model_data_classification(this->filename, this->get_comm(), this->get_params(), classification, this->get_rho(), this->get_alpha(), index_sets, this->get_data_set())),
                      fmt::format("There shouldn't be any index sets for the OAA classification, but {} were found!", this->get_index_sets().size()));
     } else if constexpr (classification == plssvm::classification_type::oao) {
-        EXPECT_DEATH((plssvm::detail::io::write_libsvm_model_data_classification(this->filename, this->get_params(), classification, this->get_rho(), this->get_alpha(), index_sets, this->get_data_set())),
+        EXPECT_DEATH((plssvm::detail::io::write_libsvm_model_data_classification(this->filename, this->get_comm(), this->get_params(), classification, this->get_rho(), this->get_alpha(), index_sets, this->get_data_set())),
                      "All index sets must be sorted in ascending order!");
     } else {
         FAIL() << "Invalid classification_type!";
@@ -449,10 +460,10 @@ TYPED_TEST(LIBSVMClassificationModelDataWriteDeathTest, indices_in_one_index_set
 
     // try writing the LIBSVM model header
     if constexpr (classification == plssvm::classification_type::oaa) {
-        EXPECT_DEATH((plssvm::detail::io::write_libsvm_model_data_classification(this->filename, this->get_params(), classification, this->get_rho(), this->get_alpha(), index_sets, this->get_data_set())),
+        EXPECT_DEATH((plssvm::detail::io::write_libsvm_model_data_classification(this->filename, this->get_comm(), this->get_params(), classification, this->get_rho(), this->get_alpha(), index_sets, this->get_data_set())),
                      fmt::format("There shouldn't be any index sets for the OAA classification, but {} were found!", this->get_index_sets().size()));
     } else if constexpr (classification == plssvm::classification_type::oao) {
-        EXPECT_DEATH((plssvm::detail::io::write_libsvm_model_data_classification(this->filename, this->get_params(), classification, this->get_rho(), this->get_alpha(), index_sets, this->get_data_set())),
+        EXPECT_DEATH((plssvm::detail::io::write_libsvm_model_data_classification(this->filename, this->get_comm(), this->get_params(), classification, this->get_rho(), this->get_alpha(), index_sets, this->get_data_set())),
                      "All indices in one index set must be unique!");
     } else {
         FAIL() << "Invalid classification_type!";
@@ -468,10 +479,10 @@ TYPED_TEST(LIBSVMClassificationModelDataWriteDeathTest, index_sets_not_disjoint)
 
     // try writing the LIBSVM model header
     if constexpr (classification == plssvm::classification_type::oaa) {
-        EXPECT_DEATH((plssvm::detail::io::write_libsvm_model_data_classification(this->filename, this->get_params(), classification, this->get_rho(), this->get_alpha(), index_sets, this->get_data_set())),
+        EXPECT_DEATH((plssvm::detail::io::write_libsvm_model_data_classification(this->filename, this->get_comm(), this->get_params(), classification, this->get_rho(), this->get_alpha(), index_sets, this->get_data_set())),
                      fmt::format("There shouldn't be any index sets for the OAA classification, but {} were found!", this->get_index_sets().size()));
     } else if constexpr (classification == plssvm::classification_type::oao) {
-        EXPECT_DEATH((plssvm::detail::io::write_libsvm_model_data_classification(this->filename, this->get_params(), classification, this->get_rho(), this->get_alpha(), index_sets, this->get_data_set())),
+        EXPECT_DEATH((plssvm::detail::io::write_libsvm_model_data_classification(this->filename, this->get_comm(), this->get_params(), classification, this->get_rho(), this->get_alpha(), index_sets, this->get_data_set())),
                      fmt::format("All index sets must be pairwise unique, but index sets 0 and {} share at least one index!", this->get_data_set().num_classes() == 2 ? 1 : 2));
     } else {
         FAIL() << "Invalid classification_type!";

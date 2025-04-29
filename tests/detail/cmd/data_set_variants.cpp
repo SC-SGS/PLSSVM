@@ -14,6 +14,7 @@
 #include "plssvm/detail/cmd/parser_predict.hpp"  // plssvm::detail::cmd::parser_predict
 #include "plssvm/detail/cmd/parser_scale.hpp"    // plssvm::detail::cmd::parser_scale
 #include "plssvm/detail/cmd/parser_train.hpp"    // plssvm::detail::cmd::parser_train
+#include "plssvm/mpi/communicator.hpp"           // plssvm::mpi::communicator
 #include "plssvm/svm_types.hpp"                  // plssvm::svm_type
 
 #include "tests/detail/cmd/cmd_utility.hpp"  // util::ParameterBase
@@ -25,7 +26,7 @@
 
 #include <cstddef>  // std::size_t
 #include <string>   // std::string
-#include <tuple>    // std::tuple, std::make_tuple
+#include <tuple>    // std::tuple, std::make_tuple, std::ignore
 #include <vector>   // std::vector
 
 // the variant order is: classification<real_type, int> -> classification<real_type, std::string> -> regression<real_type, real_type>
@@ -62,10 +63,10 @@ TEST_P(DataSetFactory, data_set_factory_predict) {
     // create artificial command line arguments in test fixture
     this->CreateCMDArgs(cmd_args);
     // create parameter object
-    const plssvm::detail::cmd::parser_predict parser{ this->get_argc(), this->get_argv() };
+    const plssvm::detail::cmd::parser_predict parser{ this->get_comm(), this->get_argc(), this->get_argv() };
 
     // test active variant type
-    const plssvm::detail::cmd::data_set_variants var = plssvm::detail::cmd::data_set_factory(parser);
+    const plssvm::detail::cmd::data_set_variants var = plssvm::detail::cmd::data_set_factory(this->get_comm(), parser);
     EXPECT_EQ(var.index(), result_index);
 }
 
@@ -89,10 +90,10 @@ TEST_P(DataSetFactory, data_set_factory_scale) {
     // create artificial command line arguments in test fixture
     this->CreateCMDArgs(cmd_args);
     // create parameter object
-    const plssvm::detail::cmd::parser_scale parser{ this->get_argc(), this->get_argv() };
+    const plssvm::detail::cmd::parser_scale parser{ this->get_comm(), this->get_argc(), this->get_argv() };
 
     // test active variant type
-    const plssvm::detail::cmd::data_set_variants var = plssvm::detail::cmd::data_set_factory(parser);
+    const plssvm::detail::cmd::data_set_variants var = plssvm::detail::cmd::data_set_factory(this->get_comm(), parser);
     if (svm == plssvm::svm_type::csvr) {
         // the svm_type doesn't matter for plssvm-scale
         EXPECT_EQ(var.index(), 0);  // use corresponding classification data set index
@@ -121,10 +122,10 @@ TEST_P(DataSetFactory, data_set_factory_scale_restore_filename) {
     // create artificial command line arguments in test fixture
     this->CreateCMDArgs(cmd_args);
     // create parameter object
-    const plssvm::detail::cmd::parser_scale parser{ this->get_argc(), this->get_argv() };
+    const plssvm::detail::cmd::parser_scale parser{ this->get_comm(), this->get_argc(), this->get_argv() };
 
     // test active variant type
-    const plssvm::detail::cmd::data_set_variants var = plssvm::detail::cmd::data_set_factory(parser);
+    const plssvm::detail::cmd::data_set_variants var = plssvm::detail::cmd::data_set_factory(this->get_comm(), parser);
     if (svm == plssvm::svm_type::csvr) {
         // the svm_type doesn't matter for plssvm-scale
         EXPECT_EQ(var.index(), 0);  // use corresponding classification data set index
@@ -153,10 +154,10 @@ TEST_P(DataSetFactory, data_set_factory_train) {
     // create artificial command line arguments in test fixture
     this->CreateCMDArgs(cmd_args);
     // create parameter object
-    const plssvm::detail::cmd::parser_train parser{ this->get_argc(), this->get_argv() };
+    const plssvm::detail::cmd::parser_train parser{ this->get_comm(), this->get_argc(), this->get_argv() };
 
     // test active variant type
-    const plssvm::detail::cmd::data_set_variants var = plssvm::detail::cmd::data_set_factory(parser);
+    const plssvm::detail::cmd::data_set_variants var = plssvm::detail::cmd::data_set_factory(this->get_comm(), parser);
     EXPECT_EQ(var.index(), result_index);
 }
 

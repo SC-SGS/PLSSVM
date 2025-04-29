@@ -11,13 +11,18 @@
 #include "plssvm/constants.hpp"           // plssvm::PADDING_SIZE
 #include "plssvm/detail/assert.hpp"       // PLSSVM_ASSERT
 #include "plssvm/detail/memory_size.hpp"  // plssvm::detail::memory_size
+#include "plssvm/mpi/communicator.hpp"    // plssvm::mpi::communicator
 
-#include "fmt/format.h"  // fmt::format, fmt::runtime
+#include "fmt/base.h"    // fmt::runtime
+#include "fmt/format.h"  // fmt::format
 #include "fmt/ranges.h"  // fmt::join
 
-#include <algorithm>  // std::max, std::fill
+#include <algorithm>  // std::max
 #include <cstddef>    // std::size_t
+#include <numeric>    // std::accumulate, std::gcd, std::exclusive_scan
+#include <optional>   // std::optional
 #include <ostream>    // std::ostream
+#include <utility>    // std::move
 #include <vector>     // std::vector
 
 [[nodiscard]] std::size_t calculate_data_set_num_entries(const std::size_t num_data_points, const std::size_t num_features) noexcept {
@@ -34,26 +39,53 @@
 
 namespace plssvm::detail {
 
-data_distribution::data_distribution(const std::size_t num_rows, const std::size_t num_places) :
-    distribution_(num_places + 1),
+data_distribution::data_distribution(mpi::communicator comm, const std::size_t num_rows, const std::size_t num_places) :
     num_rows_{ num_rows },
-    num_places_{ num_places } {
-    PLSSVM_ASSERT(num_rows_ > 0, "At least one row must be present!");
-    PLSSVM_ASSERT(num_places_ > 0, "At least one place must be present!");
+    num_places_{ num_places },
+    comm_{ std::move(comm) } {
+    PLSSVM_ASSERT(num_rows > 0, "At least one row must be present!");
+    PLSSVM_ASSERT(num_places > 0, "At least one place must be present!");
+
+    // gather the number of places from all MPI ranks on all MPI ranks
+    places_ = comm_.allgather(num_places_);
+
+    // calculate the total number of places
+    total_num_places_ = std::accumulate(places_.cbegin(), places_.cend(), std::size_t{ 0 });
+    // calculate the prefix sum given the places
+    std::vector<std::size_t> offsets(places_.size());
+    std::exclusive_scan(places_.cbegin(), places_.cend(), offsets.begin(), std::size_t{ 0 });
+    rank_places_offset_ = offsets[comm_.rank()];
+
+    // check whether there are load balancing weights
+    const std::optional<std::vector<std::size_t>> weights = comm_.get_load_balancing_weights();
+    if (weights.has_value()) {
+        // get the load balancing weights -> reduce them to reduce the allocation side later
+        const std::size_t gcd = std::accumulate(weights->cbegin(), weights->cend(), weights->front(), std::gcd<std::size_t, std::size_t>);
+        load_balancing_weights_.resize(weights->size());
+        for (std::size_t i = 0; i < load_balancing_weights_.size(); ++i) {
+            load_balancing_weights_[i] = weights.value()[i] / gcd;
+        }
+    } else {
+        // no load balancing weights -> determine default weights -> equals to the place distribution
+        load_balancing_weights_ = places_;
+    }
+
+    // create distribution
+    distribution_ = std::vector<std::size_t>(total_num_places_ + 1);
 }
 
 data_distribution::~data_distribution() = default;
 
 std::size_t data_distribution::place_specific_num_rows(const std::size_t place) const noexcept {
     PLSSVM_ASSERT(distribution_.size() >= 2, "At least one place must be present and, therefore, the distribution vector must contain at least two entries!");
-    PLSSVM_ASSERT(place < distribution_.size() - 1, "The queried place can at most be {}, but is {}!", distribution_.size() - 1, place);
-    return distribution_[place + 1] - distribution_[place];
+    PLSSVM_ASSERT(rank_places_offset_ + place < distribution_.size() - 1, "The queried place can at most be {}, but is {}!", distribution_.size() - 1, rank_places_offset_ + place);
+    return distribution_[rank_places_offset_ + place + 1] - distribution_[rank_places_offset_ + place];
 }
 
 std::size_t data_distribution::place_row_offset(const std::size_t place) const noexcept {
     PLSSVM_ASSERT(distribution_.size() >= 2, "At least one place must be present and, therefore, the distribution vector must contain at least two entries!");
-    PLSSVM_ASSERT(place < distribution_.size() - 1, "The queried place can at most be {}, but is {}!", distribution_.size() - 1, place);
-    return distribution_[place];
+    PLSSVM_ASSERT(rank_places_offset_ + place < distribution_.size() - 1, "The queried place can at most be {}, but is {}!", distribution_.size() - 1, rank_places_offset_ + place);
+    return distribution_[rank_places_offset_ + place];
 }
 
 const std::vector<std::size_t> &data_distribution::distribution() const noexcept {
@@ -64,12 +96,16 @@ std::size_t data_distribution::num_rows() const noexcept {
     return num_rows_;
 }
 
+std::size_t data_distribution::total_num_places() const noexcept {
+    return total_num_places_;
+}
+
 std::size_t data_distribution::num_places() const noexcept {
     return num_places_;
 }
 
 std::ostream &operator<<(std::ostream &out, const data_distribution &dist) {
-    return out << fmt::format(fmt::runtime("{ num_rows: {}, num_places: {}, dist: [{}] }"), dist.num_rows(), dist.num_places(), fmt::join(dist.distribution(), ", "));
+    return out << fmt::format(fmt::runtime("{{ num_rows: {}, total_num_places: {}, dist: [{}] }}"), dist.num_rows(), dist.total_num_places(), fmt::join(dist.distribution(), ", "));
 }
 
 //*************************************************************************************************************************************//
@@ -77,31 +113,37 @@ std::ostream &operator<<(std::ostream &out, const data_distribution &dist) {
 //*************************************************************************************************************************************//
 using namespace literals;
 
-triangular_data_distribution::triangular_data_distribution(const std::size_t num_rows, const std::size_t num_places) :
-    data_distribution{ num_rows, num_places } {
-    // set all distribution values to "num_rows"
-    std::fill(distribution_.begin(), distribution_.end(), num_rows);
-
-    if (!distribution_.empty()) {  // necessary to silence GCC "potential null pointer dereference [-Wnull-dereference]" warning
-        distribution_.front() = 0;
-    }
-
-    // only the upper triangular matrix is important
-    const std::size_t balanced = (num_rows * (num_rows + 1) / 2) / num_places;
-
-    std::size_t range_idx = 1;
-    std::size_t sum = 0;
-    std::size_t row = 0;
-
-    // the first row has the most data points, while the last row has the fewest
-    for (std::size_t i = num_rows; i >= 1; --i) {
-        sum += i;
-        ++row;
-        if (sum >= balanced) {
-            distribution_[range_idx++] = row;
-            sum = 0;
+triangular_data_distribution::triangular_data_distribution(mpi::communicator comm, const std::size_t num_rows, const std::size_t num_places) :
+    data_distribution{ std::move(comm), num_rows, num_places } {
+    // the triangular distribution function
+    const auto distribute = [](const std::size_t current_num_rows, const std::size_t offset, const std::size_t current_num_places) {
+        std::vector<std::size_t> result(current_num_places + 1, current_num_rows);
+        if (!result.empty()) {  // necessary to silence GCC "potential null pointer dereference [-Wnull-dereference]" warning
+            result.front() = 0;
         }
-    }
+
+        // only the upper triangular matrix is important
+        const std::size_t balanced = ((current_num_rows * (current_num_rows + 1) / 2) + current_num_rows * offset) / current_num_places;
+
+        std::size_t range_idx = 1;
+        std::size_t sum = 0;
+        std::size_t row = 0;
+
+        // the first row has the most data points, while the last row has the fewest
+        for (std::size_t i = current_num_rows; i >= 1; --i) {
+            sum += i + offset;
+            ++row;
+            if (sum >= balanced) {
+                result[range_idx++] = row;
+                sum = 0;
+            }
+        }
+
+        return result;
+    };
+
+    // update the final distribution given the custom distribution function
+    this->update_distribution(distribute);
 
     PLSSVM_ASSERT(std::is_sorted(distribution_.cbegin(), distribution_.cend()), "The distribution must be sorted in an ascending order!");
 }
@@ -267,25 +309,34 @@ std::vector<memory_size> triangular_data_distribution::calculate_maximum_implici
     return res;
 }
 
-rectangular_data_distribution::rectangular_data_distribution(const std::size_t num_rows, const std::size_t num_places) :
-    data_distribution{ num_rows, num_places } {
-    // uniform distribution
-    const std::size_t balanced = num_rows / num_places;
-    for (std::size_t device_id = 0; device_id < num_places; ++device_id) {
-        distribution_[device_id] = balanced * device_id;
-    }
+rectangular_data_distribution::rectangular_data_distribution(mpi::communicator comm, const std::size_t num_rows, const std::size_t num_places) :
+    data_distribution{ std::move(comm), num_rows, num_places } {
+    // the uniform distribution function
+    const auto distribute = [](const std::size_t current_num_rows, const std::size_t, const std::size_t current_num_places) {
+        std::vector<std::size_t> result(current_num_places + 1);
 
-    // fill remaining values into distribution starting at device 0
-    const std::size_t remaining = num_rows - num_places * balanced;
-    std::size_t running = 0;
-    for (std::size_t device_id = 1; device_id <= num_places; ++device_id) {
-        distribution_[device_id] += running;
-        if (device_id - 1 < remaining) {
-            distribution_[device_id] += 1;
-            ++running;
+        const std::size_t balanced = current_num_rows / current_num_places;
+        for (std::size_t device_id = 0; device_id < current_num_places; ++device_id) {
+            result[device_id] = balanced * device_id;
         }
-    }
-    distribution_.back() = num_rows;
+
+        // fill remaining values into distribution starting at device 0
+        const std::size_t remaining = current_num_rows - (current_num_places * balanced);
+        std::size_t running = 0;
+        for (std::size_t device_id = 1; device_id <= current_num_places; ++device_id) {
+            result[device_id] += running;
+            if (device_id - 1 < remaining) {
+                result[device_id] += 1;
+                ++running;
+            }
+        }
+        result.back() = current_num_rows;
+
+        return result;
+    };
+
+    // update the final distribution given the custom distribution function
+    this->update_distribution(distribute);
 
     PLSSVM_ASSERT(std::is_sorted(distribution_.cbegin(), distribution_.cend()), "The distribution must be sorted in an ascending order!");
 }

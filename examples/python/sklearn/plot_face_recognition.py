@@ -23,7 +23,7 @@ from sklearn.decomposition import PCA
 from sklearn.metrics import ConfusionMatrixDisplay, classification_report
 from sklearn.model_selection import RandomizedSearchCV, train_test_split
 from sklearn.preprocessing import StandardScaler
-from plssvm import SVC
+from plssvm.svm import SVC
 
 # %%
 # Download the data, if not already on disk and load it as numpy arrays

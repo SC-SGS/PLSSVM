@@ -21,6 +21,9 @@ jobs:
       - name: "Install Compiler"
         run: |
           sudo apt install g++ clang libomp-dev
+      - name: "Install MPI"
+        run: |
+          sudo apt install libopenmpi-dev
       - name: "Install cmake 3.31.0"
         uses: lukka/get-cmake@v3.31.0
       - name: "Clone the PLSSVM repository into PLSSVM/"
@@ -34,7 +37,7 @@ jobs:
       - name: "Configure PLSSVM using CMake"
         run: |
           cd PLSSVM
-          cmake --preset openmp_test -DCMAKE_CXX_COMPILER=${{ matrix.compiler }} -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DPLSSVM_TARGET_PLATFORMS="cpu" -DPLSSVM_ENABLE_LANGUAGE_BINDINGS=ON -DPLSSVM_ENABLE_PERFORMANCE_TRACKING=ON -DPLSSVM_TEST_FILE_NUM_DATA_POINTS=50 -DPLSSVM_TEST_FILE_NUM_FEATURES=20 -DPLSSVM_ENABLE_LTO=OFF
+          cmake --preset openmp_test -DCMAKE_CXX_COMPILER=${{ matrix.compiler }} -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DPLSSVM_TARGET_PLATFORMS="cpu" -DPLSSVM_ENABLE_LANGUAGE_BINDINGS=ON -DPLSSVM_ENABLE_PERFORMANCE_TRACKING=ON -DPLSSVM_ENABLE_MPI=ON -DPLSSVM_TEST_FILE_NUM_DATA_POINTS=50 -DPLSSVM_TEST_FILE_NUM_FEATURES=20 -DPLSSVM_ENABLE_LTO=OFF
       - name: "Build PLSSVM"
         run: |
           cd PLSSVM
@@ -43,4 +46,6 @@ jobs:
       - name: "Run tests"
         run: |
           cd PLSSVM
+          mkdir tmp
+          export TMPDIR=$PWD/tmp
           ctest --preset openmp_test -C ${{ matrix.build_type }} --parallel 2

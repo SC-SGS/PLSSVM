@@ -17,6 +17,7 @@
 #include "plssvm/data_set/data_set.hpp"  // plssvm::data_set, plssvm::optional_ref
 #include "plssvm/detail/assert.hpp"      // PLSSVM_ASSERT
 #include "plssvm/matrix.hpp"             // plssvm::soa_matrix, plssvm::aos_matrix
+#include "plssvm/mpi/communicator.hpp"   // plssvm::mpi::communicator
 #include "plssvm/parameter.hpp"          // plssvm::parameter
 
 #include <cstddef>   // std::size_t
@@ -39,6 +40,12 @@ class model {
     using label_type = U;
     /// The unsigned size type.
     using size_type = std::size_t;
+
+    /**
+     * @brief Create a model with the provided MPI communicator.
+     * @param[in] comm the used MPI communicator (**note**: current only used to restrict logging outputs to the main MPI rank)
+     */
+    explicit model(mpi::communicator comm);
 
     /**
      * @brief Default copy constructor.
@@ -67,6 +74,7 @@ class model {
     /**
      * @brief Save the model to a LIBSVM model file for later usage.
      * @param[in] filename the file to save the model to
+     * @note Only the main MPI rank (traditionally rank 0) saves the whole data set (if MPI is available).
      */
     virtual void save(const std::string &filename) const = 0;
 
@@ -128,6 +136,14 @@ class model {
      */
     [[nodiscard]] const std::optional<std::vector<unsigned long long>> &num_iters() const noexcept { return num_iters_; }
 
+    /**
+     * @brief Get the associated MPI communicator.
+     * @return the MPI communicator (`[[nodiscard]]`)
+     */
+    [[nodiscard]] const mpi::communicator &communicator() const noexcept {
+        return comm_;
+    }
+
   protected:
     /**
      * @brief Default construct an empty model.
@@ -150,6 +166,9 @@ class model {
     size_type num_features_{ 0 };
     /// The number of iterations needed to fit this model.
     std::optional<std::vector<unsigned long long>> num_iters_{};
+
+    /// The used MPI communicator.
+    mpi::communicator comm_{};
 
     /**
      * @brief The learned weights for each support vector.
@@ -175,11 +194,16 @@ class model {
 };
 
 template <typename U>
+model<U>::model(mpi::communicator comm) :
+    comm_{ std::move(comm) } { }
+
+template <typename U>
 model<U>::model(parameter params, std::shared_ptr<data_set<label_type>> data) :
     params_{ std::move(params) },
     data_{ std::move(data) },
     num_support_vectors_{ data_->num_data_points() },
-    num_features_{ data_->num_features() } { }
+    num_features_{ data_->num_features() },
+    comm_{ data_->communicator() } { }
 
 }  // namespace plssvm
 

@@ -7,8 +7,8 @@
 list(APPEND CMAKE_MESSAGE_INDENT "Tests:  ")
 
 # setup testing wit GoogleTest
-set(PLSSVM_googletest_VERSION v1.15.2)
-find_package(GTest 1.15.2 QUIET)
+set(PLSSVM_googletest_VERSION v1.16.0)
+find_package(GTest 1.16.0 QUIET)
 if (GTEST_FOUND)
     message(STATUS "Found package GTest.")
 else ()
@@ -129,6 +129,14 @@ option(PLSSVM_TEST_WITH_REDUCED_LABEL_TYPES "Reduce the number of tested label t
 if (PLSSVM_TEST_WITH_REDUCED_LABEL_TYPES)
     message(STATUS "Reducing the number of tested label types.")
     target_compile_definitions(${PLSSVM_BASE_TEST_LIBRARY_NAME} PUBLIC PLSSVM_TEST_WITH_REDUCED_LABEL_TYPES)
+else ()
+    # use all possible label types currently not supported if nvc++ is the CMAKE_CXX_COMPILER
+    if (CMAKE_CXX_COMPILER_ID STREQUAL "NVHPC")
+        message(
+            FATAL_ERROR
+                "Full label type test currently not supported with nvc++ as CMAKE_CXX_COMPILER. Please set \"PLSSVM_TEST_WITH_REDUCED_LABEL_TYPES=OFF\" or use another compiler!"
+        )
+    endif ()
 endif ()
 
 # set necessary include directories
@@ -152,6 +160,8 @@ set(PLSSVM_BASE_TEST_NAME Base_tests)
 set(PLSSVM_BASE_TEST_SOURCES
     # it is unnecessary to test the execution range for each backend
     ${CMAKE_CURRENT_LIST_DIR}/backends/execution_range.cpp
+    # since the Kokkos execution_space enumeration is used even if no Kokkos backend is available this is also tested in the base library
+    ${CMAKE_CURRENT_LIST_DIR}/backends/Kokkos/execution_space.cpp
     # since the SYCL implementation_type and kernel_invocation_type enumerations are used even if no SYCL backend is available these are also tested in the base
     # library
     ${CMAKE_CURRENT_LIST_DIR}/backends/SYCL/implementation_types.cpp
@@ -190,8 +200,10 @@ set(PLSSVM_BASE_TEST_SOURCES
     ${CMAKE_CURRENT_LIST_DIR}/detail/arithmetic_type_name.cpp
     ${CMAKE_CURRENT_LIST_DIR}/detail/assert.cpp
     ${CMAKE_CURRENT_LIST_DIR}/detail/data_distribution.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/detail/logging.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/detail/logging_without_performance_tracking.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/detail/logging/log.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/detail/logging/log_untracked.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/detail/logging/mpi_log.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/detail/logging/mpi_log_untracked.cpp
     ${CMAKE_CURRENT_LIST_DIR}/detail/memory_size.cpp
     ${CMAKE_CURRENT_LIST_DIR}/detail/move_only_any.cpp
     ${CMAKE_CURRENT_LIST_DIR}/detail/operators.cpp
@@ -203,24 +215,32 @@ set(PLSSVM_BASE_TEST_SOURCES
     ${CMAKE_CURRENT_LIST_DIR}/detail/utility.cpp
     ${CMAKE_CURRENT_LIST_DIR}/exceptions/exceptions.cpp
     ${CMAKE_CURRENT_LIST_DIR}/exceptions/source_location.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/model/classification_model.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/model/regression_model.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/mpi/detail/information.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/mpi/detail/mpi_datatype.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/mpi/detail/utility.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/mpi/detail/version.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/mpi/communicator.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/mpi/environment.cpp
     ${CMAKE_CURRENT_LIST_DIR}/svm/csvm.cpp
     ${CMAKE_CURRENT_LIST_DIR}/svm/csvc.cpp
     ${CMAKE_CURRENT_LIST_DIR}/svm/csvr.cpp
     ${CMAKE_CURRENT_LIST_DIR}/version/git_metadata/git_metadata.cpp
     ${CMAKE_CURRENT_LIST_DIR}/version/version.cpp
     ${CMAKE_CURRENT_LIST_DIR}/backend_types.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/classification_model.cpp
     ${CMAKE_CURRENT_LIST_DIR}/classification_report.cpp
     ${CMAKE_CURRENT_LIST_DIR}/classification_types.cpp
     ${CMAKE_CURRENT_LIST_DIR}/csvc_factory.cpp
     ${CMAKE_CURRENT_LIST_DIR}/csvr_factory.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/environment.cpp
     ${CMAKE_CURRENT_LIST_DIR}/file_format_types.cpp
     ${CMAKE_CURRENT_LIST_DIR}/gamma.cpp
     ${CMAKE_CURRENT_LIST_DIR}/kernel_function_types.cpp
     ${CMAKE_CURRENT_LIST_DIR}/kernel_functions.cpp
     ${CMAKE_CURRENT_LIST_DIR}/matrix.cpp
     ${CMAKE_CURRENT_LIST_DIR}/parameter.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/regression_model.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/regression_report.cpp
     ${CMAKE_CURRENT_LIST_DIR}/shape.cpp
     ${CMAKE_CURRENT_LIST_DIR}/solver_types.cpp
     ${CMAKE_CURRENT_LIST_DIR}/svm_types.cpp
@@ -264,16 +284,17 @@ add_test(NAME MainScale/executable_version COMMAND ${PLSSVM_EXECUTABLE_SCALE_NAM
 
 # add minimal run test for scaling
 add_test(NAME MainScale/executable_minimal COMMAND ${PLSSVM_EXECUTABLE_SCALE_NAME} "${PLSSVM_CLASSIFICATION_TEST_FILE}"
-                                                   "${CMAKE_CURRENT_BINARY_DIR}/scaled.libsvm.model"
+                                                   "${CMAKE_CURRENT_BINARY_DIR}/test_classification.libsvm.scaled"
 )
+add_test(NAME MainScale/executable_minimal_cmd_output COMMAND ${PLSSVM_EXECUTABLE_SCALE_NAME} "${PLSSVM_CLASSIFICATION_TEST_FILE}")
 add_test(NAME MainScale/executable_save_scaling_factors
          COMMAND ${PLSSVM_EXECUTABLE_SCALE_NAME} -s "${CMAKE_CURRENT_BINARY_DIR}/scaling_parameter.txt" # the file the scaling parameters are saved to
                  "${PLSSVM_CLASSIFICATION_TEST_FILE}" # the file to scale
-                 "${CMAKE_CURRENT_BINARY_DIR}/scaled.libsvm.model" # the scaled file (result)
+                 "${CMAKE_CURRENT_BINARY_DIR}/test_classification.libsvm.scaled" # the scaled file (result)
 )
 
 # add minimal run test for the classification task
-add_test(NAME MainTrainClassification/executable_minimal COMMAND ${PLSSVM_EXECUTABLE_TRAIN_NAME} -s 0 "${PLSSVM_CLASSIFICATION_TEST_FILE}"
+add_test(NAME MainTrainClassification/executable_minimal COMMAND ${PLSSVM_EXECUTABLE_TRAIN_NAME} -s 0 -i 10 "${PLSSVM_CLASSIFICATION_TEST_FILE}"
                                                                  "${CMAKE_CURRENT_BINARY_DIR}/test_classification.libsvm.model"
 )
 add_test(NAME MainPredictClassification/executable_minimal
@@ -281,8 +302,9 @@ add_test(NAME MainPredictClassification/executable_minimal
                  "${CMAKE_CURRENT_LIST_DIR}/data/model/classification/5x4.libsvm.model" # model file
                  "${CMAKE_CURRENT_BINARY_DIR}/test_classification.libsvm.predict" # predict file (result)
 )
+
 # add minimal run test for the regression task
-add_test(NAME MainTrainRegression/executable_minimal COMMAND ${PLSSVM_EXECUTABLE_TRAIN_NAME} -s 1 "${PLSSVM_REGRESSION_TEST_FILE}"
+add_test(NAME MainTrainRegression/executable_minimal COMMAND ${PLSSVM_EXECUTABLE_TRAIN_NAME} -s 1 -i 10 "${PLSSVM_REGRESSION_TEST_FILE}"
                                                              "${CMAKE_CURRENT_BINARY_DIR}/test_regression.libsvm.model"
 )
 add_test(NAME MainPredictRegression/executable_minimal
@@ -290,6 +312,22 @@ add_test(NAME MainPredictRegression/executable_minimal
                  "${CMAKE_CURRENT_LIST_DIR}/data/model/regression/5x4.libsvm.model" # model file
                  "${CMAKE_CURRENT_BINARY_DIR}/test_regression.libsvm.predict" # predict file (result)
 )
+
+# if performance tracking is enabled, also add minimal run tests
+if (PLSSVM_ENABLE_PERFORMANCE_TRACKING)
+    add_test(NAME MainTrainPerformanceTracking/executable_minimal
+             COMMAND ${PLSSVM_EXECUTABLE_TRAIN_NAME} -s 0 --performance_tracking "${CMAKE_CURRENT_BINARY_DIR}/track.yaml" "${PLSSVM_CLASSIFICATION_TEST_FILE}"
+                     "${CMAKE_CURRENT_BINARY_DIR}/test_classification.libsvm.model"
+    )
+    add_test(
+        NAME MainPredictPerformanceTracking/executable_minimal
+        COMMAND
+            ${PLSSVM_EXECUTABLE_PREDICT_NAME} --performance_tracking "${CMAKE_CURRENT_BINARY_DIR}/track.yaml"
+            "${CMAKE_CURRENT_LIST_DIR}/data/libsvm/classification/5x4.libsvm" # test file
+            "${CMAKE_CURRENT_LIST_DIR}/data/model/classification/5x4.libsvm.model" # model file
+            "${CMAKE_CURRENT_BINARY_DIR}/test_classification.libsvm.predict" # predict file (result)
+    )
+endif ()
 
 # add failing test (must return with a non-zero exit code)
 add_test(NAME MainTrain/executable_fail COMMAND ${PLSSVM_EXECUTABLE_TRAIN_NAME} " ")

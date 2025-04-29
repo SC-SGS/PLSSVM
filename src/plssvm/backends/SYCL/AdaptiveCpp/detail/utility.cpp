@@ -104,7 +104,7 @@ std::string get_adaptivecpp_version_short() {
 }
 
 std::string get_adaptivecpp_version() {
-    return ::hipsycl::sycl::detail::version_string();
+    return ::acpp::sycl::detail::version_string();
 }
 
 }  // namespace plssvm::adaptivecpp::detail

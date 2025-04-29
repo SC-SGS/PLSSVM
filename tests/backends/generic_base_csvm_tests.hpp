@@ -23,6 +23,7 @@
 #include "plssvm/detail/utility.hpp"            // plssvm::detail::{unreachable, get}
 #include "plssvm/kernel_function_types.hpp"     // plssvm::csvm_to_backend_type_v, plssvm::backend_type
 #include "plssvm/matrix.hpp"                    // plssvm::aos_matrix
+#include "plssvm/mpi/communicator.hpp"          // plssvm::mpi::communicator
 #include "plssvm/parameter.hpp"                 // plssvm::parameter
 #include "plssvm/shape.hpp"                     // plssvm::shape
 #include "plssvm/solver_types.hpp"              // plssvm::solver_type
@@ -292,7 +293,7 @@ TYPED_TEST_P(GenericCSVM, blas_level_3_explicit_without_C) {
           { plssvm::real_type{ 0.3 }, plssvm::real_type{ 1.3 }, plssvm::real_type{ 2.3 } } }
     };
     // be sure to use the correct data distribution
-    svm.data_distribution_ = std::make_unique<plssvm::detail::triangular_data_distribution>(matr_A.num_rows(), svm.num_available_devices());
+    svm.data_distribution_ = std::make_unique<plssvm::detail::triangular_data_distribution>(plssvm::mpi::communicator{}, matr_A.num_rows(), svm.num_available_devices());
     const std::vector<plssvm::detail::move_only_any> A{ util::init_explicit_matrices<csvm_type, device_ptr_type>(matr_A, svm) };
 
     const plssvm::soa_matrix<plssvm::real_type> B{ { { plssvm::real_type{ 1.0 }, plssvm::real_type{ 2.0 }, plssvm::real_type{ 3.0 } },
@@ -338,7 +339,7 @@ TYPED_TEST_P(GenericCSVM, blas_level_3_explicit) {
           { plssvm::real_type{ 0.3 }, plssvm::real_type{ 1.3 }, plssvm::real_type{ 2.3 } } }
     };
     // be sure to use the correct data distribution
-    svm.data_distribution_ = std::make_unique<plssvm::detail::triangular_data_distribution>(matr_A.num_rows(), svm.num_available_devices());
+    svm.data_distribution_ = std::make_unique<plssvm::detail::triangular_data_distribution>(plssvm::mpi::communicator{}, matr_A.num_rows(), svm.num_available_devices());
     const std::vector<plssvm::detail::move_only_any> A{ util::init_explicit_matrices<csvm_type, device_ptr_type>(matr_A, svm) };
 
     const plssvm::soa_matrix<plssvm::real_type> B{ { { plssvm::real_type{ 1.0 }, plssvm::real_type{ 2.0 }, plssvm::real_type{ 3.0 } },
@@ -384,7 +385,7 @@ TYPED_TEST_P(GenericCSVM, conjugate_gradients_trivial) {
           { plssvm::real_type{ 0.0 }, plssvm::real_type{ 0.0 }, plssvm::real_type{ 0.0 }, plssvm::real_type{ 1.0 } } }
     };
     // be sure to use the correct data distribution
-    svm.data_distribution_ = std::make_unique<plssvm::detail::triangular_data_distribution>(matr_A.num_rows(), svm.num_available_devices());
+    svm.data_distribution_ = std::make_unique<plssvm::detail::triangular_data_distribution>(plssvm::mpi::communicator{}, matr_A.num_rows(), svm.num_available_devices());
     const std::vector<plssvm::detail::move_only_any> A{ util::init_explicit_matrices<csvm_type, device_ptr_type>(matr_A, svm) };
 
     const plssvm::soa_matrix<plssvm::real_type> B{ { { plssvm::real_type{ 1.0 }, plssvm::real_type{ -1.0 }, plssvm::real_type{ 1.0 }, plssvm::real_type{ -1.0 } },
@@ -416,7 +417,7 @@ TYPED_TEST_P(GenericCSVM, conjugate_gradients) {
           { plssvm::real_type{ 1.0 }, plssvm::real_type{ 3.0 } } }
     };
     // be sure to use the correct data distribution
-    svm.data_distribution_ = std::make_unique<plssvm::detail::triangular_data_distribution>(matr_A.num_rows(), svm.num_available_devices());
+    svm.data_distribution_ = std::make_unique<plssvm::detail::triangular_data_distribution>(plssvm::mpi::communicator{}, matr_A.num_rows(), svm.num_available_devices());
     const std::vector<plssvm::detail::move_only_any> A = util::init_explicit_matrices<csvm_type, device_ptr_type>(matr_A, svm);
 
     const plssvm::soa_matrix<plssvm::real_type> B{ { { plssvm::real_type{ 1.0 }, plssvm::real_type{ 2.0 } },
@@ -483,7 +484,7 @@ TYPED_TEST_P(GenericCSVMKernelFunction, blas_level_3_assembly_implicit_without_C
     const auto [q, QA_cost] = ground_truth::perform_dimensional_reduction(params, matr_A);
 
     // be sure to use the correct data distribution
-    svm.data_distribution_ = std::make_unique<plssvm::detail::triangular_data_distribution>(matr_A.num_rows() - 1, svm.num_available_devices());
+    svm.data_distribution_ = std::make_unique<plssvm::detail::triangular_data_distribution>(plssvm::mpi::communicator{}, matr_A.num_rows() - 1, svm.num_available_devices());
     const std::vector<plssvm::detail::move_only_any> A{ util::init_implicit_matrices<csvm_type, device_ptr_type>(matr_A, svm, params, q, QA_cost) };
 
     const plssvm::soa_matrix<plssvm::real_type> B{ { { plssvm::real_type{ 1.0 }, plssvm::real_type{ 2.0 }, plssvm::real_type{ 3.0 } },
@@ -540,7 +541,7 @@ TYPED_TEST_P(GenericCSVMKernelFunction, blas_level_3_assembly_implicit) {
     const auto [q, QA_cost] = ground_truth::perform_dimensional_reduction(params, matr_A);
 
     // be sure to use the correct data distribution
-    svm.data_distribution_ = std::make_unique<plssvm::detail::triangular_data_distribution>(matr_A.num_rows() - 1, svm.num_available_devices());
+    svm.data_distribution_ = std::make_unique<plssvm::detail::triangular_data_distribution>(plssvm::mpi::communicator{}, matr_A.num_rows() - 1, svm.num_available_devices());
     const std::vector<plssvm::detail::move_only_any> A{ util::init_implicit_matrices<csvm_type, device_ptr_type>(matr_A, svm, params, q, QA_cost) };
 
     const plssvm::soa_matrix<plssvm::real_type> B{ { { plssvm::real_type{ 1.0 }, plssvm::real_type{ 2.0 }, plssvm::real_type{ 3.0 } },
@@ -602,7 +603,7 @@ TYPED_TEST_P(GenericCSVMKernelFunction, predict_values) {
     const mock_csvm_type svm = util::construct_from_tuple<mock_csvm_type>(params, csvm_test_type::additional_arguments);
 
     // be sure to use the correct data distribution
-    svm.data_distribution_ = std::make_unique<plssvm::detail::rectangular_data_distribution>(data.num_rows(), 1);
+    svm.data_distribution_ = std::make_unique<plssvm::detail::rectangular_data_distribution>(plssvm::mpi::communicator{}, data.num_rows(), 1);
 
     // predict the values using the previously learned support vectors and weights
     const plssvm::aos_matrix<plssvm::real_type> calculated = svm.predict_values(params, support_vectors, weights, rho, w, data);
@@ -667,7 +668,7 @@ TYPED_TEST_P(GenericCSVMKernelFunction, predict_values_provided_w) {
         const mock_csvm_type svm = util::construct_from_tuple<mock_csvm_type>(params, csvm_test_type::additional_arguments);
 
         // be sure to use the correct data distribution
-        svm.data_distribution_ = std::make_unique<plssvm::detail::rectangular_data_distribution>(data.num_rows(), 1);
+        svm.data_distribution_ = std::make_unique<plssvm::detail::rectangular_data_distribution>(plssvm::mpi::communicator{}, data.num_rows(), 1);
 
         // predict the values using the previously learned support vectors and weights
         const plssvm::aos_matrix<plssvm::real_type> calculated = svm.predict_values(params, support_vectors, weights, rho, w, data);
@@ -849,7 +850,7 @@ TYPED_TEST_P(GenericCSVMSolverKernelFunction, assemble_kernel_matrix_minimal) {
     const mock_csvm_type svm = util::construct_from_tuple<mock_csvm_type>(params, csvm_test_type::additional_arguments);
     const std::size_t num_devices = svm.num_available_devices();
     // be sure to use the correct data distribution
-    svm.data_distribution_ = std::make_unique<plssvm::detail::triangular_data_distribution>(data.num_rows() - 1, num_devices);
+    svm.data_distribution_ = std::make_unique<plssvm::detail::triangular_data_distribution>(plssvm::mpi::communicator{}, data.num_rows() - 1, num_devices);
 
     // automatic solver type not permitted
     if constexpr (solver == plssvm::solver_type::automatic) {
@@ -959,7 +960,7 @@ TYPED_TEST_P(GenericCSVMSolverKernelFunction, assemble_kernel_matrix) {
     const mock_csvm_type svm = util::construct_from_tuple<mock_csvm_type>(params, csvm_test_type::additional_arguments);
     const std::size_t num_devices = svm.num_available_devices();
     // be sure to use the correct data distribution
-    svm.data_distribution_ = std::make_unique<plssvm::detail::triangular_data_distribution>(data.num_rows() - 1, num_devices);
+    svm.data_distribution_ = std::make_unique<plssvm::detail::triangular_data_distribution>(plssvm::mpi::communicator{}, data.num_rows() - 1, num_devices);
 
     // automatic solver type not permitted
     if constexpr (solver == plssvm::solver_type::automatic) {
@@ -1075,7 +1076,7 @@ TYPED_TEST_P(GenericCSVMDeathTest, blas_level_3_automatic) {
           { plssvm::real_type{ 0.3 }, plssvm::real_type{ 1.3 }, plssvm::real_type{ 2.3 } } }
     };
     // be sure to use the correct data distribution
-    svm.data_distribution_ = std::make_unique<plssvm::detail::triangular_data_distribution>(matr_A.num_rows(), svm.num_available_devices());
+    svm.data_distribution_ = std::make_unique<plssvm::detail::triangular_data_distribution>(plssvm::mpi::communicator{}, matr_A.num_rows(), svm.num_available_devices());
     const std::vector<plssvm::detail::move_only_any> A{ util::init_explicit_matrices<csvm_type, device_ptr_type>(matr_A, svm) };
 
     const plssvm::soa_matrix<plssvm::real_type> B{ { { plssvm::real_type{ 1.0 }, plssvm::real_type{ 2.0 }, plssvm::real_type{ 3.0 } },
@@ -1115,7 +1116,7 @@ TYPED_TEST_P(GenericCSVMSolverDeathTest, conjugate_gradients_empty_B) {
     const plssvm::real_type QA_cost{ 1.0 };
 
     // be sure to use the correct data distribution
-    svm.data_distribution_ = std::make_unique<plssvm::detail::triangular_data_distribution>(matr_A.num_rows(), svm.num_available_devices());
+    svm.data_distribution_ = std::make_unique<plssvm::detail::triangular_data_distribution>(plssvm::mpi::communicator{}, matr_A.num_rows(), svm.num_available_devices());
     const std::vector<plssvm::detail::move_only_any> A{ util::init_matrices<csvm_type, device_ptr_type>(matr_A, solver, svm, params, q_red, QA_cost) };
 
     // create empty matrix
@@ -1141,7 +1142,7 @@ TYPED_TEST_P(GenericCSVMSolverDeathTest, conjugate_gradients_invalid_eps) {
     const plssvm::real_type QA_cost{ 1.0 };
 
     // be sure to use the correct data distribution
-    svm.data_distribution_ = std::make_unique<plssvm::detail::triangular_data_distribution>(matr_A.num_rows(), svm.num_available_devices());
+    svm.data_distribution_ = std::make_unique<plssvm::detail::triangular_data_distribution>(plssvm::mpi::communicator{}, matr_A.num_rows(), svm.num_available_devices());
     const std::vector<plssvm::detail::move_only_any> A{ util::init_matrices<csvm_type, device_ptr_type>(matr_A, solver, svm, params, q_red, QA_cost) };
 
     const plssvm::soa_matrix<plssvm::real_type> B{ plssvm::shape{ 1, 6 } };
@@ -1167,7 +1168,7 @@ TYPED_TEST_P(GenericCSVMSolverDeathTest, conjugate_gradients_invalid_max_cg_iter
     const plssvm::real_type QA_cost{ 1.0 };
 
     // be sure to use the correct data distribution
-    svm.data_distribution_ = std::make_unique<plssvm::detail::triangular_data_distribution>(matr_A.num_rows(), svm.num_available_devices());
+    svm.data_distribution_ = std::make_unique<plssvm::detail::triangular_data_distribution>(plssvm::mpi::communicator{}, matr_A.num_rows(), svm.num_available_devices());
     const std::vector<plssvm::detail::move_only_any> A{ util::init_matrices<csvm_type, device_ptr_type>(matr_A, solver, svm, params, q_red, QA_cost) };
 
     const plssvm::soa_matrix<plssvm::real_type> B{ plssvm::shape{ 1, 6 } };
@@ -1195,7 +1196,7 @@ TYPED_TEST_P(GenericCSVMSolverDeathTest, run_blas_level_3_wrong_number_of_kernel
         const plssvm::real_type QA_cost{ 1.0 };
 
         // be sure to use the correct data distribution
-        svm.data_distribution_ = std::make_unique<plssvm::detail::triangular_data_distribution>(matr_A.num_rows(), svm.num_available_devices());
+        svm.data_distribution_ = std::make_unique<plssvm::detail::triangular_data_distribution>(plssvm::mpi::communicator{}, matr_A.num_rows(), svm.num_available_devices());
         std::vector<plssvm::detail::move_only_any> A{ util::init_matrices<csvm_type, device_ptr_type>(matr_A, solver, svm, params, q_red, QA_cost) };
         A.pop_back();
 
@@ -1227,7 +1228,7 @@ TYPED_TEST_P(GenericCSVMSolverDeathTest, blas_level_3_empty_matrices) {
         const plssvm::real_type QA_cost{ 1.0 };
 
         // be sure to use the correct data distribution
-        svm.data_distribution_ = std::make_unique<plssvm::detail::triangular_data_distribution>(matr_A.num_rows(), svm.num_available_devices());
+        svm.data_distribution_ = std::make_unique<plssvm::detail::triangular_data_distribution>(plssvm::mpi::communicator{}, matr_A.num_rows(), svm.num_available_devices());
         const std::vector<plssvm::detail::move_only_any> A{ util::init_matrices<csvm_type, device_ptr_type>(matr_A, solver, svm, params, q_red, QA_cost) };
 
         plssvm::soa_matrix<plssvm::real_type> matr{ plssvm::shape{ 4, 4 }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE } };
@@ -1258,7 +1259,7 @@ TYPED_TEST_P(GenericCSVMSolverDeathTest, blas_level_3_missing_padding) {
         const plssvm::real_type QA_cost{ 1.0 };
 
         // be sure to use the correct data distribution
-        svm.data_distribution_ = std::make_unique<plssvm::detail::triangular_data_distribution>(matr_A.num_rows(), svm.num_available_devices());
+        svm.data_distribution_ = std::make_unique<plssvm::detail::triangular_data_distribution>(plssvm::mpi::communicator{}, matr_A.num_rows(), svm.num_available_devices());
         const std::vector<plssvm::detail::move_only_any> A{ util::init_matrices<csvm_type, device_ptr_type>(matr_A, solver, svm, params, q_red, QA_cost) };
 
         plssvm::soa_matrix<plssvm::real_type> matr_padded{ plssvm::shape{ 4, 4 }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE } };
@@ -1289,7 +1290,7 @@ TYPED_TEST_P(GenericCSVMSolverDeathTest, blas_level_3_matrix_shape_mismatch) {
         const plssvm::real_type QA_cost{ 1.0 };
 
         // be sure to use the correct data distribution
-        svm.data_distribution_ = std::make_unique<plssvm::detail::triangular_data_distribution>(matr_A.num_rows(), svm.num_available_devices());
+        svm.data_distribution_ = std::make_unique<plssvm::detail::triangular_data_distribution>(plssvm::mpi::communicator{}, matr_A.num_rows(), svm.num_available_devices());
         const std::vector<plssvm::detail::move_only_any> A{ util::init_matrices<csvm_type, device_ptr_type>(matr_A, solver, svm, params, q_red, QA_cost) };
 
         plssvm::soa_matrix<plssvm::real_type> B{ plssvm::shape{ 4, 4 }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE } };
@@ -1320,7 +1321,7 @@ TYPED_TEST_P(GenericCSVMSolverDeathTest, blas_level_3_matrix_padding_mismatch) {
         const plssvm::real_type QA_cost{ 1.0 };
 
         // be sure to use the correct data distribution
-        svm.data_distribution_ = std::make_unique<plssvm::detail::triangular_data_distribution>(matr_A.num_rows(), svm.num_available_devices());
+        svm.data_distribution_ = std::make_unique<plssvm::detail::triangular_data_distribution>(plssvm::mpi::communicator{}, matr_A.num_rows(), svm.num_available_devices());
         const std::vector<plssvm::detail::move_only_any> A{ util::init_matrices<csvm_type, device_ptr_type>(matr_A, solver, svm, params, q_red, QA_cost) };
 
         plssvm::soa_matrix<plssvm::real_type> B{ plssvm::shape{ 4, 4 }, plssvm::shape{ 3, 3 } };
@@ -1492,7 +1493,7 @@ TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, assemble_kernel_matrix_automati
     const plssvm::real_type QA_cost = 42.0;
 
     // be sure to use the correct data distribution
-    svm.data_distribution_ = std::make_unique<plssvm::detail::triangular_data_distribution>(A.num_rows() - 1, svm.num_available_devices());
+    svm.data_distribution_ = std::make_unique<plssvm::detail::triangular_data_distribution>(plssvm::mpi::communicator{}, A.num_rows() - 1, svm.num_available_devices());
 
     // the solver type must not be automatic
     EXPECT_DEATH(std::ignore = svm.assemble_kernel_matrix(plssvm::solver_type::automatic, params, A, q_red, QA_cost), ::testing::HasSubstr("An explicit solver type must be provided instead of solver_type::automatic!"));
@@ -1524,7 +1525,7 @@ TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, predict_values_empty_matrices) 
     const auto data = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ 2, 4 }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE });
 
     // be sure to use the correct data distribution
-    svm.data_distribution_ = std::make_unique<plssvm::detail::triangular_data_distribution>(data.num_rows(), svm.num_available_devices());
+    svm.data_distribution_ = std::make_unique<plssvm::detail::triangular_data_distribution>(plssvm::mpi::communicator{}, data.num_rows(), svm.num_available_devices());
 
     // support vectors shouldn't be empty
     EXPECT_DEATH(std::ignore = svm.predict_values(params, empty_soa_matr, weights, rho, w, data), "The support vectors must not be empty!");
@@ -1564,7 +1565,7 @@ TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, predict_values_missing_padding)
     const auto data_without_padding = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ 2, 4 });
 
     // be sure to use the correct data distribution
-    svm.data_distribution_ = std::make_unique<plssvm::detail::triangular_data_distribution>(data.num_rows(), svm.num_available_devices());
+    svm.data_distribution_ = std::make_unique<plssvm::detail::triangular_data_distribution>(plssvm::mpi::communicator{}, data.num_rows(), svm.num_available_devices());
 
     // support vectors must be padded
     EXPECT_DEATH(std::ignore = svm.predict_values(params, support_vectors_without_padding, weights, rho, w, data), "The support vectors must be padded!");
@@ -1598,7 +1599,7 @@ TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, predict_values_sv_alpha_size_mi
     const auto data = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ 2, 4 }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE });
 
     // be sure to use the correct data distribution
-    svm.data_distribution_ = std::make_unique<plssvm::detail::triangular_data_distribution>(data.num_rows(), svm.num_available_devices());
+    svm.data_distribution_ = std::make_unique<plssvm::detail::triangular_data_distribution>(plssvm::mpi::communicator{}, data.num_rows(), svm.num_available_devices());
 
     // the number of support vectors and weights must be identical
     EXPECT_DEATH(std::ignore = svm.predict_values(params, support_vectors, weights, rho, w, data), ::testing::HasSubstr("The number of support vectors (3) and number of weights (4) must be the same!"));
@@ -1626,7 +1627,7 @@ TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, predict_values_rho_alpha_size_m
     const auto data = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ 2, 4 }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE });
 
     // be sure to use the correct data distribution
-    svm.data_distribution_ = std::make_unique<plssvm::detail::triangular_data_distribution>(data.num_rows(), svm.num_available_devices());
+    svm.data_distribution_ = std::make_unique<plssvm::detail::triangular_data_distribution>(plssvm::mpi::communicator{}, data.num_rows(), svm.num_available_devices());
 
     // the number of rho values and weight vectors must be identical
     EXPECT_DEATH(std::ignore = svm.predict_values(params, support_vectors, weights, rho, w, data), ::testing::HasSubstr("The number of rho values (1) and the number of weight vectors (2) must be the same!"));
@@ -1653,7 +1654,7 @@ TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, predict_values_w_size_mismatch)
     const auto data = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ 2, 4 }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE });
 
     // be sure to use the correct data distribution
-    svm.data_distribution_ = std::make_unique<plssvm::detail::triangular_data_distribution>(data.num_rows(), svm.num_available_devices());
+    svm.data_distribution_ = std::make_unique<plssvm::detail::triangular_data_distribution>(plssvm::mpi::communicator{}, data.num_rows(), svm.num_available_devices());
 
     // the number of features and w values must be identical
     auto w = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ 2, 3 }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE });
@@ -1685,7 +1686,7 @@ TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, predict_values_num_features_mis
     const auto data = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ 2, 4 }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE });
 
     // be sure to use the correct data distribution
-    svm.data_distribution_ = std::make_unique<plssvm::detail::triangular_data_distribution>(data.num_rows(), svm.num_available_devices());
+    svm.data_distribution_ = std::make_unique<plssvm::detail::triangular_data_distribution>(plssvm::mpi::communicator{}, data.num_rows(), svm.num_available_devices());
 
     // the number of features for the support vectors and predict points must be identical
     EXPECT_DEATH(std::ignore = svm.predict_values(params, support_vectors, weights, rho, w, data), ::testing::HasSubstr("The number of features in the support vectors (5) must be the same as in the data points to predict (4)!"));
@@ -1735,7 +1736,7 @@ TYPED_TEST_P(GenericCSVMSolverKernelFunctionDeathTest, assemble_kernel_matrix_em
         const plssvm::real_type QA_cost = 42.0;
 
         // be sure to use the correct data distribution
-        svm.data_distribution_ = std::make_unique<plssvm::detail::triangular_data_distribution>(A.num_rows() - 1, svm.num_available_devices());
+        svm.data_distribution_ = std::make_unique<plssvm::detail::triangular_data_distribution>(plssvm::mpi::communicator{}, A.num_rows() - 1, svm.num_available_devices());
 
         const plssvm::soa_matrix<plssvm::real_type> empty_matr{};
         const std::vector<plssvm::real_type> empty_vec{};
@@ -1771,7 +1772,7 @@ TYPED_TEST_P(GenericCSVMSolverKernelFunctionDeathTest, assemble_kernel_matrix_A_
         const plssvm::real_type QA_cost = 42.0;
 
         // be sure to use the correct data distribution
-        svm.data_distribution_ = std::make_unique<plssvm::detail::triangular_data_distribution>(A.num_rows() - 1, svm.num_available_devices());
+        svm.data_distribution_ = std::make_unique<plssvm::detail::triangular_data_distribution>(plssvm::mpi::communicator{}, A.num_rows() - 1, svm.num_available_devices());
 
         // the A matrix must be padded
         EXPECT_DEATH(std::ignore = svm.assemble_kernel_matrix(solver, params, A, q_red, QA_cost), ::testing::HasSubstr("The matrix to setup on the devices must be padded!"));
@@ -1802,7 +1803,7 @@ TYPED_TEST_P(GenericCSVMSolverKernelFunctionDeathTest, assemble_kernel_matrix_si
         const plssvm::real_type QA_cost = 42.0;
 
         // be sure to use the correct data distribution
-        svm.data_distribution_ = std::make_unique<plssvm::detail::triangular_data_distribution>(A.num_rows() - 1, svm.num_available_devices());
+        svm.data_distribution_ = std::make_unique<plssvm::detail::triangular_data_distribution>(plssvm::mpi::communicator{}, A.num_rows() - 1, svm.num_available_devices());
 
         // the A matrix must be padded
         EXPECT_DEATH(std::ignore = svm.assemble_kernel_matrix(solver, params, A, q_red, QA_cost), ::testing::HasSubstr("The q_red size (4) mismatches the number of data points after dimensional reduction (3)!"));
