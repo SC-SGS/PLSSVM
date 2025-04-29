@@ -44,8 +44,8 @@ class device_kernel_w_linear {
      * @param[in] grid_y_offset the offset in y-dimension into the data points if more than one execution grid has to be used
      */
     device_kernel_w_linear(::sycl::handler &cgh, real_type *w_d, const real_type *alpha_d, const real_type *sv_d, const std::size_t num_classes, const std::size_t num_sv, const std::size_t device_specific_num_sv, const std::size_t sv_offset, const std::size_t grid_x_offset, const std::size_t grid_y_offset) :
-        data_cache_feature_{ ::sycl::range<2>{ static_cast<std::size_t>(FEATURE_BLOCK_SIZE), static_cast<std::size_t>(INTERNAL_BLOCK_SIZE) * static_cast<std::size_t>(THREAD_BLOCK_SIZE) }, cgh },
-        data_cache_alpha_{ ::sycl::range<2>{ static_cast<std::size_t>(FEATURE_BLOCK_SIZE), static_cast<std::size_t>(INTERNAL_BLOCK_SIZE) * static_cast<std::size_t>(THREAD_BLOCK_SIZE) }, cgh },
+        data_cache_feature_{ ::sycl::range<2>{ static_cast<std::size_t>(THREAD_BLOCK_SIZE), static_cast<std::size_t>(INTERNAL_BLOCK_SIZE) * static_cast<std::size_t>(THREAD_BLOCK_SIZE) }, cgh },
+        data_cache_alpha_{ ::sycl::range<2>{ static_cast<std::size_t>(THREAD_BLOCK_SIZE), static_cast<std::size_t>(INTERNAL_BLOCK_SIZE) * static_cast<std::size_t>(THREAD_BLOCK_SIZE) }, cgh },
         w_d_{ w_d },
         alpha_d_{ alpha_d },
         sv_d_{ sv_d },
@@ -92,8 +92,8 @@ class device_kernel_w_linear {
                 const auto global_class_idx = class_idx_linear + static_cast<std::size_t>(internal) * THREAD_BLOCK_SIZE_uz;
                 const auto global_feature_idx = feature_idx_linear + static_cast<std::size_t>(internal) * THREAD_BLOCK_SIZE_uz;
 
-                data_cache_feature_[local_id_0][internal * THREAD_BLOCK_SIZE + local_id_1] = sv_d_[global_feature_idx * (device_specific_num_sv_ + PADDING_SIZE_uz) + sv + sv_offset_ + threadIdx_x];  // SoA
-                data_cache_alpha_[local_id_0][internal * THREAD_BLOCK_SIZE + local_id_1] = alpha_d_[global_class_idx * (num_sv_ + PADDING_SIZE_uz) + sv + threadIdx_x];                                // AoS
+                data_cache_feature_[local_id_0][internal * THREAD_BLOCK_SIZE + local_id_1] = sv_d_[global_feature_idx * (device_specific_num_sv_ + PADDING_SIZE_uz) + sv + threadIdx_x];  // SoA
+                data_cache_alpha_[local_id_0][internal * THREAD_BLOCK_SIZE + local_id_1] = alpha_d_[global_class_idx * (num_sv_ + PADDING_SIZE_uz) + sv + sv_offset_ + threadIdx_x];      // AoS
             }
             nd_idx.barrier();  // wait until all work-items loaded their part of the data
 
