@@ -13,6 +13,7 @@
 #include "plssvm/backends/Kokkos/execution_space.hpp"               // plssvm::kokkos::execution_space
 #include "plssvm/detail/assert.hpp"                                 // PLSSVM_ASSERT
 #include "plssvm/detail/logging/log_untracked.hpp"                  // plssvm::detail::log_untracked
+#include "plssvm/detail/logging/mpi_log_untracked.hpp"              // plssvm::detail::log_untracked
 #include "plssvm/detail/string_utility.hpp"                         // plssvm::detail::as_lower_case
 #include "plssvm/detail/utility.hpp"                                // plssvm::detail::contains
 #include "plssvm/mpi/communicator.hpp"                              // plssvm::mpi::communicator
@@ -101,10 +102,10 @@ std::vector<device_wrapper> get_device_list(const execution_space space, [[maybe
 
 #if !defined(PLSSVM_KOKKOS_BACKEND_SYCL_ENABLE_MULTI_GPU)
                 if (devices.size() > 1) {
-                    plssvm::detail::log_untracked(plssvm::verbosity_level::full | plssvm::verbosity_level::warning,
-                                                  "\nFound {} devices on MPI rank {} for the Kokkos::SYCL execution space, but multi-GPU support is disabled. Using only device 1.",
-                                                  devices.size(),
-                                                  comm.rank());
+                    ::plssvm::detail::log_untracked(plssvm::verbosity_level::full | plssvm::verbosity_level::warning,
+                                                    "\nFound {} devices on MPI rank {} for the Kokkos::SYCL execution space, but multi-GPU support is disabled. Using only device 1.",
+                                                    devices.size(),
+                                                    comm.rank());
                     // only use the first GPU found (which most likely is the default device)
                     devices.resize(1);
                 }
@@ -121,6 +122,7 @@ std::vector<device_wrapper> get_device_list(const execution_space space, [[maybe
                 // Note: if OpenMP should be used as device  must be set in order for it to work!
                 if (omp_get_nested() == 0) {
                     ::plssvm::detail::log_untracked(verbosity_level::full | verbosity_level::warning,
+                                                    comm,
                                                     "WARNING: In order for Kokkos::OpenMP to work properly, we have to set \"omp_set_nested(1)\"!\n");
                     // enable OMP_NESTED support
                     // Note: function is officially deprecated but still necessary for Kokkos::OpenMP to work properly
