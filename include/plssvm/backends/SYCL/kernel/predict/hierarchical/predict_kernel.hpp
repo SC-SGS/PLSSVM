@@ -60,8 +60,8 @@ class device_kernel_w_linear {
      */
     void operator()(::sycl::group<2> group) const {
         // allocate shared memory
-        real_type data_cache_feature[FEATURE_BLOCK_SIZE][INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE];
-        real_type data_cache_alpha[FEATURE_BLOCK_SIZE][INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE];
+        real_type data_cache_feature[THREAD_BLOCK_SIZE][INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE];
+        real_type data_cache_alpha[THREAD_BLOCK_SIZE][INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE];
 
         // calculate the indices used in the current work-item
         ::sycl::private_memory<std::size_t, 2> feature_idx{ group };
@@ -114,8 +114,8 @@ class device_kernel_w_linear {
                     const auto global_class_idx = class_idx_linear(idx) + static_cast<std::size_t>(internal) * THREAD_BLOCK_SIZE_uz;
                     const auto global_feature_idx = feature_idx_linear(idx) + static_cast<std::size_t>(internal) * THREAD_BLOCK_SIZE_uz;
 
-                    data_cache_feature[local_id_0][internal * THREAD_BLOCK_SIZE + local_id_1] = sv_d_[global_feature_idx * (device_specific_num_sv_ + PADDING_SIZE_uz) + sv + sv_offset_ + threadIdx_x];  // SoA
-                    data_cache_alpha[local_id_0][internal * THREAD_BLOCK_SIZE + local_id_1] = alpha_d_[global_class_idx * (num_sv_ + PADDING_SIZE_uz) + sv + threadIdx_x];                                // AoS
+                    data_cache_feature[local_id_0][internal * THREAD_BLOCK_SIZE + local_id_1] = sv_d_[global_feature_idx * (device_specific_num_sv_ + PADDING_SIZE_uz) + sv + threadIdx_x];  // SoA
+                    data_cache_alpha[local_id_0][internal * THREAD_BLOCK_SIZE + local_id_1] = alpha_d_[global_class_idx * (num_sv_ + PADDING_SIZE_uz) + sv + sv_offset_ + threadIdx_x];      // AoS
                 }
             });
 

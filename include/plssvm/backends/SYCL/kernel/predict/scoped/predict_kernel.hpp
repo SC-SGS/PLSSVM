@@ -62,8 +62,8 @@ class device_kernel_w_linear {
     template <typename T>
     void operator()(T group) const {
         ::sycl::memory_environment(group,
-                                   ::sycl::require_local_mem<real_type[FEATURE_BLOCK_SIZE][INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE]>(),
-                                   ::sycl::require_local_mem<real_type[FEATURE_BLOCK_SIZE][INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE]>(),
+                                   ::sycl::require_local_mem<real_type[THREAD_BLOCK_SIZE][INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE]>(),
+                                   ::sycl::require_local_mem<real_type[THREAD_BLOCK_SIZE][INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE]>(),
                                    ::sycl::require_private_mem<std::size_t>(),
                                    ::sycl::require_private_mem<std::size_t>(),
                                    ::sycl::require_private_mem<std::size_t>(),
@@ -104,8 +104,8 @@ class device_kernel_w_linear {
                                                    const auto global_class_idx = class_idx_linear(idx) + static_cast<std::size_t>(internal) * THREAD_BLOCK_SIZE_uz;
                                                    const auto global_feature_idx = feature_idx_linear(idx) + static_cast<std::size_t>(internal) * THREAD_BLOCK_SIZE_uz;
 
-                                                   data_cache_feature[local_id_0][internal * THREAD_BLOCK_SIZE + local_id_1] = sv_d_[global_feature_idx * (device_specific_num_sv_ + PADDING_SIZE_uz) + sv + sv_offset_ + threadIdx_x];  // SoA
-                                                   data_cache_alpha[local_id_0][internal * THREAD_BLOCK_SIZE + local_id_1] = alpha_d_[global_class_idx * (num_sv_ + PADDING_SIZE_uz) + sv + threadIdx_x];                                // AoS
+                                                   data_cache_feature[local_id_0][internal * THREAD_BLOCK_SIZE + local_id_1] = sv_d_[global_feature_idx * (device_specific_num_sv_ + PADDING_SIZE_uz) + sv + threadIdx_x];  // SoA
+                                                   data_cache_alpha[local_id_0][internal * THREAD_BLOCK_SIZE + local_id_1] = alpha_d_[global_class_idx * (num_sv_ + PADDING_SIZE_uz) + sv + sv_offset_ + threadIdx_x];      // AoS
                                                }
                                            });
 

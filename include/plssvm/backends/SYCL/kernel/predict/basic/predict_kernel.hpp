@@ -78,7 +78,7 @@ class device_kernel_w_linear {
                     const auto global_class_idx = class_idx + static_cast<std::size_t>(internal_class);
                     const auto global_feature_idx = feature_idx + static_cast<std::size_t>(internal_feature);
 
-                    temp[internal_feature][internal_class] += alpha_d_[global_class_idx * (num_sv_ + PADDING_SIZE_uz) + sv] * sv_d_[global_feature_idx * (device_specific_num_sv_ + PADDING_SIZE_uz) + sv + sv_offset_];
+                    temp[internal_feature][internal_class] += alpha_d_[global_class_idx * (num_sv_ + PADDING_SIZE_uz) + sv + sv_offset_] * sv_d_[global_feature_idx * (device_specific_num_sv_ + PADDING_SIZE_uz) + sv];
                 }
             }
         }
