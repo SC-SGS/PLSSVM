@@ -293,8 +293,8 @@ const char *file_reader::buffer() const noexcept {
     return file_content_;
 }
 
-void file_reader::open_memory_mapped_file_unix([[maybe_unused]] const char *filename) {
 #if defined(PLSSVM_HAS_MEMORY_MAPPING_UNIX)
+void file_reader::open_memory_mapped_file_unix([[maybe_unused]] const char *filename) {
     // open the file
     file_descriptor_ = ::open(filename, O_RDONLY);
 
@@ -324,13 +324,11 @@ void file_reader::open_memory_mapped_file_unix([[maybe_unused]] const char *file
             must_unmap_file_ = true;
         }
     }
-#else
-    throw file_reader_exception{ "Called open_memory_mapped_file_unix(), but the necessary headers couldn't be found!" };
-#endif
 }
+#endif
 
-void file_reader::open_memory_mapped_file_windows([[maybe_unused]] const char *filename) {
 #if defined(PLSSVM_HAS_MEMORY_MAPPING_WINDOWS)
+void file_reader::open_memory_mapped_file_windows([[maybe_unused]] const char *filename) {
     // open the file
     file_ = CreateFile(filename, GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_READONLY, nullptr);
     // check if file could be opened
@@ -377,10 +375,8 @@ void file_reader::open_memory_mapped_file_windows([[maybe_unused]] const char *f
             }
         }
     }
-#else
-    throw file_reader_exception{ "Called open_memory_mapped_file_windows(), but the necessary headers couldn't be found!" };
-#endif
 }
+#endif
 
 void file_reader::open_file(const char *filename) {
     // open the file

@@ -65,6 +65,8 @@ std::string get_stdpar_version() {
     return fmt::format("{}", __VERSION__);
 #elif defined(PLSSVM_STDPAR_BACKEND_HAS_GNU_TBB)
     return fmt::format("{}.{}.{}", __GNUC__, __GNUC_MINOR__, __GNUC_PATCHLEVEL__);
+#elif defined(PLSSVM_STDPAR_BACKEND_HAS_HIPSTDPAR)
+    return fmt::format("{}.{}.{}", __clang_major__, __clang_minor__, __clang_patchlevel__);
 #else
     return "unknown";
 #endif

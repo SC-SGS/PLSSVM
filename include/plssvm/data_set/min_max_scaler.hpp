@@ -14,12 +14,11 @@
 #pragma once
 
 #include "plssvm/constants.hpp"                            // plssvm::real_type
-#include "plssvm/detail/io/file_reader.hpp"                // plssvm::detail::io::file_reader
-#include "plssvm/detail/io/scaling_factors_parsing.hpp"    // plssvm::detail::io::parse_scaling_factors
-#include "plssvm/detail/logging.hpp"                       // plssvm::detail::log
+#include "plssvm/detail/logging/mpi_log.hpp"               // plssvm::detail::log
 #include "plssvm/detail/tracking/performance_tracker.hpp"  // plssvm::detail::tracking_entry
 #include "plssvm/exceptions/exceptions.hpp"                // plssvm::min_max_scaler_exception
 #include "plssvm/matrix.hpp"                               // plssvm::matrix, plssvm::layout_type
+#include "plssvm/mpi/communicator.hpp"                     // plssvm::mpi::communicator
 #include "plssvm/verbosity_levels.hpp"                     // plssvm::verbosity_level
 
 #include "fmt/format.h"  // fmt::format
@@ -27,11 +26,10 @@
 #include <algorithm>  // std::min, std::max, std::sort, std::adjacent_find
 #include <chrono>     // std::chrono::{time_point, steady_clock, duration_cast, milliseconds}
 #include <cstddef>    // std::size_t
-#include <numeric>    // std::numeric_limits::{min, max}
+#include <limits>     // std::numeric_limits::{max, lowest}
 #include <optional>   // std::optional, std::make_optional, std::nullopt
 #include <string>     // std::string
-#include <tuple>      // std::tie
-#include <utility>    // std::pair, std::make_pair
+#include <utility>    // std::pair
 #include <vector>     // std::vector
 
 namespace plssvm {
@@ -43,6 +41,7 @@ class min_max_scaler {
   public:
     /**
      * @brief The calculated or read feature-wise scaling factors.
+     * @details Note that the feature indices are zero-based and not one-based.
      */
     struct factors {
         /// The used size type.
@@ -80,11 +79,27 @@ class min_max_scaler {
      */
     min_max_scaler(real_type lower, real_type upper);
     /**
+     * @brief Create a new scaling class that can be used to scale all features of a data set to the interval [lower, upper].
+     * @param[in] comm the used MPI communicator (**note**: current only used to restrict logging outputs to the main MPI rank)
+     * @param[in] lower the lower bound value of all features
+     * @param[in] upper the upper bound value of all features
+     * @throws plssvm::data_set_exception if lower is greater or equal than upper
+     */
+    min_max_scaler(mpi::communicator comm, real_type lower, real_type upper);
+
+    /**
      * @brief Read the scaling interval and factors from the provided file @p filename.
      * @param[in] filename the filename to read the scaling information from
      * @throws plssvm::invalid_file_format_exception all exceptions thrown by the plssvm::detail::io::parse_scaling_factors function
      */
     min_max_scaler(const std::string &filename);  // can't be explicit due to the data_set_variant
+    /**
+     * @brief Read the scaling interval and factors from the provided file @p filename.
+     * @param[in] comm the used MPI communicator (**note**: current only used to restrict logging outputs to the main MPI rank)
+     * @param[in] filename the filename to read the scaling information from
+     * @throws plssvm::invalid_file_format_exception all exceptions thrown by the plssvm::detail::io::parse_scaling_factors function
+     */
+    min_max_scaler(mpi::communicator comm, const std::string &filename);  // can't be explicit due to the data_set_variant
 
     /**
      * @brief Save the scaling factors to the file @p filename.
@@ -126,42 +141,23 @@ class min_max_scaler {
         }
     }
 
+    /**
+     * @brief Get the associated MPI communicator.
+     * @return the MPI communicator (`[[nodiscard]]`)
+     */
+    [[nodiscard]] const mpi::communicator &communicator() const noexcept {
+        return comm_;
+    }
+
   private:
     /// The user-provided scaling interval. After scaling, all feature values are scaled to [lower, upper].
     std::pair<real_type, real_type> scaling_interval_{};
     /// The scaling factors for all features.
     std::vector<factors> scaling_factors_{};
+
+    /// The used MPI communicator.
+    mpi::communicator comm_{};
 };
-
-inline min_max_scaler::min_max_scaler(const real_type lower, const real_type upper) :
-    scaling_interval_{ std::make_pair(lower, upper) } {
-    if (lower >= upper) {
-        throw min_max_scaler_exception{ fmt::format("Inconsistent scaling interval specification: lower ({}) must be less than upper ({})!", lower, upper) };
-    }
-}
-
-inline min_max_scaler::min_max_scaler(const std::string &filename) {
-    // open the file
-    detail::io::file_reader reader{ filename };
-    reader.read_lines('#');
-
-    // read scaling values from file
-    std::tie(scaling_interval_, scaling_factors_) = detail::io::parse_scaling_factors<factors>(reader);
-}
-
-inline void min_max_scaler::save(const std::string &filename) const {
-    const std::chrono::time_point start_time = std::chrono::steady_clock::now();
-
-    // write scaling values to file
-    detail::io::write_scaling_factors(filename, scaling_interval_, scaling_factors_);
-
-    const std::chrono::time_point end_time = std::chrono::steady_clock::now();
-    detail::log(verbosity_level::full | verbosity_level::timing,
-                "Write {} scaling factors in {} to the file '{}'.\n",
-                detail::tracking::tracking_entry{ "scaling_factors_write", "num_scaling_factors", scaling_factors_.size() },
-                detail::tracking::tracking_entry{ "scaling_factors_write", "time", std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time) },
-                detail::tracking::tracking_entry{ "scaling_factors_write", "filename", filename });
-}
 
 template <layout_type layout>
 void min_max_scaler::scale(plssvm::matrix<real_type, layout> &data) {
@@ -204,7 +200,7 @@ void min_max_scaler::scale(plssvm::matrix<real_type, layout> &data) {
         std::sort(scaling_factors_.begin(), scaling_factors_.end(), scaling_factors_comp_less);
         // check whether the biggest feature index is smaller than the number of features
         if (scaling_factors_.back().feature >= num_features) {
-            throw min_max_scaler_exception{ fmt::format("The maximum scaling feature index most not be greater than {}, but is {}!", num_features - 1, scaling_factors_.back().feature) };
+            throw min_max_scaler_exception{ fmt::format("The maximum scaling feature index most not be greater or equal than {}, but is {}!", num_features, scaling_factors_.back().feature) };
         }
         // check that there are no duplicate entries
         const auto scaling_factors_comp_eq = [](const factors &lhs, const factors &rhs) { return lhs.feature == rhs.feature; };
@@ -227,6 +223,7 @@ void min_max_scaler::scale(plssvm::matrix<real_type, layout> &data) {
 
     const std::chrono::time_point end_time = std::chrono::steady_clock::now();
     detail::log(verbosity_level::full | verbosity_level::timing,
+                comm_,
                 "Scaled the data set to the range [{}, {}] in {}.\n",
                 detail::tracking::tracking_entry{ "data_set_scale", "lower", lower },
                 detail::tracking::tracking_entry{ "data_set_scale", "upper", upper },

@@ -139,7 +139,7 @@ X_2d = scaler.fit_transform(X_2d)
 # tuning can be achieved but at a much higher cost.
 
 from sklearn.model_selection import GridSearchCV, StratifiedShuffleSplit
-from sklearn.svm import SVC
+from plssvm.svm import SVC
 
 C_range = np.logspace(-2, 10, 13)
 gamma_range = np.logspace(-9, 3, 13)

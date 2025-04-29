@@ -20,13 +20,14 @@
 #include "plssvm/detail/assert.hpp"                     // PLSSVM_ASSERT
 #include "plssvm/detail/io/file_reader.hpp"             // plssvm::detail::io::file_reader
 #include "plssvm/detail/io/libsvm_parsing.hpp"          // plssvm::detail::io::parse_libsvm_num_features
-#include "plssvm/detail/logging.hpp"                    // plssvm::detail::log
+#include "plssvm/detail/logging/mpi_log_untracked.hpp"  // plssvm::detail::log_untracked
 #include "plssvm/detail/memory_size.hpp"                // plssvm::memory_size, custom literals
 #include "plssvm/detail/string_conversion.hpp"          // plssvm::detail::{convert_to, split_as}
 #include "plssvm/detail/string_utility.hpp"             // plssvm::detail::{trim, trim_left, to_lower_case}
 #include "plssvm/gamma.hpp"                             // plssvm::get_gamma_string
 #include "plssvm/kernel_function_types.hpp"             // plssvm::kernel_function_type
 #include "plssvm/matrix.hpp"                            // plssvm::soa_matrix
+#include "plssvm/mpi/communicator.hpp"                  // plssvm::mpi::communicator
 #include "plssvm/parameter.hpp"                         // plssvm::parameter
 #include "plssvm/shape.hpp"                             // plssvm::shape
 #include "plssvm/verbosity_levels.hpp"                  // plssvm::verbosity_level
@@ -582,6 +583,7 @@ template <typename label_type>
  * @endcode
  * @tparam label_type the type of the labels (any arithmetic type, except bool, or std::string)
  * @param[in,out] out the output-stream to write the header information to
+ * @param[in] comm the used MPI communicator
  * @param[in] params the SVM parameters
  * @param[in] rho the rho values for the different classes resulting from the hyperplane learning
  * @param[in] data the data used to create the model
@@ -589,7 +591,7 @@ template <typename label_type>
  * @return the order of the different classes as it should appear in the following data section (`[[nodiscard]]`)
  */
 template <typename label_type>
-[[nodiscard]] inline std::vector<label_type> write_libsvm_model_header_classification(fmt::ostream &out, const plssvm::parameter &params, const std::vector<real_type> &rho, const classification_data_set<label_type> &data) {
+[[nodiscard]] inline std::vector<label_type> write_libsvm_model_header_classification(fmt::ostream &out, const mpi::communicator &comm, const plssvm::parameter &params, const std::vector<real_type> &rho, const classification_data_set<label_type> &data) {
     PLSSVM_ASSERT(data.has_labels(), "Cannot write a model file that does not include labels!");
     PLSSVM_ASSERT(!rho.empty(), "At least one rho value must be provided!");
 
@@ -635,9 +637,10 @@ template <typename label_type>
                               fmt::join(rho, " "));
 
     // print model header
-    detail::log(verbosity_level::full | verbosity_level::libsvm,
-                "\n{}\n",
-                out_string);
+    detail::log_untracked(verbosity_level::full | verbosity_level::libsvm,
+                          comm,
+                          "\n{}\n",
+                          out_string);
     // write model header to file
     out.print("{}", out_string);
 
@@ -667,6 +670,7 @@ template <typename label_type>
  * @endcode
  * @tparam label_type the type of the labels (any arithmetic type, except bool, or std::string)
  * @param[in] filename the file to write the LIBSVM model to
+ * @param[in] comm the used MPI communicator
  * @param[in] params the SVM parameters
  * @param[in] classification the used multi-class classification strategy
  * @param[in] rho the rho value resulting from the hyperplane learning
@@ -676,7 +680,7 @@ template <typename label_type>
  * @attention The PLSSVM model file is only compatible with LIBSVM for the one vs. one classification type.
  */
 template <typename label_type>
-inline void write_libsvm_model_data_classification(const std::string &filename, const plssvm::parameter &params, const classification_type classification, const std::vector<real_type> &rho, const std::vector<aos_matrix<real_type>> &alpha, const std::vector<std::vector<std::size_t>> &index_sets, const classification_data_set<label_type> &data) {
+inline void write_libsvm_model_data_classification(const std::string &filename, const mpi::communicator &comm, const plssvm::parameter &params, const classification_type classification, const std::vector<real_type> &rho, const std::vector<aos_matrix<real_type>> &alpha, const std::vector<std::vector<std::size_t>> &index_sets, const classification_data_set<label_type> &data) {
     PLSSVM_ASSERT(!filename.empty(), "The provided model filename must not be empty!");
     PLSSVM_ASSERT(data.has_labels(), "Cannot write a model file that does not include labels!");
     PLSSVM_ASSERT(rho.size() == calculate_number_of_classifiers(classification, data.num_classes()),
@@ -727,7 +731,7 @@ inline void write_libsvm_model_data_classification(const std::string &filename, 
     fmt::ostream out = fmt::output_file(filename);
 
     // write header information
-    const std::vector<label_type> label_order = write_libsvm_model_header_classification(out, params, rho, data);
+    const std::vector<label_type> label_order = write_libsvm_model_header_classification(out, comm, params, rho, data);
 
     // the maximum size of one formatted LIBSVM entry, e.g., 1234:1.365363e+10
     // biggest number representable as std::size_t: 18446744073709551615 -> 20 chars

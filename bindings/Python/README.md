@@ -17,10 +17,10 @@
         - [plssvm.CSVC and plssvm.CSVR](#plssvmcsvc-and-plssvmcsvr)
         - [The backend C-SVCs and C-SVRs](#the-backend-c-svcs-and-c-svrs)
         - [plssvm.ClassificationModel and plssvm.RegressionModel](#plssvmclassificationmodel-and-plssvmregressionmodel)
-        - [plssvm.Version](#plssvmversion)
-        - [plssvm.detail.tracking.PerformanceTracker](#plssvmdetailtrackingperformancetracker)
-        - [plssvm.detail.tracking.Events](#plssvmdetailtrackingevent-plssvmdetailtrackingevents)
+        - [plssvm.performance_tracking](#plssvmperformance_tracking)
+        - [plssvm.performance_tracking.Events](#plssvmperformance_trackingevent-plssvmperformance_trackingevents)
     - [Free functions](#free-functions)
+    - [Module Level Attributes](#module-level-attributes)
     - [Exceptions](#exceptions)
 
 We currently support two kinds of Python3 bindings, one reflecting the API
@@ -63,8 +63,8 @@ new `SVC`:
 |          :x:          | `break_ties : bool, default=False`                                                         | If true, decision_function_shape='ovr', and number of classes > 2, predict will break ties according to the confidence values of decision_function; otherwise the first class among the tied classes is returned. **Note**: PLSSVM behaves as if False was provided. |
 |          :x:          | `random_state : int, RandomState instance or None, default=None`                           | Controls the pseudo random number generation for shuffling the data for probability estimates. Ignored when `probability` is False.                                                                                                                                  |
 
-**Note**: the `plssvm.SVC` automatically uses the optimal (in the sense of performance) backend and target platform, as
-they were made available during PLSSVM's build step.
+**Note**: the `plssvm.svm.SVC` automatically uses the optimal (in the sense of performance) backend and target platform, 
+as they were made available during PLSSVM's build step.
 
 ### Attributes
 
@@ -215,8 +215,8 @@ new `SVR`:
 |  :white_check_mark:   | `max_iter : int, default=-1`                                                               | Hard limit on iterations within solver, or -1 for no limit. **Note**: if -1 is provided, at most `#data_points - 1` many CG iterations are performed.                                                            |
 |          :x:          | `epsilon : real_type, default=0.1`                                                         | The epsilon-tube within which no penalty is associated in the training loss function. **Note**: not applicable to PLSSVM's regression notation.                                                                  |
 
-**Note**: the `plssvm.SVR` automatically uses the optimal (in the sense of performance) backend and target platform, as
-they were made available during PLSSVM's build step.
+**Note**: the `plssvm.svm.SVR` automatically uses the optimal (in the sense of performance) backend and target platform, 
+as they were made available during PLSSVM's build step.
 
 ### Attributes
 
@@ -349,6 +349,8 @@ If the Kokos backend is available, an additional enumeration is available:
 |------------------|----------------------------------------------------------------------------------------|--------------------------------------------------|
 | `ExecutionSpace` | `CUDA`, `HIP`, `SYCL`, `HPX`, `OPENMP`, `OPENMPTARGET`, `OPENACC`, `THREADS`, `SERIAL` | The different supported Kokkos execution spaces. |
 
+**Note**: all our enumerations support implicit conversions from Python strings to the correct PLSSVM enumeration value.
+
 ### Classes and submodules
 
 The following tables list all PLSSVM classes exposed on the Python side:
@@ -357,11 +359,9 @@ The following tables list all PLSSVM classes exposed on the Python side:
 
 The parameter class encapsulates all necessary hyperparameters needed to fit an SVM.
 
-| constructors                                                                                         | description                                                                      |
-|------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------|
-| `Parameter()`                                                                                        | Default construct a parameter object.                                            |
-| `Parameter(kernel_type, degree, gamma, coef0, cost)`                                                 | Construct a parameter object by explicitly providing each hyper-parameter value. |
-| `Parameter([kernel_type=KernelFunctionType.RBF, degree=3, gamma=*1/#features*, coef=0.0, cost=1.0])` | Construct a parameter object with the provided named parameters.                 |
+| constructors                                                                                                                  | description                                                            |
+|-------------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------|
+| `Parameter(kernel_type=plssvm.KernelFunctionType.RBF, degree=3, gamma=plssvm.GammaCoefficientType.AUTO, coef0=0.0, cost=1.0)` | Construct a parameter object using the provided hyper-parameter value. |
 
 | attributes                         | description                                                                                                                                                                                                                                                     |
 |------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -386,23 +386,24 @@ file, they must be explicitly stated using the `type` parameter.
 
 The following constructors and methods are available for both the classification and regression data sets:
 
-| constructors                                                                                                                                   | description                                                                                                                                                                                                                                                                                                                                    |
-|------------------------------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `ClassificationDataSet(filename, [type=*the used label type*, file_format=*depending on the extesion of the filename*, scaling=*no scaling*])` | Construct a new data set using the data provided in the given file. Default type: `std::string` for the ClassificationDataSet, `double` for the RegressionDataSet. Default file format: determines the file content based on its extension (.arff, everything else assumed to be a LIBSVM file). Default scaling: don't scale the data points. |
-| `ClassificationDataSet(data, [type=*the used label type*, scaling=*no scaling*])`                                                              | Construct a new data set using the provided data directly. Default type: `std::string` for the ClassificationDataSet, `double` for the RegressionDataSet. Default scaling: don't scale the data points.                                                                                                                                        |
-| `ClassificationDataSet(data, labels, [scaling=*no scaling*])`                                                                                  | Construct a new data set using the provided data and labels directly. Default scaling: don't scale the data points.                                                                                                                                                                                                                            |
+| constructors                                                                                                                                                            | description                                                                                                                                                                                                                                                                                                                                   |
+|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `ClassificationDataSet(filename, *, type=*the used label type*, format=*depending on the extesion of the filename*, scaler=*no scaling*, comm=*used MPI communicator*)` | Construct a new data set using the data provided in the given file. Default type: `std::string` for the ClassificationDataSet, `double` for the RegressionDataSet. Default file format: determines the file content based on its extension (.arff, everything else assumed to be a LIBSVM file). Default scaler: don't scale the data points. |
+| `ClassificationDataSet(X, *, type=*the used label type*, scaler=*no scaling*, comm=*used MPI communicator*)`                                                            | Construct a new data set using the provided data directly. Default type: `std::string` for the ClassificationDataSet, `double` for the RegressionDataSet. Default scaler: don't scale the data points.                                                                                                                                        |
+| `ClassificationDataSet(X, y, *, scaler=*no scaling*, comm=*used MPI communicator*)`                                                                                     | Construct a new data set using the provided data and labels directly. Default scaler: don't scale the data points.                                                                                                                                                                                                                            |
 
-| methods             | description                                                                                                                                                        |
-|---------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `save(filename)`    | Save the current data set to the provided file.                                                                                                                    |
-| `num_data_points()` | Return the number of data points in the data set.                                                                                                                  |
-| `num_features()`    | Return the number of features in the data set.                                                                                                                     |
-| `data()`            | Return the data points.                                                                                                                                            |
-| `has_labels()`      | Check whether the data set is annotated with labels.                                                                                                               |
-| `labels()`          | Return the labels, if present.                                                                                                                                     |
-| `is_scaled()`       | Check whether the data points have been scaled.                                                                                                                    |
-| `scaling_factors()` | Return the scaling factors, if the data set has been scaled.                                                                                                       |
-| `print(data_set)`   | Overload to print a data set object displaying the label type, the number of data points and features as well as the classes and scaling interval (if applicable). |
+| methods                                        | description                                                                                                                                                        |
+|------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `save(filename, *, format=*used file format*)` | Save the current data set to the provided file.                                                                                                                    |
+| `data()`                                       | Return the data points.                                                                                                                                            |
+| `has_labels()`                                 | Check whether the data set is annotated with labels.                                                                                                               |
+| `labels()`                                     | Return the labels, if present.                                                                                                                                     |
+| `num_data_points()`                            | Return the number of data points in the data set.                                                                                                                  |
+| `num_features()`                               | Return the number of features in the data set.                                                                                                                     |
+| `is_scaled()`                                  | Check whether the data points have been scaled.                                                                                                                    |
+| `scaling_factors()`                            | Return the scaling factors, if the data set has been scaled.                                                                                                       |
+| `communicator()`                               | Return the used MPI communicator.                                                                                                                                  |
+| `print(data_set)`                              | Overload to print a data set object displaying the label type, the number of data points and features as well as the classes and scaling interval (if applicable). |
 
 The following methods are **only** available for a `plssvm.ClassificationDataSet`:
 
@@ -415,17 +416,18 @@ The following methods are **only** available for a `plssvm.ClassificationDataSet
 
 A class encapsulating and performing the scaling of a data set to the provided `[lower, upper]` range.
 
-| constructors                 | description                                                          |
-|------------------------------|----------------------------------------------------------------------|
-| `MinMaxScaler(lower, upper)` | Scale all data points feature-wise to the interval `[lower, upper]`. |
-| `MinMaxScaler(interval)`     | Scale all data points feature-wise to the provided interval.         |
-| `MinMaxScaler(filename)`     | Read previously calculated scaling factors from the provided file.   |
+| constructors                                                  | description                                                          |
+|---------------------------------------------------------------|----------------------------------------------------------------------|
+| `MinMaxScaler(lower, upper, *, comm=*used MPI communicator*)` | Scale all data points feature-wise to the interval `[lower, upper]`. |
+| `MinMaxScaler(interval, *, comm=*used MPI communicator*)`     | Scale all data points feature-wise to the provided interval.         |
+| `MinMaxScaler(filename, *, comm=*used MPI communicator*)`     | Read previously calculated scaling factors from the provided file.   |
 
 | methods              | description                                                                                                       |
 |----------------------|-------------------------------------------------------------------------------------------------------------------|
 | `save(filename)`     | Save the current scaling factors to the provided file.                                                            |
 | `scaling_interval()` | The scaling interval.                                                                                             |
 | `scaling_factors())` | The calculated feature-wise scaling factors.                                                                      |
+| `communicator()`     | Return the used MPI communicator.                                                                                 |
 | `print(scaling)`     | Overload to print a data set scaling object object displaying the scaling interval and number of scaling factors. |
 
 ##### `plssvm.MinMaxScalerFactors`
@@ -460,10 +462,10 @@ If the most performant backend should be used, it is sufficient to use `plssvm.C
 
 The following constructors and methods are available for both classification `CSVC` and regression `CSVR`:
 
-| constructors                                                        | description                                                                                                                                             |
-|---------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `CSVC([backend, target_platform, plssvm.Parameter kwargs])`         | Create a new C-SVM with the provided named arguments.                                                                                                   |
-| `CSVC(params, [backend, target_platform, plssvm.Parameter kwargs])` | Create a new C-SVM with the provided parameters and named arguments; the values in the `plssvm.Parameter` will be overwritten by the keyword arguments. |
+| constructors                                                                                                                                                                | description                                                                         |
+|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------|
+| `CSVC(backend, target, *, params=plssvm.Parameter, comm=*used MPI communicator*)`                                                                                           | Create a new C-SVM with the provided named arguments and `plssvm.Parameter` object. |
+| `CSVC(pbackend, target, *, kernel_type=plssvm.KernelFunctionType.RBF, degree=3, gamma=plssvm.GammaCoefficientType.AUTO, coef0=0.0, cost=1.0, comm=*used MPI communicator*)` | Create a new C-SVM with the provided parameters and named arguments.                |
 
 **Note**: if the backend type is `plssvm.BackendType.SYCL` two additional named parameters can be provided:
 `sycl_implementation_type` to choose between DPC++ and AdaptiveCpp as SYCL implementations
@@ -473,17 +475,18 @@ and `sycl_kernel_invocation_type` to choose between the two different SYCL kerne
 finalization functions must be called.
 However, this is **automatically** handled by our Python bindings on the module import and cleanup.
 
-| methods                                                                                                                                      | description                                                                                                                                                                                                         |
-|----------------------------------------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `set_params(params)`                                                                                                                         | Replace the current `plssvm.Parameter` with the provided one.                                                                                                                                                       |
-| `set_params([kernel_type=KernelFunctionType.LINEAR, degree=3, gamma=*1/#features*, coef=0.0, cost=1.0])`                                     | Replace the current `plssvm.Parameter` values with the provided named parameters.                                                                                                                                   |
-| `get_params()`                                                                                                                               | Return the `plssvm.Parameter` that are used in the C-SVM to learn the model.                                                                                                                                        |
-| `get_target_platform()`                                                                                                                      | Return the target platform this C-SVM is running on.                                                                                                                                                                |
-| `num_available_devices()`                                                                                                                    | Return the number of available devices, i.e., if the target platform represents a GPU, this function returns the number of used GPUs. Returns always 1 for CPU only backends.                                       |
-| `fit(data_set, [epsilon=0.01, classification=plssvm.ClassificatioType.OAA, solver=plssvm.SolverType.AUTOMATIC, max_iter=*#datapoints - 1*])` | Learn a LS-SVM model given the provided data points and optional parameters (the termination criterion in the CG algorithm, the classification strategy, the used solver, and the maximum number of CG iterations). |
-| `predict(model, data_set)`                                                                                                                   | Predict the labels of the data set using the previously learned model.                                                                                                                                              |
-| `score(model)`                                                                                                                               | Score the model with respect to itself returning its accuracy.                                                                                                                                                      |
-| `score(model, data_set)`                                                                                                                     | Score the model given the provided data set returning its accuracy.                                                                                                                                                 |
+| methods                                                                                                                                    | description                                                                                                                                                                                                         |
+|--------------------------------------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `get_params()`                                                                                                                             | Return the `plssvm.Parameter` that are used in the C-SVM to learn the model.                                                                                                                                        |
+| `set_params(params=plssvm.Parameter)`                                                                                                      | Replace the current `plssvm.Parameter` with the provided one.                                                                                                                                                       |
+| `set_params(*, kernel_type=KernelFunctionType.LINEAR, degree=3, gamma=plssvm.GammaCoefficientType.AUTO, coef=0.0, cost=1.0])`              | Replace the current `plssvm.Parameter` values with the provided named parameters.                                                                                                                                   |
+| `get_target_platform()`                                                                                                                    | Return the target platform this C-SVM is running on.                                                                                                                                                                |
+| `num_available_devices()`                                                                                                                  | Return the number of available devices, i.e., if the target platform represents a GPU, this function returns the number of used GPUs. Returns always 1 for CPU only backends.                                       |
+| `communicator()`                                                                                                                           | Return the used MPI communicator.                                                                                                                                                                                   |
+| `fit(data, *, epsilon=1e-10, classification=plssvm.ClassificatioType.OAA, solver=plssvm.SolverType.AUTOMATIC, max_iter=*#datapoints - 1*)` | Learn a LS-SVM model given the provided data points and optional parameters (the termination criterion in the CG algorithm, the classification strategy, the used solver, and the maximum number of CG iterations). |
+| `predict(model, data)`                                                                                                                     | Predict the labels of the data set using the previously learned model.                                                                                                                                              |
+| `score(model)`                                                                                                                             | Score the model with respect to itself returning its accuracy.                                                                                                                                                      |
+| `score(model, data)`                                                                                                                       | Score the model given the provided data set returning its accuracy.                                                                                                                                                 |
 
 **Note**: the `classification` named parameter is not allowed for the `CSVR`!
 
@@ -510,14 +513,13 @@ supported as target.
 These classes inherit all methods from the base `plssvm.CSVC` or `plssvm.CSVR` classes.
 The following constructors and methods are available for both classification `CSVC` and regression `CSVR`:
 
-| constructors                              | description                                                                                                                       |
-|-------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------|
-| `CSVC(params)`                            | Create a new C-SVM with the default target platform. The hyper-parameters are explicitly set to the provided `plssvm.Parameter`.  |
-| `CSVC(target, params)`                    | Create a new C-SVM with the provided target platform. The hyper-parameters are explicitly set to the provided `plssvm.Parameter`. |
-| `CSVC([plssvm.Parameter kwargs])`         | Create a new C-SVM with the default target platform. The hyper-parameter values are set ot the provided named parameter values.   |
-| `CSVC(target, [plssvm.Parameter kwargs])` | Create a new C-SVM with the provided target platform. The hyper-parameter values are set ot the provided named parameter values.  |
+| constructors                                                                                                                                                      | description                                                                         |
+|-------------------------------------------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------|
+| `CSVC(target, *, params=plssvm.Parameter, comm=*used MPI communicator*)`                                                                                          | Create a new C-SVM with the provided named arguments and `plssvm.Parameter` object. |
+| `CSVC(target, *, kernel_type=plssvm.KernelFunctionType.RBF, degree=3, gamma=plssvm.GammaCoefficientType.AUTO, coef0=0.0, cost=1.0, comm=*used MPI communicator*)` | Create a new C-SVM with the provided parameters and named arguments.                |
 
-In case of the SYCL C-SVMs (`plssvm.sycl.CSVM`, `plssvm.dpcpp.CSVM`, and `plssvm.adaptivecpp.CSVM`; the same for the `CSVR`s), additionally, all constructors also accept the SYCL specific `sycl_kernel_invocation_type` keyword parameter.
+In case of the SYCL C-SVMs (`plssvm.sycl.CSVM`, `plssvm.dpcpp.CSVM`, and `plssvm.adaptivecpp.CSVM`; the same for the 
+`CSVR`s), additionally, all constructors also accept the SYCL specific `sycl_kernel_invocation_type` keyword parameter.
 Also, the following method is additional available for the backend specific C-SVM:
 
 | methods                        | description                             |
@@ -544,43 +546,32 @@ A class encapsulating a model learned during a call to `plssvm.CSVC.fit()` or `p
 
 The following constructors and methods are available for both the classification and regression models:
 
-| constructors                                                    | description                                                                                                                                                                |
-|-----------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `ClassificationModel(model_file, [type=*the used label type*])` | Construct a new model object by reading a previously learned model from a file. Default type: `std::string` for the ClassificationModel, `double` for the RegressionModel. |
+| constructors                                                                                 | description                                                                                                                                                                |
+|----------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `ClassificationModel(filename, *, type=*the used label type*, comm=*used MPI communicator*)` | Construct a new model object by reading a previously learned model from a file. Default type: `std::string` for the ClassificationModel, `double` for the RegressionModel. |
 
-| methods                     | description                                                                                                                                                             |
-|-----------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `save(filename)`            | Save the current model to the provided file.                                                                                                                            |
-| `num_support_vectors()`     | Return the number of support vectors. **Note**: for LS-SVMs this corresponds to the number of training data points.                                                     |
-| `num_features()`            | Return the number of features each support vector has.                                                                                                                  |
-| `get_params()`              | Return the `plssvm.Parameter` that were used to learn this model.                                                                                                       |
-| `support_vectors()`         | Return the support vectors learned in this model. **Note**: for LS-SVMs this corresponds to all training data points.                                                   |
-| `labels()`                  | Return the labels of the support vectors.                                                                                                                               |
-| `weights()`                 | Return the learned weights.                                                                                                                                             |
-| `rho()`                     | Return the learned bias values.                                                                                                                                         |
-| `print(model)`              | Overload to print a model object displaying the number of support vectors and features, as well as the learned biases and used classification strategy (if applicable). |
+| methods                 | description                                                                                                                                                             |
+|-------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `save(filename)`        | Save the current model to the provided file.                                                                                                                            |
+| `num_support_vectors()` | Return the number of support vectors. **Note**: for LS-SVMs this corresponds to the number of training data points.                                                     |
+| `num_features()`        | Return the number of features each support vector has.                                                                                                                  |
+| `get_params()`          | Return the `plssvm.Parameter` that were used to learn this model.                                                                                                       |
+| `support_vectors()`     | Return the support vectors learned in this model. **Note**: for LS-SVMs this corresponds to all training data points.                                                   |
+| `labels()`              | Return the labels of the support vectors.                                                                                                                               |
+| `weights()`             | Return the learned weights.                                                                                                                                             |
+| `rho()`                 | Return the learned bias values.                                                                                                                                         |
+| `communicator()`        | Return the used MPI communicator.                                                                                                                                       |
+| `print(model)`          | Overload to print a model object displaying the number of support vectors and features, as well as the learned biases and used classification strategy (if applicable). |
 
 The following methods are **only** available for a `plssvm.ClassificationModel`:
 
 | methods                     | description                              |
 |-----------------------------|------------------------------------------|
-| `classes()`                 | Return the different classes.            |
 | `num_classes()`             | Return the number of different classes.  |
+| `classes()`                 | Return the different classes.            |
 | `get_classification_type()` | Return the used classification strategy. |
 
-#### `plssvm.Version`
-
-A class encapsulating the version information of the used PLSSVM installation.
-
-| attributes         | description                               |
-|--------------------|-------------------------------------------|
-| `name : string`    | The full name of the PLSSVM library.      |
-| `version : string` | The PLSSVM version ("major.minor.patch"). |
-| `major : int`      | The major PLSSVM version.                 |
-| `minor : int`      | The minor PLSSVM version.                 |
-| `patch : int`      | The patch PLSSVM version.                 |
-
-#### `plssvm.detail.tracking.PerformanceTracker`
+#### `plssvm.performance_tracking`
 
 A submodule used to track various performance statistics like runtimes, but also the used setup and hyperparameters.
 The tracked metrics can be saved to a YAML file for later post-processing.
@@ -601,12 +592,12 @@ The tracked metrics can be saved to a YAML file for later post-processing.
 | `get_events()`                                     | Return all previously recorded events.                                                 |
 | `clear_tracking_entries()`                         | Remove all currently tracked entries from the performance tracker.                     |
 
-#### `plssvm.detail.tracking.Event`, `plssvm.detail.tracking.Events`
+#### `plssvm.performance_tracking.Event`, `plssvm.performance_tracking.Events`
 
 Two rather similar classes.
 **Note**: both classes are only available if PLSSVM was built with `-DPLSSVM_ENABLE_PERFORMANCE_TRACKING=ON`!
 
-The `plssvm.detail.tracking.Event` class is a simple POD encapsulating the time point when
+The `plssvm.performance_tracking.Event` class is a simple POD encapsulating the time point when
 an event occurred and the respective event name.
 
 | constructors              | description            |
@@ -618,7 +609,7 @@ an event occurred and the respective event name.
 | `time_point : time` | The time point when this event occurred. |
 | `name : string`     | The name of this event.                  |
 
-The `plssvm.detail.tracking.Events` class stores multiple `plssvm.detail.tracking.Event`s.
+The `plssvm.performance_tracking.Events` class stores multiple `plssvm.performance_tracking.Event`s.
 
 | constructors | description                                 |
 |--------------|---------------------------------------------|
@@ -644,12 +635,12 @@ The following table lists all free functions in PLSSVM directly callable via `pl
 | `determine_default_target_platform(platform_device_list)`                   | Determines the default target platform used given the available target platforms.                                                                                                                                                                                                                 |
 | `kernel_function_type_to_math_string(kernel)`                               | Returns a math string of the provided kernel function.                                                                                                                                                                                                                                            |
 | `linear_kernel_function(x, y)`                                              | Calculate the linear kernel function of two vectors: x'*y                                                                                                                                                                                                                                         |
-| `polynomial_kernel_function(x, y, degree, gamma, coef0)`                    | Calculate the polynomial kernel function of two vectors: (gamma*x'*y+coef0)^degree, with degree ∊ ℤ, gamma > 0                                                                                                                                                                                    |
-| `rbf_kernel_function(x, y, gamma)`                                          | Calculate the radial basis function kernel function of two vectors: exp(-gamma*\|x-y\|^2), with gamma > 0                                                                                                                                                                                         |
-| `sigmoid_kernel_function(x, y, gamma, coef0)`                               | Calculate the sigmoid kernel function of two vectors: tanh(gamma*x'*y), with gamma > 0                                                                                                                                                                                                            |
-| `laplacian_kernel_function(x, y, gamma)`                                    | Calculate the laplacian kernel function of two vectors: exp(-gamma*\|x-y\|_1), with gamma > 0                                                                                                                                                                                                     |
-| `chi_squared_kernel_function(x, y, gamma)`                                  | Calculate the chi-squared kernel function of two vectors: exp(-gamma*sum_i((x[i] - y[i])^2) / (x[i] + y[i])), with gamma > 0                                                                                                                                                                      |
-| `kernel_function(x, y, params)`                                             | Calculate the kernel function provided in params with the additional parameters also provided in params.                                                                                                                                                                                          |
+| `polynomial_kernel_function(x, y, *, degree, gamma, coef0)`                 | Calculate the polynomial kernel function of two vectors: (gamma*x'*y+coef0)^degree, with degree ∊ ℤ, gamma > 0                                                                                                                                                                                    |
+| `rbf_kernel_function(x, y, *, gamma)`                                       | Calculate the radial basis function kernel function of two vectors: exp(-gamma*\|x-y\|^2), with gamma > 0                                                                                                                                                                                         |
+| `sigmoid_kernel_function(x, y, *, gamma, coef0)`                            | Calculate the sigmoid kernel function of two vectors: tanh(gamma*x'*y), with gamma > 0                                                                                                                                                                                                            |
+| `laplacian_kernel_function(x, y, *, gamma)`                                 | Calculate the laplacian kernel function of two vectors: exp(-gamma*\|x-y\|_1), with gamma > 0                                                                                                                                                                                                     |
+| `chi_squared_kernel_function(x, y, *, gamma)`                               | Calculate the chi-squared kernel function of two vectors: exp(-gamma*sum_i((x[i] - y[i])^2) / (x[i] + y[i])), with gamma > 0                                                                                                                                                                      |
+| `kernel_function(x, y, *, params)`                                          | Calculate the kernel function provided in params with the additional parameters also provided in params.                                                                                                                                                                                          |
 | `classification_type_to_full_string(classification)`                        | Returns the full string of the provided classification type, i.e., "one vs. all" and "one vs. one" instead of only "oaa" or "oao".                                                                                                                                                                |
 | `calculate_number_of_classifiers(classification, num_classes)`              | Return the number of necessary classifiers in a multi-class setting with the provided classification strategy and number of different classes.                                                                                                                                                    |
 | `list_available_backends()`                                                 | List all available backends (determined during PLSSVM's build step).                                                                                                                                                                                                                              |
@@ -663,7 +654,7 @@ The following table lists all free functions in PLSSVM directly callable via `pl
 | `list_available_svm_types()`                                                | List all available SVM types (C-SVC or C-SVR).                                                                                                                                                                                                                                                    |
 | `svm_type_to_task_name(svm_type)`                                           | Returns the task name (classification or regression) associated with the provided SVM type.                                                                                                                                                                                                       |
 | `svm_type_from_model_file(model_file)`                                      | Returns the SVM type used to create the provided model file.                                                                                                                                                                                                                                      |
-| `regression_report(y_true, y_pred, [force_finite, output_dict])`            | Returns a regression report similar to sklearn's [`metrics.classification_report`](https://scikit-learn.org/0.15/modules/generated/sklearn.metrics.classification_report.html) for the regression task. If `output_dict` is , returns a Python dictionary, otherwise directly returns a string.   |
+| `regression_report(y_true, y_pred, *, force_finite, output_dict)`           | Returns a regression report similar to sklearn's [`metrics.classification_report`](https://scikit-learn.org/0.15/modules/generated/sklearn.metrics.classification_report.html) for the regression task. If `output_dict` is , returns a Python dictionary, otherwise directly returns a string.   |
 
 If a SYCL implementation is available, additional free functions are available:
 
@@ -676,6 +667,16 @@ If a stdpar implementation is available, additional free functions are available
 | function                                  | description                                                                                                                                   |
 |-------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------|
 | `list_available_stdpar_implementations()` | List all available stdpar implementations (determined during PLSSVM's build step; currently always guaranteed to be only one implementation). |
+
+### Module Level Attributes
+
+A few model level attributes are support and directly retrievable in the top-level `plssvm` module:
+
+| attribute          | description                                                                               |
+|--------------------|-------------------------------------------------------------------------------------------|
+| `__name__`         | The name of our PLSSVM library: "PLSSVM - Parallel Least Squares Support Vector Machine". |
+| `__version__`      | The current PLSSVM version as version string.                                             |
+| `__version_info__` | The current PLSSVM major, minor, and patch versions as tuple.                             |
 
 ### Exceptions
 
@@ -694,7 +695,7 @@ The PLSSVM Python3 bindings define a few new exception types:
 | `UnsupportedKernelTypeError` | If an unsupported target platform has been requested.                                                                                                           |
 | `GPUDevicePtrError`          | If something went wrong in one of the backend's GPU device pointers. **Note**: shouldn't occur in user code.                                                    |
 | `MatrixError`                | If something went wrong in the internal matrix class. **Note**: shouldn't occur in user code.                                                                   |
-| `KernelLaunchResourcesError` | If something went wrong during a kernel launch due to insufficient ressources.                                                                                  |
+| `KernelLaunchResourcesError` | If something went wrong during a kernel launch due to insufficient resources.                                                                                   |
 | `ClassificationReportError`  | If something in the classification report went wrong. **Note**: shouldn't occur in user code.                                                                   |
 | `RegressionReportError`      | If something in the regression report went wrong. **Note**: shouldn't occur in user code.                                                                       |
 | `EnvironmentError`           | If something during the special environment initialization or finalization went wrong.                                                                          |

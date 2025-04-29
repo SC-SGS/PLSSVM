@@ -87,8 +87,8 @@ def create_svc_layout():
 
     def train_models(svm_params, X_train, y_train):
         """Train the SVMs and compute the decision boundaries."""
-        # train plssvm.SVC
-        trained_plssvm_model = SVCModel(plssvm.SVC(**svm_params), X_train, y_train)
+        # train plssvm.svm.SVC
+        trained_plssvm_model = SVCModel(plssvm.svm.SVC(**svm_params), X_train, y_train)
 
         # if the laplacian kernel is selected, we can't train the sklearn model
         if svm_params["kernel"] == "laplacian":
@@ -112,7 +112,7 @@ def create_svc_layout():
     sklearn_classification_report, sklearn_classification_report_source = create_classification_report_plot(y, sklearn_pred)
     sklearn_text = Div(text=f"score: {sklearn_model.model.score(X, y) * 100:.2f}%<br>runtime: {sklearn_model.time:.2f}ms", styles={'font-size': '16px', 'color': 'black'})
 
-    plssvm_decision_boundary_fig, plssvm_decision_boundary, plssvm_decision_boundary_source, plssvm_data_source = create_decision_boundary_plot("plssvm.SVC",
+    plssvm_decision_boundary_fig, plssvm_decision_boundary, plssvm_decision_boundary_source, plssvm_data_source = create_decision_boundary_plot("plssvm.svm.SVC",
                                                                                                                                                 plssvm_model, X, y)
     plssvm_pred = plssvm_model.model.predict(X)
     plssvm_confusion_matrix, plssvm_confusion_matrix_source = create_confusion_matrix_plot(y, plssvm_pred)

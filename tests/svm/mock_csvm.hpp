@@ -17,6 +17,7 @@
 #include "plssvm/detail/memory_size.hpp"    // plssvm::detail::memory_size, plssvm::detail::literals
 #include "plssvm/detail/move_only_any.hpp"  // plssvm::detail::move_only_any
 #include "plssvm/matrix.hpp"                // plssvm::aos_matrix
+#include "plssvm/mpi/communicator.hpp"      // plssvm::mpi::communicator
 #include "plssvm/parameter.hpp"             // plssvm::parameter
 #include "plssvm/solver_types.hpp"          // plssvm::solver_type
 #include "plssvm/svm/csvm.hpp"              // plssvm::csvm
@@ -34,7 +35,7 @@ class mock_csvm : virtual public plssvm::csvm {
   public:
     template <typename... Args>
     explicit mock_csvm(Args &&...args) :
-        plssvm::csvm{ std::forward<Args>(args)... } {
+        plssvm::csvm{ plssvm::mpi::communicator{}, std::forward<Args>(args)... } {
         this->fake_functions();
     }
 

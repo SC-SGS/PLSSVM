@@ -66,8 +66,8 @@ def create_svr_layout():
 
     def train_models(svm_params, X_train, y_train):
         """Train the SVMs and compute the decision boundaries."""
-        # train plssvm.SVR
-        trained_plssvm_model = SVRModel(plssvm.SVR(**svm_params), X_train, y_train)
+        # train plssvm.svm.SVR
+        trained_plssvm_model = SVRModel(plssvm.svm.SVR(**svm_params), X_train, y_train)
 
         # if the laplacian kernel is selected, we can't train the sklearn model
         if svm_params["kernel"] == "laplacian":
@@ -90,7 +90,7 @@ def create_svr_layout():
     sklearn_text = Div(text=f"score: {r2_score(y, sklearn_pred):.3f}<br>runtime: {sklearn_model.time:.2f}ms",
                        styles={'font-size': '16px', 'color': 'black'})
 
-    plssvm_fig, plssvm_plot, plssvm_plot_source, plssvm_data_source, plssvm_pred = create_plot("plssvm.SVR", plssvm_model, X, y)
+    plssvm_fig, plssvm_plot, plssvm_plot_source, plssvm_data_source, plssvm_pred = create_plot("plssvm.svm.SVR", plssvm_model, X, y)
     plssvm_prediction_vs_actual, plssvm_prediction_vs_actual_source, plssvm_prediction_vs_actual_bisector_source = create_prediction_vs_actual_plot(y, plssvm_pred)
     plssvm_regression_report, plssvm_regression_report_source = create_regression_report_plot(y, plssvm_pred)
     plssvm_text = Div(text=f"score: {r2_score(y, plssvm_pred):.3f}<br>runtime: {plssvm_model.time:.2f}ms",

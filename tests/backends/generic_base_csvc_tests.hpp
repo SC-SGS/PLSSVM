@@ -126,6 +126,12 @@ TYPED_TEST_P(GenericCSVCKernelFunctionClassification, predict) {
 
     // check the calculated result for correctness
     EXPECT_EQ(calculated, test_data.labels().value().get());
+
+    // for the linear kernel, predict again to check whether reusing the w vector works as intended
+    if (kernel == plssvm::kernel_function_type::linear) {
+        const std::vector<label_type> calculated_second = svc.predict(model, test_data);
+        EXPECT_EQ(calculated_second, test_data.labels().value().get());
+    }
 }
 
 TYPED_TEST_P(GenericCSVCKernelFunctionClassification, score_model) {

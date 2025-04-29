@@ -27,7 +27,7 @@ namespace util {
 #if defined(KOKKOS_ENABLE_HIP) && (defined(PLSSVM_HAS_NVIDIA_TARGET) || defined(PLSSVM_HAS_AMD_TARGET))  // for Kokkos::HIP, an NVIDIA or AMD target must be available
         plssvm::kokkos::execution_space::hip,
 #endif
-#if defined(KOKKOS_ENABLE_SYCL)  // for Kokkos::SYCL, any target is ok
+#if defined(KOKKOS_ENABLE_SYCL) && (defined(PLSSVM_HAS_NVIDIA_TARGET) || defined(PLSSVM_HAS_AMD_TARGET) || defined(PLSSVM_HAS_INTEL_TARGET))  // for Kokkos::SYCL, any target is ok except CPUs
         plssvm::kokkos::execution_space::sycl,
 #endif
 #if defined(KOKKOS_ENABLE_HPX) && defined(PLSSVM_HAS_CPU_TARGET)  // for Kokkos::Experimental::HPX, a CPU target must be available

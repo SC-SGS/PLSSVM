@@ -96,48 +96,48 @@ TEST(DimType, swap_free_function) {
 
 TEST(DimType, equality) {
     // create dim types
-    constexpr plssvm::detail::dim_type dim1{};
-    constexpr plssvm::detail::dim_type dim2{ 64ull };
-    constexpr plssvm::detail::dim_type dim3{ 64ull, 32ull };
-    constexpr plssvm::detail::dim_type dim4{ 64ull, 32ull, 16ull };
-    constexpr plssvm::detail::dim_type dim5{ 32ull };
-    constexpr plssvm::detail::dim_type dim6{ 32ull, 16ull };
-    constexpr plssvm::detail::dim_type dim7{ 32ull, 16ull, 8ull };
+    constexpr plssvm::detail::dim_type dim_1{};
+    constexpr plssvm::detail::dim_type dim_2{ 64ull };
+    constexpr plssvm::detail::dim_type dim_3{ 64ull, 32ull };
+    constexpr plssvm::detail::dim_type dim_4{ 64ull, 32ull, 16ull };
+    constexpr plssvm::detail::dim_type dim_5{ 32ull };
+    constexpr plssvm::detail::dim_type dim_6{ 32ull, 16ull };
+    constexpr plssvm::detail::dim_type dim_7{ 32ull, 16ull, 8ull };
 
     // check for equality
-    EXPECT_TRUE(dim1 == dim1);
-    EXPECT_TRUE(dim2 == dim2);
-    EXPECT_TRUE(dim3 == dim3);
-    EXPECT_TRUE(dim4 == dim4);
-    EXPECT_FALSE(dim2 == dim3);
-    EXPECT_FALSE(dim2 == dim4);
-    EXPECT_FALSE(dim3 == dim4);
-    EXPECT_FALSE(dim2 == dim5);
-    EXPECT_FALSE(dim3 == dim6);
-    EXPECT_FALSE(dim4 == dim7);
+    EXPECT_TRUE(dim_1 == dim_1);
+    EXPECT_TRUE(dim_2 == dim_2);
+    EXPECT_TRUE(dim_3 == dim_3);
+    EXPECT_TRUE(dim_4 == dim_4);
+    EXPECT_FALSE(dim_2 == dim_3);
+    EXPECT_FALSE(dim_2 == dim_4);
+    EXPECT_FALSE(dim_3 == dim_4);
+    EXPECT_FALSE(dim_2 == dim_5);
+    EXPECT_FALSE(dim_3 == dim_6);
+    EXPECT_FALSE(dim_4 == dim_7);
 }
 
 TEST(DimType, inequality) {
     // create dim types
-    constexpr plssvm::detail::dim_type dim1{};
-    constexpr plssvm::detail::dim_type dim2{ 64ull };
-    constexpr plssvm::detail::dim_type dim3{ 64ull, 32ull };
-    constexpr plssvm::detail::dim_type dim4{ 64ull, 32ull, 16ull };
-    constexpr plssvm::detail::dim_type dim5{ 32ull };
-    constexpr plssvm::detail::dim_type dim6{ 32ull, 16ull };
-    constexpr plssvm::detail::dim_type dim7{ 32ull, 16ull, 8ull };
+    constexpr plssvm::detail::dim_type dim_1{};
+    constexpr plssvm::detail::dim_type dim_2{ 64ull };
+    constexpr plssvm::detail::dim_type dim_3{ 64ull, 32ull };
+    constexpr plssvm::detail::dim_type dim_4{ 64ull, 32ull, 16ull };
+    constexpr plssvm::detail::dim_type dim_5{ 32ull };
+    constexpr plssvm::detail::dim_type dim_6{ 32ull, 16ull };
+    constexpr plssvm::detail::dim_type dim_7{ 32ull, 16ull, 8ull };
 
     // check for inequality
-    EXPECT_FALSE(dim1 != dim1);
-    EXPECT_FALSE(dim2 != dim2);
-    EXPECT_FALSE(dim3 != dim3);
-    EXPECT_FALSE(dim4 != dim4);
-    EXPECT_TRUE(dim2 != dim3);
-    EXPECT_TRUE(dim2 != dim4);
-    EXPECT_TRUE(dim3 != dim4);
-    EXPECT_TRUE(dim2 != dim5);
-    EXPECT_TRUE(dim3 != dim6);
-    EXPECT_TRUE(dim4 != dim7);
+    EXPECT_FALSE(dim_1 != dim_1);
+    EXPECT_FALSE(dim_2 != dim_2);
+    EXPECT_FALSE(dim_3 != dim_3);
+    EXPECT_FALSE(dim_4 != dim_4);
+    EXPECT_TRUE(dim_2 != dim_3);
+    EXPECT_TRUE(dim_2 != dim_4);
+    EXPECT_TRUE(dim_3 != dim_4);
+    EXPECT_TRUE(dim_2 != dim_5);
+    EXPECT_TRUE(dim_3 != dim_6);
+    EXPECT_TRUE(dim_4 != dim_7);
 }
 
 TEST(DimType, to_string) {

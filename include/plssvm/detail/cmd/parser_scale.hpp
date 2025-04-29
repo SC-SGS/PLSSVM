@@ -15,6 +15,7 @@
 
 #include "plssvm/constants.hpp"          // plssvm::real_type
 #include "plssvm/file_format_types.hpp"  // plssvm::file_format_type
+#include "plssvm/mpi/communicator.hpp"   // plssvm::mpi::communicator
 
 #include "fmt/base.h"     // fmt::formatter
 #include "fmt/ostream.h"  // mt::ostream_formatter
@@ -31,10 +32,11 @@ struct parser_scale {
     /**
      * @brief Parse the command line arguments @p argv using [`cxxopts`](https://github.com/jarro2783/cxxopts) and set the scale parameters accordingly.
      * @details If no scaled filename is given, the scaled data is directly output to the terminal (the default behavior of LIBSVM).
+     * @param[in] comm the MPI communicator wrapper
      * @param[in] argc the number of passed command line arguments
      * @param[in] argv the command line arguments
      */
-    parser_scale(int argc, char **argv);
+    parser_scale(const mpi::communicator &comm, int argc, char **argv);
 
     /// The lower bound of the scaled data values.
     real_type lower{ -1.0 };

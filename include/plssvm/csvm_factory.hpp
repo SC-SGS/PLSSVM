@@ -69,7 +69,8 @@ namespace detail {
 /**
  * @brief Construct a C-SVM using the parameters @p args.
  * @details The default case, no special parameters for the C-SVMs are necessary.
- * @tparam csvm_type the type of the C-SVM
+ * @tparam base_csvm_type the type of the C-SVM base class
+ * @tparam backend_csvm_type the type of the C-SVM backend specific class
  * @tparam Args the types of the parameters to initialize the C-SVM
  * @param[in] args the parameters used to initialize the C-SVM
  * @throws plssvm::unsupported_backend_exception if the @p backend is not recognized

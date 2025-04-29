@@ -79,7 +79,7 @@ struct type_caster<plssvm::bindings::python::util::matrix_wrapper<T, layout>> {
      * @param[in] matr the PLSSVM matrix to convert to a Numpy ndarray
      * @return a Pybind11 handle to the Numpy ndarray
      */
-    static handle cast(const matrix_type &matr, return_value_policy, handle) {
+    static py::handle cast(const matrix_type &matr, py::return_value_policy, py::handle) {
         return py::cast(matr.matrix);
     }
 
@@ -91,7 +91,7 @@ struct type_caster<plssvm::bindings::python::util::matrix_wrapper<T, layout>> {
      * @throws py::value_error all exceptions from the custom plssvm::matrix type caster
      * @throws py::value_error if not all column names are strings
      */
-    bool load(handle obj, bool) {
+    bool load(py::handle obj, bool) {
         // convert the object to a plssvm::matrix
         value.matrix = obj.cast<plssvm::matrix<T, layout>>();
 

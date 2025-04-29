@@ -17,6 +17,9 @@ jobs:
       - name: "Install new g++"
         run: |
           sudo apt install g++
+      - name: "Install MPI (necessary for mpi4py)"
+        run: |
+          sudo apt install libopenmpi-dev
       - name: "Clone the PLSSVM repository into PLSSVM/"
         uses: actions/checkout@v4.1.1
         with:

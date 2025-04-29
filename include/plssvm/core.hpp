@@ -32,6 +32,7 @@
 #include "plssvm/matrix.hpp"                                 // a custom matrix class
 #include "plssvm/model/classification_model.hpp"             // the model as a result of training a C-SVC
 #include "plssvm/model/regression_model.hpp"                 // the model as a result of training a C-SVR
+#include "plssvm/mpi/communicator.hpp"                       // PLSSVM MPI communicator wrapper
 #include "plssvm/parameter.hpp"                              // the C-SVM parameter
 #include "plssvm/regression_report.hpp"                      // reports different metrics (e.g., mean squared error or R^2 score) for the regression task after scoring
 #include "plssvm/shape.hpp"                                  // shape for a matrix or device pointer
@@ -65,6 +66,12 @@ namespace plssvm::detail::io { }
 
 /// Namespace containing implementation details for the command line interface functionality. **Should not** directly be used by users.
 namespace plssvm::detail::cmd { }
+
+/// Namespace containing MPI wrapper functionality.
+namespace plssvm::mpi { }
+
+/// Namespace containing implementation details for our MPI wrapper functionality. **Should not** directly be used by users.
+namespace plssvm::mpi::detail { }
 
 /// Namespace containing implementation details for the performance tracking and hardware sampling functionality. **Should not** directly be used by users.
 namespace plssvm::detail::tracking { }

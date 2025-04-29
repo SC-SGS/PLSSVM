@@ -29,13 +29,38 @@ if (PLSSVM_ENABLE_HARDWARE_SAMPLING)
     target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC PLSSVM_HARDWARE_SAMPLING_INTERVAL=${PLSSVM_HARDWARE_SAMPLING_INTERVAL}ms)
 
     include(FetchContent)
-    set(PLSSVM_hws_VERSION v1.0.3)
+    set(PLSSVM_hws_VERSION v1.1.1)
     find_package(hws QUIET)
     if (hws_FOUND)
         message(STATUS "Found package hws.")
     else ()
-        set(PLSSVM_)
         message(STATUS "Couldn't find package hws. Building version ${PLSSVM_hws_VERSION} from source.")
+        # always try to sample CPU information
+        set(HWS_ENABLE_CPU_SAMPLING AUTO CACHE INTERNAL "" FORCE)
+        # NVIDIA GPUs
+        if (DEFINED PLSSVM_NVIDIA_TARGET_ARCHS)
+            # NVIDIA GPU targets are provided -> try to sample information
+            set(HWS_ENABLE_GPU_NVIDIA_SAMPLING AUTO CACHE INTERNAL "" FORCE)
+        else ()
+            # no NVIDIA GPU targets are provided -> don't try to sample information
+            set(HWS_ENABLE_GPU_NVIDIA_SAMPLING OFF CACHE INTERNAL "" FORCE)
+        endif ()
+        # AMD GPUs
+        if (DEFINED PLSSVM_AMD_TARGET_ARCHS)
+            # AMD GPU targets are provided -> try to sample information
+            set(HWS_ENABLE_GPU_AMD_SAMPLING AUTO CACHE INTERNAL "" FORCE)
+        else ()
+            # no AMD GPU targets are provided -> don't try to sample information
+            set(HWS_ENABLE_GPU_AMD_SAMPLING OFF CACHE INTERNAL "" FORCE)
+        endif ()
+        # Intel GPUs
+        if (DEFINED PLSSVM_INTEL_TARGET_ARCHS)
+            # Intel GPU targets are provided -> try to sample information
+            set(HWS_ENABLE_GPU_INTEL_SAMPLING AUTO CACHE INTERNAL "" FORCE)
+        else ()
+            # no Intel GPU targets are provided -> don't try to sample information
+            set(HWS_ENABLE_GPU_INTEL_SAMPLING OFF CACHE INTERNAL "" FORCE)
+        endif ()
         set(HWS_ENABLE_ERROR_CHECKS ${PLSSVM_ENABLE_ASSERTS} CACHE INTERNAL "" FORCE)
         set(HWS_SAMPLING_INTERVAL ${PLSSVM_HARDWARE_SAMPLING_INTERVAL} CACHE INTERNAL "" FORCE)
         set(HWS_ENABLE_PYTHON_BINDINGS OFF CACHE INTERNAL "" FORCE)

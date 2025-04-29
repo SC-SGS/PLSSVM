@@ -17,13 +17,14 @@
 #include "plssvm/data_set/data_set.hpp"                    // plssvm::data_set
 #include "plssvm/data_set/min_max_scaler.hpp"              // plssvm::min_max_scaler
 #include "plssvm/detail/assert.hpp"                        // PLSSVM_ASSERT
-#include "plssvm/detail/logging.hpp"                       // plssvm::detail::log
+#include "plssvm/detail/logging/mpi_log.hpp"               // plssvm::detail::log
 #include "plssvm/detail/tracking/performance_tracker.hpp"  // PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY, plssvm::detail::tracking::tracking_entry
 #include "plssvm/detail/type_list.hpp"                     // plssvm::detail::{supported_label_types_classification, tuple_contains_v}
 #include "plssvm/detail/utility.hpp"                       // plssvm::detail::contains
 #include "plssvm/exceptions/exceptions.hpp"                // plssvm::data_set_exception
 #include "plssvm/file_format_types.hpp"                    // plssvm::file_format_type
 #include "plssvm/matrix.hpp"                               // plssvm::aos_matrix
+#include "plssvm/mpi/communicator.hpp"                     // plssvm::mpi::communicator
 #include "plssvm/shape.hpp"                                // plssvm::shape
 #include "plssvm/verbosity_levels.hpp"                     // plssvm::verbosity_level
 
@@ -82,104 +83,450 @@ class classification_data_set : public data_set<U> {
     class label_mapper;
 
     /**
-     * @copydoc plssvm::data_set::data_set(const std::string &)
+     * @brief Read the data points from the file @p filename.
+     *        Automatically determines the plssvm::file_format_type based on the file extension.
+     * @details If @p filename ends with `.arff` it uses the ARFF parser, otherwise the LIBSVM parser is used.
+     * @param[in] filename the file to read the data points from
+     * @throws plssvm::invalid_file_format_exception all exceptions thrown by plssvm::data_set::read_file
      */
     explicit classification_data_set(const std::string &filename) :
-        base_data_set{ filename } { this->init(); }
+        base_data_set{ mpi::communicator{}, filename } { this->init(); }
 
     /**
-     * @copydoc plssvm::data_set::data_set(const std::string &, file_format_type)
+     * @brief Read the data points from the file @p filename.
+     *        Automatically determines the plssvm::file_format_type based on the file extension.
+     * @details If @p filename ends with `.arff` it uses the ARFF parser, otherwise the LIBSVM parser is used.
+     * @param[in] comm the used MPI communicator (**note**: current only used to restrict logging outputs to the main MPI rank)
+     * @param[in] filename the file to read the data points from
+     * @throws plssvm::invalid_file_format_exception all exceptions thrown by plssvm::data_set::read_file
+     */
+    classification_data_set(mpi::communicator comm, const std::string &filename) :
+        base_data_set{ std::move(comm), filename } { this->init(); }
+
+    /**
+     * @brief Read the data points from the file @p filename assuming that the file is given in the @p plssvm::file_format_type.
+     * @param[in] filename the file to read the data points from
+     * @param[in] format the assumed file format used to parse the data points
+     * @throws plssvm::invalid_file_format_exception all exceptions thrown by plssvm::data_set::read_file
      */
     classification_data_set(const std::string &filename, file_format_type format) :
-        base_data_set{ filename, format } { this->init(); }
+        base_data_set{ mpi::communicator{}, filename, format } { this->init(); }
 
     /**
-     * @copydoc plssvm::data_set::data_set(const std::string &, min_max_scaler)
+     * @brief Read the data points from the file @p filename assuming that the file is given in the @p plssvm::file_format_type.
+     * @param[in] comm the used MPI communicator (**note**: current only used to restrict logging outputs to the main MPI rank)
+     * @param[in] filename the file to read the data points from
+     * @param[in] format the assumed file format used to parse the data points
+     * @throws plssvm::invalid_file_format_exception all exceptions thrown by plssvm::data_set::read_file
+     */
+    classification_data_set(mpi::communicator comm, const std::string &filename, file_format_type format) :
+        base_data_set{ std::move(comm), filename, format } { this->init(); }
+
+    /**
+     * @brief Read the data points from the file @p filename and scale it using the provided @p scaler.
+     *        Automatically determines the plssvm::file_format_type based on the file extension.
+     * @details If @p filename ends with `.arff` it uses the ARFF parser, otherwise the LIBSVM parser is used.
+     * @param[in] filename the file to read the data points from
+     * @param[in] scaler the parameters used to scale the data set feature values to a given range
+     * @throws plssvm::invalid_file_format_exception all exceptions thrown by plssvm::data_set::read_file
+     * @throws plssvm::min_max_scaler_exception all exceptions thrown by plssvm::min_max_scaler::scale
      */
     classification_data_set(const std::string &filename, min_max_scaler scaler) :
-        base_data_set{ filename, std::move(scaler) } { this->init(); }
+        base_data_set{ mpi::communicator{}, filename, std::move(scaler) } { this->init(); }
 
     /**
-     * @copydoc plssvm::data_set::data_set(const std::string &, file_format_type, min_max_scaler)
+     * @brief Read the data points from the file @p filename and scale it using the provided @p scaler.
+     *        Automatically determines the plssvm::file_format_type based on the file extension.
+     * @details If @p filename ends with `.arff` it uses the ARFF parser, otherwise the LIBSVM parser is used.
+     * @param[in] comm the used MPI communicator (**note**: current only used to restrict logging outputs to the main MPI rank)
+     * @param[in] filename the file to read the data points from
+     * @param[in] scaler the parameters used to scale the data set feature values to a given range
+     * @throws plssvm::invalid_file_format_exception all exceptions thrown by plssvm::data_set::read_file
+     * @throws plssvm::min_max_scaler_exception all exceptions thrown by plssvm::min_max_scaler::scale
+     * @throws plssvm::mpi_exception if the MPI communicator @p comm and the MPI communicator in @p scaler are not identical
+     */
+    classification_data_set(mpi::communicator comm, const std::string &filename, min_max_scaler scaler) :
+        base_data_set{ std::move(comm), filename, std::move(scaler) } { this->init(); }
+
+    /**
+     * @brief Read the data points from the file @p filename assuming that the file is given in the plssvm::file_format_type @p format and
+     *        scale it using the provided @p scaler.
+     * @param[in] filename the file to read the data points from
+     * @param[in] format the assumed file format used to parse the data points
+     * @param[in] scaler the parameters used to scale the data set feature values to a given range
+     * @throws plssvm::invalid_file_format_exception all exceptions thrown by plssvm::data_set::read_file
+     * @throws plssvm::min_max_scaler_exception all exceptions thrown by plssvm::min_max_scaler::scale
      */
     classification_data_set(const std::string &filename, file_format_type format, min_max_scaler scaler) :
-        base_data_set{ filename, format, std::move(scaler) } { this->init(); }
+        base_data_set{ mpi::communicator{}, filename, format, std::move(scaler) } { this->init(); }
 
     /**
-     * @copydoc plssvm::data_set::data_set(const std::vector<std::vector<real_type>> &)
+     * @brief Read the data points from the file @p filename assuming that the file is given in the plssvm::file_format_type @p format and
+     *        scale it using the provided @p scaler.
+     * @param[in] comm the used MPI communicator (**note**: current only used to restrict logging outputs to the main MPI rank)
+     * @param[in] filename the file to read the data points from
+     * @param[in] format the assumed file format used to parse the data points
+     * @param[in] scaler the parameters used to scale the data set feature values to a given range
+     * @throws plssvm::invalid_file_format_exception all exceptions thrown by plssvm::data_set::read_file
+     * @throws plssvm::min_max_scaler_exception all exceptions thrown by plssvm::min_max_scaler::scale
+     * @throws plssvm::mpi_exception if the MPI communicator @p comm and the MPI communicator in @p scaler are not identical
+     */
+    classification_data_set(mpi::communicator comm, const std::string &filename, file_format_type format, min_max_scaler scaler) :
+        base_data_set{ std::move(comm), filename, format, std::move(scaler) } { this->init(); }
+
+    /**
+     * @brief Create a new data set by converting the provided @p data_points to a plssvm::matrix.
+     * @details Since no labels are provided, this data set may **not** be used to a call to plssvm::csvc::fit/plssvm::csvr::fit!
+     * @param[in] data_points the data points used in this data set
+     * @throws plssvm::data_set_exception if the @p data_points vector is empty
+     * @throws plssvm::data_set_exception if the data points in @p data_points have mismatching number of features
+     * @throws plssvm::data_set_exception if any @p data_point has no features
      */
     explicit classification_data_set(const std::vector<std::vector<real_type>> &data_points) :
-        base_data_set{ data_points } { this->init(); }
+        base_data_set{ mpi::communicator{}, data_points } { this->init(); }
 
     /**
-     * @copydoc plssvm::data_set::data_set(const std::vector<std::vector<real_type>> &, std::vector<label_type>)
+     * @brief Create a new data set by converting the provided @p data_points to a plssvm::matrix.
+     * @details Since no labels are provided, this data set may **not** be used to a call to plssvm::csvc::fit/plssvm::csvr::fit!
+     * @param[in] comm the used MPI communicator (**note**: current only used to restrict logging outputs to the main MPI rank)
+     * @param[in] data_points the data points used in this data set
+     * @throws plssvm::data_set_exception if the @p data_points vector is empty
+     * @throws plssvm::data_set_exception if the data points in @p data_points have mismatching number of features
+     * @throws plssvm::data_set_exception if any @p data_point has no features
+     */
+    classification_data_set(mpi::communicator comm, const std::vector<std::vector<real_type>> &data_points) :
+        base_data_set{ std::move(comm), data_points } { this->init(); }
+
+    /**
+     * @brief Create a new data set by converting the provided @p data_points to a plssvm::matrix and copying the @p labels.
+     * @param[in] data_points the data points used in this data set
+     * @param[in] labels the labels used in this data set
+     * @throws plssvm::data_set_exception if the @p data_points vector is empty
+     * @throws plssvm::data_set_exception if the data points in @p data_points have mismatching number of features
+     * @throws plssvm::data_set_exception if any @p data_point has no features
+     * @throws plssvm::data_set_exception if the number of data points in @p data_points and number of @p labels mismatch
      */
     classification_data_set(const std::vector<std::vector<real_type>> &data_points, std::vector<label_type> labels) :
-        base_data_set{ data_points, std::move(labels) } { this->init(); }
+        base_data_set{ mpi::communicator{}, data_points, std::move(labels) } { this->init(); }
 
     /**
-     * @copydoc plssvm::data_set::data_set(const std::vector<std::vector<real_type>> &, min_max_scaler)
+     * @brief Create a new data set by converting the provided @p data_points to a plssvm::matrix and copying the @p labels.
+     * @param[in] comm the used MPI communicator (**note**: current only used to restrict logging outputs to the main MPI rank)
+     * @param[in] data_points the data points used in this data set
+     * @param[in] labels the labels used in this data set
+     * @throws plssvm::data_set_exception if the @p data_points vector is empty
+     * @throws plssvm::data_set_exception if the data points in @p data_points have mismatching number of features
+     * @throws plssvm::data_set_exception if any @p data_point has no features
+     * @throws plssvm::data_set_exception if the number of data points in @p data_points and number of @p labels mismatch
+     */
+    classification_data_set(mpi::communicator comm, const std::vector<std::vector<real_type>> &data_points, std::vector<label_type> labels) :
+        base_data_set{ std::move(comm), data_points, std::move(labels) } { this->init(); }
+
+    /**
+     * @brief Create a new data set  by converting the provided @p data_points to a plssvm::matrix and scale them using the provided @p scaler.
+     * @param[in] data_points the data points used in this data set
+     * @param[in] scaler the parameters used to scale the data set feature values to a given range
+     * @throws plssvm::data_set_exception if the @p data_points vector is empty
+     * @throws plssvm::data_set_exception if the data points in @p data_points have mismatching number of features
+     * @throws plssvm::data_set_exception if any @p data_point has no features
+     * @throws plssvm::min_max_scaler_exception all exceptions thrown by plssvm::min_max_scaler::scale
      */
     classification_data_set(const std::vector<std::vector<real_type>> &data_points, min_max_scaler scaler) :
-        base_data_set{ data_points, std::move(scaler) } { this->init(); }
+        base_data_set{ mpi::communicator{}, data_points, std::move(scaler) } { this->init(); }
 
     /**
-     * @copydoc plssvm::data_set::data_set(const std::vector<std::vector<real_type>> &, std::vector<label_type>, min_max_scaler)
+     * @brief Create a new data set  by converting the provided @p data_points to a plssvm::matrix and scale them using the provided @p scaler.
+     * @param[in] comm the used MPI communicator (**note**: current only used to restrict logging outputs to the main MPI rank)
+     * @param[in] data_points the data points used in this data set
+     * @param[in] scaler the parameters used to scale the data set feature values to a given range
+     * @throws plssvm::data_set_exception if the @p data_points vector is empty
+     * @throws plssvm::data_set_exception if the data points in @p data_points have mismatching number of features
+     * @throws plssvm::data_set_exception if any @p data_point has no features
+     * @throws plssvm::min_max_scaler_exception all exceptions thrown by plssvm::min_max_scaler::scale
+     * @throws plssvm::mpi_exception if the MPI communicator @p comm and the MPI communicator in @p scaler are not identical
+     */
+    classification_data_set(mpi::communicator comm, const std::vector<std::vector<real_type>> &data_points, min_max_scaler scaler) :
+        base_data_set{ std::move(comm), data_points, std::move(scaler) } { this->init(); }
+
+    /**
+     * @brief Create a new data set  by converting the provided @p data_points to a plssvm::matrix and copying the @p labels and scale the @p data_points using the provided @p scaler.
+     * @param[in] data_points the data points used in this data set
+     * @param[in] labels the labels used in this data set
+     * @param[in] scaler the parameters used to scale the data set feature values to a given range
+     * @throws plssvm::data_set_exception if the @p data_points vector is empty
+     * @throws plssvm::data_set_exception if the data points in @p data_points have mismatching number of features
+     * @throws plssvm::data_set_exception if any @p data_point has no features
+     * @throws plssvm::data_set_exception if the number of data points in @p data_points and number of @p labels mismatch
+     * @throws plssvm::min_max_scaler_exception all exceptions thrown by plssvm::min_max_scaler::scale
      */
     classification_data_set(const std::vector<std::vector<real_type>> &data_points, std::vector<label_type> labels, min_max_scaler scaler) :
-        base_data_set{ data_points, std::move(labels), std::move(scaler) } { this->init(); }
+        base_data_set{ mpi::communicator{}, data_points, std::move(labels), std::move(scaler) } { this->init(); }
 
     /**
-     * @copydoc plssvm::data_set::data_set(const matrix<real_type, layout> &)
+     * @brief Create a new data set  by converting the provided @p data_points to a plssvm::matrix and copying the @p labels and scale the @p data_points using the provided @p scaler.
+     * @param[in] comm the used MPI communicator (**note**: current only used to restrict logging outputs to the main MPI rank)
+     * @param[in] data_points the data points used in this data set
+     * @param[in] labels the labels used in this data set
+     * @param[in] scaler the parameters used to scale the data set feature values to a given range
+     * @throws plssvm::data_set_exception if the @p data_points vector is empty
+     * @throws plssvm::data_set_exception if the data points in @p data_points have mismatching number of features
+     * @throws plssvm::data_set_exception if any @p data_point has no features
+     * @throws plssvm::data_set_exception if the number of data points in @p data_points and number of @p labels mismatch
+     * @throws plssvm::min_max_scaler_exception all exceptions thrown by plssvm::min_max_scaler::scale
+     * @throws plssvm::mpi_exception if the MPI communicator @p comm and the MPI communicator in @p scaler are not identical
+     */
+    classification_data_set(mpi::communicator comm, const std::vector<std::vector<real_type>> &data_points, std::vector<label_type> labels, min_max_scaler scaler) :
+        base_data_set{ std::move(comm), data_points, std::move(labels), std::move(scaler) } { this->init(); }
+
+    /**
+     * @brief Create a new data set from the provided @p data_points.
+     * @details Since no labels are provided, this data set may **not** be used to a call to plssvm::csvc::fit/plssvm::csvr::fit!
+     * @note If the provided matrix isn't padded, adds the necessary padding entries automatically.
+     * @tparam layout the layout type of the input matrix
+     * @param[in] data_points the data points used in this data set
+     * @throws plssvm::data_set_exception if the @p data_points vector is empty
+     * @throws plssvm::data_set_exception if the data points in @p data_points have mismatching number of features
+     * @throws plssvm::data_set_exception if any @p data_point has no features
      */
     template <layout_type layout>
     explicit classification_data_set(const matrix<real_type, layout> &data_points) :
-        base_data_set{ data_points } { this->init(); }
+        base_data_set{ mpi::communicator{}, data_points } { this->init(); }
 
     /**
-     * @copydoc plssvm::data_set::data_set(const matrix<real_type, layout> &, std::vector<label_type>)
+     * @brief Create a new data set from the provided @p data_points.
+     * @details Since no labels are provided, this data set may **not** be used to a call to plssvm::csvc::fit/plssvm::csvr::fit!
+     * @note If the provided matrix isn't padded, adds the necessary padding entries automatically.
+     * @tparam layout the layout type of the input matrix
+     * @param[in] comm the used MPI communicator (**note**: current only used to restrict logging outputs to the main MPI rank)
+     * @param[in] data_points the data points used in this data set
+     * @throws plssvm::data_set_exception if the @p data_points vector is empty
+     * @throws plssvm::data_set_exception if the data points in @p data_points have mismatching number of features
+     * @throws plssvm::data_set_exception if any @p data_point has no features
+     */
+    template <layout_type layout>
+    classification_data_set(mpi::communicator comm, const matrix<real_type, layout> &data_points) :
+        base_data_set{ std::move(comm), data_points } { this->init(); }
+
+    /**
+     * @brief Create a new data set from the provided @p data_points and @p labels.
+     * @note If the provided matrix isn't padded, adds the necessary padding entries automatically.
+     * @tparam layout the layout type of the input matrix
+     * @param[in] data_points the data points used in this data set
+     * @param[in] labels the labels used in this data set
+     * @throws plssvm::data_set_exception if the @p data_points vector is empty
+     * @throws plssvm::data_set_exception if the data points in @p data_points have mismatching number of features
+     * @throws plssvm::data_set_exception if any @p data_point has no features
+     * @throws plssvm::data_set_exception if the number of data points in @p data_points and number of @p labels mismatch
      */
     template <layout_type layout>
     classification_data_set(const matrix<real_type, layout> &data_points, std::vector<label_type> labels) :
-        base_data_set{ data_points, std::move(labels) } { this->init(); }
+        base_data_set{ mpi::communicator{}, data_points, std::move(labels) } { this->init(); }
 
     /**
-     * @copydoc plssvm::data_set::data_set(const matrix<real_type, layout> &, min_max_scaler)
+     * @brief Create a new data set from the provided @p data_points and @p labels.
+     * @note If the provided matrix isn't padded, adds the necessary padding entries automatically.
+     * @tparam layout the layout type of the input matrix
+     * @param[in] comm the used MPI communicator (**note**: current only used to restrict logging outputs to the main MPI rank)
+     * @param[in] data_points the data points used in this data set
+     * @param[in] labels the labels used in this data set
+     * @throws plssvm::data_set_exception if the @p data_points vector is empty
+     * @throws plssvm::data_set_exception if the data points in @p data_points have mismatching number of features
+     * @throws plssvm::data_set_exception if any @p data_point has no features
+     * @throws plssvm::data_set_exception if the number of data points in @p data_points and number of @p labels mismatch
+     */
+    template <layout_type layout>
+    classification_data_set(mpi::communicator comm, const matrix<real_type, layout> &data_points, std::vector<label_type> labels) :
+        base_data_set{ std::move(comm), data_points, std::move(labels) } { this->init(); }
+
+    /**
+     * @brief Create a new data set from the the provided @p data_points and scale them using the provided @p scaler.
+     * @note If the provided matrix isn't padded, adds the necessary padding entries automatically.
+     * @tparam layout the layout type of the input matrix
+     * @param[in] data_points the data points used in this data set
+     * @param[in] scaler the parameters used to scale the data set feature values to a given range
+     * @throws plssvm::data_set_exception if the @p data_points vector is empty
+     * @throws plssvm::data_set_exception if the data points in @p data_points have mismatching number of features
+     * @throws plssvm::data_set_exception if any @p data_point has no features
+     * @throws plssvm::min_max_scaler_exception all exceptions thrown by plssvm::min_max_scaler::scale
      */
     template <layout_type layout>
     classification_data_set(const matrix<real_type, layout> &data_points, min_max_scaler scaler) :
-        base_data_set{ data_points, std::move(scaler) } { this->init(); }
+        base_data_set{ mpi::communicator{}, data_points, std::move(scaler) } { this->init(); }
 
     /**
-     * @copydoc plssvm::data_set::data_set(const matrix<real_type, layout> &, std::vector<label_type>, min_max_scaler)
+     * @brief Create a new data set from the the provided @p data_points and scale them using the provided @p scaler.
+     * @note If the provided matrix isn't padded, adds the necessary padding entries automatically.
+     * @tparam layout the layout type of the input matrix
+     * @param[in] comm the used MPI communicator (**note**: current only used to restrict logging outputs to the main MPI rank)
+     * @param[in] data_points the data points used in this data set
+     * @param[in] scaler the parameters used to scale the data set feature values to a given range
+     * @throws plssvm::data_set_exception if the @p data_points vector is empty
+     * @throws plssvm::data_set_exception if the data points in @p data_points have mismatching number of features
+     * @throws plssvm::data_set_exception if any @p data_point has no features
+     * @throws plssvm::min_max_scaler_exception all exceptions thrown by plssvm::min_max_scaler::scale
+     * @throws plssvm::mpi_exception if the MPI communicator @p comm and the MPI communicator in @p scaler are not identical
+     */
+    template <layout_type layout>
+    classification_data_set(mpi::communicator comm, const matrix<real_type, layout> &data_points, min_max_scaler scaler) :
+        base_data_set{ std::move(comm), data_points, std::move(scaler) } { this->init(); }
+
+    /**
+     * @brief Create a new data set from the the provided @p data_points and @p labels and scale the @p data_points using the provided @p scaler.
+     * @note If the provided matrix isn't padded, adds the necessary padding entries automatically.
+     * @tparam layout the layout type of the input matrix
+     * @param[in] data_points the data points used in this data set
+     * @param[in] labels the labels used in this data set
+     * @param[in] scaler the parameters used to scale the data set feature values to a given range
+     * @throws plssvm::data_set_exception if the @p data_points vector is empty
+     * @throws plssvm::data_set_exception if the data points in @p data_points have mismatching number of features
+     * @throws plssvm::data_set_exception if any @p data_point has no features
+     * @throws plssvm::data_set_exception if the number of data points in @p data_points and number of @p labels mismatch
+     * @throws plssvm::min_max_scaler_exception all exceptions thrown by plssvm::min_max_scaler::scale
      */
     template <layout_type layout>
     classification_data_set(const matrix<real_type, layout> &data_points, std::vector<label_type> labels, min_max_scaler scaler) :
-        base_data_set{ data_points, std::move(labels), std::move(scaler) } { this->init(); }
+        base_data_set{ mpi::communicator{}, data_points, std::move(labels), std::move(scaler) } { this->init(); }
 
     /**
-     * @copydoc plssvm::data_set::data_set(soa_matrix<real_type> &&)
+     * @brief Create a new data set from the the provided @p data_points and @p labels and scale the @p data_points using the provided @p scaler.
+     * @note If the provided matrix isn't padded, adds the necessary padding entries automatically.
+     * @tparam layout the layout type of the input matrix
+     * @param[in] comm the used MPI communicator (**note**: current only used to restrict logging outputs to the main MPI rank)
+     * @param[in] data_points the data points used in this data set
+     * @param[in] labels the labels used in this data set
+     * @param[in] scaler the parameters used to scale the data set feature values to a given range
+     * @throws plssvm::data_set_exception if the @p data_points vector is empty
+     * @throws plssvm::data_set_exception if the data points in @p data_points have mismatching number of features
+     * @throws plssvm::data_set_exception if any @p data_point has no features
+     * @throws plssvm::data_set_exception if the number of data points in @p data_points and number of @p labels mismatch
+     * @throws plssvm::min_max_scaler_exception all exceptions thrown by plssvm::min_max_scaler::scale
+     * @throws plssvm::mpi_exception if the MPI communicator @p comm and the MPI communicator in @p scaler are not identical
+     */
+    template <layout_type layout>
+    classification_data_set(mpi::communicator comm, const matrix<real_type, layout> &data_points, std::vector<label_type> labels, min_max_scaler scaler) :
+        base_data_set{ std::move(comm), data_points, std::move(labels), std::move(scaler) } { this->init(); }
+
+    /**
+     * @brief Use the provided @p data_points in this data set.
+     * @details Since no labels are provided, this data set may **not** be used to a call to plssvm::csvc::fit/plssvm::csvr::fit!
+     * @note Moves the @p data_points into this data set. If @p data_points have the wrong padding, a runtime exception is thrown.
+     * @param[in] data_points the data points used in this data set
+     * @throws plssvm::data_set_exception if the @p data_points vector is empty
+     * @throws plssvm::data_set_exception if the data points in @p data_points have mismatching number of features
+     * @throws plssvm::data_set_exception if any @p data_point has no features
+     * @throws plssvm::data_set_exception if the padding sizes of @p data_points are wrong
      */
     explicit classification_data_set(soa_matrix<real_type> &&data_points) :
-        base_data_set{ std::move(data_points) } { this->init(); }
+        base_data_set{ mpi::communicator{}, std::move(data_points) } { this->init(); }
 
     /**
-     * @copydoc plssvm::data_set::data_set(soa_matrix<real_type> &&, std::vector<label_type> &&)
+     * @brief Use the provided @p data_points in this data set.
+     * @details Since no labels are provided, this data set may **not** be used to a call to plssvm::csvc::fit/plssvm::csvr::fit!
+     * @note Moves the @p data_points into this data set. If @p data_points have the wrong padding, a runtime exception is thrown.
+     * @param[in] comm the used MPI communicator (**note**: current only used to restrict logging outputs to the main MPI rank)
+     * @param[in] data_points the data points used in this data set
+     * @throws plssvm::data_set_exception if the @p data_points vector is empty
+     * @throws plssvm::data_set_exception if the data points in @p data_points have mismatching number of features
+     * @throws plssvm::data_set_exception if any @p data_point has no features
+     * @throws plssvm::data_set_exception if the padding sizes of @p data_points are wrong
+     */
+    classification_data_set(mpi::communicator comm, soa_matrix<real_type> &&data_points) :
+        base_data_set{ std::move(comm), std::move(data_points) } { this->init(); }
+
+    /**
+     * @brief Use the provided @p data_points and @p labels in this data set.
+     * @note Moves the @p data_points and @p labels into this data set. If @p data_points have the wrong padding, a runtime exception is thrown.
+     * @param[in] data_points the data points used in this data set
+     * @param[in] labels the labels used in this data set
+     * @throws plssvm::data_set_exception if the @p data_points vector is empty
+     * @throws plssvm::data_set_exception if the data points in @p data_points have mismatching number of features
+     * @throws plssvm::data_set_exception if any @p data_point has no features
+     * @throws plssvm::data_set_exception if the padding sizes of @p data_points are wrong
+     * @throws plssvm::data_set_exception if the number of data points in @p data_points and number of @p labels mismatch
      */
     classification_data_set(soa_matrix<real_type> &&data_points, std::vector<label_type> &&labels) :
-        base_data_set{ std::move(data_points), std::move(labels) } { this->init(); }
+        base_data_set{ mpi::communicator{}, std::move(data_points), std::move(labels) } { this->init(); }
 
     /**
-     * @copydoc plssvm::data_set::data_set(soa_matrix<real_type> &&, min_max_scaler)
+     * @brief Use the provided @p data_points and @p labels in this data set.
+     * @note Moves the @p data_points and @p labels into this data set. If @p data_points have the wrong padding, a runtime exception is thrown.
+     * @param[in] comm the used MPI communicator (**note**: current only used to restrict logging outputs to the main MPI rank)
+     * @param[in] data_points the data points used in this data set
+     * @param[in] labels the labels used in this data set
+     * @throws plssvm::data_set_exception if the @p data_points vector is empty
+     * @throws plssvm::data_set_exception if the data points in @p data_points have mismatching number of features
+     * @throws plssvm::data_set_exception if any @p data_point has no features
+     * @throws plssvm::data_set_exception if the padding sizes of @p data_points are wrong
+     * @throws plssvm::data_set_exception if the number of data points in @p data_points and number of @p labels mismatch
+     */
+    classification_data_set(mpi::communicator comm, soa_matrix<real_type> &&data_points, std::vector<label_type> &&labels) :
+        base_data_set{ std::move(comm), std::move(data_points), std::move(labels) } { this->init(); }
+
+    /**
+     * @brief Use the provided @p data_points in this data set and scale them using the provided @p scaler.
+     * @details Since no labels are provided, this data set may **not** be used to a call to plssvm::csvc::fit/plssvm::csvr::fit!
+     * @note Moves the @p data_points into this data set. If @p data_points have the wrong padding, a runtime exception is thrown.
+     * @param[in] data_points the data points used in this data set
+     * @param[in] scaler the parameters used to scale the data set feature values to a given range
+     * @throws plssvm::data_set_exception if the @p data_points vector is empty
+     * @throws plssvm::data_set_exception if the data points in @p data_points have mismatching number of features
+     * @throws plssvm::data_set_exception if any @p data_point has no features
+     * @throws plssvm::data_set_exception if the padding sizes of @p data_points are wrong
+     * @throws plssvm::min_max_scaler_exception all exceptions thrown by plssvm::min_max_scaler::scale
      */
     classification_data_set(soa_matrix<real_type> &&data_points, min_max_scaler scaler) :
-        base_data_set{ std::move(data_points), std::move(scaler) } { this->init(); }
+        base_data_set{ mpi::communicator{}, std::move(data_points), std::move(scaler) } { this->init(); }
 
     /**
-     * @copydoc plssvm::data_set::data_set(soa_matrix<real_type> &&, std::vector<label_type> &&, min_max_scaler)
+     * @brief Use the provided @p data_points in this data set and scale them using the provided @p scaler.
+     * @details Since no labels are provided, this data set may **not** be used to a call to plssvm::csvc::fit/plssvm::csvr::fit!
+     * @note Moves the @p data_points into this data set. If @p data_points have the wrong padding, a runtime exception is thrown.
+     * @param[in] comm the used MPI communicator (**note**: current only used to restrict logging outputs to the main MPI rank)
+     * @param[in] data_points the data points used in this data set
+     * @param[in] scaler the parameters used to scale the data set feature values to a given range
+     * @throws plssvm::data_set_exception if the @p data_points vector is empty
+     * @throws plssvm::data_set_exception if the data points in @p data_points have mismatching number of features
+     * @throws plssvm::data_set_exception if any @p data_point has no features
+     * @throws plssvm::data_set_exception if the padding sizes of @p data_points are wrong
+     * @throws plssvm::min_max_scaler_exception all exceptions thrown by plssvm::min_max_scaler::scale
+     * @throws plssvm::mpi_exception if the MPI communicator @p comm and the MPI communicator in @p scaler are not identical
+     */
+    classification_data_set(mpi::communicator comm, soa_matrix<real_type> &&data_points, min_max_scaler scaler) :
+        base_data_set{ std::move(comm), std::move(data_points), std::move(scaler) } { this->init(); }
+
+    /**
+     * @brief Use the provided @p data_points and @p labels in this data set and scale them using the provided @p scaler.
+     * @note Moves the @p data_points and @p labels into this data set. If @p data_points have the wrong padding, a runtime exception is thrown.
+     * @param[in] data_points the data points used in this data set
+     * @param[in] labels the labels used in this data set
+     * @param[in] scaler the parameters used to scale the data set feature values to a given range
+     * @throws plssvm::data_set_exception if the @p data_points vector is empty
+     * @throws plssvm::data_set_exception if the data points in @p data_points have mismatching number of features
+     * @throws plssvm::data_set_exception if any @p data_point has no features
+     * @throws plssvm::data_set_exception if the padding sizes of @p data_points are wrong
+     * @throws plssvm::data_set_exception if the number of data points in @p data_points and number of @p labels mismatch
+     * @throws plssvm::min_max_scaler_exception all exceptions thrown by plssvm::min_max_scaler::scale
      */
     classification_data_set(soa_matrix<real_type> &&data_points, std::vector<label_type> &&labels, min_max_scaler scaler) :
-        base_data_set{ std::move(data_points), std::move(labels), std::move(scaler) } { this->init(); }
+        base_data_set{ mpi::communicator{}, std::move(data_points), std::move(labels), std::move(scaler) } { this->init(); }
+
+    /**
+     * @brief Use the provided @p data_points and @p labels in this data set and scale them using the provided @p scaler.
+     * @note Moves the @p data_points and @p labels into this data set. If @p data_points have the wrong padding, a runtime exception is thrown.
+     * @param[in] comm the used MPI communicator (**note**: current only used to restrict logging outputs to the main MPI rank)
+     * @param[in] data_points the data points used in this data set
+     * @param[in] labels the labels used in this data set
+     * @param[in] scaler the parameters used to scale the data set feature values to a given range
+     * @throws plssvm::data_set_exception if the @p data_points vector is empty
+     * @throws plssvm::data_set_exception if the data points in @p data_points have mismatching number of features
+     * @throws plssvm::data_set_exception if any @p data_point has no features
+     * @throws plssvm::data_set_exception if the padding sizes of @p data_points are wrong
+     * @throws plssvm::data_set_exception if the number of data points in @p data_points and number of @p labels mismatch
+     * @throws plssvm::min_max_scaler_exception all exceptions thrown by plssvm::min_max_scaler::scale
+     * @throws plssvm::mpi_exception if the MPI communicator @p comm and the MPI communicator in @p scaler are not identical
+     */
+    classification_data_set(mpi::communicator comm, soa_matrix<real_type> &&data_points, std::vector<label_type> &&labels, min_max_scaler scaler) :
+        base_data_set{ std::move(comm), std::move(data_points), std::move(labels), std::move(scaler) } { this->init(); }
 
     /**
      * @copydoc plssvm::data_set::save
@@ -328,12 +675,14 @@ void classification_data_set<U>::init() {
     PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((detail::tracking::tracking_entry{ "data_set_create", "type", "classification" }));
     if (this->has_labels()) {
         detail::log(verbosity_level::full | verbosity_level::timing,
+                    this->communicator(),
                     "Created a classification data set with {} data points, {} features, and {} classes.\n",
                     detail::tracking::tracking_entry{ "data_set_create", "num_data_points", this->num_data_points() },
                     detail::tracking::tracking_entry{ "data_set_create", "num_features", this->num_features() },
                     detail::tracking::tracking_entry{ "data_set_create", "num_classes", this->num_classes() });
     } else {
         detail::log(verbosity_level::full | verbosity_level::timing,
+                    this->communicator(),
                     "Created a classification data set with {} data points and {} features.\n",
                     detail::tracking::tracking_entry{ "data_set_create", "num_data_points", this->num_data_points() },
                     detail::tracking::tracking_entry{ "data_set_create", "num_features", this->num_features() });
@@ -349,6 +698,7 @@ void classification_data_set<U>::save(const std::string &filename, const file_fo
 
     const std::chrono::time_point end_time = std::chrono::steady_clock::now();
     detail::log(verbosity_level::full | verbosity_level::timing,
+                this->communicator(),
                 "Write {} classification data points with {} features and {} classes in {} to the {} file '{}'.\n",
                 detail::tracking::tracking_entry{ "data_set_write", "num_data_points", this->num_data_points() },
                 detail::tracking::tracking_entry{ "data_set_write", "num_features", this->num_features() },

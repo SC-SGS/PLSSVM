@@ -8,8 +8,9 @@
 
 #include "plssvm/classification_report.hpp"
 
-#include "plssvm/detail/logging.hpp"         // plssvm::detail::log
-#include "plssvm/detail/string_utility.hpp"  // plssvm::detail::to_lower_case
+#include "plssvm/detail/logging/log_untracked.hpp"  // plssvm::detail::log_untracked
+#include "plssvm/detail/string_utility.hpp"         // plssvm::detail::to_lower_case
+#include "plssvm/verbosity_levels.hpp"              // plssvm::verbosity_level
 
 #include "fmt/format.h"  // fmt::format
 
@@ -33,10 +34,10 @@ double sanitize_nan(const double dividend, const double divisor, const classific
         // handle the correct zero division behavior
         switch (zero_div) {
             case classification_report::zero_division_behavior::warn:
-                detail::log(verbosity_level::full,
-                            "{} is ill-defined and is set to 0.0 in labels with no predicted samples. "
-                            "Use 'plssvm::classification_report::zero_division' parameter to control this behavior.\n",
-                            metric_name);
+                detail::log_untracked(verbosity_level::full,
+                                      "{} is ill-defined and is set to 0.0 in labels with no predicted samples. "
+                                      "Use 'plssvm::classification_report::zero_division' parameter to control this behavior.\n",
+                                      metric_name);
                 [[fallthrough]];
             case classification_report::zero_division_behavior::zero:
                 return 0.0;
@@ -105,11 +106,7 @@ std::ostream &operator<<(std::ostream &out, const classification_report &report)
 
     out << '\n';
     // print accuracy and average metrics
-    if (!report.use_micro_average_) {
-        out << fmt::format("{1:>{2}}                       {3:>{4}}{5:.{0}f}   {6:>7}\n", report.output_digits_, "accuracy", max_label_string_size, "", 2 * report.output_digits_, report.accuracy_.achieved_accuracy, report.accuracy_.num_total);
-    } else {
-        out << fmt::format("{1:>{2}}       {3:.{0}f}      {4:.{0}f}      {5:.{0}f}   {6:>7}\n", report.output_digits_, "micro avg", max_label_string_size, micro_avg.precision, micro_avg.recall, micro_avg.f1, micro_avg.support);
-    }
+    out << fmt::format("{1:>{2}}                       {3:>{4}}{5:.{0}f}   {6:>7}\n", report.output_digits_, "accuracy", max_label_string_size, "", 2 * report.output_digits_, report.accuracy_.achieved_accuracy, report.accuracy_.num_total);
     out << fmt::format("{1:>{2}}       {3:.{0}f}      {4:.{0}f}      {5:.{0}f}   {6:>7}\n", report.output_digits_, "macro avg", max_label_string_size, macro_avg.precision, macro_avg.recall, macro_avg.f1, macro_avg.support);
     out << fmt::format("{1:>{2}}       {3:.{0}f}      {4:.{0}f}      {5:.{0}f}   {6:>7}\n\n", report.output_digits_, "weighted avg", max_label_string_size, weighted_avg.precision, weighted_avg.recall, weighted_avg.f1, weighted_avg.support);
     out << report.accuracy_ << std::endl;

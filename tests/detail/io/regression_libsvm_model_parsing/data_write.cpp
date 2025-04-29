@@ -34,7 +34,18 @@
 template <typename T>
 class LIBSVMRegressionModelDataWrite : public ::testing::Test,
                                        private util::redirect_output<>,
-                                       protected util::temporary_file { };
+                                       protected util::temporary_file {
+  public:
+    /**
+     * @brief Return the used MPI communicator.
+     * @return the MPI communicator (`[[nodiscard]]`)
+     */
+    [[nodiscard]] const plssvm::mpi::communicator get_comm() const noexcept { return comm_; }
+
+  private:
+    /// The MPI communicator (unused during testing since we do not support MPI runtime tests).
+    plssvm::mpi::communicator comm_{};
+};
 
 TYPED_TEST_SUITE(LIBSVMRegressionModelDataWrite, util::regression_label_type_gtest, naming::test_parameter_to_name);
 
@@ -52,7 +63,7 @@ TYPED_TEST(LIBSVMRegressionModelDataWrite, write) {
     const plssvm::regression_data_set<label_type> data_set{ data, label };
 
     // write the LIBSVM model file
-    plssvm::detail::io::write_libsvm_model_data_regression(this->filename, params, rho, alpha, data_set);
+    plssvm::detail::io::write_libsvm_model_data_regression(this->filename, this->get_comm(), params, rho, alpha, data_set);
 
     // read the written file
     plssvm::detail::io::file_reader reader{ this->filename };
@@ -107,7 +118,7 @@ TYPED_TEST(LIBSVMRegressionModelDataWrite, write_without_label) {
     const plssvm::regression_data_set<label_type> data_set{ data };
 
     // write the LIBSVM model file
-    plssvm::detail::io::write_libsvm_model_data_regression(this->filename, params, rho, alpha, data_set);
+    plssvm::detail::io::write_libsvm_model_data_regression(this->filename, this->get_comm(), params, rho, alpha, data_set);
 
     // read the written file
     plssvm::detail::io::file_reader reader{ this->filename };
@@ -195,7 +206,7 @@ TYPED_TEST_SUITE(LIBSVMRegressionModelDataWriteDeathTest, util::regression_label
 
 TYPED_TEST(LIBSVMRegressionModelDataWriteDeathTest, empty_filename) {
     // try writing the LIBSVM model header
-    EXPECT_DEATH((plssvm::detail::io::write_libsvm_model_data_regression("", this->get_params(), this->get_rho(), this->get_alpha(), this->get_data_set())),
+    EXPECT_DEATH((plssvm::detail::io::write_libsvm_model_data_regression("", this->get_comm(), this->get_params(), this->get_rho(), this->get_alpha(), this->get_data_set())),
                  "The provided model filename must not be empty!");
 }
 
@@ -204,7 +215,7 @@ TYPED_TEST(LIBSVMRegressionModelDataWriteDeathTest, invalid_number_of_rho_values
     const std::vector<plssvm::real_type> rho = util::generate_random_vector<plssvm::real_type>(42);
 
     // try writing the LIBSVM model header
-    EXPECT_DEATH((plssvm::detail::io::write_libsvm_model_data_regression(this->filename, this->get_params(), rho, this->get_alpha(), this->get_data_set())),
+    EXPECT_DEATH((plssvm::detail::io::write_libsvm_model_data_regression(this->filename, this->get_comm(), this->get_params(), rho, this->get_alpha(), this->get_data_set())),
                  "The number of rho values is 42 but must be exactly 1!");
 }
 
@@ -212,19 +223,19 @@ TYPED_TEST(LIBSVMRegressionModelDataWriteDeathTest, invalid_alpha_vector) {
     {
         // alpha vector too large
         const std::vector<plssvm::aos_matrix<plssvm::real_type>> alpha(2);
-        EXPECT_DEATH((plssvm::detail::io::write_libsvm_model_data_regression(this->filename, this->get_params(), this->get_rho(), alpha, this->get_data_set())),
+        EXPECT_DEATH((plssvm::detail::io::write_libsvm_model_data_regression(this->filename, this->get_comm(), this->get_params(), this->get_rho(), alpha, this->get_data_set())),
                      "The alpha vector may only contain one matrix as entry, but has 2!");
     }
     {
         // invalid number of rows in matrix
         const std::vector<plssvm::aos_matrix<plssvm::real_type>> alpha{ plssvm::aos_matrix<plssvm::real_type>{ plssvm::shape{ 42, 6 } } };
-        EXPECT_DEATH((plssvm::detail::io::write_libsvm_model_data_regression(this->filename, this->get_params(), this->get_rho(), alpha, this->get_data_set())),
+        EXPECT_DEATH((plssvm::detail::io::write_libsvm_model_data_regression(this->filename, this->get_comm(), this->get_params(), this->get_rho(), alpha, this->get_data_set())),
                      "The number of rows in the matrix must be 1, but is 42!");
     }
     {
         // invalid number of columns in matrix
         const std::vector<plssvm::aos_matrix<plssvm::real_type>> alpha{ plssvm::aos_matrix<plssvm::real_type>{ plssvm::shape{ 1, 42 } } };
-        EXPECT_DEATH((plssvm::detail::io::write_libsvm_model_data_regression(this->filename, this->get_params(), this->get_rho(), alpha, this->get_data_set())),
+        EXPECT_DEATH((plssvm::detail::io::write_libsvm_model_data_regression(this->filename, this->get_comm(), this->get_params(), this->get_rho(), alpha, this->get_data_set())),
                      ::testing::HasSubstr("The number of weights (42) must be equal to the number of support vectors (6)!"));
     }
 }

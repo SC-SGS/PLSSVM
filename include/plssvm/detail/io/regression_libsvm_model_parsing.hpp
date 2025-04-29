@@ -13,21 +13,22 @@
 #define PLSSVM_DETAIL_IO_REGRESSION_LIBSVM_MODEL_PARSING_HPP_
 #pragma once
 
-#include "plssvm/constants.hpp"                     // plssvm::real_type, plssvm::PADDING_SIZE
-#include "plssvm/data_set/regression_data_set.hpp"  // plssvm::regression_data_set
-#include "plssvm/detail/assert.hpp"                 // PLSSVM_ASSERT
-#include "plssvm/detail/io/file_reader.hpp"         // plssvm::detail::io::file_reader
-#include "plssvm/detail/io/libsvm_parsing.hpp"      // plssvm::detail::io::parse_libsvm_num_features
-#include "plssvm/detail/logging.hpp"                // plssvm::detail::log
-#include "plssvm/detail/memory_size.hpp"            // plssvm::memory_size, custom literals
-#include "plssvm/detail/string_conversion.hpp"      // plssvm::detail::{convert_to, split_as}
-#include "plssvm/detail/string_utility.hpp"         // plssvm::detail::{trim, trim_left, to_lower_case}
-#include "plssvm/gamma.hpp"                         // plssvm::get_gamma_string
-#include "plssvm/kernel_function_types.hpp"         // plssvm::kernel_function_type
-#include "plssvm/matrix.hpp"                        // plssvm::soa_matrix
-#include "plssvm/parameter.hpp"                     // plssvm::parameter
-#include "plssvm/shape.hpp"                         // plssvm::shape
-#include "plssvm/verbosity_levels.hpp"              // plssvm::verbosity_level
+#include "plssvm/constants.hpp"                         // plssvm::real_type, plssvm::PADDING_SIZE
+#include "plssvm/data_set/regression_data_set.hpp"      // plssvm::regression_data_set
+#include "plssvm/detail/assert.hpp"                     // PLSSVM_ASSERT
+#include "plssvm/detail/io/file_reader.hpp"             // plssvm::detail::io::file_reader
+#include "plssvm/detail/io/libsvm_parsing.hpp"          // plssvm::detail::io::parse_libsvm_num_features
+#include "plssvm/detail/logging/mpi_log_untracked.hpp"  // plssvm::detail::log_untracked
+#include "plssvm/detail/memory_size.hpp"                // plssvm::memory_size, custom literals
+#include "plssvm/detail/string_conversion.hpp"          // plssvm::detail::{convert_to, split_as}
+#include "plssvm/detail/string_utility.hpp"             // plssvm::detail::{trim, trim_left, to_lower_case}
+#include "plssvm/gamma.hpp"                             // plssvm::get_gamma_string
+#include "plssvm/kernel_function_types.hpp"             // plssvm::kernel_function_type
+#include "plssvm/matrix.hpp"                            // plssvm::soa_matrix
+#include "plssvm/mpi/communicator.hpp"                  // plssvm::mpi::communicator
+#include "plssvm/parameter.hpp"                         // plssvm::parameter
+#include "plssvm/shape.hpp"                             // plssvm::shape
+#include "plssvm/verbosity_levels.hpp"                  // plssvm::verbosity_level
 
 #include "fmt/compile.h"  // FMT_COMPILE
 #include "fmt/format.h"   // fmt::format_to, fmt::format
@@ -370,13 +371,14 @@ namespace plssvm::detail::io {
  * @endcode
  * @tparam label_type the type of the labels (any arithmetic type, except bool, or std::string)
  * @param[in,out] out the output-stream to write the header information to
+ * @param[in] comm the used MPI communicator
  * @param[in] params the SVM parameters
  * @param[in] rho the rho value
  * @param[in] data the data used to create the model
  * @attention The PLSSVM model file is currently not compatible with LIBSVM due to other "svm_type" entries.
  */
 template <typename label_type>
-inline void write_libsvm_model_header_regression(fmt::ostream &out, const plssvm::parameter &params, const std::vector<real_type> &rho, const regression_data_set<label_type> &data) {
+inline void write_libsvm_model_header_regression(fmt::ostream &out, const mpi::communicator &comm, const plssvm::parameter &params, const std::vector<real_type> &rho, const regression_data_set<label_type> &data) {
     PLSSVM_ASSERT(rho.size() == 1, "Exactly one rho value must be provided!");
 
     // save model file header
@@ -403,9 +405,10 @@ inline void write_libsvm_model_header_regression(fmt::ostream &out, const plssvm
                               fmt::join(rho, " "));
 
     // print model header
-    detail::log(verbosity_level::full | verbosity_level::libsvm,
-                "\n{}\n",
-                out_string);
+    detail::log_untracked(verbosity_level::full | verbosity_level::libsvm,
+                          comm,
+                          "\n{}\n",
+                          out_string);
     // write model header to file
     out.print("{}", out_string);
 }
@@ -431,6 +434,7 @@ inline void write_libsvm_model_header_regression(fmt::ostream &out, const plssvm
  * @endcode
  * @tparam label_type the type of the labels (any arithmetic type, except bool, or std::string)
  * @param[in] filename the file to write the LIBSVM model to
+ * @param[in] comm the used MPI communicator
  * @param[in] params the SVM parameters
  * @param[in] rho the rho value resulting from the hyperplane learning
  * @param[in] alpha the weights learned by the SVM
@@ -438,7 +442,7 @@ inline void write_libsvm_model_header_regression(fmt::ostream &out, const plssvm
  * @attention The PLSSVM model file is only compatible with LIBSVM for the one vs. one classification type.
  */
 template <typename label_type>
-inline void write_libsvm_model_data_regression(const std::string &filename, const plssvm::parameter &params, const std::vector<real_type> &rho, const std::vector<aos_matrix<real_type>> &alpha, const regression_data_set<label_type> &data) {
+inline void write_libsvm_model_data_regression(const std::string &filename, const mpi::communicator &comm, const plssvm::parameter &params, const std::vector<real_type> &rho, const std::vector<aos_matrix<real_type>> &alpha, const regression_data_set<label_type> &data) {
     PLSSVM_ASSERT(!filename.empty(), "The provided model filename must not be empty!");
     PLSSVM_ASSERT(rho.size() == 1,
                   "The number of rho values is {} but must be exactly 1!",
@@ -458,7 +462,7 @@ inline void write_libsvm_model_data_regression(const std::string &filename, cons
     fmt::ostream out = fmt::output_file(filename);
 
     // write header information
-    write_libsvm_model_header_regression(out, params, rho, data);
+    write_libsvm_model_header_regression(out, comm, params, rho, data);
 
     // the maximum size of one formatted LIBSVM entry, e.g., 1234:1.365363e+10
     // biggest number representable as std::size_t: 18446744073709551615 -> 20 chars

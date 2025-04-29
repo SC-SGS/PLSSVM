@@ -23,6 +23,7 @@
 #include "plssvm/detail/igor_utility.hpp"                    // plssvm::detail::get_value_from_named_parameter
 #include "plssvm/detail/memory_size.hpp"                     // plssvm::detail::memory_size
 #include "plssvm/detail/type_traits.hpp"                     // PLSSVM_REQUIRES, plssvm::detail::is_one_type_of
+#include "plssvm/mpi/communicator.hpp"                       // plssvm::mpi::communicator
 #include "plssvm/parameter.hpp"                              // plssvm::parameter, plssvm::detail::{has_only_kokkos_parameter_named_args_v, has_only_kokkos_named_args_v}
 #include "plssvm/svm/csvc.hpp"                               // plssvm::csvc
 #include "plssvm/svm/csvm.hpp"                               // plssvm::detail::csvm_backend_exists
@@ -187,7 +188,19 @@ class csvc : public ::plssvm::csvc,
      */
     template <typename... Args, PLSSVM_REQUIRES(::plssvm::detail::has_only_kokkos_named_args_v<Args...>)>
     explicit csvc(const parameter params, Args &&...named_kokkos_args) :
-        ::plssvm::csvm{ params },
+        ::plssvm::csvm{ mpi::communicator{}, params },
+        ::plssvm::kokkos::csvm(target_platform::automatic, std::forward<Args>(named_kokkos_args)...) { }
+
+    /**
+     * @brief Construct a new C-SVC using the Kokkos backend with the parameters given through @p params.
+     * @param[in] comm the used MPI communicator
+     * @param[in] params struct encapsulating all possible parameters
+     * @param[in] named_kokkos_args the additional optional Kokkos specific named arguments
+     * @throws plssvm::exception all exceptions thrown in the base class constructors
+     */
+    template <typename... Args, PLSSVM_REQUIRES(::plssvm::detail::has_only_kokkos_named_args_v<Args...>)>
+    csvc(mpi::communicator comm, const parameter params, Args &&...named_kokkos_args) :
+        ::plssvm::csvm{ std::move(comm), params },
         ::plssvm::kokkos::csvm(target_platform::automatic, std::forward<Args>(named_kokkos_args)...) { }
 
     /**
@@ -198,8 +211,21 @@ class csvc : public ::plssvm::csvc,
      * @throws plssvm::exception all exceptions thrown in the base class constructors
      */
     template <typename... Args, PLSSVM_REQUIRES(::plssvm::detail::has_only_kokkos_named_args_v<Args...>)>
-    explicit csvc(const target_platform target, const parameter params, Args &&...named_kokkos_args) :
-        ::plssvm::csvm{ params },
+    csvc(const target_platform target, const parameter params, Args &&...named_kokkos_args) :
+        ::plssvm::csvm{ mpi::communicator{}, params },
+        ::plssvm::kokkos::csvm(target, std::forward<Args>(named_kokkos_args)...) { }
+
+    /**
+     * @brief Construct a new C-SVC using the Kokkos backend on the @p target platform with the parameters given through @p params.
+     * @param[in] comm the used MPI communicator
+     * @param[in] target the target platform used for this C-SVC
+     * @param[in] params struct encapsulating all possible SVM parameters
+     * @param[in] named_kokkos_args the additional optional Kokkos specific named arguments
+     * @throws plssvm::exception all exceptions thrown in the base class constructors
+     */
+    template <typename... Args, PLSSVM_REQUIRES(::plssvm::detail::has_only_kokkos_named_args_v<Args...>)>
+    csvc(mpi::communicator comm, const target_platform target, const parameter params, Args &&...named_kokkos_args) :
+        ::plssvm::csvm{ std::move(comm), params },
         ::plssvm::kokkos::csvm(target, std::forward<Args>(named_kokkos_args)...) { }
 
     /**
@@ -209,7 +235,18 @@ class csvc : public ::plssvm::csvc,
      */
     template <typename... Args, PLSSVM_REQUIRES(::plssvm::detail::has_only_kokkos_parameter_named_args_v<Args...>)>
     explicit csvc(Args &&...named_args) :
-        ::plssvm::csvm{ named_args... },
+        ::plssvm::csvm{ mpi::communicator{}, named_args... },
+        ::plssvm::kokkos::csvm(target_platform::automatic, std::forward<Args>(named_args)...) { }
+
+    /**
+     * @brief Construct a new C-SVC using the Kokkos backend and the optionally provided @p named_args.
+     * @param[in] comm the used MPI communicator
+     * @param[in] named_args the additional optional named arguments
+     * @throws plssvm::exception all exceptions thrown in the base class constructors
+     */
+    template <typename... Args, PLSSVM_REQUIRES(::plssvm::detail::has_only_kokkos_parameter_named_args_v<Args...>)>
+    explicit csvc(mpi::communicator comm, Args &&...named_args) :
+        ::plssvm::csvm{ std::move(comm), named_args... },
         ::plssvm::kokkos::csvm(target_platform::automatic, std::forward<Args>(named_args)...) { }
 
     /**
@@ -220,7 +257,19 @@ class csvc : public ::plssvm::csvc,
      */
     template <typename... Args, PLSSVM_REQUIRES(::plssvm::detail::has_only_kokkos_parameter_named_args_v<Args...>)>
     explicit csvc(const target_platform target, Args &&...named_args) :
-        ::plssvm::csvm{ named_args... },
+        ::plssvm::csvm{ mpi::communicator{}, named_args... },
+        ::plssvm::kokkos::csvm(target, std::forward<Args>(named_args)...) { }
+
+    /**
+     * @brief Construct a new C-SVC using the Kokkos backend on the @p target platform and the optionally provided @p named_args.
+     * @param[in] comm the used MPI communicator
+     * @param[in] target the target platform used for this C-SVC
+     * @param[in] named_args the additional optional named-parameters
+     * @throws plssvm::exception all exceptions thrown in the base class constructors
+     */
+    template <typename... Args, PLSSVM_REQUIRES(::plssvm::detail::has_only_kokkos_parameter_named_args_v<Args...>)>
+    csvc(mpi::communicator comm, const target_platform target, Args &&...named_args) :
+        ::plssvm::csvm{ std::move(comm), named_args... },
         ::plssvm::kokkos::csvm(target, std::forward<Args>(named_args)...) { }
 };
 
@@ -238,8 +287,20 @@ class csvr : public ::plssvm::csvr,
      * @throws plssvm::exception all exceptions thrown in the base class constructors
      */
     template <typename... Args, PLSSVM_REQUIRES(::plssvm::detail::has_only_kokkos_named_args_v<Args...>)>
-    explicit csvr(parameter params, Args &&...named_kokkos_args) :
-        ::plssvm::csvm{ params },
+    explicit csvr(const parameter params, Args &&...named_kokkos_args) :
+        ::plssvm::csvm{ mpi::communicator{}, params },
+        ::plssvm::kokkos::csvm(target_platform::automatic, std::forward<Args>(named_kokkos_args)...) { }
+
+    /**
+     * @brief Construct a new C-SVR using the Kokkos backend with the parameters given through @p params.
+     * @param[in] comm the used MPI communicator
+     * @param[in] params struct encapsulating all possible parameters
+     * @param[in] named_kokkos_args the additional optional Kokkos specific named arguments
+     * @throws plssvm::exception all exceptions thrown in the base class constructors
+     */
+    template <typename... Args, PLSSVM_REQUIRES(::plssvm::detail::has_only_kokkos_named_args_v<Args...>)>
+    csvr(mpi::communicator comm, const parameter params, Args &&...named_kokkos_args) :
+        ::plssvm::csvm{ std::move(comm), params },
         ::plssvm::kokkos::csvm(target_platform::automatic, std::forward<Args>(named_kokkos_args)...) { }
 
     /**
@@ -250,8 +311,21 @@ class csvr : public ::plssvm::csvr,
      * @throws plssvm::exception all exceptions thrown in the base class constructors
      */
     template <typename... Args, PLSSVM_REQUIRES(::plssvm::detail::has_only_kokkos_named_args_v<Args...>)>
-    explicit csvr(target_platform target, parameter params, Args &&...named_kokkos_args) :
-        ::plssvm::csvm{ params },
+    csvr(const target_platform target, const parameter params, Args &&...named_kokkos_args) :
+        ::plssvm::csvm{ mpi::communicator{}, params },
+        ::plssvm::kokkos::csvm(target, std::forward<Args>(named_kokkos_args)...) { }
+
+    /**
+     * @brief Construct a new C-SVR using the Kokkos backend on the @p target platform with the parameters given through @p params.
+     * @param[in] comm the used MPI communicator
+     * @param[in] target the target platform used for this C-SVR
+     * @param[in] params struct encapsulating all possible SVM parameters
+     * @param[in] named_kokkos_args the additional optional Kokkos specific named arguments
+     * @throws plssvm::exception all exceptions thrown in the base class constructors
+     */
+    template <typename... Args, PLSSVM_REQUIRES(::plssvm::detail::has_only_kokkos_named_args_v<Args...>)>
+    csvr(mpi::communicator comm, const target_platform target, const parameter params, Args &&...named_kokkos_args) :
+        ::plssvm::csvm{ std::move(comm), params },
         ::plssvm::kokkos::csvm(target, std::forward<Args>(named_kokkos_args)...) { }
 
     /**
@@ -261,7 +335,18 @@ class csvr : public ::plssvm::csvr,
      */
     template <typename... Args, PLSSVM_REQUIRES(::plssvm::detail::has_only_kokkos_parameter_named_args_v<Args...>)>
     explicit csvr(Args &&...named_args) :
-        ::plssvm::csvm{ named_args... },
+        ::plssvm::csvm{ mpi::communicator{}, named_args... },
+        ::plssvm::kokkos::csvm(target_platform::automatic, std::forward<Args>(named_args)...) { }
+
+    /**
+     * @brief Construct a new C-SVR using the Kokkos backend and the optionally provided @p named_args.
+     * @param[in] comm the used MPI communicator
+     * @param[in] named_args the additional optional named arguments
+     * @throws plssvm::exception all exceptions thrown in the base class constructors
+     */
+    template <typename... Args, PLSSVM_REQUIRES(::plssvm::detail::has_only_kokkos_parameter_named_args_v<Args...>)>
+    explicit csvr(mpi::communicator comm, Args &&...named_args) :
+        ::plssvm::csvm{ std::move(comm), named_args... },
         ::plssvm::kokkos::csvm(target_platform::automatic, std::forward<Args>(named_args)...) { }
 
     /**
@@ -272,7 +357,19 @@ class csvr : public ::plssvm::csvr,
      */
     template <typename... Args, PLSSVM_REQUIRES(::plssvm::detail::has_only_kokkos_parameter_named_args_v<Args...>)>
     explicit csvr(const target_platform target, Args &&...named_args) :
-        ::plssvm::csvm{ named_args... },
+        ::plssvm::csvm{ mpi::communicator{}, named_args... },
+        ::plssvm::kokkos::csvm(target, std::forward<Args>(named_args)...) { }
+
+    /**
+     * @brief Construct a new C-SVR using the Kokkos backend on the @p target platform and the optionally provided @p named_args.
+     * @param[in] comm the used MPI communicator
+     * @param[in] target the target platform used for this C-SVR
+     * @param[in] named_args the additional optional named-parameters
+     * @throws plssvm::exception all exceptions thrown in the base class constructors
+     */
+    template <typename... Args, PLSSVM_REQUIRES(::plssvm::detail::has_only_kokkos_parameter_named_args_v<Args...>)>
+    csvr(mpi::communicator comm, const target_platform target, Args &&...named_args) :
+        ::plssvm::csvm{ std::move(comm), named_args... },
         ::plssvm::kokkos::csvm(target, std::forward<Args>(named_args)...) { }
 };
 

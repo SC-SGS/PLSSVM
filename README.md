@@ -20,6 +20,7 @@
   - [Training using `plssvm-train`](#training-using-plssvm-train)
   - [Predicting using `plssvm-predict`](#predicting-using-plssvm-predict)
   - [Data Scaling using `plssvm-scale`](#data-scaling-using-plssvm-scale)
+  - [Distributed Memory Support via MPI](#distributed-memory-support-via-mpi)
   - [Example Code for PLSSVM Used as a Library](#example-code-for-plssvm-used-as-a-library)
   - [Example Using the `sklearn` Python Bindings Available For PLSSVM](#example-using-the-sklearn-like-python-bindings-available-for-plssvm)
 - [Citing PLSSVM](#citing-plssvm)
@@ -58,15 +59,22 @@ The main highlights of our SVM implementations are:
 1. Drop-in replacement for LIBSVM's `svm-train`, `svm-predict`, and `svm-scale` (some features currently not implemented).
 2. Support of multiple different programming frameworks for parallelization (also called backends in our PLSSVM implementation) which allows us to target GPUs and CPUs from different vendors like NVIDIA, AMD, or Intel:
    - [OpenMP](https://www.openmp.org/)
-   - [HPX](https://hpx.stellar-group.org/)
-   - [stdpar](https://en.cppreference.com/w/cpp/algorithm) (supported implementations are [nvc++](https://developer.nvidia.com/hpc-sdk) from NVIDIA's HPC SDK, [roc-stdpar](https://github.com/ROCm/roc-stdpar) as a patched LLVM, [icpx](https://www.intel.com/content/www/us/en/developer/tools/oneapi/dpc-compiler.html) as Intel's oneAPI compiler, [AdaptiveCpp](https://github.com/AdaptiveCpp/AdaptiveCpp), and [GNU GCC](https://gcc.gnu.org/) using TBB). <br>
+   - [HPX](https://hpx.stellar-group.org/) (tested with current master)
+   - C++ 17's standard parallelism [stdpar](https://en.cppreference.com/w/cpp/algorithm):<br>
      **Note**: due to the nature of the used USM mechanics in the `stdpar` implementations, the `stdpar` backend **can't** be enabled together with **any** other backend! <br>
-     **Note**: since every translation units need to be compiled with the same flag, we currently globally set `CMAKE_CXX_FLAGS` although it's discouraged in favor of `target_compile_options`.
-   - [CUDA](https://developer.nvidia.com/cuda-zone)
-   - [HIP](https://github.com/ROCm-Developer-Tools/HIP)
-   - [OpenCL](https://www.khronos.org/opencl/)
-   - [SYCL](https://www.khronos.org/sycl/) (supported implementations are Intel's [DPC++/icpx](https://github.com/intel/llvm) and [AdaptiveCpp](https://github.com/AdaptiveCpp/AdaptiveCpp) (formerly known as hipSYCL); specifically the versions [intel-oneapi-compilers@2025.0.0](https://github.com/spack/spack) (via spack) and AdaptiveCpp release [v24.06.0](https://github.com/AdaptiveCpp/AdaptiveCpp/releases/tag/v23.10.0))
-   - [Kokkos](https://github.com/kokkos/kokkos) (all execution spaces supported except `OpenMPTarget` and `OpenACC`); specifically the version [4.5.00](https://github.com/kokkos/kokkos/releases/tag/4.5.00)
+     **Note**: since every translation units need to be compiled with the same flag, we currently globally set `CMAKE_CXX_FLAGS` although it's discouraged.
+     - [nvc++](https://developer.nvidia.com/hpc-sdk) from NVIDIA's HPC SDK (tested with version [25.3](https://docs.nvidia.com/hpc-sdk/hpc-sdk-release-notes/index.html))
+     - [roc-stdpar](https://github.com/ROCm/roc-stdpar) merged into upstream LLVM starting with version 18 (tested with version [18](https://releases.llvm.org/))
+     - [icpx](https://www.intel.com/content/www/us/en/developer/tools/oneapi/dpc-compiler.html) as Intel's oneAPI compiler (tested with version [2025.0.0](https://www.intel.com/content/www/us/en/developer/articles/release-notes/oneapi-dpcpp/2025.html))
+     - [AdaptiveCpp](https://github.com/AdaptiveCpp/AdaptiveCpp) (tested with version [v24.10.0](https://github.com/AdaptiveCpp/AdaptiveCpp/releases/tag/v24.10.0))
+     - [GNU GCC](https://gcc.gnu.org/) using TBB (tested with version GCC [14.2.0](https://gcc.gnu.org/onlinedocs/14.2.0/)) 
+   - [CUDA](https://developer.nvidia.com/cuda-zone) (tested with version [12.6.3](https://developer.nvidia.com/cuda-12-6-3-download-archive))
+   - [HIP](https://github.com/ROCm-Developer-Tools/HIP) (tested with version [6.3.3](https://rocm.docs.amd.com/projects/HIP/en/docs-6.3.3/))
+   - [OpenCL](https://www.khronos.org/opencl/) (tested with CUDA and ROCm provided OpenCL implementations as well as [PoCL](https://github.com/pocl/pocl) version [v6.0](https://github.com/pocl/pocl/releases/tag/v6.0))
+   - [SYCL](https://www.khronos.org/sycl/):
+     - [DPC++/icpx](https://github.com/intel/llvm) as Intel's oneAPI compiler (tested with version [2025.0.0](https://www.intel.com/content/www/us/en/developer/articles/release-notes/oneapi-dpcpp/2025.html))
+     - [AdaptiveCpp](https://github.com/AdaptiveCpp/AdaptiveCpp), formerly known as hipSYCL (tested with version [v24.10.0](https://github.com/AdaptiveCpp/AdaptiveCpp/releases/tag/v24.10.0))
+   - [Kokkos](https://github.com/kokkos/kokkos) (all execution spaces supported except `OpenMPTarget` and `OpenACC`) (tested with version [4.6.00](https://github.com/kokkos/kokkos/releases/tag/4.6.00))
 3. Six different kernel functions to be able to classify a large variety of different problems:
    - linear: $\vec{u}^T$ $\cdot$ $\vec{v}$
    - polynomial: $(\gamma$ $\cdot$ $\vec{u}^T$ $\cdot$ $\vec{v}$ $+$ $coef0)^{d}$
@@ -82,7 +90,8 @@ The main highlights of our SVM implementations are:
    - OAO: constructs many but smaller binary classifications. The resulting model file is **fully** compatible with LIBSVM.
 6. Also, support for the regression task.
 7. Multi-GPU support for **all** kernel functions and GPU backends for `fit` as well as `predict/score` (**note**: no multi-GPU support for the stdpar backend even if run on a GPU!).
-8. Python bindings as drop-in replacement for `sklearn.SVC` and `sklearn.SVR` (some features currently not implemented).
+8. Distributed memory support via [MPI](https://www.mpi-forum.org/) for all backends.
+9. Python bindings as drop-in replacement for `sklearn.SVC` and `sklearn.SVR` (some features currently not implemented).
 
 To see the full power of Support Vector Machines, have a look at our live visualization examples in 
 [examples/python/interactive](examples/python/interactive/README.md).
@@ -95,11 +104,12 @@ General dependencies:
 
 - a C++17 capable compiler (e.g. [`gcc`](https://gcc.gnu.org/) or [`clang`](https://clang.llvm.org/))
 - [CMake](https://cmake.org/) 3.25 or newer
-- [cxxopts ≥ v3.2.0](https://github.com/jarro2783/cxxopts), [fast_float ≥ v6.1.3](https://github.com/fastfloat/fast_float), [{fmt} ≥ v11.0.2](https://github.com/fmtlib/fmt), and [igor](https://github.com/bluescarni/igor) (all four are automatically build during the CMake configuration if they couldn't be found using the respective `find_package` call)
-- [GoogleTest ≥ v1.15.2](https://github.com/google/googletest) if testing is enabled (automatically build during the CMake configuration if `find_package(GTest)` wasn't successful)
+- [cxxopts ≥ v3.2.0](https://github.com/jarro2783/cxxopts), [fast_float ≥ v8.0.2](https://github.com/fastfloat/fast_float), [{fmt} ≥ v11.0.2](https://github.com/fmtlib/fmt), and [igor](https://github.com/bluescarni/igor) (all four are automatically build during the CMake configuration if they couldn't be found using the respective `find_package` call)
+- [GoogleTest ≥ v1.16.0](https://github.com/google/googletest) if testing is enabled (automatically build during the CMake configuration if `find_package(GTest)` wasn't successful)
 - [doxygen](https://www.doxygen.nl/index.html) if documentation generation is enabled
-- [Pybind11 ≥ v2.13.3](https://github.com/pybind/pybind11) if Python bindings are enabled
+- [Pybind11 ≥ v2.13.6](https://github.com/pybind/pybind11) if Python bindings are enabled
 - [OpenMP](https://www.openmp.org/) 4.0 or newer (optional) to speed-up library utilities (like file parsing)
+- [MPI](https://www.mpi-forum.org/) if distributed memory systems should be supported; [mpi4py](https://mpi4py.readthedocs.io/en/stable/) to enable interoperability in our Python bindings
 - [Format.cmake](https://github.com/TheLartians/Format.cmake) if auto formatting via cmake-format and clang-format is enabled; also requires at least clang-format-18 and git, additionally, needs our custom [cmake-format fork](https://github.com/vancraar/cmake_format) incorporating some patches
 - multiple Python modules used in the utility scripts, to install all modules use `pip install --user -r install/python_requirements.txt`
 
@@ -113,12 +123,12 @@ Additional dependencies for the stdpar backend:
 
 Additional dependencies for the HPX backend:
 
-- [HPX ≥ v1.9.0](https://hpx.stellar-group.org/)
+- [HPX @ current master](https://hpx.stellar-group.org/)
 
 Additional dependencies for the CUDA backend:
 
 - CUDA SDK
-- either NVIDIA [`nvcc`](https://docs.nvidia.com/cuda/cuda-compiler-driver-nvcc/index.html) or [`clang` with CUDA support enabled](https://llvm.org/docs/CompileCudaWithLLVM.html)
+- either NVIDIA [`nvcc`](https://docs.nvidia.com/cuda/cuda-compiler-driver-nvcc/index.html), [`nvc++`](https://developer.nvidia.com/hpc-sdk) or [`clang` with CUDA support enabled](https://llvm.org/docs/CompileCudaWithLLVM.html)
 
 Additional dependencies for the HIP backend:
 
@@ -128,6 +138,7 @@ Additional dependencies for the HIP backend:
 Additional dependencies for the OpenCL backend:
 
 - OpenCL runtime and header files
+- e.g., the CUDA or ROCm provided OpenCL runtimes or [PoCL](https://github.com/pocl/pocl)
 
 Additional dependencies for the SYCL backend:
 
@@ -232,11 +243,6 @@ python3 utility_scripts/plssvm_target_platforms.py --quiet
 cpu:avx512;nvidia:sm_86
 ```
 
-If the architectural information for the requested GPU could not be retrieved, one option would be to have a look at:
-
-- for Intel GPUs and CPUs: [Ahead of Time Compilation](https://www.intel.com/content/www/us/en/develop/documentation/oneapi-dpcpp-cpp-compiler-dev-guide-and-reference/top/compilation/ahead-of-time-compilation.html) and [Intel graphics processor table](https://dgpu-docs.intel.com/devices/hardware-table.html)
-
-
 #### Optional CMake Options
 
 The `[optional_options]` can be one or multiple of:
@@ -283,12 +289,17 @@ The `[optional_options]` can be one or multiple of:
 
 **Attention:** at least one backend must be enabled and available!
 
+- `PLSSVM_ENABLE_MPI=ON|OFF|AUTO` (default: `AUTO`):
+    - `ON`: check for MPI and fail if not available
+    - `AUTO`: check for MPI but **do not** fail if not available
+    - `OFF`: do not check for MPI
+
 - `PLSSVM_ENABLE_FAST_MATH=ON|OFF` (default depending on `CMAKE_BUILD_TYPE`: `ON` for Release or RelWithDebInfo, `OFF` otherwise): enable `fast-math` compiler flags for all backends
 - `PLSSVM_ENABLE_ASSERTS=ON|OFF` (default: `OFF`): enables custom assertions
 - `PLSSVM_USE_FLOAT_AS_REAL_TYPE=ON|OFF` (default: `OFF`): use `float` as real_type instead of `double`
 - `PLSSVM_THREAD_BLOCK_SIZE` (default: `8`): set a specific thread block size used in the GPU kernels (for fine-tuning optimizations)
 - `PLSSVM_INTERNAL_BLOCK_SIZE` (default: `4`): set a specific internal block size used in the GPU kernels (for fine-tuning optimizations)
-- `PLSSVM_ENABLE_LTO=ON|OFF` (default: `ON`): enable interprocedural optimization (IPO/LTO) if supported by the compiler
+- `PLSSVM_ENABLE_LTO=ON|OFF` (default: `OFF`): enable interprocedural optimization (IPO/LTO) if supported by the compiler
 - `PLSSVM_ENFORCE_MAX_MEM_ALLOC_SIZE=ON|OFF` (default: `ON`): enforce the maximum (device) memory allocation size for the plssvm::solver_type::automatic solver
 - `PLSSVM_ENABLE_DOCUMENTATION=ON|OFF` (default: `OFF`): enable the `doc` target using doxygen
 - `PLSSVM_ENABLE_PERFORMANCE_TRACKING=ON|OFF` (default: `OFF`): enable gathering performance characteristics for the three executables using YAML files; example Python3 scripts to perform performance measurements and to process the resulting YAML files can be found in the `utility_scripts/` directory (requires the Python3 modules [wrapt-timeout-decorator](https://pypi.org/project/wrapt-timeout-decorator/), [`pyyaml`](https://pyyaml.org/), and [`pint`](https://pint.readthedocs.io/en/stable/))
@@ -313,7 +324,6 @@ If `PLSSVM_ENABLE_PERFORMANCE_TRACKING` is set to `ON`, the following option can
 
 If `PLSSVM_ENABLE_HARDWARE_SAMPLING` is set to `ON`, the following options can also be set:
 
-- `PLSSVM_HARDWARE_SAMPLING_ENABLE_ERROR_CHECKS=ON|OFF` (default: `OFF`): enable some runtime error checks for the hardware sampling libraries
 - `PLSSVM_HARDWARE_SAMPLING_INTERVAL` (default: `100`): the sampling interval for the `plssvm-train`, `plssvm-predict`, and `plssvm-scale` executables in **milliseconds**
 
 If `PLSSVM_ENABLE_LANGUAGE_BINDINGS` is set to `ON`, the following option can also be set:
@@ -340,9 +350,7 @@ To use DPC++/icpx for SYCL, simply set the `CMAKE_CXX_COMPILER` to the respectiv
 
 If the SYCL implementation is DPC++/icpx the following additional options are available:
 
-- `PLSSVM_SYCL_BACKEND_DPCPP_ENABLE_AOT` (default: `ON`): enable Ahead-of-Time (AOT) compilation for the specified target platforms
 - `PLSSVM_SYCL_BACKEND_DPCPP_USE_LEVEL_ZERO` (default: `ON`): use DPC++/icpx's Level-Zero backend instead of its OpenCL backend **(only available if a CPU or Intel GPU is targeted)**
-- `PLSSVM_SYCL_BACKEND_DPCPP_GPU_AMD_USE_HIP` (default: `ON`): use DPC++/icpx's HIP backend instead of its OpenCL backend for AMD GPUs **(only available if an AMD GPU is targeted)**
 
 If the SYCL implementation is AdaptiveCpp the following additional option is available:
 
@@ -353,13 +361,24 @@ If more than one SYCL implementation is available the environment variables `PLS
 
 - `PLSSVM_SYCL_BACKEND_PREFERRED_IMPLEMENTATION` (`dpcpp`|`adaptivecpp`): specify the preferred SYCL implementation if the `sycl_implementation_type` option is set to `automatic`; additional the specified SYCL implementation is used in the `plssvm::sycl` namespace, the other implementations are available in the `plssvm::dpcpp` and `plssvm::adaptivecpp` namespace respectively
 
-If the Kokkos backend is available the following additional option is available (**note**: this option takes only effect if the Kokkos SYCL execution space is available):
+If the Kokkos backend is available, an additional option can be set.
 
-- `PLSSVM_KOKKOS_BACKEND_INTEL_LLVM_ENABLE_AOT` (default: `ON`): enable Ahead-of-Time (AOT) compilation for the specified target platforms
+- `PLSSVM_KOKKOS_BACKEND_SYCL_ENABLE_MULTI_GPU` (default: `OFF`): enable multi-GPU support for the Kokkos::SYCL execution space; broken in Kokkos as of version 4.6.00!
 
-If the stdpar backend is available, an additional options can be set.
+If the stdpar backend is available, an additional option can be set.
 
 - `PLSSVM_STDPAR_BACKEND_IMPLEMENTATION` (default: `AUTO`): explicitly specify the used stdpar implementation; must be one of: `AUTO`, `NVHPC`, `roc-stdpar`, `IntelLLVM`, `ACPP`, `GNU_TBB`.
+
+If the stdpar implementation is AdaptiveCpp, the following additional option is available:
+
+- `PLSSVM_STDPAR_BACKEND_ACPP_USE_GENERIC_SSCP` (default: `ON`): use AdaptiveCpp's new SSCP compilation flow
+- 
+If the stdpar implementation is roc-stdpar, the following additional option is available:
+
+- `PLSSVM_STDPAR_BACKEND_ROCSTDPAR_USE_INTERPOSE_ALLOC=ON|OFF|AUTO` (default: `AUTO`):
+    - `ON`: always set the `--hipstdpar-interpose-alloc` compiler flag
+    - `AUTO`: only set the `--hipstdpar-interpose-alloc` compiler flag if the environment variable `HSA_XNACK` is not defined or set to `0`
+    - `OFF`: never set the `--hipstdpar-interpose-alloc` compiler flag
 
 #### CMake presets
 
@@ -406,9 +425,12 @@ Available configure presets:
   "acpp"                    - AdaptiveCpp SYCL backend
   "acpp_python"             - AdaptiveCpp SYCL backend + Python bindings
   "acpp_test"               - AdaptiveCpp SYCL backend tests
-  "dpcpp"                   - DPC++/icpx SYCL backend
-  "dpcpp_python"            - DPC++/icpx backend + Python bindings
-  "dpcpp_test"              - DPC++/icpx backend tests
+  "dpcpp"                   - DPC++ SYCL backend
+  "dpcpp_python"            - DPC++ backend + Python bindings
+  "dpcpp_test"              - DPC++ backend tests
+  "icpx"                    - icpx SYCL backend
+  "icpx_python"             - icpx backend + Python bindings
+  "icpx_test"               - icpx backend tests
   "kokkos"                  - Kokkos backend
   "kokkos_python"           - Kokkos backend + Python bindings
   "kokkos_test"             - Kokkos backend tests
@@ -428,6 +450,8 @@ However, these additional options can be enabled using normal CMake options.
 
 **Note**: the `all` presets always exclude the `stdpar` backend since it is currently not supported to enable them with any other backend.
 
+**Note**: the only difference between the dpcpp and icpx presets is the automatically set `CMAKE_CXX_COMPILER`. Internally, both presets use the same SYCL implementation.
+
 ### Running the Tests
 
 To run the tests after building the library (with `PLSSVM_ENABLE_TESTING` set to `ON`) use:
@@ -443,6 +467,8 @@ ctest
 **Note:** If the used stdpar implementation is `nvc++`, `PLSSVM_ENABLE_PERFORMANCE_TRACKING` must be set to `OFF` in order to run the tests.
 
 **Note:** the stdpar tests may fail if executed in parallel via `ctest -j $(nproc)`.
+
+**Note:** our tests do not support the execution with more than one MPI process launched via `mpirun`.
 
 ### Generating Test Coverage Results
 
@@ -665,6 +691,8 @@ Usage:
                                 choose the Kokkos execution space to be used in the Kokkos backend: automatic|Cuda|OpenMP|Serial (default: automatic)
       --performance_tracking arg
                                 the output YAML file where the performance tracking results are written to; if not provided, the results are dumped to stderr
+      --mpi_load_balancing_weights arg
+                                can be used to load balance for MPI (must be integers); number of provided values must match the number of MPI ranks
       --use_strings_as_labels   use strings as labels instead of plane numbers
       --verbosity               choose the level of verbosity: full|timing|libsvm|quiet (default: full)
   -q, --quiet                   quiet mode (no outputs regardless the provided verbosity level!)
@@ -771,6 +799,8 @@ Usage:
                                 choose the Kokkos execution space to be used in the Kokkos backend: automatic|Cuda|OpenMP|Serial (default: automatic)
       --performance_tracking arg
                                 the output YAML file where the performance tracking results are written to; if not provided, the results are dumped to stderr
+      --mpi_load_balancing_weights arg
+                                can be used to load balance for MPI (must be integers); number of provided values must match the number of MPI ranks
       --use_strings_as_labels   use strings as labels instead of plane numbers
       --verbosity               choose the level of verbosity: full|timing|libsvm|quiet (default: full)
   -q, --quiet                   quiet mode (no outputs regardless the provided verbosity level!)
@@ -833,6 +863,37 @@ An example invocation to scale a train and test file in the same way looks like:
 ./plssvm-scale -l -1.0 -u 1.0 -s scaling_parameter.txt train_file.libsvm train_file_scaled.libsvm
 ./plssvm-scale -r scaling_parameter.txt test_file.libsvm test_file_scaled.libsvm
 ```
+
+### Distributed Memory Support via MPI
+
+We support distributed memory via MPI for `plssvm-train` and `plssvm-predict` while simultaneously allowing multiple devices per MPI rank.
+In order to use it, MPI must be found during the CMake configuration step.
+Note that if MPI couldn't be found, PLSSVM still works in shared memory mode only and internally disables all MPI related functionality.
+For example, to run PLSSVM via MPI on four nodes simply use the normal `mpirun` command:
+
+```bash
+mpirun -N 4 ./plssvm-train --backend cuda --input /path/to/data_file
+```
+
+We also have support for a rudimentary, manual load balancing: 
+
+```bash
+mpirun -N 4 ./plssvm-train mpi_load_balancing_weights=1,2,2,1 --backend cuda --input /path/to/data_file
+```
+
+The above command results in MPI rank 1 and 2 computing twice the matrix elements than the ranks 0 and 3. 
+This can be used to load balance our computations in scenarios where heterogeneous hardware is used. 
+Note that the number of provided load balancing weights must be equal to the used MPI ranks and is independent of the number of devices per MPI rank. 
+If one MPI rank has more than one device, all these devices on one MPI rank compute the same number of matrix elements. 
+
+Our MPI implementation, however, currently has some limitations:
+- the training, test, and model data is fully read by **every** MPI rank
+- the training, test, and model data is fully stored on **each** compute device on **every** MPI rank
+- **only** the kernel matrix is really divided across **all** MPI ranks
+- while the expensive BLAS level 3 operations in the CG algorithm are computed in a distributed way, everything else is computed on **every** MPI rank
+- in the CG algorithm we communicate the whole matrix, although it would be sufficient to communicate only matrix parts
+- **only** the **main** MPI rank (per default rank 0) writes the output files
+- `plssvm-scale` **does not** support more than one MPI rank
 
 ### Example Code for PLSSVM Used as a Library
 
@@ -919,9 +980,9 @@ int main() {
         std::cout << "model accuracy: " << model_accuracy << std::endl;
 
         // predict the labels
-        const std::vector<double> predicted_values = svc->predict(model, test_data);
+        const std::vector<plssvm::real_type> predicted_values = svc->predict(model, test_data);
         // output a more complete regression report
-        const std::vector<double> &correct_values = test_data.labels().value();
+        const std::vector<plssvm::real_type> &correct_values = test_data.labels().value();
         std::cout << plssvm::regression_report{ correct_label, predicted_label } << std::endl;
 
         // write model file to disk
@@ -936,26 +997,39 @@ int main() {
 }
 ```
 
+The `examples/cpp` directory also contains the same examples using MPI to support distributed memory systems.
+
 With a corresponding minimal CMake file:
 
 ```cmake
 cmake_minimum_required(VERSION 3.25)
 
-project(LibraryUsageExample
-        LANGUAGES CXX)
+project(LibraryUsageExample LANGUAGES CXX)
 
-find_package(plssvm REQUIRED)
+find_package(plssvm CONFIG REQUIRED)
 # CMake's COMPONENTS mechanism can also be used if a specific library component is required, e.g.:
 # find_package(plssvm REQUIRED COMPONENTS CUDA)
 
+# classification executable example
 add_executable(classification main_classification.cpp)
+# classification executable example using MPI
+add_executable(classification_mpi main_classification_mpi.cpp)
+# regression executable example
 add_executable(regression main_regression.cpp)
+# regression executable example using MPI
+add_executable(regression_mpi main_regression_mpi.cpp)
 
-target_compile_features(prog PUBLIC cxx_std_17)
-target_link_libraries(prog PUBLIC plssvm::all)
-# can also only link against a single library component, e.g.:
-# target_link_libraries(prog PUBLIC plssvm::cuda)
+# link PLSSVM against executables
+foreach (target classification classification_mpi regression regression_mpi)
+    target_compile_features(${target} PUBLIC cxx_std_17)
+    target_link_libraries(${target} PUBLIC plssvm::plssvm)
+    # can also only link against a single library component, e.g.:
+    # target_link_libraries(${target} PUBLIC plssvm::cuda)
+endforeach ()
 ```
+
+The `examples/python` directory contains the same examples using our PLSSVM Python bindings. 
+Additionally, it contains Python examples leveraging MPI to target distributed memory systems. 
 
 ### Example Using the `sklearn` like Python Bindings Available For PLSSVM
 
@@ -977,7 +1051,7 @@ import sklearn.datasets
 import sklearn.metrics
 import sklearn.inspection
 import numpy as np
-from plssvm import SVC  # identical to from sklearn.svm import SVC
+from plssvm.svm import SVC  # identical to from sklearn.svm import SVC
 
 # load the breast cancer datasets
 cancer = sklearn.datasets.load_breast_cancer()
@@ -1076,7 +1150,7 @@ y_rbf_sklearn = sklearn_svr_rbf.fit(X, y).predict(X)
 plt.plot(X, y_rbf_sklearn, lw=2, linestyle='dashed', label='RBF model sklearn')
 
 # fit the PLSSVM regression model
-from plssvm import SVR
+from plssvm.svm import SVR
 
 plssvm_svr_lin = SVR(kernel='linear', C=100)
 y_lin_plssvm = plssvm_svr_lin.fit(X, y).predict(X)

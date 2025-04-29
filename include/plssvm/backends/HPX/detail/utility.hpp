@@ -15,7 +15,8 @@
 #pragma once
 
 #include "boost/atomic/atomic_ref.hpp"  // boost::atomic_ref
-#include <string>                       // std::string
+
+#include <string>  // std::string
 
 namespace plssvm::hpx::detail {
 

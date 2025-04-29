@@ -18,13 +18,16 @@
 #include "plssvm/detail/data_distribution.hpp"             // plssvm::detail::triangular_data_distribution
 #include "plssvm/detail/data_distribution.hpp"             // plssvm::detail::data_distribution
 #include "plssvm/detail/igor_utility.hpp"                  // plssvm::detail::{get_value_from_named_parameter, has_only_parameter_named_args_v}
-#include "plssvm/detail/logging.hpp"                       // plssvm::detail::log
+#include "plssvm/detail/logging/mpi_log.hpp"               // plssvm::detail::log
+#include "plssvm/detail/logging/mpi_log_untracked.hpp"     // plssvm::detail::log_untracked
 #include "plssvm/detail/memory_size.hpp"                   // plssvm::detail::memory_size
 #include "plssvm/detail/move_only_any.hpp"                 // plssvm::detail::move_only_any
 #include "plssvm/detail/tracking/performance_tracker.hpp"  // PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY, PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_EVENT, plssvm::detail::tracking::tracking_entry
 #include "plssvm/detail/type_traits.hpp"                   // PLSSVM_REQUIRES, plssvm::detail::remove_cvref_t
 #include "plssvm/exceptions/exceptions.hpp"                // plssvm::invalid_parameter_exception
 #include "plssvm/matrix.hpp"                               // plssvm::aos_matrix
+#include "plssvm/mpi/communicator.hpp"                     // plssvm::mpi::communicator
+#include "plssvm/mpi/detail/information.hpp"               // plssvm::mpi::detail::gather_and_print_solver_information
 #include "plssvm/parameter.hpp"                            // plssvm::parameter
 #include "plssvm/shape.hpp"                                // plssvm::shape
 #include "plssvm/solver_types.hpp"                         // plssvm::solver_type
@@ -32,6 +35,7 @@
 #include "plssvm/verbosity_levels.hpp"                     // plssvm::verbosity_level
 
 #include "fmt/format.h"   // fmt::format
+#include "fmt/ranges.h"   // fmt::join
 #include "igor/igor.hpp"  // igor::parser
 
 #include <algorithm>    // std::max
@@ -54,18 +58,25 @@ namespace plssvm {
 class csvm {
   public:
     /**
+     * @brief Default constructor.
+     * @details Needed due to multiple-inheritance.
+     */
+    csvm() = default;
+    /**
      * @brief Construct a C-SVM using the SVM parameter @p params.
      * @details Uses the default SVM parameter if none are provided.
+     * @param[in] comm the used MPI communicator
      * @param[in] params the SVM parameter
      */
-    explicit csvm(parameter params = {});
+    explicit csvm(mpi::communicator comm, parameter params = {});
     /**
      * @brief Construct a C-SVM forwarding all parameters @p args to the plssvm::parameter constructor.
      * @tparam Args the type of the (named-)parameters
+     * @param[in] comm the used MPI communicator
      * @param[in] args the parameters used to construct a plssvm::parameter
      */
     template <typename... Args>
-    explicit csvm(Args &&...args);
+    explicit csvm(mpi::communicator comm, Args &&...args);
 
     /**
      * @brief Delete copy-constructor since a C-SVM is a move-only type.
@@ -121,6 +132,14 @@ class csvm {
      */
     template <typename... Args, PLSSVM_REQUIRES(detail::has_only_parameter_named_args_v<Args...>)>
     void set_params(Args &&...named_args);
+
+    /**
+     * @brief Get the associated MPI communicator.
+     * @return the MPI communicator (`[[nodiscard]]`)
+     */
+    [[nodiscard]] const mpi::communicator &communicator() const noexcept {
+        return comm_;
+    }
 
   protected:
     //*************************************************************************************************************************************//
@@ -178,18 +197,6 @@ class csvm {
      */
     [[nodiscard]] virtual aos_matrix<real_type> predict_values(const parameter &params, const soa_matrix<real_type> &support_vectors, const aos_matrix<real_type> &alpha, const std::vector<real_type> &rho, soa_matrix<real_type> &w, const soa_matrix<real_type> &predict_points) const = 0;
 
-    /// The target platform of this SVM.
-    target_platform target_{ plssvm::target_platform::automatic };
-    /// The data distribution on the available devices.
-    mutable std::unique_ptr<detail::data_distribution> data_distribution_{};
-
-    /**
-     * @brief Perform some sanity checks on the passed SVM parameters.
-     * @throws plssvm::invalid_parameter_exception if the kernel function is invalid
-     * @throws plssvm::invalid_parameter_exception if the gamma value for the polynomial or radial basis function kernel is **not** greater than zero
-     */
-    void sanity_check_parameter() const;
-
     /**
      * @brief Solve the system of linear equations `K * X = B` where `K` is the kernel matrix assembled from @p A using the @p params with potentially multiple right-hand sides.
      * @tparam Args the type of the potential additional parameters
@@ -235,17 +242,23 @@ class csvm {
 
     /// The SVM parameter (e.g., cost, degree, gamma, coef0) currently in use.
     parameter params_{};
+    /// The target platform of this SVM.
+    target_platform target_{ plssvm::target_platform::automatic };
+    /// The data distribution on the available devices.
+    mutable std::unique_ptr<detail::data_distribution> data_distribution_{};
+    /// The used MPI communicator.
+    mpi::communicator comm_{};
 };
 
-inline csvm::csvm(parameter params) :
-    params_{ params } {
-    this->sanity_check_parameter();
+inline csvm::csvm(mpi::communicator comm, parameter params) :
+    params_{ params },
+    comm_{ std::move(comm) } {
 }
 
 template <typename... Args>
-csvm::csvm(Args &&...named_args) :
-    params_{ std::forward<Args>(named_args)... } {
-    this->sanity_check_parameter();
+csvm::csvm(mpi::communicator comm, Args &&...named_args) :
+    params_{ std::forward<Args>(named_args)... },
+    comm_{ std::move(comm) } {
 }
 
 template <typename... Args, std::enable_if_t<detail::has_only_parameter_named_args_v<Args...>, bool>>
@@ -254,9 +267,6 @@ void csvm::set_params(Args &&...named_args) {
 
     // update the parameters
     params_.set_named_arguments(std::forward<Args>(named_args)...);
-
-    // check if the new parameters make sense
-    this->sanity_check_parameter();
 }
 
 //*************************************************************************************************************************************//
@@ -324,6 +334,9 @@ std::tuple<aos_matrix<real_type>, std::vector<real_type>, std::vector<unsigned l
         constexpr detail::memory_size minimal_safety_margin = 512_MiB;
         constexpr long double percentual_safety_margin = 0.05L;
         const auto reduce_total_memory = [=](const detail::memory_size total_memory) {
+            if (total_memory < 512_MiB) {
+                throw kernel_launch_resources{ fmt::format("At least {} of memory must be available, but available are only {}!", 512_MiB, total_memory) };
+            }
             return total_memory - std::max(total_memory * percentual_safety_margin, minimal_safety_margin);
         };
 
@@ -342,7 +355,7 @@ std::tuple<aos_matrix<real_type>, std::vector<real_type>, std::vector<unsigned l
         }();
 
         // calculate the maximum total memory needed for the explicit and implicit kernel matrix per device
-        const detail::triangular_data_distribution data_distribution{ num_rows_reduced, this->num_available_devices() };
+        const detail::triangular_data_distribution data_distribution{ comm_, num_rows_reduced, this->num_available_devices() };
         const std::vector<detail::memory_size> total_memory_needed_explicit_per_device = data_distribution.calculate_maximum_explicit_kernel_matrix_memory_needed_per_place(num_features, num_rhs);
         const std::vector<detail::memory_size> total_memory_needed_implicit_per_device = data_distribution.calculate_maximum_implicit_kernel_matrix_memory_needed_per_place(num_features, num_rhs);
 
@@ -355,23 +368,26 @@ std::tuple<aos_matrix<real_type>, std::vector<real_type>, std::vector<unsigned l
             }
         };
 
-        // output the necessary information on the console
-        detail::log(verbosity_level::full,
-                    "Determining the solver type based on the available memory:\n"
-                    "  - total system memory: {2}\n"
-                    "  - usable system memory (with safety margin of min({0} %, {1}): {3}\n"
-                    "  - total device memory: {4}\n"
-                    "  - usable device memory (with safety margin of min({0} %, {1}): {5}\n"
-                    "  - maximum memory needed (cg_explicit): {6}\n"
-                    "  - maximum memory needed (cg_implicit): {7}\n",
-                    static_cast<double>(percentual_safety_margin * 100.0L),
-                    minimal_safety_margin,
-                    detail::tracking::tracking_entry{ "solver", "system_memory", total_system_memory },
-                    detail::tracking::tracking_entry{ "solver", "usable_system_memory_with_safety_margin", usable_system_memory },
-                    format_vector(total_device_memory_per_device),
-                    format_vector(usable_device_memory_per_device),
-                    format_vector(total_memory_needed_explicit_per_device),
-                    format_vector(total_memory_needed_implicit_per_device));
+        if (comm_.size() <= 1) {
+            // output the necessary information on the console, full output only if a single MPI rank is used
+            detail::log(verbosity_level::full,
+                        comm_,
+                        "Determining the solver type based on the available memory:\n"
+                        "  - total system memory: {2}\n"
+                        "  - usable system memory (with safety margin of min({0} %, {1}): {3}\n"
+                        "  - total device memory: {4}\n"
+                        "  - usable device memory (with safety margin of min({0} %, {1}): {5}\n"
+                        "  - maximum memory needed (cg_explicit): {6}\n"
+                        "  - maximum memory needed (cg_implicit): {7}\n",
+                        static_cast<double>(percentual_safety_margin * 100.0L),
+                        minimal_safety_margin,
+                        detail::tracking::tracking_entry{ "solver", "system_memory", total_system_memory },
+                        detail::tracking::tracking_entry{ "solver", "usable_system_memory_with_safety_margin", usable_system_memory },
+                        format_vector(total_device_memory_per_device),
+                        format_vector(usable_device_memory_per_device),
+                        format_vector(total_memory_needed_explicit_per_device),
+                        format_vector(total_memory_needed_implicit_per_device));
+        }
         PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((detail::tracking::tracking_entry{ "solver", "device_memory", total_device_memory_per_device }));
         PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((detail::tracking::tracking_entry{ "solver", "usable_device_memory_with_safety_margin", usable_device_memory_per_device }));
         PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((detail::tracking::tracking_entry{ "solver", "needed_device_memory_cg_explicit", total_memory_needed_explicit_per_device }));
@@ -395,7 +411,13 @@ std::tuple<aos_matrix<real_type>, std::vector<real_type>, std::vector<unsigned l
             // use the explicit solver type
             used_solver = solver_type::cg_explicit;
         } else {
-            detail::log(verbosity_level::full, "Cannot use cg_explicit due to memory constraints on device(s) {}!\n", format_vector(failed_cg_explicit_constraints));
+            if (comm_.size() <= 1) {
+                // output only if a single MPI rank is used
+                detail::log_untracked(verbosity_level::full,
+                                      comm_,
+                                      "Cannot use cg_explicit due to memory constraints on device(s) {}!\n",
+                                      format_vector(failed_cg_explicit_constraints));
+            }
 
             // check whether there is enough memory available for cg_implicit
             if (const std::vector<std::size_t> failed_cg_implicit_constraints = check_sizes(total_memory_needed_implicit_per_device, usable_device_memory_per_device); failed_cg_implicit_constraints.empty()) {
@@ -417,13 +439,17 @@ std::tuple<aos_matrix<real_type>, std::vector<real_type>, std::vector<unsigned l
         const std::vector<detail::memory_size> max_single_allocation_cg_implicit_size_per_device = data_distribution.calculate_maximum_implicit_kernel_matrix_memory_allocation_size_per_place(num_features, num_rhs);
 
         // output the maximum memory allocation size per device
-        detail::log(verbosity_level::full,
-                    "  - maximum supported single memory allocation size: {}\n"
-                    "  - maximum needed single memory allocation size (cg_explicit): {}\n"
-                    "  - maximum needed single memory allocation size (cg_implicit): {}\n",
-                    format_vector(max_mem_alloc_size_per_device),
-                    format_vector(max_single_allocation_cg_explicit_size_per_device),
-                    format_vector(max_single_allocation_cg_implicit_size_per_device));
+        if (comm_.size() <= 1) {
+            // output only if a single MPI rank is used
+            detail::log_untracked(verbosity_level::full,
+                                  comm_,
+                                  "  - maximum supported single memory allocation size: {}\n"
+                                  "  - maximum needed single memory allocation size (cg_explicit): {}\n"
+                                  "  - maximum needed single memory allocation size (cg_implicit): {}\n",
+                                  format_vector(max_mem_alloc_size_per_device),
+                                  format_vector(max_single_allocation_cg_explicit_size_per_device),
+                                  format_vector(max_single_allocation_cg_implicit_size_per_device));
+        }
         PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((detail::tracking::tracking_entry{ "solver", "device_max_single_mem_alloc_size", max_mem_alloc_size_per_device }));
         PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((detail::tracking::tracking_entry{ "solver", "device_max_mem_alloc_size_cg_explicit", max_single_allocation_cg_explicit_size_per_device }));
         PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((detail::tracking::tracking_entry{ "solver", "device_max_mem_alloc_size_cg_implicit", max_single_allocation_cg_implicit_size_per_device }));
@@ -433,26 +459,42 @@ std::tuple<aos_matrix<real_type>, std::vector<real_type>, std::vector<unsigned l
         if (const std::vector<std::size_t> failed_cg_explicit_constraints = check_sizes(max_single_allocation_cg_explicit_size_per_device, max_mem_alloc_size_per_device);
             used_solver == solver_type::cg_explicit && !failed_cg_explicit_constraints.empty()) {
             // max mem alloc size constraints not fulfilled
-            detail::log(verbosity_level::full,
-                        "Cannot use cg_explicit due to maximum single memory allocation constraints on device(s) {}! Falling back to cg_implicit.\n",
-                        format_vector(failed_cg_explicit_constraints));
+            if (comm_.size() <= 1) {
+                // output only if a single MPI rank is used
+                detail::log_untracked(verbosity_level::full,
+                                      comm_,
+                                      "Cannot use cg_explicit due to maximum single memory allocation constraints on device(s) {}! Falling back to cg_implicit.\n",
+                                      format_vector(failed_cg_explicit_constraints));
+            }
             // can't use cg_explicit
             used_solver = solver_type::cg_implicit;
         }
         if (const std::vector<std::size_t> failed_cg_implicit_constraints = check_sizes(max_single_allocation_cg_implicit_size_per_device, max_mem_alloc_size_per_device);
             used_solver == solver_type::cg_implicit && !failed_cg_implicit_constraints.empty()) {
             // can't fulfill maximum single memory allocation size even for cg_implicit
-            plssvm::detail::log(verbosity_level::full | verbosity_level::warning,
-                                "WARNING: if you are sure that the guaranteed maximum memory allocation size can be safely ignored on your device, "
-                                "this check can be disabled via \"-DPLSSVM_ENFORCE_MAX_MEM_ALLOC_SIZE=OFF\" during the CMake configuration!\n");
+            if (comm_.size() <= 1) {
+                // output only if a single MPI rank is used
+                plssvm::detail::log_untracked(verbosity_level::full | verbosity_level::warning,
+                                              comm_,
+                                              "WARNING: if you are sure that the guaranteed maximum memory allocation size can be safely ignored on your device, "
+                                              "this check can be disabled via \"-DPLSSVM_ENFORCE_MAX_MEM_ALLOC_SIZE=OFF\" during the CMake configuration!\n");
+            }
             throw kernel_launch_resources{ fmt::format("Can't fulfill maximum single memory allocation constraint for device(s) {} even for the cg_implicit solver!", format_vector(failed_cg_implicit_constraints)) };
         }
 #endif
     }
 
-    detail::log(verbosity_level::full,
-                "Using {} as solver for AX=B.\n\n",
-                detail::tracking::tracking_entry{ "solver", "solver_type", used_solver });
+    if (comm_.size() <= 1) {
+        // output only if a single MPI rank is used
+        detail::log_untracked(verbosity_level::full,
+                              comm_,
+                              "Using {} as solver for AX=B.\n\n",
+                              used_solver);
+    } else {
+        // multiple MPI ranks are used -> output used solver type in a more condensed way
+        mpi::detail::gather_and_print_solver_information(comm_, used_solver);
+    }
+    PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((detail::tracking::tracking_entry{ "solver", "solver_type", used_solver }));
 
     // perform dimensional reduction
     // note: structured binding is rejected by clang HIP compiler!
@@ -478,9 +520,22 @@ std::tuple<aos_matrix<real_type>, std::vector<real_type>, std::vector<unsigned l
     const auto assembly_duration = std::chrono::duration_cast<std::chrono::milliseconds>(assembly_end_time - assembly_start_time);
 
     if (used_solver != solver_type::cg_implicit) {
-        detail::log(verbosity_level::full | verbosity_level::timing,
-                    "Assembled the kernel matrix in {}.\n",
-                    assembly_duration);
+        if (comm_.size() > 1) {
+            // gather kernel matrix assembly runtimes from each MPI rank
+            const std::vector<std::chrono::milliseconds> durations = comm_.gather(assembly_duration);
+
+            detail::log_untracked(verbosity_level::full | verbosity_level::timing,
+                                  comm_,
+                                  "Assembled the kernel matrix in {} ({}).\n",
+                                  *std::max_element(durations.cbegin(), durations.cend()),
+                                  fmt::join(durations, "|"));
+
+        } else {
+            detail::log_untracked(verbosity_level::full | verbosity_level::timing,
+                                  comm_,
+                                  "Assembled the kernel matrix in {}.\n",
+                                  assembly_duration);
+        }
     }
     PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((detail::tracking::tracking_entry{ "kernel_matrix", "kernel_matrix_assembly", assembly_duration }));
 

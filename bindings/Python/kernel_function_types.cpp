@@ -8,13 +8,16 @@
 
 #include "plssvm/kernel_function_types.hpp"  // plssvm::kernel_function_type
 
-#include "pybind11/pybind11.h"  // py::module_, py::enum_
+#include "bindings/Python/utility.hpp"  // plssvm::bindings::python::util::register_implicit_str_enum_conversion
+
+#include "pybind11/pybind11.h"  // py::module_, py::enum_, py::arg
 
 namespace py = pybind11;
 
 void init_kernel_function_types(py::module_ &m) {
     // bind enum class
-    py::enum_<plssvm::kernel_function_type>(m, "KernelFunctionType", "Enum class for all implemented kernel functions in PLSSVM.")
+    py::enum_<plssvm::kernel_function_type> py_enum(m, "KernelFunctionType", "Enum class for all implemented kernel functions in PLSSVM.");
+    py_enum
         .value("LINEAR", plssvm::kernel_function_type::linear, "linear kernel function: <u, v>")
         .value("POLYNOMIAL", plssvm::kernel_function_type::polynomial, "polynomial kernel function: (gamma * <u, v> + coef0)^degree")
         .value("RBF", plssvm::kernel_function_type::rbf, "radial basis function: exp(-gamma * ||u - v||^2)")
@@ -22,6 +25,9 @@ void init_kernel_function_types(py::module_ &m) {
         .value("LAPLACIAN", plssvm::kernel_function_type::laplacian, "laplacian kernel function: exp(-gamma * ||u - v||_1)")
         .value("CHI_SQUARED", plssvm::kernel_function_type::chi_squared, "chi-squared kernel function: exp(-gamma * sum_i (u[i] - v[i])^2 / (u[i] + v[i]))");
 
+    // enable implicit conversion from string to enum
+    plssvm::bindings::python::util::register_implicit_str_enum_conversion<plssvm::kernel_function_type>(py_enum);
+
     // bind free functions
-    m.def("kernel_function_type_to_math_string", &plssvm::kernel_function_type_to_math_string, "return the mathematical representation of a KernelFunctionType");
+    m.def("kernel_function_type_to_math_string", &plssvm::kernel_function_type_to_math_string, "return the mathematical representation of a KernelFunctionType", py::arg("kernel_function"));
 }

@@ -82,6 +82,11 @@ TEST(ClassificationType, calculate_number_of_classifiers) {
     EXPECT_EQ(calculate_number_of_classifiers(plssvm::classification_type::oao, 42), 861);
 }
 
+TEST(ClassificationType, calculate_number_of_classifiers_unknown) {
+    // should return 0 if the provided classification_type is invalid
+    EXPECT_EQ(calculate_number_of_classifiers(static_cast<plssvm::classification_type>(2), 2), 0);
+}
+
 TEST(ClassificationTypeDeathTest, too_few_classes) {
     // at least two classes must be provided
     EXPECT_DEATH(std::ignore = plssvm::calculate_number_of_classifiers(plssvm::classification_type::oaa, 1), "At least two classes must be given!");

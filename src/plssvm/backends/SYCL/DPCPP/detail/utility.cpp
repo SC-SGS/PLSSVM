@@ -54,15 +54,8 @@ namespace plssvm::dpcpp::detail {
                     platform_devices.insert({ target_platform::gpu_nvidia, device });
                 } else if ((::plssvm::detail::contains(vendor_string, "amd") || ::plssvm::detail::contains(vendor_string, "advanced micro devices"))
                            && ::plssvm::detail::contains(available_target_platforms, target_platform::gpu_amd)) {
-                    // select between DPC++'s OpenCL and HIP backend
-                    std::ostringstream oss;
-                    oss << device.get_backend();
-#if defined(PLSSVM_SYCL_BACKEND_DPCPP_GPU_AMD_BACKEND_TYPE)
-                    if (::plssvm::detail::contains(oss.str(), PLSSVM_SYCL_BACKEND_DPCPP_GPU_AMD_BACKEND_TYPE)) {
-                        platform_devices.insert({ target_platform::gpu_amd, device });
-                    }
-#endif
-                } else if (::plssvm::detail::contains(vendor_string, "intel") || ::plssvm::detail::contains(available_target_platforms, target_platform::gpu_intel)) {
+                    platform_devices.insert({ target_platform::gpu_amd, device });
+                } else if (::plssvm::detail::contains(vendor_string, "intel") && ::plssvm::detail::contains(available_target_platforms, target_platform::gpu_intel)) {
                     // select between DPC++'s OpenCL and Level-Zero backend
 #if defined(PLSSVM_SYCL_BACKEND_DPCPP_BACKEND_TYPE)
                     // get platform name of current GPU device and convert it to all lower case

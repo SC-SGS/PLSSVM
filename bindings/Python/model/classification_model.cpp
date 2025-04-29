@@ -11,19 +11,22 @@
 #include "plssvm/constants.hpp"           // plssvm::real_type
 #include "plssvm/detail/type_traits.hpp"  // plssvm::detail::remove_cvref_t
 #include "plssvm/matrix.hpp"              // plssvm::aos_matrix
+#include "plssvm/mpi/communicator.hpp"    // plssvm::mpi::communicator
 
-#include "bindings/Python/model/variant_wrapper.hpp"  // plssvm::bindings::python::util::classification_model_wrapper
-#include "bindings/Python/utility.hpp"                // plssvm::bindings::python::util::{python_type_name_mapping, create_instance, vector_to_pyarray}
+#include "bindings/Python/model/variant_wrapper.hpp"        // plssvm::bindings::python::util::classification_model_wrapper
+#include "bindings/Python/type_caster/mpi_type_caster.hpp"  // a custom Pybind11 type caster for a plssvm::mpi::communicator
+#include "bindings/Python/utility.hpp"                      // plssvm::bindings::python::util::{python_type_name_mapping, create_instance, vector_to_pyarray}
 
 #include "fmt/format.h"         // fmt::format
 #include "fmt/ranges.h"         // fmt::join
-#include "pybind11/pybind11.h"  // py::module_, py::class_, py::init, py::arg, py::pos_only, py::array, py::list
+#include "pybind11/pybind11.h"  // py::module_, py::class_, py::init, py::arg, py::kw_only, py::array, py::list
 #include "pybind11/pytypes.h"   // py::type
 #include "pybind11/stl.h"       // support for STL types: std::vector
 
 #include <memory>    // std::make_unique
 #include <optional>  // std::optional, std::make_optional, std::nullopt
 #include <string>    // std::string
+#include <utility>   // std::move
 #include <variant>   // std::visit
 
 namespace py = pybind11;
@@ -32,18 +35,19 @@ void init_classification_model(py::module_ &m) {
     using plssvm::bindings::python::util::classification_model_wrapper;
 
     py::class_<classification_model_wrapper>(m, "ClassificationModel", "Implements a class encapsulating the result of a call to the C-SVC fit function. A model is used to predict the labels of a new data set.")
-        .def(py::init([](const std::string &filename, const std::optional<py::type> type) {
+        .def(py::init([](const std::string &filename, const std::optional<py::type> type, plssvm::mpi::communicator comm) {
                  if (type.has_value()) {
-                     return std::make_unique<classification_model_wrapper>(plssvm::bindings::python::util::create_instance<plssvm::classification_model, typename classification_model_wrapper::possible_model_types>(type.value(), filename));
+                     return std::make_unique<classification_model_wrapper>(plssvm::bindings::python::util::create_instance<plssvm::classification_model, typename classification_model_wrapper::possible_model_types>(type.value(), std::move(comm), filename));
                  } else {
-                     return std::make_unique<classification_model_wrapper>(plssvm::classification_model<std::string>{ filename });
+                     return std::make_unique<classification_model_wrapper>(plssvm::classification_model<std::string>{ std::move(comm), filename });
                  }
              }),
              "load a previously learned classification model from a file",
              py::arg("filename"),
-             py::pos_only(),
-             py::arg("type") = std::nullopt)
-        .def("save", [](const classification_model_wrapper &self, const std::string &filename) { return std::visit([&filename](auto &&model) { model.save(filename); }, self.model); }, "save the current model to a file")
+             py::kw_only(),
+             py::arg("type") = std::nullopt,
+             py::arg("comm") = plssvm::mpi::communicator{})
+        .def("save", [](const classification_model_wrapper &self, const std::string &filename) { return std::visit([&filename](auto &&model) { model.save(filename); }, self.model); }, "save the current model to a file", py::arg("filename"))
         .def("num_support_vectors", [](const classification_model_wrapper &self) { return std::visit([](auto &&model) { return model.num_support_vectors(); }, self.model); }, "the number of support vectors (note: all training points become support vectors for LS-SVMs)")
         .def("num_features", [](const classification_model_wrapper &self) { return std::visit([](auto &&model) { return model.num_features(); }, self.model); }, "the number of features of the support vectors")
         .def("get_params", [](const classification_model_wrapper &self) { return std::visit([](auto &&model) { return model.get_params(); }, self.model); }, "the C-SVC hyper-parameters used to learn this model")
@@ -71,6 +75,7 @@ void init_classification_model(py::module_ &m) {
         .def("classes", [](const classification_model_wrapper &self) { return std::visit([](auto &&model) { return plssvm::bindings::python::util::vector_to_pyarray(model.classes()); }, self.model); }, "the classes")
         .def("get_classification_type", [](const classification_model_wrapper &self) { return std::visit([](auto &&model) { return model.get_classification_type(); }, self.model); }, "the classification type used to create this model")
         // clang-format off
+        .def("communicator", [](const classification_model_wrapper &self) { return std::visit([](auto &&model) { return model.communicator(); }, self.model); }, "the associated MPI communicator")
         .def("__repr__", [](const classification_model_wrapper &self) {
             return std::visit([](auto &&model) {
                 using label_type = typename plssvm::detail::remove_cvref_t<decltype(model)>::label_type;

@@ -2,6 +2,7 @@
  * @file
  * @author Alexander Van Craen
  * @author Marcel Breyer
+ * @author Alexander Strack
  * @copyright 2018-today The PLSSVM project - All Rights Reserved
  * @license This file is part of the PLSSVM project which is released under the MIT license.
  *          See the LICENSE.md file in the project root for full license information.
@@ -13,17 +14,19 @@
 
 #ifndef PLSSVM_ENVIRONMENT_HPP_
 #define PLSSVM_ENVIRONMENT_HPP_
+#pragma once
 
 #include "plssvm/backend_types.hpp"          // plssvm::backend_type, plssvm::list_available_backends
 #include "plssvm/detail/assert.hpp"          // PLSSVM_ASSERT
 #include "plssvm/detail/string_utility.hpp"  // plssvm::detail::to_lower_case
 #include "plssvm/detail/utility.hpp"         // plssvm::detail::{contains, unreachable}
 #include "plssvm/exceptions/exceptions.hpp"  // plssvm::environment_exception
+#include "plssvm/mpi/environment.hpp"        // plssvm::mpi::{is_initialized, init}
 
 #if defined(PLSSVM_HAS_HPX_BACKEND)
-    #include <hpx/execution.hpp>  // ::hpx::post
-    #include <hpx/hpx_start.hpp>  // ::hpx::{start, stop, finalize}
-    #include <hpx/runtime.hpp>    // ::hpx::{is_running, is_stopped}
+    #include "hpx/execution.hpp"  // ::hpx::post
+    #include "hpx/hpx_start.hpp"  // ::hpx::{start, stop, finalize}
+    #include "hpx/runtime.hpp"    // ::hpx::{is_running, is_stopped}
 #endif
 #if defined(PLSSVM_HAS_KOKKOS_BACKEND)
     #include "Kokkos_Core.hpp"  // Kokkos::is_initialized, Kokkos::is_finalized, Kokkos::initialize, Kokkos::finalize
@@ -87,7 +90,7 @@ inline std::ostream &operator<<(std::ostream &out, const status s) {
 inline std::istream &operator>>(std::istream &in, status &s) {
     std::string str;
     in >> str;
-    detail::to_lower_case(str);
+    ::plssvm::detail::to_lower_case(str);
 
     if (str == "uninitialized") {
         s = status::uninitialized;
@@ -274,6 +277,11 @@ inline void finalize_backend([[maybe_unused]] const backend_type backend) {
  */
 template <typename... Args>
 inline void initialize_impl(const std::vector<backend_type> &backends, Args &...args) {
+    // if necessary, initialize MPI
+    if (!mpi::is_initialized()) {
+        mpi::init(args...);
+    }
+
     // check if the provided backends are currently available
     const std::vector<backend_type> available_backends = list_available_backends();
     for (const backend_type backend : backends) {
@@ -400,6 +408,11 @@ inline std::vector<backend_type> initialize(int &argc, char **argv) {
  * @throws plssvm::environment_exception if one of the provided @p backends has already been finalized
  */
 inline void finalize(const std::vector<backend_type> &backends) {
+    // if necessary, finalize MPI
+    if (!mpi::is_finalized()) {
+        mpi::finalize();
+    }
+
     // check if the provided backends are currently available
     const std::vector<backend_type> available_backends = list_available_backends();
     for (const backend_type backend : backends) {

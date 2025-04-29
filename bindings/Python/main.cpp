@@ -7,11 +7,16 @@
  *          See the LICENSE.md file in the project root for full license information.
  */
 
-#include "plssvm/environment.hpp"            // plssvm::environment::{initialize, finalize}
-#include "plssvm/exceptions/exceptions.hpp"  // plssvm::exception
-#include "plssvm/version/version.hpp"        // plssvm::version::version
+#include "plssvm/detail/logging/mpi_log_untracked.hpp"  // plssvm::detail::log_untracked
+#include "plssvm/detail/utility.hpp"                    // PLSSVM_IS_DEFINED
+#include "plssvm/environment.hpp"                       // plssvm::environment::{initialize, finalize}
+#include "plssvm/exceptions/exceptions.hpp"             // plssvm::exception
+#include "plssvm/mpi/communicator.hpp"                  // plssvm::mpi::communicator
+#include "plssvm/mpi/environment.hpp"                   // plssvm::mpi::is_executed_via_mpirun
+#include "plssvm/verbosity_levels.hpp"                  // plssvm::verbosity_level
+#include "plssvm/version/version.hpp"                   // plssvm::version::{version, major, minor, patch}
 
-#include "pybind11/pybind11.h"  // PYBIND11_MODULE, py::module_, py::exception, py::register_exception_translator
+#include "pybind11/pybind11.h"  // PYBIND11_MODULE, py::module_, py::exception, py::register_exception_translator, py::make_tuple
 #include "pybind11/pytypes.h"   // py::set_error
 
 #include <exception>  // std::exception_ptr, std::rethrow_exception
@@ -30,19 +35,18 @@ void init_gamma(py::module_ &);
 void init_classification_types(py::module_ &);
 void init_file_format_types(py::module_ &);
 void init_kernel_function_types(py::module_ &);
-void init_kernel_functions(py::module_ &);
 void init_parameter(py::module_ &);
+void init_kernel_functions(py::module_ &);
 void init_classification_model(py::module_ &);
 void init_regression_model(py::module_ &);
 void init_min_max_scaler(py::module_ &);
 void init_classification_data_set(py::module_ &);
 void init_regression_data_set(py::module_ &);
-void init_version(py::module_ &);
 void init_exceptions(py::module_ &, const py::exception<plssvm::exception> &);
 void init_regression_report(py::module_ &);
 void init_csvm(py::module_ &);
-void init_csvc(py::module_ &, py::module_ &);
-void init_csvr(py::module_ &, py::module_ &);
+void init_csvc(py::module_ &);
+void init_csvr(py::module_ &);
 void init_openmp_csvm(py::module_ &, const py::exception<plssvm::exception> &);
 void init_hpx_csvm(py::module_ &, const py::exception<plssvm::exception> &);
 void init_stdpar_csvm(py::module_ &, const py::exception<plssvm::exception> &);
@@ -57,12 +61,36 @@ void init_sklearn_svr(py::module_ &);
 PYBIND11_MODULE(plssvm, m) {
     m.doc() = "PLSSVM - Parallel Least Squares Support Vector Machine";
     m.attr("__version__") = plssvm::version::version;
-
-    // create a pure-virtual module
-    py::module_ pure_virtual = m.def_submodule("__pure_virtual");
+    m.attr("__version_info__") = py::make_tuple(plssvm::version::major, plssvm::version::minor, plssvm::version::patch);
+    m.attr("__has_mpi_support__") = PLSSVM_IS_DEFINED(PLSSVM_HAS_MPI_ENABLED);
 
     // automatically initialize the environments
     plssvm::environment::initialize();
+
+    // issue a warning if PLSSVM was build without MPI support, but the Python code was run via mpirun
+#if !defined(PLSSVM_HAS_MPI_ENABLED)
+    if (plssvm::mpi::is_executed_via_mpirun()) {
+        plssvm::detail::log_untracked(plssvm::verbosity_level::full | plssvm::verbosity_level::warning,
+                                      plssvm::mpi::communicator{},
+                                      "WARNING: PLSSVM was built without MPI support, but is currently executed via mpirun! "
+                                      "As a result, each MPI process will run the same code.\n");
+    }
+#endif
+
+    // issue a warning if PLSSVM was build with MPI support and mpi4py wasn't found, but the Python code was still run via mpirun
+#if defined(PLSSVM_HAS_MPI_ENABLED)
+    if (plssvm::mpi::is_executed_via_mpirun()) {
+        try {
+            [[maybe_unused]] const py::module_ module = py::module_::import("mpi4py.MPI");
+            // it worked
+        } catch (const py::error_already_set &) {
+            // error loading mpi4py -> issue the warning
+            plssvm::detail::log_untracked(plssvm::verbosity_level::full | plssvm::verbosity_level::warning,
+                                          plssvm::mpi::communicator{},
+                                          "WARNING: PLSSVM was built without MPI support and the current code is executed via mpirun, but mpi4py wasn't found!\n");
+        }
+    }
+#endif
 
     // automatically finalize the environments
     m.add_object("_cleanup", py::capsule([]() {
@@ -98,19 +126,18 @@ PYBIND11_MODULE(plssvm, m) {
     init_classification_types(m);
     init_file_format_types(m);
     init_kernel_function_types(m);
-    init_kernel_functions(m);
     init_parameter(m);
+    init_kernel_functions(m);
     init_classification_model(m);
     init_regression_model(m);
     init_min_max_scaler(m);
     init_classification_data_set(m);
     init_regression_data_set(m);
-    init_version(m);
     init_exceptions(m, base_exception);
     init_regression_report(m);
-    init_csvm(pure_virtual);
-    init_csvc(m, pure_virtual);
-    init_csvr(m, pure_virtual);
+    init_csvm(m);
+    init_csvc(m);
+    init_csvr(m);
 
     // init bindings for the specific backends ONLY if the backend has been enabled
 #if defined(PLSSVM_HAS_OPENMP_BACKEND)
@@ -138,6 +165,7 @@ PYBIND11_MODULE(plssvm, m) {
     init_kokkos_csvm(m, base_exception);
 #endif
 
-    init_sklearn_svc(m);
-    init_sklearn_svr(m);
+    py::module_ sklearn_like_svm_model = m.def_submodule("svm", "a module containing the sklearn like SVC and SVR implementations");
+    init_sklearn_svc(sklearn_like_svm_model);
+    init_sklearn_svr(sklearn_like_svm_model);
 }

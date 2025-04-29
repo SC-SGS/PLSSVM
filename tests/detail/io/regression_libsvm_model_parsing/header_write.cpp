@@ -30,7 +30,18 @@
 
 template <typename T>
 class LIBSVMRegressionModelHeaderWrite : public ::testing::Test,
-                                         protected util::temporary_file { };
+                                         protected util::temporary_file {
+  public:
+    /**
+     * @brief Return the used MPI communicator.
+     * @return the MPI communicator (`[[nodiscard]]`)
+     */
+    [[nodiscard]] const plssvm::mpi::communicator get_comm() const noexcept { return comm_; }
+
+  private:
+    /// The MPI communicator (unused during testing since we do not support MPI runtime tests).
+    plssvm::mpi::communicator comm_{};
+};
 
 TYPED_TEST_SUITE(LIBSVMRegressionModelHeaderWrite, util::regression_label_type_gtest, naming::test_parameter_to_name);
 
@@ -48,7 +59,7 @@ TYPED_TEST(LIBSVMRegressionModelHeaderWrite, write_linear) {
 
     // write the LIBSVM model to the temporary file
     fmt::ostream out = fmt::output_file(this->filename);
-    plssvm::detail::io::write_libsvm_model_header_regression(out, params, rho, data_set);
+    plssvm::detail::io::write_libsvm_model_header_regression(out, this->get_comm(), params, rho, data_set);
     out.close();
 
     // read the written file
@@ -78,7 +89,7 @@ TYPED_TEST(LIBSVMRegressionModelHeaderWrite, write_linear_without_label) {
 
     // write the LIBSVM model to the temporary file
     fmt::ostream out = fmt::output_file(this->filename);
-    plssvm::detail::io::write_libsvm_model_header_regression(out, params, rho, data_set);
+    plssvm::detail::io::write_libsvm_model_header_regression(out, this->get_comm(), params, rho, data_set);
     out.close();
 
     // read the written file
@@ -109,7 +120,7 @@ TYPED_TEST(LIBSVMRegressionModelHeaderWrite, write_polynomial) {
 
     // write the LIBSVM model to the temporary file
     fmt::ostream out = fmt::output_file(this->filename);
-    plssvm::detail::io::write_libsvm_model_header_regression(out, params, rho, data_set);
+    plssvm::detail::io::write_libsvm_model_header_regression(out, this->get_comm(), params, rho, data_set);
     out.close();
 
     // read the written file
@@ -142,7 +153,7 @@ TYPED_TEST(LIBSVMRegressionModelHeaderWrite, write_polynomial_without_label) {
 
     // write the LIBSVM model to the temporary file
     fmt::ostream out = fmt::output_file(this->filename);
-    plssvm::detail::io::write_libsvm_model_header_regression(out, params, rho, data_set);
+    plssvm::detail::io::write_libsvm_model_header_regression(out, this->get_comm(), params, rho, data_set);
     out.close();
 
     // read the written file
@@ -176,7 +187,7 @@ TYPED_TEST(LIBSVMRegressionModelHeaderWrite, write_rbf) {
 
     // write the LIBSVM model to the temporary file
     fmt::ostream out = fmt::output_file(this->filename);
-    plssvm::detail::io::write_libsvm_model_header_regression(out, params, rho, data_set);
+    plssvm::detail::io::write_libsvm_model_header_regression(out, this->get_comm(), params, rho, data_set);
     out.close();
 
     // read the written file
@@ -207,7 +218,7 @@ TYPED_TEST(LIBSVMRegressionModelHeaderWrite, write_rbf_without_label) {
 
     // write the LIBSVM model to the temporary file
     fmt::ostream out = fmt::output_file(this->filename);
-    plssvm::detail::io::write_libsvm_model_header_regression(out, params, rho, data_set);
+    plssvm::detail::io::write_libsvm_model_header_regression(out, this->get_comm(), params, rho, data_set);
     out.close();
 
     // read the written file
@@ -239,7 +250,7 @@ TYPED_TEST(LIBSVMRegressionModelHeaderWrite, write_sigmoid) {
 
     // write the LIBSVM model to the temporary file
     fmt::ostream out = fmt::output_file(this->filename);
-    plssvm::detail::io::write_libsvm_model_header_regression(out, params, rho, data_set);
+    plssvm::detail::io::write_libsvm_model_header_regression(out, this->get_comm(), params, rho, data_set);
     out.close();
 
     // read the written file
@@ -271,7 +282,7 @@ TYPED_TEST(LIBSVMRegressionModelHeaderWrite, write_sigmoid_without_label) {
 
     // write the LIBSVM model to the temporary file
     fmt::ostream out = fmt::output_file(this->filename);
-    plssvm::detail::io::write_libsvm_model_header_regression(out, params, rho, data_set);
+    plssvm::detail::io::write_libsvm_model_header_regression(out, this->get_comm(), params, rho, data_set);
     out.close();
 
     // read the written file
@@ -304,7 +315,7 @@ TYPED_TEST(LIBSVMRegressionModelHeaderWrite, write_laplacian) {
 
     // write the LIBSVM model to the temporary file
     fmt::ostream out = fmt::output_file(this->filename);
-    plssvm::detail::io::write_libsvm_model_header_regression(out, params, rho, data_set);
+    plssvm::detail::io::write_libsvm_model_header_regression(out, this->get_comm(), params, rho, data_set);
     out.close();
 
     // read the written file
@@ -335,7 +346,7 @@ TYPED_TEST(LIBSVMRegressionModelHeaderWrite, write_laplacian_without_label) {
 
     // write the LIBSVM model to the temporary file
     fmt::ostream out = fmt::output_file(this->filename);
-    plssvm::detail::io::write_libsvm_model_header_regression(out, params, rho, data_set);
+    plssvm::detail::io::write_libsvm_model_header_regression(out, this->get_comm(), params, rho, data_set);
     out.close();
 
     // read the written file
@@ -367,7 +378,7 @@ TYPED_TEST(LIBSVMRegressionModelHeaderWrite, write_chi_squared) {
 
     // write the LIBSVM model to the temporary file
     fmt::ostream out = fmt::output_file(this->filename);
-    plssvm::detail::io::write_libsvm_model_header_regression(out, params, rho, data_set);
+    plssvm::detail::io::write_libsvm_model_header_regression(out, this->get_comm(), params, rho, data_set);
     out.close();
 
     // read the written file
@@ -398,7 +409,7 @@ TYPED_TEST(LIBSVMRegressionModelHeaderWrite, write_chi_squared_without_label) {
 
     // write the LIBSVM model to the temporary file
     fmt::ostream out = fmt::output_file(this->filename);
-    plssvm::detail::io::write_libsvm_model_header_regression(out, params, rho, data_set);
+    plssvm::detail::io::write_libsvm_model_header_regression(out, this->get_comm(), params, rho, data_set);
     out.close();
 
     // read the written file
@@ -435,6 +446,6 @@ TYPED_TEST(LIBSVMRegressionModelHeaderWriteDeathTest, write_header_invalid_numbe
     fmt::ostream out = fmt::output_file(this->filename);
 
     // try writing the LIBSVM model header
-    EXPECT_DEATH((plssvm::detail::io::write_libsvm_model_header_regression(out, params, rho, data_set)),
+    EXPECT_DEATH((plssvm::detail::io::write_libsvm_model_header_regression(out, this->get_comm(), params, rho, data_set)),
                  ::testing::HasSubstr("Exactly one rho value must be provided!"));
 }

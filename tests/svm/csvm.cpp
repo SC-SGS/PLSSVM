@@ -48,26 +48,6 @@ TEST(BaseCSVM, construct_from_parameter) {
     EXPECT_EQ(csvm.get_params(), params);
 }
 
-TEST(BaseCSVM, construct_from_parameter_invalid_kernel_type) {
-    // create parameter
-    const plssvm::parameter params{ plssvm::kernel_type = static_cast<plssvm::kernel_function_type>(6) };
-
-    // create C-SVM: must be done using the mock class since the csvm base class is pure virtual
-    EXPECT_THROW_WHAT(mock_csvm{ params },
-                      plssvm::invalid_parameter_exception,
-                      "Invalid kernel function with value 6 given!");
-}
-
-TEST(BaseCSVM, construct_from_parameter_invalid_gamma) {
-    // create parameter
-    const plssvm::parameter params{ plssvm::kernel_type = plssvm::kernel_function_type::polynomial, plssvm::gamma = -1.0 };
-
-    // create C-SVM: must be done using the mock class since the csvm base class is pure virtual
-    EXPECT_THROW_WHAT(mock_csvm{ params },
-                      plssvm::invalid_parameter_exception,
-                      "gamma must be greater than 0.0, but is -1!");
-}
-
 TEST(BaseCSVM, construct_linear_from_named_parameters) {
     // correct parameter
     const plssvm::parameter params{ plssvm::kernel_type = plssvm::kernel_function_type::linear, plssvm::cost = 2.0 };
@@ -105,20 +85,6 @@ TEST(BaseCSVM, construct_rbf_from_named_parameters) {
 
     // check whether the parameters have been set correctly
     EXPECT_TRUE(csvm.get_params().equivalent(params));
-}
-
-TEST(BaseCSVM, construct_from_named_parameters_invalid_kernel_type) {
-    // create C-SVM: must be done using the mock class since the csvm base class is pure virtual
-    EXPECT_THROW_WHAT(mock_csvm{ plssvm::kernel_type = static_cast<plssvm::kernel_function_type>(6) },
-                      plssvm::invalid_parameter_exception,
-                      "Invalid kernel function with value 6 given!");
-}
-
-TEST(BaseCSVM, construct_from_named_parameters_invalid_gamma) {
-    // create C-SVM: must be done using the mock class since the csvm base class is pure virtual
-    EXPECT_THROW_WHAT((mock_csvm{ plssvm::kernel_type = plssvm::kernel_function_type::polynomial, plssvm::gamma = -1.0 }),
-                      plssvm::invalid_parameter_exception,
-                      "gamma must be greater than 0.0, but is -1!");
 }
 
 TEST(BaseCSVM, get_target_platforms) {

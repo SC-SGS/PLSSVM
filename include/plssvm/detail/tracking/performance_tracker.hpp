@@ -21,6 +21,7 @@
 #include "plssvm/detail/tracking/events.hpp"     // plssvm::detail::tracking::{events, event}
 #include "plssvm/detail/type_traits.hpp"         // plssvm::detail::remove_cvref_t
 #include "plssvm/detail/utility.hpp"             // PLSSVM_EXTERN
+#include "plssvm/mpi/communicator.hpp"           // plssvm::mpi::communicator
 #include "plssvm/parameter.hpp"                  // plssvm::parameter
 
 #if defined(PLSSVM_HARDWARE_SAMPLING_ENABLED)
@@ -188,6 +189,13 @@ class performance_tracker {
      * @param[in] entry the entry to add
      */
     void add_tracking_entry(const tracking_entry<plssvm::parameter> &entry);
+    /**
+     * @brief Add a tracking_entry encapsulating a `plssvm::mpi::communicator` to this performance tracker.
+     * @details Saves a string containing the entry name and value in a map with the entry category as key.
+     *          Adds all values related to MPI (if available).
+     * @param[in] entry the entry to add
+     */
+    void add_tracking_entry(const tracking_entry<mpi::communicator> &entry);
     /**
      * @brief Add a tracking_entry encapsulating a `plssvm::detail::cmd::parser_train` to this performance tracker.
      * @details Saves a string containing the entry name and value in a map with the entry category as key.

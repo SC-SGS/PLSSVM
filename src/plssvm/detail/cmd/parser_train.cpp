@@ -8,28 +8,31 @@
 
 #include "plssvm/detail/cmd/parser_train.hpp"
 
-#include "plssvm/backend_types.hpp"                                // plssvm::list_available_backends, plssvm::determine_default_backend
-#include "plssvm/backends/Kokkos/execution_space.hpp"              // plssvm::kokkos::{list_available_execution_spaces, execution_space}
-#include "plssvm/backends/SYCL/implementation_types.hpp"           // plssvm::sycl::{list_available_sycl_implementations, implementation_type}
-#include "plssvm/backends/SYCL/kernel_invocation_types.hpp"        // plssvm::sycl::kernel_invocation_type
-#include "plssvm/classification_types.hpp"                         // plssvm::classification_type, plssvm::classification_type_to_full_string
-#include "plssvm/constants.hpp"                                    // plssvm::real_type
-#include "plssvm/detail/assert.hpp"                                // PLSSVM_ASSERT
-#include "plssvm/detail/logging_without_performance_tracking.hpp"  // plssvm::detail::log_untracked
-#include "plssvm/detail/utility.hpp"                               // plssvm::detail::to_underlying
-#include "plssvm/gamma.hpp"                                        // plssvm::get_gamma_string
-#include "plssvm/kernel_function_types.hpp"                        // plssvm::kernel_type_to_math_string
-#include "plssvm/svm_types.hpp"                                    // plssvm::svm_type
-#include "plssvm/target_platforms.hpp"                             // plssvm::list_available_target_platforms
-#include "plssvm/verbosity_levels.hpp"                             // plssvm::verbosity, plssvm::verbosity_level
-#include "plssvm/version/version.hpp"                              // plssvm::version::detail::get_version_info
+#include "plssvm/backend_types.hpp"                          // plssvm::list_available_backends, plssvm::determine_default_backend
+#include "plssvm/backends/Kokkos/execution_space.hpp"        // plssvm::kokkos::{list_available_execution_spaces, execution_space}
+#include "plssvm/backends/SYCL/implementation_types.hpp"     // plssvm::sycl::{list_available_sycl_implementations, implementation_type}
+#include "plssvm/backends/SYCL/kernel_invocation_types.hpp"  // plssvm::sycl::kernel_invocation_type
+#include "plssvm/classification_types.hpp"                   // plssvm::classification_type, plssvm::classification_type_to_full_string
+#include "plssvm/constants.hpp"                              // plssvm::real_type
+#include "plssvm/detail/assert.hpp"                          // PLSSVM_ASSERT
+#include "plssvm/detail/logging/mpi_log_untracked.hpp"       // plssvm::detail::log_untracked
+#include "plssvm/detail/utility.hpp"                         // plssvm::detail::to_underlying
+#include "plssvm/exceptions/exceptions.hpp"                  // plssvm::cmd_parser_exit
+#include "plssvm/gamma.hpp"                                  // plssvm::get_gamma_string
+#include "plssvm/kernel_function_types.hpp"                  // plssvm::kernel_type_to_math_string
+#include "plssvm/mpi/communicator.hpp"                       // plssvm::mpi::communicator
+#include "plssvm/mpi/environment.hpp"                        // plssvm::mpi::{is_active, finalize}
+#include "plssvm/svm_types.hpp"                              // plssvm::svm_type
+#include "plssvm/target_platforms.hpp"                       // plssvm::list_available_target_platforms
+#include "plssvm/verbosity_levels.hpp"                       // plssvm::verbosity, plssvm::verbosity_level
+#include "plssvm/version/version.hpp"                        // plssvm::version::detail::get_version_info
 
 #include "cxxopts.hpp"   // cxxopts::Options, cxxopts::value,cxxopts::ParseResult
 #include "fmt/color.h"   // fmt::fg, fmt::color::red
 #include "fmt/format.h"  // fmt::format
 #include "fmt/ranges.h"  // fmt::join
 
-#include <cstdlib>      // std::exit, EXIT_SUCCESS, EXIT_FAILURE
+#include <cstdlib>      // EXIT_SUCCESS, EXIT_FAILURE
 #include <exception>    // std::exception
 #include <filesystem>   // std::filesystem::path
 #include <iostream>     // std::cout, std::cerr, std::endl
@@ -40,7 +43,7 @@
 
 namespace plssvm::detail::cmd {
 
-parser_train::parser_train(int argc, char **argv) {
+parser_train::parser_train(const mpi::communicator &comm, int argc, char **argv) {
     // check for basic argc and argv correctness
     PLSSVM_ASSERT(argc >= 1, fmt::format("At least one argument is always given (the executable name), but argc is {}!", argc));
     PLSSVM_ASSERT(argv != nullptr, "At least one argument is always given (the executable name), but argv is a nullptr!");
@@ -86,6 +89,9 @@ parser_train::parser_train(int argc, char **argv) {
 #if defined(PLSSVM_PERFORMANCE_TRACKER_ENABLED)
            ("performance_tracking", "the output YAML file where the performance tracking results are written to; if not provided, the results are dumped to stderr", cxxopts::value<decltype(performance_tracking_filename)>())
 #endif
+#if defined(PLSSVM_HAS_MPI_ENABLED)
+           ("mpi_load_balancing_weights", "can be used to load balance for MPI (must be integers); number of provided values must match the number of MPI ranks", cxxopts::value<decltype(mpi_load_balancing_weights)>())
+#endif
            ("use_strings_as_labels", "use strings as labels for the classification task instead of plane numbers", cxxopts::value<decltype(strings_as_labels)>()->default_value(fmt::format("{}", strings_as_labels)))
            ("verbosity", fmt::format("choose the level of verbosity: full|timing|libsvm|quiet (default: {})", fmt::format("{}", verbosity)), cxxopts::value<verbosity_level>())
            ("q,quiet", "quiet mode (no outputs regardless the provided verbosity level!)", cxxopts::value<bool>())
@@ -101,28 +107,36 @@ parser_train::parser_train(int argc, char **argv) {
         options.parse_positional({ "input", "model" });
         result = options.parse(argc, argv);
     } catch (const std::exception &e) {
-        std::cerr << fmt::format(fmt::fg(fmt::color::red), "ERROR: {}\n", e.what()) << std::endl;
-        std::cout << options.help() << std::endl;
-        std::exit(EXIT_FAILURE);
+        if (comm.is_main_rank()) {
+            std::cerr << fmt::format(fmt::fg(fmt::color::red), "ERROR: {}\n", e.what()) << std::endl;
+            std::cout << options.help() << std::endl;
+        }
+        throw cmd_parser_exit{ EXIT_FAILURE };
     }
 
     // print help message and exit
     if (result.count("help")) {
-        std::cout << options.help() << std::endl;
-        std::exit(EXIT_SUCCESS);
+        if (comm.is_main_rank()) {
+            std::cout << options.help() << std::endl;
+        }
+        throw cmd_parser_exit{ EXIT_SUCCESS };
     }
 
     // print version info
     if (result.count("version")) {
-        std::cout << version::detail::get_version_info("plssvm-train") << std::endl;
-        std::exit(EXIT_SUCCESS);
+        if (comm.is_main_rank()) {
+            std::cout << version::detail::get_version_info("plssvm-train") << std::endl;
+        }
+        throw cmd_parser_exit{ EXIT_SUCCESS };
     }
 
     // check if the number of positional arguments is not too large
     if (!result.unmatched().empty()) {
-        std::cerr << fmt::format(fmt::fg(fmt::color::red), "ERROR: only up to two positional options may be given, but {} (\"{}\") additional option(s) where provided!\n", result.unmatched().size(), fmt::join(result.unmatched(), " ")) << std::endl;
-        std::cout << options.help() << std::endl;
-        std::exit(EXIT_FAILURE);
+        if (comm.is_main_rank()) {
+            std::cerr << fmt::format(fmt::fg(fmt::color::red), "ERROR: only up to two positional options may be given, but {} (\"{}\") additional option(s) where provided!\n", result.unmatched().size(), fmt::join(result.unmatched(), " ")) << std::endl;
+            std::cout << options.help() << std::endl;
+        }
+        throw cmd_parser_exit{ EXIT_FAILURE };
     }
 
     // parse svm_type and cast the value to the respective enum
@@ -145,9 +159,11 @@ parser_train::parser_train(int argc, char **argv) {
         const decltype(csvm_params.gamma) gamma_input = result["gamma"].as<decltype(csvm_params.gamma)>();
         // check if the provided gamma is legal iff a real_type has been provided
         if (std::holds_alternative<real_type>(gamma_input) && std::get<real_type>(gamma_input) <= real_type{ 0.0 }) {
-            std::cerr << fmt::format(fmt::fg(fmt::color::red), "ERROR: gamma must be greater than 0.0, but is {}!\n", std::get<real_type>(gamma_input)) << std::endl;
-            std::cout << options.help() << std::endl;
-            std::exit(EXIT_FAILURE);
+            if (comm.is_main_rank()) {
+                std::cerr << fmt::format(fmt::fg(fmt::color::red), "ERROR: gamma must be greater than 0.0, but is {}!\n", std::get<real_type>(gamma_input)) << std::endl;
+                std::cout << options.help() << std::endl;
+            }
+            throw cmd_parser_exit{ EXIT_FAILURE };
         }
         // provided gamma was legal -> override default value
         csvm_params.gamma = gamma_input;
@@ -173,9 +189,11 @@ parser_train::parser_train(int argc, char **argv) {
         const auto max_iter_input = result["max_iter"].as<long long int>();
         // check if the provided max_iter is legal
         if (max_iter_input <= decltype(max_iter_input){ 0 }) {
-            std::cerr << fmt::format(fmt::fg(fmt::color::red), "ERROR: max_iter must be greater than 0, but is {}!\n", max_iter_input) << std::endl;
-            std::cout << options.help() << std::endl;
-            std::exit(EXIT_FAILURE);
+            if (comm.is_main_rank()) {
+                std::cerr << fmt::format(fmt::fg(fmt::color::red), "ERROR: max_iter must be greater than 0, but is {}!\n", max_iter_input) << std::endl;
+                std::cout << options.help() << std::endl;
+            }
+            throw cmd_parser_exit{ EXIT_FAILURE };
         }
         // provided max_iter was legal -> override default value
         max_iter = static_cast<decltype(max_iter)>(max_iter_input);
@@ -188,6 +206,7 @@ parser_train::parser_train(int argc, char **argv) {
         // warn if a classification type has been provided, but the SVM type is a C-SVR (regression)
         if (svm == svm_type::csvr) {
             detail::log_untracked(verbosity_level::full | verbosity_level::warning,
+                                  comm,
                                   "WARNING: explicitly set a classification type but the current svm_type is a C-SVR; ignoring --classification={}\n",
                                   classification);
         }
@@ -214,6 +233,7 @@ parser_train::parser_train(int argc, char **argv) {
         // warn if kernel invocation type is explicitly set but SYCL isn't the current (automatic) backend
         if (!sycl_backend_is_used && sycl_kernel_invocation_type != sycl::kernel_invocation_type::automatic) {
             detail::log_untracked(verbosity_level::full | verbosity_level::warning,
+                                  comm,
                                   "WARNING: explicitly set a SYCL kernel invocation type but the current backend isn't SYCL; ignoring --sycl_kernel_invocation_type={}\n",
                                   sycl_kernel_invocation_type);
         }
@@ -224,6 +244,7 @@ parser_train::parser_train(int argc, char **argv) {
         // warn if a SYCL implementation type is explicitly set but SYCL isn't the current (automatic) backend
         if (!sycl_backend_is_used && sycl_implementation_type != sycl::implementation_type::automatic) {
             detail::log_untracked(verbosity_level::full | verbosity_level::warning,
+                                  comm,
                                   "WARNING: explicitly set a SYCL implementation type but the current backend isn't SYCL; ignoring --sycl_implementation_type={}\n",
                                   sycl_implementation_type);
         }
@@ -242,6 +263,7 @@ parser_train::parser_train(int argc, char **argv) {
         // warn if the kokkos execution space is explicitly set but Kokkos isn't the current (automatic) backend
         if (!kokkos_backend_is_used && kokkos_execution_space != kokkos::execution_space::automatic) {
             detail::log_untracked(verbosity_level::full | verbosity_level::warning,
+                                  comm,
                                   "WARNING: explicitly set a Kokkos execution space but the current backend isn't Kokkos; ignoring --kokkos_execution_space={}\n",
                                   kokkos_execution_space);
         }
@@ -252,6 +274,7 @@ parser_train::parser_train(int argc, char **argv) {
     strings_as_labels = result["use_strings_as_labels"].as<decltype(strings_as_labels)>();
     if (svm != svm_type::csvc && strings_as_labels) {
         detail::log_untracked(verbosity_level::full | verbosity_level::warning,
+                              comm,
                               "WARNING: explicitly requested string labels for the regression task; ignoring --use_strings_as_labels\n");
     }
 
@@ -263,6 +286,7 @@ parser_train::parser_train(int argc, char **argv) {
         const verbosity_level verb = result["verbosity"].as<verbosity_level>();
         if (quiet && verb != verbosity_level::quiet) {
             detail::log_untracked(verbosity_level::full | verbosity_level::warning,
+                                  comm,
                                   "WARNING: explicitly set the -q/--quiet flag, but the provided verbosity level isn't \"quiet\"; setting --verbosity={} to --verbosity=quiet\n",
                                   verb);
             verbosity = verbosity_level::quiet;
@@ -275,9 +299,11 @@ parser_train::parser_train(int argc, char **argv) {
 
     // parse input data filename
     if (!result.count("input")) {
-        std::cerr << fmt::format(fmt::fg(fmt::color::red), "ERROR: missing input file!\n") << std::endl;
-        std::cout << options.help() << std::endl;
-        std::exit(EXIT_FAILURE);
+        if (comm.is_main_rank()) {
+            std::cerr << fmt::format(fmt::fg(fmt::color::red), "ERROR: missing input file!\n") << std::endl;
+            std::cout << options.help() << std::endl;
+        }
+        throw cmd_parser_exit{ EXIT_FAILURE };
     }
     input_filename = result["input"].as<decltype(input_filename)>();
 
@@ -289,10 +315,28 @@ parser_train::parser_train(int argc, char **argv) {
         model_filename = input_path.filename().string() + ".model";
     }
 
+#if defined(PLSSVM_PERFORMANCE_TRACKER_ENABLED)
     // parse performance tracking filename
     if (result.count("performance_tracking")) {
         performance_tracking_filename = result["performance_tracking"].as<decltype(performance_tracking_filename)>();
     }
+#endif
+
+#if defined(PLSSVM_HAS_MPI_ENABLED)
+    // parse MPI load balancing factors
+    if (result.count("mpi_load_balancing_weights")) {
+        mpi_load_balancing_weights = result["mpi_load_balancing_weights"].as<decltype(mpi_load_balancing_weights)>();
+
+        // sanity check provided balance factors
+        if (mpi_load_balancing_weights.size() != comm.size()) {
+            if (comm.is_main_rank()) {
+                std::cerr << fmt::format(fmt::fg(fmt::color::red), "ERROR: the number of load balancing weights ({}) must match the number of MPI ranks ({})!\n", mpi_load_balancing_weights.size(), comm.size()) << std::endl;
+                std::cout << options.help() << std::endl;
+            }
+            throw cmd_parser_exit{ EXIT_FAILURE };
+        }
+    }
+#endif
 }
 
 std::ostream &operator<<(std::ostream &out, const parser_train &params) {
@@ -363,9 +407,14 @@ std::ostream &operator<<(std::ostream &out, const parser_train &params) {
         std::is_same_v<real_type, float> ? "float" : "double",
         params.input_filename,
         params.model_filename);
+
     if (!params.performance_tracking_filename.empty()) {
         out << fmt::format("performance tracking file: '{}'\n", params.performance_tracking_filename);
     }
+    if (!params.mpi_load_balancing_weights.empty()) {
+        out << fmt::format("mpi load-balancing weights: [{}]\n", fmt::join(params.mpi_load_balancing_weights, ", "));
+    }
+
     return out;
 }
 

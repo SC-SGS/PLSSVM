@@ -160,6 +160,7 @@ class file_reader {
     [[nodiscard]] const char *buffer() const noexcept;
 
   private:
+#if defined(PLSSVM_HAS_MEMORY_MAPPING_UNIX)
     /**
      * @brief Try to open the file @p filename and "read" its content using memory mapped IO on UNIX systems.
      * @details If the file could not be memory mapped, automatically falls back to open_file().
@@ -167,7 +168,9 @@ class file_reader {
      * @throws plssvm::file_not_found_exception if the @p filename couldn't be found
      */
     void open_memory_mapped_file_unix(const char *filename);
+#endif
 
+#if defined(PLSSVM_HAS_MEMORY_MAPPING_WINDOWS)
     /**
      * @brief Try to open the file @p filename and "read" its content using memory mapped IO on Windows systems.
      * @details If the file could not be memory mapped, automatically falls back to open_file().
@@ -175,6 +178,7 @@ class file_reader {
      * @throws plssvm::file_not_found_exception if the @p filename couldn't be found
      */
     void open_memory_mapped_file_windows(const char *filename);
+#endif
 
     /**
      * @brief Read open the file and read its content in one buffer using a normal std::ifstream.

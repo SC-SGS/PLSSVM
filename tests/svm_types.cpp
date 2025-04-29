@@ -10,6 +10,8 @@
 
 #include "plssvm/svm_types.hpp"
 
+#include "plssvm/exceptions/exceptions.hpp"  // plssvm::invalid_file_format_exception
+
 #include "tests/custom_test_macros.hpp"  // EXPECT_CONVERSION_TO_STRING, EXPECT_CONVERSION_FROM_STRING
 
 #include "gmock/gmock.h"  // EXPECT_THAT, ::testing::Contains
@@ -17,6 +19,7 @@
 
 #include <sstream>      // std::istringstream
 #include <string_view>  // std::string_view
+#include <tuple>        // std::ignore
 #include <vector>       // std::vector
 
 // check whether the plssvm::svm_type -> std::string conversions are correct
@@ -71,10 +74,29 @@ TEST(SvmType, svm_type_to_task_name) {
     EXPECT_EQ(plssvm::svm_type_to_task_name(plssvm::svm_type::csvr), std::string_view{ "regression" });
 }
 
+TEST(SvmType, svm_type_to_task_name_unknown) {
+    // try converting an unknown SVM type to a task name
+    EXPECT_EQ(plssvm::svm_type_to_task_name(static_cast<plssvm::svm_type>(2)), std::string_view{ "unknown" });
+}
+
 TEST(SvmType, svm_type_from_model_file) {
     // check a classification model file
     EXPECT_EQ(plssvm::svm_type_from_model_file(PLSSVM_TEST_PATH "/data/model/classification/6x4.libsvm.model"), plssvm::svm_type::csvc);
 
     // check a regression model file
     EXPECT_EQ(plssvm::svm_type_from_model_file(PLSSVM_TEST_PATH "/data/model/regression/6x4.libsvm.model"), plssvm::svm_type::csvr);
+}
+
+TEST(SvmType, svm_type_from_model_file_missing_svm_type) {
+    // try getting the SVM type from an empty file won't work
+    EXPECT_THROW_WHAT(std::ignore = plssvm::svm_type_from_model_file(PLSSVM_TEST_PATH "/data/model/classification/invalid/missing_svm_type.libsvm.model"),
+                      plssvm::invalid_file_format_exception,
+                      R"(The provided model file is not a valid LIBSVM model file since "svm_type" is missing!)");
+}
+
+TEST(SvmType, svm_type_from_model_file_empty) {
+    // try getting the SVM type from an empty file won't work
+    EXPECT_THROW_WHAT(std::ignore = plssvm::svm_type_from_model_file(PLSSVM_TEST_PATH "/data/empty.txt"),
+                      plssvm::invalid_file_format_exception,
+                      R"(The provided model file is not a valid LIBSVM model file since "svm_type" AND "SV" are missing!)");
 }

@@ -16,9 +16,9 @@
 #include "plssvm/constants.hpp"                            // plssvm::PADDING_SIZE, plssvm::real_type
 #include "plssvm/data_set/regression_data_set.hpp"         // plssvm::regression_data_set
 #include "plssvm/detail/assert.hpp"                        // PLSSVM_ASSERT
-#include "plssvm/detail/logging.hpp"                       // plssvm::detail::log
+#include "plssvm/detail/logging/mpi_log.hpp"               // plssvm::detail::log
 #include "plssvm/detail/tracking/performance_tracker.hpp"  // PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_EVENT, plssvm::detail::tracking::tracking_entry
-#include "plssvm/exceptions/exceptions.hpp"                // plssvm::invalid_parameter_exception
+#include "plssvm/exceptions/exceptions.hpp"                // plssvm::invalid_parameter_exception, plssvm::mpi_exception
 #include "plssvm/kernel_function_types.hpp"                // plssvm::kernel_function_type
 #include "plssvm/matrix.hpp"                               // plssvm::aos_matrix
 #include "plssvm/model/regression_model.hpp"               // plssvm::regression_model
@@ -104,6 +104,7 @@ class csvr : virtual public csvm {
      * @throws plssvm::invlaid_parameter_exception if the provided maximum number of iterations is less or equal than zero
      * @throws plssvm::invalid_parameter_exception if the training @p data does **not** include labels
      * @throws plssvm::exception any exception thrown in the respective backend's implementation of `plssvm::csvm::solve_lssvm_system_of_linear_equations`
+     * @throws plssvm::mpi_exception if the MPI communicator of the C-SVR and the MPI communicator of the @p data set are not identical
      * @note For binary classification **always** one vs. all is used regardless of the provided parameter!
      * @return the learned model (`[[nodiscard]]`)
      */
@@ -123,6 +124,10 @@ class csvr : virtual public csvm {
 
         if (!data.has_labels()) {
             throw invalid_parameter_exception{ "No labels given for training! Maybe the data is only usable for prediction?" };
+        }
+        // check whether the C-SVR and data set MPI communicators are identical
+        if (comm_ != data.communicator()) {
+            throw mpi_exception{ "The MPI communicators provided to the C-SVR and data set must be identical!" };
         }
 
         PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_EVENT("fit start");
@@ -159,6 +164,7 @@ class csvr : virtual public csvm {
 
         const std::chrono::time_point end_time = std::chrono::steady_clock::now();
         detail::log(verbosity_level::full | verbosity_level::timing,
+                    comm_,
                     "\nLearned the SVR classifier for regression in {}.\n\n",
                     detail::tracking::tracking_entry{ "cg", "total_runtime", std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time) });
 
@@ -177,6 +183,8 @@ class csvr : virtual public csvm {
      * @param[in] data the data to predict the labels for
      * @throws plssvm::invalid_parameter_exception if the number of features in the @p model's support vectors don't match the number of features in the @p data set
      * @throws plssvm::exception any exception thrown in the respective backend's implementation of `plssvm::csvm::predict_values`
+     * @throws plssvm::mpi_exception if the MPI communicator of the C-SVR and the MPI communicator of the @p model set are not identical
+     * @throws plssvm::mpi_exception if the MPI communicator of the C-SVR and the MPI communicator of the @p data set are not identical
      * @return the predicted labels (`[[nodiscard]]`)
      */
     template <typename label_type>
@@ -200,6 +208,14 @@ class csvr : virtual public csvm {
 
         if (model.num_features() != data.num_features()) {
             throw invalid_parameter_exception{ fmt::format("Number of features per data point ({}) must match the number of features per support vector of the provided model ({})!", data.num_features(), model.num_features()) };
+        }
+        // check whether the C-SVR and model MPI communicators are identical
+        if (comm_ != model.communicator()) {
+            throw mpi_exception{ "The MPI communicators provided to the C-SVR and model must be identical!" };
+        }
+        // check whether the C-SVR and data set MPI communicators are identical
+        if (comm_ != data.communicator()) {
+            throw mpi_exception{ "The MPI communicators provided to the C-SVR and data set must be identical!" };
         }
 
         PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_EVENT("predict start");
@@ -245,6 +261,7 @@ class csvr : virtual public csvm {
      * @param[in] model a previously learned model
      * @throws plssvm::invalid_parameter_exception if the @p model has no labels
      * @throws plssvm::exception any exception thrown in the respective backend's implementation of `plssvm::csvm::predict_values`
+     * @throws plssvm::mpi_exception if the MPI communicator of the C-SVR and the MPI communicator of the @p model set are not identical
      * @return the regression loss of the model (`[[nodiscard]]`)
      */
     template <typename label_type>
@@ -264,6 +281,8 @@ class csvr : virtual public csvm {
      * @throws plssvm::invalid_parameter_exception if the @p data to score has no labels
      * @throws plssvm::invalid_parameter_exception if the number of features in the @p model's support vectors don't match the number of features in the @p data set
      * @throws plssvm::exception any exception thrown in the respective backend's implementation of `plssvm::csvm::predict_values`
+     * @throws plssvm::mpi_exception if the MPI communicator of the C-SVR and the MPI communicator of the @p model set are not identical
+     * @throws plssvm::mpi_exception if the MPI communicator of the C-SVR and the MPI communicator of the @p data set are not identical
      * @return the regression loss of the labeled @p data (`[[nodiscard]]`)
      */
     template <typename label_type>
@@ -275,6 +294,14 @@ class csvr : virtual public csvm {
         // the number of features must be equal
         if (model.num_features() != data.num_features()) {
             throw invalid_parameter_exception{ fmt::format("Number of features per data point ({}) must match the number of features per support vector of the provided model ({})!", data.num_features(), model.num_features()) };
+        }
+        // check whether the C-SVR and model MPI communicators are identical
+        if (comm_ != model.communicator()) {
+            throw mpi_exception{ "The MPI communicators provided to the C-SVR and model must be identical!" };
+        }
+        // check whether the C-SVR and data set MPI communicators are identical
+        if (comm_ != data.communicator()) {
+            throw mpi_exception{ "The MPI communicators provided to the C-SVR and data set must be identical!" };
         }
 
         // predict labels

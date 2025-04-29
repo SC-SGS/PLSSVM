@@ -20,10 +20,10 @@ classifiers = [
     ("Linear SVM (ovo)", sklearn.svm.SVC(kernel="linear", C=0.025, random_state=42, decision_function_shape='ovo')),
     ("RBF SVM (ovr)", sklearn.svm.SVC(gamma=2, C=1, random_state=42, decision_function_shape='ovr')),
     ("RBF SVM (ovo)", sklearn.svm.SVC(gamma=2, C=1, random_state=42, decision_function_shape='ovo')),
-    ("PLSSVM Linear (ovr)", plssvm.SVC(kernel="linear", decision_function_shape='ovr', C=0.025)),
-    ("PLSSVM Linear (ovo)", plssvm.SVC(kernel="linear", decision_function_shape='ovo', C=0.025)),
-    ("PLSSVM RBF (ovr)", plssvm.SVC(gamma=2, decision_function_shape='ovr', C=1)),
-    ("PLSSVM RBF (ovo)", plssvm.SVC(gamma=2, decision_function_shape='ovo', C=1)),
+    ("PLSSVM Linear (ovr)", plssvm.svm.SVC(kernel="linear", decision_function_shape='ovr', C=0.025)),
+    ("PLSSVM Linear (ovo)", plssvm.svm.SVC(kernel="linear", decision_function_shape='ovo', C=0.025)),
+    ("PLSSVM RBF (ovr)", plssvm.svm.SVC(gamma=2, decision_function_shape='ovr', C=1)),
+    ("PLSSVM RBF (ovo)", plssvm.svm.SVC(gamma=2, decision_function_shape='ovo', C=1)),
     ("Neural Net", MLPClassifier(alpha=1, max_iter=1000, random_state=42)),
 ]
 

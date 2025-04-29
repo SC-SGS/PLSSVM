@@ -9,6 +9,8 @@
 
 #include "plssvm/backend_types.hpp"  // plssvm::backend_type, plssvm::list_available_backends, plssvm::determine_default_backend
 
+#include "bindings/Python/utility.hpp"  // plssvm::bindings::python::util::register_implicit_str_enum_conversion
+
 #include "pybind11/pybind11.h"  // py::module_, py::enum_
 #include "pybind11/stl.h"       // support for STL types: std::vector
 
@@ -18,7 +20,8 @@ namespace py = pybind11;
 
 void init_backend_types(py::module_ &m) {
     // bind enum class
-    py::enum_<plssvm::backend_type>(m, "BackendType", "Enum class for all possible backend types, all different SYCL implementations have the same backend type \"sycl\".")
+    py::enum_<plssvm::backend_type> py_enum(m, "BackendType", "Enum class for all possible backend types, all different SYCL implementations have the same backend type \"sycl\".");
+    py_enum
         .value("AUTOMATIC", plssvm::backend_type::automatic, "the default backend; depends on the specified target platform")
         .value("OPENMP", plssvm::backend_type::openmp, "OpenMP to target CPUs only (currently no OpenMP target offloading support)")
         .value("HPX", plssvm::backend_type::hpx, "HPX to target CPUs only (currently no GPU executor support)")
@@ -28,6 +31,9 @@ void init_backend_types(py::module_ &m) {
         .value("OPENCL", plssvm::backend_type::opencl, "OpenCL to target CPUs and GPUs from different vendors")
         .value("SYCL", plssvm::backend_type::sycl, "SYCL to target CPUs and GPUs from different vendors; currently tested SYCL implementations are DPC++ and AdaptiveCpp")
         .value("KOKKOS", plssvm::backend_type::kokkos, "Kokkos to target CPUs and GPUs from different vendors; currently all Kokkos execution spaces except Kokkos::Experimental::OpenMPTarget and Kokkos::Experimental::OpenACC are supported");
+
+    // enable implicit conversion from string to enum
+    plssvm::bindings::python::util::register_implicit_str_enum_conversion<plssvm::backend_type>(py_enum);
 
     // bind free functions
     m.def("list_available_backends", &plssvm::list_available_backends, "list the available backends (as found during CMake configuration)");
