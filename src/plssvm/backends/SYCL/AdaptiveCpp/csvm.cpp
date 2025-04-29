@@ -132,7 +132,7 @@ void csvm::init(const target_platform target) {
         // use more detailed single rank command line output
         plssvm::detail::log_untracked(verbosity_level::full,
                                       comm_,
-                                      "\nUsing AdaptiveCpp ({}; {}) as SYCL backend with the kernel invocation type \"{}\" for the svm_kernel.\n",
+                                      "\nUsing AdaptiveCpp ({}; {}) as SYCL backend with the kernel invocation type \"{}\".\n",
                                       detail::get_adaptivecpp_version_short(),
                                       PLSSVM_ACPP_TARGETS,
                                       invocation_type_);

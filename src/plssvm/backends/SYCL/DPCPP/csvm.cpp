@@ -120,7 +120,7 @@ void csvm::init(const target_platform target) {
         // use more detailed single rank command line output
         plssvm::detail::log_untracked(verbosity_level::full,
                                       comm_,
-                                      "\nUsing DPC++ ({}; {}) as SYCL backend with the kernel invocation type \"{}\" for the svm_kernel.\n",
+                                      "\nUsing DPC++ ({}; {}) as SYCL backend with the kernel invocation type \"{}\".\n",
                                       detail::get_dpcpp_version(),
                                       detail::get_dpcpp_timestamp_version(),
                                       invocation_type_);
