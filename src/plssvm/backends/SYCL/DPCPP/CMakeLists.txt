@@ -24,12 +24,13 @@ endif ()
 if (PLSSVM_SYCL_BACKEND_CHECK_FOR_DPCPP_COMPILER)
     message(CHECK_PASS "found")
     append_local_and_parent(PLSSVM_SYCL_BACKEND_FOUND_IMPLEMENTATIONS "dpcpp")
-    
+
     # check if the hierarchical kernel is enabled while the build type is Debug -> throw a warning
     if (PLSSVM_ENABLE_SYCL_HIERARCHICAL_AND_SCOPED_KERNELS AND uppercase_CMAKE_BUILD_TYPE MATCHES DEBUG)
         message(WARNING "Enabled SYCL's hierarchical kernels in DPC++ while using Debug as build type. "
                         "This may result in compilation errors during PTX code generation. "
-                        "If this is the case, either set \"PLSSVM_ENABLE_SYCL_HIERARCHICAL_AND_SCOPED_KERNELS\" to \"OFF\" or use another build type.")
+                        "If this is the case, either set \"PLSSVM_ENABLE_SYCL_HIERARCHICAL_AND_SCOPED_KERNELS\" to \"OFF\" or use another build type."
+        )
     endif ()
 
     # set DPC++ specific targets
