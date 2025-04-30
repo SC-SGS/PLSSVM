@@ -18,7 +18,7 @@
  * @license This file is part of the PLSSVM project which is released under the MIT license.
  *          See the LICENSE.md file in the project root for full license information.
  *
- * @brief Directory containing the implementation of all four available backends: OpenMP, CUDA, OpenCL, and SYCL.
+ * @brief Directory containing the implementation of all available backends.
  */
 
 /**
@@ -489,6 +489,50 @@
  */
 
 /**
+ * @dir include/plssvm/backends/SYCL/kernel/cg_explicit/basic
+ * @author Alexander Van Craen
+ * @author Marcel Breyer
+ * @copyright 2018-today The PLSSVM project - All Rights Reserved
+ * @license This file is part of the PLSSVM project which is released under the MIT license.
+ *          See the LICENSE.md file in the project root for full license information.
+ *
+ * @brief Directory containing basic data parallel kernel implementations for the explicit CG algorithm using the SYCL backend.
+ */
+
+/**
+ * @dir include/plssvm/backends/SYCL/kernel/cg_explicit/hierarchical
+ * @author Alexander Van Craen
+ * @author Marcel Breyer
+ * @copyright 2018-today The PLSSVM project - All Rights Reserved
+ * @license This file is part of the PLSSVM project which is released under the MIT license.
+ *          See the LICENSE.md file in the project root for full license information.
+ *
+ * @brief Directory containing hierarchical kernel implementations for the explicit CG algorithm using the SYCL backend.
+ */
+
+/**
+ * @dir include/plssvm/backends/SYCL/kernel/cg_explicit/scoped
+ * @author Alexander Van Craen
+ * @author Marcel Breyer
+ * @copyright 2018-today The PLSSVM project - All Rights Reserved
+ * @license This file is part of the PLSSVM project which is released under the MIT license.
+ *          See the LICENSE.md file in the project root for full license information.
+ *
+ * @brief Directory containing scoped-parallelism kernel implementations for the explicit CG algorithm using the SYCL backend.
+ */
+
+/**
+ * @dir include/plssvm/backends/SYCL/kernel/cg_explicit/work_group
+ * @author Alexander Van Craen
+ * @author Marcel Breyer
+ * @copyright 2018-today The PLSSVM project - All Rights Reserved
+ * @license This file is part of the PLSSVM project which is released under the MIT license.
+ *          See the LICENSE.md file in the project root for full license information.
+ *
+ * @brief Directory containing work-group data parallel kernel implementations for the explicit CG algorithm using the SYCL backend.
+ */
+
+/**
  * @dir include/plssvm/backends/SYCL/kernel/cg_implicit
  * @author Alexander Van Craen
  * @author Marcel Breyer
@@ -497,6 +541,105 @@
  *          See the LICENSE.md file in the project root for full license information.
  *
  * @brief Directory containing kernel implementations for the implicit CG algorithm using the SYCL backend.
+ */
+
+/**
+ * @dir include/plssvm/backends/SYCL/kernel/cg_implicit/basic
+ * @author Alexander Van Craen
+ * @author Marcel Breyer
+ * @copyright 2018-today The PLSSVM project - All Rights Reserved
+ * @license This file is part of the PLSSVM project which is released under the MIT license.
+ *          See the LICENSE.md file in the project root for full license information.
+ *
+ * @brief Directory containing basic data parallel kernel implementations for the implicit CG algorithm using the SYCL backend.
+ */
+
+/**
+ * @dir include/plssvm/backends/SYCL/kernel/cg_implicit/hierarchical
+ * @author Alexander Van Craen
+ * @author Marcel Breyer
+ * @copyright 2018-today The PLSSVM project - All Rights Reserved
+ * @license This file is part of the PLSSVM project which is released under the MIT license.
+ *          See the LICENSE.md file in the project root for full license information.
+ *
+ * @brief Directory containing hierarchical kernel implementations for the implicit CG algorithm using the SYCL backend.
+ */
+
+/**
+ * @dir include/plssvm/backends/SYCL/kernel/cg_implicit/scoped
+ * @author Alexander Van Craen
+ * @author Marcel Breyer
+ * @copyright 2018-today The PLSSVM project - All Rights Reserved
+ * @license This file is part of the PLSSVM project which is released under the MIT license.
+ *          See the LICENSE.md file in the project root for full license information.
+ *
+ * @brief Directory containing scoped-parallelism kernel implementations for the implicit CG algorithm using the SYCL backend.
+ */
+
+/**
+ * @dir include/plssvm/backends/SYCL/kernel/cg_implicit/work_group
+ * @author Alexander Van Craen
+ * @author Marcel Breyer
+ * @copyright 2018-today The PLSSVM project - All Rights Reserved
+ * @license This file is part of the PLSSVM project which is released under the MIT license.
+ *          See the LICENSE.md file in the project root for full license information.
+ *
+ * @brief Directory containing work-group data parallel kernel implementations for the implicit CG algorithm using the SYCL backend.
+ */
+
+/**
+ * @dir include/plssvm/backends/SYCL/kernel/predict
+ * @author Alexander Van Craen
+ * @author Marcel Breyer
+ * @copyright 2018-today The PLSSVM project - All Rights Reserved
+ * @license This file is part of the PLSSVM project which is released under the MIT license.
+ *          See the LICENSE.md file in the project root for full license information.
+ *
+ * @brief Directory containing kernel implementations for the predictions using the SYCL backend.
+ */
+
+/**
+ * @dir include/plssvm/backends/SYCL/kernel/predict/basic
+ * @author Alexander Van Craen
+ * @author Marcel Breyer
+ * @copyright 2018-today The PLSSVM project - All Rights Reserved
+ * @license This file is part of the PLSSVM project which is released under the MIT license.
+ *          See the LICENSE.md file in the project root for full license information.
+ *
+ * @brief Directory containing basic data parallel kernel implementations for the predictions using the SYCL backend.
+ */
+
+/**
+ * @dir include/plssvm/backends/SYCL/kernel/predict/hierarchical
+ * @author Alexander Van Craen
+ * @author Marcel Breyer
+ * @copyright 2018-today The PLSSVM project - All Rights Reserved
+ * @license This file is part of the PLSSVM project which is released under the MIT license.
+ *          See the LICENSE.md file in the project root for full license information.
+ *
+ * @brief Directory containing hierarchical kernel implementations for the predictions using the SYCL backend.
+ */
+
+/**
+ * @dir include/plssvm/backends/SYCL/kernel/predict/scoped
+ * @author Alexander Van Craen
+ * @author Marcel Breyer
+ * @copyright 2018-today The PLSSVM project - All Rights Reserved
+ * @license This file is part of the PLSSVM project which is released under the MIT license.
+ *          See the LICENSE.md file in the project root for full license information.
+ *
+ * @brief Directory containing scoped-parallelism kernel implementations for the predictions using the SYCL backend.
+ */
+
+/**
+ * @dir include/plssvm/backends/SYCL/kernel/predict/work_group
+ * @author Alexander Van Craen
+ * @author Marcel Breyer
+ * @copyright 2018-today The PLSSVM project - All Rights Reserved
+ * @license This file is part of the PLSSVM project which is released under the MIT license.
+ *          See the LICENSE.md file in the project root for full license information.
+ *
+ * @brief Directory containing work-group data parallel kernel implementations for the predictions using the SYCL backend.
  */
 
 /**

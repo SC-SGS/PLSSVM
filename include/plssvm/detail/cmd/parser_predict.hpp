@@ -13,11 +13,12 @@
 #define PLSSVM_DETAIL_CMD_PARSER_PREDICT_HPP_
 #pragma once
 
-#include "plssvm/backend_types.hpp"                       // plssvm::backend_type
-#include "plssvm/backends/Kokkos/execution_space.hpp"     // plssvm::kokkos::execution_space
-#include "plssvm/backends/SYCL/implementation_types.hpp"  // plssvm::sycl::implementation_type
-#include "plssvm/mpi/communicator.hpp"                    // plssvm::mpi::communicator
-#include "plssvm/target_platforms.hpp"                    // plssvm::target_platform
+#include "plssvm/backend_types.hpp"                          // plssvm::backend_type
+#include "plssvm/backends/Kokkos/execution_space.hpp"        // plssvm::kokkos::execution_space
+#include "plssvm/backends/SYCL/implementation_types.hpp"     // plssvm::sycl::implementation_type
+#include "plssvm/backends/SYCL/kernel_invocation_types.hpp"  // plssvm::sycl::kernel_invocation_type
+#include "plssvm/mpi/communicator.hpp"                       // plssvm::mpi::communicator
+#include "plssvm/target_platforms.hpp"                       // plssvm::target_platform
 
 #include "fmt/base.h"     // fmt::formatter
 #include "fmt/ostream.h"  // fmt::ostream_formatter
@@ -46,6 +47,8 @@ struct parser_predict {
     /// The target platform: automatic (depending on the used backend), CPUs or GPUs from NVIDIA, AMD, or Intel.
     target_platform target{ target_platform::automatic };
 
+    /// The kernel invocation type when using SYCL as backend.
+    sycl::kernel_invocation_type sycl_kernel_invocation_type{ sycl::kernel_invocation_type::automatic };
     /// The SYCL implementation to use with `--backend sycl`.
     sycl::implementation_type sycl_implementation_type{ sycl::implementation_type::automatic };
 

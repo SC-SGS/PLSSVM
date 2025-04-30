@@ -17,6 +17,7 @@
 #include "fmt/ostream.h"  // fmt::ostream_formatter
 
 #include <iosfwd>  // forward declare std::ostream and std::istream
+#include <vector>  // std::vector
 
 namespace plssvm::sycl {
 
@@ -26,9 +27,22 @@ namespace plssvm::sycl {
 enum class kernel_invocation_type {
     /** Use the best kernel invocation type for the current SYCL implementation and target hardware platform. */
     automatic,
-    /** Use the [`nd_range` invocation type](https://www.khronos.org/registry/SYCL/specs/sycl-2020/html/sycl-2020.html#_parallel_for_invoke). */
-    nd_range
+    /** Use the [`basic` data parallel kernels](https://registry.khronos.org/SYCL/specs/sycl-2020/html/sycl-2020.html#_basic_data_parallel_kernels). */
+    basic,
+    /** Use the [`work-group` data parallel kernels](https://registry.khronos.org/SYCL/specs/sycl-2020/html/sycl-2020.html#_work_group_data_parallel_kernels). */
+    work_group,
+    /** Use the [`hierarchical` data parallel kernels](https://registry.khronos.org/SYCL/specs/sycl-2020/html/sycl-2020.html#_hierarchical_data_parallel_kernels). **Note:** deprecated in newer SYCL version, will be replaced with a "better" version in future SYCL specifications. */
+    hierarchical,
+    /** Use the AdaptiveCpp specific [`scoped` parallelism](https://github.com/AdaptiveCpp/AdaptiveCpp/blob/develop/doc/scoped-parallelism.md). */
+    scoped
 };
+
+/**
+ * @brief Return a list of all currently available SYCL kernel invocation types.
+ * @details SYCL's hierarchical and AdaptiveCpp's scoped kernel invocation type can be disabled during the CMake configuration.
+ * @return the available SYCL kernel invocation types (`[[nodiscard]]`)
+ */
+[[nodiscard]] std::vector<kernel_invocation_type> list_available_sycl_kernel_invocation_types();
 
 /**
  * @brief Output the @p invocation type to the given output-stream @p out.

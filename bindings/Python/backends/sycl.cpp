@@ -48,7 +48,10 @@ void init_sycl(py::module_ &m, const py::exception<plssvm::exception> &base_exce
     py::enum_<plssvm::sycl::kernel_invocation_type> py_enum_invocation(sycl_module, "KernelInvocationType", "Enum class for all possible SYCL kernel invocation types supported in PLSSVM.");
     py_enum_invocation
         .value("AUTOMATIC", plssvm::sycl::kernel_invocation_type::automatic, "use the best kernel invocation type for the current SYCL implementation and target hardware platform")
-        .value("ND_RANGE", plssvm::sycl::kernel_invocation_type::nd_range, "use the nd_range kernel invocation type");
+        .value("BASIC", plssvm::sycl::kernel_invocation_type::basic, "use the basic data parallel kernel invocation type")
+        .value("WORK_GROUP", plssvm::sycl::kernel_invocation_type::work_group, "use the work-group data parallel kernel invocation type")
+        .value("HIERARCHICAL", plssvm::sycl::kernel_invocation_type::hierarchical, "use the hierarchical data parallel kernel invocation type")
+        .value("SCOPED", plssvm::sycl::kernel_invocation_type::scoped, "use the AdaptiveCpp specific scoped parallelism kernel invocation type");
 
     // enable implicit conversion from string to enum
     plssvm::bindings::python::util::register_implicit_str_enum_conversion<plssvm::sycl::kernel_invocation_type>(py_enum_invocation);

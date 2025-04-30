@@ -11,7 +11,7 @@
 #include "plssvm/backend_types.hpp"                          // plssvm::list_available_backends, plssvm::determine_default_backend
 #include "plssvm/backends/Kokkos/execution_space.hpp"        // plssvm::kokkos::{list_available_execution_spaces, execution_space}
 #include "plssvm/backends/SYCL/implementation_types.hpp"     // plssvm::sycl::{list_available_sycl_implementations, implementation_type}
-#include "plssvm/backends/SYCL/kernel_invocation_types.hpp"  // plssvm::sycl::kernel_invocation_type
+#include "plssvm/backends/SYCL/kernel_invocation_types.hpp"  // plssvm::sycl::{list_available_sycl_kernel_invocation_types, kernel_invocation_type}
 #include "plssvm/classification_types.hpp"                   // plssvm::classification_type, plssvm::classification_type_to_full_string
 #include "plssvm/constants.hpp"                              // plssvm::real_type
 #include "plssvm/detail/assert.hpp"                          // PLSSVM_ASSERT
@@ -80,7 +80,7 @@ parser_train::parser_train(const mpi::communicator &comm, int argc, char **argv)
            ("b,backend", fmt::format("choose the backend: {}", fmt::join(list_available_backends(), "|")), cxxopts::value<decltype(backend)>()->default_value(fmt::format("{}", backend)))
            ("p,target_platform", fmt::format("choose the target platform: {}", fmt::join(list_available_target_platforms(), "|")), cxxopts::value<decltype(target)>()->default_value(fmt::format("{}", target)))
 #if defined(PLSSVM_HAS_SYCL_BACKEND)
-           ("sycl_kernel_invocation_type", "choose the kernel invocation type when using SYCL as backend: automatic|nd_range", cxxopts::value<decltype(sycl_kernel_invocation_type)>()->default_value(fmt::format("{}", sycl_kernel_invocation_type)))
+           ("sycl_kernel_invocation_type", fmt::format("choose the kernel invocation type when using SYCL as backend: {}", fmt::join(sycl::list_available_sycl_kernel_invocation_types(), "|")), cxxopts::value<decltype(sycl_kernel_invocation_type)>()->default_value(fmt::format("{}", sycl_kernel_invocation_type)))
            ("sycl_implementation_type", fmt::format("choose the SYCL implementation to be used in the SYCL backend: {}", fmt::join(sycl::list_available_sycl_implementations(), "|")), cxxopts::value<decltype(sycl_implementation_type)>()->default_value(fmt::format("{}", sycl_implementation_type)))
 #endif
 #if defined(PLSSVM_HAS_KOKKOS_BACKEND)

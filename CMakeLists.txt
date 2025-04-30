@@ -903,11 +903,12 @@ if (TARGET ${PLSSVM_SYCL_BACKEND_LIBRARY_NAME})
 choose the SYCL implementation to be used in the SYCL backend: ${PLSSVM_SYCL_BACKEND_NAME_LIST} (default: automatic)
 "
     )
+    string(REPLACE ";" "|" PLSSVM_SYCL_KERNEL_INVOCATION_TYPE_NAME_LIST "${PLSSVM_SYCL_KERNEL_INVOCATION_TYPE_NAME_LIST}")
     set(PLSSVM_SYCL_KERNEL_INVOCATION_TYPE_MANPAGE_ENTRY
         "
 .TP
 .B --sycl_kernel_invocation_type
-choose the kernel invocation type when using SYCL as backend: automatic|nd_range (default: automatic)
+choose the kernel invocation type when using SYCL as backend: ${PLSSVM_SYCL_KERNEL_INVOCATION_TYPE_NAME_LIST} (default: automatic)
 "
     )
 endif ()
@@ -936,8 +937,6 @@ endif ()
 
 # configure the manpage files
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/docs/plssvm-train.1.in ${CMAKE_CURRENT_SOURCE_DIR}/docs/plssvm-train.1 @ONLY)
-# update manpage entry since plssvm-predict can't recognize the SYCL kernel invocation type
-set(PLSSVM_SYCL_MANPAGE_ENTRY "${PLSSVM_SYCL_IMPLEMENTATION_TYPE_MANPAGE_ENTRY}")
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/docs/plssvm-predict.1.in ${CMAKE_CURRENT_SOURCE_DIR}/docs/plssvm-predict.1 @ONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/docs/plssvm-scale.1.in ${CMAKE_CURRENT_SOURCE_DIR}/docs/plssvm-scale.1 @ONLY)
 
