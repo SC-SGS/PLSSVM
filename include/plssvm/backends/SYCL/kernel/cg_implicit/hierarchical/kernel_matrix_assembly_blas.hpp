@@ -74,10 +74,6 @@ class device_kernel_assembly_symm {
      * @param[in] group indices representing the current point in the execution space
      */
     void operator()(::sycl::group<2> group) const {
-        // allocate shared memory
-        real_type data_cache_i[FEATURE_BLOCK_SIZE * INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE];
-        real_type data_cache_j[FEATURE_BLOCK_SIZE * INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE];
-
         // calculate the indices used in the current work-item
         ::sycl::private_memory<std::size_t, 2> i{ group };
         ::sycl::private_memory<std::size_t, 2> i_linear{ group };
@@ -115,48 +111,54 @@ class device_kernel_assembly_symm {
 
         // only calculate the upper triangular matrix -> can't use get_local_id() since all work-items in a work-group must progress further
         if (group[1] >= group[0]) {
-            // iterate over all features using blocking to be able to cache them for faster memory accesses
-            for (std::size_t dim = 0; dim < num_features_; dim += static_cast<std::size_t>(FEATURE_BLOCK_SIZE)) {
-                // load data into local memory
-                group.parallel_for_work_item([&](::sycl::h_item<2> idx) {
-                    const auto local_id_0 = static_cast<unsigned>(idx.get_local_id(0));
-                    const auto local_id_1 = static_cast<unsigned>(idx.get_local_id(1));
+            {
+                // allocate shared memory
+                real_type data_cache_i[FEATURE_BLOCK_SIZE][INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE];
+                real_type data_cache_j[FEATURE_BLOCK_SIZE][INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE];
 
-                    const std::size_t threadIdx_x = idx.get_local_id(0);
+                // iterate over all features using blocking to be able to cache them for faster memory accesses
+                for (std::size_t dim = 0; dim < num_features_; dim += static_cast<std::size_t>(FEATURE_BLOCK_SIZE)) {
+                    // load data into local memory
+                    group.parallel_for_work_item([&](::sycl::h_item<2> idx) {
+                        const auto local_id_0 = static_cast<unsigned>(idx.get_local_id(0));
+                        const auto local_id_1 = static_cast<unsigned>(idx.get_local_id(1));
 
-                    const auto THREAD_BLOCK_SIZE_uz = static_cast<std::size_t>(THREAD_BLOCK_SIZE);
-                    const auto PADDING_SIZE_uz = static_cast<std::size_t>(PADDING_SIZE);
+                        const std::size_t threadIdx_x = idx.get_local_id(0);
 
-                    for (unsigned internal = 0; internal < INTERNAL_BLOCK_SIZE; ++internal) {
-                        const auto global_i = row_offset_ + i_linear(idx) + static_cast<std::size_t>(internal) * THREAD_BLOCK_SIZE_uz;
-                        const auto global_j = row_offset_ + j_linear(idx) + static_cast<std::size_t>(internal) * THREAD_BLOCK_SIZE_uz;
+                        const auto THREAD_BLOCK_SIZE_uz = static_cast<std::size_t>(THREAD_BLOCK_SIZE);
+                        const auto PADDING_SIZE_uz = static_cast<std::size_t>(PADDING_SIZE);
 
-                        // FEATURE_BLOCK_SIZE = 2 * THREAD_BLOCK_SIZE -> store twice as many values in the local memory
-                        data_cache_i[local_id_0 * INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE + internal * THREAD_BLOCK_SIZE + local_id_1] = data_d_[(dim + threadIdx_x) * (num_rows_ + std::size_t{ 1 } + PADDING_SIZE_uz) + global_i];
-                        data_cache_i[(local_id_0 + THREAD_BLOCK_SIZE) * INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE + internal * THREAD_BLOCK_SIZE + local_id_1] = data_d_[(dim + threadIdx_x + THREAD_BLOCK_SIZE_uz) * (num_rows_ + std::size_t{ 1 } + PADDING_SIZE_uz) + global_i];
-                        data_cache_j[local_id_0 * INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE + internal * THREAD_BLOCK_SIZE + local_id_1] = data_d_[(dim + threadIdx_x) * (num_rows_ + std::size_t{ 1 } + PADDING_SIZE_uz) + global_j];
-                        data_cache_j[(local_id_0 + THREAD_BLOCK_SIZE) * INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE + internal * THREAD_BLOCK_SIZE + local_id_1] = data_d_[(dim + threadIdx_x + THREAD_BLOCK_SIZE_uz) * (num_rows_ + std::size_t{ 1 } + PADDING_SIZE_uz) + global_j];
-                    }
-                });
+                        for (unsigned internal = 0; internal < INTERNAL_BLOCK_SIZE; ++internal) {
+                            const auto global_i = row_offset_ + i_linear(idx) + static_cast<std::size_t>(internal) * THREAD_BLOCK_SIZE_uz;
+                            const auto global_j = row_offset_ + j_linear(idx) + static_cast<std::size_t>(internal) * THREAD_BLOCK_SIZE_uz;
 
-                // implicit group barrier
+                            // FEATURE_BLOCK_SIZE = 2 * THREAD_BLOCK_SIZE -> store twice as many values in the local memory
+                            data_cache_i[local_id_0][internal * THREAD_BLOCK_SIZE + local_id_1] = data_d_[(dim + threadIdx_x) * (num_rows_ + std::size_t{ 1 } + PADDING_SIZE_uz) + global_i];
+                            data_cache_i[local_id_0 + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + local_id_1] = data_d_[(dim + threadIdx_x + THREAD_BLOCK_SIZE_uz) * (num_rows_ + std::size_t{ 1 } + PADDING_SIZE_uz) + global_i];
+                            data_cache_j[local_id_0][internal * THREAD_BLOCK_SIZE + local_id_1] = data_d_[(dim + threadIdx_x) * (num_rows_ + std::size_t{ 1 } + PADDING_SIZE_uz) + global_j];
+                            data_cache_j[local_id_0 + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + local_id_1] = data_d_[(dim + threadIdx_x + THREAD_BLOCK_SIZE_uz) * (num_rows_ + std::size_t{ 1 } + PADDING_SIZE_uz) + global_j];
+                        }
+                    });
 
-                // perform the feature reduction calculation
-                group.parallel_for_work_item([&](::sycl::h_item<2> idx) {
-                    const auto local_id_0 = static_cast<unsigned>(idx.get_local_id(0));
-                    const auto local_id_1 = static_cast<unsigned>(idx.get_local_id(1));
+                    // implicit group barrier
 
-                    for (unsigned block_dim = 0; block_dim < FEATURE_BLOCK_SIZE; ++block_dim) {
-                        for (unsigned internal_i = 0; internal_i < INTERNAL_BLOCK_SIZE; ++internal_i) {
-                            for (unsigned internal_j = 0; internal_j < INTERNAL_BLOCK_SIZE; ++internal_j) {
-                                temp(idx)[internal_i][internal_j] += detail::feature_reduce<kernel_function>(data_cache_i[block_dim * INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE + local_id_1 * INTERNAL_BLOCK_SIZE + internal_i],
-                                                                                                             data_cache_j[block_dim * INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE + local_id_0 * INTERNAL_BLOCK_SIZE + internal_j]);
+                    // perform the feature reduction calculation
+                    group.parallel_for_work_item([&](::sycl::h_item<2> idx) {
+                        const auto local_id_0 = static_cast<unsigned>(idx.get_local_id(0));
+                        const auto local_id_1 = static_cast<unsigned>(idx.get_local_id(1));
+
+                        for (unsigned block_dim = 0; block_dim < FEATURE_BLOCK_SIZE; ++block_dim) {
+                            for (unsigned internal_i = 0; internal_i < INTERNAL_BLOCK_SIZE; ++internal_i) {
+                                for (unsigned internal_j = 0; internal_j < INTERNAL_BLOCK_SIZE; ++internal_j) {
+                                    temp(idx)[internal_i][internal_j] += detail::feature_reduce<kernel_function>(data_cache_i[block_dim][local_id_1 * INTERNAL_BLOCK_SIZE + internal_i],
+                                                                                                                 data_cache_j[block_dim][local_id_0 * INTERNAL_BLOCK_SIZE + internal_j]);
+                                }
                             }
                         }
-                    }
-                });
+                    });
 
-                // implicit group barrier
+                    // implicit group barrier
+                }
             }
 
             // apply the remaining part of the kernel function and store the value in the output kernel matrix
@@ -188,8 +190,8 @@ class device_kernel_assembly_symm {
             // calculate C += alpha * temp * B for the UPPER triangular matrix
             {
                 // allocate shared memory
-                auto &B_cache = data_cache_i;      // [INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE][FEATURE_BLOCK_SIZE]
-                auto &C_out_cache = data_cache_j;  // [INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE][FEATURE_BLOCK_SIZE]
+                real_type B_cache[INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE][FEATURE_BLOCK_SIZE];
+                real_type C_out_cache[INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE][FEATURE_BLOCK_SIZE];
 
                 // iterate over all classes using blocking to be able to cache them for faster memory accesses
                 for (std::size_t dim = 0; dim < num_classes_; dim += static_cast<std::size_t>(FEATURE_BLOCK_SIZE)) {
@@ -207,10 +209,10 @@ class device_kernel_assembly_symm {
                             const std::size_t global_i = row_offset_ + i_linear(idx) + static_cast<std::size_t>(internal) * THREAD_BLOCK_SIZE_uz;
 
                             // FEATURE_BLOCK_SIZE = 2 * THREAD_BLOCK_SIZE -> store twice as many values in the local memory
-                            B_cache[(internal * THREAD_BLOCK_SIZE + local_id_1) * FEATURE_BLOCK_SIZE + local_id_0] = alpha_ * B_[global_i * (num_classes_ + PADDING_SIZE_uz) + dim + threadIdx_x];
-                            B_cache[(internal * THREAD_BLOCK_SIZE + local_id_1) * FEATURE_BLOCK_SIZE + local_id_0 + THREAD_BLOCK_SIZE] = alpha_ * B_[global_i * (num_classes_ + PADDING_SIZE_uz) + dim + threadIdx_x + THREAD_BLOCK_SIZE_uz];
-                            C_out_cache[(internal * THREAD_BLOCK_SIZE + local_id_1) * FEATURE_BLOCK_SIZE + local_id_0] = real_type{ 0.0 };
-                            C_out_cache[(internal * THREAD_BLOCK_SIZE + local_id_1) * FEATURE_BLOCK_SIZE + local_id_0 + THREAD_BLOCK_SIZE] = real_type{ 0.0 };
+                            B_cache[internal * THREAD_BLOCK_SIZE + local_id_1][local_id_0] = alpha_ * B_[global_i * (num_classes_ + PADDING_SIZE_uz) + dim + threadIdx_x];
+                            B_cache[internal * THREAD_BLOCK_SIZE + local_id_1][local_id_0 + THREAD_BLOCK_SIZE] = alpha_ * B_[global_i * (num_classes_ + PADDING_SIZE_uz) + dim + threadIdx_x + THREAD_BLOCK_SIZE_uz];
+                            C_out_cache[internal * THREAD_BLOCK_SIZE + local_id_1][local_id_0] = real_type{ 0.0 };
+                            C_out_cache[internal * THREAD_BLOCK_SIZE + local_id_1][local_id_0 + THREAD_BLOCK_SIZE] = real_type{ 0.0 };
                         }
                     });
 
@@ -224,8 +226,8 @@ class device_kernel_assembly_symm {
 
                             for (unsigned internal_i = 0; internal_i < INTERNAL_BLOCK_SIZE; ++internal_i) {
                                 for (unsigned internal_j = 0; internal_j < INTERNAL_BLOCK_SIZE; ++internal_j) {
-                                    C_out_cache[(local_id_0 * INTERNAL_BLOCK_SIZE + internal_j) * FEATURE_BLOCK_SIZE + (class_idx + local_id_1) % FEATURE_BLOCK_SIZE] +=
-                                        temp(idx)[internal_i][internal_j] * B_cache[(local_id_1 * INTERNAL_BLOCK_SIZE + internal_i) * FEATURE_BLOCK_SIZE + (class_idx + local_id_1) % FEATURE_BLOCK_SIZE];
+                                    C_out_cache[local_id_0 * INTERNAL_BLOCK_SIZE + internal_j][(class_idx + local_id_1) % FEATURE_BLOCK_SIZE] +=
+                                        temp(idx)[internal_i][internal_j] * B_cache[local_id_1 * INTERNAL_BLOCK_SIZE + internal_i][(class_idx + local_id_1) % FEATURE_BLOCK_SIZE];
                                 }
                             }
                         });
@@ -245,8 +247,8 @@ class device_kernel_assembly_symm {
 
                         for (unsigned internal = 0; internal < INTERNAL_BLOCK_SIZE; ++internal) {
                             const auto global_j = row_offset_ + j(idx) + static_cast<std::size_t>(internal);
-                            detail::atomic_op<real_type>{ C_[global_j * (num_classes_ + PADDING_SIZE_uz) + dim + threadIdx_y] } += C_out_cache[(local_id_0 * INTERNAL_BLOCK_SIZE + internal) * FEATURE_BLOCK_SIZE + local_id_1];
-                            detail::atomic_op<real_type>{ C_[global_j * (num_classes_ + PADDING_SIZE_uz) + dim + threadIdx_y + THREAD_BLOCK_SIZE_uz] } += C_out_cache[(local_id_0 * INTERNAL_BLOCK_SIZE + internal) * FEATURE_BLOCK_SIZE + local_id_1 + THREAD_BLOCK_SIZE];
+                            detail::atomic_op<real_type>{ C_[global_j * (num_classes_ + PADDING_SIZE_uz) + dim + threadIdx_y] } += C_out_cache[local_id_0 * INTERNAL_BLOCK_SIZE + internal][local_id_1];
+                            detail::atomic_op<real_type>{ C_[global_j * (num_classes_ + PADDING_SIZE_uz) + dim + threadIdx_y + THREAD_BLOCK_SIZE_uz] } += C_out_cache[local_id_0 * INTERNAL_BLOCK_SIZE + internal][local_id_1 + THREAD_BLOCK_SIZE];
                         }
                     });
 
@@ -273,8 +275,8 @@ class device_kernel_assembly_symm {
             // calculate C += alpha * temp * B for the LOWER triangular matrix
             {
                 // allocate shared memory
-                auto &B_cache = data_cache_i;      // [FEATURE_BLOCK_SIZE][INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE]
-                auto &C_out_cache = data_cache_j;  // [FEATURE_BLOCK_SIZE][INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE]
+                real_type B_cache[FEATURE_BLOCK_SIZE][INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE];
+                real_type C_out_cache[FEATURE_BLOCK_SIZE][INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE];
 
                 // iterate over all classes using blocking to be able to cache them for faster memory accesses
                 for (std::size_t dim = 0; dim < num_classes_; dim += static_cast<std::size_t>(FEATURE_BLOCK_SIZE)) {
@@ -292,10 +294,10 @@ class device_kernel_assembly_symm {
                             const auto global_j = row_offset_ + j_linear(idx) + static_cast<std::size_t>(internal) * THREAD_BLOCK_SIZE_uz;
 
                             // FEATURE_BLOCK_SIZE = 2 * THREAD_BLOCK_SIZE -> store twice as many values in the shared memory
-                            B_cache[local_id_0 * INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE + internal * THREAD_BLOCK_SIZE + local_id_1] = alpha_ * B_[global_j * (num_classes_ + PADDING_SIZE_uz) + dim + threadIdx_x];
-                            B_cache[(local_id_0 + THREAD_BLOCK_SIZE) * INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE + internal * THREAD_BLOCK_SIZE + local_id_1] = alpha_ * B_[global_j * (num_classes_ + PADDING_SIZE_uz) + dim + threadIdx_x + THREAD_BLOCK_SIZE_uz];
-                            C_out_cache[local_id_0 * INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE + internal * THREAD_BLOCK_SIZE + local_id_1] = real_type{ 0.0 };
-                            C_out_cache[(local_id_0 + THREAD_BLOCK_SIZE) * INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE + internal * THREAD_BLOCK_SIZE + local_id_1] = real_type{ 0.0 };
+                            B_cache[local_id_0][internal * THREAD_BLOCK_SIZE + local_id_1] = alpha_ * B_[global_j * (num_classes_ + PADDING_SIZE_uz) + dim + threadIdx_x];
+                            B_cache[local_id_0 + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + local_id_1] = alpha_ * B_[global_j * (num_classes_ + PADDING_SIZE_uz) + dim + threadIdx_x + THREAD_BLOCK_SIZE_uz];
+                            C_out_cache[local_id_0][internal * THREAD_BLOCK_SIZE + local_id_1] = real_type{ 0.0 };
+                            C_out_cache[local_id_0 + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + local_id_1] = real_type{ 0.0 };
                         }
                     });
 
@@ -309,8 +311,8 @@ class device_kernel_assembly_symm {
 
                             for (unsigned internal_i = 0; internal_i < INTERNAL_BLOCK_SIZE; ++internal_i) {
                                 for (unsigned internal_j = 0; internal_j < INTERNAL_BLOCK_SIZE; ++internal_j) {
-                                    C_out_cache[((class_idx + local_id_0) % FEATURE_BLOCK_SIZE) * INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE + internal_i * THREAD_BLOCK_SIZE + local_id_1] +=
-                                        temp(idx)[internal_i][internal_j] * B_cache[((class_idx + local_id_0) % FEATURE_BLOCK_SIZE) * INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE + local_id_0 * INTERNAL_BLOCK_SIZE + internal_j];
+                                    C_out_cache[(class_idx + local_id_0) % FEATURE_BLOCK_SIZE][internal_i * THREAD_BLOCK_SIZE + local_id_1] +=
+                                        temp(idx)[internal_i][internal_j] * B_cache[(class_idx + local_id_0) % FEATURE_BLOCK_SIZE][local_id_0 * INTERNAL_BLOCK_SIZE + internal_j];
                                 }
                             }
                         });
@@ -330,8 +332,8 @@ class device_kernel_assembly_symm {
 
                         for (unsigned internal = 0; internal < INTERNAL_BLOCK_SIZE; ++internal) {
                             const auto global_i = row_offset_ + i(idx) + static_cast<std::size_t>(internal);
-                            detail::atomic_op<real_type>{ C_[global_i * (num_classes_ + PADDING_SIZE_uz) + dim + threadIdx_x] } += C_out_cache[local_id_0 * INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE + internal * THREAD_BLOCK_SIZE + local_id_1];
-                            detail::atomic_op<real_type>{ C_[global_i * (num_classes_ + PADDING_SIZE_uz) + dim + threadIdx_x + THREAD_BLOCK_SIZE_uz] } += C_out_cache[(local_id_0 + THREAD_BLOCK_SIZE) * INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE + internal * THREAD_BLOCK_SIZE + local_id_1];
+                            detail::atomic_op<real_type>{ C_[global_i * (num_classes_ + PADDING_SIZE_uz) + dim + threadIdx_x] } += C_out_cache[local_id_0][internal * THREAD_BLOCK_SIZE + local_id_1];
+                            detail::atomic_op<real_type>{ C_[global_i * (num_classes_ + PADDING_SIZE_uz) + dim + threadIdx_x + THREAD_BLOCK_SIZE_uz] } += C_out_cache[local_id_0 + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + local_id_1];
                         }
                     });
 
