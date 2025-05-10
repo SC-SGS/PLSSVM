@@ -100,6 +100,8 @@ if (Kokkos_ENABLE_SYCL)
     list(APPEND PLSSVM_KOKKOS_BACKEND_AVAILABLE_EXECUTION_SPACES "SYCL")
 endif ()
 if (Kokkos_ENABLE_HPX)
+    # for some reasons, we also need to link against atomic in some cases if Kokkos::HPX is used
+    target_link_libraries(${PLSSVM_KOKKOS_BACKEND_LIBRARY_NAME} PUBLIC atomic)
     target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC PLSSVM_KOKKOS_BACKEND_ENABLE_HPX)
     list(APPEND PLSSVM_KOKKOS_BACKEND_AVAILABLE_EXECUTION_SPACES "HPX")
 endif ()
