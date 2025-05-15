@@ -28,6 +28,7 @@
 #include "fmt/format.h"  // fmt::format
 
 #include <algorithm>   // std::max, std::min, std::sort, std::adjacent_find
+#include <chrono>      // std::chrono::steady_clock
 #include <cstddef>     // std::size_t
 #include <functional>  // std::reference_wrapper, std::cref
 #include <memory>      // std::shared_ptr, std::make_shared
@@ -400,6 +401,9 @@ class data_set {
 
     /// The min-max scaling parameters used to scale the data points in this data set; may be `nullptr` if no data point scaling was requested.
     std::shared_ptr<min_max_scaler> scaler_{ nullptr };
+
+    /// The start time of the creation of this data set.
+    std::chrono::steady_clock::time_point creation_start_time_{ std::chrono::steady_clock::now() };
 };
 
 //*************************************************************************************************************************************//

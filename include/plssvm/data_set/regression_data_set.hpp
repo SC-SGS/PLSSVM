@@ -62,6 +62,7 @@ class regression_data_set : public data_set<U> {
     /// The base data set class.
     using base_data_set = data_set<U>;
 
+    using base_data_set::creation_start_time_;
     using base_data_set::labels_ptr_;
     using base_data_set::y_ptr_;
 
@@ -549,11 +550,15 @@ void regression_data_set<U>::init() {
         this->map_label();
     }
 
+    const auto creation_end_time = std::chrono::steady_clock::now();
+    const auto creation_duration = std::chrono::duration_cast<std::chrono::milliseconds>(creation_end_time - creation_start_time_);
+
     detail::log(verbosity_level::full | verbosity_level::timing,
                 this->communicator(),
-                "Created a regression data set with {} data points and {} features.\n",
+                "Created a regression data set with {} data points and {} features in {}.\n",
                 detail::tracking::tracking_entry{ "data_set_create", "num_data_points", this->num_data_points() },
-                detail::tracking::tracking_entry{ "data_set_create", "num_features", this->num_features() });
+                detail::tracking::tracking_entry{ "data_set_create", "num_features", this->num_features() },
+                detail::tracking::tracking_entry{ "data_set_create", "time", creation_duration });
 }
 
 template <typename U>
