@@ -15,7 +15,7 @@
 
 #include "plssvm/detail/arithmetic_type_name.hpp"  // plssvm::detail::arithmetic_type_name
 #include "plssvm/detail/fast_float_wrapper.hpp"    // plssvm::detail::convert_to_floating_point
-#include "plssvm/detail/string_utility.hpp"        // plssvm::detail::{trim, trim_left, as_lower_case}
+#include "plssvm/detail/string_utility.hpp"        // plssvm::detail::{trim, trim_left, as_lower_case, starts_with}
 #include "plssvm/detail/type_traits.hpp"           // PLSSVM_REQUIRES, plssvm::detail::remove_cvref_t
 #include "plssvm/detail/utility.hpp"               // plssvm::detail::unreachable
 
@@ -79,9 +79,14 @@ template <typename T, typename Exception = std::runtime_error, PLSSVM_REQUIRES((
         return val;
     } else {
         // remove leading whitespaces
-        const std::string_view trimmed_str = trim_left(str);
+        std::string_view trimmed_str = trim_left(str);
 
-        // convert string to value fo type T
+        // std::from_chars does not support leading '+' signs!
+        if (detail::starts_with(trimmed_str, '+')) {
+            trimmed_str.remove_prefix(1);
+        }
+
+        // convert string to value of type T
         T val;
         auto res = std::from_chars(trimmed_str.data(), trimmed_str.data() + trimmed_str.size(), val);
         if (res.ec != std::errc{}) {
