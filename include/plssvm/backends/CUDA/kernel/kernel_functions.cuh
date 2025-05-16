@@ -84,7 +84,7 @@ template <>
  */
 template <>
 [[nodiscard]] __device__ __forceinline__ real_type feature_reduce<kernel_function_type::laplacian>(const real_type val1, const real_type val2) {
-    return abs(val1 - val2);
+    return fabs(val1 - val2);
 }
 
 /**
