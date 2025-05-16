@@ -25,6 +25,25 @@
 namespace plssvm::kokkos::detail {
 
 //***************************************************//
+//                  helper function                  //
+//***************************************************//
+
+/**
+ * @brief Return the minimum possible floating point value for type @p T.
+ * @brief Function necessary such the the `if constexpr` depends on a template parameter and, therefore, no false-positive implicit conversion warnings are reported.
+ * @tparam T the type to retrieve the minimum value
+ * @return the minimum floating point value for type @p T (`[[nodiscard]]`)
+ */
+template <typename T>
+[[nodiscard]] constexpr KOKKOS_INLINE_FUNCTION T floating_point_min() {
+    if constexpr (std::is_same_v<real_type, float>) {
+        return FLT_MIN;
+    } else {
+        return DBL_MIN;
+    }
+}
+
+//***************************************************//
 //                 feature reductions                //
 //***************************************************//
 
@@ -64,21 +83,6 @@ template <>
 }
 
 /**
- * @brief Return the minimum possible floating point value for type @p T.
- * @brief Function necessary such the the `if constexpr` depends on a template parameter and, therefore, no false-positive implicit conversion warnings are reported.
- * @tparam T the type to retrieve the minimum value
- * @return the minimum floating point value for type @p T (`[[nodiscard]]`)
- */
-template <typename T>
-[[nodiscard]] constexpr KOKKOS_INLINE_FUNCTION T real_type_min() {
-    if constexpr (std::is_same_v<real_type, float>) {
-        return FLT_MIN;
-    } else {
-        return DBL_MIN;
-    }
-}
-
-/**
  * @brief Compute the feature reduction for the chi-squared kernel function.
  * @note Be sure that the denominator isn't 0.0 which may be the case for padding values.
  * @param[in] val1 the first feature value
@@ -88,7 +92,7 @@ template <typename T>
 template <>
 [[nodiscard]] KOKKOS_INLINE_FUNCTION real_type feature_reduce<kernel_function_type::chi_squared>(const real_type val1, const real_type val2) {
     const real_type d = val1 - val2;
-    return (real_type{ 1.0 } / (val1 + val2 + real_type_min<real_type>())) * d * d;
+    return (real_type{ 1.0 } / (val1 + val2 + floating_point_min<real_type>())) * d * d;
 }
 
 //***************************************************//
