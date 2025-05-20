@@ -258,8 +258,10 @@ std::vector<::plssvm::detail::move_only_any> gpu_csvm<device_ptr_t, queue_t, pin
         q_red_d[device_id] = device_ptr_type{ q_red.size() + PADDING_SIZE, device };
     }
 
-    // pin the data matrix
+    // pin the data matrix if requested
+#if defined(PLSSVM_USE_PINNED_MEMORY)
     const pinned_memory_type pm{ A };
+#endif
 
 #pragma omp parallel for if (num_devices > 1)
     for (std::size_t device_id = 0; device_id < num_devices; ++device_id) {

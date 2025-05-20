@@ -611,6 +611,14 @@ if (PLSSVM_ENFORCE_MAX_MEM_ALLOC_SIZE)
     target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC PLSSVM_ENFORCE_MAX_MEM_ALLOC_SIZE)
 endif ()
 
+# use host pinned memory for the input matrix when assembling the kernel matrix, if available
+option(PLSSVM_ENABLE_PINNED_MEMORY "Use host pinned memory for the input matrix when assembling the kernel matrix, if available." OFF)
+if (PLSSVM_ENABLE_PINNED_MEMORY)
+    message(STATUS "Using host pinned memory for the input matrix for the kernel matrix assembly.")
+    # add target definition
+    target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC PLSSVM_USE_PINNED_MEMORY)
+endif ()
+
 ########################################################################################################################
 #                                           check for Link Time Optimization                                           #
 ########################################################################################################################
