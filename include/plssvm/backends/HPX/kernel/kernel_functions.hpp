@@ -17,10 +17,54 @@
 #include "plssvm/constants.hpp"              // plssvm::real_type
 #include "plssvm/kernel_function_types.hpp"  // plssvm::kernel_function_type
 
-#include <cmath>   // std::abs, std::pow, std::exp, std::tanh
+#include <cmath>   // std::abs, std::exp, std::tanh
 #include <limits>  // std::numeric_limits::min
 
 namespace plssvm::hpx::detail {
+
+//***************************************************//
+//                  helper function                  //
+//***************************************************//
+
+/**
+ * @brief Fast integer power function. Computes base^exponent and takes advantage of the fact that degree may only be positive integer values.
+ * @details Hardcodes the power function for degree <= 6, uses a simple for loop otherwise.
+ * @param[in] base the base
+ * @param[in] exponent the exponent
+ * @return base^exponent (`[[nodiscard]]`)
+ */
+[[nodiscard]] inline real_type powi(const real_type base, const int exponent) {
+    switch (exponent) {
+        case 0: return real_type{ 1.0 };
+        case 1: return base;
+        case 2: return base * base;
+        case 3: return base * base * base;
+        case 4:
+            {
+                const real_type temp = base * base;
+                return temp * temp;
+            }
+        case 5:
+            {
+                const real_type temp = base * base;
+                return temp * temp * base;
+            }
+        case 6:
+            {
+                const real_type temp = base * base * base;
+                return temp * temp;
+            }
+        default:
+            {
+                // generic integer power function
+                real_type result{ 1.0 };
+                for (int i = 0; i < exponent; ++i) {
+                    result *= base;
+                }
+                return result;
+            }
+    }
+}
 
 //***************************************************//
 //                 feature reductions                //
@@ -104,7 +148,7 @@ template <>
  */
 template <>
 [[nodiscard]] inline real_type apply_kernel_function<kernel_function_type::polynomial>(const real_type value, const int degree, const real_type gamma, const real_type coef0) {
-    return std::pow(gamma * value + coef0, (real_type) degree);
+    return detail::powi(gamma * value + coef0, degree);
 }
 
 /**

@@ -33,6 +33,50 @@
 namespace plssvm::stdpar::detail {
 
 //***************************************************//
+//                  helper function                  //
+//***************************************************//
+
+/**
+ * @brief Fast integer power function. Computes base^exponent and takes advantage of the fact that degree may only be positive integer values.
+ * @details Hardcodes the power function for degree <= 6, uses a simple for loop otherwise.
+ * @param[in] base the base
+ * @param[in] exponent the exponent
+ * @return base^exponent (`[[nodiscard]]`)
+ */
+[[nodiscard]] inline PLSSVM_STDPAR_KERNEL_FUNCTION real_type powi(const real_type base, const int exponent) {
+    switch (exponent) {
+        case 0: return real_type{ 1.0 };
+        case 1: return base;
+        case 2: return base * base;
+        case 3: return base * base * base;
+        case 4:
+            {
+                const real_type temp = base * base;
+                return temp * temp;
+            }
+        case 5:
+            {
+                const real_type temp = base * base;
+                return temp * temp * base;
+            }
+        case 6:
+            {
+                const real_type temp = base * base * base;
+                return temp * temp;
+            }
+        default:
+            {
+                // generic integer power function
+                real_type result{ 1.0 };
+                for (int i = 0; i < exponent; ++i) {
+                    result *= base;
+                }
+                return result;
+            }
+    }
+}
+
+//***************************************************//
 //                 feature reductions                //
 //***************************************************//
 
@@ -118,11 +162,7 @@ template <>
  */
 template <>
 [[nodiscard]] inline PLSSVM_STDPAR_KERNEL_FUNCTION real_type apply_kernel_function<kernel_function_type::polynomial>(const real_type value, const int degree, const real_type gamma, const real_type coef0) {
-#if defined(PLSSVM_STDPAR_BACKEND_HAS_INTEL_LLVM) || defined(PLSSVM_STDPAR_BACKEND_HAS_ACPP)
-    return ::sycl::pow(gamma * value + coef0, (real_type) degree);
-#else
-    return std::pow(gamma * value + coef0, (real_type) degree);
-#endif
+    return detail::powi(gamma * value + coef0, degree);
 }
 
 /**

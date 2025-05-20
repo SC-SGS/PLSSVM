@@ -17,7 +17,7 @@
 #include "plssvm/detail/utility.hpp"                                // plssvm::detail::always_false_v
 #include "plssvm/kernel_function_types.hpp"                         // plssvm::kernel_function_type
 
-#include "Kokkos_MathematicalFunctions.hpp"  // KOKKOS_INLINE_FUNCTION, Kokkos::pow, Kokkos::exp, Kokkos::tanh, Kokkos::abs
+#include "Kokkos_MathematicalFunctions.hpp"  // KOKKOS_INLINE_FUNCTION, Kokkos::exp, Kokkos::tanh, Kokkos::abs
 
 #include <float.h>      // LT_MIN, DBL_MIN
 #include <type_traits>  // std::is_same_v
@@ -40,6 +40,46 @@ template <typename T>
         return FLT_MIN;
     } else {
         return DBL_MIN;
+    }
+}
+
+/**
+ * @brief Fast integer power function. Computes base^exponent and takes advantage of the fact that degree may only be positive integer values.
+ * @details Hardcodes the power function for degree <= 6, uses a simple for loop otherwise.
+ * @param[in] base the base
+ * @param[in] exponent the exponent
+ * @return base^exponent (`[[nodiscard]]`)
+ */
+[[nodiscard]] KOKKOS_INLINE_FUNCTION real_type powi(const real_type base, const int exponent) {
+    switch (exponent) {
+        case 0: return real_type{ 1.0 };
+        case 1: return base;
+        case 2: return base * base;
+        case 3: return base * base * base;
+        case 4:
+            {
+                const real_type temp = base * base;
+                return temp * temp;
+            }
+        case 5:
+            {
+                const real_type temp = base * base;
+                return temp * temp * base;
+            }
+        case 6:
+            {
+                const real_type temp = base * base * base;
+                return temp * temp;
+            }
+        default:
+            {
+                // generic integer power function
+                real_type result{ 1.0 };
+                for (int i = 0; i < exponent; ++i) {
+                    result *= base;
+                }
+                return result;
+            }
     }
 }
 
@@ -112,7 +152,7 @@ template <kernel_function_type kernel_function, typename... Args>
     if constexpr (kernel_function == kernel_function_type::linear) {
         return value;
     } else if constexpr (kernel_function == kernel_function_type::polynomial) {
-        return Kokkos::pow(detail::get<1>(params) * value + detail::get<2>(params), detail::get<0>(params));
+        return detail::powi(detail::get<1>(params) * value + detail::get<2>(params), detail::get<0>(params));
     } else if constexpr (kernel_function == kernel_function_type::rbf) {
         return Kokkos::exp(-detail::get<0>(params) * value);
     } else if constexpr (kernel_function == kernel_function_type::sigmoid) {
