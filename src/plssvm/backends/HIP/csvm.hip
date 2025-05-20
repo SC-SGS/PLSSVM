@@ -22,7 +22,7 @@
 #include "plssvm/detail/data_distribution.hpp"                                         // plssvm::detail::{data_distribution, triangular_data_distribution, rectangular_data_distribution}
 #include "plssvm/detail/logging/mpi_log_untracked.hpp"                                 // plssvm::detail::log_untracked
 #include "plssvm/detail/memory_size.hpp"                                               // plssvm::detail::memory_size
-#include "plssvm/detail/tracking/performance_tracker.hpp"                              // plssvm::detail::tracking::tracking_entry
+#include "plssvm/detail/tracking/performance_tracker.hpp"                              // plssvm::detail::tracking::tracking_entry, PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY
 #include "plssvm/exceptions/exceptions.hpp"                                            // plssvm::exception
 #include "plssvm/gamma.hpp"                                                            // plssvm::gamma_type
 #include "plssvm/kernel_function_types.hpp"                                            // plssvm::kernel_function_type
@@ -37,6 +37,7 @@
 
 #include "fmt/format.h"  // fmt::format
 
+#include <chrono>     // std::chrono::{steady_clock, duration_cast}
 #include <cmath>      // std::ceil
 #include <cstddef>    // std::size_t
 #include <exception>  // std::terminate
@@ -201,6 +202,7 @@ auto csvm::run_assemble_kernel_matrix_explicit(const std::size_t device_id, cons
     const dim3 native_block = detail::dim_type_to_native(exec.block);
 
     detail::set_device(device);
+    const auto start = std::chrono::steady_clock::now();
     for (const auto &[partial_grid, offsets] : exec.grids) {
         // convert execution range partial_grid to HIP's native dim3
         const dim3 native_partial_grid = detail::dim_type_to_native(partial_grid);
@@ -228,6 +230,9 @@ auto csvm::run_assemble_kernel_matrix_explicit(const std::size_t device_id, cons
     }
     detail::peek_at_last_error();
     detail::device_synchronize(device);
+    const auto end = std::chrono::steady_clock::now();
+    [[maybe_unused]] const auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+    PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "kernel_matrix", "kernel_matrix_assembly_kernel", duration }));
 
     return kernel_matrix_d;
 }
@@ -246,6 +251,7 @@ void csvm::run_blas_level_3_kernel_explicit(const std::size_t device_id, const :
     const dim3 native_block = detail::dim_type_to_native(exec.block);
 
     detail::set_device(device);
+    const auto start = std::chrono::steady_clock::now();
     for (const auto &[partial_grid, offsets] : exec.grids) {
         // convert execution range partial_grid to HIP's native dim3
         const dim3 native_partial_grid = detail::dim_type_to_native(partial_grid);
@@ -268,6 +274,9 @@ void csvm::run_blas_level_3_kernel_explicit(const std::size_t device_id, const :
     }
     detail::peek_at_last_error();
     detail::device_synchronize(device);
+    const auto end = std::chrono::steady_clock::now();
+    [[maybe_unused]] const auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+    PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "cg", "blas_level_3_times_kernel", duration }));
 }
 
 void csvm::run_inplace_matrix_addition(const std::size_t device_id, const ::plssvm::detail::execution_range &exec, device_ptr_type &lhs_d, const device_ptr_type &rhs_d) const {
@@ -323,6 +332,7 @@ void csvm::run_assemble_kernel_matrix_implicit_blas_level_3(const std::size_t de
     const dim3 native_block = detail::dim_type_to_native(exec.block);
 
     detail::set_device(device);
+    const auto start = std::chrono::steady_clock::now();
     for (const auto &[partial_grid, offsets] : exec.grids) {
         // convert execution range partial_grid to HIP's native dim3
         const dim3 native_partial_grid = detail::dim_type_to_native(partial_grid);
@@ -350,6 +360,9 @@ void csvm::run_assemble_kernel_matrix_implicit_blas_level_3(const std::size_t de
     }
     detail::peek_at_last_error();
     detail::device_synchronize(device);
+    const auto end = std::chrono::steady_clock::now();
+    [[maybe_unused]] const auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+    PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "cg", "blas_level_3_times_kernel", duration }));
 }
 
 //***************************************************//
@@ -372,6 +385,7 @@ auto csvm::run_w_kernel(const std::size_t device_id, const ::plssvm::detail::exe
     const dim3 native_block = detail::dim_type_to_native(exec.block);
 
     detail::set_device(device);
+    const auto start = std::chrono::steady_clock::now();
     for (const auto &[partial_grid, offsets] : exec.grids) {
         // convert execution range partial_grid to HIP's native dim3
         const dim3 native_partial_grid = detail::dim_type_to_native(partial_grid);
@@ -380,6 +394,9 @@ auto csvm::run_w_kernel(const std::size_t device_id, const ::plssvm::detail::exe
     }
     detail::peek_at_last_error();
     detail::device_synchronize(device);
+    const auto end = std::chrono::steady_clock::now();
+    [[maybe_unused]] const auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+    PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "predict_values", "w_kernel", duration }));
 
     return w_d;
 }
@@ -397,6 +414,7 @@ auto csvm::run_predict_kernel(const std::size_t device_id, const ::plssvm::detai
     const dim3 native_block = detail::dim_type_to_native(exec.block);
 
     detail::set_device(device);
+    const auto start = std::chrono::steady_clock::now();
     for (const auto &[partial_grid, offsets] : exec.grids) {
         // convert execution range partial_grid to HIP's native dim3
         const dim3 native_partial_grid = detail::dim_type_to_native(partial_grid);
@@ -424,6 +442,9 @@ auto csvm::run_predict_kernel(const std::size_t device_id, const ::plssvm::detai
     }
     detail::peek_at_last_error();
     detail::device_synchronize(device);
+    const auto end = std::chrono::steady_clock::now();
+    [[maybe_unused]] const auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+    PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "predict_values", "predict_kernel", duration }));
 
     return out_d;
 }

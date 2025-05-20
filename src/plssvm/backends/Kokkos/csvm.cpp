@@ -26,7 +26,7 @@
 #include "plssvm/detail/logging/log_untracked.hpp"                                    // plssvm::detail::log_untracked
 #include "plssvm/detail/logging/mpi_log_untracked.hpp"                                // plssvm::detail::log_untracked
 #include "plssvm/detail/memory_size.hpp"                                              // plssvm::detail::memory_size
-#include "plssvm/detail/tracking/performance_tracker.hpp"                             // plssvm::detail::tracking::tracking_entry
+#include "plssvm/detail/tracking/performance_tracker.hpp"                             // plssvm::detail::tracking::tracking_entry, PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY
 #include "plssvm/detail/type_traits.hpp"                                              // plssvm::detail::remove_cvref_t
 #include "plssvm/detail/utility.hpp"                                                  // plssvm::detail::{get_system_memory, unreachable}
 #include "plssvm/exceptions/exceptions.hpp"                                           // plssvm::exception
@@ -43,6 +43,7 @@
 #include "fmt/core.h"    // fmt::format
 #include "fmt/format.h"  // fmt::format
 
+#include <chrono>     // std::chrono::{steady_clock, duration_cast}
 #include <cmath>      // std::sqrt
 #include <cstddef>    // std::size_t
 #include <exception>  // std::terminate
@@ -422,6 +423,7 @@ auto csvm::run_assemble_kernel_matrix_explicit(const std::size_t device_id, cons
         using kokkos_execution_space_type = ::plssvm::detail::remove_cvref_t<decltype(device)>;
         constexpr execution_space space = kokkos_type_to_execution_space_v<kokkos_execution_space_type>;
 
+        const auto start = std::chrono::steady_clock::now();
         for (const auto &[partial_grid, offsets] : exec.grids) {
             // convert execution range partial_grid to Kokkos' native one-dimensional size
             const int native_partial_grid = detail::dim_type_to_native(partial_grid);
@@ -469,6 +471,9 @@ auto csvm::run_assemble_kernel_matrix_explicit(const std::size_t device_id, cons
             }
         }
         detail::device_synchronize(device);
+        const auto end = std::chrono::steady_clock::now();
+        [[maybe_unused]] const auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+        PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "kernel_matrix", "kernel_matrix_assembly_kernel", duration }));
 
         return std::move(kernel_matrix_d);
     });
@@ -492,6 +497,7 @@ void csvm::run_blas_level_3_kernel_explicit(const std::size_t device_id, const :
         // save the team size
         const int team_size = detail::dim_type_to_native(exec.block);
 
+        const auto start = std::chrono::steady_clock::now();
         for (const auto &[partial_grid, offsets] : exec.grids) {
             // convert execution range partial_grid to Kokkos' native one-dimensional size
             const int native_partial_grid = detail::dim_type_to_native(partial_grid);
@@ -519,6 +525,9 @@ void csvm::run_blas_level_3_kernel_explicit(const std::size_t device_id, const :
             }
         }
         detail::device_synchronize(device);
+        const auto end = std::chrono::steady_clock::now();
+        [[maybe_unused]] const auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+        PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "cg", "blas_level_3_times_kernel", duration }));
     });
 }
 
@@ -588,6 +597,7 @@ void csvm::run_assemble_kernel_matrix_implicit_blas_level_3(const std::size_t de
         // save the team size
         const int team_size = detail::dim_type_to_native(exec.block);
 
+        const auto start = std::chrono::steady_clock::now();
         for (const auto &[partial_grid, offsets] : exec.grids) {
             // convert execution range partial_grid to Kokkos' native one-dimensional size
             const int native_partial_grid = detail::dim_type_to_native(partial_grid);
@@ -635,6 +645,9 @@ void csvm::run_assemble_kernel_matrix_implicit_blas_level_3(const std::size_t de
             }
         }
         detail::device_synchronize(device);
+        const auto end = std::chrono::steady_clock::now();
+        [[maybe_unused]] const auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+        PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "cg", "blas_level_3_times_kernel", duration }));
     });
 }
 
@@ -662,6 +675,7 @@ auto csvm::run_w_kernel(const std::size_t device_id, const ::plssvm::detail::exe
         using kokkos_execution_space_type = ::plssvm::detail::remove_cvref_t<decltype(device)>;
         constexpr execution_space space = kokkos_type_to_execution_space_v<kokkos_execution_space_type>;
 
+        const auto start = std::chrono::steady_clock::now();
         for (const auto &[partial_grid, offsets] : exec.grids) {
             // convert execution range partial_grid to Kokkos' native one-dimensional size
             const int native_partial_grid = detail::dim_type_to_native(partial_grid);
@@ -672,6 +686,9 @@ auto csvm::run_w_kernel(const std::size_t device_id, const ::plssvm::detail::exe
             Kokkos::parallel_for("w_kernel", team_policy.set_scratch_size(0, Kokkos::PerTeam(scratch_memory_size)), detail::device_kernel_w_linear<kokkos_execution_space_type>{ w_d.get().get<space>(), alpha_d.get().get<space>(), sv_d.get().get<space>(), num_classes, num_sv, device_specific_num_sv, sv_offset, offsets.x, offsets.y, partial_grid.x });
         }
         detail::device_synchronize(device);
+        const auto end = std::chrono::steady_clock::now();
+        [[maybe_unused]] const auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+        PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "predict_values", "w_kernel", duration }));
 
         return std::move(w_d);
     });
@@ -694,6 +711,7 @@ auto csvm::run_predict_kernel(const std::size_t device_id, const ::plssvm::detai
         using kokkos_execution_space_type = ::plssvm::detail::remove_cvref_t<decltype(device)>;
         constexpr execution_space space = kokkos_type_to_execution_space_v<kokkos_execution_space_type>;
 
+        const auto start = std::chrono::steady_clock::now();
         for (const auto &[partial_grid, offsets] : exec.grids) {
             // convert execution range partial_grid to Kokkos' native one-dimensional size
             const int native_partial_grid = detail::dim_type_to_native(partial_grid);
@@ -741,6 +759,9 @@ auto csvm::run_predict_kernel(const std::size_t device_id, const ::plssvm::detai
             }
         }
         detail::device_synchronize(device);
+        const auto end = std::chrono::steady_clock::now();
+        [[maybe_unused]] const auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+        PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "predict_values", "predict_kernel", duration }));
 
         return std::move(out_d);
     });

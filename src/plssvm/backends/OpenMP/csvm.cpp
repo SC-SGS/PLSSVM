@@ -37,6 +37,7 @@
 
 #include "fmt/format.h"  // fmt::format
 
+#include <chrono>   // std::chrono::{steady_clock, duration_cast}
 #include <cmath>    // std::fma
 #include <cstddef>  // std::size_t
 #include <cstring>  // std::memset
@@ -125,6 +126,7 @@ std::vector<::plssvm::detail::move_only_any> csvm::assemble_kernel_matrix(const 
                     const std::size_t row_offset = dist.place_row_offset(0);
 
                     std::vector<real_type> kernel_matrix(dist.calculate_explicit_kernel_matrix_num_entries_padded(0));  // only explicitly store the upper triangular matrix
+                    const auto start = std::chrono::steady_clock::now();
                     switch (params.kernel_type) {
                         case kernel_function_type::linear:
                             detail::device_kernel_assembly<kernel_function_type::linear>(kernel_matrix, A, device_specific_num_rows, row_offset, q_red, QA_cost, cost);
@@ -145,6 +147,9 @@ std::vector<::plssvm::detail::move_only_any> csvm::assemble_kernel_matrix(const 
                             detail::device_kernel_assembly<kernel_function_type::chi_squared>(kernel_matrix, A, device_specific_num_rows, row_offset, q_red, QA_cost, cost, std::get<real_type>(params.gamma));
                             break;
                     }
+                    const auto end = std::chrono::steady_clock::now();
+                    [[maybe_unused]] const auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+                    PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "kernel_matrix", "kernel_matrix_assembly_kernel", duration }));
 
                     kernel_matrices_parts[0] = ::plssvm::detail::move_only_any{ std::move(kernel_matrix) };
                 }
@@ -200,12 +205,18 @@ void csvm::blas_level_3(const solver_type solver, const real_type alpha, const s
                     const auto &explicit_A = ::plssvm::detail::move_only_any_cast<const std::vector<real_type> &>(A.front());
                     PLSSVM_ASSERT(!explicit_A.empty(), "The A matrix must not be empty!");
 
+                    const auto start = std::chrono::steady_clock::now();
+
                     detail::device_kernel_symm(num_rows, num_rhs, device_specific_num_rows, row_offset, alpha, explicit_A, B, beta, C);
 
                     const std::size_t num_mirror_rows = num_rows - row_offset - device_specific_num_rows;
                     if (num_mirror_rows > std::size_t{ 0 }) {
                         detail::device_kernel_symm_mirror(num_rows, num_rhs, num_mirror_rows, device_specific_num_rows, row_offset, alpha, explicit_A, B, beta, C);
                     }
+
+                    const auto end = std::chrono::steady_clock::now();
+                    [[maybe_unused]] const auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+                    PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "cg", "blas_level_3_times_kernel", duration }));
                 }
                 break;
             case solver_type::cg_implicit:
@@ -221,6 +232,7 @@ void csvm::blas_level_3(const solver_type solver, const real_type alpha, const s
                         C *= beta;
                     }
 
+                    const auto start = std::chrono::steady_clock::now();
                     switch (params.kernel_type) {
                         case kernel_function_type::linear:
                             detail::device_kernel_assembly_symm<kernel_function_type::linear>(alpha, q_red, matr_A, device_specific_num_rows, row_offset, QA_cost, cost, B, C);
@@ -241,6 +253,9 @@ void csvm::blas_level_3(const solver_type solver, const real_type alpha, const s
                             detail::device_kernel_assembly_symm<kernel_function_type::chi_squared>(alpha, q_red, matr_A, device_specific_num_rows, row_offset, QA_cost, cost, B, C, std::get<real_type>(params.gamma));
                             break;
                     }
+                    const auto end = std::chrono::steady_clock::now();
+                    [[maybe_unused]] const auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+                    PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "cg", "blas_level_3_times_kernel", duration }));
                 }
                 break;
         }
@@ -292,7 +307,13 @@ aos_matrix<real_type> csvm::predict_values(const parameter &params,
                 const std::size_t device_specific_num_sv = data_distribution_->place_specific_num_rows(0);
                 const std::size_t sv_offset = data_distribution_->place_row_offset(0);
 
+                const auto start = std::chrono::steady_clock::now();
+
                 detail::device_kernel_w_linear(w, alpha, support_vectors, device_specific_num_sv, sv_offset);
+
+                const auto end = std::chrono::steady_clock::now();
+                [[maybe_unused]] const auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+                PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "predict_values", "w_kernel", duration }));
             }
 
             // reduce w on all MPI ranks
@@ -305,6 +326,7 @@ aos_matrix<real_type> csvm::predict_values(const parameter &params,
     const std::size_t row_offset = data_distribution_->place_row_offset(0);
 
     if (data_distribution_->place_specific_num_rows(0) > std::size_t{ 0 }) {
+        const auto start = std::chrono::steady_clock::now();
         // call the predict kernels
         switch (params.kernel_type) {
             case kernel_function_type::linear:
@@ -327,6 +349,9 @@ aos_matrix<real_type> csvm::predict_values(const parameter &params,
                 detail::device_kernel_predict<kernel_function_type::chi_squared>(out, alpha, rho, support_vectors, predict_points, device_specific_num_predict_points, row_offset, std::get<real_type>(params.gamma));
                 break;
         }
+        const auto end = std::chrono::steady_clock::now();
+        [[maybe_unused]] const auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+        PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "predict_values", "predict_kernel", duration }));
     }
 
     return out;
