@@ -34,6 +34,7 @@
 #include "plssvm/detail/logging/log_untracked.hpp"                                               // plssvm::detail::log_untracked
 #include "plssvm/detail/logging/mpi_log_untracked.hpp"                                           // plssvm::detail::log_untracked
 #include "plssvm/detail/memory_size.hpp"                                                         // plssvm::detail::memory_size
+#include "plssvm/detail/string_utility.hpp"                                                      // plssvm::detail::trim
 #include "plssvm/detail/tracking/performance_tracker.hpp"                                        // plssvm::detail::tracking::tracking_entry, PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY
 #include "plssvm/exceptions/exceptions.hpp"                                                      // plssvm::exception
 #include "plssvm/gamma.hpp"                                                                      // plssvm::gamma_type
@@ -50,16 +51,17 @@
 #include "fmt/color.h"   // fmt::fg, fmt::color::orange
 #include "fmt/format.h"  // fmt::format
 
-#include <chrono>     // std::chrono::{steady_clock, duration_cast}
-#include <cstddef>    // std::size_t
-#include <cstdint>    // std::int32_t, std::uint16_t
-#include <exception>  // std::terminate
-#include <iostream>   // std::cout, std::endl
-#include <limits>     // std::numeric_limits::max
-#include <string>     // std::string
-#include <tuple>      // std::tie
-#include <variant>    // std::get
-#include <vector>     // std::vector
+#include <chrono>       // std::chrono::{steady_clock, duration_cast}
+#include <cstddef>      // std::size_t
+#include <cstdint>      // std::int32_t, std::uint16_t
+#include <exception>    // std::terminate
+#include <iostream>     // std::cout, std::endl
+#include <limits>       // std::numeric_limits::max
+#include <string>       // std::string
+#include <string_view>  // std::string_view
+#include <tuple>        // std::tie
+#include <variant>      // std::get
+#include <vector>       // std::vector
 
 namespace plssvm::dpcpp {
 
@@ -139,11 +141,12 @@ void csvm::init(const target_platform target) {
 
         for (typename std::vector<queue_type>::size_type device = 0; device < devices_.size(); ++device) {
             const std::string device_name = devices_[device].impl->sycl_queue.get_device().template get_info<::sycl::info::device::name>();
+            const std::string_view trimmed_device_name = plssvm::detail::trim(device_name);
             plssvm::detail::log_untracked(verbosity_level::full,
                                           comm_,
                                           "  [{}, {}]\n",
                                           device,
-                                          device_name);
+                                          trimmed_device_name);
             device_names.emplace_back(device_name);
         }
     }
