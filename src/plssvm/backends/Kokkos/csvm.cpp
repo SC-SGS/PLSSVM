@@ -20,7 +20,7 @@
 #include "plssvm/backends/Kokkos/kernel/cg_explicit/kernel_matrix_assembly.hpp"       // plssvm::kokkos::detail::device_kernel_assembly
 #include "plssvm/backends/Kokkos/kernel/cg_implicit/kernel_matrix_assembly_blas.hpp"  // plssvm::kokkos::detail::device_kernel_assembly_symm
 #include "plssvm/backends/Kokkos/kernel/predict_kernel.hpp"                           // plssvm::kokkos::detail::{device_kernel_w_linear, device_kernel_predict_linear, device_kernel_predict}
-#include "plssvm/constants.hpp"                                                       // plssvm::THREAD_BLOCK_SIZE, plssvm::INTERNAL_BLOCK_SIZE, plssvm::FEATURE_BLOCK_SIZE
+#include "plssvm/constants.hpp"                                                       // plssvm::THREAD_BLOCK_SIZE, plssvm::INTERNAL_BLOCK_SIZE
 #include "plssvm/detail/assert.hpp"                                                   // PLSSVM_ASSERT
 #include "plssvm/detail/data_distribution.hpp"                                        // plssvm::detail::triangular_data_distribution
 #include "plssvm/detail/logging/log_untracked.hpp"                                    // plssvm::detail::log_untracked
@@ -414,7 +414,7 @@ auto csvm::run_assemble_kernel_matrix_explicit(const std::size_t device_id, cons
 
     device_ptr_type kernel_matrix_d{ num_entries_padded, devices_[device_id] };  // only explicitly store the upper triangular matrix
     const real_type cost_factor = real_type{ 1.0 } / params.cost;
-    const std::size_t scratch_memory_size = static_cast<std::size_t>(2u * FEATURE_BLOCK_SIZE * THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE) * sizeof(real_type);
+    const std::size_t scratch_memory_size = static_cast<std::size_t>(2u * THREAD_BLOCK_SIZE * THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE) * sizeof(real_type);
 
     // save the team size
     const int team_size = detail::dim_type_to_native(exec.block);
@@ -492,7 +492,7 @@ void csvm::run_blas_level_3_kernel_explicit(const std::size_t device_id, const :
         // get the offset of the data points this device is responsible for
         const unsigned long long row_offset = data_distribution_->place_row_offset(device_id);
         // the necessary amount of scratch memory for the kernels
-        const std::size_t scratch_memory_size = static_cast<std::size_t>(2u * FEATURE_BLOCK_SIZE * THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE) * sizeof(real_type);
+        const std::size_t scratch_memory_size = static_cast<std::size_t>(2u * THREAD_BLOCK_SIZE * THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE) * sizeof(real_type);
 
         // save the team size
         const int team_size = detail::dim_type_to_native(exec.block);
@@ -592,7 +592,7 @@ void csvm::run_assemble_kernel_matrix_implicit_blas_level_3(const std::size_t de
         const unsigned long long row_offset = data_distribution_->place_row_offset(device_id);
 
         const real_type cost_factor = real_type{ 1.0 } / params.cost;
-        const std::size_t scratch_memory_size = static_cast<std::size_t>(2u * FEATURE_BLOCK_SIZE * THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE) * sizeof(real_type);
+        const std::size_t scratch_memory_size = static_cast<std::size_t>(2u * THREAD_BLOCK_SIZE * THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE) * sizeof(real_type);
 
         // save the team size
         const int team_size = detail::dim_type_to_native(exec.block);
@@ -702,7 +702,7 @@ auto csvm::run_predict_kernel(const std::size_t device_id, const ::plssvm::detai
 
     device_ptr_type out_d{ shape{ num_predict_points, num_classes }, shape{ PADDING_SIZE, PADDING_SIZE }, devices_[device_id] };
 
-    const std::size_t scratch_memory_size = static_cast<std::size_t>(2u * FEATURE_BLOCK_SIZE * THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE) * sizeof(real_type);
+    const std::size_t scratch_memory_size = static_cast<std::size_t>(2u * THREAD_BLOCK_SIZE * THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE) * sizeof(real_type);
 
     // save the team size
     const int team_size = detail::dim_type_to_native(exec.block);

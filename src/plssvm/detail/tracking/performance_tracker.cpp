@@ -8,7 +8,7 @@
 
 #include "plssvm/detail/tracking/performance_tracker.hpp"
 
-#include "plssvm/constants.hpp"                          // plssvm::real_type, plssvm::THREAD_BLOCK_SIZE, plssvm::INTERNAL_BLOCK_SIZE, plssvm::FEATURE_BLOCK_SIZE, plssvm::PADDING_SIZE
+#include "plssvm/constants.hpp"                          // plssvm::real_type, plssvm::THREAD_BLOCK_SIZE, plssvm::INTERNAL_BLOCK_SIZE, plssvm::PADDING_SIZE
 #include "plssvm/detail/arithmetic_type_name.hpp"        // plssvm::detail::arithmetic_type_name
 #include "plssvm/detail/assert.hpp"                      // PLSSVM_ASSERT, PLSSVM_ASSERT_ENABLED
 #include "plssvm/detail/cmd/parser_predict.hpp"          // plssvm::detail::cmd::parser_predict
@@ -280,7 +280,6 @@ void performance_tracker::save(std::ostream &out) {
         "  asserts:                           {}\n"
         "  enforce_max_mem_alloc_size:        {}\n"
         "  THREAD_BLOCK_SIZE:                 {}\n"
-        "  FEATURE_BLOCK_SIZE:                {}\n"
         "  INTERNAL_BLOCK_SIZE:               {}\n"
         "  PADDING_SIZE:                      {}\n",
         plssvm::detail::current_date_time(),
@@ -295,7 +294,6 @@ void performance_tracker::save(std::ostream &out) {
         assert_enabled,
         enforce_max_mem_alloc_size,
         THREAD_BLOCK_SIZE,
-        FEATURE_BLOCK_SIZE,
         INTERNAL_BLOCK_SIZE,
         PADDING_SIZE);
 

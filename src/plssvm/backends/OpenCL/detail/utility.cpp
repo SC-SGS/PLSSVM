@@ -13,7 +13,7 @@
 #include "plssvm/backends/OpenCL/detail/error_code.hpp"     // plssvm::opencl::detail::error_code
 #include "plssvm/backends/OpenCL/detail/jit_info.hpp"       // plssvm::opencl::detail::jit_info
 #include "plssvm/backends/OpenCL/detail/kernel.hpp"         // plssvm::opencl::detail::compute_kernel_name, plssvm::opencl::detail::kernel
-#include "plssvm/constants.hpp"                             // plssvm::{real_type, THREAD_BLOCK_SIZE, INTERNAL_BLOCK_SIZE, FEATURE_BLOCK_SIZE, PADDING_SIZE}
+#include "plssvm/constants.hpp"                             // plssvm::{real_type, THREAD_BLOCK_SIZE, INTERNAL_BLOCK_SIZE, PADDING_SIZE}
 #include "plssvm/detail/arithmetic_type_name.hpp"           // plssvm::detail::arithmetic_type_name
 #include "plssvm/detail/assert.hpp"                         // PLSSVM_ASSERT
 #include "plssvm/detail/logging/mpi_log_untracked.hpp"      // plssvm::detail::log_untracked
@@ -359,12 +359,10 @@ std::pair<std::vector<command_queue>, jit_info> create_command_queues(const mpi:
     // replace constants in kernel_src_string
     // replace the size_t variants -> BEFORE replacing the "normal" values
     ::plssvm::detail::replace_all(kernel_src_string, "THREAD_BLOCK_SIZE_ul", fmt::format("(ulong) {}", THREAD_BLOCK_SIZE));
-    ::plssvm::detail::replace_all(kernel_src_string, "FEATURE_BLOCK_SIZE_ul", fmt::format("(ulong) {}", FEATURE_BLOCK_SIZE));
     ::plssvm::detail::replace_all(kernel_src_string, "INTERNAL_BLOCK_SIZE_ul", fmt::format("(ulong) {}", INTERNAL_BLOCK_SIZE));
     ::plssvm::detail::replace_all(kernel_src_string, "PADDING_SIZE_ul", fmt::format("(ulong) {}", PADDING_SIZE));
     // replace the normal variants
     ::plssvm::detail::replace_all(kernel_src_string, "THREAD_BLOCK_SIZE", fmt::format("{}", THREAD_BLOCK_SIZE));
-    ::plssvm::detail::replace_all(kernel_src_string, "FEATURE_BLOCK_SIZE", fmt::format("{}", FEATURE_BLOCK_SIZE));
     ::plssvm::detail::replace_all(kernel_src_string, "INTERNAL_BLOCK_SIZE", fmt::format("{}", INTERNAL_BLOCK_SIZE));
     ::plssvm::detail::replace_all(kernel_src_string, "PADDING_SIZE", fmt::format("{}", PADDING_SIZE));
 

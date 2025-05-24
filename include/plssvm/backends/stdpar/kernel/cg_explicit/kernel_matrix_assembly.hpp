@@ -14,7 +14,7 @@
 #pragma once
 
 #include "plssvm/backends/stdpar/kernel/kernel_functions.hpp"  // plssvm::stdpar::detail::{feature_reduce, apply_kernel_function}
-#include "plssvm/constants.hpp"                                // plssvm::{real_type, INTERNAL_BLOCK_SIZE, FEATURE_BLOCK_SIZE, PADDING_SIZE}
+#include "plssvm/constants.hpp"                                // plssvm::{real_type, INTERNAL_BLOCK_SIZE, PADDING_SIZE}
 #include "plssvm/detail/assert.hpp"                            // PLSSVM_ASSERT
 #include "plssvm/kernel_function_types.hpp"                    // plssvm::kernel_function_type
 #include "plssvm/matrix.hpp"                                   // plssvm::aos_matrix
