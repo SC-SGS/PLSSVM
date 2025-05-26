@@ -15,7 +15,7 @@
 
 #include "plssvm/backends/SYCL/detail/atomics.hpp"           // plssvm::sycl::detail::atomic_op
 #include "plssvm/backends/SYCL/kernel/kernel_functions.hpp"  // plssvm::sycl::detail::{feature_reduce, apply_kernel_function}
-#include "plssvm/constants.hpp"                              // plssvm::{real_type, THREAD_BLOCK_SIZE, INTERNAL_BLOCK_SIZE, FEATURE_BLOCK_SIZE, PADDING_SIZE}
+#include "plssvm/constants.hpp"                              // plssvm::{real_type, THREAD_BLOCK_SIZE, INTERNAL_BLOCK_SIZE, PADDING_SIZE}
 #include "plssvm/kernel_function_types.hpp"                  // plssvm::kernel_function_type
 
 #include "sycl/sycl.hpp"  // sycl::group, sycl::private_memory, sycl::h_item
@@ -202,8 +202,8 @@ class device_kernel_predict_linear {
      */
     void operator()(::sycl::group<2> group) const {
         // allocate shared memory
-        real_type data_cache_pp[FEATURE_BLOCK_SIZE][INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE];
-        real_type data_cache_w[FEATURE_BLOCK_SIZE][INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE];
+        real_type data_cache_pp[THREAD_BLOCK_SIZE][INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE];
+        real_type data_cache_w[THREAD_BLOCK_SIZE][INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE];
 
         // calculate the indices used in the current work-item
         ::sycl::private_memory<std::size_t, 2> pp_idx{ group };
@@ -241,7 +241,7 @@ class device_kernel_predict_linear {
         // implicit group barrier
 
         // iterate over all support vectors using blocking to be able to cache them for faster memory accesses
-        for (std::size_t dim = 0; dim < num_features_; dim += static_cast<std::size_t>(FEATURE_BLOCK_SIZE)) {
+        for (std::size_t dim = 0; dim < num_features_; dim += static_cast<std::size_t>(THREAD_BLOCK_SIZE)) {
             group.parallel_for_work_item([&](::sycl::h_item<2> idx) {
                 const auto local_id_0 = static_cast<unsigned>(idx.get_local_id(0));
                 const auto local_id_1 = static_cast<unsigned>(idx.get_local_id(1));
@@ -256,11 +256,9 @@ class device_kernel_predict_linear {
                     const auto global_pp_idx = pp_idx_linear(idx) + static_cast<std::size_t>(internal) * THREAD_BLOCK_SIZE_uz;
                     const auto global_class_idx = class_idx_linear(idx) + static_cast<std::size_t>(internal) * THREAD_BLOCK_SIZE_uz;
 
-                    // FEATURE_BLOCK_SIZE = 2 * THREAD_BLOCK_SIZE -> store twice as many values in the local memory
+                    // store the values in the local memory
                     data_cache_pp[local_id_0][internal * THREAD_BLOCK_SIZE + local_id_1] = predict_points_d_[(dim + threadIdx_x) * (num_predict_points_ + PADDING_SIZE_uz) + global_pp_idx];
-                    data_cache_pp[local_id_0 + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + local_id_1] = predict_points_d_[(dim + threadIdx_x + THREAD_BLOCK_SIZE_uz) * (num_predict_points_ + PADDING_SIZE_uz) + global_pp_idx];
                     data_cache_w[local_id_0][internal * THREAD_BLOCK_SIZE + local_id_1] = w_d_[(dim + threadIdx_x) * (num_classes_ + PADDING_SIZE_uz) + global_class_idx];
-                    data_cache_w[local_id_0 + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + local_id_1] = w_d_[(dim + threadIdx_x + THREAD_BLOCK_SIZE_uz) * (num_classes_ + PADDING_SIZE_uz) + global_class_idx];
                 }
             });
 
@@ -271,7 +269,7 @@ class device_kernel_predict_linear {
                 const auto local_id_0 = static_cast<unsigned>(idx.get_local_id(0));
                 const auto local_id_1 = static_cast<unsigned>(idx.get_local_id(1));
 
-                for (unsigned block_dim = 0; block_dim < FEATURE_BLOCK_SIZE; ++block_dim) {
+                for (unsigned block_dim = 0; block_dim < THREAD_BLOCK_SIZE; ++block_dim) {
                     for (unsigned internal_pd = 0; internal_pd < INTERNAL_BLOCK_SIZE; ++internal_pd) {
                         for (unsigned internal_class = 0; internal_class < INTERNAL_BLOCK_SIZE; ++internal_class) {
                             temp(idx)[internal_pd][internal_class] += data_cache_w[block_dim][local_id_0 * INTERNAL_BLOCK_SIZE + internal_class] * data_cache_pp[block_dim][local_id_1 * INTERNAL_BLOCK_SIZE + internal_pd];
@@ -356,8 +354,8 @@ class device_kernel_predict {
      */
     void operator()(::sycl::group<2> group) const {
         // allocate shared memory
-        real_type data_cache_pp[FEATURE_BLOCK_SIZE][INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE];
-        real_type data_cache_sv[FEATURE_BLOCK_SIZE][INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE];
+        real_type data_cache_pp[THREAD_BLOCK_SIZE][INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE];
+        real_type data_cache_sv[THREAD_BLOCK_SIZE][INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE];
 
         // calculate the indices used in the current work-item
         ::sycl::private_memory<std::size_t, 2> pp_idx{ group };
@@ -393,7 +391,7 @@ class device_kernel_predict {
 
         {
             // iterate over all features using blocking to be able to cache them for faster memory accesses
-            for (std::size_t dim = 0; dim < num_features_; dim += static_cast<std::size_t>(FEATURE_BLOCK_SIZE)) {
+            for (std::size_t dim = 0; dim < num_features_; dim += static_cast<std::size_t>(THREAD_BLOCK_SIZE)) {
                 group.parallel_for_work_item([&](::sycl::h_item<2> idx) {
                     const auto local_id_0 = static_cast<unsigned>(idx.get_local_id(0));
                     const auto local_id_1 = static_cast<unsigned>(idx.get_local_id(1));
@@ -408,11 +406,9 @@ class device_kernel_predict {
                         const auto global_pp_idx = pp_idx_linear(idx) + static_cast<std::size_t>(internal) * THREAD_BLOCK_SIZE_uz;
                         const auto global_sv_idx = sv_idx_linear(idx) + static_cast<std::size_t>(internal) * THREAD_BLOCK_SIZE_uz;
 
-                        // FEATURE_BLOCK_SIZE = 2 * THREAD_BLOCK_SIZE -> store twice as many values in the shared memory
+                        // store the values in the shared memory
                         data_cache_pp[local_id_0][internal * THREAD_BLOCK_SIZE + local_id_1] = predict_points_d_[(dim + threadIdx_x) * (num_predict_points_ + PADDING_SIZE_uz) + global_pp_idx];
-                        data_cache_pp[local_id_0 + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + local_id_1] = predict_points_d_[(dim + threadIdx_x + THREAD_BLOCK_SIZE) * (num_predict_points_ + PADDING_SIZE_uz) + global_pp_idx];
                         data_cache_sv[local_id_0][internal * THREAD_BLOCK_SIZE + local_id_1] = sv_d_[(dim + threadIdx_x) * (num_sv_ + PADDING_SIZE_uz) + global_sv_idx];
-                        data_cache_sv[local_id_0 + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + local_id_1] = sv_d_[(dim + threadIdx_x + THREAD_BLOCK_SIZE_uz) * (num_sv_ + PADDING_SIZE_uz) + global_sv_idx];
                     }
                 });
 
@@ -423,7 +419,7 @@ class device_kernel_predict {
                     const auto local_id_0 = static_cast<unsigned>(idx.get_local_id(0));
                     const auto local_id_1 = static_cast<unsigned>(idx.get_local_id(1));
 
-                    for (unsigned block_dim = 0; block_dim < FEATURE_BLOCK_SIZE; ++block_dim) {
+                    for (unsigned block_dim = 0; block_dim < THREAD_BLOCK_SIZE; ++block_dim) {
                         for (unsigned internal_pd = 0; internal_pd < INTERNAL_BLOCK_SIZE; ++internal_pd) {
                             for (unsigned internal_sv = 0; internal_sv < INTERNAL_BLOCK_SIZE; ++internal_sv) {
                                 temp(idx)[internal_pd][internal_sv] += detail::feature_reduce<kernel_function>(data_cache_sv[block_dim][local_id_0 * INTERNAL_BLOCK_SIZE + internal_sv],
@@ -454,7 +450,7 @@ class device_kernel_predict {
             // auto &out_cache = data_cache_sv;
 
             // iterate over all features using blocking to be able to cache them for faster memory accesses
-            for (std::size_t dim = 0; dim < num_classes_; dim += static_cast<std::size_t>(FEATURE_BLOCK_SIZE)) {
+            for (std::size_t dim = 0; dim < num_classes_; dim += static_cast<std::size_t>(THREAD_BLOCK_SIZE)) {
                 // load data into local memory
                 group.parallel_for_work_item([&](::sycl::h_item<2> idx) {
                     const auto local_id_0 = static_cast<unsigned>(idx.get_local_id(0));
@@ -470,15 +466,12 @@ class device_kernel_predict {
                         const std::size_t global_sv_idx = sv_idx_linear(idx) + static_cast<std::size_t>(internal) * THREAD_BLOCK_SIZE_uz;
 
                         data_cache_pp[local_id_0][internal * THREAD_BLOCK_SIZE + local_id_1] = alpha_d_[(dim + threadIdx_x) * (num_sv_ + PADDING_SIZE_uz) + global_sv_idx];
-                        data_cache_pp[local_id_0 + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + local_id_1] = alpha_d_[(dim + threadIdx_x + THREAD_BLOCK_SIZE_uz) * (num_sv_ + PADDING_SIZE_uz) + global_sv_idx];
 
                         // the bias (rho) must only be applied once for all support vectors
                         if (blockIdx_x == std::size_t{ 0 }) {
                             data_cache_sv[local_id_0][internal * THREAD_BLOCK_SIZE + local_id_1] = -rho_d_[dim + threadIdx_x];
-                            data_cache_sv[local_id_0 + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + local_id_1] = -rho_d_[dim + threadIdx_x + THREAD_BLOCK_SIZE_uz];
                         } else {
                             data_cache_sv[local_id_0][internal * THREAD_BLOCK_SIZE + local_id_1] = real_type{ 0.0 };
-                            data_cache_sv[local_id_0 + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + local_id_1] = real_type{ 0.0 };
                         }
                     }
                 });
@@ -486,15 +479,15 @@ class device_kernel_predict {
                 // implicit group barrier
 
                 // calculate intermediate results and store them in local memory
-                for (unsigned class_idx = 0; class_idx < FEATURE_BLOCK_SIZE; ++class_idx) {
+                for (unsigned class_idx = 0; class_idx < THREAD_BLOCK_SIZE; ++class_idx) {
                     group.parallel_for_work_item([&](::sycl::h_item<2> idx) {
                         const auto local_id_0 = static_cast<unsigned>(idx.get_local_id(0));
                         const auto local_id_1 = static_cast<unsigned>(idx.get_local_id(1));
 
                         for (unsigned internal_pd = 0; internal_pd < INTERNAL_BLOCK_SIZE; ++internal_pd) {
                             for (unsigned internal_sv = 0; internal_sv < INTERNAL_BLOCK_SIZE; ++internal_sv) {
-                                data_cache_sv[(class_idx + local_id_0) % FEATURE_BLOCK_SIZE][internal_pd * THREAD_BLOCK_SIZE + local_id_1] +=
-                                    temp(idx)[internal_pd][internal_sv] * data_cache_pp[(class_idx + local_id_0) % FEATURE_BLOCK_SIZE][local_id_0 * INTERNAL_BLOCK_SIZE + internal_sv];
+                                data_cache_sv[(class_idx + local_id_0) % THREAD_BLOCK_SIZE][internal_pd * THREAD_BLOCK_SIZE + local_id_1] +=
+                                    temp(idx)[internal_pd][internal_sv] * data_cache_pp[(class_idx + local_id_0) % THREAD_BLOCK_SIZE][local_id_0 * INTERNAL_BLOCK_SIZE + internal_sv];
                             }
                         }
                     });
@@ -509,14 +502,12 @@ class device_kernel_predict {
 
                     const std::size_t threadIdx_x = idx.get_local_id(0);
 
-                    const auto THREAD_BLOCK_SIZE_uz = static_cast<std::size_t>(THREAD_BLOCK_SIZE);
                     const auto PADDING_SIZE_uz = static_cast<std::size_t>(PADDING_SIZE);
 
                     for (unsigned internal = 0; internal < INTERNAL_BLOCK_SIZE; ++internal) {
                         const auto global_pp_idx = pp_idx(idx) + static_cast<std::size_t>(internal);
 
                         detail::atomic_op<real_type>{ prediction_d_[global_pp_idx * (num_classes_ + PADDING_SIZE_uz) + dim + threadIdx_x] } += data_cache_sv[local_id_0][internal * THREAD_BLOCK_SIZE + local_id_1];
-                        detail::atomic_op<real_type>{ prediction_d_[global_pp_idx * (num_classes_ + PADDING_SIZE_uz) + dim + threadIdx_x + THREAD_BLOCK_SIZE_uz] } += data_cache_sv[local_id_0 + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + local_id_1];
                     }
                 });
 

@@ -13,7 +13,7 @@
 #define PLSSVM_BACKENDS_SYCL_CG_EXPLICIT_BASIC_BLAS_HPP_
 #pragma once
 
-#include "plssvm/constants.hpp"  // plssvm::{real_type, THREAD_BLOCK_SIZE, INTERNAL_BLOCK_SIZE, FEATURE_BLOCK_SIZE, PADDING_SIZE}
+#include "plssvm/constants.hpp"  // plssvm::{real_type, THREAD_BLOCK_SIZE, INTERNAL_BLOCK_SIZE, PADDING_SIZE}
 
 #include "sycl/sycl.hpp"  // sycl::item
 
