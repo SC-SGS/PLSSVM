@@ -223,10 +223,12 @@ std::size_t csvm::get_max_work_group_size(const std::size_t device_id) const {
 //                        fit                        //
 //***************************************************//
 
-auto csvm::run_assemble_kernel_matrix_explicit(const std::size_t device_id, const ::plssvm::detail::execution_range &exec, const parameter &params, const device_ptr_type &data_d, const device_ptr_type &q_red_d, real_type QA_cost) const -> device_ptr_type {
+// TODO: better!
+template <target_platform target, typename device_ptr_type, typename Device, typename Distribution>
+auto dispatch_assemble_kernel_matrix_explicit(const std::size_t device_id, const ::plssvm::detail::execution_range &exec, const parameter &params, const device_ptr_type &data_d, const device_ptr_type &q_red_d, real_type QA_cost, sycl::kernel_invocation_type invocation_type_, Device& devices_, Distribution& data_distribution_) {
     const std::size_t num_rows_reduced = data_d.shape().x - 1;
     const std::size_t num_features = data_d.shape().y;
-    const queue_type &device = devices_[device_id];
+    const auto &device = devices_[device_id];
 
     // calculate the number of data points this device is responsible for
     const std::size_t device_specific_num_rows = data_distribution_->place_specific_num_rows(device_id);
@@ -260,7 +262,7 @@ auto csvm::run_assemble_kernel_matrix_explicit(const std::size_t device_id, cons
                     case sycl::kernel_invocation_type::work_group:
                         device.impl->sycl_queue.submit([&, &partial_grid_ref = partial_grid, &offsets_ref = offsets](::sycl::handler &cgh) {
                             cgh.parallel_for(detail::get_execution_range<sycl::kernel_invocation_type::work_group>(partial_grid_ref, exec.block),
-                                             sycl::detail::work_group::device_kernel_assembly<kernel_function_type::linear>{ cgh, kernel_matrix_d.get(), data_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, q_red_d.get(), QA_cost, cost_factor, offsets_ref.y, offsets_ref.x });
+                                             sycl::detail::work_group::device_kernel_assembly<target, kernel_function_type::linear>{ cgh, kernel_matrix_d.get(), data_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, q_red_d.get(), QA_cost, cost_factor, offsets_ref.y, offsets_ref.x });
                         });
                         break;
                     case sycl::kernel_invocation_type::hierarchical:
@@ -293,7 +295,7 @@ auto csvm::run_assemble_kernel_matrix_explicit(const std::size_t device_id, cons
                         break;
                     case sycl::kernel_invocation_type::work_group:
                         device.impl->sycl_queue.submit([&, &partial_grid_ref = partial_grid, &offsets_ref = offsets](::sycl::handler &cgh) {
-                            using functor_type = sycl::detail::work_group::device_kernel_assembly<kernel_function_type::polynomial, decltype(params.degree), real_type, decltype(params.coef0)>;
+                            using functor_type = sycl::detail::work_group::device_kernel_assembly<target, kernel_function_type::polynomial, decltype(params.degree), real_type, decltype(params.coef0)>;
                             cgh.parallel_for(detail::get_execution_range<sycl::kernel_invocation_type::work_group>(partial_grid_ref, exec.block),
                                              functor_type{ cgh, kernel_matrix_d.get(), data_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, q_red_d.get(), QA_cost, cost_factor, offsets_ref.y, offsets_ref.x, params.degree, std::get<real_type>(params.gamma), params.coef0 });
                         });
@@ -329,7 +331,7 @@ auto csvm::run_assemble_kernel_matrix_explicit(const std::size_t device_id, cons
                         break;
                     case sycl::kernel_invocation_type::work_group:
                         device.impl->sycl_queue.submit([&, &partial_grid_ref = partial_grid, &offsets_ref = offsets](::sycl::handler &cgh) {
-                            using functor_type = sycl::detail::work_group::device_kernel_assembly<kernel_function_type::rbf, real_type>;
+                            using functor_type = sycl::detail::work_group::device_kernel_assembly<target, kernel_function_type::rbf, real_type>;
                             cgh.parallel_for(detail::get_execution_range<sycl::kernel_invocation_type::work_group>(partial_grid_ref, exec.block),
                                              functor_type{ cgh, kernel_matrix_d.get(), data_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, q_red_d.get(), QA_cost, cost_factor, offsets_ref.y, offsets_ref.x, std::get<real_type>(params.gamma) });
                         });
@@ -365,7 +367,7 @@ auto csvm::run_assemble_kernel_matrix_explicit(const std::size_t device_id, cons
                         break;
                     case sycl::kernel_invocation_type::work_group:
                         device.impl->sycl_queue.submit([&, &partial_grid_ref = partial_grid, &offsets_ref = offsets](::sycl::handler &cgh) {
-                            using functor_type = sycl::detail::work_group::device_kernel_assembly<kernel_function_type::sigmoid, real_type, decltype(params.coef0)>;
+                            using functor_type = sycl::detail::work_group::device_kernel_assembly<target, kernel_function_type::sigmoid, real_type, decltype(params.coef0)>;
                             cgh.parallel_for(detail::get_execution_range<sycl::kernel_invocation_type::work_group>(partial_grid_ref, exec.block),
                                              functor_type{ cgh, kernel_matrix_d.get(), data_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, q_red_d.get(), QA_cost, cost_factor, offsets_ref.y, offsets_ref.x, std::get<real_type>(params.gamma), params.coef0 });
                         });
@@ -401,7 +403,7 @@ auto csvm::run_assemble_kernel_matrix_explicit(const std::size_t device_id, cons
                         break;
                     case sycl::kernel_invocation_type::work_group:
                         device.impl->sycl_queue.submit([&, &partial_grid_ref = partial_grid, &offsets_ref = offsets](::sycl::handler &cgh) {
-                            using functor_type = sycl::detail::work_group::device_kernel_assembly<kernel_function_type::laplacian, real_type>;
+                            using functor_type = sycl::detail::work_group::device_kernel_assembly<target, kernel_function_type::laplacian, real_type>;
                             cgh.parallel_for(detail::get_execution_range<sycl::kernel_invocation_type::work_group>(partial_grid_ref, exec.block),
                                              functor_type{ cgh, kernel_matrix_d.get(), data_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, q_red_d.get(), QA_cost, cost_factor, offsets_ref.y, offsets_ref.x, std::get<real_type>(params.gamma) });
                         });
@@ -437,7 +439,7 @@ auto csvm::run_assemble_kernel_matrix_explicit(const std::size_t device_id, cons
                         break;
                     case sycl::kernel_invocation_type::work_group:
                         device.impl->sycl_queue.submit([&, &partial_grid_ref = partial_grid, &offsets_ref = offsets](::sycl::handler &cgh) {
-                            using functor_type = sycl::detail::work_group::device_kernel_assembly<kernel_function_type::chi_squared, real_type>;
+                            using functor_type = sycl::detail::work_group::device_kernel_assembly<target, kernel_function_type::chi_squared, real_type>;
                             cgh.parallel_for(detail::get_execution_range<sycl::kernel_invocation_type::work_group>(partial_grid_ref, exec.block),
                                              functor_type{ cgh, kernel_matrix_d.get(), data_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, q_red_d.get(), QA_cost, cost_factor, offsets_ref.y, offsets_ref.x, std::get<real_type>(params.gamma) });
                         });
@@ -465,6 +467,22 @@ auto csvm::run_assemble_kernel_matrix_explicit(const std::size_t device_id, cons
     PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "kernel_matrix", "kernel_matrix_assembly_kernel", duration }));
 
     return kernel_matrix_d;
+}
+
+auto csvm::run_assemble_kernel_matrix_explicit(const std::size_t device_id, const ::plssvm::detail::execution_range &exec, const parameter &params, const device_ptr_type &data_d, const device_ptr_type &q_red_d, real_type QA_cost) const -> device_ptr_type {
+    switch (target_) {
+        case target_platform::automatic:
+            // error
+            throw backend_exception{ "Can't determine the target platform!" };
+        case target_platform::gpu_nvidia:
+            return dispatch_assemble_kernel_matrix_explicit<target_platform::gpu_nvidia>(device_id, exec, params, data_d, q_red_d, QA_cost, invocation_type_, devices_, data_distribution_);
+        case target_platform::gpu_amd:
+            return dispatch_assemble_kernel_matrix_explicit<target_platform::gpu_amd>(device_id, exec, params, data_d, q_red_d, QA_cost, invocation_type_, devices_, data_distribution_);
+        case target_platform::gpu_intel:
+            return dispatch_assemble_kernel_matrix_explicit<target_platform::gpu_intel>(device_id, exec, params, data_d, q_red_d, QA_cost, invocation_type_, devices_, data_distribution_);
+        case target_platform::cpu:
+            return dispatch_assemble_kernel_matrix_explicit<target_platform::cpu>(device_id, exec, params, data_d, q_red_d, QA_cost, invocation_type_, devices_, data_distribution_);
+    }
 }
 
 void csvm::run_blas_level_3_kernel_explicit(const std::size_t device_id, const ::plssvm::detail::execution_range &exec, const ::plssvm::detail::execution_range &mirror_exec, const real_type alpha, const device_ptr_type &A_d, const device_ptr_type &B_d, const real_type beta, device_ptr_type &C_d) const {

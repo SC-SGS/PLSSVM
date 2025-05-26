@@ -16,6 +16,7 @@
 #include "plssvm/backends/SYCL/kernel/kernel_functions.hpp"  // plssvm::sycl::detail::{feature_reduce, apply_kernel_function}
 #include "plssvm/constants.hpp"                              // plssvm::{real_type, THREAD_BLOCK_SIZE, INTERNAL_BLOCK_SIZE, PADDING_SIZE}
 #include "plssvm/kernel_function_types.hpp"                  // plssvm::kernel_function_type
+#include "plssvm/target_platforms.hpp"                       // plssvm::target_platform
 
 #include "sycl/sycl.hpp"  // sycl::handler, sycl::range, sycl::nd_item, sycl::local_accessor
 
@@ -27,10 +28,11 @@ namespace plssvm::sycl::detail::work_group {
 /**
  * @brief Create the explicit kernel matrix using the @p kernel_function.
  * @details Uses SYCL's work-group data parallel kernels.
+ * @details target the target platform
  * @tparam kernel_function the type of the used kernel function
  * @tparam Args the types of the parameters necessary for the specific kernel function; stored in a `std::tuple`
  */
-template <kernel_function_type kernel_function, typename... Args>
+template <target_platform target, kernel_function_type kernel_function, typename... Args>
 class device_kernel_assembly {
   public:
     /**
@@ -111,12 +113,26 @@ class device_kernel_assembly {
                     }
                     nd_idx.barrier();  // wait until all work-items loaded their part of the data
 
-                    // perform the feature reduction calculation
-                    for (unsigned block_dim = 0; block_dim < THREAD_BLOCK_SIZE; ++block_dim) {
+                    if constexpr (target == target_platform::gpu_amd) {
+                        // perform the feature reduction calculation, the block_dim is the slowest moving index
+                        for (unsigned block_dim = 0; block_dim < THREAD_BLOCK_SIZE; ++block_dim) {
+                            for (unsigned internal_i = 0; internal_i < INTERNAL_BLOCK_SIZE; ++internal_i) {
+                                for (unsigned internal_j = 0; internal_j < INTERNAL_BLOCK_SIZE; ++internal_j) {
+                                    temp[internal_i][internal_j] += detail::feature_reduce<kernel_function>(data_i_cache_[block_dim][local_id_1 * INTERNAL_BLOCK_SIZE + internal_i],
+                                                                                                            data_j_cache_[block_dim][local_id_0 * INTERNAL_BLOCK_SIZE + internal_j]);
+                                }
+                            }
+                        }
+                    } else {
+                        // perform the feature reduction calculation, the block_dim is the fastest moving index
                         for (unsigned internal_i = 0; internal_i < INTERNAL_BLOCK_SIZE; ++internal_i) {
                             for (unsigned internal_j = 0; internal_j < INTERNAL_BLOCK_SIZE; ++internal_j) {
-                                temp[internal_i][internal_j] += detail::feature_reduce<kernel_function>(data_i_cache_[block_dim][local_id_1 * INTERNAL_BLOCK_SIZE + internal_i],
-                                                                                                        data_j_cache_[block_dim][local_id_0 * INTERNAL_BLOCK_SIZE + internal_j]);
+                                real_type sum{ 0.0 };
+                                for (unsigned block_dim = 0; block_dim < THREAD_BLOCK_SIZE; ++block_dim) {
+                                    sum += detail::feature_reduce<kernel_function>(data_i_cache_[block_dim][local_id_1 * INTERNAL_BLOCK_SIZE + internal_i],
+                                                                                   data_j_cache_[block_dim][local_id_0 * INTERNAL_BLOCK_SIZE + internal_j]);
+                                }
+                                temp[internal_i][internal_j] += sum;
                             }
                         }
                     }
