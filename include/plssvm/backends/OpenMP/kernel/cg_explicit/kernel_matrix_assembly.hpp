@@ -40,9 +40,8 @@ namespace plssvm::openmp::detail {
  * @param[in] kernel_function_parameter the potential additional arguments for the @p kernel function
  */
 template <kernel_function_type kernel, typename... Args>
-void device_kernel_assembly(std::vector<real_type> &kernel_matrix, const soa_matrix<real_type> &data, const std::size_t device_specific_num_rows, const std::size_t row_offset, const std::vector<real_type> &q, const real_type QA_cost, const real_type cost, Args... kernel_function_parameter) {
+void device_kernel_assembly(real_type*kernel_matrix, const soa_matrix<real_type> &data, const std::size_t device_specific_num_rows, const std::size_t row_offset, const std::vector<real_type> &q, const real_type QA_cost, const real_type cost, Args... kernel_function_parameter) {
     PLSSVM_ASSERT(q.size() == data.num_rows() - 1, "Sizes mismatch!: {} != {}", q.size(), data.num_rows() - 1);
-    PLSSVM_ASSERT(!kernel_matrix.empty(), "A matrix may not be empty!");
     PLSSVM_ASSERT(q.size() >= device_specific_num_rows, "The number of place specific rows ({}) cannot be greater the the total number of rows ({})!", device_specific_num_rows, q.size());
     PLSSVM_ASSERT(q.size() >= row_offset, "The row offset ({}) cannot be greater the the total number of rows ({})!", row_offset, q.size());
     PLSSVM_ASSERT(cost != real_type{ 0.0 }, "cost must not be 0.0 since it is 1 / plssvm::cost!");
