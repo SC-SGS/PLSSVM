@@ -57,36 +57,12 @@ template <>
  * @return base^exponent (`[[nodiscard]]`)
  */
 [[nodiscard]] __device__ __forceinline__ real_type powi(const real_type base, const int exponent) {
-    switch (exponent) {
-        case 0: return real_type{ 1.0 };
-        case 1: return base;
-        case 2: return base * base;
-        case 3: return base * base * base;
-        case 4:
-            {
-                const real_type temp = base * base;
-                return temp * temp;
-            }
-        case 5:
-            {
-                const real_type temp = base * base;
-                return temp * temp * base;
-            }
-        case 6:
-            {
-                const real_type temp = base * base * base;
-                return temp * temp;
-            }
-        default:
-            {
-                // generic integer power function
-                real_type result{ 1.0 };
-                for (int i = 0; i < exponent; ++i) {
-                    result *= base;
-                }
-                return result;
-            }
+    // generic integer power function
+    real_type result{ 1.0 };
+    for (int i = 0; i < exponent; ++i) {
+        result *= base;
     }
+    return result;
 }
 
 //***************************************************//
