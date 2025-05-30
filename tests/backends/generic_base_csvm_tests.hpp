@@ -41,6 +41,7 @@
 
 #include <cmath>    // std::sqrt, std::abs
 #include <cstddef>  // std::size_t
+#include <cstring>  // std::memcpy
 #include <limits>   // std::numeric_limits::epsilon
 #include <memory>   // std::unique_ptr, std::make_unique
 #include <tuple>    // std::ignore, std::tuple, std::make_tuple
@@ -86,7 +87,10 @@ template <typename csvm_type, typename device_ptr_type, typename matrix_type, ty
 
     if constexpr (plssvm::csvm_to_backend_type_v<csvm_type> == plssvm::backend_type::openmp || plssvm::csvm_to_backend_type_v<csvm_type> == plssvm::backend_type::stdpar || plssvm::csvm_to_backend_type_v<csvm_type> == plssvm::backend_type::hpx) {
         // only a single device for OpenMP, stdpar, and HPX on the CPU
-        result[0] = plssvm::detail::move_only_any{ calculate_partial_kernel_matrix(0, matr.num_rows()) };
+        const std::vector<real_type> partial_kernel_matrix = calculate_partial_kernel_matrix(0, matr.num_rows());
+        auto ptr = std::make_unique<real_type[]>(partial_kernel_matrix.size());
+        std::memcpy(ptr.get(), partial_kernel_matrix.data(), partial_kernel_matrix.size() * sizeof(real_type));
+        result[0] = plssvm::detail::move_only_any{ std::move(ptr) };
     } else {
         for (std::size_t device_id = 0; device_id < csvm.num_available_devices(); ++device_id) {
             auto &device = csvm.devices_[device_id];
@@ -850,7 +854,8 @@ TYPED_TEST_P(GenericCSVMSolverKernelFunction, assemble_kernel_matrix_minimal) {
     const mock_csvm_type svm = util::construct_from_tuple<mock_csvm_type>(params, csvm_test_type::additional_arguments);
     const std::size_t num_devices = svm.num_available_devices();
     // be sure to use the correct data distribution
-    svm.data_distribution_ = std::make_unique<plssvm::detail::triangular_data_distribution>(plssvm::mpi::communicator{}, data.num_rows() - 1, num_devices);
+    const plssvm::detail::triangular_data_distribution dist{ plssvm::mpi::communicator{}, data.num_rows() - 1, num_devices };
+    svm.data_distribution_ = std::make_unique<plssvm::detail::triangular_data_distribution>(dist);
 
     // automatic solver type not permitted
     if constexpr (solver == plssvm::solver_type::automatic) {
@@ -880,7 +885,9 @@ TYPED_TEST_P(GenericCSVMSolverKernelFunction, assemble_kernel_matrix_minimal) {
                 // get result based on used backend
                 std::vector<plssvm::real_type> kernel_matrix{};
                 if constexpr (plssvm::csvm_to_backend_type_v<csvm_type> == plssvm::backend_type::openmp || plssvm::csvm_to_backend_type_v<csvm_type> == plssvm::backend_type::stdpar || plssvm::csvm_to_backend_type_v<csvm_type> == plssvm::backend_type::hpx) {
-                    kernel_matrix = plssvm::detail::move_only_any_cast<std::vector<plssvm::real_type>>(kernel_matrix_d[device_id]);  // std::vector
+                    const auto &kernel_matrix_d_ptr = plssvm::detail::move_only_any_cast<const std::unique_ptr<plssvm::real_type[]> &>(kernel_matrix_d[device_id]);  // std::unique_ptr<plssvm::real_type[]>
+                    kernel_matrix.resize(dist.calculate_explicit_kernel_matrix_num_entries_padded(0));
+                    std::memcpy(kernel_matrix.data(), kernel_matrix_d_ptr.get(), kernel_matrix.size() * sizeof(plssvm::real_type));
                 } else {
                     const auto &kernel_matrix_d_ptr = plssvm::detail::move_only_any_cast<const device_ptr_type &>(kernel_matrix_d[device_id]);  // device_ptr -> convert it to a std::vector
                     kernel_matrix.resize(kernel_matrix_d_ptr.size_padded());
@@ -960,7 +967,8 @@ TYPED_TEST_P(GenericCSVMSolverKernelFunction, assemble_kernel_matrix) {
     const mock_csvm_type svm = util::construct_from_tuple<mock_csvm_type>(params, csvm_test_type::additional_arguments);
     const std::size_t num_devices = svm.num_available_devices();
     // be sure to use the correct data distribution
-    svm.data_distribution_ = std::make_unique<plssvm::detail::triangular_data_distribution>(plssvm::mpi::communicator{}, data.num_rows() - 1, num_devices);
+    const plssvm::detail::triangular_data_distribution dist{ plssvm::mpi::communicator{}, data.num_rows() - 1, num_devices };
+    svm.data_distribution_ = std::make_unique<plssvm::detail::triangular_data_distribution>(dist);
 
     // automatic solver type not permitted
     if constexpr (solver == plssvm::solver_type::automatic) {
@@ -990,7 +998,9 @@ TYPED_TEST_P(GenericCSVMSolverKernelFunction, assemble_kernel_matrix) {
                 // get result based on used backend
                 std::vector<plssvm::real_type> kernel_matrix{};
                 if constexpr (plssvm::csvm_to_backend_type_v<csvm_type> == plssvm::backend_type::openmp || plssvm::csvm_to_backend_type_v<csvm_type> == plssvm::backend_type::stdpar || plssvm::csvm_to_backend_type_v<csvm_type> == plssvm::backend_type::hpx) {
-                    kernel_matrix = plssvm::detail::move_only_any_cast<std::vector<plssvm::real_type>>(kernel_matrix_d[device_id]);  // std::vector
+                    const auto &kernel_matrix_d_ptr = plssvm::detail::move_only_any_cast<const std::unique_ptr<plssvm::real_type[]> &>(kernel_matrix_d[device_id]);  // std::unique_ptr<plssvm::real_type[]>
+                    kernel_matrix.resize(dist.calculate_explicit_kernel_matrix_num_entries_padded(0));
+                    std::memcpy(kernel_matrix.data(), kernel_matrix_d_ptr.get(), kernel_matrix.size() * sizeof(plssvm::real_type));
                 } else {
                     const auto &kernel_matrix_d_ptr = plssvm::detail::move_only_any_cast<const device_ptr_type &>(kernel_matrix_d[device_id]);  // device_ptr -> convert it to a std::vector
                     kernel_matrix.resize(kernel_matrix_d_ptr.size_padded());
