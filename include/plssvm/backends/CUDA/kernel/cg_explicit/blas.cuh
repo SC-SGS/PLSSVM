@@ -58,7 +58,7 @@ __global__ void device_kernel_symm(const std::size_t num_rows, const std::size_t
         const auto j_idx_linear = blockIdx_y * blockDim_y * INTERNAL_BLOCK_SIZE_uz + threadIdx_x;  // device_num_rows
 
         // iterate over all values using blocking to be able to cache them for faster memory accesses
-        for (std::size_t dim = 0; dim < (num_rows - device_row_offset); dim += THREAD_BLOCK_SIZE_uz) {
+        for (std::size_t dim_block = 0; dim_block < (num_rows - device_row_offset); dim_block += THREAD_BLOCK_SIZE_uz) {
             // load data into shared memory
             for (unsigned internal = 0; internal < INTERNAL_BLOCK_SIZE; ++internal) {
                 // calculate the indices to access the global data, pays attention to coalesced memory accesses
@@ -67,20 +67,20 @@ __global__ void device_kernel_symm(const std::size_t num_rows, const std::size_t
 
                 // store the values in the shared memory
                 // determine on which side of the diagonal we are located
-                if (dim + threadIdx_y < global_j_idx_linear) {
-                    A_cache[threadIdx.y][internal * THREAD_BLOCK_SIZE + threadIdx.x] = A[(dim + threadIdx_y) * (num_rows - device_row_offset + PADDING_SIZE_uz) + global_j_idx_linear - (dim + threadIdx_y) * (dim + threadIdx_y + std::size_t{ 1 }) / std::size_t{ 2 }];  // SoA, upper triangular matrix only
+                if (dim_block + threadIdx_y < global_j_idx_linear) {
+                    A_cache[threadIdx.y][internal * THREAD_BLOCK_SIZE + threadIdx.x] = A[(dim_block + threadIdx_y) * (num_rows - device_row_offset + PADDING_SIZE_uz) + global_j_idx_linear - (dim_block + threadIdx_y) * (dim_block + threadIdx_y + std::size_t{ 1 }) / std::size_t{ 2 }];  // SoA, upper triangular matrix only
                 } else {
-                    A_cache[threadIdx.y][internal * THREAD_BLOCK_SIZE + threadIdx.x] = A[global_j_idx_linear * (num_rows - device_row_offset + PADDING_SIZE_uz) + dim + threadIdx_y - global_j_idx_linear * (global_j_idx_linear + std::size_t{ 1 }) / std::size_t{ 2 }];  // SoA, upper triangular matrix only
+                    A_cache[threadIdx.y][internal * THREAD_BLOCK_SIZE + threadIdx.x] = A[global_j_idx_linear * (num_rows - device_row_offset + PADDING_SIZE_uz) + dim_block + threadIdx_y - global_j_idx_linear * (global_j_idx_linear + std::size_t{ 1 }) / std::size_t{ 2 }];  // SoA, upper triangular matrix only
                 }
-                B_cache[threadIdx.y][internal * THREAD_BLOCK_SIZE + threadIdx.x] = B[(dim + device_row_offset + threadIdx_y) * (num_rhs + PADDING_SIZE_uz) + global_i_idx_linear];  // SoA
+                B_cache[threadIdx.y][internal * THREAD_BLOCK_SIZE + threadIdx.x] = B[(dim_block + device_row_offset + threadIdx_y) * (num_rhs + PADDING_SIZE_uz) + global_i_idx_linear];  // SoA
             }
             __syncthreads();  // wait until all threads loaded their part of the data
 
             // perform the dot product calculation
-            for (unsigned block_dim = 0; block_dim < THREAD_BLOCK_SIZE; ++block_dim) {
+            for (unsigned dim = 0; dim < THREAD_BLOCK_SIZE; ++dim) {
                 for (unsigned internal_i = 0; internal_i < INTERNAL_BLOCK_SIZE; ++internal_i) {
                     for (unsigned internal_j = 0; internal_j < INTERNAL_BLOCK_SIZE; ++internal_j) {
-                        temp[internal_i][internal_j] += A_cache[block_dim][threadIdx.y * INTERNAL_BLOCK_SIZE + internal_j] * B_cache[block_dim][threadIdx.x * INTERNAL_BLOCK_SIZE + internal_i];
+                        temp[internal_i][internal_j] += A_cache[dim][threadIdx.y * INTERNAL_BLOCK_SIZE + internal_j] * B_cache[dim][threadIdx.x * INTERNAL_BLOCK_SIZE + internal_i];
                     }
                 }
             }
@@ -150,7 +150,7 @@ __global__ void device_kernel_symm_mirror(const std::size_t num_rows, const std:
         const auto j_idx_linear = blockIdx_y * blockDim_y * INTERNAL_BLOCK_SIZE_uz + threadIdx_x;  // num_mirror_rows
 
         // iterate over the remaining values using blocking to be able to cache them for faster memory accesses
-        for (std::size_t dim = 0; dim < device_num_rows; dim += THREAD_BLOCK_SIZE_uz) {
+        for (std::size_t dim_block = 0; dim_block < device_num_rows; dim_block += THREAD_BLOCK_SIZE_uz) {
             // load data into shared memory
             for (unsigned internal = 0; internal < INTERNAL_BLOCK_SIZE; ++internal) {
                 // calculate the indices to access the global data, pays attention to coalesced memory accesses
@@ -158,16 +158,16 @@ __global__ void device_kernel_symm_mirror(const std::size_t num_rows, const std:
                 const auto global_j_idx_linear = j_idx_linear + static_cast<std::size_t>(internal) * THREAD_BLOCK_SIZE_uz;
 
                 // store the values in the shared memory
-                A_cache[threadIdx.y][internal * THREAD_BLOCK_SIZE + threadIdx.x] = A[(dim + threadIdx_y) * (num_rows - device_row_offset + PADDING_SIZE_uz) - (dim + threadIdx_y - std::size_t{ 1 }) * (dim + threadIdx_y) / std::size_t{ 2 } + device_num_rows - (dim + threadIdx_y) + global_j_idx_linear];  // SoA, upper triangular matrix only
-                B_cache[threadIdx.y][internal * THREAD_BLOCK_SIZE + threadIdx.x] = B[(device_row_offset + dim + threadIdx_y) * (num_rhs + PADDING_SIZE_uz) + global_i_idx_linear];                                                                                                                             // SoA
+                A_cache[threadIdx.y][internal * THREAD_BLOCK_SIZE + threadIdx.x] = A[(dim_block + threadIdx_y) * (num_rows - device_row_offset + PADDING_SIZE_uz) - (dim_block + threadIdx_y - std::size_t{ 1 }) * (dim_block + threadIdx_y) / std::size_t{ 2 } + device_num_rows - (dim_block + threadIdx_y) + global_j_idx_linear];  // SoA, upper triangular matrix only
+                B_cache[threadIdx.y][internal * THREAD_BLOCK_SIZE + threadIdx.x] = B[(device_row_offset + dim_block + threadIdx_y) * (num_rhs + PADDING_SIZE_uz) + global_i_idx_linear];                                                                                                                                               // SoA
             }
             __syncthreads();  // wait until all threads loaded their part of the data
 
             // perform the dot product calculation
-            for (unsigned block_dim = 0; block_dim < THREAD_BLOCK_SIZE; ++block_dim) {
+            for (unsigned dim = 0; dim < THREAD_BLOCK_SIZE; ++dim) {
                 for (unsigned internal_i = 0; internal_i < INTERNAL_BLOCK_SIZE; ++internal_i) {
                     for (unsigned internal_j = 0; internal_j < INTERNAL_BLOCK_SIZE; ++internal_j) {
-                        temp[internal_i][internal_j] += A_cache[block_dim][threadIdx.y * INTERNAL_BLOCK_SIZE + internal_j] * B_cache[block_dim][threadIdx.x * INTERNAL_BLOCK_SIZE + internal_i];
+                        temp[internal_i][internal_j] += A_cache[dim][threadIdx.y * INTERNAL_BLOCK_SIZE + internal_j] * B_cache[dim][threadIdx.x * INTERNAL_BLOCK_SIZE + internal_i];
                     }
                 }
             }

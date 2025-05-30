@@ -67,7 +67,7 @@ __global__ void device_kernel_assembly(real_type *kernel_matrix, const real_type
             const auto j_idx_linear = blockIdx_y * blockDim_y * INTERNAL_BLOCK_SIZE_uz + threadIdx_x;  // device_num_rows
 
             // iterate over all features using blocking to be able to cache them for faster memory accesses
-            for (std::size_t dim = 0; dim < num_features; dim += THREAD_BLOCK_SIZE_uz) {
+            for (std::size_t feature_block = 0; feature_block < num_features; feature_block += THREAD_BLOCK_SIZE_uz) {
                 // load data into shared memory
                 for (unsigned internal = 0; internal < INTERNAL_BLOCK_SIZE; ++internal) {
                     // calculate the indices to access the global data, pays attention to coalesced memory accesses
@@ -75,17 +75,17 @@ __global__ void device_kernel_assembly(real_type *kernel_matrix, const real_type
                     const auto global_j_idx_linear = device_row_offset + j_idx_linear + static_cast<std::size_t>(internal) * THREAD_BLOCK_SIZE_uz;
 
                     // store the values in the shared memory
-                    data_i_cache[threadIdx.y][internal * THREAD_BLOCK_SIZE + threadIdx.x] = data[(dim + threadIdx_y) * (num_rows + std::size_t{ 1 } + PADDING_SIZE_uz) + global_i_idx_linear];  // SoA
-                    data_j_cache[threadIdx.y][internal * THREAD_BLOCK_SIZE + threadIdx.x] = data[(dim + threadIdx_y) * (num_rows + std::size_t{ 1 } + PADDING_SIZE_uz) + global_j_idx_linear];  // SoA
+                    data_i_cache[threadIdx.y][internal * THREAD_BLOCK_SIZE + threadIdx.x] = data[(feature_block + threadIdx_y) * (num_rows + std::size_t{ 1 } + PADDING_SIZE_uz) + global_i_idx_linear];  // SoA
+                    data_j_cache[threadIdx.y][internal * THREAD_BLOCK_SIZE + threadIdx.x] = data[(feature_block + threadIdx_y) * (num_rows + std::size_t{ 1 } + PADDING_SIZE_uz) + global_j_idx_linear];  // SoA
                 }
                 __syncthreads();  // wait until all threads loaded their part of the data
 
                 // perform the feature reduction calculation
-                for (unsigned block_dim = 0; block_dim < THREAD_BLOCK_SIZE; ++block_dim) {
+                for (unsigned feature = 0; feature < THREAD_BLOCK_SIZE; ++feature) {
                     for (unsigned internal_i = 0; internal_i < INTERNAL_BLOCK_SIZE; ++internal_i) {
                         for (unsigned internal_j = 0; internal_j < INTERNAL_BLOCK_SIZE; ++internal_j) {
-                            temp[internal_i][internal_j] += detail::feature_reduce<kernel_function>(data_i_cache[block_dim][threadIdx.x * INTERNAL_BLOCK_SIZE + internal_i],
-                                                                                                    data_j_cache[block_dim][threadIdx.y * INTERNAL_BLOCK_SIZE + internal_j]);
+                            temp[internal_i][internal_j] += detail::feature_reduce<kernel_function>(data_i_cache[feature][threadIdx.x * INTERNAL_BLOCK_SIZE + internal_i],
+                                                                                                    data_j_cache[feature][threadIdx.y * INTERNAL_BLOCK_SIZE + internal_j]);
                         }
                     }
                 }
