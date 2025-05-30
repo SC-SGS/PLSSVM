@@ -58,14 +58,14 @@ void device_kernel_assembly(real_type *kernel_matrix, const soa_matrix<real_type
     const auto PADDING_SIZE_uz = static_cast<std::size_t>(PADDING_SIZE);
 
 #pragma omp parallel for collapse(2) schedule(dynamic)
-    for (std::size_t row = 0; row < blocked_row_range; row += THREAD_BLOCK_SIZE_uz) {
-        for (std::size_t col = 0; col < blocked_device_specific_num_rows; col += THREAD_BLOCK_SIZE_uz) {
+    for (std::size_t row_block = 0; row_block < blocked_row_range; row_block += THREAD_BLOCK_SIZE_uz) {
+        for (std::size_t col_block = 0; col_block < blocked_device_specific_num_rows; col_block += THREAD_BLOCK_SIZE_uz) {
             // perform operations on the current block
-            for (std::size_t row_block = 0; row_block < THREAD_BLOCK_SIZE_uz; ++row_block) {
-                for (std::size_t col_block = 0; col_block < THREAD_BLOCK_SIZE_uz; ++col_block) {
+            for (std::size_t row_thread = 0; row_thread < THREAD_BLOCK_SIZE_uz; ++row_thread) {
+                for (std::size_t col_thread = 0; col_thread < THREAD_BLOCK_SIZE_uz; ++col_thread) {
                     // calculate the indices used in the current thread
-                    const std::size_t i_idx = (row + row_block) * INTERNAL_BLOCK_SIZE_uz;
-                    const std::size_t j_idx = (col + col_block) * INTERNAL_BLOCK_SIZE_uz;
+                    const std::size_t i_idx = (row_block + row_thread) * INTERNAL_BLOCK_SIZE_uz;
+                    const std::size_t j_idx = (col_block + col_thread) * INTERNAL_BLOCK_SIZE_uz;
 
                     // only calculate the upper triangular matrix
                     if (i_idx >= j_idx) {
@@ -73,7 +73,7 @@ void device_kernel_assembly(real_type *kernel_matrix, const soa_matrix<real_type
                         std::array<std::array<real_type, INTERNAL_BLOCK_SIZE>, INTERNAL_BLOCK_SIZE> temp{};
 
                         // iterate over all features
-                        for (std::size_t dim = 0; dim < num_features; dim += THREAD_BLOCK_SIZE_uz) {
+                        for (std::size_t feature_block = 0; feature_block < num_features; feature_block += THREAD_BLOCK_SIZE_uz) {
                             // perform the feature reduction calculation
                             for (unsigned internal_i = 0; internal_i < INTERNAL_BLOCK_SIZE; ++internal_i) {
                                 for (unsigned internal_j = 0; internal_j < INTERNAL_BLOCK_SIZE; ++internal_j) {
@@ -82,10 +82,10 @@ void device_kernel_assembly(real_type *kernel_matrix, const soa_matrix<real_type
                                     const auto global_j_idx = device_row_offset + j_idx + static_cast<std::size_t>(internal_j);
 
                                     real_type sum{ 0.0 };
-                                    for (unsigned block_dim = 0; block_dim < THREAD_BLOCK_SIZE; ++block_dim) {
-                                        sum += detail::feature_reduce<kernel_function>(data(global_i_idx, dim + block_dim), data(global_j_idx, dim + block_dim));
+                                    for (std::size_t feature = 0; feature < THREAD_BLOCK_SIZE_uz; ++feature) {
+                                        sum += detail::feature_reduce<kernel_function>(data(global_i_idx, feature_block + feature), data(global_j_idx, feature_block + feature));
                                     }
-                                    temp[internal_j][internal_i] += sum;
+                                    temp[internal_i][internal_j] += sum;
                                 }
                             }
                         }
@@ -101,7 +101,7 @@ void device_kernel_assembly(real_type *kernel_matrix, const soa_matrix<real_type
 
                                 // be sure to not perform out-of-bounds accesses (only using the upper triangular matrix)
                                 if (device_global_i_idx < (num_rows - device_row_offset) && device_global_j_idx < device_num_rows && global_i_idx >= global_j_idx) {
-                                    real_type temp_ij = temp[internal_j][internal_i];
+                                    real_type temp_ij = temp[internal_i][internal_j];
                                     // apply the final kernel function
                                     temp_ij = detail::apply_kernel_function<kernel_function>(temp_ij, kernel_function_parameter...) + QA_cost - q[global_i_idx] - q[global_j_idx];
                                     // apply the cost on the diagonal

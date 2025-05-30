@@ -53,19 +53,19 @@ inline void device_kernel_w_linear(soa_matrix<real_type> &w, const aos_matrix<re
     const auto THREAD_BLOCK_SIZE_uz = static_cast<std::size_t>(THREAD_BLOCK_SIZE);
 
 #pragma omp parallel for collapse(2) default(none) shared(w, support_vectors, alpha) firstprivate(blocked_num_classes, blocked_num_features, num_classes, num_features, device_num_sv, sv_offset)
-    for (std::size_t dim = 0; dim < blocked_num_features; dim += THREAD_BLOCK_SIZE_uz) {
-        for (std::size_t a = 0; a < blocked_num_classes; a += THREAD_BLOCK_SIZE_uz) {
+    for (std::size_t feature_block = 0; feature_block < blocked_num_features; feature_block += THREAD_BLOCK_SIZE_uz) {
+        for (std::size_t class_block = 0; class_block < blocked_num_classes; class_block += THREAD_BLOCK_SIZE_uz) {
             // perform operations on the current block
-            for (std::size_t dim_block = 0; dim_block < THREAD_BLOCK_SIZE_uz; ++dim_block) {
-                for (std::size_t a_block = 0; a_block < THREAD_BLOCK_SIZE_uz; ++a_block) {
+            for (std::size_t feature_thread = 0; feature_thread < THREAD_BLOCK_SIZE_uz; ++feature_thread) {
+                for (std::size_t class_thread = 0; class_thread < THREAD_BLOCK_SIZE_uz; ++class_thread) {
                     // calculate the indices used in the current thread
-                    const std::size_t feature_idx = (dim + dim_block) * INTERNAL_BLOCK_SIZE_uz;
-                    const std::size_t class_idx = (a + a_block) * INTERNAL_BLOCK_SIZE_uz;
+                    const std::size_t feature_idx = (feature_block + feature_thread) * INTERNAL_BLOCK_SIZE_uz;
+                    const std::size_t class_idx = (class_block + class_thread) * INTERNAL_BLOCK_SIZE_uz;
 
                     // create a thread private array used for internal caching
                     std::array<std::array<real_type, INTERNAL_BLOCK_SIZE>, INTERNAL_BLOCK_SIZE> temp{};
 
-                    for (std::size_t sv = 0; sv < device_num_sv; sv += THREAD_BLOCK_SIZE_uz) {
+                    for (std::size_t sv_block = 0; sv_block < device_num_sv; sv_block += THREAD_BLOCK_SIZE_uz) {
                         // perform the dot product calculation
                         for (unsigned internal_feature = 0; internal_feature < INTERNAL_BLOCK_SIZE; ++internal_feature) {
                             for (unsigned internal_class = 0; internal_class < INTERNAL_BLOCK_SIZE; ++internal_class) {
@@ -74,8 +74,8 @@ inline void device_kernel_w_linear(soa_matrix<real_type> &w, const aos_matrix<re
                                 const auto global_class_idx = class_idx + static_cast<std::size_t>(internal_class);
 
                                 real_type sum{ 0.0 };
-                                for (unsigned block_sv = 0; block_sv < THREAD_BLOCK_SIZE; ++block_sv) {
-                                    sum += alpha(global_class_idx, sv_offset + sv + block_sv) * support_vectors(sv_offset + sv + block_sv, global_feature_idx);
+                                for (std::size_t sv = 0; sv < THREAD_BLOCK_SIZE_uz; ++sv) {
+                                    sum += alpha(global_class_idx, sv_offset + sv_block + sv) * support_vectors(sv_offset + sv_block + sv, global_feature_idx);
                                 }
                                 temp[internal_class][internal_feature] += sum;
                             }
@@ -129,19 +129,19 @@ inline void device_kernel_predict_linear(aos_matrix<real_type> &prediction, cons
     const auto THREAD_BLOCK_SIZE_uz = static_cast<std::size_t>(THREAD_BLOCK_SIZE);
 
 #pragma omp parallel for collapse(2) default(none) shared(prediction, w, rho, predict_points) firstprivate(blocked_device_num_predict_points, blocked_num_classes, device_num_predict_points, num_classes, num_features, device_row_offset)
-    for (std::size_t point = 0; point < blocked_device_num_predict_points; point += THREAD_BLOCK_SIZE_uz) {
-        for (std::size_t a = 0; a < blocked_num_classes; a += THREAD_BLOCK_SIZE_uz) {
+    for (std::size_t pp_block = 0; pp_block < blocked_device_num_predict_points; pp_block += THREAD_BLOCK_SIZE_uz) {
+        for (std::size_t class_block = 0; class_block < blocked_num_classes; class_block += THREAD_BLOCK_SIZE_uz) {
             // perform operations on the current block
-            for (std::size_t point_block = 0; point_block < THREAD_BLOCK_SIZE_uz; ++point_block) {
-                for (std::size_t a_block = 0; a_block < THREAD_BLOCK_SIZE_uz; ++a_block) {
+            for (std::size_t pp_thread = 0; pp_thread < THREAD_BLOCK_SIZE_uz; ++pp_thread) {
+                for (std::size_t class_thread = 0; class_thread < THREAD_BLOCK_SIZE_uz; ++class_thread) {
                     // calculate the indices used in the current thread
-                    const std::size_t pp_idx = (point + point_block) * INTERNAL_BLOCK_SIZE_uz;
-                    const std::size_t class_idx = (a + a_block) * INTERNAL_BLOCK_SIZE_uz;
+                    const std::size_t pp_idx = (pp_block + pp_thread) * INTERNAL_BLOCK_SIZE_uz;
+                    const std::size_t class_idx = (class_block + class_thread) * INTERNAL_BLOCK_SIZE_uz;
 
                     // create a thread private array used for internal caching
                     std::array<std::array<real_type, INTERNAL_BLOCK_SIZE>, INTERNAL_BLOCK_SIZE> temp{};
 
-                    for (std::size_t dim = 0; dim < num_features; dim += THREAD_BLOCK_SIZE_uz) {
+                    for (std::size_t feature_block = 0; feature_block < num_features; feature_block += THREAD_BLOCK_SIZE_uz) {
                         // perform the dot product calculation
                         for (unsigned internal_pp = 0; internal_pp < INTERNAL_BLOCK_SIZE; ++internal_pp) {
                             for (unsigned internal_class = 0; internal_class < INTERNAL_BLOCK_SIZE; ++internal_class) {
@@ -150,8 +150,8 @@ inline void device_kernel_predict_linear(aos_matrix<real_type> &prediction, cons
                                 const auto global_class_idx = class_idx + static_cast<std::size_t>(internal_class);
 
                                 real_type sum{ 0.0 };
-                                for (unsigned block_dim = 0; block_dim < THREAD_BLOCK_SIZE; ++block_dim) {
-                                    sum += w(global_class_idx, dim + block_dim) * predict_points(global_pp_idx, dim + block_dim);
+                                for (std::size_t feature = 0; feature < THREAD_BLOCK_SIZE_uz; ++feature) {
+                                    sum += w(global_class_idx, feature_block + feature) * predict_points(global_pp_idx, feature_block + feature);
                                 }
                                 temp[internal_class][internal_pp] += sum;
                             }
@@ -218,20 +218,20 @@ inline void device_kernel_predict(aos_matrix<real_type> &prediction, const aos_m
     }
 
 #pragma omp parallel for collapse(2)
-    for (std::size_t x_block = 0; x_block < blocked_device_specific_num_predict_points; x_block += THREAD_BLOCK_SIZE_uz) {
-        for (std::size_t y_block = 0; y_block < blocked_num_support_vectors; y_block += THREAD_BLOCK_SIZE_uz) {
+    for (std::size_t pp_block = 0; pp_block < blocked_device_specific_num_predict_points; pp_block += THREAD_BLOCK_SIZE_uz) {
+        for (std::size_t sv_block = 0; sv_block < blocked_num_support_vectors; sv_block += THREAD_BLOCK_SIZE_uz) {
             // perform operations on the current block
-            for (std::size_t x_thread = 0; x_thread < THREAD_BLOCK_SIZE_uz; ++x_thread) {
-                for (std::size_t y_thread = 0; y_thread < THREAD_BLOCK_SIZE_uz; ++y_thread) {
+            for (std::size_t pp_thread = 0; pp_thread < THREAD_BLOCK_SIZE_uz; ++pp_thread) {
+                for (std::size_t sv_thread = 0; sv_thread < THREAD_BLOCK_SIZE_uz; ++sv_thread) {
                     // calculate the indices used in the current thread
-                    const std::size_t pp_idx = (x_block + x_thread) * INTERNAL_BLOCK_SIZE_uz;
-                    const std::size_t sv_idx = (y_block + y_thread) * INTERNAL_BLOCK_SIZE_uz;
+                    const std::size_t pp_idx = (pp_block + pp_thread) * INTERNAL_BLOCK_SIZE_uz;
+                    const std::size_t sv_idx = (sv_block + sv_thread) * INTERNAL_BLOCK_SIZE_uz;
 
                     // create a thread private array used for internal caching
                     std::array<std::array<real_type, INTERNAL_BLOCK_SIZE>, INTERNAL_BLOCK_SIZE> temp{};
 
                     // iterate over all features
-                    for (std::size_t dim = 0; dim < num_features; dim += THREAD_BLOCK_SIZE_uz) {
+                    for (std::size_t feature_block = 0; feature_block < num_features; feature_block += THREAD_BLOCK_SIZE_uz) {
                         // perform the feature reduction calculation
                         for (unsigned internal_pp = 0; internal_pp < INTERNAL_BLOCK_SIZE; ++internal_pp) {
                             for (unsigned internal_sv = 0; internal_sv < INTERNAL_BLOCK_SIZE; ++internal_sv) {
@@ -240,8 +240,8 @@ inline void device_kernel_predict(aos_matrix<real_type> &prediction, const aos_m
                                 const auto global_sv_idx = sv_idx + static_cast<std::size_t>(internal_sv);
 
                                 real_type sum{ 0.0 };
-                                for (unsigned block_dim = 0; block_dim < THREAD_BLOCK_SIZE; ++block_dim) {
-                                    sum += detail::feature_reduce<kernel_function>(support_vectors(global_sv_idx, dim + block_dim), predict_points(global_pp_idx, dim + block_dim));
+                                for (std::size_t feature = 0; feature < THREAD_BLOCK_SIZE_uz; ++feature) {
+                                    sum += detail::feature_reduce<kernel_function>(support_vectors(global_sv_idx, feature_block + feature), predict_points(global_pp_idx, feature_block + feature));
                                 }
                                 temp[internal_pp][internal_sv] += sum;
                             }
@@ -256,7 +256,7 @@ inline void device_kernel_predict(aos_matrix<real_type> &prediction, const aos_m
                     }
 
                     // add results to prediction
-                    for (std::size_t dim = 0; dim < num_classes; dim += THREAD_BLOCK_SIZE_uz) {
+                    for (std::size_t class_block = 0; class_block < num_classes; class_block += THREAD_BLOCK_SIZE_uz) {
                         for (unsigned internal_pp = 0; internal_pp < INTERNAL_BLOCK_SIZE; ++internal_pp) {
                             for (unsigned internal_sv = 0; internal_sv < INTERNAL_BLOCK_SIZE; ++internal_sv) {
                                 // calculate the indices to access the global data and the data with respect to the current device
@@ -268,7 +268,7 @@ inline void device_kernel_predict(aos_matrix<real_type> &prediction, const aos_m
                                 if (device_global_pp_idx < device_num_predict_points && global_sv_idx < num_support_vectors) {
                                     for (std::size_t class_idx = 0; class_idx < THREAD_BLOCK_SIZE_uz; ++class_idx) {
 #pragma omp atomic
-                                        prediction(global_pp_idx, dim + class_idx) += alpha(dim + class_idx, global_sv_idx) * temp[internal_pp][internal_sv];
+                                        prediction(global_pp_idx, class_block + class_idx) += alpha(class_block + class_idx, global_sv_idx) * temp[internal_pp][internal_sv];
                                     }
                                 }
                             }

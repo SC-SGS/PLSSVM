@@ -53,20 +53,20 @@ inline void device_kernel_symm(const std::size_t num_rows, const std::size_t num
     const auto PADDING_SIZE_uz = static_cast<std::size_t>(PADDING_SIZE);
 
 #pragma omp parallel for collapse(2)
-    for (std::size_t rhs = 0; rhs < blocked_num_rhs; rhs += THREAD_BLOCK_SIZE_uz) {
-        for (std::size_t row = 0; row < blocked_device_specific_num_rows; row += THREAD_BLOCK_SIZE_uz) {
+    for (std::size_t rhs_block = 0; rhs_block < blocked_num_rhs; rhs_block += THREAD_BLOCK_SIZE_uz) {
+        for (std::size_t row_block = 0; row_block < blocked_device_specific_num_rows; row_block += THREAD_BLOCK_SIZE_uz) {
             // perform operations on the current block
-            for (std::size_t rhs_block = 0; rhs_block < THREAD_BLOCK_SIZE_uz; ++rhs_block) {
-                for (std::size_t row_block = 0; row_block < THREAD_BLOCK_SIZE_uz; ++row_block) {
+            for (std::size_t rhs_thread = 0; rhs_thread < THREAD_BLOCK_SIZE_uz; ++rhs_thread) {
+                for (std::size_t row_thread = 0; row_thread < THREAD_BLOCK_SIZE_uz; ++row_thread) {
                     // calculate the indices used in the current thread
-                    const std::size_t i_idx = (rhs + rhs_block) * INTERNAL_BLOCK_SIZE_uz;
-                    const std::size_t j_idx = (row + row_block) * INTERNAL_BLOCK_SIZE_uz;
+                    const std::size_t i_idx = (rhs_block + rhs_thread) * INTERNAL_BLOCK_SIZE_uz;
+                    const std::size_t j_idx = (row_block + row_thread) * INTERNAL_BLOCK_SIZE_uz;
 
                     // create a thread private array used for internal caching
                     std::array<std::array<real_type, INTERNAL_BLOCK_SIZE>, INTERNAL_BLOCK_SIZE> temp{};
 
                     // iterate over all values
-                    for (std::size_t dim = 0; dim < (num_rows - device_row_offset); dim += THREAD_BLOCK_SIZE_uz) {
+                    for (std::size_t dim_block = 0; dim_block < (num_rows - device_row_offset); dim_block += THREAD_BLOCK_SIZE_uz) {
                         // perform the dot product calculation
                         for (unsigned internal_i = 0; internal_i < INTERNAL_BLOCK_SIZE; ++internal_i) {
                             for (unsigned internal_j = 0; internal_j < INTERNAL_BLOCK_SIZE; ++internal_j) {
@@ -75,15 +75,15 @@ inline void device_kernel_symm(const std::size_t num_rows, const std::size_t num
                                 const auto global_j_idx = j_idx + static_cast<std::size_t>(internal_j);
 
                                 real_type sum{ 0.0 };
-                                for (unsigned block_dim = 0; block_dim < THREAD_BLOCK_SIZE; ++block_dim) {
+                                for (std::size_t dim = 0; dim < THREAD_BLOCK_SIZE_uz; ++dim) {
                                     real_type A_cache = 0.0;
                                     // determine on which side of the diagonal we are located
-                                    if (dim + block_dim < global_j_idx) {
-                                        A_cache = A[(dim + block_dim) * (num_rows - device_row_offset + PADDING_SIZE_uz) + global_j_idx - (dim + block_dim) * (dim + block_dim + std::size_t{ 1 }) / std::size_t{ 2 }];
+                                    if (dim_block + dim < global_j_idx) {
+                                        A_cache = A[(dim_block + dim) * (num_rows - device_row_offset + PADDING_SIZE_uz) + global_j_idx - (dim_block + dim) * (dim_block + dim + std::size_t{ 1 }) / std::size_t{ 2 }];
                                     } else {
-                                        A_cache = A[global_j_idx * (num_rows - device_row_offset + PADDING_SIZE_uz) + dim + block_dim - global_j_idx * (global_j_idx + std::size_t{ 1 }) / std::size_t{ 2 }];
+                                        A_cache = A[global_j_idx * (num_rows - device_row_offset + PADDING_SIZE_uz) + dim_block + dim - global_j_idx * (global_j_idx + std::size_t{ 1 }) / std::size_t{ 2 }];
                                     }
-                                    sum += A_cache * B(global_i_idx, dim + block_dim + device_row_offset);
+                                    sum += A_cache * B(global_i_idx, dim_block + dim + device_row_offset);
                                 }
                                 temp[internal_i][internal_j] += sum;
                             }
@@ -141,20 +141,20 @@ inline void device_kernel_symm_mirror(const std::size_t num_rows, const std::siz
     const auto PADDING_SIZE_uz = static_cast<std::size_t>(PADDING_SIZE);
 
 #pragma omp parallel for collapse(2)
-    for (std::size_t rhs = 0; rhs < blocked_num_rhs; rhs += THREAD_BLOCK_SIZE_uz) {
-        for (std::size_t row = 0; row < blocked_num_mirror_rows; row += THREAD_BLOCK_SIZE_uz) {
+    for (std::size_t rhs_block = 0; rhs_block < blocked_num_rhs; rhs_block += THREAD_BLOCK_SIZE_uz) {
+        for (std::size_t row_block = 0; row_block < blocked_num_mirror_rows; row_block += THREAD_BLOCK_SIZE_uz) {
             // perform operations on the current block
-            for (std::size_t rhs_block = 0; rhs_block < THREAD_BLOCK_SIZE_uz; ++rhs_block) {
-                for (std::size_t row_block = 0; row_block < THREAD_BLOCK_SIZE_uz; ++row_block) {
+            for (std::size_t rhs_thread = 0; rhs_thread < THREAD_BLOCK_SIZE_uz; ++rhs_thread) {
+                for (std::size_t row_thread = 0; row_thread < THREAD_BLOCK_SIZE_uz; ++row_thread) {
                     // calculate the indices used in the current thread
-                    const std::size_t i_idx = (rhs + rhs_block) * INTERNAL_BLOCK_SIZE_uz;
-                    const std::size_t j_idx = (row + row_block) * INTERNAL_BLOCK_SIZE_uz;
+                    const std::size_t i_idx = (rhs_block + rhs_thread) * INTERNAL_BLOCK_SIZE_uz;
+                    const std::size_t j_idx = (row_block + row_thread) * INTERNAL_BLOCK_SIZE_uz;
 
                     // create a thread private array used for internal caching
                     std::array<std::array<real_type, INTERNAL_BLOCK_SIZE>, INTERNAL_BLOCK_SIZE> temp{};
 
                     // iterate over the remaining values
-                    for (std::size_t dim = 0; dim < device_num_rows; dim += THREAD_BLOCK_SIZE_uz) {
+                    for (std::size_t dim_block = 0; dim_block < device_num_rows; dim_block += THREAD_BLOCK_SIZE_uz) {
                         // perform the dot product calculation
                         for (unsigned internal_i = 0; internal_i < INTERNAL_BLOCK_SIZE; ++internal_i) {
                             for (unsigned internal_j = 0; internal_j < INTERNAL_BLOCK_SIZE; ++internal_j) {
@@ -163,9 +163,9 @@ inline void device_kernel_symm_mirror(const std::size_t num_rows, const std::siz
                                 const auto global_j_idx = j_idx + static_cast<std::size_t>(internal_j);
 
                                 real_type sum{ 0.0 };
-                                for (unsigned block_dim = 0; block_dim < THREAD_BLOCK_SIZE; ++block_dim) {
-                                    const real_type A_cache = A[(dim + block_dim) * (num_rows - device_row_offset + PADDING_SIZE_uz) - (dim + block_dim - std::size_t{ 1 }) * (dim + block_dim) / std::size_t{ 2 } + device_num_rows - dim + block_dim + global_j_idx];
-                                    sum += A_cache * B(global_i_idx, device_row_offset + dim + block_dim);
+                                for (std::size_t dim = 0; dim < THREAD_BLOCK_SIZE_uz; ++dim) {
+                                    const real_type A_cache = A[(dim_block + dim) * (num_rows - device_row_offset + PADDING_SIZE_uz) - (dim_block + dim - std::size_t{ 1 }) * (dim_block + dim) / std::size_t{ 2 } + device_num_rows - dim_block + dim + global_j_idx];
+                                    sum += A_cache * B(global_i_idx, device_row_offset + dim_block + dim);
                                 }
                                 temp[internal_i][internal_j] += sum;
                             }

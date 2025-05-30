@@ -61,14 +61,14 @@ inline void device_kernel_assembly_symm(const real_type alpha, const std::vector
     const auto THREAD_BLOCK_SIZE_uz = static_cast<std::size_t>(THREAD_BLOCK_SIZE);
 
 #pragma omp parallel for collapse(2) schedule(dynamic)
-    for (std::size_t row = 0; row < blocked_row_range; row += THREAD_BLOCK_SIZE_uz) {
-        for (std::size_t col = 0; col < blocked_device_specific_num_rows; col += THREAD_BLOCK_SIZE_uz) {
+    for (std::size_t row_block = 0; row_block < blocked_row_range; row_block += THREAD_BLOCK_SIZE_uz) {
+        for (std::size_t col_block = 0; col_block < blocked_device_specific_num_rows; col_block += THREAD_BLOCK_SIZE_uz) {
             // perform operations on the current block
-            for (std::size_t row_block = 0; row_block < THREAD_BLOCK_SIZE_uz; ++row_block) {
-                for (std::size_t col_block = 0; col_block < THREAD_BLOCK_SIZE_uz; ++col_block) {
+            for (std::size_t row_thread = 0; row_thread < THREAD_BLOCK_SIZE_uz; ++row_thread) {
+                for (std::size_t col_thread = 0; col_thread < THREAD_BLOCK_SIZE_uz; ++col_thread) {
                     // calculate the indices used in the current thread
-                    const std::size_t i_idx = (row + row_block) * INTERNAL_BLOCK_SIZE_uz;
-                    const std::size_t j_idx = (col + col_block) * INTERNAL_BLOCK_SIZE_uz;
+                    const std::size_t i_idx = (row_block + row_thread) * INTERNAL_BLOCK_SIZE_uz;
+                    const std::size_t j_idx = (col_block + col_thread) * INTERNAL_BLOCK_SIZE_uz;
 
                     // only calculate the upper triangular matrix
                     if (i_idx >= j_idx) {
@@ -76,7 +76,7 @@ inline void device_kernel_assembly_symm(const real_type alpha, const std::vector
                         std::array<std::array<real_type, INTERNAL_BLOCK_SIZE>, INTERNAL_BLOCK_SIZE> temp{};
 
                         // iterate over all features
-                        for (std::size_t dim = 0; dim < num_features; dim += THREAD_BLOCK_SIZE_uz) {
+                        for (std::size_t feature_block = 0; feature_block < num_features; feature_block += THREAD_BLOCK_SIZE_uz) {
                             for (unsigned internal_i = 0; internal_i < INTERNAL_BLOCK_SIZE; ++internal_i) {
                                 for (unsigned internal_j = 0; internal_j < INTERNAL_BLOCK_SIZE; ++internal_j) {
                                     // calculate the indices to access the global data
@@ -84,8 +84,8 @@ inline void device_kernel_assembly_symm(const real_type alpha, const std::vector
                                     const auto global_j_idx = device_row_offset + j_idx + static_cast<std::size_t>(internal_j);
 
                                     real_type sum{ 0.0 };
-                                    for (unsigned block_dim = 0; block_dim < THREAD_BLOCK_SIZE; ++block_dim) {
-                                        sum += detail::feature_reduce<kernel_function>(data(global_i_idx, dim + block_dim), data(global_j_idx, dim + block_dim));
+                                    for (std::size_t feature = 0; feature < THREAD_BLOCK_SIZE_uz; ++feature) {
+                                        sum += detail::feature_reduce<kernel_function>(data(global_i_idx, feature_block + feature), data(global_j_idx, feature_block + feature));
                                     }
                                     temp[internal_j][internal_i] += sum;
                                 }
@@ -119,7 +119,7 @@ inline void device_kernel_assembly_symm(const real_type alpha, const std::vector
                         //*************************************************************************//
                         //                     calculate C += alpha * temp * B                     //
                         //*************************************************************************//
-                        for (std::size_t dim = 0; dim < num_classes; dim += THREAD_BLOCK_SIZE_uz) {
+                        for (std::size_t class_block = 0; class_block < num_classes; class_block += THREAD_BLOCK_SIZE_uz) {
                             for (unsigned internal_i = 0; internal_i < INTERNAL_BLOCK_SIZE; ++internal_i) {
                                 for (unsigned internal_j = 0; internal_j < INTERNAL_BLOCK_SIZE; ++internal_j) {
                                     const auto global_i_idx = device_row_offset + i_idx + static_cast<std::size_t>(internal_i);
@@ -129,16 +129,16 @@ inline void device_kernel_assembly_symm(const real_type alpha, const std::vector
                                         // only apply once to the diagonal
                                         for (std::size_t class_idx = 0; class_idx < THREAD_BLOCK_SIZE; ++class_idx) {
 #pragma omp atomic
-                                            C(dim + class_idx, global_i_idx) += alpha * temp[internal_j][internal_i] * B(dim + class_idx, global_i_idx);
+                                            C(class_block + class_idx, global_i_idx) += alpha * temp[internal_j][internal_i] * B(class_block + class_idx, global_i_idx);
                                         }
                                     } else {
                                         // apply it for the upper and lower triangular matrix
                                         for (std::size_t class_idx = 0; class_idx < THREAD_BLOCK_SIZE; ++class_idx) {
 #pragma omp atomic
-                                            C(dim + class_idx, global_i_idx) += alpha * temp[internal_j][internal_i] * B(dim + class_idx, global_j_idx);
+                                            C(class_block + class_idx, global_i_idx) += alpha * temp[internal_j][internal_i] * B(class_block + class_idx, global_j_idx);
                                             // symmetry
 #pragma omp atomic
-                                            C(dim + class_idx, global_j_idx) += alpha * temp[internal_j][internal_i] * B(dim + class_idx, global_i_idx);
+                                            C(class_block + class_idx, global_j_idx) += alpha * temp[internal_j][internal_i] * B(class_block + class_idx, global_i_idx);
                                         }
                                     }
                                 }
