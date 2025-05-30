@@ -45,7 +45,7 @@ inline void device_kernel_symm(const std::size_t num_rows, const std::size_t num
 
     // calculate constants
     const auto blocked_num_rhs = static_cast<std::size_t>(std::ceil(static_cast<real_type>(num_rhs) / INTERNAL_BLOCK_SIZE));
-    const auto blocked_device_specific_num_rows = static_cast<std::size_t>(std::ceil(static_cast<real_type>(device_num_rows) / INTERNAL_BLOCK_SIZE));
+    const auto blocked_device_num_rows = static_cast<std::size_t>(std::ceil(static_cast<real_type>(device_num_rows) / INTERNAL_BLOCK_SIZE));
 
     // cast all values to 64-bit unsigned long long to prevent potential 32-bit overflows
     const auto INTERNAL_BLOCK_SIZE_uz = static_cast<std::size_t>(INTERNAL_BLOCK_SIZE);
@@ -54,7 +54,7 @@ inline void device_kernel_symm(const std::size_t num_rows, const std::size_t num
 
 #pragma omp parallel for collapse(2)
     for (std::size_t rhs_block = 0; rhs_block < blocked_num_rhs; rhs_block += THREAD_BLOCK_SIZE_uz) {
-        for (std::size_t row_block = 0; row_block < blocked_device_specific_num_rows; row_block += THREAD_BLOCK_SIZE_uz) {
+        for (std::size_t row_block = 0; row_block < blocked_device_num_rows; row_block += THREAD_BLOCK_SIZE_uz) {
             // perform operations on the current block
             for (std::size_t rhs_thread = 0; rhs_thread < THREAD_BLOCK_SIZE_uz; ++rhs_thread) {
                 for (std::size_t row_thread = 0; row_thread < THREAD_BLOCK_SIZE_uz; ++row_thread) {
@@ -83,7 +83,7 @@ inline void device_kernel_symm(const std::size_t num_rows, const std::size_t num
                                     } else {
                                         A_cache = A[global_j_idx * (num_rows - device_row_offset + PADDING_SIZE_uz) + dim_block + dim - global_j_idx * (global_j_idx + std::size_t{ 1 }) / std::size_t{ 2 }];
                                     }
-                                    sum += A_cache * B(global_i_idx, dim_block + dim + device_row_offset);
+                                    sum += A_cache * B(global_i_idx, device_row_offset + dim_block + dim);
                                 }
                                 temp[internal_i][internal_j] += sum;
                             }
@@ -164,7 +164,7 @@ inline void device_kernel_symm_mirror(const std::size_t num_rows, const std::siz
 
                                 real_type sum{ 0.0 };
                                 for (std::size_t dim = 0; dim < THREAD_BLOCK_SIZE_uz; ++dim) {
-                                    const real_type A_cache = A[(dim_block + dim) * (num_rows - device_row_offset + PADDING_SIZE_uz) - (dim_block + dim - std::size_t{ 1 }) * (dim_block + dim) / std::size_t{ 2 } + device_num_rows - dim_block + dim + global_j_idx];
+                                    const real_type A_cache = A[(dim_block + dim) * (num_rows - device_row_offset + PADDING_SIZE_uz) - (dim_block + dim - std::size_t{ 1 }) * (dim_block + dim) / std::size_t{ 2 } + device_num_rows - (dim_block + dim) + global_j_idx];
                                     sum += A_cache * B(global_i_idx, device_row_offset + dim_block + dim);
                                 }
                                 temp[internal_i][internal_j] += sum;

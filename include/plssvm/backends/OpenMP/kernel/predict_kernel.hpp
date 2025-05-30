@@ -89,9 +89,7 @@ inline void device_kernel_w_linear(soa_matrix<real_type> &w, const aos_matrix<re
                             const auto global_feature_idx = feature_idx + static_cast<std::size_t>(internal_feature);
                             const auto global_class_idx = class_idx + static_cast<std::size_t>(internal_class);
 
-                            if (global_class_idx < num_classes && global_feature_idx < num_features) {
-                                w(global_class_idx, global_feature_idx) = temp[internal_class][internal_feature];
-                            }
+                            w(global_class_idx, global_feature_idx) = temp[internal_class][internal_feature];
                         }
                     }
                 }
@@ -162,13 +160,10 @@ inline void device_kernel_predict_linear(aos_matrix<real_type> &prediction, cons
                     for (unsigned internal_pp = 0; internal_pp < INTERNAL_BLOCK_SIZE; ++internal_pp) {
                         for (unsigned internal_class = 0; internal_class < INTERNAL_BLOCK_SIZE; ++internal_class) {
                             // calculate the indices to access the global data
-                            const auto device_global_pp_idx = pp_idx + static_cast<std::size_t>(internal_pp);
-                            const auto global_pp_idx = device_row_offset + device_global_pp_idx;
+                            const auto global_pp_idx = device_row_offset + pp_idx + static_cast<std::size_t>(internal_pp);
                             const auto global_class_idx = class_idx + static_cast<std::size_t>(internal_class);
 
-                            if (global_class_idx < num_classes && global_pp_idx < device_num_predict_points) {
-                                prediction(global_pp_idx, global_class_idx) = temp[internal_class][internal_pp] - rho[global_class_idx];
-                            }
+                            prediction(global_pp_idx, global_class_idx) = temp[internal_class][internal_pp] - rho[global_class_idx];
                         }
                     }
                 }
@@ -260,16 +255,13 @@ inline void device_kernel_predict(aos_matrix<real_type> &prediction, const aos_m
                         for (unsigned internal_pp = 0; internal_pp < INTERNAL_BLOCK_SIZE; ++internal_pp) {
                             for (unsigned internal_sv = 0; internal_sv < INTERNAL_BLOCK_SIZE; ++internal_sv) {
                                 // calculate the indices to access the global data and the data with respect to the current device
-                                const auto device_global_pp_idx = pp_idx + static_cast<std::size_t>(internal_pp);
-                                const auto global_pp_idx = device_row_offset + device_global_pp_idx;
+                                const auto global_pp_idx = device_row_offset + pp_idx + static_cast<std::size_t>(internal_pp);
                                 const auto global_sv_idx = sv_idx + static_cast<std::size_t>(internal_sv);
 
                                 // be sure to not perform out-of-bounds accesses
-                                if (device_global_pp_idx < device_num_predict_points && global_sv_idx < num_support_vectors) {
-                                    for (std::size_t class_idx = 0; class_idx < THREAD_BLOCK_SIZE_uz; ++class_idx) {
+                                for (std::size_t class_idx = 0; class_idx < THREAD_BLOCK_SIZE_uz; ++class_idx) {
 #pragma omp atomic
-                                        prediction(global_pp_idx, class_block + class_idx) += alpha(class_block + class_idx, global_sv_idx) * temp[internal_pp][internal_sv];
-                                    }
+                                    prediction(global_pp_idx, class_block + class_idx) += alpha(class_block + class_idx, global_sv_idx) * temp[internal_pp][internal_sv];
                                 }
                             }
                         }

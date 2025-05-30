@@ -275,6 +275,8 @@ void csvm::blas_level_3(const solver_type solver, const real_type alpha, const s
                 break;
         }
     }
+    // restore padding entries by setting them to zero
+    C.restore_padding();
 }
 
 //***************************************************//
@@ -330,6 +332,8 @@ aos_matrix<real_type> csvm::predict_values(const parameter &params,
                 [[maybe_unused]] const auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
                 PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "predict_values", "w_kernel", duration }));
             }
+            // restore padding entries by setting them to zero
+            w.restore_padding();
 
             // reduce w on all MPI ranks
             comm_.allreduce_inplace(w);
@@ -369,6 +373,8 @@ aos_matrix<real_type> csvm::predict_values(const parameter &params,
         PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "predict_values", "predict_kernel", duration }));
     }
 
+    // restore padding entries by setting them to zero
+    out.restore_padding();
     return out;
 }
 
