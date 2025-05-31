@@ -41,6 +41,7 @@ namespace plssvm::openmp::detail {
  */
 template <kernel_function_type kernel_function, typename... Args>
 void device_kernel_assembly(real_type *kernel_matrix, const soa_matrix<real_type> &data, const std::size_t device_num_rows, const std::size_t device_row_offset, const std::vector<real_type> &q, const real_type QA_cost, const real_type cost, Args... kernel_function_parameter) {
+    PLSSVM_ASSERT(kernel_matrix != nullptr, "The kernel matrix result pointer must be valid!");
     PLSSVM_ASSERT(q.size() == data.num_rows() - 1, "Sizes mismatch!: {} != {}", q.size(), data.num_rows() - 1);
     PLSSVM_ASSERT(q.size() >= device_num_rows, "The number of place specific rows ({}) cannot be greater the the total number of rows ({})!", device_num_rows, q.size());
     PLSSVM_ASSERT(q.size() >= device_row_offset, "The row offset ({}) cannot be greater the the total number of rows ({})!", device_row_offset, q.size());
