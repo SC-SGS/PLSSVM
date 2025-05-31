@@ -18,6 +18,7 @@
 #include "plssvm/detail/assert.hpp"                                                // PLSSVM_ASSERT
 #include "plssvm/detail/data_distribution.hpp"                                     // plssvm::detail::triangular_data_distribution
 #include "plssvm/detail/logging/mpi_log_untracked.hpp"                             // plssvm::detail::log_untracked
+#include "plssvm/detail/make_unique_for_overwrite.hpp"                             // plssvm::detail::{make_unique_for_overwrite, parallel_zero_memset}
 #include "plssvm/detail/memory_size.hpp"                                           // plssvm::detail::memory_size
 #include "plssvm/detail/move_only_any.hpp"                                         // plssvm::detail::{move_only_any, move_only_any_cast}
 #include "plssvm/detail/tracking/performance_tracker.hpp"                          // plssvm::detail::tracking::tracking_entry, PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY
@@ -120,26 +121,33 @@ std::vector<::plssvm::detail::move_only_any> csvm::assemble_kernel_matrix(const 
                         // get the offset of the data points this device is responsible for
                         const std::size_t row_offset = dist.place_row_offset(0);
 
-                        std::vector<real_type> kernel_matrix(dist.calculate_explicit_kernel_matrix_num_entries_padded(0));  // only explicitly store the upper triangular matrix
+                        // get the number of kernel matrix entries
+                        const std::size_t num_entries = dist.calculate_explicit_kernel_matrix_num_entries_padded(0);
+
+                        // only explicitly store the upper triangular matrix
+                        auto kernel_matrix = ::plssvm::detail::make_unique_for_overwrite<real_type[]>(num_entries);
+                        // initialize kernel matrix to all zeros in parallel
+                        ::plssvm::detail::parallel_zero_memset(kernel_matrix.get(), num_entries);
+
                         const auto start = std::chrono::steady_clock::now();
                         switch (params.kernel_type) {
                             case kernel_function_type::linear:
-                                detail::device_kernel_assembly<kernel_function_type::linear>(kernel_matrix, A, device_specific_num_rows, row_offset, q_red, QA_cost, cost);
+                                detail::device_kernel_assembly<kernel_function_type::linear>(kernel_matrix.get(), A, device_specific_num_rows, row_offset, q_red, QA_cost, cost);
                                 break;
                             case kernel_function_type::polynomial:
-                                detail::device_kernel_assembly<kernel_function_type::polynomial>(kernel_matrix, A, device_specific_num_rows, row_offset, q_red, QA_cost, cost, params.degree, std::get<real_type>(params.gamma), params.coef0);
+                                detail::device_kernel_assembly<kernel_function_type::polynomial>(kernel_matrix.get(), A, device_specific_num_rows, row_offset, q_red, QA_cost, cost, params.degree, std::get<real_type>(params.gamma), params.coef0);
                                 break;
                             case kernel_function_type::rbf:
-                                detail::device_kernel_assembly<kernel_function_type::rbf>(kernel_matrix, A, device_specific_num_rows, row_offset, q_red, QA_cost, cost, std::get<real_type>(params.gamma));
+                                detail::device_kernel_assembly<kernel_function_type::rbf>(kernel_matrix.get(), A, device_specific_num_rows, row_offset, q_red, QA_cost, cost, std::get<real_type>(params.gamma));
                                 break;
                             case kernel_function_type::sigmoid:
-                                detail::device_kernel_assembly<kernel_function_type::sigmoid>(kernel_matrix, A, device_specific_num_rows, row_offset, q_red, QA_cost, cost, std::get<real_type>(params.gamma), params.coef0);
+                                detail::device_kernel_assembly<kernel_function_type::sigmoid>(kernel_matrix.get(), A, device_specific_num_rows, row_offset, q_red, QA_cost, cost, std::get<real_type>(params.gamma), params.coef0);
                                 break;
                             case kernel_function_type::laplacian:
-                                detail::device_kernel_assembly<kernel_function_type::laplacian>(kernel_matrix, A, device_specific_num_rows, row_offset, q_red, QA_cost, cost, std::get<real_type>(params.gamma));
+                                detail::device_kernel_assembly<kernel_function_type::laplacian>(kernel_matrix.get(), A, device_specific_num_rows, row_offset, q_red, QA_cost, cost, std::get<real_type>(params.gamma));
                                 break;
                             case kernel_function_type::chi_squared:
-                                detail::device_kernel_assembly<kernel_function_type::chi_squared>(kernel_matrix, A, device_specific_num_rows, row_offset, q_red, QA_cost, cost, std::get<real_type>(params.gamma));
+                                detail::device_kernel_assembly<kernel_function_type::chi_squared>(kernel_matrix.get(), A, device_specific_num_rows, row_offset, q_red, QA_cost, cost, std::get<real_type>(params.gamma));
                                 break;
                         }
                         const auto end = std::chrono::steady_clock::now();
@@ -200,16 +208,16 @@ void csvm::blas_level_3(const solver_type solver, const real_type alpha, const s
                     break;
                 case solver_type::cg_explicit:
                     {
-                        const auto &explicit_A = ::plssvm::detail::move_only_any_cast<const std::vector<real_type> &>(A.front());
+                        const auto &explicit_A = ::plssvm::detail::move_only_any_cast<const std::unique_ptr<real_type[]> &>(A.front());
                         PLSSVM_ASSERT(!explicit_A.empty(), "The A matrix must not be empty!");
 
                         const auto start = std::chrono::steady_clock::now();
 
-                        detail::device_kernel_symm(num_rows, num_rhs, device_specific_num_rows, row_offset, alpha, explicit_A, B, beta, C);
+                        detail::device_kernel_symm(num_rows, num_rhs, device_specific_num_rows, row_offset, alpha, explicit_A.get(), B, beta, C);
 
                         const std::size_t num_mirror_rows = num_rows - row_offset - device_specific_num_rows;
                         if (num_mirror_rows > std::size_t{ 0 }) {
-                            detail::device_kernel_symm_mirror(num_rows, num_rhs, num_mirror_rows, device_specific_num_rows, row_offset, alpha, explicit_A, B, beta, C);
+                            detail::device_kernel_symm_mirror(num_rows, num_rhs, num_mirror_rows, device_specific_num_rows, row_offset, alpha, explicit_A.get(), B, beta, C);
                         }
 
                         const auto end = std::chrono::steady_clock::now();
@@ -261,6 +269,8 @@ void csvm::blas_level_3(const solver_type solver, const real_type alpha, const s
     });
     // wait until operation is completed
     wait.get();
+    // restore padding entries by setting them to zero
+    C.restore_padding();
 }
 
 //***************************************************//
@@ -317,6 +327,8 @@ aos_matrix<real_type> csvm::predict_values(const parameter &params,
                     [[maybe_unused]] const auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
                     PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "predict_values", "w_kernel", duration }));
                 }
+                // restore padding entries by setting them to zero
+                w.restore_padding();
 
                 // reduce w on all MPI ranks
                 comm_.allreduce_inplace(w);
@@ -358,6 +370,9 @@ aos_matrix<real_type> csvm::predict_values(const parameter &params,
     });
     // wait until operation is completed
     wait.get();
+
+    // restore padding entries by setting them to zero
+    out.restore_padding();
     return out;
 }
 
