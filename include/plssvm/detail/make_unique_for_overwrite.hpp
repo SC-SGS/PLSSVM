@@ -68,7 +68,7 @@ constexpr bool is_bounded_array_v = is_bounded_array<T>::value;
  * @tparam T the type of the object to create
  * @return a unique pointer to the newly created object (`[[nodiscard]]`)
  */
-template <class T, std::enable_if_t<std::is_array_v<T>, bool> = true>
+template <typename T, std::enable_if_t<std::is_array_v<T>, bool> = true>
 [[nodiscard]] std::unique_ptr<T> make_unique_for_overwrite() {
     return std::unique_ptr<T>(new T);
 }
@@ -80,7 +80,7 @@ template <class T, std::enable_if_t<std::is_array_v<T>, bool> = true>
  * @param[in] n the size of the array to create
  * @return a unique pointer to the newly created object (`[[nodiscard]]`)
  */
-template <class T, std::enable_if_t<is_unbounded_array_v<T>, bool> = true>
+template <typename T, std::enable_if_t<is_unbounded_array_v<T>, bool> = true>
 std::unique_ptr<T> make_unique_for_overwrite(const std::size_t n) {
     return std::unique_ptr<T>(new std::remove_extent_t<T>[n]);
 }
@@ -93,7 +93,7 @@ std::unique_ptr<T> make_unique_for_overwrite(const std::size_t n) {
  * @param[in] args the arguments to pass to the constructor
  * @return a unique pointer to the newly created object (`[[nodiscard]]`)
  */
-template <class T, class... Args, std::enable_if_t<is_bounded_array_v<T>, bool> = true>
+template <typename T, typename... Args, std::enable_if_t<is_bounded_array_v<T>, bool> = true>
 auto make_unique_for_overwrite(Args &&...args) = delete;
 
 }  // namespace plssvm::detail
