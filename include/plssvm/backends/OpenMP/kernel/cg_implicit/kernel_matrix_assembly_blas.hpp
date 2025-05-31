@@ -54,7 +54,7 @@ inline void device_kernel_assembly_symm(const real_type alpha, const std::vector
     const std::size_t num_features = data.num_cols();
     const std::size_t num_classes = B.num_rows();
     const auto blocked_row_range = static_cast<std::size_t>(std::ceil(static_cast<real_type>(num_rows - device_row_offset) / INTERNAL_BLOCK_SIZE));
-    const auto blocked_device_specific_num_rows = static_cast<std::size_t>(std::ceil(static_cast<real_type>(device_num_rows) / INTERNAL_BLOCK_SIZE));
+    const auto blocked_device_num_rows = static_cast<std::size_t>(std::ceil(static_cast<real_type>(device_num_rows) / INTERNAL_BLOCK_SIZE));
 
     // cast all values to 64-bit unsigned long long to prevent potential 32-bit overflows
     const auto INTERNAL_BLOCK_SIZE_uz = static_cast<std::size_t>(INTERNAL_BLOCK_SIZE);
@@ -62,7 +62,7 @@ inline void device_kernel_assembly_symm(const real_type alpha, const std::vector
 
 #pragma omp parallel for collapse(2) schedule(dynamic)
     for (std::size_t row_block = 0; row_block < blocked_row_range; row_block += THREAD_BLOCK_SIZE_uz) {
-        for (std::size_t col_block = 0; col_block < blocked_device_specific_num_rows; col_block += THREAD_BLOCK_SIZE_uz) {
+        for (std::size_t col_block = 0; col_block < blocked_device_num_rows; col_block += THREAD_BLOCK_SIZE_uz) {
             // perform operations on the current block
             for (std::size_t row_thread = 0; row_thread < THREAD_BLOCK_SIZE_uz; ++row_thread) {
                 for (std::size_t col_thread = 0; col_thread < THREAD_BLOCK_SIZE_uz; ++col_thread) {
