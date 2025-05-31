@@ -19,7 +19,7 @@
 #include "plssvm/detail/assert.hpp"                                                   // PLSSVM_ASSERT
 #include "plssvm/detail/data_distribution.hpp"                                        // plssvm::detail::triangular_data_distribution
 #include "plssvm/detail/logging/mpi_log_untracked.hpp"                                // plssvm::detail::log_untracked
-#include "plssvm/detail/make_unique_for_overwrite.hpp"                                // plssvm::detail::make_unique_for_overwrite
+#include "plssvm/detail/make_unique_for_overwrite.hpp"                                // plssvm::detail::{make_unique_for_overwrite, parallel_zero_memset}
 #include "plssvm/detail/memory_size.hpp"                                              // plssvm::detail::memory_size
 #include "plssvm/detail/move_only_any.hpp"                                            // plssvm::detail::{move_only_any, move_only_any_cast}
 #include "plssvm/detail/tracking/performance_tracker.hpp"                             // plssvm::detail::tracking::tracking_entry, PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY
@@ -131,15 +131,8 @@ std::vector<::plssvm::detail::move_only_any> csvm::assemble_kernel_matrix(const 
 
                     // only explicitly store the upper triangular matrix
                     auto kernel_matrix = ::plssvm::detail::make_unique_for_overwrite<real_type[]>(num_entries);
-                    // initialize kernel matrix to all zeros in parallel using OpenMP if available, otherwise fall back to a sequential memset
-#if defined(_OPENMP)
-    #pragma omp parallel for
-                    for (std::size_t i = 0; i < num_entries; ++i) {
-                        kernel_matrix[i] = real_type{ 0.0 };
-                    }
-#else
-                    std::memset(kernel_matrix.get(), 0, num_entries * sizeof(real_type));
-#endif
+                    // initialize kernel matrix to all zeros in parallel
+                    ::plssvm::detail::parallel_zero_memset(kernel_matrix.get(), num_entries);
 
                     const auto start = std::chrono::steady_clock::now();
                     switch (params.kernel_type) {

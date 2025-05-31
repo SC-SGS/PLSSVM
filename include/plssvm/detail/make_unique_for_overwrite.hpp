@@ -13,7 +13,10 @@
 #ifndef PLSSVM_DETAIL_MAKE_UNIQUE_FOR_OVERWRITE_HPP_
 #define PLSSVM_DETAIL_MAKE_UNIQUE_FOR_OVERWRITE_HPP_
 
+#include "plssvm/detail/assert.hpp"  // PLSSVM_ASSERT
+
 #include <cstddef>      // std::size_t
+#include <cstring>      // std::memset
 #include <memory>       // std::unique_ptr
 #include <type_traits>  // std::false_type, std::true_type, std::enable_if_t, std::is_array_v
 
@@ -95,6 +98,21 @@ std::unique_ptr<T> make_unique_for_overwrite(const std::size_t n) {
  */
 template <typename T, typename... Args, std::enable_if_t<is_bounded_array_v<T>, bool> = true>
 auto make_unique_for_overwrite(Args &&...args) = delete;
+
+template <typename T>
+void parallel_zero_memset(T *dest, const std::size_t count) {
+    PLSSVM_ASSERT(dest != nullptr, "The destination pointer may not be a nullptr!");
+
+// initialize the data pointed to by dest to all zeros in parallel using OpenMP if available, otherwise fall back to a sequential memset
+#if defined(_OPENMP)
+    #pragma omp parallel for
+    for (std::size_t i = 0; i < count; ++i) {
+        dest[i] = T{ 0 };
+    }
+#else
+    std::memset(dest, 0, count * sizeof(T));
+#endif
+}
 
 }  // namespace plssvm::detail
 
