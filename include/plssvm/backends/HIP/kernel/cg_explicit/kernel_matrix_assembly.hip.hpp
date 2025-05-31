@@ -55,7 +55,7 @@ __global__ void device_kernel_assembly(real_type *kernel_matrix, const real_type
     const auto blockIdx_x = static_cast<std::size_t>(blockIdx.x) + grid_x_offset;  // current block in grid x-dimension + offsets if the grid size is too large
     const auto blockIdx_y = static_cast<std::size_t>(blockIdx.y) + grid_y_offset;  // current block in grid y-dimension + offsets if the grid size is too large
 
-    // create two shared memory arrays used for caching data point features
+    // create two shared memory arrays used for caching
     __shared__ real_type data_i_cache[THREAD_BLOCK_SIZE][INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE];
     __shared__ real_type data_j_cache[THREAD_BLOCK_SIZE][INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE];
 
@@ -65,30 +65,30 @@ __global__ void device_kernel_assembly(real_type *kernel_matrix, const real_type
         real_type temp[INTERNAL_BLOCK_SIZE][INTERNAL_BLOCK_SIZE]{};
 
         {
-            // calculate the indices used in the current thread paying attention to coalesced memory accesses
-            const auto i_linear = blockIdx_x * blockDim_x * INTERNAL_BLOCK_SIZE_uz + threadIdx_x;
-            const auto j_linear = blockIdx_y * blockDim_y * INTERNAL_BLOCK_SIZE_uz + threadIdx_x;
+            // calculate the indices used in the current thread, pays attention to coalesced memory accesses
+            const auto i_idx_linear = blockIdx_x * blockDim_x * INTERNAL_BLOCK_SIZE_uz + threadIdx_x;  // num_rows - device_row_offset
+            const auto j_idx_linear = blockIdx_y * blockDim_y * INTERNAL_BLOCK_SIZE_uz + threadIdx_x;  // device_num_rows
 
             // iterate over all features using blocking to be able to cache them for faster memory accesses
-            for (std::size_t dim = 0; dim < num_features; dim += THREAD_BLOCK_SIZE_uz) {
+            for (std::size_t feature_block = 0; feature_block < num_features; feature_block += THREAD_BLOCK_SIZE_uz) {
                 // load data into shared memory
                 for (unsigned internal = 0; internal < INTERNAL_BLOCK_SIZE; ++internal) {
-                    // calculate the indices to access the global data points, pays attention to coalesced memory accesses
-                    const auto global_i_linear = device_row_offset + i_linear + static_cast<std::size_t>(internal) * THREAD_BLOCK_SIZE_uz;
-                    const auto global_j_linear = device_row_offset + j_linear + static_cast<std::size_t>(internal) * THREAD_BLOCK_SIZE_uz;
+                    // calculate the indices to access the global data, pays attention to coalesced memory accesses
+                    const auto global_i_idx_linear = device_row_offset + i_idx_linear + static_cast<std::size_t>(internal) * THREAD_BLOCK_SIZE_uz;
+                    const auto global_j_idx_linear = device_row_offset + j_idx_linear + static_cast<std::size_t>(internal) * THREAD_BLOCK_SIZE_uz;
 
                     // store the values in the shared memory
-                    data_i_cache[threadIdx.y][internal * THREAD_BLOCK_SIZE + threadIdx.x] = data[(dim + threadIdx_y) * (num_rows + std::size_t{ 1 } + PADDING_SIZE_uz) + global_i_linear];
-                    data_j_cache[threadIdx.y][internal * THREAD_BLOCK_SIZE + threadIdx.x] = data[(dim + threadIdx_y) * (num_rows + std::size_t{ 1 } + PADDING_SIZE_uz) + global_j_linear];
+                    data_i_cache[threadIdx.y][internal * THREAD_BLOCK_SIZE + threadIdx.x] = data[(feature_block + threadIdx_y) * (num_rows + std::size_t{ 1 } + PADDING_SIZE_uz) + global_i_idx_linear];  // SoA
+                    data_j_cache[threadIdx.y][internal * THREAD_BLOCK_SIZE + threadIdx.x] = data[(feature_block + threadIdx_y) * (num_rows + std::size_t{ 1 } + PADDING_SIZE_uz) + global_j_idx_linear];  // SoA
                 }
                 __syncthreads();  // wait until all threads loaded their part of the data
 
                 // perform the feature reduction calculation
-                for (unsigned block_dim = 0; block_dim < THREAD_BLOCK_SIZE; ++block_dim) {
+                for (unsigned feature = 0; feature < THREAD_BLOCK_SIZE; ++feature) {
                     for (unsigned internal_i = 0; internal_i < INTERNAL_BLOCK_SIZE; ++internal_i) {
                         for (unsigned internal_j = 0; internal_j < INTERNAL_BLOCK_SIZE; ++internal_j) {
-                            temp[internal_i][internal_j] += detail::feature_reduce<kernel_function>(data_i_cache[block_dim][threadIdx.x * INTERNAL_BLOCK_SIZE + internal_i],
-                                                                                                    data_j_cache[block_dim][threadIdx.y * INTERNAL_BLOCK_SIZE + internal_j]);
+                            temp[internal_i][internal_j] += detail::feature_reduce<kernel_function>(data_i_cache[feature][threadIdx.x * INTERNAL_BLOCK_SIZE + internal_i],
+                                                                                                    data_j_cache[feature][threadIdx.y * INTERNAL_BLOCK_SIZE + internal_j]);
                         }
                     }
                 }
@@ -97,29 +97,29 @@ __global__ void device_kernel_assembly(real_type *kernel_matrix, const real_type
         }
 
         // calculate the indices used in the current thread
-        const auto i = (blockIdx_x * blockDim_x + threadIdx_x) * INTERNAL_BLOCK_SIZE_uz;
-        const auto j = (blockIdx_y * blockDim_y + threadIdx_y) * INTERNAL_BLOCK_SIZE_uz;
+        const auto i_idx = (blockIdx_x * blockDim_x + threadIdx_x) * INTERNAL_BLOCK_SIZE_uz;  // num_rows - device_row_offset
+        const auto j_idx = (blockIdx_y * blockDim_y + threadIdx_y) * INTERNAL_BLOCK_SIZE_uz;  // device_num_rows
 
         // apply the remaining part of the kernel function and store the value in the output kernel matrix
         for (unsigned internal_i = 0; internal_i < INTERNAL_BLOCK_SIZE; ++internal_i) {
             for (unsigned internal_j = 0; internal_j < INTERNAL_BLOCK_SIZE; ++internal_j) {
-                // calculate the indices to access the global data points and wrt the current device
-                const auto device_global_i = i + static_cast<std::size_t>(internal_i);
-                const auto global_i = device_row_offset + device_global_i;
-                const auto device_global_j = j + static_cast<std::size_t>(internal_j);
-                const auto global_j = device_row_offset + device_global_j;
+                // calculate the indices to access the global data and the data with respect to the current device
+                const auto device_global_i_idx = i_idx + static_cast<std::size_t>(internal_i);
+                const auto global_i_idx = device_row_offset + device_global_i_idx;
+                const auto device_global_j_idx = j_idx + static_cast<std::size_t>(internal_j);
+                const auto global_j_idx = device_row_offset + device_global_j_idx;
 
-                // be sure to not perform out of bounds accesses for the kernel matrix (only using the upper triangular matrix)
-                if (device_global_i < (num_rows - device_row_offset) && device_global_j < device_num_rows && global_i >= global_j) {
+                // be sure to not perform out-of-bounds accesses (only using the upper triangular matrix)
+                if (device_global_i_idx < (num_rows - device_row_offset) && device_global_j_idx < device_num_rows && global_i_idx >= global_j_idx) {
                     real_type temp_ij = temp[internal_i][internal_j];
                     // apply the final kernel function
-                    temp_ij = detail::apply_kernel_function<kernel_function>(temp_ij, kernel_function_parameter...) + QA_cost - q[global_i] - q[global_j];
+                    temp_ij = detail::apply_kernel_function<kernel_function>(temp_ij, kernel_function_parameter...) + QA_cost - q[global_i_idx] - q[global_j_idx];
                     // apply the cost on the diagonal
-                    if (global_i == global_j) {
+                    if (global_i_idx == global_j_idx) {
                         temp_ij += cost;
                     }
                     // update the upper triangular kernel matrix
-                    kernel_matrix[device_global_j * (num_rows - device_row_offset + PADDING_SIZE_uz) - device_global_j * (device_global_j + std::size_t{ 1 }) / std::size_t{ 2 } + device_global_i] = temp_ij;
+                    kernel_matrix[device_global_j_idx * (num_rows - device_row_offset + PADDING_SIZE_uz) - device_global_j_idx * (device_global_j_idx + std::size_t{ 1 }) / std::size_t{ 2 } + device_global_i_idx] = temp_ij;
                 }
             }
         }
