@@ -99,6 +99,12 @@ std::unique_ptr<T> make_unique_for_overwrite(const std::size_t n) {
 template <typename T, typename... Args, std::enable_if_t<is_bounded_array_v<T>, bool> = true>
 auto make_unique_for_overwrite(Args &&...args) = delete;
 
+/**
+ * @brief Fill the array @p dest with zeros in parallel using OpenMP if available, otherwise fall back to a sequential memset.
+ * @tparam T the type of the values
+ * @param[in,out] dest the array to fill with zeros
+ * @param[in] count the number of values to fill
+ */
 template <typename T>
 void parallel_zero_memset(T *dest, const std::size_t count) {
     PLSSVM_ASSERT(dest != nullptr, "The destination pointer may not be a nullptr!");
