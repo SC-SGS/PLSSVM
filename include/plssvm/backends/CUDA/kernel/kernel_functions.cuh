@@ -51,7 +51,6 @@ template <>
 
 /**
  * @brief Fast integer power function. Computes base^exponent and takes advantage of the fact that degree may only be positive integer values.
- * @details Hardcodes the power function for degree <= 6, uses a simple for loop otherwise.
  * @param[in] base the base
  * @param[in] exponent the exponent
  * @return base^exponent (`[[nodiscard]]`)

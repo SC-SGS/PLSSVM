@@ -15,6 +15,8 @@
 
 #include "plssvm/constants.hpp"  // plssvm::{real_type, THREAD_BLOCK_SIZE, INTERNAL_BLOCK_SIZE, PADDING_SIZE}
 
+#include <cstddef>  // std::size_t
+
 namespace plssvm::cuda::detail {
 
 /**

@@ -32,13 +32,13 @@ namespace plssvm::openmp::detail {
  * @param[in] alpha the previously learned weights
  * @param[in] support_vectors the support vectors
  * @param[in] device_num_sv the number of support vectors the current device is responsible for
- * @param[in] sv_offset the first row in @p support_vectors the current device is responsible for
+ * @param[in] device_sv_offset the first row in @p support_vectors the current device is responsible for
  */
-inline void device_kernel_w_linear(soa_matrix<real_type> &w, const aos_matrix<real_type> &alpha, const soa_matrix<real_type> &support_vectors, const std::size_t device_num_sv, const std::size_t sv_offset) {
+inline void device_kernel_w_linear(soa_matrix<real_type> &w, const aos_matrix<real_type> &alpha, const soa_matrix<real_type> &support_vectors, const std::size_t device_num_sv, const std::size_t device_sv_offset) {
     PLSSVM_ASSERT(alpha.num_cols() == support_vectors.num_rows(), "Size mismatch: {} vs {}!", alpha.num_cols(), support_vectors.num_rows());
     PLSSVM_ASSERT(w.shape() == (plssvm::shape{ alpha.num_rows(), support_vectors.num_cols() }), "Shape mismatch: {} vs {}!", w.shape(), (plssvm::shape{ alpha.num_rows(), support_vectors.num_cols() }));
     PLSSVM_ASSERT(support_vectors.num_rows() >= device_num_sv, "The number of place specific sv ({}) cannot be greater the the total number of sv ({})!", device_num_sv, support_vectors.num_rows());
-    PLSSVM_ASSERT(support_vectors.num_rows() >= sv_offset, "The sv offset ({}) cannot be greater the the total number of sv ({})!", sv_offset, support_vectors.num_rows());
+    PLSSVM_ASSERT(support_vectors.num_rows() >= device_sv_offset, "The sv offset ({}) cannot be greater the the total number of sv ({})!", device_sv_offset, support_vectors.num_rows());
 
     // calculate constants
     const std::size_t num_classes = alpha.num_rows();
@@ -52,7 +52,7 @@ inline void device_kernel_w_linear(soa_matrix<real_type> &w, const aos_matrix<re
     const auto INTERNAL_BLOCK_SIZE_uz = static_cast<std::size_t>(INTERNAL_BLOCK_SIZE);
     const auto THREAD_BLOCK_SIZE_uz = static_cast<std::size_t>(THREAD_BLOCK_SIZE);
 
-#pragma omp parallel for collapse(2) default(none) shared(w, support_vectors, alpha) firstprivate(blocked_num_classes, blocked_num_features, num_classes, num_features, device_num_sv, sv_offset)
+#pragma omp parallel for collapse(2) default(none) shared(w, support_vectors, alpha) firstprivate(blocked_num_classes, blocked_num_features, num_classes, num_features, device_num_sv, device_sv_offset)
     for (std::size_t feature_block = 0; feature_block < blocked_num_features; feature_block += THREAD_BLOCK_SIZE_uz) {
         for (std::size_t class_block = 0; class_block < blocked_num_classes; class_block += THREAD_BLOCK_SIZE_uz) {
             // perform operations on the current block
@@ -75,7 +75,7 @@ inline void device_kernel_w_linear(soa_matrix<real_type> &w, const aos_matrix<re
 
                                 real_type sum{ 0.0 };
                                 for (std::size_t sv = 0; sv < THREAD_BLOCK_SIZE_uz; ++sv) {
-                                    sum += alpha(global_class_idx, sv_offset + sv_block + sv) * support_vectors(sv_offset + sv_block + sv, global_feature_idx);
+                                    sum += alpha(global_class_idx, device_sv_offset + sv_block + sv) * support_vectors(device_sv_offset + sv_block + sv, global_feature_idx);
                                 }
                                 temp[internal_class][internal_feature] += sum;
                             }
