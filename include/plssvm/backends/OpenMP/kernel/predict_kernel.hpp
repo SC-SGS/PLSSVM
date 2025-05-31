@@ -43,8 +43,6 @@ inline void device_kernel_w_linear(soa_matrix<real_type> &w, const aos_matrix<re
     // calculate constants
     const std::size_t num_classes = alpha.num_rows();
     const std::size_t num_features = support_vectors.num_cols();
-
-    // calculate constants
     const auto blocked_num_features = static_cast<std::size_t>(std::ceil(static_cast<real_type>(num_features) / INTERNAL_BLOCK_SIZE));
     const auto blocked_num_classes = static_cast<std::size_t>(std::ceil(static_cast<real_type>(num_classes) / INTERNAL_BLOCK_SIZE));
 
@@ -65,6 +63,7 @@ inline void device_kernel_w_linear(soa_matrix<real_type> &w, const aos_matrix<re
                     // create a thread private array used for internal caching
                     std::array<std::array<real_type, INTERNAL_BLOCK_SIZE>, INTERNAL_BLOCK_SIZE> temp{};
 
+                    // iterate over all support vectors
                     for (std::size_t sv_block = 0; sv_block < device_num_sv; sv_block += THREAD_BLOCK_SIZE_uz) {
                         // perform the dot product calculation
                         for (unsigned internal_feature = 0; internal_feature < INTERNAL_BLOCK_SIZE; ++internal_feature) {
@@ -117,8 +116,6 @@ inline void device_kernel_predict_linear(aos_matrix<real_type> &prediction, cons
     // calculate constants
     const std::size_t num_classes = prediction.num_cols();
     const std::size_t num_features = predict_points.num_cols();
-
-    // calculate constants
     const auto blocked_device_num_predict_points = static_cast<std::size_t>(std::ceil(static_cast<real_type>(device_num_predict_points) / INTERNAL_BLOCK_SIZE));
     const auto blocked_num_classes = static_cast<std::size_t>(std::ceil(static_cast<real_type>(num_classes) / INTERNAL_BLOCK_SIZE));
 
@@ -139,6 +136,7 @@ inline void device_kernel_predict_linear(aos_matrix<real_type> &prediction, cons
                     // create a thread private array used for internal caching
                     std::array<std::array<real_type, INTERNAL_BLOCK_SIZE>, INTERNAL_BLOCK_SIZE> temp{};
 
+                    // iterate over all features
                     for (std::size_t feature_block = 0; feature_block < num_features; feature_block += THREAD_BLOCK_SIZE_uz) {
                         // perform the dot product calculation
                         for (unsigned internal_pp = 0; internal_pp < INTERNAL_BLOCK_SIZE; ++internal_pp) {
@@ -197,9 +195,9 @@ inline void device_kernel_predict(aos_matrix<real_type> &prediction, const aos_m
     // calculate constants
     const std::size_t num_classes = alpha.num_rows();
     const std::size_t num_support_vectors = support_vectors.num_rows();
+    const std::size_t num_features = predict_points.num_cols();
     const auto blocked_num_support_vectors = static_cast<std::size_t>(std::ceil(static_cast<real_type>(num_support_vectors) / INTERNAL_BLOCK_SIZE));
     const auto blocked_device_num_predict_points = static_cast<std::size_t>(std::ceil(static_cast<real_type>(device_num_predict_points) / INTERNAL_BLOCK_SIZE));
-    const std::size_t num_features = predict_points.num_cols();
 
     // cast all values to 64-bit unsigned long long to prevent potential 32-bit overflows
     const auto INTERNAL_BLOCK_SIZE_uz = static_cast<std::size_t>(INTERNAL_BLOCK_SIZE);
@@ -258,7 +256,6 @@ inline void device_kernel_predict(aos_matrix<real_type> &prediction, const aos_m
                                 const auto global_pp_idx = device_row_offset + pp_idx + static_cast<std::size_t>(internal_pp);
                                 const auto global_sv_idx = sv_idx + static_cast<std::size_t>(internal_sv);
 
-                                // be sure to not perform out-of-bounds accesses
                                 for (std::size_t class_idx = 0; class_idx < THREAD_BLOCK_SIZE_uz; ++class_idx) {
 #pragma omp atomic
                                     prediction(global_pp_idx, class_block + class_idx) += alpha(class_block + class_idx, global_sv_idx) * temp[internal_pp][internal_sv];

@@ -122,6 +122,7 @@ inline void device_kernel_assembly_symm(const real_type alpha, const std::vector
                         for (std::size_t class_block = 0; class_block < num_classes; class_block += THREAD_BLOCK_SIZE_uz) {
                             for (unsigned internal_i = 0; internal_i < INTERNAL_BLOCK_SIZE; ++internal_i) {
                                 for (unsigned internal_j = 0; internal_j < INTERNAL_BLOCK_SIZE; ++internal_j) {
+                                    // calculate the indices to access the global data
                                     const auto global_i_idx = device_row_offset + i_idx + static_cast<std::size_t>(internal_i);
                                     const auto global_j_idx = device_row_offset + j_idx + static_cast<std::size_t>(internal_j);
 
