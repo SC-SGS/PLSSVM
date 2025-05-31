@@ -86,7 +86,7 @@ void device_kernel_assembly(real_type *kernel_matrix, const soa_matrix<real_type
                                     for (std::size_t feature = 0; feature < THREAD_BLOCK_SIZE_uz; ++feature) {
                                         sum += detail::feature_reduce<kernel_function>(data(global_i_idx, feature_block + feature), data(global_j_idx, feature_block + feature));
                                     }
-                                    temp[internal_i][internal_j] += sum;
+                                    temp[internal_j][internal_i] += sum;
                                 }
                             }
                         }
@@ -102,7 +102,7 @@ void device_kernel_assembly(real_type *kernel_matrix, const soa_matrix<real_type
 
                                 // be sure to not perform out-of-bounds accesses (only using the upper triangular matrix)
                                 if (device_global_i_idx < (num_rows - device_row_offset) && device_global_j_idx < device_num_rows && global_i_idx >= global_j_idx) {
-                                    real_type temp_ij = temp[internal_i][internal_j];
+                                    real_type temp_ij = temp[internal_j][internal_i];
                                     // apply the final kernel function
                                     temp_ij = detail::apply_kernel_function<kernel_function>(temp_ij, kernel_function_parameter...) + QA_cost - q[global_i_idx] - q[global_j_idx];
                                     // apply the cost on the diagonal

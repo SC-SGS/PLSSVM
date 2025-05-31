@@ -236,7 +236,7 @@ inline void device_kernel_predict(aos_matrix<real_type> &prediction, const aos_m
                                 for (std::size_t feature = 0; feature < THREAD_BLOCK_SIZE_uz; ++feature) {
                                     sum += detail::feature_reduce<kernel_function>(support_vectors(global_sv_idx, feature_block + feature), predict_points(global_pp_idx, feature_block + feature));
                                 }
-                                temp[internal_pp][internal_sv] += sum;
+                                temp[internal_sv][internal_pp] += sum;
                             }
                         }
                     }
@@ -244,7 +244,7 @@ inline void device_kernel_predict(aos_matrix<real_type> &prediction, const aos_m
                     // update temp using the respective kernel function
                     for (unsigned internal_pp = 0; internal_pp < INTERNAL_BLOCK_SIZE; ++internal_pp) {
                         for (unsigned internal_sv = 0; internal_sv < INTERNAL_BLOCK_SIZE; ++internal_sv) {
-                            temp[internal_pp][internal_sv] = detail::apply_kernel_function<kernel_function>(temp[internal_pp][internal_sv], kernel_function_parameter...);
+                            temp[internal_sv][internal_pp] = detail::apply_kernel_function<kernel_function>(temp[internal_sv][internal_pp], kernel_function_parameter...);
                         }
                     }
 
@@ -258,7 +258,7 @@ inline void device_kernel_predict(aos_matrix<real_type> &prediction, const aos_m
 
                                 for (std::size_t class_idx = 0; class_idx < THREAD_BLOCK_SIZE_uz; ++class_idx) {
 #pragma omp atomic
-                                    prediction(global_pp_idx, class_block + class_idx) += alpha(class_block + class_idx, global_sv_idx) * temp[internal_pp][internal_sv];
+                                    prediction(global_pp_idx, class_block + class_idx) += alpha(class_block + class_idx, global_sv_idx) * temp[internal_sv][internal_pp];
                                 }
                             }
                         }

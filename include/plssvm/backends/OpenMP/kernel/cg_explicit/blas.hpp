@@ -86,7 +86,7 @@ inline void device_kernel_symm(const std::size_t num_rows, const std::size_t num
                                     }
                                     sum += A_cache * B(global_i_idx, device_row_offset + dim_block + dim);
                                 }
-                                temp[internal_i][internal_j] += sum;
+                                temp[internal_j][internal_i] += sum;
                             }
                         }
                     }
@@ -101,7 +101,7 @@ inline void device_kernel_symm(const std::size_t num_rows, const std::size_t num
 
                             // be sure to not perform out-of-bounds accesses
                             if (global_i_idx < num_rhs && device_global_j_idx < device_num_rows) {
-                                C(global_i_idx, global_j_idx) = alpha * temp[internal_i][internal_j] + beta * C(global_i_idx, global_j_idx);
+                                C(global_i_idx, global_j_idx) = alpha * temp[internal_j][internal_i] + beta * C(global_i_idx, global_j_idx);
                             }
                         }
                     }
@@ -169,7 +169,7 @@ inline void device_kernel_symm_mirror(const std::size_t num_rows, const std::siz
                                     const real_type A_cache = A[(dim_block + dim) * (num_rows - device_row_offset + PADDING_SIZE_uz) - (dim_block + dim - std::size_t{ 1 }) * (dim_block + dim) / std::size_t{ 2 } + device_num_rows - (dim_block + dim) + global_j_idx];
                                     sum += A_cache * B(global_i_idx, device_row_offset + dim_block + dim);
                                 }
-                                temp[internal_i][internal_j] += sum;
+                                temp[internal_j][internal_i] += sum;
                             }
                         }
                     }
@@ -184,7 +184,7 @@ inline void device_kernel_symm_mirror(const std::size_t num_rows, const std::siz
 
                             // be sure to not perform out-of-bounds accesses
                             if (global_i_idx < num_rhs && partial_global_j_idx < num_mirror_rows) {
-                                C(global_i_idx, global_j_idx) = alpha * temp[internal_i][internal_j] + beta * C(global_i_idx, global_j_idx);
+                                C(global_i_idx, global_j_idx) = alpha * temp[internal_j][internal_i] + beta * C(global_i_idx, global_j_idx);
                             }
                         }
                     }
