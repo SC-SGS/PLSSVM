@@ -154,7 +154,7 @@ inline void device_kernel_predict_linear(aos_matrix<real_type> &prediction, cons
                         }
                     }
 
-                    // store the result back to the w vector
+                    // update the global array with the local one
                     for (unsigned internal_pp = 0; internal_pp < INTERNAL_BLOCK_SIZE; ++internal_pp) {
                         for (unsigned internal_class = 0; internal_class < INTERNAL_BLOCK_SIZE; ++internal_class) {
                             // calculate the indices to access the global data
