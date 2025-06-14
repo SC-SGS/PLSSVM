@@ -187,7 +187,7 @@ __global__ void device_kernel_predict_linear(real_type *prediction, const real_t
  * @param[in] prediction the predicted values
  * @param[in] alpha the previously learned weights
  * @param[in] rho the previously learned biases
- * @param[in] sv the support vectors
+ * @param[in] support_vectors the support vectors
  * @param[in] predict_points the data points to predict
  * @param[in] num_classes the number of classes
  * @param[in] num_sv the number of support vectors
@@ -198,7 +198,7 @@ __global__ void device_kernel_predict_linear(real_type *prediction, const real_t
  * @param[in] kernel_function_parameter the parameters necessary to apply the @p kernel_function
  */
 template <kernel_function_type kernel_function, typename... Args>
-__global__ void device_kernel_predict(real_type *prediction, const real_type *alpha, const real_type *rho, const real_type *sv, const real_type *predict_points, const std::size_t num_classes, const std::size_t num_sv, const std::size_t num_predict_points, const std::size_t num_features, const std::size_t grid_x_offset, const std::size_t grid_y_offset, Args... kernel_function_parameter) {
+__global__ void device_kernel_predict(real_type *prediction, const real_type *alpha, const real_type *rho, const real_type *support_vectors, const real_type *predict_points, const std::size_t num_classes, const std::size_t num_sv, const std::size_t num_predict_points, const std::size_t num_features, const std::size_t grid_x_offset, const std::size_t grid_y_offset, Args... kernel_function_parameter) {
     // cast all values to 64-bit std::size_t to prevent potential 32-bit overflows
     constexpr auto INTERNAL_BLOCK_SIZE_uz = static_cast<std::size_t>(INTERNAL_BLOCK_SIZE);
     constexpr auto THREAD_BLOCK_SIZE_uz = static_cast<std::size_t>(THREAD_BLOCK_SIZE);
@@ -237,7 +237,7 @@ __global__ void device_kernel_predict(real_type *prediction, const real_type *al
 
                 // store the values in the shared memory
                 pp_cache[threadIdx.y][internal * THREAD_BLOCK_SIZE + threadIdx.x] = predict_points[(feature_block + threadIdx_y) * (num_predict_points + PADDING_SIZE_uz) + global_pp_idx_linear];  // SoA
-                sv_cache[threadIdx.y][internal * THREAD_BLOCK_SIZE + threadIdx.x] = sv[(feature_block + threadIdx_y) * (num_sv + PADDING_SIZE_uz) + global_sv_idx_linear];                          // SoA
+                sv_cache[threadIdx.y][internal * THREAD_BLOCK_SIZE + threadIdx.x] = support_vectors[(feature_block + threadIdx_y) * (num_sv + PADDING_SIZE_uz) + global_sv_idx_linear];             // SoA
             }
             __syncthreads();  // wait until all threads loaded their part of the data
 
