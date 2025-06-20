@@ -82,6 +82,9 @@ inline void device_kernel_assembly_symm(const real_type alpha, const std::vector
             // create a thread private array used for internal caching
             std::array<std::array<real_type, INTERNAL_BLOCK_SIZE>, INTERNAL_BLOCK_SIZE> temp{};
 
+            //*************************************************************************//
+            //                   inplace kernel matrix construction                    //
+            //*************************************************************************//
             // iterate over all features
             for (std::size_t feature_block = 0; feature_block < num_features; feature_block += THREAD_BLOCK_SIZE_uz) {
                 for (unsigned internal_i = 0; internal_i < INTERNAL_BLOCK_SIZE; ++internal_i) {
@@ -108,7 +111,7 @@ inline void device_kernel_assembly_symm(const real_type alpha, const std::vector
                     const auto device_global_j_idx = j_idx + static_cast<std::size_t>(internal_j);
                     const auto global_j_idx = device_row_offset + device_global_j_idx;
 
-                    // be sure to not perform out of bounds accesses for the kernel matrix (only using the upper triangular matrix)
+                    // be sure to not perform out-of-bounds accesses (only using the upper triangular matrix)
                     if (device_global_i_idx < (num_rows - device_row_offset) && device_global_j_idx < device_num_rows && global_i_idx >= global_j_idx) {
                         // apply the final kernel function
                         temp[internal_j][internal_i] = detail::apply_kernel_function<kernel_function>(temp[internal_j][internal_i], kernel_function_parameter...) + QA_cost - q[global_i_idx] - q[global_j_idx];
