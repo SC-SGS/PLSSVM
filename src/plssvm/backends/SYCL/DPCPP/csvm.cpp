@@ -147,7 +147,7 @@ void csvm::init(const target_platform target) {
                                           "  [{}, {}]\n",
                                           device,
                                           trimmed_device_name);
-            device_names.emplace_back(device_name);
+            device_names.emplace_back(trimmed_device_name);
         }
     }
 
