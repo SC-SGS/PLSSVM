@@ -78,8 +78,8 @@ endif ()
 # set base sources
 set(PLSSVM_BASE_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/backends/Kokkos/execution_space.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/backends/SYCL/data_parallel_kernels.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/backends/SYCL/implementation_types.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/backends/SYCL/kernel_invocation_types.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/backends/stdpar/implementation_types.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/backends/execution_range.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/data_set/min_max_scaler.cpp
@@ -945,16 +945,16 @@ if (TARGET ${PLSSVM_SYCL_BACKEND_LIBRARY_NAME})
 choose the SYCL implementation to be used in the SYCL backend: ${PLSSVM_SYCL_BACKEND_NAME_LIST} (default: automatic)
 "
     )
-    string(REPLACE ";" "|" PLSSVM_SYCL_KERNEL_INVOCATION_TYPE_NAME_LIST "${PLSSVM_SYCL_KERNEL_INVOCATION_TYPE_NAME_LIST}")
-    set(PLSSVM_SYCL_KERNEL_INVOCATION_TYPE_MANPAGE_ENTRY
+    string(REPLACE ";" "|" PLSSVM_SYCL_DATA_PARALLEL_KERNEL_NAME_LIST "${PLSSVM_SYCL_DATA_PARALLEL_KERNEL_NAME_LIST}")
+    set(PLSSVM_SYCL_DATA_PARALLEL_KERNEL_MANPAGE_ENTRY
         "
 .TP
-.B --sycl_kernel_invocation_type
-choose the kernel invocation type when using SYCL as backend: ${PLSSVM_SYCL_KERNEL_INVOCATION_TYPE_NAME_LIST} (default: automatic)
+.B --sycl_data_parallel_kernel
+choose the data parallel kernel when using SYCL as backend: ${PLSSVM_SYCL_DATA_PARALLEL_KERNEL_NAME_LIST} (default: automatic)
 "
     )
 endif ()
-set(PLSSVM_SYCL_MANPAGE_ENTRY "${PLSSVM_SYCL_KERNEL_INVOCATION_TYPE_MANPAGE_ENTRY}${PLSSVM_SYCL_IMPLEMENTATION_TYPE_MANPAGE_ENTRY}")
+set(PLSSVM_SYCL_MANPAGE_ENTRY "${PLSSVM_SYCL_DATA_PARALLEL_KERNEL_MANPAGE_ENTRY}${PLSSVM_SYCL_IMPLEMENTATION_TYPE_MANPAGE_ENTRY}")
 # assemble the Kokkos manpage entry
 if (TARGET ${PLSSVM_KOKKOS_BACKEND_LIBRARY_NAME})
     string(REPLACE ";" "|" PLSSVM_KOKKOS_BACKEND_AVAILABLE_EXECUTION_SPACES "${PLSSVM_KOKKOS_BACKEND_AVAILABLE_EXECUTION_SPACES}")

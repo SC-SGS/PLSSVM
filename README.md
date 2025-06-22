@@ -347,7 +347,7 @@ If the SYCL backend is available, additional options can be set.
   - `AUTO`: check for DPC++/icpx as implementation for the SYCL backend but **do not** fail if not available
   - `OFF`: do not check for DPC++/icpx as implementation for the SYCL backend
 
-- `PLSSVM_ENABLE_SYCL_HIERARCHICAL_AND_SCOPED_KERNELS` (default: `ON`): enable SYCL's `hierarchical` and AdaptiveCpp's `scoped` kernel invocation types
+- `PLSSVM_ENABLE_SYCL_HIERARCHICAL_AND_SCOPED_KERNELS` (default: `ON`): enable SYCL's `hierarchical` data parallel kernel and AdaptiveCpp's `scoped` parallelism 
 
 To use DPC++/icpx for SYCL, simply set the `CMAKE_CXX_COMPILER` to the respective DPC++/icpx clang executable during CMake invocation.
 
@@ -686,8 +686,8 @@ Usage:
   -a, --classification arg      the classification strategy to use for multi-class classification: oaa|oao (default: oaa)
   -b, --backend arg             choose the backend: automatic|openmp|hpx|cuda|hip|opencl|sycl|kokkos|stdpar (default: automatic)
   -p, --target_platform arg     choose the target platform: automatic|cpu|gpu_nvidia|gpu_amd|gpu_intel (default: automatic)
-      --sycl_kernel_invocation_type arg
-                                choose the kernel invocation type when using SYCL as backend: automatic|basic|work_group|hierarchical|scoped (default: automatic)
+      --sycl_data_parallel_kernel arg
+                                choose the data parallel kernel when using SYCL as backend: automatic|basic|work_group|hierarchical|scoped (default: automatic)
       --sycl_implementation_type arg
                                 choose the SYCL implementation to be used in the SYCL backend: automatic|dpcpp|adaptivecpp (default: automatic)
       --kokkos_execution_space arg
@@ -747,8 +747,8 @@ The `--target_platform=automatic` option works for the different backends as fol
 - `Kokkos`: checks which execution spaces are available and which target platforms they support and then tries to find available devices in the following order: NVIDIA GPUs 🠦 AMD GPUs 🠦 Intel GPUs 🠦 CPU
 - `stdpar`: target device must be selected at compile time (using `PLSSVM_TARGET_PLATFORMS`) or using environment variables at runtime
 
-The `--sycl_kernel_invocation_type` and `--sycl_implementation_type` flags are only used if the `--backend` is `sycl`, otherwise a warning is emitted on `stderr`.
-If the `--sycl_kernel_invocation_type` is `automatic`, the `work_group` invocation type is currently always used.
+The `--sycl_data_parallel_kernel` and `--sycl_implementation_type` flags are only used if the `--backend` is `sycl`, otherwise a warning is emitted on `stderr`.
+If the `--sycl_data_parallel_kernel` is `automatic`, the `work_group` data parallel kernels are currently always used.
 If the `--sycl_implementation_type` is `automatic`, the used SYCL implementation is determined by the `PLSSVM_SYCL_BACKEND_PREFERRED_IMPLEMENTATION` CMake flag.
 If the `--kokkos_execution_space` is `automatic`, uses the best fitting execution space based on the provided and/or available target platforms.
 
@@ -796,8 +796,8 @@ Usage:
 
   -b, --backend arg             choose the backend: automatic|openmp|hpx|cuda|hip|opencl|sycl|kokkos|stdpar (default: automatic)
   -p, --target_platform arg     choose the target platform: automatic|cpu|gpu_nvidia|gpu_amd|gpu_intel (default: automatic)
-      --sycl_kernel_invocation_type arg
-                                choose the kernel invocation type when using SYCL as backend: automatic|basic|work_group|hierarchical|scoped (default: automatic)
+      --sycl_data_parallel_kernel arg
+                                choose the data parallel kernel when using SYCL as backend: automatic|basic|work_group|hierarchical|scoped (default: automatic)
       --sycl_implementation_type arg
                                 choose the SYCL implementation to be used in the SYCL backend: automatic|dpcpp|adaptivecpp (default: automatic)
       --kokkos_execution_space arg

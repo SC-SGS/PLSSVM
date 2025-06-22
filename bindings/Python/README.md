@@ -332,10 +332,10 @@ The following table lists all PLSSVM enumerations exposed on the Python side:
 
 If a SYCL implementation is available, additional enumerations are available:
 
-| enumeration            | values                                                       | description                                                                                                                                                                                                                                               |
-|------------------------|--------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `ImplementationType`   | `AUTOMATIC`, `DPCPP`, `ADAPTIVECPP`                          | The different supported SYCL implementation types (default: `AUTOMATIC`). If `AUTOMATIC` is provided, determines the used SYCL implementation based on the value of `-DPLSSVM_SYCL_BACKEND_PREFERRED_IMPLEMENTATION` provided during PLSSVM'S build step. |
-| `KernelInvocationType` | `AUTOMATIC`, `BASIC`, `WORK_GROUP`, `HIERARCHICAL`, `SCOPED` | The different supported SYCL kernel invocation types (default: `AUTOMATIC`). If `AUTOMATIC` is provided, simply uses `WORK_GROUP`.                                                                                                                        |
+| enumeration          | values                                                       | description                                                                                                                                                                                                                                               |
+|----------------------|--------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `ImplementationType` | `AUTOMATIC`, `DPCPP`, `ADAPTIVECPP`                          | The different supported SYCL implementation types (default: `AUTOMATIC`). If `AUTOMATIC` is provided, determines the used SYCL implementation based on the value of `-DPLSSVM_SYCL_BACKEND_PREFERRED_IMPLEMENTATION` provided during PLSSVM'S build step. |
+| `DataParallelKernel` | `AUTOMATIC`, `BASIC`, `WORK_GROUP`, `HIERARCHICAL`, `SCOPED` | The different supported SYCL data parallel kernels (default: `AUTOMATIC`). If `AUTOMATIC` is provided, simply uses `WORK_GROUP`.                                                                                                                          |
 
 If the stdpar backend is available, an additional enumeration is available:
 
@@ -469,7 +469,7 @@ The following constructors and methods are available for both classification `CS
 
 **Note**: if the backend type is `plssvm.BackendType.SYCL` two additional named parameters can be provided:
 `sycl_implementation_type` to choose between DPC++ and AdaptiveCpp as SYCL implementations
-and `sycl_kernel_invocation_type` to choose between the two different SYCL kernel invocation types.
+and `sycl_data_parallel_kernel` to choose between the different SYCL data parallel kernels.
 
 **Note**: if the backend type is `plssvm.BackendType.HPX` or `plssvm.BackendType.Kokkos` special initialization and
 finalization functions must be called.
@@ -519,12 +519,12 @@ The following constructors and methods are available for both classification `CS
 | `CSVC(target, *, kernel_type=plssvm.KernelFunctionType.RBF, degree=3, gamma=plssvm.GammaCoefficientType.AUTO, coef0=0.0, cost=1.0, comm=*used MPI communicator*)` | Create a new C-SVM with the provided parameters and named arguments.                |
 
 In case of the SYCL C-SVMs (`plssvm.sycl.CSVM`, `plssvm.dpcpp.CSVM`, and `plssvm.adaptivecpp.CSVM`; the same for the 
-`CSVR`s), additionally, all constructors also accept the SYCL specific `sycl_kernel_invocation_type` keyword parameter.
+`CSVR`s), additionally, all constructors also accept the SYCL specific `sycl_data_parallel_kernel` keyword parameter.
 Also, the following method is additional available for the backend specific C-SVM:
 
-| methods                        | description                             |
-|--------------------------------|-----------------------------------------|
-| `get_kernel_invocation_type()` | Return the SYCL kernel invocation type. |
+| methods                      | description                                |
+|------------------------------|--------------------------------------------|
+| `get_data_parallel_kernel()` | Return the used SYCL data parallel kernel. |
 
 In case of the stdpar C-SVM (`plssvm.stdpar.CSVC` and `plssvm.stdpar.CSVR`) the following method is additional available for the backend specific
 C-SVM.

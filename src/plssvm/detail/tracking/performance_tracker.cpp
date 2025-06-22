@@ -136,7 +136,7 @@ void performance_tracker::add_tracking_entry(const tracking_entry<cmd::parser_tr
         tracking_entries_[entry.entry_category].emplace("classification_type", std::vector<std::string>{ fmt::format("{}", entry.entry_value.classification) });
         tracking_entries_[entry.entry_category].emplace("backend", std::vector<std::string>{ fmt::format("{}", entry.entry_value.backend) });
         tracking_entries_[entry.entry_category].emplace("target", std::vector<std::string>{ fmt::format("{}", entry.entry_value.target) });
-        tracking_entries_[entry.entry_category].emplace("sycl_kernel_invocation_type", std::vector<std::string>{ fmt::format("{}", entry.entry_value.sycl_kernel_invocation_type) });
+        tracking_entries_[entry.entry_category].emplace("sycl_data_parallel_kernel", std::vector<std::string>{ fmt::format("{}", entry.entry_value.sycl_data_parallel_kernel) });
         tracking_entries_[entry.entry_category].emplace("sycl_implementation_type", std::vector<std::string>{ fmt::format("{}", entry.entry_value.sycl_implementation_type) });
         tracking_entries_[entry.entry_category].emplace("kokkos_execution_space", std::vector<std::string>{ fmt::format("{}", entry.entry_value.kokkos_execution_space) });
         tracking_entries_[entry.entry_category].emplace("strings_as_labels", std::vector<std::string>{ fmt::format("{}", entry.entry_value.strings_as_labels) });
@@ -155,6 +155,7 @@ void performance_tracker::add_tracking_entry(const tracking_entry<cmd::parser_pr
         tracking_entries_[entry.entry_category].emplace("task", std::vector<std::string>{ "predict" });
         tracking_entries_[entry.entry_category].emplace("backend", std::vector<std::string>{ fmt::format("{}", entry.entry_value.backend) });
         tracking_entries_[entry.entry_category].emplace("target", std::vector<std::string>{ fmt::format("{}", entry.entry_value.target) });
+        tracking_entries_[entry.entry_category].emplace("sycl_data_parallel_kernel", std::vector<std::string>{ fmt::format("{}", entry.entry_value.sycl_data_parallel_kernel) });
         tracking_entries_[entry.entry_category].emplace("sycl_implementation_type", std::vector<std::string>{ fmt::format("{}", entry.entry_value.sycl_implementation_type) });
         tracking_entries_[entry.entry_category].emplace("kokkos_execution_space", std::vector<std::string>{ fmt::format("{}", entry.entry_value.kokkos_execution_space) });
         tracking_entries_[entry.entry_category].emplace("strings_as_labels", std::vector<std::string>{ fmt::format("{}", entry.entry_value.strings_as_labels) });
@@ -253,16 +254,16 @@ void performance_tracker::save(std::ostream &out) {
     constexpr std::string_view hostname{ "not available" };
     constexpr std::string_view username{ "not available" };
 #endif
-    // check whether asserts are enabled
+    // check if asserts are enabled
     constexpr bool assert_enabled = PLSSVM_IS_DEFINED(PLSSVM_ENABLE_ASSERTS);
-    // check whether LTO has been enabled
+    // check if LTO has been enabled
     constexpr bool lto_enabled = PLSSVM_IS_DEFINED(PLSSVM_LTO_SUPPORTED);
-    // check whether fast-math has been enabled
+    // check if fast-math has been enabled
     constexpr bool fast_math_enabled = PLSSVM_IS_DEFINED(PLSSVM_USE_FAST_MATH);
-    // check whether the maximum allocatable memory size should be enforced
+    // check if the maximum allocatable memory size should be enforced
     constexpr bool enforce_max_mem_alloc_size = PLSSVM_IS_DEFINED(PLSSVM_ENFORCE_MAX_MEM_ALLOC_SIZE);
 
-    // begin a new YAML document (only with "---" multiple YAML docments in a single file are allowed)
+    // begin a new YAML document (only with "---" multiple YAML documents in a single file are allowed)
     out << "---\n";
 
     // output metadata information
@@ -361,7 +362,7 @@ void performance_tracker::save(std::ostream &out) {
 
     out << "dependencies:\n";
 
-    // calculate the number of padding whitespaces for the dependencies category
+    // calculate the number of padding whitespaces for the "dependencies" category
     std::size_t max_dependency_entry_name_length = 18;  // fast_float_version
     if (detail::contains(tracking_entries_, "dependencies")) {
         for (const auto &[entry_name, entry_value] : tracking_entries_["dependencies"]) {

@@ -21,7 +21,7 @@ if (PLSSVM_SYCL_BACKEND_ADAPTIVECPP_USE_GENERIC_SSCP)
     if (PLSSVM_ENABLE_SYCL_HIERARCHICAL_AND_SCOPED_KERNELS)
         message(
             WARNING "Enabled SYCL's hierarchical and AdapitveCpp's scoped kernels in AdaptiveCpp while using its SSCP compilation flow. "
-                    "SSCP, however, does currently not implement these kernel invocation types resulting in a runtime exception. "
+                    "SSCP, however, does currently not implement these data parallel kernels resulting in a runtime exception. "
                     "If you wish to use them, set \"PLSSVM_SYCL_BACKEND_ADAPTIVECPP_USE_GENERIC_SSCP\" to \"OFF\" and use one of the legacy compilation flows. "
         )
     endif ()

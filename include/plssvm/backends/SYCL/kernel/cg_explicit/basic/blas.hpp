@@ -13,7 +13,7 @@
 #define PLSSVM_BACKENDS_SYCL_CG_EXPLICIT_BASIC_BLAS_HPP_
 #pragma once
 
-#include "plssvm/backends/SYCL/kernel_invocation_types.hpp"  // plssvm::sycl::kernel_invocation_type
+#include "plssvm/backends/SYCL/data_parallel_kernels.hpp"    // plssvm::sycl::data_parallel_kernel
 #include "plssvm/constants.hpp"                              // plssvm::{real_type, THREAD_BLOCK_SIZE, INTERNAL_BLOCK_SIZE, PADDING_SIZE}
 #include "plssvm/target_platforms.hpp"                       // plssvm::target_platform
 
@@ -31,8 +31,8 @@ namespace plssvm::sycl::detail::basic {
 template <target_platform target>
 class device_kernel_symm {
   public:
-    /// The used SYCL kernel invocation type.
-    constexpr static sycl::kernel_invocation_type invocation_type = sycl::kernel_invocation_type::basic;
+    /// The used SYCL data parallel kernel.
+    constexpr static sycl::data_parallel_kernel data_parallel_kernel_type = sycl::data_parallel_kernel::basic;
 
     /**
      * @brief Initialize the SYCL kernel function object.
@@ -168,8 +168,8 @@ class device_kernel_symm {
 template <target_platform target>
 class device_kernel_symm_mirror {
   public:
-    /// The used SYCL kernel invocation type.
-    constexpr static sycl::kernel_invocation_type invocation_type = sycl::kernel_invocation_type::basic;
+    /// The used SYCL data parallel kernel.
+    constexpr static sycl::data_parallel_kernel data_parallel_kernel_type = sycl::data_parallel_kernel::basic;
 
     /**
      * @brief Initialize the SYCL kernel function object.
@@ -291,8 +291,8 @@ class device_kernel_symm_mirror {
  */
 class device_kernel_inplace_matrix_add {
   public:
-    /// The used SYCL kernel invocation type.
-    constexpr static sycl::kernel_invocation_type invocation_type = sycl::kernel_invocation_type::basic;
+    /// The used SYCL data parallel kernel.
+    constexpr static sycl::data_parallel_kernel data_parallel_kernel_type = sycl::data_parallel_kernel::basic;
 
     /**
      * @brief Initialize the SYCL kernel function object.
@@ -350,8 +350,8 @@ class device_kernel_inplace_matrix_add {
  */
 class device_kernel_inplace_matrix_scale {
   public:
-    /// The used SYCL kernel invocation type.
-    constexpr static sycl::kernel_invocation_type invocation_type = sycl::kernel_invocation_type::basic;
+    /// The used SYCL data parallel kernel.
+    constexpr static sycl::data_parallel_kernel data_parallel_kernel_type = sycl::data_parallel_kernel::basic;
 
     /**
      * @brief Initialize the SYCL kernel function object.

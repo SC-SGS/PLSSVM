@@ -6,10 +6,10 @@
  *          See the LICENSE.md file in the project root for full license information.
  */
 
-#include "plssvm/backends/SYCL/exceptions.hpp"               // plssvm::sycl::backend_exception
-#include "plssvm/backends/SYCL/implementation_types.hpp"     // plssvm::sycl::{implementation_type, list_available_sycl_implementations}
-#include "plssvm/backends/SYCL/kernel_invocation_types.hpp"  // plssvm::sycl::kernel_invocation_type
-#include "plssvm/exceptions/exceptions.hpp"                  // plssvm::exception
+#include "plssvm/backends/SYCL/data_parallel_kernels.hpp"  // plssvm::sycl::data_parallel_kernel
+#include "plssvm/backends/SYCL/exceptions.hpp"             // plssvm::sycl::backend_exception
+#include "plssvm/backends/SYCL/implementation_types.hpp"   // plssvm::sycl::{implementation_type, list_available_sycl_implementations}
+#include "plssvm/exceptions/exceptions.hpp"                // plssvm::exception
 
 #include "bindings/Python/utility.hpp"  // plssvm::bindings::python::util::{register_py_exception, register_implicit_str_enum_conversion}
 
@@ -45,16 +45,16 @@ void init_sycl(py::module_ &m, const py::exception<plssvm::exception> &base_exce
 
     sycl_module.def("list_available_sycl_implementations", &plssvm::sycl::list_available_sycl_implementations, "list all available SYCL implementations");
 
-    py::enum_<plssvm::sycl::kernel_invocation_type> py_enum_invocation(sycl_module, "KernelInvocationType", "Enum class for all possible SYCL kernel invocation types supported in PLSSVM.");
-    py_enum_invocation
-        .value("AUTOMATIC", plssvm::sycl::kernel_invocation_type::automatic, "use the best kernel invocation type for the current SYCL implementation and target hardware platform")
-        .value("BASIC", plssvm::sycl::kernel_invocation_type::basic, "use the basic data parallel kernel invocation type")
-        .value("WORK_GROUP", plssvm::sycl::kernel_invocation_type::work_group, "use the work-group data parallel kernel invocation type")
-        .value("HIERARCHICAL", plssvm::sycl::kernel_invocation_type::hierarchical, "use the hierarchical data parallel kernel invocation type")
-        .value("SCOPED", plssvm::sycl::kernel_invocation_type::scoped, "use the AdaptiveCpp specific scoped parallelism kernel invocation type");
+    py::enum_<plssvm::sycl::data_parallel_kernel> py_enum_data_parallel_kernel(sycl_module, "DataParallelKernel", "Enum class for all possible SYCL data parallel kernels supported in PLSSVM.");
+    py_enum_data_parallel_kernel
+        .value("AUTOMATIC", plssvm::sycl::data_parallel_kernel::automatic, "use the best data parallel kernel for the current SYCL implementation and target hardware platform")
+        .value("BASIC", plssvm::sycl::data_parallel_kernel::basic, "use the basic data parallel kernel")
+        .value("WORK_GROUP", plssvm::sycl::data_parallel_kernel::work_group, "use the work-group data parallel kernel")
+        .value("HIERARCHICAL", plssvm::sycl::data_parallel_kernel::hierarchical, "use the hierarchical data parallel kernel")
+        .value("SCOPED", plssvm::sycl::data_parallel_kernel::scoped, "use the AdaptiveCpp specific scoped parallelism kernel");
 
     // enable implicit conversion from string to enum
-    plssvm::bindings::python::util::register_implicit_str_enum_conversion<plssvm::sycl::kernel_invocation_type>(py_enum_invocation);
+    plssvm::bindings::python::util::register_implicit_str_enum_conversion<plssvm::sycl::data_parallel_kernel>(py_enum_data_parallel_kernel);
 
     // initialize SYCL binding classes
 #if defined(PLSSVM_SYCL_BACKEND_HAS_ADAPTIVECPP)

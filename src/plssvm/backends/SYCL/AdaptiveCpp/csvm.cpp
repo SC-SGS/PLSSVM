@@ -13,6 +13,7 @@
 #include "plssvm/backends/SYCL/AdaptiveCpp/detail/device_ptr.hpp"                                // plssvm::adaptivecpp::detail::::device_ptr
 #include "plssvm/backends/SYCL/AdaptiveCpp/detail/queue_impl.hpp"                                // plssvm::adaptivecpp::detail::queue (PImpl implementation)
 #include "plssvm/backends/SYCL/AdaptiveCpp/detail/utility.hpp"                                   // plssvm::adaptivecpp::detail::{get_device_list, device_synchronize, get_adaptivecpp_version_short, get_adaptivecpp_version}
+#include "plssvm/backends/SYCL/data_parallel_kernels.hpp"                                        // plssvm::sycl::data_parallel_kernel
 #include "plssvm/backends/SYCL/exceptions.hpp"                                                   // plssvm::adaptivecpp::backend_exception
 #include "plssvm/backends/SYCL/implementation_types.hpp"                                         // plssvm::sycl::implementation_type
 #include "plssvm/backends/SYCL/kernel/cg_explicit/basic/blas.hpp"                                // plssvm::sycl::detail::basic::{device_kernel_symm, device_kernel_symm_mirror, device_kernel_inplace_matrix_add, device_kernel_inplace_matrix_scale}
@@ -31,7 +32,6 @@
 #include "plssvm/backends/SYCL/kernel/predict/hierarchical/predict_kernel.hpp"                   // plssvm::sycl::detail::hierarchical::{device_kernel_w_linear, device_kernel_predict_linear, device_kernel_predict}
 #include "plssvm/backends/SYCL/kernel/predict/scoped/predict_kernel.hpp"                         // plssvm::sycl::detail::scoped::{device_kernel_w_linear, device_kernel_predict_linear, device_kernel_predict}
 #include "plssvm/backends/SYCL/kernel/predict/work_group/predict_kernel.hpp"                     // plssvm::sycl::detail::work_group::{device_kernel_w_linear, device_kernel_predict_linear, device_kernel_predict}
-#include "plssvm/backends/SYCL/kernel_invocation_types.hpp"                                      // plssvm::kernel_invocation_type
 #include "plssvm/constants.hpp"                                                                  // plssvm::{real_type, THREAD_BLOCK_SIZE, INTERNAL_BLOCK_SIZE, PADDING_SIZE}
 #include "plssvm/detail/assert.hpp"                                                              // PLSSVM_ASSERT
 #include "plssvm/detail/data_distribution.hpp"                                                   // plssvm::detail::{data_distribution, triangular_data_distribution, rectangular_data_distribution}
@@ -81,35 +81,35 @@ namespace {
  */
 template <typename KernelFunctor, typename QueueType, typename... Args>
 void run_kernel_functor(const QueueType &device, const plssvm::detail::dim_type partial_grid, const plssvm::detail::dim_type block, Args &&...args) {
-    constexpr plssvm::sycl::kernel_invocation_type invocation = KernelFunctor::invocation_type;
+    constexpr plssvm::sycl::data_parallel_kernel data_parallel_kernel_type = KernelFunctor::data_parallel_kernel_type;
 
-    if constexpr (invocation == plssvm::sycl::kernel_invocation_type::basic) {
+    if constexpr (data_parallel_kernel_type == plssvm::sycl::data_parallel_kernel::basic) {
         device.impl->sycl_queue.submit([&](::sycl::handler &cgh) {
-            cgh.parallel_for(plssvm::adaptivecpp::detail::get_execution_range<plssvm::sycl::kernel_invocation_type::basic>(partial_grid, block),
+            cgh.parallel_for(plssvm::adaptivecpp::detail::get_execution_range<plssvm::sycl::data_parallel_kernel::basic>(partial_grid, block),
                              KernelFunctor{ std::forward<Args>(args)... });
         });
-    } else if constexpr (invocation == plssvm::sycl::kernel_invocation_type::work_group) {
+    } else if constexpr (data_parallel_kernel_type == plssvm::sycl::data_parallel_kernel::work_group) {
         device.impl->sycl_queue.submit([&](::sycl::handler &cgh) {
-            cgh.parallel_for(plssvm::adaptivecpp::detail::get_execution_range<plssvm::sycl::kernel_invocation_type::work_group>(partial_grid, block),
+            cgh.parallel_for(plssvm::adaptivecpp::detail::get_execution_range<plssvm::sycl::data_parallel_kernel::work_group>(partial_grid, block),
                              KernelFunctor{ cgh, std::forward<Args>(args)... });
         });
-    } else if constexpr (invocation == plssvm::sycl::kernel_invocation_type::hierarchical) {
+    } else if constexpr (data_parallel_kernel_type == plssvm::sycl::data_parallel_kernel::hierarchical) {
 #if defined(PLSSVM_SYCL_HIERARCHICAL_AND_SCOPED_KERNELS_ENABLED)
         device.impl->sycl_queue.submit([&](::sycl::handler &cgh) {
-            const auto exec_range = plssvm::adaptivecpp::detail::get_execution_range<plssvm::sycl::kernel_invocation_type::hierarchical>(partial_grid, block);
+            const auto exec_range = plssvm::adaptivecpp::detail::get_execution_range<plssvm::sycl::data_parallel_kernel::hierarchical>(partial_grid, block);
             cgh.parallel_for_work_group(exec_range.get_global_range(), exec_range.get_local_range(), KernelFunctor{ std::forward<Args>(args)... });
         });
 #else
-        throw plssvm::adaptivecpp::backend_exception{ "Support for sycl::kernel_invocation_type::hierarchical was disabled!" };
+        throw plssvm::adaptivecpp::backend_exception{ "Support for sycl::data_parallel_kernel::hierarchical was disabled!" };
 #endif
-    } else if constexpr (invocation == plssvm::sycl::kernel_invocation_type::scoped) {
+    } else if constexpr (data_parallel_kernel_type == plssvm::sycl::data_parallel_kernel::scoped) {
 #if defined(PLSSVM_SYCL_HIERARCHICAL_AND_SCOPED_KERNELS_ENABLED)
         device.impl->sycl_queue.submit([&](::sycl::handler &cgh) {
-            const auto exec_range = plssvm::adaptivecpp::detail::get_execution_range<plssvm::sycl::kernel_invocation_type::scoped>(partial_grid, block);
+            const auto exec_range = plssvm::adaptivecpp::detail::get_execution_range<plssvm::sycl::data_parallel_kernel::scoped>(partial_grid, block);
             cgh.parallel(exec_range.get_global_range(), exec_range.get_local_range(), KernelFunctor{ std::forward<Args>(args)... });
         });
 #else
-        throw plssvm::adaptivecpp::backend_exception{ "Support for sycl::kernel_invocation_type::scoped was disabled!" };
+        throw plssvm::adaptivecpp::backend_exception{ "Support for sycl::data_parallel_kernel::scoped was disabled!" };
 #endif
     } else {
         static_assert(::plssvm::detail::always_false_v<Args...>, "Unsupported kernel function!");
@@ -245,10 +245,10 @@ void csvm::init(const target_platform target) {
         throw backend_exception{ fmt::format("SYCL backend selected but no devices for the target {} were found!", target_) };
     }
 
-    // set correct kernel invocation type if "automatic" has been provided
-    if (invocation_type_ == sycl::kernel_invocation_type::automatic) {
+    // set the correct data parallel kernel if "automatic" has been provided
+    if (data_parallel_kernel_type_ == sycl::data_parallel_kernel::automatic) {
         // always use work_group for AdaptiveCpp
-        invocation_type_ = sycl::kernel_invocation_type::work_group;
+        data_parallel_kernel_type_ = sycl::data_parallel_kernel::work_group;
         if (target_ == target_platform::cpu) {  // TODO: set to hierarchical or scoped?!
 #if !defined(__ACPP_USE_ACCELERATED_CPU__) && defined(__ACPP_ENABLE_OMPHOST_TARGET__)
             plssvm::detail::log_untracked(verbosity_level::full | verbosity_level::warning,
@@ -266,15 +266,15 @@ void csvm::init(const target_platform target) {
             device_names.emplace_back(device.impl->sycl_queue.get_device().template get_info<::sycl::info::device::name>());
         }
 
-        mpi::detail::gather_and_print_csvm_information(comm_, plssvm::backend_type::sycl, target_, device_names, fmt::format("{}", invocation_type_));
+        mpi::detail::gather_and_print_csvm_information(comm_, plssvm::backend_type::sycl, target_, device_names, fmt::format("{}", data_parallel_kernel_type_));
     } else {
         // use more detailed single rank command line output
         plssvm::detail::log_untracked(verbosity_level::full,
                                       comm_,
-                                      "\nUsing AdaptiveCpp ({}; {}) as SYCL backend with the kernel invocation type \"{}\".\n",
+                                      "\nUsing AdaptiveCpp ({}; {}) as SYCL backend with the data parallel kernel \"{}\".\n",
                                       detail::get_adaptivecpp_version_short(),
                                       PLSSVM_ACPP_TARGETS,
-                                      invocation_type_);
+                                      data_parallel_kernel_type_);
         if (target == target_platform::automatic) {
             plssvm::detail::log_untracked(verbosity_level::full,
                                           comm_,
@@ -305,7 +305,7 @@ void csvm::init(const target_platform target) {
     PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "dependencies", "adaptivecpp_version", detail::get_adaptivecpp_version() }));
     PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "backend", "backend", plssvm::backend_type::sycl }));
     PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "backend", "sycl_implementation_type", plssvm::sycl::implementation_type::adaptivecpp }));
-    PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "backend", "sycl_kernel_invocation_type", invocation_type_ }));
+    PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "backend", "sycl_data_parallel_kernel", data_parallel_kernel_type_ }));
     PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "backend", "target_platform", target_ }));
     PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "backend", "num_devices", devices_.size() }));
     PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "backend", "device", device_names }));
@@ -395,20 +395,20 @@ auto csvm::run_assemble_kernel_matrix_explicit(const std::size_t device_id, cons
 
     const auto start = std::chrono::steady_clock::now();
     for (const auto &[partial_grid, offsets] : exec.grids) {
-        switch (invocation_type_) {
-            case sycl::kernel_invocation_type::automatic:
-                throw backend_exception{ "Can't determine the sycl::kernel_invocation_type!" };
+        switch (data_parallel_kernel_type_) {
+            case sycl::data_parallel_kernel::automatic:
+                throw backend_exception{ "Can't determine the sycl::data_parallel_kernel!" };
                 break;
-            case sycl::kernel_invocation_type::basic:
+            case sycl::data_parallel_kernel::basic:
                 dispatch_target_platform<sycl::detail::basic::device_kernel_assembly>(target_, params, device, partial_grid, exec.block, kernel_matrix_d.get(), data_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, q_red_d.get(), QA_cost, cost_factor, offsets.y, offsets.x);
                 break;
-            case sycl::kernel_invocation_type::work_group:
+            case sycl::data_parallel_kernel::work_group:
                 dispatch_target_platform<sycl::detail::work_group::device_kernel_assembly>(target_, params, device, partial_grid, exec.block, kernel_matrix_d.get(), data_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, q_red_d.get(), QA_cost, cost_factor, offsets.y, offsets.x);
                 break;
-            case sycl::kernel_invocation_type::hierarchical:
+            case sycl::data_parallel_kernel::hierarchical:
                 dispatch_target_platform<sycl::detail::hierarchical::device_kernel_assembly>(target_, params, device, partial_grid, exec.block, kernel_matrix_d.get(), data_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, q_red_d.get(), QA_cost, cost_factor, offsets.y, offsets.x);
                 break;
-            case sycl::kernel_invocation_type::scoped:
+            case sycl::data_parallel_kernel::scoped:
                 dispatch_target_platform<sycl::detail::scoped::device_kernel_assembly>(target_, params, device, partial_grid, exec.block, kernel_matrix_d.get(), data_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, q_red_d.get(), QA_cost, cost_factor, offsets.y, offsets.x);
         }
     }
@@ -432,19 +432,19 @@ void csvm::run_blas_level_3_kernel_explicit(const std::size_t device_id, const :
 
     const auto start = std::chrono::steady_clock::now();
     for (const auto &[partial_grid, offsets] : exec.grids) {
-        switch (invocation_type_) {
-            case sycl::kernel_invocation_type::automatic:
-                throw backend_exception{ "Can't determine the sycl::kernel_invocation_type!" };
-            case sycl::kernel_invocation_type::basic:
+        switch (data_parallel_kernel_type_) {
+            case sycl::data_parallel_kernel::automatic:
+                throw backend_exception{ "Can't determine the sycl::data_parallel_kernel!" };
+            case sycl::data_parallel_kernel::basic:
                 dispatch_target_platform<sycl::detail::basic::device_kernel_symm>(target_, device, partial_grid, exec.block, num_rows, num_rhs, device_specific_num_rows, row_offset, alpha, A_d.get(), B_d.get(), beta, C_d.get(), offsets.y, offsets.x);
                 break;
-            case sycl::kernel_invocation_type::work_group:
+            case sycl::data_parallel_kernel::work_group:
                 dispatch_target_platform<sycl::detail::work_group::device_kernel_symm>(target_, device, partial_grid, exec.block, num_rows, num_rhs, device_specific_num_rows, row_offset, alpha, A_d.get(), B_d.get(), beta, C_d.get(), offsets.y, offsets.x);
                 break;
-            case sycl::kernel_invocation_type::hierarchical:
+            case sycl::data_parallel_kernel::hierarchical:
                 dispatch_target_platform<sycl::detail::hierarchical::device_kernel_symm>(target_, device, partial_grid, exec.block, num_rows, num_rhs, device_specific_num_rows, row_offset, alpha, A_d.get(), B_d.get(), beta, C_d.get(), offsets.y, offsets.x);
                 break;
-            case sycl::kernel_invocation_type::scoped:
+            case sycl::data_parallel_kernel::scoped:
                 dispatch_target_platform<sycl::detail::scoped::device_kernel_symm>(target_, device, partial_grid, exec.block, num_rows, num_rhs, device_specific_num_rows, row_offset, alpha, A_d.get(), B_d.get(), beta, C_d.get(), offsets.y, offsets.x);
         }
     }
@@ -453,19 +453,19 @@ void csvm::run_blas_level_3_kernel_explicit(const std::size_t device_id, const :
         const unsigned long long num_mirror_rows = num_rows - row_offset - device_specific_num_rows;
 
         if (num_mirror_rows > 0) {
-            switch (invocation_type_) {
-                case sycl::kernel_invocation_type::automatic:
-                    throw backend_exception{ "Can't determine the sycl::kernel_invocation_type!" };
-                case sycl::kernel_invocation_type::basic:
+            switch (data_parallel_kernel_type_) {
+                case sycl::data_parallel_kernel::automatic:
+                    throw backend_exception{ "Can't determine the sycl::data_parallel_kernel!" };
+                case sycl::data_parallel_kernel::basic:
                     dispatch_target_platform<sycl::detail::basic::device_kernel_symm_mirror>(target_, device, partial_grid, exec.block, num_rows, num_rhs, num_mirror_rows, device_specific_num_rows, row_offset, alpha, A_d.get(), B_d.get(), beta, C_d.get(), offsets.y, offsets.x);
                     break;
-                case sycl::kernel_invocation_type::work_group:
+                case sycl::data_parallel_kernel::work_group:
                     dispatch_target_platform<sycl::detail::work_group::device_kernel_symm_mirror>(target_, device, partial_grid, exec.block, num_rows, num_rhs, num_mirror_rows, device_specific_num_rows, row_offset, alpha, A_d.get(), B_d.get(), beta, C_d.get(), offsets.y, offsets.x);
                     break;
-                case sycl::kernel_invocation_type::hierarchical:
+                case sycl::data_parallel_kernel::hierarchical:
                     dispatch_target_platform<sycl::detail::hierarchical::device_kernel_symm_mirror>(target_, device, partial_grid, exec.block, num_rows, num_rhs, num_mirror_rows, device_specific_num_rows, row_offset, alpha, A_d.get(), B_d.get(), beta, C_d.get(), offsets.y, offsets.x);
                     break;
-                case sycl::kernel_invocation_type::scoped:
+                case sycl::data_parallel_kernel::scoped:
                     dispatch_target_platform<sycl::detail::scoped::device_kernel_symm_mirror>(target_, device, partial_grid, exec.block, num_rows, num_rhs, num_mirror_rows, device_specific_num_rows, row_offset, alpha, A_d.get(), B_d.get(), beta, C_d.get(), offsets.y, offsets.x);
             }
         }
@@ -481,39 +481,39 @@ void csvm::run_inplace_matrix_addition(const std::size_t device_id, const ::plss
     const queue_type &device = devices_[device_id];
 
     for (const auto &[partial_grid, offsets] : exec.grids) {
-        switch (invocation_type_) {
-            case sycl::kernel_invocation_type::automatic:
-                throw backend_exception{ "Can't determine the sycl::kernel_invocation_type!" };
-            case sycl::kernel_invocation_type::basic:
+        switch (data_parallel_kernel_type_) {
+            case sycl::data_parallel_kernel::automatic:
+                throw backend_exception{ "Can't determine the sycl::data_parallel_kernel!" };
+            case sycl::data_parallel_kernel::basic:
                 device.impl->sycl_queue.submit([&, &partial_grid_ref = partial_grid, &offsets_ref = offsets](::sycl::handler &cgh) {
-                    cgh.parallel_for(detail::get_execution_range<sycl::kernel_invocation_type::basic>(partial_grid_ref, exec.block),
+                    cgh.parallel_for(detail::get_execution_range<sycl::data_parallel_kernel::basic>(partial_grid_ref, exec.block),
                                      sycl::detail::basic::device_kernel_inplace_matrix_add{ num_rhs, lhs_d.get(), rhs_d.get(), offsets_ref.y, offsets_ref.x });
                 });
                 break;
-            case sycl::kernel_invocation_type::work_group:
+            case sycl::data_parallel_kernel::work_group:
                 device.impl->sycl_queue.submit([&, &partial_grid_ref = partial_grid, &offsets_ref = offsets](::sycl::handler &cgh) {
-                    cgh.parallel_for(detail::get_execution_range<sycl::kernel_invocation_type::work_group>(partial_grid_ref, exec.block),
+                    cgh.parallel_for(detail::get_execution_range<sycl::data_parallel_kernel::work_group>(partial_grid_ref, exec.block),
                                      sycl::detail::work_group::device_kernel_inplace_matrix_add{ num_rhs, lhs_d.get(), rhs_d.get(), offsets_ref.y, offsets_ref.x });
                 });
                 break;
-            case sycl::kernel_invocation_type::hierarchical:
+            case sycl::data_parallel_kernel::hierarchical:
 #if defined(PLSSVM_SYCL_HIERARCHICAL_AND_SCOPED_KERNELS_ENABLED)
                 device.impl->sycl_queue.submit([&, &partial_grid_ref = partial_grid, &offsets_ref = offsets](::sycl::handler &cgh) {
-                    const auto exec_range = detail::get_execution_range<sycl::kernel_invocation_type::hierarchical>(partial_grid_ref, exec.block);
+                    const auto exec_range = detail::get_execution_range<sycl::data_parallel_kernel::hierarchical>(partial_grid_ref, exec.block);
                     cgh.parallel_for_work_group(exec_range.get_global_range(), exec_range.get_local_range(), sycl::detail::hierarchical::device_kernel_inplace_matrix_add{ num_rhs, lhs_d.get(), rhs_d.get(), offsets_ref.y, offsets_ref.x });
                 });
 #else
-                throw backend_exception{ "Support for sycl::kernel_invocation_type::hierarchical was disabled!" };
+                throw backend_exception{ "Support for sycl::data_parallel_kernel::hierarchical was disabled!" };
 #endif
                 break;
-            case sycl::kernel_invocation_type::scoped:
+            case sycl::data_parallel_kernel::scoped:
 #if defined(PLSSVM_SYCL_HIERARCHICAL_AND_SCOPED_KERNELS_ENABLED)
                 device.impl->sycl_queue.submit([&, &partial_grid_ref = partial_grid, &offsets_ref = offsets](::sycl::handler &cgh) {
-                    const auto exec_range = detail::get_execution_range<sycl::kernel_invocation_type::scoped>(partial_grid_ref, exec.block);
+                    const auto exec_range = detail::get_execution_range<sycl::data_parallel_kernel::scoped>(partial_grid_ref, exec.block);
                     cgh.parallel(exec_range.get_global_range(), exec_range.get_local_range(), sycl::detail::scoped::device_kernel_inplace_matrix_add{ num_rhs, lhs_d.get(), rhs_d.get(), offsets_ref.y, offsets_ref.x });
                 });
 #else
-                throw backend_exception{ "Support for sycl::kernel_invocation_type::scoped was disabled!" };
+                throw backend_exception{ "Support for sycl::data_parallel_kernel::scoped was disabled!" };
 #endif
                 break;
         }
@@ -526,39 +526,39 @@ void csvm::run_inplace_matrix_scale(const std::size_t device_id, const ::plssvm:
     const queue_type &device = devices_[device_id];
 
     for (const auto &[partial_grid, offsets] : exec.grids) {
-        switch (invocation_type_) {
-            case sycl::kernel_invocation_type::automatic:
-                throw backend_exception{ "Can't determine the sycl::kernel_invocation_type!" };
-            case sycl::kernel_invocation_type::basic:
+        switch (data_parallel_kernel_type_) {
+            case sycl::data_parallel_kernel::automatic:
+                throw backend_exception{ "Can't determine the sycl::data_parallel_kernel!" };
+            case sycl::data_parallel_kernel::basic:
                 device.impl->sycl_queue.submit([&, &partial_grid_ref = partial_grid, &offsets_ref = offsets](::sycl::handler &cgh) {
-                    cgh.parallel_for(detail::get_execution_range<sycl::kernel_invocation_type::basic>(partial_grid_ref, exec.block),
+                    cgh.parallel_for(detail::get_execution_range<sycl::data_parallel_kernel::basic>(partial_grid_ref, exec.block),
                                      sycl::detail::basic::device_kernel_inplace_matrix_scale{ num_rhs, lhs_d.get(), scale, offsets_ref.y, offsets_ref.x });
                 });
                 break;
-            case sycl::kernel_invocation_type::work_group:
+            case sycl::data_parallel_kernel::work_group:
                 device.impl->sycl_queue.submit([&, &partial_grid_ref = partial_grid, &offsets_ref = offsets](::sycl::handler &cgh) {
-                    cgh.parallel_for(detail::get_execution_range<sycl::kernel_invocation_type::work_group>(partial_grid_ref, exec.block),
+                    cgh.parallel_for(detail::get_execution_range<sycl::data_parallel_kernel::work_group>(partial_grid_ref, exec.block),
                                      sycl::detail::work_group::device_kernel_inplace_matrix_scale{ num_rhs, lhs_d.get(), scale, offsets_ref.y, offsets_ref.x });
                 });
                 break;
-            case sycl::kernel_invocation_type::hierarchical:
+            case sycl::data_parallel_kernel::hierarchical:
 #if defined(PLSSVM_SYCL_HIERARCHICAL_AND_SCOPED_KERNELS_ENABLED)
                 device.impl->sycl_queue.submit([&, &partial_grid_ref = partial_grid, &offsets_ref = offsets](::sycl::handler &cgh) {
-                    const auto exec_range = detail::get_execution_range<sycl::kernel_invocation_type::hierarchical>(partial_grid_ref, exec.block);
+                    const auto exec_range = detail::get_execution_range<sycl::data_parallel_kernel::hierarchical>(partial_grid_ref, exec.block);
                     cgh.parallel_for_work_group(exec_range.get_global_range(), exec_range.get_local_range(), sycl::detail::hierarchical::device_kernel_inplace_matrix_scale{ num_rhs, lhs_d.get(), scale, offsets_ref.y, offsets_ref.x });
                 });
 #else
-                throw backend_exception{ "Support for sycl::kernel_invocation_type::hierarchical was disabled!" };
+                throw backend_exception{ "Support for sycl::data_parallel_kernel::hierarchical was disabled!" };
 #endif
                 break;
-            case sycl::kernel_invocation_type::scoped:
+            case sycl::data_parallel_kernel::scoped:
 #if defined(PLSSVM_SYCL_HIERARCHICAL_AND_SCOPED_KERNELS_ENABLED)
                 device.impl->sycl_queue.submit([&, &partial_grid_ref = partial_grid, &offsets_ref = offsets](::sycl::handler &cgh) {
-                    const auto exec_range = detail::get_execution_range<sycl::kernel_invocation_type::scoped>(partial_grid_ref, exec.block);
+                    const auto exec_range = detail::get_execution_range<sycl::data_parallel_kernel::scoped>(partial_grid_ref, exec.block);
                     cgh.parallel(exec_range.get_global_range(), exec_range.get_local_range(), sycl::detail::scoped::device_kernel_inplace_matrix_scale{ num_rhs, lhs_d.get(), scale, offsets_ref.y, offsets_ref.x });
                 });
 #else
-                throw backend_exception{ "Support for sycl::kernel_invocation_type::scoped was disabled!" };
+                throw backend_exception{ "Support for sycl::data_parallel_kernel::scoped was disabled!" };
 #endif
                 break;
         }
@@ -581,20 +581,20 @@ void csvm::run_assemble_kernel_matrix_implicit_blas_level_3(const std::size_t de
 
     const auto start = std::chrono::steady_clock::now();
     for (const auto &[partial_grid, offsets] : exec.grids) {
-        switch (invocation_type_) {
-            case sycl::kernel_invocation_type::automatic:
-                throw backend_exception{ "Can't determine the sycl::kernel_invocation_type!" };
+        switch (data_parallel_kernel_type_) {
+            case sycl::data_parallel_kernel::automatic:
+                throw backend_exception{ "Can't determine the sycl::data_parallel_kernel!" };
                 break;
-            case sycl::kernel_invocation_type::basic:
+            case sycl::data_parallel_kernel::basic:
                 dispatch_target_platform<sycl::detail::basic::device_kernel_assembly_symm>(target_, params, device, partial_grid, exec.block, alpha, q_red.get(), A_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, QA_cost, cost_factor, B_d.get(), C_d.get(), num_classes, offsets.y, offsets.x);
                 break;
-            case sycl::kernel_invocation_type::work_group:
+            case sycl::data_parallel_kernel::work_group:
                 dispatch_target_platform<sycl::detail::work_group::device_kernel_assembly_symm>(target_, params, device, partial_grid, exec.block, alpha, q_red.get(), A_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, QA_cost, cost_factor, B_d.get(), C_d.get(), num_classes, offsets.y, offsets.x);
                 break;
-            case sycl::kernel_invocation_type::hierarchical:
+            case sycl::data_parallel_kernel::hierarchical:
                 dispatch_target_platform<sycl::detail::hierarchical::device_kernel_assembly_symm>(target_, params, device, partial_grid, exec.block, alpha, q_red.get(), A_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, QA_cost, cost_factor, B_d.get(), C_d.get(), num_classes, offsets.y, offsets.x);
                 break;
-            case sycl::kernel_invocation_type::scoped:
+            case sycl::data_parallel_kernel::scoped:
                 dispatch_target_platform<sycl::detail::scoped::device_kernel_assembly_symm>(target_, params, device, partial_grid, exec.block, alpha, q_red.get(), A_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, QA_cost, cost_factor, B_d.get(), C_d.get(), num_classes, offsets.y, offsets.x);
         }
     }
@@ -622,19 +622,19 @@ auto csvm::run_w_kernel(const std::size_t device_id, const ::plssvm::detail::exe
 
     const auto start = std::chrono::steady_clock::now();
     for (const auto &[partial_grid, offsets] : exec.grids) {
-        switch (invocation_type_) {
-            case sycl::kernel_invocation_type::automatic:
-                throw backend_exception{ "Can't determine the sycl::kernel_invocation_type!" };
-            case sycl::kernel_invocation_type::basic:
+        switch (data_parallel_kernel_type_) {
+            case sycl::data_parallel_kernel::automatic:
+                throw backend_exception{ "Can't determine the sycl::data_parallel_kernel!" };
+            case sycl::data_parallel_kernel::basic:
                 dispatch_target_platform<sycl::detail::basic::device_kernel_w_linear>(target_, device, partial_grid, exec.block, w_d.get(), alpha_d.get(), sv_d.get(), num_classes, num_sv, device_specific_num_sv, sv_offset, offsets.y, offsets.x);
                 break;
-            case sycl::kernel_invocation_type::work_group:
+            case sycl::data_parallel_kernel::work_group:
                 dispatch_target_platform<sycl::detail::work_group::device_kernel_w_linear>(target_, device, partial_grid, exec.block, w_d.get(), alpha_d.get(), sv_d.get(), num_classes, num_sv, device_specific_num_sv, sv_offset, offsets.y, offsets.x);
                 break;
-            case sycl::kernel_invocation_type::hierarchical:
+            case sycl::data_parallel_kernel::hierarchical:
                 dispatch_target_platform<sycl::detail::hierarchical::device_kernel_w_linear>(target_, device, partial_grid, exec.block, w_d.get(), alpha_d.get(), sv_d.get(), num_classes, num_sv, device_specific_num_sv, sv_offset, offsets.y, offsets.x);
                 break;
-            case sycl::kernel_invocation_type::scoped:
+            case sycl::data_parallel_kernel::scoped:
                 dispatch_target_platform<sycl::detail::scoped::device_kernel_w_linear>(target_, device, partial_grid, exec.block, w_d.get(), alpha_d.get(), sv_d.get(), num_classes, num_sv, device_specific_num_sv, sv_offset, offsets.y, offsets.x);
         }
     }
@@ -658,35 +658,35 @@ auto csvm::run_predict_kernel(const std::size_t device_id, const ::plssvm::detai
     const auto start = std::chrono::steady_clock::now();
     for (const auto &[partial_grid, offsets] : exec.grids) {
         if (params.kernel_type == kernel_function_type::linear) {
-            switch (invocation_type_) {
-                case sycl::kernel_invocation_type::automatic:
-                    throw backend_exception{ "Can't determine the sycl::kernel_invocation_type!" };
-                case sycl::kernel_invocation_type::basic:
+            switch (data_parallel_kernel_type_) {
+                case sycl::data_parallel_kernel::automatic:
+                    throw backend_exception{ "Can't determine the sycl::data_parallel_kernel!" };
+                case sycl::data_parallel_kernel::basic:
                     dispatch_target_platform<sycl::detail::basic::device_kernel_predict_linear>(target_, device, partial_grid, exec.block, out_d.get(), sv_or_w_d.get(), rho_d.get(), predict_points_d.get(), num_classes, num_predict_points, num_features, offsets.y, offsets.x);
                     break;
-                case sycl::kernel_invocation_type::work_group:
+                case sycl::data_parallel_kernel::work_group:
                     dispatch_target_platform<sycl::detail::work_group::device_kernel_predict_linear>(target_, device, partial_grid, exec.block, out_d.get(), sv_or_w_d.get(), rho_d.get(), predict_points_d.get(), num_classes, num_predict_points, num_features, offsets.y, offsets.x);
                     break;
-                case sycl::kernel_invocation_type::hierarchical:
+                case sycl::data_parallel_kernel::hierarchical:
                     dispatch_target_platform<sycl::detail::hierarchical::device_kernel_predict_linear>(target_, device, partial_grid, exec.block, out_d.get(), sv_or_w_d.get(), rho_d.get(), predict_points_d.get(), num_classes, num_predict_points, num_features, offsets.y, offsets.x);
                     break;
-                case sycl::kernel_invocation_type::scoped:
+                case sycl::data_parallel_kernel::scoped:
                     dispatch_target_platform<sycl::detail::scoped::device_kernel_predict_linear>(target_, device, partial_grid, exec.block, out_d.get(), sv_or_w_d.get(), rho_d.get(), predict_points_d.get(), num_classes, num_predict_points, num_features, offsets.y, offsets.x);
             }
         } else {
-            switch (invocation_type_) {
-                case sycl::kernel_invocation_type::automatic:
-                    throw backend_exception{ "Can't determine the sycl::kernel_invocation_type!" };
-                case sycl::kernel_invocation_type::basic:
+            switch (data_parallel_kernel_type_) {
+                case sycl::data_parallel_kernel::automatic:
+                    throw backend_exception{ "Can't determine the sycl::data_parallel_kernel!" };
+                case sycl::data_parallel_kernel::basic:
                     dispatch_target_platform<sycl::detail::basic::device_kernel_predict>(target_, params, device, partial_grid, exec.block, out_d.get(), alpha_d.get(), rho_d.get(), sv_or_w_d.get(), predict_points_d.get(), num_classes, num_sv, num_predict_points, num_features, offsets.y, offsets.x);
                     break;
-                case sycl::kernel_invocation_type::work_group:
+                case sycl::data_parallel_kernel::work_group:
                     dispatch_target_platform<sycl::detail::work_group::device_kernel_predict>(target_, params, device, partial_grid, exec.block, out_d.get(), alpha_d.get(), rho_d.get(), sv_or_w_d.get(), predict_points_d.get(), num_classes, num_sv, num_predict_points, num_features, offsets.y, offsets.x);
                     break;
-                case sycl::kernel_invocation_type::hierarchical:
+                case sycl::data_parallel_kernel::hierarchical:
                     dispatch_target_platform<sycl::detail::hierarchical::device_kernel_predict>(target_, params, device, partial_grid, exec.block, out_d.get(), alpha_d.get(), rho_d.get(), sv_or_w_d.get(), predict_points_d.get(), num_classes, num_sv, num_predict_points, num_features, offsets.y, offsets.x);
                     break;
-                case sycl::kernel_invocation_type::scoped:
+                case sycl::data_parallel_kernel::scoped:
                     dispatch_target_platform<sycl::detail::scoped::device_kernel_predict>(target_, params, device, partial_grid, exec.block, out_d.get(), alpha_d.get(), rho_d.get(), sv_or_w_d.get(), predict_points_d.get(), num_classes, num_sv, num_predict_points, num_features, offsets.y, offsets.x);
             }
         }

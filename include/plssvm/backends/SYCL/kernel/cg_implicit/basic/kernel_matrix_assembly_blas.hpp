@@ -13,9 +13,9 @@
 #define PLSSVM_BACKENDS_SYCL_CG_IMPLICIT_BASIC_KERNEL_MATRIX_ASSEMBLY_BLAS_HPP_
 #pragma once
 
+#include "plssvm/backends/SYCL/data_parallel_kernels.hpp"    // plssvm::sycl::data_parallel_kernel
 #include "plssvm/backends/SYCL/detail/atomics.hpp"           // plssvm::sycl::detail::atomic_op
 #include "plssvm/backends/SYCL/kernel/kernel_functions.hpp"  // plssvm::sycl::detail::{feature_reduce, apply_kernel_function}
-#include "plssvm/backends/SYCL/kernel_invocation_types.hpp"  // plssvm::sycl::kernel_invocation_type
 #include "plssvm/constants.hpp"                              // plssvm::{real_type, THREAD_BLOCK_SIZE, INTERNAL_BLOCK_SIZE, PADDING_SIZE}
 #include "plssvm/kernel_function_types.hpp"                  // plssvm::kernel_function_type
 #include "plssvm/target_platforms.hpp"                       // plssvm::target_platform
@@ -37,8 +37,8 @@ namespace plssvm::sycl::detail::basic {
 template <target_platform target, kernel_function_type kernel_function, typename... Args>
 class device_kernel_assembly_symm {
   public:
-    /// The used SYCL kernel invocation type.
-    constexpr static sycl::kernel_invocation_type invocation_type = sycl::kernel_invocation_type::basic;
+    /// The used SYCL data parallel kernel.
+    constexpr static sycl::data_parallel_kernel data_parallel_kernel_type = sycl::data_parallel_kernel::basic;
 
     /**
      * @brief Initialize the SYCL kernel function object.
