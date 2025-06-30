@@ -64,6 +64,7 @@
 #include <limits>     // std::numeric_limits::max
 #include <string>     // std::string
 #include <tuple>      // std::tie
+#include <utility>    // std::forward
 #include <variant>    // std::get
 #include <vector>     // std::vector
 
