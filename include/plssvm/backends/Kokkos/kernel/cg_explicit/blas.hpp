@@ -13,7 +13,8 @@
 #define PLSSVM_BACKENDS_KOKKOS_CG_EXPLICIT_BLAS_HPP_
 #pragma once
 
-#include "plssvm/constants.hpp"  // plssvm::{real_type, THREAD_BLOCK_SIZE, INTERNAL_BLOCK_SIZE, FEATURE_BLOCK_SIZE, PADDING_SIZE}
+#include "plssvm/constants.hpp"         // plssvm::{real_type, THREAD_BLOCK_SIZE, INTERNAL_BLOCK_SIZE, PADDING_SIZE}
+#include "plssvm/target_platforms.hpp"  // plssvm::target_platform
 
 #include "Kokkos_Core.hpp"  // KOKKOS_INLINE_FUNCTION, Kokkos::View, Kokkos::TeamPolicy, Kokkos::mdspan, Kokkos::dextents
 
@@ -24,8 +25,9 @@ namespace plssvm::kokkos::detail {
 /**
  * @brief Perform an explicit BLAS SYMM operation: `C = alpha * A * B + beta * C` where @p A is a `m x k` symmetric matrix (memory optimized), @p B is a `k x n` matrix, @p C is a `m x n` matrix, and @p alpha and @p beta are scalars.
  * @tparam ExecutionSpace the Kokkos::ExecutionSpace used to execute the kernel
+ * @tparam target the target platform
  */
-template <typename ExecutionSpace>
+template <typename ExecutionSpace, target_platform target>
 class device_kernel_symm {
     /**
      * @brief The type of the used Kokkos::View.
@@ -38,8 +40,8 @@ class device_kernel_symm {
      * @brief Initialize the Kokkos kernel function object.
      * @param[in] num_rows the number of rows in @p A and @p C
      * @param[in] num_rhs the number of columns in @p B and @p C
-     * @param[in] device_specific_num_rows the number of rows in @p A and number of rows in @p B; thr rows in @p A are potentially distributed across multiple devices
-     * @param[in] row_offset the first row this device is responsible for
+     * @param[in] device_num_rows the number of rows in @p A and number of rows in @p B; thr rows in @p A are potentially distributed across multiple devices
+     * @param[in] device_row_offset the first row this device is responsible for
      * @param[in] alpha the scalar alpha value
      * @param[in] A the matrix @p A
      * @param[in] B the matrix @p B
@@ -49,11 +51,11 @@ class device_kernel_symm {
      * @param[in] grid_y_offset the offset in y-dimension into the data points if more than one execution grid has to be used
      * @param[in] grid_size_x the size of the execution grid in x-dimension
      */
-    device_kernel_symm(const std::size_t num_rows, const std::size_t num_rhs, const std::size_t device_specific_num_rows, const std::size_t row_offset, const real_type alpha, device_view_type<const real_type> A, device_view_type<const real_type> B, const real_type beta, device_view_type<real_type> C, const std::size_t grid_x_offset, const std::size_t grid_y_offset, const std::size_t grid_size_x) :
+    device_kernel_symm(const std::size_t num_rows, const std::size_t num_rhs, const std::size_t device_num_rows, const std::size_t device_row_offset, const real_type alpha, device_view_type<const real_type> A, device_view_type<const real_type> B, const real_type beta, device_view_type<real_type> C, const std::size_t grid_x_offset, const std::size_t grid_y_offset, const std::size_t grid_size_x) :
         num_rows_{ num_rows },
         num_rhs_{ num_rhs },
-        device_specific_num_rows_{ device_specific_num_rows },
-        row_offset_{ row_offset },
+        device_num_rows_{ device_num_rows },
+        device_row_offset_{ device_row_offset },
         alpha_{ alpha },
         A_{ A },
         B_{ B },
@@ -69,79 +71,96 @@ class device_kernel_symm {
      */
     KOKKOS_INLINE_FUNCTION
     void operator()(const typename Kokkos::TeamPolicy<ExecutionSpace>::member_type &team) const {
+        // cast values to 32-bit unsigned int values to prevent implicit conversions
+        const auto team_rank_x = static_cast<unsigned>(team.team_rank()) / THREAD_BLOCK_SIZE;
+        const auto team_rank_y = static_cast<unsigned>(team.team_rank()) % THREAD_BLOCK_SIZE;
+
         // cast all values to 64-bit std::size_t to prevent potential 32-bit overflows
-        const auto INTERNAL_BLOCK_SIZE_sz = static_cast<std::size_t>(INTERNAL_BLOCK_SIZE);
-        const auto THREAD_BLOCK_SIZE_sz = static_cast<std::size_t>(THREAD_BLOCK_SIZE);
-        const auto FEATURE_BLOCK_SIZE_sz = static_cast<std::size_t>(FEATURE_BLOCK_SIZE);
-        const auto PADDING_SIZE_sz = static_cast<std::size_t>(PADDING_SIZE);
-        const auto threadIdx_x = static_cast<std::size_t>(team.team_rank()) / THREAD_BLOCK_SIZE_sz;            // current thread in block x-dimension
-        const auto threadIdx_y = static_cast<std::size_t>(team.team_rank()) % THREAD_BLOCK_SIZE_sz;            // current thread in block y-dimension
-        const auto blockDim_x = THREAD_BLOCK_SIZE_sz;                                                          // number of threads in block x-dimension
-        const auto blockDim_y = THREAD_BLOCK_SIZE_sz;                                                          // number of threads in block y-dimension
-        const auto blockIdx_x = static_cast<std::size_t>(team.league_rank()) % grid_size_x_ + grid_x_offset_;  // current block in grid x-dimension + offsets if the grid size would be too large
-        const auto blockIdx_y = static_cast<std::size_t>(team.league_rank()) / grid_size_x_ + grid_y_offset_;  // current block in grid y-dimension + offsets if the grid size would be too large
+        constexpr auto INTERNAL_BLOCK_SIZE_uz = static_cast<std::size_t>(INTERNAL_BLOCK_SIZE);
+        constexpr auto THREAD_BLOCK_SIZE_uz = static_cast<std::size_t>(THREAD_BLOCK_SIZE);
+        constexpr auto PADDING_SIZE_uz = static_cast<std::size_t>(PADDING_SIZE);
 
-        // calculate the indices used in the current thread
-        const auto i = (blockIdx_x * blockDim_x + threadIdx_x) * INTERNAL_BLOCK_SIZE_sz;  // # rhs -> num_rhs
-        const auto i_linear = blockIdx_x * blockDim_x * INTERNAL_BLOCK_SIZE_sz + threadIdx_x;
-        const auto j = (blockIdx_y * blockDim_y + threadIdx_y) * INTERNAL_BLOCK_SIZE_sz;  // # rows -> num_mirror_rows
-        const auto j_linear = blockIdx_y * blockDim_y * INTERNAL_BLOCK_SIZE_sz + threadIdx_x;
+        const auto threadIdx_x = static_cast<std::size_t>(team.team_rank()) / THREAD_BLOCK_SIZE_uz;            // current thread in team x-dimension
+        const auto threadIdx_y = static_cast<std::size_t>(team.team_rank()) % THREAD_BLOCK_SIZE_uz;            // current thread in team y-dimension
+        const auto blockDim_x = THREAD_BLOCK_SIZE_uz;                                                          // number of threads in team x-dimension
+        const auto blockDim_y = THREAD_BLOCK_SIZE_uz;                                                          // number of threads in team y-dimension
+        const auto blockIdx_x = static_cast<std::size_t>(team.league_rank()) % grid_size_x_ + grid_x_offset_;  // current team in league x-dimension + offsets if the league size is too large
+        const auto blockIdx_y = static_cast<std::size_t>(team.league_rank()) / grid_size_x_ + grid_y_offset_;  // current team in league y-dimension + offsets if the league size is too large
 
-        // create the shared memory arrays used for caching data point features
-        constexpr std::size_t shmem_size = FEATURE_BLOCK_SIZE * THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE;
-        real_type *data_cache_ptr = static_cast<real_type *>(team.team_shmem().get_shmem(2 * shmem_size * sizeof(real_type)));
-        Kokkos::mdspan<real_type, Kokkos::dextents<std::size_t, 2>> A_cache{ data_cache_ptr, FEATURE_BLOCK_SIZE, INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE };
-        Kokkos::mdspan<real_type, Kokkos::dextents<std::size_t, 2>> B_cache{ data_cache_ptr + shmem_size, FEATURE_BLOCK_SIZE, INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE };
+        // create two scratchpad memory arrays used for caching
+        constexpr std::size_t scratchpad_size = THREAD_BLOCK_SIZE_uz * THREAD_BLOCK_SIZE_uz * INTERNAL_BLOCK_SIZE_uz;
+        real_type *scratchpad_ptr = static_cast<real_type *>(team.team_shmem().get_shmem(std::size_t{ 2 } * scratchpad_size * sizeof(real_type)));
+        Kokkos::mdspan<real_type, Kokkos::dextents<std::size_t, 2>> A_cache{ scratchpad_ptr, THREAD_BLOCK_SIZE_uz, INTERNAL_BLOCK_SIZE_uz * THREAD_BLOCK_SIZE_uz };
+        Kokkos::mdspan<real_type, Kokkos::dextents<std::size_t, 2>> B_cache{ scratchpad_ptr + scratchpad_size, THREAD_BLOCK_SIZE_uz, INTERNAL_BLOCK_SIZE_uz * THREAD_BLOCK_SIZE_uz };
 
         // create a thread private array used for internal caching
         real_type temp[INTERNAL_BLOCK_SIZE][INTERNAL_BLOCK_SIZE]{};
 
-        // iterate over all features using blocking to be able to cache them for faster memory accesses
-        for (std::size_t dim = 0; dim < (num_rows_ - row_offset_); dim += FEATURE_BLOCK_SIZE_sz) {
-            // load data into shared memory
-            for (unsigned internal = 0; internal < INTERNAL_BLOCK_SIZE; ++internal) {
-                const auto global_i = i_linear + static_cast<std::size_t>(internal) * THREAD_BLOCK_SIZE_sz;
-                const auto global_j = j_linear + static_cast<std::size_t>(internal) * THREAD_BLOCK_SIZE_sz;
+        {
+            // calculate the indices used in the current thread, pays attention to coalesced memory accesses
+            const auto i_idx_linear = blockIdx_x * blockDim_x * INTERNAL_BLOCK_SIZE_uz + threadIdx_x;  // num_rhs
+            const auto j_idx_linear = blockIdx_y * blockDim_y * INTERNAL_BLOCK_SIZE_uz + threadIdx_x;  // device_num_rows
 
-                // determine on which side of the diagonal we are located
-                if (dim + threadIdx_y < global_j) {
-                    A_cache(threadIdx_y, internal * THREAD_BLOCK_SIZE + threadIdx_x) = A_[(dim + threadIdx_y) * (num_rows_ - row_offset_ + PADDING_SIZE_sz) + global_j - (dim + threadIdx_y) * (dim + threadIdx_y + std::size_t{ 1 }) / std::size_t{ 2 }];
-                } else {
-                    A_cache(threadIdx_y, internal * THREAD_BLOCK_SIZE + threadIdx_x) = A_[global_j * (num_rows_ - row_offset_ + PADDING_SIZE_sz) + dim + threadIdx_y - global_j * (global_j + std::size_t{ 1 }) / std::size_t{ 2 }];
+            // iterate over all values using blocking to be able to cache them for faster memory accesses
+            for (std::size_t dim_block = 0; dim_block < (num_rows_ - device_row_offset_); dim_block += THREAD_BLOCK_SIZE_uz) {
+                // load data into scratchpad memory
+                for (unsigned internal = 0; internal < INTERNAL_BLOCK_SIZE; ++internal) {
+                    // calculate the indices to access the global data, pays attention to coalesced memory accesses
+                    const auto global_i_idx_linear = i_idx_linear + static_cast<std::size_t>(internal) * THREAD_BLOCK_SIZE_uz;
+                    const auto global_j_idx_linear = j_idx_linear + static_cast<std::size_t>(internal) * THREAD_BLOCK_SIZE_uz;
+
+                    // store the values in the scratchpad memory
+                    // determine on which side of the diagonal we are located
+                    if (dim_block + threadIdx_y < global_j_idx_linear) {
+                        A_cache(team_rank_y, internal * THREAD_BLOCK_SIZE + team_rank_x) = A_[(dim_block + threadIdx_y) * (num_rows_ - device_row_offset_ + PADDING_SIZE_uz) + global_j_idx_linear - (dim_block + threadIdx_y) * (dim_block + threadIdx_y + std::size_t{ 1 }) / std::size_t{ 2 }];  // SoA, upper triangular matrix only
+                    } else {
+                        A_cache(team_rank_y, internal * THREAD_BLOCK_SIZE + team_rank_x) = A_[global_j_idx_linear * (num_rows_ - device_row_offset_ + PADDING_SIZE_uz) + dim_block + threadIdx_y - global_j_idx_linear * (global_j_idx_linear + std::size_t{ 1 }) / std::size_t{ 2 }];  // SoA, upper triangular matrix only
+                    }
+
+                    B_cache(team_rank_y, internal * THREAD_BLOCK_SIZE + team_rank_x) = B_[(dim_block + device_row_offset_ + threadIdx_y) * (num_rhs_ + PADDING_SIZE_uz) + global_i_idx_linear];  // SoA
                 }
-                // determine on which side of the diagonal we are located
-                if (dim + threadIdx_y + THREAD_BLOCK_SIZE < global_j) {
-                    A_cache(threadIdx_y + THREAD_BLOCK_SIZE, internal * THREAD_BLOCK_SIZE + threadIdx_x) = A_[(dim + threadIdx_y + THREAD_BLOCK_SIZE_sz) * (num_rows_ - row_offset_ + PADDING_SIZE_sz) + global_j - (dim + threadIdx_y + THREAD_BLOCK_SIZE_sz) * (dim + threadIdx_y + THREAD_BLOCK_SIZE_sz + std::size_t{ 1 }) / std::size_t{ 2 }];
+                team.team_barrier();  // wait until all threads loaded their part of the data
+
+                if constexpr (target == target_platform::cpu) {
+                    // perform the dot product calculation, the dim is the fastest moving index
+                    for (unsigned internal_i = 0; internal_i < INTERNAL_BLOCK_SIZE; ++internal_i) {
+                        for (unsigned internal_j = 0; internal_j < INTERNAL_BLOCK_SIZE; ++internal_j) {
+                            real_type sum{ 0.0 };
+                            for (unsigned dim = 0; dim < THREAD_BLOCK_SIZE; ++dim) {
+                                sum += A_cache(dim, team_rank_y * INTERNAL_BLOCK_SIZE + internal_j) * B_cache(dim, team_rank_x * INTERNAL_BLOCK_SIZE + internal_i);
+                            }
+                            temp[internal_i][internal_j] += sum;
+                        }
+                    }
                 } else {
-                    A_cache(threadIdx_y + THREAD_BLOCK_SIZE, internal * THREAD_BLOCK_SIZE + threadIdx_x) = A_[global_j * (num_rows_ - row_offset_ + PADDING_SIZE_sz) + dim + threadIdx_y + THREAD_BLOCK_SIZE_sz - global_j * (global_j + std::size_t{ 1 }) / std::size_t{ 2 }];
-                }
-
-                B_cache(threadIdx_y, internal * THREAD_BLOCK_SIZE + threadIdx_x) = B_[(dim + row_offset_ + threadIdx_y) * (num_rhs_ + PADDING_SIZE_sz) + global_i];
-                B_cache(threadIdx_y + THREAD_BLOCK_SIZE, internal * THREAD_BLOCK_SIZE + threadIdx_x) = B_[(dim + row_offset_ + threadIdx_y + THREAD_BLOCK_SIZE_sz) * (num_rhs_ + PADDING_SIZE_sz) + global_i];
-            }
-            team.team_barrier();  // wait until all threads loaded their part of the data
-
-            // perform the dot product calculation
-            for (unsigned block_dim = 0; block_dim < FEATURE_BLOCK_SIZE; ++block_dim) {
-                for (unsigned internal_i = 0; internal_i < INTERNAL_BLOCK_SIZE; ++internal_i) {
-                    for (unsigned internal_j = 0; internal_j < INTERNAL_BLOCK_SIZE; ++internal_j) {
-                        temp[internal_i][internal_j] += A_cache(block_dim, threadIdx_y * INTERNAL_BLOCK_SIZE + internal_j) * B_cache(block_dim, threadIdx_x * INTERNAL_BLOCK_SIZE + internal_i);
+                    // perform the dot product calculation, the dim is the slowest moving index
+                    for (unsigned dim = 0; dim < THREAD_BLOCK_SIZE; ++dim) {
+                        for (unsigned internal_i = 0; internal_i < INTERNAL_BLOCK_SIZE; ++internal_i) {
+                            for (unsigned internal_j = 0; internal_j < INTERNAL_BLOCK_SIZE; ++internal_j) {
+                                temp[internal_i][internal_j] += A_cache(dim, team_rank_y * INTERNAL_BLOCK_SIZE + internal_j) * B_cache(dim, team_rank_x * INTERNAL_BLOCK_SIZE + internal_i);
+                            }
+                        }
                     }
                 }
+                team.team_barrier();  // wait until all threads performed their part of the calculations
             }
-            team.team_barrier();  // wait until all threads performed their part of the calculations
         }
+
+        // calculate the indices used in the current thread
+        const auto i_idx = (blockIdx_x * blockDim_x + threadIdx_x) * INTERNAL_BLOCK_SIZE_uz;  // num_rhs
+        const auto j_idx = (blockIdx_y * blockDim_y + threadIdx_y) * INTERNAL_BLOCK_SIZE_uz;  // device_num_rows
 
         // apply the (partial) BLAS operation and update C
         for (unsigned internal_i = 0; internal_i < INTERNAL_BLOCK_SIZE; ++internal_i) {
             for (unsigned internal_j = 0; internal_j < INTERNAL_BLOCK_SIZE; ++internal_j) {
-                const auto global_i = i + static_cast<std::size_t>(internal_i);
-                const auto device_global_j = j + static_cast<std::size_t>(internal_j);
-                const auto global_j = row_offset_ + j + static_cast<std::size_t>(internal_j);
+                // calculate the indices to access the global data and the data with respect to the current device
+                const auto global_i_idx = i_idx + static_cast<std::size_t>(internal_i);
+                const auto device_global_j_idx = j_idx + static_cast<std::size_t>(internal_j);
+                const auto global_j_idx = device_row_offset_ + device_global_j_idx;
 
-                // be sure to not perform out of bounds accesses
-                if (global_i < num_rhs_ && device_global_j < device_specific_num_rows_) {
-                    C_[global_j * (num_rhs_ + PADDING_SIZE_sz) + global_i] = alpha_ * temp[internal_i][internal_j] + beta_ * C_[global_j * (num_rhs_ + PADDING_SIZE_sz) + global_i];
+                // be sure to not perform out-of-bounds accesses
+                if (global_i_idx < num_rhs_ && device_global_j_idx < device_num_rows_) {
+                    C_[global_j_idx * (num_rhs_ + PADDING_SIZE_uz) + global_i_idx] = alpha_ * temp[internal_i][internal_j] + beta_ * C_[global_j_idx * (num_rhs_ + PADDING_SIZE_uz) + global_i_idx];  // SoA
                 }
             }
         }
@@ -151,8 +170,8 @@ class device_kernel_symm {
     /// @cond Doxygen_suppress
     const std::size_t num_rows_;
     const std::size_t num_rhs_;
-    const std::size_t device_specific_num_rows_;
-    const std::size_t row_offset_;
+    const std::size_t device_num_rows_;
+    const std::size_t device_row_offset_;
     const real_type alpha_;
     device_view_type<const real_type> A_;
     device_view_type<const real_type> B_;
@@ -168,8 +187,9 @@ class device_kernel_symm {
  * @brief Perform an explicit BLAS SYMM operation: `C = alpha * A * B + beta * C` where @p A is a `m x k` symmetric matrix (memory optimized), @p B is a `k x n` matrix, @p C is a `m x n` matrix, and @p alpha and @p beta are scalars.
  * @details In a multi-GPU setting, this function is responsible for mirroring down the columns this device is responsible for!
  * @tparam ExecutionSpace the Kokkos::ExecutionSpace used to execute the kernel
+ * @tparam target the target platform
  */
-template <typename ExecutionSpace>
+template <typename ExecutionSpace, target_platform target>
 class device_kernel_symm_mirror {
     /**
      * @brief The type of the used Kokkos::View.
@@ -183,8 +203,8 @@ class device_kernel_symm_mirror {
      * @param[in] num_rows the number of rows in @p A and @p C
      * @param[in] num_rhs the number of columns in @p B and @p C
      * @param[in] num_mirror_rows the number of rows to mirror down
-     * @param[in] device_specific_num_rows the number of rows in @p A and number of rows in @p B; thr rows in @p A are potentially distributed across multiple devices
-     * @param[in] row_offset the first row this device is responsible for
+     * @param[in] device_num_rows the number of rows in @p A and number of rows in @p B; thr rows in @p A are potentially distributed across multiple devices
+     * @param[in] device_row_offset the first row this device is responsible for
      * @param[in] alpha the scalar alpha value
      * @param[in] A the matrix @p A
      * @param[in] B the matrix @p B
@@ -194,12 +214,12 @@ class device_kernel_symm_mirror {
      * @param[in] grid_y_offset the offset in y-dimension into the data points if more than one execution grid has to be used
      * @param[in] grid_size_x the size of the execution grid in x-dimension
      */
-    device_kernel_symm_mirror(const std::size_t num_rows, const std::size_t num_rhs, const std::size_t num_mirror_rows, const std::size_t device_specific_num_rows, const std::size_t row_offset, const real_type alpha, device_view_type<const real_type> A, device_view_type<const real_type> B, const real_type beta, device_view_type<real_type> C, const std::size_t grid_x_offset, const std::size_t grid_y_offset, const std::size_t grid_size_x) :
+    device_kernel_symm_mirror(const std::size_t num_rows, const std::size_t num_rhs, const std::size_t num_mirror_rows, const std::size_t device_num_rows, const std::size_t device_row_offset, const real_type alpha, device_view_type<const real_type> A, device_view_type<const real_type> B, const real_type beta, device_view_type<real_type> C, const std::size_t grid_x_offset, const std::size_t grid_y_offset, const std::size_t grid_size_x) :
         num_rows_{ num_rows },
         num_rhs_{ num_rhs },
         num_mirror_rows_{ num_mirror_rows },
-        device_specific_num_rows_{ device_specific_num_rows },
-        row_offset_{ row_offset },
+        device_num_rows_{ device_num_rows },
+        device_row_offset_{ device_row_offset },
         alpha_{ alpha },
         A_{ A },
         B_{ B },
@@ -215,69 +235,90 @@ class device_kernel_symm_mirror {
      */
     KOKKOS_INLINE_FUNCTION
     void operator()(const typename Kokkos::TeamPolicy<ExecutionSpace>::member_type &team) const {
+        // cast values to 32-bit unsigned int values to prevent implicit conversions
+        const auto team_rank_x = static_cast<unsigned>(team.team_rank()) / THREAD_BLOCK_SIZE;
+        const auto team_rank_y = static_cast<unsigned>(team.team_rank()) % THREAD_BLOCK_SIZE;
+
         // cast all values to 64-bit std::size_t to prevent potential 32-bit overflows
-        const auto INTERNAL_BLOCK_SIZE_sz = static_cast<std::size_t>(INTERNAL_BLOCK_SIZE);
-        const auto THREAD_BLOCK_SIZE_sz = static_cast<std::size_t>(THREAD_BLOCK_SIZE);
-        const auto FEATURE_BLOCK_SIZE_sz = static_cast<std::size_t>(FEATURE_BLOCK_SIZE);
-        const auto PADDING_SIZE_sz = static_cast<std::size_t>(PADDING_SIZE);
-        const auto threadIdx_x = static_cast<std::size_t>(team.team_rank()) / THREAD_BLOCK_SIZE_sz;            // current thread in block x-dimension
-        const auto threadIdx_y = static_cast<std::size_t>(team.team_rank()) % THREAD_BLOCK_SIZE_sz;            // current thread in block y-dimension
-        const auto blockDim_x = THREAD_BLOCK_SIZE_sz;                                                          // number of threads in block x-dimension
-        const auto blockDim_y = THREAD_BLOCK_SIZE_sz;                                                          // number of threads in block y-dimension
-        const auto blockIdx_x = static_cast<std::size_t>(team.league_rank()) % grid_size_x_ + grid_x_offset_;  // current block in grid x-dimension + offsets if the grid size would be too large
-        const auto blockIdx_y = static_cast<std::size_t>(team.league_rank()) / grid_size_x_ + grid_y_offset_;  // current block in grid y-dimension + offsets if the grid size would be too large
+        constexpr auto INTERNAL_BLOCK_SIZE_uz = static_cast<std::size_t>(INTERNAL_BLOCK_SIZE);
+        constexpr auto THREAD_BLOCK_SIZE_uz = static_cast<std::size_t>(THREAD_BLOCK_SIZE);
+        constexpr auto PADDING_SIZE_uz = static_cast<std::size_t>(PADDING_SIZE);
 
-        // calculate the indices used in the current thread
-        const auto i = (blockIdx_x * blockDim_x + threadIdx_x) * INTERNAL_BLOCK_SIZE_sz;  // # rhs -> num_rhs
-        const auto i_linear = blockIdx_x * blockDim_x * INTERNAL_BLOCK_SIZE_sz + threadIdx_x;
-        const auto j = (blockIdx_y * blockDim_y + threadIdx_y) * INTERNAL_BLOCK_SIZE_sz;  // # rows -> num_mirror_rows
-        const auto j_linear = blockIdx_y * blockDim_y * INTERNAL_BLOCK_SIZE_sz + threadIdx_x;
+        const auto threadIdx_x = static_cast<std::size_t>(team.team_rank()) / THREAD_BLOCK_SIZE_uz;            // current thread in team x-dimension
+        const auto threadIdx_y = static_cast<std::size_t>(team.team_rank()) % THREAD_BLOCK_SIZE_uz;            // current thread in team y-dimension
+        const auto blockDim_x = THREAD_BLOCK_SIZE_uz;                                                          // number of threads in team x-dimension
+        const auto blockDim_y = THREAD_BLOCK_SIZE_uz;                                                          // number of threads in team y-dimension
+        const auto blockIdx_x = static_cast<std::size_t>(team.league_rank()) % grid_size_x_ + grid_x_offset_;  // current team in league x-dimension + offsets if the league size is too large
+        const auto blockIdx_y = static_cast<std::size_t>(team.league_rank()) / grid_size_x_ + grid_y_offset_;  // current team in league y-dimension + offsets if the league size is too large
 
-        // create the shared memory arrays used for caching data point features
-        constexpr std::size_t shmem_size = FEATURE_BLOCK_SIZE * THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE;
-        real_type *data_cache_ptr = static_cast<real_type *>(team.team_shmem().get_shmem(2 * shmem_size * sizeof(real_type)));
-        Kokkos::mdspan<real_type, Kokkos::dextents<std::size_t, 2>> A_cache{ data_cache_ptr, FEATURE_BLOCK_SIZE, INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE };
-        Kokkos::mdspan<real_type, Kokkos::dextents<std::size_t, 2>> B_cache{ data_cache_ptr + shmem_size, FEATURE_BLOCK_SIZE, INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE };
+        // create two shared memory arrays used for caching
+        constexpr std::size_t scratchpad_size = THREAD_BLOCK_SIZE_uz * THREAD_BLOCK_SIZE_uz * INTERNAL_BLOCK_SIZE_uz;
+        real_type *scratchpad_ptr = static_cast<real_type *>(team.team_shmem().get_shmem(std::size_t{ 2 } * scratchpad_size * sizeof(real_type)));
+        Kokkos::mdspan<real_type, Kokkos::dextents<std::size_t, 2>> A_cache{ scratchpad_ptr, THREAD_BLOCK_SIZE_uz, INTERNAL_BLOCK_SIZE_uz * THREAD_BLOCK_SIZE_uz };
+        Kokkos::mdspan<real_type, Kokkos::dextents<std::size_t, 2>> B_cache{ scratchpad_ptr + scratchpad_size, THREAD_BLOCK_SIZE_uz, INTERNAL_BLOCK_SIZE_uz * THREAD_BLOCK_SIZE_uz };
 
         // create a thread private array used for internal caching
         real_type temp[INTERNAL_BLOCK_SIZE][INTERNAL_BLOCK_SIZE]{};
 
-        // iterate over the remaining features using blocking to be able to cache them for faster memory accesses
-        for (std::size_t dim = 0; dim < device_specific_num_rows_; dim += FEATURE_BLOCK_SIZE_sz) {
-            // load data into shared memory
-            for (unsigned internal = 0; internal < INTERNAL_BLOCK_SIZE; ++internal) {
-                const auto global_i = i_linear + static_cast<std::size_t>(internal) * THREAD_BLOCK_SIZE_sz;
-                const auto global_j = j_linear + static_cast<std::size_t>(internal) * THREAD_BLOCK_SIZE_sz;
+        {
+            // calculate the indices used in the current thread, pays attention to coalesced memory accesses
+            const auto i_idx_linear = blockIdx_x * blockDim_x * INTERNAL_BLOCK_SIZE_uz + threadIdx_x;  // num_rhs
+            const auto j_idx_linear = blockIdx_y * blockDim_y * INTERNAL_BLOCK_SIZE_uz + threadIdx_x;  // num_mirror_rows
 
-                // FEATURE_BLOCK_SIZE = 2 * THREAD_BLOCK_SIZE -> store twice as many values in the shared memory
-                A_cache(threadIdx_y, internal * THREAD_BLOCK_SIZE + threadIdx_x) = A_[(dim + threadIdx_y) * (num_rows_ - row_offset_ + PADDING_SIZE_sz) - (dim + threadIdx_y - std::size_t{ 1 }) * (dim + threadIdx_y) / std::size_t{ 2 } + device_specific_num_rows_ - (dim + threadIdx_y) + global_j];
-                A_cache(threadIdx_y + THREAD_BLOCK_SIZE, internal * THREAD_BLOCK_SIZE + threadIdx_x) = A_[(dim + threadIdx_y + THREAD_BLOCK_SIZE_sz) * (num_rows_ - row_offset_ + PADDING_SIZE_sz) - (dim + threadIdx_y + THREAD_BLOCK_SIZE_sz - std::size_t{ 1 }) * (dim + threadIdx_y + THREAD_BLOCK_SIZE_sz) / std::size_t{ 2 } + device_specific_num_rows_ - (dim + threadIdx_y + THREAD_BLOCK_SIZE_sz) + global_j];
-                B_cache(threadIdx_y, internal * THREAD_BLOCK_SIZE + threadIdx_x) = B_[(row_offset_ + dim + threadIdx_y) * (num_rhs_ + PADDING_SIZE_sz) + global_i];
-                B_cache(threadIdx_y + THREAD_BLOCK_SIZE, internal * THREAD_BLOCK_SIZE + threadIdx_x) = B_[(row_offset_ + dim + threadIdx_y + THREAD_BLOCK_SIZE_sz) * (num_rhs_ + PADDING_SIZE_sz) + global_i];
-            }
-            team.team_barrier();  // wait until all threads loaded their part of the data
+            // iterate over the remaining values using blocking to be able to cache them for faster memory accesses
+            for (std::size_t dim_block = 0; dim_block < device_num_rows_; dim_block += THREAD_BLOCK_SIZE_uz) {
+                // load data into scratchpad memory
+                for (unsigned internal = 0; internal < INTERNAL_BLOCK_SIZE; ++internal) {
+                    // calculate the indices to access the global data, pays attention to coalesced memory accesses
+                    const auto global_i_idx_linear = i_idx_linear + static_cast<std::size_t>(internal) * THREAD_BLOCK_SIZE_uz;
+                    const auto global_j_idx_linear = j_idx_linear + static_cast<std::size_t>(internal) * THREAD_BLOCK_SIZE_uz;
 
-            // perform the feature reduction calculation
-            for (unsigned block_dim = 0; block_dim < FEATURE_BLOCK_SIZE; ++block_dim) {
-                for (unsigned internal_i = 0; internal_i < INTERNAL_BLOCK_SIZE; ++internal_i) {
-                    for (unsigned internal_j = 0; internal_j < INTERNAL_BLOCK_SIZE; ++internal_j) {
-                        temp[internal_i][internal_j] += A_cache(block_dim, threadIdx_y * INTERNAL_BLOCK_SIZE + internal_j) * B_cache(block_dim, threadIdx_x * INTERNAL_BLOCK_SIZE + internal_i);
+                    // store the values in the scratchpad memory
+                    A_cache(team_rank_y, internal * THREAD_BLOCK_SIZE + team_rank_x) = A_[(dim_block + threadIdx_y) * (num_rows_ - device_row_offset_ + PADDING_SIZE_uz) - (dim_block + threadIdx_y - std::size_t{ 1 }) * (dim_block + threadIdx_y) / std::size_t{ 2 } + device_num_rows_ - (dim_block + threadIdx_y) + global_j_idx_linear];  // SoA, upper triangular matrix only
+                    B_cache(team_rank_y, internal * THREAD_BLOCK_SIZE + team_rank_x) = B_[(device_row_offset_ + dim_block + threadIdx_y) * (num_rhs_ + PADDING_SIZE_uz) + global_i_idx_linear];                                                                                                                                                // SoA
+                }
+                team.team_barrier();  // wait until all threads loaded their part of the data
+
+                if constexpr (target == target_platform::cpu) {
+                    // perform the dot product calculation, the dim is the fastest moving index
+                    for (unsigned internal_i = 0; internal_i < INTERNAL_BLOCK_SIZE; ++internal_i) {
+                        for (unsigned internal_j = 0; internal_j < INTERNAL_BLOCK_SIZE; ++internal_j) {
+                            real_type sum{ 0.0 };
+                            for (unsigned dim = 0; dim < THREAD_BLOCK_SIZE; ++dim) {
+                                sum += A_cache(dim, team_rank_y * INTERNAL_BLOCK_SIZE + internal_j) * B_cache(dim, team_rank_x * INTERNAL_BLOCK_SIZE + internal_i);
+                            }
+                            temp[internal_i][internal_j] += sum;
+                        }
+                    }
+                } else {
+                    // perform the dot product calculation, the dim is the slowest moving index
+                    for (unsigned dim = 0; dim < THREAD_BLOCK_SIZE; ++dim) {
+                        for (unsigned internal_i = 0; internal_i < INTERNAL_BLOCK_SIZE; ++internal_i) {
+                            for (unsigned internal_j = 0; internal_j < INTERNAL_BLOCK_SIZE; ++internal_j) {
+                                temp[internal_i][internal_j] += A_cache(dim, team_rank_y * INTERNAL_BLOCK_SIZE + internal_j) * B_cache(dim, team_rank_x * INTERNAL_BLOCK_SIZE + internal_i);
+                            }
+                        }
                     }
                 }
+                team.team_barrier();  // wait until all threads performed their part of the calculations
             }
-            team.team_barrier();  // wait until all threads performed their part of the calculations
         }
+
+        // calculate the indices used in the current thread
+        const auto i_idx = (blockIdx_x * blockDim_x + threadIdx_x) * INTERNAL_BLOCK_SIZE_uz;  // num_rhs
+        const auto j_idx = (blockIdx_y * blockDim_y + threadIdx_y) * INTERNAL_BLOCK_SIZE_uz;  // num_mirror_rows
 
         // apply the (remaining) BLAS operation and update C
         for (unsigned internal_i = 0; internal_i < INTERNAL_BLOCK_SIZE; ++internal_i) {
             for (unsigned internal_j = 0; internal_j < INTERNAL_BLOCK_SIZE; ++internal_j) {
-                const auto global_i = i + static_cast<std::size_t>(internal_i);
-                const auto partial_global_j = j + static_cast<std::size_t>(internal_j);
-                const auto global_j = row_offset_ + device_specific_num_rows_ + j + static_cast<std::size_t>(internal_j);
+                // calculate the indices to access the global data and the data with respect to the current device
+                const auto global_i_idx = i_idx + static_cast<std::size_t>(internal_i);
+                const auto partial_global_j_idx = j_idx + static_cast<std::size_t>(internal_j);
+                const auto global_j_idx = device_row_offset_ + device_num_rows_ + partial_global_j_idx;
 
-                // be sure to not perform out of bounds accesses
-                if (global_i < num_rhs_ && partial_global_j < num_mirror_rows_) {
-                    C_[global_j * (num_rhs_ + PADDING_SIZE_sz) + global_i] = alpha_ * temp[internal_i][internal_j] + beta_ * C_[global_j * (num_rhs_ + PADDING_SIZE_sz) + global_i];
+                // be sure to not perform out-of-bounds accesses
+                if (global_i_idx < num_rhs_ && partial_global_j_idx < num_mirror_rows_) {
+                    C_[global_j_idx * (num_rhs_ + PADDING_SIZE_uz) + global_i_idx] = alpha_ * temp[internal_i][internal_j] + beta_ * C_[global_j_idx * (num_rhs_ + PADDING_SIZE_uz) + global_i_idx];  // SoA
                 }
             }
         }
@@ -288,8 +329,8 @@ class device_kernel_symm_mirror {
     const std::size_t num_rows_;
     const std::size_t num_rhs_;
     const std::size_t num_mirror_rows_;
-    const std::size_t device_specific_num_rows_;
-    const std::size_t row_offset_;
+    const std::size_t device_num_rows_;
+    const std::size_t device_row_offset_;
     const real_type alpha_;
     device_view_type<const real_type> A_;
     device_view_type<const real_type> B_;
@@ -338,26 +379,28 @@ class device_kernel_inplace_matrix_add {
     KOKKOS_INLINE_FUNCTION
     void operator()(const typename Kokkos::TeamPolicy<ExecutionSpace>::member_type &team) const {
         // cast all values to 64-bit std::size_t to prevent potential 32-bit overflows
-        const auto INTERNAL_BLOCK_SIZE_sz = static_cast<std::size_t>(INTERNAL_BLOCK_SIZE);
-        const auto THREAD_BLOCK_SIZE_sz = static_cast<std::size_t>(THREAD_BLOCK_SIZE);
-        const auto PADDING_SIZE_sz = static_cast<std::size_t>(PADDING_SIZE);
-        const auto threadIdx_x = static_cast<std::size_t>(team.team_rank()) / THREAD_BLOCK_SIZE_sz;            // current thread in block x-dimension
-        const auto threadIdx_y = static_cast<std::size_t>(team.team_rank()) % THREAD_BLOCK_SIZE_sz;            // current thread in block y-dimension
-        const auto blockDim_x = THREAD_BLOCK_SIZE_sz;                                                          // number of threads in block x-dimension
-        const auto blockDim_y = THREAD_BLOCK_SIZE_sz;                                                          // number of threads in block y-dimension
-        const auto blockIdx_x = static_cast<std::size_t>(team.league_rank()) % grid_size_x_ + grid_x_offset_;  // current block in grid x-dimension + offsets if the grid size would be too large
-        const auto blockIdx_y = static_cast<std::size_t>(team.league_rank()) / grid_size_x_ + grid_y_offset_;  // current block in grid y-dimension + offsets if the grid size would be too large
+        constexpr auto INTERNAL_BLOCK_SIZE_uz = static_cast<std::size_t>(INTERNAL_BLOCK_SIZE);
+        constexpr auto THREAD_BLOCK_SIZE_uz = static_cast<std::size_t>(THREAD_BLOCK_SIZE);
+        constexpr auto PADDING_SIZE_uz = static_cast<std::size_t>(PADDING_SIZE);
 
-        // Calculate the indices used in the current thread
-        const auto i = (blockIdx_x * blockDim_x + threadIdx_x) * INTERNAL_BLOCK_SIZE_sz;  // num_rows
-        const auto j = (blockIdx_y * blockDim_y + threadIdx_y) * INTERNAL_BLOCK_SIZE_sz;  // num_rhs
+        const auto threadIdx_x = static_cast<std::size_t>(team.team_rank()) / THREAD_BLOCK_SIZE_uz;            // current thread in team x-dimension
+        const auto threadIdx_y = static_cast<std::size_t>(team.team_rank()) % THREAD_BLOCK_SIZE_uz;            // current thread in team y-dimension
+        const auto blockDim_x = THREAD_BLOCK_SIZE_uz;                                                          // number of threads in team x-dimension
+        const auto blockDim_y = THREAD_BLOCK_SIZE_uz;                                                          // number of threads in team y-dimension
+        const auto blockIdx_x = static_cast<std::size_t>(team.league_rank()) % grid_size_x_ + grid_x_offset_;  // current team in league x-dimension + offsets if the league size is too large
+        const auto blockIdx_y = static_cast<std::size_t>(team.league_rank()) / grid_size_x_ + grid_y_offset_;  // current team in league y-dimension + offsets if the league size is too large
+
+        // calculate the indices used in the current thread
+        const auto i_idx = (blockIdx_x * blockDim_x + threadIdx_x) * INTERNAL_BLOCK_SIZE_uz;  // num_rows
+        const auto j_idx = (blockIdx_y * blockDim_y + threadIdx_y) * INTERNAL_BLOCK_SIZE_uz;  // num_rhs
 
         for (unsigned internal_i = 0; internal_i < INTERNAL_BLOCK_SIZE; ++internal_i) {
             for (unsigned internal_j = 0; internal_j < INTERNAL_BLOCK_SIZE; ++internal_j) {
-                const auto global_i = i + static_cast<std::size_t>(internal_i);
-                const auto global_j = j + static_cast<std::size_t>(internal_j);
+                // calculate the indices to access the global data
+                const auto global_i_idx = i_idx + static_cast<std::size_t>(internal_i);
+                const auto global_j_idx = j_idx + static_cast<std::size_t>(internal_j);
 
-                lhs_[global_i * (num_cols_ + PADDING_SIZE_sz) + global_j] += rhs_[global_i * (num_cols_ + PADDING_SIZE_sz) + global_j];
+                lhs_[global_i_idx * (num_cols_ + PADDING_SIZE_uz) + global_j_idx] += rhs_[global_i_idx * (num_cols_ + PADDING_SIZE_uz) + global_j_idx];  // SoA
             }
         }
     }
@@ -410,26 +453,28 @@ class device_kernel_inplace_matrix_scale {
     KOKKOS_INLINE_FUNCTION
     void operator()(const typename Kokkos::TeamPolicy<ExecutionSpace>::member_type &team) const {
         // cast all values to 64-bit std::size_t to prevent potential 32-bit overflows
-        const auto INTERNAL_BLOCK_SIZE_sz = static_cast<std::size_t>(INTERNAL_BLOCK_SIZE);
-        const auto THREAD_BLOCK_SIZE_sz = static_cast<std::size_t>(THREAD_BLOCK_SIZE);
-        const auto PADDING_SIZE_sz = static_cast<std::size_t>(PADDING_SIZE);
-        const auto threadIdx_x = static_cast<std::size_t>(team.team_rank()) / THREAD_BLOCK_SIZE_sz;            // current thread in block x-dimension
-        const auto threadIdx_y = static_cast<std::size_t>(team.team_rank()) % THREAD_BLOCK_SIZE_sz;            // current thread in block y-dimension
-        const auto blockDim_x = THREAD_BLOCK_SIZE_sz;                                                          // number of threads in block x-dimension
-        const auto blockDim_y = THREAD_BLOCK_SIZE_sz;                                                          // number of threads in block y-dimension
-        const auto blockIdx_x = static_cast<std::size_t>(team.league_rank()) % grid_size_x_ + grid_x_offset_;  // current block in grid x-dimension + offsets if the grid size would be too large
-        const auto blockIdx_y = static_cast<std::size_t>(team.league_rank()) / grid_size_x_ + grid_y_offset_;  // current block in grid y-dimension + offsets if the grid size would be too large
+        constexpr auto INTERNAL_BLOCK_SIZE_uz = static_cast<std::size_t>(INTERNAL_BLOCK_SIZE);
+        constexpr auto THREAD_BLOCK_SIZE_uz = static_cast<std::size_t>(THREAD_BLOCK_SIZE);
+        constexpr auto PADDING_SIZE_uz = static_cast<std::size_t>(PADDING_SIZE);
 
-        // Calculate the indices used in the current thread
-        const auto i = (blockIdx_x * blockDim_x + threadIdx_x) * INTERNAL_BLOCK_SIZE_sz;  // num_rows
-        const auto j = (blockIdx_y * blockDim_y + threadIdx_y) * INTERNAL_BLOCK_SIZE_sz;  // num_rhs
+        const auto threadIdx_x = static_cast<std::size_t>(team.team_rank()) / THREAD_BLOCK_SIZE_uz;            // current thread in team x-dimension
+        const auto threadIdx_y = static_cast<std::size_t>(team.team_rank()) % THREAD_BLOCK_SIZE_uz;            // current thread in team y-dimension
+        const auto blockDim_x = THREAD_BLOCK_SIZE_uz;                                                          // number of threads in team x-dimension
+        const auto blockDim_y = THREAD_BLOCK_SIZE_uz;                                                          // number of threads in team y-dimension
+        const auto blockIdx_x = static_cast<std::size_t>(team.league_rank()) % grid_size_x_ + grid_x_offset_;  // current team in league x-dimension + offsets if the league size is too large
+        const auto blockIdx_y = static_cast<std::size_t>(team.league_rank()) / grid_size_x_ + grid_y_offset_;  // current team in league y-dimension + offsets if the league size is too large
+
+        // calculate the indices used in the current thread
+        const auto i_idx = (blockIdx_x * blockDim_x + threadIdx_x) * INTERNAL_BLOCK_SIZE_uz;  // num_rows
+        const auto j_idx = (blockIdx_y * blockDim_y + threadIdx_y) * INTERNAL_BLOCK_SIZE_uz;  // num_rhs
 
         for (unsigned internal_i = 0; internal_i < INTERNAL_BLOCK_SIZE; ++internal_i) {
             for (unsigned internal_j = 0; internal_j < INTERNAL_BLOCK_SIZE; ++internal_j) {
-                const auto global_i = i + static_cast<std::size_t>(internal_i);
-                const auto global_j = j + static_cast<std::size_t>(internal_j);
+                // calculate the indices to access the global data
+                const auto global_i_idx = i_idx + static_cast<std::size_t>(internal_i);
+                const auto global_j_idx = j_idx + static_cast<std::size_t>(internal_j);
 
-                lhs_[global_i * (num_cols_ + PADDING_SIZE_sz) + global_j] *= scale_;
+                lhs_[global_i_idx * (num_cols_ + PADDING_SIZE_uz) + global_j_idx] *= scale_;  // SoA
             }
         }
     }
