@@ -160,7 +160,8 @@ __kernel void device_kernel_predict_linear(__global real_type *prediction, const
             // perform the feature reduction calculation, the feature is the fastest moving index
             for (uint internal_pp = 0; internal_pp < INTERNAL_BLOCK_SIZE; ++internal_pp) {
                 for (uint internal_class = 0; internal_class < INTERNAL_BLOCK_SIZE; ++internal_class) {
-                    real_type sum = 0.0 : for (uint feature = 0; feature < THREAD_BLOCK_SIZE; ++feature) {
+                    real_type sum = 0.0;
+                    for (uint feature = 0; feature < THREAD_BLOCK_SIZE; ++feature) {
                         sum += w_cache[feature][local_id_1 * INTERNAL_BLOCK_SIZE + internal_class] * pp_cache[feature][local_id_0 * INTERNAL_BLOCK_SIZE + internal_pp];
                     }
                     temp[internal_pp][internal_class] += sum;
