@@ -807,7 +807,9 @@ TYPED_TEST_P(GenericCSVMSolver, solve_lssvm_system_of_linear_equations) {
     // check the calculated result for correctness
     EXPECT_FLOATING_POINT_MATRIX_NEAR_EPS(calculated_x, correct_x, 1e6);  // due to hand provided results
     for (const auto rho : calculated_rho) {
-        EXPECT_FLOATING_POINT_NEAR_EPS(std::abs(rho), std::abs(calculated_rho.front()), 1e6);  // due to hand provided results
+        const auto rho_abs = std::abs(rho);
+        const auto calculated_rho_abs = std::abs(calculated_rho.front());
+        EXPECT_FLOATING_POINT_NEAR_EPS(rho_abs, calculated_rho_abs, 1e6);  // due to hand provided results
     }
     EXPECT_THAT(num_iters, ::testing::Each(::testing::Gt(0)));
 }
