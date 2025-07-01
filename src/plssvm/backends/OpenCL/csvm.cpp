@@ -97,7 +97,7 @@ csvm::csvm(const target_platform target) {
 
     // create command_queues and JIT compile OpenCL kernels; compile all kernels for float and double
     detail::jit_info info{};
-    std::tie(devices_, info) = detail::create_command_queues(comm_, contexts_, params_.kernel_type);
+    std::tie(devices_, info) = detail::create_command_queues(comm_, contexts_, target_, params_.kernel_type);
 
     std::vector<std::string> device_names{};
     device_names.reserve(devices_.size());

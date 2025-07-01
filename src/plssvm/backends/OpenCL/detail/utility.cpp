@@ -213,7 +213,7 @@ std::vector<std::pair<compute_kernel_name, std::string>> kernel_type_to_function
     return kernels;
 }
 
-std::pair<std::vector<command_queue>, jit_info> create_command_queues(const mpi::communicator &comm, const std::vector<context> &contexts, const kernel_function_type kernel_function) {
+std::pair<std::vector<command_queue>, jit_info> create_command_queues(const mpi::communicator &comm, const std::vector<context> &contexts, const target_platform target, const kernel_function_type kernel_function) {
     jit_info info{};
     const auto jit_start_time = std::chrono::steady_clock::now();
 
@@ -336,6 +336,8 @@ std::pair<std::vector<command_queue>, jit_info> create_command_queues(const mpi:
     // replace the generic strings in the kernel_src_string
     replace_kernel_function_type_placeholders(kernel_src_string, kernel_function);
 
+    // TODO: use defines? -DTHREAD_BLOCK_SIZE=32 ...
+
     // read generic predict kernel
     std::ifstream predict_file{ base_path / "predict_kernel.cl" };
     std::string predict_kernel_src_string{};
@@ -358,13 +360,20 @@ std::pair<std::vector<command_queue>, jit_info> create_command_queues(const mpi:
 
     // replace constants in kernel_src_string
     // replace the size_t variants -> BEFORE replacing the "normal" values
-    ::plssvm::detail::replace_all(kernel_src_string, "THREAD_BLOCK_SIZE_ul", fmt::format("(ulong) {}", THREAD_BLOCK_SIZE));
-    ::plssvm::detail::replace_all(kernel_src_string, "INTERNAL_BLOCK_SIZE_ul", fmt::format("(ulong) {}", INTERNAL_BLOCK_SIZE));
-    ::plssvm::detail::replace_all(kernel_src_string, "PADDING_SIZE_ul", fmt::format("(ulong) {}", PADDING_SIZE));
+    ::plssvm::detail::replace_all(kernel_src_string, "THREAD_BLOCK_SIZE_uz", fmt::format("(ulong) {}", THREAD_BLOCK_SIZE));
+    ::plssvm::detail::replace_all(kernel_src_string, "INTERNAL_BLOCK_SIZE_uz", fmt::format("(ulong) {}", INTERNAL_BLOCK_SIZE));
+    ::plssvm::detail::replace_all(kernel_src_string, "PADDING_SIZE_uz", fmt::format("(ulong) {}", PADDING_SIZE));
     // replace the normal variants
     ::plssvm::detail::replace_all(kernel_src_string, "THREAD_BLOCK_SIZE", fmt::format("{}", THREAD_BLOCK_SIZE));
     ::plssvm::detail::replace_all(kernel_src_string, "INTERNAL_BLOCK_SIZE", fmt::format("{}", INTERNAL_BLOCK_SIZE));
     ::plssvm::detail::replace_all(kernel_src_string, "PADDING_SIZE", fmt::format("{}", PADDING_SIZE));
+
+    // set compile definition checking whether we are executing on a CPU or not
+    for (std::string &options : compile_options) {
+        if (target == target_platform::cpu) {
+            options += " -DPLSSVM_OPENCL_TARGET_CPUS";
+        }
+    }
 
     // get all device names
     std::vector<std::string> device_names{};

@@ -126,11 +126,12 @@ void device_synchronize(const command_queue &queue);
  *
  * @param[in] comm the MPI communicator
  * @param[in] contexts the used OpenCL contexts
+ * @param[in] target the target platform to create the kernel binaries for
  * @param[in] kernel_function the kernel function
  * @throws plssvm::invalid_file_format_exception if the file couldn't be read using [`std::ifstream::read`](https://en.cppreference.com/w/cpp/io/basic_istream/read)
  * @return [the command queues with all necessary kernels; information regarding the JIT compilation] (`[[nodiscard]]`)
  */
-[[nodiscard]] std::pair<std::vector<command_queue>, jit_info> create_command_queues(const mpi::communicator &comm, const std::vector<context> &contexts, kernel_function_type kernel_function);
+[[nodiscard]] std::pair<std::vector<command_queue>, jit_info> create_command_queues(const mpi::communicator &comm, const std::vector<context> &contexts, target_platform target, kernel_function_type kernel_function);
 
 /**
  * @brief Set all arguments in the parameter pack @p args for the kernel @p kernel.
