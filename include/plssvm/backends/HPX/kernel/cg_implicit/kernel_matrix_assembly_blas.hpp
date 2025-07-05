@@ -138,12 +138,12 @@ inline void device_kernel_assembly_symm(const real_type alpha, const std::vector
 
                         if (global_i_idx == global_j_idx) {
                             // only apply once to the diagonal
-                            for (std::size_t class_idx = 0; class_idx < THREAD_BLOCK_SIZE; ++class_idx) {
+                            for (std::size_t class_idx = 0; class_idx < THREAD_BLOCK_SIZE_uz; ++class_idx) {
                                 atomic_ref<real_type>{ C(class_block + class_idx, global_i_idx) } += alpha * temp[internal_j][internal_i] * B(class_block + class_idx, global_i_idx);
                             }
                         } else {
                             // apply it for the upper and lower triangular matrix
-                            for (std::size_t class_idx = 0; class_idx < THREAD_BLOCK_SIZE; ++class_idx) {
+                            for (std::size_t class_idx = 0; class_idx < THREAD_BLOCK_SIZE_uz; ++class_idx) {
                                 atomic_ref<real_type>{ C(class_block + class_idx, global_i_idx) } += alpha * temp[internal_j][internal_i] * B(class_block + class_idx, global_j_idx);
                                 // symmetry
                                 atomic_ref<real_type>{ C(class_block + class_idx, global_j_idx) } += alpha * temp[internal_j][internal_i] * B(class_block + class_idx, global_i_idx);
