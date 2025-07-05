@@ -78,7 +78,7 @@ inline void device_kernel_assembly_symm(const real_type alpha, const std::vector
                         //*************************************************************************//
                         //                   inplace kernel matrix construction                    //
                         //*************************************************************************//
-                        // iterate over all features
+                        // iterate over all features using blocking
                         for (std::size_t feature_block = 0; feature_block < num_features; feature_block += THREAD_BLOCK_SIZE_uz) {
                             for (unsigned internal_i = 0; internal_i < INTERNAL_BLOCK_SIZE; ++internal_i) {
                                 for (unsigned internal_j = 0; internal_j < INTERNAL_BLOCK_SIZE; ++internal_j) {

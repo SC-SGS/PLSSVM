@@ -70,7 +70,7 @@ inline void device_kernel_symm(const std::size_t num_rows, const std::size_t num
         // create a thread private array used for internal caching
         std::array<std::array<real_type, INTERNAL_BLOCK_SIZE>, INTERNAL_BLOCK_SIZE> temp{};
 
-        // iterate over all values
+        // iterate over all values using blocking
         for (std::size_t dim_block = 0; dim_block < (num_rows - device_row_offset); dim_block += THREAD_BLOCK_SIZE_uz) {
             // perform the dot product calculation
             for (unsigned internal_i = 0; internal_i < INTERNAL_BLOCK_SIZE; ++internal_i) {
@@ -155,7 +155,7 @@ inline void device_kernel_symm_mirror(const std::size_t num_rows, const std::siz
         // create a thread private array used for internal caching
         std::array<std::array<real_type, INTERNAL_BLOCK_SIZE>, INTERNAL_BLOCK_SIZE> temp{};
 
-        // iterate over the remaining values
+        // iterate over the remaining values using blocking
         for (std::size_t dim_block = 0; dim_block < device_num_rows; dim_block += THREAD_BLOCK_SIZE_uz) {
             // perform the dot product calculation
             for (unsigned internal_i = 0; internal_i < INTERNAL_BLOCK_SIZE; ++internal_i) {

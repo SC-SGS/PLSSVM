@@ -63,7 +63,7 @@ inline void device_kernel_w_linear(soa_matrix<real_type> &w, const aos_matrix<re
                     // create a thread private array used for internal caching
                     std::array<std::array<real_type, INTERNAL_BLOCK_SIZE>, INTERNAL_BLOCK_SIZE> temp{};
 
-                    // iterate over all support vectors
+                    // iterate over all support vectors using blocking
                     for (std::size_t sv_block = 0; sv_block < device_num_sv; sv_block += THREAD_BLOCK_SIZE_uz) {
                         // perform the dot product calculation
                         for (unsigned internal_feature = 0; internal_feature < INTERNAL_BLOCK_SIZE; ++internal_feature) {
@@ -136,7 +136,7 @@ inline void device_kernel_predict_linear(aos_matrix<real_type> &prediction, cons
                     // create a thread private array used for internal caching
                     std::array<std::array<real_type, INTERNAL_BLOCK_SIZE>, INTERNAL_BLOCK_SIZE> temp{};
 
-                    // iterate over all features
+                    // iterate over all features using blocking
                     for (std::size_t feature_block = 0; feature_block < num_features; feature_block += THREAD_BLOCK_SIZE_uz) {
                         // perform the dot product calculation
                         for (unsigned internal_pp = 0; internal_pp < INTERNAL_BLOCK_SIZE; ++internal_pp) {
@@ -223,7 +223,7 @@ inline void device_kernel_predict(aos_matrix<real_type> &prediction, const aos_m
                     // create a thread private array used for internal caching
                     std::array<std::array<real_type, INTERNAL_BLOCK_SIZE>, INTERNAL_BLOCK_SIZE> temp{};
 
-                    // iterate over all features
+                    // iterate over all features using blocking
                     for (std::size_t feature_block = 0; feature_block < num_features; feature_block += THREAD_BLOCK_SIZE_uz) {
                         // perform the feature reduction calculation
                         for (unsigned internal_pp = 0; internal_pp < INTERNAL_BLOCK_SIZE; ++internal_pp) {
@@ -248,7 +248,7 @@ inline void device_kernel_predict(aos_matrix<real_type> &prediction, const aos_m
                         }
                     }
 
-                    // add results to prediction
+                    // atomically add the results to the prediction
                     for (std::size_t class_block = 0; class_block < num_classes; class_block += THREAD_BLOCK_SIZE_uz) {
                         for (unsigned internal_pp = 0; internal_pp < INTERNAL_BLOCK_SIZE; ++internal_pp) {
                             for (unsigned internal_sv = 0; internal_sv < INTERNAL_BLOCK_SIZE; ++internal_sv) {
