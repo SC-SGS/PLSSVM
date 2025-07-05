@@ -14,7 +14,7 @@
 #pragma OPENCL EXTENSION cl_khr_fp64 : enable
 
 /**
- * @brief Calculate the `q` vector used to speedup the prediction using the linear kernel function.
+ * @brief Calculate the `w` vector used to speedup the prediction using the linear kernel function.
  * @param[in,out] w the vector to speedup the linear prediction
  * @param[in] alpha the previously learned weights
  * @param[in] support_vectors the support vectors

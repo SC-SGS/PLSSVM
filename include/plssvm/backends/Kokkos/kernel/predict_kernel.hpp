@@ -25,7 +25,7 @@
 namespace plssvm::kokkos::detail {
 
 /**
- * @brief Calculate the `q` vector used to speedup the prediction using the linear kernel function.
+ * @brief Calculate the `w` vector used to speedup the prediction using the linear kernel function.
  * @tparam ExecutionSpace the Kokkos::ExecutionSpace used to execute the kernel
  * @tparam target the target platform
  */

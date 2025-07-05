@@ -28,7 +28,7 @@
 namespace plssvm::sycl::detail::basic {
 
 /**
- * @brief Calculate the `q` vector used to speedup the prediction using the linear kernel function.
+ * @brief Calculate the `w` vector used to speedup the prediction using the linear kernel function.
  * @details Uses SYCL's basic data parallel kernels.
  * @tparam target the target platform
  */

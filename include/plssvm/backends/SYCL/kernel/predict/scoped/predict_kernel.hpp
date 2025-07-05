@@ -28,7 +28,7 @@
 namespace plssvm::sycl::detail::scoped {
 
 /**
- * @brief Calculate the `q` vector used to speedup the prediction using the linear kernel function.
+ * @brief Calculate the `w` vector used to speedup the prediction using the linear kernel function.
  * @details Uses AdaptiveCpp's scoped parallelism.
  * @tparam target the target platform
  */
