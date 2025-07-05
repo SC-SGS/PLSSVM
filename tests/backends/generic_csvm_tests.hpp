@@ -165,19 +165,19 @@ TYPED_TEST_P(GenericBackendCSVMKernelFunction, assemble_kernel_matrix_explicit) 
             device_kernel_assembly<plssvm::kernel_function_type::linear>(kernel_matrix.data(), data_matr, device_specific_num_rows, row_offset, q_red, QA_cost, cost);
             break;
         case plssvm::kernel_function_type::polynomial:
-            device_kernel_assembly<plssvm::kernel_function_type::polynomial>(kernel_matrix.data(), data_matr, device_specific_num_rows, row_offset, q_red, QA_cost, cost, params.degree, std::get<plssvm::real_type>(params.gamma), params.coef0);
+            device_kernel_assembly<plssvm::kernel_function_type::polynomial, int, plssvm::real_type, plssvm::real_type>(kernel_matrix.data(), data_matr, device_specific_num_rows, row_offset, q_red, QA_cost, cost, params.degree, std::get<plssvm::real_type>(params.gamma), params.coef0);
             break;
         case plssvm::kernel_function_type::rbf:
-            device_kernel_assembly<plssvm::kernel_function_type::rbf>(kernel_matrix.data(), data_matr, device_specific_num_rows, row_offset, q_red, QA_cost, cost, std::get<plssvm::real_type>(params.gamma));
+            device_kernel_assembly<plssvm::kernel_function_type::rbf, plssvm::real_type>(kernel_matrix.data(), data_matr, device_specific_num_rows, row_offset, q_red, QA_cost, cost, std::get<plssvm::real_type>(params.gamma));
             break;
         case plssvm::kernel_function_type::sigmoid:
-            device_kernel_assembly<plssvm::kernel_function_type::sigmoid>(kernel_matrix.data(), data_matr, device_specific_num_rows, row_offset, q_red, QA_cost, cost, std::get<plssvm::real_type>(params.gamma), params.coef0);
+            device_kernel_assembly<plssvm::kernel_function_type::sigmoid, plssvm::real_type, plssvm::real_type>(kernel_matrix.data(), data_matr, device_specific_num_rows, row_offset, q_red, QA_cost, cost, std::get<plssvm::real_type>(params.gamma), params.coef0);
             break;
         case plssvm::kernel_function_type::laplacian:
-            device_kernel_assembly<plssvm::kernel_function_type::laplacian>(kernel_matrix.data(), data_matr, device_specific_num_rows, row_offset, q_red, QA_cost, cost, std::get<plssvm::real_type>(params.gamma));
+            device_kernel_assembly<plssvm::kernel_function_type::laplacian, plssvm::real_type>(kernel_matrix.data(), data_matr, device_specific_num_rows, row_offset, q_red, QA_cost, cost, std::get<plssvm::real_type>(params.gamma));
             break;
         case plssvm::kernel_function_type::chi_squared:
-            device_kernel_assembly<plssvm::kernel_function_type::chi_squared>(kernel_matrix.data(), data_matr, device_specific_num_rows, row_offset, q_red, QA_cost, cost, std::get<plssvm::real_type>(params.gamma));
+            device_kernel_assembly<plssvm::kernel_function_type::chi_squared, plssvm::real_type>(kernel_matrix.data(), data_matr, device_specific_num_rows, row_offset, q_red, QA_cost, cost, std::get<plssvm::real_type>(params.gamma));
             break;
     }
     const std::vector<plssvm::real_type> correct_kernel_matrix = ground_truth::assemble_device_specific_kernel_matrix(params, data_matr, q_red, QA_cost, dist, 0);
@@ -228,19 +228,19 @@ TYPED_TEST_P(GenericBackendCSVMKernelFunction, blas_level_3_kernel_implicit) {
             device_kernel_assembly_symm<plssvm::kernel_function_type::linear>(alpha, q_red, data_matr, device_specific_num_rows, row_offset, QA_cost, cost, B, C);
             break;
         case plssvm::kernel_function_type::polynomial:
-            device_kernel_assembly_symm<plssvm::kernel_function_type::polynomial>(alpha, q_red, data_matr, device_specific_num_rows, row_offset, QA_cost, cost, B, C, params.degree, std::get<plssvm::real_type>(params.gamma), params.coef0);
+            device_kernel_assembly_symm<plssvm::kernel_function_type::polynomial, int, plssvm::real_type, plssvm::real_type>(alpha, q_red, data_matr, device_specific_num_rows, row_offset, QA_cost, cost, B, C, params.degree, std::get<plssvm::real_type>(params.gamma), params.coef0);
             break;
         case plssvm::kernel_function_type::rbf:
-            device_kernel_assembly_symm<plssvm::kernel_function_type::rbf>(alpha, q_red, data_matr, device_specific_num_rows, row_offset, QA_cost, cost, B, C, std::get<plssvm::real_type>(params.gamma));
+            device_kernel_assembly_symm<plssvm::kernel_function_type::rbf, plssvm::real_type>(alpha, q_red, data_matr, device_specific_num_rows, row_offset, QA_cost, cost, B, C, std::get<plssvm::real_type>(params.gamma));
             break;
         case plssvm::kernel_function_type::sigmoid:
-            device_kernel_assembly_symm<plssvm::kernel_function_type::sigmoid>(alpha, q_red, data_matr, device_specific_num_rows, row_offset, QA_cost, cost, B, C, std::get<plssvm::real_type>(params.gamma), params.coef0);
+            device_kernel_assembly_symm<plssvm::kernel_function_type::sigmoid, plssvm::real_type, plssvm::real_type>(alpha, q_red, data_matr, device_specific_num_rows, row_offset, QA_cost, cost, B, C, std::get<plssvm::real_type>(params.gamma), params.coef0);
             break;
         case plssvm::kernel_function_type::laplacian:
-            device_kernel_assembly_symm<plssvm::kernel_function_type::laplacian>(alpha, q_red, data_matr, device_specific_num_rows, row_offset, QA_cost, cost, B, C, std::get<plssvm::real_type>(params.gamma));
+            device_kernel_assembly_symm<plssvm::kernel_function_type::laplacian, plssvm::real_type>(alpha, q_red, data_matr, device_specific_num_rows, row_offset, QA_cost, cost, B, C, std::get<plssvm::real_type>(params.gamma));
             break;
         case plssvm::kernel_function_type::chi_squared:
-            device_kernel_assembly_symm<plssvm::kernel_function_type::chi_squared>(alpha, q_red, data_matr, device_specific_num_rows, row_offset, QA_cost, cost, B, C, std::get<plssvm::real_type>(params.gamma));
+            device_kernel_assembly_symm<plssvm::kernel_function_type::chi_squared, plssvm::real_type>(alpha, q_red, data_matr, device_specific_num_rows, row_offset, QA_cost, cost, B, C, std::get<plssvm::real_type>(params.gamma));
             break;
     }
 
@@ -284,19 +284,19 @@ TYPED_TEST_P(GenericBackendCSVMKernelFunction, predict_values) {
             device_kernel_predict_linear(out, correct_w, rho, predict_points, device_specific_num_predict_points, row_offset);
             break;
         case plssvm::kernel_function_type::polynomial:
-            device_kernel_predict<plssvm::kernel_function_type::polynomial>(out, weights, rho, data_matr, predict_points, device_specific_num_predict_points, row_offset, params.degree, std::get<plssvm::real_type>(params.gamma), params.coef0);
+            device_kernel_predict<plssvm::kernel_function_type::polynomial, int, plssvm::real_type, plssvm::real_type>(out, weights, rho, data_matr, predict_points, device_specific_num_predict_points, row_offset, params.degree, std::get<plssvm::real_type>(params.gamma), params.coef0);
             break;
         case plssvm::kernel_function_type::rbf:
-            device_kernel_predict<plssvm::kernel_function_type::rbf>(out, weights, rho, data_matr, predict_points, device_specific_num_predict_points, row_offset, std::get<plssvm::real_type>(params.gamma));
+            device_kernel_predict<plssvm::kernel_function_type::rbf, plssvm::real_type>(out, weights, rho, data_matr, predict_points, device_specific_num_predict_points, row_offset, std::get<plssvm::real_type>(params.gamma));
             break;
         case plssvm::kernel_function_type::sigmoid:
-            device_kernel_predict<plssvm::kernel_function_type::sigmoid>(out, weights, rho, data_matr, predict_points, device_specific_num_predict_points, row_offset, std::get<plssvm::real_type>(params.gamma), params.coef0);
+            device_kernel_predict<plssvm::kernel_function_type::sigmoid, plssvm::real_type, plssvm::real_type>(out, weights, rho, data_matr, predict_points, device_specific_num_predict_points, row_offset, std::get<plssvm::real_type>(params.gamma), params.coef0);
             break;
         case plssvm::kernel_function_type::laplacian:
-            device_kernel_predict<plssvm::kernel_function_type::laplacian>(out, weights, rho, data_matr, predict_points, device_specific_num_predict_points, row_offset, std::get<plssvm::real_type>(params.gamma));
+            device_kernel_predict<plssvm::kernel_function_type::laplacian, plssvm::real_type>(out, weights, rho, data_matr, predict_points, device_specific_num_predict_points, row_offset, std::get<plssvm::real_type>(params.gamma));
             break;
         case plssvm::kernel_function_type::chi_squared:
-            device_kernel_predict<plssvm::kernel_function_type::chi_squared>(out, weights, rho, data_matr, predict_points, device_specific_num_predict_points, row_offset, std::get<plssvm::real_type>(params.gamma));
+            device_kernel_predict<plssvm::kernel_function_type::chi_squared, plssvm::real_type>(out, weights, rho, data_matr, predict_points, device_specific_num_predict_points, row_offset, std::get<plssvm::real_type>(params.gamma));
             break;
     }
     out.restore_padding();
@@ -445,19 +445,19 @@ TYPED_TEST_P(GenericBackendCSVMKernelFunctionDeathTest, assemble_kernel_matrix_e
                 device_kernel_assembly<plssvm::kernel_function_type::linear>(kernel_matrix_p.data(), data_p, device_specific_num_rows_p, row_offset_p, q_red_p, QA_cost_p, params_p.cost);
                 break;
             case plssvm::kernel_function_type::polynomial:
-                device_kernel_assembly<plssvm::kernel_function_type::polynomial>(kernel_matrix_p.data(), data_p, device_specific_num_rows_p, row_offset_p, q_red_p, QA_cost_p, params_p.cost, params_p.degree, std::get<plssvm::real_type>(params_p.gamma), params_p.coef0);
+                device_kernel_assembly<plssvm::kernel_function_type::polynomial, int, plssvm::real_type, plssvm::real_type>(kernel_matrix_p.data(), data_p, device_specific_num_rows_p, row_offset_p, q_red_p, QA_cost_p, params_p.cost, params_p.degree, std::get<plssvm::real_type>(params_p.gamma), params_p.coef0);
                 break;
             case plssvm::kernel_function_type::rbf:
-                device_kernel_assembly<plssvm::kernel_function_type::rbf>(kernel_matrix_p.data(), data_p, device_specific_num_rows_p, row_offset_p, q_red_p, QA_cost_p, params_p.cost, std::get<plssvm::real_type>(params_p.gamma));
+                device_kernel_assembly<plssvm::kernel_function_type::rbf, plssvm::real_type>(kernel_matrix_p.data(), data_p, device_specific_num_rows_p, row_offset_p, q_red_p, QA_cost_p, params_p.cost, std::get<plssvm::real_type>(params_p.gamma));
                 break;
             case plssvm::kernel_function_type::sigmoid:
-                device_kernel_assembly<plssvm::kernel_function_type::sigmoid>(kernel_matrix_p.data(), data_p, device_specific_num_rows_p, row_offset_p, q_red_p, QA_cost_p, params_p.cost, std::get<plssvm::real_type>(params_p.gamma), params_p.coef0);
+                device_kernel_assembly<plssvm::kernel_function_type::sigmoid, plssvm::real_type, plssvm::real_type>(kernel_matrix_p.data(), data_p, device_specific_num_rows_p, row_offset_p, q_red_p, QA_cost_p, params_p.cost, std::get<plssvm::real_type>(params_p.gamma), params_p.coef0);
                 break;
             case plssvm::kernel_function_type::laplacian:
-                device_kernel_assembly<plssvm::kernel_function_type::laplacian>(kernel_matrix_p.data(), data_p, device_specific_num_rows_p, row_offset_p, q_red_p, QA_cost_p, params_p.cost, std::get<plssvm::real_type>(params_p.gamma));
+                device_kernel_assembly<plssvm::kernel_function_type::laplacian, plssvm::real_type>(kernel_matrix_p.data(), data_p, device_specific_num_rows_p, row_offset_p, q_red_p, QA_cost_p, params_p.cost, std::get<plssvm::real_type>(params_p.gamma));
                 break;
             case plssvm::kernel_function_type::chi_squared:
-                device_kernel_assembly<plssvm::kernel_function_type::chi_squared>(kernel_matrix_p.data(), data_p, device_specific_num_rows_p, row_offset_p, q_red_p, QA_cost_p, params_p.cost, std::get<plssvm::real_type>(params_p.gamma));
+                device_kernel_assembly<plssvm::kernel_function_type::chi_squared, plssvm::real_type>(kernel_matrix_p.data(), data_p, device_specific_num_rows_p, row_offset_p, q_red_p, QA_cost_p, params_p.cost, std::get<plssvm::real_type>(params_p.gamma));
                 break;
         }
     };
@@ -514,19 +514,19 @@ TYPED_TEST_P(GenericBackendCSVMKernelFunctionDeathTest, blas_level_3_kernel_impl
                 device_kernel_assembly_symm<plssvm::kernel_function_type::linear>(alpha, q_red_p, data_p, device_specific_num_rows_p, row_offset_p, QA_cost, params_p.cost, B_p, C_p);
                 break;
             case plssvm::kernel_function_type::polynomial:
-                device_kernel_assembly_symm<plssvm::kernel_function_type::polynomial>(alpha, q_red_p, data_p, device_specific_num_rows_p, row_offset_p, QA_cost, params_p.cost, B_p, C_p, params_p.degree, std::get<plssvm::real_type>(params_p.gamma), params_p.coef0);
+                device_kernel_assembly_symm<plssvm::kernel_function_type::polynomial, int, plssvm::real_type, plssvm::real_type>(alpha, q_red_p, data_p, device_specific_num_rows_p, row_offset_p, QA_cost, params_p.cost, B_p, C_p, params_p.degree, std::get<plssvm::real_type>(params_p.gamma), params_p.coef0);
                 break;
             case plssvm::kernel_function_type::rbf:
-                device_kernel_assembly_symm<plssvm::kernel_function_type::rbf>(alpha, q_red_p, data_p, device_specific_num_rows_p, row_offset_p, QA_cost, params_p.cost, B_p, C_p, std::get<plssvm::real_type>(params_p.gamma));
+                device_kernel_assembly_symm<plssvm::kernel_function_type::rbf, plssvm::real_type>(alpha, q_red_p, data_p, device_specific_num_rows_p, row_offset_p, QA_cost, params_p.cost, B_p, C_p, std::get<plssvm::real_type>(params_p.gamma));
                 break;
             case plssvm::kernel_function_type::sigmoid:
-                device_kernel_assembly_symm<plssvm::kernel_function_type::sigmoid>(alpha, q_red_p, data_p, device_specific_num_rows_p, row_offset_p, QA_cost, params_p.cost, B_p, C_p, std::get<plssvm::real_type>(params_p.gamma), params_p.coef0);
+                device_kernel_assembly_symm<plssvm::kernel_function_type::sigmoid, plssvm::real_type, plssvm::real_type>(alpha, q_red_p, data_p, device_specific_num_rows_p, row_offset_p, QA_cost, params_p.cost, B_p, C_p, std::get<plssvm::real_type>(params_p.gamma), params_p.coef0);
                 break;
             case plssvm::kernel_function_type::laplacian:
-                device_kernel_assembly_symm<plssvm::kernel_function_type::laplacian>(alpha, q_red_p, data_p, device_specific_num_rows_p, row_offset_p, QA_cost, params_p.cost, B_p, C_p, std::get<plssvm::real_type>(params_p.gamma));
+                device_kernel_assembly_symm<plssvm::kernel_function_type::laplacian, plssvm::real_type>(alpha, q_red_p, data_p, device_specific_num_rows_p, row_offset_p, QA_cost, params_p.cost, B_p, C_p, std::get<plssvm::real_type>(params_p.gamma));
                 break;
             case plssvm::kernel_function_type::chi_squared:
-                device_kernel_assembly_symm<plssvm::kernel_function_type::chi_squared>(alpha, q_red_p, data_p, device_specific_num_rows_p, row_offset_p, QA_cost, params_p.cost, B_p, C_p, std::get<plssvm::real_type>(params_p.gamma));
+                device_kernel_assembly_symm<plssvm::kernel_function_type::chi_squared, plssvm::real_type>(alpha, q_red_p, data_p, device_specific_num_rows_p, row_offset_p, QA_cost, params_p.cost, B_p, C_p, std::get<plssvm::real_type>(params_p.gamma));
                 break;
         }
     };
@@ -608,19 +608,19 @@ TYPED_TEST_P(GenericBackendCSVMKernelFunctionDeathTest, predict_values) {
                     // unreachable
                     break;
                 case plssvm::kernel_function_type::polynomial:
-                    device_kernel_predict<plssvm::kernel_function_type::polynomial>(out_p, weights_p, rho_p, support_vectors_p, predict_points_p, device_specific_num_predict_points_p, row_offset_p, params_p.degree, std::get<plssvm::real_type>(params_p.gamma), params_p.coef0);
+                    device_kernel_predict<plssvm::kernel_function_type::polynomial, int, plssvm::real_type, plssvm::real_type>(out_p, weights_p, rho_p, support_vectors_p, predict_points_p, device_specific_num_predict_points_p, row_offset_p, params_p.degree, std::get<plssvm::real_type>(params_p.gamma), params_p.coef0);
                     break;
                 case plssvm::kernel_function_type::rbf:
-                    device_kernel_predict<plssvm::kernel_function_type::rbf>(out_p, weights_p, rho_p, support_vectors_p, predict_points_p, device_specific_num_predict_points_p, row_offset_p, std::get<plssvm::real_type>(params_p.gamma));
+                    device_kernel_predict<plssvm::kernel_function_type::rbf, plssvm::real_type>(out_p, weights_p, rho_p, support_vectors_p, predict_points_p, device_specific_num_predict_points_p, row_offset_p, std::get<plssvm::real_type>(params_p.gamma));
                     break;
                 case plssvm::kernel_function_type::sigmoid:
-                    device_kernel_predict<plssvm::kernel_function_type::sigmoid>(out_p, weights_p, rho_p, support_vectors_p, predict_points_p, device_specific_num_predict_points_p, row_offset_p, std::get<plssvm::real_type>(params_p.gamma), params_p.coef0);
+                    device_kernel_predict<plssvm::kernel_function_type::sigmoid, plssvm::real_type, plssvm::real_type>(out_p, weights_p, rho_p, support_vectors_p, predict_points_p, device_specific_num_predict_points_p, row_offset_p, std::get<plssvm::real_type>(params_p.gamma), params_p.coef0);
                     break;
                 case plssvm::kernel_function_type::laplacian:
-                    device_kernel_predict<plssvm::kernel_function_type::laplacian>(out_p, weights_p, rho_p, support_vectors_p, predict_points_p, device_specific_num_predict_points_p, row_offset_p, std::get<plssvm::real_type>(params_p.gamma));
+                    device_kernel_predict<plssvm::kernel_function_type::laplacian, plssvm::real_type>(out_p, weights_p, rho_p, support_vectors_p, predict_points_p, device_specific_num_predict_points_p, row_offset_p, std::get<plssvm::real_type>(params_p.gamma));
                     break;
                 case plssvm::kernel_function_type::chi_squared:
-                    device_kernel_predict<plssvm::kernel_function_type::chi_squared>(out_p, weights_p, rho_p, support_vectors_p, predict_points_p, device_specific_num_predict_points_p, row_offset_p, std::get<plssvm::real_type>(params_p.gamma));
+                    device_kernel_predict<plssvm::kernel_function_type::chi_squared, plssvm::real_type>(out_p, weights_p, rho_p, support_vectors_p, predict_points_p, device_specific_num_predict_points_p, row_offset_p, std::get<plssvm::real_type>(params_p.gamma));
                     break;
             }
         };

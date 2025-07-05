@@ -15,13 +15,13 @@
 #include "plssvm/backends/stdpar/kernel/cg_explicit/kernel_matrix_assembly.hpp"       // plssvm::stdpar::device_kernel_assembly
 #include "plssvm/backends/stdpar/kernel/cg_implicit/kernel_matrix_assembly_blas.hpp"  // plssvm::stdpar::device_kernel_assembly_symm
 #include "plssvm/backends/stdpar/kernel/predict_kernel.hpp"                           // plssvm::stdpar::{device_kernel_w_linear, device_kernel_predict_linear, device_kernel_predict}
-#include "plssvm/constants.hpp"                                                       // plssvm::PADDING_SIZE
+#include "plssvm/constants.hpp"                                                       // plssvm::real_type
 #include "plssvm/data_set/classification_data_set.hpp"                                // plssvm::classification_data_set
 #include "plssvm/detail/arithmetic_type_name.hpp"                                     // plssvm::detail::arithmetic_type_name
 #include "plssvm/detail/data_distribution.hpp"                                        // plssvm::detail::triangular_data_distribution
 #include "plssvm/detail/type_list.hpp"                                                // plssvm::detail::supported_label_types
 #include "plssvm/kernel_function_types.hpp"                                           // plssvm::kernel_function_type
-#include "plssvm/matrix.hpp"                                                          // plssvm::soa_matrix
+#include "plssvm/matrix.hpp"                                                          // plssvm::soa_matrix. plssvm::aos_matrix
 #include "plssvm/parameter.hpp"                                                       // plssvm::parameter, plssvm::detail::parameter, plssvm::kernel_type, plssvm::cost
 #include "plssvm/shape.hpp"                                                           // plssvm::shape
 #include "plssvm/target_platforms.hpp"                                                // plssvm::target_platform
@@ -93,14 +93,151 @@ INSTANTIATE_TYPED_TEST_SUITE_P(stdparCSVMDeathTest, GenericCSVMSolverDeathTest, 
 INSTANTIATE_TYPED_TEST_SUITE_P(stdparCSVMDeathTest, GenericCSVMKernelFunctionDeathTest, stdpar_kernel_function_type_gtest, naming::test_parameter_to_name);
 INSTANTIATE_TYPED_TEST_SUITE_P(stdparCSVMDeathTest, GenericCSVMSolverKernelFunctionDeathTest, stdpar_solver_and_kernel_function_type_gtest, naming::test_parameter_to_name);
 
+// TODO: better without that much code cuplication
 // define the exact functions to be used in the generic header
-using plssvm::stdpar::detail::device_kernel_assembly;
-using plssvm::stdpar::detail::device_kernel_assembly_symm;
-using plssvm::stdpar::detail::device_kernel_predict;
-using plssvm::stdpar::detail::device_kernel_predict_linear;
-using plssvm::stdpar::detail::device_kernel_symm;
-using plssvm::stdpar::detail::device_kernel_symm_mirror;
-using plssvm::stdpar::detail::device_kernel_w_linear;
+template <plssvm::kernel_function_type kernel_function, typename... Args>
+void device_kernel_assembly(plssvm::real_type *kernel_matrix, const plssvm::soa_matrix<plssvm::real_type> &data, const std::size_t device_num_rows, const std::size_t device_row_offset, const std::vector<plssvm::real_type> &q, const plssvm::real_type QA_cost, const plssvm::real_type cost, Args... kernel_function_parameter) {
+    switch (plssvm::determine_default_target_platform()) {
+        case plssvm::target_platform::automatic:
+            // may never be reached
+            break;
+        case plssvm::target_platform::gpu_nvidia:
+            plssvm::stdpar::detail::device_kernel_assembly<plssvm::target_platform::gpu_nvidia, kernel_function, Args...>{}(kernel_matrix, data, device_num_rows, device_row_offset, q, QA_cost, cost, kernel_function_parameter...);
+            break;
+        case plssvm::target_platform::gpu_amd:
+            plssvm::stdpar::detail::device_kernel_assembly<plssvm::target_platform::gpu_amd, kernel_function, Args...>{}(kernel_matrix, data, device_num_rows, device_row_offset, q, QA_cost, cost, kernel_function_parameter...);
+            break;
+        case plssvm::target_platform::gpu_intel:
+            plssvm::stdpar::detail::device_kernel_assembly<plssvm::target_platform::gpu_intel, kernel_function, Args...>{}(kernel_matrix, data, device_num_rows, device_row_offset, q, QA_cost, cost, kernel_function_parameter...);
+            break;
+        case plssvm::target_platform::cpu:
+            plssvm::stdpar::detail::device_kernel_assembly<plssvm::target_platform::cpu, kernel_function, Args...>{}(kernel_matrix, data, device_num_rows, device_row_offset, q, QA_cost, cost, kernel_function_parameter...);
+            break;
+    }
+}
+
+void device_kernel_symm(const std::size_t num_rows, const std::size_t num_rhs, const std::size_t device_num_rows, const std::size_t device_row_offset, const plssvm::real_type alpha, const plssvm::real_type *A, const plssvm::soa_matrix<plssvm::real_type> &B, const plssvm::real_type beta, plssvm::soa_matrix<plssvm::real_type> &C) {
+    switch (plssvm::determine_default_target_platform()) {
+        case plssvm::target_platform::automatic:
+            // may never be reached
+            break;
+        case plssvm::target_platform::gpu_nvidia:
+            plssvm::stdpar::detail::device_kernel_symm<plssvm::target_platform::gpu_nvidia>{}(num_rows, num_rhs, device_num_rows, device_row_offset, alpha, A, B, beta, C);
+            break;
+        case plssvm::target_platform::gpu_amd:
+            plssvm::stdpar::detail::device_kernel_symm<plssvm::target_platform::gpu_amd>{}(num_rows, num_rhs, device_num_rows, device_row_offset, alpha, A, B, beta, C);
+            break;
+        case plssvm::target_platform::gpu_intel:
+            plssvm::stdpar::detail::device_kernel_symm<plssvm::target_platform::gpu_intel>{}(num_rows, num_rhs, device_num_rows, device_row_offset, alpha, A, B, beta, C);
+            break;
+        case plssvm::target_platform::cpu:
+            plssvm::stdpar::detail::device_kernel_symm<plssvm::target_platform::cpu>{}(num_rows, num_rhs, device_num_rows, device_row_offset, alpha, A, B, beta, C);
+            break;
+    }
+}
+
+void device_kernel_symm_mirror(const std::size_t num_rows, const std::size_t num_rhs, const std::size_t num_mirror_rows, const std::size_t device_num_rows, const std::size_t device_row_offset, const plssvm::real_type alpha, const plssvm::real_type *A, const plssvm::soa_matrix<plssvm::real_type> &B, const plssvm::real_type beta, plssvm::soa_matrix<plssvm::real_type> &C) {
+    switch (plssvm::determine_default_target_platform()) {
+        case plssvm::target_platform::automatic:
+            // may never be reached
+            break;
+        case plssvm::target_platform::gpu_nvidia:
+            plssvm::stdpar::detail::device_kernel_symm_mirror<plssvm::target_platform::gpu_nvidia>{}(num_rows, num_rhs, num_mirror_rows, device_num_rows, device_row_offset, alpha, A, B, beta, C);
+            break;
+        case plssvm::target_platform::gpu_amd:
+            plssvm::stdpar::detail::device_kernel_symm_mirror<plssvm::target_platform::gpu_amd>{}(num_rows, num_rhs, num_mirror_rows, device_num_rows, device_row_offset, alpha, A, B, beta, C);
+            break;
+        case plssvm::target_platform::gpu_intel:
+            plssvm::stdpar::detail::device_kernel_symm_mirror<plssvm::target_platform::gpu_intel>{}(num_rows, num_rhs, num_mirror_rows, device_num_rows, device_row_offset, alpha, A, B, beta, C);
+            break;
+        case plssvm::target_platform::cpu:
+            plssvm::stdpar::detail::device_kernel_symm_mirror<plssvm::target_platform::cpu>{}(num_rows, num_rhs, num_mirror_rows, device_num_rows, device_row_offset, alpha, A, B, beta, C);
+            break;
+    }
+}
+
+template <plssvm::kernel_function_type kernel_function, typename... Args>
+void device_kernel_assembly_symm(const plssvm::real_type alpha, const std::vector<plssvm::real_type> &q, const plssvm::soa_matrix<plssvm::real_type> &data, const std::size_t device_num_rows, const std::size_t device_row_offset, const plssvm::real_type QA_cost, const plssvm::real_type cost, const plssvm::soa_matrix<plssvm::real_type> &B, plssvm::soa_matrix<plssvm::real_type> &C, Args... kernel_function_parameter) {
+    switch (plssvm::determine_default_target_platform()) {
+        case plssvm::target_platform::automatic:
+            // may never be reached
+            break;
+        case plssvm::target_platform::gpu_nvidia:
+            plssvm::stdpar::detail::device_kernel_assembly_symm<plssvm::target_platform::gpu_nvidia, kernel_function, Args...>{}(alpha, q, data, device_num_rows, device_row_offset, QA_cost, cost, B, C, kernel_function_parameter...);
+            break;
+        case plssvm::target_platform::gpu_amd:
+            plssvm::stdpar::detail::device_kernel_assembly_symm<plssvm::target_platform::gpu_amd, kernel_function, Args...>{}(alpha, q, data, device_num_rows, device_row_offset, QA_cost, cost, B, C, kernel_function_parameter...);
+            break;
+        case plssvm::target_platform::gpu_intel:
+            plssvm::stdpar::detail::device_kernel_assembly_symm<plssvm::target_platform::gpu_intel, kernel_function, Args...>{}(alpha, q, data, device_num_rows, device_row_offset, QA_cost, cost, B, C, kernel_function_parameter...);
+            break;
+        case plssvm::target_platform::cpu:
+            plssvm::stdpar::detail::device_kernel_assembly_symm<plssvm::target_platform::cpu, kernel_function, Args...>{}(alpha, q, data, device_num_rows, device_row_offset, QA_cost, cost, B, C, kernel_function_parameter...);
+            break;
+    }
+}
+
+void device_kernel_w_linear(plssvm::soa_matrix<plssvm::real_type> &w, const plssvm::aos_matrix<plssvm::real_type> &alpha, const plssvm::soa_matrix<plssvm::real_type> &support_vectors, const std::size_t device_num_sv, const std::size_t device_sv_offset) {
+    switch (plssvm::determine_default_target_platform()) {
+        case plssvm::target_platform::automatic:
+            // may never be reached
+            break;
+        case plssvm::target_platform::gpu_nvidia:
+            plssvm::stdpar::detail::device_kernel_w_linear<plssvm::target_platform::gpu_nvidia>{}(w, alpha, support_vectors, device_num_sv, device_sv_offset);
+            break;
+        case plssvm::target_platform::gpu_amd:
+            plssvm::stdpar::detail::device_kernel_w_linear<plssvm::target_platform::gpu_amd>{}(w, alpha, support_vectors, device_num_sv, device_sv_offset);
+            break;
+        case plssvm::target_platform::gpu_intel:
+            plssvm::stdpar::detail::device_kernel_w_linear<plssvm::target_platform::gpu_intel>{}(w, alpha, support_vectors, device_num_sv, device_sv_offset);
+            break;
+        case plssvm::target_platform::cpu:
+            plssvm::stdpar::detail::device_kernel_w_linear<plssvm::target_platform::cpu>{}(w, alpha, support_vectors, device_num_sv, device_sv_offset);
+            break;
+    }
+}
+
+void device_kernel_predict_linear(plssvm::aos_matrix<plssvm::real_type> &prediction, const plssvm::soa_matrix<plssvm::real_type> &w, const std::vector<plssvm::real_type> &rho, const plssvm::soa_matrix<plssvm::real_type> &predict_points, const std::size_t device_num_predict_points, const std::size_t device_row_offset) {
+    switch (plssvm::determine_default_target_platform()) {
+        case plssvm::target_platform::automatic:
+            // may never be reached
+            break;
+        case plssvm::target_platform::gpu_nvidia:
+            plssvm::stdpar::detail::device_kernel_predict_linear<plssvm::target_platform::gpu_nvidia>{}(prediction, w, rho, predict_points, device_num_predict_points, device_row_offset);
+            break;
+        case plssvm::target_platform::gpu_amd:
+            plssvm::stdpar::detail::device_kernel_predict_linear<plssvm::target_platform::gpu_amd>{}(prediction, w, rho, predict_points, device_num_predict_points, device_row_offset);
+            break;
+        case plssvm::target_platform::gpu_intel:
+            plssvm::stdpar::detail::device_kernel_predict_linear<plssvm::target_platform::gpu_intel>{}(prediction, w, rho, predict_points, device_num_predict_points, device_row_offset);
+            break;
+        case plssvm::target_platform::cpu:
+            plssvm::stdpar::detail::device_kernel_predict_linear<plssvm::target_platform::cpu>{}(prediction, w, rho, predict_points, device_num_predict_points, device_row_offset);
+            break;
+    }
+}
+
+template <plssvm::kernel_function_type kernel_function, typename... Args>
+void device_kernel_predict(plssvm::aos_matrix<plssvm::real_type> &prediction, const plssvm::aos_matrix<plssvm::real_type> &alpha, const std::vector<plssvm::real_type> &rho, const plssvm::soa_matrix<plssvm::real_type> &support_vectors, const plssvm::soa_matrix<plssvm::real_type> &predict_points, const std::size_t device_num_predict_points, const std::size_t device_row_offset, Args... kernel_function_parameter) {
+    switch (plssvm::determine_default_target_platform()) {
+        case plssvm::target_platform::automatic:
+            // may never be reached
+            break;
+        case plssvm::target_platform::gpu_nvidia:
+            plssvm::stdpar::detail::device_kernel_predict<plssvm::target_platform::gpu_nvidia, kernel_function, Args...>{}(prediction, alpha, rho, support_vectors, predict_points, device_num_predict_points, device_row_offset, kernel_function_parameter...);
+            break;
+        case plssvm::target_platform::gpu_amd:
+            plssvm::stdpar::detail::device_kernel_predict<plssvm::target_platform::gpu_amd, kernel_function, Args...>{}(prediction, alpha, rho, support_vectors, predict_points, device_num_predict_points, device_row_offset, kernel_function_parameter...);
+            break;
+        case plssvm::target_platform::gpu_intel:
+            plssvm::stdpar::detail::device_kernel_predict<plssvm::target_platform::gpu_intel, kernel_function, Args...>{}(prediction, alpha, rho, support_vectors, predict_points, device_num_predict_points, device_row_offset, kernel_function_parameter...);
+            break;
+        case plssvm::target_platform::cpu:
+            plssvm::stdpar::detail::device_kernel_predict<plssvm::target_platform::cpu, kernel_function, Args...>{}(prediction, alpha, rho, support_vectors, predict_points, device_num_predict_points, device_row_offset, kernel_function_parameter...);
+            break;
+    }
+}
+
 #include "tests/backends/generic_csvm_tests.hpp"  // generic backend C-SVM tests to instantiate
 
 // generic non-GPU C-SVM tests
