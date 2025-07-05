@@ -90,15 +90,15 @@ class device_kernel_symm {
 
                         real_type sum{ 0.0 };
                         for (std::size_t dim = 0; dim < THREAD_BLOCK_SIZE_uz; ++dim) {
-                            real_type A_val = 0.0;
+                            real_type A_cache = 0.0;
                             // determine on which side of the diagonal we are located
                             if (dim_block + dim < global_j_idx) {
-                                A_val = A_[(dim_block + dim) * (num_rows_ - device_row_offset_ + PADDING_SIZE_uz) + global_j_idx - (dim_block + dim) * (dim_block + dim + std::size_t{ 1 }) / std::size_t{ 2 }];  // SoA, upper triangular matrix only
+                                A_cache = A_[(dim_block + dim) * (num_rows_ - device_row_offset_ + PADDING_SIZE_uz) + global_j_idx - (dim_block + dim) * (dim_block + dim + std::size_t{ 1 }) / std::size_t{ 2 }];  // SoA, upper triangular matrix only
                             } else {
-                                A_val = A_[global_j_idx * (num_rows_ - device_row_offset_ + PADDING_SIZE_uz) + dim_block + dim - global_j_idx * (global_j_idx + std::size_t{ 1 }) / std::size_t{ 2 }];  // SoA, upper triangular matrix only
+                                A_cache = A_[global_j_idx * (num_rows_ - device_row_offset_ + PADDING_SIZE_uz) + dim_block + dim - global_j_idx * (global_j_idx + std::size_t{ 1 }) / std::size_t{ 2 }];  // SoA, upper triangular matrix only
                             }
 
-                            sum += A_val * B_[((dim_block + dim) + device_row_offset_) * (num_rhs_ + PADDING_SIZE_uz) + global_i_idx];  // SoA
+                            sum += A_cache * B_[((dim_block + dim) + device_row_offset_) * (num_rhs_ + PADDING_SIZE_uz) + global_i_idx];  // SoA
                         }
                         temp[internal_i][internal_j] += sum;
                     }
@@ -112,15 +112,15 @@ class device_kernel_symm {
                             const auto global_i_idx = i_idx + static_cast<std::size_t>(internal_i);
                             const auto global_j_idx = j_idx + static_cast<std::size_t>(internal_j);
 
-                            real_type A_val = 0.0;
+                            real_type A_cache = 0.0;
                             // determine on which side of the diagonal we are located
                             if (dim_block + dim < global_j_idx) {
-                                A_val = A_[(dim_block + dim) * (num_rows_ - device_row_offset_ + PADDING_SIZE_uz) + global_j_idx - (dim_block + dim) * (dim_block + dim + std::size_t{ 1 }) / std::size_t{ 2 }];  // SoA, upper triangular matrix only
+                                A_cache = A_[(dim_block + dim) * (num_rows_ - device_row_offset_ + PADDING_SIZE_uz) + global_j_idx - (dim_block + dim) * (dim_block + dim + std::size_t{ 1 }) / std::size_t{ 2 }];  // SoA, upper triangular matrix only
                             } else {
-                                A_val = A_[global_j_idx * (num_rows_ - device_row_offset_ + PADDING_SIZE_uz) + dim_block + dim - global_j_idx * (global_j_idx + std::size_t{ 1 }) / std::size_t{ 2 }];  // SoA, upper triangular matrix only
+                                A_cache = A_[global_j_idx * (num_rows_ - device_row_offset_ + PADDING_SIZE_uz) + dim_block + dim - global_j_idx * (global_j_idx + std::size_t{ 1 }) / std::size_t{ 2 }];  // SoA, upper triangular matrix only
                             }
 
-                            temp[internal_i][internal_j] += A_val * B_[((dim_block + dim) + device_row_offset_) * (num_rhs_ + PADDING_SIZE_uz) + global_i_idx];  // SoA
+                            temp[internal_i][internal_j] += A_cache * B_[(dim_block + dim + device_row_offset_) * (num_rhs_ + PADDING_SIZE_uz) + global_i_idx];  // SoA
                         }
                     }
                 }
@@ -228,7 +228,7 @@ class device_kernel_symm_mirror {
                         const auto global_j_idx = j_idx + static_cast<std::size_t>(internal_j);
 
                         real_type sum{ 0.0 };
-                        for (unsigned dim = 0; dim < THREAD_BLOCK_SIZE; ++dim) {
+                        for (std::size_t dim = 0; dim < THREAD_BLOCK_SIZE; ++dim) {
                             sum += A_[(dim_block + dim) * (num_rows_ - device_row_offset_ + PADDING_SIZE_uz) - (dim_block + dim - std::size_t{ 1 }) * (dim_block + dim) / std::size_t{ 2 } + device_num_rows_ - (dim_block + dim) + global_j_idx] *  // SoA, upper triangular matrix only
                                    B_[(dim_block + dim + device_row_offset_) * (num_rhs_ + PADDING_SIZE_uz) + global_i_idx];                                                                                                                         // SoA
                         }
@@ -237,7 +237,7 @@ class device_kernel_symm_mirror {
                 }
             } else {
                 // perform the dot product calculation, the dim is the slowest moving index
-                for (unsigned dim = 0; dim < THREAD_BLOCK_SIZE; ++dim) {
+                for (std::size_t dim = 0; dim < THREAD_BLOCK_SIZE; ++dim) {
                     for (unsigned internal_i = 0; internal_i < INTERNAL_BLOCK_SIZE; ++internal_i) {
                         for (unsigned internal_j = 0; internal_j < INTERNAL_BLOCK_SIZE; ++internal_j) {
                             // calculate the indices to access the global data
