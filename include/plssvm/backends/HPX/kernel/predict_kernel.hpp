@@ -54,8 +54,8 @@ inline void device_kernel_w_linear(soa_matrix<real_type> &w, const aos_matrix<re
     const auto blocked_num_classes = static_cast<std::size_t>(std::ceil(static_cast<real_type>(num_classes) / INTERNAL_BLOCK_SIZE));
 
     // cast all values to 64-bit unsigned long long to prevent potential 32-bit overflows
-    const auto INTERNAL_BLOCK_SIZE_uz = static_cast<std::size_t>(INTERNAL_BLOCK_SIZE);
-    const auto THREAD_BLOCK_SIZE_uz = static_cast<std::size_t>(THREAD_BLOCK_SIZE);
+    constexpr auto INTERNAL_BLOCK_SIZE_uz = static_cast<std::size_t>(INTERNAL_BLOCK_SIZE);
+    constexpr auto THREAD_BLOCK_SIZE_uz = static_cast<std::size_t>(THREAD_BLOCK_SIZE);
 
     // define the range over which should be iterated
     std::vector<std::size_t> range(blocked_num_classes * blocked_num_features);
@@ -123,8 +123,8 @@ inline void device_kernel_predict_linear(aos_matrix<real_type> &prediction, cons
     const auto blocked_num_classes = static_cast<std::size_t>(std::ceil(static_cast<real_type>(num_classes) / INTERNAL_BLOCK_SIZE));
 
     // cast all values to 64-bit unsigned long long to prevent potential 32-bit overflows
-    const auto INTERNAL_BLOCK_SIZE_uz = static_cast<std::size_t>(INTERNAL_BLOCK_SIZE);
-    const auto THREAD_BLOCK_SIZE_uz = static_cast<std::size_t>(THREAD_BLOCK_SIZE);
+    constexpr auto INTERNAL_BLOCK_SIZE_uz = static_cast<std::size_t>(INTERNAL_BLOCK_SIZE);
+    constexpr auto THREAD_BLOCK_SIZE_uz = static_cast<std::size_t>(THREAD_BLOCK_SIZE);
 
     // define the range over which should be iterated
     std::vector<std::size_t> range(blocked_device_num_predict_points * blocked_num_classes);
@@ -199,8 +199,8 @@ inline void device_kernel_predict(aos_matrix<real_type> &prediction, const aos_m
     const auto blocked_device_num_predict_points = static_cast<std::size_t>(std::ceil(static_cast<real_type>(device_num_predict_points) / INTERNAL_BLOCK_SIZE));
 
     // cast all values to 64-bit unsigned long long to prevent potential 32-bit overflows
-    const auto INTERNAL_BLOCK_SIZE_uz = static_cast<std::size_t>(INTERNAL_BLOCK_SIZE);
-    const auto THREAD_BLOCK_SIZE_uz = static_cast<std::size_t>(THREAD_BLOCK_SIZE);
+    constexpr auto INTERNAL_BLOCK_SIZE_uz = static_cast<std::size_t>(INTERNAL_BLOCK_SIZE);
+    constexpr auto THREAD_BLOCK_SIZE_uz = static_cast<std::size_t>(THREAD_BLOCK_SIZE);
 
     // define the range over which should be iterated
     std::vector<std::size_t> range(blocked_device_num_predict_points * blocked_num_support_vectors);

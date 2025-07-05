@@ -47,8 +47,8 @@ inline void device_kernel_w_linear(soa_matrix<real_type> &w, const aos_matrix<re
     const auto blocked_num_classes = static_cast<std::size_t>(std::ceil(static_cast<real_type>(num_classes) / INTERNAL_BLOCK_SIZE));
 
     // cast all values to 64-bit unsigned long long to prevent potential 32-bit overflows
-    const auto INTERNAL_BLOCK_SIZE_uz = static_cast<std::size_t>(INTERNAL_BLOCK_SIZE);
-    const auto THREAD_BLOCK_SIZE_uz = static_cast<std::size_t>(THREAD_BLOCK_SIZE);
+    constexpr auto INTERNAL_BLOCK_SIZE_uz = static_cast<std::size_t>(INTERNAL_BLOCK_SIZE);
+    constexpr auto THREAD_BLOCK_SIZE_uz = static_cast<std::size_t>(THREAD_BLOCK_SIZE);
 
 #pragma omp parallel for collapse(2) default(none) shared(w, support_vectors, alpha) firstprivate(blocked_num_classes, blocked_num_features, num_classes, num_features, device_num_sv, device_sv_offset)
     for (std::size_t feature_block = 0; feature_block < blocked_num_features; feature_block += THREAD_BLOCK_SIZE_uz) {
@@ -120,8 +120,8 @@ inline void device_kernel_predict_linear(aos_matrix<real_type> &prediction, cons
     const auto blocked_num_classes = static_cast<std::size_t>(std::ceil(static_cast<real_type>(num_classes) / INTERNAL_BLOCK_SIZE));
 
     // cast all values to 64-bit unsigned long long to prevent potential 32-bit overflows
-    const auto INTERNAL_BLOCK_SIZE_uz = static_cast<std::size_t>(INTERNAL_BLOCK_SIZE);
-    const auto THREAD_BLOCK_SIZE_uz = static_cast<std::size_t>(THREAD_BLOCK_SIZE);
+    constexpr auto INTERNAL_BLOCK_SIZE_uz = static_cast<std::size_t>(INTERNAL_BLOCK_SIZE);
+    constexpr auto THREAD_BLOCK_SIZE_uz = static_cast<std::size_t>(THREAD_BLOCK_SIZE);
 
 #pragma omp parallel for collapse(2) default(none) shared(prediction, w, rho, predict_points) firstprivate(blocked_device_num_predict_points, blocked_num_classes, device_num_predict_points, num_classes, num_features, device_row_offset)
     for (std::size_t pp_block = 0; pp_block < blocked_device_num_predict_points; pp_block += THREAD_BLOCK_SIZE_uz) {
@@ -200,8 +200,8 @@ inline void device_kernel_predict(aos_matrix<real_type> &prediction, const aos_m
     const auto blocked_device_num_predict_points = static_cast<std::size_t>(std::ceil(static_cast<real_type>(device_num_predict_points) / INTERNAL_BLOCK_SIZE));
 
     // cast all values to 64-bit unsigned long long to prevent potential 32-bit overflows
-    const auto INTERNAL_BLOCK_SIZE_uz = static_cast<std::size_t>(INTERNAL_BLOCK_SIZE);
-    const auto THREAD_BLOCK_SIZE_uz = static_cast<std::size_t>(THREAD_BLOCK_SIZE);
+    constexpr auto INTERNAL_BLOCK_SIZE_uz = static_cast<std::size_t>(INTERNAL_BLOCK_SIZE);
+    constexpr auto THREAD_BLOCK_SIZE_uz = static_cast<std::size_t>(THREAD_BLOCK_SIZE);
 
 #pragma omp parallel for collapse(2)
     for (std::size_t pp_idx = 0; pp_idx < device_num_predict_points; ++pp_idx) {

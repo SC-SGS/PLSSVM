@@ -54,9 +54,9 @@ inline void device_kernel_symm(const std::size_t num_rows, const std::size_t num
     const auto blocked_device_num_rows = static_cast<std::size_t>(std::ceil(static_cast<real_type>(device_num_rows) / INTERNAL_BLOCK_SIZE));
 
     // cast all values to 64-bit unsigned long long to prevent potential 32-bit overflows
-    const auto INTERNAL_BLOCK_SIZE_uz = static_cast<std::size_t>(INTERNAL_BLOCK_SIZE);
-    const auto THREAD_BLOCK_SIZE_uz = static_cast<std::size_t>(THREAD_BLOCK_SIZE);
-    const auto PADDING_SIZE_uz = static_cast<std::size_t>(PADDING_SIZE);
+    constexpr auto INTERNAL_BLOCK_SIZE_uz = static_cast<std::size_t>(INTERNAL_BLOCK_SIZE);
+    constexpr auto THREAD_BLOCK_SIZE_uz = static_cast<std::size_t>(THREAD_BLOCK_SIZE);
+    constexpr auto PADDING_SIZE_uz = static_cast<std::size_t>(PADDING_SIZE);
 
     // define the range over which should be iterated
     std::vector<std::size_t> range(blocked_num_rhs * blocked_device_num_rows);
@@ -139,9 +139,9 @@ inline void device_kernel_symm_mirror(const std::size_t num_rows, const std::siz
     const auto blocked_num_mirror_rows = static_cast<std::size_t>(std::ceil(static_cast<real_type>(num_mirror_rows) / INTERNAL_BLOCK_SIZE));
 
     // cast all values to 64-bit unsigned long long to prevent potential 32-bit overflows
-    const auto INTERNAL_BLOCK_SIZE_uz = static_cast<std::size_t>(INTERNAL_BLOCK_SIZE);
-    const auto THREAD_BLOCK_SIZE_uz = static_cast<std::size_t>(THREAD_BLOCK_SIZE);
-    const auto PADDING_SIZE_uz = static_cast<std::size_t>(PADDING_SIZE);
+    constexpr auto INTERNAL_BLOCK_SIZE_uz = static_cast<std::size_t>(INTERNAL_BLOCK_SIZE);
+    constexpr auto THREAD_BLOCK_SIZE_uz = static_cast<std::size_t>(THREAD_BLOCK_SIZE);
+    constexpr auto PADDING_SIZE_uz = static_cast<std::size_t>(PADDING_SIZE);
 
     // define the range over which should be iterated
     std::vector<std::size_t> range(blocked_num_rhs * blocked_num_mirror_rows);

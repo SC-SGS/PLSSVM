@@ -59,9 +59,9 @@ void device_kernel_assembly(real_type *kernel_matrix, const soa_matrix<real_type
     const auto blocked_device_num_rows = static_cast<std::size_t>(std::ceil(static_cast<real_type>(device_num_rows) / INTERNAL_BLOCK_SIZE));
 
     // cast all values to 64-bit unsigned long long to prevent potential 32-bit overflows
-    const auto INTERNAL_BLOCK_SIZE_uz = static_cast<std::size_t>(INTERNAL_BLOCK_SIZE);
-    const auto THREAD_BLOCK_SIZE_uz = static_cast<std::size_t>(THREAD_BLOCK_SIZE);
-    const auto PADDING_SIZE_uz = static_cast<std::size_t>(PADDING_SIZE);
+    constexpr auto INTERNAL_BLOCK_SIZE_uz = static_cast<std::size_t>(INTERNAL_BLOCK_SIZE);
+    constexpr auto THREAD_BLOCK_SIZE_uz = static_cast<std::size_t>(THREAD_BLOCK_SIZE);
+    constexpr auto PADDING_SIZE_uz = static_cast<std::size_t>(PADDING_SIZE);
 
     // define the range over which should be iterated
     std::vector<std::size_t> indices(blocked_row_range * blocked_device_num_rows);
