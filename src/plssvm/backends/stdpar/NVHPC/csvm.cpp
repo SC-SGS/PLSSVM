@@ -72,7 +72,11 @@ csvm::csvm(const target_platform target) {
         plssvm::detail::log_untracked(verbosity_level::full,
                                       comm_,
                                       "\nUsing stdpar ({}; {}) as backend.\n"
+#if defined(PLSSVM_STDPAR_BACKEND_NVHPC_GPU)
                                       "Found {} stdpar device(s) for the target platform {}:\n",
+#else
+                                      "Found {} stdpar device(s) for the target platform {}.\n",
+#endif
                                       this->get_implementation_type(),
                                       detail::get_stdpar_version(),
                                       this->num_available_devices(),
