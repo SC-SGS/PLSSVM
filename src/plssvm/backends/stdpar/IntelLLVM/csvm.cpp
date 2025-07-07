@@ -14,6 +14,7 @@
 #include "plssvm/backends/stdpar/implementation_types.hpp"  // plssvm::stdpar::implementation_type
 #include "plssvm/detail/logging/log.hpp"                    // plssvm::detail::log
 #include "plssvm/detail/logging/log_untracked.hpp"          // plssvm::detail::log_untracked
+#include "plssvm/detail/string_utility.hpp"                 // plssvm::detail::trim
 #include "plssvm/detail/tracking/performance_tracker.hpp"   // plssvm::detail::tracking::tracking_entry, PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY
 #include "plssvm/target_platforms.hpp"                      // plssvm::target_platform
 #include "plssvm/verbosity_levels.hpp"                      // plssvm::verbosity_level
@@ -66,7 +67,7 @@ csvm::csvm(const target_platform target) {
                                              target_) };
     }
 
-    const std::vector<std::string> device_names{ default_device.get_info<::sycl::info::device::name>() };
+    const std::vector<std::string> device_names{ std::string{ plssvm::detail::trim(default_device.get_info<::sycl::info::device::name>()) } };
 
     if (comm_.size() > 1) {
         mpi::detail::gather_and_print_csvm_information(comm_, plssvm::backend_type::stdpar, target_, device_names, fmt::format("{}", this->get_implementation_type()));
