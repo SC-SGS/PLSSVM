@@ -124,7 +124,7 @@ int main(int argc, char *argv[]) {
             if (use_kokkos_as_backend) {
                 backends_to_initialize.push_back(plssvm::backend_type::kokkos);
             }
-            environment_guard = std::make_unique<plssvm::environment::scope_guard>(backends_to_initialize);
+            environment_guard = std::make_unique<plssvm::environment::scope_guard>(argc, argv, backends_to_initialize);
 
             // create default csvm
             const std::unique_ptr<csvm_type> svm = [&]() {

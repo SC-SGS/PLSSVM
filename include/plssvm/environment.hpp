@@ -18,6 +18,7 @@
 
 #include "plssvm/backend_types.hpp"          // plssvm::backend_type, plssvm::list_available_backends
 #include "plssvm/detail/assert.hpp"          // PLSSVM_ASSERT
+#include "plssvm/detail/cmd/utility.hpp"     // plssvm::detail::cmd::filter_argv
 #include "plssvm/detail/string_utility.hpp"  // plssvm::detail::to_lower_case
 #include "plssvm/detail/utility.hpp"         // plssvm::detail::{contains, unreachable}
 #include "plssvm/exceptions/exceptions.hpp"  // plssvm::environment_exception
@@ -243,7 +244,10 @@ inline void initialize_backend([[maybe_unused]] const backend_type backend, [[ma
     #if defined(PLSSVM_KOKKOS_BACKEND_ENABLE_HPX)
         ::hpx::start(nullptr, argc, argv);
     #endif
-        Kokkos::initialize(argc, argv);
+        // we have to filter out our "--kokkos_execution_space" command line option or Kokkos itself will issue a warning on the command line
+        std::vector<char *> filtered_argv = plssvm::detail::cmd::filter_argv(argc, argv, { "--kokkos_" });
+        int filtered_argc = static_cast<int>(filtered_argv.size());
+        Kokkos::initialize(filtered_argc, filtered_argv.data());
     }
 #endif
 }
