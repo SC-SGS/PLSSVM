@@ -35,7 +35,7 @@ This is also the reason, why SVMs are also called "large margin classifiers."
 To predict to which class a new, unseen data point belongs, the SVM simply has to calculate on which side of the previously calculated hyperplane the data point lies.
 This is very efficient since it only involves a single scalar product of the size corresponding to the numer of features per data point in the data set.
 
-<p style="text-align: center;">
+<p align="center">
   <img alt="Basic idea of an Support Vector Machine as classification model." src="https://github.com/SC-SGS/PLSSVM/raw/main/.figures/support_vector_machine.png" width="50%">
 </p>
 
@@ -1122,7 +1122,7 @@ weighted avg       0.91      0.91      0.91       569
 
 Score: 91.39%
 ```
-<p style="text-align: center;">
+<p align="center">
   <img alt="Example classification task breast cancer decision boundary output." src="https://github.com/SC-SGS/PLSSVM/raw/regression/.figures/classification_example.png" width="80%">
 </p>
 
@@ -1189,7 +1189,7 @@ plt.legend()
 plt.show()
 ```
 with an example output:
-<p style="text-align: center;">
+<p align="center">
   <img alt="Example regression output using a sine curve." src="https://github.com/SC-SGS/PLSSVM/raw/regression/.figures/regression_example.png" width="80%">
 </p>
 
