@@ -297,8 +297,15 @@ The `[optional_options]` can be one or multiple of:
 - `PLSSVM_ENABLE_FAST_MATH=ON|OFF` (default depending on `CMAKE_BUILD_TYPE`: `ON` for Release or RelWithDebInfo, `OFF` otherwise): enable `fast-math` compiler flags for all backends
 - `PLSSVM_ENABLE_ASSERTS=ON|OFF` (default: `OFF`): enables custom assertions
 - `PLSSVM_USE_FLOAT_AS_REAL_TYPE=ON|OFF` (default: `OFF`): use `float` as real_type instead of `double`
-- `PLSSVM_THREAD_BLOCK_SIZE` (default: `8`): set a specific thread block size used in the GPU kernels (for fine-tuning optimizations)
-- `PLSSVM_INTERNAL_BLOCK_SIZE` (default: `4`): set a specific internal block size used in the GPU kernels (for fine-tuning optimizations)
+- `PLSSVM_THREAD_BLOCK_SIZE` (default: `8`): set a specific thread block size used in the kernels (for fine-tuning optimizations) <br>
+   **Note**: for the different execution spaces in the Kokkos backend, the maximum value of the `PLSSVM_THREAD_BLOCK_SIZE` is not as straight forward as one may wish:
+  - CUDA, HIP, and SYCL: the maximum value depends on the underlying backend (in practice $\sqrt{1024}$ = 32)
+  - HPX and Serial: must **exactly** be 1
+  - OpenMP: must be 1 or 2 (most likely only 1 will work)
+  - Threads: must be 1; however, note that Kokkos itself **must** be built with hwloc support (via `-DKokkos_ENABLE_HWLOC=ON`), otherwise the Kokkos::Threads execution space will always only use a single core
+  - OpenMPTarget: $\sqrt{256}$ = 16
+  - OpenACC: $\lfloor\sqrt{512}\rfloor$ = 22
+- `PLSSVM_INTERNAL_BLOCK_SIZE` (default: `4`): set a specific internal block size used in the kernels (for fine-tuning optimizations)
 - `PLSSVM_ENABLE_LTO=ON|OFF` (default: `OFF`): enable interprocedural optimization (IPO/LTO) if supported by the compiler
 - `PLSSVM_ENFORCE_MAX_MEM_ALLOC_SIZE=ON|OFF` (default: `ON`): enforce the maximum (device) memory allocation size for the plssvm::solver_type::automatic solver
 - `PLSSVM_ENABLE_PINNED_MEMORY=ON|OFF` (default: `OFF`): use host pinned memory for the input matrix when assembling the kernel matrix, if available

@@ -437,7 +437,7 @@ std::size_t csvm::get_max_work_group_size(const std::size_t device_id) const {
         // NOTE: CUDA + HIP + SYCL: returns the maximum possible number of threads, due to no further limitations in the dummy functor (like, e.g., scratch memory)
         // NOTE: HPX + Serial: hardcoded to 1
         // NOTE: OpenMP: should be 1-2; most likely 1
-        // NOTE: Threads: should be equal to number of hardware threads IF hwloc is enabled; otherwise 1
+        // NOTE: Threads: should be 1; however, always only uses a single core if Kokkos wasn't built with hwloc support
         // NOTE: OpenMPTarget: hardcoded to 256
         // NOTE: OpenACC: hardcoded to 512
 
