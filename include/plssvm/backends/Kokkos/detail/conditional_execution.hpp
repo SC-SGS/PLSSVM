@@ -42,9 +42,9 @@ namespace plssvm::kokkos::detail {
     #define PLSSVM_KOKKOS_BACKEND_INVOKE_IF_CUDA(func) std::invoke(func)
 #else
     #define PLSSVM_KOKKOS_BACKEND_INVOKE_RETURN_IF_CUDA(func) \
-        throw backend_exception { fmt::format("The Kokkos ExecutionSpace {} is not available!", execution_space::cuda) }
+        throw plssvm::kokkos::backend_exception { fmt::format("The Kokkos ExecutionSpace {} is not available!", plssvm::kokkos::execution_space::cuda) }
     #define PLSSVM_KOKKOS_BACKEND_INVOKE_IF_CUDA(func) \
-        throw backend_exception { fmt::format("The Kokkos ExecutionSpace {} is not available!", execution_space::cuda) }
+        throw plssvm::kokkos::backend_exception { fmt::format("The Kokkos ExecutionSpace {} is not available!", plssvm::kokkos::execution_space::cuda) }
 #endif
 
 //***************************************************//
@@ -65,9 +65,9 @@ namespace plssvm::kokkos::detail {
     #define PLSSVM_KOKKOS_BACKEND_INVOKE_IF_HIP(func) std::invoke(func)
 #else
     #define PLSSVM_KOKKOS_BACKEND_INVOKE_RETURN_IF_HIP(func) \
-        throw backend_exception { fmt::format("The Kokkos ExecutionSpace {} is not available!", execution_space::hip) }
+        throw plssvm::kokkos::backend_exception { fmt::format("The Kokkos ExecutionSpace {} is not available!", plssvm::kokkos::execution_space::hip) }
     #define PLSSVM_KOKKOS_BACKEND_INVOKE_IF_HIP(func) \
-        throw backend_exception { fmt::format("The Kokkos ExecutionSpace {} is not available!", execution_space::hip) }
+        throw plssvm::kokkos::backend_exception { fmt::format("The Kokkos ExecutionSpace {} is not available!", plssvm::kokkos::execution_space::hip) }
 #endif
 
 //***************************************************//
@@ -88,9 +88,9 @@ namespace plssvm::kokkos::detail {
     #define PLSSVM_KOKKOS_BACKEND_INVOKE_IF_SYCL(func) std::invoke(func)
 #else
     #define PLSSVM_KOKKOS_BACKEND_INVOKE_RETURN_IF_SYCL(func) \
-        throw backend_exception { fmt::format("The Kokkos ExecutionSpace {} is not available!", execution_space::sycl) }
+        throw plssvm::kokkos::backend_exception { fmt::format("The Kokkos ExecutionSpace {} is not available!", plssvm::kokkos::execution_space::sycl) }
     #define PLSSVM_KOKKOS_BACKEND_INVOKE_IF_SYCL(func) \
-        throw backend_exception { fmt::format("The Kokkos ExecutionSpace {} is not available!", execution_space::sycl) }
+        throw plssvm::kokkos::backend_exception { fmt::format("The Kokkos ExecutionSpace {} is not available!", plssvm::kokkos::execution_space::sycl) }
 #endif
 
 //***************************************************//
@@ -111,9 +111,9 @@ namespace plssvm::kokkos::detail {
     #define PLSSVM_KOKKOS_BACKEND_INVOKE_IF_HPX(func) std::invoke(func)
 #else
     #define PLSSVM_KOKKOS_BACKEND_INVOKE_RETURN_IF_HPX(func) \
-        throw backend_exception { fmt::format("The Kokkos ExecutionSpace {} is not available!", execution_space::hpx) }
+        throw plssvm::kokkos::backend_exception { fmt::format("The Kokkos ExecutionSpace {} is not available!", plssvm::kokkos::execution_space::hpx) }
     #define PLSSVM_KOKKOS_BACKEND_INVOKE_IF_HPX(func) \
-        throw backend_exception { fmt::format("The Kokkos ExecutionSpace {} is not available!", execution_space::hpx) }
+        throw plssvm::kokkos::backend_exception { fmt::format("The Kokkos ExecutionSpace {} is not available!", plssvm::kokkos::execution_space::hpx) }
 #endif
 
 //***************************************************//
@@ -134,9 +134,9 @@ namespace plssvm::kokkos::detail {
     #define PLSSVM_KOKKOS_BACKEND_INVOKE_IF_OPENMP(func) std::invoke(func)
 #else
     #define PLSSVM_KOKKOS_BACKEND_INVOKE_RETURN_IF_OPENMP(func) \
-        throw backend_exception { fmt::format("The Kokkos ExecutionSpace {} is not available!", execution_space::openmp) }
+        throw plssvm::kokkos::backend_exception { fmt::format("The Kokkos ExecutionSpace {} is not available!", plssvm::kokkos::execution_space::openmp) }
     #define PLSSVM_KOKKOS_BACKEND_INVOKE_IF_OPENMP(func) \
-        throw backend_exception { fmt::format("The Kokkos ExecutionSpace {} is not available!", execution_space::openmp) }
+        throw plssvm::kokkos::backend_exception { fmt::format("The Kokkos ExecutionSpace {} is not available!", plssvm::kokkos::execution_space::openmp) }
 #endif
 
 //***************************************************//
@@ -157,9 +157,9 @@ namespace plssvm::kokkos::detail {
     #define PLSSVM_KOKKOS_BACKEND_INVOKE_IF_OPENMPTARGET(func) std::invoke(func)
 #else
     #define PLSSVM_KOKKOS_BACKEND_INVOKE_RETURN_IF_OPENMPTARGET(func) \
-        throw backend_exception { fmt::format("The Kokkos ExecutionSpace {} is not available!", execution_space::openmp_target) }
+        throw plssvm::kokkos::backend_exception { fmt::format("The Kokkos ExecutionSpace {} is not available!", plssvm::kokkos::execution_space::openmp_target) }
     #define PLSSVM_KOKKOS_BACKEND_INVOKE_IF_OPENMPTARGET(func) \
-        throw backend_exception { fmt::format("The Kokkos ExecutionSpace {} is not available!", execution_space::openmp_target) }
+        throw plssvm::kokkos::backend_exception { fmt::format("The Kokkos ExecutionSpace {} is not available!", plssvm::kokkos::execution_space::openmp_target) }
 #endif
 
 //***************************************************//
@@ -180,9 +180,9 @@ namespace plssvm::kokkos::detail {
     #define PLSSVM_KOKKOS_BACKEND_INVOKE_IF_OPENACC(func) std::invoke(func)
 #else
     #define PLSSVM_KOKKOS_BACKEND_INVOKE_RETURN_IF_OPENACC(func) \
-        throw backend_exception { fmt::format("The Kokkos ExecutionSpace {} is not available!", execution_space::openacc) }
+        throw plssvm::kokkos::backend_exception { fmt::format("The Kokkos ExecutionSpace {} is not available!", plssvm::kokkos::execution_space::openacc) }
     #define PLSSVM_KOKKOS_BACKEND_INVOKE_IF_OPENACC(func) \
-        throw backend_exception { fmt::format("The Kokkos ExecutionSpace {} is not available!", execution_space::openacc) }
+        throw plssvm::kokkos::backend_exception { fmt::format("The Kokkos ExecutionSpace {} is not available!", plssvm::kokkos::execution_space::openacc) }
 #endif
 
 //***************************************************//
@@ -203,9 +203,9 @@ namespace plssvm::kokkos::detail {
     #define PLSSVM_KOKKOS_BACKEND_INVOKE_IF_THREADS(func) std::invoke(func)
 #else
     #define PLSSVM_KOKKOS_BACKEND_INVOKE_RETURN_IF_THREADS(func) \
-        throw backend_exception { fmt::format("The Kokkos ExecutionSpace {} is not available!", execution_space::threads) }
+        throw plssvm::kokkos::backend_exception { fmt::format("The Kokkos ExecutionSpace {} is not available!", plssvm::kokkos::execution_space::threads) }
     #define PLSSVM_KOKKOS_BACKEND_INVOKE_IF_THREADS(func) \
-        throw backend_exception { fmt::format("The Kokkos ExecutionSpace {} is not available!", execution_space::threads) }
+        throw plssvm::kokkos::backend_exception { fmt::format("The Kokkos ExecutionSpace {} is not available!", plssvm::kokkos::execution_space::threads) }
 #endif
 
 //***************************************************//
@@ -228,9 +228,9 @@ namespace plssvm::kokkos::detail {
     #define PLSSVM_KOKKOS_BACKEND_INVOKE_IF_SERIAL(func) std::invoke(func)
 #else
     #define PLSSVM_KOKKOS_BACKEND_INVOKE_RETURN_IF_SERIAL(func) \
-        throw backend_exception { fmt::format("The Kokkos ExecutionSpace {} is not available!", execution_space::serial) }
+        throw plssvm::kokkos::backend_exception { fmt::format("The Kokkos ExecutionSpace {} is not available!", plssvm::kokkos::execution_space::serial) }
     #define PLSSVM_KOKKOS_BACKEND_INVOKE_IF_SERIAL(func) \
-        throw backend_exception { fmt::format("The Kokkos ExecutionSpace {} is not available!", execution_space::serial) }
+        throw plssvm::kokkos::backend_exception { fmt::format("The Kokkos ExecutionSpace {} is not available!", plssvm::kokkos::execution_space::serial) }
 #endif
 
 }  // namespace plssvm::kokkos::detail
