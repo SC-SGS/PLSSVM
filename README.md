@@ -588,7 +588,11 @@ Issues: https://github.com/SC-SGS/PLSSVM/issues
 
 PLSSVM provides three executables: `plssvm-train`, `plssvm-predict`, and `plssvm-scale`.
 In addition, PLSSVM can also be used as a library in third-party code.
-For more information, see the respective `man` pages which are installed via `cmake --build . -- install`.
+For more information, see the respective `man` pages which are installed via `cmake --build . -- install`. 
+
+We support the command line options of the third-party libraries [HPX](https://hpx.stellar-group.org/) and [Kokkos](https://github.com/kokkos/kokkos) 
+by forwarding the command line options to the respective initialization functions. 
+Internally, these options are filtered out before they are passed to our command line parser utility. 
 
 ### Generating Artificial Data
 
