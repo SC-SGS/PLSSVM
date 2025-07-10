@@ -30,8 +30,6 @@
     #include "hpx/runtime.hpp"    // ::hpx::{is_running, is_stopped}
 #endif
 #if defined(PLSSVM_HAS_KOKKOS_BACKEND)
-    #include "plssvm/backends/Kokkos/detail/conditional_execution.hpp"  // PLSSVM_KOKKOS_BACKEND_INVOKE_IF_*
-
     #include "Kokkos_Core.hpp"  // Kokkos::is_initialized, Kokkos::is_finalized, Kokkos::initialize, Kokkos::finalize
 #endif
 
@@ -242,9 +240,9 @@ inline void initialize_backend([[maybe_unused]] const backend_type backend, [[ma
 #endif
 #if defined(PLSSVM_HAS_KOKKOS_BACKEND)
     if (backend == backend_type::kokkos) {
-        PLSSVM_KOKKOS_BACKEND_INVOKE_IF_HPX([&]() {
-            ::hpx::start(nullptr, argc, argv);
-        });
+    #if defined(PLSSVM_KOKKOS_BACKEND_ENABLE_HPX)
+        ::hpx::start(nullptr, argc, argv);
+    #endif
         Kokkos::initialize(argc, argv);
     }
 #endif
