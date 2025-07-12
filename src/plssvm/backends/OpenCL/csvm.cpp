@@ -163,8 +163,18 @@ csvm::csvm(const target_platform target) {
     PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "backend", "jit_compilation_time", info.duration }));
 
     // sanity checks for the number of the OpenCL kernels
-    PLSSVM_ASSERT(std::all_of(devices_.begin(), devices_.end(), [](const queue_type &queue) { return queue.kernels.size() == 13; }),
-                  "Every command queue must have exactly thirteen associated kernels!");
+    PLSSVM_ASSERT(std::all_of(devices_.begin(), devices_.end(), [](const queue_type &queue) { return queue.kernels.size() == 17; }),
+                  "Every command queue must have exactly 17 associated kernels!");
+
+    PLSSVM_ASSERT(std::all_of(devices_.begin(), devices_.end(), [](const queue_type &queue) { return ::plssvm::detail::contains(queue.kernels, detail::compute_kernel_name::fill_kernel_float); }),
+                  "The double device pointer fill kernel is missing!");
+    PLSSVM_ASSERT(std::all_of(devices_.begin(), devices_.end(), [](const queue_type &queue) { return ::plssvm::detail::contains(queue.kernels, detail::compute_kernel_name::fill_kernel_double); }),
+                  "The float device pointer fill kernel is missing!");
+
+    PLSSVM_ASSERT(std::all_of(devices_.begin(), devices_.end(), [](const queue_type &queue) { return ::plssvm::detail::contains(queue.kernels, detail::compute_kernel_name::memset_kernel_float); }),
+                  "The double device pointer memset kernel is missing!");
+    PLSSVM_ASSERT(std::all_of(devices_.begin(), devices_.end(), [](const queue_type &queue) { return ::plssvm::detail::contains(queue.kernels, detail::compute_kernel_name::memset_kernel_double); }),
+                  "The float device pointer memset kernel is missing!");
 
     PLSSVM_ASSERT(std::all_of(devices_.begin(), devices_.end(), [](const queue_type &queue) { return ::plssvm::detail::contains(queue.kernels, detail::compute_kernel_name::assemble_kernel_matrix_explicit); }),
                   "The explicit kernel matrix assembly device kernel is missing!");

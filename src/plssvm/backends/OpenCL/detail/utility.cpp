@@ -191,6 +191,12 @@ std::string get_device_name(const command_queue &queue) {
 std::vector<std::pair<compute_kernel_name, std::string>> kernel_type_to_function_names() {
     // since the correct predict kernel function cannot be determined during construction, add all predict kernels
     std::vector<std::pair<compute_kernel_name, std::string>> kernels{
+        // fill_kernel.cl
+        std::make_pair(compute_kernel_name::fill_kernel_float, "device_fill_kernel_float"),
+        std::make_pair(compute_kernel_name::fill_kernel_double, "device_fill_kernel_double"),
+        // memset_kernel.cl
+        std::make_pair(compute_kernel_name::memset_kernel_float, "device_memset_kernel_float"),
+        std::make_pair(compute_kernel_name::memset_kernel_double, "device_memset_kernel_double"),
         // kernel_matrix_assembly.cl
         std::make_pair(compute_kernel_name::assemble_kernel_matrix_explicit, "device_kernel_assembly"),
         // blas.cl
@@ -281,6 +287,8 @@ std::pair<std::vector<command_queue>, jit_info> create_command_queues(const mpi:
     std::string kernel_src_string{};
     // note: the detail/atomics.cl file must be included first!
     for (const auto &path : { base_path / "detail/atomics.cl",
+                              base_path / "detail/fill_kernel.cl",
+                              base_path / "detail/memset_kernel.cl",
                               base_path / "kernel_functions.cl",
                               base_path / "cg_explicit/blas.cl",
                               base_path / "cg_explicit/kernel_matrix_assembly.cl",
@@ -551,8 +559,8 @@ std::pair<std::vector<command_queue>, jit_info> create_command_queues(const mpi:
     }
 
     std::vector<command_queue> queues{};
-    // compile kernels for each context, i.e., each device
 
+    // compile kernels for each context, i.e., each device
     for (std::size_t idx = 0; idx < contexts.size(); ++idx) {
         auto &context = contexts[idx];
         auto &device = context.device;
