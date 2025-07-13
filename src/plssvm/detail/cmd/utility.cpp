@@ -91,7 +91,7 @@ std::optional<std::pair<sycl::data_parallel_kernel, sycl::implementation_type>> 
     }
 
     // parse the SYCL implementation used in the SYCL backend
-    const sycl::implementation_type implementation_type = result["sycl_implementation_type"].as<decltype(sycl_implementation_type)>();
+    const sycl::implementation_type implementation_type = result["sycl_implementation_type"].as<sycl::implementation_type>();
 
     // warn if a SYCL implementation type is explicitly set but SYCL isn't the current (automatic) backend
     if (!sycl_backend_is_used && implementation_type != sycl::implementation_type::automatic) {
