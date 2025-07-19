@@ -10,18 +10,21 @@
 
 #include "plssvm/detail/cmd/parser_train.hpp"
 
-#include "plssvm/backend_types.hpp"                          // plssvm::backend_type
-#include "plssvm/backends/SYCL/implementation_types.hpp"     // plssvm::sycl::implementation_type
-#include "plssvm/backends/SYCL/kernel_invocation_types.hpp"  // plssvm::sycl::kernel_invocation_type
-#include "plssvm/classification_types.hpp"                   // plssvm::classification_type
-#include "plssvm/constants.hpp"                              // plssvm::real_type
-#include "plssvm/gamma.hpp"                                  // plssvm::gamma_type
-#include "plssvm/kernel_function_types.hpp"                  // plssvm::kernel_function_type
-#include "plssvm/solver_types.hpp"                           // plssvm::solver_type
-#include "plssvm/target_platforms.hpp"                       // plssvm::target_platform
-#include "plssvm/verbosity_levels.hpp"                       // plssvm::verbosity
+#include "plssvm/backend_types.hpp"                        // plssvm::backend_type
+#include "plssvm/backends/Kokkos/execution_space.hpp"      // plssvm::kokkos::execution_space
+#include "plssvm/backends/SYCL/data_parallel_kernels.hpp"  // plssvm::sycl::data_parallel_kernel
+#include "plssvm/backends/SYCL/implementation_types.hpp"   // plssvm::sycl::implementation_type
+#include "plssvm/classification_types.hpp"                 // plssvm::classification_type
+#include "plssvm/constants.hpp"                            // plssvm::real_type
+#include "plssvm/exceptions/exceptions.hpp"                // plssvm::cmd_parser_exit
+#include "plssvm/gamma.hpp"                                // plssvm::gamma_type
+#include "plssvm/kernel_function_types.hpp"                // plssvm::kernel_function_type
+#include "plssvm/solver_types.hpp"                         // plssvm::solver_type
+#include "plssvm/svm_types.hpp"                            // plssvm::svm_type
+#include "plssvm/target_platforms.hpp"                     // plssvm::target_platform
+#include "plssvm/verbosity_levels.hpp"                     // plssvm::verbosity
 
-#include "tests/custom_test_macros.hpp"      // EXPECT_CONVERSION_TO_STRING
+#include "tests/custom_test_macros.hpp"      // EXPECT_CONVERSION_TO_STRING, EXPECT_THROW_WHAT
 #include "tests/detail/cmd/cmd_utility.hpp"  // util::ParameterBase
 #include "tests/naming.hpp"                  // naming::{pretty_print_parameter_flag_and_value, pretty_print_parameter_flag}
 #include "tests/utility.hpp"                 // util::{convert_from_string, redirect_output}
@@ -42,25 +45,25 @@
 
 class ParserTrain : public util::ParameterBase { };
 
-class ParserTrainDeathTest : public ParserTrain { };
-
 TEST_F(ParserTrain, minimal) {
     // create artificial command line arguments in test fixture
     this->CreateCMDArgs({ "./plssvm-train", "data.libsvm" });
 
     // create parameter object
-    const plssvm::detail::cmd::parser_train parser{ this->get_argc(), this->get_argv() };
+    const plssvm::detail::cmd::parser_train parser{ this->get_comm(), this->get_argc(), this->get_argv() };
 
     // check parsed values
     EXPECT_EQ(parser.csvm_params, plssvm::parameter{});
-    EXPECT_FLOATING_POINT_EQ(parser.epsilon, plssvm::real_type{ 0.001 });
+    EXPECT_FLOATING_POINT_EQ(parser.epsilon, plssvm::real_type{ 1e-10 });
     EXPECT_EQ(parser.max_iter, 0);
     EXPECT_EQ(parser.classification, plssvm::classification_type::oaa);
+    EXPECT_EQ(parser.svm, plssvm::svm_type::csvc);
     EXPECT_EQ(parser.backend, plssvm::backend_type::automatic);
     EXPECT_EQ(parser.target, plssvm::target_platform::automatic);
     EXPECT_EQ(parser.solver, plssvm::solver_type::automatic);
-    EXPECT_EQ(parser.sycl_kernel_invocation_type, plssvm::sycl::kernel_invocation_type::automatic);
+    EXPECT_EQ(parser.sycl_data_parallel_kernel, plssvm::sycl::data_parallel_kernel::automatic);
     EXPECT_EQ(parser.sycl_implementation_type, plssvm::sycl::implementation_type::automatic);
+    EXPECT_EQ(parser.kokkos_execution_space, plssvm::kokkos::execution_space::automatic);
     EXPECT_FALSE(parser.strings_as_labels);
     EXPECT_EQ(parser.input_filename, "data.libsvm");
     EXPECT_EQ(parser.model_filename, "data.libsvm.model");
@@ -74,20 +77,22 @@ TEST_F(ParserTrain, minimal_output) {
     this->CreateCMDArgs({ "./plssvm-train", "data.libsvm" });
 
     // create parameter object
-    const plssvm::detail::cmd::parser_train parser{ this->get_argc(), this->get_argv() };
+    const plssvm::detail::cmd::parser_train parser{ this->get_comm(), this->get_argc(), this->get_argv() };
 
     // test output string
     const std::string correct = fmt::format(
+        "svm_type: csvc\n"
         "kernel_type: rbf -> exp(-gamma*|u-v|^2)\n"
         "gamma: \"1 / num_features\"\n"
         "cost: 1\n"
-        "epsilon: 0.001\n"
+        "epsilon: 1e-10\n"
         "max_iter: num_data_points\n"
         "backend: automatic\n"
         "target platform: automatic\n"
         "solver: automatic\n"
         "SYCL implementation type: automatic\n"
-        "SYCL kernel invocation type: automatic\n"
+        "SYCL data parallel kernel: automatic\n"
+        "Kokkos execution space: automatic\n"
         "classification_type: one vs. all\n"
         "label_type: int\n"
         "real_type: {}\n"
@@ -101,18 +106,25 @@ TEST_F(ParserTrain, minimal_output) {
 
 TEST_F(ParserTrain, all_arguments) {
     // create artificial command line arguments in test fixture
-    std::vector<std::string> cmd_args = { "./plssvm-train", "--kernel_type", "1", "--degree", "2", "--gamma", "1.5", "--coef0", "-1.5", "--cost", "2", "--epsilon", "1e-10", "--max_iter", "100", "--classification", "oao", "--solver", "cg_implicit", "--backend", "cuda", "--target_platform", "gpu_nvidia", "--use_strings_as_labels", "--verbosity", "libsvm" };
+    std::vector<std::string> cmd_args = { "./plssvm-train", "--svm_type", "1", "--kernel_type", "1", "--degree", "2", "--gamma", "1.5", "--coef0", "-1.5", "--cost", "2", "--epsilon", "1e-12", "--max_iter", "100", "--classification", "oao", "--solver", "cg_implicit", "--backend", "cuda", "--target_platform", "gpu_nvidia", "--use_strings_as_labels", "--verbosity", "libsvm" };
 #if defined(PLSSVM_HAS_SYCL_BACKEND)
-    cmd_args.insert(cmd_args.end(), { "--sycl_kernel_invocation_type", "nd_range", "--sycl_implementation_type", "dpcpp" });
+    cmd_args.insert(cmd_args.end(), { "--sycl_data_parallel_kernel", "work_group", "--sycl_implementation_type", "dpcpp" });
+#endif
+#if defined(PLSSVM_HAS_KOKKOS_BACKEND)
+    const plssvm::kokkos::execution_space space = plssvm::kokkos::list_available_execution_spaces()[1];  // [0] would be automatic
+    cmd_args.insert(cmd_args.end(), { "--kokkos_execution_space", fmt::format("{}", space) });
 #endif
 #if defined(PLSSVM_PERFORMANCE_TRACKER_ENABLED)
     cmd_args.insert(cmd_args.end(), { "--performance_tracking", "tracking.yaml" });
+#endif
+#if defined(PLSSVM_HAS_MPI_ENABLED)
+    cmd_args.insert(cmd_args.end(), { "--mpi_load_balancing_weights", "2" });
 #endif
     cmd_args.insert(cmd_args.end(), { "data.libsvm", "data.libsvm.model" });
     this->CreateCMDArgs(cmd_args);
 
     // create parameter object
-    const plssvm::detail::cmd::parser_train parser{ this->get_argc(), this->get_argv() };
+    const plssvm::detail::cmd::parser_train parser{ this->get_comm(), this->get_argc(), this->get_argv() };
 
     // check parsed values
     EXPECT_EQ(parser.csvm_params.kernel_type, plssvm::kernel_function_type::polynomial);
@@ -122,18 +134,24 @@ TEST_F(ParserTrain, all_arguments) {
     EXPECT_FLOATING_POINT_EQ(parser.csvm_params.coef0, plssvm::real_type{ -1.5 });
     EXPECT_FLOATING_POINT_EQ(parser.csvm_params.cost, plssvm::real_type{ 2.0 });
 
-    EXPECT_FLOATING_POINT_EQ(parser.epsilon, plssvm::real_type{ 1e-10 });
+    EXPECT_FLOATING_POINT_EQ(parser.epsilon, plssvm::real_type{ 1e-12 });
     EXPECT_EQ(parser.max_iter, 100);
     EXPECT_EQ(parser.classification, plssvm::classification_type::oao);
+    EXPECT_EQ(parser.svm, plssvm::svm_type::csvr);
     EXPECT_EQ(parser.backend, plssvm::backend_type::cuda);
     EXPECT_EQ(parser.target, plssvm::target_platform::gpu_nvidia);
     EXPECT_EQ(parser.solver, plssvm::solver_type::cg_implicit);
 #if defined(PLSSVM_HAS_SYCL_BACKEND)
-    EXPECT_EQ(parser.sycl_kernel_invocation_type, plssvm::sycl::kernel_invocation_type::nd_range);
+    EXPECT_EQ(parser.sycl_data_parallel_kernel, plssvm::sycl::data_parallel_kernel::work_group);
     EXPECT_EQ(parser.sycl_implementation_type, plssvm::sycl::implementation_type::dpcpp);
 #else
-    EXPECT_EQ(parser.sycl_kernel_invocation_type, plssvm::sycl::kernel_invocation_type::automatic);
+    EXPECT_EQ(parser.sycl_data_parallel_kernel, plssvm::sycl::data_parallel_kernel::automatic);
     EXPECT_EQ(parser.sycl_implementation_type, plssvm::sycl::implementation_type::automatic);
+#endif
+#if defined(PLSSVM_HAS_KOKKOS_BACKEND)
+    EXPECT_EQ(parser.kokkos_execution_space, space);
+#else
+    EXPECT_EQ(parser.kokkos_execution_space, plssvm::kokkos::execution_space::automatic);
 #endif
     EXPECT_TRUE(parser.strings_as_labels);
     EXPECT_EQ(parser.input_filename, "data.libsvm");
@@ -141,43 +159,59 @@ TEST_F(ParserTrain, all_arguments) {
 #if defined(PLSSVM_PERFORMANCE_TRACKER_ENABLED)
     EXPECT_EQ(parser.performance_tracking_filename, "tracking.yaml");
 #endif
+#if defined(PLSSVM_HAS_MPI_ENABLED)
+    EXPECT_EQ(parser.mpi_load_balancing_weights, std::vector<std::size_t>{ 2 });
+#endif
 
     EXPECT_EQ(plssvm::verbosity, plssvm::verbosity_level::libsvm);
 }
 
 TEST_F(ParserTrain, all_arguments_output) {
     // create artificial command line arguments in test fixture
-    std::vector<std::string> cmd_args = { "./plssvm-train", "--kernel_type", "1", "--degree", "2", "--gamma", "1.5", "--coef0", "-1.5", "--cost", "2", "--epsilon", "1e-10", "--max_iter", "100", "--classification", "oao", "--solver", "cg_implicit", "--backend", "sycl", "--target_platform", "gpu_nvidia", "--use_strings_as_labels", "--verbosity", "libsvm" };
+    std::vector<std::string> cmd_args = { "./plssvm-train", "--svm_type", "1", "--kernel_type", "1", "--degree", "2", "--gamma", "1.5", "--coef0", "-1.5", "--cost", "2", "--epsilon", "1e-12", "--max_iter", "100", "--classification", "oao", "--solver", "cg_implicit", "--backend", "automatic", "--target_platform", "gpu_nvidia", "--use_strings_as_labels", "--verbosity", "libsvm" };
 #if defined(PLSSVM_HAS_SYCL_BACKEND)
-    cmd_args.insert(cmd_args.end(), { "--sycl_kernel_invocation_type", "nd_range", "--sycl_implementation_type", "dpcpp" });
+    cmd_args.insert(cmd_args.end(), { "--sycl_data_parallel_kernel", "work_group", "--sycl_implementation_type", "dpcpp" });
+#endif
+#if defined(PLSSVM_HAS_KOKKOS_BACKEND)
+    const std::string space = fmt::format("{}", plssvm::kokkos::list_available_execution_spaces()[1]);  // [0] would be automatic
+    cmd_args.insert(cmd_args.end(), { "--kokkos_execution_space", space });
 #endif
 #if defined(PLSSVM_PERFORMANCE_TRACKER_ENABLED)
     cmd_args.insert(cmd_args.end(), { "--performance_tracking", "tracking.yaml" });
+#endif
+#if defined(PLSSVM_HAS_MPI_ENABLED)
+    cmd_args.insert(cmd_args.end(), { "--mpi_load_balancing_weights", "2" });
 #endif
     cmd_args.insert(cmd_args.end(), { "data.libsvm", "data.libsvm.model" });
     this->CreateCMDArgs(cmd_args);
 
     // create parameter object
-    const plssvm::detail::cmd::parser_train parser{ this->get_argc(), this->get_argv() };
+    const plssvm::detail::cmd::parser_train parser{ this->get_comm(), this->get_argc(), this->get_argv() };
 
     // test output string
     std::string correct =
+        "svm_type: csvr\n"
         "kernel_type: polynomial -> (gamma*u'*v+coef0)^degree\n"
         "degree: 2\n"
         "gamma: 1.5\n"
         "coef0: -1.5\n"
         "cost: 2\n"
-        "epsilon: 1e-10\n"
+        "epsilon: 1e-12\n"
         "max_iter: 100\n"
-        "backend: sycl\n"
+        "backend: automatic\n"
         "target platform: gpu_nvidia\n"
         "solver: cg_implicit\n";
 #if defined(PLSSVM_HAS_SYCL_BACKEND)
     correct += "SYCL implementation type: dpcpp\n"
-               "SYCL kernel invocation type: nd_range\n";
+               "SYCL data parallel kernel: work_group\n";
 #else
     correct += "SYCL implementation type: automatic\n"
-               "SYCL kernel invocation type: automatic\n";
+               "SYCL data parallel kernel: automatic\n";
+#endif
+#if defined(PLSSVM_HAS_KOKKOS_BACKEND)
+    correct += fmt::format("Kokkos execution space: {}\n", space);
+#else
+    correct += "Kokkos execution space: automatic\n";
 #endif
     correct += fmt::format(
         "classification_type: one vs. one\n"
@@ -189,12 +223,37 @@ TEST_F(ParserTrain, all_arguments_output) {
 #if defined(PLSSVM_PERFORMANCE_TRACKER_ENABLED)
     correct += "performance tracking file: 'tracking.yaml'\n";
 #endif
+#if defined(PLSSVM_HAS_MPI_ENABLED)
+    correct += "mpi load-balancing weights: [2]\n";
+#endif
     EXPECT_CONVERSION_TO_STRING(parser, correct);
 
     EXPECT_EQ(plssvm::verbosity, plssvm::verbosity_level::libsvm);
 }
 
 // test all command line parameter separately
+class ParserTrainSvm : public ParserTrain,
+                       public ::testing::WithParamInterface<std::tuple<std::string, std::string>> { };
+
+TEST_P(ParserTrainSvm, parsing) {
+    const auto &[flag, value] = GetParam();
+    // convert string to svm_type
+    const auto svm_type = util::convert_from_string<plssvm::svm_type>(value);
+    // create artificial command line arguments in test fixture
+    this->CreateCMDArgs({ "./plssvm-train", flag, value, "data.libsvm" });
+    // create parameter object
+    const plssvm::detail::cmd::parser_train parser{ this->get_comm(), this->get_argc(), this->get_argv() };
+    // test for correctness
+    EXPECT_EQ(parser.svm, svm_type);
+}
+
+// clang-format off
+INSTANTIATE_TEST_SUITE_P(ParserTrain, ParserTrainSvm, ::testing::Combine(
+                ::testing::Values("-s", "--svm_type"),
+                ::testing::Values("csvc", "c_svc", "0", "csvr", "c_svr", "1")),
+                naming::pretty_print_parameter_flag_and_value<ParserTrainSvm>);
+// clang-format on
+
 class ParserTrainKernel : public ParserTrain,
                           public ::testing::WithParamInterface<std::tuple<std::string, std::string>> { };
 
@@ -205,7 +264,7 @@ TEST_P(ParserTrainKernel, parsing) {
     // create artificial command line arguments in test fixture
     this->CreateCMDArgs({ "./plssvm-train", flag, value, "data.libsvm" });
     // create parameter object
-    const plssvm::detail::cmd::parser_train parser{ this->get_argc(), this->get_argv() };
+    const plssvm::detail::cmd::parser_train parser{ this->get_comm(), this->get_argc(), this->get_argv() };
     // test for correctness
     EXPECT_EQ(parser.csvm_params.kernel_type, kernel_type);
 }
@@ -226,7 +285,7 @@ TEST_P(ParserTrainDegree, parsing) {
     this->CreateCMDArgs({ "./plssvm-train", flag, fmt::format("{}", degree), "data.libsvm" });
 
     // create parameter object
-    const plssvm::detail::cmd::parser_train parser{ this->get_argc(), this->get_argv() };
+    const plssvm::detail::cmd::parser_train parser{ this->get_comm(), this->get_argc(), this->get_argv() };
     // test for correctness
     EXPECT_EQ(parser.csvm_params.degree, degree);
 }
@@ -246,7 +305,7 @@ TEST_P(ParserTrainGamma, parsing) {
     // create artificial command line arguments in test fixture
     this->CreateCMDArgs({ "./plssvm-train", flag, fmt::format("{}", gamma), "data.libsvm" });
     // create parameter object
-    const plssvm::detail::cmd::parser_train parser{ this->get_argc(), this->get_argv() };
+    const plssvm::detail::cmd::parser_train parser{ this->get_comm(), this->get_argc(), this->get_argv() };
     // test for correctness
     if (std::holds_alternative<plssvm::real_type>(gamma)) {
         ASSERT_TRUE(std::holds_alternative<plssvm::real_type>(parser.csvm_params.gamma));
@@ -266,22 +325,22 @@ INSTANTIATE_TEST_SUITE_P(ParserTrain, ParserTrainGamma,
                 naming::pretty_print_parameter_flag_and_value<ParserTrainGamma>);
 // clang-format on
 
-class ParserTrainGammaDeathTest : public ParserTrain,
-                                  public ::testing::WithParamInterface<std::tuple<std::string, plssvm::real_type>> { };
+class ParserTrainGammaInvalid : public ParserTrain,
+                                public ::testing::WithParamInterface<std::tuple<std::string, plssvm::real_type>> { };
 
-TEST_P(ParserTrainGammaDeathTest, gamma_explicit_less_or_equal_to_zero) {
+TEST_P(ParserTrainGammaInvalid, gamma_explicit_less_or_equal_to_zero) {
     const auto &[flag, gamma] = GetParam();
     // create artificial command line arguments in test fixture
     this->CreateCMDArgs({ "./plssvm-train", flag, fmt::format("{}", gamma), "data.libsvm" });
     // create parser_train object
-    EXPECT_DEATH((plssvm::detail::cmd::parser_train{ this->get_argc(), this->get_argv() }), ::testing::HasSubstr(fmt::format("gamma must be greater than 0.0, but is {}!", gamma)));
+    EXPECT_THROW_WHAT((plssvm::detail::cmd::parser_train{ this->get_comm(), this->get_argc(), this->get_argv() }), plssvm::cmd_parser_exit, fmt::format("exit code: {}", EXIT_FAILURE));
 }
 
 // clang-format off
-INSTANTIATE_TEST_SUITE_P(ParserTrainDeathTest, ParserTrainGammaDeathTest, ::testing::Combine(
+INSTANTIATE_TEST_SUITE_P(ParserTrain, ParserTrainGammaInvalid, ::testing::Combine(
                 ::testing::Values("-g", "--gamma"),
                 ::testing::Values(plssvm::real_type{ -2 }, plssvm::real_type{ -1.5 }, plssvm::real_type{ 0.0 })),
-                naming::pretty_print_parameter_flag_and_value<ParserTrainGammaDeathTest>);
+                naming::pretty_print_parameter_flag_and_value<ParserTrainGammaInvalid>);
 // clang-format on
 
 class ParserTrainCoef0 : public ParserTrain,
@@ -292,7 +351,7 @@ TEST_P(ParserTrainCoef0, parsing) {
     // create artificial command line arguments in test fixture
     this->CreateCMDArgs({ "./plssvm-train", flag, fmt::format("{}", coef0), "data.libsvm" });
     // create parameter object
-    const plssvm::detail::cmd::parser_train parser{ this->get_argc(), this->get_argv() };
+    const plssvm::detail::cmd::parser_train parser{ this->get_comm(), this->get_argc(), this->get_argv() };
     // test for correctness
     EXPECT_FLOATING_POINT_EQ(parser.csvm_params.coef0, coef0);
 }
@@ -314,7 +373,7 @@ TEST_P(ParserTrainCost, parsing) {
     // create artificial command line arguments in test fixture
     this->CreateCMDArgs({ "./plssvm-train", flag, fmt::format("{}", cost), "data.libsvm" });
     // create parameter object
-    const plssvm::detail::cmd::parser_train parser{ this->get_argc(), this->get_argv() };
+    const plssvm::detail::cmd::parser_train parser{ this->get_comm(), this->get_argc(), this->get_argv() };
     // test for correctness
     EXPECT_FLOATING_POINT_EQ(parser.csvm_params.cost, cost);
 }
@@ -334,7 +393,7 @@ TEST_P(ParserTrainEpsilon, parsing) {
     // create artificial command line arguments in test fixture
     this->CreateCMDArgs({ "./plssvm-train", flag, fmt::format("{}", eps), "data.libsvm" });
     // create parameter object
-    const plssvm::detail::cmd::parser_train parser{ this->get_argc(), this->get_argv() };
+    const plssvm::detail::cmd::parser_train parser{ this->get_comm(), this->get_argc(), this->get_argv() };
     // test for correctness
     EXPECT_FLOATING_POINT_EQ(parser.epsilon, eps);
 }
@@ -355,7 +414,7 @@ TEST_P(ParserTrainMaxIter, parsing) {
     // create artificial command line arguments in test fixture
     this->CreateCMDArgs({ "./plssvm-train", flag, fmt::format("{}", max_iter), "data.libsvm" });
     // create parameter object
-    const plssvm::detail::cmd::parser_train parser{ this->get_argc(), this->get_argv() };
+    const plssvm::detail::cmd::parser_train parser{ this->get_comm(), this->get_argc(), this->get_argv() };
     // test for correctness
     EXPECT_EQ(parser.max_iter, max_iter);
 }
@@ -367,6 +426,24 @@ INSTANTIATE_TEST_SUITE_P(ParserTrain, ParserTrainMaxIter, ::testing::Combine(
                 naming::pretty_print_parameter_flag_and_value<ParserTrainMaxIter>);
 // clang-format on
 
+class ParserTrainMaxIterInvalid : public ParserTrain,
+                                  public ::testing::WithParamInterface<std::tuple<std::string, long long int>> { };
+
+TEST_P(ParserTrainMaxIterInvalid, max_iter_explicit_less_or_equal_to_zero) {
+    const auto &[flag, max_iter] = GetParam();
+    // create artificial command line arguments in test fixture
+    this->CreateCMDArgs({ "./plssvm-train", flag, fmt::format("{}", max_iter), "data.libsvm" });
+    // create parameter object
+    EXPECT_THROW_WHAT((plssvm::detail::cmd::parser_train{ this->get_comm(), this->get_argc(), this->get_argv() }), plssvm::cmd_parser_exit, fmt::format("exit code: {}", EXIT_FAILURE));
+}
+
+// clang-format off
+INSTANTIATE_TEST_SUITE_P(ParserTrain, ParserTrainMaxIterInvalid, ::testing::Combine(
+                ::testing::Values("-i", "--max_iter"),
+                ::testing::Values(-100, -10, -1, 0)),
+                naming::pretty_print_parameter_flag_and_value<ParserTrainMaxIterInvalid>);
+// clang-format on
+
 class ParserTrainSolver : public ParserTrain,
                           public ::testing::WithParamInterface<std::tuple<std::string, plssvm::solver_type>> { };
 
@@ -375,7 +452,7 @@ TEST_P(ParserTrainSolver, parsing) {
     // create artificial command line arguments in test fixture
     this->CreateCMDArgs({ "./plssvm-train", flag, fmt::format("{}", solver), "data.libsvm" });
     // create parameter object
-    const plssvm::detail::cmd::parser_train parser{ this->get_argc(), this->get_argv() };
+    const plssvm::detail::cmd::parser_train parser{ this->get_comm(), this->get_argc(), this->get_argv() };
     // test for correctness
     EXPECT_EQ(parser.solver, solver);
 }
@@ -387,24 +464,6 @@ INSTANTIATE_TEST_SUITE_P(ParserTrain, ParserTrainSolver, ::testing::Combine(
                 naming::pretty_print_parameter_flag_and_value<ParserTrainSolver>);
 // clang-format on
 
-class ParserTrainMaxIterDeathTest : public ParserTrain,
-                                    public ::testing::WithParamInterface<std::tuple<std::string, long long int>> { };
-
-TEST_P(ParserTrainMaxIterDeathTest, max_iter_explicit_less_or_equal_to_zero) {
-    const auto &[flag, max_iter] = GetParam();
-    // create artificial command line arguments in test fixture
-    this->CreateCMDArgs({ "./plssvm-train", flag, fmt::format("{}", max_iter), "data.libsvm" });
-    // create parameter object
-    EXPECT_DEATH((plssvm::detail::cmd::parser_train{ this->get_argc(), this->get_argv() }), ::testing::HasSubstr(fmt::format("max_iter must be greater than 0, but is {}!", max_iter)));
-}
-
-// clang-format off
-INSTANTIATE_TEST_SUITE_P(ParserTrainDeathTest, ParserTrainMaxIterDeathTest, ::testing::Combine(
-                ::testing::Values("-i", "--max_iter"),
-                ::testing::Values(-100, -10, -1, 0)),
-                naming::pretty_print_parameter_flag_and_value<ParserTrainMaxIterDeathTest>);
-// clang-format on
-
 class ParserTrainClassification : public ParserTrain,
                                   public ::testing::WithParamInterface<std::tuple<std::string, plssvm::classification_type>> { };
 
@@ -413,7 +472,7 @@ TEST_P(ParserTrainClassification, parsing) {
     // create artificial command line arguments in test fixture
     this->CreateCMDArgs({ "./plssvm-train", flag, fmt::format("{}", classification), "data.libsvm" });
     // create parameter object
-    const plssvm::detail::cmd::parser_train parser{ this->get_argc(), this->get_argv() };
+    const plssvm::detail::cmd::parser_train parser{ this->get_comm(), this->get_argc(), this->get_argv() };
     // test for correctness
     EXPECT_EQ(parser.classification, classification);
 }
@@ -435,7 +494,7 @@ TEST_P(ParserTrainBackend, parsing) {
     // create artificial command line arguments in test fixture
     this->CreateCMDArgs({ "./plssvm-train", flag, value, "data.libsvm" });
     // create parameter object
-    const plssvm::detail::cmd::parser_train parser{ this->get_argc(), this->get_argv() };
+    const plssvm::detail::cmd::parser_train parser{ this->get_comm(), this->get_argc(), this->get_argv() };
     // test for correctness
     EXPECT_EQ(parser.backend, backend);
 }
@@ -443,7 +502,7 @@ TEST_P(ParserTrainBackend, parsing) {
 // clang-format off
 INSTANTIATE_TEST_SUITE_P(ParserTrain, ParserTrainBackend, ::testing::Combine(
                 ::testing::Values("-b", "--backend"),
-                ::testing::Values("automatic", "OpenMP", "CUDA", "HIP", "OpenCL", "SYCL")),
+                ::testing::Values("automatic", "OpenMP", "HPX", "stdpar", "CUDA", "HIP", "OpenCL", "SYCL", "Kokkos")),
                 naming::pretty_print_parameter_flag_and_value<ParserTrainBackend>);
 // clang-format on
 
@@ -457,7 +516,7 @@ TEST_P(ParserTrainTargetPlatform, parsing) {
     // create artificial command line arguments in test fixture
     this->CreateCMDArgs({ "./plssvm-train", flag, value, "data.libsvm" });
     // create parameter object
-    const plssvm::detail::cmd::parser_train parser{ this->get_argc(), this->get_argv() };
+    const plssvm::detail::cmd::parser_train parser{ this->get_comm(), this->get_argc(), this->get_argv() };
     // test for correctness
     EXPECT_EQ(parser.target, target_platform);
 }
@@ -471,26 +530,26 @@ INSTANTIATE_TEST_SUITE_P(ParserTrain, ParserTrainTargetPlatform, ::testing::Comb
 
 #if defined(PLSSVM_HAS_SYCL_BACKEND)
 
-class ParserTrainSYCLKernelInvocation : public ParserTrain,
-                                        public ::testing::WithParamInterface<std::tuple<std::string, std::string>> { };
+class ParserTrainSYCLDataParallelKernel : public ParserTrain,
+                                          public ::testing::WithParamInterface<std::tuple<std::string, std::string>> { };
 
-TEST_P(ParserTrainSYCLKernelInvocation, parsing) {
+TEST_P(ParserTrainSYCLDataParallelKernel, parsing) {
     const auto &[flag, value] = GetParam();
-    // convert string to sycl::kernel_invocation_type
-    const auto sycl_kernel_invocation_type = util::convert_from_string<plssvm::sycl::kernel_invocation_type>(value);
+    // convert string to sycl::data_parallel_kernel
+    const auto sycl_data_parallel_kernel = util::convert_from_string<plssvm::sycl::data_parallel_kernel>(value);
     // create artificial command line arguments in test fixture
     this->CreateCMDArgs({ "./plssvm-train", flag, value, "data.libsvm" });
     // create parameter object
-    const plssvm::detail::cmd::parser_train parser{ this->get_argc(), this->get_argv() };
+    const plssvm::detail::cmd::parser_train parser{ this->get_comm(), this->get_argc(), this->get_argv() };
     // test for correctness
-    EXPECT_EQ(parser.sycl_kernel_invocation_type, sycl_kernel_invocation_type);
+    EXPECT_EQ(parser.sycl_data_parallel_kernel, sycl_data_parallel_kernel);
 }
 
 // clang-format off
-INSTANTIATE_TEST_SUITE_P(ParserTrain, ParserTrainSYCLKernelInvocation, ::testing::Combine(
-                ::testing::Values("--sycl_kernel_invocation_type"),
-                ::testing::Values("automatic", "nd_range", "ND_RANGE")),
-                naming::pretty_print_parameter_flag_and_value<ParserTrainSYCLKernelInvocation>);
+INSTANTIATE_TEST_SUITE_P(ParserTrain, ParserTrainSYCLDataParallelKernel, ::testing::Combine(
+                ::testing::Values("--sycl_data_parallel_kernel"),
+                ::testing::Values("automatic", "auto", "basic", "nd_range", "work_group", "hierarchical", "scoped")),
+                naming::pretty_print_parameter_flag_and_value<ParserTrainSYCLDataParallelKernel>);
 // clang-format on
 
 class ParserTrainSYCLImplementation : public ParserTrain,
@@ -503,7 +562,7 @@ TEST_P(ParserTrainSYCLImplementation, parsing) {
     // create artificial command line arguments in test fixture
     this->CreateCMDArgs({ "./plssvm-train", flag, value, "data.libsvm" });
     // create parameter object
-    const plssvm::detail::cmd::parser_train parser{ this->get_argc(), this->get_argv() };
+    const plssvm::detail::cmd::parser_train parser{ this->get_comm(), this->get_argc(), this->get_argv() };
     // test for correctness
     EXPECT_EQ(parser.sycl_implementation_type, sycl_implementation_type);
 }
@@ -517,6 +576,32 @@ INSTANTIATE_TEST_SUITE_P(ParserTrain, ParserTrainSYCLImplementation, ::testing::
 
 #endif  // PLSSVM_HAS_SYCL_BACKEND
 
+#if defined(PLSSVM_HAS_KOKKOS_BACKEND)
+
+class ParserTrainKokkosExecutionSpace : public ParserTrain,
+                                        public ::testing::WithParamInterface<std::tuple<std::string, std::string>> { };
+
+TEST_P(ParserTrainKokkosExecutionSpace, parsing) {
+    const auto &[flag, value] = GetParam();
+    // convert string to kokkos::execution_space
+    const auto kokkos_execution_space = util::convert_from_string<plssvm::kokkos::execution_space>(value);
+    // create artificial command line arguments in test fixture
+    this->CreateCMDArgs({ "./plssvm-train", flag, value, "data.libsvm" });
+    // create parameter object
+    const plssvm::detail::cmd::parser_train parser{ this->get_comm(), this->get_argc(), this->get_argv() };
+    // test for correctness
+    EXPECT_EQ(parser.kokkos_execution_space, kokkos_execution_space);
+}
+
+// clang-format off
+INSTANTIATE_TEST_SUITE_P(ParserTrain, ParserTrainKokkosExecutionSpace, ::testing::Combine(
+                ::testing::Values("--kokkos_execution_space"),
+                ::testing::Values("automatic", "Cuda", "HIP", "SYCL", "HPX", "OpenMP", "OpenMPTarget", "OpenACC", "Threads", "Serial")),
+                naming::pretty_print_parameter_flag_and_value<ParserTrainKokkosExecutionSpace>);
+// clang-format on
+
+#endif  // PLSSVM_HAS_KOKKOS_BACKEND
+
 #if defined(PLSSVM_PERFORMANCE_TRACKER_ENABLED)
 
 class ParserTrainPerformanceTrackingFilename : public ParserTrain,
@@ -527,7 +612,7 @@ TEST_P(ParserTrainPerformanceTrackingFilename, parsing) {
     // create artificial command line arguments in test fixture
     this->CreateCMDArgs({ "./plssvm-train", flag, value, "data.libsvm" });
     // create parameter object
-    const plssvm::detail::cmd::parser_train parser{ this->get_argc(), this->get_argv() };
+    const plssvm::detail::cmd::parser_train parser{ this->get_comm(), this->get_argc(), this->get_argv() };
     // test for correctness
     EXPECT_EQ(parser.performance_tracking_filename, value);
 }
@@ -541,6 +626,50 @@ INSTANTIATE_TEST_SUITE_P(ParserTrain, ParserTrainPerformanceTrackingFilename, ::
 
 #endif  // PLSSVM_PERFORMANCE_TRACKER_ENABLED
 
+#if defined(PLSSVM_HAS_MPI_ENABLED)
+
+class ParserTrainMPILoadBalancingWeights : public ParserTrain,
+                                           public ::testing::WithParamInterface<std::tuple<std::string, std::string>> { };
+
+TEST_P(ParserTrainMPILoadBalancingWeights, parsing) {
+    const auto &[flag, value] = GetParam();
+    // convert string to std::vector
+    const std::vector<std::size_t> weights{ util::convert_from_string<std::size_t>(value) };
+    // create artificial command line arguments in test fixture
+    this->CreateCMDArgs({ "./plssvm-train", flag, value, "data.libsvm" });
+    // create parameter object
+    const plssvm::detail::cmd::parser_train parser{ this->get_comm(), this->get_argc(), this->get_argv() };
+    // test for correctness
+    EXPECT_EQ(parser.mpi_load_balancing_weights, weights);
+}
+
+// clang-format off
+INSTANTIATE_TEST_SUITE_P(ParserTrain, ParserTrainMPILoadBalancingWeights, ::testing::Combine(
+                ::testing::Values("--mpi_load_balancing_weights"),
+                ::testing::Values("1", "2")),
+                naming::pretty_print_parameter_flag_and_value<ParserTrainMPILoadBalancingWeights>);
+// clang-format on
+
+class ParserTrainMPILoadBalancingWeightsInvalid : public ParserTrain,
+                                                  public ::testing::WithParamInterface<std::tuple<std::string, std::string>> { };
+
+TEST_P(ParserTrainMPILoadBalancingWeightsInvalid, parsing) {
+    const auto &[flag, value] = GetParam();
+    // create artificial command line arguments in test fixture
+    this->CreateCMDArgs({ "./plssvm-train", flag, value, "data.libsvm" });
+    // create parameter object
+    EXPECT_THROW_WHAT((plssvm::detail::cmd::parser_train{ this->get_comm(), this->get_argc(), this->get_argv() }), plssvm::cmd_parser_exit, fmt::format("exit code: {}", EXIT_FAILURE));
+}
+
+// clang-format off
+INSTANTIATE_TEST_SUITE_P(ParserTrain, ParserTrainMPILoadBalancingWeightsInvalid, ::testing::Combine(
+                ::testing::Values("--mpi_load_balancing_weights"),
+                ::testing::Values("1,2", "1,2,3")),
+                naming::pretty_print_parameter_flag_and_value<ParserTrainMPILoadBalancingWeightsInvalid>);
+// clang-format on
+
+#endif  // PLSSVM_HAS_MPI_ENABLED
+
 class ParserTrainUseStringsAsLabels : public ParserTrain,
                                       public ::testing::WithParamInterface<std::tuple<std::string, bool>> { };
 
@@ -549,7 +678,7 @@ TEST_P(ParserTrainUseStringsAsLabels, parsing) {
     // create artificial command line arguments in test fixture
     this->CreateCMDArgs({ "./plssvm-train", fmt::format("{}={}", flag, value), "data.libsvm" });
     // create parameter object
-    const plssvm::detail::cmd::parser_train parser{ this->get_argc(), this->get_argv() };
+    const plssvm::detail::cmd::parser_train parser{ this->get_comm(), this->get_argc(), this->get_argv() };
     // test for correctness
     EXPECT_EQ(parser.strings_as_labels, value);
 }
@@ -569,7 +698,7 @@ TEST_P(ParserTrainVerbosity, parsing) {
     // create artificial command line arguments in test fixture
     this->CreateCMDArgs({ "./plssvm-train", flag, value, "data.libsvm" });
     // create parameter object
-    const plssvm::detail::cmd::parser_train parser{ this->get_argc(), this->get_argv() };
+    const plssvm::detail::cmd::parser_train parser{ this->get_comm(), this->get_argc(), this->get_argv() };
     // test for correctness
     EXPECT_EQ(fmt::format("{}", plssvm::verbosity), value);
 }
@@ -590,7 +719,7 @@ TEST_P(ParserTrainQuiet, parsing) {
     // create artificial command line arguments in test fixture
     this->CreateCMDArgs({ "./plssvm-train", flag, "data.libsvm" });
     // create parameter object
-    const plssvm::detail::cmd::parser_train parser{ this->get_argc(), this->get_argv() };
+    const plssvm::detail::cmd::parser_train parser{ this->get_comm(), this->get_argc(), this->get_argv() };
     // test for correctness
     EXPECT_EQ(plssvm::verbosity, flag.empty() ? old_verbosity : plssvm::verbosity_level::quiet);
 }
@@ -604,7 +733,7 @@ TEST_F(ParserTrainVerbosityAndQuiet, parsing) {
     // create artificial command line arguments in test fixture
     this->CreateCMDArgs({ "./plssvm-train", "--quiet", "--verbosity", "full", "data.libsvm" });
     // create parameter object
-    const plssvm::detail::cmd::parser_train parser{ this->get_argc(), this->get_argv() };
+    const plssvm::detail::cmd::parser_train parser{ this->get_comm(), this->get_argc(), this->get_argv() };
     // the quiet flag overrides the verbosity flag
     EXPECT_EQ(plssvm::verbosity, plssvm::verbosity_level::quiet);
 }
@@ -617,7 +746,7 @@ TEST_P(ParserTrainHelp, parsing) {
     // create artificial command line arguments in test fixture
     this->CreateCMDArgs({ "./plssvm-train", flag });
     // create parameter object
-    EXPECT_EXIT((plssvm::detail::cmd::parser_train{ this->get_argc(), this->get_argv() }), ::testing::ExitedWithCode(EXIT_SUCCESS), "");
+    EXPECT_THROW_WHAT((plssvm::detail::cmd::parser_train{ this->get_comm(), this->get_argc(), this->get_argv() }), plssvm::cmd_parser_exit, fmt::format("exit code: {}", EXIT_SUCCESS));
 }
 
 INSTANTIATE_TEST_SUITE_P(ParserTrain, ParserTrainHelp, ::testing::Values("-h", "--help"), naming::pretty_print_parameter_flag<ParserTrainHelp>);
@@ -630,37 +759,97 @@ TEST_P(ParserTrainVersion, parsing) {
     // create artificial command line arguments in test fixture
     this->CreateCMDArgs({ "./plssvm-train", flag });
     // create parameter object
-    EXPECT_EXIT((plssvm::detail::cmd::parser_train{ this->get_argc(), this->get_argv() }), ::testing::ExitedWithCode(EXIT_SUCCESS), "");
+    EXPECT_THROW_WHAT((plssvm::detail::cmd::parser_train{ this->get_comm(), this->get_argc(), this->get_argv() }), plssvm::cmd_parser_exit, fmt::format("exit code: {}", EXIT_SUCCESS));
 }
 
 INSTANTIATE_TEST_SUITE_P(ParserTrain, ParserTrainVersion, ::testing::Values("-v", "--version"), naming::pretty_print_parameter_flag<ParserTrainVersion>);
 
-TEST_F(ParserTrainDeathTest, no_positional_argument) {
+TEST_F(ParserTrain, no_positional_argument) {
     this->CreateCMDArgs({ "./plssvm-train" });
-    EXPECT_EXIT((plssvm::detail::cmd::parser_train{ this->get_argc(), this->get_argv() }),
-                ::testing::ExitedWithCode(EXIT_FAILURE),
-                ::testing::HasSubstr("ERROR: missing input file!"));
+    EXPECT_THROW_WHAT((plssvm::detail::cmd::parser_train{ this->get_comm(), this->get_argc(), this->get_argv() }), plssvm::cmd_parser_exit, fmt::format("exit code: {}", EXIT_FAILURE));
 }
 
-TEST_F(ParserTrainDeathTest, too_many_positional_arguments) {
+TEST_F(ParserTrain, too_many_positional_arguments) {
     this->CreateCMDArgs({ "./plssvm-train", "p1", "p2", "p3", "p4" });
-    EXPECT_EXIT((plssvm::detail::cmd::parser_train{ this->get_argc(), this->get_argv() }),
-                ::testing::ExitedWithCode(EXIT_FAILURE),
-                ::testing::HasSubstr(R"(ERROR: only up to two positional options may be given, but 2 ("p3 p4") additional option(s) where provided!)"));
+    EXPECT_THROW_WHAT((plssvm::detail::cmd::parser_train{ this->get_comm(), this->get_argc(), this->get_argv() }), plssvm::cmd_parser_exit, fmt::format("exit code: {}", EXIT_FAILURE));
 }
+
+TEST_F(ParserTrain, unrecognized_option) {
+    this->CreateCMDArgs({ "./plssvm-train", "--foo", "bar" });
+    EXPECT_THROW_WHAT((plssvm::detail::cmd::parser_train{ this->get_comm(), this->get_argc(), this->get_argv() }), plssvm::cmd_parser_exit, fmt::format("exit code: {}", EXIT_FAILURE));
+}
+
+class ParserTrainOutput : public ParserTrain,
+                          public ::testing::WithParamInterface<std::string> { };
+
+TEST_P(ParserTrainOutput, parsing) {
+    const std::string &flag = GetParam();
+    // create artificial command line arguments in test fixture
+    this->CreateCMDArgs({ "./plssvm-train", "--kernel_type", flag, "data.libsvm" });
+    // create parameter object
+    const plssvm::detail::cmd::parser_train parser{ this->get_comm(), this->get_argc(), this->get_argv() };
+
+    const auto get_kernel_function_string = [](const plssvm::kernel_function_type kernel_type) {
+        switch (kernel_type) {
+            case plssvm::kernel_function_type::linear:
+                return "kernel_type: linear -> u'*v\n";
+            case plssvm::kernel_function_type::polynomial:
+                return "kernel_type: polynomial -> (gamma*u'*v+coef0)^degree\n"
+                       "degree: 3\n"
+                       "gamma: \"1 / num_features\"\n"
+                       "coef0: 0\n";
+            case plssvm::kernel_function_type::rbf:
+                return "kernel_type: rbf -> exp(-gamma*|u-v|^2)\n"
+                       "gamma: \"1 / num_features\"\n";
+            case plssvm::kernel_function_type::sigmoid:
+                return "kernel_type: sigmoid -> tanh(gamma*u'*v+coef0)\n"
+                       "gamma: \"1 / num_features\"\n"
+                       "coef0: 0\n";
+            case plssvm::kernel_function_type::laplacian:
+                return "kernel_type: laplacian -> exp(-gamma*|u-v|_1)\n"
+                       "gamma: \"1 / num_features\"\n";
+            case plssvm::kernel_function_type::chi_squared:
+                return "kernel_type: chi_squared -> exp(-gamma*sum_i((x[i]-y[i])^2/(x[i]+y[i])))\n"
+                       "gamma: \"1 / num_features\"\n";
+        }
+        return "unknown";
+    };
+
+    // test output string
+    std::string correct = fmt::format(
+        "svm_type: csvc\n"
+        "{}"
+        "cost: 1\n"
+        "epsilon: 1e-10\n"
+        "max_iter: num_data_points\n"
+        "backend: automatic\n"
+        "target platform: automatic\n"
+        "solver: automatic\n"
+        "SYCL implementation type: automatic\n"
+        "SYCL data parallel kernel: automatic\n"
+        "Kokkos execution space: automatic\n"
+        "classification_type: one vs. all\n"
+        "label_type: int\n"
+        "real_type: {}\n"
+        "input file (data set): 'data.libsvm'\n"
+        "output file (model): 'data.libsvm.model'\n",
+        get_kernel_function_string(parser.csvm_params.kernel_type),
+        std::is_same_v<plssvm::real_type, float> ? "float" : "double");
+
+    EXPECT_CONVERSION_TO_STRING(parser, correct);
+}
+
+INSTANTIATE_TEST_SUITE_P(ParserTrain, ParserTrainOutput, ::testing::Values("linear", "polynomial", "rbf", "sigmoid", "laplacian", "chi_squared"), naming::pretty_print_parameter_flag<ParserTrainOutput>);
+
+class ParserTrainDeathTest : public ParserTrain { };
 
 // test whether nonsensical cmd arguments trigger the assertions
 TEST_F(ParserTrainDeathTest, too_few_argc) {
-    EXPECT_DEATH((plssvm::detail::cmd::parser_train{ 0, nullptr }),
+    EXPECT_DEATH((plssvm::detail::cmd::parser_train{ this->get_comm(), 0, nullptr }),
                  ::testing::HasSubstr("At least one argument is always given (the executable name), but argc is 0!"));
 }
 
 TEST_F(ParserTrainDeathTest, nullptr_argv) {
-    EXPECT_DEATH((plssvm::detail::cmd::parser_train{ 1, nullptr }),
+    EXPECT_DEATH((plssvm::detail::cmd::parser_train{ this->get_comm(), 1, nullptr }),
                  ::testing::HasSubstr("At least one argument is always given (the executable name), but argv is a nullptr!"));
-}
-
-TEST_F(ParserTrainDeathTest, unrecognized_option) {
-    this->CreateCMDArgs({ "./plssvm-train", "--foo", "bar" });
-    EXPECT_DEATH((plssvm::detail::cmd::parser_train{ this->get_argc(), this->get_argv() }), "");
 }

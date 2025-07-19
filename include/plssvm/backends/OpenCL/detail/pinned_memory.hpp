@@ -88,6 +88,6 @@ class [[nodiscard]] pinned_memory final : public ::plssvm::detail::host_pinned_m
 extern template class pinned_memory<float>;
 extern template class pinned_memory<double>;
 
-}  // namespace plssvm::adaptivecpp::detail
+}  // namespace plssvm::opencl::detail
 
 #endif  // PLSSVM_BACKENDS_OPENCL_DETAIL_PINNED_MEMORY_HPP_

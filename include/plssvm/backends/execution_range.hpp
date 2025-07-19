@@ -12,6 +12,8 @@
 #ifndef PLSSVM_BACKENDS_EXECUTION_RANGE_HPP_
 #define PLSSVM_BACKENDS_EXECUTION_RANGE_HPP_
 
+#include "plssvm/backend_types.hpp"  // plssvm::backend_type
+
 #include "fmt/base.h"     // fmt::formatter
 #include "fmt/ostream.h"  // fmt::ostream_formatter
 
@@ -100,7 +102,7 @@ constexpr void swap(dim_type &lhs, dim_type &rhs) noexcept {
  * @param[in] rhs the second dim_type
  * @return `true` if all three dimensions are equal, otherwise `false` (`[[nodiscard]]`)
  */
-constexpr bool operator==(const dim_type lhs, const dim_type rhs) {
+constexpr bool operator==(const dim_type &lhs, const dim_type &rhs) {
     return lhs.x == rhs.x && lhs.y == rhs.y && lhs.z == rhs.z;
 }
 
@@ -110,7 +112,7 @@ constexpr bool operator==(const dim_type lhs, const dim_type rhs) {
  * @param[in] rhs the second dim_type
  * @return `false` if all three dimensions are equal, otherwise `true` (`[[nodiscard]]`)
  */
-constexpr bool operator!=(const dim_type lhs, const dim_type rhs) {
+constexpr bool operator!=(const dim_type &lhs, const dim_type &rhs) {
     return !(lhs == rhs);
 }
 
@@ -120,7 +122,7 @@ constexpr bool operator!=(const dim_type lhs, const dim_type rhs) {
  * @param[in] dim the dim_type
  * @return the output-stream
  */
-std::ostream &operator<<(std::ostream &out, dim_type dim);
+std::ostream &operator<<(std::ostream &out, const dim_type &dim);
 
 //*************************************************************************************************************************************//
 //                                                           execution_range                                                           //
@@ -161,7 +163,6 @@ struct execution_range {
     /// The grids. Multiple grids are used, if the grid sizes would exceed the maximum allowed number. Also stores the offsets for the respective grids used in the kernels.
     /// Note: no default initialization due to a linker error occurring with NVIDIA's nvhpc!
     std::vector<grid_type> grids;
-
 };
 
 /**
@@ -201,10 +202,14 @@ std::ostream &operator<<(std::ostream &out, const execution_range &exec);
 
 }  // namespace plssvm::detail
 
+/// @cond Doxygen_suppress
+
 template <>
 struct fmt::formatter<plssvm::detail::dim_type> : fmt::ostream_formatter { };
 
 template <>
 struct fmt::formatter<plssvm::detail::execution_range> : fmt::ostream_formatter { };
+
+/// @endcond
 
 #endif  // PLSSVM_BACKENDS_EXECUTION_RANGE_HPP_

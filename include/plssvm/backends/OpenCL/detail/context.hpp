@@ -32,7 +32,7 @@ class context {
      * @brief Construct a new OpenCL context.
      * @param[in] device_context the associated OpenCL context
      * @param[in] platform the OpenCL platform associated with this OpenCL context
-     * @param[in] devices the list of devices associated with this OpenCL cl_context
+     * @param[in] device the device associated with this OpenCL cl_context
      */
     context(cl_context device_context, cl_platform_id platform, cl_device_id device);
 

@@ -1,0 +1,144 @@
+{
+  "version": 6,
+  "include": ["common.json"],
+  "configurePresets": [
+    {
+      "name": "stdpar",
+      "displayName": "stdpar backend",
+      "inherits": "build",
+      "cacheVariables": {
+        "PLSSVM_ENABLE_STDPAR_BACKEND": "ON",
+        "PLSSVM_STDPAR_BACKEND_IMPLEMENTATION": "AUTO"
+      }
+    },
+    {
+      "name": "stdpar_python",
+      "displayName": "stdpar backend + Python bindings",
+      "inherits": "build",
+      "cacheVariables": {
+        "PLSSVM_ENABLE_STDPAR_BACKEND": "ON",
+        "PLSSVM_STDPAR_BACKEND_IMPLEMENTATION": "AUTO",
+        "PLSSVM_ENABLE_LANGUAGE_BINDINGS": "ON",
+        "PLSSVM_ENABLE_PYTHON_BINDINGS": "ON"
+      }
+    },
+    {
+      "name": "stdpar_test",
+      "displayName": "stdpar backend tests",
+      "inherits": "test",
+      "cacheVariables": {
+        "PLSSVM_ENABLE_ASSERTS": "OFF",
+        "PLSSVM_ENABLE_STDPAR_BACKEND": "ON",
+        "PLSSVM_STDPAR_BACKEND_IMPLEMENTATION": "AUTO"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "stdpar",
+      "displayName": "stdpar backend",
+      "configurePreset": "stdpar",
+      "configuration": "RelWithDebInfo",
+      "inherits": "common"
+    },
+    {
+      "name": "stdpar_python",
+      "displayName": "stdpar backend + Python bindings",
+      "configurePreset": "stdpar_python",
+      "configuration": "RelWithDebInfo",
+      "inherits": "common"
+    },
+    {
+      "name": "stdpar_test",
+      "displayName": "stdpar backend tests",
+      "configurePreset": "stdpar_test",
+      "configuration": "Debug",
+      "inherits": "common"
+    }
+  ],
+  "testPresets": [
+    {
+      "name": "stdpar_test",
+      "displayName": "stdpar backend all tests",
+      "configurePreset": "stdpar_test",
+      "inherits": "common"
+    },
+    {
+      "name": "stdpar_backend_test",
+      "displayName": "stdpar backend specific tests",
+      "configurePreset": "stdpar_test",
+      "inherits": "common",
+      "filter": {
+        "include": {
+          "name": "stdpar.*"
+        }
+      }
+    }
+  ],
+  "workflowPresets": [
+    {
+      "name": "stdpar",
+      "displayName": "stdpar backend workflow",
+      "steps": [
+        {
+          "name": "stdpar",
+          "type": "configure"
+        },
+        {
+          "name": "stdpar",
+          "type": "build"
+        }
+      ]
+    },
+    {
+      "name": "stdpar_python",
+      "displayName": "stdpar backend + Python bindings workflow",
+      "steps": [
+        {
+          "name": "stdpar_python",
+          "type": "configure"
+        },
+        {
+          "name": "stdpar_python",
+          "type": "build"
+        }
+      ]
+    },
+    {
+      "name": "stdpar_test",
+      "displayName": "stdpar test workflow",
+      "steps": [
+        {
+          "name": "stdpar_test",
+          "type": "configure"
+        },
+        {
+          "name": "stdpar_test",
+          "type": "build"
+        },
+        {
+          "name": "stdpar_test",
+          "type": "test"
+        }
+      ]
+    },
+    {
+      "name": "stdpar_backend_test",
+      "displayName": "stdpar backend test workflow",
+      "steps": [
+        {
+          "name": "stdpar_test",
+          "type": "configure"
+        },
+        {
+          "name": "stdpar_test",
+          "type": "build"
+        },
+        {
+          "name": "stdpar_backend_test",
+          "type": "test"
+        }
+      ]
+    }
+  ]
+}

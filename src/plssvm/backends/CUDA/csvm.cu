@@ -20,12 +20,14 @@
 #include "plssvm/constants.hpp"                                                     // plssvm::{real_type, THREAD_BLOCK_SIZE, INTERNAL_BLOCK_SIZE, PADDING_SIZE}
 #include "plssvm/detail/assert.hpp"                                                 // PLSSVM_ASSERT
 #include "plssvm/detail/data_distribution.hpp"                                      // plssvm::detail::{data_distribution, triangular_data_distribution, rectangular_data_distribution}
-#include "plssvm/detail/logging.hpp"                                                // plssvm::detail::log
+#include "plssvm/detail/logging/mpi_log_untracked.hpp"                              // plssvm::detail::log_untracked
 #include "plssvm/detail/memory_size.hpp"                                            // plssvm::detail::memory_size
 #include "plssvm/detail/tracking/performance_tracker.hpp"                           // plssvm::detail::tracking::tracking_entry, PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY
 #include "plssvm/exceptions/exceptions.hpp"                                         // plssvm::exception
 #include "plssvm/gamma.hpp"                                                         // plssvm::gamma_type
 #include "plssvm/kernel_function_types.hpp"                                         // plssvm::kernel_function_type
+#include "plssvm/mpi/communicator.hpp"                                              // plssvm::mpi::communicator
+#include "plssvm/mpi/detail/information.hpp"                                        // plssvm::mpi::detail::gather_and_print_csvm_information
 #include "plssvm/parameter.hpp"                                                     // plssvm::parameter
 #include "plssvm/shape.hpp"                                                         // plssvm::shape
 #include "plssvm/target_platforms.hpp"                                              // plssvm::target_platform
@@ -37,38 +39,20 @@
 
 #include "fmt/format.h"  // fmt::format
 
+#include <chrono>     // std::chrono::{steady_clock, duration_cast}
 #include <cmath>      // std::sqrt, std::ceil
 #include <cstddef>    // std::size_t
 #include <exception>  // std::terminate
 #include <iostream>   // std::cout, std::endl
 #include <numeric>    // std::iota
 #include <string>     // std::string
+#include <utility>    // std::move
 #include <variant>    // std::get
 #include <vector>     // std:vector
 
 namespace plssvm::cuda {
 
-csvm::csvm(parameter params) :
-    csvm{ plssvm::target_platform::automatic, params } { }
-
-csvm::csvm(target_platform target, parameter params) :
-    base_type{ params } {
-    this->init(target);
-}
-
-csvm::~csvm() {
-    try {
-        // be sure that all operations on the CUDA devices have finished before destruction
-        for (const queue_type &device : devices_) {
-            detail::device_synchronize(device);
-        }
-    } catch (const plssvm::exception &e) {
-        std::cout << e.what_with_loc() << std::endl;
-        std::terminate();
-    }
-}
-
-void csvm::init(const target_platform target) {
+csvm::csvm(const target_platform target) {
     // check if supported target platform has been selected
     if (target != target_platform::automatic && target != target_platform::gpu_nvidia) {
         throw backend_exception{ fmt::format("Invalid target platform '{}' for the CUDA backend!", target) };
@@ -77,12 +61,6 @@ void csvm::init(const target_platform target) {
         throw backend_exception{ "Requested target platform 'gpu_nvidia' that hasn't been enabled using PLSSVM_TARGET_PLATFORMS!" };
 #endif
     }
-
-    plssvm::detail::log(verbosity_level::full,
-                        "\nUsing CUDA ({}) as backend.\n",
-                        plssvm::detail::tracking::tracking_entry{ "dependencies", "cuda_runtime_version", detail::get_runtime_version() });
-    PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "backend", "backend", plssvm::backend_type::cuda }));
-    PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "backend", "target_platform", plssvm::target_platform::gpu_nvidia }));
 
     // update the target platform
     target_ = plssvm::target_platform::gpu_nvidia;
@@ -96,26 +74,62 @@ void csvm::init(const target_platform target) {
         throw backend_exception{ "CUDA backend selected but no CUDA capable devices were found!" };
     }
 
-    // print found CUDA devices
-    plssvm::detail::log(verbosity_level::full,
-                        "Found {} CUDA device(s):\n",
-                        plssvm::detail::tracking::tracking_entry{ "backend", "num_devices", devices_.size() });
-    std::vector<std::string> device_names;
+    std::vector<std::string> device_names{};
     device_names.reserve(devices_.size());
-    for (const queue_type &device : devices_) {
-        cudaDeviceProp prop{};
-        PLSSVM_CUDA_ERROR_CHECK(cudaGetDeviceProperties(&prop, device))
-        plssvm::detail::log(verbosity_level::full,
-                            "  [{}, {}, {}.{}]\n",
-                            device,
-                            prop.name,
-                            prop.major,
-                            prop.minor);
-        device_names.emplace_back(prop.name);
+
+    if (comm_.size() > 1) {
+        // use MPI rank specific command line output
+        for (const queue_type &device : devices_) {
+            cudaDeviceProp prop{};
+            PLSSVM_CUDA_ERROR_CHECK(cudaGetDeviceProperties(&prop, device))
+            device_names.emplace_back(prop.name);
+        }
+
+        mpi::detail::gather_and_print_csvm_information(comm_, plssvm::backend_type::cuda, target_, device_names);
+    } else {
+        // use more detailed single rank command line output
+        plssvm::detail::log_untracked(verbosity_level::full,
+                                      comm_,
+                                      "\nUsing CUDA ({}) as backend.\n"
+                                      "Found {} CUDA device(s):\n",
+                                      detail::get_runtime_version(),
+                                      devices_.size());
+
+        for (const queue_type &device : devices_) {
+            cudaDeviceProp prop{};
+            PLSSVM_CUDA_ERROR_CHECK(cudaGetDeviceProperties(&prop, device))
+            plssvm::detail::log_untracked(verbosity_level::full,
+                                          comm_,
+                                          "  [{}, {}, {}.{}]\n",
+                                          device,
+                                          prop.name,
+                                          prop.major,
+                                          prop.minor);
+            device_names.emplace_back(prop.name);
+        }
     }
+
+    plssvm::detail::log_untracked(verbosity_level::full | verbosity_level::timing,
+                                  comm_,
+                                  "\n");
+
+    PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "dependencies", "cuda_runtime_version", detail::get_runtime_version() }));
+    PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "backend", "backend", plssvm::backend_type::cuda }));
+    PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "backend", "target_platform", target_ }));
+    PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "backend", "num_devices", devices_.size() }));
     PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "backend", "device", device_names }));
-    plssvm::detail::log(verbosity_level::full | verbosity_level::timing,
-                        "\n");
+}
+
+csvm::~csvm() {
+    try {
+        // be sure that all operations on the CUDA devices have finished before destruction
+        for (const queue_type &device : devices_) {
+            detail::device_synchronize(device);
+        }
+    } catch (const plssvm::exception &e) {
+        std::cout << e.what_with_loc() << std::endl;
+        std::terminate();
+    }
 }
 
 std::vector<::plssvm::detail::memory_size> csvm::get_device_memory() const {
@@ -175,6 +189,7 @@ auto csvm::run_assemble_kernel_matrix_explicit(const std::size_t device_id, cons
     const dim3 native_block = detail::dim_type_to_native(exec.block);
 
     detail::set_device(device);
+    const auto start = std::chrono::steady_clock::now();
     for (const auto &[partial_grid, offsets] : exec.grids) {
         // convert execution range partial_grid to CUDA's native dim3
         const dim3 native_partial_grid = detail::dim_type_to_native(partial_grid);
@@ -202,6 +217,9 @@ auto csvm::run_assemble_kernel_matrix_explicit(const std::size_t device_id, cons
     }
     detail::peek_at_last_error();
     detail::device_synchronize(device);
+    const auto end = std::chrono::steady_clock::now();
+    [[maybe_unused]] const auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+    PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "kernel_matrix", "kernel_matrix_assembly_kernel", duration }));
 
     return kernel_matrix_d;
 }
@@ -220,6 +238,7 @@ void csvm::run_blas_level_3_kernel_explicit(const std::size_t device_id, const :
     const dim3 native_block = detail::dim_type_to_native(exec.block);
 
     detail::set_device(device);
+    const auto start = std::chrono::steady_clock::now();
     for (const auto &[partial_grid, offsets] : exec.grids) {
         // convert execution range partial_grid to CUDA's native dim3
         const dim3 native_partial_grid = detail::dim_type_to_native(partial_grid);
@@ -242,6 +261,9 @@ void csvm::run_blas_level_3_kernel_explicit(const std::size_t device_id, const :
     }
     detail::peek_at_last_error();
     detail::device_synchronize(device);
+    const auto end = std::chrono::steady_clock::now();
+    [[maybe_unused]] const auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+    PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "cg", "blas_level_3_times_kernel", duration }));
 }
 
 void csvm::run_inplace_matrix_addition(const std::size_t device_id, const ::plssvm::detail::execution_range &exec, device_ptr_type &lhs_d, const device_ptr_type &rhs_d) const {
@@ -297,6 +319,7 @@ void csvm::run_assemble_kernel_matrix_implicit_blas_level_3(const std::size_t de
     const dim3 native_block = detail::dim_type_to_native(exec.block);
 
     detail::set_device(device);
+    const auto start = std::chrono::steady_clock::now();
     for (const auto &[partial_grid, offsets] : exec.grids) {
         // convert execution range partial_grid to CUDA's native dim3
         const dim3 native_partial_grid = detail::dim_type_to_native(partial_grid);
@@ -324,6 +347,9 @@ void csvm::run_assemble_kernel_matrix_implicit_blas_level_3(const std::size_t de
     }
     detail::peek_at_last_error();
     detail::device_synchronize(device);
+    const auto end = std::chrono::steady_clock::now();
+    [[maybe_unused]] const auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+    PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "cg", "blas_level_3_times_kernel", duration }));
 }
 
 //***************************************************//
@@ -346,6 +372,7 @@ auto csvm::run_w_kernel(const std::size_t device_id, const ::plssvm::detail::exe
     const dim3 native_block = detail::dim_type_to_native(exec.block);
 
     detail::set_device(device);
+    const auto start = std::chrono::steady_clock::now();
     for (const auto &[partial_grid, offsets] : exec.grids) {
         // convert execution range partial_grid to CUDA's native dim3
         const dim3 native_partial_grid = detail::dim_type_to_native(partial_grid);
@@ -354,6 +381,9 @@ auto csvm::run_w_kernel(const std::size_t device_id, const ::plssvm::detail::exe
     }
     detail::peek_at_last_error();
     detail::device_synchronize(device);
+    const auto end = std::chrono::steady_clock::now();
+    [[maybe_unused]] const auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+    PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "predict_values", "w_kernel", duration }));
 
     return w_d;
 }
@@ -371,6 +401,7 @@ auto csvm::run_predict_kernel(const std::size_t device_id, const ::plssvm::detai
     const dim3 native_block = detail::dim_type_to_native(exec.block);
 
     detail::set_device(device);
+    const auto start = std::chrono::steady_clock::now();
     for (const auto &[partial_grid, offsets] : exec.grids) {
         // convert execution range partial_grid to CUDA's native dim3
         const dim3 native_partial_grid = detail::dim_type_to_native(partial_grid);
@@ -398,6 +429,9 @@ auto csvm::run_predict_kernel(const std::size_t device_id, const ::plssvm::detai
     }
     detail::peek_at_last_error();
     detail::device_synchronize(device);
+    const auto end = std::chrono::steady_clock::now();
+    [[maybe_unused]] const auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+    PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "predict_values", "predict_kernel", duration }));
 
     return out_d;
 }

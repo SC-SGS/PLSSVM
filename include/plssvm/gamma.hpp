@@ -128,10 +128,14 @@ std::istream &operator>>(std::istream &in, gamma_type &gamma_value);
 
 }  // namespace plssvm
 
+/// @cond Doxygen_suppress
+
 template <>
 struct fmt::formatter<plssvm::gamma_coefficient_type> : fmt::ostream_formatter { };
 
 template <>
 struct fmt::formatter<plssvm::gamma_type> : fmt::ostream_formatter { };
+
+/// @endcond
 
 #endif  // PLSSVM_GAMMA_HPP_

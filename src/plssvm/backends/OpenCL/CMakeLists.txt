@@ -1,7 +1,7 @@
-## Authors: Alexander Van Craen, Marcel Breyer
-## Copyright (C): 2018-today The PLSSVM project - All Rights Reserved
-## License: This file is part of the PLSSVM project which is released under the MIT license.
-##          See the LICENSE.md file in the project root for full license information.
+# Authors: Alexander Van Craen, Marcel Breyer
+# Copyright (C): 2018-today The PLSSVM project - All Rights Reserved
+# License: This file is part of the PLSSVM project which is released under the MIT license.
+#          See the LICENSE.md file in the project root for full license information.
 ########################################################################################################################
 
 list(APPEND CMAKE_MESSAGE_INDENT "OpenCL:  ")
@@ -26,6 +26,7 @@ set(PLSSVM_OPENCL_SOURCES
     ${CMAKE_CURRENT_LIST_DIR}/detail/context.cpp
     ${CMAKE_CURRENT_LIST_DIR}/detail/device_ptr.cpp
     ${CMAKE_CURRENT_LIST_DIR}/detail/error_code.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/detail/jit_info.cpp
     ${CMAKE_CURRENT_LIST_DIR}/detail/kernel.cpp
     ${CMAKE_CURRENT_LIST_DIR}/detail/pinned_memory.cpp
     ${CMAKE_CURRENT_LIST_DIR}/detail/utility.cpp
@@ -39,17 +40,22 @@ add_library(${PLSSVM_OPENCL_BACKEND_LIBRARY_NAME} SHARED ${PLSSVM_OPENCL_SOURCES
 target_include_directories(${PLSSVM_OPENCL_BACKEND_LIBRARY_NAME} PUBLIC ${OpenCL_INCLUDE_DIRS})
 target_link_libraries(${PLSSVM_OPENCL_BACKEND_LIBRARY_NAME} PUBLIC OpenCL)
 
-target_sources(${PLSSVM_OPENCL_BACKEND_LIBRARY_NAME} PRIVATE
-               FILE_SET HEADERS
-               BASE_DIRS
-               "${PROJECT_SOURCE_DIR}/include/plssvm/backends/OpenCL/kernel"
-               FILES
-               "${PROJECT_SOURCE_DIR}/include/plssvm/backends/OpenCL/kernel/cg_explicit/blas.cl"
-               "${PROJECT_SOURCE_DIR}/include/plssvm/backends/OpenCL/kernel/cg_explicit/kernel_matrix_assembly.cl"
-               "${PROJECT_SOURCE_DIR}/include/plssvm/backends/OpenCL/kernel/cg_implicit/kernel_matrix_assembly_blas.cl"
-               "${PROJECT_SOURCE_DIR}/include/plssvm/backends/OpenCL/kernel/kernel_functions.cl"
-               "${PROJECT_SOURCE_DIR}/include/plssvm/backends/OpenCL/kernel/predict_kernel.cl"
-               "${PROJECT_SOURCE_DIR}/include/plssvm/backends/OpenCL/kernel/predict_kernel_linear.cl"
+target_sources(
+    ${PLSSVM_OPENCL_BACKEND_LIBRARY_NAME}
+    PRIVATE FILE_SET
+            HEADERS
+            BASE_DIRS
+            "${PROJECT_SOURCE_DIR}/include/plssvm/backends/OpenCL/kernel"
+            FILES
+            "${PROJECT_SOURCE_DIR}/include/plssvm/backends/OpenCL/kernel/detail/atomics.cl"
+            "${PROJECT_SOURCE_DIR}/include/plssvm/backends/OpenCL/kernel/detail/fill_kernel.cl"
+            "${PROJECT_SOURCE_DIR}/include/plssvm/backends/OpenCL/kernel/detail/memset_kernel.cl"
+            "${PROJECT_SOURCE_DIR}/include/plssvm/backends/OpenCL/kernel/cg_explicit/blas.cl"
+            "${PROJECT_SOURCE_DIR}/include/plssvm/backends/OpenCL/kernel/cg_explicit/kernel_matrix_assembly.cl"
+            "${PROJECT_SOURCE_DIR}/include/plssvm/backends/OpenCL/kernel/cg_implicit/kernel_matrix_assembly_blas.cl"
+            "${PROJECT_SOURCE_DIR}/include/plssvm/backends/OpenCL/kernel/kernel_functions.cl"
+            "${PROJECT_SOURCE_DIR}/include/plssvm/backends/OpenCL/kernel/predict_kernel.cl"
+            "${PROJECT_SOURCE_DIR}/include/plssvm/backends/OpenCL/kernel/predict_kernel_linear.cl"
 )
 
 # link base library against OpenCL library
@@ -59,14 +65,18 @@ target_link_libraries(${PLSSVM_OPENCL_BACKEND_LIBRARY_NAME} PUBLIC ${PLSSVM_BASE
 set(PLSSVM_OPENCL_KERNEL_SOURCE_DIRECTORY "${PROJECT_SOURCE_DIR}/include/plssvm/backends/OpenCL/kernel")
 target_compile_definitions(${PLSSVM_OPENCL_BACKEND_LIBRARY_NAME} PRIVATE PLSSVM_OPENCL_KERNEL_SOURCE_DIR="${PLSSVM_OPENCL_KERNEL_SOURCE_DIRECTORY}")
 
-# set OpenCL library name (concatenated to the full kernel source string, to make sure that different OpenCL libraries
-# are recognized by the sha256 caching algorithm)
+# set OpenCL library name (concatenated to the full kernel source string, to make sure that different OpenCL libraries are recognized by the sha256 caching
+# algorithm)
 target_compile_definitions(${PLSSVM_OPENCL_BACKEND_LIBRARY_NAME} PRIVATE PLSSVM_OPENCL_LIBRARY="${OpenCL_LIBRARY}")
 
 # option only available if NVIDIA GPUs are requested as target platforms
 if (PLSSVM_NUM_NVIDIA_TARGET_ARCHS GREATER 0)
     # add option to completely disable PTX inline assembly
-    option(PLSSVM_OPENCL_BACKEND_ENABLE_PTX_INLINE_ASSEMBLY "Enables the usage of PTX inline assembly on NVIDIA GPUs to greatly improve the atomicAdd performance! Only available for sm greater or equal than sm_60." ON)
+    option(
+        PLSSVM_OPENCL_BACKEND_ENABLE_PTX_INLINE_ASSEMBLY
+        "Enables the usage of PTX inline assembly on NVIDIA GPUs to greatly improve the atomicAdd performance! Only available for sm greater or equal than sm_60."
+        ON
+    )
     if (PLSSVM_OPENCL_BACKEND_ENABLE_PTX_INLINE_ASSEMBLY)
         # test whether the requested sm version is new enough
         list(TRANSFORM PLSSVM_NVIDIA_TARGET_ARCHS REPLACE "sm_" "")
@@ -75,7 +85,7 @@ if (PLSSVM_NUM_NVIDIA_TARGET_ARCHS GREATER 0)
                 message(FATAL_ERROR "Requested PTX inline assembly to speed up the FP32/FP64 atomicAdd, but the supplied sm_${sm_value} is too old!")
             endif ()
         endforeach ()
-        
+
         message(STATUS "Enabled PTX inline assembly on NVIDIA GPUs to greatly improve the atomicAdd performance.")
         target_compile_definitions(${PLSSVM_OPENCL_BACKEND_LIBRARY_NAME} PRIVATE PLSSVM_OPENCL_BACKEND_USE_PTX_INLINE_ASSEMBLY)
     endif ()
@@ -93,7 +103,7 @@ if (PLSSVM_ENABLE_FAST_MATH)
 endif ()
 
 # needed to link the OpenCL backend to a third-party executable
-target_compile_options(${PLSSVM_OPENCL_BACKEND_LIBRARY_NAME} PRIVATE -fPIE)
+target_compile_options(${PLSSVM_OPENCL_BACKEND_LIBRARY_NAME} PRIVATE -fPIE -fPIC)
 
 # set compile definition that the OpenCL backend is available
 target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PRIVATE PLSSVM_HAS_OPENCL_BACKEND)

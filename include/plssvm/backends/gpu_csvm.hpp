@@ -15,7 +15,6 @@
 
 #include "plssvm/backends/execution_range.hpp"  // plssvm::detail::{dim_type, execution_range}
 #include "plssvm/constants.hpp"                 // plssvm::real_type, plssvm::PADDING_SIZE
-#include "plssvm/csvm.hpp"                      // plssvm::csvm
 #include "plssvm/detail/assert.hpp"             // PLSSVM_ASSERT
 #include "plssvm/detail/data_distribution.hpp"  // plssvm::detail::{data_distribution, triangular_data_distribution, rectangular_data_distribution}
 #include "plssvm/detail/move_only_any.hpp"      // plssvm::detail::{move_only_any, move_only_any_cast}
@@ -24,12 +23,13 @@
 #include "plssvm/parameter.hpp"                 // plssvm::parameter
 #include "plssvm/shape.hpp"                     // plssvm::shape
 #include "plssvm/solver_types.hpp"              // plssvm::solver_type
+#include "plssvm/svm/csvm.hpp"                  // plssvm::csvm
 
 #include "fmt/format.h"  // fmt::format
 
 #include <cmath>    // std::ceil
 #include <cstddef>  // std::size_t
-#include <memory>   // std::make_unique
+#include <memory>   // std::make_unique, std::addressof
 #include <tuple>    // std::tuple
 #include <utility>  // std::forward, std::move
 #include <vector>   // std::vector
@@ -44,7 +44,7 @@ namespace plssvm::detail {
  * @tparam pinned_memory_t the type of the pinned memory wrapper (dependent on the used backend)
  */
 template <template <typename> typename device_ptr_t, typename queue_t, template <typename> typename pinned_memory_t>
-class gpu_csvm : public ::plssvm::csvm {
+class gpu_csvm : virtual public ::plssvm::csvm {
   public:
     /// The type of the device pointer (dependent on the used backend).
     using device_ptr_type = device_ptr_t<real_type>;
@@ -54,19 +54,10 @@ class gpu_csvm : public ::plssvm::csvm {
     using pinned_memory_type = pinned_memory_t<real_type>;
 
     /**
-     * @copydoc plssvm::csvm::csvm()
+     * @brief Default constructor.
+     * @details Needed due to multiple-inheritance.
      */
-    explicit gpu_csvm(parameter params = {}) :
-        ::plssvm::csvm{ params } { }
-
-    /**
-     * @brief Construct a C-SVM forwarding all parameters @p args to the plssvm::parameter constructor.
-     * @tparam Args the type of the (named-)parameters
-     * @param[in] args the parameters used to construct a plssvm::parameter
-     */
-    template <typename... Args>
-    explicit gpu_csvm(Args &&...args) :
-        ::plssvm::csvm{ std::forward<Args>(args)... } { }
+    gpu_csvm() = default;
 
     /**
      * @copydoc plssvm::csvm::csvm(const plssvm::csvm &)
@@ -80,10 +71,21 @@ class gpu_csvm : public ::plssvm::csvm {
      * @copydoc plssvm::csvm::operator=(const plssvm::csvm &)
      */
     gpu_csvm &operator=(const gpu_csvm &) = delete;
+
     /**
-     * @copydoc plssvm::csvm::operator=(plssvm::csvm &&) noexcept
+     * @brief Correctly implement the move-assignment operator in presence of a virtual base class.
+     * @details Calls the base class move-assignment operator. Afterwards, moves the additional `gpu_csvm` members.
+     * @param[in,out] other the other C-SVM to move from
+     * @return `*this`
      */
-    gpu_csvm &operator=(gpu_csvm &&) noexcept = default;
+    gpu_csvm &operator=(gpu_csvm &&other) noexcept {
+        if (this != std::addressof(other)) {
+            ::plssvm::csvm::operator=(std::move(other));
+            devices_ = std::move(other.devices_);
+        }
+        return *this;
+    }
+
     /**
      * @copydoc plssvm::csvm::~csvm()
      */
@@ -236,7 +238,7 @@ std::vector<::plssvm::detail::move_only_any> gpu_csvm<device_ptr_t, queue_t, pin
 
     // update the data distribution: only the upper triangular kernel matrix is used
     // note: account for the dimensional reduction
-    data_distribution_ = std::make_unique<detail::triangular_data_distribution>(A.num_rows() - 1, num_devices);
+    data_distribution_ = std::make_unique<detail::triangular_data_distribution>(comm_, num_rows_reduced, num_devices);
 
     // the final kernel matrix; multiple parts in case of multi-device execution
     std::vector<::plssvm::detail::move_only_any> kernel_matrices_parts(num_devices);
@@ -258,8 +260,10 @@ std::vector<::plssvm::detail::move_only_any> gpu_csvm<device_ptr_t, queue_t, pin
         q_red_d[device_id] = device_ptr_type{ q_red.size() + PADDING_SIZE, device };
     }
 
-    // pin the data matrix
+    // pin the data matrix if requested
+#if defined(PLSSVM_USE_PINNED_MEMORY)
     const pinned_memory_type pm{ A };
+#endif
 
 #pragma omp parallel for if (num_devices > 1)
     for (std::size_t device_id = 0; device_id < num_devices; ++device_id) {
@@ -359,7 +363,7 @@ void gpu_csvm<device_ptr_t, queue_t, pinned_memory_t>::blas_level_3(const solver
 
         // copy data to the device
         B_d[device_id].copy_to_device(B);
-        if (device_id == 0) {
+        if (device_id == 0 && comm_.is_main_rank()) {
             // device 0 always touches all values in C -> it is sufficient that only device 0 gets the actual C matrix
             C_d[device_id].copy_to_device(C);
             // we do not perform the beta scale in C in the cg_implicit device kernel
@@ -520,7 +524,7 @@ aos_matrix<real_type> gpu_csvm<device_ptr_t, queue_t, pinned_memory_t>::predict_
             }
 
             // update the data distribution to account for the support vectors
-            data_distribution_ = std::make_unique<detail::rectangular_data_distribution>(num_support_vectors, num_devices);
+            data_distribution_ = std::make_unique<detail::rectangular_data_distribution>(comm_, num_support_vectors, num_devices);
 
             std::vector<device_ptr_type> sv_d(num_devices);
             // split memory allocation and memory copy!
@@ -587,6 +591,9 @@ aos_matrix<real_type> gpu_csvm<device_ptr_t, queue_t, pinned_memory_t>::predict_
             w = soa_matrix<real_type>{ shape{ num_classes, num_features }, shape{ PADDING_SIZE, PADDING_SIZE } };
             w_d[0].copy_to_host(w);
             w.restore_padding();
+
+            // reduce w on all MPI ranks
+            comm_.allreduce_inplace(w);
         }
 
         // upload the w vector to all devices
@@ -621,7 +628,7 @@ aos_matrix<real_type> gpu_csvm<device_ptr_t, queue_t, pinned_memory_t>::predict_
     }
 
     // update the data distribution to account for the predict points
-    data_distribution_ = std::make_unique<detail::rectangular_data_distribution>(num_predict_points, num_devices);
+    data_distribution_ = std::make_unique<detail::rectangular_data_distribution>(comm_, num_predict_points, num_devices);
 
     // the predict points; partial stored on each device
     std::vector<device_ptr_type> predict_points_d(num_devices);

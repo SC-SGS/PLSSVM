@@ -10,12 +10,13 @@
 
 #include "plssvm/parameter.hpp"
 
-#include "plssvm/backends/SYCL/implementation_types.hpp"     // plssvm::sycl::implementation_type
-#include "plssvm/backends/SYCL/kernel_invocation_types.hpp"  // plssvm::sycl::kernel_invocation_type
-#include "plssvm/constants.hpp"                              // plssvm::real_type
-#include "plssvm/detail/arithmetic_type_name.hpp"            // plssvm::detail::arithmetic_type_name
-#include "plssvm/gamma.hpp"                                  // plssvm::gamma_coefficient_type
-#include "plssvm/kernel_function_types.hpp"                  // plssvm::kernel_function_type
+#include "plssvm/backends/Kokkos/execution_space.hpp"      // plssvm::kokkos::execution_space
+#include "plssvm/backends/SYCL/data_parallel_kernels.hpp"  // plssvm::sycl::data_parallel_kernel
+#include "plssvm/backends/SYCL/implementation_types.hpp"   // plssvm::sycl::implementation_type
+#include "plssvm/constants.hpp"                            // plssvm::real_type
+#include "plssvm/detail/arithmetic_type_name.hpp"          // plssvm::detail::arithmetic_type_name
+#include "plssvm/gamma.hpp"                                // plssvm::gamma_coefficient_type
+#include "plssvm/kernel_function_types.hpp"                // plssvm::kernel_function_type
 
 #include "tests/custom_test_macros.hpp"  // EXPECT_CONVERSION_TO_STRING, EXPECT_FLOATING_POINT_EQ
 
@@ -39,13 +40,13 @@ TEST(Parameter, default_construct) {
 
 TEST(Parameter, construct) {
     // construct a parameter set explicitly overwriting the default values
-    const plssvm::parameter param{ plssvm::kernel_function_type::polynomial, 1, plssvm::real_type{ -1.0 }, plssvm::real_type{ 2.5 }, plssvm::real_type{ 0.05 } };
+    const plssvm::parameter param{ plssvm::kernel_function_type::polynomial, 1, plssvm::real_type{ 0.1 }, plssvm::real_type{ 2.5 }, plssvm::real_type{ 0.05 } };
 
     // test default values
     EXPECT_EQ(param.kernel_type, plssvm::kernel_function_type::polynomial);
     EXPECT_EQ(param.degree, 1);
     ASSERT_TRUE(std::holds_alternative<plssvm::real_type>(param.gamma));
-    EXPECT_FLOATING_POINT_EQ(std::get<plssvm::real_type>(param.gamma), plssvm::real_type{ -1.0 });
+    EXPECT_FLOATING_POINT_EQ(std::get<plssvm::real_type>(param.gamma), plssvm::real_type{ 0.1 });
     EXPECT_FLOATING_POINT_EQ(param.coef0, plssvm::real_type{ 2.5 });
     EXPECT_FLOATING_POINT_EQ(param.cost, plssvm::real_type{ 0.05 });
 }
@@ -74,14 +75,14 @@ TEST(Parameter, construct_named_args) {
     const plssvm::parameter param{
         plssvm::kernel_type = plssvm::kernel_function_type::polynomial,
         plssvm::cost = 0.05,
-        plssvm::gamma = -1.0
+        plssvm::gamma = 0.1
     };
 
     // test default values
     EXPECT_EQ(param.kernel_type, plssvm::kernel_function_type::polynomial);
     EXPECT_EQ(param.degree, 3);
     ASSERT_TRUE(std::holds_alternative<plssvm::real_type>(param.gamma));
-    EXPECT_FLOATING_POINT_EQ(std::get<plssvm::real_type>(param.gamma), plssvm::real_type{ -1.0 });
+    EXPECT_FLOATING_POINT_EQ(std::get<plssvm::real_type>(param.gamma), plssvm::real_type{ 0.1 });
     EXPECT_FLOATING_POINT_EQ(param.coef0, plssvm::real_type{ 0.0 });
     EXPECT_FLOATING_POINT_EQ(param.cost, plssvm::real_type{ 0.05 });
 }
@@ -91,22 +92,50 @@ TEST(Parameter, construct_parameter_and_named_args) {
     const plssvm::parameter param_base{
         plssvm::kernel_type = plssvm::kernel_function_type::laplacian,
         plssvm::cost = 0.05,
-        plssvm::gamma = -1.0
+        plssvm::gamma = 0.1
     };
 
     // create new parameter set using a previous parameter set together with some named parameters
     const plssvm::parameter param{ param_base,
                                    plssvm::kernel_type = plssvm::kernel_function_type::rbf,
                                    plssvm::sycl_implementation_type = plssvm::sycl::implementation_type::adaptivecpp,
-                                   plssvm::sycl_kernel_invocation_type = plssvm::sycl::kernel_invocation_type::nd_range };
+                                   plssvm::sycl_data_parallel_kernel = plssvm::sycl::data_parallel_kernel::work_group,
+                                   plssvm::kokkos_execution_space = plssvm::kokkos::execution_space::cuda };
 
     // test default values
     EXPECT_EQ(param.kernel_type, plssvm::kernel_function_type::rbf);
     EXPECT_EQ(param.degree, 3);
     ASSERT_TRUE(std::holds_alternative<plssvm::real_type>(param.gamma));
-    EXPECT_FLOATING_POINT_EQ(std::get<plssvm::real_type>(param.gamma), plssvm::real_type{ -1.0 });
+    EXPECT_FLOATING_POINT_EQ(std::get<plssvm::real_type>(param.gamma), plssvm::real_type{ 0.1 });
     EXPECT_FLOATING_POINT_EQ(param.coef0, plssvm::real_type{ 0.0 });
     EXPECT_FLOATING_POINT_EQ(param.cost, plssvm::real_type{ 0.05 });
+}
+
+TEST(Parameter, construct_invalid_kernel_type) {
+    EXPECT_THROW_WHAT(plssvm::parameter{ plssvm::kernel_type = static_cast<plssvm::kernel_function_type>(6) },
+                      plssvm::invalid_parameter_exception,
+                      "Invalid kernel function with value 6 given!");
+}
+
+TEST(Parameter, construct_invalid_degree) {
+    EXPECT_THROW_WHAT((plssvm::parameter{ plssvm::kernel_type = plssvm::kernel_function_type::polynomial, plssvm::degree = -1 }),
+                      plssvm::invalid_parameter_exception,
+                      "degree must be non-negative, but is -1!");
+}
+
+TEST(Parameter, construct_invalid_gamma) {
+    EXPECT_THROW_WHAT(plssvm::parameter{ plssvm::gamma = plssvm::real_type{ -0.1 } },
+                      plssvm::invalid_parameter_exception,
+                      "gamma must be non-negative, but is -0.1!");
+}
+
+TEST(Parameter, construct_invalid_cost) {
+    EXPECT_THROW_WHAT(plssvm::parameter{ plssvm::cost = plssvm::real_type{ 0.0 } },
+                      plssvm::invalid_parameter_exception,
+                      "cost must be strictly-positive, but is 0!");
+    EXPECT_THROW_WHAT(plssvm::parameter{ plssvm::cost = plssvm::real_type{ -0.1 } },
+                      plssvm::invalid_parameter_exception,
+                      "cost must be strictly-positive, but is -0.1!");
 }
 
 TEST(Parameter, equal) {
@@ -161,14 +190,12 @@ TEST(Parameter, equivalent_member_function) {
     const plssvm::parameter params2{ plssvm::kernel_function_type::rbf, 3, plssvm::real_type{ 0.02 }, plssvm::real_type{ 1.5 }, plssvm::real_type{ 1.0 } };
     const plssvm::parameter params3{ plssvm::kernel_function_type::linear, 3, plssvm::real_type{ 0.02 }, plssvm::real_type{ 1.5 }, plssvm::real_type{ 1.0 } };
     const plssvm::parameter params4{ plssvm::kernel_function_type::rbf, 2, plssvm::real_type{ 0.02 }, plssvm::real_type{ 1.5 }, plssvm::real_type{ 1.0 } };
-    const plssvm::parameter params5{ plssvm::kernel_function_type::linear, 2, plssvm::real_type{ -0.02 }, plssvm::real_type{ 0.5 }, plssvm::real_type{ 1.0 } };
+    const plssvm::parameter params5{ plssvm::kernel_function_type::linear, 2, plssvm::real_type{ 0.04 }, plssvm::real_type{ 0.5 }, plssvm::real_type{ 1.0 } };
     const plssvm::parameter params6{ plssvm::kernel_function_type::polynomial, 2, plssvm::real_type{ 0.02 }, plssvm::real_type{ 1.5 }, plssvm::real_type{ 1.0 } };
     const plssvm::parameter params7{ plssvm::kernel_function_type::polynomial, 2, plssvm::real_type{ 0.02 }, plssvm::real_type{ 1.5 }, plssvm::real_type{ 1.0 } };
     const plssvm::parameter params8{ plssvm::kernel_function_type::sigmoid, 0, plssvm::real_type{ 0.2 }, plssvm::real_type{ -1.5 }, plssvm::real_type{ 0.2 } };
     const plssvm::parameter params9{ plssvm::kernel_function_type::laplacian, 0, plssvm::real_type{ 0.1 }, plssvm::real_type{ 1.5 }, plssvm::real_type{ 0.1 } };
     const plssvm::parameter params10{ plssvm::kernel_function_type::chi_squared, 1, plssvm::real_type{ 0.02 }, plssvm::real_type{ 0.5 }, plssvm::real_type{ 1.0 } };
-    const plssvm::parameter params11{ static_cast<plssvm::kernel_function_type>(6), 3, plssvm::real_type{ 0.2 }, plssvm::real_type{ -1.5 }, plssvm::real_type{ 0.1 } };
-    const plssvm::parameter params12{ static_cast<plssvm::kernel_function_type>(6), 3, plssvm::real_type{ 0.2 }, plssvm::real_type{ -1.5 }, plssvm::real_type{ 0.1 } };
 
     // test
     EXPECT_TRUE(params1.equivalent(params2));
@@ -179,9 +206,8 @@ TEST(Parameter, equivalent_member_function) {
     EXPECT_TRUE(params6.equivalent(params7));
     EXPECT_FALSE(params6.equivalent(params8));
     EXPECT_FALSE(params8.equivalent(params9));
+    EXPECT_TRUE(params8.equivalent(params8));
     EXPECT_FALSE(params4.equivalent(params10));
-    EXPECT_FALSE(params6.equivalent(params11));
-    EXPECT_FALSE(params8.equivalent(params12));
 }
 
 TEST(Parameter, equivalent_member_function_default_constructed) {
@@ -199,14 +225,12 @@ TEST(Parameter, equivalent_free_function) {
     const plssvm::parameter params2{ plssvm::kernel_function_type::rbf, 3, plssvm::real_type{ 0.02 }, plssvm::real_type{ 1.5 }, plssvm::real_type{ 1.0 } };
     const plssvm::parameter params3{ plssvm::kernel_function_type::linear, 3, plssvm::real_type{ 0.02 }, plssvm::real_type{ 1.5 }, plssvm::real_type{ 1.0 } };
     const plssvm::parameter params4{ plssvm::kernel_function_type::rbf, 2, plssvm::real_type{ 0.02 }, plssvm::real_type{ 1.5 }, plssvm::real_type{ 1.0 } };
-    const plssvm::parameter params5{ plssvm::kernel_function_type::linear, 2, plssvm::real_type{ -0.02 }, plssvm::real_type{ 0.5 }, plssvm::real_type{ 1.0 } };
+    const plssvm::parameter params5{ plssvm::kernel_function_type::linear, 2, plssvm::real_type{ 0.04 }, plssvm::real_type{ 0.5 }, plssvm::real_type{ 1.0 } };
     const plssvm::parameter params6{ plssvm::kernel_function_type::polynomial, 2, plssvm::real_type{ 0.02 }, plssvm::real_type{ 1.5 }, plssvm::real_type{ 1.0 } };
     const plssvm::parameter params7{ plssvm::kernel_function_type::polynomial, 2, plssvm::real_type{ 0.02 }, plssvm::real_type{ 1.5 }, plssvm::real_type{ 1.0 } };
     const plssvm::parameter params8{ plssvm::kernel_function_type::sigmoid, 0, plssvm::real_type{ 0.2 }, plssvm::real_type{ -1.5 }, plssvm::real_type{ 0.2 } };
     const plssvm::parameter params9{ plssvm::kernel_function_type::laplacian, 0, plssvm::real_type{ 0.1 }, plssvm::real_type{ 1.5 }, plssvm::real_type{ 1.0 } };
     const plssvm::parameter params10{ plssvm::kernel_function_type::chi_squared, 1, plssvm::real_type{ 0.02 }, plssvm::real_type{ 0.5 }, plssvm::real_type{ 0.1 } };
-    const plssvm::parameter params11{ static_cast<plssvm::kernel_function_type>(6), 3, plssvm::real_type{ 0.2 }, plssvm::real_type{ -1.5 }, plssvm::real_type{ 0.1 } };
-    const plssvm::parameter params12{ static_cast<plssvm::kernel_function_type>(6), 3, plssvm::real_type{ 0.2 }, plssvm::real_type{ -1.5 }, plssvm::real_type{ 0.1 } };
 
     // test
     EXPECT_TRUE(plssvm::equivalent(params1, params2));
@@ -217,9 +241,8 @@ TEST(Parameter, equivalent_free_function) {
     EXPECT_TRUE(plssvm::equivalent(params6, params7));
     EXPECT_FALSE(plssvm::equivalent(params6, params8));
     EXPECT_FALSE(plssvm::equivalent(params8, params9));
+    EXPECT_TRUE(plssvm::equivalent(params8, params8));
     EXPECT_FALSE(plssvm::equivalent(params4, params10));
-    EXPECT_FALSE(plssvm::equivalent(params6, params11));
-    EXPECT_FALSE(plssvm::equivalent(params8, params12));
 }
 
 TEST(Parameter, equivalent_free_function_default_constructed) {
@@ -233,10 +256,10 @@ TEST(Parameter, equivalent_free_function_default_constructed) {
 
 TEST(Parameter, to_string) {
     // check conversions to std::string
-    const plssvm::parameter param{ plssvm::kernel_function_type::linear, 3, plssvm::real_type{ 0.0 }, plssvm::real_type{ 0.0 }, plssvm::real_type{ 1.0 } };
+    const plssvm::parameter param{ plssvm::kernel_function_type::linear, 3, plssvm::real_type{ 0.1 }, plssvm::real_type{ 0.0 }, plssvm::real_type{ 1.0 } };
     EXPECT_CONVERSION_TO_STRING(param, fmt::format("kernel_type                 linear\n"
                                                    "degree                      3\n"
-                                                   "gamma                       0\n"
+                                                   "gamma                       0.1\n"
                                                    "coef0                       0\n"
                                                    "cost                        1\n"
                                                    "real_type                   {}\n",

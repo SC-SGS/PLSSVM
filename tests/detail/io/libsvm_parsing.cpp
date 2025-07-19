@@ -48,10 +48,10 @@ TEST_P(LIBSVMParseNumFeatures, num_features) {
 
 // clang-format off
 INSTANTIATE_TEST_SUITE_P(LIBSVMParse, LIBSVMParseNumFeatures, ::testing::Values(
-                                                      std::make_pair("/data/libsvm/5x4.libsvm", 4),
-                                                      std::make_pair("/data/libsvm/5x4_sparse.libsvm", 4),
+                                                      std::make_pair("/data/libsvm/classification/5x4.libsvm", 4),
+                                                      std::make_pair("/data/libsvm/classification/5x4_sparse.libsvm", 4),
                                                       std::make_pair("/data/libsvm/3x2_without_label.libsvm", 2),
-                                                      std::make_pair("/data/libsvm/500x200_4.libsvm", 200),
+                                                      std::make_pair("/data/libsvm/classification/500x200_4.libsvm", 200),
                                                       std::make_pair("/data/empty.txt", 0)));
 // clang-format on
 
@@ -73,7 +73,7 @@ class LIBSVMParseDense : public ::testing::Test,
 
     void SetUp() override {
         // create file used in this test fixture by instantiating the template file
-        util::instantiate_template_file<fixture_label_type>(PLSSVM_TEST_PATH "/data/libsvm/6x4_TEMPLATE.libsvm", this->filename);
+        util::instantiate_template_file<fixture_label_type>(PLSSVM_TEST_PATH "/data/libsvm/classification/6x4_TEMPLATE.libsvm", this->filename);
     }
 
     /**
@@ -111,7 +111,7 @@ class LIBSVMParseSparse : public ::testing::Test,
 
     void SetUp() override {
         // create file used in this test fixture by instantiating the template file
-        util::instantiate_template_file<fixture_label_type>(PLSSVM_TEST_PATH "/data/libsvm/6x4_sparse_TEMPLATE.libsvm", this->filename);
+        util::instantiate_template_file<fixture_label_type>(PLSSVM_TEST_PATH "/data/libsvm/classification/6x4_sparse_TEMPLATE.libsvm", this->filename);
     }
 
     /**
@@ -221,7 +221,7 @@ TYPED_TEST(LIBSVMParse, arff_file) {
     using label_type = typename TestFixture::fixture_label_type;
 
     // parse the ARFF file
-    const std::string filename = PLSSVM_TEST_PATH "/data/arff/5x4.arff";
+    const std::string filename = PLSSVM_TEST_PATH "/data/arff/classification/5x4.arff";
     plssvm::detail::io::file_reader reader{ filename };
     reader.read_lines('#');
     EXPECT_THROW(std::ignore = (plssvm::detail::io::parse_libsvm_data<label_type>(reader)), plssvm::invalid_file_format_exception);

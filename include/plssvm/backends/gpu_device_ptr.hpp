@@ -21,9 +21,9 @@
 
 #include "fmt/format.h"  // fmt::format
 
-#include <algorithm>  // std::swap
+#include <algorithm>  // std::min
 #include <cstddef>    // std::size_t
-#include <utility>    // std::exchange
+#include <utility>    // std::swap, std::exchange
 #include <vector>     // std::vector
 
 namespace plssvm::detail {

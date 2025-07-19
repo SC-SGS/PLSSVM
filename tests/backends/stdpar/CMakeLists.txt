@@ -1,20 +1,25 @@
-## Authors: Alexander Van Craen, Marcel Breyer
-## Copyright (C): 2018-today The PLSSVM project - All Rights Reserved
-## License: This file is part of the PLSSVM project which is released under the MIT license.
-##          See the LICENSE.md file in the project root for full license information.
+# Authors: Alexander Van Craen, Marcel Breyer
+# Copyright (C): 2018-today The PLSSVM project - All Rights Reserved
+# License: This file is part of the PLSSVM project which is released under the MIT license.
+#          See the LICENSE.md file in the project root for full license information.
 ########################################################################################################################
 
-## create stdpar tests
+# death tests are currently not supported for the stdpar implementations due to GoogleTest internal SegFaults
+if (PLSSVM_ENABLE_ASSERTS AND PLSSVM_STDPAR_BACKEND)
+    message(FATAL_ERROR "GTest's death tests not supported with our stdpar backend. Please set \"PLSSVM_ENABLE_ASSERTS=OFF\"!")
+endif ()
+
+# create stdpar tests
 set(PLSSVM_STDPAR_TEST_NAME stdpar_tests)
 
 # list all necessary sources
 set(PLSSVM_STDPAR_TEST_SOURCES
-    ${CMAKE_CURRENT_LIST_DIR}/detail/utility.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/exceptions.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/stdpar_csvm.cpp
-    ## since the stdpar implementation_type enumeration is used even if no stdpar backend
-    ## is available this is also tested in the base library
+    ${CMAKE_CURRENT_LIST_DIR}/detail/utility.cpp ${CMAKE_CURRENT_LIST_DIR}/exceptions.cpp ${CMAKE_CURRENT_LIST_DIR}/stdpar_csvm.cpp
+    # ~~~
+    # since the stdpar implementation_type enumeration is used even if no stdpar backend
+    # is available this is also tested in the base library
     # ${CMAKE_CURRENT_LIST_DIR}/implementation_types.cpp
+    # ~~~
 )
 
 # add stdpar implementation specific test files containing tests for the stdpar::csvm constructors
@@ -40,6 +45,26 @@ target_link_libraries(${PLSSVM_STDPAR_TEST_NAME} PRIVATE ${PLSSVM_BASE_TEST_LIBR
 include(GoogleTest)
 include(${PROJECT_SOURCE_DIR}/cmake/discover_tests_with_death_test_filter.cmake)
 discover_tests_with_death_test_filter(${PLSSVM_STDPAR_TEST_NAME})
+
+# add minimal run test for the classification task with the stdpar backend
+add_test(NAME MainTrainClassificationStdpar/executable_minimal COMMAND ${PLSSVM_EXECUTABLE_TRAIN_NAME} -s 0 -b stdpar "${PLSSVM_CLASSIFICATION_TEST_FILE}"
+                                                                       "${CMAKE_CURRENT_BINARY_DIR}/test_classification.libsvm.model"
+)
+add_test(NAME MainPredictClassificationStdpar/executable_minimal
+         COMMAND ${PLSSVM_EXECUTABLE_PREDICT_NAME} -b stdpar "${CMAKE_CURRENT_LIST_DIR}/../../data/libsvm/classification/5x4.libsvm" # test file
+                 "${CMAKE_CURRENT_LIST_DIR}/../../data/model/classification/5x4.libsvm.model" # model file
+                 "${CMAKE_CURRENT_BINARY_DIR}/test_classification.libsvm.predict" # predict file (result)
+)
+
+# add minimal run test for the regression task with the stdpar backend
+add_test(NAME MainTrainRegressionStdpar/executable_minimal COMMAND ${PLSSVM_EXECUTABLE_TRAIN_NAME} -s 1 -b stdpar "${PLSSVM_REGRESSION_TEST_FILE}"
+                                                                   "${CMAKE_CURRENT_BINARY_DIR}/test_regression.libsvm.model"
+)
+add_test(NAME MainPredictRegressionStdpar/executable_minimal
+         COMMAND ${PLSSVM_EXECUTABLE_PREDICT_NAME} -b stdpar "${CMAKE_CURRENT_LIST_DIR}/../../data/libsvm/regression/5x4.libsvm" # test file
+                 "${CMAKE_CURRENT_LIST_DIR}/../../data/model/regression/5x4.libsvm.model" # model file
+                 "${CMAKE_CURRENT_BINARY_DIR}/test_regression.libsvm.predict" # predict file (result)
+)
 
 # add test as coverage dependency
 if (TARGET coverage)

@@ -16,14 +16,14 @@
 #include "plssvm/detail/io/file_reader.hpp"      // plssvm::detail::io::file_reader
 #include "plssvm/detail/memory_size.hpp"         // plssvm::detail::memory_size (literals)
 #include "plssvm/detail/tracking/events.hpp"     // plssvm::detail::tracking::{events, event}
+#include "plssvm/mpi/communicator.hpp"           // plssvm::mpi::communicator
 
-#include "tests/detail/tracking/mock_hardware_sampler.hpp"  // mock_hardware_sampler
-#include "tests/naming.hpp"                                 // naming::test_parameter_to_name
-#include "tests/types_to_test.hpp"                          // util::{label_type_gtest, test_parameter_type_at_t}
-#include "tests/utility.hpp"                                // util::redirect_output
+#include "tests/naming.hpp"         // naming::test_parameter_to_name
+#include "tests/types_to_test.hpp"  // util::{label_type_gtest, test_parameter_type_at_t}
+#include "tests/utility.hpp"        // util::redirect_output
 
 #include "fmt/format.h"   // fmt::format
-#include "gmock/gmock.h"  // EXPECT_CALL, EXPECT_THAT, ::testing::{HasSubstr}
+#include "gmock/gmock.h"  // EXPECT_CALL, EXPECT_THAT, ::testing::{HasSubstr, ContainsRegex}
 #include "gtest/gtest.h"  // TEST, TYPED_TEST_SUITE, TYPED_TEST, EXPECT_EQ, EXPECT_TRUE, EXPECT_FALSE, ::testing::Test, ::testing::An
 
 #include <algorithm>   // std::transform
@@ -109,6 +109,128 @@ class PerformanceTracker : public ::testing::Test,
   private:
     plssvm::detail::tracking::performance_tracker tracker_{};
 };
+
+TEST_F(PerformanceTracker, copy_construct) {
+    // get performance tracker from fixture class
+    plssvm::detail::tracking::performance_tracker &tracker = this->get_performance_tracker();
+
+    // add different tracking entries
+    tracker.add_tracking_entry(plssvm::detail::tracking::tracking_entry{ "foo", "bar", 42 });
+    tracker.add_tracking_entry(plssvm::detail::tracking::tracking_entry{ "foo", "baz", 3.1415 });
+    tracker.add_tracking_entry(plssvm::detail::tracking::tracking_entry{ "foo", "mem", 1_KiB });
+    tracker.add_tracking_entry(plssvm::detail::tracking::tracking_entry{ "", "foobar", 'a' });
+    tracker.add_tracking_entry(plssvm::detail::tracking::tracking_entry{ "", "foobar", 'b' });
+
+    // copy-construct new performance tracker
+    const plssvm::detail::tracking::performance_tracker tracker2{ tracker };
+
+    // check the contents
+    EXPECT_EQ(tracker2.get_tracking_entries(), tracker.get_tracking_entries());
+    ASSERT_EQ(tracker2.get_events().num_events(), tracker.get_events().num_events());
+    for (std::size_t i = 0; i < tracker.get_events().num_events(); ++i) {
+        EXPECT_EQ(tracker2.get_events()[i].time_point, tracker.get_events()[i].time_point);
+        EXPECT_EQ(tracker2.get_events()[i].name, tracker.get_events()[i].name);
+    }
+    EXPECT_EQ(tracker2.get_reference_time(), tracker.get_reference_time());
+    EXPECT_EQ(tracker2.is_tracking(), tracker.is_tracking());
+}
+
+TEST_F(PerformanceTracker, move_construct) {
+    // get performance tracker from fixture class
+    plssvm::detail::tracking::performance_tracker &tracker = this->get_performance_tracker();
+
+    // add different tracking entries
+    tracker.add_tracking_entry(plssvm::detail::tracking::tracking_entry{ "foo", "bar", 42 });
+    tracker.add_tracking_entry(plssvm::detail::tracking::tracking_entry{ "foo", "baz", 3.1415 });
+    tracker.add_tracking_entry(plssvm::detail::tracking::tracking_entry{ "foo", "mem", 1_KiB });
+    tracker.add_tracking_entry(plssvm::detail::tracking::tracking_entry{ "", "foobar", 'a' });
+    tracker.add_tracking_entry(plssvm::detail::tracking::tracking_entry{ "", "foobar", 'b' });
+
+    // save (i.e. copy contents as ground truth)
+    const auto entries = tracker.get_tracking_entries();
+    const auto events = tracker.get_events();
+    const auto reference_time = tracker.get_reference_time();
+    const bool is_tracking = tracker.is_tracking();
+
+    // move-construct new performance tracker
+    const plssvm::detail::tracking::performance_tracker tracker2{ std::move(tracker) };
+
+    // check the contents
+    EXPECT_EQ(tracker2.get_tracking_entries(), entries);
+    ASSERT_EQ(tracker2.get_events().num_events(), events.num_events());
+    for (std::size_t i = 0; i < events.num_events(); ++i) {
+        EXPECT_EQ(tracker2.get_events()[i].time_point, events[i].time_point);
+        EXPECT_EQ(tracker2.get_events()[i].name, events[i].name);
+    }
+    EXPECT_EQ(tracker2.get_reference_time(), reference_time);
+    EXPECT_EQ(tracker2.is_tracking(), is_tracking);
+
+    // check moved-from state
+    EXPECT_TRUE(tracker.get_tracking_entries().empty());
+    EXPECT_TRUE(tracker.get_events().empty());
+}
+
+TEST_F(PerformanceTracker, copy_assign) {
+    // get performance tracker from fixture class
+    plssvm::detail::tracking::performance_tracker &tracker = this->get_performance_tracker();
+
+    // add different tracking entries
+    tracker.add_tracking_entry(plssvm::detail::tracking::tracking_entry{ "foo", "bar", 42 });
+    tracker.add_tracking_entry(plssvm::detail::tracking::tracking_entry{ "foo", "baz", 3.1415 });
+    tracker.add_tracking_entry(plssvm::detail::tracking::tracking_entry{ "foo", "mem", 1_KiB });
+    tracker.add_tracking_entry(plssvm::detail::tracking::tracking_entry{ "", "foobar", 'a' });
+    tracker.add_tracking_entry(plssvm::detail::tracking::tracking_entry{ "", "foobar", 'b' });
+
+    // default-construct new performance tracker then copy-assign another performance tracker
+    plssvm::detail::tracking::performance_tracker tracker2{};
+    tracker2 = tracker;
+
+    // check the contents
+    EXPECT_EQ(tracker2.get_tracking_entries(), tracker.get_tracking_entries());
+    ASSERT_EQ(tracker2.get_events().num_events(), tracker.get_events().num_events());
+    for (std::size_t i = 0; i < tracker.get_events().num_events(); ++i) {
+        EXPECT_EQ(tracker2.get_events()[i].time_point, tracker.get_events()[i].time_point);
+        EXPECT_EQ(tracker2.get_events()[i].name, tracker.get_events()[i].name);
+    }
+    EXPECT_EQ(tracker2.get_reference_time(), tracker.get_reference_time());
+    EXPECT_EQ(tracker2.is_tracking(), tracker.is_tracking());
+}
+
+TEST_F(PerformanceTracker, move_assign) {
+    // get performance tracker from fixture class
+    plssvm::detail::tracking::performance_tracker &tracker = this->get_performance_tracker();
+
+    // add different tracking entries
+    tracker.add_tracking_entry(plssvm::detail::tracking::tracking_entry{ "foo", "bar", 42 });
+    tracker.add_tracking_entry(plssvm::detail::tracking::tracking_entry{ "foo", "baz", 3.1415 });
+    tracker.add_tracking_entry(plssvm::detail::tracking::tracking_entry{ "foo", "mem", 1_KiB });
+    tracker.add_tracking_entry(plssvm::detail::tracking::tracking_entry{ "", "foobar", 'a' });
+    tracker.add_tracking_entry(plssvm::detail::tracking::tracking_entry{ "", "foobar", 'b' });
+
+    // save (i.e. copy contents as ground truth)
+    const auto entries = tracker.get_tracking_entries();
+    const auto events = tracker.get_events();
+    const auto reference_time = tracker.get_reference_time();
+    const bool is_tracking = tracker.is_tracking();
+
+    // default-construct new performance tracker then move-assign another performance tracker
+    plssvm::detail::tracking::performance_tracker tracker2{};
+    tracker2 = std::move(tracker);
+
+    // check the contents
+    EXPECT_EQ(tracker2.get_tracking_entries(), entries);
+    ASSERT_EQ(tracker2.get_events().num_events(), events.num_events());
+    for (std::size_t i = 0; i < events.num_events(); ++i) {
+        EXPECT_EQ(tracker2.get_events()[i].time_point, events[i].time_point);
+        EXPECT_EQ(tracker2.get_events()[i].name, events[i].name);
+    }
+    EXPECT_EQ(tracker2.get_reference_time(), reference_time);
+    EXPECT_EQ(tracker2.is_tracking(), is_tracking);
+
+    // check moved-from state
+    EXPECT_TRUE(tracker.get_tracking_entries().empty());
+    EXPECT_TRUE(tracker.get_events().empty());
+}
 
 // the macros are only available if PLSSVM_PERFORMANCE_TRACKER_ENABLED is defined!
 #if defined(PLSSVM_PERFORMANCE_TRACKER_ENABLED)
@@ -197,31 +319,6 @@ TEST_F(PerformanceTracker, add_entry_macro) {
 
     // clear tracking entries for next test
     plssvm::detail::tracking::global_performance_tracker().clear_tracking_entries();
-}
-
-TEST_F(PerformanceTracker, add_hardware_sampler_entry_macro) {
-    using namespace std::chrono_literals;
-
-    // create the mocked hardware sampler
-    const mock_hardware_sampler sampler1{ std::size_t{ 0 }, 50ms };
-    const mock_hardware_sampler sampler2{ std::size_t{ 1 }, 100ms };
-
-    EXPECT_CALL(sampler1, generate_yaml_string(::testing::An<std::chrono::steady_clock::time_point>())).Times(1);
-    EXPECT_CALL(sampler1, device_identification()).Times(1);
-    EXPECT_CALL(sampler2, generate_yaml_string(::testing::An<std::chrono::steady_clock::time_point>())).Times(1);
-    EXPECT_CALL(sampler2, device_identification()).Times(1);
-
-    // save the sampling entries
-    PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_HARDWARE_SAMPLER_ENTRY(sampler1);
-    PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_HARDWARE_SAMPLER_ENTRY(sampler2);
-
-    // get the tracking entries
-    const std::map<std::string, std::map<std::string, std::vector<std::string>>> entries = plssvm::detail::tracking::global_performance_tracker().get_tracking_entries();
-
-    // check entries for correctness
-    ASSERT_EQ(entries.size(), 1);
-
-    EXPECT_EQ(entries.at("hardware_samples").size(), 2);
 }
 
 TEST_F(PerformanceTracker, add_event_macro) {
@@ -354,8 +451,9 @@ TEST_F(PerformanceTracker, add_parser_train_tracking_entry) {
     std::array<std::string, 3> input_argv{ "./plssvm-train", "/path/to/train", "/path/to/model" };
     std::array<char *, input_argv.size()> argv{};
     std::transform(input_argv.begin(), input_argv.end(), argv.begin(), [](std::string &str) { return str.data(); });
+    const auto argc = static_cast<int>(argv.size());
 
-    const plssvm::detail::cmd::parser_train parser{ argv.size(), argv.data() };
+    const plssvm::detail::cmd::parser_train parser{ plssvm::mpi::communicator{}, argc, argv.data() };
 
     // save cmd::parser_train entry
     tracker.add_tracking_entry(plssvm::detail::tracking::tracking_entry{ "parameter", "", parser });
@@ -366,7 +464,7 @@ TEST_F(PerformanceTracker, add_parser_train_tracking_entry) {
     // check entries for correctness
     EXPECT_EQ(entries.size(), 1);
 
-    ASSERT_EQ(entries.at("parameter").size(), 17);
+    ASSERT_EQ(entries.at("parameter").size(), 18);
 }
 
 TEST_F(PerformanceTracker, add_parser_predict_tracking_entry) {
@@ -377,8 +475,9 @@ TEST_F(PerformanceTracker, add_parser_predict_tracking_entry) {
     std::array<std::string, 4> input_argv{ "./plssvm-predict", "/path/to/train", "/path/to/model", "/path/to/predict" };
     std::array<char *, input_argv.size()> argv{};
     std::transform(input_argv.begin(), input_argv.end(), argv.begin(), [](std::string &str) { return str.data(); });
+    const auto argc = static_cast<int>(argv.size());
 
-    const plssvm::detail::cmd::parser_predict parser{ argv.size(), argv.data() };
+    const plssvm::detail::cmd::parser_predict parser{ plssvm::mpi::communicator{}, argc, argv.data() };
 
     // save cmd::parser_predict entry
     tracker.add_tracking_entry(plssvm::detail::tracking::tracking_entry{ "parameter", "", parser });
@@ -389,7 +488,7 @@ TEST_F(PerformanceTracker, add_parser_predict_tracking_entry) {
     // check entries for correctness
     EXPECT_EQ(entries.size(), 1);
 
-    ASSERT_EQ(entries.at("parameter").size(), 9);
+    ASSERT_EQ(entries.at("parameter").size(), 11);
 }
 
 TEST_F(PerformanceTracker, add_parser_scale_tracking_entry) {
@@ -400,8 +499,9 @@ TEST_F(PerformanceTracker, add_parser_scale_tracking_entry) {
     std::array<std::string, 3> input_argv{ "./plssvm-train", "/path/to/train", "/path/to/scaled" };
     std::array<char *, input_argv.size()> argv{};
     std::transform(input_argv.begin(), input_argv.end(), argv.begin(), [](std::string &str) { return str.data(); });
+    const auto argc = static_cast<int>(argv.size());
 
-    const plssvm::detail::cmd::parser_scale parser{ argv.size(), argv.data() };
+    const plssvm::detail::cmd::parser_scale parser{ plssvm::mpi::communicator{}, argc, argv.data() };
 
     // save cmd::parser_scale entry
     tracker.add_tracking_entry(plssvm::detail::tracking::tracking_entry{ "parameter", "", parser });
@@ -413,34 +513,6 @@ TEST_F(PerformanceTracker, add_parser_scale_tracking_entry) {
     EXPECT_EQ(entries.size(), 1);
 
     ASSERT_EQ(entries.at("parameter").size(), 10);
-}
-
-TEST_F(PerformanceTracker, add_hardware_sampler_entry) {
-    using namespace std::chrono_literals;
-
-    // create the mocked hardware sampler
-    const mock_hardware_sampler sampler1{ std::size_t{ 0 }, 50ms };
-    const mock_hardware_sampler sampler2{ std::size_t{ 1 }, 100ms };
-
-    EXPECT_CALL(sampler1, generate_yaml_string(::testing::An<std::chrono::steady_clock::time_point>())).Times(1);
-    EXPECT_CALL(sampler1, device_identification()).Times(1);
-    EXPECT_CALL(sampler2, generate_yaml_string(::testing::An<std::chrono::steady_clock::time_point>())).Times(1);
-    EXPECT_CALL(sampler2, device_identification()).Times(1);
-
-    // get performance tracker from fixture class
-    plssvm::detail::tracking::performance_tracker &tracker = this->get_performance_tracker();
-
-    // save the sampling entries
-    tracker.add_hardware_sampler_entry(sampler1);
-    tracker.add_hardware_sampler_entry(sampler2);
-
-    // get the tracking entries
-    const std::map<std::string, std::map<std::string, std::vector<std::string>>> entries = tracker.get_tracking_entries();
-
-    // check entries for correctness
-    ASSERT_EQ(entries.size(), 1);
-
-    EXPECT_EQ(entries.at("hardware_samples").size(), 2);
 }
 
 TEST_F(PerformanceTracker, add_event) {
@@ -507,6 +579,8 @@ TEST_F(PerformanceTracker, save_entries_to_file) {
     tracker.add_tracking_entry(plssvm::detail::tracking::tracking_entry{ "foo", "mem", 1_KiB });
     tracker.add_tracking_entry(plssvm::detail::tracking::tracking_entry{ "", "foobar", 'a' });
     tracker.add_tracking_entry(plssvm::detail::tracking::tracking_entry{ "", "foobar", 'b' });
+    tracker.add_tracking_entry(plssvm::detail::tracking::tracking_entry{ "dependencies", "backend", "one" });
+    tracker.add_tracking_entry(plssvm::detail::tracking::tracking_entry{ "dependencies", "backend", "two" });
     tracker.save(tmp_file.filename);
 
     // the file must not be empty
@@ -522,9 +596,11 @@ TEST_F(PerformanceTracker, save_entries_to_file) {
     EXPECT_THAT(reader.buffer(), ::testing::HasSubstr("baz: 3.1415"));
     EXPECT_THAT(reader.buffer(), ::testing::HasSubstr("mem: 1024"));
     EXPECT_THAT(reader.buffer(), ::testing::HasSubstr("foobar: [a, b]"));
+    EXPECT_THAT(reader.buffer(), ::testing::HasSubstr("dependencies:"));
+    EXPECT_THAT(reader.buffer(), ::testing::ContainsRegex("backend: .*one, two"));
 
     // the tracking entries must not have changed
-    EXPECT_EQ(tracker.get_tracking_entries().size(), 2);
+    EXPECT_EQ(tracker.get_tracking_entries().size(), 3);
 }
 
 TEST_F(PerformanceTracker, save_entries_empty_file) {
@@ -537,6 +613,8 @@ TEST_F(PerformanceTracker, save_entries_empty_file) {
     tracker.add_tracking_entry(plssvm::detail::tracking::tracking_entry{ "foo", "mem", 1_KiB });
     tracker.add_tracking_entry(plssvm::detail::tracking::tracking_entry{ "", "foobar", 'a' });
     tracker.add_tracking_entry(plssvm::detail::tracking::tracking_entry{ "", "foobar", 'b' });
+    tracker.add_tracking_entry(plssvm::detail::tracking::tracking_entry{ "dependencies", "backend", "one" });
+    tracker.add_tracking_entry(plssvm::detail::tracking::tracking_entry{ "dependencies", "backend", "two" });
     // save to empty file, i.e., dump the performance tracking entries to std::clog
     tracker.save("");
 
@@ -549,9 +627,11 @@ TEST_F(PerformanceTracker, save_entries_empty_file) {
     EXPECT_THAT(this->get_capture(), ::testing::HasSubstr("baz: 3.1415"));
     EXPECT_THAT(this->get_capture(), ::testing::HasSubstr("mem: 1024"));
     EXPECT_THAT(this->get_capture(), ::testing::HasSubstr("foobar: [a, b]"));
+    EXPECT_THAT(this->get_capture(), ::testing::HasSubstr("dependencies:"));
+    EXPECT_THAT(this->get_capture(), ::testing::ContainsRegex("backend: .*one, two"));
 
     // the tracking entries must not have changed
-    EXPECT_EQ(tracker.get_tracking_entries().size(), 2);
+    EXPECT_EQ(tracker.get_tracking_entries().size(), 3);
 }
 
 TEST_F(PerformanceTracker, get_tracking_entries) {

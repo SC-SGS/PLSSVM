@@ -1,0 +1,142 @@
+{
+  "version": 6,
+  "include": [
+    "common.json"
+  ],
+  "configurePresets": [
+    {
+      "name": "opencl",
+      "displayName": "OpenCL backend",
+      "inherits": "build",
+      "cacheVariables": {
+        "PLSSVM_ENABLE_OPENCL_BACKEND": "ON"
+      }
+    },
+    {
+      "name": "opencl_python",
+      "displayName": "OpenCL backend + Python bindings",
+      "inherits": "build",
+      "cacheVariables": {
+        "PLSSVM_ENABLE_OPENCL_BACKEND": "ON",
+        "PLSSVM_ENABLE_LANGUAGE_BINDINGS": "ON",
+        "PLSSVM_ENABLE_PYTHON_BINDINGS": "ON"
+      }
+    },
+    {
+      "name": "opencl_test",
+      "displayName": "OpenCL backend tests",
+      "inherits": "test",
+      "cacheVariables": {
+        "PLSSVM_ENABLE_OPENCL_BACKEND": "ON"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "opencl",
+      "displayName": "OpenCL backend",
+      "configurePreset": "opencl",
+      "configuration": "RelWithDebInfo",
+      "inherits": "common"
+    },
+    {
+      "name": "opencl_python",
+      "displayName": "OpenCL backend + Python bindings",
+      "configurePreset": "opencl_python",
+      "configuration": "RelWithDebInfo",
+      "inherits": "common"
+    },
+    {
+      "name": "opencl_test",
+      "displayName": "OpenCL backend tests",
+      "configurePreset": "opencl_test",
+      "configuration": "Debug",
+      "inherits": "common"
+    }
+  ],
+  "testPresets": [
+    {
+      "name": "opencl_test",
+      "displayName": "OpenCL backend all tests",
+      "configurePreset": "opencl_test",
+      "inherits": "common"
+    },
+    {
+      "name": "opencl_backend_test",
+      "displayName": "OpenCL backend specific tests",
+      "configurePreset": "opencl_test",
+      "inherits": "common",
+      "filter": {
+        "include": {
+          "name": "OpenCL.*"
+        }
+      }
+    }
+  ],
+  "workflowPresets": [
+    {
+      "name": "opencl",
+      "displayName": "OpenCL backend workflow",
+      "steps": [
+        {
+          "name": "opencl",
+          "type": "configure"
+        },
+        {
+          "name": "opencl",
+          "type": "build"
+        }
+      ]
+    },
+    {
+      "name": "opencl_python",
+      "displayName": "OpenCL backend + Python bindings workflow",
+      "steps": [
+        {
+          "name": "opencl_python",
+          "type": "configure"
+        },
+        {
+          "name": "opencl_python",
+          "type": "build"
+        }
+      ]
+    },
+    {
+      "name": "opencl_test",
+      "displayName": "OpenCL test workflow",
+      "steps": [
+        {
+          "name": "opencl_test",
+          "type": "configure"
+        },
+        {
+          "name": "opencl_test",
+          "type": "build"
+        },
+        {
+          "name": "opencl_test",
+          "type": "test"
+        }
+      ]
+    },
+    {
+      "name": "opencl_backend_test",
+      "displayName": "OpenCL backend test workflow",
+      "steps": [
+        {
+          "name": "opencl_test",
+          "type": "configure"
+        },
+        {
+          "name": "opencl_test",
+          "type": "build"
+        },
+        {
+          "name": "opencl_backend_test",
+          "type": "test"
+        }
+      ]
+    }
+  ]
+}

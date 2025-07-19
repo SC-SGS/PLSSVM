@@ -8,24 +8,27 @@
 
 #include "plssvm/detail/cmd/parser_scale.hpp"
 
-#include "plssvm/detail/assert.hpp"                                // PLSSVM_ASSERT
-#include "plssvm/detail/logging_without_performance_tracking.hpp"  // plssvm::detail::log_untracked
-#include "plssvm/verbosity_levels.hpp"                             // plssvm::verbosity, plssvm::verbosity_level
-#include "plssvm/version/version.hpp"                              // plssvm::version::detail::get_version_info
+#include "plssvm/detail/assert.hpp"                     // PLSSVM_ASSERT
+#include "plssvm/detail/logging/mpi_log_untracked.hpp"  // plssvm::detail::log_untracked
+#include "plssvm/exceptions/exceptions.hpp"             // plssvm::cmd_parser_exit
+#include "plssvm/mpi/communicator.hpp"                  // plssvm::mpi::communicator
+#include "plssvm/mpi/environment.hpp"                   // plssvm::mpi::{is_active, finalize}
+#include "plssvm/verbosity_levels.hpp"                  // plssvm::verbosity, plssvm::verbosity_level
+#include "plssvm/version/version.hpp"                   // plssvm::version::detail::get_version_info
 
-#include "cxxopts.hpp"    // cxxopts::{Options, value, ParseResult}
-#include "fmt/color.h"    // fmt::fg, fmt::color::red
+#include "cxxopts.hpp"   // cxxopts::{Options, value, ParseResult}
+#include "fmt/color.h"   // fmt::fg, fmt::color::red
 #include "fmt/format.h"  // fmt::format
 #include "fmt/ranges.h"  // fmt::join
 
-#include <cstdlib>      // std::exit, EXIT_SUCCESS, EXIT_FAILURE
+#include <cstdlib>      // EXIT_SUCCESS, EXIT_FAILURE
 #include <exception>    // std::exception
 #include <iostream>     // std::cout, std::cerr, std::endl
 #include <type_traits>  // std::is_same_v
 
 namespace plssvm::detail::cmd {
 
-parser_scale::parser_scale(int argc, char **argv) {
+parser_scale::parser_scale(const mpi::communicator &comm, int argc, char **argv) {
     // check for basic argc and argv correctness
     PLSSVM_ASSERT(argc >= 1, fmt::format("At least one argument is always given (the executable name), but argc is {}!", argc));
     PLSSVM_ASSERT(argv != nullptr, "At least one argument is always given (the executable name), but argv is a nullptr!");
@@ -63,28 +66,36 @@ parser_scale::parser_scale(int argc, char **argv) {
         options.parse_positional({ "input", "scaled" });
         result = options.parse(argc, argv);
     } catch (const std::exception &e) {
-        std::cerr << fmt::format(fmt::fg(fmt::color::red), "ERROR: {}\n", e.what()) << std::endl;
-        std::cout << options.help() << std::endl;
-        std::exit(EXIT_FAILURE);
+        if (comm.is_main_rank()) {
+            std::cerr << fmt::format(fmt::fg(fmt::color::red), "ERROR: {}\n", e.what()) << std::endl;
+            std::cout << options.help() << std::endl;
+        }
+        throw cmd_parser_exit{ EXIT_FAILURE };
     }
 
     // print help message and exit
     if (result.count("help")) {
-        std::cout << options.help() << std::endl;
-        std::exit(EXIT_SUCCESS);
+        if (comm.is_main_rank()) {
+            std::cout << options.help() << std::endl;
+        }
+        throw cmd_parser_exit{ EXIT_SUCCESS };
     }
 
     // print version info
     if (result.count("version")) {
-        std::cout << version::detail::get_version_info("plssvm-scale", false) << std::endl;
-        std::exit(EXIT_SUCCESS);
+        if (comm.is_main_rank()) {
+            std::cout << version::detail::get_version_info("plssvm-scale", false) << std::endl;
+        }
+        throw cmd_parser_exit{ EXIT_SUCCESS };
     }
 
     // check if the number of positional arguments is not too large
     if (!result.unmatched().empty()) {
-        std::cerr << fmt::format(fmt::fg(fmt::color::red), "ERROR: only up to two positional options may be given, but {} (\"{}\") additional option(s) where provided!\n", result.unmatched().size(), fmt::join(result.unmatched(), " ")) << std::endl;
-        std::cout << options.help() << std::endl;
-        std::exit(EXIT_FAILURE);
+        if (comm.is_main_rank()) {
+            std::cerr << fmt::format(fmt::fg(fmt::color::red), "ERROR: only up to two positional options may be given, but {} (\"{}\") additional option(s) where provided!\n", result.unmatched().size(), fmt::join(result.unmatched(), " ")) << std::endl;
+            std::cout << options.help() << std::endl;
+        }
+        throw cmd_parser_exit{ EXIT_FAILURE };
     }
 
     // parse the lowest allowed value
@@ -95,9 +106,11 @@ parser_scale::parser_scale(int argc, char **argv) {
 
     // lower must be strictly less than upper!
     if (lower >= upper) {
-        std::cerr << fmt::format(fmt::fg(fmt::color::red), "ERROR: invalid scaling range [lower, upper] with [{}, {}]!\n", lower, upper) << std::endl;
-        std::cout << options.help() << std::endl;
-        std::exit(EXIT_FAILURE);
+        if (comm.is_main_rank()) {
+            std::cerr << fmt::format(fmt::fg(fmt::color::red), "ERROR: invalid scaling range [lower, upper] with [{}, {}]!\n", lower, upper) << std::endl;
+            std::cout << options.help() << std::endl;
+        }
+        throw cmd_parser_exit{ EXIT_FAILURE };
     }
 
     // parse the file format
@@ -114,6 +127,7 @@ parser_scale::parser_scale(int argc, char **argv) {
         const verbosity_level verb = result["verbosity"].as<verbosity_level>();
         if (quiet && verb != verbosity_level::quiet) {
             detail::log_untracked(verbosity_level::full | verbosity_level::warning,
+                                  comm,
                                   "WARNING: explicitly set the -q/--quiet flag, but the provided verbosity level isn't \"quiet\"; setting --verbosity={} to --verbosity=quiet\n",
                                   verb);
             verbosity = verbosity_level::quiet;
@@ -126,9 +140,11 @@ parser_scale::parser_scale(int argc, char **argv) {
 
     // parse input data filename
     if (!result.count("input")) {
-        std::cerr << fmt::format(fmt::fg(fmt::color::red), "ERROR: missing input file!\n") << std::endl;
-        std::cout << options.help() << std::endl;
-        std::exit(EXIT_FAILURE);
+        if (comm.is_main_rank()) {
+            std::cerr << fmt::format(fmt::fg(fmt::color::red), "ERROR: missing input file!\n") << std::endl;
+            std::cout << options.help() << std::endl;
+        }
+        throw cmd_parser_exit{ EXIT_FAILURE };
     }
     input_filename = result["input"].as<decltype(input_filename)>();
 
@@ -139,9 +155,11 @@ parser_scale::parser_scale(int argc, char **argv) {
 
     // can only use one of save_filename or restore_filename
     if (result.count("save_filename") && result.count("restore_filename")) {
-        std::cerr << fmt::format(fmt::fg(fmt::color::red), "ERROR: cannot use -s (--save_filename) and -r (--restore_filename) simultaneously!\n") << std::endl;
-        std::cout << options.help() << std::endl;
-        std::exit(EXIT_FAILURE);
+        if (comm.is_main_rank()) {
+            std::cerr << fmt::format(fmt::fg(fmt::color::red), "ERROR: cannot use -s (--save_filename) and -r (--restore_filename) simultaneously!\n") << std::endl;
+            std::cout << options.help() << std::endl;
+        }
+        throw cmd_parser_exit{ EXIT_FAILURE };
     }
 
     // parse the file name to save the calculated weights to
@@ -153,15 +171,18 @@ parser_scale::parser_scale(int argc, char **argv) {
     if (result.count("restore_filename")) {
         if (result.count("lower") || result.count("upper")) {
             detail::log_untracked(verbosity_level::full | verbosity_level::warning,
+                                  comm,
                                   "WARNING: provided -l (--lower) and/or -u (--upper) together with -r (--restore_filename); ignoring -l/-u\n");
         }
         restore_filename = result["restore_filename"].as<decltype(restore_filename)>();
     }
 
+#if defined(PLSSVM_PERFORMANCE_TRACKER_ENABLED)
     // parse performance tracking filename
     if (result.count("performance_tracking")) {
         performance_tracking_filename = result["performance_tracking"].as<decltype(performance_tracking_filename)>();
     }
+#endif
 }
 
 std::ostream &operator<<(std::ostream &out, const parser_scale &params) {

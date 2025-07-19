@@ -34,7 +34,7 @@ enum class verbosity_level {
     timing = 0b0010,
     /** Log all messages related to warnings. */
     warning = 0b0100,
-    /** Log all messages (i.e., timing, warning, and additional messages). */
+    /** Log all messages (i.e., timing, warning, and additional messages except LIBSVM specific messages). */
     full = 0b1000
 };
 
@@ -92,7 +92,11 @@ verbosity_level operator&=(verbosity_level &lhs, verbosity_level rhs);
 
 }  // namespace plssvm
 
+/// @cond Doxygen_suppress
+
 template <>
 struct fmt::formatter<plssvm::verbosity_level> : fmt::ostream_formatter { };
+
+/// @endcond
 
 #endif  // PLSSVM_VERBOSITY_LEVELS_HPP_

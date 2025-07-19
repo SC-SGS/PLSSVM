@@ -46,13 +46,13 @@ TEST_P(ARFFParseHeaderValid, header) {
     const std::string filename = fmt::format("{}{}", PLSSVM_TEST_PATH, filename_part);
     plssvm::detail::io::file_reader reader{ filename };
     reader.read_lines('%');
-    const auto &[parsed_num_features, parsed_header_skip, unique_label, parsed_label_idx] = plssvm::detail::io::parse_arff_header<int>(reader.lines());
+    const auto &[parsed_num_features, parsed_header_skip, has_label_found, unique_label, parsed_label_idx] = plssvm::detail::io::parse_arff_header<int>(reader.lines());
 
     // check for correctness
     EXPECT_EQ(parsed_num_features, num_features);
     EXPECT_EQ(parsed_header_skip, header_skip);
-    EXPECT_EQ(!unique_label.empty(), has_label);
-    if (has_label) {
+    EXPECT_EQ(has_label_found, has_label);
+    if (has_label && !unique_label.empty()) {
         EXPECT_EQ(unique_label, (std::set<int>{ -1, 1 }));
     }
     EXPECT_EQ(parsed_label_idx, label_idx);
@@ -60,8 +60,8 @@ TEST_P(ARFFParseHeaderValid, header) {
 
 // clang-format off
 INSTANTIATE_TEST_SUITE_P(ARFFParse, ARFFParseHeaderValid, ::testing::Values(
-                                                     std::make_tuple("/data/arff/5x4.arff", 4, 7, true, 4),
-                                                     std::make_tuple("/data/arff/5x4_sparse.arff", 4, 7, true, 2),
+                                                     std::make_tuple("/data/arff/classification/5x4.arff", 4, 7, true, 4),
+                                                     std::make_tuple("/data/arff/classification/5x4_sparse.arff", 4, 7, true, 2),
                                                      std::make_tuple("/data/arff/3x2_without_label.arff", 2, 4, false, 0)));
 // clang-format on
 
@@ -73,16 +73,6 @@ TEST(ARFFParseHeader, class_unquoted_nominal_attribute) {
     EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_arff_header<int>(reader.lines())),
                       plssvm::invalid_file_format_exception,
                       R"(The "@ATTRIBUTE class    0,1" nominal attribute must be enclosed with {}!)");
-}
-
-TEST(ARFFParseHeader, class_with_wrong_label) {
-    // parse the ARFF file
-    const std::string filename = PLSSVM_TEST_PATH "/data/arff/invalid/class_with_wrong_label.arff";
-    plssvm::detail::io::file_reader reader{ filename };
-    reader.read_lines('%');
-    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_arff_header<int>(reader.lines())),
-                      plssvm::invalid_file_format_exception,
-                      R"(May not use the combination of the reserved name "class" and attribute type NUMERIC!)");
 }
 
 TEST(ARFFParseHeader, class_without_label) {
@@ -221,7 +211,7 @@ class ARFFParseDense : public ARFFParse<T>,
 
     void SetUp() override {
         // create file used in this test fixture by instantiating the template file
-        util::instantiate_template_file<fixture_label_type>(PLSSVM_TEST_PATH "/data/arff/6x4_TEMPLATE.arff", this->filename);
+        util::instantiate_template_file<fixture_label_type>(PLSSVM_TEST_PATH "/data/arff/classification/6x4_TEMPLATE.arff", this->filename);
     }
 
     /**
@@ -259,7 +249,7 @@ class ARFFParseSparse : public ARFFParse<T>,
 
     void SetUp() override {
         // create file used in this test fixture by instantiating the template file
-        util::instantiate_template_file<fixture_label_type>(PLSSVM_TEST_PATH "/data/arff/6x4_sparse_TEMPLATE.arff", this->filename);
+        util::instantiate_template_file<fixture_label_type>(PLSSVM_TEST_PATH "/data/arff/classification/6x4_sparse_TEMPLATE.arff", this->filename);
     }
 
     /**
@@ -492,7 +482,7 @@ TYPED_TEST(ARFFParse, libsvm_file) {
     using label_type = typename TestFixture::fixture_label_type;
 
     // parse the ARFF file
-    const std::string filename = PLSSVM_TEST_PATH "/data/libsvm/5x4.libsvm";
+    const std::string filename = PLSSVM_TEST_PATH "/data/libsvm/classification/5x4.libsvm";
     plssvm::detail::io::file_reader reader{ filename };
     reader.read_lines('#');
     EXPECT_THROW(std::ignore = (plssvm::detail::io::parse_arff_data<label_type>(reader)), plssvm::invalid_file_format_exception);

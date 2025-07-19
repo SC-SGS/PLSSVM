@@ -65,7 +65,11 @@ std::istream &operator>>(std::istream &in, classification_type &classification);
 
 }  // namespace plssvm
 
+/// @cond Doxygen_suppress
+
 template <>
 struct fmt::formatter<plssvm::classification_type> : fmt::ostream_formatter { };
+
+/// @endcond
 
 #endif  // PLSSVM_CLASSIFICATION_TYPES_HPP_

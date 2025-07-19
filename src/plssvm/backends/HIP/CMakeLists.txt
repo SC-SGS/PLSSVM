@@ -1,7 +1,7 @@
-## Authors: Alexander Van Craen, Marcel Breyer
-## Copyright (C): 2018-today The PLSSVM project - All Rights Reserved
-## License: This file is part of the PLSSVM project which is released under the MIT license.
-##          See the LICENSE.md file in the project root for full license information.
+# Authors: Alexander Van Craen, Marcel Breyer
+# Copyright (C): 2018-today The PLSSVM project - All Rights Reserved
+# License: This file is part of the PLSSVM project which is released under the MIT license.
+#          See the LICENSE.md file in the project root for full license information.
 ########################################################################################################################
 
 list(APPEND CMAKE_MESSAGE_INDENT "HIP:  ")
@@ -9,52 +9,81 @@ list(APPEND CMAKE_MESSAGE_INDENT "HIP:  ")
 # check if HIP can be enabled
 message(CHECK_START "Checking for HIP backend")
 
-# if both NVIDIA and AMD targets are available, the HIP backend is disabled
-if (DEFINED PLSSVM_AMD_TARGET_ARCHS AND DEFINED PLSSVM_NVIDIA_TARGET_ARCHS)
-    message(SEND_ERROR "Found AMD and NVIDIA targets, but only one of them are supported for the HIP backend!")
-    message(CHECK_FAIL "skipped")
-    return()
-endif ()
-
-# set used HIP target based on the provided PLSSVM target archs
-if (DEFINED PLSSVM_AMD_TARGET_ARCHS)
-    set_local_and_parent(PLSSVM_HIP_BACKEND_GPU_RUNTIME "HIP")
-elseif (DEFINED PLSSVM_NVIDIA_TARGET_ARCHS)
-    set_local_and_parent(PLSSVM_HIP_BACKEND_GPU_RUNTIME "CUDA")
-else ()
-    if (PLSSVM_ENABLE_HIP_BACKEND MATCHES "ON")
-        message(SEND_ERROR "Found no AMD or NVIDIA targets for the requested HIP backend!")
-    else ()
-        message(STATUS "Found HIP backend, but no \"amd\" targets were specified!")
-    endif ()
-    message(CHECK_FAIL "skipped")
-    return()
-endif ()
-
 # check if HIP_PLATFORM is provided as environment variable
 if (DEFINED ENV{HIP_PLATFORM})
-    # check if the environment variable is correctly defined
-    if ((DEFINED PLSSVM_AMD_TARGET_ARCHS AND NOT $ENV{HIP_PLATFORM} MATCHES "amd") OR (DEFINED PLSSVM_NVIDIA_TARGET_ARCHS AND NOT $ENV{HIP_PLATFORM} MATCHES "nvidia"))
-        if (PLSSVM_ENABLE_HIP_BACKEND MATCHES "ON")
-            message(SEND_ERROR "Found invalid \"HIP_PLATFORM\" value ($ENV{HIP_PLATFORM}) for the requested HIP backend!")
+    # the HIP_PLATFORM environment variable is defined
+    if ("$ENV{HIP_PLATFORM}" STREQUAL "amd")
+        # we want to target AMD GPUs according to the provided HIP_PLATFORM
+        if (DEFINED PLSSVM_AMD_TARGET_ARCHS)
+            # found AMD target
+            set_local_and_parent(PLSSVM_HIP_BACKEND_GPU_RUNTIME "HIP")
         else ()
-            message(STATUS "Found invalid \"HIP_PLATFORM\" value ($ENV{HIP_PLATFORM}) for the HIP backend!")
+            # no AMD targets provided
+            if (PLSSVM_ENABLE_HIP_BACKEND MATCHES "ON")
+                message(SEND_ERROR "The \"HIP_PLATFORM\" is \"amd\" but no \"amd\" target was provided for the requested HIP backend!")
+            else ()
+                message(STATUS "The \"HIP_PLATFORM\" is \"amd\" but no \"amd\" target was provided for the HIP backend!")
+            endif ()
+            message(CHECK_FAIL "skipped")
+            return()
+        endif ()
+    elseif ("$ENV{HIP_PLATFORM}" STREQUAL "nvidia")
+        # we want to target NVIDIA GPUs according to the provided HIP_PLATFORM
+        if (DEFINED PLSSVM_NVIDIA_TARGET_ARCHS)
+            # found NVIDIA target
+            set_local_and_parent(PLSSVM_HIP_BACKEND_GPU_RUNTIME "CUDA")
+        else ()
+            # no NVIDIA targets provided
+            if (PLSSVM_ENABLE_HIP_BACKEND MATCHES "ON")
+                message(SEND_ERROR "The \"HIP_PLATFORM\" is \"nvidia\" but no \"nvidia\" target was provided for the requested HIP backend!")
+            else ()
+                message(STATUS "The \"HIP_PLATFORM\" is \"nvidia\" but no \"nvidia\" target was provided for the HIP backend!")
+            endif ()
+            message(CHECK_FAIL "skipped")
+            return()
+        endif ()
+    else ()
+        # invalid HIP_PLATFORM
+        if (PLSSVM_ENABLE_HIP_BACKEND MATCHES "ON")
+            message(SEND_ERROR "Found invalid \"HIP_PLATFORM\" value \"$ENV{HIP_PLATFORM}\" for the requested HIP backend!")
+        else ()
+            message(STATUS "Found invalid \"HIP_PLATFORM\" value \"$ENV{HIP_PLATFORM}\" for the HIP backend!")
         endif ()
         message(CHECK_FAIL "skipped")
         return()
-    else ()
-        message(STATUS "Using \"HIP_PLATFORM=$ENV{HIP_PLATFORM}\".")
     endif ()
 else ()
-    # environment variable is not defined -> we set it
-    if (DEFINED PLSSVM_AMD_TARGET_ARCHS)
+    # environment variable not defined -> try inferring it using the provided PLSSVM target platforms
+    if (DEFINED PLSSVM_AMD_TARGET_ARCHS AND DEFINED PLSSVM_NVIDIA_TARGET_ARCHS)
+        # we try to target NVIDIA and AMD GPUs
+        if (PLSSVM_ENABLE_HIP_BACKEND MATCHES "ON")
+            message(SEND_ERROR "Found \"amd\" and \"nvidia\" targets for the requested HIP backend, but only one of them are supported for the HIP backend!")
+        else ()
+            message(STATUS "Found \"amd\" and \"nvidia\" targets for the HIP backend, but only one of them are supported for the HIP backend.")
+        endif ()
+        message(CHECK_FAIL "skipped")
+        return()
+    elseif (DEFINED PLSSVM_AMD_TARGET_ARCHS)
+        # we target AMD GPUs but NO NVIDIA GPUs -> infer HIP_PLATFORM as amd
         set(ENV{HIP_PLATFORM} "amd")
         set(HIP_PLATFORM "amd" CACHE STRING "set the HIP_PLATFORM to AMD" FORCE)
         set(CMAKE_HIP_PLATFORM "amd" CACHE STRING "set the HIP_PLATFORM to AMD" FORCE)
+        set_local_and_parent(PLSSVM_HIP_BACKEND_GPU_RUNTIME "HIP")
     elseif (DEFINED PLSSVM_NVIDIA_TARGET_ARCHS)
+        # we target NVIDIA GPUs but NO AMD GPUs -> infer HIP_PLATFORM as nvidia
         set(ENV{HIP_PLATFORM} "nvidia")
         set(HIP_PLATFORM "nvidia" CACHE STRING "set the HIP_PLATFORM to NVIDIA" FORCE)
         set(CMAKE_HIP_PLATFORM "nvidia" CACHE STRING "set the HIP_PLATFORM to NVIDIA" FORCE)
+        set_local_and_parent(PLSSVM_HIP_BACKEND_GPU_RUNTIME "CUDA")
+    else ()
+        # no AMD or NVIDIA GPUs requested -> can't find HIP
+        if (PLSSVM_ENABLE_HIP_BACKEND MATCHES "ON")
+            message(SEND_ERROR "Found no \"amd\" or \"nvidia\" targets for the requested HIP backend!")
+        else ()
+            message(STATUS "Found no \"amd\" or \"nvidia\" targets for the HIP backend.")
+        endif ()
+        message(CHECK_FAIL "skipped")
+        return()
     endif ()
     message(STATUS "Environment variable \"HIP_PLATFORM\" is not defined. Setting it to \"$ENV{HIP_PLATFORM}\"")
 endif ()
@@ -71,7 +100,8 @@ if (NOT CMAKE_${PLSSVM_HIP_BACKEND_GPU_RUNTIME}_COMPILER)
 endif ()
 
 enable_language(${PLSSVM_HIP_BACKEND_GPU_RUNTIME})
-find_package(HIP QUIET)
+# always necessary (also with HIP_PLATFORM nvidia) in order to be able to link against hip:: targets
+find_package(HIP)
 if (NOT HIP_FOUND)
     if (PLSSVM_ENABLE_HIP_BACKEND MATCHES "ON")
         message(SEND_ERROR "Cannot find requested backend: HIP!")
@@ -83,13 +113,15 @@ if (NOT HIP_FOUND)
 endif ()
 message(CHECK_PASS "found")
 
-## set necessary flags
+# set necessary flags
 set(CMAKE_HIP_STANDARD 17)
 set(CMAKE_HIP_STANDARD_REQUIRED ON)
 
 if (DEFINED PLSSVM_AMD_TARGET_ARCHS)
-    ## hipcc is used to compile the HIP code -> set flags accordingly
-    set(CMAKE_HIP_FLAGS "${CMAKE_HIP_FLAGS} -std=c++17 -Wall -Wextra -Wdouble-promotion -Wshadow -Wcast-qual -Wnull-dereference -Wextra-semi -Wunreachable-code -Wuninitialized -Wmost -Wconversion")
+    # hipcc is used to compile the HIP code -> set flags accordingly
+    set(CMAKE_HIP_FLAGS
+        "${CMAKE_HIP_FLAGS} -std=c++17 -Wall -Wextra -Wdouble-promotion -Wshadow -Wcast-qual -Wnull-dereference -Wextra-semi -Wunreachable-code -Wuninitialized -Wmost -Wconversion"
+    )
     # build type specific flags
     set(CMAKE_HIP_FLAGS_RELWITHDEBINFO "${CMAKE_HIP_FLAGS_RELWITHDEBINFO} -O2")
     set(CMAKE_HIP_FLAGS_RELEASE "${CMAKE_HIP_FLAGS_RELEASE} -O3")
@@ -98,7 +130,7 @@ if (DEFINED PLSSVM_AMD_TARGET_ARCHS)
         set(CMAKE_HIP_FLAGS "${CMAKE_HIP_FLAGS} -ffast-math")
     endif ()
 elseif (DEFINED PLSSVM_NVIDIA_TARGET_ARCHS)
-    ## nvcc is used to compile the HIP code -> set flags accordingly
+    # nvcc is used to compile the HIP code -> set flags accordingly
     set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -Xcompiler '-fPIC' -Xcudafe --diag_suppress=unsigned_compare_with_zero -lineinfo")
     # build type specific flags
     set(CMAKE_CUDA_FLAGS_DEBUG "${CMAKE_CUDA_FLAGS_DEBUG} -Xptxas=-v -Xptxas -dlcm=cg -Xcudafe --diag_suppress=unrecognized_gcc_pragma")
@@ -130,8 +162,7 @@ set_source_files_properties(${PLSSVM_HIP_SOURCES} PROPERTIES LANGUAGE ${PLSSVM_H
 set_local_and_parent(PLSSVM_HIP_BACKEND_LIBRARY_NAME plssvm-HIP)
 add_library(${PLSSVM_HIP_BACKEND_LIBRARY_NAME} SHARED ${PLSSVM_HIP_SOURCES})
 
-# https://gitlab.kitware.com/cmake/cmake/-/issues/23210
-#set_target_properties(${PLSSVM_HIP_BACKEND_LIBRARY_NAME} PROPERTIES HIP_SEPARABLE_COMPILATION ON)
+# set_target_properties(${PLSSVM_HIP_BACKEND_LIBRARY_NAME} PROPERTIES HIP_SEPARABLE_COMPILATION ON) #< https://gitlab.kitware.com/cmake/cmake/-/issues/23210
 
 target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC -Wno-sign-compare)
 

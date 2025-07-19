@@ -185,7 +185,6 @@ template <typename real_type, plssvm::layout_type layout>
 template <typename real_type>
 [[nodiscard]] plssvm::aos_matrix<real_type> predict_values(const plssvm::parameter &params, const plssvm::soa_matrix<real_type> &w, const plssvm::aos_matrix<real_type> &weights, const std::vector<real_type> &rho, const plssvm::soa_matrix<real_type> &support_vectors, const plssvm::soa_matrix<real_type> &predict_points, std::size_t row_offset, std::size_t device_specific_num_rows);
 
-
 }  // namespace detail
 
 /**

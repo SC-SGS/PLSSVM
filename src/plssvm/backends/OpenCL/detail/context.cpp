@@ -18,12 +18,12 @@ namespace plssvm::opencl::detail {
 context::context(cl_context p_device_context, cl_platform_id p_platform, cl_device_id p_device) :
     device_context{ p_device_context },
     platform{ p_platform },
-    device{ p_device } { }
+    device{ std::move(p_device) } { }
 
 context::context(context &&other) noexcept :
     device_context{ std::exchange(other.device_context, nullptr) },
     platform{ std::exchange(other.platform, nullptr) },
-    device{ other.device } { }
+    device{ std::move(other.device) } { }
 
 context &context::operator=(context &&other) noexcept {
     if (this != std::addressof(other)) {

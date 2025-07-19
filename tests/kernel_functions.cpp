@@ -61,7 +61,7 @@ class KernelFunctionVector : public ::testing::Test {
     std::vector<std::array<plssvm::real_type, 4>> param_values_{
         std::array{ plssvm::real_type{ 3.0 }, plssvm::real_type{ 0.05 }, plssvm::real_type{ 1.0 }, plssvm::real_type{ 1.0 } },
         std::array{ plssvm::real_type{ 1.0 }, plssvm::real_type{ 0.0 }, plssvm::real_type{ 0.0 }, plssvm::real_type{ 1.0 } },
-        std::array{ plssvm::real_type{ 4.0 }, plssvm::real_type{ -0.05 }, plssvm::real_type{ 1.5 }, plssvm::real_type{ 1.0 } },
+        std::array{ plssvm::real_type{ 4.0 }, plssvm::real_type{ 0.01 }, plssvm::real_type{ 1.5 }, plssvm::real_type{ 1.0 } },
         std::array{ plssvm::real_type{ 2.0 }, plssvm::real_type{ 0.025 }, plssvm::real_type{ -1.0 }, plssvm::real_type{ 0.5 } },
     };
 };
@@ -371,16 +371,7 @@ TYPED_TEST(KernelFunctionMatrix, linear_kernel_function_variadic) {
             for (std::size_t i = 0; i < matr1.num_rows(); ++i) {
                 for (std::size_t j = 0; j < matr1.num_rows(); ++j) {
                     SCOPED_TRACE(fmt::format("i: {}; j: {}", i, j));
-
-                    // create vectors for ground truth calculation
-                    std::vector<real_type> x1(matr1.num_cols());
-                    std::vector<real_type> x2(matr2.num_cols());
-                    for (std::size_t dim = 0; dim < matr1.num_cols(); ++dim) {
-                        x1[dim] = matr1(i, dim);
-                        x2[dim] = matr2(j, dim);
-                    }
-
-                    EXPECT_FLOATING_POINT_NEAR(plssvm::kernel_function<plssvm::kernel_function_type::linear>(matr1, i, matr2, j), ground_truth::detail::linear_kernel(x1, x2));
+                    EXPECT_FLOATING_POINT_NEAR(plssvm::kernel_function<plssvm::kernel_function_type::linear>(matr1, i, matr2, j), ground_truth::detail::linear_kernel(matr1, i, matr2, j));
                 }
             }
         }
@@ -404,17 +395,8 @@ TYPED_TEST(KernelFunctionMatrix, linear_kernel_function_parameter) {
             for (std::size_t i = 0; i < matr1.num_rows(); ++i) {
                 for (std::size_t j = 0; j < matr1.num_rows(); ++j) {
                     SCOPED_TRACE(fmt::format("i: {}; j: {}", i, j));
-
-                    // create vectors for ground truth calculation
-                    std::vector<real_type> x1(matr1.num_cols());
-                    std::vector<real_type> x2(matr2.num_cols());
-                    for (std::size_t dim = 0; dim < matr1.num_cols(); ++dim) {
-                        x1[dim] = matr1(i, dim);
-                        x2[dim] = matr2(j, dim);
-                    }
-
                     const plssvm::parameter params{ plssvm::kernel_function_type::linear, static_cast<int>(degree), gamma, coef0, cost };
-                    EXPECT_FLOATING_POINT_NEAR(plssvm::kernel_function(matr1, i, matr2, j, params), ground_truth::detail::linear_kernel(x1, x2));
+                    EXPECT_FLOATING_POINT_NEAR(plssvm::kernel_function(matr1, i, matr2, j, params), ground_truth::detail::linear_kernel(matr1, i, matr2, j));
                 }
             }
         }
@@ -438,19 +420,11 @@ TYPED_TEST(KernelFunctionMatrix, polynomial_kernel_function_variadic) {
             for (std::size_t i = 0; i < matr1.num_rows(); ++i) {
                 for (std::size_t j = 0; j < matr1.num_rows(); ++j) {
                     SCOPED_TRACE(fmt::format("i: {}; j: {}", i, j));
-
-                    // create vectors for ground truth calculation
-                    std::vector<real_type> x1(matr1.num_cols());
-                    std::vector<real_type> x2(matr2.num_cols());
-                    for (std::size_t dim = 0; dim < matr1.num_cols(); ++dim) {
-                        x1[dim] = matr1(i, dim);
-                        x2[dim] = matr2(j, dim);
-                    }
-
                     const auto degree_p = static_cast<int>(degree);
                     const auto gamma_p = static_cast<real_type>(gamma);
                     const auto coef0_p = static_cast<real_type>(coef0);
-                    EXPECT_FLOATING_POINT_NEAR(plssvm::kernel_function<plssvm::kernel_function_type::polynomial>(matr1, i, matr2, j, degree_p, gamma_p, coef0_p), ground_truth::detail::polynomial_kernel(x1, x2, degree_p, gamma_p, coef0_p));
+                    EXPECT_FLOATING_POINT_NEAR(plssvm::kernel_function<plssvm::kernel_function_type::polynomial>(matr1, i, matr2, j, degree_p, gamma_p, coef0_p),
+                                               ground_truth::detail::polynomial_kernel(matr1, i, matr2, j, degree_p, gamma_p, coef0_p));
                 }
             }
         }
@@ -474,18 +448,9 @@ TYPED_TEST(KernelFunctionMatrix, polynomial_kernel_function_parameter) {
             for (std::size_t i = 0; i < matr1.num_rows(); ++i) {
                 for (std::size_t j = 0; j < matr1.num_rows(); ++j) {
                     SCOPED_TRACE(fmt::format("i: {}; j: {}", i, j));
-
-                    // create vectors for ground truth calculation
-                    std::vector<real_type> x1(matr1.num_cols());
-                    std::vector<real_type> x2(matr2.num_cols());
-                    for (std::size_t dim = 0; dim < matr1.num_cols(); ++dim) {
-                        x1[dim] = matr1(i, dim);
-                        x2[dim] = matr2(j, dim);
-                    }
-
                     const plssvm::parameter params{ plssvm::kernel_function_type::polynomial, static_cast<int>(degree), gamma, coef0, cost };
                     EXPECT_FLOATING_POINT_NEAR(plssvm::kernel_function(matr1, i, matr2, j, params),
-                                               ground_truth::detail::polynomial_kernel(x1, x2, params.degree, static_cast<real_type>(std::get<plssvm::real_type>(params.gamma)), static_cast<real_type>(params.coef0)));
+                                               ground_truth::detail::polynomial_kernel(matr1, i, matr2, j, params.degree, static_cast<real_type>(std::get<plssvm::real_type>(params.gamma)), static_cast<real_type>(params.coef0)));
                 }
             }
         }
@@ -509,17 +474,8 @@ TYPED_TEST(KernelFunctionMatrix, rbf_kernel_function_variadic) {
             for (std::size_t i = 0; i < matr1.num_rows(); ++i) {
                 for (std::size_t j = 0; j < matr1.num_rows(); ++j) {
                     SCOPED_TRACE(fmt::format("i: {}; j: {}", i, j));
-
-                    // create vectors for ground truth calculation
-                    std::vector<real_type> x1(matr1.num_cols());
-                    std::vector<real_type> x2(matr2.num_cols());
-                    for (std::size_t dim = 0; dim < matr1.num_cols(); ++dim) {
-                        x1[dim] = matr1(i, dim);
-                        x2[dim] = matr2(j, dim);
-                    }
-
                     const auto gamma_p = static_cast<real_type>(gamma);
-                    EXPECT_FLOATING_POINT_NEAR(plssvm::kernel_function<plssvm::kernel_function_type::rbf>(matr1, i, matr2, j, gamma_p), ground_truth::detail::rbf_kernel(x1, x2, gamma_p));
+                    EXPECT_FLOATING_POINT_NEAR(plssvm::kernel_function<plssvm::kernel_function_type::rbf>(matr1, i, matr2, j, gamma_p), ground_truth::detail::rbf_kernel(matr1, i, matr2, j, gamma_p));
                 }
             }
         }
@@ -543,18 +499,9 @@ TYPED_TEST(KernelFunctionMatrix, rbf_kernel_function_parameter) {
             for (std::size_t i = 0; i < matr1.num_rows(); ++i) {
                 for (std::size_t j = 0; j < matr1.num_rows(); ++j) {
                     SCOPED_TRACE(fmt::format("i: {}; j: {}", i, j));
-
-                    // create vectors for ground truth calculation
-                    std::vector<real_type> x1(matr1.num_cols());
-                    std::vector<real_type> x2(matr2.num_cols());
-                    for (std::size_t dim = 0; dim < matr1.num_cols(); ++dim) {
-                        x1[dim] = matr1(i, dim);
-                        x2[dim] = matr2(j, dim);
-                    }
-
                     const plssvm::parameter params{ plssvm::kernel_function_type::rbf, static_cast<int>(degree), gamma, coef0, cost };
                     EXPECT_FLOATING_POINT_NEAR(plssvm::kernel_function(matr1, i, matr2, j, params),
-                                               ground_truth::detail::rbf_kernel(x1, x2, static_cast<real_type>(std::get<plssvm::real_type>(params.gamma))));
+                                               ground_truth::detail::rbf_kernel(matr1, i, matr2, j, static_cast<real_type>(std::get<plssvm::real_type>(params.gamma))));
                 }
             }
         }
@@ -578,18 +525,10 @@ TYPED_TEST(KernelFunctionMatrix, sigmoid_kernel_function_variadic) {
             for (std::size_t i = 0; i < matr1.num_rows(); ++i) {
                 for (std::size_t j = 0; j < matr1.num_rows(); ++j) {
                     SCOPED_TRACE(fmt::format("i: {}; j: {}", i, j));
-
-                    // create vectors for ground truth calculation
-                    std::vector<real_type> x1(matr1.num_cols());
-                    std::vector<real_type> x2(matr2.num_cols());
-                    for (std::size_t dim = 0; dim < matr1.num_cols(); ++dim) {
-                        x1[dim] = matr1(i, dim);
-                        x2[dim] = matr2(j, dim);
-                    }
-
                     const auto gamma_p = static_cast<real_type>(gamma);
                     const auto coef0_p = static_cast<real_type>(coef0);
-                    EXPECT_FLOATING_POINT_NEAR(plssvm::kernel_function<plssvm::kernel_function_type::sigmoid>(matr1, i, matr2, j, gamma_p, coef0_p), ground_truth::detail::sigmoid_kernel(x1, x2, gamma_p, coef0_p));
+                    EXPECT_FLOATING_POINT_NEAR(plssvm::kernel_function<plssvm::kernel_function_type::sigmoid>(matr1, i, matr2, j, gamma_p, coef0_p),
+                                               ground_truth::detail::sigmoid_kernel(matr1, i, matr2, j, gamma_p, coef0_p));
                 }
             }
         }
@@ -613,18 +552,9 @@ TYPED_TEST(KernelFunctionMatrix, sigmoid_kernel_function_parameter) {
             for (std::size_t i = 0; i < matr1.num_rows(); ++i) {
                 for (std::size_t j = 0; j < matr1.num_rows(); ++j) {
                     SCOPED_TRACE(fmt::format("i: {}; j: {}", i, j));
-
-                    // create vectors for ground truth calculation
-                    std::vector<real_type> x1(matr1.num_cols());
-                    std::vector<real_type> x2(matr2.num_cols());
-                    for (std::size_t dim = 0; dim < matr1.num_cols(); ++dim) {
-                        x1[dim] = matr1(i, dim);
-                        x2[dim] = matr2(j, dim);
-                    }
-
                     const plssvm::parameter params{ plssvm::kernel_function_type::sigmoid, static_cast<int>(degree), gamma, coef0, cost };
                     EXPECT_FLOATING_POINT_NEAR(plssvm::kernel_function(matr1, i, matr2, j, params),
-                                               ground_truth::detail::sigmoid_kernel(x1, x2, static_cast<real_type>(std::get<plssvm::real_type>(params.gamma)), static_cast<real_type>(params.coef0)));
+                                               ground_truth::detail::sigmoid_kernel(matr1, i, matr2, j, static_cast<real_type>(std::get<plssvm::real_type>(params.gamma)), static_cast<real_type>(params.coef0)));
                 }
             }
         }
@@ -648,17 +578,9 @@ TYPED_TEST(KernelFunctionMatrix, laplacian_kernel_function_variadic) {
             for (std::size_t i = 0; i < matr1.num_rows(); ++i) {
                 for (std::size_t j = 0; j < matr1.num_rows(); ++j) {
                     SCOPED_TRACE(fmt::format("i: {}; j: {}", i, j));
-
-                    // create vectors for ground truth calculation
-                    std::vector<real_type> x1(matr1.num_cols());
-                    std::vector<real_type> x2(matr2.num_cols());
-                    for (std::size_t dim = 0; dim < matr1.num_cols(); ++dim) {
-                        x1[dim] = matr1(i, dim);
-                        x2[dim] = matr2(j, dim);
-                    }
-
                     const auto gamma_p = static_cast<real_type>(gamma);
-                    EXPECT_FLOATING_POINT_NEAR(plssvm::kernel_function<plssvm::kernel_function_type::laplacian>(matr1, i, matr2, j, gamma_p), ground_truth::detail::laplacian_kernel(x1, x2, gamma_p));
+                    EXPECT_FLOATING_POINT_NEAR(plssvm::kernel_function<plssvm::kernel_function_type::laplacian>(matr1, i, matr2, j, gamma_p),
+                                               ground_truth::detail::laplacian_kernel(matr1, i, matr2, j, gamma_p));
                 }
             }
         }
@@ -682,18 +604,9 @@ TYPED_TEST(KernelFunctionMatrix, laplacian_kernel_function_parameter) {
             for (std::size_t i = 0; i < matr1.num_rows(); ++i) {
                 for (std::size_t j = 0; j < matr1.num_rows(); ++j) {
                     SCOPED_TRACE(fmt::format("i: {}; j: {}", i, j));
-
-                    // create vectors for ground truth calculation
-                    std::vector<real_type> x1(matr1.num_cols());
-                    std::vector<real_type> x2(matr2.num_cols());
-                    for (std::size_t dim = 0; dim < matr1.num_cols(); ++dim) {
-                        x1[dim] = matr1(i, dim);
-                        x2[dim] = matr2(j, dim);
-                    }
-
                     const plssvm::parameter params{ plssvm::kernel_function_type::laplacian, static_cast<int>(degree), gamma, coef0, cost };
                     EXPECT_FLOATING_POINT_NEAR(plssvm::kernel_function(matr1, i, matr2, j, params),
-                                               ground_truth::detail::laplacian_kernel(x1, x2, static_cast<real_type>(std::get<plssvm::real_type>(params.gamma))));
+                                               ground_truth::detail::laplacian_kernel(matr1, i, matr2, j, static_cast<real_type>(std::get<plssvm::real_type>(params.gamma))));
                 }
             }
         }
@@ -717,17 +630,9 @@ TYPED_TEST(KernelFunctionMatrix, chi_squared_kernel_function_variadic) {
             for (std::size_t i = 0; i < matr1.num_rows(); ++i) {
                 for (std::size_t j = 0; j < matr1.num_rows(); ++j) {
                     SCOPED_TRACE(fmt::format("i: {}; j: {}", i, j));
-
-                    // create vectors for ground truth calculation
-                    std::vector<real_type> x1(matr1.num_cols());
-                    std::vector<real_type> x2(matr2.num_cols());
-                    for (std::size_t dim = 0; dim < matr1.num_cols(); ++dim) {
-                        x1[dim] = matr1(i, dim);
-                        x2[dim] = matr2(j, dim);
-                    }
-
                     const auto gamma_p = static_cast<real_type>(gamma);
-                    EXPECT_FLOATING_POINT_NEAR(plssvm::kernel_function<plssvm::kernel_function_type::chi_squared>(matr1, i, matr2, j, gamma_p), ground_truth::detail::chi_squared_kernel(x1, x2, gamma_p));
+                    EXPECT_FLOATING_POINT_NEAR(plssvm::kernel_function<plssvm::kernel_function_type::chi_squared>(matr1, i, matr2, j, gamma_p),
+                                               ground_truth::detail::chi_squared_kernel(matr1, i, matr2, j, gamma_p));
                 }
             }
         }
@@ -751,18 +656,9 @@ TYPED_TEST(KernelFunctionMatrix, chi_squared_kernel_function_parameter) {
             for (std::size_t i = 0; i < matr1.num_rows(); ++i) {
                 for (std::size_t j = 0; j < matr1.num_rows(); ++j) {
                     SCOPED_TRACE(fmt::format("i: {}; j: {}", i, j));
-
-                    // create vectors for ground truth calculation
-                    std::vector<real_type> x1(matr1.num_cols());
-                    std::vector<real_type> x2(matr2.num_cols());
-                    for (std::size_t dim = 0; dim < matr1.num_cols(); ++dim) {
-                        x1[dim] = matr1(i, dim);
-                        x2[dim] = matr2(j, dim);
-                    }
-
                     const plssvm::parameter params{ plssvm::kernel_function_type::chi_squared, static_cast<int>(degree), gamma, coef0, cost };
                     EXPECT_FLOATING_POINT_NEAR(plssvm::kernel_function(matr1, i, matr2, j, params),
-                                               ground_truth::detail::chi_squared_kernel(x1, x2, static_cast<real_type>(std::get<plssvm::real_type>(params.gamma))));
+                                               ground_truth::detail::chi_squared_kernel(matr1, i, matr2, j, static_cast<real_type>(std::get<plssvm::real_type>(params.gamma))));
                 }
             }
         }

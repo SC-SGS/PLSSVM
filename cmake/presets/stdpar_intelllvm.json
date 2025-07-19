@@ -1,0 +1,147 @@
+{
+  "version": 6,
+  "include": ["common.json"],
+  "configurePresets": [
+    {
+      "name": "stdpar_intelllvm",
+      "displayName": "stdpar IntelLLVM (icpx) backend",
+      "inherits": "build",
+      "cacheVariables": {
+        "CMAKE_CXX_COMPILER": "icpx",
+        "PLSSVM_ENABLE_STDPAR_BACKEND": "ON",
+        "PLSSVM_STDPAR_BACKEND_IMPLEMENTATION": "IntelLLVM"
+      }
+    },
+    {
+      "name": "stdpar_intelllvm_python",
+      "displayName": "stdpar IntelLLVM (icpx) backend + Python bindings",
+      "inherits": "build",
+      "cacheVariables": {
+        "CMAKE_CXX_COMPILER": "icpx",
+        "PLSSVM_ENABLE_STDPAR_BACKEND": "ON",
+        "PLSSVM_STDPAR_BACKEND_IMPLEMENTATION": "IntelLLVM",
+        "PLSSVM_ENABLE_LANGUAGE_BINDINGS": "ON",
+        "PLSSVM_ENABLE_PYTHON_BINDINGS": "ON"
+      }
+    },
+    {
+      "name": "stdpar_intelllvm_test",
+      "displayName": "stdpar IntelLLVM (icpx) backend tests",
+      "inherits": "test",
+      "cacheVariables": {
+        "CMAKE_CXX_COMPILER": "icpx",
+        "PLSSVM_ENABLE_ASSERTS": "OFF",
+        "PLSSVM_ENABLE_STDPAR_BACKEND": "ON",
+        "PLSSVM_STDPAR_BACKEND_IMPLEMENTATION": "IntelLLVM"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "stdpar_intelllvm",
+      "displayName": "stdpar IntelLLVM (icpx) backend",
+      "configurePreset": "stdpar_intelllvm",
+      "configuration": "RelWithDebInfo",
+      "inherits": "common"
+    },
+    {
+      "name": "stdpar_intelllvm_python",
+      "displayName": "stdpar IntelLLVM (icpx) backend + Python bindings",
+      "configurePreset": "stdpar_intelllvm_python",
+      "configuration": "RelWithDebInfo",
+      "inherits": "common"
+    },
+    {
+      "name": "stdpar_intelllvm_test",
+      "displayName": "stdpar IntelLLVM (icpx) backend tests",
+      "configurePreset": "stdpar_intelllvm_test",
+      "configuration": "Debug",
+      "inherits": "common"
+    }
+  ],
+  "testPresets": [
+    {
+      "name": "stdpar_intelllvm_test",
+      "displayName": "stdpar IntelLLVM (icpx) backend all tests",
+      "configurePreset": "stdpar_intelllvm_test",
+      "inherits": "common"
+    },
+    {
+      "name": "stdpar_intelllvm_backend_test",
+      "displayName": "stdpar IntelLLVM (icpx) backend specific tests",
+      "configurePreset": "stdpar_intelllvm_test",
+      "inherits": "common",
+      "filter": {
+        "include": {
+          "name": "stdpar.*"
+        }
+      }
+    }
+  ],
+  "workflowPresets": [
+    {
+      "name": "stdpar_intelllvm",
+      "displayName": "stdpar IntelLLVM (icpx) backend workflow",
+      "steps": [
+        {
+          "name": "stdpar_intelllvm",
+          "type": "configure"
+        },
+        {
+          "name": "stdpar_intelllvm",
+          "type": "build"
+        }
+      ]
+    },
+    {
+      "name": "stdpar_intelllvm_python",
+      "displayName": "stdpar IntelLLVM (icpx) backend + Python bindings workflow",
+      "steps": [
+        {
+          "name": "stdpar_intelllvm_python",
+          "type": "configure"
+        },
+        {
+          "name": "stdpar_intelllvm_python",
+          "type": "build"
+        }
+      ]
+    },
+    {
+      "name": "stdpar_intelllvm_test",
+      "displayName": "stdpar IntelLLVM (icpx) test workflow",
+      "steps": [
+        {
+          "name": "stdpar_intelllvm_test",
+          "type": "configure"
+        },
+        {
+          "name": "stdpar_intelllvm_test",
+          "type": "build"
+        },
+        {
+          "name": "stdpar_intelllvm_test",
+          "type": "test"
+        }
+      ]
+    },
+    {
+      "name": "stdpar_intelllvm_backend_test",
+      "displayName": "stdpar IntelLLVM (icpx) backend test workflow",
+      "steps": [
+        {
+          "name": "stdpar_intelllvm_test",
+          "type": "configure"
+        },
+        {
+          "name": "stdpar_intelllvm_test",
+          "type": "build"
+        },
+        {
+          "name": "stdpar_intelllvm_backend_test",
+          "type": "test"
+        }
+      ]
+    }
+  ]
+}

@@ -13,6 +13,7 @@
 #define PLSSVM_KERNEL_FUNCTIONS_HPP_
 #pragma once
 
+#include "plssvm/constants.hpp"              // plssvm::real_type
 #include "plssvm/detail/assert.hpp"          // PLSSVM_ASSERT
 #include "plssvm/detail/operators.hpp"       // dot product, plssvm::operators::{squared_euclidean_dist, manhattan_dist}
 #include "plssvm/detail/type_traits.hpp"     // plssvm::detail::always_false_v

@@ -71,7 +71,11 @@ std::istream &operator>>(std::istream &in, target_platform &target);
 
 }  // namespace plssvm
 
+/// @cond Doxygen_suppress
+
 template <>
 struct fmt::formatter<plssvm::target_platform> : fmt::ostream_formatter { };
+
+/// @endcond
 
 #endif  // PLSSVM_TARGET_PLATFORMS_HPP_

@@ -39,6 +39,10 @@ std::string exception::what_with_loc() const {
         loc_.line());
 }
 
+cmd_parser_exit::cmd_parser_exit(const int exit_code, source_location loc) :
+    exception{ fmt::format("exit code: {}", exit_code), "cmd_parser_exit", loc },
+    exit_code_{ exit_code } { }
+
 invalid_parameter_exception::invalid_parameter_exception(const std::string &msg, source_location loc) :
     exception{ msg, "invalid_parameter_exception", loc } { }
 
@@ -47,6 +51,9 @@ file_reader_exception::file_reader_exception(const std::string &msg, source_loca
 
 data_set_exception::data_set_exception(const std::string &msg, source_location loc) :
     exception{ msg, "data_set_exception", loc } { }
+
+min_max_scaler_exception::min_max_scaler_exception(const std::string &msg, source_location loc) :
+    exception{ msg, "min_max_scaler_exception", loc } { }
 
 file_not_found_exception::file_not_found_exception(const std::string &msg, source_location loc) :
     exception{ msg, "file_not_found_exception", loc } { }
@@ -72,10 +79,16 @@ kernel_launch_resources::kernel_launch_resources(const std::string &msg, source_
 classification_report_exception::classification_report_exception(const std::string &msg, source_location loc) :
     exception{ msg, "classification_report_exception", loc } { }
 
+regression_report_exception::regression_report_exception(const std::string &msg, source_location loc) :
+    exception{ msg, "regression_report_exception", loc } { }
+
 platform_devices_empty::platform_devices_empty(const std::string &msg, source_location loc) :
     exception{ msg, "platform_devices_empty", loc } { }
 
-hardware_sampling_exception::hardware_sampling_exception(const std::string &msg, source_location loc) :
-    exception{ msg, "hardware_sampling_exception", loc } { }
+environment_exception::environment_exception(const std::string &msg, source_location loc) :
+    exception{ msg, "environment_exception", loc } { }
+
+mpi_exception::mpi_exception(const std::string &msg, source_location loc) :
+    exception{ msg, "mpi_exception", loc } { }
 
 }  // namespace plssvm

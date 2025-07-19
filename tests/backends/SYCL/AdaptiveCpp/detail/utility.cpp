@@ -10,10 +10,11 @@
 
 #include "plssvm/backends/SYCL/AdaptiveCpp/detail/utility.hpp"
 
-#include "plssvm/backends/execution_range.hpp"  // plssvm::detail::dim_type
-#include "plssvm/target_platforms.hpp"          // plssvm::target_platform
+#include "plssvm/backends/execution_range.hpp"               // plssvm::detail::dim_type
+#include "plssvm/backends/SYCL/data_parallel_kernels.hpp"    // plssvm::sycl::data_parallel_kernel
+#include "plssvm/target_platforms.hpp"                       // plssvm::target_platform
 
-#include "sycl/sycl.hpp"  // sycl::range
+#include "sycl/sycl.hpp"  // sycl::range, sycl::nd_range
 
 #include "gtest/gtest.h"  // TEST, EXPECT_NE, EXPECT_FALSE
 
@@ -58,6 +59,50 @@ TEST(AdaptiveCppUtility, dim_type_to_native_3) {
     EXPECT_EQ(native_dim[0], dim.z);
     EXPECT_EQ(native_dim[1], dim.y);
     EXPECT_EQ(native_dim[2], dim.x);
+}
+
+TEST(AdaptiveCppUtility, get_execution_range_basic) {
+    // create a grid
+    const plssvm::detail::dim_type grid{ 64ull, 64ull };
+    const plssvm::detail::dim_type block{ 8ull, 8ull };
+
+    // calculate the SYCL execution range
+    const ::sycl::range exec = plssvm::adaptivecpp::detail::get_execution_range<plssvm::sycl::data_parallel_kernel::basic>(grid, block);
+
+    EXPECT_EQ(exec, (sycl::range<2>{ 512ull, 512ull }));
+}
+
+TEST(AdaptiveCppUtility, get_execution_range_work_group) {
+    // create a grid
+    const plssvm::detail::dim_type grid{ 64ull, 64ull };
+    const plssvm::detail::dim_type block{ 8ull, 8ull };
+
+    // calculate the SYCL execution range
+    const ::sycl::nd_range exec = plssvm::adaptivecpp::detail::get_execution_range<plssvm::sycl::data_parallel_kernel::work_group>(grid, block);
+
+    EXPECT_EQ(exec, (::sycl::nd_range<2>{ ::sycl::range<2>{ 512ull, 512ull }, ::sycl::range<2>{ 8ull, 8ull } }));
+}
+
+TEST(AdaptiveCppUtility, get_execution_range_hierarchical) {
+    // create a grid
+    const plssvm::detail::dim_type grid{ 64ull, 64ull };
+    const plssvm::detail::dim_type block{ 8ull, 8ull };
+
+    // calculate the SYCL execution range
+    const ::sycl::nd_range exec = plssvm::adaptivecpp::detail::get_execution_range<plssvm::sycl::data_parallel_kernel::hierarchical>(grid, block);
+
+    EXPECT_EQ(exec, (::sycl::nd_range<2>{ ::sycl::range<2>{ 64ull, 64ull }, ::sycl::range<2>{ 8ull, 8ull } }));
+}
+
+TEST(AdaptiveCppUtility, get_execution_range_scoped) {
+    // create a grid
+    const plssvm::detail::dim_type grid{ 64ull, 64ull };
+    const plssvm::detail::dim_type block{ 8ull, 8ull };
+
+    // calculate the SYCL execution range
+    const ::sycl::nd_range exec = plssvm::adaptivecpp::detail::get_execution_range<plssvm::sycl::data_parallel_kernel::scoped>(grid, block);
+
+    EXPECT_EQ(exec, (::sycl::nd_range<2>{ ::sycl::range<2>{ 64ull, 64ull }, ::sycl::range<2>{ 8ull, 8ull } }));
 }
 
 TEST(AdaptiveCppUtility, get_device_list) {

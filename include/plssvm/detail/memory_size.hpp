@@ -13,10 +13,7 @@
 #define PLSSVM_DETAIL_MEMORY_SIZE_HPP_
 #pragma once
 
-#include "plssvm/exceptions/exceptions.hpp"  // plssvm::exception
-
 #include "fmt/base.h"     // fmt::formatter
-#include "fmt/format.h"   // fmt::format
 #include "fmt/ostream.h"  // fmt::ostream_formatter
 
 #include <cstddef>     // std::size_t
@@ -329,7 +326,11 @@ struct hash<plssvm::detail::memory_size> {
 
 }  // namespace std
 
+/// @cond Doxygen_suppress
+
 template <>
 struct fmt::formatter<plssvm::detail::memory_size> : fmt::ostream_formatter { };
+
+/// @endcond
 
 #endif  // PLSSVM_DETAIL_MEMORY_SIZE_HPP_

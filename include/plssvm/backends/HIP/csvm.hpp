@@ -18,10 +18,13 @@
 #include "plssvm/backends/HIP/detail/device_ptr.hip.hpp"     // plssvm::hip::detail::device_ptr
 #include "plssvm/backends/HIP/detail/pinned_memory.hip.hpp"  // plssvm::hip::detail::pinned_memory
 #include "plssvm/constants.hpp"                              // plssvm::real_type
-#include "plssvm/csvm.hpp"                                   // plssvm::detail::csvm_backend_exists
 #include "plssvm/detail/memory_size.hpp"                     // plssvm::detail::memory_size
-#include "plssvm/detail/type_traits.hpp"                     // PLSSVM_REQUIRES
+#include "plssvm/detail/type_traits.hpp"                     // PLSSVM_REQUIRES, plssvm::detail::is_one_type_of
+#include "plssvm/mpi/communicator.hpp"                       // plssvm::mpi::communicator
 #include "plssvm/parameter.hpp"                              // plssvm::parameter, plssvm::detail::parameter
+#include "plssvm/svm/csvc.hpp"                               // plssvm::csvc
+#include "plssvm/svm/csvm.hpp"                               // plssvm::detail::csvm_backend_exists
+#include "plssvm/svm/csvr.hpp"                               // plssvm::csvr
 #include "plssvm/target_platforms.hpp"                       // plssvm::target_platform
 
 #include <cstddef>      // std::size_t
@@ -51,55 +54,14 @@ class csvm : public ::plssvm::detail::gpu_csvm<detail::device_ptr, int, detail::
     using typename base_type::queue_type;
 
     /**
-     * @brief Construct a new C-SVM using the HIP backend with the parameters given through @p params.
-     * @details Currently only tested with AMD GPUs.
-     * @param[in] params struct encapsulating all possible parameters
-     * @throws plssvm::exception all exceptions thrown in the base class constructor
-     * @throws plssvm::hip::backend_exception if the target platform isn't plssvm::target_platform::automatic or plssvm::target_platform::gpu_amd
-     * @throws plssvm::hip::backend_exception if the plssvm::target_platform::gpu_amd target isn't available
-     * @throws plssvm::hip::backend_exception if no HIP capable devices could be found
-     */
-    explicit csvm(parameter params = {});
-    /**
-     * @brief Construct a new C-SVM using the HIP backend on the @p target platform with the parameters given through @p params.
-     * @details Currently only tested with AMD GPUs.
+     * @brief Construct a new C-SVM using the HIP backend on the @p target platform.
      * @param[in] target the target platform used for this C-SVM
-     * @param[in] params struct encapsulating all possible SVM parameters
      * @throws plssvm::exception all exceptions thrown in the base class constructor
-     * @throws plssvm::hip::backend_exception if the target platform isn't plssvm::target_platform::automatic or plssvm::target_platform::gpu_amd
-     * @throws plssvm::hip::backend_exception if the plssvm::target_platform::gpu_amd target isn't available
-     * @throws plssvm::hip::backend_exception if no HIP capable devices could be found
+     * @throws plssvm::cuda::backend_exception if the target platform isn't plssvm::target_platform::automatic or plssvm::target_platform::gpu_amd (or plssvm::target_platform::gpu_nvidia)
+     * @throws plssvm::cuda::backend_exception if the plssvm::target_platform::gpu_amd (or plssvm::target_platform::gpu_nvidia) target isn't available
+     * @throws plssvm::cuda::backend_exception if no HIP capable devices could be found
      */
-    explicit csvm(target_platform target, parameter params = {});
-
-    /**
-     * @brief Construct a new C-SVM using the HIP backend and the optionally provided @p named_args.
-     * @details Currently only tested with AMD GPUs.
-     * @param[in] named_args the additional optional named-parameter
-     * @throws plssvm::exception all exceptions thrown in the base class constructor
-     * @throws plssvm::hip::backend_exception if the target platform isn't plssvm::target_platform::automatic or plssvm::target_platform::gpu_amd
-     * @throws plssvm::hip::backend_exception if the plssvm::target_platform::gpu_amd target isn't available
-     * @throws plssvm::hip::backend_exception if no HIP capable devices could be found
-     */
-    template <typename... Args, PLSSVM_REQUIRES(::plssvm::detail::has_only_parameter_named_args_v<Args...>)>
-    explicit csvm(Args &&...named_args) :
-        csvm{ plssvm::target_platform::automatic, std::forward<Args>(named_args)... } { }
-
-    /**
-     * @brief Construct a new C-SVM using the HIP backend on the @p target platform and the optionally provided @p named_args.
-     * @details Currently only tested with AMD GPUs.
-     * @param[in] target the target platform used for this C-SVM
-     * @param[in] named_args the additional optional named-parameter
-     * @throws plssvm::exception all exceptions thrown in the base class constructor
-     * @throws plssvm::hip::backend_exception if the target platform isn't plssvm::target_platform::automatic or plssvm::target_platform::gpu_amd
-     * @throws plssvm::hip::backend_exception if the plssvm::target_platform::gpu_amd target isn't available
-     * @throws plssvm::hip::backend_exception if no HIP capable devices could be found
-     */
-    template <typename... Args, PLSSVM_REQUIRES(::plssvm::detail::has_only_parameter_named_args_v<Args...>)>
-    explicit csvm(const target_platform target, Args &&...named_args) :
-        base_type{ std::forward<Args>(named_args)... } {
-        this->init(target);
-    }
+    explicit csvm(target_platform target = target_platform::automatic);
 
     /**
      * @copydoc plssvm::csvm::csvm(const plssvm::csvm &)
@@ -121,18 +83,9 @@ class csvm : public ::plssvm::detail::gpu_csvm<detail::device_ptr, int, detail::
      * @brief Wait for all operations on all HIP devices to finish.
      * @details Terminates the program, if any exception is thrown.
      */
-    ~csvm() override;
+    ~csvm() override = 0;
 
   protected:
-    /**
-     * @brief Initialize all important states related to the HIP backend.
-     * @param[in] target the target platform to use
-     * @throws plssvm::hip::backend_exception if the target platform isn't plssvm::target_platform::automatic or plssvm::target_platform::gpu_amd
-     * @throws plssvm::hip::backend_exception if the plssvm::target_platform::gpu_amd target isn't available
-     * @throws plssvm::hip::backend_exception if no HIP capable devices could be found
-     */
-    void init(target_platform target);
-
     /**
      * @copydoc plssvm::csvm::get_device_memory
      */
@@ -187,15 +140,199 @@ class csvm : public ::plssvm::detail::gpu_csvm<detail::device_ptr, int, detail::
     [[nodiscard]] device_ptr_type run_predict_kernel(std::size_t device_id, const ::plssvm::detail::execution_range &exec, const parameter &params, const device_ptr_type &alpha_d, const device_ptr_type &rho_d, const device_ptr_type &sv_or_w_d, const device_ptr_type &predict_points_d) const final;
 };
 
+/**
+ * @brief Create a C-SVC using the HIP backend.
+ * @details Inherits all functionality either from the `plssvm::csvc` or `plssvm::hip::csvm` classes.
+ */
+class csvc : public ::plssvm::csvc,
+             public ::plssvm::hip::csvm {
+  public:
+    /**
+     * @brief Construct a new C-SVC using the HIP backend with the parameters given through @p params.
+     * @param[in] params struct encapsulating all possible parameters
+     * @throws plssvm::exception all exceptions thrown in the base class constructors
+     */
+    explicit csvc(const parameter params) :
+        ::plssvm::csvm{ mpi::communicator{}, params },
+        ::plssvm::hip::csvm{} { }
+
+    /**
+     * @brief Construct a new C-SVC using the HIP backend with the parameters given through @p params.
+     * @param[in] comm the used MPI communicator
+     * @param[in] params struct encapsulating all possible parameters
+     * @throws plssvm::exception all exceptions thrown in the base class constructors
+     */
+    csvc(mpi::communicator comm, const parameter params) :
+        ::plssvm::csvm{ std::move(comm), params },
+        ::plssvm::hip::csvm{} { }
+
+    /**
+     * @brief Construct a new C-SVC using the HIP backend on the @p target platform with the parameters given through @p params.
+     * @param[in] target the target platform used for this C-SVC
+     * @param[in] params struct encapsulating all possible SVM parameters
+     * @throws plssvm::exception all exceptions thrown in the base class constructors
+     */
+    csvc(const target_platform target, const parameter params) :
+        ::plssvm::csvm{ mpi::communicator{}, params },
+        ::plssvm::hip::csvm{ target } { }
+
+    /**
+     * @brief Construct a new C-SVC using the HIP backend on the @p target platform with the parameters given through @p params.
+     * @param[in] target the target platform used for this C-SVC
+     * @param[in] comm the used MPI communicator
+     * @param[in] params struct encapsulating all possible SVM parameters
+     * @throws plssvm::exception all exceptions thrown in the base class constructors
+     */
+    csvc(mpi::communicator comm, const target_platform target, const parameter params) :
+        ::plssvm::csvm{ std::move(comm), params },
+        ::plssvm::hip::csvm{ target } { }
+
+    /**
+     * @brief Construct a new C-SVC using the HIP backend and the optionally provided @p named_args.
+     * @param[in] named_args the additional optional named arguments
+     * @throws plssvm::exception all exceptions thrown in the base class constructors
+     */
+    template <typename... Args, PLSSVM_REQUIRES(::plssvm::detail::has_only_parameter_named_args_v<Args...>)>
+    explicit csvc(Args &&...named_args) :
+        ::plssvm::csvm{ mpi::communicator{}, std::forward<Args>(named_args)... },
+        ::plssvm::hip::csvm{} { }
+
+    /**
+     * @brief Construct a new C-SVC using the HIP backend and the optionally provided @p named_args.
+     * @param[in] comm the used MPI communicator
+     * @param[in] named_args the additional optional named arguments
+     * @throws plssvm::exception all exceptions thrown in the base class constructors
+     */
+    template <typename... Args, PLSSVM_REQUIRES(::plssvm::detail::has_only_parameter_named_args_v<Args...>)>
+    explicit csvc(mpi::communicator comm, Args &&...named_args) :
+        ::plssvm::csvm{ std::move(comm), std::forward<Args>(named_args)... },
+        ::plssvm::hip::csvm{} { }
+
+    /**
+     * @brief Construct a new C-SVC using the HIP backend on the @p target platform and the optionally provided @p named_args.
+     * @param[in] target the target platform used for this C-SVC
+     * @param[in] named_args the additional optional named-parameters
+     * @throws plssvm::exception all exceptions thrown in the base class constructors
+     */
+    template <typename... Args, PLSSVM_REQUIRES(::plssvm::detail::has_only_parameter_named_args_v<Args...>)>
+    explicit csvc(const target_platform target, Args &&...named_args) :
+        ::plssvm::csvm{ mpi::communicator{}, std::forward<Args>(named_args)... },
+        ::plssvm::hip::csvm{ target } { }
+
+    /**
+     * @brief Construct a new C-SVC using the HIP backend on the @p target platform and the optionally provided @p named_args.
+     * @param[in] comm the used MPI communicator
+     * @param[in] target the target platform used for this C-SVC
+     * @param[in] named_args the additional optional named-parameters
+     * @throws plssvm::exception all exceptions thrown in the base class constructors
+     */
+    template <typename... Args, PLSSVM_REQUIRES(::plssvm::detail::has_only_parameter_named_args_v<Args...>)>
+    csvc(mpi::communicator comm, const target_platform target, Args &&...named_args) :
+        ::plssvm::csvm{ std::move(comm), std::forward<Args>(named_args)... },
+        ::plssvm::hip::csvm{ target } { }
+};
+
+/**
+ * @brief Create a C-SVR using the HIP backend.
+ * @details Inherits all functionality either from the `plssvm::csvr` or `plssvm::hip::csvm` classes.
+ */
+class csvr : public ::plssvm::csvr,
+             public ::plssvm::hip::csvm {
+  public:
+    /**
+     * @brief Construct a new C-SVR using the HIP backend with the parameters given through @p params.
+     * @param[in] params struct encapsulating all possible parameters
+     * @throws plssvm::exception all exceptions thrown in the base class constructors
+     */
+    explicit csvr(const parameter params) :
+        ::plssvm::csvm{ mpi::communicator{}, params },
+        ::plssvm::hip::csvm{} { }
+
+    /**
+     * @brief Construct a new C-SVR using the HIP backend with the parameters given through @p params.
+     * @param[in] comm the used MPI communicator
+     * @param[in] params struct encapsulating all possible parameters
+     * @throws plssvm::exception all exceptions thrown in the base class constructors
+     */
+    explicit csvr(mpi::communicator comm, const parameter params) :
+        ::plssvm::csvm{ std::move(comm), params },
+        ::plssvm::hip::csvm{} { }
+
+    /**
+     * @brief Construct a new C-SVR using the HIP backend on the @p target platform with the parameters given through @p params.
+     * @param[in] target the target platform used for this C-SVR
+     * @param[in] params struct encapsulating all possible SVM parameters
+     * @throws plssvm::exception all exceptions thrown in the base class constructors
+     */
+    csvr(const target_platform target, const parameter params) :
+        ::plssvm::csvm{ mpi::communicator{}, params },
+        ::plssvm::hip::csvm{ target } { }
+
+    /**
+     * @brief Construct a new C-SVR using the HIP backend on the @p target platform with the parameters given through @p params.
+     * @param[in] comm the used MPI communicator
+     * @param[in] target the target platform used for this C-SVR
+     * @param[in] params struct encapsulating all possible SVM parameters
+     * @throws plssvm::exception all exceptions thrown in the base class constructors
+     */
+    csvr(mpi::communicator comm, const target_platform target, const parameter params) :
+        ::plssvm::csvm{ std::move(comm), params },
+        ::plssvm::hip::csvm{ target } { }
+
+    /**
+     * @brief Construct a new C-SVR using the HIP backend and the optionally provided @p named_args.
+     * @param[in] named_args the additional optional named arguments
+     * @throws plssvm::exception all exceptions thrown in the base class constructors
+     */
+    template <typename... Args, PLSSVM_REQUIRES(::plssvm::detail::has_only_parameter_named_args_v<Args...>)>
+    explicit csvr(Args &&...named_args) :
+        ::plssvm::csvm{ mpi::communicator{}, std::forward<Args>(named_args)... },
+        ::plssvm::hip::csvm{} { }
+
+    /**
+     * @brief Construct a new C-SVR using the HIP backend and the optionally provided @p named_args.
+     * @param[in] comm the used MPI communicator
+     * @param[in] named_args the additional optional named arguments
+     * @throws plssvm::exception all exceptions thrown in the base class constructors
+     */
+    template <typename... Args, PLSSVM_REQUIRES(::plssvm::detail::has_only_parameter_named_args_v<Args...>)>
+    explicit csvr(mpi::communicator comm, Args &&...named_args) :
+        ::plssvm::csvm{ std::move(comm), std::forward<Args>(named_args)... },
+        ::plssvm::hip::csvm{} { }
+
+    /**
+     * @brief Construct a new C-SVR using the HIP backend on the @p target platform and the optionally provided @p named_args.
+     * @param[in] target the target platform used for this C-SVR
+     * @param[in] named_args the additional optional named-parameters
+     * @throws plssvm::exception all exceptions thrown in the base class constructors
+     */
+    template <typename... Args, PLSSVM_REQUIRES(::plssvm::detail::has_only_parameter_named_args_v<Args...>)>
+    explicit csvr(const target_platform target, Args &&...named_args) :
+        ::plssvm::csvm{ mpi::communicator{}, std::forward<Args>(named_args)... },
+        ::plssvm::hip::csvm{ target } { }
+
+    /**
+     * @brief Construct a new C-SVR using the HIP backend on the @p target platform and the optionally provided @p named_args.
+     * @param[in] comm the used MPI communicator
+     * @param[in] target the target platform used for this C-SVR
+     * @param[in] named_args the additional optional named-parameters
+     * @throws plssvm::exception all exceptions thrown in the base class constructors
+     */
+    template <typename... Args, PLSSVM_REQUIRES(::plssvm::detail::has_only_parameter_named_args_v<Args...>)>
+    csvr(mpi::communicator comm, const target_platform target, Args &&...named_args) :
+        ::plssvm::csvm{ std::move(comm), std::forward<Args>(named_args)... },
+        ::plssvm::hip::csvm{ target } { }
+};
+
 }  // namespace hip
 
 namespace detail {
 
 /**
- * @brief Sets the `value` to `true` since C-SVMs using the HIP backend are available.
+ * @brief Sets the `value` to `true` since C-SVMs (C-SVCs, C-SVRs) using the HIP backend are available.
  */
-template <>
-struct csvm_backend_exists<hip::csvm> : std::true_type { };
+template <typename T>
+struct csvm_backend_exists<T, std::enable_if_t<is_one_type_of_v<T, hip::csvm, hip::csvc, hip::csvr>>> : std::true_type { };
 
 }  // namespace detail
 

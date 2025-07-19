@@ -78,7 +78,11 @@ void device_synchronize(int device);
 
 }  // namespace plssvm::cuda::detail
 
+/// @cond Doxygen_suppress
+
 template <>
 struct fmt::formatter<cudaError_t> : fmt::ostream_formatter { };
+
+/// @endcond
 
 #endif  // PLSSVM_BACKENDS_CUDA_DETAIL_UTILITY_HPP_

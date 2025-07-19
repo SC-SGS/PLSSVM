@@ -10,19 +10,44 @@
 
 #include "plssvm/backends/CUDA/detail/device_ptr.cuh"  // plssvm::cuda::detail::device_ptr
 
+#include "plssvm/backends/CUDA/csvm.hpp"        // plssvm::cuda::csvc
+#include "plssvm/backends/CUDA/exceptions.hpp"  // plssvm::cuda::backend_exception
+#include "plssvm/shape.hpp"                     // plssvm::shape
+
 #include "tests/backends/generic_device_ptr_tests.hpp"  // generic device pointer tests to instantiate
 #include "tests/naming.hpp"                             // naming::test_parameter_to_name
-#include "tests/types_to_test.hpp"                      // util::{combine_test_parameters_gtest_t, cartesian_type_product_t, layout_type_list}
+#include "tests/types_to_test.hpp"                      // util::{combine_test_parameters_gtest_t, cartesian_type_product_t, layout_type_list, real_type_gtest}
 
+#include "gmock/gmock.h"  // EXPECT_THAT, ::testing::HasSubstr
 #include "gtest/gtest.h"  // INSTANTIATE_TYPED_TEST_SUITE_P
 
 #include <tuple>  // std::tuple
+
+template <typename T>
+class CUDADevicePtrConstruct : public ::testing::Test { };
+
+TYPED_TEST_SUITE(CUDADevicePtrConstruct, util::real_type_gtest, naming::test_parameter_to_name);
+
+TYPED_TEST(CUDADevicePtrConstruct, construct_invalid_queue) {
+    using real_type = util::test_parameter_type_at_t<0, TypeParam>;
+
+    // the number of devices
+    const std::size_t num_devices = plssvm::cuda::csvc{}.num_available_devices();
+
+    EXPECT_THROW_WHAT_MATCHER((plssvm::cuda::detail::device_ptr<real_type>(plssvm::shape{ 4, 4 }, plssvm::shape{ 4, 4 }, -1)),
+                              plssvm::cuda::backend_exception,
+                              ::testing::HasSubstr(fmt::format("Illegal device ID! Must be in range: [0, {}) but is -1.", num_devices)));
+
+    EXPECT_THROW_WHAT_MATCHER((plssvm::cuda::detail::device_ptr<real_type>(plssvm::shape{ 4, 4 }, plssvm::shape{ 4, 4 }, num_devices)),
+                              plssvm::cuda::backend_exception,
+                              ::testing::HasSubstr(fmt::format("Illegal device ID! Must be in range: [0, {}) but is {}.", num_devices, num_devices)));
+}
 
 template <typename T, bool UUA>
 struct cuda_device_ptr_test_type {
     using device_ptr_type = plssvm::cuda::detail::device_ptr<T>;
     using queue_type = int;
-    static constexpr bool use_usm_allocations = UUA;
+    constexpr static bool use_usm_allocations = UUA;
 
     static const queue_type &default_queue() {
         static const queue_type queue = 0;

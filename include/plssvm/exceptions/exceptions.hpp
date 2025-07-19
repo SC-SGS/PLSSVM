@@ -57,6 +57,30 @@ class exception : public std::runtime_error {
 };
 
 /**
+ * @brief Exception type thrown for early exit in the cmd parser constructor.
+ * @details Used for a graceful tear down.
+ */
+class cmd_parser_exit : public exception {
+  public:
+    /**
+     * @brief Construct a new exception forwarding the exit code and source location to `plssvm::exception`.
+     * @param[in] exit_code the exit code
+     * @param[in] loc the exception's call side information
+     */
+    explicit cmd_parser_exit(int exit_code, source_location loc = source_location::current());
+
+    /**
+     * @brief Return the previously defined exit code.
+     * @return the exit code (`[[nodiscard]]`)
+     */
+    [[nodiscard]] int exit_code() const noexcept { return exit_code_; }
+
+  private:
+    /// The exit code.
+    int exit_code_{};
+};
+
+/**
  * @brief Exception type thrown if the provided parameter is invalid.
  */
 class invalid_parameter_exception : public exception {
@@ -93,6 +117,19 @@ class data_set_exception : public exception {
      * @param[in] loc the exception's call side information
      */
     explicit data_set_exception(const std::string &msg, source_location loc = source_location::current());
+};
+
+/**
+ * @brief Exception type thrown if a `plssvm::min_max_scaler` is used inappropriately.
+ */
+class min_max_scaler_exception : public exception {
+  public:
+    /**
+     * @brief Construct a new exception forwarding the exception message and source location to `plssvm::exception`.
+     * @param[in] msg the exception's `what()` message
+     * @param[in] loc the exception's call side information
+     */
+    explicit min_max_scaler_exception(const std::string &msg, source_location loc = source_location::current());
 };
 
 /**
@@ -200,6 +237,19 @@ class classification_report_exception : public exception {
 };
 
 /**
+ * @brief Exception type thrown if something during the creation of the regression report goes wrong.
+ */
+class regression_report_exception : public exception {
+  public:
+    /**
+     * @brief Construct a new exception forwarding the exception message and source location to `plssvm::exception`.
+     * @param[in] msg the exception's `what()` message
+     * @param[in] loc the exception's call side information
+     */
+    explicit regression_report_exception(const std::string &msg, source_location loc = source_location::current());
+};
+
+/**
  * @brief Exception type thrown if the list of available platform devices is empty.
  */
 class platform_devices_empty : public exception {
@@ -213,16 +263,29 @@ class platform_devices_empty : public exception {
 };
 
 /**
- * @brief Exception type thrown if something during hardware sampling goes wrong.
+ * @brief Exception type thrown if something during the environment initialization and/or finalization went wrong.
  */
-class hardware_sampling_exception : public exception {
+class environment_exception : public exception {
   public:
     /**
      * @brief Construct a new exception forwarding the exception message and source location to `plssvm::exception`.
      * @param[in] msg the exception's `what()` message
      * @param[in] loc the exception's call side information
      */
-    explicit hardware_sampling_exception(const std::string &msg, source_location loc = source_location::current());
+    explicit environment_exception(const std::string &msg, source_location loc = source_location::current());
+};
+
+/**
+ * @brief Exception type thrown if something regarding our MPI wrapper went wrong.
+ */
+class mpi_exception : public exception {
+  public:
+    /**
+     * @brief Construct a new exception forwarding the exception message and source location to `plssvm::exception`.
+     * @param[in] msg the exception's `what()` message
+     * @param[in] loc the exception's call side information
+     */
+    explicit mpi_exception(const std::string &msg, source_location loc = source_location::current());
 };
 
 }  // namespace plssvm

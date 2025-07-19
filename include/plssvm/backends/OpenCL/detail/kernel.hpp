@@ -22,6 +22,14 @@ namespace plssvm::opencl::detail {
  * @details Used to distinguish kernels in the plssvm::opencl::detail::command_queue class.
  */
 enum class compute_kernel_name {
+    /// The kernel to fill a float device pointer with a provided value.
+    fill_kernel_float,
+    /// The kernel to fill a double device pointer with a provided value.
+    fill_kernel_double,
+    /// The kernel to memset a float device pointer with a provided pattern.
+    memset_kernel_float,
+    /// The kernel to memset a double device pointer with a provided pattern.
+    memset_kernel_double,
     /// The kernels to explicitly assemble the kernel matrix.
     assemble_kernel_matrix_explicit,
     /// The kernel performing a explicit BLAS SYMM calculation.

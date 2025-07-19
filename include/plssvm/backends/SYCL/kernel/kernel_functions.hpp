@@ -17,12 +17,31 @@
 #include "plssvm/detail/utility.hpp"         // plssvm::detail::always_false_v
 #include "plssvm/kernel_function_types.hpp"  // plssvm::kernel_function_type
 
-#include "sycl/sycl.hpp"  // sycl::pown, sycl::exp, sycl::tanh, sycl::fabs
+#include "sycl/sycl.hpp"  // sycl::exp, sycl::tanh, sycl::fabs
 
 #include <limits>  // std::numeric_limits
 #include <tuple>   // std::tuple, std::get
 
 namespace plssvm::sycl::detail {
+
+//***************************************************//
+//                  helper function                  //
+//***************************************************//
+
+/**
+ * @brief Fast integer power function. Computes base^exponent and takes advantage of the fact that degree may only be positive integer values.
+ * @param[in] base the base
+ * @param[in] exponent the exponent
+ * @return base^exponent (`[[nodiscard]]`)
+ */
+[[nodiscard]] inline real_type powi(const real_type base, const int exponent) {
+    // generic integer power function
+    real_type result{ 1.0 };
+    for (int i = 0; i < exponent; ++i) {
+        result *= base;
+    }
+    return result;
+}
 
 //***************************************************//
 //                 feature reductions                //
@@ -93,7 +112,7 @@ template <kernel_function_type kernel_function, typename... Args>
     if constexpr (kernel_function == kernel_function_type::linear) {
         return value;
     } else if constexpr (kernel_function == kernel_function_type::polynomial) {
-        return ::sycl::pown(std::get<1>(params) * value + std::get<2>(params), std::get<0>(params));
+        return detail::powi(std::get<1>(params) * value + std::get<2>(params), std::get<0>(params));
     } else if constexpr (kernel_function == kernel_function_type::rbf) {
         return ::sycl::exp(-std::get<0>(params) * value);
     } else if constexpr (kernel_function == kernel_function_type::sigmoid) {

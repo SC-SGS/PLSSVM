@@ -49,6 +49,21 @@ template <>
     return FLT_MIN;
 }
 
+/**
+ * @brief Fast integer power function. Computes base^exponent and takes advantage of the fact that degree may only be positive integer values.
+ * @param[in] base the base
+ * @param[in] exponent the exponent
+ * @return base^exponent (`[[nodiscard]]`)
+ */
+[[nodiscard]] __device__ __forceinline__ real_type powi(const real_type base, const int exponent) {
+    // generic integer power function
+    real_type result{ 1.0 };
+    for (int i = 0; i < exponent; ++i) {
+        result *= base;
+    }
+    return result;
+}
+
 //***************************************************//
 //                 feature reductions                //
 //***************************************************//
@@ -84,7 +99,7 @@ template <>
  */
 template <>
 [[nodiscard]] __device__ __forceinline__ real_type feature_reduce<kernel_function_type::laplacian>(const real_type val1, const real_type val2) {
-    return abs(val1 - val2);
+    return fabs(val1 - val2);
 }
 
 /**
@@ -131,7 +146,7 @@ template <>
  */
 template <>
 [[nodiscard]] __device__ __forceinline__ real_type apply_kernel_function<kernel_function_type::polynomial>(const real_type value, const int degree, const real_type gamma, const real_type coef0) {
-    return pow(gamma * value + coef0, (double) degree);
+    return detail::powi(gamma * value + coef0, degree);
 }
 
 /**

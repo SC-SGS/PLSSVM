@@ -13,17 +13,19 @@
 #define PLSSVM_TESTS_BACKENDS_SYCL_DPCPP_MOCK_DPCPP_CSVM_HPP_
 #pragma once
 
-#include "plssvm/backends/SYCL/DPCPP/csvm.hpp"  // plssvm::dpcpp::csvm
 #include "plssvm/backends/execution_range.hpp"  // plssvm::detail::dim_type
+#include "plssvm/backends/SYCL/DPCPP/csvm.hpp"  // plssvm::dpcpp::csvm
+#include "plssvm/mpi/communicator.hpp"          // plssvm::mpi::communicator
+#include "plssvm/svm/csvm.hpp"                  // plssvm::csvm
+#include "plssvm/target_platforms.hpp"          // plssvm::target_platform
 
 #include "gmock/gmock.h"  // MOCK_METHOD, ON_CALL, ::testing::Return
 
 #include <cstddef>  // std::size_t
 #include <utility>  // std::forward
 
-
 /**
- * @brief GTest mock class for the SYCL CSVM using DPC++ as SYCL implementation.
+ * @brief GTest mock class for the SYCL C-SVM using DPC++ as SYCL implementation.
  * @tparam mock_grid_size `true` if the `plssvm::dpcpp::csvm::get_max_grid_size()` function should be mocked, otherwise `false`
  */
 template <bool mock_grid_size>
@@ -35,7 +37,8 @@ class mock_dpcpp_csvm final : public plssvm::dpcpp::csvm {
 
     template <typename... Args>
     explicit mock_dpcpp_csvm(Args &&...args) :
-        base_type{ std::forward<Args>(args)... } {
+        plssvm::csvm{ plssvm::mpi::communicator{}, args... },
+        base_type(plssvm::target_platform::automatic, std::forward<Args>(args)...) {
         this->fake_functions();
     }
 

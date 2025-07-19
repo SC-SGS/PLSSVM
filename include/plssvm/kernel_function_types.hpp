@@ -66,7 +66,11 @@ std::istream &operator>>(std::istream &in, kernel_function_type &kernel);
 
 }  // namespace plssvm
 
+/// @cond Doxygen_suppress
+
 template <>
 struct fmt::formatter<plssvm::kernel_function_type> : fmt::ostream_formatter { };
+
+/// @endcond
 
 #endif  // PLSSVM_KERNEL_FUNCTION_TYPES_HPP_

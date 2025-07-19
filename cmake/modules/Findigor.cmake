@@ -1,8 +1,8 @@
-## Authors: Alexander Van Craen, Marcel Breyer
-## Copyright (C): 2018-today The PLSSVM project - All Rights Reserved
-## License: This file is part of the PLSSVM project which is released under the MIT license.
-##          See the LICENSE.md file in the project root for full license information.
-## Based on: https://gist.github.com/CodeFinder2/40864be863c887e0a6dabf4f3a1fa93b
+# Authors: Alexander Van Craen, Marcel Breyer
+# Copyright (C): 2018-today The PLSSVM project - All Rights Reserved
+# License: This file is part of the PLSSVM project which is released under the MIT license.
+#          See the LICENSE.md file in the project root for full license information.
+# Based on: https://gist.github.com/CodeFinder2/40864be863c887e0a6dabf4f3a1fa93b
 ########################################################################################################################
 
 find_package(PkgConfig)
@@ -14,10 +14,11 @@ endif ()
 
 # try to automatically find the header files in the standard directories
 if (NOT EXISTS "${igor_INCLUDE_DIR}")
-    find_path(igor_INCLUDE_DIR
-              NAMES igor/igor.hpp
-              PATH_SUFFIXES include
-              DOC "igor header-only library header files"
+    find_path(
+        igor_INCLUDE_DIR
+        NAMES igor/igor.hpp
+        PATH_SUFFIXES include
+        DOC "igor header-only library header files"
     )
 endif ()
 
@@ -26,7 +27,7 @@ if (EXISTS "${igor_INCLUDE_DIR}")
     include(FindPackageHandleStandardArgs)
     mark_as_advanced(igor_INCLUDE_DIR)
 else ()
-    #message(WARNING "Can't find required package igor!")
+    # message(WARNING "Can't find required package igor!")
 endif ()
 
 # set the _FOUND variable to the correct value

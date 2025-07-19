@@ -41,9 +41,11 @@ template <typename T>
 
 // create exception type -> string mapping for all custom exception types
 PLSSVM_CREATE_EXCEPTION_TYPE_NAME(exception)
+PLSSVM_CREATE_EXCEPTION_TYPE_NAME(cmd_parser_exit)
 PLSSVM_CREATE_EXCEPTION_TYPE_NAME(invalid_parameter_exception)
 PLSSVM_CREATE_EXCEPTION_TYPE_NAME(file_reader_exception)
 PLSSVM_CREATE_EXCEPTION_TYPE_NAME(data_set_exception)
+PLSSVM_CREATE_EXCEPTION_TYPE_NAME(min_max_scaler_exception)
 PLSSVM_CREATE_EXCEPTION_TYPE_NAME(file_not_found_exception)
 PLSSVM_CREATE_EXCEPTION_TYPE_NAME(invalid_file_format_exception)
 PLSSVM_CREATE_EXCEPTION_TYPE_NAME(unsupported_backend_exception)
@@ -52,7 +54,10 @@ PLSSVM_CREATE_EXCEPTION_TYPE_NAME(gpu_device_ptr_exception)
 PLSSVM_CREATE_EXCEPTION_TYPE_NAME(matrix_exception)
 PLSSVM_CREATE_EXCEPTION_TYPE_NAME(kernel_launch_resources)
 PLSSVM_CREATE_EXCEPTION_TYPE_NAME(classification_report_exception)
+PLSSVM_CREATE_EXCEPTION_TYPE_NAME(regression_report_exception)
 PLSSVM_CREATE_EXCEPTION_TYPE_NAME(platform_devices_empty)
+PLSSVM_CREATE_EXCEPTION_TYPE_NAME(environment_exception)
+PLSSVM_CREATE_EXCEPTION_TYPE_NAME(mpi_exception)
 
 }  // namespace util
 

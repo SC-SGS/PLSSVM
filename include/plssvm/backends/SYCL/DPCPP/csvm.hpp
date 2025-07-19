@@ -15,16 +15,20 @@
 
 #include "plssvm/backends/execution_range.hpp"                  // plssvm::detail::{dim_type, execution_range}
 #include "plssvm/backends/gpu_csvm.hpp"                         // plssvm::detail::gpu_csvm
+#include "plssvm/backends/SYCL/data_parallel_kernels.hpp"       // plssvm::sycl::data_parallel_kernel
 #include "plssvm/backends/SYCL/DPCPP/detail/device_ptr.hpp"     // plssvm::dpcpp::detail::device_ptr
 #include "plssvm/backends/SYCL/DPCPP/detail/pinned_memory.hpp"  // plssvm::dpcpp::detail::pinned_memory
 #include "plssvm/backends/SYCL/DPCPP/detail/queue.hpp"          // plssvm::dpcpp::detail::queue (PImpl)
-#include "plssvm/backends/SYCL/kernel_invocation_types.hpp"     // plssvm::sycl::kernel_invocation_type
 #include "plssvm/constants.hpp"                                 // plssvm::real_type
-#include "plssvm/csvm.hpp"                                      // plssvm::detail::csvm_backend_exists
 #include "plssvm/detail/igor_utility.hpp"                       // plssvm::detail::get_value_from_named_parameter
 #include "plssvm/detail/memory_size.hpp"                        // plssvm::detail::memory_size
-#include "plssvm/detail/type_traits.hpp"                        // PLSSVM_REQUIRES
-#include "plssvm/parameter.hpp"                                 // plssvm::parameter, plssvm::detail::parameter
+#include "plssvm/detail/type_traits.hpp"                        // PLSSVM_REQUIRES, plssvm::detail::is_one_type_of
+#include "plssvm/exceptions/exceptions.hpp"                     // plssvm::invalid_parameter_exception
+#include "plssvm/mpi/communicator.hpp"                          // plssvm::mpi::communicator
+#include "plssvm/parameter.hpp"                                 // plssvm::parameter, plssvm::detail::{has_only_sycl_parameter_named_args_v, has_only_sycl_named_args_v}
+#include "plssvm/svm/csvc.hpp"                                  // plssvm::csvc
+#include "plssvm/svm/csvm.hpp"                                  // plssvm::detail::csvm_backend_exists
+#include "plssvm/svm/csvr.hpp"                                  // plssvm::csvr
 #include "plssvm/target_platforms.hpp"                          // plssvm::target_platform
 
 #include "igor/igor.hpp"  // igor::parser
@@ -56,52 +60,33 @@ class csvm : public ::plssvm::detail::gpu_csvm<detail::device_ptr, detail::queue
     using typename base_type::queue_type;
 
     /**
-     * @brief Construct a new C-SVM using the SYCL backend with the parameters given through @p params.
-     * @param[in] params struct encapsulating all possible parameters
-     * @throws plssvm::exception all exceptions thrown in the base class constructor
-     * @throws plssvm::dpcpp::backend_exception if the requested target is not available
-     * @throws plssvm::dpcpp::backend_exception if no device for the requested target was found
-     */
-    explicit csvm(parameter params = {});
-    /**
-     * @brief Construct a new C-SVM using the SYCL backend on the @p target platform with the parameters given through @p params.
-     * @param[in] target the target platform used for this C-SVM
-     * @param[in] params struct encapsulating all possible SVM parameters
-     * @throws plssvm::exception all exceptions thrown in the base class constructor
-     * @throws plssvm::dpcpp::backend_exception if the requested target is not available
-     * @throws plssvm::dpcpp::backend_exception if no device for the requested target was found
-     */
-    explicit csvm(target_platform target, parameter params = {});
-
-    /**
-     * @brief Construct a new C-SVM using the SYCL backend and the optionally provided @p named_args.
-     * @param[in] named_args the additional optional named arguments
-     * @throws plssvm::exception all exceptions thrown in the base class constructor
-     * @throws plssvm::dpcpp::backend_exception if the requested target is not available
-     * @throws plssvm::dpcpp::backend_exception if no device for the requested target was found
-     */
-    template <typename... Args, PLSSVM_REQUIRES(::plssvm::detail::has_only_sycl_parameter_named_args_v<Args...>)>
-    explicit csvm(Args &&...named_args) :
-        csvm{ plssvm::target_platform::automatic, std::forward<Args>(named_args)... } { }
-
-    /**
      * @brief Construct a new C-SVM using the SYCL backend on the @p target platform and the optionally provided @p named_args.
      * @param[in] target the target platform used for this C-SVM
      * @param[in] named_args the additional optional named arguments
      * @throws plssvm::exception all exceptions thrown in the base class constructor
+     * @throws plssvm::invalid_parameter_exception the provided SYCL data parallel kernel is "scoped"
      * @throws plssvm::dpcpp::backend_exception if the requested target is not available
      * @throws plssvm::dpcpp::backend_exception if no device for the requested target was found
      */
     template <typename... Args, PLSSVM_REQUIRES(::plssvm::detail::has_only_sycl_parameter_named_args_v<Args...>)>
-    explicit csvm(const target_platform target, Args &&...named_args) :
-        base_type{ named_args... } {
+    explicit csvm(const target_platform target = target_platform::automatic, Args &&...named_args) {
         // check igor parameter
         igor::parser parser{ std::forward<Args>(named_args)... };
 
-        // check whether a specific SYCL kernel invocation type has been requested
-        if constexpr (parser.has(sycl_kernel_invocation_type)) {
+        // check whether a specific SYCL data parallel kernel has been requested
+        if constexpr (parser.has(sycl_data_parallel_kernel)) {
             // compile time check: the value must have the correct type
-            invocation_type_ = ::plssvm::detail::get_value_from_named_parameter<sycl::kernel_invocation_type>(parser, sycl_kernel_invocation_type);
+            data_parallel_kernel_type_ = ::plssvm::detail::get_value_from_named_parameter<sycl::data_parallel_kernel>(parser, sycl_data_parallel_kernel);
+            // the data parallel kernel "scoped" isn't supported by DPC++
+            if (data_parallel_kernel_type_ == sycl::data_parallel_kernel::scoped) {
+                throw ::plssvm::invalid_parameter_exception{ "The provided sycl::data_parallel_kernel::scoped isn't supported by DPC++!" };
+            }
+
+#if !defined(PLSSVM_SYCL_HIERARCHICAL_AND_SCOPED_KERNELS_ENABLED)
+            if (data_parallel_kernel_type_ == sycl::data_parallel_kernel::hierarchical) {
+                throw ::plssvm::invalid_parameter_exception{ "The provided sycl::data_parallel_kernel::hierarchical is disabled for the DPC++ SYCL backend!" };
+            }
+#endif
         }
         this->init(target);
     }
@@ -126,13 +111,13 @@ class csvm : public ::plssvm::detail::gpu_csvm<detail::device_ptr, detail::queue
      * @brief Wait for all operations in all [`sycl::queue`](https://www.khronos.org/registry/SYCL/specs/sycl-2020/html/sycl-2020.html#sec:interface.queue.class) to finish.
      * @details Terminates the program, if any asynchronous exception is thrown.
      */
-    ~csvm() override;
+    ~csvm() override = 0;
 
     /**
-     * @brief Return the kernel invocation type used in this SYCL SVM.
-     * @return the SYCL kernel invocation type (`[[nodiscard]]`)
+     * @brief Return the data parallel kernel used in this SYCL SVM.
+     * @return the SYCL data parallel kernel (`[[nodiscard]]`)
      */
-    [[nodiscard]] sycl::kernel_invocation_type get_kernel_invocation_type() const noexcept { return invocation_type_; }
+    [[nodiscard]] sycl::data_parallel_kernel get_data_parallel_kernel() const noexcept { return data_parallel_kernel_type_; }
 
   protected:
     /**
@@ -198,8 +183,208 @@ class csvm : public ::plssvm::detail::gpu_csvm<detail::device_ptr, detail::queue
      */
     [[nodiscard]] device_ptr_type run_predict_kernel(std::size_t device_id, const ::plssvm::detail::execution_range &exec, const parameter &params, const device_ptr_type &alpha_d, const device_ptr_type &rho_d, const device_ptr_type &sv_or_w_d, const device_ptr_type &predict_points_d) const final;
 
-    /// The SYCL kernel invocation type for the svm kernel.
-    sycl::kernel_invocation_type invocation_type_{ sycl::kernel_invocation_type::automatic };
+    /// The used SYCL data parallel kernel.
+    sycl::data_parallel_kernel data_parallel_kernel_type_{ sycl::data_parallel_kernel::automatic };
+};
+
+/**
+ * @brief Create a C-SVC using the DPC++ SYCL backend.
+ * @details Inherits all functionality either from the `plssvm::csvc` or `plssvm::dpcpp::csvm` classes.
+ */
+class csvc : public ::plssvm::csvc,
+             public ::plssvm::dpcpp::csvm {
+  public:
+    /**
+     * @brief Construct a new C-SVC using the DPC++ backend with the parameters given through @p params.
+     * @param[in] params struct encapsulating all possible parameters
+     * @param[in] named_sycl_args the additional optional SYCL specific named arguments
+     * @throws plssvm::exception all exceptions thrown in the base class constructors
+     */
+    template <typename... Args, PLSSVM_REQUIRES(::plssvm::detail::has_only_sycl_named_args_v<Args...>)>
+    explicit csvc(const parameter params, Args &&...named_sycl_args) :
+        ::plssvm::csvm{ mpi::communicator{}, params },
+        ::plssvm::dpcpp::csvm(target_platform::automatic, std::forward<Args>(named_sycl_args)...) { }
+
+    /**
+     * @brief Construct a new C-SVC using the DPC++ backend with the parameters given through @p params.
+     * @param[in] comm the used MPI communicator
+     * @param[in] params struct encapsulating all possible parameters
+     * @param[in] named_sycl_args the additional optional SYCL specific named arguments
+     * @throws plssvm::exception all exceptions thrown in the base class constructors
+     */
+    template <typename... Args, PLSSVM_REQUIRES(::plssvm::detail::has_only_sycl_named_args_v<Args...>)>
+    csvc(mpi::communicator comm, const parameter params, Args &&...named_sycl_args) :
+        ::plssvm::csvm{ std::move(comm), params },
+        ::plssvm::dpcpp::csvm(target_platform::automatic, std::forward<Args>(named_sycl_args)...) { }
+
+    /**
+     * @brief Construct a new C-SVC using the DPC++ backend on the @p target platform with the parameters given through @p params.
+     * @param[in] target the target platform used for this C-SVC
+     * @param[in] params struct encapsulating all possible SVM parameters
+     * @param[in] named_sycl_args the additional optional SYCL specific named arguments
+     * @throws plssvm::exception all exceptions thrown in the base class constructors
+     */
+    template <typename... Args, PLSSVM_REQUIRES(::plssvm::detail::has_only_sycl_named_args_v<Args...>)>
+    csvc(const target_platform target, const parameter params, Args &&...named_sycl_args) :
+        ::plssvm::csvm{ mpi::communicator{}, params },
+        ::plssvm::dpcpp::csvm(target, std::forward<Args>(named_sycl_args)...) { }
+
+    /**
+     * @brief Construct a new C-SVC using the DPC++ backend on the @p target platform with the parameters given through @p params.
+     * @param[in] comm the used MPI communicator
+     * @param[in] target the target platform used for this C-SVC
+     * @param[in] params struct encapsulating all possible SVM parameters
+     * @param[in] named_sycl_args the additional optional SYCL specific named arguments
+     * @throws plssvm::exception all exceptions thrown in the base class constructors
+     */
+    template <typename... Args, PLSSVM_REQUIRES(::plssvm::detail::has_only_sycl_named_args_v<Args...>)>
+    csvc(mpi::communicator comm, const target_platform target, const parameter params, Args &&...named_sycl_args) :
+        ::plssvm::csvm{ std::move(comm), params },
+        ::plssvm::dpcpp::csvm(target, std::forward<Args>(named_sycl_args)...) { }
+
+    /**
+     * @brief Construct a new C-SVC using the DPC++ backend and the optionally provided @p named_args.
+     * @param[in] named_args the additional optional named arguments
+     * @throws plssvm::exception all exceptions thrown in the base class constructors
+     */
+    template <typename... Args, PLSSVM_REQUIRES(::plssvm::detail::has_only_sycl_parameter_named_args_v<Args...>)>
+    explicit csvc(Args &&...named_args) :
+        ::plssvm::csvm{ mpi::communicator{}, named_args... },
+        ::plssvm::dpcpp::csvm(target_platform::automatic, std::forward<Args>(named_args)...) { }
+
+    /**
+     * @brief Construct a new C-SVC using the DPC++ backend and the optionally provided @p named_args.
+     * @param[in] comm the used MPI communicator
+     * @param[in] named_args the additional optional named arguments
+     * @throws plssvm::exception all exceptions thrown in the base class constructors
+     */
+    template <typename... Args, PLSSVM_REQUIRES(::plssvm::detail::has_only_sycl_parameter_named_args_v<Args...>)>
+    explicit csvc(mpi::communicator comm, Args &&...named_args) :
+        ::plssvm::csvm{ std::move(comm), named_args... },
+        ::plssvm::dpcpp::csvm(target_platform::automatic, std::forward<Args>(named_args)...) { }
+
+    /**
+     * @brief Construct a new C-SVC using the DPC++ backend on the @p target platform and the optionally provided @p named_args.
+     * @param[in] target the target platform used for this C-SVC
+     * @param[in] named_args the additional optional named-parameters
+     * @throws plssvm::exception all exceptions thrown in the base class constructors
+     */
+    template <typename... Args, PLSSVM_REQUIRES(::plssvm::detail::has_only_sycl_parameter_named_args_v<Args...>)>
+    explicit csvc(const target_platform target, Args &&...named_args) :
+        ::plssvm::csvm{ mpi::communicator{}, named_args... },
+        ::plssvm::dpcpp::csvm(target, std::forward<Args>(named_args)...) { }
+
+    /**
+     * @brief Construct a new C-SVC using the DPC++ backend on the @p target platform and the optionally provided @p named_args.
+     * @param[in] comm the used MPI communicator
+     * @param[in] target the target platform used for this C-SVC
+     * @param[in] named_args the additional optional named-parameters
+     * @throws plssvm::exception all exceptions thrown in the base class constructors
+     */
+    template <typename... Args, PLSSVM_REQUIRES(::plssvm::detail::has_only_sycl_parameter_named_args_v<Args...>)>
+    csvc(mpi::communicator comm, const target_platform target, Args &&...named_args) :
+        ::plssvm::csvm{ std::move(comm), named_args... },
+        ::plssvm::dpcpp::csvm(target, std::forward<Args>(named_args)...) { }
+};
+
+/**
+ * @brief Create a C-SVR using the DPC++ SYCL backend.
+ * @details Inherits all functionality either from the `plssvm::csvr` or `plssvm::dpcpp::csvm` classes.
+ */
+class csvr : public ::plssvm::csvr,
+             public ::plssvm::dpcpp::csvm {
+  public:
+    /**
+     * @brief Construct a new C-SVR using the DPC++ backend with the parameters given through @p params.
+     * @param[in] params struct encapsulating all possible parameters
+     * @param[in] named_sycl_args the additional optional SYCL specific named arguments
+     * @throws plssvm::exception all exceptions thrown in the base class constructors
+     */
+    template <typename... Args, PLSSVM_REQUIRES(::plssvm::detail::has_only_sycl_named_args_v<Args...>)>
+    explicit csvr(const parameter params, Args &&...named_sycl_args) :
+        ::plssvm::csvm{ mpi::communicator{}, params },
+        ::plssvm::dpcpp::csvm(target_platform::automatic, std::forward<Args>(named_sycl_args)...) { }
+
+    /**
+     * @brief Construct a new C-SVR using the DPC++ backend with the parameters given through @p params.
+     * @param[in] comm the used MPI communicator
+     * @param[in] params struct encapsulating all possible parameters
+     * @param[in] named_sycl_args the additional optional SYCL specific named arguments
+     * @throws plssvm::exception all exceptions thrown in the base class constructors
+     */
+    template <typename... Args, PLSSVM_REQUIRES(::plssvm::detail::has_only_sycl_named_args_v<Args...>)>
+    csvr(mpi::communicator comm, const parameter params, Args &&...named_sycl_args) :
+        ::plssvm::csvm{ std::move(comm), params },
+        ::plssvm::dpcpp::csvm(target_platform::automatic, std::forward<Args>(named_sycl_args)...) { }
+
+    /**
+     * @brief Construct a new C-SVR using the DPC++ backend on the @p target platform with the parameters given through @p params.
+     * @param[in] target the target platform used for this C-SVR
+     * @param[in] params struct encapsulating all possible SVM parameters
+     * @param[in] named_sycl_args the additional optional SYCL specific named arguments
+     * @throws plssvm::exception all exceptions thrown in the base class constructors
+     */
+    template <typename... Args, PLSSVM_REQUIRES(::plssvm::detail::has_only_sycl_named_args_v<Args...>)>
+    csvr(const target_platform target, const parameter params, Args &&...named_sycl_args) :
+        ::plssvm::csvm{ mpi::communicator{}, params },
+        ::plssvm::dpcpp::csvm(target, std::forward<Args>(named_sycl_args)...) { }
+
+    /**
+     * @brief Construct a new C-SVR using the DPC++ backend on the @p target platform with the parameters given through @p params.
+     * @param[in] comm the used MPI communicator
+     * @param[in] target the target platform used for this C-SVR
+     * @param[in] params struct encapsulating all possible SVM parameters
+     * @param[in] named_sycl_args the additional optional SYCL specific named arguments
+     * @throws plssvm::exception all exceptions thrown in the base class constructors
+     */
+    template <typename... Args, PLSSVM_REQUIRES(::plssvm::detail::has_only_sycl_named_args_v<Args...>)>
+    csvr(mpi::communicator comm, const target_platform target, const parameter params, Args &&...named_sycl_args) :
+        ::plssvm::csvm{ std::move(comm), params },
+        ::plssvm::dpcpp::csvm(target, std::forward<Args>(named_sycl_args)...) { }
+
+    /**
+     * @brief Construct a new C-SVR using the DPC++ backend and the optionally provided @p named_args.
+     * @param[in] named_args the additional optional named arguments
+     * @throws plssvm::exception all exceptions thrown in the base class constructors
+     */
+    template <typename... Args, PLSSVM_REQUIRES(::plssvm::detail::has_only_sycl_parameter_named_args_v<Args...>)>
+    explicit csvr(Args &&...named_args) :
+        ::plssvm::csvm{ mpi::communicator{}, named_args... },
+        ::plssvm::dpcpp::csvm(target_platform::automatic, std::forward<Args>(named_args)...) { }
+
+    /**
+     * @brief Construct a new C-SVR using the DPC++ backend and the optionally provided @p named_args.
+     * @param[in] comm the used MPI communicator
+     * @param[in] named_args the additional optional named arguments
+     * @throws plssvm::exception all exceptions thrown in the base class constructors
+     */
+    template <typename... Args, PLSSVM_REQUIRES(::plssvm::detail::has_only_sycl_parameter_named_args_v<Args...>)>
+    explicit csvr(mpi::communicator comm, Args &&...named_args) :
+        ::plssvm::csvm{ std::move(comm), named_args... },
+        ::plssvm::dpcpp::csvm(target_platform::automatic, std::forward<Args>(named_args)...) { }
+
+    /**
+     * @brief Construct a new C-SVR using the DPC++ backend on the @p target platform and the optionally provided @p named_args.
+     * @param[in] target the target platform used for this C-SVR
+     * @param[in] named_args the additional optional named-parameters
+     * @throws plssvm::exception all exceptions thrown in the base class constructors
+     */
+    template <typename... Args, PLSSVM_REQUIRES(::plssvm::detail::has_only_sycl_parameter_named_args_v<Args...>)>
+    explicit csvr(const target_platform target, Args &&...named_args) :
+        ::plssvm::csvm{ mpi::communicator{}, named_args... },
+        ::plssvm::dpcpp::csvm(target, std::forward<Args>(named_args)...) { }
+
+    /**
+     * @brief Construct a new C-SVR using the DPC++ backend on the @p target platform and the optionally provided @p named_args.
+     * @param[in] comm the used MPI communicator
+     * @param[in] target the target platform used for this C-SVR
+     * @param[in] named_args the additional optional named-parameters
+     * @throws plssvm::exception all exceptions thrown in the base class constructors
+     */
+    template <typename... Args, PLSSVM_REQUIRES(::plssvm::detail::has_only_sycl_parameter_named_args_v<Args...>)>
+    csvr(mpi::communicator comm, const target_platform target, Args &&...named_args) :
+        ::plssvm::csvm{ std::move(comm), named_args... },
+        ::plssvm::dpcpp::csvm(target, std::forward<Args>(named_args)...) { }
 };
 
 }  // namespace dpcpp
@@ -207,10 +392,10 @@ class csvm : public ::plssvm::detail::gpu_csvm<detail::device_ptr, detail::queue
 namespace detail {
 
 /**
- * @brief Sets the `value` to `true` since C-SVMs using the SYCL backend with DPC++ as SYCL implementation are available.
+ * @brief Sets the `value` to `true` since C-SVMs (C-SVCs, C-SVRs) using the SYCL backend with DPC++ as SYCL implementation are available.
  */
-template <>
-struct csvm_backend_exists<dpcpp::csvm> : std::true_type { };
+template <typename T>
+struct csvm_backend_exists<T, std::enable_if_t<is_one_type_of_v<T, dpcpp::csvm, dpcpp::csvc, dpcpp::csvr>>> : std::true_type { };
 
 }  // namespace detail
 

@@ -22,9 +22,6 @@ namespace plssvm {
 
 std::vector<target_platform> list_available_target_platforms() {
     std::vector<target_platform> available_targets = { target_platform::automatic };
-#if defined(PLSSVM_HAS_CPU_TARGET)
-    available_targets.push_back(target_platform::cpu);
-#endif
 #if defined(PLSSVM_HAS_NVIDIA_TARGET)
     available_targets.push_back(target_platform::gpu_nvidia);
 #endif
@@ -33,6 +30,9 @@ std::vector<target_platform> list_available_target_platforms() {
 #endif
 #if defined(PLSSVM_HAS_INTEL_TARGET)
     available_targets.push_back(target_platform::gpu_intel);
+#endif
+#if defined(PLSSVM_HAS_CPU_TARGET)
+    available_targets.push_back(target_platform::cpu);
 #endif
 
     // automatic is ALWAYS available but AT LEAST ONE other target must be available in addition

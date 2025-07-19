@@ -124,10 +124,14 @@ std::ostream &operator<<(std::ostream &out, const events &e);
 
 }  // namespace plssvm::detail::tracking
 
+/// @cond Doxygen_suppress
+
 template <>
 struct fmt::formatter<plssvm::detail::tracking::events::event> : fmt::ostream_formatter { };
 
 template <>
 struct fmt::formatter<plssvm::detail::tracking::events> : fmt::ostream_formatter { };
+
+/// @endcond
 
 #endif  // PLSSVM_DETAIL_TRACKING_EVENT_HPP_

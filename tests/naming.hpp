@@ -17,6 +17,7 @@
 #include "plssvm/detail/arithmetic_type_name.hpp"  // plssvm::detail::arithmetic_type_name
 #include "plssvm/detail/string_utility.hpp"        // plssvm::detail::replace_all
 #include "plssvm/detail/type_traits.hpp"           // plssvm::detail::{always_false_v, is_map_v, is_unordered_map_v, is_set_v, is_unordered_set_v, is_vector_v}
+#include "plssvm/detail/utility.hpp"               // plssvm::detail::unreachable
 #include "plssvm/exceptions/exceptions.hpp"        // plssvm::exception
 
 #include "tests/exceptions/utility.hpp"  // util::exception_type_name
@@ -32,7 +33,7 @@
 #include <string>       // std::string
 #include <string_view>  // std::string_view
 #include <tuple>        // std::tuple, std::tuple_element_t, std::tuple_size_v, std::get
-#include <type_traits>  // std::true_type, std::false_type, std::is_same_v, std::is_arithmetic_v, std::is_base_of_v
+#include <type_traits>  // std::true_type, std::false_type, std::is_same_v, std::is_arithmetic_v, std::is_base_of_v, std::void_t
 
 namespace naming {
 
@@ -92,6 +93,21 @@ PLSSVM_CREATE_HAS_MEMBER_TYPEDEF_TYPE_TRAIT(pinned_memory_type)
 #undef PLSSVM_CREATE_HAS_MEMBER_TYPEDEF_TYPE_TRAIT
 
 /**
+ * @brief A macro to create type traits for testing whether a type has a static variable declaration called @p def.
+ */
+#define PLSSVM_CREATE_HAS_MEMBER_VARIABLE_TYPE_TRAIT(def)                                                   \
+    template <typename T, typename = void>                                                                  \
+    struct enable_if_##def##_member_variable_exists : std::false_type { };                                  \
+    template <typename T>                                                                                   \
+    struct enable_if_##def##_member_variable_exists<T, std::void_t<decltype(T::def)>> : std::true_type { }; \
+    template <typename T>                                                                                   \
+    constexpr bool has_##def##_member_variable_v = enable_if_##def##_member_variable_exists<T>::value;
+
+PLSSVM_CREATE_HAS_MEMBER_VARIABLE_TYPE_TRAIT(space)
+
+#undef PLSSVM_CREATE_HAS_MEMBER_VARIABLE_TYPE_TRAIT
+
+/**
  * @brief Escape some characters of the string such that GTest accepts it as test case name.
  * @details Replaces some special cases for better readability: "-" with "_M_" (for Minus), " " with "_W_" (for Whitespace), "." with "_D_" (for dot),
  *          ":" with "_C_" (for colon), "/" with "_", and "@" with "_A_" (for at).
@@ -130,7 +146,43 @@ PLSSVM_CREATE_HAS_MEMBER_TYPEDEF_TYPE_TRAIT(pinned_memory_type)
  */
 template <typename T>
 [[nodiscard]] inline std::string type_name() {
-    if constexpr (plssvm::detail::is_map_v<T>) {
+    if constexpr (std::is_same_v<T, plssvm::openmp::csvc>) {
+        return "openmp_csvc";
+    } else if constexpr (std::is_same_v<T, plssvm::openmp::csvr>) {
+        return "openmp_csvr";
+    } else if constexpr (std::is_same_v<T, plssvm::hpx::csvc>) {
+        return "hpx_csvc";
+    } else if constexpr (std::is_same_v<T, plssvm::hpx::csvr>) {
+        return "hpx_csvr";
+    } else if constexpr (std::is_same_v<T, plssvm::stdpar::csvc>) {
+        return "stdpar_csvc";
+    } else if constexpr (std::is_same_v<T, plssvm::stdpar::csvr>) {
+        return "stdpar_csvr";
+    } else if constexpr (std::is_same_v<T, plssvm::cuda::csvc>) {
+        return "cuda_csvc";
+    } else if constexpr (std::is_same_v<T, plssvm::cuda::csvr>) {
+        return "cuda_csvr";
+    } else if constexpr (std::is_same_v<T, plssvm::hip::csvc>) {
+        return "hip_csvc";
+    } else if constexpr (std::is_same_v<T, plssvm::hip::csvr>) {
+        return "hip_csvr";
+    } else if constexpr (std::is_same_v<T, plssvm::opencl::csvc>) {
+        return "opencl_csvc";
+    } else if constexpr (std::is_same_v<T, plssvm::opencl::csvr>) {
+        return "opencl_csvr";
+    } else if constexpr (std::is_same_v<T, plssvm::dpcpp::csvc>) {
+        return "sycl_dpcpp_csvc";
+    } else if constexpr (std::is_same_v<T, plssvm::dpcpp::csvr>) {
+        return "sycl_dpcpp_csvr";
+    } else if constexpr (std::is_same_v<T, plssvm::adaptivecpp::csvc>) {
+        return "sycl_adaptivecpp_csvc";
+    } else if constexpr (std::is_same_v<T, plssvm::adaptivecpp::csvr>) {
+        return "sycl_adaptivecpp_csvr";
+    } else if constexpr (std::is_same_v<T, plssvm::kokkos::csvc>) {
+        return "kokkos_csvc";
+    } else if constexpr (std::is_same_v<T, plssvm::kokkos::csvr>) {
+        return "kokkos_csvr";
+    } else if constexpr (plssvm::detail::is_map_v<T>) {
         return "std_map";
     } else if constexpr (plssvm::detail::is_unordered_map_v<T>) {
         return "std_unordered_map";
@@ -153,16 +205,30 @@ template <typename T>
     } else if constexpr (std::is_base_of_v<plssvm::exception, T>) {
         return std::string{ util::exception_type_name<T>() };
     } else if constexpr (has_csvm_type_member_typedef_v<T>) {
-        return fmt::format("{}", plssvm::csvm_to_backend_type_v<typename T::csvm_type>);
+        // clang-format off
+        return fmt::format("{}{}", plssvm::csvm_to_backend_type_v<typename T::csvm_type>, std::apply([](const auto &...args) {
+                               if constexpr (sizeof...(args) == 0) {
+                                   return std::string{};
+                               } else {
+                                   return (fmt::format("_{}", args.second) + ...);
+                               }
+                           }, T::additional_arguments));
+        // clang-format on
     } else if constexpr (has_device_ptr_type_member_typedef_v<T>) {
         using device_ptr_type = typename T::device_ptr_type;
-        return fmt::format("{}", plssvm::detail::arithmetic_type_name<typename device_ptr_type::value_type>());
+        std::string test_name{ fmt::format("{}", plssvm::detail::arithmetic_type_name<typename device_ptr_type::value_type>()) };
+        if constexpr (has_space_member_variable_v<T>) {
+            test_name += fmt::format("_{}", T::space);
+        }
+        return test_name;
     } else if constexpr (has_pinned_memory_type_member_typedef_v<T>) {
         using pinned_memory_type = typename T::pinned_memory_type;
         return fmt::format("{}", plssvm::detail::arithmetic_type_name<typename pinned_memory_type::value_type>());
     } else {
         static_assert(plssvm::detail::always_false_v<T>, "Can't convert the type 'T' to a std::string!");
     }
+    // should never be reachable (silence nvc++ warnings)
+    plssvm::detail::unreachable();
 }
 
 /**
@@ -303,7 +369,7 @@ template <typename T>
 template <typename T>
 [[nodiscard]] inline std::string pretty_print_data_set_factory(const ::testing::TestParamInfo<typename T::ParamType> &param_info) {
     // the values are bools
-    return detail::escape_string(fmt::format("strings_as_labels_{}", std::get<0>(param_info.param)));
+    return detail::escape_string(fmt::format("strings_as_labels_{}__svm_type_{}", std::get<0>(param_info.param), std::get<1>(param_info.param)));
 }
 
 // detail/sha256.cpp -> Sha256

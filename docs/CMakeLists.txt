@@ -1,18 +1,18 @@
-## Authors: Alexander Van Craen, Marcel Breyer
-## Copyright (C): 2018-today The PLSSVM project - All Rights Reserved
-## License: This file is part of the PLSSVM project which is released under the MIT license.
-##          See the LICENSE.md file in the project root for full license information.
+# Authors: Alexander Van Craen, Marcel Breyer
+# Copyright (C): 2018-today The PLSSVM project - All Rights Reserved
+# License: This file is part of the PLSSVM project which is released under the MIT license.
+#          See the LICENSE.md file in the project root for full license information.
 ########################################################################################################################
 
 list(APPEND CMAKE_MESSAGE_INDENT "Documentation:  ")
 
 ########################################################################################################################
-##                                     setup documentation generation with doxygen                                    ##
+#                                      setup documentation generation with doxygen                                     #
 ########################################################################################################################
-## use installed doxygen
+# use installed doxygen
 find_package(Doxygen REQUIRED OPTIONAL_COMPONENTS dot)
 
-## configure doxygen
+# configure doxygen
 set(DOXYGEN_OUTPUT_DIRECTORY "${PROJECT_SOURCE_DIR}/docs")
 set(DOXYGEN_IMAGE_PATH "${PROJECT_SOURCE_DIR}/docs/resources")
 set(DOXYGEN_USE_MDFILE_AS_MAINPAGE "${PROJECT_SOURCE_DIR}/README.md")
@@ -32,12 +32,13 @@ set(DOXYGEN_PROJECT_LOGO "${PROJECT_SOURCE_DIR}/docs/resources/logo_90x55.png")
 set(DOXYGEN_EXCLUDE_SYMBOLS "*_HPP_")
 
 set(DOXYGEN_DOT_IMAGE_FORMAT "svg")
+set(DOXYGEN_DOT_GRAPH_MAX_NODES "100")
 set(DOXYGEN_INTERACTIVE_SVG "YES")
 set(DOXYGEN_INCLUDE_GRAPH "NO")
 set(DOXYGEN_EXTRACT_PRIVATE "YES")
 set(DOXYGEN_EXAMPLE_PATH "${PROJECT_SOURCE_DIR}/docs/resources/examples")
 
-## enable processing of specific attributes and macros
+# enable processing of specific attributes and macros
 set(DOXYGEN_ENABLE_PREPROCESSING "YES")
 set(DOXYGEN_MACRO_EXPANSION "YES")
 set(DOXYGEN_EXPAND_ONLY_PREDEF "YES")
@@ -45,41 +46,39 @@ set(DOXYGEN_EXPAND_AS_DEFINED "YES")
 set(DOXYGEN_PREDEFINED "__attribute__((x))=;__CUDA_ARCH__=0")
 
 set(DOXYGEN_VERBATIM_VARS DOXYGEN_ALIASES)
-set(DOXYGEN_ALIASES
-    [[license="\par License^^\parblock^^"  ]]
-)
+set(DOXYGEN_ALIASES [[license="\par License^^\parblock^^"  ]])
 
 # sanitize README formulas for Doxygen if the sed utility is available
 find_program(PLSSVM_HAS_SED "sed")
 if (PLSSVM_HAS_SED)
-    set(DOXYGEN_FILTER_PATTERNS "*.md=sed -e '1,90 s/\\$/\\\\f\\$/g' -e '/^## Table of Contents/,/^## Introduction to PLSSVM/{//!d}' -e 's/^## Table of Contents/@tableofcontents/g' -e '/^# The Python3 Bindings/,/^We currently support two kinds of Python3 bindings/{//!d}' -e 's/^# The Python3 Bindings/@tableofcontents{HTML:3}/g' -e '/^#/ s/`//g'")
-    list(APPEND DOXYGEN_FILTER_PATTERNS "*.cl=sed -e 's/ PLSSVM_OPENCL_KERNEL_FUNCTION_PARAMETER_LIST)/, Args... PLSSVM_OPENCL_KERNEL_FUNCTION_PARAMETER_LIST)/g'")
+    set(DOXYGEN_FILTER_PATTERNS
+        "*.md=sed -e '1,90 s/\\$/\\\\f\\$/g' -e '/^## Table of Contents/,/^## Introduction to PLSSVM/{//!d}' -e 's/^## Table of Contents/@tableofcontents/g' -e '/^# The Python3 Bindings/,/^We currently support two kinds of Python3 bindings/{//!d}' -e 's/^# The Python3 Bindings/@tableofcontents{HTML:3}/g' -e '/^#/ s/`//g'"
+    )
+    list(APPEND DOXYGEN_FILTER_PATTERNS
+         "*.cl=sed -e 's/ PLSSVM_OPENCL_KERNEL_FUNCTION_PARAMETER_LIST)/, Args... PLSSVM_OPENCL_KERNEL_FUNCTION_PARAMETER_LIST)/g'"
+    )
 endif ()
 
-## add doxygen as target
+# add doxygen as target
 doxygen_add_docs(
-        doc
-        "${PROJECT_SOURCE_DIR}/include;${PROJECT_SOURCE_DIR}/docs/resources;${PROJECT_SOURCE_DIR}/README.md;${PROJECT_SOURCE_DIR}/bindings/Python/README.md"
-        ALL  # add to the default build target
-        WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
-        COMMENT "Generating API documentation with Doxygen"
+    doc
+    "${PROJECT_SOURCE_DIR}/include;${PROJECT_SOURCE_DIR}/docs/resources;${PROJECT_SOURCE_DIR}/README.md;${PROJECT_SOURCE_DIR}/bindings/Python/README.md;${PROJECT_SOURCE_DIR}/examples/python/interactive/README.md"
+    ALL # add to the default build target
+    WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
+    COMMENT "Generating API documentation with Doxygen"
 )
 
-## create shortcut for index.html
+# create shortcut for index.html
 add_custom_command(
-        TARGET doc
-        POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -P "${PROJECT_SOURCE_DIR}/cmake/create_documentation_shortcut.cmake"
-        WORKING_DIRECTORY "${CMAKE_CURRENT_LIST_DIR}"
+    TARGET doc
+    POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -P "${PROJECT_SOURCE_DIR}/cmake/create_documentation_shortcut.cmake"
+    WORKING_DIRECTORY "${CMAKE_CURRENT_LIST_DIR}"
 )
 
-## install targets for the documentation
+# install targets for the documentation
 include(GNUInstallDirs)
-install(DIRECTORY "${PROJECT_SOURCE_DIR}/docs/html"
-        DESTINATION "${CMAKE_INSTALL_DOCDIR}"
-)
-install(FILES "${CMAKE_CURRENT_LIST_DIR}/documentation.html"
-        DESTINATION "${CMAKE_INSTALL_DOCDIR}"
-)
+install(DIRECTORY "${PROJECT_SOURCE_DIR}/docs/html" DESTINATION "${CMAKE_INSTALL_DOCDIR}")
+install(FILES "${CMAKE_CURRENT_LIST_DIR}/documentation.html" DESTINATION "${CMAKE_INSTALL_DOCDIR}")
 
 list(POP_BACK CMAKE_MESSAGE_INDENT)

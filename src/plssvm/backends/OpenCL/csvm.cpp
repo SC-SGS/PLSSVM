@@ -13,19 +13,23 @@
 #include "plssvm/backends/OpenCL/detail/command_queue.hpp"  // plssvm::opencl::detail::command_queue
 #include "plssvm/backends/OpenCL/detail/context.hpp"        // plssvm::opencl::detail::context
 #include "plssvm/backends/OpenCL/detail/device_ptr.hpp"     // plssvm::opencl::detail::device_ptr
+#include "plssvm/backends/OpenCL/detail/jit_info.hpp"       // plssvm::opencl::detail::create_jit_report
 #include "plssvm/backends/OpenCL/detail/kernel.hpp"         // plssvm::opencl::detail::{compute_kernel_name, kernel}
 #include "plssvm/backends/OpenCL/detail/utility.hpp"        // PLSSVM_OPENCL_ERROR_CHECK, plssvm::opencl::detail::{get_contexts, create_command_queues, run_kernel, kernel_type_to_function_name, device_synchronize, get_opencl_target_version, get_driver_version}
 #include "plssvm/backends/OpenCL/exceptions.hpp"            // plssvm::opencl::backend_exception
 #include "plssvm/constants.hpp"                             // plssvm::{real_type, THREAD_BLOCK_SIZE, INTERNAL_BLOCK_SIZE, PADDING_SIZE}
 #include "plssvm/detail/assert.hpp"                         // PLSSVM_ASSERT
 #include "plssvm/detail/data_distribution.hpp"              // plssvm::detail::{data_distribution, triangular_data_distribution, rectangular_data_distribution}
-#include "plssvm/detail/logging.hpp"                        // plssvm::detail::log
+#include "plssvm/detail/logging/log_untracked.hpp"          // plssvm::detail::log_untracked
+#include "plssvm/detail/logging/mpi_log_untracked.hpp"      // plssvm::detail::log_untracked
 #include "plssvm/detail/memory_size.hpp"                    // plssvm::detail::memory_size
-#include "plssvm/detail/tracking/performance_tracker.hpp"   // plssvm::detail::tracking::tracking_entry
+#include "plssvm/detail/tracking/performance_tracker.hpp"   // plssvm::detail::tracking::tracking_entry, PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY
 #include "plssvm/detail/utility.hpp"                        // plssvm::detail::contains
 #include "plssvm/exceptions/exceptions.hpp"                 // plssvm::exception
 #include "plssvm/gamma.hpp"                                 // plssvm::gamma_type
 #include "plssvm/kernel_function_types.hpp"                 // plssvm::kernel_function_type
+#include "plssvm/mpi/communicator.hpp"                      // plssvm::mpi::communicator
+#include "plssvm/mpi/detail/information.hpp"                // plssvm::mpi::detail::gather_and_print_csvm_information
 #include "plssvm/parameter.hpp"                             // plssvm::parameter, plssvm::detail::parameter
 #include "plssvm/shape.hpp"                                 // plssvm::shape
 #include "plssvm/target_platforms.hpp"                      // plssvm::target_platform
@@ -38,7 +42,7 @@
 #include "fmt/format.h"  // fmt::format
 
 #include <algorithm>  // std::all_of
-#include <chrono>     // std::chrono
+#include <chrono>     // std::chrono::{steady_clock, duration_cast}
 #include <cmath>      // std::ceil
 #include <cstddef>    // std::size_t
 #include <cstdint>    // std::int32_t, std::uint16_t
@@ -53,27 +57,7 @@
 
 namespace plssvm::opencl {
 
-csvm::csvm(parameter params) :
-    csvm{ plssvm::target_platform::automatic, params } { }
-
-csvm::csvm(target_platform target, parameter params) :
-    base_type{ params } {
-    this->init(target);
-}
-
-csvm::~csvm() {
-    try {
-        // be sure that all operations on the OpenCL devices have finished before destruction
-        for (const queue_type &queue : devices_) {
-            detail::device_synchronize(queue);
-        }
-    } catch (const plssvm::exception &e) {
-        std::cout << e.what_with_loc() << std::endl;
-        std::terminate();
-    }
-}
-
-void csvm::init(const target_platform target) {
+csvm::csvm(const target_platform target) {
     // check whether the requested target platform has been enabled
     switch (target) {
         case target_platform::automatic:
@@ -100,68 +84,97 @@ void csvm::init(const target_platform target) {
             break;
     }
 
-    // get kernel type from base class
-    const kernel_function_type kernel = base_type::get_params().kernel_type;
-
     // get all available OpenCL contexts for the current target including devices with respect to the requested target platform
     std::tie(contexts_, target_) = detail::get_contexts(target);
 
-    // at least one context must be created
+    // At this point, target_ may NEVER be target_platform::automatic!
+    PLSSVM_ASSERT(target_ != target_platform::automatic, "At this point, the target platform must be determined and must NOT be automatic!");
+
+    // at least one OpenCL context must be created
     if (contexts_.empty()) {
         throw backend_exception{ fmt::format("No OpenCL context for the target {} could be found!", target_) };
     }
 
-    // print OpenCL info
-    plssvm::detail::log(verbosity_level::full,
-                        "\nUsing OpenCL (target version: {}) as backend.\n",
-                        plssvm::detail::tracking::tracking_entry{ "dependencies", "opencl_target_version", detail::get_opencl_target_version() });
-    PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "dependencies", "opencl_library", std::string{ PLSSVM_OPENCL_LIBRARY } }));
-    if (target == target_platform::automatic) {
-        plssvm::detail::log(verbosity_level::full,
-                            "Using {} as automatic target platform.\n",
-                            target_);
-    }
-    PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "backend", "backend", plssvm::backend_type::opencl }));
+    // create command_queues and JIT compile OpenCL kernels; compile all kernels for float and double
+    detail::jit_info info{};
+    std::tie(devices_, info) = detail::create_command_queues(comm_, contexts_, target_, params_.kernel_type);
 
-    // create command_queues and JIT compile OpenCL kernels
-    const auto jit_start_time = std::chrono::steady_clock::now();
-
-    // get kernel names
-    const std::vector<std::pair<detail::compute_kernel_name, std::string>> kernel_names = detail::kernel_type_to_function_names();
-    // compile all kernels for float and double
-    devices_ = detail::create_command_queues(contexts_, kernel, kernel_names);
-
-    const auto jit_end_time = std::chrono::steady_clock::now();
-    plssvm::detail::log(verbosity_level::full | verbosity_level::timing,
-                        "\nOpenCL kernel JIT compilation done in {}.\n",
-                        plssvm::detail::tracking::tracking_entry{ "backend", "jit_compilation_time", std::chrono::duration_cast<std::chrono::milliseconds>(jit_end_time - jit_start_time) });
-
-    // print found OpenCL devices
-    plssvm::detail::log(verbosity_level::full,
-                        "Found {} OpenCL device(s) for the target platform {}:\n",
-                        plssvm::detail::tracking::tracking_entry{ "backend", "num_devices", devices_.size() },
-                        plssvm::detail::tracking::tracking_entry{ "backend", "target_platform", target_ });
-    std::vector<std::string> device_names;
+    std::vector<std::string> device_names{};
     device_names.reserve(devices_.size());
-    for (typename std::vector<queue_type>::size_type device = 0; device < devices_.size(); ++device) {
-        const std::string device_name = detail::get_device_name(devices_[device]);
-        plssvm::detail::log(verbosity_level::full,
-                            "  [{}, {}]\n",
-                            device,
-                            device_name);
-        device_names.emplace_back(device_name);
+    std::vector<std::string> driver_versions{};
+    driver_versions.reserve(comm_.size());
 
-        // get the target platform's driver version
-        const std::string driver_version = detail::get_driver_version(devices_[device]);
-        PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "dependencies", "device_driver_version", driver_version }));
+    if (comm_.size() > 1) {
+        // use MPI rank specific command line output
+        for (const queue_type &device : devices_) {
+            device_names.emplace_back(detail::get_device_name(device));
+            // get the target platform's driver version
+            driver_versions.emplace_back(detail::get_driver_version(device));
+        }
+
+        mpi::detail::gather_and_print_csvm_information(comm_, plssvm::backend_type::opencl, target_, device_names, detail::create_jit_report(info));
+    } else {
+        // use more detailed single rank command line output
+        plssvm::detail::log_untracked(verbosity_level::full | verbosity_level::timing,
+                                      comm_,
+                                      "\nOpenCL kernel JIT compilation done in {}.\n",
+                                      info.duration);
+        plssvm::detail::log_untracked(verbosity_level::full,
+                                      comm_,
+                                      "\nUsing OpenCL (target version: {}) as backend.\n",
+                                      detail::get_opencl_target_version());
+        if (target == target_platform::automatic) {
+            plssvm::detail::log_untracked(verbosity_level::full,
+                                          comm_,
+                                          "Using {} as automatic target platform.\n",
+                                          target_);
+        }
+        plssvm::detail::log_untracked(verbosity_level::full,
+                                      comm_,
+                                      "Found {} OpenCL device(s) for the target platform {}:\n",
+                                      devices_.size(),
+                                      target_);
+
+        for (typename std::vector<queue_type>::size_type device = 0; device < devices_.size(); ++device) {
+            const std::string device_name = detail::get_device_name(devices_[device]);
+            plssvm::detail::log_untracked(verbosity_level::full,
+                                          comm_,
+                                          "  [{}, {}]\n",
+                                          device,
+                                          device_name);
+            device_names.emplace_back(device_name);
+
+            // get the target platform's driver version
+            driver_versions.emplace_back(detail::get_driver_version(devices_[device]));
+        }
     }
+
+    plssvm::detail::log_untracked(verbosity_level::full | verbosity_level::timing,
+                                  comm_,
+                                  "\n");
+
+    PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "dependencies", "opencl_target_version", detail::get_opencl_target_version() }));
+    PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "dependencies", "opencl_library", std::string{ PLSSVM_OPENCL_LIBRARY } }));
+    PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "dependencies", "device_driver_version", driver_versions }));
+    PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "backend", "backend", plssvm::backend_type::opencl }));
+    PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "backend", "target_platform", target_ }));
+    PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "backend", "num_devices", devices_.size() }));
     PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "backend", "device", device_names }));
-    plssvm::detail::log(verbosity_level::full | verbosity_level::timing,
-                        "\n");
+    PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "backend", "jit_compilation_time", info.duration }));
 
     // sanity checks for the number of the OpenCL kernels
-    PLSSVM_ASSERT(std::all_of(devices_.begin(), devices_.end(), [](const queue_type &queue) { return queue.kernels.size() == 13; }),
-                  "Every command queue must have exactly thirteen associated kernels!");
+    PLSSVM_ASSERT(std::all_of(devices_.begin(), devices_.end(), [](const queue_type &queue) { return queue.kernels.size() == 17; }),
+                  "Every command queue must have exactly 17 associated kernels!");
+
+    PLSSVM_ASSERT(std::all_of(devices_.begin(), devices_.end(), [](const queue_type &queue) { return ::plssvm::detail::contains(queue.kernels, detail::compute_kernel_name::fill_kernel_float); }),
+                  "The double device pointer fill kernel is missing!");
+    PLSSVM_ASSERT(std::all_of(devices_.begin(), devices_.end(), [](const queue_type &queue) { return ::plssvm::detail::contains(queue.kernels, detail::compute_kernel_name::fill_kernel_double); }),
+                  "The float device pointer fill kernel is missing!");
+
+    PLSSVM_ASSERT(std::all_of(devices_.begin(), devices_.end(), [](const queue_type &queue) { return ::plssvm::detail::contains(queue.kernels, detail::compute_kernel_name::memset_kernel_float); }),
+                  "The double device pointer memset kernel is missing!");
+    PLSSVM_ASSERT(std::all_of(devices_.begin(), devices_.end(), [](const queue_type &queue) { return ::plssvm::detail::contains(queue.kernels, detail::compute_kernel_name::memset_kernel_double); }),
+                  "The float device pointer memset kernel is missing!");
 
     PLSSVM_ASSERT(std::all_of(devices_.begin(), devices_.end(), [](const queue_type &queue) { return ::plssvm::detail::contains(queue.kernels, detail::compute_kernel_name::assemble_kernel_matrix_explicit); }),
                   "The explicit kernel matrix assembly device kernel is missing!");
@@ -192,6 +205,18 @@ void csvm::init(const target_platform target) {
                   "The predict_kernel_laplacian device kernel is missing!");
     PLSSVM_ASSERT(std::all_of(devices_.begin(), devices_.end(), [](const queue_type &queue) { return ::plssvm::detail::contains(queue.kernels, detail::compute_kernel_name::predict_kernel_chi_squared); }),
                   "The predict_kernel_chi_squared device kernel is missing!");
+}
+
+csvm::~csvm() {
+    try {
+        // be sure that all operations on the OpenCL devices have finished before destruction
+        for (const queue_type &queue : devices_) {
+            detail::device_synchronize(queue);
+        }
+    } catch (const plssvm::exception &e) {
+        std::cout << e.what_with_loc() << std::endl;
+        std::terminate();
+    }
 }
 
 std::vector<::plssvm::detail::memory_size> csvm::get_device_memory() const {
@@ -280,6 +305,7 @@ auto csvm::run_assemble_kernel_matrix_explicit(const std::size_t device_id, cons
 
     using namespace plssvm::operators;
 
+    const auto start = std::chrono::steady_clock::now();
     for (const auto &[partial_grid, offsets] : exec.grids) {
         // convert execution range partial_grid to OpenCL's native std::vector
         const std::vector<std::size_t> native_partial_grid = detail::dim_type_to_native<2>(partial_grid) * native_block;
@@ -310,6 +336,9 @@ auto csvm::run_assemble_kernel_matrix_explicit(const std::size_t device_id, cons
         }
     }
     detail::device_synchronize(device);
+    const auto end = std::chrono::steady_clock::now();
+    [[maybe_unused]] const auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+    PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "kernel_matrix", "kernel_matrix_assembly_kernel", duration }));
 
     return kernel_matrix_d;
 }
@@ -329,6 +358,7 @@ void csvm::run_blas_level_3_kernel_explicit(const std::size_t device_id, const :
 
     using namespace plssvm::operators;
 
+    const auto start = std::chrono::steady_clock::now();
     for (const auto &[partial_grid, offsets] : exec.grids) {
         // convert execution range grid[i] to OpenCL's native std::vector
         const std::vector<std::size_t> native_partial_grid = detail::dim_type_to_native<2>(partial_grid) * native_block;
@@ -358,6 +388,9 @@ void csvm::run_blas_level_3_kernel_explicit(const std::size_t device_id, const :
         }
     }
     detail::device_synchronize(device);
+    const auto end = std::chrono::steady_clock::now();
+    [[maybe_unused]] const auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+    PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "cg", "blas_level_3_times_kernel", duration }));
 }
 
 void csvm::run_inplace_matrix_addition(const std::size_t device_id, const ::plssvm::detail::execution_range &exec, device_ptr_type &lhs_d, const device_ptr_type &rhs_d) const {
@@ -422,6 +455,7 @@ void csvm::run_assemble_kernel_matrix_implicit_blas_level_3(const std::size_t de
 
     using namespace plssvm::operators;
 
+    const auto start = std::chrono::steady_clock::now();
     for (const auto &[partial_grid, offsets] : exec.grids) {
         // convert execution range partial_grid to OpenCL's native std::vector
         const std::vector<std::size_t> native_partial_grid = detail::dim_type_to_native<2>(partial_grid) * native_block;
@@ -452,6 +486,9 @@ void csvm::run_assemble_kernel_matrix_implicit_blas_level_3(const std::size_t de
         }
     }
     detail::device_synchronize(device);
+    const auto end = std::chrono::steady_clock::now();
+    [[maybe_unused]] const auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+    PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "cg", "blas_level_3_times_kernel", duration }));
 }
 
 //***************************************************//
@@ -475,6 +512,7 @@ auto csvm::run_w_kernel(const std::size_t device_id, const ::plssvm::detail::exe
 
     using namespace plssvm::operators;
 
+    const auto start = std::chrono::steady_clock::now();
     for (const auto &[partial_grid, offsets] : exec.grids) {
         // convert execution range partial_grid to OpenCL's native std::vector
         const std::vector<std::size_t> native_partial_grid = detail::dim_type_to_native<2>(partial_grid) * native_block;
@@ -486,6 +524,9 @@ auto csvm::run_w_kernel(const std::size_t device_id, const ::plssvm::detail::exe
         detail::run_kernel(device, device.get_kernel(detail::compute_kernel_name::w_kernel), native_partial_grid, native_block, w_d.get(), alpha_d.get(), sv_d.get(), num_classes, num_sv, device_specific_num_sv, sv_offset, grid_offset_x, grid_offset_y);
     }
     detail::device_synchronize(device);
+    const auto end = std::chrono::steady_clock::now();
+    [[maybe_unused]] const auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+    PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "predict_values", "w_kernel", duration }));
 
     return w_d;
 }
@@ -504,6 +545,7 @@ auto csvm::run_predict_kernel(const std::size_t device_id, const ::plssvm::detai
 
     using namespace plssvm::operators;
 
+    const auto start = std::chrono::steady_clock::now();
     for (const auto &[partial_grid, offsets] : exec.grids) {
         // convert execution range partial_grid to OpenCL's native std::vector
         const std::vector<std::size_t> native_partial_grid = detail::dim_type_to_native<2>(partial_grid) * native_block;
@@ -534,6 +576,9 @@ auto csvm::run_predict_kernel(const std::size_t device_id, const ::plssvm::detai
         }
     }
     detail::device_synchronize(device);
+    const auto end = std::chrono::steady_clock::now();
+    [[maybe_unused]] const auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+    PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "predict_values", "predict_kernel", duration }));
 
     return out_d;
 }

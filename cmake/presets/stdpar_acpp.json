@@ -1,0 +1,148 @@
+{
+  "version": 6,
+  "include": ["common.json"],
+  "configurePresets": [
+    {
+      "name": "stdpar_acpp",
+      "displayName": "stdpar AdaptiveCpp backend",
+      "inherits": "build",
+      "cacheVariables": {
+        "CMAKE_CXX_COMPILER": "acpp",
+        "PLSSVM_ENABLE_STDPAR_BACKEND": "ON",
+        "PLSSVM_STDPAR_BACKEND_IMPLEMENTATION": "ACPP"
+      }
+    },
+    {
+      "name": "stdpar_acpp_python",
+      "displayName": "stdpar AdaptiveCpp backend + Python bindings",
+      "inherits": "build",
+      "cacheVariables": {
+        "CMAKE_CXX_COMPILER": "acpp",
+        "PLSSVM_ENABLE_STDPAR_BACKEND": "ON",
+        "PLSSVM_STDPAR_BACKEND_IMPLEMENTATION": "ACPP",
+        "PLSSVM_ENABLE_CUDA_BACKEND": "ON",
+        "PLSSVM_ENABLE_LANGUAGE_BINDINGS": "ON",
+        "PLSSVM_ENABLE_PYTHON_BINDINGS": "ON"
+      }
+    },
+    {
+      "name": "stdpar_acpp_test",
+      "displayName": "stdpar AdaptiveCpp backend tests",
+      "inherits": "test",
+      "cacheVariables": {
+        "CMAKE_CXX_COMPILER": "acpp",
+        "PLSSVM_ENABLE_ASSERTS": "OFF",
+        "PLSSVM_ENABLE_STDPAR_BACKEND": "ON",
+        "PLSSVM_STDPAR_BACKEND_IMPLEMENTATION": "ACPP"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "stdpar_acpp",
+      "displayName": "stdpar AdaptiveCpp backend",
+      "configurePreset": "stdpar_acpp",
+      "configuration": "RelWithDebInfo",
+      "inherits": "common"
+    },
+    {
+      "name": "stdpar_acpp_python",
+      "displayName": "stdpar AdaptiveCpp backend + Python bindings",
+      "configurePreset": "stdpar_acpp_python",
+      "configuration": "RelWithDebInfo",
+      "inherits": "common"
+    },
+    {
+      "name": "stdpar_acpp_test",
+      "displayName": "stdpar AdaptiveCpp backend tests",
+      "configurePreset": "stdpar_acpp_test",
+      "configuration": "Debug",
+      "inherits": "common"
+    }
+  ],
+  "testPresets": [
+    {
+      "name": "stdpar_acpp_test",
+      "displayName": "stdpar AdaptiveCpp backend all tests",
+      "configurePreset": "stdpar_acpp_test",
+      "inherits": "common"
+    },
+    {
+      "name": "stdpar_acpp_backend_test",
+      "displayName": "stdpar AdaptiveCpp backend specific tests",
+      "configurePreset": "stdpar_acpp_test",
+      "inherits": "common",
+      "filter": {
+        "include": {
+          "name": "stdpar.*"
+        }
+      }
+    }
+  ],
+  "workflowPresets": [
+    {
+      "name": "stdpar_acpp",
+      "displayName": "stdpar AdaptiveCpp backend workflow",
+      "steps": [
+        {
+          "name": "stdpar_acpp",
+          "type": "configure"
+        },
+        {
+          "name": "stdpar_acpp",
+          "type": "build"
+        }
+      ]
+    },
+    {
+      "name": "stdpar_acpp_python",
+      "displayName": "stdpar AdaptiveCpp backend + Python bindings workflow",
+      "steps": [
+        {
+          "name": "stdpar_acpp_python",
+          "type": "configure"
+        },
+        {
+          "name": "stdpar_acpp_python",
+          "type": "build"
+        }
+      ]
+    },
+    {
+      "name": "stdpar_acpp_test",
+      "displayName": "stdpar AdaptiveCpp test workflow",
+      "steps": [
+        {
+          "name": "stdpar_acpp_test",
+          "type": "configure"
+        },
+        {
+          "name": "stdpar_acpp_test",
+          "type": "build"
+        },
+        {
+          "name": "stdpar_acpp_test",
+          "type": "test"
+        }
+      ]
+    },
+    {
+      "name": "stdpar_acpp_backend_test",
+      "displayName": "stdpar AdaptiveCpp backend test workflow",
+      "steps": [
+        {
+          "name": "stdpar_acpp_test",
+          "type": "configure"
+        },
+        {
+          "name": "stdpar_acpp_test",
+          "type": "build"
+        },
+        {
+          "name": "stdpar_acpp_backend_test",
+          "type": "test"
+        }
+      ]
+    }
+  ]
+}
