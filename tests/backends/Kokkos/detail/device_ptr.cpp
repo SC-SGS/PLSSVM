@@ -24,10 +24,11 @@
 
 #include <tuple>  // std::tuple
 
-template <typename T, plssvm::kokkos::execution_space exec_space>
+template <typename T, bool UAA, plssvm::kokkos::execution_space exec_space>
 struct kokkos_device_ptr_test_type {
     using device_ptr_type = plssvm::kokkos::detail::device_ptr<T>;
     using queue_type = plssvm::kokkos::detail::device_wrapper;
+    constexpr static bool use_usm_allocations = UAA;
     constexpr static plssvm::kokkos::execution_space space = exec_space;
 
     static const queue_type &default_queue() {
@@ -37,9 +38,9 @@ struct kokkos_device_ptr_test_type {
 };
 
 template <plssvm::kokkos::execution_space space>
-using kokkos_device_ptr_test_type_float = kokkos_device_ptr_test_type<float, space>;
+using kokkos_device_ptr_test_type_float = kokkos_device_ptr_test_type<float, false, space>;
 template <plssvm::kokkos::execution_space space>
-using kokkos_device_ptr_test_type_double = kokkos_device_ptr_test_type<double, space>;
+using kokkos_device_ptr_test_type_double = kokkos_device_ptr_test_type<double, false, space>;
 
 using kokkos_device_ptr_tuple = util::detail::concat_tuple_types_t<util::create_kokkos_test_tuple_t<kokkos_device_ptr_test_type_float>,
                                                                    util::create_kokkos_test_tuple_t<kokkos_device_ptr_test_type_double>>;
@@ -53,3 +54,25 @@ INSTANTIATE_TYPED_TEST_SUITE_P(KokkosDevicePtr, DevicePtr, kokkos_device_ptr_typ
 INSTANTIATE_TYPED_TEST_SUITE_P(KokkosDevicePtr, DevicePtrLayout, kokkos_device_ptr_layout_type_gtest, naming::test_parameter_to_name);
 
 INSTANTIATE_TYPED_TEST_SUITE_P(KokkosDevicePtrDeathTest, DevicePtrDeathTest, kokkos_device_ptr_type_gtest, naming::test_parameter_to_name);
+
+//
+// test USM pointer
+//
+
+template <plssvm::kokkos::execution_space space>
+using kokkos_usm_device_ptr_test_type_float = kokkos_device_ptr_test_type<float, true, space>;
+template <plssvm::kokkos::execution_space space>
+using kokkos_usm_device_ptr_test_type_double = kokkos_device_ptr_test_type<double, true, space>;
+
+using kokkos_device_ptr_usm_tuple = util::detail::concat_tuple_types_t<util::create_kokkos_test_tuple_t<kokkos_usm_device_ptr_test_type_float>,
+                                                                       util::create_kokkos_test_tuple_t<kokkos_usm_device_ptr_test_type_double>>;
+
+// the tests used in the instantiated GTest test suites
+using kokkos_device_ptr_usm_type_gtest = util::combine_test_parameters_gtest_t<util::cartesian_type_product_t<kokkos_device_ptr_usm_tuple>>;
+using kokkos_device_ptr_usm_layout_type_gtest = util::combine_test_parameters_gtest_t<util::cartesian_type_product_t<kokkos_device_ptr_usm_tuple>, util::layout_type_list>;
+
+// instantiate type-parameterized tests
+INSTANTIATE_TYPED_TEST_SUITE_P(KokkosDevicePtrUSM, DevicePtr, kokkos_device_ptr_usm_type_gtest, naming::test_parameter_to_name);
+INSTANTIATE_TYPED_TEST_SUITE_P(KokkosDevicePtrUSM, DevicePtrLayout, kokkos_device_ptr_usm_layout_type_gtest, naming::test_parameter_to_name);
+
+INSTANTIATE_TYPED_TEST_SUITE_P(KokkosDevicePtrUSMDeathTest, DevicePtrDeathTest, kokkos_device_ptr_usm_type_gtest, naming::test_parameter_to_name);
