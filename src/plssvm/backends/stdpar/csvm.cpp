@@ -248,7 +248,7 @@ void csvm::blas_level_3(const solver_type solver, const real_type alpha, const s
             case solver_type::cg_explicit:
                 {
                     const auto &explicit_A = ::plssvm::detail::move_only_any_cast<const std::unique_ptr<real_type[]> &>(A.front());
-                    PLSSVM_ASSERT(!explicit_A.empty(), "The A matrix must not be empty!");
+                    PLSSVM_ASSERT(explicit_A != nullptr, "The A matrix must not be empty!");
 
                     const auto start = std::chrono::steady_clock::now();
 
