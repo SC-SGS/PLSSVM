@@ -439,45 +439,44 @@ TYPED_TEST_P(GenericBackendCSVMKernelFunctionDeathTest, assemble_kernel_matrix_e
     const std::size_t row_offset = dist.place_row_offset(0);
 
     // helper lambda to reduce the amount of needed switches!
-    const auto run_assembly = [=](const plssvm::parameter &params_p, std::vector<plssvm::real_type> &kernel_matrix_p, const plssvm::soa_matrix<plssvm::real_type> &data_p, const std::size_t device_specific_num_rows_p, const std::size_t row_offset_p, const std::vector<plssvm::real_type> &q_red_p, const plssvm::real_type QA_cost_p) {
+    const auto run_assembly = [=](const plssvm::parameter &params_p, plssvm::real_type *kernel_matrix_p, const plssvm::soa_matrix<plssvm::real_type> &data_p, const std::size_t device_specific_num_rows_p, const std::size_t row_offset_p, const std::vector<plssvm::real_type> &q_red_p, const plssvm::real_type QA_cost_p) {
         switch (kernel) {
             case plssvm::kernel_function_type::linear:
-                device_kernel_assembly<plssvm::kernel_function_type::linear>(kernel_matrix_p.data(), data_p, device_specific_num_rows_p, row_offset_p, q_red_p, QA_cost_p, params_p.cost);
+                device_kernel_assembly<plssvm::kernel_function_type::linear>(kernel_matrix_p, data_p, device_specific_num_rows_p, row_offset_p, q_red_p, QA_cost_p, params_p.cost);
                 break;
             case plssvm::kernel_function_type::polynomial:
-                device_kernel_assembly<plssvm::kernel_function_type::polynomial, int, plssvm::real_type, plssvm::real_type>(kernel_matrix_p.data(), data_p, device_specific_num_rows_p, row_offset_p, q_red_p, QA_cost_p, params_p.cost, params_p.degree, std::get<plssvm::real_type>(params_p.gamma), params_p.coef0);
+                device_kernel_assembly<plssvm::kernel_function_type::polynomial, int, plssvm::real_type, plssvm::real_type>(kernel_matrix_p, data_p, device_specific_num_rows_p, row_offset_p, q_red_p, QA_cost_p, params_p.cost, params_p.degree, std::get<plssvm::real_type>(params_p.gamma), params_p.coef0);
                 break;
             case plssvm::kernel_function_type::rbf:
-                device_kernel_assembly<plssvm::kernel_function_type::rbf, plssvm::real_type>(kernel_matrix_p.data(), data_p, device_specific_num_rows_p, row_offset_p, q_red_p, QA_cost_p, params_p.cost, std::get<plssvm::real_type>(params_p.gamma));
+                device_kernel_assembly<plssvm::kernel_function_type::rbf, plssvm::real_type>(kernel_matrix_p, data_p, device_specific_num_rows_p, row_offset_p, q_red_p, QA_cost_p, params_p.cost, std::get<plssvm::real_type>(params_p.gamma));
                 break;
             case plssvm::kernel_function_type::sigmoid:
-                device_kernel_assembly<plssvm::kernel_function_type::sigmoid, plssvm::real_type, plssvm::real_type>(kernel_matrix_p.data(), data_p, device_specific_num_rows_p, row_offset_p, q_red_p, QA_cost_p, params_p.cost, std::get<plssvm::real_type>(params_p.gamma), params_p.coef0);
+                device_kernel_assembly<plssvm::kernel_function_type::sigmoid, plssvm::real_type, plssvm::real_type>(kernel_matrix_p, data_p, device_specific_num_rows_p, row_offset_p, q_red_p, QA_cost_p, params_p.cost, std::get<plssvm::real_type>(params_p.gamma), params_p.coef0);
                 break;
             case plssvm::kernel_function_type::laplacian:
-                device_kernel_assembly<plssvm::kernel_function_type::laplacian, plssvm::real_type>(kernel_matrix_p.data(), data_p, device_specific_num_rows_p, row_offset_p, q_red_p, QA_cost_p, params_p.cost, std::get<plssvm::real_type>(params_p.gamma));
+                device_kernel_assembly<plssvm::kernel_function_type::laplacian, plssvm::real_type>(kernel_matrix_p, data_p, device_specific_num_rows_p, row_offset_p, q_red_p, QA_cost_p, params_p.cost, std::get<plssvm::real_type>(params_p.gamma));
                 break;
             case plssvm::kernel_function_type::chi_squared:
-                device_kernel_assembly<plssvm::kernel_function_type::chi_squared, plssvm::real_type>(kernel_matrix_p.data(), data_p, device_specific_num_rows_p, row_offset_p, q_red_p, QA_cost_p, params_p.cost, std::get<plssvm::real_type>(params_p.gamma));
+                device_kernel_assembly<plssvm::kernel_function_type::chi_squared, plssvm::real_type>(kernel_matrix_p, data_p, device_specific_num_rows_p, row_offset_p, q_red_p, QA_cost_p, params_p.cost, std::get<plssvm::real_type>(params_p.gamma));
                 break;
         }
     };
 
     // check q_red size (must be equal to the number of data points - 1
-    EXPECT_DEATH(run_assembly(params, kernel_matrix, data.data(), device_specific_num_rows, row_offset, std::vector<plssvm::real_type>{}, QA_cost), fmt::format("Sizes mismatch!: 0 != {}", data.num_data_points() - 1));
+    EXPECT_DEATH(run_assembly(params, kernel_matrix.data(), data.data(), device_specific_num_rows, row_offset, std::vector<plssvm::real_type>{}, QA_cost), fmt::format("Sizes mismatch!: 0 != {}", data.num_data_points() - 1));
 
-    // check the kernel matrix size (depending on the usage of GEMM/SYMM)
-    std::vector<plssvm::real_type> ret;
-    EXPECT_DEATH(run_assembly(params, ret, data.data(), device_specific_num_rows, row_offset, q_red, QA_cost), "A matrix may not be empty!");
+    // the result kernel matrix must point to a valid chunk of memory
+    EXPECT_DEATH(run_assembly(params, nullptr, data.data(), device_specific_num_rows, row_offset, q_red, QA_cost), "The kernel matrix result pointer must be valid!");
 
     // check place specific number of rows
-    EXPECT_DEATH(run_assembly(params, kernel_matrix, data.data(), q_red.size() + 1, row_offset, q_red, QA_cost), ::testing::HasSubstr(fmt::format("The number of place specific rows ({}) cannot be greater the the total number of rows ({})!", q_red.size() + 1, q_red.size())));
+    EXPECT_DEATH(run_assembly(params, kernel_matrix.data(), data.data(), q_red.size() + 1, row_offset, q_red, QA_cost), ::testing::HasSubstr(fmt::format("The number of place specific rows ({}) cannot be greater the the total number of rows ({})!", q_red.size() + 1, q_red.size())));
 
     // check the row offset
-    EXPECT_DEATH(run_assembly(params, kernel_matrix, data.data(), device_specific_num_rows, q_red.size() + 1, q_red, QA_cost), ::testing::HasSubstr(fmt::format("The row offset ({}) cannot be greater the the total number of rows ({})!", q_red.size() + 1, q_red.size())));
+    EXPECT_DEATH(run_assembly(params, kernel_matrix.data(), data.data(), device_specific_num_rows, q_red.size() + 1, q_red, QA_cost), ::testing::HasSubstr(fmt::format("The row offset ({}) cannot be greater the the total number of rows ({})!", q_red.size() + 1, q_red.size())));
 
     // cost must not be 0.0 since 1.0 / cost is used
     params.cost = plssvm::real_type{ 0.0 };
-    EXPECT_DEATH(run_assembly(params, kernel_matrix, data.data(), device_specific_num_rows, row_offset, q_red, QA_cost), "cost must not be 0.0 since it is 1 / plssvm::cost!");
+    EXPECT_DEATH(run_assembly(params, kernel_matrix.data(), data.data(), device_specific_num_rows, row_offset, q_red, QA_cost), "cost must not be 0.0 since it is 1 / plssvm::cost!");
 }
 
 TYPED_TEST_P(GenericBackendCSVMKernelFunctionDeathTest, blas_level_3_kernel_implicit) {
