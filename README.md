@@ -82,8 +82,9 @@ The main highlights of our SVM implementations are:
    - sigmoid: $\tanh(\gamma$ $\cdot$ $\vec{u}^T$ $\cdot$ $\vec{v}$ $+$ $coef0)$
    - laplacian: $\exp(-\gamma$ $\cdot |$ $\vec{u}$ $-$ $\vec{v}$ $|_1)$
    - chi-squared (only well-defined for values > 0): $\exp(-\gamma \cdot \sum_i \frac{(x[i] - y[i])^2}{x[i] + y[i]})$
-4. Two different solver types for a trade-off between memory footprint and runtime:
+4. Three different solver types for a trade-off between memory footprint and runtime:
    - `cg_explicit`: large memory overhead but fast
+   - `cg_streaming`: the respective runtime automatically handles the memory migrations but may reduce the performance (implemented via unified shared memory)
    - `cg_implicit`: slower but requires drastically less memory
 5. Multi-class classification available via one vs. all (also one vs. rest or OAA) and one vs. one (also OAO):
    - OAA: one huge classification task where our CG algorithm solves a system of linear equations with multiple right-hand sides. The resulting model file is **not** compatible with LIBSVM.
@@ -693,7 +694,7 @@ Usage:
   -c, --cost arg                set the parameter C (default: 1)
   -e, --epsilon arg             set the tolerance of termination criterion (default: 1e-10)
   -i, --max_iter arg            set the maximum number of CG iterations (default: num_features)
-  -l, --solver arg              choose the solver: automatic|cg_explicit|cg_implicit (default: automatic)
+  -l, --solver arg              choose the solver: automatic|cg_explicit|cg_streaming|cg_implicit (default: automatic)
   -a, --classification arg      the classification strategy to use for multi-class classification: oaa|oao (default: oaa)
   -b, --backend arg             choose the backend: automatic|openmp|hpx|cuda|hip|opencl|sycl|kokkos|stdpar (default: automatic)
   -p, --target_platform arg     choose the target platform: automatic|cpu|gpu_nvidia|gpu_amd|gpu_intel (default: automatic)
