@@ -114,6 +114,7 @@ std::vector<::plssvm::detail::move_only_any> csvm::assemble_kernel_matrix(const 
                     // unreachable
                     break;
                 case solver_type::cg_explicit:
+                case solver_type::cg_streaming:
                     {
                         // calculate the number of data points this device is responsible for
                         const std::size_t device_specific_num_rows = dist.place_specific_num_rows(0);
@@ -207,6 +208,7 @@ void csvm::blas_level_3(const solver_type solver, const real_type alpha, const s
                     // unreachable
                     break;
                 case solver_type::cg_explicit:
+                case solver_type::cg_streaming:
                     {
                         const auto &explicit_A = ::plssvm::detail::move_only_any_cast<const std::unique_ptr<real_type[]> &>(A.front());
                         PLSSVM_ASSERT(!explicit_A.empty(), "The A matrix must not be empty!");
