@@ -78,14 +78,15 @@ endif ()
 # set base sources
 set(PLSSVM_BASE_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/backends/Kokkos/execution_space.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/backends/SYCL/data_parallel_kernels.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/backends/SYCL/implementation_types.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/backends/SYCL/kernel_invocation_types.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/backends/stdpar/implementation_types.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/backends/execution_range.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/data_set/min_max_scaler.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/cmd/parser_predict.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/cmd/parser_scale.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/cmd/parser_train.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/cmd/utility.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/io/file_reader.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/data_distribution.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/memory_size.cpp
@@ -639,6 +640,37 @@ if (PLSSVM_ENABLE_LTO)
 endif ()
 
 ########################################################################################################################
+#                          enable the requested vectorization widths for the auto-vectorizers                          #
+########################################################################################################################
+# GCC and clang both do not automatically auto-vectorize for AVX-512 (only AVX2)
+# -> enable it if "cpu:avx512" was passed as PLSSVM_TARGET_PLATFORMS
+if (PLSSVM_NUM_CPU_TARGET_ARCHS EQUAL 1)
+    if (${PLSSVM_CPU_TARGET_ARCHS} STREQUAL "avx512")
+        message(STATUS "Enabling AVX512 support for the auto-vectorizers (-mprefer-vector-width=512).")
+        target_compile_options(
+                ${PLSSVM_BASE_LIBRARY_NAME}
+                PUBLIC $<$<COMPILE_LANGUAGE:CXX>:$<$<CXX_COMPILER_ID:GNU,Clang,IntelLLVM>:-mprefer-vector-width=512>>
+        )
+    elseif (${PLSSVM_CPU_TARGET_ARCHS} STREQUAL "avx2" OR ${PLSSVM_CPU_TARGET_ARCHS} STREQUAL "avx")
+        message(STATUS "Enabling AVX/AVX2 support for the auto-vectorizers (-mprefer-vector-width=256).")
+        target_compile_options(
+                ${PLSSVM_BASE_LIBRARY_NAME}
+                PUBLIC $<$<COMPILE_LANGUAGE:CXX>:$<$<CXX_COMPILER_ID:GNU,Clang,IntelLLVM>:-mprefer-vector-width=256>>
+        )
+    elseif (${PLSSVM_CPU_TARGET_ARCHS} MATCHES "^sse")
+        message(STATUS "Enabling SSE for the auto-vectorizers (-mprefer-vector-width=128).")
+        target_compile_options(
+                ${PLSSVM_BASE_LIBRARY_NAME}
+                PUBLIC $<$<COMPILE_LANGUAGE:CXX>:$<$<CXX_COMPILER_ID:GNU,Clang,IntelLLVM>:-mprefer-vector-width=128>>
+        )
+    else ()
+        message(FATAL_ERROR "Unrecognized CPU target architecture \"${PLSSVM_CPU_TARGET_ARCHS}\". Allowed values are: avx512, avx2, avx, sse.")
+    endif ()
+else ()
+    # automatically use the "optimal" auto-vectorizer width
+endif ()
+
+########################################################################################################################
 #                                     check for optional and necessary dependencies                                    #
 ########################################################################################################################
 # setup dependencies
@@ -914,16 +946,16 @@ if (TARGET ${PLSSVM_SYCL_BACKEND_LIBRARY_NAME})
 choose the SYCL implementation to be used in the SYCL backend: ${PLSSVM_SYCL_BACKEND_NAME_LIST} (default: automatic)
 "
     )
-    string(REPLACE ";" "|" PLSSVM_SYCL_KERNEL_INVOCATION_TYPE_NAME_LIST "${PLSSVM_SYCL_KERNEL_INVOCATION_TYPE_NAME_LIST}")
-    set(PLSSVM_SYCL_KERNEL_INVOCATION_TYPE_MANPAGE_ENTRY
+    string(REPLACE ";" "|" PLSSVM_SYCL_DATA_PARALLEL_KERNEL_NAME_LIST "${PLSSVM_SYCL_DATA_PARALLEL_KERNEL_NAME_LIST}")
+    set(PLSSVM_SYCL_DATA_PARALLEL_KERNEL_MANPAGE_ENTRY
         "
 .TP
-.B --sycl_kernel_invocation_type
-choose the kernel invocation type when using SYCL as backend: ${PLSSVM_SYCL_KERNEL_INVOCATION_TYPE_NAME_LIST} (default: automatic)
+.B --sycl_data_parallel_kernel
+choose the data parallel kernel when using SYCL as backend: ${PLSSVM_SYCL_DATA_PARALLEL_KERNEL_NAME_LIST} (default: automatic)
 "
     )
 endif ()
-set(PLSSVM_SYCL_MANPAGE_ENTRY "${PLSSVM_SYCL_KERNEL_INVOCATION_TYPE_MANPAGE_ENTRY}${PLSSVM_SYCL_IMPLEMENTATION_TYPE_MANPAGE_ENTRY}")
+set(PLSSVM_SYCL_MANPAGE_ENTRY "${PLSSVM_SYCL_DATA_PARALLEL_KERNEL_MANPAGE_ENTRY}${PLSSVM_SYCL_IMPLEMENTATION_TYPE_MANPAGE_ENTRY}")
 # assemble the Kokkos manpage entry
 if (TARGET ${PLSSVM_KOKKOS_BACKEND_LIBRARY_NAME})
     string(REPLACE ";" "|" PLSSVM_KOKKOS_BACKEND_AVAILABLE_EXECUTION_SPACES "${PLSSVM_KOKKOS_BACKEND_AVAILABLE_EXECUTION_SPACES}")

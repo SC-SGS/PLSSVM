@@ -22,6 +22,7 @@
 #include "plssvm/detail/type_traits.hpp"                  // PLSSVM_REQUIRES, plssvm::detail::is_one_type_of
 #include "plssvm/mpi/communicator.hpp"                    // plssvm::mpi::communicator
 #include "plssvm/parameter.hpp"                           // plssvm::parameter, plssvm::detail::has_only_parameter_named_args_v
+#include "plssvm/solver_types.hpp"                        // plssvm::solver_type
 #include "plssvm/svm/csvc.hpp"                            // plssvm::csvc
 #include "plssvm/svm/csvm.hpp"                            // plssvm::detail::csvm_backend_exists
 #include "plssvm/svm/csvr.hpp"                            // plssvm::csvr
@@ -109,7 +110,7 @@ class csvm : public ::plssvm::detail::gpu_csvm<detail::device_ptr, int, detail::
     /**
      * @copydoc plssvm::detail::gpu_csvm::run_assemble_kernel_matrix_explicit
      */
-    [[nodiscard]] device_ptr_type run_assemble_kernel_matrix_explicit(std::size_t device_id, const ::plssvm::detail::execution_range &exec, const parameter &params, const device_ptr_type &data_d, const device_ptr_type &q_red_d, real_type QA_cost) const final;
+    [[nodiscard]] device_ptr_type run_assemble_kernel_matrix_explicit(std::size_t device_id, const ::plssvm::detail::execution_range &exec, const parameter &params, bool use_usm_allocations, const device_ptr_type &data_d, const device_ptr_type &q_red_d, real_type QA_cost) const final;
     /**
      * @copydoc plssvm::detail::gpu_csvm::run_blas_level_3_kernel_explicit
      */

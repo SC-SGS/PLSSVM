@@ -19,8 +19,12 @@
 #include "plssvm/matrix.hpp"                 // plssvm::layout_type, plssvm::matrix
 #include "plssvm/shape.hpp"                  // plssvm::shape
 
-#include <cstddef>  // std::size_t
-#include <vector>   // std::vector
+#include "fmt/format.h"  // fmt::format
+
+#include <algorithm>  // std::min
+#include <cstddef>    // std::size_t
+#include <utility>    // std::swap, std::exchange
+#include <vector>     // std::vector
 
 namespace plssvm::detail {
 
@@ -56,23 +60,26 @@ class gpu_device_ptr {
      * @brief Construct a device_ptr for the device managed by @p queue with the extents { @p size, 1 }.
      * @param[in] size the size of the managed memory
      * @param[in] queue the queue (or similar) to manage the device_ptr
+     * @param[in] use_usm_allocations if `true` use USM allocations in the respective backend
      */
-    gpu_device_ptr(size_type size, const queue_type queue);
+    gpu_device_ptr(size_type size, const queue_type queue, bool use_usm_allocations);
     /**
      * @brief Construct a device_ptr for the device managed by @p queue with the provided @p shape.
      * @details The managed memory size is: extents[0] * extents[1].
      * @param[in] shape the 2D size of the managed memory; size = shape.x * shape.y
      * @param[in] queue the queue (or similar) to manage the device_ptr
+     * @param[in] use_usm_allocations if `true` use USM allocations in the respective backend
      */
-    gpu_device_ptr(plssvm::shape shape, const queue_type queue);
+    gpu_device_ptr(plssvm::shape shape, const queue_type queue, bool use_usm_allocations);
     /**
      * @brief Construct a device_ptr for the device managed by @p queue with the provided @p shape including @p padding.
      * @details The managed memory size is: (shape.x + padding.x) * (shape.y + padding.y).
      * @param[in] shape the extents of the managed memory
      * @param[in] padding the padding applied to the extents
      * @param[in] queue the queue (or similar) to manage the device_ptr
+     * @param[in] use_usm_allocations if `true` use USM allocations in the respective backend
      */
-    gpu_device_ptr(plssvm::shape shape, plssvm::shape padding, const queue_type queue);
+    gpu_device_ptr(plssvm::shape shape, plssvm::shape padding, const queue_type queue, bool use_usm_allocations);
 
     /**
      * @brief Delete copy-constructor to make device_ptr a move only type.
@@ -228,7 +235,7 @@ class gpu_device_ptr {
      */
     void fill(value_type value, size_type pos = 0);
     /**
-     * @brief Fill up-to @p count values to @p value starting at position @p pos.
+     * @brief Fill up-to @p count values of @p value starting at position @p pos.
      * @details Fill `[pos, rcount)` where `rcount` is the smaller value of @p count and `device_ptr::size() - pos`.
      * @param[in] value the fill value
      * @param[in] pos the position to start the fill
@@ -368,30 +375,36 @@ class gpu_device_ptr {
     plssvm::shape padding_{};
     /// The device pointer pointing to the managed memory.
     device_pointer_type data_{};
+    /// If true, use USM allocations automatically migrating the data between host and device.
+    bool use_usm_allocations_{};
 };
 
 template <typename T, typename queue_t, typename device_pointer_t, typename derived_gpu_device_ptr>
-gpu_device_ptr<T, queue_t, device_pointer_t, derived_gpu_device_ptr>::gpu_device_ptr(const size_type size, const queue_type queue) :
+gpu_device_ptr<T, queue_t, device_pointer_t, derived_gpu_device_ptr>::gpu_device_ptr(const size_type size, const queue_type queue, const bool use_usm_allocations) :
     queue_{ queue },
-    shape_{ plssvm::shape{ size, 1 } } { }
+    shape_{ plssvm::shape{ size, 1 } },
+    use_usm_allocations_{ use_usm_allocations } { }
 
 template <typename T, typename queue_t, typename device_pointer_t, typename derived_gpu_device_ptr>
-gpu_device_ptr<T, queue_t, device_pointer_t, derived_gpu_device_ptr>::gpu_device_ptr(const plssvm::shape shape, const queue_type queue) :
-    queue_{ queue },
-    shape_{ shape } { }
-
-template <typename T, typename queue_t, typename device_pointer_t, typename derived_gpu_device_ptr>
-gpu_device_ptr<T, queue_t, device_pointer_t, derived_gpu_device_ptr>::gpu_device_ptr(const plssvm::shape shape, const plssvm::shape padding, const queue_type queue) :
+gpu_device_ptr<T, queue_t, device_pointer_t, derived_gpu_device_ptr>::gpu_device_ptr(const plssvm::shape shape, const queue_type queue, const bool use_usm_allocations) :
     queue_{ queue },
     shape_{ shape },
-    padding_{ padding } { }
+    use_usm_allocations_{ use_usm_allocations } { }
+
+template <typename T, typename queue_t, typename device_pointer_t, typename derived_gpu_device_ptr>
+gpu_device_ptr<T, queue_t, device_pointer_t, derived_gpu_device_ptr>::gpu_device_ptr(const plssvm::shape shape, const plssvm::shape padding, const queue_type queue, const bool use_usm_allocations) :
+    queue_{ queue },
+    shape_{ shape },
+    padding_{ padding },
+    use_usm_allocations_{ use_usm_allocations } { }
 
 template <typename T, typename queue_t, typename device_pointer_t, typename derived_gpu_device_ptr>
 gpu_device_ptr<T, queue_t, device_pointer_t, derived_gpu_device_ptr>::gpu_device_ptr(gpu_device_ptr &&other) noexcept :
     queue_{ std::exchange(other.queue_, queue_type{}) },
     shape_{ std::exchange(other.shape_, plssvm::shape{}) },
     padding_{ std::exchange(other.padding_, plssvm::shape{}) },
-    data_{ std::exchange(other.data_, device_pointer_type{}) } { }
+    data_{ std::exchange(other.data_, device_pointer_type{}) },
+    use_usm_allocations_{ std::exchange(other.use_usm_allocations_, false) } { }
 
 template <typename T, typename queue_t, typename device_pointer_t, typename derived_gpu_device_ptr>
 auto gpu_device_ptr<T, queue_t, device_pointer_t, derived_gpu_device_ptr>::operator=(gpu_device_ptr &&other) noexcept -> gpu_device_ptr & {
@@ -401,6 +414,7 @@ auto gpu_device_ptr<T, queue_t, device_pointer_t, derived_gpu_device_ptr>::opera
         shape_ = std::exchange(other.shape_, plssvm::shape{});
         padding_ = std::exchange(other.padding_, plssvm::shape{});
         data_ = std::exchange(other.data_, device_pointer_type{});
+        use_usm_allocations_ = std::exchange(other.use_usm_allocations_, false);
     }
     return *this;
 }
@@ -411,6 +425,7 @@ void gpu_device_ptr<T, queue_t, device_pointer_t, derived_gpu_device_ptr>::swap(
     std::swap(shape_, other.shape_);
     std::swap(padding_, other.padding_);
     std::swap(data_, other.data_);
+    std::swap(use_usm_allocations_, other.use_usm_allocations_);
 }
 
 template <typename T, typename queue_t, typename device_pointer_t, typename derived_gpu_device_ptr>

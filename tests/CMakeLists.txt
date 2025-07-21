@@ -162,10 +162,10 @@ set(PLSSVM_BASE_TEST_SOURCES
     ${CMAKE_CURRENT_LIST_DIR}/backends/execution_range.cpp
     # since the Kokkos execution_space enumeration is used even if no Kokkos backend is available this is also tested in the base library
     ${CMAKE_CURRENT_LIST_DIR}/backends/Kokkos/execution_space.cpp
-    # since the SYCL implementation_type and kernel_invocation_type enumerations are used even if no SYCL backend is available these are also tested in the base
+    # since the SYCL implementation_type and data_parallel_kernel enumerations are used even if no SYCL backend is available these are also tested in the base
     # library
+    ${CMAKE_CURRENT_LIST_DIR}/backends/SYCL/data_parallel_kernels.cpp
     ${CMAKE_CURRENT_LIST_DIR}/backends/SYCL/implementation_types.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/backends/SYCL/kernel_invocation_types.cpp
     # since the stdpar implementation_type enumeration is used even if no stdpar backend is available this is also tested in the base library
     ${CMAKE_CURRENT_LIST_DIR}/backends/stdpar/implementation_types.cpp
     ${CMAKE_CURRENT_LIST_DIR}/data_set/classification/constructors.cpp

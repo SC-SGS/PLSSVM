@@ -10,19 +10,19 @@
 
 #include "plssvm/detail/cmd/parser_train.hpp"
 
-#include "plssvm/backend_types.hpp"                          // plssvm::backend_type
-#include "plssvm/backends/Kokkos/execution_space.hpp"        // plssvm::kokkos::execution_space
-#include "plssvm/backends/SYCL/implementation_types.hpp"     // plssvm::sycl::implementation_type
-#include "plssvm/backends/SYCL/kernel_invocation_types.hpp"  // plssvm::sycl::kernel_invocation_type
-#include "plssvm/classification_types.hpp"                   // plssvm::classification_type
-#include "plssvm/constants.hpp"                              // plssvm::real_type
-#include "plssvm/exceptions/exceptions.hpp"                  // plssvm::cmd_parser_exit
-#include "plssvm/gamma.hpp"                                  // plssvm::gamma_type
-#include "plssvm/kernel_function_types.hpp"                  // plssvm::kernel_function_type
-#include "plssvm/solver_types.hpp"                           // plssvm::solver_type
-#include "plssvm/svm_types.hpp"                              // plssvm::svm_type
-#include "plssvm/target_platforms.hpp"                       // plssvm::target_platform
-#include "plssvm/verbosity_levels.hpp"                       // plssvm::verbosity
+#include "plssvm/backend_types.hpp"                        // plssvm::backend_type
+#include "plssvm/backends/Kokkos/execution_space.hpp"      // plssvm::kokkos::execution_space
+#include "plssvm/backends/SYCL/data_parallel_kernels.hpp"  // plssvm::sycl::data_parallel_kernel
+#include "plssvm/backends/SYCL/implementation_types.hpp"   // plssvm::sycl::implementation_type
+#include "plssvm/classification_types.hpp"                 // plssvm::classification_type
+#include "plssvm/constants.hpp"                            // plssvm::real_type
+#include "plssvm/exceptions/exceptions.hpp"                // plssvm::cmd_parser_exit
+#include "plssvm/gamma.hpp"                                // plssvm::gamma_type
+#include "plssvm/kernel_function_types.hpp"                // plssvm::kernel_function_type
+#include "plssvm/solver_types.hpp"                         // plssvm::solver_type
+#include "plssvm/svm_types.hpp"                            // plssvm::svm_type
+#include "plssvm/target_platforms.hpp"                     // plssvm::target_platform
+#include "plssvm/verbosity_levels.hpp"                     // plssvm::verbosity
 
 #include "tests/custom_test_macros.hpp"      // EXPECT_CONVERSION_TO_STRING, EXPECT_THROW_WHAT
 #include "tests/detail/cmd/cmd_utility.hpp"  // util::ParameterBase
@@ -61,7 +61,7 @@ TEST_F(ParserTrain, minimal) {
     EXPECT_EQ(parser.backend, plssvm::backend_type::automatic);
     EXPECT_EQ(parser.target, plssvm::target_platform::automatic);
     EXPECT_EQ(parser.solver, plssvm::solver_type::automatic);
-    EXPECT_EQ(parser.sycl_kernel_invocation_type, plssvm::sycl::kernel_invocation_type::automatic);
+    EXPECT_EQ(parser.sycl_data_parallel_kernel, plssvm::sycl::data_parallel_kernel::automatic);
     EXPECT_EQ(parser.sycl_implementation_type, plssvm::sycl::implementation_type::automatic);
     EXPECT_EQ(parser.kokkos_execution_space, plssvm::kokkos::execution_space::automatic);
     EXPECT_FALSE(parser.strings_as_labels);
@@ -91,7 +91,7 @@ TEST_F(ParserTrain, minimal_output) {
         "target platform: automatic\n"
         "solver: automatic\n"
         "SYCL implementation type: automatic\n"
-        "SYCL kernel invocation type: automatic\n"
+        "SYCL data parallel kernel: automatic\n"
         "Kokkos execution space: automatic\n"
         "classification_type: one vs. all\n"
         "label_type: int\n"
@@ -108,7 +108,7 @@ TEST_F(ParserTrain, all_arguments) {
     // create artificial command line arguments in test fixture
     std::vector<std::string> cmd_args = { "./plssvm-train", "--svm_type", "1", "--kernel_type", "1", "--degree", "2", "--gamma", "1.5", "--coef0", "-1.5", "--cost", "2", "--epsilon", "1e-12", "--max_iter", "100", "--classification", "oao", "--solver", "cg_implicit", "--backend", "cuda", "--target_platform", "gpu_nvidia", "--use_strings_as_labels", "--verbosity", "libsvm" };
 #if defined(PLSSVM_HAS_SYCL_BACKEND)
-    cmd_args.insert(cmd_args.end(), { "--sycl_kernel_invocation_type", "work_group", "--sycl_implementation_type", "dpcpp" });
+    cmd_args.insert(cmd_args.end(), { "--sycl_data_parallel_kernel", "work_group", "--sycl_implementation_type", "dpcpp" });
 #endif
 #if defined(PLSSVM_HAS_KOKKOS_BACKEND)
     const plssvm::kokkos::execution_space space = plssvm::kokkos::list_available_execution_spaces()[1];  // [0] would be automatic
@@ -142,10 +142,10 @@ TEST_F(ParserTrain, all_arguments) {
     EXPECT_EQ(parser.target, plssvm::target_platform::gpu_nvidia);
     EXPECT_EQ(parser.solver, plssvm::solver_type::cg_implicit);
 #if defined(PLSSVM_HAS_SYCL_BACKEND)
-    EXPECT_EQ(parser.sycl_kernel_invocation_type, plssvm::sycl::kernel_invocation_type::work_group);
+    EXPECT_EQ(parser.sycl_data_parallel_kernel, plssvm::sycl::data_parallel_kernel::work_group);
     EXPECT_EQ(parser.sycl_implementation_type, plssvm::sycl::implementation_type::dpcpp);
 #else
-    EXPECT_EQ(parser.sycl_kernel_invocation_type, plssvm::sycl::kernel_invocation_type::automatic);
+    EXPECT_EQ(parser.sycl_data_parallel_kernel, plssvm::sycl::data_parallel_kernel::automatic);
     EXPECT_EQ(parser.sycl_implementation_type, plssvm::sycl::implementation_type::automatic);
 #endif
 #if defined(PLSSVM_HAS_KOKKOS_BACKEND)
@@ -170,7 +170,7 @@ TEST_F(ParserTrain, all_arguments_output) {
     // create artificial command line arguments in test fixture
     std::vector<std::string> cmd_args = { "./plssvm-train", "--svm_type", "1", "--kernel_type", "1", "--degree", "2", "--gamma", "1.5", "--coef0", "-1.5", "--cost", "2", "--epsilon", "1e-12", "--max_iter", "100", "--classification", "oao", "--solver", "cg_implicit", "--backend", "automatic", "--target_platform", "gpu_nvidia", "--use_strings_as_labels", "--verbosity", "libsvm" };
 #if defined(PLSSVM_HAS_SYCL_BACKEND)
-    cmd_args.insert(cmd_args.end(), { "--sycl_kernel_invocation_type", "work_group", "--sycl_implementation_type", "dpcpp" });
+    cmd_args.insert(cmd_args.end(), { "--sycl_data_parallel_kernel", "work_group", "--sycl_implementation_type", "dpcpp" });
 #endif
 #if defined(PLSSVM_HAS_KOKKOS_BACKEND)
     const std::string space = fmt::format("{}", plssvm::kokkos::list_available_execution_spaces()[1]);  // [0] would be automatic
@@ -203,10 +203,10 @@ TEST_F(ParserTrain, all_arguments_output) {
         "solver: cg_implicit\n";
 #if defined(PLSSVM_HAS_SYCL_BACKEND)
     correct += "SYCL implementation type: dpcpp\n"
-               "SYCL kernel invocation type: work_group\n";
+               "SYCL data parallel kernel: work_group\n";
 #else
     correct += "SYCL implementation type: automatic\n"
-               "SYCL kernel invocation type: automatic\n";
+               "SYCL data parallel kernel: automatic\n";
 #endif
 #if defined(PLSSVM_HAS_KOKKOS_BACKEND)
     correct += fmt::format("Kokkos execution space: {}\n", space);
@@ -460,7 +460,7 @@ TEST_P(ParserTrainSolver, parsing) {
 // clang-format off
 INSTANTIATE_TEST_SUITE_P(ParserTrain, ParserTrainSolver, ::testing::Combine(
                 ::testing::Values("-l", "--solver"),
-                ::testing::Values(plssvm::solver_type::automatic, plssvm::solver_type::cg_explicit, plssvm::solver_type::cg_implicit)),
+                ::testing::Values(plssvm::solver_type::automatic, plssvm::solver_type::cg_explicit, plssvm::solver_type::cg_streaming, plssvm::solver_type::cg_implicit)),
                 naming::pretty_print_parameter_flag_and_value<ParserTrainSolver>);
 // clang-format on
 
@@ -530,26 +530,26 @@ INSTANTIATE_TEST_SUITE_P(ParserTrain, ParserTrainTargetPlatform, ::testing::Comb
 
 #if defined(PLSSVM_HAS_SYCL_BACKEND)
 
-class ParserTrainSYCLKernelInvocation : public ParserTrain,
-                                        public ::testing::WithParamInterface<std::tuple<std::string, std::string>> { };
+class ParserTrainSYCLDataParallelKernel : public ParserTrain,
+                                          public ::testing::WithParamInterface<std::tuple<std::string, std::string>> { };
 
-TEST_P(ParserTrainSYCLKernelInvocation, parsing) {
+TEST_P(ParserTrainSYCLDataParallelKernel, parsing) {
     const auto &[flag, value] = GetParam();
-    // convert string to sycl::kernel_invocation_type
-    const auto sycl_kernel_invocation_type = util::convert_from_string<plssvm::sycl::kernel_invocation_type>(value);
+    // convert string to sycl::data_parallel_kernel
+    const auto sycl_data_parallel_kernel = util::convert_from_string<plssvm::sycl::data_parallel_kernel>(value);
     // create artificial command line arguments in test fixture
     this->CreateCMDArgs({ "./plssvm-train", flag, value, "data.libsvm" });
     // create parameter object
     const plssvm::detail::cmd::parser_train parser{ this->get_comm(), this->get_argc(), this->get_argv() };
     // test for correctness
-    EXPECT_EQ(parser.sycl_kernel_invocation_type, sycl_kernel_invocation_type);
+    EXPECT_EQ(parser.sycl_data_parallel_kernel, sycl_data_parallel_kernel);
 }
 
 // clang-format off
-INSTANTIATE_TEST_SUITE_P(ParserTrain, ParserTrainSYCLKernelInvocation, ::testing::Combine(
-                ::testing::Values("--sycl_kernel_invocation_type"),
+INSTANTIATE_TEST_SUITE_P(ParserTrain, ParserTrainSYCLDataParallelKernel, ::testing::Combine(
+                ::testing::Values("--sycl_data_parallel_kernel"),
                 ::testing::Values("automatic", "auto", "basic", "nd_range", "work_group", "hierarchical", "scoped")),
-                naming::pretty_print_parameter_flag_and_value<ParserTrainSYCLKernelInvocation>);
+                naming::pretty_print_parameter_flag_and_value<ParserTrainSYCLDataParallelKernel>);
 // clang-format on
 
 class ParserTrainSYCLImplementation : public ParserTrain,
@@ -826,7 +826,7 @@ TEST_P(ParserTrainOutput, parsing) {
         "target platform: automatic\n"
         "solver: automatic\n"
         "SYCL implementation type: automatic\n"
-        "SYCL kernel invocation type: automatic\n"
+        "SYCL data parallel kernel: automatic\n"
         "Kokkos execution space: automatic\n"
         "classification_type: one vs. all\n"
         "label_type: int\n"

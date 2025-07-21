@@ -33,6 +33,7 @@ class device_ptr : public ::plssvm::detail::gpu_device_ptr<T, queue, T *, device
     using base_type::data_;
     using base_type::queue_;
     using base_type::shape_;
+    using base_type::use_usm_allocations_;
 
   public:
     // Be able to use overloaded base class functions.
@@ -58,21 +59,24 @@ class device_ptr : public ::plssvm::detail::gpu_device_ptr<T, queue, T *, device
      * @brief Allocates `size * sizeof(T)` bytes on the device associated with @p q.
      * @param[in] size the number of elements represented by the device_ptr
      * @param[in] q the associated SYCL queue
+     * @param[in] use_usm_allocations if `true` use USM allocations
      */
-    device_ptr(size_type size, const queue &q);
+    device_ptr(size_type size, const queue &q, bool use_usm_allocations = false);
     /**
      * @brief Allocates `shape.x * shape.y * sizeof(T)` bytes on the device associated with @p q.
      * @param[in] shape the number of elements represented by the device_ptr
      * @param[in] q the associated SYCL queue
+     * @param[in] use_usm_allocations if `true` use USM allocations
      */
-    device_ptr(plssvm::shape shape, const queue &q);
+    device_ptr(plssvm::shape shape, const queue &q, bool use_usm_allocations = false);
     /**
      * @brief Allocates `(shape.x + padding.x) * (shape.y + padding.y) * sizeof(T)` bytes on the device associated with @p q.
      * @param[in] shape the number of elements represented by the device_ptr
      * @param[in] padding the number of padding elements added to the extent values
      * @param[in] q the associated SYCL queue
+     * @param[in] use_usm_allocations if `true` use USM allocations
      */
-    device_ptr(plssvm::shape shape, plssvm::shape padding, const queue &q);
+    device_ptr(plssvm::shape shape, plssvm::shape padding, const queue &q, bool use_usm_allocations = false);
 
     /**
      * @copydoc plssvm::detail::gpu_device_ptr::gpu_device_ptr(const plssvm::detail::gpu_device_ptr &)

@@ -10,13 +10,13 @@
 
 #include "plssvm/parameter.hpp"
 
-#include "plssvm/backends/Kokkos/execution_space.hpp"        // plssvm::kokkos::execution_space
-#include "plssvm/backends/SYCL/implementation_types.hpp"     // plssvm::sycl::implementation_type
-#include "plssvm/backends/SYCL/kernel_invocation_types.hpp"  // plssvm::sycl::kernel_invocation_type
-#include "plssvm/constants.hpp"                              // plssvm::real_type
-#include "plssvm/detail/arithmetic_type_name.hpp"            // plssvm::detail::arithmetic_type_name
-#include "plssvm/gamma.hpp"                                  // plssvm::gamma_coefficient_type
-#include "plssvm/kernel_function_types.hpp"                  // plssvm::kernel_function_type
+#include "plssvm/backends/Kokkos/execution_space.hpp"      // plssvm::kokkos::execution_space
+#include "plssvm/backends/SYCL/data_parallel_kernels.hpp"  // plssvm::sycl::data_parallel_kernel
+#include "plssvm/backends/SYCL/implementation_types.hpp"   // plssvm::sycl::implementation_type
+#include "plssvm/constants.hpp"                            // plssvm::real_type
+#include "plssvm/detail/arithmetic_type_name.hpp"          // plssvm::detail::arithmetic_type_name
+#include "plssvm/gamma.hpp"                                // plssvm::gamma_coefficient_type
+#include "plssvm/kernel_function_types.hpp"                // plssvm::kernel_function_type
 
 #include "tests/custom_test_macros.hpp"  // EXPECT_CONVERSION_TO_STRING, EXPECT_FLOATING_POINT_EQ
 
@@ -99,7 +99,7 @@ TEST(Parameter, construct_parameter_and_named_args) {
     const plssvm::parameter param{ param_base,
                                    plssvm::kernel_type = plssvm::kernel_function_type::rbf,
                                    plssvm::sycl_implementation_type = plssvm::sycl::implementation_type::adaptivecpp,
-                                   plssvm::sycl_kernel_invocation_type = plssvm::sycl::kernel_invocation_type::work_group,
+                                   plssvm::sycl_data_parallel_kernel = plssvm::sycl::data_parallel_kernel::work_group,
                                    plssvm::kokkos_execution_space = plssvm::kokkos::execution_space::cuda };
 
     // test default values

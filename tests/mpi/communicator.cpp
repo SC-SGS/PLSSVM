@@ -109,6 +109,14 @@ TEST(MPICommunicator, is_mpi_enabled) {
 #endif
 }
 
+TEST(MPICommunicator, is_mpi_parallel) {
+    // create a default constructed MPI communicator
+    const plssvm::mpi::communicator comm{};
+
+    // always false since MPI is disabled
+    EXPECT_FALSE(comm.is_mpi_parallel());
+}
+
 TEST(MPICommunicator, is_main_rank) {
     // create a default constructed MPI communicator
     const plssvm::mpi::communicator comm{};

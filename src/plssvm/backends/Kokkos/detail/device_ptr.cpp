@@ -36,17 +36,17 @@ template <typename T>
 using host_view_type = Kokkos::View<T *, Kokkos::HostSpace, Kokkos::MemoryUnmanaged>;
 
 template <typename T>
-device_ptr<T>::device_ptr(const size_type size, const device_wrapper &device) :
-    device_ptr{ plssvm::shape{ size, 1 }, plssvm::shape{ 0, 0 }, device } { }
+device_ptr<T>::device_ptr(const size_type size, const device_wrapper &device, const bool use_usm_allocations) :
+    device_ptr{ plssvm::shape{ size, 1 }, plssvm::shape{ 0, 0 }, device, use_usm_allocations } { }
 
 template <typename T>
-device_ptr<T>::device_ptr(const plssvm::shape shape, const device_wrapper &device) :
-    device_ptr{ shape, plssvm::shape{ 0, 0 }, device } { }
+device_ptr<T>::device_ptr(const plssvm::shape shape, const device_wrapper &device, const bool use_usm_allocations) :
+    device_ptr{ shape, plssvm::shape{ 0, 0 }, device, use_usm_allocations } { }
 
 template <typename T>
-device_ptr<T>::device_ptr(const plssvm::shape shape, const plssvm::shape padding, const device_wrapper &device) :
-    base_type{ shape, padding, device } {
-    data_ = make_device_view_wrapper<T *>(device, this->size_padded());
+device_ptr<T>::device_ptr(const plssvm::shape shape, const plssvm::shape padding, const device_wrapper &device, const bool use_usm_allocations) :
+    base_type{ shape, padding, device, use_usm_allocations } {
+    data_ = make_device_view_wrapper<T *>(device, this->size_padded(), use_usm_allocations_);
     this->memset(0);
 }
 

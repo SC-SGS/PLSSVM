@@ -13,7 +13,7 @@
 #include "plssvm/backends/OpenCL/detail/error_code.hpp"     // plssvm::opencl::detail::error_code
 #include "plssvm/backends/OpenCL/detail/jit_info.hpp"       // plssvm::opencl::detail::jit_info
 #include "plssvm/backends/OpenCL/detail/kernel.hpp"         // plssvm::opencl::detail::compute_kernel_name, plssvm::opencl::detail::kernel
-#include "plssvm/constants.hpp"                             // plssvm::{real_type, THREAD_BLOCK_SIZE, INTERNAL_BLOCK_SIZE, FEATURE_BLOCK_SIZE, PADDING_SIZE}
+#include "plssvm/constants.hpp"                             // plssvm::{real_type, THREAD_BLOCK_SIZE, INTERNAL_BLOCK_SIZE, PADDING_SIZE}
 #include "plssvm/detail/arithmetic_type_name.hpp"           // plssvm::detail::arithmetic_type_name
 #include "plssvm/detail/assert.hpp"                         // PLSSVM_ASSERT
 #include "plssvm/detail/logging/mpi_log_untracked.hpp"      // plssvm::detail::log_untracked
@@ -31,7 +31,7 @@
 #include "CL/cl.h"           // cl_program, cl_platform_id, cl_device_id, cl_uint, cl_device_type, cl_context,
                              // CL_DEVICE_NAME, CL_QUEUE_DEVICE, CL_DEVICE_TYPE_ALL, CL_DEVICE_TYPE_CPU, CL_DEVICE_TYPE_GPU, CL_DEVICE_VENDOR, CL_PROGRAM_BUILD_LOG, CL_PROGRAM_BINARY_SIZES, CL_PROGRAM_BINARIES, CL_PLATFORM_VENDOR, CL_DRIVER_VERSION,
                              // clCreateProgramWithSource, clBuildProgram, clGetProgramBuildInfo, clGetProgramInfo, clCreateKernel, clReleaseProgram, clCreateProgramWithBinary,
-                             // clSetKernelArg, clEnqueueNDRangeKernel, clFinish, clGetPlatformIDs, clGetDeviceIDs, clGetDeviceInfo, clCreateContext, clGetPlatformInfo
+                             // clFinish, clGetPlatformIDs, clGetDeviceIDs, clGetDeviceInfo, clCreateContext, clGetPlatformInfo
 #include "CL/cl_platform.h"  // cl_uint
 
 #include "fmt/format.h"  // fmt::format
@@ -191,6 +191,12 @@ std::string get_device_name(const command_queue &queue) {
 std::vector<std::pair<compute_kernel_name, std::string>> kernel_type_to_function_names() {
     // since the correct predict kernel function cannot be determined during construction, add all predict kernels
     std::vector<std::pair<compute_kernel_name, std::string>> kernels{
+        // fill_kernel.cl
+        std::make_pair(compute_kernel_name::fill_kernel_float, "device_fill_kernel_float"),
+        std::make_pair(compute_kernel_name::fill_kernel_double, "device_fill_kernel_double"),
+        // memset_kernel.cl
+        std::make_pair(compute_kernel_name::memset_kernel_float, "device_memset_kernel_float"),
+        std::make_pair(compute_kernel_name::memset_kernel_double, "device_memset_kernel_double"),
         // kernel_matrix_assembly.cl
         std::make_pair(compute_kernel_name::assemble_kernel_matrix_explicit, "device_kernel_assembly"),
         // blas.cl
@@ -213,7 +219,7 @@ std::vector<std::pair<compute_kernel_name, std::string>> kernel_type_to_function
     return kernels;
 }
 
-std::pair<std::vector<command_queue>, jit_info> create_command_queues(const mpi::communicator &comm, const std::vector<context> &contexts, const kernel_function_type kernel_function) {
+std::pair<std::vector<command_queue>, jit_info> create_command_queues(const mpi::communicator &comm, const std::vector<context> &contexts, const target_platform target, const kernel_function_type kernel_function) {
     jit_info info{};
     const auto jit_start_time = std::chrono::steady_clock::now();
 
@@ -281,6 +287,8 @@ std::pair<std::vector<command_queue>, jit_info> create_command_queues(const mpi:
     std::string kernel_src_string{};
     // note: the detail/atomics.cl file must be included first!
     for (const auto &path : { base_path / "detail/atomics.cl",
+                              base_path / "detail/fill_kernel.cl",
+                              base_path / "detail/memset_kernel.cl",
                               base_path / "kernel_functions.cl",
                               base_path / "cg_explicit/blas.cl",
                               base_path / "cg_explicit/kernel_matrix_assembly.cl",
@@ -336,6 +344,8 @@ std::pair<std::vector<command_queue>, jit_info> create_command_queues(const mpi:
     // replace the generic strings in the kernel_src_string
     replace_kernel_function_type_placeholders(kernel_src_string, kernel_function);
 
+    // TODO: use defines? -DTHREAD_BLOCK_SIZE=32 ...
+
     // read generic predict kernel
     std::ifstream predict_file{ base_path / "predict_kernel.cl" };
     std::string predict_kernel_src_string{};
@@ -358,15 +368,20 @@ std::pair<std::vector<command_queue>, jit_info> create_command_queues(const mpi:
 
     // replace constants in kernel_src_string
     // replace the size_t variants -> BEFORE replacing the "normal" values
-    ::plssvm::detail::replace_all(kernel_src_string, "THREAD_BLOCK_SIZE_ul", fmt::format("(ulong) {}", THREAD_BLOCK_SIZE));
-    ::plssvm::detail::replace_all(kernel_src_string, "FEATURE_BLOCK_SIZE_ul", fmt::format("(ulong) {}", FEATURE_BLOCK_SIZE));
-    ::plssvm::detail::replace_all(kernel_src_string, "INTERNAL_BLOCK_SIZE_ul", fmt::format("(ulong) {}", INTERNAL_BLOCK_SIZE));
-    ::plssvm::detail::replace_all(kernel_src_string, "PADDING_SIZE_ul", fmt::format("(ulong) {}", PADDING_SIZE));
+    ::plssvm::detail::replace_all(kernel_src_string, "THREAD_BLOCK_SIZE_uz", fmt::format("(ulong) {}", THREAD_BLOCK_SIZE));
+    ::plssvm::detail::replace_all(kernel_src_string, "INTERNAL_BLOCK_SIZE_uz", fmt::format("(ulong) {}", INTERNAL_BLOCK_SIZE));
+    ::plssvm::detail::replace_all(kernel_src_string, "PADDING_SIZE_uz", fmt::format("(ulong) {}", PADDING_SIZE));
     // replace the normal variants
     ::plssvm::detail::replace_all(kernel_src_string, "THREAD_BLOCK_SIZE", fmt::format("{}", THREAD_BLOCK_SIZE));
-    ::plssvm::detail::replace_all(kernel_src_string, "FEATURE_BLOCK_SIZE", fmt::format("{}", FEATURE_BLOCK_SIZE));
     ::plssvm::detail::replace_all(kernel_src_string, "INTERNAL_BLOCK_SIZE", fmt::format("{}", INTERNAL_BLOCK_SIZE));
     ::plssvm::detail::replace_all(kernel_src_string, "PADDING_SIZE", fmt::format("{}", PADDING_SIZE));
+
+    // set compile definition checking whether we are executing on a CPU or not
+    for (std::string &options : compile_options) {
+        if (target == target_platform::cpu) {
+            options += " -DPLSSVM_OPENCL_TARGET_CPUS";
+        }
+    }
 
     // get all device names
     std::vector<std::string> device_names{};
@@ -544,8 +559,8 @@ std::pair<std::vector<command_queue>, jit_info> create_command_queues(const mpi:
     }
 
     std::vector<command_queue> queues{};
-    // compile kernels for each context, i.e., each device
 
+    // compile kernels for each context, i.e., each device
     for (std::size_t idx = 0; idx < contexts.size(); ++idx) {
         auto &context = contexts[idx];
         auto &device = context.device;

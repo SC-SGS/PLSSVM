@@ -47,6 +47,9 @@ target_sources(
             BASE_DIRS
             "${PROJECT_SOURCE_DIR}/include/plssvm/backends/OpenCL/kernel"
             FILES
+            "${PROJECT_SOURCE_DIR}/include/plssvm/backends/OpenCL/kernel/detail/atomics.cl"
+            "${PROJECT_SOURCE_DIR}/include/plssvm/backends/OpenCL/kernel/detail/fill_kernel.cl"
+            "${PROJECT_SOURCE_DIR}/include/plssvm/backends/OpenCL/kernel/detail/memset_kernel.cl"
             "${PROJECT_SOURCE_DIR}/include/plssvm/backends/OpenCL/kernel/cg_explicit/blas.cl"
             "${PROJECT_SOURCE_DIR}/include/plssvm/backends/OpenCL/kernel/cg_explicit/kernel_matrix_assembly.cl"
             "${PROJECT_SOURCE_DIR}/include/plssvm/backends/OpenCL/kernel/cg_implicit/kernel_matrix_assembly_blas.cl"

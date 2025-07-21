@@ -21,11 +21,13 @@
 #include "plssvm/backends/OpenCL/detail/kernel.hpp"         // plssvm::opencl::detail::compute_kernel_name
 #include "plssvm/backends/OpenCL/exceptions.hpp"            // plssvm::opencl::backend_exception
 #include "plssvm/detail/assert.hpp"                         // PLSSVM_ASSERT
+#include "plssvm/detail/type_list.hpp"                      // plssvm::detail::{remove_cvref_t, is_variant_v}
+#include "plssvm/detail/utility.hpp"                        // plssvm::detail::visit_overload
 #include "plssvm/kernel_function_types.hpp"                 // plssvm::kernel_function_type
 #include "plssvm/mpi/communicator.hpp"                      // plssvm::mpi::communicator
 #include "plssvm/target_platforms.hpp"                      // plssvm::target_platform
 
-#include "CL/cl.h"  // cl_uint, cl_int, clSetKernelArg, clEnqueueNDRangeKernel, clFinish
+#include "CL/cl.h"  // cl_uint, cl_int, clSetKernelArg, clSetKernelArgSVMPointer, clEnqueueNDRangeKernel, clFinish
 
 #include "fmt/format.h"  // fmt::format
 
@@ -33,6 +35,7 @@
 #include <string>       // std::string
 #include <string_view>  // std::string_view
 #include <utility>      // std::forward, std::pair
+#include <variant>      // std::variant, std::visit
 #include <vector>       // std::vector
 
 /**
@@ -126,11 +129,12 @@ void device_synchronize(const command_queue &queue);
  *
  * @param[in] comm the MPI communicator
  * @param[in] contexts the used OpenCL contexts
+ * @param[in] target the target platform to create the kernel binaries for
  * @param[in] kernel_function the kernel function
  * @throws plssvm::invalid_file_format_exception if the file couldn't be read using [`std::ifstream::read`](https://en.cppreference.com/w/cpp/io/basic_istream/read)
  * @return [the command queues with all necessary kernels; information regarding the JIT compilation] (`[[nodiscard]]`)
  */
-[[nodiscard]] std::pair<std::vector<command_queue>, jit_info> create_command_queues(const mpi::communicator &comm, const std::vector<context> &contexts, kernel_function_type kernel_function);
+[[nodiscard]] std::pair<std::vector<command_queue>, jit_info> create_command_queues(const mpi::communicator &comm, const std::vector<context> &contexts, target_platform target, kernel_function_type kernel_function);
 
 /**
  * @brief Set all arguments in the parameter pack @p args for the kernel @p kernel.
@@ -143,7 +147,17 @@ inline void set_kernel_args(cl_kernel kernel, Args... args) {
     cl_uint i = 0;
     // iterate over parameter pack and set OpenCL kernel
     ([&](auto &arg) {
-        const error_code ec = clSetKernelArg(kernel, i++, sizeof(decltype(arg)), &arg);
+        error_code ec{};
+        // check if we have to set a variant value
+        if constexpr (::plssvm::detail::is_variant_v<::plssvm::detail::remove_cvref_t<decltype(arg)>>) {
+            std::visit(::plssvm::detail::visit_overload{
+                           [&](cl_mem &kernel_arg) { ec = clSetKernelArg(kernel, i++, sizeof(decltype(kernel_arg)), &kernel_arg); },
+                           [&](auto &kernel_arg) { ec = clSetKernelArgSVMPointer(kernel, i++, kernel_arg); } },
+                       arg);
+        } else {
+            // set kernel argument normally
+            ec = clSetKernelArg(kernel, i++, sizeof(decltype(arg)), &arg);
+        }
         PLSSVM_OPENCL_ERROR_CHECK(ec, fmt::format("error setting OpenCL kernel argument {}", i - 1))
     }(args),
      ...);

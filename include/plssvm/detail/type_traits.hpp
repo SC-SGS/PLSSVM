@@ -24,6 +24,7 @@
 #include <type_traits>    // std::enable_if_t, std::remove_cv_t, std::remove_reference_t, std::is_same_v, std::false_type, std::true_type, std::is_same_v
 #include <unordered_map>  // std::unordered_map, std::unordered_multimap
 #include <unordered_set>  // std::unordered_set, std::unordered_multiset
+#include <variant>        // std::variant
 #include <vector>         // std::vector
 
 namespace plssvm::detail {
@@ -356,6 +357,25 @@ struct is_one_type_of {
  */
 template <typename T, typename... Types>
 constexpr bool is_one_type_of_v = is_one_type_of<T, Types...>::value;
+
+/**
+ * @brief Type trait to check whether @p T is a `std::variant`.
+ * @tparam T the type to check
+ */
+template <typename T>
+struct is_variant : std::false_type { };
+
+/**
+ * @copybrief plssvm::detail::is_variant
+ */
+template <typename... Args>
+struct is_variant<std::variant<Args...>> : std::true_type { };
+
+/**
+ * @copybrief plssvm::detail::is_variant
+ */
+template <typename T>
+constexpr bool is_variant_v = is_variant<T>::value;
 
 }  // namespace plssvm::detail
 

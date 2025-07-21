@@ -119,15 +119,8 @@ std::vector<device_wrapper> get_device_list(const execution_space space, [[maybe
             break;
         case execution_space::openmp:
             PLSSVM_KOKKOS_BACKEND_INVOKE_IF_OPENMP([&]() {
-                // Note: if OpenMP should be used as device  must be set in order for it to work!
-                if (omp_get_nested() == 0) {
-                    ::plssvm::detail::log_untracked(verbosity_level::full | verbosity_level::warning,
-                                                    comm,
-                                                    "WARNING: In order for Kokkos::OpenMP to work properly, we have to set \"omp_set_nested(1)\"!\n");
-                    // enable OMP_NESTED support
-                    // Note: function is officially deprecated but still necessary for Kokkos::OpenMP to work properly
-                    omp_set_nested(1);
-                }
+                // Note: if OpenMP should be used as device OMP_NESTED must be set in order for it to work!
+                omp_set_max_active_levels(2);
                 devices.emplace_back(Kokkos::OpenMP{});
             });
             break;

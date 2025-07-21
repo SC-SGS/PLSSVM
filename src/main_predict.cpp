@@ -124,12 +124,12 @@ int main(int argc, char *argv[]) {
             if (use_kokkos_as_backend) {
                 backends_to_initialize.push_back(plssvm::backend_type::kokkos);
             }
-            environment_guard = std::make_unique<plssvm::environment::scope_guard>(backends_to_initialize);
+            environment_guard = std::make_unique<plssvm::environment::scope_guard>(argc, argv, backends_to_initialize);
 
             // create default csvm
             const std::unique_ptr<csvm_type> svm = [&]() {
                 if (use_sycl_as_backend) {
-                    return plssvm::make_csvm<csvm_type>(cmd_parser.backend, comm, cmd_parser.target, plssvm::sycl_implementation_type = cmd_parser.sycl_implementation_type, plssvm::sycl_kernel_invocation_type = cmd_parser.sycl_kernel_invocation_type);
+                    return plssvm::make_csvm<csvm_type>(cmd_parser.backend, comm, cmd_parser.target, plssvm::sycl_implementation_type = cmd_parser.sycl_implementation_type, plssvm::sycl_data_parallel_kernel = cmd_parser.sycl_data_parallel_kernel);
                 } else if (use_kokkos_as_backend) {
                     return plssvm::make_csvm<csvm_type>(cmd_parser.backend, comm, cmd_parser.target, plssvm::kokkos_execution_space = cmd_parser.kokkos_execution_space);
                 } else {

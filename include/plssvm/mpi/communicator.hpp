@@ -97,6 +97,12 @@ class communicator {
     [[nodiscard]] constexpr static bool is_mpi_enabled() { return PLSSVM_IS_DEFINED(PLSSVM_HAS_MPI_ENABLED); }
 
     /**
+     * @brief Check whether more than one MPI process is running, i.e., MPI is used to speed-up the computations.
+     * @return `true` if more than one MPI process is running, otherwise `false` ([[nodiscard]])
+     */
+    [[nodiscard]] bool is_mpi_parallel() const { return this->size() > std::size_t{ 1 }; }
+
+    /**
      * @brief Returns `true` if the current MPI rank is rank `0`, i.e., the main MPI rank.
      * @details If `PLSSVM_HAS_MPI_ENABLED` is undefined, returns `true`.
      * @return `true` if the current MPI rank is `0`, otherwise `false` (`[[nodiscard]]`)

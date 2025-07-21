@@ -13,17 +13,17 @@
 #define PLSSVM_DETAIL_CMD_PARSER_TRAIN_HPP_
 #pragma once
 
-#include "plssvm/backend_types.hpp"                          // plssvm::backend_type
-#include "plssvm/backends/Kokkos/execution_space.hpp"        // plssvm::kokkos::execution_space
-#include "plssvm/backends/SYCL/implementation_types.hpp"     // plssvm::sycl::implementation_type
-#include "plssvm/backends/SYCL/kernel_invocation_types.hpp"  // plssvm::sycl::kernel_invocation_type
-#include "plssvm/classification_types.hpp"                   // plssvm::classification_type
-#include "plssvm/constants.hpp"                              // plssvm::real_type
-#include "plssvm/mpi/communicator.hpp"                       // plssvm::mpi::communicator
-#include "plssvm/parameter.hpp"                              // plssvm::parameter
-#include "plssvm/solver_types.hpp"                           // plssvm::solving_type
-#include "plssvm/svm_types.hpp"                              // plssvm::svm_type
-#include "plssvm/target_platforms.hpp"                       // plssvm::target_platform
+#include "plssvm/backend_types.hpp"                        // plssvm::backend_type
+#include "plssvm/backends/Kokkos/execution_space.hpp"      // plssvm::kokkos::execution_space
+#include "plssvm/backends/SYCL/data_parallel_kernels.hpp"  // plssvm::sycl::data_parallel_kernel
+#include "plssvm/backends/SYCL/implementation_types.hpp"   // plssvm::sycl::implementation_type
+#include "plssvm/classification_types.hpp"                 // plssvm::classification_type
+#include "plssvm/constants.hpp"                            // plssvm::real_type
+#include "plssvm/mpi/communicator.hpp"                     // plssvm::mpi::communicator
+#include "plssvm/parameter.hpp"                            // plssvm::parameter
+#include "plssvm/solver_types.hpp"                         // plssvm::solving_type
+#include "plssvm/svm_types.hpp"                            // plssvm::svm_type
+#include "plssvm/target_platforms.hpp"                     // plssvm::target_platform
 
 #include "fmt/base.h"     // fmt::formatter
 #include "fmt/ostream.h"  // mt::ostream_formatter
@@ -67,8 +67,8 @@ struct parser_train {
     /// The used solver type for the LS-SVM kernel matrix: automatic (depending on the available (V)RAM), cg_explicit, or cg_implicit.
     solver_type solver{ solver_type::automatic };
 
-    /// The kernel invocation type when using SYCL as backend.
-    sycl::kernel_invocation_type sycl_kernel_invocation_type{ sycl::kernel_invocation_type::automatic };
+    /// The data parallel kernel when using SYCL as backend.
+    sycl::data_parallel_kernel sycl_data_parallel_kernel{ sycl::data_parallel_kernel::automatic };
     /// The SYCL implementation to use with --backend=sycl.
     sycl::implementation_type sycl_implementation_type{ sycl::implementation_type::automatic };
 

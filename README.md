@@ -31,38 +31,38 @@
 A [Support Vector Machine (SVM)](https://en.wikipedia.org/wiki/Support-vector_machine) is a supervised machine learning model.
 In its basic form SVMs are used for binary classification tasks.
 Their fundamental idea is to learn a hyperplane which separates the two classes best, i.e., where the widest possible margin around its decision boundary is free of data.
-This is also the reason, why SVMs are also called "large margin classifiers".
+This is also the reason, why SVMs are also called "large margin classifiers."
 To predict to which class a new, unseen data point belongs, the SVM simply has to calculate on which side of the previously calculated hyperplane the data point lies.
-This is very efficient since it only involves a single scalar product of the size corresponding to the numer of features of the data set.
+This is very efficient since it only involves a single scalar product of the size corresponding to the numer of features per data point in the data set.
 
 <p align="center">
   <img alt="Basic idea of an Support Vector Machine as classification model." src="https://github.com/SC-SGS/PLSSVM/raw/main/.figures/support_vector_machine.png" width="50%">
 </p>
 
-However, normal SVMs suffer in their potential parallelizability.
+However, normal SVMs suffer from their potential parallelizability.
 Determining the hyperplane boils down to solving a convex quadratic problem.
 For this, most SVM implementations use Sequential Minimal Optimization (SMO), an inherently sequential algorithm.
 The basic idea of this algorithm is that it takes a pair of data points and calculates the hyperplane between them.
 Afterward, two new data points are selected and the existing hyperplane is adjusted accordingly.
-This procedure is repeat until a new adjustment would be smaller than some epsilon greater than zero.
+This procedure is repeated until a new adjustment would be smaller than some epsilon greater than zero.
 
 Some SVM implementations try to harness some parallelization potential by not drawing point pairs but group of points.
 In this case, the hyperplane calculation inside this group is parallelized.
-However, even then modern highly parallel hardware can not be utilized efficiently.
+However, even then, modern highly parallel hardware cannot be utilized efficiently.
 
 Therefore, we implemented a version of the original proposed SVM called [Least Squares Support Vector Machine (LS-SVM)](https://en.wikipedia.org/wiki/Least-squares_support-vector_machine).
 The LS-SVMs reformulated the original problem such that it boils down to solving a system of linear equations.
-For this kind of problem many highly parallel algorithms and implementations are known.
+For this kind of problem, many highly parallel algorithms and implementations are known.
 We decided to use the [Conjugate Gradient (CG)](https://en.wikipedia.org/wiki/Conjugate_gradient_method) to solve the system of linear equations.
 
 The main highlights of our SVM implementations are:
 1. Drop-in replacement for LIBSVM's `svm-train`, `svm-predict`, and `svm-scale` (some features currently not implemented).
-2. Support of multiple different programming frameworks for parallelization (also called backends in our PLSSVM implementation) which allows us to target GPUs and CPUs from different vendors like NVIDIA, AMD, or Intel:
+2. Support for multiple different programming frameworks for parallelization (also called backends in our PLSSVM implementation) which allows us to support GPUs and CPUs from different vendors like NVIDIA, AMD, or Intel:
    - [OpenMP](https://www.openmp.org/)
    - [HPX](https://hpx.stellar-group.org/) (tested with current master)
    - C++ 17's standard parallelism [stdpar](https://en.cppreference.com/w/cpp/algorithm):<br>
      **Note**: due to the nature of the used USM mechanics in the `stdpar` implementations, the `stdpar` backend **can't** be enabled together with **any** other backend! <br>
-     **Note**: since every translation units need to be compiled with the same flag, we currently globally set `CMAKE_CXX_FLAGS` although it's discouraged.
+     **Note**: since every translation unit needs to be compiled with the same flag, we currently globally set `CMAKE_CXX_FLAGS` although it's discouraged.
      - [nvc++](https://developer.nvidia.com/hpc-sdk) from NVIDIA's HPC SDK (tested with version [25.3](https://docs.nvidia.com/hpc-sdk/hpc-sdk-release-notes/index.html))
      - [roc-stdpar](https://github.com/ROCm/roc-stdpar) merged into upstream LLVM starting with version 18 (tested with version [18](https://releases.llvm.org/))
      - [icpx](https://www.intel.com/content/www/us/en/developer/tools/oneapi/dpc-compiler.html) as Intel's oneAPI compiler (tested with version [2025.0.0](https://www.intel.com/content/www/us/en/developer/articles/release-notes/oneapi-dpcpp/2025.html))
@@ -82,8 +82,9 @@ The main highlights of our SVM implementations are:
    - sigmoid: $\tanh(\gamma$ $\cdot$ $\vec{u}^T$ $\cdot$ $\vec{v}$ $+$ $coef0)$
    - laplacian: $\exp(-\gamma$ $\cdot |$ $\vec{u}$ $-$ $\vec{v}$ $|_1)$
    - chi-squared (only well-defined for values > 0): $\exp(-\gamma \cdot \sum_i \frac{(x[i] - y[i])^2}{x[i] + y[i]})$
-4. Two different solver types for a trade-off between memory footprint and runtime:
-   - `cg_explicit`: large memory overhead but very fast
+4. Three different solver types for a trade-off between memory footprint and runtime:
+   - `cg_explicit`: large memory overhead but fast
+   - `cg_streaming`: the respective runtime automatically handles the memory migrations but may reduce the performance (implemented via unified shared memory)
    - `cg_implicit`: slower but requires drastically less memory
 5. Multi-class classification available via one vs. all (also one vs. rest or OAA) and one vs. one (also OAO):
    - OAA: one huge classification task where our CG algorithm solves a system of linear equations with multiple right-hand sides. The resulting model file is **not** compatible with LIBSVM.
@@ -110,7 +111,7 @@ General dependencies:
 - [Pybind11 ≥ v2.13.6](https://github.com/pybind/pybind11) if Python bindings are enabled
 - [OpenMP](https://www.openmp.org/) 4.0 or newer (optional) to speed-up library utilities (like file parsing)
 - [MPI](https://www.mpi-forum.org/) if distributed memory systems should be supported; [mpi4py](https://mpi4py.readthedocs.io/en/stable/) to enable interoperability in our Python bindings
-- [Format.cmake](https://github.com/TheLartians/Format.cmake) if auto formatting via cmake-format and clang-format is enabled; also requires at least clang-format-18 and git, additionally, needs our custom [cmake-format fork](https://github.com/vancraar/cmake_format) incorporating some patches
+- [Format.cmake](https://github.com/TheLartians/Format.cmake) if auto formatting via cmake-format and clang-format is enabled; it also requires at least clang-format-18 and git, additionally, needs our custom [cmake-format fork](https://github.com/vancraar/cmake_format) incorporating some patches
 - multiple Python modules used in the utility scripts, to install all modules use `pip install --user -r install/python_requirements.txt`
 
 Additional dependencies for the OpenMP backend:
@@ -297,8 +298,15 @@ The `[optional_options]` can be one or multiple of:
 - `PLSSVM_ENABLE_FAST_MATH=ON|OFF` (default depending on `CMAKE_BUILD_TYPE`: `ON` for Release or RelWithDebInfo, `OFF` otherwise): enable `fast-math` compiler flags for all backends
 - `PLSSVM_ENABLE_ASSERTS=ON|OFF` (default: `OFF`): enables custom assertions
 - `PLSSVM_USE_FLOAT_AS_REAL_TYPE=ON|OFF` (default: `OFF`): use `float` as real_type instead of `double`
-- `PLSSVM_THREAD_BLOCK_SIZE` (default: `8`): set a specific thread block size used in the GPU kernels (for fine-tuning optimizations)
-- `PLSSVM_INTERNAL_BLOCK_SIZE` (default: `4`): set a specific internal block size used in the GPU kernels (for fine-tuning optimizations)
+- `PLSSVM_THREAD_BLOCK_SIZE` (default: `8`): set a specific thread block size used in the kernels (for fine-tuning optimizations) <br>
+   **Note**: for the different execution spaces in the Kokkos backend, the maximum value of the `PLSSVM_THREAD_BLOCK_SIZE` is not as straight forward as one may wish:
+  - CUDA, HIP, and SYCL: the maximum value depends on the underlying backend (in practice $\sqrt{1024}$ = 32)
+  - HPX and Serial: must **exactly** be 1
+  - OpenMP: must be 1 or 2 (most likely only 1 will work)
+  - Threads: must be 1; however, note that Kokkos itself **must** be built with hwloc support (via `-DKokkos_ENABLE_HWLOC=ON`), otherwise the Kokkos::Threads execution space will always only use a single core
+  - OpenMPTarget: $\sqrt{256}$ = 16
+  - OpenACC: $\lfloor\sqrt{512}\rfloor$ = 22
+- `PLSSVM_INTERNAL_BLOCK_SIZE` (default: `4`): set a specific internal block size used in the kernels (for fine-tuning optimizations)
 - `PLSSVM_ENABLE_LTO=ON|OFF` (default: `OFF`): enable interprocedural optimization (IPO/LTO) if supported by the compiler
 - `PLSSVM_ENFORCE_MAX_MEM_ALLOC_SIZE=ON|OFF` (default: `ON`): enforce the maximum (device) memory allocation size for the plssvm::solver_type::automatic solver
 - `PLSSVM_ENABLE_PINNED_MEMORY=ON|OFF` (default: `OFF`): use host pinned memory for the input matrix when assembling the kernel matrix, if available
@@ -347,7 +355,7 @@ If the SYCL backend is available, additional options can be set.
   - `AUTO`: check for DPC++/icpx as implementation for the SYCL backend but **do not** fail if not available
   - `OFF`: do not check for DPC++/icpx as implementation for the SYCL backend
 
-- `PLSSVM_ENABLE_SYCL_HIERARCHICAL_AND_SCOPED_KERNELS` (default: `ON`): enable SYCL's `hierarchical` and AdaptiveCpp's `scoped` kernel invocation types
+- `PLSSVM_ENABLE_SYCL_HIERARCHICAL_AND_SCOPED_KERNELS` (default: `ON`): enable SYCL's `hierarchical` data parallel kernel and AdaptiveCpp's `scoped` parallelism 
 
 To use DPC++/icpx for SYCL, simply set the `CMAKE_CXX_COMPILER` to the respective DPC++/icpx clang executable during CMake invocation.
 
@@ -355,7 +363,7 @@ If the SYCL implementation is DPC++/icpx the following additional options are av
 
 - `PLSSVM_SYCL_BACKEND_DPCPP_USE_LEVEL_ZERO` (default: `ON`): use DPC++/icpx's Level-Zero backend instead of its OpenCL backend **(only available if a CPU or Intel GPU is targeted)**
 
-If the SYCL implementation is AdaptiveCpp the following additional option is available:
+If the SYCL implementation is AdaptiveCpp, the following additional option is available:
 
 - `PLSSVM_SYCL_BACKEND_ADAPTIVECPP_USE_GENERIC_SSCP` (default: `ON`): use AdaptiveCpp's new SSCP compilation flow
 
@@ -497,7 +505,7 @@ Our `cmake-format` can be installed via:
 pip install "git+https://github.com/vancraar/cmake_format@master"
 ```
 
-To check whether formatting changes must be applied use: 
+To check whether formatting changes must be applied, one can use: 
 
 ```bash
 cmake --build . --target check-cmake-format
@@ -519,7 +527,7 @@ If doxygen is installed and `PLSSVM_ENABLE_DOCUMENTATION` is set to `ON` the doc
 cmake --build . -- doc
 ```
 
-The documentation of the current state of the main branch can be found [here](https://sc-sgs.github.io/PLSSVM/).
+The documentation of the current main branch can be found [here](https://sc-sgs.github.io/PLSSVM/).
 
 ### Installing
 
@@ -550,13 +558,13 @@ export PYTHONPATH=${CMAKE_INSTALL_PREFIX}/lib:${CMAKE_INSTALL_PREFIX}/lib64:${PY
 
 #### Install via pip
 
-We also support a pip packages that can be used to install our library: 
+We also support a pip package that can be used to install our library: 
 
 ```bash
 pip install plssvm
 ```
 
-This pip install behaves **as if** the CMake `all_python` preset is used. 
+This pip installation behaves **as if** the CMake `all_python` preset is used. 
 This means that the `PLSSVM_TARGET_PLATFORMS` are automatically determined and PLSSVM is build with all supported 
 backends that available on the target machine at the point of the `pip install plssvm` invocation. 
 To check the installation, including, e.g., the installed backends, we provide the `plssvm-install-check` command after 
@@ -588,13 +596,17 @@ Issues: https://github.com/SC-SGS/PLSSVM/issues
 
 PLSSVM provides three executables: `plssvm-train`, `plssvm-predict`, and `plssvm-scale`.
 In addition, PLSSVM can also be used as a library in third-party code.
-For more information, see the respective `man` pages which are installed via `cmake --build . -- install`.
+For more information, see the respective `man` pages which are installed via `cmake --build . -- install`. 
+
+We support the command line options of the third-party libraries [HPX](https://hpx.stellar-group.org/) and [Kokkos](https://github.com/kokkos/kokkos) 
+by forwarding the command line options to the respective initialization functions. 
+Internally, these options are filtered out before they are passed to our command line parser utility. 
 
 ### Generating Artificial Data
 
 The repository comes with a Python3 script (in the `utility_scripts/` directory) to simply generate arbitrarily large classification and regression data sets.
 
-In order to use all functionality, the following Python3 modules must be installed:
+To use all functionality, the following Python3 modules must be installed:
 [`argparse`](https://docs.python.org/3/library/argparse.html), [`timeit`](https://docs.python.org/3/library/timeit.html), 
 [`numpy`](https://pypi.org/project/numpy/), [`pandas`](https://pypi.org/project/pandas/),
 [`sklearn`](https://scikit-learn.org/stable/), [`arff`](https://pypi.org/project/arff/),
@@ -643,7 +655,7 @@ optional arguments:
 
 ```
 
-An example invocation generating a classification data set consisting of blobs with 1000 data points with 200 features each and 
+An example invocation generating a classification data set consisting of blobs with 1000 data points with 200 features and 
 4 classes could look like:
 
 ```bash
@@ -682,12 +694,12 @@ Usage:
   -c, --cost arg                set the parameter C (default: 1)
   -e, --epsilon arg             set the tolerance of termination criterion (default: 1e-10)
   -i, --max_iter arg            set the maximum number of CG iterations (default: num_features)
-  -l, --solver arg              choose the solver: automatic|cg_explicit|cg_implicit (default: automatic)
+  -l, --solver arg              choose the solver: automatic|cg_explicit|cg_streaming|cg_implicit (default: automatic)
   -a, --classification arg      the classification strategy to use for multi-class classification: oaa|oao (default: oaa)
   -b, --backend arg             choose the backend: automatic|openmp|hpx|cuda|hip|opencl|sycl|kokkos|stdpar (default: automatic)
   -p, --target_platform arg     choose the target platform: automatic|cpu|gpu_nvidia|gpu_amd|gpu_intel (default: automatic)
-      --sycl_kernel_invocation_type arg
-                                choose the kernel invocation type when using SYCL as backend: automatic|basic|work_group|hierarchical|scoped (default: automatic)
+      --sycl_data_parallel_kernel arg
+                                choose the data parallel kernel when using SYCL as backend: automatic|basic|work_group|hierarchical|scoped (default: automatic)
       --sycl_implementation_type arg
                                 choose the SYCL implementation to be used in the SYCL backend: automatic|dpcpp|adaptivecpp (default: automatic)
       --kokkos_execution_space arg
@@ -709,7 +721,7 @@ Usage:
 The help message only print options available based on the CMake invocation. 
 For example, if CUDA was not available during the build step, it will not show up as possible backend in the description of the `--backend` option.
 
-The most minimal example invocation is:
+The most minimal example of an invocation is:
 
 ```bash
 ./plssvm-train /path/to/data_file
@@ -734,7 +746,7 @@ The `--backend=automatic` option works as follows:
 - otherwise, if the `gpu_intel` target is available, check for existing backends in order `sycl` 🠦 `opencl` 🠦 `kokkos` 🠦 `stdpar`
 - otherwise, if the `cpu` target is available, check for existing backends in order `sycl` 🠦 `kokkos` 🠦 `opencl` 🠦 `openmp` 🠦 `hpx` 🠦 `stdpar`
 
-Note that during CMake configuration it is guaranteed that at least one of the above combinations does exist.
+Note that during CMake configuration, it is guaranteed that at least one of the above combinations does exist.
 
 The `--target_platform=automatic` option works for the different backends as follows:
 
@@ -747,18 +759,19 @@ The `--target_platform=automatic` option works for the different backends as fol
 - `Kokkos`: checks which execution spaces are available and which target platforms they support and then tries to find available devices in the following order: NVIDIA GPUs 🠦 AMD GPUs 🠦 Intel GPUs 🠦 CPU
 - `stdpar`: target device must be selected at compile time (using `PLSSVM_TARGET_PLATFORMS`) or using environment variables at runtime
 
-The `--sycl_kernel_invocation_type` and `--sycl_implementation_type` flags are only used if the `--backend` is `sycl`, otherwise a warning is emitted on `stderr`.
-If the `--sycl_kernel_invocation_type` is `automatic`, the `work_group` invocation type is currently always used.
+The `--sycl_data_parallel_kernel` and `--sycl_implementation_type` flags are only used if the `--backend` is `sycl`, otherwise a warning is emitted on `stderr`.
+If the `--sycl_data_parallel_kernel` is `automatic`, the `work_group` data parallel kernels are currently always used.
 If the `--sycl_implementation_type` is `automatic`, the used SYCL implementation is determined by the `PLSSVM_SYCL_BACKEND_PREFERRED_IMPLEMENTATION` CMake flag.
 If the `--kokkos_execution_space` is `automatic`, uses the best fitting execution space based on the provided and/or available target platforms.
 
 ### Predicting using `plssvm-predict`
 
-Our predict utility is fully conform to LIBSVM's model files. 
+Our `plssvm-predict` utility is fully conforming to LIBSVM's model files. 
 This means that our `plssvm-predict` can be used on model files learned with, e.g., LIBSVM's `svm-train`. 
 Note: this is not the case for the regression task since the `svm_type` filed mismatch between LIBSVM (`epsilon_svr`) 
-and PLSSVM (`c_svr`). To automatically convert between the two, simply use the `convert_model.py` script 
-(in the `utility_scripts/` directory) which simply replaces these fields with the respectively expected one 
+and PLSSVM (`c_svr`). 
+To automatically convert between the two, the `convert_model.py` script (in the `utility_scripts/` directory) 
+can be used which simply replaces these fields with the respectively expected one 
 (note that for large files doing that manually may be faster):
 
 ```bash
@@ -796,8 +809,8 @@ Usage:
 
   -b, --backend arg             choose the backend: automatic|openmp|hpx|cuda|hip|opencl|sycl|kokkos|stdpar (default: automatic)
   -p, --target_platform arg     choose the target platform: automatic|cpu|gpu_nvidia|gpu_amd|gpu_intel (default: automatic)
-      --sycl_kernel_invocation_type arg
-                                choose the kernel invocation type when using SYCL as backend: automatic|basic|work_group|hierarchical|scoped (default: automatic)
+      --sycl_data_parallel_kernel arg
+                                choose the data parallel kernel when using SYCL as backend: automatic|basic|work_group|hierarchical|scoped (default: automatic)
       --sycl_implementation_type arg
                                 choose the SYCL implementation to be used in the SYCL backend: automatic|dpcpp|adaptivecpp (default: automatic)
       --kokkos_execution_space arg
@@ -872,7 +885,7 @@ An example invocation to scale a train and test file in the same way looks like:
 ### Distributed Memory Support via MPI
 
 We support distributed memory via MPI for `plssvm-train` and `plssvm-predict` while simultaneously allowing multiple devices per MPI rank.
-In order to use it, MPI must be found during the CMake configuration step.
+To use MPI, it must be found during the CMake configuration step.
 Note that if MPI couldn't be found, PLSSVM still works in shared memory mode only and internally disables all MPI related functionality.
 For example, to run PLSSVM via MPI on four nodes simply use the normal `mpirun` command:
 
@@ -892,17 +905,17 @@ Note that the number of provided load balancing weights must be equal to the use
 If one MPI rank has more than one device, all these devices on one MPI rank compute the same number of matrix elements. 
 
 Our MPI implementation, however, currently has some limitations:
-- the training, test, and model data is fully read by **every** MPI rank
-- the training, test, and model data is fully stored on **each** compute device on **every** MPI rank
+- **every** MPI rank fully reads the training, test, and model data
+- **each** compute device on **every** MPI rank fully stores the training, test, and model data
 - **only** the kernel matrix is really divided across **all** MPI ranks
 - while the expensive BLAS level 3 operations in the CG algorithm are computed in a distributed way, everything else is computed on **every** MPI rank
-- in the CG algorithm we communicate the whole matrix, although it would be sufficient to communicate only matrix parts
+- in the CG algorithm we communicate the whole matrix, although it would be enough to communicate only matrix parts
 - **only** the **main** MPI rank (per default rank 0) writes the output files
 - `plssvm-scale` **does not** support more than one MPI rank
 
 ### Example Code for PLSSVM Used as a Library
 
-A simple C++ program (`main_classification.cpp`) using PLSSVM as library for classification could look like:
+A simple C++ program (`main_classification.cpp`) using PLSSVM as a library for classification could look like:
 
 ```cpp
 #include "plssvm/core.hpp"
@@ -940,7 +953,7 @@ int main() {
         const std::vector<int> &correct_label = test_data.labels().value();
         std::cout << plssvm::classification_report{ correct_label, predicted_label } << std::endl;
 
-        // write model file to disk
+        // write the model file to disk
         model.save("model_file.libsvm");
     } catch (const plssvm::exception &e) {
         std::cerr << e.what_with_loc() << std::endl;
@@ -952,7 +965,7 @@ int main() {
 }
 ```
 
-A simple C++ program (`main_regression.cpp`) using PLSSVM as library for regression could look like:
+A simple C++ program (`main_regression.cpp`) using PLSSVM as a library for regression could look like:
 
 ```cpp
 #include "plssvm/core.hpp"
@@ -990,7 +1003,7 @@ int main() {
         const std::vector<plssvm::real_type> &correct_values = test_data.labels().value();
         std::cout << plssvm::regression_report{ correct_label, predicted_label } << std::endl;
 
-        // write model file to disk
+        // write the model file to disk
         model.save("model_file.libsvm");
     } catch (const plssvm::exception &e) {
         std::cerr << e.what_with_loc() << std::endl;
@@ -1089,7 +1102,7 @@ plt.scatter(X[:, 0], X[:, 1],
             c=y,
             s=20, edgecolors="k")
 
-# generate legend handles and add handle
+# generate legend handles
 legend_handles = [plt.scatter([], [], color=viridis(color), label=f'{label}')
                   for label, color in zip(y_label, np.unique(y))]
 plt.legend(handles=legend_handles)

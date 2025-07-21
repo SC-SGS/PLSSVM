@@ -97,7 +97,7 @@ csvm::csvm(const target_platform target) {
 
     // create command_queues and JIT compile OpenCL kernels; compile all kernels for float and double
     detail::jit_info info{};
-    std::tie(devices_, info) = detail::create_command_queues(comm_, contexts_, params_.kernel_type);
+    std::tie(devices_, info) = detail::create_command_queues(comm_, contexts_, target_, params_.kernel_type);
 
     std::vector<std::string> device_names{};
     device_names.reserve(devices_.size());
@@ -163,8 +163,18 @@ csvm::csvm(const target_platform target) {
     PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "backend", "jit_compilation_time", info.duration }));
 
     // sanity checks for the number of the OpenCL kernels
-    PLSSVM_ASSERT(std::all_of(devices_.begin(), devices_.end(), [](const queue_type &queue) { return queue.kernels.size() == 13; }),
-                  "Every command queue must have exactly thirteen associated kernels!");
+    PLSSVM_ASSERT(std::all_of(devices_.begin(), devices_.end(), [](const queue_type &queue) { return queue.kernels.size() == 17; }),
+                  "Every command queue must have exactly 17 associated kernels!");
+
+    PLSSVM_ASSERT(std::all_of(devices_.begin(), devices_.end(), [](const queue_type &queue) { return ::plssvm::detail::contains(queue.kernels, detail::compute_kernel_name::fill_kernel_float); }),
+                  "The double device pointer fill kernel is missing!");
+    PLSSVM_ASSERT(std::all_of(devices_.begin(), devices_.end(), [](const queue_type &queue) { return ::plssvm::detail::contains(queue.kernels, detail::compute_kernel_name::fill_kernel_double); }),
+                  "The float device pointer fill kernel is missing!");
+
+    PLSSVM_ASSERT(std::all_of(devices_.begin(), devices_.end(), [](const queue_type &queue) { return ::plssvm::detail::contains(queue.kernels, detail::compute_kernel_name::memset_kernel_float); }),
+                  "The double device pointer memset kernel is missing!");
+    PLSSVM_ASSERT(std::all_of(devices_.begin(), devices_.end(), [](const queue_type &queue) { return ::plssvm::detail::contains(queue.kernels, detail::compute_kernel_name::memset_kernel_double); }),
+                  "The float device pointer memset kernel is missing!");
 
     PLSSVM_ASSERT(std::all_of(devices_.begin(), devices_.end(), [](const queue_type &queue) { return ::plssvm::detail::contains(queue.kernels, detail::compute_kernel_name::assemble_kernel_matrix_explicit); }),
                   "The explicit kernel matrix assembly device kernel is missing!");
@@ -270,7 +280,7 @@ std::size_t csvm::get_max_work_group_size(const std::size_t device_id) const {
 //                        fit                        //
 //***************************************************//
 
-auto csvm::run_assemble_kernel_matrix_explicit(const std::size_t device_id, const ::plssvm::detail::execution_range &exec, const parameter &params, const device_ptr_type &data_d, const device_ptr_type &q_red_d, real_type QA_cost) const -> device_ptr_type {
+auto csvm::run_assemble_kernel_matrix_explicit(const std::size_t device_id, const ::plssvm::detail::execution_range &exec, const parameter &params, const bool use_usm_allocations, const device_ptr_type &data_d, const device_ptr_type &q_red_d, real_type QA_cost) const -> device_ptr_type {
     const cl_ulong num_rows_reduced = data_d.shape().x - 1;
     const cl_ulong num_features = data_d.shape().y;
     const queue_type &device = devices_[device_id];
@@ -285,7 +295,9 @@ auto csvm::run_assemble_kernel_matrix_explicit(const std::size_t device_id, cons
     const ::plssvm::detail::triangular_data_distribution &dist = dynamic_cast<::plssvm::detail::triangular_data_distribution &>(*data_distribution_);
     const std::size_t num_entries_padded = dist.calculate_explicit_kernel_matrix_num_entries_padded(device_id);
 
-    device_ptr_type kernel_matrix_d{ num_entries_padded, device };  // only explicitly store the upper triangular matrix
+    // if solver == solver_type::cg_explicit: store it explicitly
+    // if solver == solver_type::cg_streaming: store it using USM
+    device_ptr_type kernel_matrix_d{ num_entries_padded, device, use_usm_allocations };
     const real_type cost_factor = real_type{ 1.0 } / params.cost;
 
     // convert execution range block to OpenCL's native std::vector

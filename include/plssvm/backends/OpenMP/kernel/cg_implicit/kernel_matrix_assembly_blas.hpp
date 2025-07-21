@@ -26,25 +26,25 @@
 namespace plssvm::openmp::detail {
 
 /**
- * @brief Perform an implicit BLAS SYMM-like operation: `C = alpha * A * B + C` where `A` is the implicitly calculated kernel matrix using the @p kernel function (never actually stored, reducing the amount of needed global memory), @p B and @p C are matrices, and @p alpha is a scalar.
- * @tparam kernel the compile-time kernel function to use
- * @tparam Args the types of the potential additional arguments for the @p kernel function
+ * @brief Perform an implicit BLAS SYMM-like operation: `C = alpha * A * B + C` where `A` is the implicitly calculated kernel matrix using the @p kernel_function function (never actually stored, reducing the amount of needed global memory), @p B and @p C are matrices, and @p alpha is a scalar.
+ * @tparam kernel_function the compile-time kernel function to use
+ * @tparam Args the types of the potential additional arguments for the @p kernel_function function
  * @param[in] alpha the scalar alpha value
  * @param[in] q the `q` vector
  * @param[in] data the data matrix
- * @param[in] device_specific_num_rows the number of rows the current device is responsible for
- * @param[in] row_offset the first row in @p data the current device is responsible for
+ * @param[in] device_num_rows the number of rows the current device is responsible for
+ * @param[in] device_row_offset the first row in @p data the current device is responsible for
  * @param[in] QA_cost he bottom right matrix entry multiplied by cost
  * @param[in] cost 1 / the cost parameter in the C-SVM
  * @param[in] B the matrix @p B
  * @param[in,out] C the matrix @p C
- * @param[in] kernel_function_parameter the potential additional arguments for the @p kernel function
+ * @param[in] kernel_function_parameter the potential additional arguments for the @p kernel_function function
  */
-template <kernel_function_type kernel, typename... Args>
-inline void device_kernel_assembly_symm(const real_type alpha, const std::vector<real_type> &q, const soa_matrix<real_type> &data, const std::size_t device_specific_num_rows, const std::size_t row_offset, const real_type QA_cost, const real_type cost, const soa_matrix<real_type> &B, soa_matrix<real_type> &C, Args... kernel_function_parameter) {
+template <kernel_function_type kernel_function, typename... Args>
+inline void device_kernel_assembly_symm(const real_type alpha, const std::vector<real_type> &q, const soa_matrix<real_type> &data, const std::size_t device_num_rows, const std::size_t device_row_offset, const real_type QA_cost, const real_type cost, const soa_matrix<real_type> &B, soa_matrix<real_type> &C, Args... kernel_function_parameter) {
     PLSSVM_ASSERT(q.size() == data.num_rows() - 1, "Sizes mismatch!: {} != {}", q.size(), data.num_rows() - 1);
-    PLSSVM_ASSERT(q.size() >= device_specific_num_rows, "The number of place specific rows ({}) cannot be greater the the total number of rows ({})!", device_specific_num_rows, q.size());
-    PLSSVM_ASSERT(q.size() >= row_offset, "The row offset ({}) cannot be greater the the total number of rows ({})!", row_offset, q.size());
+    PLSSVM_ASSERT(q.size() >= device_num_rows, "The number of place specific rows ({}) cannot be greater the the total number of rows ({})!", device_num_rows, q.size());
+    PLSSVM_ASSERT(q.size() >= device_row_offset, "The row offset ({}) cannot be greater the the total number of rows ({})!", device_row_offset, q.size());
     PLSSVM_ASSERT(cost != real_type{ 0.0 }, "cost must not be 0.0 since it is 1 / plssvm::cost!");
     PLSSVM_ASSERT(B.shape() == C.shape(), "The matrices B and C must have the same shape!");
     PLSSVM_ASSERT(B.num_cols() == q.size(), "The number of columns in B ({}) must be the same as the values in q ({})!", B.num_cols(), q.size());
@@ -53,68 +53,96 @@ inline void device_kernel_assembly_symm(const real_type alpha, const std::vector
     const std::size_t num_rows = data.num_rows() - 1;
     const std::size_t num_features = data.num_cols();
     const std::size_t num_classes = B.num_rows();
-    const auto blocked_row_range = static_cast<std::size_t>(std::ceil(static_cast<real_type>(num_rows - row_offset) / INTERNAL_BLOCK_SIZE));
-    const auto blocked_device_specific_num_rows = static_cast<std::size_t>(std::ceil(static_cast<real_type>(device_specific_num_rows) / INTERNAL_BLOCK_SIZE));
+    const auto blocked_row_range = static_cast<std::size_t>(std::ceil(static_cast<real_type>(num_rows - device_row_offset) / INTERNAL_BLOCK_SIZE));
+    const auto blocked_device_num_rows = static_cast<std::size_t>(std::ceil(static_cast<real_type>(device_num_rows) / INTERNAL_BLOCK_SIZE));
 
     // cast all values to 64-bit unsigned long long to prevent potential 32-bit overflows
-    const auto INTERNAL_BLOCK_SIZE_uz = static_cast<std::size_t>(INTERNAL_BLOCK_SIZE);
-    const auto THREAD_BLOCK_SIZE_uz = static_cast<std::size_t>(THREAD_BLOCK_SIZE);
+    constexpr auto INTERNAL_BLOCK_SIZE_uz = static_cast<std::size_t>(INTERNAL_BLOCK_SIZE);
+    constexpr auto THREAD_BLOCK_SIZE_uz = static_cast<std::size_t>(THREAD_BLOCK_SIZE);
 
 #pragma omp parallel for collapse(2) schedule(dynamic)
-    for (std::size_t row = 0; row < blocked_row_range; row += THREAD_BLOCK_SIZE_uz) {
-        for (std::size_t col = 0; col < blocked_device_specific_num_rows; col += THREAD_BLOCK_SIZE_uz) {
+    for (std::size_t row_block = 0; row_block < blocked_row_range; row_block += THREAD_BLOCK_SIZE_uz) {
+        for (std::size_t col_block = 0; col_block < blocked_device_num_rows; col_block += THREAD_BLOCK_SIZE_uz) {
             // perform operations on the current block
-            for (std::size_t row_block = 0; row_block < THREAD_BLOCK_SIZE_uz; ++row_block) {
-                for (std::size_t col_block = 0; col_block < THREAD_BLOCK_SIZE_uz; ++col_block) {
+            for (std::size_t row_thread = 0; row_thread < THREAD_BLOCK_SIZE_uz; ++row_thread) {
+                for (std::size_t col_thread = 0; col_thread < THREAD_BLOCK_SIZE_uz; ++col_thread) {
                     // calculate the indices used in the current thread
-                    const std::size_t row_idx = (row + row_block) * INTERNAL_BLOCK_SIZE_uz;
-                    const std::size_t col_idx = (col + col_block) * INTERNAL_BLOCK_SIZE_uz;
+                    const std::size_t i_idx = (row_block + row_thread) * INTERNAL_BLOCK_SIZE_uz;
+                    const std::size_t j_idx = (col_block + col_thread) * INTERNAL_BLOCK_SIZE_uz;
 
                     // only calculate the upper triangular matrix
-                    if (row_idx >= col_idx) {
+                    if (i_idx >= j_idx) {
                         // create a thread private array used for internal caching
                         std::array<std::array<real_type, INTERNAL_BLOCK_SIZE>, INTERNAL_BLOCK_SIZE> temp{};
 
-                        // iterate over all features
-                        for (std::size_t dim = 0; dim < num_features; ++dim) {
-                            for (unsigned internal_row = 0; internal_row < INTERNAL_BLOCK_SIZE; ++internal_row) {
-                                for (unsigned internal_col = 0; internal_col < INTERNAL_BLOCK_SIZE; ++internal_col) {
-                                    const std::size_t global_row = row_offset + row_idx + static_cast<std::size_t>(internal_row);
-                                    const std::size_t global_col = row_offset + col_idx + static_cast<std::size_t>(internal_col);
+                        //*************************************************************************//
+                        //                   inplace kernel matrix construction                    //
+                        //*************************************************************************//
+                        // iterate over all features using blocking
+                        for (std::size_t feature_block = 0; feature_block < num_features; feature_block += THREAD_BLOCK_SIZE_uz) {
+                            for (unsigned internal_i = 0; internal_i < INTERNAL_BLOCK_SIZE; ++internal_i) {
+                                for (unsigned internal_j = 0; internal_j < INTERNAL_BLOCK_SIZE; ++internal_j) {
+                                    // calculate the indices to access the global data
+                                    const auto global_i_idx = device_row_offset + i_idx + static_cast<std::size_t>(internal_i);
+                                    const auto global_j_idx = device_row_offset + j_idx + static_cast<std::size_t>(internal_j);
 
-                                    temp[internal_row][internal_col] += detail::feature_reduce<kernel>(data(global_row, dim), data(global_col, dim));
+                                    real_type sum{ 0.0 };
+                                    for (std::size_t feature = 0; feature < THREAD_BLOCK_SIZE_uz; ++feature) {
+                                        sum += detail::feature_reduce<kernel_function>(data(global_i_idx, feature_block + feature), data(global_j_idx, feature_block + feature));
+                                    }
+                                    temp[internal_j][internal_i] += sum;
                                 }
                             }
                         }
 
                         // apply the remaining part of the kernel function and store the value in the output kernel matrix
-                        for (unsigned internal_row = 0; internal_row < INTERNAL_BLOCK_SIZE; ++internal_row) {
-                            for (unsigned internal_col = 0; internal_col < INTERNAL_BLOCK_SIZE; ++internal_col) {
-                                const std::size_t device_global_row = row_idx + static_cast<std::size_t>(internal_row);
-                                const std::size_t global_row = row_offset + row_idx + static_cast<std::size_t>(internal_row);
-                                const std::size_t device_global_col = col_idx + static_cast<std::size_t>(internal_col);
-                                const std::size_t global_col = row_offset + col_idx + static_cast<std::size_t>(internal_col);
+                        for (unsigned internal_i = 0; internal_i < INTERNAL_BLOCK_SIZE; ++internal_i) {
+                            for (unsigned internal_j = 0; internal_j < INTERNAL_BLOCK_SIZE; ++internal_j) {
+                                // calculate the indices to access the global data and the data with respect to the current device
+                                const auto device_global_i_idx = i_idx + static_cast<std::size_t>(internal_i);
+                                const auto global_i_idx = device_row_offset + device_global_i_idx;
+                                const auto device_global_j_idx = j_idx + static_cast<std::size_t>(internal_j);
+                                const auto global_j_idx = device_row_offset + device_global_j_idx;
 
-                                // be sure to not perform out of bounds accesses for the kernel matrix (only using the upper triangular matrix)
-                                if (device_global_row < (num_rows - row_offset) && device_global_col < device_specific_num_rows && global_row >= global_col) {
-                                    real_type temp_ij = temp[internal_row][internal_col];
-                                    temp_ij = detail::apply_kernel_function<kernel>(temp_ij, kernel_function_parameter...) + QA_cost - q[global_row] - q[global_col];
+                                // be sure to not perform out-of-bounds accesses (only using the upper triangular matrix)
+                                if (device_global_i_idx < (num_rows - device_row_offset) && device_global_j_idx < device_num_rows && global_i_idx >= global_j_idx) {
+                                    // apply the final kernel function
+                                    temp[internal_j][internal_i] = detail::apply_kernel_function<kernel_function>(temp[internal_j][internal_i], kernel_function_parameter...) + QA_cost - q[global_i_idx] - q[global_j_idx];
                                     // apply the cost on the diagonal
-                                    if (global_row == global_col) {
-                                        temp_ij += cost;
-                                        // calculate the values of alpha * A * B
-                                        for (std::size_t class_idx = 0; class_idx < num_classes; ++class_idx) {
+                                    if (global_i_idx == global_j_idx) {
+                                        temp[internal_j][internal_i] += cost;
+                                    }
+                                } else {
+                                    // be sure to set the value to zero otherwise
+                                    temp[internal_j][internal_i] = real_type{ 0.0 };
+                                }
+                            }
+                        }
+
+                        //*************************************************************************//
+                        //                     calculate C += alpha * temp * B                     //
+                        //*************************************************************************//
+                        for (std::size_t class_block = 0; class_block < num_classes; class_block += THREAD_BLOCK_SIZE_uz) {
+                            for (unsigned internal_i = 0; internal_i < INTERNAL_BLOCK_SIZE; ++internal_i) {
+                                for (unsigned internal_j = 0; internal_j < INTERNAL_BLOCK_SIZE; ++internal_j) {
+                                    // calculate the indices to access the global data
+                                    const auto global_i_idx = device_row_offset + i_idx + static_cast<std::size_t>(internal_i);
+                                    const auto global_j_idx = device_row_offset + j_idx + static_cast<std::size_t>(internal_j);
+
+                                    if (global_i_idx == global_j_idx) {
+                                        // only apply once to the diagonal
+                                        for (std::size_t class_idx = 0; class_idx < THREAD_BLOCK_SIZE_uz; ++class_idx) {
 #pragma omp atomic
-                                            C(class_idx, global_row) += alpha * temp_ij * B(class_idx, global_row);
+                                            C(class_block + class_idx, global_i_idx) += alpha * temp[internal_j][internal_i] * B(class_block + class_idx, global_i_idx);
                                         }
                                     } else {
-                                        // calculate the values of alpha * A * B
-                                        for (std::size_t class_idx = 0; class_idx < num_classes; ++class_idx) {
+                                        // apply it for the upper and lower triangular matrix
+                                        for (std::size_t class_idx = 0; class_idx < THREAD_BLOCK_SIZE_uz; ++class_idx) {
 #pragma omp atomic
-                                            C(class_idx, global_row) += alpha * temp_ij * B(class_idx, global_col);
-// symmetry
+                                            C(class_block + class_idx, global_i_idx) += alpha * temp[internal_j][internal_i] * B(class_block + class_idx, global_j_idx);
+                                            // symmetry
 #pragma omp atomic
-                                            C(class_idx, global_col) += alpha * temp_ij * B(class_idx, global_row);
+                                            C(class_block + class_idx, global_j_idx) += alpha * temp[internal_j][internal_i] * B(class_block + class_idx, global_i_idx);
                                         }
                                     }
                                 }

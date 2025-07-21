@@ -12,7 +12,9 @@
 
 #include "plssvm/backends/OpenCL/detail/command_queue.hpp"  // plssvm::opencl::detail::command_queue
 #include "plssvm/backends/OpenCL/detail/context.hpp"        // plssvm::opencl::detail::context
-#include "plssvm/backends/OpenCL/detail/utility.hpp"        // plssvm::opencl::detail::get_contexts
+#include "plssvm/backends/OpenCL/detail/utility.hpp"        // plssvm::opencl::detail::{get_contexts, create_command_queues}
+#include "plssvm/kernel_function_types.hpp"                 // plssvm::kernel_function_type
+#include "plssvm/target_platforms.hpp"                      // plssvm::target_platform, plssvm::determine_default_target_platform
 
 #include "tests/backends/generic_device_ptr_tests.hpp"  // generic device pointer tests to instantiate
 #include "tests/naming.hpp"                             // naming::test_parameter_to_name
@@ -23,19 +25,22 @@
 #include <tuple>   // std::tuple
 #include <vector>  // std::vector
 
-template <typename T>
+template <typename T, bool UUA>
 struct opencl_device_ptr_test_type {
     using device_ptr_type = plssvm::opencl::detail::device_ptr<T>;
     using queue_type = plssvm::opencl::detail::command_queue;
+    constexpr static bool use_usm_allocations = UUA;
 
     static const queue_type &default_queue() {
-        static const std::vector<plssvm::opencl::detail::context> contexts{ plssvm::opencl::detail::get_contexts(plssvm::target_platform::automatic).first };
-        static const plssvm::opencl::detail::command_queue queue{ contexts[0], contexts[0].device };
+        static const std::vector<plssvm::opencl::detail::context> contexts{ plssvm::opencl::detail::get_contexts(plssvm::determine_default_target_platform()).first };
+        // note: the kernel_function_type doesn't matter for the device_ptr tests!
+        static const auto command_queues{ plssvm::opencl::detail::create_command_queues({}, contexts, plssvm::determine_default_target_platform(), plssvm::kernel_function_type::linear) };
+        static const plssvm::opencl::detail::command_queue &queue{ command_queues.first.front() };
         return queue;
     }
 };
 
-using opencl_device_ptr_tuple = std::tuple<opencl_device_ptr_test_type<float>, opencl_device_ptr_test_type<double>>;
+using opencl_device_ptr_tuple = std::tuple<opencl_device_ptr_test_type<float, false>, opencl_device_ptr_test_type<double, false>>;
 
 // the tests used in the instantiated GTest test suites
 using opencl_device_ptr_type_gtest = util::combine_test_parameters_gtest_t<util::cartesian_type_product_t<opencl_device_ptr_tuple>>;
@@ -46,3 +51,19 @@ INSTANTIATE_TYPED_TEST_SUITE_P(OpenCLDevicePtr, DevicePtr, opencl_device_ptr_typ
 INSTANTIATE_TYPED_TEST_SUITE_P(OpenCLDevicePtr, DevicePtrLayout, opencl_device_ptr_layout_type_gtest, naming::test_parameter_to_name);
 
 INSTANTIATE_TYPED_TEST_SUITE_P(OpenCLDevicePtrDeathTest, DevicePtrDeathTest, opencl_device_ptr_type_gtest, naming::test_parameter_to_name);
+
+//
+// test USM pointer
+//
+
+using opencl_device_ptr_usm_tuple = std::tuple<opencl_device_ptr_test_type<float, true>, opencl_device_ptr_test_type<double, true>>;
+
+// the tests used in the instantiated GTest test suites
+using opencl_device_ptr_usm_type_gtest = util::combine_test_parameters_gtest_t<util::cartesian_type_product_t<opencl_device_ptr_usm_tuple>>;
+using opencl_device_ptr_usm_layout_type_gtest = util::combine_test_parameters_gtest_t<util::cartesian_type_product_t<opencl_device_ptr_usm_tuple>, util::layout_type_list>;
+
+// instantiate type-parameterized tests
+INSTANTIATE_TYPED_TEST_SUITE_P(OpenCLDevicePtrUSM, DevicePtr, opencl_device_ptr_usm_type_gtest, naming::test_parameter_to_name);
+INSTANTIATE_TYPED_TEST_SUITE_P(OpenCLDevicePtrUSM, DevicePtrLayout, opencl_device_ptr_usm_layout_type_gtest, naming::test_parameter_to_name);
+
+INSTANTIATE_TYPED_TEST_SUITE_P(OpenCLDevicePtrUSMDeathTest, DevicePtrDeathTest, opencl_device_ptr_usm_type_gtest, naming::test_parameter_to_name);

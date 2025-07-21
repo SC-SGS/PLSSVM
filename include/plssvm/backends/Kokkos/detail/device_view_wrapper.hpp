@@ -12,13 +12,14 @@
 #ifndef PLSSVM_BACKENDS_KOKKOS_DETAIL_DEVICE_VIEW_WRAPPER_HPP_
 #define PLSSVM_BACKENDS_KOKKOS_DETAIL_DEVICE_VIEW_WRAPPER_HPP_
 
-#include "plssvm/backends/Kokkos/detail/constexpr_available_execution_spaces.hpp"  // plssvm::kokkos::detail::constexpr_available_execution_spaces
-#include "plssvm/backends/Kokkos/detail/device_wrapper.hpp"                        // plssvm::kokkos::detail::device_wrapper
-#include "plssvm/backends/Kokkos/execution_space.hpp"                              // plssvm::kokkos::execution_space
-#include "plssvm/backends/Kokkos/execution_space_type_traits.hpp"                  // plssvm::kokkos::execution_space_to_kokkos_type_t
-#include "plssvm/detail/type_traits.hpp"                                           // plssvm::detail::remove_cvref_t
+#include "plssvm/backends/Kokkos/detail/constexpr_available_memory_spaces.hpp"  // plssvm::kokkos::detail::constexpr_available_memory_spaces
+#include "plssvm/backends/Kokkos/detail/device_wrapper.hpp"                     // plssvm::kokkos::detail::device_wrapper
+#include "plssvm/backends/Kokkos/execution_space.hpp"                           // plssvm::kokkos::execution_space
+#include "plssvm/backends/Kokkos/memory_space.hpp"                              // plssvm::kokkos::memory_space
+#include "plssvm/backends/Kokkos/memory_space_type_traits.hpp"                  // plssvm::kokkos::{memory_space_to_kokkos_type_t, kokkos_execution_space_to_kokkos_memory_space_t}
+#include "plssvm/detail/type_traits.hpp"                                        // plssvm::detail::remove_cvref_t
 
-#include "Kokkos_Core.hpp"  // Kokkos::View, Kokkos::ExecutionSpace
+#include "Kokkos_Core.hpp"  // Kokkos::View, Kokkos::MemorySpace
 
 #include <array>       // std::array
 #include <cstddef>     // std::size_t
@@ -38,27 +39,27 @@ struct create_view_variant_type_helper;
 
 /**
  * @brief Helper struct to create a `std::variant` containing all available Kokkos::View types by iterating over the `std::array` of
- *        `plssvm::kokkos::execution_space` values as returned by `plssvm::kokkos::detail::constexpr_available_execution_spaces()`.
+ *        `plssvm::kokkos::memory_space` values as returned by `plssvm::kokkos::detail::constexpr_available_memory_spaces()`.
  * @tparam T the value type of the underlying Kokkos::View
  * @tparam Is the indices to index the `std::array`
  */
 template <typename T, std::size_t... Is>
 struct create_view_variant_type_helper<T, std::index_sequence<Is...>> {
-    /// The array containing all available execution spaces.
-    constexpr static auto array = detail::constexpr_available_execution_spaces();
+    /// The array containing all available memory spaces.
+    constexpr static auto array = detail::constexpr_available_memory_spaces();
     /// The resulting variant type.
-    using type = std::variant<Kokkos::View<T, execution_space_to_kokkos_type_t<array[Is]>>...>;
+    using type = std::variant<Kokkos::View<T, memory_space_to_kokkos_type_t<array[Is]>>...>;
 };
 
 /**
  * @brief Create a `std::variant` containing all available Kokkos::View types by iterating over the `std::array` of
- *        `plssvm::kokkos::execution_space` values as returned by `plssvm::kokkos::detail::constexpr_available_execution_spaces()`.
+ *        `plssvm::kokkos::memory_space` values as returned by `plssvm::kokkos::detail::constexpr_available_memory_spaces()`.
  * @tparam T the value type of the underlying Kokkos::View
  */
 template <typename T>
 struct create_view_variant_type {
     /// The number of types in the final variant.
-    constexpr static std::size_t N = detail::constexpr_available_execution_spaces().size();
+    constexpr static std::size_t N = detail::constexpr_available_memory_spaces().size();
     /// The final variant type.
     using type = typename create_view_variant_type_helper<T, std::make_index_sequence<N>>::type;
 };
@@ -82,37 +83,49 @@ class device_view_wrapper {
 
     /**
      * @brief Construct the wrapper using the provided Kokkos::View instance by forwarding its value to the underlying `std::variant`.
-     * @tparam ExecutionSpace the used Kokkos::ExecutionSpace type of the Kokkos::View
+     * @tparam MemorySpace the used Kokkos::MemorySpace type of the Kokkos::View
      * @param[in] view the Kokkos::View instance
      */
-    template <typename ExecutionSpace>
-    explicit device_view_wrapper(Kokkos::View<T, ExecutionSpace> &&view) :
-        v_{ std::move(view) } { }
+    template <typename MemorySpace>
+    explicit device_view_wrapper(Kokkos::View<T, MemorySpace> &&view, const bool use_usm_allocations = false) :
+        v_{ std::move(view) },
+        use_usm_allocations_{ use_usm_allocations } { }
 
     /**
      * @brief Given the provided `execution_space` enum value, tries to get the `std::variant` alternative for the corresponding Kokkos::ExecutionSpace type.
      * @tparam space the `execution_space` enum value
+     * @tparam use_usm_allocations if `true` use USM allocations
      * @return the Kokkos::View instance (`[[nodiscard]]`)
      */
-    template <execution_space space>
-    [[nodiscard]] Kokkos::View<T, execution_space_to_kokkos_type_t<space>> &get() {
-        return std::get<Kokkos::View<T, execution_space_to_kokkos_type_t<space>>>(v_);
+    template <execution_space space, bool use_usm_allocations = false>
+    [[nodiscard]] auto &get() {
+        constexpr memory_space mem_space = execution_space_to_memory_space_v<space, use_usm_allocations>;
+        return std::get<Kokkos::View<T, memory_space_to_kokkos_type_t<mem_space>>>(v_);
     }
 
     /**
      * @copydoc plssvm::kokkos::detail::device_view_wrapper::get
      */
-    template <execution_space space>
-    [[nodiscard]] const Kokkos::View<T, execution_space_to_kokkos_type_t<space>> &get() const {
-        return std::get<Kokkos::View<T, execution_space_to_kokkos_type_t<space>>>(v_);
+    template <execution_space space, bool use_usm_allocations = false>
+    [[nodiscard]] const auto &get() const {
+        constexpr memory_space mem_space = execution_space_to_memory_space_v<space, use_usm_allocations>;
+        return std::get<Kokkos::View<T, memory_space_to_kokkos_type_t<mem_space>>>(v_);
     }
 
     /**
-     * @brief Return the `execution_space` enum value of the currently active `std::variant` Kokkos::View type.
-     * @return the `execution_space` enum value (`[[nodiscard]]`)
+     * @brief Return the `memory_space` enum value of the currently active `std::variant` Kokkos::View type.
+     * @return the `memory_space` enum value (`[[nodiscard]]`)
      */
-    [[nodiscard]] execution_space get_execution_space() const noexcept {
-        return detail::constexpr_available_execution_spaces()[v_.index()];
+    [[nodiscard]] constexpr memory_space get_memory_space() const noexcept {
+        return detail::constexpr_available_memory_spaces()[v_.index()];
+    }
+
+    /**
+     * @brief Check whether USM allocations are used.
+     * @return `true` if USM allocations are used, `false` otherwise (`[[nodiscard]]`)
+     */
+    [[nodiscard]] bool uses_usm_allocations() const noexcept {
+        return use_usm_allocations_;
     }
 
     /**
@@ -164,6 +177,8 @@ class device_view_wrapper {
   private:
     /// The wrapped `std::variant` type.
     variant_type v_;
+    /// `true` if USM allocations and, therefore, other Kokkos::MemorySpaces, are used.
+    bool use_usm_allocations_;
 };
 
 /**
@@ -171,14 +186,20 @@ class device_view_wrapper {
  * @tparam T the value type of the underlying Kokkos::View
  * @param[in] device the device for which this view should be allocated
  * @param[in] size the size of the Kokkos::View (number of elements **not** byte!)
- * @return a Kokkos::View wrapper where the active member of the internal `std::variant` corresponds to the Kokkos::View in the Kokkos::ExecutionSpace specified by @p space (`[[nodiscard]]`)
+ * @param[in] use_usm_allocations decide whether a USM memory space should be used or not
+ * @return a Kokkos::View wrapper where the active member of the internal `std::variant` corresponds to the Kokkos::View in the Kokkos::MemorySpace based on the requested Kokkos::ExecutionSpace and @p use_usm_allocations (`[[nodiscard]]`)
  */
 template <typename T>
-[[nodiscard]] device_view_wrapper<T> make_device_view_wrapper(const device_wrapper &device, const std::size_t size) {
+[[nodiscard]] device_view_wrapper<T> make_device_view_wrapper(const device_wrapper &device, const std::size_t size, const bool use_usm_allocations) {
     return device.execute_and_return([&](const auto &value) {
+        // get the Kokkos execution space
         using kokkos_execution_space_type = ::plssvm::detail::remove_cvref_t<decltype(value)>;
-
-        return device_view_wrapper{ Kokkos::View<T, kokkos_execution_space_type>{ Kokkos::view_alloc(value, "device_ptr_view"), size } };
+        // check whether we want to use USM allocations or not
+        if (use_usm_allocations) {
+            return device_view_wrapper{ Kokkos::View<T, kokkos_execution_space_to_kokkos_memory_space_t<kokkos_execution_space_type, true>>{ Kokkos::view_alloc(value, "usm_device_ptr_view"), size }, use_usm_allocations };
+        } else {
+            return device_view_wrapper{ Kokkos::View<T, kokkos_execution_space_to_kokkos_memory_space_t<kokkos_execution_space_type, false>>{ Kokkos::view_alloc(value, "device_ptr_view"), size }, use_usm_allocations };
+        }
     });
 }
 

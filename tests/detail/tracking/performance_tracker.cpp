@@ -488,7 +488,7 @@ TEST_F(PerformanceTracker, add_parser_predict_tracking_entry) {
     // check entries for correctness
     EXPECT_EQ(entries.size(), 1);
 
-    ASSERT_EQ(entries.at("parameter").size(), 10);
+    ASSERT_EQ(entries.at("parameter").size(), 11);
 }
 
 TEST_F(PerformanceTracker, add_parser_scale_tracking_entry) {
