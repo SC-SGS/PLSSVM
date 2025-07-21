@@ -80,31 +80,32 @@ void run_kernel_functor(const std::string &kernel_name, const TeamPolicy &policy
  * @brief Dispatch the kernel functor to the correct kernel function type.
  * @tparam KernelFunctor the type of the kernel functor to run
  * @tparam ExecutionSpace the used Kokkos execution space
+ * @tparam USMEnabledMemorySpace the possibly USM enabled Kokkos memory space
  * @tparam target the target platform to run the kernel on
  * @tparam Args the types of the parameters necessary for the specific kernel functor
  * @param[in] params the parameters used to determine the kernel function type
  * @param[in] args the parameters necessary for the specific kernel functor
  */
-template <template <typename, plssvm::target_platform, plssvm::kernel_function_type, typename...> typename KernelFunctor, typename ExecutionSpace, plssvm::target_platform target, typename... Args>
+template <template <typename, typename, plssvm::target_platform, plssvm::kernel_function_type, typename...> typename KernelFunctor, typename ExecutionSpace, typename USMEnabledMemorySpace, plssvm::target_platform target, typename... Args>
 void dispatch_kernel_function_type(const plssvm::parameter &params, Args &&...args) {
     switch (params.kernel_type) {
         case plssvm::kernel_function_type::linear:
-            run_kernel_functor<KernelFunctor<ExecutionSpace, target, plssvm::kernel_function_type::linear>>(std::forward<Args>(args)...);
+            run_kernel_functor<KernelFunctor<ExecutionSpace, USMEnabledMemorySpace, target, plssvm::kernel_function_type::linear>>(std::forward<Args>(args)...);
             break;
         case plssvm::kernel_function_type::polynomial:
-            run_kernel_functor<KernelFunctor<ExecutionSpace, target, plssvm::kernel_function_type::polynomial, int, plssvm::real_type, plssvm::real_type>>(std::forward<Args>(args)..., params.degree, std::get<plssvm::real_type>(params.gamma), params.coef0);
+            run_kernel_functor<KernelFunctor<ExecutionSpace, USMEnabledMemorySpace, target, plssvm::kernel_function_type::polynomial, int, plssvm::real_type, plssvm::real_type>>(std::forward<Args>(args)..., params.degree, std::get<plssvm::real_type>(params.gamma), params.coef0);
             break;
         case plssvm::kernel_function_type::rbf:
-            run_kernel_functor<KernelFunctor<ExecutionSpace, target, plssvm::kernel_function_type::rbf, plssvm::real_type>>(std::forward<Args>(args)..., std::get<plssvm::real_type>(params.gamma));
+            run_kernel_functor<KernelFunctor<ExecutionSpace, USMEnabledMemorySpace, target, plssvm::kernel_function_type::rbf, plssvm::real_type>>(std::forward<Args>(args)..., std::get<plssvm::real_type>(params.gamma));
             break;
         case plssvm::kernel_function_type::sigmoid:
-            run_kernel_functor<KernelFunctor<ExecutionSpace, target, plssvm::kernel_function_type::sigmoid, plssvm::real_type, plssvm::real_type>>(std::forward<Args>(args)..., std::get<plssvm::real_type>(params.gamma), params.coef0);
+            run_kernel_functor<KernelFunctor<ExecutionSpace, USMEnabledMemorySpace, target, plssvm::kernel_function_type::sigmoid, plssvm::real_type, plssvm::real_type>>(std::forward<Args>(args)..., std::get<plssvm::real_type>(params.gamma), params.coef0);
             break;
         case plssvm::kernel_function_type::laplacian:
-            run_kernel_functor<KernelFunctor<ExecutionSpace, target, plssvm::kernel_function_type::laplacian, plssvm::real_type>>(std::forward<Args>(args)..., std::get<plssvm::real_type>(params.gamma));
+            run_kernel_functor<KernelFunctor<ExecutionSpace, USMEnabledMemorySpace, target, plssvm::kernel_function_type::laplacian, plssvm::real_type>>(std::forward<Args>(args)..., std::get<plssvm::real_type>(params.gamma));
             break;
         case plssvm::kernel_function_type::chi_squared:
-            run_kernel_functor<KernelFunctor<ExecutionSpace, target, plssvm::kernel_function_type::chi_squared, plssvm::real_type>>(std::forward<Args>(args)..., std::get<plssvm::real_type>(params.gamma));
+            run_kernel_functor<KernelFunctor<ExecutionSpace, USMEnabledMemorySpace, target, plssvm::kernel_function_type::chi_squared, plssvm::real_type>>(std::forward<Args>(args)..., std::get<plssvm::real_type>(params.gamma));
             break;
     }
 }
@@ -113,27 +114,28 @@ void dispatch_kernel_function_type(const plssvm::parameter &params, Args &&...ar
  * @brief Dispatch the kernel functor to the correct target platform and kernel function type.
  * @tparam KernelFunctor the type of the kernel functor to run
  * @tparam ExecutionSpace the used Kokkos execution space
+ * @tparam USMEnabledMemorySpace the possibly USM enabled Kokkos memory space
  * @tparam Args the types of the parameters necessary for the specific kernel functor; stored in a `std::tuple`
  * @param[in] target the target platform to run the kernel on
  * @param[in] params the parameters used to determine the kernel function type
  * @param[in] args the parameters necessary for the specific kernel functor
  */
-template <template <typename, plssvm::target_platform, plssvm::kernel_function_type, typename...> typename KernelFunctor, typename ExecutionSpace, typename... Args>
+template <template <typename, typename, plssvm::target_platform, plssvm::kernel_function_type, typename...> typename KernelFunctor, typename ExecutionSpace, typename USMEnabledMemorySpace, typename... Args>
 void dispatch_target_platform(const plssvm::target_platform target, const plssvm::parameter &params, Args &&...args) {
     switch (target) {
         case plssvm::target_platform::automatic:
             throw plssvm::kokkos::backend_exception{ "Can't determine the target platform!" };
         case plssvm::target_platform::gpu_nvidia:
-            dispatch_kernel_function_type<KernelFunctor, ExecutionSpace, plssvm::target_platform::gpu_nvidia>(params, std::forward<Args>(args)...);
+            dispatch_kernel_function_type<KernelFunctor, ExecutionSpace, USMEnabledMemorySpace, plssvm::target_platform::gpu_nvidia>(params, std::forward<Args>(args)...);
             break;
         case plssvm::target_platform::gpu_amd:
-            dispatch_kernel_function_type<KernelFunctor, ExecutionSpace, plssvm::target_platform::gpu_amd>(params, std::forward<Args>(args)...);
+            dispatch_kernel_function_type<KernelFunctor, ExecutionSpace, USMEnabledMemorySpace, plssvm::target_platform::gpu_amd>(params, std::forward<Args>(args)...);
             break;
         case plssvm::target_platform::gpu_intel:
-            dispatch_kernel_function_type<KernelFunctor, ExecutionSpace, plssvm::target_platform::gpu_intel>(params, std::forward<Args>(args)...);
+            dispatch_kernel_function_type<KernelFunctor, ExecutionSpace, USMEnabledMemorySpace, plssvm::target_platform::gpu_intel>(params, std::forward<Args>(args)...);
             break;
         case plssvm::target_platform::cpu:
-            dispatch_kernel_function_type<KernelFunctor, ExecutionSpace, plssvm::target_platform::cpu>(params, std::forward<Args>(args)...);
+            dispatch_kernel_function_type<KernelFunctor, ExecutionSpace, USMEnabledMemorySpace, plssvm::target_platform::cpu>(params, std::forward<Args>(args)...);
             break;
     }
 }
@@ -142,26 +144,27 @@ void dispatch_target_platform(const plssvm::target_platform target, const plssvm
  * @brief Dispatch the kernel functor to the correct target platform.
  * @tparam KernelFunctor the type of the kernel functor to run
  * @tparam ExecutionSpace the used Kokkos execution space
+ * @tparam USMEnabledMemorySpace the possibly USM enabled Kokkos memory space
  * @tparam Args the types of the parameters necessary for the specific kernel functor; stored in a `std::tuple`
  * @param[in] target the target platform to run the kernel on
  * @param[in] args the parameters necessary for the specific kernel functor
  */
-template <template <typename, plssvm::target_platform> typename KernelFunctor, typename ExecutionSpace, typename... Args>
+template <template <typename, typename, plssvm::target_platform> typename KernelFunctor, typename ExecutionSpace, typename USMEnabledMemorySpace, typename... Args>
 void dispatch_target_platform(const plssvm::target_platform target, Args &&...args) {
     switch (target) {
         case plssvm::target_platform::automatic:
             throw plssvm::kokkos::backend_exception{ "Can't determine the target platform!" };
         case plssvm::target_platform::gpu_nvidia:
-            run_kernel_functor<KernelFunctor<ExecutionSpace, plssvm::target_platform::gpu_nvidia>>(std::forward<Args>(args)...);
+            run_kernel_functor<KernelFunctor<ExecutionSpace, USMEnabledMemorySpace, plssvm::target_platform::gpu_nvidia>>(std::forward<Args>(args)...);
             break;
         case plssvm::target_platform::gpu_amd:
-            run_kernel_functor<KernelFunctor<ExecutionSpace, plssvm::target_platform::gpu_amd>>(std::forward<Args>(args)...);
+            run_kernel_functor<KernelFunctor<ExecutionSpace, USMEnabledMemorySpace, plssvm::target_platform::gpu_amd>>(std::forward<Args>(args)...);
             break;
         case plssvm::target_platform::gpu_intel:
-            run_kernel_functor<KernelFunctor<ExecutionSpace, plssvm::target_platform::gpu_intel>>(std::forward<Args>(args)...);
+            run_kernel_functor<KernelFunctor<ExecutionSpace, USMEnabledMemorySpace, plssvm::target_platform::gpu_intel>>(std::forward<Args>(args)...);
             break;
         case plssvm::target_platform::cpu:
-            run_kernel_functor<KernelFunctor<ExecutionSpace, plssvm::target_platform::cpu>>(std::forward<Args>(args)...);
+            run_kernel_functor<KernelFunctor<ExecutionSpace, USMEnabledMemorySpace, plssvm::target_platform::cpu>>(std::forward<Args>(args)...);
             break;
     }
 }
@@ -541,7 +544,14 @@ auto csvm::run_assemble_kernel_matrix_explicit(const std::size_t device_id, cons
             // create a Kokkos TeamPolicy
             Kokkos::TeamPolicy<kokkos_execution_space_type> team_policy{ device, native_partial_grid, team_size };
 
-            dispatch_target_platform<detail::device_kernel_assembly, kokkos_execution_space_type>(target_, params, fmt::format("assemble_kernel_matrix_explicit_{}", params.kernel_type), team_policy.set_scratch_size(0, Kokkos::PerTeam(scratch_memory_size)), kernel_matrix_d.get().get<space>(), data_d.get().get<space>(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, q_red_d.get().get<space>(), QA_cost, cost_factor, offsets.x, offsets.y, partial_grid.x);
+            // get the underlying kernel matrix view based on whether we wanted USM allocations or not
+            if (kernel_matrix_d.get().uses_usm_allocations()) {
+                using kokkos_memory_space_type = kokkos_execution_space_to_kokkos_memory_space_t<kokkos_execution_space_type, true>;
+                dispatch_target_platform<detail::device_kernel_assembly, kokkos_execution_space_type, kokkos_memory_space_type>(target_, params, fmt::format("assemble_kernel_matrix_explicit_{}", params.kernel_type), team_policy.set_scratch_size(0, Kokkos::PerTeam(scratch_memory_size)), kernel_matrix_d.get().get<space, true>(), data_d.get().get<space>(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, q_red_d.get().get<space>(), QA_cost, cost_factor, offsets.x, offsets.y, partial_grid.x);
+            } else {
+                using kokkos_memory_space_type = kokkos_execution_space_to_kokkos_memory_space_t<kokkos_execution_space_type, false>;
+                dispatch_target_platform<detail::device_kernel_assembly, kokkos_execution_space_type, kokkos_memory_space_type>(target_, params, fmt::format("assemble_kernel_matrix_explicit_{}", params.kernel_type), team_policy.set_scratch_size(0, Kokkos::PerTeam(scratch_memory_size)), kernel_matrix_d.get().get<space, false>(), data_d.get().get<space>(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, q_red_d.get().get<space>(), QA_cost, cost_factor, offsets.x, offsets.y, partial_grid.x);
+            }
         }
         detail::device_synchronize(device);
         const auto end = std::chrono::steady_clock::now();
@@ -578,7 +588,13 @@ void csvm::run_blas_level_3_kernel_explicit(const std::size_t device_id, const :
             // create a Kokkos TeamPolicy
             Kokkos::TeamPolicy<kokkos_execution_space_type> team_policy{ device, native_partial_grid, team_size };
 
-            dispatch_target_platform<detail::device_kernel_symm, kokkos_execution_space_type>(target_, "blas_level_3_kernel_explicit", team_policy.set_scratch_size(0, Kokkos::PerTeam(scratch_memory_size)), num_rows, num_rhs, device_specific_num_rows, row_offset, alpha, A_d.get().get<space>(), B_d.get().get<space>(), beta, C_d.get().get<space>(), offsets.x, offsets.y, partial_grid.x);
+            if (A_d.get().uses_usm_allocations()) {
+                using kokkos_memory_space_type = kokkos_execution_space_to_kokkos_memory_space_t<kokkos_execution_space_type, true>;
+                dispatch_target_platform<detail::device_kernel_symm, kokkos_execution_space_type, kokkos_memory_space_type>(target_, "blas_level_3_kernel_explicit", team_policy.set_scratch_size(0, Kokkos::PerTeam(scratch_memory_size)), num_rows, num_rhs, device_specific_num_rows, row_offset, alpha, A_d.get().get<space, true>(), B_d.get().get<space>(), beta, C_d.get().get<space>(), offsets.x, offsets.y, partial_grid.x);
+            } else {
+                using kokkos_memory_space_type = kokkos_execution_space_to_kokkos_memory_space_t<kokkos_execution_space_type, false>;
+                dispatch_target_platform<detail::device_kernel_symm, kokkos_execution_space_type, kokkos_memory_space_type>(target_, "blas_level_3_kernel_explicit", team_policy.set_scratch_size(0, Kokkos::PerTeam(scratch_memory_size)), num_rows, num_rhs, device_specific_num_rows, row_offset, alpha, A_d.get().get<space, false>(), B_d.get().get<space>(), beta, C_d.get().get<space>(), offsets.x, offsets.y, partial_grid.x);
+            }
         }
 
         // save the team size
@@ -594,7 +610,13 @@ void csvm::run_blas_level_3_kernel_explicit(const std::size_t device_id, const :
                 // create a Kokkos TeamPolicy
                 Kokkos::TeamPolicy<kokkos_execution_space_type> team_policy{ device, native_partial_grid, mirror_team_size };
 
-                dispatch_target_platform<detail::device_kernel_symm_mirror, kokkos_execution_space_type>(target_, "blas_level_3_kernel_explicit_mirror", team_policy.set_scratch_size(0, Kokkos::PerTeam(scratch_memory_size)), num_rows, num_rhs, num_mirror_rows, device_specific_num_rows, row_offset, alpha, A_d.get().get<space>(), B_d.get().get<space>(), beta, C_d.get().get<space>(), offsets.x, offsets.y, partial_grid.x);
+                if (A_d.get().uses_usm_allocations()) {
+                    using kokkos_memory_space_type = kokkos_execution_space_to_kokkos_memory_space_t<kokkos_execution_space_type, true>;
+                    dispatch_target_platform<detail::device_kernel_symm_mirror, kokkos_execution_space_type, kokkos_memory_space_type>(target_, "blas_level_3_kernel_explicit_mirror", team_policy.set_scratch_size(0, Kokkos::PerTeam(scratch_memory_size)), num_rows, num_rhs, num_mirror_rows, device_specific_num_rows, row_offset, alpha, A_d.get().get<space, true>(), B_d.get().get<space>(), beta, C_d.get().get<space>(), offsets.x, offsets.y, partial_grid.x);
+                } else {
+                    using kokkos_memory_space_type = kokkos_execution_space_to_kokkos_memory_space_t<kokkos_execution_space_type, false>;
+                    dispatch_target_platform<detail::device_kernel_symm_mirror, kokkos_execution_space_type, kokkos_memory_space_type>(target_, "blas_level_3_kernel_explicit_mirror", team_policy.set_scratch_size(0, Kokkos::PerTeam(scratch_memory_size)), num_rows, num_rhs, num_mirror_rows, device_specific_num_rows, row_offset, alpha, A_d.get().get<space, false>(), B_d.get().get<space>(), beta, C_d.get().get<space>(), offsets.x, offsets.y, partial_grid.x);
+                }
             }
         }
         detail::device_synchronize(device);
@@ -658,6 +680,7 @@ void csvm::run_assemble_kernel_matrix_implicit_blas_level_3(const std::size_t de
     devices_[device_id].execute([&](auto &device) {
         using kokkos_execution_space_type = ::plssvm::detail::remove_cvref_t<decltype(device)>;
         constexpr execution_space space = kokkos_type_to_execution_space_v<kokkos_execution_space_type>;
+        using kokkos_memory_space_type = kokkos_execution_space_to_kokkos_memory_space_t<kokkos_execution_space_type>;
 
         // calculate the number of data points this device is responsible for
         const unsigned long long device_specific_num_rows = data_distribution_->place_specific_num_rows(device_id);
@@ -678,7 +701,7 @@ void csvm::run_assemble_kernel_matrix_implicit_blas_level_3(const std::size_t de
             // create a Kokkos TeamPolicy
             Kokkos::TeamPolicy<kokkos_execution_space_type> team_policy{ device, native_partial_grid, team_size };
 
-            dispatch_target_platform<detail::device_kernel_assembly_symm, kokkos_execution_space_type>(target_, params, fmt::format("assemble_kernel_matrix_implicit_blas_level_3_{}", params.kernel_type), team_policy.set_scratch_size(0, Kokkos::PerTeam(scratch_memory_size)), alpha, q_red.get().get<space>(), A_d.get().get<space>(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, QA_cost, cost_factor, B_d.get().get<space>(), C_d.get().get<space>(), num_classes, offsets.x, offsets.y, partial_grid.x);
+            dispatch_target_platform<detail::device_kernel_assembly_symm, kokkos_execution_space_type, kokkos_memory_space_type>(target_, params, fmt::format("assemble_kernel_matrix_implicit_blas_level_3_{}", params.kernel_type), team_policy.set_scratch_size(0, Kokkos::PerTeam(scratch_memory_size)), alpha, q_red.get().get<space>(), A_d.get().get<space>(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, QA_cost, cost_factor, B_d.get().get<space>(), C_d.get().get<space>(), num_classes, offsets.x, offsets.y, partial_grid.x);
         }
         detail::device_synchronize(device);
         const auto end = std::chrono::steady_clock::now();
@@ -710,6 +733,7 @@ auto csvm::run_w_kernel(const std::size_t device_id, const ::plssvm::detail::exe
     return devices_[device_id].execute_and_return([&](auto &device) {
         using kokkos_execution_space_type = ::plssvm::detail::remove_cvref_t<decltype(device)>;
         constexpr execution_space space = kokkos_type_to_execution_space_v<kokkos_execution_space_type>;
+        using kokkos_memory_space_type = kokkos_execution_space_to_kokkos_memory_space_t<kokkos_execution_space_type>;
 
         const auto start = std::chrono::steady_clock::now();
         for (const auto &[partial_grid, offsets] : exec.grids) {
@@ -719,7 +743,7 @@ auto csvm::run_w_kernel(const std::size_t device_id, const ::plssvm::detail::exe
             // create a Kokkos TeamPolicy
             Kokkos::TeamPolicy<kokkos_execution_space_type> team_policy{ device, native_partial_grid, team_size };
 
-            dispatch_target_platform<detail::device_kernel_w_linear, kokkos_execution_space_type>(target_, "w_kernel", team_policy.set_scratch_size(0, Kokkos::PerTeam(scratch_memory_size)), w_d.get().get<space>(), alpha_d.get().get<space>(), sv_d.get().get<space>(), num_classes, num_sv, device_specific_num_sv, sv_offset, offsets.x, offsets.y, partial_grid.x);
+            dispatch_target_platform<detail::device_kernel_w_linear, kokkos_execution_space_type, kokkos_memory_space_type>(target_, "w_kernel", team_policy.set_scratch_size(0, Kokkos::PerTeam(scratch_memory_size)), w_d.get().get<space>(), alpha_d.get().get<space>(), sv_d.get().get<space>(), num_classes, num_sv, device_specific_num_sv, sv_offset, offsets.x, offsets.y, partial_grid.x);
         }
         detail::device_synchronize(device);
         const auto end = std::chrono::steady_clock::now();
@@ -746,6 +770,7 @@ auto csvm::run_predict_kernel(const std::size_t device_id, const ::plssvm::detai
     return devices_[device_id].execute_and_return([&](auto &device) {
         using kokkos_execution_space_type = ::plssvm::detail::remove_cvref_t<decltype(device)>;
         constexpr execution_space space = kokkos_type_to_execution_space_v<kokkos_execution_space_type>;
+        using kokkos_memory_space_type = kokkos_execution_space_to_kokkos_memory_space_t<kokkos_execution_space_type>;
 
         const auto start = std::chrono::steady_clock::now();
         for (const auto &[partial_grid, offsets] : exec.grids) {
@@ -756,9 +781,9 @@ auto csvm::run_predict_kernel(const std::size_t device_id, const ::plssvm::detai
             Kokkos::TeamPolicy<kokkos_execution_space_type> team_policy{ device, native_partial_grid, team_size };
 
             if (params.kernel_type == kernel_function_type::linear) {
-                dispatch_target_platform<detail::device_kernel_predict_linear, kokkos_execution_space_type>(target_, "predict_kernel_linear", team_policy.set_scratch_size(0, Kokkos::PerTeam(scratch_memory_size)), out_d.get().get<space>(), sv_or_w_d.get().get<space>(), rho_d.get().get<space>(), predict_points_d.get().get<space>(), num_classes, num_predict_points, num_features, offsets.x, offsets.y, partial_grid.x);
+                dispatch_target_platform<detail::device_kernel_predict_linear, kokkos_execution_space_type, kokkos_memory_space_type>(target_, "predict_kernel_linear", team_policy.set_scratch_size(0, Kokkos::PerTeam(scratch_memory_size)), out_d.get().get<space>(), sv_or_w_d.get().get<space>(), rho_d.get().get<space>(), predict_points_d.get().get<space>(), num_classes, num_predict_points, num_features, offsets.x, offsets.y, partial_grid.x);
             } else {
-                dispatch_target_platform<detail::device_kernel_predict, kokkos_execution_space_type>(target_, params, fmt::format("predict_kernel_linear_{}", params.kernel_type), team_policy.set_scratch_size(0, Kokkos::PerTeam(scratch_memory_size)), out_d.get().get<space>(), alpha_d.get().get<space>(), rho_d.get().get<space>(), sv_or_w_d.get().get<space>(), predict_points_d.get().get<space>(), num_classes, num_sv, num_predict_points, num_features, offsets.x, offsets.y, partial_grid.x);
+                dispatch_target_platform<detail::device_kernel_predict, kokkos_execution_space_type, kokkos_memory_space_type>(target_, params, fmt::format("predict_kernel_linear_{}", params.kernel_type), team_policy.set_scratch_size(0, Kokkos::PerTeam(scratch_memory_size)), out_d.get().get<space>(), alpha_d.get().get<space>(), rho_d.get().get<space>(), sv_or_w_d.get().get<space>(), predict_points_d.get().get<space>(), num_classes, num_sv, num_predict_points, num_features, offsets.x, offsets.y, partial_grid.x);
             }
         }
         detail::device_synchronize(device);

@@ -15,6 +15,7 @@
 
 #include "plssvm/backends/Kokkos/detail/standard_layout_tuple.hpp"  // plssvm::kokkos::detail::standard_layout_tuple
 #include "plssvm/backends/Kokkos/kernel/kernel_functions.hpp"       // plssvm::kokkos::detail::{feature_reduce, apply_kernel_function}
+#include "plssvm/backends/Kokkos/memory_space_type_traits.hpp"      // plssvm::kokkos::kokkos_execution_space_to_kokkos_memory_space_t
 #include "plssvm/constants.hpp"                                     // plssvm::{real_type, THREAD_BLOCK_SIZE, INTERNAL_BLOCK_SIZE, PADDING_SIZE}
 #include "plssvm/kernel_function_types.hpp"                         // plssvm::kernel_function_type
 #include "plssvm/target_platforms.hpp"                              // plssvm::target_platform
@@ -28,17 +29,23 @@ namespace plssvm::kokkos::detail {
 /**
  * @brief Create the explicit kernel matrix using the @p kernel_function.
  * @tparam ExecutionSpace the Kokkos::ExecutionSpace used to execute the kernel
+ * @tparam USMEnabledMemorySpace the Kokkos::MemorySpace that may use USM allocations
  * @tparam target the target platform
  * @tparam kernel_function the type of the used kernel function
  * @tparam Args the types of the parameters necessary for the specific kernel function; stored in a `standard_layout_tuple`
  */
-template <typename ExecutionSpace, target_platform target, kernel_function_type kernel_function, typename... Args>
+template <typename ExecutionSpace, typename USMEnabledMemorySpace, target_platform target, kernel_function_type kernel_function, typename... Args>
 class device_kernel_assembly {
+    /**
+     * @brief The type of the used Kokkos::View that may use USM allocations.
+     */
+    template <typename T>
+    using usm_device_view_type = Kokkos::View<T *, USMEnabledMemorySpace>;  // possible USM allocations
     /**
      * @brief The type of the used Kokkos::View.
      */
     template <typename T>
-    using device_view_type = Kokkos::View<T *, ExecutionSpace>;
+    using device_view_type = Kokkos::View<T *, kokkos_execution_space_to_kokkos_memory_space_t<ExecutionSpace, false>>;  // no USM allocations
 
   public:
     /**
@@ -57,7 +64,7 @@ class device_kernel_assembly {
      * @param[in] grid_size_x the size of the execution grid in x-dimension
      * @param[in] kernel_function_parameter the parameters necessary to apply the @p kernel_function
      */
-    device_kernel_assembly(device_view_type<real_type> kernel_matrix, device_view_type<real_type> data, const std::size_t num_rows, const std::size_t device_num_rows, const std::size_t device_row_offset, const std::size_t num_features, device_view_type<real_type> q, const real_type QA_cost, const real_type cost, const std::size_t grid_x_offset, const std::size_t grid_y_offset, const std::size_t grid_size_x, Args... kernel_function_parameter) :
+    device_kernel_assembly(usm_device_view_type<real_type> kernel_matrix, device_view_type<real_type> data, const std::size_t num_rows, const std::size_t device_num_rows, const std::size_t device_row_offset, const std::size_t num_features, device_view_type<real_type> q, const real_type QA_cost, const real_type cost, const std::size_t grid_x_offset, const std::size_t grid_y_offset, const std::size_t grid_size_x, Args... kernel_function_parameter) :
         kernel_matrix_{ kernel_matrix },
         data_{ data },
         num_rows_{ num_rows },
@@ -184,7 +191,7 @@ class device_kernel_assembly {
 
   private:
     /// @cond Doxygen_suppress
-    device_view_type<real_type> kernel_matrix_;
+    usm_device_view_type<real_type> kernel_matrix_;
     device_view_type<const real_type> data_;
     const std::size_t num_rows_;
     const std::size_t device_num_rows_;

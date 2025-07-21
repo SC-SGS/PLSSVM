@@ -13,10 +13,11 @@
 #define PLSSVM_BACKENDS_KOKKOS_PREDICT_KERNEL_HPP_
 #pragma once
 
-#include "plssvm/backends/Kokkos/kernel/kernel_functions.hpp"  // plssvm::kokkos::detail::{feature_reduce, apply_kernel_function}
-#include "plssvm/constants.hpp"                                // plssvm::{real_type, THREAD_BLOCK_SIZE, INTERNAL_BLOCK_SIZE, PADDING_SIZE}
-#include "plssvm/kernel_function_types.hpp"                    // plssvm::kernel_function_type
-#include "plssvm/target_platforms.hpp"                         // plssvm::target_platform
+#include "plssvm/backends/Kokkos/kernel/kernel_functions.hpp"   // plssvm::kokkos::detail::{feature_reduce, apply_kernel_function}
+#include "plssvm/backends/Kokkos/memory_space_type_traits.hpp"  // plssvm::kokkos::kokkos_execution_space_to_kokkos_memory_space_t
+#include "plssvm/constants.hpp"                                 // plssvm::{real_type, THREAD_BLOCK_SIZE, INTERNAL_BLOCK_SIZE, PADDING_SIZE}
+#include "plssvm/kernel_function_types.hpp"                     // plssvm::kernel_function_type
+#include "plssvm/target_platforms.hpp"                          // plssvm::target_platform
 
 #include "Kokkos_Core.hpp"  // KOKKOS_INLINE_FUNCTION, Kokkos::View, Kokkos::TeamPolicy, Kokkos::mdspan, Kokkos::dextents, Kokkos::atomic_add
 
@@ -29,13 +30,13 @@ namespace plssvm::kokkos::detail {
  * @tparam ExecutionSpace the Kokkos::ExecutionSpace used to execute the kernel
  * @tparam target the target platform
  */
-template <typename ExecutionSpace, target_platform target>
+template <typename ExecutionSpace, typename, target_platform target>
 class device_kernel_w_linear {
     /**
      * @brief The type of the used Kokkos::View.
      */
     template <typename T>
-    using device_view_type = Kokkos::View<T *, ExecutionSpace>;
+    using device_view_type = Kokkos::View<T *, kokkos_execution_space_to_kokkos_memory_space_t<ExecutionSpace, false>>;  // no USM allocations
 
   public:
     /**
@@ -174,13 +175,13 @@ class device_kernel_w_linear {
  * @tparam ExecutionSpace the Kokkos::ExecutionSpace used to execute the kernel
  * @tparam target the target platform
  */
-template <typename ExecutionSpace, target_platform target>
+template <typename ExecutionSpace, typename, target_platform target>
 class device_kernel_predict_linear {
     /**
      * @brief The type of the used Kokkos::View.
      */
     template <typename T>
-    using device_view_type = Kokkos::View<T *, ExecutionSpace>;
+    using device_view_type = Kokkos::View<T *, kokkos_execution_space_to_kokkos_memory_space_t<ExecutionSpace, false>>;  // no USM allocations
 
   public:
     /**
@@ -321,13 +322,13 @@ class device_kernel_predict_linear {
  * @tparam kernel_function the type of the used kernel function
  * @tparam Args the types of the parameters necessary for the specific kernel function
  */
-template <typename ExecutionSpace, target_platform target, kernel_function_type kernel_function, typename... Args>
+template <typename ExecutionSpace, typename, target_platform target, kernel_function_type kernel_function, typename... Args>
 class device_kernel_predict {
     /**
      * @brief The type of the used Kokkos::View.
      */
     template <typename T>
-    using device_view_type = Kokkos::View<T *, ExecutionSpace>;
+    using device_view_type = Kokkos::View<T *, kokkos_execution_space_to_kokkos_memory_space_t<ExecutionSpace, false>>;  // no USM allocations
 
   public:
     /**

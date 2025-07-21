@@ -17,6 +17,8 @@ set(PLSSVM_KOKKOS_TEST_SOURCES
     ${CMAKE_CURRENT_LIST_DIR}/detail/pinned_memory.cpp
     ${CMAKE_CURRENT_LIST_DIR}/detail/utility.cpp
     ${CMAKE_CURRENT_LIST_DIR}/kokkos_csvm.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/memory_space.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/memory_space_type_traits.cpp
     ${CMAKE_CURRENT_LIST_DIR}/exceptions.cpp
     ${CMAKE_CURRENT_LIST_DIR}/execution_space_type_traits.cpp
 )

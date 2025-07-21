@@ -13,8 +13,9 @@
 #define PLSSVM_BACKENDS_KOKKOS_CG_EXPLICIT_BLAS_HPP_
 #pragma once
 
-#include "plssvm/constants.hpp"         // plssvm::{real_type, THREAD_BLOCK_SIZE, INTERNAL_BLOCK_SIZE, PADDING_SIZE}
-#include "plssvm/target_platforms.hpp"  // plssvm::target_platform
+#include "plssvm/backends/Kokkos/memory_space_type_traits.hpp"  // plssvm::kokkos::kokkos_execution_space_to_kokkos_memory_space_t
+#include "plssvm/constants.hpp"                                 // plssvm::{real_type, THREAD_BLOCK_SIZE, INTERNAL_BLOCK_SIZE, PADDING_SIZE}
+#include "plssvm/target_platforms.hpp"                          // plssvm::target_platform
 
 #include "Kokkos_Core.hpp"  // KOKKOS_INLINE_FUNCTION, Kokkos::View, Kokkos::TeamPolicy, Kokkos::mdspan, Kokkos::dextents
 
@@ -25,15 +26,21 @@ namespace plssvm::kokkos::detail {
 /**
  * @brief Perform an explicit BLAS SYMM operation: `C = alpha * A * B + beta * C` where @p A is a `m x k` symmetric matrix (memory optimized), @p B is a `k x n` matrix, @p C is a `m x n` matrix, and @p alpha and @p beta are scalars.
  * @tparam ExecutionSpace the Kokkos::ExecutionSpace used to execute the kernel
+ * @tparam USMEnabledMemorySpace the Kokkos::MemorySpace that may use USM allocations
  * @tparam target the target platform
  */
-template <typename ExecutionSpace, target_platform target>
+template <typename ExecutionSpace, typename USMEnabledMemorySpace, target_platform target>
 class device_kernel_symm {
+    /**
+     * @brief The type of the used Kokkos::View that may use USM allocations.
+     */
+    template <typename T>
+    using usm_device_view_type = Kokkos::View<T *, USMEnabledMemorySpace>;  // possible USM allocations
     /**
      * @brief The type of the used Kokkos::View.
      */
     template <typename T>
-    using device_view_type = Kokkos::View<T *, ExecutionSpace>;
+    using device_view_type = Kokkos::View<T *, kokkos_execution_space_to_kokkos_memory_space_t<ExecutionSpace, false>>;  // no USM allocations
 
   public:
     /**
@@ -51,7 +58,7 @@ class device_kernel_symm {
      * @param[in] grid_y_offset the offset in y-dimension into the data points if more than one execution grid has to be used
      * @param[in] grid_size_x the size of the execution grid in x-dimension
      */
-    device_kernel_symm(const std::size_t num_rows, const std::size_t num_rhs, const std::size_t device_num_rows, const std::size_t device_row_offset, const real_type alpha, device_view_type<const real_type> A, device_view_type<const real_type> B, const real_type beta, device_view_type<real_type> C, const std::size_t grid_x_offset, const std::size_t grid_y_offset, const std::size_t grid_size_x) :
+    device_kernel_symm(const std::size_t num_rows, const std::size_t num_rhs, const std::size_t device_num_rows, const std::size_t device_row_offset, const real_type alpha, usm_device_view_type<const real_type> A, device_view_type<const real_type> B, const real_type beta, device_view_type<real_type> C, const std::size_t grid_x_offset, const std::size_t grid_y_offset, const std::size_t grid_size_x) :
         num_rows_{ num_rows },
         num_rhs_{ num_rhs },
         device_num_rows_{ device_num_rows },
@@ -173,7 +180,7 @@ class device_kernel_symm {
     const std::size_t device_num_rows_;
     const std::size_t device_row_offset_;
     const real_type alpha_;
-    device_view_type<const real_type> A_;
+    usm_device_view_type<const real_type> A_;
     device_view_type<const real_type> B_;
     const real_type beta_;
     device_view_type<real_type> C_;
@@ -187,15 +194,21 @@ class device_kernel_symm {
  * @brief Perform an explicit BLAS SYMM operation: `C = alpha * A * B + beta * C` where @p A is a `m x k` symmetric matrix (memory optimized), @p B is a `k x n` matrix, @p C is a `m x n` matrix, and @p alpha and @p beta are scalars.
  * @details In a multi-GPU setting, this function is responsible for mirroring down the columns this device is responsible for!
  * @tparam ExecutionSpace the Kokkos::ExecutionSpace used to execute the kernel
+ * @tparam USMEnabledMemorySpace the Kokkos::MemorySpace that may use USM allocations
  * @tparam target the target platform
  */
-template <typename ExecutionSpace, target_platform target>
+template <typename ExecutionSpace, typename USMEnabledMemorySpace, target_platform target>
 class device_kernel_symm_mirror {
+    /**
+     * @brief The type of the used Kokkos::View that may use USM allocations.
+     */
+    template <typename T>
+    using usm_device_view_type = Kokkos::View<T *, USMEnabledMemorySpace>;  // possible USM allocations
     /**
      * @brief The type of the used Kokkos::View.
      */
     template <typename T>
-    using device_view_type = Kokkos::View<T *, ExecutionSpace>;
+    using device_view_type = Kokkos::View<T *, kokkos_execution_space_to_kokkos_memory_space_t<ExecutionSpace, false>>;  // no USM allocations
 
   public:
     /**
@@ -214,7 +227,7 @@ class device_kernel_symm_mirror {
      * @param[in] grid_y_offset the offset in y-dimension into the data points if more than one execution grid has to be used
      * @param[in] grid_size_x the size of the execution grid in x-dimension
      */
-    device_kernel_symm_mirror(const std::size_t num_rows, const std::size_t num_rhs, const std::size_t num_mirror_rows, const std::size_t device_num_rows, const std::size_t device_row_offset, const real_type alpha, device_view_type<const real_type> A, device_view_type<const real_type> B, const real_type beta, device_view_type<real_type> C, const std::size_t grid_x_offset, const std::size_t grid_y_offset, const std::size_t grid_size_x) :
+    device_kernel_symm_mirror(const std::size_t num_rows, const std::size_t num_rhs, const std::size_t num_mirror_rows, const std::size_t device_num_rows, const std::size_t device_row_offset, const real_type alpha, usm_device_view_type<const real_type> A, device_view_type<const real_type> B, const real_type beta, device_view_type<real_type> C, const std::size_t grid_x_offset, const std::size_t grid_y_offset, const std::size_t grid_size_x) :
         num_rows_{ num_rows },
         num_rhs_{ num_rhs },
         num_mirror_rows_{ num_mirror_rows },
@@ -332,7 +345,7 @@ class device_kernel_symm_mirror {
     const std::size_t device_num_rows_;
     const std::size_t device_row_offset_;
     const real_type alpha_;
-    device_view_type<const real_type> A_;
+    usm_device_view_type<const real_type> A_;
     device_view_type<const real_type> B_;
     const real_type beta_;
     device_view_type<real_type> C_;
@@ -352,7 +365,7 @@ class device_kernel_inplace_matrix_add {
      * @brief The type of the used Kokkos::View.
      */
     template <typename T>
-    using device_view_type = Kokkos::View<T *, ExecutionSpace>;
+    using device_view_type = Kokkos::View<T *, kokkos_execution_space_to_kokkos_memory_space_t<ExecutionSpace, false>>;  // no USM allocations
 
   public:
     /**
@@ -426,7 +439,7 @@ class device_kernel_inplace_matrix_scale {
      * @brief The type of the used Kokkos::View.
      */
     template <typename T>
-    using device_view_type = Kokkos::View<T *, ExecutionSpace>;
+    using device_view_type = Kokkos::View<T *, kokkos_execution_space_to_kokkos_memory_space_t<ExecutionSpace, false>>;  // no USM allocations
 
   public:
     /**

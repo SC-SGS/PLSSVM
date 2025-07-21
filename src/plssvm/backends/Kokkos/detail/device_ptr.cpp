@@ -46,11 +46,7 @@ device_ptr<T>::device_ptr(const plssvm::shape shape, const device_wrapper &devic
 template <typename T>
 device_ptr<T>::device_ptr(const plssvm::shape shape, const plssvm::shape padding, const device_wrapper &device, const bool use_usm_allocations) :
     base_type{ shape, padding, device, use_usm_allocations } {
-    if (use_usm_allocations_) {
-        // TODO: implement
-        throw backend_exception{ "Not implemented yet!" };
-    }
-    data_ = make_device_view_wrapper<T *>(device, this->size_padded());
+    data_ = make_device_view_wrapper<T *>(device, this->size_padded(), use_usm_allocations_);
     this->memset(0);
 }
 

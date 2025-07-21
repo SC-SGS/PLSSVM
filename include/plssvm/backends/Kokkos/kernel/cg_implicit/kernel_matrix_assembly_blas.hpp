@@ -15,6 +15,7 @@
 
 #include "plssvm/backends/Kokkos/detail/standard_layout_tuple.hpp"  // plssvm::kokkos::detail::standard_layout_tuple
 #include "plssvm/backends/Kokkos/kernel/kernel_functions.hpp"       // plssvm::kokkos::detail::{feature_reduce, apply_kernel_function}
+#include "plssvm/backends/Kokkos/memory_space_type_traits.hpp"      // plssvm::kokkos::kokkos_execution_space_to_kokkos_memory_space_t
 #include "plssvm/constants.hpp"                                     // plssvm::{real_type, THREAD_BLOCK_SIZE, INTERNAL_BLOCK_SIZE, PADDING_SIZE}
 #include "plssvm/kernel_function_types.hpp"                         // plssvm::kernel_function_type
 #include "plssvm/target_platforms.hpp"                              // plssvm::target_platform
@@ -32,13 +33,13 @@ namespace plssvm::kokkos::detail {
  * @tparam kernel_function the type of the used kernel function
  * @tparam Args the types of the parameters necessary for the specific kernel function
  */
-template <typename ExecutionSpace, target_platform target, kernel_function_type kernel_function, typename... Args>
+template <typename ExecutionSpace, typename, target_platform target, kernel_function_type kernel_function, typename... Args>
 class device_kernel_assembly_symm {
     /**
      * @brief The type of the used Kokkos::View.
      */
     template <typename T>
-    using device_view_type = Kokkos::View<T *, ExecutionSpace>;
+    using device_view_type = Kokkos::View<T *, kokkos_execution_space_to_kokkos_memory_space_t<ExecutionSpace, false>>;  // no USM allocations
 
   public:
     /**
