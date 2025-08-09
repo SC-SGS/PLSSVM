@@ -83,7 +83,7 @@ struct device_kernel_assembly {
 
                 // iterate over all features
                 for (std::size_t feature_block = 0; feature_block < num_features; feature_block += THREAD_BLOCK_SIZE_uz) {
-                    if constexpr (target != target_platform::cpu) {
+                    if constexpr (target == target_platform::cpu) {
                         // perform the feature reduction calculation, the feature is the fastest moving index
                         for (unsigned internal_i = 0; internal_i < INTERNAL_BLOCK_SIZE; ++internal_i) {
                             for (unsigned internal_j = 0; internal_j < INTERNAL_BLOCK_SIZE; ++internal_j) {
