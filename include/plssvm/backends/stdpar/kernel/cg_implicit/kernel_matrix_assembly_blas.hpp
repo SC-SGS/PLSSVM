@@ -78,8 +78,8 @@ struct device_kernel_assembly_symm {
 
         std::for_each(std::execution::par_unseq, indices.begin(), indices.end(), [=, q_ptr = q.data(), data_ptr = data.data(), B_ptr = B.data(), C_ptr = C.data()](const std::size_t idx) {
             // calculate the indices used in the current thread
-            const std::size_t i_idx = (idx / blocked_device_num_rows) * INTERNAL_BLOCK_SIZE_uz;
-            const std::size_t j_idx = (idx % blocked_device_num_rows) * INTERNAL_BLOCK_SIZE_uz;
+            const std::size_t i_idx = (idx % blocked_device_num_rows) * INTERNAL_BLOCK_SIZE_uz;
+            const std::size_t j_idx = (idx / blocked_device_num_rows) * INTERNAL_BLOCK_SIZE_uz;
 
             // only calculate the upper triangular matrix
             if (i_idx >= j_idx) {

@@ -69,8 +69,8 @@ struct device_kernel_symm {
 
         std::for_each(std::execution::par_unseq, range.begin(), range.end(), [=, A_ptr = A, B_ptr = B.data(), C_ptr = C.data()](const std::size_t idx) {
             // calculate the indices used in the current thread
-            const std::size_t i_idx = (idx / blocked_device_num_rows) * INTERNAL_BLOCK_SIZE_uz;
-            const std::size_t j_idx = (idx % blocked_device_num_rows) * INTERNAL_BLOCK_SIZE_uz;
+            const std::size_t i_idx = (idx % blocked_device_num_rows) * INTERNAL_BLOCK_SIZE_uz;
+            const std::size_t j_idx = (idx / blocked_device_num_rows) * INTERNAL_BLOCK_SIZE_uz;
 
             // create a thread private array used for internal caching
             std::array<std::array<real_type, INTERNAL_BLOCK_SIZE>, INTERNAL_BLOCK_SIZE> temp{};
@@ -184,8 +184,8 @@ struct device_kernel_symm_mirror {
 
         std::for_each(std::execution::par_unseq, range.begin(), range.end(), [=, A_ptr = A, B_ptr = B.data(), C_ptr = C.data()](const std::size_t idx) {
             // calculate the indices used in the current thread
-            const std::size_t i_idx = (idx / blocked_num_mirror_rows) * INTERNAL_BLOCK_SIZE_uz;
-            const std::size_t j_idx = (idx % blocked_num_mirror_rows) * INTERNAL_BLOCK_SIZE_uz;
+            const std::size_t i_idx = (idx % blocked_num_mirror_rows) * INTERNAL_BLOCK_SIZE_uz;
+            const std::size_t j_idx = (idx / blocked_num_mirror_rows) * INTERNAL_BLOCK_SIZE_uz;
 
             // create a thread private array used for internal caching
             std::array<std::array<real_type, INTERNAL_BLOCK_SIZE>, INTERNAL_BLOCK_SIZE> temp{};

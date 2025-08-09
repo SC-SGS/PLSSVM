@@ -70,8 +70,8 @@ struct device_kernel_w_linear {
 
         std::for_each(std::execution::par_unseq, range.begin(), range.end(), [=, w_ptr = w.data(), alpha_ptr = alpha.data(), support_vectors_ptr = support_vectors.data()](const std::size_t idx) {
             // calculate the indices used in the current thread
-            const std::size_t feature_idx = (idx / blocked_num_classes) * INTERNAL_BLOCK_SIZE_uz;
-            const std::size_t class_idx = (idx % blocked_num_classes) * INTERNAL_BLOCK_SIZE_uz;
+            const std::size_t feature_idx = (idx % blocked_num_classes) * INTERNAL_BLOCK_SIZE_uz;
+            const std::size_t class_idx = (idx / blocked_num_classes) * INTERNAL_BLOCK_SIZE_uz;
 
             // create a thread private array used for internal caching
             std::array<std::array<real_type, INTERNAL_BLOCK_SIZE>, INTERNAL_BLOCK_SIZE> temp{};
@@ -165,8 +165,8 @@ struct device_kernel_predict_linear {
 
         std::for_each(std::execution::par_unseq, range.begin(), range.end(), [=, prediction_ptr = prediction.data(), w_ptr = w.data(), rho_ptr = rho.data(), predict_points_ptr = predict_points.data()](const std::size_t idx) {
             // calculate the indices used in the current thread
-            const std::size_t pp_idx = (idx / blocked_num_classes) * INTERNAL_BLOCK_SIZE_uz;
-            const std::size_t class_idx = (idx % blocked_num_classes) * INTERNAL_BLOCK_SIZE_uz;
+            const std::size_t pp_idx = (idx % blocked_num_classes) * INTERNAL_BLOCK_SIZE_uz;
+            const std::size_t class_idx = (idx / blocked_num_classes) * INTERNAL_BLOCK_SIZE_uz;
 
             // create a thread private array used for internal caching
             std::array<std::array<real_type, INTERNAL_BLOCK_SIZE>, INTERNAL_BLOCK_SIZE> temp{};
@@ -266,8 +266,8 @@ struct device_kernel_predict {
 
         std::for_each(std::execution::par_unseq, range.begin(), range.end(), [=, prediction_ptr = prediction.data(), alpha_ptr = alpha.data(), rho_ptr = rho.data(), support_vectors_ptr = support_vectors.data(), predict_points_ptr = predict_points.data()](const std::size_t idx) {
             // calculate the indices used in the current thread
-            const std::size_t pp_idx = (idx / blocked_device_num_sv) * INTERNAL_BLOCK_SIZE_uz;  // num_predict_points
-            const std::size_t sv_idx = (idx % blocked_device_num_sv) * INTERNAL_BLOCK_SIZE_uz;  // num_support_vectors
+            const std::size_t pp_idx = (idx % blocked_device_num_sv) * INTERNAL_BLOCK_SIZE_uz;  // num_predict_points
+            const std::size_t sv_idx = (idx / blocked_device_num_sv) * INTERNAL_BLOCK_SIZE_uz;  // num_support_vectors
 
             // create a thread private array used for internal caching
             std::array<std::array<real_type, INTERNAL_BLOCK_SIZE>, INTERNAL_BLOCK_SIZE> temp{};
