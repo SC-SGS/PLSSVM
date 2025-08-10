@@ -757,6 +757,8 @@ else ()
     target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PRIVATE PLSSVM_igor_VERSION="${PLSSVM_igor_VERSION}")
     # set options for igor
     set(IGOR_BUILD_TESTS OFF CACHE INTERNAL "" FORCE)
+    # disable additional compiler flags check (only warning flags) since for some reasons it takes ages with stdpar compilers
+    set(_YACMACompilerLinkerSettingsIncluded ON CACHE INTERNAL "" FORCE)
     # fetch named argument library igor
     FetchContent_Declare(
         igor
