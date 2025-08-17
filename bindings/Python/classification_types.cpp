@@ -8,9 +8,8 @@
 
 #include "plssvm/classification_types.hpp"  // plssvm::classification_type, plssvm::classification_type_to_full_string, plssvm::calculate_number_of_classifiers
 
-#include "bindings/Python/utility.hpp"  // plssvm::bindings::python::util::register_implicit_str_enum_conversion
-
-#include "pybind11/pybind11.h"  // py::module_, py::enum_, py::arg
+#include "pybind11/native_enum.h"  // py::native_enum
+#include "pybind11/pybind11.h"     // py::module_, py::arg
 
 #include <string>  // std::string
 
@@ -18,13 +17,11 @@ namespace py = pybind11;
 
 void init_classification_types(py::module_ &m) {
     // bind enum class
-    py::enum_<plssvm::classification_type> py_enum(m, "ClassificationType", "Enum class for all implemented multiclass classification strategies.");
+    py::native_enum<plssvm::classification_type> py_enum(m, "ClassificationType", "enum.Enum", "Enum class for all implemented multiclass classification strategies.");
     py_enum
         .value("OAA", plssvm::classification_type::oaa, "use the one vs. all classification strategy (default)")
-        .value("OAO", plssvm::classification_type::oao, "use the one vs. one classification strategy");
-
-    // enable implicit conversion from string to enum
-    plssvm::bindings::python::util::register_implicit_str_enum_conversion<plssvm::classification_type>(py_enum);
+        .value("OAO", plssvm::classification_type::oao, "use the one vs. one classification strategy")
+        .finalize();
 
     // bind free functions
     m.def("classification_type_to_full_string", &plssvm::classification_type_to_full_string, "convert the classification type to its full string representation", py::arg("classification"));

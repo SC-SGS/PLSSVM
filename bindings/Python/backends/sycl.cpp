@@ -11,10 +11,11 @@
 #include "plssvm/backends/SYCL/implementation_types.hpp"   // plssvm::sycl::{implementation_type, list_available_sycl_implementations}
 #include "plssvm/exceptions/exceptions.hpp"                // plssvm::exception
 
-#include "bindings/Python/utility.hpp"  // plssvm::bindings::python::util::{register_py_exception, register_implicit_str_enum_conversion}
+#include "bindings/Python/utility.hpp"  // plssvm::bindings::python::util::register_py_exception
 
-#include "pybind11/pybind11.h"  // py::module_, py::enum_, py::exception
-#include "pybind11/stl.h"       // support for STL types: std:vector
+#include "pybind11/native_enum.h"  // py::native_enum
+#include "pybind11/pybind11.h"     // py::module_, py::exception
+#include "pybind11/stl.h"          // support for STL types: std:vector
 
 #include <vector>  // std::vector
 
@@ -34,27 +35,23 @@ void init_sycl(py::module_ &m, const py::exception<plssvm::exception> &base_exce
     plssvm::bindings::python::util::register_py_exception<plssvm::sycl::backend_exception>(sycl_module, "BackendError", base_exception);
 
     // bind the two enum classes
-    py::enum_<plssvm::sycl::implementation_type> py_enum_impl(sycl_module, "ImplementationType", "Enum class for all supported SYCL implementation in PLSSVM.");
+    py::native_enum<plssvm::sycl::implementation_type> py_enum_impl(sycl_module, "ImplementationType", "enum.Enum", "Enum class for all supported SYCL implementation in PLSSVM.");
     py_enum_impl
         .value("AUTOMATIC", plssvm::sycl::implementation_type::automatic, "use the available SYCL implementation; if more than one implementation is available, the macro PLSSVM_SYCL_BACKEND_PREFERRED_IMPLEMENTATION must be defined during the CMake configuration")
         .value("DPCPP", plssvm::sycl::implementation_type::dpcpp, "use DPC++ as SYCL implementation")
-        .value("ADAPTIVECPP", plssvm::sycl::implementation_type::adaptivecpp, "use AdaptiveCpp (formerly known as hipSYCL) as SYCL implementation");
-
-    // enable implicit conversion from string to enum
-    plssvm::bindings::python::util::register_implicit_str_enum_conversion<plssvm::sycl::implementation_type>(py_enum_impl);
+        .value("ADAPTIVECPP", plssvm::sycl::implementation_type::adaptivecpp, "use AdaptiveCpp (formerly known as hipSYCL) as SYCL implementation")
+        .finalize();
 
     sycl_module.def("list_available_sycl_implementations", &plssvm::sycl::list_available_sycl_implementations, "list all available SYCL implementations");
 
-    py::enum_<plssvm::sycl::data_parallel_kernel> py_enum_data_parallel_kernel(sycl_module, "DataParallelKernel", "Enum class for all possible SYCL data parallel kernels supported in PLSSVM.");
+    py::native_enum<plssvm::sycl::data_parallel_kernel> py_enum_data_parallel_kernel(sycl_module, "DataParallelKernel", "enum.Enum", "Enum class for all possible SYCL data parallel kernels supported in PLSSVM.");
     py_enum_data_parallel_kernel
         .value("AUTOMATIC", plssvm::sycl::data_parallel_kernel::automatic, "use the best data parallel kernel for the current SYCL implementation and target hardware platform")
         .value("BASIC", plssvm::sycl::data_parallel_kernel::basic, "use the basic data parallel kernel")
         .value("WORK_GROUP", plssvm::sycl::data_parallel_kernel::work_group, "use the work-group data parallel kernel")
         .value("HIERARCHICAL", plssvm::sycl::data_parallel_kernel::hierarchical, "use the hierarchical data parallel kernel")
-        .value("SCOPED", plssvm::sycl::data_parallel_kernel::scoped, "use the AdaptiveCpp specific scoped parallelism kernel");
-
-    // enable implicit conversion from string to enum
-    plssvm::bindings::python::util::register_implicit_str_enum_conversion<plssvm::sycl::data_parallel_kernel>(py_enum_data_parallel_kernel);
+        .value("SCOPED", plssvm::sycl::data_parallel_kernel::scoped, "use the AdaptiveCpp specific scoped parallelism kernel")
+        .finalize();
 
     // initialize SYCL binding classes
 #if defined(PLSSVM_SYCL_BACKEND_HAS_ADAPTIVECPP)

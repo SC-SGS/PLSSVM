@@ -8,25 +8,22 @@
 
 #include "plssvm/target_platforms.hpp"  // plssvm::target_platform, plssvm::list_available_target_platforms, plssvm::determine_default_target_platform
 
-#include "bindings/Python/utility.hpp"  // plssvm::bindings::python::util::register_implicit_str_enum_conversion
-
-#include "pybind11/pybind11.h"  // py::module_, py::enum_
-#include "pybind11/stl.h"       // support for STL types: std::vector
+#include "pybind11/native_enum.h"  // py::native_enum
+#include "pybind11/pybind11.h"     // py::module_
+#include "pybind11/stl.h"          // support for STL types: std::vector
 
 namespace py = pybind11;
 
 void init_target_platforms(py::module_ &m) {
     // bind enum class
-    py::enum_<plssvm::target_platform> py_enum(m, "TargetPlatform", "Enum class for all possible targets that PLSSVM supports.");
+    py::native_enum<plssvm::target_platform> py_enum(m, "TargetPlatform", "enum.Enum", "Enum class for all possible targets that PLSSVM supports.");
     py_enum
         .value("AUTOMATIC", plssvm::target_platform::automatic, "the default target with respect to the used backend type; checks for available devices in the following order: NVIDIA GPUs -> AMD GPUs -> Intel GPUs -> CPUs")
         .value("CPU", plssvm::target_platform::cpu, "target CPUs only (Intel, AMD, IBM, ...)")
         .value("GPU_NVIDIA", plssvm::target_platform::gpu_nvidia, "target GPUs from NVIDIA")
         .value("GPU_AMD", plssvm::target_platform::gpu_amd, "target GPUs from AMD")
-        .value("GPU_INTEL", plssvm::target_platform::gpu_intel, "target GPUs from Intel");
-
-    // enable implicit conversion from string to enum
-    plssvm::bindings::python::util::register_implicit_str_enum_conversion<plssvm::target_platform>(py_enum);
+        .value("GPU_INTEL", plssvm::target_platform::gpu_intel, "target GPUs from Intel")
+        .finalize();
 
     // bind free functions
     m.def("list_available_target_platforms", &plssvm::list_available_target_platforms, "list the available target platforms (as defined during CMake configuration)");
