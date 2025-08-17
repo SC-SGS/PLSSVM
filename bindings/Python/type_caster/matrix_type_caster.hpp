@@ -215,7 +215,7 @@ struct type_caster<plssvm::matrix<T, layout>> {
                 // provided obj is a SciPy sparse matrix
                 arr = obj.attr("toarray")().cast<py::array>();
             } else {
-                throw py::value_error{ fmt::format("Unsupported data type: {}", std::string{ py::str(obj.get_type().attr("__name__")) }) };
+                throw py::value_error{ fmt::format("Unsupported data type: {}", std::string{ py::str(py::type::of(obj).attr("__name__")) }) };
             }
 
             // sanity check the number of elements in the numpy array

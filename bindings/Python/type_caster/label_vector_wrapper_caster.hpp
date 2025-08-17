@@ -317,7 +317,7 @@ struct type_caster<plssvm::bindings::python::util::label_vector_wrapper<Possible
                 arr = obj.attr("values").cast<py::array>();
                 arr = arr.reshape({ arr.size() });
             } else {
-                throw py::value_error{ fmt::format("Unsupported data type: {}", std::string{ py::str(obj.get_type().attr("__name__")) }) };
+                throw py::value_error{ fmt::format("Unsupported data type: {}", std::string{ py::str(py::type::of(obj).attr("__name__")) }) };
             }
 
             // sanity check the number of elements in the numpy array
