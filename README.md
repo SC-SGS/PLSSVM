@@ -107,7 +107,7 @@ General dependencies:
 - [cxxopts ≥ v3.2.0](https://github.com/jarro2783/cxxopts), [fast_float ≥ v8.0.2](https://github.com/fastfloat/fast_float), [{fmt} ≥ v11.0.2](https://github.com/fmtlib/fmt), and [igor](https://github.com/bluescarni/igor) (all four are automatically build during the CMake configuration if they couldn't be found using the respective `find_package` call)
 - [GoogleTest ≥ v1.16.0](https://github.com/google/googletest) if testing is enabled (automatically build during the CMake configuration if `find_package(GTest)` wasn't successful)
 - [doxygen](https://www.doxygen.nl/index.html) if documentation generation is enabled
-- [Pybind11 ≥ v2.13.6](https://github.com/pybind/pybind11) if Python bindings are enabled
+- [Pybind11 ≥ v3.0.0](https://github.com/pybind/pybind11) if Python bindings are enabled
 - [OpenMP](https://www.openmp.org/) 4.0 or newer (optional) to speed-up library utilities (like file parsing)
 - [MPI](https://www.mpi-forum.org/) if distributed memory systems should be supported; [mpi4py](https://mpi4py.readthedocs.io/en/stable/) to enable interoperability in our Python bindings
 - [Format.cmake](https://github.com/TheLartians/Format.cmake) if auto formatting via cmake-format and clang-format is enabled; it also requires at least clang-format-18 and git, additionally, needs our custom [cmake-format fork](https://github.com/vancraar/cmake_format) incorporating some patches
