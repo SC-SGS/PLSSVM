@@ -14,8 +14,10 @@
 
 #include "fmt/format.h"          // fmt::format
 #include "pybind11/operators.h"  // support for operators
-#include "pybind11/pybind11.h"   // py::module_, py::class_, py::init, py::return_value_policy, py::self
+#include "pybind11/pybind11.h"   // py::module_, py::class_, py::init, py::return_value_policy, py::self, py::tuple, py::pickle
 #include "pybind11/stl.h"        // support for STL types
+
+#include <stdexcept>  // std::runtime_error
 
 namespace py = pybind11;
 
@@ -73,7 +75,23 @@ void init_parameter(py::module_ &m) {
                                self.gamma,
                                self.coef0,
                                self.cost);
-        });
+        })
+        .def(py::pickle(
+            // clang-format off
+            [](const plssvm::parameter &self) {  // __getstate__
+                // return a tuple that fully encodes the state of the object
+                return py::make_tuple(self.kernel_type, self.degree, self.gamma, self.coef0, self.cost);
+            },
+            [](py::tuple t) {  // __setstate__
+                if (t.size() != 5) {
+                    throw std::runtime_error{ "Invalid state!" };
+                }
+                // create a new C++ instance
+                return plssvm::parameter{ t[0].cast<plssvm::kernel_function_type>(), t[1].cast<int>(), t[2].cast<plssvm::real_type>(), t[3].cast<plssvm::real_type>(), t[4].cast<plssvm::real_type>() };
+            }
+            )
+             // clang-format on
+        );
 
     // bind free functions
     m.def("equivalent", &plssvm::equivalent, "check whether two parameter objects are equivalent, i.e., the SVM hyper-parameters important for the current 'kernel_type' are the same");

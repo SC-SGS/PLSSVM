@@ -32,7 +32,7 @@
 #include "pybind11/cast.h"       // py::cast
 #include "pybind11/numpy.h"      // support for STL types
 #include "pybind11/operators.h"  // support for operators
-#include "pybind11/pybind11.h"   // py::module_, py::class_, py::init, py::arg, py::return_value_policy, py::self, py::dynamic_attr, py::value_error, py::attribute_error
+#include "pybind11/pybind11.h"   // py::module_, py::class_, py::init, py::arg, py::return_value_policy, py::self, py::dynamic_attr, py::value_error, py::attribute_error, py::tuple, py::pickle
 #include "pybind11/pytypes.h"    // py::dict, py::kwargs, py::str
 #include "pybind11/stl.h"        // support for STL types
 
@@ -44,6 +44,7 @@
 #include <map>        // std::map
 #include <memory>     // std::unique_ptr, std::make_unique
 #include <optional>   // std::optional, std::nullopt
+#include <stdexcept>  // std::runtime_error
 #include <string>     // std::string
 #include <tuple>      // std::make_tuple, std::ignore
 #include <utility>    // std::move
@@ -723,5 +724,21 @@ void init_sklearn_svc(py::module_ &m) {
                 }
             }
 
-            return fmt::format("plssvm.svm.SVC({})", fmt::join(non_default_values, ", ")); }, "Print the SVC showing all non-default parameters.");
+            return fmt::format("plssvm.svm.SVC({})", fmt::join(non_default_values, ", ")); }, "Print the SVC showing all non-default parameters.")
+        .def(py::pickle(
+            // clang-format off
+            [](const svc &self) {  // __getstate__
+                // return a tuple that fully encodes the state of the object
+                return py::make_tuple(self.svm_->get_params(), self.epsilon_, self.max_iter_, self.classification_);
+            },
+            [](py::tuple t) {  // __setstate__
+                if (t.size() != 4) {
+                    throw std::runtime_error{ "Invalid state!" };
+                }
+                // create a new C++ instance
+                return svc{ t[0].cast<plssvm::parameter>(), t[1].cast<plssvm::real_type>(), t[2].cast<std::optional<unsigned long long>>(), t[3].cast<plssvm::classification_type>() };
+            }
+            )
+             // clang-format on
+        );
 }

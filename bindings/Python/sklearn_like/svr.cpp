@@ -30,19 +30,20 @@
 #include "pybind11/cast.h"       // py::cast
 #include "pybind11/numpy.h"      // support for STL types
 #include "pybind11/operators.h"  // support for operators
-#include "pybind11/pybind11.h"   // py::module_, py::class_, py::init, py::arg, py::return_value_policy, py::self, py::dynamic_attr, py::value_error, py::attribute_error
+#include "pybind11/pybind11.h"   // py::module_, py::class_, py::init, py::arg, py::return_value_policy, py::self, py::dynamic_attr, py::value_error, py::attribute_error, py::tuple, py::pickle
 #include "pybind11/pytypes.h"    // py::dict, py::kwargs, py::str
 #include "pybind11/stl.h"        // support for STL types
 
-#include <cstdint>   // std::int32_t
-#include <memory>    // std::unique_ptr, std::make_unique
-#include <numeric>   // std::iota
-#include <optional>  // std::optional, std::nullopt
-#include <string>    // std::string
-#include <tuple>     // std::make_tuple
-#include <utility>   // std::move
-#include <variant>   // std::holds_alternative
-#include <vector>    // std::vector
+#include <cstdint>    // std::int32_t
+#include <memory>     // std::unique_ptr, std::make_unique
+#include <numeric>    // std::iota
+#include <optional>   // std::optional, std::nullopt
+#include <stdexcept>  // std::runtime_error
+#include <string>     // std::string
+#include <tuple>      // std::make_tuple
+#include <utility>    // std::move
+#include <variant>    // std::holds_alternative
+#include <vector>     // std::vector
 
 namespace py = pybind11;
 
@@ -432,5 +433,22 @@ void init_sklearn_svr(py::module_ &m) {
                 }
             }
 
-            return fmt::format("plssvm.svm.SVR({})", fmt::join(non_default_values, ", ")); }, "Print the SVR showing all non-default parameters.");
+            return fmt::format("plssvm.svm.SVR({})", fmt::join(non_default_values, ", ")); }, "Print the SVR showing all non-default parameters.")
+        .def(py::pickle(
+            // clang-format off
+            [](const svr &self) {  // __getstate__
+                // return a tuple that fully encodes the state of the object
+                return py::make_tuple(self.svm_->get_params(), self.epsilon_, self.max_iter_);
+            },
+            [](py::tuple t) {  // __setstate__
+                if (t.size() != 3) {
+                    throw std::runtime_error{ "Invalid state!" };
+                }
+                // create a new C++ instance
+                return svr{ t[0].cast<plssvm::parameter>(), t[1].cast<plssvm::real_type>(), t[2].cast<std::optional<unsigned long long>>() };
+            }
+            )
+             // clang-format on
+        );
+    ;
 }
