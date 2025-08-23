@@ -19,6 +19,7 @@
 
 #include "fmt/format.h"  // fmt::format
 
+#include <cstddef>  // std::size_t
 #include <map>      // std::multimap
 #include <memory>   // std::make_shared
 #include <string>   // std::string
@@ -58,6 +59,24 @@ namespace plssvm::adaptivecpp::detail {
                            && ::plssvm::detail::contains(available_target_platforms, target_platform::gpu_intel)) {
                     platform_devices.insert({ target_platform::gpu_intel, device });
                 }
+            }
+        }
+    }
+
+    // check CPU devices: if there are multiple, remove the AdaptiveCpp OpenMP host device
+    // reason: it is enabled ALWAYS and if AdaptiveCpp is built with OpenCL support, two CPUs will be found!
+    if (platform_devices.count(target_platform::cpu) > std::size_t{ 1 }) {
+        // we found more than one CPU device -> remove the host device
+
+        // get all CPU devices
+        auto range = platform_devices.equal_range(target_platform::cpu);
+        // iterate over them and remove the AdaptiveCpp OpenMP host device
+        for (auto it = range.first; it != range.second;) {
+            if (::plssvm::detail::contains(it->second.get_info<::sycl::info::device::name>(), "AdaptiveCpp OpenMP host device")) {
+                // erase returns the iterator to the next element
+                it = platform_devices.erase(it);
+            } else {
+                ++it;
             }
         }
     }
