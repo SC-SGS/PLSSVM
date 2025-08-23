@@ -208,8 +208,8 @@ inline void device_kernel_predict(aos_matrix<real_type> &prediction, const aos_m
 
     ::hpx::for_each(::hpx::execution::par_unseq, range.cbegin(), range.cend(), [&](const std::size_t idx) {
         // calculate the indices used in the current thread
-        const std::size_t pp_idx = (idx / blocked_num_support_vectors) * INTERNAL_BLOCK_SIZE_uz;
-        const std::size_t sv_idx = (idx % blocked_num_support_vectors) * INTERNAL_BLOCK_SIZE_uz;
+        const std::size_t pp_idx = (idx % blocked_num_support_vectors) * INTERNAL_BLOCK_SIZE_uz;
+        const std::size_t sv_idx = (idx / blocked_num_support_vectors) * INTERNAL_BLOCK_SIZE_uz;
 
         // create a thread private array used for internal caching
         std::array<std::array<real_type, INTERNAL_BLOCK_SIZE>, INTERNAL_BLOCK_SIZE> temp{};

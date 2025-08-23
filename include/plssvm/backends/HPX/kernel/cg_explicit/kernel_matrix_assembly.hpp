@@ -69,8 +69,8 @@ void device_kernel_assembly(real_type *kernel_matrix, const soa_matrix<real_type
 
     ::hpx::for_each(::hpx::execution::par_unseq, indices.cbegin(), indices.cend(), [&](const std::size_t idx) {
         // calculate the indices used in the current thread
-        const std::size_t i_idx = (idx / blocked_device_num_rows) * INTERNAL_BLOCK_SIZE_uz;
-        const std::size_t j_idx = (idx % blocked_device_num_rows) * INTERNAL_BLOCK_SIZE_uz;
+        const std::size_t i_idx = (idx % blocked_device_num_rows) * INTERNAL_BLOCK_SIZE_uz;  // num_rows - device_row_offset
+        const std::size_t j_idx = (idx / blocked_device_num_rows) * INTERNAL_BLOCK_SIZE_uz;  // device_num_rows
 
         // only calculate the upper triangular matrix
         if (i_idx >= j_idx) {
