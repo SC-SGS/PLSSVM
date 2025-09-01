@@ -13,7 +13,7 @@
 #define PLSSVM_DATA_SET_DATA_SET_HPP_
 #pragma once
 
-#include "plssvm/constants.hpp"                 // plssvm::real_type, plssvm::PADDING_SIZE
+#include "plssvm/constants.hpp"                 // plssvm::real_type
 #include "plssvm/data_set/min_max_scaler.hpp"   // plssvm::min_max_scaler
 #include "plssvm/detail/io/arff_parsing.hpp"    // plssvm::detail::io::write_libsvm_data
 #include "plssvm/detail/io/file_reader.hpp"     // plssvm::detail::io::file_reader
@@ -21,7 +21,7 @@
 #include "plssvm/detail/string_utility.hpp"     // plssvm::detail::ends_with
 #include "plssvm/exceptions/exceptions.hpp"     // plssvm::data_set_exception, plssvm::mpi_exception
 #include "plssvm/file_format_types.hpp"         // plssvm::file_format_type
-#include "plssvm/matrix.hpp"                    // plssvm::soa_matrix
+#include "plssvm/matrix.hpp"                    // plssvm::aos_matrix
 #include "plssvm/mpi/communicator.hpp"          // plssvm::mpi::communicator
 #include "plssvm/shape.hpp"                     // plssvm::shape
 
@@ -154,7 +154,6 @@ class data_set {
     /**
      * @brief Create a new data set from the provided @p data_points.
      * @details Since no labels are provided, this data set may **not** be used to a call to plssvm::csvc::fit/plssvm::csvr::fit!
-     * @note If the provided matrix isn't padded, adds the necessary padding entries automatically.
      * @tparam layout the layout type of the input matrix
      * @param[in] comm the used MPI communicator (**note**: current only used to restrict logging outputs to the main MPI rank)
      * @param[in] data_points the data points used in this data set
@@ -166,7 +165,6 @@ class data_set {
     data_set(mpi::communicator comm, const matrix<real_type, layout> &data_points);
     /**
      * @brief Create a new data set from the provided @p data_points and @p labels.
-     * @note If the provided matrix isn't padded, adds the necessary padding entries automatically.
      * @tparam layout the layout type of the input matrix
      * @param[in] comm the used MPI communicator (**note**: current only used to restrict logging outputs to the main MPI rank)
      * @param[in] data_points the data points used in this data set
@@ -180,7 +178,6 @@ class data_set {
     data_set(mpi::communicator comm, const matrix<real_type, layout> &data_points, std::vector<label_type> labels);
     /**
      * @brief Create a new data set from the the provided @p data_points and scale them using the provided @p scaler.
-     * @note If the provided matrix isn't padded, adds the necessary padding entries automatically.
      * @tparam layout the layout type of the input matrix
      * @param[in] comm the used MPI communicator (**note**: current only used to restrict logging outputs to the main MPI rank)
      * @param[in] data_points the data points used in this data set
@@ -195,7 +192,6 @@ class data_set {
     data_set(mpi::communicator comm, const matrix<real_type, layout> &data_points, min_max_scaler scaler);
     /**
      * @brief Create a new data set from the the provided @p data_points and @p labels and scale the @p data_points using the provided @p scaler.
-     * @note If the provided matrix isn't padded, adds the necessary padding entries automatically.
      * @tparam layout the layout type of the input matrix
      * @param[in] comm the used MPI communicator (**note**: current only used to restrict logging outputs to the main MPI rank)
      * @param[in] data_points the data points used in this data set
@@ -214,46 +210,39 @@ class data_set {
     /**
      * @brief Use the provided @p data_points in this data set.
      * @details Since no labels are provided, this data set may **not** be used to a call to plssvm::csvc::fit/plssvm::csvr::fit!
-     * @note Moves the @p data_points into this data set. If @p data_points have the wrong padding, a runtime exception is thrown.
      * @param[in] comm the used MPI communicator (**note**: current only used to restrict logging outputs to the main MPI rank)
      * @param[in] data_points the data points used in this data set
      * @throws plssvm::data_set_exception if the @p data_points vector is empty
      * @throws plssvm::data_set_exception if the data points in @p data_points have mismatching number of features
      * @throws plssvm::data_set_exception if any @p data_point has no features
-     * @throws plssvm::data_set_exception if the padding sizes of @p data_points are wrong
      */
-    data_set(mpi::communicator comm, soa_matrix<real_type> &&data_points);
+    data_set(mpi::communicator comm, aos_matrix<real_type> &&data_points);
     /**
      * @brief Use the provided @p data_points and @p labels in this data set.
-     * @note Moves the @p data_points and @p labels into this data set. If @p data_points have the wrong padding, a runtime exception is thrown.
      * @param[in] comm the used MPI communicator (**note**: current only used to restrict logging outputs to the main MPI rank)
      * @param[in] data_points the data points used in this data set
      * @param[in] labels the labels used in this data set
      * @throws plssvm::data_set_exception if the @p data_points vector is empty
      * @throws plssvm::data_set_exception if the data points in @p data_points have mismatching number of features
      * @throws plssvm::data_set_exception if any @p data_point has no features
-     * @throws plssvm::data_set_exception if the padding sizes of @p data_points are wrong
      * @throws plssvm::data_set_exception if the number of data points in @p data_points and number of @p labels mismatch
      */
-    data_set(mpi::communicator comm, soa_matrix<real_type> &&data_points, std::vector<label_type> &&labels);
+    data_set(mpi::communicator comm, aos_matrix<real_type> &&data_points, std::vector<label_type> &&labels);
     /**
      * @brief Use the provided @p data_points in this data set and scale them using the provided @p scaler.
      * @details Since no labels are provided, this data set may **not** be used to a call to plssvm::csvc::fit/plssvm::csvr::fit!
-     * @note Moves the @p data_points into this data set. If @p data_points have the wrong padding, a runtime exception is thrown.
      * @param[in] comm the used MPI communicator (**note**: current only used to restrict logging outputs to the main MPI rank)
      * @param[in] data_points the data points used in this data set
      * @param[in] scaler the parameters used to scale the data set feature values to a given range
      * @throws plssvm::data_set_exception if the @p data_points vector is empty
      * @throws plssvm::data_set_exception if the data points in @p data_points have mismatching number of features
      * @throws plssvm::data_set_exception if any @p data_point has no features
-     * @throws plssvm::data_set_exception if the padding sizes of @p data_points are wrong
      * @throws plssvm::min_max_scaler_exception all exceptions thrown by plssvm::min_max_scaler::scale
      * @throws plssvm::mpi_exception if the MPI communicator @p comm and the MPI communicator in @p scaler are not identical
      */
-    data_set(mpi::communicator comm, soa_matrix<real_type> &&data_points, min_max_scaler scaler);
+    data_set(mpi::communicator comm, aos_matrix<real_type> &&data_points, min_max_scaler scaler);
     /**
      * @brief Use the provided @p data_points and @p labels in this data set and scale them using the provided @p scaler.
-     * @note Moves the @p data_points and @p labels into this data set. If @p data_points have the wrong padding, a runtime exception is thrown.
      * @param[in] comm the used MPI communicator (**note**: current only used to restrict logging outputs to the main MPI rank)
      * @param[in] data_points the data points used in this data set
      * @param[in] labels the labels used in this data set
@@ -261,12 +250,11 @@ class data_set {
      * @throws plssvm::data_set_exception if the @p data_points vector is empty
      * @throws plssvm::data_set_exception if the data points in @p data_points have mismatching number of features
      * @throws plssvm::data_set_exception if any @p data_point has no features
-     * @throws plssvm::data_set_exception if the padding sizes of @p data_points are wrong
      * @throws plssvm::data_set_exception if the number of data points in @p data_points and number of @p labels mismatch
      * @throws plssvm::min_max_scaler_exception all exceptions thrown by plssvm::min_max_scaler::scale
      * @throws plssvm::mpi_exception if the MPI communicator @p comm and the MPI communicator in @p scaler are not identical
      */
-    data_set(mpi::communicator comm, soa_matrix<real_type> &&data_points, std::vector<label_type> &&labels, min_max_scaler scaler);
+    data_set(mpi::communicator comm, aos_matrix<real_type> &&data_points, std::vector<label_type> &&labels, min_max_scaler scaler);
 
     /**
      * @brief Default copy constructor.
@@ -312,7 +300,7 @@ class data_set {
      * @brief Return the data points in this data set by copying them to a 2D vector.
      * @return the data points (`[[nodiscard]]`)
      */
-    [[nodiscard]] const soa_matrix<real_type> &data() const { return *data_ptr_; }
+    [[nodiscard]] const aos_matrix<real_type> &data() const { return *data_ptr_; }
 
     /**
      * @brief Returns whether this data set contains labels or not.
@@ -367,7 +355,7 @@ class data_set {
      * @brief Default construct an empty data set.
      */
     data_set() :
-        data_ptr_{ std::make_shared<soa_matrix<real_type>>() } { }
+        data_ptr_{ std::make_shared<aos_matrix<real_type>>() } { }
 
     /**
      * @brief Create the mapping between the provided labels and the internally used values.
@@ -393,7 +381,7 @@ class data_set {
     mpi::communicator comm_{};
 
     /// A pointer to the two-dimensional data points.
-    std::shared_ptr<soa_matrix<real_type>> data_ptr_{ nullptr };
+    std::shared_ptr<aos_matrix<real_type>> data_ptr_{ nullptr };
     /// A pointer to the original labels of this data set; may be `nullptr` if no labels have been provided.
     std::shared_ptr<std::vector<label_type>> labels_ptr_{ nullptr };
     /// A pointer to the mapped values of the labels of this data set; may be `nullptr` if no labels have been provided.
@@ -456,28 +444,28 @@ data_set<U>::data_set(mpi::communicator comm, const std::string &filename, file_
 // clang-format off
 template <typename U>
 data_set<U>::data_set(mpi::communicator comm, const std::vector<std::vector<real_type>> &data_points) try :
-    data_set{ std::move(comm), soa_matrix<real_type>{ data_points, shape{ PADDING_SIZE, PADDING_SIZE } } } {}
+    data_set{ std::move(comm), aos_matrix<real_type>{ data_points } } {}
     catch (const matrix_exception &e) {
         throw data_set_exception{ e.what() };
     }
 
 template <typename U>
 data_set<U>::data_set(mpi::communicator comm, const std::vector<std::vector<real_type>> &data_points, std::vector<label_type> labels) try :
-    data_set{ std::move(comm), soa_matrix<real_type>{ data_points, shape{ PADDING_SIZE, PADDING_SIZE } }, std::move(labels) } {}
+    data_set{ std::move(comm), aos_matrix<real_type>{ data_points }, std::move(labels) } {}
     catch (const matrix_exception &e) {
         throw data_set_exception{ e.what() };
     }
 
 template <typename U>
 data_set<U>::data_set(mpi::communicator comm, const std::vector<std::vector<real_type>> &data_points, min_max_scaler scaler) try :
-    data_set{ std::move(comm), soa_matrix<real_type>{ data_points, shape{ PADDING_SIZE, PADDING_SIZE } }, std::move(scaler) } {}
+    data_set{ std::move(comm), aos_matrix<real_type>{ data_points }, std::move(scaler) } {}
     catch (const matrix_exception &e) {
         throw data_set_exception{ e.what() };
     }
 
 template <typename U>
 data_set<U>::data_set(mpi::communicator comm, const std::vector<std::vector<real_type>> &data_points, std::vector<label_type> labels, min_max_scaler scaler) try :
-    data_set{ std::move(comm), soa_matrix<real_type>{ data_points, shape{ PADDING_SIZE, PADDING_SIZE } }, std::move(labels), std::move(scaler) } {}
+    data_set{ std::move(comm), aos_matrix<real_type>{ data_points }, std::move(labels), std::move(scaler) } {}
     catch (const matrix_exception &e) {
         throw data_set_exception{ e.what() };
     }
@@ -490,7 +478,7 @@ data_set<U>::data_set(mpi::communicator comm, const matrix<real_type, layout> &d
     num_data_points_{ data_points.num_rows() },
     num_features_{ data_points.num_cols() },
     comm_{ std::move(comm) },
-    data_ptr_{ std::make_shared<soa_matrix<real_type>>(data_points, shape{ PADDING_SIZE, PADDING_SIZE }) } {
+    data_ptr_{ std::make_shared<aos_matrix<real_type>>(data_points) } {
     // the provided data points vector may not be empty
     if (data_ptr_->num_rows() == 0) {
         throw data_set_exception{ "Data vector is empty!" };
@@ -506,7 +494,7 @@ data_set<U>::data_set(mpi::communicator comm, const matrix<real_type, layout> &d
     num_data_points_{ data_points.num_rows() },
     num_features_{ data_points.num_cols() },
     comm_{ std::move(comm) },
-    data_ptr_{ std::make_shared<soa_matrix<real_type>>(data_points, shape{ PADDING_SIZE, PADDING_SIZE }) },
+    data_ptr_{ std::make_shared<aos_matrix<real_type>>(data_points) },
     labels_ptr_{ std::make_shared<std::vector<label_type>>(std::move(labels)) } {
     // the provided data points vector may not be empty
     if (data_ptr_->num_rows() == 0) {
@@ -552,11 +540,11 @@ data_set<U>::data_set(mpi::communicator comm, const matrix<real_type, layout> &d
 }
 
 template <typename U>
-data_set<U>::data_set(mpi::communicator comm, soa_matrix<real_type> &&data_points) :
+data_set<U>::data_set(mpi::communicator comm, aos_matrix<real_type> &&data_points) :
     num_data_points_{ data_points.num_rows() },
     num_features_{ data_points.num_cols() },
     comm_{ std::move(comm) },
-    data_ptr_{ std::make_shared<soa_matrix<real_type>>(std::move(data_points)) } {
+    data_ptr_{ std::make_shared<aos_matrix<real_type>>(std::move(data_points)) } {
     // the provided data points vector may not be empty
     if (data_ptr_->num_rows() == 0) {
         throw data_set_exception{ "Data vector is empty!" };
@@ -564,18 +552,14 @@ data_set<U>::data_set(mpi::communicator comm, soa_matrix<real_type> &&data_point
     if (data_ptr_->num_cols() == 0) {
         throw data_set_exception{ "No features provided for the data points!" };
     }
-    // the padding must be correct
-    if (data_ptr_->padding() != shape{ PADDING_SIZE, PADDING_SIZE }) {
-        throw data_set_exception{ fmt::format("Data vector has the wring padding ({})!", data_ptr_->padding()) };
-    }
 }
 
 template <typename U>
-data_set<U>::data_set(mpi::communicator comm, soa_matrix<real_type> &&data_points, std::vector<label_type> &&labels) :
+data_set<U>::data_set(mpi::communicator comm, aos_matrix<real_type> &&data_points, std::vector<label_type> &&labels) :
     num_data_points_{ data_points.num_rows() },
     num_features_{ data_points.num_cols() },
     comm_{ std::move(comm) },
-    data_ptr_{ std::make_shared<soa_matrix<real_type>>(std::move(data_points)) },
+    data_ptr_{ std::make_shared<aos_matrix<real_type>>(std::move(data_points)) },
     labels_ptr_{ std::make_shared<std::vector<label_type>>(std::move(labels)) } {
     // the provided data points vector may not be empty
     if (data_ptr_->num_rows() == 0) {
@@ -588,14 +572,10 @@ data_set<U>::data_set(mpi::communicator comm, soa_matrix<real_type> &&data_point
     if (data_ptr_->num_rows() != labels_ptr_->size()) {
         throw data_set_exception{ fmt::format("Number of labels ({}) must match the number of data points ({})!", labels_ptr_->size(), data_ptr_->num_rows()) };
     }
-    // the padding must be correct
-    if (data_ptr_->padding() != shape{ PADDING_SIZE, PADDING_SIZE }) {
-        throw data_set_exception{ fmt::format("Data vector has the wring padding ({})!", data_ptr_->padding()) };
-    }
 }
 
 template <typename U>
-data_set<U>::data_set(mpi::communicator comm, soa_matrix<real_type> &&data_points, min_max_scaler scaler) :
+data_set<U>::data_set(mpi::communicator comm, aos_matrix<real_type> &&data_points, min_max_scaler scaler) :
     data_set{ std::move(comm), std::move(data_points) } {
     // check whether the data set and scaler MPI communicators are identical
     if (comm != scaler.communicator()) {
@@ -609,7 +589,7 @@ data_set<U>::data_set(mpi::communicator comm, soa_matrix<real_type> &&data_point
 }
 
 template <typename U>
-data_set<U>::data_set(mpi::communicator comm, soa_matrix<real_type> &&data_points, std::vector<label_type> &&labels, min_max_scaler scaler) :
+data_set<U>::data_set(mpi::communicator comm, aos_matrix<real_type> &&data_points, std::vector<label_type> &&labels, min_max_scaler scaler) :
     data_set{ std::move(comm), std::move(data_points), std::move(labels) } {
     // check whether the data set and scaler MPI communicators are identical
     if (comm != scaler.communicator()) {

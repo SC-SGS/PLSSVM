@@ -16,7 +16,7 @@
 #include "plssvm/constants.hpp"          // plssvm::real_type
 #include "plssvm/data_set/data_set.hpp"  // plssvm::data_set, plssvm::optional_ref
 #include "plssvm/detail/assert.hpp"      // PLSSVM_ASSERT
-#include "plssvm/matrix.hpp"             // plssvm::soa_matrix, plssvm::aos_matrix
+#include "plssvm/matrix.hpp"             // plssvm::aos_matrix
 #include "plssvm/mpi/communicator.hpp"   // plssvm::mpi::communicator
 #include "plssvm/parameter.hpp"          // plssvm::parameter
 
@@ -101,7 +101,7 @@ class model {
      * @details The support vectors are of dimension `num_support_vectors()` x `num_features()`.
      * @return the support vectors (`[[nodiscard]]`)
      */
-    [[nodiscard]] const soa_matrix<real_type> &support_vectors() const noexcept { return data_->data(); }
+    [[nodiscard]] const aos_matrix<real_type> &support_vectors() const noexcept { return data_->data(); }
 
     /**
      * @brief Returns an optional reference to the labels of the support vectors.
@@ -190,7 +190,7 @@ class model {
      * @details Will be reused by subsequent calls to `plssvm::csvm::fit`/`plssvm::csvm::score` with the same `plssvm::model`.
      * @note Must be initialized to an empty vector instead of a `nullptr` in order to be passable as const reference.
      */
-    std::shared_ptr<soa_matrix<real_type>> w_ptr_{ std::make_shared<soa_matrix<real_type>>() };
+    std::shared_ptr<aos_matrix<real_type>> w_ptr_{ std::make_shared<aos_matrix<real_type>>() };
 };
 
 template <typename U>

@@ -9,7 +9,7 @@
  */
 
 #include "plssvm/classification_types.hpp"                           // plssvm::classification_type
-#include "plssvm/constants.hpp"                                      // plssvm::real_type, plssvm::PADDING_SIZE, plssvm::PADDING_SIZE
+#include "plssvm/constants.hpp"                                      // plssvm::real_type
 #include "plssvm/detail/io/classification_libsvm_model_parsing.hpp"  // functions to test
 #include "plssvm/detail/io/file_reader.hpp"                          // plssvm::detail::io::file_reader
 #include "plssvm/matrix.hpp"                                         // plssvm::aos_matrix
@@ -46,7 +46,7 @@ class LIBSVMClassificationModelDataParseValid : public ::testing::Test,
      * @brief Return the correct data points.
      * @return the correct data points (`[[nodiscard]]`)
      */
-    [[nodiscard]] const plssvm::soa_matrix<plssvm::real_type> &get_correct_data() const noexcept { return correct_data_; }
+    [[nodiscard]] const plssvm::aos_matrix<plssvm::real_type> &get_correct_data() const noexcept { return correct_data_; }
 
     /**
      * @brief Return all correct weights.
@@ -65,13 +65,12 @@ class LIBSVMClassificationModelDataParseValid : public ::testing::Test,
 
   private:
     /// The correct data points.
-    plssvm::soa_matrix<plssvm::real_type> correct_data_{ { { plssvm::real_type{ -1.1178275006 }, plssvm::real_type{ -2.9087188881 }, plssvm::real_type{ 0.66638344270 }, plssvm::real_type{ 1.0978832704 } },
+    plssvm::aos_matrix<plssvm::real_type> correct_data_{ { { plssvm::real_type{ -1.1178275006 }, plssvm::real_type{ -2.9087188881 }, plssvm::real_type{ 0.66638344270 }, plssvm::real_type{ 1.0978832704 } },
                                                            { plssvm::real_type{ -0.52821182989 }, plssvm::real_type{ -0.33588098497 }, plssvm::real_type{ 0.51687296030 }, plssvm::real_type{ 0.54604461446 } },
                                                            { plssvm::real_type{ 0.57650218263 }, plssvm::real_type{ 1.0140559662 }, plssvm::real_type{ 0.13009428080 }, plssvm::real_type{ 0.72619138869 } },
                                                            { plssvm::real_type{ 1.8849404372 }, plssvm::real_type{ 1.0051856432 }, plssvm::real_type{ 0.29849993305 }, plssvm::real_type{ 1.6464627049 } },
                                                            { plssvm::real_type{ -0.20981208921 }, plssvm::real_type{ 0.60276937379 }, plssvm::real_type{ -0.13086851759 }, plssvm::real_type{ 0.10805254527 } },
-                                                           { plssvm::real_type{ -1.1256816276 }, plssvm::real_type{ 2.1254153434 }, plssvm::real_type{ -0.16512657655 }, plssvm::real_type{ 2.5164553141 } } },
-                                                         plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE } };
+                                                           { plssvm::real_type{ -1.1256816276 }, plssvm::real_type{ 2.1254153434 }, plssvm::real_type{ -0.16512657655 }, plssvm::real_type{ 2.5164553141 } } } };
     /// The correct weights. Might be more than are actually used in a specific test case.
     std::vector<std::vector<plssvm::real_type>> correct_weights_{
         { plssvm::real_type{ -1.8568721894e-01 }, plssvm::real_type{ 9.0116552290e-01 }, plssvm::real_type{ -2.2483112395e-01 }, plssvm::real_type{ 1.4909749921e-02 }, plssvm::real_type{ -4.5666857706e-01 }, plssvm::real_type{ -4.8888352876e-02 } },
@@ -108,7 +107,6 @@ TYPED_TEST(LIBSVMClassificationModelDataParseValid, read) {
         // OAA
         ASSERT_EQ(alpha.size(), 1);
         ASSERT_EQ(alpha.front().shape(), (plssvm::shape{ num_classes_for_label_type, 6 }));
-        ASSERT_EQ(alpha.front().padding(), (plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE }));
 
         switch (num_classes_for_label_type) {
             case 2:
@@ -127,7 +125,7 @@ TYPED_TEST(LIBSVMClassificationModelDataParseValid, read) {
                 FAIL() << "Unreachable!";
         }
 
-        EXPECT_EQ(alpha.front(), (plssvm::aos_matrix<plssvm::real_type>{ this->get_correct_weights(), plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE } }));
+        EXPECT_EQ(alpha.front(), (plssvm::aos_matrix<plssvm::real_type>{ this->get_correct_weights() }));
     } else if constexpr (expected_classification == plssvm::classification_type::oao) {
         // OAO
         ASSERT_EQ(alpha.size(), num_classes_for_label_type * (num_classes_for_label_type - 1) / 2);
@@ -162,10 +160,6 @@ TYPED_TEST(LIBSVMClassificationModelDataParseValid, read) {
                 break;
             default:
                 FAIL() << "Unreachable!";
-        }
-        // add padding to each matrix (theoretically expensive, but matrices are tiny)
-        for (plssvm::aos_matrix<plssvm::real_type> &matr : weights) {
-            matr = plssvm::aos_matrix<plssvm::real_type>{ matr, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE } };
         }
 
         EXPECT_EQ(alpha, weights);

@@ -10,7 +10,6 @@
 
 #include "plssvm/detail/data_distribution.hpp"
 
-#include "plssvm/constants.hpp"           // plssvm::PADDING_SIZE
 #include "plssvm/detail/memory_size.hpp"  // plssvm::detail::memory_size
 #include "plssvm/mpi/communicator.hpp"    // plssvm::mpi::communicator
 
@@ -138,14 +137,14 @@ TEST(TriangularDataDistribution, num_places) {
     EXPECT_EQ(dist.num_places(), 4);
 }
 
-TEST(TriangularDataDistribution, calculate_explicit_kernel_matrix_num_entries_padded) {
+TEST(TriangularDataDistribution, calculate_explicit_kernel_matrix_num_entries) {
     // create a triangular data distribution
     const plssvm::detail::triangular_data_distribution dist{ plssvm::mpi::communicator{}, 1024, 4 };
 
     // check the returned values
     for (std::size_t place = 0; place < dist.num_places(); ++place) {
-        EXPECT_GE(dist.calculate_explicit_kernel_matrix_num_entries_padded(place), 0);
-        EXPECT_LT(dist.calculate_explicit_kernel_matrix_num_entries_padded(place), (1024 + plssvm::PADDING_SIZE) * (1024 + plssvm::PADDING_SIZE));  // must be less than the squared matrix padded
+        EXPECT_GE(dist.calculate_explicit_kernel_matrix_num_entries(place), 0);
+        EXPECT_LT(dist.calculate_explicit_kernel_matrix_num_entries(place), 1024 * 1024);  // must be less than the squared matrix
     }
 }
 

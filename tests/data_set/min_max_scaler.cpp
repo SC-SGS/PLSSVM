@@ -134,7 +134,7 @@ TEST(MinMaxScaler, scale_scaling_factors_empty) {
     plssvm::min_max_scaler scaler{ plssvm::real_type{ -1.0 }, plssvm::real_type{ 1.0 } };
 
     // create data and ground truth result
-    auto data = util::generate_specific_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ 10, 4 }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE });
+    auto data = util::generate_specific_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ 10, 4 });
     const auto [data_scaled, scaling_factors] = util::scale(data, plssvm::real_type{ -1.0 }, plssvm::real_type{ 1.0 });
 
     // scale the data (inplace)
@@ -149,7 +149,7 @@ TEST(MinMaxScaler, scale_scaling_factors) {
     const util::temporary_file tmp_file{};  // automatically removes the created file at the end of its scope
 
     // create data and ground truth result
-    auto data = util::generate_specific_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ 10, 5 }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE });
+    auto data = util::generate_specific_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ 10, 5 });
     auto data_2 = data;
     const auto [data_scaled, scaling_factors] = util::scale(data, plssvm::real_type{ -1.0 }, plssvm::real_type{ 1.0 });
 
@@ -178,7 +178,7 @@ TEST(MinMaxScaler, scale_too_many_scaling_factors) {
     plssvm::min_max_scaler scaler{ PLSSVM_TEST_PATH "/data/scaling_factors/scaling_factors.txt" };
 
     // create data and ground truth result
-    auto data = util::generate_specific_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ 10, 3 }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE });
+    auto data = util::generate_specific_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ 10, 3 });
 
     // invalid number of scaling factors
     EXPECT_THROW_WHAT_MATCHER(scaler.scale(data), plssvm::min_max_scaler_exception, ::testing::HasSubstr("Need at most as much scaling factors as features in the data set are present (3), but 4 were given!"));
@@ -189,7 +189,7 @@ TEST(MinMaxScaler, scale_feature_index_too_big) {
     plssvm::min_max_scaler scaler{ PLSSVM_TEST_PATH "/data/scaling_factors/scaling_factors.txt" };
 
     // create data and ground truth result
-    auto data = util::generate_specific_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ 10, 4 }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE });
+    auto data = util::generate_specific_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ 10, 4 });
 
     // invalid number of scaling factors
     EXPECT_THROW_WHAT(scaler.scale(data), plssvm::min_max_scaler_exception, "The maximum scaling feature index most not be greater or equal than 4, but is 4!");
@@ -200,7 +200,7 @@ TEST(MinMaxScaler, scale_scaling_factor_more_than_once) {
     plssvm::min_max_scaler scaler{ PLSSVM_TEST_PATH "/data/scaling_factors/invalid/feature_index_more_than_once.txt" };
 
     // create data and ground truth result
-    auto data = util::generate_specific_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ 10, 4 }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE });
+    auto data = util::generate_specific_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ 10, 4 });
 
     // invalid number of scaling factors
     EXPECT_THROW_WHAT(scaler.scale(data), plssvm::min_max_scaler_exception, "Found more than one scaling factor for the feature index 0!");

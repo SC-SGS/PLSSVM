@@ -13,7 +13,6 @@
 #define PLSSVM_BINDINGS_PYTHON_TYPE_CASTER_MATRIX_TYPE_CASTER_HPP_
 #pragma once
 
-#include "plssvm/constants.hpp"                 // plssvm::PADDING_SIZE
 #include "plssvm/detail/string_conversion.hpp"  // plssvm::detail::convert_to
 #include "plssvm/matrix.hpp"                    // plssvm::matrix, plssvm::layout_type
 #include "plssvm/shape.hpp"                     // plssvm::shape
@@ -182,7 +181,7 @@ struct type_caster<plssvm::matrix<T, layout>> {
             const std::size_t num_cols = list[0].cast<py::list>().size();
 
             // create the matrix with the expected size
-            value = matrix_type{ plssvm::shape{ num_rows, num_cols }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE } };
+            value = matrix_type{ plssvm::shape{ num_rows, num_cols } };
 
             // fill the matrix
             for (std::size_t row = 0; row < num_rows; ++row) {
@@ -234,7 +233,7 @@ struct type_caster<plssvm::matrix<T, layout>> {
             const std::size_t num_cols = arr.shape(1);
 
             // create PLSSVM matrix with the correct dimensions AND padding entries
-            value = matrix_type{ plssvm::shape{ num_rows, num_cols }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE } };
+            value = matrix_type{ plssvm::shape{ num_rows, num_cols } };
 
             // get the underlying buffer
             py::buffer_info buffer = arr.request();

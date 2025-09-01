@@ -182,7 +182,6 @@ void csvm::blas_level_3(const solver_type solver, const real_type alpha, const s
     PLSSVM_ASSERT(!C.empty(), "The C matrix must not be empty!");
     PLSSVM_ASSERT(C.is_padded(), "The C matrix must be padded!");
     PLSSVM_ASSERT(B.shape() == C.shape(), "The B ({}) and C ({}) matrices must have the same shape!", B.shape(), C.shape());
-    PLSSVM_ASSERT(B.padding() == C.padding(), "The B ({}) and C ({}) matrices must have the same padding!", B.padding(), C.padding());
 
     using namespace operators;
 
