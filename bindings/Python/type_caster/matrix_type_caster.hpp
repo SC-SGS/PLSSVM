@@ -68,22 +68,8 @@ struct type_caster<plssvm::matrix<T, layout>> {
         py::buffer_info buffer = arr.request();
         T *ptr = static_cast<T *>(buffer.ptr);
 
-        // check if the provided matrix has padding entries -> must be removed
-        if (matr.is_padded()) {
-            // padding entries found -> copy data row-wise to the Python numpy array
-            if constexpr (layout == plssvm::layout_type::aos) {
-                for (std::size_t row = 0; row < num_data_points; ++row) {
-                    std::memcpy(ptr + row * num_features, matr.data() + row * matr.num_cols_padded(), num_features * sizeof(T));
-                }
-            } else {
-                for (std::size_t col = 0; col < num_features; ++col) {
-                    std::memcpy(ptr + col * num_data_points, matr.data() + col * matr.num_rows_padded(), num_data_points * sizeof(T));
-                }
-            }
-        } else {
-            // can memcpy data directly
-            std::memcpy(ptr, matr.data(), matr.size() * sizeof(T));
-        }
+        // can memcpy data directly
+        std::memcpy(ptr, matr.data(), matr.size() * sizeof(T));
 
         // transfer ownership to Python
         return arr.release();
@@ -115,7 +101,7 @@ struct type_caster<plssvm::matrix<T, layout>> {
                 // memory layout of Python Numpy array and PLSSVM matrix are the same -> can use memcpy to convert
 #pragma omp parallel for
                 for (std::size_t row = 0; row < num_rows; ++row) {
-                    std::memcpy(value.data() + row * value.num_cols_padded(), ptr + row * num_cols, num_cols * sizeof(T));
+                    std::memcpy(value.data() + row * value.num_cols(), ptr + row * num_cols, num_cols * sizeof(T));
                 }
             } else if constexpr (layout == plssvm::layout_type::soa) {
                 // the memory layouts don't match -> must use loops to convert layouts
@@ -142,7 +128,7 @@ struct type_caster<plssvm::matrix<T, layout>> {
                 // memory layout of Python Numpy array and PLSSVM matrix are the same -> can use memcpy to convert
 #pragma omp parallel for
                 for (std::size_t row = 0; row < num_cols; ++row) {
-                    std::memcpy(value.data() + row * value.num_rows_padded(), ptr + row * num_rows, num_rows * sizeof(T));
+                    std::memcpy(value.data() + row * value.num_rows(), ptr + row * num_rows, num_rows * sizeof(T));
                 }
             } else {
                 // unsupported PLSSVM matrix memory layout
@@ -232,7 +218,7 @@ struct type_caster<plssvm::matrix<T, layout>> {
             const std::size_t num_rows = arr.shape(0);
             const std::size_t num_cols = arr.shape(1);
 
-            // create PLSSVM matrix with the correct dimensions AND padding entries
+            // create PLSSVM matrix with the correct dimensions
             value = matrix_type{ plssvm::shape{ num_rows, num_cols } };
 
             // get the underlying buffer

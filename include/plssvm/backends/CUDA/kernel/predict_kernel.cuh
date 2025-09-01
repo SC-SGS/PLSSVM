@@ -144,8 +144,6 @@ __global__ void device_kernel_predict(real_type *prediction, const real_type *al
     }
 }
 
-// TODO: FAILS IN MULTI-GPU SETTING!
-
 }  // namespace plssvm::cuda::detail
 
 #endif  // PLSSVM_BACKENDS_CUDA_KERNEL_PREDICT_KERNEL_HPP_

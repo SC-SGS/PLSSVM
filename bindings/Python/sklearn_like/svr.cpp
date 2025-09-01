@@ -12,7 +12,7 @@
 #include "plssvm/detail/type_traits.hpp"            // plssvm::detail::remove_cvref_t
 #include "plssvm/gamma.hpp"                         // plssvm::gamma_coefficient_type, plssvm::gamma_type
 #include "plssvm/kernel_function_types.hpp"         // plssvm::kernel_function_type
-#include "plssvm/matrix.hpp"                        // plssvm::aos_matrix, plssvm::soa_matrix
+#include "plssvm/matrix.hpp"                        // plssvm::aos_matrix
 #include "plssvm/model/regression_model.hpp"        // plssvm::regression_model
 #include "plssvm/parameter.hpp"                     // plssvm::parameter, named arguments definition
 #include "plssvm/svm/csvr.hpp"                      // plssvm::csvr
@@ -264,7 +264,7 @@ void init_sklearn_svr(py::module_ &m) {
     //                                                               METHODS                                                               //
     //*************************************************************************************************************************************//
     py_svr
-        .def("fit", [](svr &self, plssvm::bindings::python::util::soa_matrix_wrapper<plssvm::real_type> data, plssvm::bindings::python::util::label_vector_wrapper<typename svr::possible_vector_types> labels, const std::optional<std::vector<plssvm::real_type>> &sample_weight) -> svr & {
+        .def("fit", [](svr &self, plssvm::bindings::python::util::aos_matrix_wrapper<plssvm::real_type> data, plssvm::bindings::python::util::label_vector_wrapper<typename svr::possible_vector_types> labels, const std::optional<std::vector<plssvm::real_type>> &sample_weight) -> svr & {
            PLSSVM_ASSERT(self.svm_ != nullptr, "svm_ may not be a nullptr! Maybe you forgot to initialize it?");
             if (sample_weight.has_value()) {
                 throw py::attribute_error{ "The 'sample_weight' parameter for a call to 'fit' is not implemented yet!" };
@@ -303,7 +303,7 @@ void init_sklearn_svr(py::module_ &m) {
             return self; }, py::return_value_policy::reference, "Fit the SVM model according to the given training data.", py::arg("X"), py::arg("y"), py::pos_only(), py::arg("sample_weight") = std::nullopt)
         .def("get_metadata_routing", [](const svr &) { throw py::attribute_error{ "'SVR' object has no function 'get_metadata_routing' (not implemented)" }; }, "Get metadata routing of this object.")
         .def("get_params", &svr::get_params, "Get parameters for this estimator.", py::arg("deep") = true)
-        .def("predict", [](svr &self, plssvm::soa_matrix<plssvm::real_type> data) -> py::array {
+        .def("predict", [](svr &self, plssvm::aos_matrix<plssvm::real_type> data) -> py::array {
             PLSSVM_ASSERT(self.svm_ != nullptr, "svm_ may not be a nullptr! Maybe you forgot to initialize it?");
             if (self.model_ == nullptr) {
                 throw py::attribute_error{ "This SVR instance is not fitted yet. Call 'fit' with appropriate arguments before using this estimator." };
@@ -317,7 +317,7 @@ void init_sklearn_svr(py::module_ &m) {
                 // predict the data
                 return plssvm::bindings::python::util::vector_to_pyarray(self.svm_->predict(model, data_to_predict));
             }, *self.model_); }, "Perform classification on samples in X.", py::arg("X"))
-        .def("score", [](svr &self, plssvm::soa_matrix<plssvm::real_type> data, plssvm::bindings::python::util::label_vector_wrapper<typename svr::possible_vector_types> labels, const std::optional<std::vector<plssvm::real_type>> &sample_weight) -> plssvm::real_type {
+        .def("score", [](svr &self, plssvm::aos_matrix<plssvm::real_type> data, plssvm::bindings::python::util::label_vector_wrapper<typename svr::possible_vector_types> labels, const std::optional<std::vector<plssvm::real_type>> &sample_weight) -> plssvm::real_type {
             PLSSVM_ASSERT(self.svm_ != nullptr, "svm_ may not be a nullptr! Maybe you forgot to initialize it?");
             if (sample_weight.has_value()) {
                 throw py::attribute_error{ "The 'sample_weight' parameter for a call to 'fit' is not implemented yet!" };
