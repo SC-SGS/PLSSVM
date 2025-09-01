@@ -100,8 +100,6 @@ __global__ void device_kernel_assembly_symm(const real_type alpha, const real_ty
     }
 }
 
-// TODO: segfault :/
-
 }  // namespace plssvm::cuda::detail
 
 #endif  // PLSSVM_BACKENDS_CUDA_KERNEL_CG_IMPLICIT_KERNEL_MATRIX_ASSEMBLY_BLAS_CUH_
