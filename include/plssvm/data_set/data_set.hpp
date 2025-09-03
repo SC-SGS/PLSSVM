@@ -21,7 +21,7 @@
 #include "plssvm/detail/string_utility.hpp"     // plssvm::detail::ends_with
 #include "plssvm/exceptions/exceptions.hpp"     // plssvm::data_set_exception, plssvm::mpi_exception
 #include "plssvm/file_format_types.hpp"         // plssvm::file_format_type
-#include "plssvm/matrix.hpp"                    // plssvm::aos_matrix
+#include "plssvm/matrix.hpp"                    // plssvm::soa_matrix
 #include "plssvm/mpi/communicator.hpp"          // plssvm::mpi::communicator
 #include "plssvm/shape.hpp"                     // plssvm::shape
 
@@ -216,7 +216,7 @@ class data_set {
      * @throws plssvm::data_set_exception if the data points in @p data_points have mismatching number of features
      * @throws plssvm::data_set_exception if any @p data_point has no features
      */
-    data_set(mpi::communicator comm, aos_matrix<real_type> &&data_points);
+    data_set(mpi::communicator comm, soa_matrix<real_type> &&data_points);
     /**
      * @brief Use the provided @p data_points and @p labels in this data set.
      * @param[in] comm the used MPI communicator (**note**: current only used to restrict logging outputs to the main MPI rank)
@@ -227,7 +227,7 @@ class data_set {
      * @throws plssvm::data_set_exception if any @p data_point has no features
      * @throws plssvm::data_set_exception if the number of data points in @p data_points and number of @p labels mismatch
      */
-    data_set(mpi::communicator comm, aos_matrix<real_type> &&data_points, std::vector<label_type> &&labels);
+    data_set(mpi::communicator comm, soa_matrix<real_type> &&data_points, std::vector<label_type> &&labels);
     /**
      * @brief Use the provided @p data_points in this data set and scale them using the provided @p scaler.
      * @details Since no labels are provided, this data set may **not** be used to a call to plssvm::csvc::fit/plssvm::csvr::fit!
@@ -240,7 +240,7 @@ class data_set {
      * @throws plssvm::min_max_scaler_exception all exceptions thrown by plssvm::min_max_scaler::scale
      * @throws plssvm::mpi_exception if the MPI communicator @p comm and the MPI communicator in @p scaler are not identical
      */
-    data_set(mpi::communicator comm, aos_matrix<real_type> &&data_points, min_max_scaler scaler);
+    data_set(mpi::communicator comm, soa_matrix<real_type> &&data_points, min_max_scaler scaler);
     /**
      * @brief Use the provided @p data_points and @p labels in this data set and scale them using the provided @p scaler.
      * @param[in] comm the used MPI communicator (**note**: current only used to restrict logging outputs to the main MPI rank)
@@ -254,7 +254,7 @@ class data_set {
      * @throws plssvm::min_max_scaler_exception all exceptions thrown by plssvm::min_max_scaler::scale
      * @throws plssvm::mpi_exception if the MPI communicator @p comm and the MPI communicator in @p scaler are not identical
      */
-    data_set(mpi::communicator comm, aos_matrix<real_type> &&data_points, std::vector<label_type> &&labels, min_max_scaler scaler);
+    data_set(mpi::communicator comm, soa_matrix<real_type> &&data_points, std::vector<label_type> &&labels, min_max_scaler scaler);
 
     /**
      * @brief Default copy constructor.
@@ -300,7 +300,7 @@ class data_set {
      * @brief Return the data points in this data set by copying them to a 2D vector.
      * @return the data points (`[[nodiscard]]`)
      */
-    [[nodiscard]] const aos_matrix<real_type> &data() const { return *data_ptr_; }
+    [[nodiscard]] const soa_matrix<real_type> &data() const { return *data_ptr_; }
 
     /**
      * @brief Returns whether this data set contains labels or not.
@@ -355,7 +355,7 @@ class data_set {
      * @brief Default construct an empty data set.
      */
     data_set() :
-        data_ptr_{ std::make_shared<aos_matrix<real_type>>() } { }
+        data_ptr_{ std::make_shared<soa_matrix<real_type>>() } { }
 
     /**
      * @brief Create the mapping between the provided labels and the internally used values.
@@ -381,7 +381,7 @@ class data_set {
     mpi::communicator comm_{};
 
     /// A pointer to the two-dimensional data points.
-    std::shared_ptr<aos_matrix<real_type>> data_ptr_{ nullptr };
+    std::shared_ptr<soa_matrix<real_type>> data_ptr_{ nullptr };
     /// A pointer to the original labels of this data set; may be `nullptr` if no labels have been provided.
     std::shared_ptr<std::vector<label_type>> labels_ptr_{ nullptr };
     /// A pointer to the mapped values of the labels of this data set; may be `nullptr` if no labels have been provided.
@@ -444,28 +444,28 @@ data_set<U>::data_set(mpi::communicator comm, const std::string &filename, file_
 // clang-format off
 template <typename U>
 data_set<U>::data_set(mpi::communicator comm, const std::vector<std::vector<real_type>> &data_points) try :
-    data_set{ std::move(comm), aos_matrix<real_type>{ data_points } } {}
+    data_set{ std::move(comm), soa_matrix<real_type>{ data_points } } {}
     catch (const matrix_exception &e) {
         throw data_set_exception{ e.what() };
     }
 
 template <typename U>
 data_set<U>::data_set(mpi::communicator comm, const std::vector<std::vector<real_type>> &data_points, std::vector<label_type> labels) try :
-    data_set{ std::move(comm), aos_matrix<real_type>{ data_points }, std::move(labels) } {}
+    data_set{ std::move(comm), soa_matrix<real_type>{ data_points }, std::move(labels) } {}
     catch (const matrix_exception &e) {
         throw data_set_exception{ e.what() };
     }
 
 template <typename U>
 data_set<U>::data_set(mpi::communicator comm, const std::vector<std::vector<real_type>> &data_points, min_max_scaler scaler) try :
-    data_set{ std::move(comm), aos_matrix<real_type>{ data_points }, std::move(scaler) } {}
+    data_set{ std::move(comm), soa_matrix<real_type>{ data_points }, std::move(scaler) } {}
     catch (const matrix_exception &e) {
         throw data_set_exception{ e.what() };
     }
 
 template <typename U>
 data_set<U>::data_set(mpi::communicator comm, const std::vector<std::vector<real_type>> &data_points, std::vector<label_type> labels, min_max_scaler scaler) try :
-    data_set{ std::move(comm), aos_matrix<real_type>{ data_points }, std::move(labels), std::move(scaler) } {}
+    data_set{ std::move(comm), soa_matrix<real_type>{ data_points }, std::move(labels), std::move(scaler) } {}
     catch (const matrix_exception &e) {
         throw data_set_exception{ e.what() };
     }
@@ -478,7 +478,7 @@ data_set<U>::data_set(mpi::communicator comm, const matrix<real_type, layout> &d
     num_data_points_{ data_points.num_rows() },
     num_features_{ data_points.num_cols() },
     comm_{ std::move(comm) },
-    data_ptr_{ std::make_shared<aos_matrix<real_type>>(data_points) } {
+    data_ptr_{ std::make_shared<soa_matrix<real_type>>(data_points) } {
     // the provided data points vector may not be empty
     if (data_ptr_->num_rows() == 0) {
         throw data_set_exception{ "Data vector is empty!" };
@@ -494,7 +494,7 @@ data_set<U>::data_set(mpi::communicator comm, const matrix<real_type, layout> &d
     num_data_points_{ data_points.num_rows() },
     num_features_{ data_points.num_cols() },
     comm_{ std::move(comm) },
-    data_ptr_{ std::make_shared<aos_matrix<real_type>>(data_points) },
+    data_ptr_{ std::make_shared<soa_matrix<real_type>>(data_points) },
     labels_ptr_{ std::make_shared<std::vector<label_type>>(std::move(labels)) } {
     // the provided data points vector may not be empty
     if (data_ptr_->num_rows() == 0) {
@@ -540,11 +540,11 @@ data_set<U>::data_set(mpi::communicator comm, const matrix<real_type, layout> &d
 }
 
 template <typename U>
-data_set<U>::data_set(mpi::communicator comm, aos_matrix<real_type> &&data_points) :
+data_set<U>::data_set(mpi::communicator comm, soa_matrix<real_type> &&data_points) :
     num_data_points_{ data_points.num_rows() },
     num_features_{ data_points.num_cols() },
     comm_{ std::move(comm) },
-    data_ptr_{ std::make_shared<aos_matrix<real_type>>(std::move(data_points)) } {
+    data_ptr_{ std::make_shared<soa_matrix<real_type>>(std::move(data_points)) } {
     // the provided data points vector may not be empty
     if (data_ptr_->num_rows() == 0) {
         throw data_set_exception{ "Data vector is empty!" };
@@ -555,11 +555,11 @@ data_set<U>::data_set(mpi::communicator comm, aos_matrix<real_type> &&data_point
 }
 
 template <typename U>
-data_set<U>::data_set(mpi::communicator comm, aos_matrix<real_type> &&data_points, std::vector<label_type> &&labels) :
+data_set<U>::data_set(mpi::communicator comm, soa_matrix<real_type> &&data_points, std::vector<label_type> &&labels) :
     num_data_points_{ data_points.num_rows() },
     num_features_{ data_points.num_cols() },
     comm_{ std::move(comm) },
-    data_ptr_{ std::make_shared<aos_matrix<real_type>>(std::move(data_points)) },
+    data_ptr_{ std::make_shared<soa_matrix<real_type>>(std::move(data_points)) },
     labels_ptr_{ std::make_shared<std::vector<label_type>>(std::move(labels)) } {
     // the provided data points vector may not be empty
     if (data_ptr_->num_rows() == 0) {
@@ -575,7 +575,7 @@ data_set<U>::data_set(mpi::communicator comm, aos_matrix<real_type> &&data_point
 }
 
 template <typename U>
-data_set<U>::data_set(mpi::communicator comm, aos_matrix<real_type> &&data_points, min_max_scaler scaler) :
+data_set<U>::data_set(mpi::communicator comm, soa_matrix<real_type> &&data_points, min_max_scaler scaler) :
     data_set{ std::move(comm), std::move(data_points) } {
     // check whether the data set and scaler MPI communicators are identical
     if (comm != scaler.communicator()) {
@@ -589,7 +589,7 @@ data_set<U>::data_set(mpi::communicator comm, aos_matrix<real_type> &&data_point
 }
 
 template <typename U>
-data_set<U>::data_set(mpi::communicator comm, aos_matrix<real_type> &&data_points, std::vector<label_type> &&labels, min_max_scaler scaler) :
+data_set<U>::data_set(mpi::communicator comm, soa_matrix<real_type> &&data_points, std::vector<label_type> &&labels, min_max_scaler scaler) :
     data_set{ std::move(comm), std::move(data_points), std::move(labels) } {
     // check whether the data set and scaler MPI communicators are identical
     if (comm != scaler.communicator()) {

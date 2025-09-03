@@ -127,7 +127,7 @@ template <typename csvm_type, typename device_ptr_type, typename matrix_type, ty
         // created matrix is different for the OpenMP, stdpar or HPX backend and the GPU backends!
         if constexpr (plssvm::csvm_to_backend_type_v<csvm_type> == plssvm::backend_type::openmp || plssvm::csvm_to_backend_type_v<csvm_type> == plssvm::backend_type::stdpar || plssvm::csvm_to_backend_type_v<csvm_type> == plssvm::backend_type::hpx) {
             // only a single device ever in use
-            result[0] = plssvm::detail::move_only_any{ std::make_tuple(plssvm::aos_matrix<real_type>{ matr }, std::forward<Args>(args)...) };
+            result[0] = plssvm::detail::move_only_any{ std::make_tuple(plssvm::soa_matrix<real_type>{ matr }, std::forward<Args>(args)...) };
         } else {
             auto &device = csvm.devices_[device_id];
 
@@ -289,19 +289,19 @@ TYPED_TEST_P(GenericCSVM, blas_level_3_explicit_without_C) {
     svm.data_distribution_ = std::make_unique<plssvm::detail::triangular_data_distribution>(plssvm::mpi::communicator{}, matr_A.num_rows(), svm.num_available_devices());
     const std::vector<plssvm::detail::move_only_any> A{ util::init_explicit_matrices<csvm_type, device_ptr_type>(matr_A, svm) };
 
-    const plssvm::aos_matrix<plssvm::real_type> B{ { { plssvm::real_type{ 1.0 }, plssvm::real_type{ 2.0 }, plssvm::real_type{ 3.0 } },
+    const plssvm::soa_matrix<plssvm::real_type> B{ { { plssvm::real_type{ 1.0 }, plssvm::real_type{ 2.0 }, plssvm::real_type{ 3.0 } },
                                                      { plssvm::real_type{ 4.0 }, plssvm::real_type{ 5.0 }, plssvm::real_type{ 6.0 } },
                                                      { plssvm::real_type{ 7.0 }, plssvm::real_type{ 8.0 }, plssvm::real_type{ 9.0 } } } };
 
     const plssvm::real_type beta{ 0.0 };
-    plssvm::aos_matrix<plssvm::real_type> C{ plssvm::shape{ 3, 3 } };
-    plssvm::aos_matrix<plssvm::real_type> C2{ C };
+    plssvm::soa_matrix<plssvm::real_type> C{ plssvm::shape{ 3, 3 } };
+    plssvm::soa_matrix<plssvm::real_type> C2{ C };
 
     // perform BLAS calculation
     svm.blas_level_3(solver, alpha, A, B, beta, C);
 
     // check C for correctness
-    const plssvm::aos_matrix<plssvm::real_type> correct_C{ { { plssvm::real_type{ 1.4 }, plssvm::real_type{ 6.5 }, plssvm::real_type{ 9.8 } },
+    const plssvm::soa_matrix<plssvm::real_type> correct_C{ { { plssvm::real_type{ 1.4 }, plssvm::real_type{ 6.5 }, plssvm::real_type{ 9.8 } },
                                                              { plssvm::real_type{ 3.2 }, plssvm::real_type{ 14.6 }, plssvm::real_type{ 21.5 } },
                                                              { plssvm::real_type{ 5.0 }, plssvm::real_type{ 22.7 }, plssvm::real_type{ 33.2 } } } };
     EXPECT_FLOATING_POINT_MATRIX_NEAR(C, correct_C);
@@ -333,20 +333,20 @@ TYPED_TEST_P(GenericCSVM, blas_level_3_explicit) {
     svm.data_distribution_ = std::make_unique<plssvm::detail::triangular_data_distribution>(plssvm::mpi::communicator{}, matr_A.num_rows(), svm.num_available_devices());
     const std::vector<plssvm::detail::move_only_any> A{ util::init_explicit_matrices<csvm_type, device_ptr_type>(matr_A, svm) };
 
-    const plssvm::aos_matrix<plssvm::real_type> B{ { { plssvm::real_type{ 1.0 }, plssvm::real_type{ 2.0 }, plssvm::real_type{ 3.0 } },
+    const plssvm::soa_matrix<plssvm::real_type> B{ { { plssvm::real_type{ 1.0 }, plssvm::real_type{ 2.0 }, plssvm::real_type{ 3.0 } },
                                                      { plssvm::real_type{ 4.0 }, plssvm::real_type{ 5.0 }, plssvm::real_type{ 6.0 } },
                                                      { plssvm::real_type{ 7.0 }, plssvm::real_type{ 8.0 }, plssvm::real_type{ 9.0 } } } };
 
     const plssvm::real_type beta{ 0.5 };
-    auto C = util::generate_specific_matrix<plssvm::aos_matrix<plssvm::real_type>>(plssvm::shape{ 3, 3 });
-    plssvm::aos_matrix<plssvm::real_type> C2{ C };
+    auto C = util::generate_specific_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ 3, 3 });
+    plssvm::soa_matrix<plssvm::real_type> C2{ C };
 
     // perform BLAS calculation
     svm.blas_level_3(solver, alpha, A, B, beta, C);
     std::ignore = svm.run_blas_level_3(solver, alpha, A, B, beta, C2);
 
     // check C for correctness
-    const plssvm::aos_matrix<plssvm::real_type> correct_C{ { { plssvm::real_type{ 1.45 }, plssvm::real_type{ 6.6 }, plssvm::real_type{ 9.95 } },
+    const plssvm::soa_matrix<plssvm::real_type> correct_C{ { { plssvm::real_type{ 1.45 }, plssvm::real_type{ 6.6 }, plssvm::real_type{ 9.95 } },
                                                              { plssvm::real_type{ 3.75 }, plssvm::real_type{ 15.2 }, plssvm::real_type{ 22.15 } },
                                                              { plssvm::real_type{ 6.05 }, plssvm::real_type{ 23.8 }, plssvm::real_type{ 34.35 } } } };
 
@@ -377,14 +377,14 @@ TYPED_TEST_P(GenericCSVM, conjugate_gradients_trivial) {
     svm.data_distribution_ = std::make_unique<plssvm::detail::triangular_data_distribution>(plssvm::mpi::communicator{}, matr_A.num_rows(), svm.num_available_devices());
     const std::vector<plssvm::detail::move_only_any> A{ util::init_explicit_matrices<csvm_type, device_ptr_type>(matr_A, svm) };
 
-    const plssvm::aos_matrix<plssvm::real_type> B{ { { plssvm::real_type{ 1.0 }, plssvm::real_type{ -1.0 }, plssvm::real_type{ 1.0 }, plssvm::real_type{ -1.0 } },
+    const plssvm::soa_matrix<plssvm::real_type> B{ { { plssvm::real_type{ 1.0 }, plssvm::real_type{ -1.0 }, plssvm::real_type{ 1.0 }, plssvm::real_type{ -1.0 } },
                                                      { plssvm::real_type{ -1.0 }, plssvm::real_type{ 1.0 }, plssvm::real_type{ -1.0 }, plssvm::real_type{ 1.0 } } } };
 
     // solve AX = B
     const auto [X, num_iters] = svm.conjugate_gradients(A, B, plssvm::real_type{ 0.00001 }, 4, solver);
 
     // check result
-    EXPECT_FLOATING_POINT_MATRIX_NEAR(X, B);
+    EXPECT_FLOATING_POINT_MATRIX_NEAR(X, (plssvm::soa_matrix<plssvm::real_type>{ B }));
     EXPECT_THAT(num_iters, ::testing::Each(::testing::Gt(0)));
 }
 
@@ -409,9 +409,9 @@ TYPED_TEST_P(GenericCSVM, conjugate_gradients) {
     svm.data_distribution_ = std::make_unique<plssvm::detail::triangular_data_distribution>(plssvm::mpi::communicator{}, matr_A.num_rows(), svm.num_available_devices());
     const std::vector<plssvm::detail::move_only_any> A = util::init_explicit_matrices<csvm_type, device_ptr_type>(matr_A, svm);
 
-    const plssvm::aos_matrix<plssvm::real_type> B{ { { plssvm::real_type{ 1.0 }, plssvm::real_type{ 2.0 } },
+    const plssvm::soa_matrix<plssvm::real_type> B{ { { plssvm::real_type{ 1.0 }, plssvm::real_type{ 2.0 } },
                                                      { plssvm::real_type{ 1.0 }, plssvm::real_type{ 2.0 } } } };
-    const plssvm::aos_matrix<plssvm::real_type> correct_X{ { { plssvm::real_type{ 1.0 / 11.0 }, plssvm::real_type{ 7.0 / 11.0 } },
+    const plssvm::soa_matrix<plssvm::real_type> correct_X{ { { plssvm::real_type{ 1.0 / 11.0 }, plssvm::real_type{ 7.0 / 11.0 } },
                                                              { plssvm::real_type{ 1.0 / 11.0 }, plssvm::real_type{ 7.0 / 11.0 } } } };
 
     // solve AX = B
@@ -468,20 +468,20 @@ TYPED_TEST_P(GenericCSVMKernelFunction, blas_level_3_assembly_implicit_without_C
 
     const plssvm::real_type alpha{ 1.0 };
 
-    const auto matr_A = util::generate_specific_matrix<plssvm::aos_matrix<plssvm::real_type>>(plssvm::shape{ 4, 4 });
+    const auto matr_A = util::generate_specific_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ 4, 4 });
     const auto [q, QA_cost] = ground_truth::perform_dimensional_reduction(params, matr_A);
 
     // be sure to use the correct data distribution
     svm.data_distribution_ = std::make_unique<plssvm::detail::triangular_data_distribution>(plssvm::mpi::communicator{}, matr_A.num_rows() - 1, svm.num_available_devices());
     const std::vector<plssvm::detail::move_only_any> A{ util::init_implicit_matrices<csvm_type, device_ptr_type>(matr_A, svm, params, q, QA_cost) };
 
-    const plssvm::aos_matrix<plssvm::real_type> B{ { { plssvm::real_type{ 1.0 }, plssvm::real_type{ 2.0 }, plssvm::real_type{ 3.0 } },
+    const plssvm::soa_matrix<plssvm::real_type> B{ { { plssvm::real_type{ 1.0 }, plssvm::real_type{ 2.0 }, plssvm::real_type{ 3.0 } },
                                                      { plssvm::real_type{ 4.0 }, plssvm::real_type{ 5.0 }, plssvm::real_type{ 6.0 } },
                                                      { plssvm::real_type{ 7.0 }, plssvm::real_type{ 8.0 }, plssvm::real_type{ 9.0 } } } };
 
     const plssvm::real_type beta{ 0.0 };
-    plssvm::aos_matrix<plssvm::real_type> C{ B.shape(), plssvm::real_type{ 0.0 } };
-    plssvm::aos_matrix<plssvm::real_type> C2{ C };
+    plssvm::soa_matrix<plssvm::real_type> C{ B.shape(), plssvm::real_type{ 0.0 } };
+    plssvm::soa_matrix<plssvm::real_type> C2{ C };
 
     // perform BLAS calculation
     svm.blas_level_3(solver, alpha, A, B, beta, C);
@@ -489,7 +489,7 @@ TYPED_TEST_P(GenericCSVMKernelFunction, blas_level_3_assembly_implicit_without_C
 
     // calculate correct results
     const plssvm::aos_matrix<plssvm::real_type> full_kernel_matrix = ground_truth::assemble_full_kernel_matrix(params, matr_A, q, QA_cost);
-    plssvm::aos_matrix<plssvm::real_type> correct_C{ C.shape(), plssvm::real_type{ 0.0 } };
+    plssvm::soa_matrix<plssvm::real_type> correct_C{ C.shape(), plssvm::real_type{ 0.0 } };
     ground_truth::gemm(alpha, full_kernel_matrix, B, beta, correct_C);
 
     // check for correctness
@@ -524,21 +524,21 @@ TYPED_TEST_P(GenericCSVMKernelFunction, blas_level_3_assembly_implicit) {
 
     const plssvm::real_type alpha{ 1.0 };
 
-    const auto matr_A = util::generate_specific_matrix<plssvm::aos_matrix<plssvm::real_type>>(plssvm::shape{ 4, 4 });
+    const auto matr_A = util::generate_specific_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ 4, 4 });
     const auto [q, QA_cost] = ground_truth::perform_dimensional_reduction(params, matr_A);
 
     // be sure to use the correct data distribution
     svm.data_distribution_ = std::make_unique<plssvm::detail::triangular_data_distribution>(plssvm::mpi::communicator{}, matr_A.num_rows() - 1, svm.num_available_devices());
     const std::vector<plssvm::detail::move_only_any> A{ util::init_implicit_matrices<csvm_type, device_ptr_type>(matr_A, svm, params, q, QA_cost) };
 
-    const plssvm::aos_matrix<plssvm::real_type> B{ { { plssvm::real_type{ 1.0 }, plssvm::real_type{ 2.0 }, plssvm::real_type{ 3.0 } },
+    const plssvm::soa_matrix<plssvm::real_type> B{ { { plssvm::real_type{ 1.0 }, plssvm::real_type{ 2.0 }, plssvm::real_type{ 3.0 } },
                                                      { plssvm::real_type{ 4.0 }, plssvm::real_type{ 5.0 }, plssvm::real_type{ 6.0 } },
                                                      { plssvm::real_type{ 7.0 }, plssvm::real_type{ 8.0 }, plssvm::real_type{ 9.0 } } } };
 
     const plssvm::real_type beta{ 0.5 };
-    auto C = util::generate_specific_matrix<plssvm::aos_matrix<plssvm::real_type>>(plssvm::shape{ 3, 3 });
-    plssvm::aos_matrix<plssvm::real_type> C2{ C };
-    plssvm::aos_matrix<plssvm::real_type> correct_C{ C };
+    auto C = util::generate_specific_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ 3, 3 });
+    plssvm::soa_matrix<plssvm::real_type> C2{ C };
+    plssvm::soa_matrix<plssvm::real_type> correct_C{ C };
 
     // perform BLAS calculation
     svm.blas_level_3(solver, alpha, A, B, beta, C);
@@ -571,15 +571,15 @@ TYPED_TEST_P(GenericCSVMKernelFunction, predict_values) {
     }
 
     // create the data that should be used
-    const plssvm::aos_matrix<plssvm::real_type> support_vectors{ { { plssvm::real_type{ 1.0 }, plssvm::real_type{ 0.0 }, plssvm::real_type{ 0.0 }, plssvm::real_type{ 0.0 } },
+    const plssvm::soa_matrix<plssvm::real_type> support_vectors{ { { plssvm::real_type{ 1.0 }, plssvm::real_type{ 0.0 }, plssvm::real_type{ 0.0 }, plssvm::real_type{ 0.0 } },
                                                                    { plssvm::real_type{ 0.0 }, plssvm::real_type{ 1.0 }, plssvm::real_type{ 0.0 }, plssvm::real_type{ 0.0 } },
                                                                    { plssvm::real_type{ 0.0 }, plssvm::real_type{ 0.0 }, plssvm::real_type{ 1.0 }, plssvm::real_type{ 0.0 } },
                                                                    { plssvm::real_type{ 0.0 }, plssvm::real_type{ 0.0 }, plssvm::real_type{ 0.0 }, plssvm::real_type{ 1.0 } } } };
     const plssvm::aos_matrix<plssvm::real_type> weights{ { { plssvm::real_type{ 1.0 }, plssvm::real_type{ -1.0 }, plssvm::real_type{ 1.0 }, plssvm::real_type{ -1.0 } },
                                                            { plssvm::real_type{ 1.0 }, plssvm::real_type{ -1.0 }, plssvm::real_type{ 1.0 }, plssvm::real_type{ -1.0 } } } };
     const std::vector<plssvm::real_type> rho{ plssvm::real_type{ 0.0 }, plssvm::real_type{ 0.0 } };
-    plssvm::aos_matrix<plssvm::real_type> w{};
-    const plssvm::aos_matrix<plssvm::real_type> data{ { { plssvm::real_type{ 1.0 }, plssvm::real_type{ 1.0 }, plssvm::real_type{ 1.0 }, plssvm::real_type{ 1.0 } },
+    plssvm::soa_matrix<plssvm::real_type> w{};
+    const plssvm::soa_matrix<plssvm::real_type> data{ { { plssvm::real_type{ 1.0 }, plssvm::real_type{ 1.0 }, plssvm::real_type{ 1.0 }, plssvm::real_type{ 1.0 } },
                                                         { plssvm::real_type{ 1.0 }, plssvm::real_type{ 2.0 }, plssvm::real_type{ 1.0 }, plssvm::real_type{ 2.0 } } } };
 
     // create C-SVM: must be done using the mock class since the member function to test is private or protected
@@ -592,7 +592,7 @@ TYPED_TEST_P(GenericCSVMKernelFunction, predict_values) {
     const plssvm::aos_matrix<plssvm::real_type> calculated = svm.predict_values(params, support_vectors, weights, rho, w, data);
 
     // calculate correct predict values
-    plssvm::aos_matrix<plssvm::real_type> correct_w;
+    plssvm::soa_matrix<plssvm::real_type> correct_w;
     if (kernel == plssvm::kernel_function_type::linear) {
         correct_w = ground_truth::calculate_w(weights, support_vectors);
     }
@@ -604,7 +604,7 @@ TYPED_TEST_P(GenericCSVMKernelFunction, predict_values) {
     // in case of the linear kernel, the w vector should have been filled
     if (kernel == plssvm::kernel_function_type::linear) {
         EXPECT_EQ(w.num_rows(), rho.size());
-        EXPECT_FLOATING_POINT_MATRIX_NEAR(w, (plssvm::aos_matrix<plssvm::real_type>{ weights }));
+        EXPECT_FLOATING_POINT_MATRIX_NEAR(w, (plssvm::soa_matrix<plssvm::real_type>{ weights }));
     } else {
         EXPECT_TRUE(w.empty());
     }
@@ -625,17 +625,17 @@ TYPED_TEST_P(GenericCSVMKernelFunction, predict_values_provided_w) {
         }
 
         // create the data that should be used
-        const plssvm::aos_matrix<plssvm::real_type> support_vectors{ { { plssvm::real_type{ 1.0 }, plssvm::real_type{ 0.0 }, plssvm::real_type{ 0.0 }, plssvm::real_type{ 0.0 } },
+        const plssvm::soa_matrix<plssvm::real_type> support_vectors{ { { plssvm::real_type{ 1.0 }, plssvm::real_type{ 0.0 }, plssvm::real_type{ 0.0 }, plssvm::real_type{ 0.0 } },
                                                                        { plssvm::real_type{ 0.0 }, plssvm::real_type{ 1.0 }, plssvm::real_type{ 0.0 }, plssvm::real_type{ 0.0 } },
                                                                        { plssvm::real_type{ 0.0 }, plssvm::real_type{ 0.0 }, plssvm::real_type{ 1.0 }, plssvm::real_type{ 0.0 } },
                                                                        { plssvm::real_type{ 0.0 }, plssvm::real_type{ 0.0 }, plssvm::real_type{ 0.0 }, plssvm::real_type{ 1.0 } } } };
         const plssvm::aos_matrix<plssvm::real_type> weights{ { { plssvm::real_type{ 1.0 }, plssvm::real_type{ -1.0 }, plssvm::real_type{ 1.0 }, plssvm::real_type{ -1.0 } },
                                                                { plssvm::real_type{ 1.0 }, plssvm::real_type{ -1.0 }, plssvm::real_type{ 1.0 }, plssvm::real_type{ -1.0 } } } };
         const std::vector<plssvm::real_type> rho{ plssvm::real_type{ 0.0 }, plssvm::real_type{ 0.0 } };
-        plssvm::aos_matrix<plssvm::real_type> w{ { { plssvm::real_type{ 1.0 }, plssvm::real_type{ -1.0 }, plssvm::real_type{ 1.0 }, plssvm::real_type{ -1.0 } },
+        plssvm::soa_matrix<plssvm::real_type> w{ { { plssvm::real_type{ 1.0 }, plssvm::real_type{ -1.0 }, plssvm::real_type{ 1.0 }, plssvm::real_type{ -1.0 } },
                                                    { plssvm::real_type{ 1.0 }, plssvm::real_type{ -1.0 }, plssvm::real_type{ 1.0 }, plssvm::real_type{ -1.0 } } } };
-        const plssvm::aos_matrix<plssvm::real_type> correct_w{ w };
-        const plssvm::aos_matrix<plssvm::real_type> data{ { { plssvm::real_type{ 1.0 }, plssvm::real_type{ 1.0 }, plssvm::real_type{ 1.0 }, plssvm::real_type{ 1.0 } },
+        const plssvm::soa_matrix<plssvm::real_type> correct_w{ w };
+        const plssvm::soa_matrix<plssvm::real_type> data{ { { plssvm::real_type{ 1.0 }, plssvm::real_type{ 1.0 }, plssvm::real_type{ 1.0 }, plssvm::real_type{ 1.0 } },
                                                             { plssvm::real_type{ 1.0 }, plssvm::real_type{ -1.0 }, plssvm::real_type{ 1.0 }, plssvm::real_type{ -1.0 } } } };
 
         // the correct result
@@ -656,7 +656,7 @@ TYPED_TEST_P(GenericCSVMKernelFunction, predict_values_provided_w) {
         EXPECT_FLOATING_POINT_MATRIX_NEAR(calculated, correct_predict_values);
         // in case of the linear kernel, the w vector should not have changed
         EXPECT_FLOATING_POINT_MATRIX_EQ(w, correct_w);
-        EXPECT_FLOATING_POINT_MATRIX_NEAR(w, (plssvm::aos_matrix<plssvm::real_type>{ weights }));
+        EXPECT_FLOATING_POINT_MATRIX_NEAR(w, (plssvm::soa_matrix<plssvm::real_type>{ weights }));
     }
 }
 
@@ -671,7 +671,7 @@ TYPED_TEST_P(GenericCSVMKernelFunction, perform_dimensional_reduction) {
         params.gamma = plssvm::real_type{ 1.0 };
     }
 
-    const auto data = util::generate_specific_matrix<plssvm::aos_matrix<plssvm::real_type>>(plssvm::shape{ 6, 4 });
+    const auto data = util::generate_specific_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ 6, 4 });
 
     // create C-SVM: must be done using the mock class since the member function to test is private or protected
     const mock_csvm_type svm = util::construct_from_tuple<mock_csvm_type>(params, csvm_test_type::additional_arguments);
@@ -717,7 +717,7 @@ TYPED_TEST_P(GenericCSVMSolver, solve_lssvm_system_of_linear_equations_trivial) 
 
     // create the data that should be used
     // Matrix with 1-1/cost on main diagonal. Thus, the diagonal entries become one with the additional addition of 1/cost
-    const plssvm::aos_matrix<plssvm::real_type> A{ { { plssvm::real_type{ std::sqrt(plssvm::real_type{ 1.0 } - (plssvm::real_type{ 1.0 } / params.cost)) }, plssvm::real_type{ 0.0 }, plssvm::real_type{ 0.0 }, plssvm::real_type{ 0.0 } },
+    const plssvm::soa_matrix<plssvm::real_type> A{ { { plssvm::real_type{ std::sqrt(plssvm::real_type{ 1.0 } - (plssvm::real_type{ 1.0 } / params.cost)) }, plssvm::real_type{ 0.0 }, plssvm::real_type{ 0.0 }, plssvm::real_type{ 0.0 } },
                                                      { plssvm::real_type{ 0.0 }, plssvm::real_type{ std::sqrt(plssvm::real_type{ 1.0 } - (plssvm::real_type{ 1.0 } / params.cost)) }, plssvm::real_type{ 0.0 }, plssvm::real_type{ 0.0 } },
                                                      { plssvm::real_type{ 0.0 }, plssvm::real_type{ 0.0 }, plssvm::real_type{ std::sqrt(plssvm::real_type{ 1.0 } - (plssvm::real_type{ 1.0 } / params.cost)) }, plssvm::real_type{ 0.0 } },
                                                      { plssvm::real_type{ 0.0 }, plssvm::real_type{ 0.0 }, plssvm::real_type{ 0.0 }, plssvm::real_type{ std::sqrt(plssvm::real_type{ 1.0 } - (plssvm::real_type{ 1.0 } / params.cost)) } } } };
@@ -758,7 +758,7 @@ TYPED_TEST_P(GenericCSVMSolver, solve_lssvm_system_of_linear_equations) {
     }
 
     // create the data that should be used
-    const auto A = util::generate_specific_matrix<plssvm::aos_matrix<plssvm::real_type>>(plssvm::shape{ 4, 4 });
+    const auto A = util::generate_specific_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ 4, 4 });
     const plssvm::aos_matrix<plssvm::real_type> B{ { { plssvm::real_type{ 1.0 }, plssvm::real_type{ -1.0 }, plssvm::real_type{ 1.0 }, plssvm::real_type{ -1.0 } },
                                                      { plssvm::real_type{ -1.0 }, plssvm::real_type{ 1.0 }, plssvm::real_type{ -1.0 }, plssvm::real_type{ 1.0 } } } };
 
@@ -815,7 +815,7 @@ TYPED_TEST_P(GenericCSVMSolverKernelFunction, assemble_kernel_matrix_minimal) {
     if constexpr (kernel == plssvm::kernel_function_type::polynomial || kernel == plssvm::kernel_function_type::sigmoid) {
         params.coef0 = 0.0;
     }
-    const plssvm::aos_matrix<plssvm::real_type> data{ { { plssvm::real_type{ 1.0 }, plssvm::real_type{ 2.0 }, plssvm::real_type{ 3.0 } },
+    const plssvm::soa_matrix<plssvm::real_type> data{ { { plssvm::real_type{ 1.0 }, plssvm::real_type{ 2.0 }, plssvm::real_type{ 3.0 } },
                                                         { plssvm::real_type{ 4.0 }, plssvm::real_type{ 5.0 }, plssvm::real_type{ 6.0 } },
                                                         { plssvm::real_type{ 7.0 }, plssvm::real_type{ 8.0 }, plssvm::real_type{ 9.0 } } } };  // 3 x 3 -> assemble 2 x 2 matrix
     [[maybe_unused]] const std::vector<plssvm::real_type> q_red(data.num_cols() - 1, plssvm::real_type{ 0.0 });
@@ -885,7 +885,7 @@ TYPED_TEST_P(GenericCSVMSolverKernelFunction, assemble_kernel_matrix_minimal) {
 
                 // implicit doesn't assemble a kernel matrix!
                 if constexpr (plssvm::csvm_to_backend_type_v<csvm_type> == plssvm::backend_type::openmp || plssvm::csvm_to_backend_type_v<csvm_type> == plssvm::backend_type::stdpar || plssvm::csvm_to_backend_type_v<csvm_type> == plssvm::backend_type::hpx) {
-                    const auto &[data_d_ret, params_ret, q_red_ret, QA_cost_ret] = plssvm::detail::move_only_any_cast<const std::tuple<plssvm::aos_matrix<plssvm::real_type>, plssvm::parameter, std::vector<plssvm::real_type>, plssvm::real_type> &>(kernel_matrix_d[device_id]);
+                    const auto &[data_d_ret, params_ret, q_red_ret, QA_cost_ret] = plssvm::detail::move_only_any_cast<const std::tuple<plssvm::soa_matrix<plssvm::real_type>, plssvm::parameter, std::vector<plssvm::real_type>, plssvm::real_type> &>(kernel_matrix_d[device_id]);
 
                     // the values should not have changed! (except the matrix layout)
                     EXPECT_EQ(params_ret, params);
@@ -896,7 +896,7 @@ TYPED_TEST_P(GenericCSVMSolverKernelFunction, assemble_kernel_matrix_minimal) {
                     const auto &[exec, data_d_ret, params_ret, q_red_d_ret, QA_cost_ret] = plssvm::detail::move_only_any_cast<const std::tuple<plssvm::detail::execution_range, device_ptr_type, plssvm::parameter, device_ptr_type, plssvm::real_type> &>(kernel_matrix_d[device_id]);
 
                     // copy data back to host
-                    plssvm::aos_matrix<plssvm::real_type> data_ret{ data };
+                    plssvm::soa_matrix<plssvm::real_type> data_ret{ data };
                     data_d_ret.copy_to_host(data_ret);
                     std::vector<plssvm::real_type> q_red_ret(q_red.size());
                     q_red_d_ret.copy_to_host(q_red_ret, 0, q_red_ret.size());
@@ -927,7 +927,7 @@ TYPED_TEST_P(GenericCSVMSolverKernelFunction, assemble_kernel_matrix) {
     if constexpr (kernel == plssvm::kernel_function_type::polynomial || kernel == plssvm::kernel_function_type::sigmoid) {
         params.coef0 = 1.0;
     }
-    const plssvm::aos_matrix<plssvm::real_type> data{ { { plssvm::real_type{ 1.0 }, plssvm::real_type{ 2.0 }, plssvm::real_type{ 3.0 } },
+    const plssvm::soa_matrix<plssvm::real_type> data{ { { plssvm::real_type{ 1.0 }, plssvm::real_type{ 2.0 }, plssvm::real_type{ 3.0 } },
                                                         { plssvm::real_type{ 4.0 }, plssvm::real_type{ 5.0 }, plssvm::real_type{ 6.0 } },
                                                         { plssvm::real_type{ 7.0 }, plssvm::real_type{ 8.0 }, plssvm::real_type{ 9.0 } } } };
     [[maybe_unused]] const std::vector<plssvm::real_type> q_red = { plssvm::real_type{ 3.0 }, plssvm::real_type{ 4.0 } };
@@ -997,7 +997,7 @@ TYPED_TEST_P(GenericCSVMSolverKernelFunction, assemble_kernel_matrix) {
 
                 // implicit doesn't assemble a kernel matrix!
                 if constexpr (plssvm::csvm_to_backend_type_v<csvm_type> == plssvm::backend_type::openmp || plssvm::csvm_to_backend_type_v<csvm_type> == plssvm::backend_type::stdpar || plssvm::csvm_to_backend_type_v<csvm_type> == plssvm::backend_type::hpx) {
-                    const auto &[data_d_ret, params_ret, q_red_ret, QA_cost_ret] = plssvm::detail::move_only_any_cast<const std::tuple<plssvm::aos_matrix<plssvm::real_type>, plssvm::parameter, std::vector<plssvm::real_type>, plssvm::real_type> &>(kernel_matrix_d[device_id]);
+                    const auto &[data_d_ret, params_ret, q_red_ret, QA_cost_ret] = plssvm::detail::move_only_any_cast<const std::tuple<plssvm::soa_matrix<plssvm::real_type>, plssvm::parameter, std::vector<plssvm::real_type>, plssvm::real_type> &>(kernel_matrix_d[device_id]);
 
                     // the values should not have changed! (except the matrix layout)
                     EXPECT_EQ(params_ret, params);
@@ -1008,7 +1008,7 @@ TYPED_TEST_P(GenericCSVMSolverKernelFunction, assemble_kernel_matrix) {
                     const auto &[exec, data_d_ret, params_ret, q_red_d_ret, QA_cost_ret] = plssvm::detail::move_only_any_cast<const std::tuple<plssvm::detail::execution_range, device_ptr_type, plssvm::parameter, device_ptr_type, plssvm::real_type> &>(kernel_matrix_d[device_id]);
 
                     // copy data back to host
-                    plssvm::aos_matrix<plssvm::real_type> data_ret{ data };
+                    plssvm::soa_matrix<plssvm::real_type> data_ret{ data };
                     data_d_ret.copy_to_host(data_ret);
                     std::vector<plssvm::real_type> q_red_ret(q_red.size());
                     q_red_d_ret.copy_to_host(q_red_ret, 0, q_red_ret.size());
@@ -1059,12 +1059,12 @@ TYPED_TEST_P(GenericCSVMDeathTest, blas_level_3_automatic) {
     svm.data_distribution_ = std::make_unique<plssvm::detail::triangular_data_distribution>(plssvm::mpi::communicator{}, matr_A.num_rows(), svm.num_available_devices());
     const std::vector<plssvm::detail::move_only_any> A{ util::init_explicit_matrices<csvm_type, device_ptr_type>(matr_A, svm) };
 
-    const plssvm::aos_matrix<plssvm::real_type> B{ { { plssvm::real_type{ 1.0 }, plssvm::real_type{ 2.0 }, plssvm::real_type{ 3.0 } },
+    const plssvm::soa_matrix<plssvm::real_type> B{ { { plssvm::real_type{ 1.0 }, plssvm::real_type{ 2.0 }, plssvm::real_type{ 3.0 } },
                                                      { plssvm::real_type{ 4.0 }, plssvm::real_type{ 5.0 }, plssvm::real_type{ 6.0 } },
                                                      { plssvm::real_type{ 7.0 }, plssvm::real_type{ 8.0 }, plssvm::real_type{ 9.0 } } } };
 
     const plssvm::real_type beta{ 0.0 };
-    plssvm::aos_matrix<plssvm::real_type> C{ plssvm::shape{ 3, 3 } };
+    plssvm::soa_matrix<plssvm::real_type> C{ plssvm::shape{ 3, 3 } };
 
     // automatic solver type not permitted
     EXPECT_DEATH(svm.blas_level_3(solver, alpha, A, B, beta, C), "An explicit solver type must be provided instead of solver_type::automatic!");
@@ -1088,7 +1088,7 @@ TYPED_TEST_P(GenericCSVMSolverDeathTest, conjugate_gradients_empty_B) {
     // create C-SVM: must be done using the mock class since the member function to test is private or protected
     const mock_csvm_type svm{};
 
-    const plssvm::aos_matrix<plssvm::real_type> matr_A{ plssvm::shape{ 4, 4 } };
+    const plssvm::soa_matrix<plssvm::real_type> matr_A{ plssvm::shape{ 4, 4 } };
     // parameter necessary for cg_implicit
     const plssvm::parameter params{ plssvm::gamma = plssvm::real_type{ 1.0 } };
     const std::vector<plssvm::real_type> q_red(matr_A.num_rows() - 1);
@@ -1099,7 +1099,7 @@ TYPED_TEST_P(GenericCSVMSolverDeathTest, conjugate_gradients_empty_B) {
     const std::vector<plssvm::detail::move_only_any> A{ util::init_matrices<csvm_type, device_ptr_type>(matr_A, solver, svm, params, q_red, QA_cost) };
 
     // create empty matrix
-    const plssvm::aos_matrix<plssvm::real_type> empty_matr{};
+    const plssvm::soa_matrix<plssvm::real_type> empty_matr{};
 
     EXPECT_DEATH(std::ignore = svm.conjugate_gradients(A, empty_matr, plssvm::real_type{ 0.001 }, 6, solver), "The right-hand sides must not be empty!");
 }
@@ -1114,7 +1114,7 @@ TYPED_TEST_P(GenericCSVMSolverDeathTest, conjugate_gradients_invalid_eps) {
     // create C-SVM: must be done using the mock class since the member function to test is private or protected
     const mock_csvm_type svm{};
 
-    const plssvm::aos_matrix<plssvm::real_type> matr_A{ plssvm::shape{ 4, 4 } };
+    const plssvm::soa_matrix<plssvm::real_type> matr_A{ plssvm::shape{ 4, 4 } };
     // parameter necessary for cg_implicit
     const plssvm::parameter params{ plssvm::gamma = plssvm::real_type{ 1.0 } };
     const std::vector<plssvm::real_type> q_red(matr_A.num_rows() - 1);
@@ -1124,7 +1124,7 @@ TYPED_TEST_P(GenericCSVMSolverDeathTest, conjugate_gradients_invalid_eps) {
     svm.data_distribution_ = std::make_unique<plssvm::detail::triangular_data_distribution>(plssvm::mpi::communicator{}, matr_A.num_rows(), svm.num_available_devices());
     const std::vector<plssvm::detail::move_only_any> A{ util::init_matrices<csvm_type, device_ptr_type>(matr_A, solver, svm, params, q_red, QA_cost) };
 
-    const plssvm::aos_matrix<plssvm::real_type> B{ plssvm::shape{ 1, 6 } };
+    const plssvm::soa_matrix<plssvm::real_type> B{ plssvm::shape{ 1, 6 } };
 
     EXPECT_DEATH(std::ignore = svm.conjugate_gradients(A, B, 0.0, 6, solver), "The epsilon value must be greater than 0.0!");
     EXPECT_DEATH(std::ignore = svm.conjugate_gradients(A, B, -0.5, 6, solver), "The epsilon value must be greater than 0.0!");
@@ -1140,7 +1140,7 @@ TYPED_TEST_P(GenericCSVMSolverDeathTest, conjugate_gradients_invalid_max_cg_iter
     // create C-SVM: must be done using the mock class since the member function to test is private or protected
     const mock_csvm_type svm{};
 
-    const plssvm::aos_matrix<plssvm::real_type> matr_A{ plssvm::shape{ 4, 4 } };
+    const plssvm::soa_matrix<plssvm::real_type> matr_A{ plssvm::shape{ 4, 4 } };
     // parameter necessary for cg_implicit
     const plssvm::parameter params{ plssvm::gamma = plssvm::real_type{ 1.0 } };
     const std::vector<plssvm::real_type> q_red(matr_A.num_rows() - 1);
@@ -1150,7 +1150,7 @@ TYPED_TEST_P(GenericCSVMSolverDeathTest, conjugate_gradients_invalid_max_cg_iter
     svm.data_distribution_ = std::make_unique<plssvm::detail::triangular_data_distribution>(plssvm::mpi::communicator{}, matr_A.num_rows(), svm.num_available_devices());
     const std::vector<plssvm::detail::move_only_any> A{ util::init_matrices<csvm_type, device_ptr_type>(matr_A, solver, svm, params, q_red, QA_cost) };
 
-    const plssvm::aos_matrix<plssvm::real_type> B{ plssvm::shape{ 1, 6 } };
+    const plssvm::soa_matrix<plssvm::real_type> B{ plssvm::shape{ 1, 6 } };
 
     EXPECT_DEATH(std::ignore = svm.conjugate_gradients(A, B, plssvm::real_type{ 0.001 }, 0, solver), "The maximum number of iterations must be greater than 0!");
 }
@@ -1168,7 +1168,7 @@ TYPED_TEST_P(GenericCSVMSolverDeathTest, run_blas_level_3_wrong_number_of_kernel
         // create C-SVM: must be done using the mock class since the member function to test is private or protected
         const mock_csvm_type svm{};
 
-        const plssvm::aos_matrix<plssvm::real_type> matr_A{ plssvm::shape{ 4, 4 } };
+        const plssvm::soa_matrix<plssvm::real_type> matr_A{ plssvm::shape{ 4, 4 } };
         // parameter necessary for cg_implicit
         const plssvm::parameter params{ plssvm::gamma = plssvm::real_type{ 1.0 } };
         const std::vector<plssvm::real_type> q_red(matr_A.num_rows() - 1);
@@ -1179,8 +1179,8 @@ TYPED_TEST_P(GenericCSVMSolverDeathTest, run_blas_level_3_wrong_number_of_kernel
         std::vector<plssvm::detail::move_only_any> A{ util::init_matrices<csvm_type, device_ptr_type>(matr_A, solver, svm, params, q_red, QA_cost) };
         A.pop_back();
 
-        const plssvm::aos_matrix<plssvm::real_type> B{ plssvm::shape{ 4, 4 } };
-        plssvm::aos_matrix<plssvm::real_type> C{ plssvm::shape{ 4, 4 } };
+        const plssvm::soa_matrix<plssvm::real_type> B{ plssvm::shape{ 4, 4 } };
+        plssvm::soa_matrix<plssvm::real_type> C{ plssvm::shape{ 4, 4 } };
 
         EXPECT_DEATH(std::ignore = svm.run_blas_level_3(solver, plssvm::real_type{ 1.0 }, A, B, plssvm::real_type{ 1.0 }, C),
                      ::testing::HasSubstr(fmt::format("Not enough kernel matrix parts ({}) for the available number of devices ({})!", A.size(), svm.num_available_devices())));
@@ -1200,7 +1200,7 @@ TYPED_TEST_P(GenericCSVMSolverDeathTest, blas_level_3_empty_matrices) {
         // create C-SVM: must be done using the mock class since the member function to test is private or protected
         const mock_csvm_type svm{};
 
-        const plssvm::aos_matrix<plssvm::real_type> matr_A{ plssvm::shape{ 4, 4 } };
+        const plssvm::soa_matrix<plssvm::real_type> matr_A{ plssvm::shape{ 4, 4 } };
         // parameter necessary for cg_implicit
         const plssvm::parameter params{ plssvm::gamma = plssvm::real_type{ 1.0 } };
         const std::vector<plssvm::real_type> q_red(matr_A.num_rows() - 1);
@@ -1210,8 +1210,8 @@ TYPED_TEST_P(GenericCSVMSolverDeathTest, blas_level_3_empty_matrices) {
         svm.data_distribution_ = std::make_unique<plssvm::detail::triangular_data_distribution>(plssvm::mpi::communicator{}, matr_A.num_rows(), svm.num_available_devices());
         const std::vector<plssvm::detail::move_only_any> A{ util::init_matrices<csvm_type, device_ptr_type>(matr_A, solver, svm, params, q_red, QA_cost) };
 
-        plssvm::aos_matrix<plssvm::real_type> matr{ plssvm::shape{ 4, 4 } };
-        plssvm::aos_matrix<plssvm::real_type> empty_matr{};
+        plssvm::soa_matrix<plssvm::real_type> matr{ plssvm::shape{ 4, 4 } };
+        plssvm::soa_matrix<plssvm::real_type> empty_matr{};
 
         EXPECT_DEATH(svm.blas_level_3(solver, plssvm::real_type{ 1.0 }, A, empty_matr, plssvm::real_type{ 1.0 }, matr), "The B matrix must not be empty!");
         EXPECT_DEATH(svm.blas_level_3(solver, plssvm::real_type{ 1.0 }, A, matr, plssvm::real_type{ 1.0 }, empty_matr), "The C matrix must not be empty!");
@@ -1231,7 +1231,7 @@ TYPED_TEST_P(GenericCSVMSolverDeathTest, blas_level_3_matrix_shape_mismatch) {
         // create C-SVM: must be done using the mock class since the member function to test is private or protected
         const mock_csvm_type svm{};
 
-        const plssvm::aos_matrix<plssvm::real_type> matr_A{ plssvm::shape{ 4, 4 } };
+        const plssvm::soa_matrix<plssvm::real_type> matr_A{ plssvm::shape{ 4, 4 } };
         // parameter necessary for cg_implicit
         const plssvm::parameter params{ plssvm::gamma = plssvm::real_type{ 1.0 } };
         const std::vector<plssvm::real_type> q_red(matr_A.num_rows() - 1);
@@ -1241,8 +1241,8 @@ TYPED_TEST_P(GenericCSVMSolverDeathTest, blas_level_3_matrix_shape_mismatch) {
         svm.data_distribution_ = std::make_unique<plssvm::detail::triangular_data_distribution>(plssvm::mpi::communicator{}, matr_A.num_rows(), svm.num_available_devices());
         const std::vector<plssvm::detail::move_only_any> A{ util::init_matrices<csvm_type, device_ptr_type>(matr_A, solver, svm, params, q_red, QA_cost) };
 
-        plssvm::aos_matrix<plssvm::real_type> B{ plssvm::shape{ 4, 4 } };
-        plssvm::aos_matrix<plssvm::real_type> C{ plssvm::shape{ 3, 3 } };
+        plssvm::soa_matrix<plssvm::real_type> B{ plssvm::shape{ 4, 4 } };
+        plssvm::soa_matrix<plssvm::real_type> C{ plssvm::shape{ 3, 3 } };
 
         EXPECT_DEATH(svm.blas_level_3(solver, plssvm::real_type{ 1.0 }, A, B, plssvm::real_type{ 1.0 }, C),
                      ::testing::HasSubstr("The B ([4, 4]) and C ([3, 3]) matrices must have the same shape!"));
@@ -1277,7 +1277,7 @@ TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, solve_lssvm_system_of_linear_eq
     const mock_csvm_type svm{};
 
     // create empty matrix
-    const plssvm::aos_matrix<plssvm::real_type> empty_matr{};
+    const plssvm::soa_matrix<plssvm::real_type> empty_matr{};
     const plssvm::aos_matrix<plssvm::real_type> B{ plssvm::shape{ 1, 4 } };
 
     EXPECT_DEATH(std::ignore = svm.solve_lssvm_system_of_linear_equations(empty_matr, B, params), "The A matrix must not be empty!");
@@ -1299,7 +1299,7 @@ TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, solve_lssvm_system_of_linear_eq
 
     // create empty matrix
     const plssvm::aos_matrix<plssvm::real_type> empty_matr{};
-    const plssvm::aos_matrix<plssvm::real_type> A{ plssvm::shape{ 6, 4 } };
+    const plssvm::soa_matrix<plssvm::real_type> A{ plssvm::shape{ 6, 4 } };
 
     EXPECT_DEATH(std::ignore = svm.solve_lssvm_system_of_linear_equations(A, empty_matr, params), "The B matrix must not be empty!");
 }
@@ -1319,7 +1319,7 @@ TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, solve_lssvm_system_of_linear_eq
     const mock_csvm_type svm{};
 
     // create empty matrix
-    const plssvm::aos_matrix<plssvm::real_type> A{ plssvm::shape{ 6, 4 } };
+    const plssvm::soa_matrix<plssvm::real_type> A{ plssvm::shape{ 6, 4 } };
     const plssvm::aos_matrix<plssvm::real_type> B{ plssvm::shape{ 1, 3 } };
 
     EXPECT_DEATH(std::ignore = svm.solve_lssvm_system_of_linear_equations(A, B, params), ::testing::HasSubstr("The number of data points in A (6) and B (3) must be the same!"));
@@ -1340,7 +1340,7 @@ TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, perform_dimensional_reduction_e
     const mock_csvm_type svm{};
 
     // create empty matrix
-    const plssvm::aos_matrix<plssvm::real_type> empty_matr{};
+    const plssvm::soa_matrix<plssvm::real_type> empty_matr{};
 
     EXPECT_DEATH(std::ignore = svm.perform_dimensional_reduction(params, empty_matr), "The matrix must not be empty!");
 }
@@ -1360,7 +1360,7 @@ TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, assemble_kernel_matrix_automati
     const mock_csvm_type svm{};
 
     // create correct input matrices
-    const auto A = util::generate_random_matrix<plssvm::aos_matrix<plssvm::real_type>>(plssvm::shape{ 4, 5 });
+    const auto A = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ 4, 5 });
     const std::vector<plssvm::real_type> q_red(A.num_rows() - 1);
     const plssvm::real_type QA_cost = 42.0;
 
@@ -1387,14 +1387,14 @@ TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, predict_values_empty_matrices) 
 
     // create empty matrix
     const plssvm::aos_matrix<plssvm::real_type> empty_aos_matr{};
-    const plssvm::aos_matrix<plssvm::real_type> empty_soa_matr{};
+    const plssvm::soa_matrix<plssvm::real_type> empty_soa_matr{};
 
     // create correct input matrices
-    const auto support_vectors = util::generate_random_matrix<plssvm::aos_matrix<plssvm::real_type>>(plssvm::shape{ 4, 4 });
+    const auto support_vectors = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ 4, 4 });
     const auto weights = util::generate_random_matrix<plssvm::aos_matrix<plssvm::real_type>>(plssvm::shape{ 2, 4 });
     const std::vector<plssvm::real_type> rho(2);
-    plssvm::aos_matrix<plssvm::real_type> w{};
-    const auto data = util::generate_random_matrix<plssvm::aos_matrix<plssvm::real_type>>(plssvm::shape{ 2, 4 });
+    plssvm::soa_matrix<plssvm::real_type> w{};
+    const auto data = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ 2, 4 });
 
     // be sure to use the correct data distribution
     svm.data_distribution_ = std::make_unique<plssvm::detail::triangular_data_distribution>(plssvm::mpi::communicator{}, data.num_rows(), svm.num_available_devices());
@@ -1422,11 +1422,11 @@ TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, predict_values_sv_alpha_size_mi
     const mock_csvm_type svm{};
 
     // create correct input matrices
-    const auto support_vectors = util::generate_random_matrix<plssvm::aos_matrix<plssvm::real_type>>(plssvm::shape{ 3, 4 });
+    const auto support_vectors = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ 3, 4 });
     const auto weights = util::generate_random_matrix<plssvm::aos_matrix<plssvm::real_type>>(plssvm::shape{ 2, 4 });
     const std::vector<plssvm::real_type> rho(2);
-    plssvm::aos_matrix<plssvm::real_type> w{};
-    const auto data = util::generate_random_matrix<plssvm::aos_matrix<plssvm::real_type>>(plssvm::shape{ 2, 4 });
+    plssvm::soa_matrix<plssvm::real_type> w{};
+    const auto data = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ 2, 4 });
 
     // be sure to use the correct data distribution
     svm.data_distribution_ = std::make_unique<plssvm::detail::triangular_data_distribution>(plssvm::mpi::communicator{}, data.num_rows(), svm.num_available_devices());
@@ -1450,11 +1450,11 @@ TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, predict_values_rho_alpha_size_m
     const mock_csvm_type svm{};
 
     // create correct input matrices
-    const auto support_vectors = util::generate_random_matrix<plssvm::aos_matrix<plssvm::real_type>>(plssvm::shape{ 4, 4 });
+    const auto support_vectors = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ 4, 4 });
     const auto weights = util::generate_random_matrix<plssvm::aos_matrix<plssvm::real_type>>(plssvm::shape{ 2, 4 });
     const std::vector<plssvm::real_type> rho(1);
-    plssvm::aos_matrix<plssvm::real_type> w{};
-    const auto data = util::generate_random_matrix<plssvm::aos_matrix<plssvm::real_type>>(plssvm::shape{ 2, 4 });
+    plssvm::soa_matrix<plssvm::real_type> w{};
+    const auto data = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ 2, 4 });
 
     // be sure to use the correct data distribution
     svm.data_distribution_ = std::make_unique<plssvm::detail::triangular_data_distribution>(plssvm::mpi::communicator{}, data.num_rows(), svm.num_available_devices());
@@ -1478,19 +1478,19 @@ TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, predict_values_w_size_mismatch)
     const mock_csvm_type svm{};
 
     // create correct input matrices
-    const auto support_vectors = util::generate_random_matrix<plssvm::aos_matrix<plssvm::real_type>>(plssvm::shape{ 4, 4 });
+    const auto support_vectors = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ 4, 4 });
     const auto weights = util::generate_random_matrix<plssvm::aos_matrix<plssvm::real_type>>(plssvm::shape{ 2, 4 });
     const std::vector<plssvm::real_type> rho(2);
-    const auto data = util::generate_random_matrix<plssvm::aos_matrix<plssvm::real_type>>(plssvm::shape{ 2, 4 });
+    const auto data = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ 2, 4 });
 
     // be sure to use the correct data distribution
     svm.data_distribution_ = std::make_unique<plssvm::detail::triangular_data_distribution>(plssvm::mpi::communicator{}, data.num_rows(), svm.num_available_devices());
 
     // the number of features and w values must be identical
-    auto w = util::generate_random_matrix<plssvm::aos_matrix<plssvm::real_type>>(plssvm::shape{ 2, 3 });
+    auto w = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ 2, 3 });
     EXPECT_DEATH(std::ignore = svm.predict_values(params, support_vectors, weights, rho, w, data), ::testing::HasSubstr("Either w must be empty or contain exactly the same number of values (3) as features are present (4)!"));
     // the number of weight and w vectors must be identical
-    w = util::generate_random_matrix<plssvm::aos_matrix<plssvm::real_type>>(plssvm::shape{ 3, 4 });
+    w = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ 3, 4 });
     EXPECT_DEATH(std::ignore = svm.predict_values(params, support_vectors, weights, rho, w, data), ::testing::HasSubstr("Either w must be empty or contain exactly the same number of vectors (3) as the alpha vector (2)!"));
 }
 
@@ -1509,11 +1509,11 @@ TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, predict_values_num_features_mis
     const mock_csvm_type svm{};
 
     // create correct input matrices
-    const auto support_vectors = util::generate_random_matrix<plssvm::aos_matrix<plssvm::real_type>>(plssvm::shape{ 4, 5 });
+    const auto support_vectors = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ 4, 5 });
     const auto weights = util::generate_random_matrix<plssvm::aos_matrix<plssvm::real_type>>(plssvm::shape{ 2, 4 });
     const std::vector<plssvm::real_type> rho(2);
-    plssvm::aos_matrix<plssvm::real_type> w{};
-    const auto data = util::generate_random_matrix<plssvm::aos_matrix<plssvm::real_type>>(plssvm::shape{ 2, 4 });
+    plssvm::soa_matrix<plssvm::real_type> w{};
+    const auto data = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ 2, 4 });
 
     // be sure to use the correct data distribution
     svm.data_distribution_ = std::make_unique<plssvm::detail::triangular_data_distribution>(plssvm::mpi::communicator{}, data.num_rows(), svm.num_available_devices());
@@ -1560,14 +1560,14 @@ TYPED_TEST_P(GenericCSVMSolverKernelFunctionDeathTest, assemble_kernel_matrix_em
         const mock_csvm_type svm{};
 
         // create correct input matrices
-        const auto A = util::generate_random_matrix<plssvm::aos_matrix<plssvm::real_type>>(plssvm::shape{ 4, 5 });
+        const auto A = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ 4, 5 });
         const std::vector<plssvm::real_type> q_red(A.num_rows() - 1);
         const plssvm::real_type QA_cost = 42.0;
 
         // be sure to use the correct data distribution
         svm.data_distribution_ = std::make_unique<plssvm::detail::triangular_data_distribution>(plssvm::mpi::communicator{}, A.num_rows() - 1, svm.num_available_devices());
 
-        const plssvm::aos_matrix<plssvm::real_type> empty_matr{};
+        const plssvm::soa_matrix<plssvm::real_type> empty_matr{};
         const std::vector<plssvm::real_type> empty_vec{};
 
         // the A matrix must not be empty
@@ -1596,7 +1596,7 @@ TYPED_TEST_P(GenericCSVMSolverKernelFunctionDeathTest, assemble_kernel_matrix_si
         const mock_csvm_type svm{};
 
         // create correct input matrices
-        const auto A = util::generate_random_matrix<plssvm::aos_matrix<plssvm::real_type>>(plssvm::shape{ 4, 5 });
+        const auto A = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ 4, 5 });
         const std::vector<plssvm::real_type> q_red(A.num_rows());
         const plssvm::real_type QA_cost = 42.0;
 

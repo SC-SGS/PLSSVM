@@ -51,9 +51,9 @@ __global__ void device_kernel_w_linear(real_type *w, const real_type *alpha, con
     if (global_feature_idx < num_features && global_class_idx < num_classes) {
         real_type temp{ 0.0 };
         for (std::size_t sv = 0; sv < device_num_sv; ++sv) {
-            temp += alpha[global_class_idx * num_sv + sv + device_sv_offset] * support_vectors[sv * num_features + global_feature_idx];
+            temp += alpha[global_class_idx * num_sv + sv + device_sv_offset] * support_vectors[global_feature_idx * device_num_sv + sv];
         }
-        w[global_class_idx * num_features + global_feature_idx] = temp;
+        w[global_feature_idx * num_classes + global_class_idx] = temp;
     }
 }
 
@@ -85,7 +85,7 @@ __global__ void device_kernel_predict_linear(real_type *prediction, const real_t
     if (global_pp_idx < num_predict_points && global_class_idx < num_classes) {
         real_type temp{ 0.0 };
         for (std::size_t feature = 0; feature < num_features; ++feature) {
-            temp += w[global_class_idx * num_features + feature] * predict_points[global_pp_idx * num_features + feature];
+            temp += w[feature * num_classes + global_class_idx] * predict_points[feature * num_predict_points + global_pp_idx];
         }
         prediction[global_pp_idx * num_classes + global_class_idx] = temp - rho[global_class_idx];
     }
@@ -126,8 +126,8 @@ __global__ void device_kernel_predict(real_type *prediction, const real_type *al
         real_type temp{ 0.0 };
         // perform the feature reduction calculation
         for (std::size_t feature = 0; feature < num_features; ++feature) {
-            temp += detail::feature_reduce<kernel_function>(support_vectors[global_sv_idx * num_features + feature],
-                                                            predict_points[global_pp_idx * num_features + feature]);
+            temp += detail::feature_reduce<kernel_function>(support_vectors[feature * num_sv + global_sv_idx],
+                                                            predict_points[feature * num_predict_points + global_pp_idx]);
         }
 
         // apply the final kernel function

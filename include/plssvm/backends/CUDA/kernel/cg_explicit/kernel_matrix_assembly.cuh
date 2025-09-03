@@ -59,8 +59,8 @@ __global__ void device_kernel_assembly(real_type *kernel_matrix, const real_type
         real_type temp{ 0.0 };
         // perform the feature reduction calculation
         for (std::size_t feature = 0; feature < num_features; ++feature) {
-            temp += detail::feature_reduce<kernel_function>(data[global_i_idx * num_features + feature],
-                                                            data[global_j_idx * num_features + feature]);
+            temp += detail::feature_reduce<kernel_function>(data[feature * (num_rows + std::size_t{ 1 }) + global_i_idx],
+                                                            data[feature * (num_rows + std::size_t{ 1 }) + global_j_idx]);
         }
 
         // apply the final kernel function

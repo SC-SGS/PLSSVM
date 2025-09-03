@@ -12,7 +12,7 @@
 #include "plssvm/data_set/min_max_scaler.hpp"  // plssvm::min_max_scaler
 #include "plssvm/detail/type_traits.hpp"       // plssvm::detail::remove_cvref_t
 #include "plssvm/file_format_types.hpp"        // plssvm::file_format_type
-#include "plssvm/matrix.hpp"                   // plssvm::aos_matrix
+#include "plssvm/matrix.hpp"                   // plssvm::soa_matrix
 #include "plssvm/mpi/communicator.hpp"         // plssvm::mpi::communicator
 
 #include "bindings/Python/data_set/variant_wrapper.hpp"                 // plssvm::bindings::python::util::classification_data_set_wrapper
@@ -62,7 +62,7 @@ void init_classification_data_set(py::module_ &m) {
              py::arg("format") = plssvm::file_format_type::libsvm,
              py::arg("scaler") = std::nullopt,
              py::arg("comm") = plssvm::mpi::communicator{})
-        .def(py::init([](plssvm::aos_matrix<plssvm::real_type> data, const std::optional<py::type> type, const std::optional<plssvm::min_max_scaler> scaler, plssvm::mpi::communicator comm) {
+        .def(py::init([](plssvm::soa_matrix<plssvm::real_type> data, const std::optional<py::type> type, const std::optional<plssvm::min_max_scaler> scaler, plssvm::mpi::communicator comm) {
                  if (type.has_value()) {
                      if (scaler.has_value()) {
                          return std::make_unique<classification_data_set_wrapper>(plssvm::bindings::python::util::create_instance<plssvm::classification_data_set, typename classification_data_set_wrapper::possible_data_set_types>(type.value(), std::move(comm), std::move(data), scaler.value()));
@@ -83,7 +83,7 @@ void init_classification_data_set(py::module_ &m) {
              py::arg("type") = std::nullopt,
              py::arg("scaler") = std::nullopt,
              py::arg("comm") = plssvm::mpi::communicator{})
-        .def(py::init([](plssvm::aos_matrix<plssvm::real_type> data, plssvm::bindings::python::util::label_vector_wrapper<typename classification_data_set_wrapper::possible_vector_types> labels, const std::optional<plssvm::min_max_scaler> scaler, plssvm::mpi::communicator comm) {
+        .def(py::init([](plssvm::soa_matrix<plssvm::real_type> data, plssvm::bindings::python::util::label_vector_wrapper<typename classification_data_set_wrapper::possible_vector_types> labels, const std::optional<plssvm::min_max_scaler> scaler, plssvm::mpi::communicator comm) {
                  return std::visit([&](auto &&labels_vector) {
                      using label_type = typename plssvm::detail::remove_cvref_t<decltype(labels_vector)>::value_type;
                      if (scaler.has_value()) {

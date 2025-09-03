@@ -20,7 +20,7 @@
 #include "plssvm/detail/tracking/performance_tracker.hpp"  // PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_EVENT, plssvm::detail::tracking::tracking_entry
 #include "plssvm/exceptions/exceptions.hpp"                // plssvm::invalid_parameter_exception, plssvm::mpi_exception
 #include "plssvm/kernel_function_types.hpp"                // plssvm::kernel_function_type
-#include "plssvm/matrix.hpp"                               // plssvm::aos_matrix
+#include "plssvm/matrix.hpp"                               // plssvm::aos_matrix, plssvm::soa_matrix
 #include "plssvm/model/regression_model.hpp"               // plssvm::regression_model
 #include "plssvm/parameter.hpp"                            // plssvm::parameter
 #include "plssvm/regression_report.hpp"                    // plssvm::regression_report
@@ -209,14 +209,14 @@ class csvr : virtual public csvm {
         std::vector<label_type> predicted_labels(data.num_data_points());
 
         PLSSVM_ASSERT(data.data_ptr_ != nullptr, "The data_ptr_ (predict points) may never be a nullptr!");
-        const aos_matrix<real_type> &predict_points = *data.data_ptr_;
+        const soa_matrix<real_type> &predict_points = *data.data_ptr_;
 
         PLSSVM_ASSERT(data.data_ptr_ != nullptr, "The data_ptr_ (model) may never be a nullptr!");
         PLSSVM_ASSERT(model.alpha_ptr_ != nullptr, "The alpha_ptr_ may never be a nullptr!");
         PLSSVM_ASSERT(model.alpha_ptr_->size() == 1, "The alpha vector must only contain a single aos_matrix of size {}x{}!", 1, model.num_support_vectors());
         PLSSVM_ASSERT(model.alpha_ptr_->front().num_rows() == 1, "The number of rows in the matrix must be exactly one, but is {}!", model.alpha_ptr_->front().num_rows());
 
-        const aos_matrix<real_type> &sv = model.support_vectors();
+        const soa_matrix<real_type> &sv = model.support_vectors();
         const aos_matrix<real_type> &alpha = model.alpha_ptr_->front();  // num_classes x num_data_points
 
         // predict values

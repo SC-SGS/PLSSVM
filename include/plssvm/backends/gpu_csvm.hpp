@@ -19,7 +19,7 @@
 #include "plssvm/detail/data_distribution.hpp"  // plssvm::detail::{data_distribution, triangular_data_distribution, rectangular_data_distribution}
 #include "plssvm/detail/move_only_any.hpp"      // plssvm::detail::{move_only_any, move_only_any_cast}
 #include "plssvm/kernel_function_types.hpp"     // plssvm::kernel_function_type
-#include "plssvm/matrix.hpp"                    // plssvm::aos_matrix
+#include "plssvm/matrix.hpp"                    // plssvm::aos_matrix, plssvm::soa_matrix
 #include "plssvm/parameter.hpp"                 // plssvm::parameter
 #include "plssvm/shape.hpp"                     // plssvm::shape
 #include "plssvm/solver_types.hpp"              // plssvm::solver_type
@@ -105,11 +105,11 @@ class gpu_csvm : virtual public ::plssvm::csvm {
     /**
      * @copydoc plssvm::csvm::assemble_kernel_matrix
      */
-    [[nodiscard]] std::vector<::plssvm::detail::move_only_any> assemble_kernel_matrix(solver_type solver, const parameter &params, const aos_matrix<real_type> &A, const std::vector<real_type> &q_red, real_type QA_cost) const final;
+    [[nodiscard]] std::vector<::plssvm::detail::move_only_any> assemble_kernel_matrix(solver_type solver, const parameter &params, const soa_matrix<real_type> &A, const std::vector<real_type> &q_red, real_type QA_cost) const final;
     /**
      * @copydoc plssvm::csvm::blas_level_3
      */
-    void blas_level_3(solver_type solver, real_type alpha, const std::vector<::plssvm::detail::move_only_any> &A, const aos_matrix<real_type> &B, real_type beta, aos_matrix<real_type> &C) const final;
+    void blas_level_3(solver_type solver, real_type alpha, const std::vector<::plssvm::detail::move_only_any> &A, const soa_matrix<real_type> &B, real_type beta, soa_matrix<real_type> &C) const final;
 
     //***************************************************//
     //                   predict, score                  //
@@ -117,7 +117,7 @@ class gpu_csvm : virtual public ::plssvm::csvm {
     /**
      * @copydoc plssvm::csvm::predict_values
      */
-    [[nodiscard]] aos_matrix<real_type> predict_values(const parameter &params, const aos_matrix<real_type> &support_vectors, const aos_matrix<real_type> &alpha, const std::vector<real_type> &rho, aos_matrix<real_type> &w, const aos_matrix<real_type> &predict_points) const final;
+    [[nodiscard]] aos_matrix<real_type> predict_values(const parameter &params, const soa_matrix<real_type> &support_vectors, const aos_matrix<real_type> &alpha, const std::vector<real_type> &rho, soa_matrix<real_type> &w, const soa_matrix<real_type> &predict_points) const final;
 
     //*************************************************************************************************************************************//
     //                                         pure virtual, must be implemented by all subclasses                                         //
@@ -224,7 +224,7 @@ class gpu_csvm : virtual public ::plssvm::csvm {
 //                        fit                        //
 //***************************************************//
 template <template <typename> typename device_ptr_t, typename queue_t, template <typename> typename pinned_memory_t>
-std::vector<::plssvm::detail::move_only_any> gpu_csvm<device_ptr_t, queue_t, pinned_memory_t>::assemble_kernel_matrix(const solver_type solver, const parameter &params, const aos_matrix<real_type> &A, const std::vector<real_type> &q_red, const real_type QA_cost) const {
+std::vector<::plssvm::detail::move_only_any> gpu_csvm<device_ptr_t, queue_t, pinned_memory_t>::assemble_kernel_matrix(const solver_type solver, const parameter &params, const soa_matrix<real_type> &A, const std::vector<real_type> &q_red, const real_type QA_cost) const {
     PLSSVM_ASSERT(solver != solver_type::automatic, "An explicit solver type must be provided instead of solver_type::automatic!");
     PLSSVM_ASSERT(!A.empty(), "The matrix to setup on the devices must not be empty!");
     PLSSVM_ASSERT(!q_red.empty(), "The q_red vector must not be empty!");
@@ -313,7 +313,7 @@ std::vector<::plssvm::detail::move_only_any> gpu_csvm<device_ptr_t, queue_t, pin
 }
 
 template <template <typename> typename device_ptr_t, typename queue_t, template <typename> typename pinned_memory_t>
-void gpu_csvm<device_ptr_t, queue_t, pinned_memory_t>::blas_level_3(const solver_type solver, const real_type alpha, const std::vector<::plssvm::detail::move_only_any> &A, const aos_matrix<real_type> &B, const real_type beta, aos_matrix<real_type> &C) const {
+void gpu_csvm<device_ptr_t, queue_t, pinned_memory_t>::blas_level_3(const solver_type solver, const real_type alpha, const std::vector<::plssvm::detail::move_only_any> &A, const soa_matrix<real_type> &B, const real_type beta, soa_matrix<real_type> &C) const {
     PLSSVM_ASSERT(solver != solver_type::automatic, "An explicit solver type must be provided instead of solver_type::automatic!");
     PLSSVM_ASSERT(A.size() == this->num_available_devices(), "Not enough kernel matrix parts ({}) for the available number of devices ({})!", A.size(), this->num_available_devices());
     PLSSVM_ASSERT(!B.empty(), "The B matrix must not be empty!");
@@ -457,11 +457,11 @@ void gpu_csvm<device_ptr_t, queue_t, pinned_memory_t>::blas_level_3(const solver
 //***************************************************//
 template <template <typename> typename device_ptr_t, typename queue_t, template <typename> typename pinned_memory_t>
 aos_matrix<real_type> gpu_csvm<device_ptr_t, queue_t, pinned_memory_t>::predict_values(const parameter &params,
-                                                                                       const aos_matrix<real_type> &support_vectors,
+                                                                                       const soa_matrix<real_type> &support_vectors,
                                                                                        const aos_matrix<real_type> &alpha,
                                                                                        const std::vector<real_type> &rho,
-                                                                                       aos_matrix<real_type> &w,
-                                                                                       const aos_matrix<real_type> &predict_points) const {
+                                                                                       soa_matrix<real_type> &w,
+                                                                                       const soa_matrix<real_type> &predict_points) const {
     PLSSVM_ASSERT(!support_vectors.empty(), "The support vectors must not be empty!");
     PLSSVM_ASSERT(!alpha.empty(), "The alpha vectors (weights) must not be empty!");
     PLSSVM_ASSERT(support_vectors.num_rows() == alpha.num_cols(), "The number of support vectors ({}) and number of weights ({}) must be the same!", support_vectors.num_rows(), alpha.num_cols());
@@ -574,7 +574,7 @@ aos_matrix<real_type> gpu_csvm<device_ptr_t, queue_t, pinned_memory_t>::predict_
             }
 
             // w_d[0] contains the final w vector
-            w = aos_matrix<real_type>{ shape{ num_classes, num_features } };
+            w = soa_matrix<real_type>{ shape{ num_classes, num_features } };
             w_d[0].copy_to_host(w);
 
             // reduce w on all MPI ranks

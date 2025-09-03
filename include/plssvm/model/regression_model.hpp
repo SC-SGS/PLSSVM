@@ -21,7 +21,7 @@
 #include "plssvm/detail/logging/mpi_log.hpp"                     // plssvm::detail::log
 #include "plssvm/detail/tracking/performance_tracker.hpp"        // PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY, plssvm::detail::tracking::tracking_entry
 #include "plssvm/detail/type_list.hpp"                           // plssvm::detail::{supported_label_types, tuple_contains_v}
-#include "plssvm/matrix.hpp"                                     // plssvm::aos_matrix
+#include "plssvm/matrix.hpp"                                     // plssvm::aos_matrix, plssvm::soa_matrix
 #include "plssvm/model/model.hpp"                                // plssvm::model
 #include "plssvm/mpi/communicator.hpp"                           // plssvm::mpi::communicator
 #include "plssvm/parameter.hpp"                                  // plssvm::parameter
@@ -131,7 +131,7 @@ regression_model<U>::regression_model(mpi::communicator comm, const std::string 
     std::tie(params_, *rho_ptr_, num_header_lines) = detail::io::parse_libsvm_model_header_regression(reader.lines());
 
     // create empty support vectors and alpha vector
-    aos_matrix<real_type> support_vectors{};
+    soa_matrix<real_type> support_vectors{};
 
     // parse libsvm model data
     std::tie(support_vectors, *alpha_ptr_) = detail::io::parse_libsvm_model_data_regression(reader, num_header_lines);

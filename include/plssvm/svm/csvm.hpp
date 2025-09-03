@@ -168,7 +168,7 @@ class csvm {
      * @param[in] QA_cost the value used in the dimensional reduction
      * @return based on the used solver type (e.g., cg_explicit -> kernel matrix fully stored on the device (distributed across the devices); cg_implicit -> "nothing") (`[[nodiscard]]`)
      */
-    [[nodiscard]] virtual std::vector<detail::move_only_any> assemble_kernel_matrix(solver_type solver, const parameter &params, const aos_matrix<real_type> &A, const std::vector<real_type> &q_red, real_type QA_cost) const = 0;
+    [[nodiscard]] virtual std::vector<detail::move_only_any> assemble_kernel_matrix(solver_type solver, const parameter &params, const soa_matrix<real_type> &A, const std::vector<real_type> &q_red, real_type QA_cost) const = 0;
 
     /**
      * @brief Perform a BLAS level 3 matrix-matrix multiplication: `C = alpha * A * B + beta * C`.
@@ -179,7 +179,7 @@ class csvm {
      * @param[in] beta the value to scale the matrix o add with
      * @param[in,out] C the result matrix and the matrix to add (inplace)
      */
-    virtual void blas_level_3(solver_type solver, real_type alpha, const std::vector<detail::move_only_any> &A, const aos_matrix<real_type> &B, real_type beta, aos_matrix<real_type> &C) const = 0;
+    virtual void blas_level_3(solver_type solver, real_type alpha, const std::vector<detail::move_only_any> &A, const soa_matrix<real_type> &B, real_type beta, soa_matrix<real_type> &C) const = 0;
 
     //***************************************************//
     //                   predict, score                  //
@@ -195,7 +195,7 @@ class csvm {
      * @throws plssvm::exception any exception thrown by the backend's implementation
      * @return a vector filled with the predictions (not the actual labels!) (`[[nodiscard]]`)
      */
-    [[nodiscard]] virtual aos_matrix<real_type> predict_values(const parameter &params, const aos_matrix<real_type> &support_vectors, const aos_matrix<real_type> &alpha, const std::vector<real_type> &rho, aos_matrix<real_type> &w, const aos_matrix<real_type> &predict_points) const = 0;
+    [[nodiscard]] virtual aos_matrix<real_type> predict_values(const parameter &params, const soa_matrix<real_type> &support_vectors, const aos_matrix<real_type> &alpha, const std::vector<real_type> &rho, soa_matrix<real_type> &w, const soa_matrix<real_type> &predict_points) const = 0;
 
     /**
      * @brief Solve the system of linear equations `K * X = B` where `K` is the kernel matrix assembled from @p A using the @p params with potentially multiple right-hand sides.
@@ -207,7 +207,7 @@ class csvm {
      * @return the result matrix `X`, the respective biases, and the number of iterations necessary for each right-hand side to converge (`[[nodiscard]]`)
      */
     template <typename... Args>
-    [[nodiscard]] std::tuple<aos_matrix<real_type>, std::vector<real_type>, std::vector<unsigned long long>> solve_lssvm_system_of_linear_equations(const aos_matrix<real_type> &A, const aos_matrix<real_type> &B, const parameter &params, Args &&...named_args) const;
+    [[nodiscard]] std::tuple<aos_matrix<real_type>, std::vector<real_type>, std::vector<unsigned long long>> solve_lssvm_system_of_linear_equations(const soa_matrix<real_type> &A, const aos_matrix<real_type> &B, const parameter &params, Args &&...named_args) const;
     /**
      * @brief Solve the system of linear equations `AX = B` where `A` is the kernel matrix using the Conjugate Gradients (CG) algorithm.
      * @param[in] A the kernel matrix; potentially distributed across multiple devices
@@ -217,7 +217,7 @@ class csvm {
      * @param[in] cg_solver the variation of the CG algorithm to use, i.e., how the kernel matrix is assembled (currently: explicit, streaming, implicit)
      * @return the result matrix `X` and the number of CG iterations necessary for each right-hand side to converge (`[[nodiscard]]`)
      */
-    [[nodiscard]] std::pair<aos_matrix<real_type>, std::vector<unsigned long long>> conjugate_gradients(const std::vector<detail::move_only_any> &A, const aos_matrix<real_type> &B, real_type eps, unsigned long long max_cg_iter, solver_type cg_solver) const;
+    [[nodiscard]] std::pair<soa_matrix<real_type>, std::vector<unsigned long long>> conjugate_gradients(const std::vector<detail::move_only_any> &A, const soa_matrix<real_type> &B, real_type eps, unsigned long long max_cg_iter, solver_type cg_solver) const;
     /**
      * @brief Perform a dimensional reduction for the kernel matrix.
      * @details Reduces the resulting dimension by `2` compared to the original LS-SVM formulation.
@@ -225,20 +225,20 @@ class csvm {
      * @param[in] A the data used for the kernel matrix
      * @return the reduction vector ´q_red` and the bottom-right value `QA_cost` (`[[nodiscard]]`)
      */
-    [[nodiscard]] std::pair<std::vector<real_type>, real_type> perform_dimensional_reduction(const parameter &params, const aos_matrix<real_type> &A) const;
+    [[nodiscard]] std::pair<std::vector<real_type>, real_type> perform_dimensional_reduction(const parameter &params, const soa_matrix<real_type> &A) const;
 
     /**
      * @copydoc plssvm::csvm::blas_level_3
      * @details Small wrapper around the virtual `plssvm::csvm::blas_level_3` function to easily track its execution time.
      * @returns the duration of the BLAS routine in milliseconds (`[[nodiscard]]`)
      */
-    [[nodiscard]] std::chrono::duration<long, std::milli> run_blas_level_3(solver_type solver, real_type alpha, const std::vector<detail::move_only_any> &A, const aos_matrix<real_type> &B, real_type beta, aos_matrix<real_type> &C) const;
+    [[nodiscard]] std::chrono::duration<long, std::milli> run_blas_level_3(solver_type solver, real_type alpha, const std::vector<detail::move_only_any> &A, const soa_matrix<real_type> &B, real_type beta, soa_matrix<real_type> &C) const;
 
     /**
      * @copydoc plssvm::csvm::predict_values
      * @details Small wrapper around the virtual `plssvm::csvm::predict_values` function to easily track its execution time.
      */
-    [[nodiscard]] aos_matrix<real_type> run_predict_values(const parameter &params, const aos_matrix<real_type> &support_vectors, const aos_matrix<real_type> &alpha, const std::vector<real_type> &rho, aos_matrix<real_type> &w, const aos_matrix<real_type> &predict_points) const;
+    [[nodiscard]] aos_matrix<real_type> run_predict_values(const parameter &params, const soa_matrix<real_type> &support_vectors, const aos_matrix<real_type> &alpha, const std::vector<real_type> &rho, soa_matrix<real_type> &w, const soa_matrix<real_type> &predict_points) const;
 
     /// The SVM parameter (e.g., cost, degree, gamma, coef0) currently in use.
     parameter params_{};
@@ -274,7 +274,7 @@ void csvm::set_params(Args &&...named_args) {
 //*************************************************************************************************************************************//
 
 template <typename... Args>
-std::tuple<aos_matrix<real_type>, std::vector<real_type>, std::vector<unsigned long long>> csvm::solve_lssvm_system_of_linear_equations(const aos_matrix<real_type> &A, const aos_matrix<real_type> &B, const parameter &params, Args &&...named_args) const {
+std::tuple<aos_matrix<real_type>, std::vector<real_type>, std::vector<unsigned long long>> csvm::solve_lssvm_system_of_linear_equations(const soa_matrix<real_type> &A, const aos_matrix<real_type> &B, const parameter &params, Args &&...named_args) const {
     PLSSVM_ASSERT(!A.empty(), "The A matrix must not be empty!");
     PLSSVM_ASSERT(!B.empty(), "The B matrix must not be empty!");
     PLSSVM_ASSERT(A.num_rows() == B.num_cols(), "The number of data points in A ({}) and B ({}) must be the same!", A.num_rows(), B.num_cols());
@@ -499,7 +499,7 @@ std::tuple<aos_matrix<real_type>, std::vector<real_type>, std::vector<unsigned l
 
     // update right-hand sides (B)
     std::vector<real_type> b_back_value(num_rhs);
-    aos_matrix<real_type> B_red{ shape{ num_rhs, num_rows_reduced } };
+    soa_matrix<real_type> B_red{ shape{ num_rhs, num_rows_reduced } };
 #pragma omp parallel for default(none) shared(B, B_red, b_back_value) firstprivate(num_rhs, num_rows_reduced)
     for (std::size_t row = 0; row < num_rhs; ++row) {
         b_back_value[row] = B(row, num_rows_reduced);
@@ -535,7 +535,7 @@ std::tuple<aos_matrix<real_type>, std::vector<real_type>, std::vector<unsigned l
     PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((detail::tracking::tracking_entry{ "kernel_matrix", "kernel_matrix_assembly", assembly_duration }));
 
     // choose the correct algorithm based on the (provided) solver type -> currently only CG available
-    aos_matrix<real_type> X{};
+    soa_matrix<real_type> X{};
     std::vector<unsigned long long> num_iter{};
     std::tie(X, num_iter) = this->conjugate_gradients(kernel_matrix, B_red, used_epsilon, used_max_iter, used_solver);
 

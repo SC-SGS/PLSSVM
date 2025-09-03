@@ -14,7 +14,7 @@
 #pragma once
 
 #include "plssvm/detail/data_distribution.hpp"  // plssvm::detail::data_distribution
-#include "plssvm/matrix.hpp"                    // plssvm::matrix, plssvm::aos_matrix, plssvm::aos_matrix, plssvm::layout_type
+#include "plssvm/matrix.hpp"                    // plssvm::matrix, plssvm::aos_matrix, plssvm::soa_matrix, plssvm::layout_type
 #include "plssvm/parameter.hpp"                 // plssvm::parameter
 
 #include <cstddef>  // std::size_t
@@ -183,7 +183,7 @@ template <typename real_type, plssvm::layout_type layout>
  * @return the predict values per new predict point and class (`[[nodiscard]]`)
  */
 template <typename real_type>
-[[nodiscard]] plssvm::aos_matrix<real_type> predict_values(const plssvm::parameter &params, const plssvm::aos_matrix<real_type> &w, const plssvm::aos_matrix<real_type> &weights, const std::vector<real_type> &rho, const plssvm::aos_matrix<real_type> &support_vectors, const plssvm::aos_matrix<real_type> &predict_points, std::size_t row_offset, std::size_t device_specific_num_rows);
+[[nodiscard]] plssvm::aos_matrix<real_type> predict_values(const plssvm::parameter &params, const plssvm::soa_matrix<real_type> &w, const plssvm::aos_matrix<real_type> &weights, const std::vector<real_type> &rho, const plssvm::soa_matrix<real_type> &support_vectors, const plssvm::soa_matrix<real_type> &predict_points, std::size_t row_offset, std::size_t device_specific_num_rows);
 
 }  // namespace detail
 
@@ -225,7 +225,7 @@ template <typename real_type, plssvm::layout_type layout>
  * @return the generated `q` vector (`[[nodiscard]]`)
  */
 template <typename real_type>
-[[nodiscard]] std::pair<std::vector<real_type>, real_type> perform_dimensional_reduction(const plssvm::parameter &params, const plssvm::aos_matrix<real_type> &data);
+[[nodiscard]] std::pair<std::vector<real_type>, real_type> perform_dimensional_reduction(const plssvm::parameter &params, const plssvm::soa_matrix<real_type> &data);
 
 /**
  * @brief Computes the @p device_id specific kernel matrix using the kernel function determined by @p params exploiting the kernel matrix's symmetry.
@@ -240,7 +240,7 @@ template <typename real_type>
  * @return the kernel matrix (upper triangle matrix) (`[[nodiscard]]`)
  */
 template <typename real_type>
-[[nodiscard]] std::vector<real_type> assemble_device_specific_kernel_matrix(const plssvm::parameter &params, const plssvm::aos_matrix<real_type> &data, const std::vector<real_type> &q, real_type QA_cost, const plssvm::detail::data_distribution &dist, std::size_t device_id);
+[[nodiscard]] std::vector<real_type> assemble_device_specific_kernel_matrix(const plssvm::parameter &params, const plssvm::soa_matrix<real_type> &data, const std::vector<real_type> &q, real_type QA_cost, const plssvm::detail::data_distribution &dist, std::size_t device_id);
 
 /**
  * @brief Computes the **full** kernel matrix using the kernel function determined by @p params.
@@ -253,7 +253,7 @@ template <typename real_type>
  * @return the kernel matrix (`[[nodiscard]]`)
  */
 template <typename real_type>
-[[nodiscard]] plssvm::aos_matrix<real_type> assemble_full_kernel_matrix(const plssvm::parameter &params, const plssvm::aos_matrix<real_type> &data, const std::vector<real_type> &q, real_type QA_cost);
+[[nodiscard]] plssvm::aos_matrix<real_type> assemble_full_kernel_matrix(const plssvm::parameter &params, const plssvm::soa_matrix<real_type> &data, const std::vector<real_type> &q, real_type QA_cost);
 
 /**
  * @brief Perform a BLAS Level 3 GEMM operation: `C = alpha * A * B + beta * C`
@@ -265,7 +265,7 @@ template <typename real_type>
  * @param[in, out] C the C matrix (also the result matrix)
  */
 template <typename real_type>
-void gemm(real_type alpha, const plssvm::aos_matrix<real_type> &A, const plssvm::aos_matrix<real_type> &B, real_type beta, plssvm::aos_matrix<real_type> &C);
+void gemm(real_type alpha, const plssvm::aos_matrix<real_type> &A, const plssvm::soa_matrix<real_type> &B, real_type beta, plssvm::soa_matrix<real_type> &C);
 
 /**
  * @brief Perform a @p device_id specific BLAS Level 3 GEMM operation: `C = alpha * A * B + beta * C`
@@ -278,7 +278,7 @@ void gemm(real_type alpha, const plssvm::aos_matrix<real_type> &A, const plssvm:
  * @param[in, out] C the C matrix (also the partial result matrix)
  */
 template <typename real_type>
-void device_specific_gemm(real_type alpha, const plssvm::aos_matrix<real_type> &A, const plssvm::aos_matrix<real_type> &B, plssvm::aos_matrix<real_type> &C, const plssvm::detail::data_distribution &dist, std::size_t device_id);
+void device_specific_gemm(real_type alpha, const plssvm::aos_matrix<real_type> &A, const plssvm::soa_matrix<real_type> &B, plssvm::soa_matrix<real_type> &C, const plssvm::detail::data_distribution &dist, std::size_t device_id);
 
 //*************************************************************************************************************************************//
 //                                                               predict                                                               //
@@ -293,7 +293,7 @@ void device_specific_gemm(real_type alpha, const plssvm::aos_matrix<real_type> &
  * @return the resulting `w` vector to speedup the prediction when using the linear kernel (`[[nodiscard]]`)
  */
 template <typename real_type>
-[[nodiscard]] plssvm::aos_matrix<real_type> calculate_w(const plssvm::aos_matrix<real_type> &weights, const plssvm::aos_matrix<real_type> &support_vectors);
+[[nodiscard]] plssvm::soa_matrix<real_type> calculate_w(const plssvm::aos_matrix<real_type> &weights, const plssvm::soa_matrix<real_type> &support_vectors);
 
 /**
  * @brief Compute the partial `w` vector for the device with @p device_id used to speedup the prediction when using the linear kernel.
@@ -306,7 +306,7 @@ template <typename real_type>
  * @return the resulting partial `w` vector to speedup the prediction when using the linear kernel (`[[nodiscard]]`)
  */
 template <typename real_type>
-[[nodiscard]] plssvm::aos_matrix<real_type> calculate_device_specific_w(const plssvm::aos_matrix<real_type> &weights, const plssvm::aos_matrix<real_type> &support_vectors, const plssvm::detail::data_distribution &dist, std::size_t device_id);
+[[nodiscard]] plssvm::soa_matrix<real_type> calculate_device_specific_w(const plssvm::aos_matrix<real_type> &weights, const plssvm::soa_matrix<real_type> &support_vectors, const plssvm::detail::data_distribution &dist, std::size_t device_id);
 
 /**
  * @brief Predict the values for the @p predict_points using the previously learned @p weights and @p support_vectors.
@@ -320,7 +320,7 @@ template <typename real_type>
  * @return the predict values per new predict point and class (`[[nodiscard]]`)
  */
 template <typename real_type>
-[[nodiscard]] plssvm::aos_matrix<real_type> predict_values(const plssvm::parameter &params, const plssvm::aos_matrix<real_type> &w, const plssvm::aos_matrix<real_type> &weights, const std::vector<real_type> &rho, const plssvm::aos_matrix<real_type> &support_vectors, const plssvm::aos_matrix<real_type> &predict_points);
+[[nodiscard]] plssvm::aos_matrix<real_type> predict_values(const plssvm::parameter &params, const plssvm::soa_matrix<real_type> &w, const plssvm::aos_matrix<real_type> &weights, const std::vector<real_type> &rho, const plssvm::soa_matrix<real_type> &support_vectors, const plssvm::soa_matrix<real_type> &predict_points);
 
 /**
  * @brief Predict the values for the @p device_id specific @p predict_points according to @p dist using the previously learned @p weights and @p support_vectors.
@@ -336,7 +336,7 @@ template <typename real_type>
  * @return the predict values per @p device_id specific predict point and class (`[[nodiscard]]`)
  */
 template <typename real_type>
-[[nodiscard]] plssvm::aos_matrix<real_type> predict_device_specific_values(const plssvm::parameter &params, const plssvm::aos_matrix<real_type> &w, const plssvm::aos_matrix<real_type> &weights, const std::vector<real_type> &rho, const plssvm::aos_matrix<real_type> &support_vectors, const plssvm::aos_matrix<real_type> &predict_points, const plssvm::detail::data_distribution &dist, std::size_t device_id);
+[[nodiscard]] plssvm::aos_matrix<real_type> predict_device_specific_values(const plssvm::parameter &params, const plssvm::soa_matrix<real_type> &w, const plssvm::aos_matrix<real_type> &weights, const std::vector<real_type> &rho, const plssvm::soa_matrix<real_type> &support_vectors, const plssvm::soa_matrix<real_type> &predict_points, const plssvm::detail::data_distribution &dist, std::size_t device_id);
 
 }  // namespace ground_truth
 

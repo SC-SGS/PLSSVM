@@ -24,7 +24,7 @@
 #include "plssvm/detail/string_utility.hpp"             // plssvm::detail::{trim, trim_left, to_lower_case}
 #include "plssvm/gamma.hpp"                             // plssvm::get_gamma_string
 #include "plssvm/kernel_function_types.hpp"             // plssvm::kernel_function_type
-#include "plssvm/matrix.hpp"                            // plssvm::aos_matrix
+#include "plssvm/matrix.hpp"                            // plssvm::aos_matrix, plssvm::soa_matrix
 #include "plssvm/mpi/communicator.hpp"                  // plssvm::mpi::communicator
 #include "plssvm/parameter.hpp"                         // plssvm::parameter
 #include "plssvm/shape.hpp"                             // plssvm::shape
@@ -255,7 +255,7 @@ namespace plssvm::detail::io {
  * @attention The PLSSVM model file is currently not compatible with LIBSVM due to other "svm_type" entries.
  * @return [the data points; the weights] (`[[nodiscard]]`)
  */
-[[nodiscard]] inline std::tuple<aos_matrix<real_type>, std::vector<aos_matrix<real_type>>> parse_libsvm_model_data_regression(const file_reader &reader, const std::size_t skipped_lines) {
+[[nodiscard]] inline std::tuple<soa_matrix<real_type>, std::vector<aos_matrix<real_type>>> parse_libsvm_model_data_regression(const file_reader &reader, const std::size_t skipped_lines) {
     PLSSVM_ASSERT(reader.is_open(), "The file_reader is currently not associated with a file!");
     PLSSVM_ASSERT(skipped_lines <= reader.num_lines(), "Tried to skipp {} lines, but only {} are present!", skipped_lines, reader.num_lines());
 
@@ -269,7 +269,7 @@ namespace plssvm::detail::io {
     }
 
     // create vector containing the data and label
-    aos_matrix<real_type> data{ shape{ num_data_points, num_features } };
+    soa_matrix<real_type> data{ shape{ num_data_points, num_features } };
     aos_matrix<real_type> alpha{ shape{ 1, num_data_points } };
 
     std::exception_ptr parallel_exception;
@@ -455,7 +455,7 @@ inline void write_libsvm_model_data_regression(const std::string &filename, cons
 #endif
     using namespace literals;
 
-    const aos_matrix<real_type> &support_vectors = data.data();
+    const soa_matrix<real_type> &support_vectors = data.data();
     const std::size_t num_features = data.num_features();
 
     // create file
@@ -478,7 +478,7 @@ inline void write_libsvm_model_data_regression(const std::string &filename, cons
     constexpr detail::memory_size STRING_BUFFER_SIZE = 1_MiB;
 
     // format one output-line
-    auto format_libsvm_line = [](std::string &output, const real_type a, const aos_matrix<real_type> &d, const std::size_t point) {
+    auto format_libsvm_line = [](std::string &output, const real_type a, const soa_matrix<real_type> &d, const std::size_t point) {
         constexpr static std::size_t STACK_BUFFER_SIZE = BLOCK_SIZE * CHARS_PER_BLOCK;
         static std::array<char, STACK_BUFFER_SIZE> buffer{};
 #pragma omp threadprivate(buffer)

@@ -23,7 +23,7 @@
 #include "plssvm/detail/logging/mpi_log.hpp"                         // plssvm::detail::log
 #include "plssvm/detail/tracking/performance_tracker.hpp"            // PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY, plssvm::detail::tracking::tracking_entry
 #include "plssvm/detail/type_list.hpp"                               // plssvm::detail::{supported_label_types, tuple_contains_v}
-#include "plssvm/matrix.hpp"                                         // plssvm::aos_matrix
+#include "plssvm/matrix.hpp"                                         // plssvm::aos_matrix, plssvm::soa_matrix
 #include "plssvm/model/model.hpp"                                    // plssvm::model
 #include "plssvm/mpi/communicator.hpp"                               // plssvm::mpi::communicator
 #include "plssvm/parameter.hpp"                                      // plssvm::parameter
@@ -172,7 +172,7 @@ classification_model<U>::classification_model(mpi::communicator comm, const std:
     std::tie(params_, *rho_ptr_, labels, unique_labels, num_sv_per_class, num_header_lines) = detail::io::parse_libsvm_model_header_classification<label_type>(reader.lines());
 
     // create empty support vectors and alpha vector
-    aos_matrix<real_type> support_vectors{};
+    soa_matrix<real_type> support_vectors{};
 
     // parse libsvm model data
     std::tie(support_vectors, *alpha_ptr_, classification_strategy_) = detail::io::parse_libsvm_model_data_classification(reader, num_sv_per_class, num_header_lines);

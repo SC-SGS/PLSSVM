@@ -19,7 +19,7 @@
 #include "plssvm/detail/string_utility.hpp"     // plssvm::detail::{to_upper_case, as_upper_case, starts_with, ends_with}
 #include "plssvm/detail/utility.hpp"            // plssvm::detail::current_date_time
 #include "plssvm/exceptions/exceptions.hpp"     // plssvm::exception::invalid_file_format_exception
-#include "plssvm/matrix.hpp"                    // plssvm::aos_matrix
+#include "plssvm/matrix.hpp"                    // plssvm::soa_matrix
 #include "plssvm/shape.hpp"                     // plssvm::shape
 
 #include "fmt/format.h"  // fmt::format
@@ -240,7 +240,7 @@ template <typename label_type>
  * @return[the number of data points, the number of features per data point, the data points, the labels (optional)] (`[[nodiscard]]`)
  */
 template <typename label_type>
-[[nodiscard]] inline std::tuple<std::size_t, std::size_t, aos_matrix<real_type>, std::vector<label_type>> parse_arff_data(const file_reader &reader) {
+[[nodiscard]] inline std::tuple<std::size_t, std::size_t, soa_matrix<real_type>, std::vector<label_type>> parse_arff_data(const file_reader &reader) {
     PLSSVM_ASSERT(reader.is_open(), "The file_reader is currently not associated with a file!");
 
     // parse arff header, structured bindings can't be used because of the OpenMP parallel section
@@ -256,7 +256,7 @@ template <typename label_type>
     const std::size_t num_attributes = num_features + static_cast<std::size_t>(has_label);
 
     // create data and label vectors
-    aos_matrix<real_type> data{ shape{ num_data_points, num_features } };
+    soa_matrix<real_type> data{ shape{ num_data_points, num_features } };
     std::vector<label_type> label(num_data_points);
 
     std::exception_ptr parallel_exception;
@@ -411,7 +411,7 @@ template <typename label_type>
  * @note The features are written using zero-based indices!
  */
 template <typename label_type, bool has_label>
-inline void write_arff_data_impl(const std::string &filename, const aos_matrix<real_type> &data, const std::vector<label_type> &label) {
+inline void write_arff_data_impl(const std::string &filename, const soa_matrix<real_type> &data, const std::vector<label_type> &label) {
     if constexpr (has_label) {
         PLSSVM_ASSERT(data.empty() || !label.empty(), "has_label is 'true' but no labels were provided!");
         PLSSVM_ASSERT(data.num_rows() == label.size(), "Number of data points ({}) and number of labels ({}) mismatch!", data.num_rows(), label.size());
@@ -497,7 +497,7 @@ inline void write_arff_data_impl(const std::string &filename, const aos_matrix<r
  * @note The features are written using zero-based indices!
  */
 template <typename label_type>
-inline void write_arff_data(const std::string &filename, const aos_matrix<real_type> &data, const std::vector<label_type> &label) {
+inline void write_arff_data(const std::string &filename, const soa_matrix<real_type> &data, const std::vector<label_type> &label) {
     write_arff_data_impl<label_type, true>(filename, data, label);
 }
 
@@ -525,7 +525,7 @@ inline void write_arff_data(const std::string &filename, const aos_matrix<real_t
  * @note The resulting order of the data points in the ARFF file is unspecified!
  * @note The features are written using zero-based indices!
  */
-inline void write_arff_data(const std::string &filename, const aos_matrix<real_type> &data) {
+inline void write_arff_data(const std::string &filename, const soa_matrix<real_type> &data) {
     write_arff_data_impl<real_type, false>(filename, data, {});
 }
 

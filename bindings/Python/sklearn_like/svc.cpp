@@ -14,7 +14,7 @@
 #include "plssvm/detail/type_traits.hpp"                // plssvm::detail::remove_cvref_t
 #include "plssvm/gamma.hpp"                             // plssvm::gamma_coefficient_type, plssvm::gamma_type
 #include "plssvm/kernel_function_types.hpp"             // plssvm::kernel_function_type
-#include "plssvm/matrix.hpp"                            // plssvm::aos_matrix
+#include "plssvm/matrix.hpp"                            // plssvm::aos_matrix, plssvm::soa_matrix
 #include "plssvm/model/classification_model.hpp"        // plssvm::classification_model
 #include "plssvm/parameter.hpp"                         // plssvm::parameter, named arguments definition
 #include "plssvm/svm/csvc.hpp"                          // plssvm::csvc
@@ -425,7 +425,7 @@ void init_sklearn_svc(py::module_ &m) {
     //                                                               METHODS                                                               //
     //*************************************************************************************************************************************//
     py_svc
-        .def("decision_function", [](const svc &self, plssvm::aos_matrix<plssvm::real_type> predict_points) -> py::array {
+        .def("decision_function", [](const svc &self, plssvm::soa_matrix<plssvm::real_type> predict_points) -> py::array {
             if (self.model_ == nullptr) {
                 throw py::attribute_error{ "This SVC instance is not fitted yet. Call 'fit' with appropriate arguments before using this estimator." };
             }
@@ -434,10 +434,10 @@ void init_sklearn_svc(py::module_ &m) {
                     case plssvm::classification_type::oaa:
                         {
                             const plssvm::parameter &params = model.get_params();
-                            const plssvm::aos_matrix<plssvm::real_type> &sv = model.support_vectors();
+                            const plssvm::soa_matrix<plssvm::real_type> &sv = model.support_vectors();
                             const plssvm::aos_matrix<plssvm::real_type> &alpha = model.weights().front();  // num_classes x num_data_points
                             const std::vector<plssvm::real_type> &rho = model.rho();
-                            plssvm::aos_matrix<plssvm::real_type> w{};  // empty -> no need to befriend the model class!
+                            plssvm::soa_matrix<plssvm::real_type> w{};  // empty -> no need to befriend the model class!
 
                             // predict values using OAA -> num_data_points x num_classes
                             // note: must not be const or the custom type_caster won't kick in
@@ -478,14 +478,14 @@ void init_sklearn_svc(py::module_ &m) {
                                     const std::vector<plssvm::real_type> binary_rho{ rho[pos] };
 
                                     // create binary support vector matrix, based on the number of classes
-                                    const plssvm::aos_matrix<plssvm::real_type> &binary_sv = [&]() {
+                                    const plssvm::soa_matrix<plssvm::real_type> &binary_sv = [&]() {
                                         if (num_classes == 2) {
                                             // no special assembly needed in binary case
                                             return model.support_vectors();
                                         } else {
                                             // note: if this is changed, it must also be changed in the libsvm_model_parsing.hpp in the calculate_alpha_idx function!!!
                                             // order the indices in increasing order
-                                            plssvm::aos_matrix<plssvm::real_type> temp{ plssvm::shape{ num_data_points_in_sub_matrix, num_features } };
+                                            plssvm::soa_matrix<plssvm::real_type> temp{ plssvm::shape{ num_data_points_in_sub_matrix, num_features } };
                                             std::vector<std::size_t> sorted_indices(num_data_points_in_sub_matrix);
                                             std::merge(index_sets[i].cbegin(), index_sets[i].cend(), index_sets[j].cbegin(), index_sets[j].cend(), sorted_indices.begin());
 // copy the support vectors to the binary support vectors
@@ -505,7 +505,7 @@ void init_sklearn_svc(py::module_ &m) {
                                     }();
 
                                     // we don't use the w optimization for the linear kernel here due to code simplicity
-                                    plssvm::aos_matrix<plssvm::real_type> w{};
+                                    plssvm::soa_matrix<plssvm::real_type> w{};
                                     // predict the values
                                     const plssvm::aos_matrix<plssvm::real_type> binary_votes = self.call_predict_values(params, binary_sv, binary_alpha, binary_rho, w, predict_points);
 
@@ -534,7 +534,7 @@ void init_sklearn_svc(py::module_ &m) {
                 // unreachable
                 return py::array{};
             }, *self.model_); }, "Evaluate the decision function for the samples in X.")
-        .def("fit", [](svc &self, plssvm::bindings::python::util::aos_matrix_wrapper<plssvm::real_type> data, plssvm::bindings::python::util::label_vector_wrapper<typename svc::possible_vector_types> labels, const std::optional<std::vector<plssvm::real_type>> &sample_weight) -> svc & {
+        .def("fit", [](svc &self, plssvm::bindings::python::util::soa_matrix_wrapper<plssvm::real_type> data, plssvm::bindings::python::util::label_vector_wrapper<typename svc::possible_vector_types> labels, const std::optional<std::vector<plssvm::real_type>> &sample_weight) -> svc & {
             PLSSVM_ASSERT(self.svm_ != nullptr, "svm_ may not be a nullptr! Maybe you forgot to initialize it?");
             // sanity check parameter
             if (sample_weight.has_value()) {
@@ -577,7 +577,7 @@ void init_sklearn_svc(py::module_ &m) {
             return self; }, py::return_value_policy::reference, "Fit the SVM model according to the given training data.", py::arg("X"), py::arg("y"), py::pos_only(), py::arg("sample_weight") = std::nullopt)
         .def("get_metadata_routing", [](const svc &) { throw py::attribute_error{ "'SVC' object has no function 'get_metadata_routing' (not implemented)" }; }, "Get metadata routing of this object.")
         .def("get_params", &svc::get_params, "Get parameters for this estimator.", py::arg("deep") = true)
-        .def("predict", [](svc &self, plssvm::aos_matrix<plssvm::real_type> data) -> py::array {
+        .def("predict", [](svc &self, plssvm::soa_matrix<plssvm::real_type> data) -> py::array {
             PLSSVM_ASSERT(self.svm_ != nullptr, "svm_ may not be a nullptr! Maybe you forgot to initialize it?");
             if (self.model_ == nullptr) {
                 throw py::attribute_error{ "This SVC instance is not fitted yet. Call 'fit' with appropriate arguments before using this estimator." };
@@ -593,7 +593,7 @@ void init_sklearn_svc(py::module_ &m) {
             }, *self.model_); }, "Perform classification on samples in X.", py::arg("X"))
         .def("predict_log_proba", [](const svc &, py::array_t<plssvm::real_type>) { throw py::attribute_error{ "'SVC' object has no function 'predict_log_proba' (not implemented)" }; }, "Compute log probabilities of possible outcomes for samples in X.", py::arg("X"))
         .def("predict_proba", [](const svc &, py::array_t<plssvm::real_type>) { throw py::attribute_error{ "'SVC' object has no function 'predict_proba' (not implemented)" }; }, "Compute probabilities of possible outcomes for samples in X.", py::arg("X"))
-        .def("score", [](svc &self, plssvm::aos_matrix<plssvm::real_type> data, plssvm::bindings::python::util::label_vector_wrapper<typename svc::possible_vector_types> labels, const std::optional<std::vector<plssvm::real_type>> &sample_weight) -> plssvm::real_type {
+        .def("score", [](svc &self, plssvm::soa_matrix<plssvm::real_type> data, plssvm::bindings::python::util::label_vector_wrapper<typename svc::possible_vector_types> labels, const std::optional<std::vector<plssvm::real_type>> &sample_weight) -> plssvm::real_type {
             PLSSVM_ASSERT(self.svm_ != nullptr, "svm_ may not be a nullptr! Maybe you forgot to initialize it?");
             // sanity check parameter
             if (sample_weight.has_value()) {

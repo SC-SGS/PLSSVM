@@ -19,7 +19,7 @@
 #include "plssvm/detail/memory_size.hpp"        // plssvm::memory_size, custom literals
 #include "plssvm/detail/string_conversion.hpp"  // plssvm::detail::convert_to
 #include "plssvm/exceptions/exceptions.hpp"     // plssvm::invalid_file_format_exception
-#include "plssvm/matrix.hpp"                    // plssvm::aos_matrix
+#include "plssvm/matrix.hpp"                    // plssvm::soa_matrix
 #include "plssvm/shape.hpp"                     // plssvm::shape
 
 #include "fmt/compile.h"  // FMT_COMPILE
@@ -116,7 +116,7 @@ namespace plssvm::detail::io {
  * @return [the number of data points; the number of features per data point; the data points, the labels (optional)] (`[[nodiscard]]`)
  */
 template <typename label_type>
-[[nodiscard]] inline std::tuple<std::size_t, std::size_t, aos_matrix<real_type>, std::vector<label_type>> parse_libsvm_data(const file_reader &reader) {
+[[nodiscard]] inline std::tuple<std::size_t, std::size_t, soa_matrix<real_type>, std::vector<label_type>> parse_libsvm_data(const file_reader &reader) {
     PLSSVM_ASSERT(reader.is_open(), "The file_reader is currently not associated with a file!");
     // sanity check: can't skip more lines than are present
 
@@ -130,7 +130,7 @@ template <typename label_type>
     }
 
     // create vector containing the data and label
-    aos_matrix<real_type> data{ shape{ num_data_points, num_features } };
+    soa_matrix<real_type> data{ shape{ num_data_points, num_features } };
     std::vector<label_type> label(num_data_points);
 
     std::exception_ptr parallel_exception;
@@ -238,7 +238,7 @@ template <typename label_type>
  * @note The features are written using one-based indices!
  */
 template <typename label_type, bool has_label>
-inline void write_libsvm_data_impl(const std::string &filename, const aos_matrix<real_type> &data, const std::vector<label_type> &label) {
+inline void write_libsvm_data_impl(const std::string &filename, const soa_matrix<real_type> &data, const std::vector<label_type> &label) {
     if constexpr (has_label) {
         PLSSVM_ASSERT(data.empty() || !label.empty(), "has_label is 'true' but no labels were provided!");
         PLSSVM_ASSERT(data.num_rows() == label.size(), "Number of data points ({}) and number of labels ({}) mismatch!", data.num_rows(), label.size());
@@ -271,7 +271,7 @@ inline void write_libsvm_data_impl(const std::string &filename, const aos_matrix
     constexpr detail::memory_size STRING_BUFFER_SIZE = 1_MiB;
 
     // format one output-line
-    auto format_libsvm_line = [num_features](std::string &output, const aos_matrix<real_type> &data_point, const std::size_t row) {
+    auto format_libsvm_line = [num_features](std::string &output, const soa_matrix<real_type> &data_point, const std::size_t row) {
         constexpr static std::size_t BUFFER_SIZE = BLOCK_SIZE * CHARS_PER_BLOCK;
         static std::array<char, BUFFER_SIZE> buffer;
 #pragma omp threadprivate(buffer)
@@ -338,7 +338,7 @@ inline void write_libsvm_data_impl(const std::string &filename, const aos_matrix
  * @note The features are written using one-based indices!
  */
 template <typename label_type>
-inline void write_libsvm_data(const std::string &filename, const aos_matrix<real_type> &data, const std::vector<label_type> &label) {
+inline void write_libsvm_data(const std::string &filename, const soa_matrix<real_type> &data, const std::vector<label_type> &label) {
     write_libsvm_data_impl<label_type, true>(filename, data, label);
 }
 
@@ -358,7 +358,7 @@ inline void write_libsvm_data(const std::string &filename, const aos_matrix<real
  * @note The resulting order of the data points in the LIBSVM file is unspecified!
  * @note The features are written using one-based indices!
  */
-inline void write_libsvm_data(const std::string &filename, const aos_matrix<real_type> &data) {
+inline void write_libsvm_data(const std::string &filename, const soa_matrix<real_type> &data) {
     write_libsvm_data_impl<real_type, false>(filename, data, {});
 }
 

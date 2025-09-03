@@ -61,7 +61,7 @@ TYPED_TEST(LIBSVMClassificationModelDataWrite, write) {
     const std::size_t num_classifiers = plssvm::calculate_number_of_classifiers(classification, classes.size());
     const std::vector<label_type> label = util::get_correct_model_file_labels<label_type>();
     const std::vector<std::size_t> num_sv_per_class = util::get_correct_model_file_num_sv_per_class<label_type>(label.size());
-    const auto data = util::generate_random_matrix<plssvm::aos_matrix<plssvm::real_type>>(plssvm::shape{ label.size(), 3 });
+    const auto data = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ label.size(), 3 });
 
     // create necessary parameter
     const plssvm::parameter params{ plssvm::kernel_type = plssvm::kernel_function_type::linear };
@@ -317,7 +317,7 @@ class LIBSVMClassificationModelDataWriteDeathTest : public LIBSVMClassificationM
     /// The index sets indicating which data point is a support vector for which class.
     std::vector<std::vector<std::size_t>> index_sets_{};
     /// The support vectors.
-    plssvm::classification_data_set<fixture_label_type> data_set_{ util::generate_random_matrix<plssvm::aos_matrix<plssvm::real_type>>(plssvm::shape{ 6, 2 }), util::get_correct_model_file_labels<fixture_label_type>() };
+    plssvm::classification_data_set<fixture_label_type> data_set_{ util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ 6, 2 }), util::get_correct_model_file_labels<fixture_label_type>() };
 };
 
 TYPED_TEST_SUITE(LIBSVMClassificationModelDataWriteDeathTest, util::classification_label_type_classification_type_gtest, naming::test_parameter_to_name);
@@ -335,7 +335,7 @@ TYPED_TEST(LIBSVMClassificationModelDataWriteDeathTest, missing_labels) {
     constexpr plssvm::classification_type classification = TestFixture::fixture_classification;
 
     // create invalid parameter
-    const plssvm::classification_data_set<label_type> data_set{ util::generate_random_matrix<plssvm::aos_matrix<plssvm::real_type>>(plssvm::shape{ 4, 2 }) };
+    const plssvm::classification_data_set<label_type> data_set{ util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ 4, 2 }) };
 
     // try writing the LIBSVM model header
     EXPECT_DEATH((plssvm::detail::io::write_libsvm_model_data_classification(this->filename, this->get_comm(), this->get_params(), classification, this->get_rho(), this->get_alpha(), this->get_index_sets(), data_set)),

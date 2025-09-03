@@ -394,7 +394,7 @@ template <typename label_type>
  * @attention The PLSSVM model file is only compatible with LIBSVM for the one vs. one classification type.
  * @return [the data points; the weights; the classification type used to create the model] (`[[nodiscard]]`)
  */
-[[nodiscard]] inline std::tuple<aos_matrix<real_type>, std::vector<aos_matrix<real_type>>, classification_type> parse_libsvm_model_data_classification(const file_reader &reader, const std::vector<std::size_t> &num_sv_per_class, const std::size_t skipped_lines) {
+[[nodiscard]] inline std::tuple<soa_matrix<real_type>, std::vector<aos_matrix<real_type>>, classification_type> parse_libsvm_model_data_classification(const file_reader &reader, const std::vector<std::size_t> &num_sv_per_class, const std::size_t skipped_lines) {
     PLSSVM_ASSERT(reader.is_open(), "The file_reader is currently not associated with a file!");
     PLSSVM_ASSERT(num_sv_per_class.size() > 1, "At least two classes must be present!");
     PLSSVM_ASSERT(skipped_lines <= reader.num_lines(), "Tried to skipp {} lines, but only {} are present!", skipped_lines, reader.num_lines());
@@ -413,7 +413,7 @@ template <typename label_type>
     }
 
     // create vector containing the data and label
-    aos_matrix<real_type> data{ shape{ num_data_points, num_features } };
+    soa_matrix<real_type> data{ shape{ num_data_points, num_features } };
     const std::size_t max_num_alpha_values = num_sv_per_class.size();  // OAA needs more alpha values than OAO
     aos_matrix<real_type> alpha{ shape{ max_num_alpha_values, num_data_points } };
     bool is_oaa{ false };
@@ -721,7 +721,7 @@ inline void write_libsvm_model_data_classification(const std::string &filename, 
 #endif
     using namespace literals;
 
-    const aos_matrix<real_type> &support_vectors = data.data();
+    const soa_matrix<real_type> &support_vectors = data.data();
     const std::vector<label_type> &labels = *data.labels();
     const std::size_t num_features = data.num_features();
     const std::size_t num_classes = data.num_classes();
@@ -747,7 +747,7 @@ inline void write_libsvm_model_data_classification(const std::string &filename, 
     constexpr detail::memory_size STRING_BUFFER_SIZE = 1_MiB;
 
     // format one output-line
-    auto format_libsvm_line = [](std::string &output, const std::vector<real_type> &a, const aos_matrix<real_type> &d, const std::size_t point) {
+    auto format_libsvm_line = [](std::string &output, const std::vector<real_type> &a, const soa_matrix<real_type> &d, const std::size_t point) {
         constexpr static std::size_t STACK_BUFFER_SIZE = BLOCK_SIZE * CHARS_PER_BLOCK;
         static std::array<char, STACK_BUFFER_SIZE> buffer{};
 #pragma omp threadprivate(buffer)

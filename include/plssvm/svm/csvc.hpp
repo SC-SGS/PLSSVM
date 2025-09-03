@@ -25,7 +25,7 @@
 #include "plssvm/exceptions/exceptions.hpp"                // plssvm::invalid_parameter_exception, plssvm::mpi_exception
 #include "plssvm/gamma.hpp"                                // plssvm::calculate_gamma_value
 #include "plssvm/kernel_function_types.hpp"                // plssvm::kernel_function_type
-#include "plssvm/matrix.hpp"                               // plssvm::aos_matrix
+#include "plssvm/matrix.hpp"                               // plssvm::aos_matrix, plssvm::soa_matrix
 #include "plssvm/model/classification_model.hpp"           // plssvm::classification_model
 #include "plssvm/parameter.hpp"                            // plssvm::parameter
 #include "plssvm/shape.hpp"                                // plssvm::shape
@@ -228,7 +228,7 @@ class csvc : virtual public csvm {
                         // TODO: reduce amount of copies!?
                         // assemble one vs. one classification matrix and rhs
                         const std::size_t num_data_points_in_sub_matrix{ index_sets[i].size() + index_sets[j].size() };
-                        aos_matrix<real_type> binary_data{ shape{ num_data_points_in_sub_matrix, num_features } };
+                        soa_matrix<real_type> binary_data{ shape{ num_data_points_in_sub_matrix, num_features } };
                         aos_matrix<real_type> binary_y{ shape{ 1, num_data_points_in_sub_matrix } };  // note: the first dimension will always be one, since only one rhs is needed
 
                         // note: if this is changed, it must also be changed in the libsvm_model_parsing.hpp in the calculate_alpha_idx function!!!
@@ -326,7 +326,7 @@ class csvc : virtual public csvm {
         std::vector<label_type> predicted_labels(data.num_data_points());
 
         PLSSVM_ASSERT(data.data_ptr_ != nullptr, "The data_ptr_ (predict points) may never be a nullptr!");
-        const aos_matrix<real_type> &predict_points = *data.data_ptr_;
+        const soa_matrix<real_type> &predict_points = *data.data_ptr_;
 
         if (model.get_classification_type() == classification_type::oaa) {
             PLSSVM_ASSERT(data.data_ptr_ != nullptr, "The data_ptr_ (model) may never be a nullptr!");
@@ -334,7 +334,7 @@ class csvc : virtual public csvm {
             PLSSVM_ASSERT(model.alpha_ptr_->size() == 1, "For OAA, the alpha vector must only contain a single aos_matrix of size {}x{}!", model.num_classes(), model.num_support_vectors());
             // PLSSVM_ASSERT(model.alpha_ptr_->front().num_rows() == calculate_number_of_classifiers(classification_type::oaa, data.num_classes()), "The number of rows in the matrix must be {}, but is {}!", model.alpha_ptr_->front().num_rows(), calculate_number_of_classifiers(classification_type::oaa, data.num_classes()));
 
-            const aos_matrix<real_type> &sv = model.support_vectors();
+            const soa_matrix<real_type> &sv = model.support_vectors();
             const aos_matrix<real_type> &alpha = model.alpha_ptr_->front();  // num_classes x num_data_points
 
             // predict values using OAA -> num_data_points x num_classes
@@ -379,7 +379,7 @@ class csvc : virtual public csvm {
                 // w is currently empty
                 // initialize the w matrix and calculate it later!
                 calculate_w = true;
-                (*model.w_ptr_) = aos_matrix<real_type>{ shape{ calculate_number_of_classifiers(classification_type::oao, num_classes), num_features } };
+                (*model.w_ptr_) = soa_matrix<real_type>{ shape{ calculate_number_of_classifiers(classification_type::oao, num_classes), num_features } };
             }
 
             // perform one vs. one prediction
@@ -393,14 +393,14 @@ class csvc : virtual public csvm {
                     const std::vector<real_type> binary_rho{ (*model.rho_ptr_)[pos] };
 
                     // create binary support vector matrix, based on the number of classes
-                    const aos_matrix<real_type> &binary_sv = [&]() {
+                    const soa_matrix<real_type> &binary_sv = [&]() {
                         if (num_classes == 2) {
                             // no special assembly needed in binary case
                             return model.support_vectors();
                         } else {
                             // note: if this is changed, it must also be changed in the libsvm_model_parsing.hpp in the calculate_alpha_idx function!!!
                             // order the indices in increasing order
-                            aos_matrix<real_type> temp{ shape{ num_data_points_in_sub_matrix, num_features } };
+                            soa_matrix<real_type> temp{ shape{ num_data_points_in_sub_matrix, num_features } };
                             std::vector<std::size_t> sorted_indices(num_data_points_in_sub_matrix);
                             std::merge(index_sets[i].cbegin(), index_sets[i].cend(), index_sets[j].cbegin(), index_sets[j].cend(), sorted_indices.begin());
 // copy the support vectors to the binary support vectors
@@ -424,7 +424,7 @@ class csvc : virtual public csvm {
                     // don't use the w vector for the polynomial and rbf kernel OR if the w vector hasn't been calculated yet
                     if (params_.kernel_type != kernel_function_type::linear || calculate_w) {
                         // the w vector optimization has not been applied yet -> calculate w and store it
-                        aos_matrix<real_type> w{};
+                        soa_matrix<real_type> w{};
                         // returned w: 1 x num_features
                         binary_votes = this->run_predict_values(model.params_, binary_sv, binary_alpha, binary_rho, w, predict_points);
                         // only in case of the linear kernel, the w vector gets filled -> store it
@@ -438,7 +438,7 @@ class csvc : virtual public csvm {
                         }
                     } else {
                         // use previously calculated w vector
-                        aos_matrix<real_type> binary_w{ shape{ 1, num_features } };
+                        soa_matrix<real_type> binary_w{ shape{ 1, num_features } };
 #pragma omp parallel for default(none) shared(model, binary_w) firstprivate(num_features, pos)
                         for (std::size_t dim = 0; dim < num_features; ++dim) {
                             binary_w(0, dim) = (*model.w_ptr_)(pos, dim);

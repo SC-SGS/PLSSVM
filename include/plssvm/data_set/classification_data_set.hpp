@@ -23,7 +23,7 @@
 #include "plssvm/detail/utility.hpp"                       // plssvm::detail::contains
 #include "plssvm/exceptions/exceptions.hpp"                // plssvm::data_set_exception
 #include "plssvm/file_format_types.hpp"                    // plssvm::file_format_type
-#include "plssvm/matrix.hpp"                               // plssvm::aos_matrix
+#include "plssvm/matrix.hpp"                               // plssvm::soa_matrix
 #include "plssvm/mpi/communicator.hpp"                     // plssvm::mpi::communicator
 #include "plssvm/shape.hpp"                                // plssvm::shape
 #include "plssvm/verbosity_levels.hpp"                     // plssvm::verbosity_level
@@ -407,7 +407,7 @@ class classification_data_set : public data_set<U> {
      * @throws plssvm::data_set_exception if the data points in @p data_points have mismatching number of features
      * @throws plssvm::data_set_exception if any @p data_point has no features
      */
-    explicit classification_data_set(aos_matrix<real_type> &&data_points) :
+    explicit classification_data_set(soa_matrix<real_type> &&data_points) :
         base_data_set{ mpi::communicator{}, std::move(data_points) } { this->init(); }
 
     /**
@@ -419,7 +419,7 @@ class classification_data_set : public data_set<U> {
      * @throws plssvm::data_set_exception if the data points in @p data_points have mismatching number of features
      * @throws plssvm::data_set_exception if any @p data_point has no features
      */
-    classification_data_set(mpi::communicator comm, aos_matrix<real_type> &&data_points) :
+    classification_data_set(mpi::communicator comm, soa_matrix<real_type> &&data_points) :
         base_data_set{ std::move(comm), std::move(data_points) } { this->init(); }
 
     /**
@@ -431,7 +431,7 @@ class classification_data_set : public data_set<U> {
      * @throws plssvm::data_set_exception if any @p data_point has no features
      * @throws plssvm::data_set_exception if the number of data points in @p data_points and number of @p labels mismatch
      */
-    classification_data_set(aos_matrix<real_type> &&data_points, std::vector<label_type> &&labels) :
+    classification_data_set(soa_matrix<real_type> &&data_points, std::vector<label_type> &&labels) :
         base_data_set{ mpi::communicator{}, std::move(data_points), std::move(labels) } { this->init(); }
 
     /**
@@ -444,7 +444,7 @@ class classification_data_set : public data_set<U> {
      * @throws plssvm::data_set_exception if any @p data_point has no features
      * @throws plssvm::data_set_exception if the number of data points in @p data_points and number of @p labels mismatch
      */
-    classification_data_set(mpi::communicator comm, aos_matrix<real_type> &&data_points, std::vector<label_type> &&labels) :
+    classification_data_set(mpi::communicator comm, soa_matrix<real_type> &&data_points, std::vector<label_type> &&labels) :
         base_data_set{ std::move(comm), std::move(data_points), std::move(labels) } { this->init(); }
 
     /**
@@ -457,7 +457,7 @@ class classification_data_set : public data_set<U> {
      * @throws plssvm::data_set_exception if any @p data_point has no features
      * @throws plssvm::min_max_scaler_exception all exceptions thrown by plssvm::min_max_scaler::scale
      */
-    classification_data_set(aos_matrix<real_type> &&data_points, min_max_scaler scaler) :
+    classification_data_set(soa_matrix<real_type> &&data_points, min_max_scaler scaler) :
         base_data_set{ mpi::communicator{}, std::move(data_points), std::move(scaler) } { this->init(); }
 
     /**
@@ -472,7 +472,7 @@ class classification_data_set : public data_set<U> {
      * @throws plssvm::min_max_scaler_exception all exceptions thrown by plssvm::min_max_scaler::scale
      * @throws plssvm::mpi_exception if the MPI communicator @p comm and the MPI communicator in @p scaler are not identical
      */
-    classification_data_set(mpi::communicator comm, aos_matrix<real_type> &&data_points, min_max_scaler scaler) :
+    classification_data_set(mpi::communicator comm, soa_matrix<real_type> &&data_points, min_max_scaler scaler) :
         base_data_set{ std::move(comm), std::move(data_points), std::move(scaler) } { this->init(); }
 
     /**
@@ -486,7 +486,7 @@ class classification_data_set : public data_set<U> {
      * @throws plssvm::data_set_exception if the number of data points in @p data_points and number of @p labels mismatch
      * @throws plssvm::min_max_scaler_exception all exceptions thrown by plssvm::min_max_scaler::scale
      */
-    classification_data_set(aos_matrix<real_type> &&data_points, std::vector<label_type> &&labels, min_max_scaler scaler) :
+    classification_data_set(soa_matrix<real_type> &&data_points, std::vector<label_type> &&labels, min_max_scaler scaler) :
         base_data_set{ mpi::communicator{}, std::move(data_points), std::move(labels), std::move(scaler) } { this->init(); }
 
     /**
@@ -502,7 +502,7 @@ class classification_data_set : public data_set<U> {
      * @throws plssvm::min_max_scaler_exception all exceptions thrown by plssvm::min_max_scaler::scale
      * @throws plssvm::mpi_exception if the MPI communicator @p comm and the MPI communicator in @p scaler are not identical
      */
-    classification_data_set(mpi::communicator comm, aos_matrix<real_type> &&data_points, std::vector<label_type> &&labels, min_max_scaler scaler) :
+    classification_data_set(mpi::communicator comm, soa_matrix<real_type> &&data_points, std::vector<label_type> &&labels, min_max_scaler scaler) :
         base_data_set{ std::move(comm), std::move(data_points), std::move(labels), std::move(scaler) } { this->init(); }
 
     /**
