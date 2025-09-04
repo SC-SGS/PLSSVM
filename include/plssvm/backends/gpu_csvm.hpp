@@ -14,7 +14,7 @@
 #pragma once
 
 #include "plssvm/backends/execution_range.hpp"  // plssvm::detail::{dim_type, execution_range}
-#include "plssvm/constants.hpp"                 // plssvm::real_type, plssvm::THREAD_BLOCK_SIZE, plssvm::INTERNAL_BLOCK_SIZE
+#include "plssvm/constants.hpp"                 // plssvm::real_type, plssvm::THREAD_BLOCK_SIZE, plssvm::INTERNAL_BLOCK_SIZE, plssvm::PADDING_SIZE
 #include "plssvm/detail/assert.hpp"             // PLSSVM_ASSERT
 #include "plssvm/detail/data_distribution.hpp"  // plssvm::detail::{data_distribution, triangular_data_distribution, rectangular_data_distribution}
 #include "plssvm/detail/move_only_any.hpp"      // plssvm::detail::{move_only_any, move_only_any_cast}
@@ -227,6 +227,7 @@ template <template <typename> typename device_ptr_t, typename queue_t, template 
 std::vector<::plssvm::detail::move_only_any> gpu_csvm<device_ptr_t, queue_t, pinned_memory_t>::assemble_kernel_matrix(const solver_type solver, const parameter &params, const soa_matrix<real_type> &A, const std::vector<real_type> &q_red, const real_type QA_cost) const {
     PLSSVM_ASSERT(solver != solver_type::automatic, "An explicit solver type must be provided instead of solver_type::automatic!");
     PLSSVM_ASSERT(!A.empty(), "The matrix to setup on the devices must not be empty!");
+    PLSSVM_ASSERT(A.is_padded(), "The matrix to setup on the devices must be padded!");
     PLSSVM_ASSERT(!q_red.empty(), "The q_red vector must not be empty!");
     PLSSVM_ASSERT(q_red.size() == A.num_rows() - 1, "The q_red size ({}) mismatches the number of data points after dimensional reduction ({})!", q_red.size(), A.num_rows() - 1);
 
@@ -253,8 +254,8 @@ std::vector<::plssvm::detail::move_only_any> gpu_csvm<device_ptr_t, queue_t, pin
         const queue_type &device = devices_[device_id];
 
         // allocate memory on the device
-        data_d[device_id] = device_ptr_type{ A.shape(), device };
-        q_red_d[device_id] = device_ptr_type{ q_red.size(), device };
+        data_d[device_id] = device_ptr_type{ A.shape(), A.padding(), device };
+        q_red_d[device_id] = device_ptr_type{ q_red.size() + PADDING_SIZE, device };
     }
 
     // pin the data matrix if requested
@@ -272,6 +273,7 @@ std::vector<::plssvm::detail::move_only_any> gpu_csvm<device_ptr_t, queue_t, pin
         // copy data to the device
         data_d[device_id].copy_to_device(A);
         q_red_d[device_id].copy_to_device(q_red, 0, q_red.size());
+        q_red_d[device_id].memset(0, q_red.size());
 
         // kernel launch specific sizes
         const unsigned long long device_specific_num_rows = data_distribution_->place_specific_num_rows(device_id);
@@ -317,8 +319,11 @@ void gpu_csvm<device_ptr_t, queue_t, pinned_memory_t>::blas_level_3(const solver
     PLSSVM_ASSERT(solver != solver_type::automatic, "An explicit solver type must be provided instead of solver_type::automatic!");
     PLSSVM_ASSERT(A.size() == this->num_available_devices(), "Not enough kernel matrix parts ({}) for the available number of devices ({})!", A.size(), this->num_available_devices());
     PLSSVM_ASSERT(!B.empty(), "The B matrix must not be empty!");
+    PLSSVM_ASSERT(B.is_padded(), "The B matrix must be padded!");
     PLSSVM_ASSERT(!C.empty(), "The C matrix must not be empty!");
+    PLSSVM_ASSERT(C.is_padded(), "The C matrix must be padded!");
     PLSSVM_ASSERT(B.shape() == C.shape(), "The B ({}) and C ({}) matrices must have the same shape!", B.shape(), C.shape());
+    PLSSVM_ASSERT(B.padding() == C.padding(), "The B ({}) and C ({}) matrices must have the same padding!", B.padding(), C.padding());
 
     const std::size_t num_devices = this->num_available_devices();
 
@@ -329,7 +334,7 @@ void gpu_csvm<device_ptr_t, queue_t, pinned_memory_t>::blas_level_3(const solver
     // the partial C result from a specific device later stored on device 0 to perform the C reduction (inplace matrix addition)
     device_ptr_type partial_C_d{};
     if (num_devices > 1) {
-        partial_C_d = device_ptr_type{ C.shape(), devices_[0] };
+        partial_C_d = device_ptr_type{ C.shape(), C.padding(), devices_[0] };
     }
 
     // split memory allocation and memory copy!
@@ -342,8 +347,8 @@ void gpu_csvm<device_ptr_t, queue_t, pinned_memory_t>::blas_level_3(const solver
         const queue_type &device = devices_[device_id];
 
         // allocate memory on the device
-        B_d[device_id] = device_ptr_type{ B.shape(), device };
-        C_d[device_id] = device_ptr_type{ C.shape(), device };
+        B_d[device_id] = device_ptr_type{ B.shape(), B.padding(), device };
+        C_d[device_id] = device_ptr_type{ C.shape(), C.padding(), device };
     }
 
 #pragma omp parallel for ordered if (num_devices > 1)
@@ -450,6 +455,7 @@ void gpu_csvm<device_ptr_t, queue_t, pinned_memory_t>::blas_level_3(const solver
 
     // device 0 contains the final, reduced results
     C_d[0].copy_to_host(C);
+    C.restore_padding();
 }
 
 //***************************************************//
@@ -463,12 +469,16 @@ aos_matrix<real_type> gpu_csvm<device_ptr_t, queue_t, pinned_memory_t>::predict_
                                                                                        soa_matrix<real_type> &w,
                                                                                        const soa_matrix<real_type> &predict_points) const {
     PLSSVM_ASSERT(!support_vectors.empty(), "The support vectors must not be empty!");
+    PLSSVM_ASSERT(support_vectors.is_padded(), "The support vectors must be padded!");
     PLSSVM_ASSERT(!alpha.empty(), "The alpha vectors (weights) must not be empty!");
+    PLSSVM_ASSERT(alpha.is_padded(), "The alpha vectors (weights) must be padded!");
     PLSSVM_ASSERT(support_vectors.num_rows() == alpha.num_cols(), "The number of support vectors ({}) and number of weights ({}) must be the same!", support_vectors.num_rows(), alpha.num_cols());
     PLSSVM_ASSERT(rho.size() == alpha.num_rows(), "The number of rho values ({}) and the number of weight vectors ({}) must be the same!", rho.size(), alpha.num_rows());
+    PLSSVM_ASSERT(w.empty() || w.is_padded(), "Either w must be empty or must be padded!");
     PLSSVM_ASSERT(w.empty() || support_vectors.num_cols() == w.num_cols(), "Either w must be empty or contain exactly the same number of values ({}) as features are present ({})!", w.num_cols(), support_vectors.num_cols());
     PLSSVM_ASSERT(w.empty() || alpha.num_rows() == w.num_rows(), "Either w must be empty or contain exactly the same number of vectors ({}) as the alpha vector ({})!", w.num_rows(), alpha.num_rows());
     PLSSVM_ASSERT(!predict_points.empty(), "The data points to predict must not be empty!");
+    PLSSVM_ASSERT(predict_points.is_padded(), "The data points to predict must be padded!");
     PLSSVM_ASSERT(support_vectors.num_cols() == predict_points.num_cols(), "The number of features in the support vectors ({}) must be the same as in the data points to predict ({})!", support_vectors.num_cols(), predict_points.num_cols());
 
     // define necessary sizes
@@ -479,7 +489,7 @@ aos_matrix<real_type> gpu_csvm<device_ptr_t, queue_t, pinned_memory_t>::predict_
     const std::size_t num_devices = this->num_available_devices();
 
     // the result matrix
-    aos_matrix<real_type> out_ret{ shape{ num_predict_points, num_classes }, real_type{ 0.0 } };
+    aos_matrix<real_type> out_ret{ shape{ num_predict_points, num_classes }, real_type{ 0.0 }, shape{ PADDING_SIZE, PADDING_SIZE } };
 
     // the support vectors or w vector and weights; fully stored on each device
     std::vector<device_ptr_type> sv_or_w_d(num_devices);
@@ -491,7 +501,7 @@ aos_matrix<real_type> gpu_csvm<device_ptr_t, queue_t, pinned_memory_t>::predict_
         const queue_type &device = devices_[device_id];
 
         // allocate memory on the device
-        alpha_d[device_id] = device_ptr_type{ alpha.shape(), device };
+        alpha_d[device_id] = device_ptr_type{ alpha.shape(), alpha.padding(),device };
     }
 #pragma omp parallel for if (num_devices > 1)
     for (std::size_t device_id = 0; device_id < num_devices; ++device_id) {
@@ -506,7 +516,7 @@ aos_matrix<real_type> gpu_csvm<device_ptr_t, queue_t, pinned_memory_t>::predict_
             std::vector<device_ptr_type> w_d(num_devices);
             device_ptr_type partial_w_d{};  // always on device 0!
             if (num_devices > 1) {
-                partial_w_d = device_ptr_type{ shape{ num_classes, num_features }, devices_[0] };
+                partial_w_d = device_ptr_type{ shape{ num_classes, num_features }, shape{ PADDING_SIZE, PADDING_SIZE }, devices_[0] };
             }
 
             // update the data distribution to account for the support vectors
@@ -523,7 +533,7 @@ aos_matrix<real_type> gpu_csvm<device_ptr_t, queue_t, pinned_memory_t>::predict_
                 const queue_type &device = devices_[device_id];
 
                 // allocate memory on the device
-                sv_d[device_id] = device_ptr_type{ shape{ data_distribution_->place_specific_num_rows(device_id), num_features }, device };
+                sv_d[device_id] = device_ptr_type{ shape{ data_distribution_->place_specific_num_rows(device_id), num_features }, support_vectors.padding(), device };
             }
 
 #pragma omp parallel for ordered if (num_devices > 1)
@@ -574,7 +584,7 @@ aos_matrix<real_type> gpu_csvm<device_ptr_t, queue_t, pinned_memory_t>::predict_
             }
 
             // w_d[0] contains the final w vector
-            w = soa_matrix<real_type>{ shape{ num_classes, num_features } };
+            w = soa_matrix<real_type>{ shape{ num_classes, num_features }, shape{ PADDING_SIZE, PADDING_SIZE } };
             w_d[0].copy_to_host(w);
 
             // reduce w on all MPI ranks
@@ -588,7 +598,7 @@ aos_matrix<real_type> gpu_csvm<device_ptr_t, queue_t, pinned_memory_t>::predict_
             const queue_type &device = devices_[device_id];
 
             // allocate memory on the device
-            sv_or_w_d[device_id] = device_ptr_type{ shape{ num_classes, num_features }, device };
+            sv_or_w_d[device_id] = device_ptr_type{ shape{ num_classes, num_features }, shape{ PADDING_SIZE, PADDING_SIZE },device };
         }
 #pragma omp parallel for if (num_devices > 1)
         for (std::size_t device_id = 0; device_id < num_devices; ++device_id) {
@@ -603,7 +613,7 @@ aos_matrix<real_type> gpu_csvm<device_ptr_t, queue_t, pinned_memory_t>::predict_
             const queue_type &device = devices_[device_id];
 
             // allocate memory on the device
-            sv_or_w_d[device_id] = device_ptr_type{ support_vectors.shape(), device };
+            sv_or_w_d[device_id] = device_ptr_type{ support_vectors.shape(), support_vectors.padding(), device };
         }
 #pragma omp parallel for if (num_devices > 1)
         for (std::size_t device_id = 0; device_id < num_devices; ++device_id) {
@@ -631,8 +641,8 @@ aos_matrix<real_type> gpu_csvm<device_ptr_t, queue_t, pinned_memory_t>::predict_
         const std::size_t device_specific_num_rows = data_distribution_->place_specific_num_rows(device_id);
 
         // allocate memory on the device
-        predict_points_d[device_id] = device_ptr_type{ shape{ device_specific_num_rows, num_features }, device };
-        rho_d[device_id] = device_ptr_type{ num_classes, device };
+        predict_points_d[device_id] = device_ptr_type{ shape{ device_specific_num_rows, num_features }, predict_points.padding(), device };
+        rho_d[device_id] = device_ptr_type{ num_classes + PADDING_SIZE, device };
     }
 
 #pragma omp parallel for if (num_devices > 1)
@@ -647,6 +657,7 @@ aos_matrix<real_type> gpu_csvm<device_ptr_t, queue_t, pinned_memory_t>::predict_
         // copy data to the device
         predict_points_d[device_id].copy_to_device_strided(predict_points, row_offset, device_specific_num_rows);
         rho_d[device_id].copy_to_device(rho, 0, rho.size());
+        rho_d[device_id].memset(0, rho.size());
 
         // the block dimension is THREAD_BLOCK_SIZE x THREAD_BLOCK_SIZE
         const dim_type block{ std::size_t{ THREAD_BLOCK_SIZE }, std::size_t{ THREAD_BLOCK_SIZE } };
@@ -667,9 +678,10 @@ aos_matrix<real_type> gpu_csvm<device_ptr_t, queue_t, pinned_memory_t>::predict_
 
         // copy results back to host, combining them into one result matrix
 #pragma omp critical
-        out_d.copy_to_host(out_ret.data() + row_offset * num_classes, 0, device_specific_num_rows * num_classes);
+        out_d.copy_to_host(out_ret.data() + row_offset * (num_classes + PADDING_SIZE), 0, device_specific_num_rows * (num_classes + PADDING_SIZE));
     }
 
+    out_ret.restore_padding();
     return out_ret;
 }
 

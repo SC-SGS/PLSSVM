@@ -11,13 +11,13 @@
 #include "plssvm/svm/csvr.hpp"  // plssvm::csvr
 
 #include "plssvm/backend_types.hpp"                 // plssvm::csvm_backend_exists, plssvm::csvm_backend_exists_v, plssvm::backend_csvm_type, plssvm::backend_csvm_type_t
-#include "plssvm/constants.hpp"                     // plssvm::real_type
+#include "plssvm/constants.hpp"                     // plssvm::real_type, plssvm::PADDING_SIZE
 #include "plssvm/core.hpp"                          // sycl namespace handling
 #include "plssvm/data_set/regression_data_set.hpp"  // plssvm::regression_data_set
 #include "plssvm/detail/move_only_any.hpp"          // plssvm::detail::move_only_any
 #include "plssvm/exceptions/exceptions.hpp"         // plssvm::invalid_parameter_exception
 #include "plssvm/kernel_function_types.hpp"         // plssvm::kernel_function_type
-#include "plssvm/matrix.hpp"                        // plssvm::aos_matrix, plssvm::soa_matrix
+#include "plssvm/matrix.hpp"                        // plssvm::aos_matrix
 #include "plssvm/model/regression_model.hpp"        // plssvm::regression_model
 #include "plssvm/parameter.hpp"                     // plssvm::parameter
 #include "plssvm/solver_types.hpp"                  // plssvm::solver_type
@@ -222,35 +222,35 @@ TYPED_TEST(BaseCSVRFit, fit) {
     const int num_calls = 1;
 
     // clang-format off
-    if constexpr (solver == plssvm::solver_type::automatic) {
-        EXPECT_CALL(csvr, get_device_memory()).Times(num_calls);
-        EXPECT_CALL(csvr, num_available_devices()).Times(num_calls);
+   if constexpr (solver == plssvm::solver_type::automatic) {
+       EXPECT_CALL(csvr, get_device_memory()).Times(num_calls);
+       EXPECT_CALL(csvr, num_available_devices()).Times(num_calls);
 #if defined(PLSSVM_ENFORCE_MAX_MEM_ALLOC_SIZE)
-        EXPECT_CALL(csvr, get_max_mem_alloc_size()).Times(num_calls);
+       EXPECT_CALL(csvr, get_max_mem_alloc_size()).Times(num_calls);
 #endif
-    }
-    EXPECT_CALL(csvr, assemble_kernel_matrix(
-                            ::testing::An<plssvm::solver_type>(),
-                            ::testing::An<const plssvm::parameter &>(),
-                            ::testing::An<const plssvm::soa_matrix<plssvm::real_type> &>(),
-                            ::testing::An<const std::vector<plssvm::real_type> &>(),
-                            ::testing::An<plssvm::real_type>()))
-                        .Times(num_calls)
-                        .WillRepeatedly(::testing::Invoke([num_devices]() {
-                            std::vector<plssvm::detail::move_only_any> res(num_devices);
-                            for (std::size_t device_id = 0; device_id < num_devices; ++device_id) {
-                                auto matr = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ 5, 5 });
-                                res[device_id] = plssvm::detail::move_only_any{ std::move(matr) };
-                            }
-                            return res; }));
-    EXPECT_CALL(csvr, blas_level_3(
-                            ::testing::An<plssvm::solver_type>(),
-                            ::testing::An<plssvm::real_type>(),
-                            ::testing::An<const std::vector<plssvm::detail::move_only_any> &>(),
-                            ::testing::An<const plssvm::soa_matrix<plssvm::real_type> &>(),
-                            ::testing::An<plssvm::real_type>(),
-                            ::testing::An<plssvm::soa_matrix<plssvm::real_type> &>()))
-                        .Times(::testing::Between(num_calls * 1, num_calls * 6));  // at least once before CG loop, at most # data_points - 1 + 1
+   }
+   EXPECT_CALL(csvr, assemble_kernel_matrix(
+                           ::testing::An<plssvm::solver_type>(),
+                           ::testing::An<const plssvm::parameter &>(),
+                           ::testing::An<const plssvm::soa_matrix<plssvm::real_type> &>(),
+                           ::testing::An<const std::vector<plssvm::real_type> &>(),
+                           ::testing::An<plssvm::real_type>()))
+                       .Times(num_calls)
+                       .WillRepeatedly(::testing::Invoke([num_devices]() {
+                           std::vector<plssvm::detail::move_only_any> res(num_devices);
+                           for (std::size_t device_id = 0; device_id < num_devices; ++device_id) {
+                               auto matr = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ 5, 5 }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE });
+                               res[device_id] = plssvm::detail::move_only_any{ std::move(matr) };
+                           }
+                           return res; }));
+   EXPECT_CALL(csvr, blas_level_3(
+                           ::testing::An<plssvm::solver_type>(),
+                           ::testing::An<plssvm::real_type>(),
+                           ::testing::An<const std::vector<plssvm::detail::move_only_any> &>(),
+                           ::testing::An<const plssvm::soa_matrix<plssvm::real_type> &>(),
+                           ::testing::An<plssvm::real_type>(),
+                           ::testing::An<plssvm::soa_matrix<plssvm::real_type> &>()))
+                       .Times(::testing::Between(num_calls * 1, num_calls * 6));  // at least once before CG loop, at most # data_points - 1 + 1
     // clang-format on
 
     // create data set
@@ -285,34 +285,35 @@ TYPED_TEST(BaseCSVRFit, fit_named_parameters) {
     const int max_iter = 20;
 
     // clang-format off
-    if constexpr (solver == plssvm::solver_type::automatic) {
-        EXPECT_CALL(csvr, get_device_memory()).Times(num_calls);
-        EXPECT_CALL(csvr, num_available_devices()).Times(num_calls);
+   if constexpr (solver == plssvm::solver_type::automatic) {
+       EXPECT_CALL(csvr, get_device_memory()).Times(num_calls);
+       EXPECT_CALL(csvr, num_available_devices()).Times(num_calls);
 #if defined(PLSSVM_ENFORCE_MAX_MEM_ALLOC_SIZE)
-        EXPECT_CALL(csvr, get_max_mem_alloc_size()).Times(num_calls);
+       EXPECT_CALL(csvr, get_max_mem_alloc_size()).Times(num_calls);
 #endif
-    }
-    EXPECT_CALL(csvr, assemble_kernel_matrix(
-                            ::testing::An<plssvm::solver_type>(),
-                            ::testing::An<const plssvm::parameter &>(),
-                            ::testing::An<const plssvm::soa_matrix<plssvm::real_type> &>(),
-                            ::testing::An<const std::vector<plssvm::real_type> &>(),
-                            ::testing::An<plssvm::real_type>()))
-                        .Times(num_calls)
-                        .WillRepeatedly(::testing::Invoke([num_devices]() {
-                            std::vector<plssvm::detail::move_only_any> res(num_devices);
-                            for (std::size_t device_id = 0; device_id < num_devices; ++device_id) {
-                                res[device_id] = plssvm::detail::move_only_any{ util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ 5, 5 }) };
-                            }
-                           return res; }));
-    EXPECT_CALL(csvr, blas_level_3(
-                            ::testing::An<plssvm::solver_type>(),
-                            ::testing::An<plssvm::real_type>(),
-                            ::testing::An<const std::vector<plssvm::detail::move_only_any> &>(),
-                            ::testing::An<const plssvm::soa_matrix<plssvm::real_type> &>(),
-                            ::testing::An<plssvm::real_type>(),
-                            ::testing::An<plssvm::soa_matrix<plssvm::real_type> &>()))
-                        .Times(::testing::Between(num_calls * 1, num_calls * (max_iter + 1)));  // at least once before CG loop, at most max_iter + 1 -> per classifier
+   }
+   EXPECT_CALL(csvr, assemble_kernel_matrix(
+                           ::testing::An<plssvm::solver_type>(),
+                           ::testing::An<const plssvm::parameter &>(),
+                           ::testing::An<const plssvm::soa_matrix<plssvm::real_type> &>(),
+                           ::testing::An<const std::vector<plssvm::real_type> &>(),
+                           ::testing::An<plssvm::real_type>()))
+                       .Times(num_calls)
+                       .WillRepeatedly(::testing::Invoke([num_devices]() {
+                           std::vector<plssvm::detail::move_only_any> res(num_devices);
+                           for (std::size_t device_id = 0; device_id < num_devices; ++device_id) {
+                               res[device_id] = plssvm::detail::move_only_any{ util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ 5, 5 },
+                                                                                                                                                   plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE }) };
+                           }
+                          return res; }));
+   EXPECT_CALL(csvr, blas_level_3(
+                           ::testing::An<plssvm::solver_type>(),
+                           ::testing::An<plssvm::real_type>(),
+                           ::testing::An<const std::vector<plssvm::detail::move_only_any> &>(),
+                           ::testing::An<const plssvm::soa_matrix<plssvm::real_type> &>(),
+                           ::testing::An<plssvm::real_type>(),
+                           ::testing::An<plssvm::soa_matrix<plssvm::real_type> &>()))
+                       .Times(::testing::Between(num_calls * 1, num_calls * (max_iter + 1)));  // at least once before CG loop, at most max_iter + 1 -> per classifier
     // clang-format on
 
     // create data set
@@ -346,26 +347,26 @@ TYPED_TEST(BaseCSVRFit, fit_named_parameters_invalid_epsilon) {
 
     // since an exception should be triggered, the mocked function should never be called
     // clang-format off
-    EXPECT_CALL(csvr, get_device_memory()).Times(0);
-    EXPECT_CALL(csvr, num_available_devices()).Times(0);
+   EXPECT_CALL(csvr, get_device_memory()).Times(0);
+   EXPECT_CALL(csvr, num_available_devices()).Times(0);
 #if defined(PLSSVM_ENFORCE_MAX_MEM_ALLOC_SIZE)
-    EXPECT_CALL(csvr, get_max_mem_alloc_size()).Times(0);
+   EXPECT_CALL(csvr, get_max_mem_alloc_size()).Times(0);
 #endif
-    EXPECT_CALL(csvr, assemble_kernel_matrix(
-                            ::testing::An<plssvm::solver_type>(),
-                            ::testing::An<const plssvm::parameter &>(),
-                            ::testing::An<const plssvm::soa_matrix<plssvm::real_type> &>(),
-                            ::testing::An<const std::vector<plssvm::real_type> &>(),
-                            ::testing::An<plssvm::real_type>()))
-                        .Times(0);
-    EXPECT_CALL(csvr, blas_level_3(
-                            ::testing::An<plssvm::solver_type>(),
-                            ::testing::An<plssvm::real_type>(),
-                            ::testing::An<const std::vector<plssvm::detail::move_only_any> &>(),
-                            ::testing::An<const plssvm::soa_matrix<plssvm::real_type> &>(),
-                            ::testing::An<plssvm::real_type>(),
-                            ::testing::An<plssvm::soa_matrix<plssvm::real_type> &>()))
-                        .Times(0);
+   EXPECT_CALL(csvr, assemble_kernel_matrix(
+                           ::testing::An<plssvm::solver_type>(),
+                           ::testing::An<const plssvm::parameter &>(),
+                           ::testing::An<const plssvm::soa_matrix<plssvm::real_type> &>(),
+                           ::testing::An<const std::vector<plssvm::real_type> &>(),
+                           ::testing::An<plssvm::real_type>()))
+                       .Times(0);
+   EXPECT_CALL(csvr, blas_level_3(
+                           ::testing::An<plssvm::solver_type>(),
+                           ::testing::An<plssvm::real_type>(),
+                           ::testing::An<const std::vector<plssvm::detail::move_only_any> &>(),
+                           ::testing::An<const plssvm::soa_matrix<plssvm::real_type> &>(),
+                           ::testing::An<plssvm::real_type>(),
+                           ::testing::An<plssvm::soa_matrix<plssvm::real_type> &>()))
+                       .Times(0);
     // clang-format on
 
     // create data set
@@ -393,26 +394,26 @@ TYPED_TEST(BaseCSVRFit, fit_named_parameters_invalid_max_iter) {
 
     // since an exception should be triggered, the mocked function should never be called
     // clang-format off
-    EXPECT_CALL(csvr, get_device_memory()).Times(0);
-    EXPECT_CALL(csvr, num_available_devices()).Times(0);
+   EXPECT_CALL(csvr, get_device_memory()).Times(0);
+   EXPECT_CALL(csvr, num_available_devices()).Times(0);
 #if defined(PLSSVM_ENFORCE_MAX_MEM_ALLOC_SIZE)
-    EXPECT_CALL(csvr, get_max_mem_alloc_size()).Times(0);
+   EXPECT_CALL(csvr, get_max_mem_alloc_size()).Times(0);
 #endif
-    EXPECT_CALL(csvr, assemble_kernel_matrix(
-                            ::testing::An<plssvm::solver_type>(),
-                            ::testing::An<const plssvm::parameter &>(),
-                            ::testing::An<const plssvm::soa_matrix<plssvm::real_type> &>(),
-                            ::testing::An<const std::vector<plssvm::real_type> &>(),
-                            ::testing::An<plssvm::real_type>()))
-                        .Times(0);
-    EXPECT_CALL(csvr, blas_level_3(
-                            ::testing::An<plssvm::solver_type>(),
-                            ::testing::An<plssvm::real_type>(),
-                            ::testing::An<const std::vector<plssvm::detail::move_only_any> &>(),
-                            ::testing::An<const plssvm::soa_matrix<plssvm::real_type> &>(),
-                            ::testing::An<plssvm::real_type>(),
-                            ::testing::An<plssvm::soa_matrix<plssvm::real_type> &>()))
-                        .Times(0);
+   EXPECT_CALL(csvr, assemble_kernel_matrix(
+                           ::testing::An<plssvm::solver_type>(),
+                           ::testing::An<const plssvm::parameter &>(),
+                           ::testing::An<const plssvm::soa_matrix<plssvm::real_type> &>(),
+                           ::testing::An<const std::vector<plssvm::real_type> &>(),
+                           ::testing::An<plssvm::real_type>()))
+                       .Times(0);
+   EXPECT_CALL(csvr, blas_level_3(
+                           ::testing::An<plssvm::solver_type>(),
+                           ::testing::An<plssvm::real_type>(),
+                           ::testing::An<const std::vector<plssvm::detail::move_only_any> &>(),
+                           ::testing::An<const plssvm::soa_matrix<plssvm::real_type> &>(),
+                           ::testing::An<plssvm::real_type>(),
+                           ::testing::An<plssvm::soa_matrix<plssvm::real_type> &>()))
+                       .Times(0);
     // clang-format on
 
     // create data set
@@ -442,26 +443,26 @@ TYPED_TEST(BaseCSVRFit, fit_communicator_mismatch) {
 
     // since an exception should be triggered, the mocked function should never be called
     // clang-format off
-    EXPECT_CALL(csvr, get_device_memory()).Times(0);
-    EXPECT_CALL(csvr, num_available_devices()).Times(0);
+   EXPECT_CALL(csvr, get_device_memory()).Times(0);
+   EXPECT_CALL(csvr, num_available_devices()).Times(0);
 #if defined(PLSSVM_ENFORCE_MAX_MEM_ALLOC_SIZE)
-    EXPECT_CALL(csvr, get_max_mem_alloc_size()).Times(0);
+   EXPECT_CALL(csvr, get_max_mem_alloc_size()).Times(0);
 #endif
-    EXPECT_CALL(csvr, assemble_kernel_matrix(
-                            ::testing::An<plssvm::solver_type>(),
-                            ::testing::An<const plssvm::parameter &>(),
-                            ::testing::An<const plssvm::soa_matrix<plssvm::real_type> &>(),
-                            ::testing::An<const std::vector<plssvm::real_type> &>(),
-                            ::testing::An<plssvm::real_type>()))
-                        .Times(0);
-    EXPECT_CALL(csvr, blas_level_3(
-                            ::testing::An<plssvm::solver_type>(),
-                            ::testing::An<plssvm::real_type>(),
-                            ::testing::An<const std::vector<plssvm::detail::move_only_any> &>(),
-                            ::testing::An<const plssvm::soa_matrix<plssvm::real_type> &>(),
-                            ::testing::An<plssvm::real_type>(),
-                            ::testing::An<plssvm::soa_matrix<plssvm::real_type> &>()))
-                        .Times(0);
+   EXPECT_CALL(csvr, assemble_kernel_matrix(
+                           ::testing::An<plssvm::solver_type>(),
+                           ::testing::An<const plssvm::parameter &>(),
+                           ::testing::An<const plssvm::soa_matrix<plssvm::real_type> &>(),
+                           ::testing::An<const std::vector<plssvm::real_type> &>(),
+                           ::testing::An<plssvm::real_type>()))
+                       .Times(0);
+   EXPECT_CALL(csvr, blas_level_3(
+                           ::testing::An<plssvm::solver_type>(),
+                           ::testing::An<plssvm::real_type>(),
+                           ::testing::An<const std::vector<plssvm::detail::move_only_any> &>(),
+                           ::testing::An<const plssvm::soa_matrix<plssvm::real_type> &>(),
+                           ::testing::An<plssvm::real_type>(),
+                           ::testing::An<plssvm::soa_matrix<plssvm::real_type> &>()))
+                       .Times(0);
     // clang-format on
 
     // create mismatching MPI communicator
@@ -498,26 +499,26 @@ TYPED_TEST(BaseCSVRFit, fit_no_label) {
 
     // since an exception should be triggered, the mocked function should never be called
     // clang-format off
-    EXPECT_CALL(csvr, get_device_memory()).Times(0);
-    EXPECT_CALL(csvr, num_available_devices()).Times(0);
+   EXPECT_CALL(csvr, get_device_memory()).Times(0);
+   EXPECT_CALL(csvr, num_available_devices()).Times(0);
 #if defined(PLSSVM_ENFORCE_MAX_MEM_ALLOC_SIZE)
-    EXPECT_CALL(csvr, get_max_mem_alloc_size()).Times(0);
+   EXPECT_CALL(csvr, get_max_mem_alloc_size()).Times(0);
 #endif
-    EXPECT_CALL(csvr, assemble_kernel_matrix(
-                            ::testing::An<plssvm::solver_type>(),
-                            ::testing::An<const plssvm::parameter &>(),
-                            ::testing::An<const plssvm::soa_matrix<plssvm::real_type> &>(),
-                            ::testing::An<const std::vector<plssvm::real_type> &>(),
-                            ::testing::An<plssvm::real_type>()))
-                        .Times(0);
-    EXPECT_CALL(csvr, blas_level_3(
-                            ::testing::An<plssvm::solver_type>(),
-                            ::testing::An<plssvm::real_type>(),
-                            ::testing::An<const std::vector<plssvm::detail::move_only_any> &>(),
-                            ::testing::An<const plssvm::soa_matrix<plssvm::real_type> &>(),
-                            ::testing::An<plssvm::real_type>(),
-                            ::testing::An<plssvm::soa_matrix<plssvm::real_type> &>()))
-                        .Times(0);
+   EXPECT_CALL(csvr, assemble_kernel_matrix(
+                           ::testing::An<plssvm::solver_type>(),
+                           ::testing::An<const plssvm::parameter &>(),
+                           ::testing::An<const plssvm::soa_matrix<plssvm::real_type> &>(),
+                           ::testing::An<const std::vector<plssvm::real_type> &>(),
+                           ::testing::An<plssvm::real_type>()))
+                       .Times(0);
+   EXPECT_CALL(csvr, blas_level_3(
+                           ::testing::An<plssvm::solver_type>(),
+                           ::testing::An<plssvm::real_type>(),
+                           ::testing::An<const std::vector<plssvm::detail::move_only_any> &>(),
+                           ::testing::An<const plssvm::soa_matrix<plssvm::real_type> &>(),
+                           ::testing::An<plssvm::real_type>(),
+                           ::testing::An<plssvm::soa_matrix<plssvm::real_type> &>()))
+                       .Times(0);
     // clang-format on
 
     // create data set without labels
@@ -548,30 +549,30 @@ TYPED_TEST(BaseCSVRFit, fit_out_of_resources) {
         ON_CALL(csvr, get_device_memory()).WillByDefault(::testing::Return(std::vector<plssvm::detail::memory_size>{ 512_MiB + 1_KiB, 512_MiB + 1_KiB }));
 
         // clang-format off
-        EXPECT_CALL(csvr, get_device_memory()).Times(1);
-        EXPECT_CALL(csvr, num_available_devices()).Times(1);
+       EXPECT_CALL(csvr, get_device_memory()).Times(1);
+       EXPECT_CALL(csvr, num_available_devices()).Times(1);
 #if defined(PLSSVM_ENFORCE_MAX_MEM_ALLOC_SIZE)
-        EXPECT_CALL(csvr, get_max_mem_alloc_size()).Times(1);
+       EXPECT_CALL(csvr, get_max_mem_alloc_size()).Times(1);
 #endif
-        EXPECT_CALL(csvr, assemble_kernel_matrix(
-                                ::testing::An<plssvm::solver_type>(),
-                                ::testing::An<const plssvm::parameter &>(),
-                                ::testing::An<const plssvm::soa_matrix<plssvm::real_type> &>(),
-                                ::testing::An<const std::vector<plssvm::real_type> &>(),
-                                ::testing::An<plssvm::real_type>()))
-                            .Times(0);
-        EXPECT_CALL(csvr, blas_level_3(
-                                ::testing::An<plssvm::solver_type>(),
-                                ::testing::An<plssvm::real_type>(),
-                                ::testing::An<const std::vector<plssvm::detail::move_only_any> &>(),
-                                ::testing::An<const plssvm::soa_matrix<plssvm::real_type> &>(),
-                                ::testing::An<plssvm::real_type>(),
-                                ::testing::An<plssvm::soa_matrix<plssvm::real_type> &>()))
-                            .Times(0);
+       EXPECT_CALL(csvr, assemble_kernel_matrix(
+                               ::testing::An<plssvm::solver_type>(),
+                               ::testing::An<const plssvm::parameter &>(),
+                               ::testing::An<const plssvm::soa_matrix<plssvm::real_type> &>(),
+                               ::testing::An<const std::vector<plssvm::real_type> &>(),
+                               ::testing::An<plssvm::real_type>()))
+                           .Times(0);
+       EXPECT_CALL(csvr, blas_level_3(
+                               ::testing::An<plssvm::solver_type>(),
+                               ::testing::An<plssvm::real_type>(),
+                               ::testing::An<const std::vector<plssvm::detail::move_only_any> &>(),
+                               ::testing::An<const plssvm::soa_matrix<plssvm::real_type> &>(),
+                               ::testing::An<plssvm::real_type>(),
+                               ::testing::An<plssvm::soa_matrix<plssvm::real_type> &>()))
+                           .Times(0);
         // clang-format on
 
         // create data set
-        plssvm::regression_data_set<label_type> training_data{ PLSSVM_REGRESSION_TEST_FILE };
+        plssvm::regression_data_set<label_type> training_data{ this->get_data_filename() };
         if constexpr (kernel == plssvm::kernel_function_type::chi_squared) {
             // chi-squared is well-defined for non-negative values only
             if (training_data.labels().has_value()) {
@@ -601,26 +602,26 @@ TYPED_TEST(BaseCSVRFit, fit_device_memory_too_small) {
         ON_CALL(csvr, get_device_memory()).WillByDefault(::testing::Return(std::vector<plssvm::detail::memory_size>{ 1_KiB, 1_KiB }));
 
         // clang-format off
-        EXPECT_CALL(csvr, get_device_memory()).Times(1);
-        EXPECT_CALL(csvr, num_available_devices()).Times(0);
+       EXPECT_CALL(csvr, get_device_memory()).Times(1);
+       EXPECT_CALL(csvr, num_available_devices()).Times(0);
 #if defined(PLSSVM_ENFORCE_MAX_MEM_ALLOC_SIZE)
-        EXPECT_CALL(csvr, get_max_mem_alloc_size()).Times(0);
+       EXPECT_CALL(csvr, get_max_mem_alloc_size()).Times(0);
 #endif
-        EXPECT_CALL(csvr, assemble_kernel_matrix(
-                                ::testing::An<plssvm::solver_type>(),
-                                ::testing::An<const plssvm::parameter &>(),
-                                ::testing::An<const plssvm::soa_matrix<plssvm::real_type> &>(),
-                                ::testing::An<const std::vector<plssvm::real_type> &>(),
-                                ::testing::An<plssvm::real_type>()))
-                            .Times(0);
-        EXPECT_CALL(csvr, blas_level_3(
-                                ::testing::An<plssvm::solver_type>(),
-                                ::testing::An<plssvm::real_type>(),
-                                ::testing::An<const std::vector<plssvm::detail::move_only_any> &>(),
-                                ::testing::An<const plssvm::soa_matrix<plssvm::real_type> &>(),
-                                ::testing::An<plssvm::real_type>(),
-                                ::testing::An<plssvm::soa_matrix<plssvm::real_type> &>()))
-                            .Times(0);
+       EXPECT_CALL(csvr, assemble_kernel_matrix(
+                               ::testing::An<plssvm::solver_type>(),
+                               ::testing::An<const plssvm::parameter &>(),
+                               ::testing::An<const plssvm::soa_matrix<plssvm::real_type> &>(),
+                               ::testing::An<const std::vector<plssvm::real_type> &>(),
+                               ::testing::An<plssvm::real_type>()))
+                           .Times(0);
+       EXPECT_CALL(csvr, blas_level_3(
+                               ::testing::An<plssvm::solver_type>(),
+                               ::testing::An<plssvm::real_type>(),
+                               ::testing::An<const std::vector<plssvm::detail::move_only_any> &>(),
+                               ::testing::An<const plssvm::soa_matrix<plssvm::real_type> &>(),
+                               ::testing::An<plssvm::real_type>(),
+                               ::testing::An<plssvm::soa_matrix<plssvm::real_type> &>()))
+                           .Times(0);
         // clang-format on
 
         // create data set
@@ -655,15 +656,15 @@ TYPED_TEST(BaseCSVRPredict, predict) {
 
     // mock the predict_values function
     // clang-format off
-    EXPECT_CALL(csvr, predict_values(
-                            ::testing::An<const plssvm::parameter &>(),
-                            ::testing::An<const plssvm::soa_matrix<plssvm::real_type> &>(),
-                            ::testing::An<const plssvm::aos_matrix<plssvm::real_type> &>(),
-                            ::testing::An<const std::vector<plssvm::real_type> &>(),
-                            ::testing::An<plssvm::soa_matrix<plssvm::real_type> &>(),
-                            ::testing::An<const plssvm::soa_matrix<plssvm::real_type> &>()))
-                        .Times(num_calls)
-                        .WillRepeatedly(::testing::Return(util::generate_random_matrix<plssvm::aos_matrix<plssvm::real_type>>(plssvm::shape{ 6, 1 })));
+   EXPECT_CALL(csvr, predict_values(
+                           ::testing::An<const plssvm::parameter &>(),
+                           ::testing::An<const plssvm::soa_matrix<plssvm::real_type> &>(),
+                           ::testing::An<const plssvm::aos_matrix<plssvm::real_type> &>(),
+                           ::testing::An<const std::vector<plssvm::real_type> &>(),
+                           ::testing::An<plssvm::soa_matrix<plssvm::real_type> &>(),
+                           ::testing::An<const plssvm::soa_matrix<plssvm::real_type> &>()))
+                       .Times(num_calls)
+                       .WillRepeatedly(::testing::Return(util::generate_random_matrix<plssvm::aos_matrix<plssvm::real_type>>(plssvm::shape{ 6, 1 })));
     // clang-format on
 
     // create data set and previously learned model
@@ -683,13 +684,13 @@ TYPED_TEST(BaseCSVRPredict, predict_num_feature_mismatch) {
 
     // mock the predict_values function -> since an exception should be triggered, the mocked function should never be called
     // clang-format off
-    EXPECT_CALL(csvr, predict_values(
-                            ::testing::An<const plssvm::parameter &>(),
-                            ::testing::An<const plssvm::soa_matrix<plssvm::real_type> &>(),
-                            ::testing::An<const plssvm::aos_matrix<plssvm::real_type> &>(),
-                            ::testing::An<const std::vector<plssvm::real_type> &>(),
-                            ::testing::An<plssvm::soa_matrix<plssvm::real_type> &>(),
-                            ::testing::An<const plssvm::soa_matrix<plssvm::real_type> &>())).Times(0);
+   EXPECT_CALL(csvr, predict_values(
+                           ::testing::An<const plssvm::parameter &>(),
+                           ::testing::An<const plssvm::soa_matrix<plssvm::real_type> &>(),
+                           ::testing::An<const plssvm::aos_matrix<plssvm::real_type> &>(),
+                           ::testing::An<const std::vector<plssvm::real_type> &>(),
+                           ::testing::An<plssvm::soa_matrix<plssvm::real_type> &>(),
+                           ::testing::An<const plssvm::soa_matrix<plssvm::real_type> &>())).Times(0);
     // clang-format on
 
     // create data set and previously learned model
@@ -712,13 +713,13 @@ TYPED_TEST(BaseCSVRPredict, predict_communicator_mismatch) {
 
     // mock the predict_values function -> since an exception should be triggered, the mocked function should never be called
     // clang-format off
-    EXPECT_CALL(csvr, predict_values(
-                            ::testing::An<const plssvm::parameter &>(),
-                            ::testing::An<const plssvm::soa_matrix<plssvm::real_type> &>(),
-                            ::testing::An<const plssvm::aos_matrix<plssvm::real_type> &>(),
-                            ::testing::An<const std::vector<plssvm::real_type> &>(),
-                            ::testing::An<plssvm::soa_matrix<plssvm::real_type> &>(),
-                            ::testing::An<const plssvm::soa_matrix<plssvm::real_type> &>())).Times(0);
+   EXPECT_CALL(csvr, predict_values(
+                           ::testing::An<const plssvm::parameter &>(),
+                           ::testing::An<const plssvm::soa_matrix<plssvm::real_type> &>(),
+                           ::testing::An<const plssvm::aos_matrix<plssvm::real_type> &>(),
+                           ::testing::An<const std::vector<plssvm::real_type> &>(),
+                           ::testing::An<plssvm::soa_matrix<plssvm::real_type> &>(),
+                           ::testing::An<const plssvm::soa_matrix<plssvm::real_type> &>())).Times(0);
     // clang-format on
 
     // create mismatching MPI communicator
@@ -761,15 +762,15 @@ TYPED_TEST(BaseCSVRScore, score_model) {
 
     // mock the predict_values function
     // clang-format off
-    EXPECT_CALL(csvr, predict_values(
-                            ::testing::An<const plssvm::parameter &>(),
-                            ::testing::An<const plssvm::soa_matrix<plssvm::real_type> &>(),
-                            ::testing::An<const plssvm::aos_matrix<plssvm::real_type> &>(),
-                            ::testing::An<const std::vector<plssvm::real_type> &>(),
-                            ::testing::An<plssvm::soa_matrix<plssvm::real_type> &>(),
-                            ::testing::An<const plssvm::soa_matrix<plssvm::real_type> &>()))
-                        .Times(num_calls)
-                        .WillRepeatedly(::testing::Return(util::generate_random_matrix<plssvm::aos_matrix<plssvm::real_type>>(plssvm::shape{ 6, 1 })));
+   EXPECT_CALL(csvr, predict_values(
+                           ::testing::An<const plssvm::parameter &>(),
+                           ::testing::An<const plssvm::soa_matrix<plssvm::real_type> &>(),
+                           ::testing::An<const plssvm::aos_matrix<plssvm::real_type> &>(),
+                           ::testing::An<const std::vector<plssvm::real_type> &>(),
+                           ::testing::An<plssvm::soa_matrix<plssvm::real_type> &>(),
+                           ::testing::An<const plssvm::soa_matrix<plssvm::real_type> &>()))
+                       .Times(num_calls)
+                       .WillRepeatedly(::testing::Return(util::generate_random_matrix<plssvm::aos_matrix<plssvm::real_type>>(plssvm::shape{ 6, 1 })));
     // clang-format on
 
     // create data set
@@ -793,13 +794,13 @@ TYPED_TEST(BaseCSVRScore, score_model_from_file) {
 
     // mock the predict_values function
     // clang-format off
-    EXPECT_CALL(csvr, predict_values(
-                    ::testing::An<const plssvm::parameter &>(),
-                    ::testing::An<const plssvm::soa_matrix<plssvm::real_type> &>(),
-                    ::testing::An<const plssvm::aos_matrix<plssvm::real_type> &>(),
-                    ::testing::An<const std::vector<plssvm::real_type> &>(),
-                    ::testing::An<plssvm::soa_matrix<plssvm::real_type> &>(),
-                    ::testing::An<const plssvm::soa_matrix<plssvm::real_type> &>())).Times(0);
+   EXPECT_CALL(csvr, predict_values(
+                   ::testing::An<const plssvm::parameter &>(),
+                   ::testing::An<const plssvm::soa_matrix<plssvm::real_type> &>(),
+                   ::testing::An<const plssvm::aos_matrix<plssvm::real_type> &>(),
+                   ::testing::An<const std::vector<plssvm::real_type> &>(),
+                   ::testing::An<plssvm::soa_matrix<plssvm::real_type> &>(),
+                   ::testing::An<const plssvm::soa_matrix<plssvm::real_type> &>())).Times(0);
     // clang-format on
 
     // read a previously learned model from a model file
@@ -820,15 +821,15 @@ TYPED_TEST(BaseCSVRScore, score_data_set) {
 
     // mock the predict_values function
     // clang-format off
-    EXPECT_CALL(csvr, predict_values(
-                        ::testing::An<const plssvm::parameter &>(),
-                        ::testing::An<const plssvm::soa_matrix<plssvm::real_type> &>(),
-                        ::testing::An<const plssvm::aos_matrix<plssvm::real_type> &>(),
-                        ::testing::An<const std::vector<plssvm::real_type> &>(),
-                        ::testing::An<plssvm::soa_matrix<plssvm::real_type> &>(),
-                        ::testing::An<const plssvm::soa_matrix<plssvm::real_type> &>()))
-                    .Times(num_calls)
-                    .WillRepeatedly(::testing::Return(util::generate_random_matrix<plssvm::aos_matrix<plssvm::real_type>>(plssvm::shape{ 6, 1 })));
+   EXPECT_CALL(csvr, predict_values(
+                       ::testing::An<const plssvm::parameter &>(),
+                       ::testing::An<const plssvm::soa_matrix<plssvm::real_type> &>(),
+                       ::testing::An<const plssvm::aos_matrix<plssvm::real_type> &>(),
+                       ::testing::An<const std::vector<plssvm::real_type> &>(),
+                       ::testing::An<plssvm::soa_matrix<plssvm::real_type> &>(),
+                       ::testing::An<const plssvm::soa_matrix<plssvm::real_type> &>()))
+                   .Times(num_calls)
+                   .WillRepeatedly(::testing::Return(util::generate_random_matrix<plssvm::aos_matrix<plssvm::real_type>>(plssvm::shape{ 6, 1 })));
     // clang-format on
 
     // create data set and previously learned model
@@ -848,13 +849,13 @@ TYPED_TEST(BaseCSVRScore, score_data_set_no_label) {
 
     // mock the predict_values function -> since an exception should be triggered, the mocked function should never be called
     // clang-format off
-    EXPECT_CALL(csvr, predict_values(
-                    ::testing::An<const plssvm::parameter &>(),
-                    ::testing::An<const plssvm::soa_matrix<plssvm::real_type> &>(),
-                    ::testing::An<const plssvm::aos_matrix<plssvm::real_type> &>(),
-                    ::testing::An<const std::vector<plssvm::real_type> &>(),
-                    ::testing::An<plssvm::soa_matrix<plssvm::real_type> &>(),
-                    ::testing::An<const plssvm::soa_matrix<plssvm::real_type> &>())).Times(0);
+   EXPECT_CALL(csvr, predict_values(
+                   ::testing::An<const plssvm::parameter &>(),
+                   ::testing::An<const plssvm::soa_matrix<plssvm::real_type> &>(),
+                   ::testing::An<const plssvm::aos_matrix<plssvm::real_type> &>(),
+                   ::testing::An<const std::vector<plssvm::real_type> &>(),
+                   ::testing::An<plssvm::soa_matrix<plssvm::real_type> &>(),
+                   ::testing::An<const plssvm::soa_matrix<plssvm::real_type> &>())).Times(0);
     // clang-format on
 
     // create data set
@@ -874,18 +875,18 @@ TYPED_TEST(BaseCSVRScore, score_data_set_num_features_mismatch) {
 
     // mock the predict_values function -> since an exception should be triggered, the mocked function should never be called
     // clang-format off
-    EXPECT_CALL(csvr, predict_values(
-                        ::testing::An<const plssvm::parameter &>(),
-                        ::testing::An<const plssvm::soa_matrix<plssvm::real_type> &>(),
-                        ::testing::An<const plssvm::aos_matrix<plssvm::real_type> &>(),
-                        ::testing::An<const std::vector<plssvm::real_type> &>(),
-                        ::testing::An<plssvm::soa_matrix<plssvm::real_type> &>(),
-                        ::testing::An<const plssvm::soa_matrix<plssvm::real_type> &>())).Times(0);
+   EXPECT_CALL(csvr, predict_values(
+                       ::testing::An<const plssvm::parameter &>(),
+                       ::testing::An<const plssvm::soa_matrix<plssvm::real_type> &>(),
+                       ::testing::An<const plssvm::aos_matrix<plssvm::real_type> &>(),
+                       ::testing::An<const std::vector<plssvm::real_type> &>(),
+                       ::testing::An<plssvm::soa_matrix<plssvm::real_type> &>(),
+                       ::testing::An<const plssvm::soa_matrix<plssvm::real_type> &>())).Times(0);
     // clang-format on
 
     // create data set
     const std::vector<label_type> labels = util::get_correct_data_file_labels<label_type>();
-    const auto data = util::generate_random_matrix<plssvm::aos_matrix<plssvm::real_type>>(plssvm::shape{ labels.size(), 2 });
+    const auto data = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ labels.size(), 2 });
     const plssvm::regression_data_set<label_type> data_to_score{ data, labels };
 
     // read a previously learned model from a model file
@@ -909,13 +910,13 @@ TYPED_TEST(BaseCSVRScore, predict_communicator_mismatch) {
 
     // mock the predict_values function -> since an exception should be triggered, the mocked function should never be called
     // clang-format off
-    EXPECT_CALL(csvr, predict_values(
-                            ::testing::An<const plssvm::parameter &>(),
-                            ::testing::An<const plssvm::soa_matrix<plssvm::real_type> &>(),
-                            ::testing::An<const plssvm::aos_matrix<plssvm::real_type> &>(),
-                            ::testing::An<const std::vector<plssvm::real_type> &>(),
-                            ::testing::An<plssvm::soa_matrix<plssvm::real_type> &>(),
-                            ::testing::An<const plssvm::soa_matrix<plssvm::real_type> &>())).Times(0);
+   EXPECT_CALL(csvr, predict_values(
+                           ::testing::An<const plssvm::parameter &>(),
+                           ::testing::An<const plssvm::soa_matrix<plssvm::real_type> &>(),
+                           ::testing::An<const plssvm::aos_matrix<plssvm::real_type> &>(),
+                           ::testing::An<const std::vector<plssvm::real_type> &>(),
+                           ::testing::An<plssvm::soa_matrix<plssvm::real_type> &>(),
+                           ::testing::An<const plssvm::soa_matrix<plssvm::real_type> &>())).Times(0);
     // clang-format on
 
     // create mismatching MPI communicator

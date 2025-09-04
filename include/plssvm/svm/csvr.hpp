@@ -13,14 +13,14 @@
 #define PLSSVM_SVM_CSVR_HPP_
 #pragma once
 
-#include "plssvm/constants.hpp"                            // plssvm::real_type
+#include "plssvm/constants.hpp"                            // plssvm::PADDING_SIZE, plssvm::real_type
 #include "plssvm/data_set/regression_data_set.hpp"         // plssvm::regression_data_set
 #include "plssvm/detail/assert.hpp"                        // PLSSVM_ASSERT
 #include "plssvm/detail/logging/mpi_log.hpp"               // plssvm::detail::log
 #include "plssvm/detail/tracking/performance_tracker.hpp"  // PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_EVENT, plssvm::detail::tracking::tracking_entry
 #include "plssvm/exceptions/exceptions.hpp"                // plssvm::invalid_parameter_exception, plssvm::mpi_exception
 #include "plssvm/kernel_function_types.hpp"                // plssvm::kernel_function_type
-#include "plssvm/matrix.hpp"                               // plssvm::aos_matrix, plssvm::soa_matrix
+#include "plssvm/matrix.hpp"                               // plssvm::aos_matrix
 #include "plssvm/model/regression_model.hpp"               // plssvm::regression_model
 #include "plssvm/parameter.hpp"                            // plssvm::parameter
 #include "plssvm/regression_report.hpp"                    // plssvm::regression_report
@@ -110,9 +110,14 @@ class csvr : virtual public csvm {
      */
     template <typename label_type, typename... Args>
     [[nodiscard]] regression_model<label_type> fit(const regression_data_set<label_type> &data, Args &&...named_args) const {
+        PLSSVM_ASSERT(data.data().is_padded(), "The data points must be padded!");
+        PLSSVM_ASSERT((data.data().padding() == shape{ PADDING_SIZE, PADDING_SIZE }),
+                      "The provided matrix must be padded with {}, but is padded with {}!",
+                      shape{ PADDING_SIZE, PADDING_SIZE },
+                      data.data().padding());
 #if defined(PLSSVM_ENABLE_ASSERTS)
         if (params_.kernel_type == kernel_function_type::chi_squared) {
-            PLSSVM_ASSERT(std::all_of(data.data().data(), data.data().data() + data.data().size(), [](const real_type val) { return val >= real_type{ 0.0 }; }),
+            PLSSVM_ASSERT(std::all_of(data.data().data(), data.data().data() + data.data().size_padded(), [](const real_type val) { return val >= real_type{ 0.0 }; }),
                           "The chi-squared kernel is only well defined for non-negative values!");
         }
 #endif
@@ -184,9 +189,19 @@ class csvr : virtual public csvm {
      */
     template <typename label_type>
     [[nodiscard]] std::vector<label_type> predict(const regression_model<label_type> &model, const regression_data_set<label_type> &data) const {
+        PLSSVM_ASSERT(model.support_vectors().is_padded(), "The support vectors must be padded!");
+        PLSSVM_ASSERT((model.support_vectors().padding() == shape{ PADDING_SIZE, PADDING_SIZE }),
+                      "The support vectors must be padded with {}, but is padded with {}!",
+                      shape{ PADDING_SIZE, PADDING_SIZE },
+                      model.support_vectors().padding());
+        PLSSVM_ASSERT(data.data().is_padded(), "The data points must be padded!");
+        PLSSVM_ASSERT((data.data().padding() == shape{ PADDING_SIZE, PADDING_SIZE }),
+                      "The provided predict points must be padded with {}, but is padded with {}!",
+                      shape{ PADDING_SIZE, PADDING_SIZE },
+                      data.data().padding());
 #if defined(PLSSVM_ENABLE_ASSERTS)
         if (params_.kernel_type == kernel_function_type::chi_squared) {
-            PLSSVM_ASSERT(std::all_of(data.data().data(), data.data().data() + data.data().size(), [](const real_type val) { return val >= real_type{ 0.0 }; }),
+            PLSSVM_ASSERT(std::all_of(data.data().data(), data.data().data() + data.data().size_padded(), [](const real_type val) { return val >= real_type{ 0.0 }; }),
                           "The chi-squared kernel is only well defined for non-negative values!");
         }
 #endif

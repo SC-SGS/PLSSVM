@@ -323,9 +323,9 @@ template <typename T, plssvm::svm_type SVM = plssvm::svm_type::csvc>
         // for LABEL_PLACEHOLDER: [ 1, 1, 2, 3, 2, 4 ]
         // if only two labels, e.g., [ -1, 1 ] are given, the output will look as follows: [ -1, -1, 1, 1, 1, 1 ]
         // clang-format off
-        return std::vector<T>{ labels[std::min<std::size_t>(0, labels.size() - 1)], labels[std::min<std::size_t>(0, labels.size() - 1)],
-                               labels[std::min<std::size_t>(1, labels.size() - 1)], labels[std::min<std::size_t>(2, labels.size() - 1)],
-                               labels[std::min<std::size_t>(1, labels.size() - 1)], labels[std::min<std::size_t>(3, labels.size() - 1)] };
+       return std::vector<T>{ labels[std::min<std::size_t>(0, labels.size() - 1)], labels[std::min<std::size_t>(0, labels.size() - 1)],
+                              labels[std::min<std::size_t>(1, labels.size() - 1)], labels[std::min<std::size_t>(2, labels.size() - 1)],
+                              labels[std::min<std::size_t>(1, labels.size() - 1)], labels[std::min<std::size_t>(3, labels.size() - 1)] };
         // clang-format on
     } else if constexpr (SVM == plssvm::svm_type::csvr) {
         return std::vector<T>{ static_cast<T>(-1.5), static_cast<T>(1.5), static_cast<T>(0.0), static_cast<T>(2.0), static_cast<T>(2.5), static_cast<T>(-1.5) };
@@ -468,6 +468,20 @@ template <typename matrix_type, typename real_type = typename matrix_type::value
 }
 
 /**
+ * @brief Generate matrix of size (@p shape.x + @p padding.x) times (@p shape.y + @p padding.y) filled with random floating point values in the @p range. The padding entries are set to `0`.
+ * @tparam matrix_type the type of the elements in the matrix (must be a floating point type)
+ * @tparam real_type the type of the elements in the matrix (must be a floating point type)
+ * @param[in] shape the shape of the matrix to generate
+ * @param[in] padding the padding of the matrix
+ * @param[in] range a pair containing the lower and upper bound of the random values in the matrix
+ * @return the randomly generated matrix (`[[nodiscard]]`)
+ */
+template <typename matrix_type, typename real_type = typename matrix_type::value_type>
+[[nodiscard]] inline matrix_type generate_random_matrix(const plssvm::shape shape, const plssvm::shape padding, const std::pair<real_type, real_type> range = { static_cast<real_type>(-1.0), static_cast<real_type>(1.0) }) {
+    return matrix_type{ generate_random_matrix<matrix_type>(shape, range), padding };
+}
+
+/**
  * @brief Generate a matrix of size @p shape with filled with values "row + (col / 10.0)".
  * @tparam matrix_type the type of the elements in the matrix (must be a floating point type)
  * @param[in] shape the shape of the matrix to generate
@@ -486,6 +500,20 @@ template <typename matrix_type>
     }
 
     return matrix;
+}
+
+/**
+ * @brief Generate a matrix of size (@p shape.x + @p padding.x) times (@p shape.y + @p padding.y) filled with filled with values "row.(col +1)".
+ *        The padding entries are set to `0`.
+ * @details Example for row = 1 and cols = 3 is: [ 1.1, 1.2, 1.3 ].
+ * @tparam matrix_type the type of the elements in the matrix (must be a floating point type)
+ * @param[in] shape the shape of the matrix to generate
+ * @param[in] padding the padding of the matrix
+ * @return the generated matrix (`[[nodiscard]]`)
+ */
+template <typename matrix_type>
+[[nodiscard]] inline matrix_type generate_specific_matrix(const plssvm::shape shape, const plssvm::shape padding) {
+    return matrix_type{ generate_specific_matrix<matrix_type>(shape), padding };
 }
 
 /**
@@ -519,6 +547,20 @@ template <typename matrix_type>
     }
 
     return matrix;
+}
+
+/**
+ * @brief Generate a "sparse" matrix of size (@p shape.x + @p padding.x) times (@p shape.y + @p padding.y) filled with filled with values "row.(col +1)".
+ *        In each row, approximately 50% of the values are replaced with zeros. The padding entries are set to `0`.
+ * @details Example for row = 1 and cols = 3 is: [ 1.1, 0.0, 1.3 ].
+ * @tparam matrix_type the type of the elements in the vector (must be a floating point type)
+ * @param[in] shape the shape of the matrix to generate
+ * @param[in] padding the padding of the matrix
+ * @return the generated sparse matrix (`[[nodiscard]]`)
+ */
+template <typename matrix_type>
+[[nodiscard]] inline matrix_type generate_specific_sparse_matrix(const plssvm::shape shape, const plssvm::shape padding) {
+    return matrix_type{ generate_specific_sparse_matrix<matrix_type>(shape), padding };
 }
 
 /**
@@ -612,7 +654,7 @@ template <typename matrix_type, typename real_type = typename matrix_type::value
 [[nodiscard]] inline matrix_type matrix_abs(const matrix_type &matr) {
     static_assert(std::is_floating_point_v<real_type>, "Only floating point types are allowed!");
 
-    matrix_type res{ matr.shape() };
+    matrix_type res{ matr.shape(), matr.padding() };
     for (std::size_t row = 0; row < matr.num_rows(); ++row) {
         for (std::size_t col = 0; col < matr.num_cols(); ++col) {
             res(row, col) = std::abs(matr(row, col));

@@ -13,11 +13,11 @@
 #define PLSSVM_TESTS_BACKENDS_GENERIC_CSVM_TESTS_HPP_
 #pragma once
 
-#include "plssvm/constants.hpp"                         // plssvm::real_type
+#include "plssvm/constants.hpp"                         // plssvm::real_type, plssvm::PADDING_SIZE
 #include "plssvm/data_set/classification_data_set.hpp"  // plssvm::classification_data_set
 #include "plssvm/detail/data_distribution.hpp"          // plssvm::detail::{triangular_data_distribution, rectangular_data_distribution}
 #include "plssvm/kernel_function_types.hpp"             // plssvm::kernel_function_type
-#include "plssvm/matrix.hpp"                            // plssvm::aos_matrix, plssvm::soa_matrix
+#include "plssvm/matrix.hpp"                            // plssvm::aos_matrix
 #include "plssvm/mpi/communicator.hpp"                  // plssvm::mpi::communicator
 #include "plssvm/parameter.hpp"                         // plssvm::parameter
 #include "plssvm/shape.hpp"                             // plssvm::shape
@@ -59,22 +59,22 @@ TYPED_TEST_P(GenericBackendCSVM, blas_level_3_kernel_explicit) {
     // create correct data distribution for the ground truth calculation
     const plssvm::detail::triangular_data_distribution dist{ plssvm::mpi::communicator{}, data.num_data_points() - 1, num_devices };
 
-    const auto B = util::generate_specific_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ data.num_data_points() - 1, data.num_data_points() - 1 });
+    const auto B = util::generate_specific_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ data.num_data_points() - 1, data.num_data_points() - 1 }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE });
 
     const plssvm::real_type beta{ 0.5 };
-    auto C = util::generate_specific_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ data.num_data_points() - 1, data.num_data_points() - 1 });
+    auto C = util::generate_specific_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ data.num_data_points() - 1, data.num_data_points() - 1 }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE });
     auto ground_truth_C{ C };
 
     const std::size_t num_rhs = B.shape().x;
     const std::size_t num_rows = B.shape().y;
 
-    plssvm::soa_matrix<plssvm::real_type> C_res{ C.shape(), plssvm::real_type{ 0.0 } };
+    plssvm::soa_matrix<plssvm::real_type> C_res{ C.shape(), plssvm::real_type{ 0.0 }, C.padding() };
 
     for (std::size_t device = 0; device < num_devices; ++device) {
         // create kernel matrix
         const std::vector<plssvm::real_type> kernel_matrix = ground_truth::assemble_device_specific_kernel_matrix(params, data.data(), q_red, QA_cost, dist, device);
 
-        plssvm::soa_matrix<plssvm::real_type> C_temp{ C.shape(), plssvm::real_type{ 0.0 } };
+        plssvm::soa_matrix<plssvm::real_type> C_temp{ C.shape(), plssvm::real_type{ 0.0 }, C.padding() };
         if (device == 0) {
             C_temp = C;
         }
@@ -89,10 +89,11 @@ TYPED_TEST_P(GenericBackendCSVM, blas_level_3_kernel_explicit) {
 
         C_res += C_temp;
     }
+    C_res.restore_padding();
 
     // calculate correct results
-    const plssvm::aos_matrix<plssvm::real_type> kernel_matrix_gemm = ground_truth::assemble_full_kernel_matrix(params, data.data(), q_red, QA_cost);
-    ground_truth::gemm(alpha, kernel_matrix_gemm, B, beta, ground_truth_C);
+    const plssvm::aos_matrix<plssvm::real_type> kernel_matrix_gemm_padded = ground_truth::assemble_full_kernel_matrix(params, data.data(), q_red, QA_cost);
+    ground_truth::gemm(alpha, kernel_matrix_gemm_padded, B, beta, ground_truth_C);
 
     // check C for correctness
     EXPECT_FLOATING_POINT_MATRIX_NEAR(C_res, ground_truth_C);
@@ -103,15 +104,16 @@ TYPED_TEST_P(GenericBackendCSVM, calculate_w) {
     const plssvm::classification_data_set data{ PLSSVM_CLASSIFICATION_TEST_FILE };
 
     // the weights (i.e., alpha values) for all support vectors
-    const auto weights = util::generate_specific_matrix<plssvm::aos_matrix<plssvm::real_type>>(plssvm::shape{ 3, data.num_data_points() });
+    const auto weights = util::generate_specific_matrix<plssvm::aos_matrix<plssvm::real_type>>(plssvm::shape{ 3, data.num_data_points() }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE });
 
     // calculate w
-    plssvm::soa_matrix<plssvm::real_type> w{ plssvm::shape{ weights.num_rows(), data.data().num_cols() } };
+    plssvm::soa_matrix<plssvm::real_type> w{ plssvm::shape{ weights.num_rows(), data.data().num_cols() }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE } };
 
     // create correct data distribution
     const plssvm::detail::rectangular_data_distribution dist{ plssvm::mpi::communicator{}, data.num_data_points(), 1 };
 
     device_kernel_w_linear(w, weights, data.data(), dist.place_specific_num_rows(0), dist.place_row_offset(0));
+    w.restore_padding();
 
     // calculate correct results
     const plssvm::soa_matrix<plssvm::real_type> correct_w = ground_truth::calculate_w(weights, data.data());
@@ -153,7 +155,7 @@ TYPED_TEST_P(GenericBackendCSVMKernelFunction, assemble_kernel_matrix_explicit) 
     const auto [q_red, QA_cost] = ground_truth::perform_dimensional_reduction(params, data_matr);
     const plssvm::real_type cost = plssvm::real_type{ 1.0 } / params.cost;
 
-    std::vector<plssvm::real_type> kernel_matrix(dist.calculate_explicit_kernel_matrix_num_entries(0));  // only explicitly store the upper triangular matrix
+    std::vector<plssvm::real_type> kernel_matrix(dist.calculate_explicit_kernel_matrix_num_entries_padded(0));  // only explicitly store the upper triangular matrix
 
     const std::size_t device_specific_num_rows = dist.place_specific_num_rows(0);
     const std::size_t row_offset = dist.place_row_offset(0);
@@ -206,10 +208,10 @@ TYPED_TEST_P(GenericBackendCSVMKernelFunction, blas_level_3_kernel_implicit) {
     const auto [q_red, QA_cost] = ground_truth::perform_dimensional_reduction(params, data_matr);
     const plssvm::real_type cost = plssvm::real_type{ 1.0 } / params.cost;
 
-    const auto B = util::generate_specific_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ data.num_data_points() - 1, data.num_data_points() - 1 });
+    const auto B = util::generate_specific_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ data.num_data_points() - 1, data.num_data_points() - 1 }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE });
 
     const plssvm::real_type beta{ 0.5 };
-    auto C = util::generate_specific_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ data.num_data_points() - 1, data.num_data_points() - 1 });
+    auto C = util::generate_specific_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ data.num_data_points() - 1, data.num_data_points() - 1 }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE });
     auto ground_truth_C{ C };
 
     // scale C
@@ -243,8 +245,8 @@ TYPED_TEST_P(GenericBackendCSVMKernelFunction, blas_level_3_kernel_implicit) {
     }
 
     // calculate correct results
-    const plssvm::aos_matrix<plssvm::real_type> kernel_matrix_gemm = ground_truth::assemble_full_kernel_matrix(params, data_matr, q_red, QA_cost);
-    ground_truth::gemm(alpha, kernel_matrix_gemm, B, beta, ground_truth_C);
+    const plssvm::aos_matrix<plssvm::real_type> kernel_matrix_gemm_padded = ground_truth::assemble_full_kernel_matrix(params, data_matr, q_red, QA_cost);
+    ground_truth::gemm(alpha, kernel_matrix_gemm_padded, B, beta, ground_truth_C);
 
     // check C for correctness
     EXPECT_FLOATING_POINT_MATRIX_NEAR_EPS(C, ground_truth_C, 1e6);
@@ -264,12 +266,12 @@ TYPED_TEST_P(GenericBackendCSVMKernelFunction, predict_values) {
         data_matr = util::matrix_abs(data_matr);
     }
 
-    const auto weights = util::generate_specific_matrix<plssvm::aos_matrix<plssvm::real_type>>(plssvm::shape{ 3, data_matr.num_rows() });
-    const auto predict_points = util::generate_specific_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ data_matr.num_rows(), data_matr.num_cols() });
+    const auto weights = util::generate_specific_matrix<plssvm::aos_matrix<plssvm::real_type>>(plssvm::shape{ 3, data_matr.num_rows() }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE });
+    const auto predict_points = util::generate_specific_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ data_matr.num_rows(), data_matr.num_cols() }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE });
     const std::vector<plssvm::real_type> rho = util::generate_random_vector<plssvm::real_type>(weights.num_rows());
     const plssvm::soa_matrix<plssvm::real_type> correct_w = ground_truth::calculate_w(weights, data_matr);
 
-    plssvm::aos_matrix<plssvm::real_type> out{ plssvm::shape{ predict_points.num_rows(), weights.num_rows() } };
+    plssvm::aos_matrix<plssvm::real_type> out{ plssvm::shape{ predict_points.num_rows(), weights.num_rows() }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE } };
 
     // create correct data distribution
     const plssvm::detail::rectangular_data_distribution dist{ plssvm::mpi::communicator{}, predict_points.num_rows(), 1 };
@@ -297,6 +299,7 @@ TYPED_TEST_P(GenericBackendCSVMKernelFunction, predict_values) {
             device_kernel_predict<plssvm::kernel_function_type::chi_squared, plssvm::real_type>(out, weights, rho, data_matr, predict_points, device_specific_num_predict_points, row_offset, std::get<plssvm::real_type>(params.gamma));
             break;
     }
+    out.restore_padding();
 
     // check out for correctness
     const plssvm::aos_matrix<plssvm::real_type> correct_out = ground_truth::predict_values(params, correct_w, weights, rho, data_matr, predict_points);
@@ -321,12 +324,12 @@ TYPED_TEST_P(GenericBackendCSVMDeathTest, blas_level_3_kernel_explicit) {
     const plssvm::real_type alpha{ 1.0 };
 
     // create kernel matrix to use in the BLAS calculation
-    const std::vector<plssvm::real_type> kernel_matrix(4 * (4 + 1) / 2);
+    const std::vector<plssvm::real_type> kernel_matrix((4 + plssvm::PADDING_SIZE) * (4 + plssvm::PADDING_SIZE + 1) / 2);
 
-    const auto B = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ 4, 4 });
+    const auto B = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ 4, 4 }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE });
 
     const plssvm::real_type beta{ 0.5 };
-    auto C = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ 4, 4 });
+    auto C = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ 4, 4 }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE });
 
     const std::size_t num_rhs = B.shape().x;
     const std::size_t num_rows = B.shape().y;
@@ -338,11 +341,11 @@ TYPED_TEST_P(GenericBackendCSVMDeathTest, blas_level_3_kernel_explicit) {
 
     {
         // the B matrix must have the correct shape
-        const auto B_wrong = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ std::min<std::size_t>(0ULL, num_rows - 1), std::min<std::size_t>(0ULL, num_rhs - 2) });
+        const auto B_wrong = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ std::min<std::size_t>(0ULL, num_rows - 1), std::min<std::size_t>(0ULL, num_rhs - 2) }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE });
         EXPECT_DEATH(device_kernel_symm(num_rows, num_rhs, specific_num_rows, row_offset, alpha, kernel_matrix.data(), B_wrong, beta, C), ::testing::HasSubstr(fmt::format("B matrix sizes mismatch!: [{}, {}] != [{}, {}]", std::min(0, static_cast<int>(num_rows) - 1), std::min(0, static_cast<int>(num_rhs) - 2), num_rows, num_rhs)));
 
         // the C matrix must have the correct shape
-        auto C_wrong = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ std::min<std::size_t>(0ULL, num_rows - 1), std::min<std::size_t>(0ULL, num_rhs - 2) });
+        auto C_wrong = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ std::min<std::size_t>(0ULL, num_rows - 1), std::min<std::size_t>(0ULL, num_rhs - 2) }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE });
         EXPECT_DEATH(device_kernel_symm(num_rows, num_rhs, specific_num_rows, row_offset, alpha, kernel_matrix.data(), B, beta, C_wrong), ::testing::HasSubstr(fmt::format("C matrix sizes mismatch!: [{}, {}] != [{}, {}]", std::min(0, static_cast<int>(num_rows) - 1), std::min(0, static_cast<int>(num_rhs) - 2), num_rows, num_rhs)));
 
         // the place specific number of rows may not be too large
@@ -355,11 +358,11 @@ TYPED_TEST_P(GenericBackendCSVMDeathTest, blas_level_3_kernel_explicit) {
         const std::size_t num_mirror_rows = num_rows - row_offset - specific_num_rows;
 
         // the B matrix must have the correct shape
-        const auto B_wrong = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ std::min<std::size_t>(0ULL, num_rows - 1), std::min<std::size_t>(0ULL, num_rhs - 2) });
+        const auto B_wrong = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ std::min<std::size_t>(0ULL, num_rows - 1), std::min<std::size_t>(0ULL, num_rhs - 2) }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE });
         EXPECT_DEATH(device_kernel_symm_mirror(num_rows, num_rhs, num_mirror_rows, specific_num_rows, row_offset, alpha, kernel_matrix.data(), B_wrong, beta, C), ::testing::HasSubstr(fmt::format("B matrix sizes mismatch!: [{}, {}] != [{}, {}]", std::min(0, static_cast<int>(num_rows) - 1), std::min(0, static_cast<int>(num_rhs) - 2), num_rows, num_rhs)));
 
         // the C matrix must have the correct shape
-        auto C_wrong = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ std::min<std::size_t>(0ULL, num_rows - 1), std::min<std::size_t>(0ULL, num_rhs - 2) });
+        auto C_wrong = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ std::min<std::size_t>(0ULL, num_rows - 1), std::min<std::size_t>(0ULL, num_rhs - 2) }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE });
         EXPECT_DEATH(device_kernel_symm_mirror(num_rows, num_rhs, num_mirror_rows, specific_num_rows, row_offset, alpha, kernel_matrix.data(), B, beta, C_wrong), ::testing::HasSubstr(fmt::format("C matrix sizes mismatch!: [{}, {}] != [{}, {}]", std::min(0, static_cast<int>(num_rows) - 1), std::min(0, static_cast<int>(num_rhs) - 2), num_rows, num_rhs)));
 
         // the place specific number of rows may not be too large
@@ -378,8 +381,8 @@ TYPED_TEST_P(GenericBackendCSVMDeathTest, calculate_w) {
     const plssvm::classification_data_set data{ PLSSVM_CLASSIFICATION_TEST_FILE };
 
     // the weights (i.e., alpha values) for all support vectors
-    const auto weights = util::generate_specific_matrix<plssvm::aos_matrix<plssvm::real_type>>(plssvm::shape{ 3, data.num_data_points() });
-    plssvm::soa_matrix<plssvm::real_type> w(plssvm::shape{ weights.num_rows(), data.data().num_cols() });
+    const auto weights = util::generate_specific_matrix<plssvm::aos_matrix<plssvm::real_type>>(plssvm::shape{ 3, data.num_data_points() }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE });
+    plssvm::soa_matrix<plssvm::real_type> w(plssvm::shape{ weights.num_rows(), data.data().num_cols() }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE });
 
     // create correct data distribution
     const plssvm::detail::rectangular_data_distribution dist{ plssvm::mpi::communicator{}, data.num_data_points(), 1 };
@@ -387,7 +390,7 @@ TYPED_TEST_P(GenericBackendCSVMDeathTest, calculate_w) {
     const std::size_t row_offset = dist.place_row_offset(0);
 
     // the weights and support vector matrix shapes must match
-    const auto weights_wrong = util::generate_specific_matrix<plssvm::aos_matrix<plssvm::real_type>>(plssvm::shape{ 3, data.num_data_points() + 1 });
+    const auto weights_wrong = util::generate_specific_matrix<plssvm::aos_matrix<plssvm::real_type>>(plssvm::shape{ 3, data.num_data_points() + 1 }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE });
     EXPECT_DEATH(device_kernel_w_linear(w, weights_wrong, data.data(), specific_num_rows, row_offset), fmt::format("Size mismatch: {} vs {}!", weights_wrong.num_cols(), data.data().num_rows()));
 
     // the w shape must be correct
@@ -430,7 +433,7 @@ TYPED_TEST_P(GenericBackendCSVMKernelFunctionDeathTest, assemble_kernel_matrix_e
     const auto [q_red, QA_cost] = ground_truth::perform_dimensional_reduction(params, data.data());
 
     // create correct data distribution for the ground truth calculation
-    std::vector<plssvm::real_type> kernel_matrix(dist.calculate_explicit_kernel_matrix_num_entries(0));  // only explicitly store the upper triangular matrix
+    std::vector<plssvm::real_type> kernel_matrix(dist.calculate_explicit_kernel_matrix_num_entries_padded(0));  // only explicitly store the upper triangular matrix
 
     const std::size_t device_specific_num_rows = dist.place_specific_num_rows(0);
     const std::size_t row_offset = dist.place_row_offset(0);
@@ -560,12 +563,12 @@ TYPED_TEST_P(GenericBackendCSVMKernelFunctionDeathTest, predict_values) {
     }
     const plssvm::classification_data_set data{ PLSSVM_CLASSIFICATION_TEST_FILE };
 
-    const auto weights = util::generate_specific_matrix<plssvm::aos_matrix<plssvm::real_type>>(plssvm::shape{ 3, data.data().num_rows() });
-    const auto predict_points = util::generate_specific_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ data.data().num_rows(), data.data().num_cols() });
+    const auto weights = util::generate_specific_matrix<plssvm::aos_matrix<plssvm::real_type>>(plssvm::shape{ 3, data.data().num_rows() }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE });
+    const auto predict_points = util::generate_specific_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ data.data().num_rows(), data.data().num_cols() }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE });
     const std::vector<plssvm::real_type> rho = util::generate_random_vector<plssvm::real_type>(weights.num_rows());
     const plssvm::soa_matrix<plssvm::real_type> w = ground_truth::calculate_w(weights, data.data());
 
-    plssvm::aos_matrix<plssvm::real_type> out{ plssvm::shape{ predict_points.num_rows(), weights.num_rows() }};
+    plssvm::aos_matrix<plssvm::real_type> out{ plssvm::shape{ predict_points.num_rows(), weights.num_rows() }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE } };
 
     // create correct data distribution
     const plssvm::detail::rectangular_data_distribution dist{ plssvm::mpi::communicator{}, predict_points.num_rows(), 1 };
@@ -580,7 +583,7 @@ TYPED_TEST_P(GenericBackendCSVMKernelFunctionDeathTest, predict_values) {
                      ::testing::HasSubstr(fmt::format("Size mismatch: {} vs {}!", w.num_rows(), rho_wrong.size())));
 
         // the number of features must match
-        const auto predict_points_wrong = util::generate_specific_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ data.data().num_rows(), data.data().num_cols() + 1 });
+        const auto predict_points_wrong = util::generate_specific_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ data.data().num_rows(), data.data().num_cols() + 1 }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE });
         EXPECT_DEATH(device_kernel_predict_linear(out, w, rho, predict_points_wrong, device_specific_num_predict_points, row_offset),
                      ::testing::HasSubstr(fmt::format("Size mismatch: {} vs {}!", w.num_cols(), predict_points_wrong.num_cols())));
 
@@ -628,12 +631,12 @@ TYPED_TEST_P(GenericBackendCSVMKernelFunctionDeathTest, predict_values) {
                      ::testing::HasSubstr(fmt::format("Size mismatch: {} vs {}!", w.num_rows(), rho_wrong.size())));
 
         // the number of support vectors and weights must match
-        const auto weights_wrong = util::generate_specific_matrix<plssvm::aos_matrix<plssvm::real_type>>(plssvm::shape{ 3, data.data().num_rows() + 1 });
+        const auto weights_wrong = util::generate_specific_matrix<plssvm::aos_matrix<plssvm::real_type>>(plssvm::shape{ 3, data.data().num_rows() + 1 }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE });
         EXPECT_DEATH(run_predict_values(params, out, weights_wrong, rho, data.data(), predict_points, device_specific_num_predict_points, row_offset),
                      ::testing::HasSubstr(fmt::format("Size mismatch: {} vs {}!", weights_wrong.num_cols(), data.data().num_rows())));
 
         // the number of features must match
-        const auto predict_points_wrong = util::generate_specific_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ data.data().num_rows(), data.data().num_cols() + 1 });
+        const auto predict_points_wrong = util::generate_specific_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ data.data().num_rows(), data.data().num_cols() + 1 }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE });
         EXPECT_DEATH(run_predict_values(params, out, weights, rho, data.data(), predict_points_wrong, device_specific_num_predict_points, row_offset),
                      ::testing::HasSubstr(fmt::format("Size mismatch: {} vs {}!", data.data().num_cols(), predict_points_wrong.num_cols())));
 

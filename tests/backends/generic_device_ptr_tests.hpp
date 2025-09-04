@@ -65,6 +65,9 @@ TYPED_TEST_P(DevicePtr, construct_size) {
     EXPECT_TRUE(static_cast<bool>(ptr));
     EXPECT_NE(ptr.get(), typename device_ptr_type::device_pointer_type{});
     EXPECT_EQ(ptr.shape(), (plssvm::shape{ 42, 1 }));
+    // check padding
+    EXPECT_EQ(ptr.padding(), (plssvm::shape{ 0, 0 }));
+    EXPECT_EQ(ptr.shape_padded(), (plssvm::shape{ 42, 1 }));
 }
 
 TYPED_TEST_P(DevicePtr, construct_shape) {
@@ -80,6 +83,27 @@ TYPED_TEST_P(DevicePtr, construct_shape) {
     EXPECT_TRUE(static_cast<bool>(ptr));
     EXPECT_NE(ptr.get(), typename device_ptr_type::device_pointer_type{});
     EXPECT_EQ(ptr.shape(), (plssvm::shape{ 42, 16 }));
+    // check padding
+    EXPECT_EQ(ptr.padding(), (plssvm::shape{ 0, 0 }));
+    EXPECT_EQ(ptr.shape_padded(), (plssvm::shape{ 42, 16 }));
+}
+
+TYPED_TEST_P(DevicePtr, construct_shape_and_padding) {
+    using test_type = typename TestFixture::fixture_test_type;
+    using device_ptr_type = typename test_type::device_ptr_type;
+    using queue_type = typename test_type::queue_type;
+    const queue_type &queue = test_type::default_queue();
+
+    // construct device_ptr
+    const device_ptr_type ptr{ plssvm::shape{ 42, 16 }, plssvm::shape{ 4, 4 }, queue };
+
+    // check data
+    EXPECT_TRUE(static_cast<bool>(ptr));
+    EXPECT_NE(ptr.get(), typename device_ptr_type::device_pointer_type{});
+    EXPECT_EQ(ptr.shape(), (plssvm::shape{ 42, 16 }));
+    // check padding
+    EXPECT_EQ(ptr.padding(), (plssvm::shape{ 4, 4 }));
+    EXPECT_EQ(ptr.shape_padded(), (plssvm::shape{ 46, 20 }));
 }
 
 TYPED_TEST_P(DevicePtr, move_construct) {
@@ -97,11 +121,45 @@ TYPED_TEST_P(DevicePtr, move_construct) {
     // EXPECT_EQ(second.queue(), queue);
     EXPECT_NE(second.get(), typename device_ptr_type::device_pointer_type{});
     EXPECT_EQ(second.shape(), (plssvm::shape{ 42, 1 }));
+    // check padding
+    EXPECT_EQ(second.padding(), (plssvm::shape{ 0, 0 }));
+    EXPECT_EQ(second.shape_padded(), (plssvm::shape{ 42, 1 }));
 
     // check moved-from data
     EXPECT_FALSE(static_cast<bool>(first));
     EXPECT_EQ(first.get(), typename device_ptr_type::device_pointer_type{});
     EXPECT_EQ(first.shape(), (plssvm::shape{ 0, 0 }));
+    // check padding
+    EXPECT_EQ(first.padding(), (plssvm::shape{ 0, 0 }));
+    EXPECT_EQ(first.shape_padded(), (plssvm::shape{ 0, 0 }));
+}
+
+TYPED_TEST_P(DevicePtr, move_construct_with_padding) {
+    using test_type = typename TestFixture::fixture_test_type;
+    using device_ptr_type = typename test_type::device_ptr_type;
+    using queue_type = typename test_type::queue_type;
+    const queue_type &queue = test_type::default_queue();
+
+    // construct device_ptr
+    device_ptr_type first{ plssvm::shape{ 42, 10 }, plssvm::shape{ 4, 5 }, queue };
+    const device_ptr_type second{ std::move(first) };
+
+    // check data
+    EXPECT_TRUE(static_cast<bool>(second));
+    // EXPECT_EQ(second.queue(), queue);
+    EXPECT_NE(second.get(), typename device_ptr_type::device_pointer_type{});
+    EXPECT_EQ(second.shape(), (plssvm::shape{ 42, 10 }));
+    // check padding
+    EXPECT_EQ(second.padding(), (plssvm::shape{ 4, 5 }));
+    EXPECT_EQ(second.shape_padded(), (plssvm::shape{ 46, 15 }));
+
+    // check moved-from data
+    EXPECT_FALSE(static_cast<bool>(first));
+    EXPECT_EQ(first.get(), typename device_ptr_type::device_pointer_type{});
+    EXPECT_EQ(first.shape(), (plssvm::shape{ 0, 0 }));
+    // check padding
+    EXPECT_EQ(first.padding(), (plssvm::shape{ 0, 0 }));
+    EXPECT_EQ(first.shape_padded(), (plssvm::shape{ 0, 0 }));
 }
 
 TYPED_TEST_P(DevicePtr, move_assign) {
@@ -121,11 +179,47 @@ TYPED_TEST_P(DevicePtr, move_assign) {
     EXPECT_TRUE(static_cast<bool>(second));
     EXPECT_NE(second.get(), typename device_ptr_type::device_pointer_type{});
     EXPECT_EQ(second.shape(), (plssvm::shape{ 42, 1 }));
+    // check padding
+    EXPECT_EQ(second.padding(), (plssvm::shape{ 0, 0 }));
+    EXPECT_EQ(second.shape_padded(), (plssvm::shape{ 42, 1 }));
 
     // check moved-from data
     EXPECT_FALSE(static_cast<bool>(first));
     EXPECT_EQ(first.get(), typename device_ptr_type::device_pointer_type{});
     EXPECT_EQ(first.shape(), (plssvm::shape{ 0, 0 }));
+    // check padding
+    EXPECT_EQ(first.padding(), (plssvm::shape{ 0, 0 }));
+    EXPECT_EQ(first.shape_padded(), (plssvm::shape{ 0, 0 }));
+}
+
+TYPED_TEST_P(DevicePtr, move_assign_with_padding) {
+    using test_type = typename TestFixture::fixture_test_type;
+    using device_ptr_type = typename test_type::device_ptr_type;
+    using queue_type = typename test_type::queue_type;
+    const queue_type &queue = test_type::default_queue();
+
+    // construct device_ptr
+    device_ptr_type first{ plssvm::shape{ 42, 10 }, plssvm::shape{ 4, 5 }, queue };
+    device_ptr_type second;
+
+    // move assign
+    second = std::move(first);
+
+    // check data
+    EXPECT_TRUE(static_cast<bool>(second));
+    EXPECT_NE(second.get(), typename device_ptr_type::device_pointer_type{});
+    EXPECT_EQ(second.shape(), (plssvm::shape{ 42, 10 }));
+    // check padding
+    EXPECT_EQ(second.padding(), (plssvm::shape{ 4, 5 }));
+    EXPECT_EQ(second.shape_padded(), (plssvm::shape{ 46, 15 }));
+
+    // check moved-from data
+    EXPECT_FALSE(static_cast<bool>(first));
+    EXPECT_EQ(first.get(), typename device_ptr_type::device_pointer_type{});
+    EXPECT_EQ(first.shape(), (plssvm::shape{ 0, 0 }));
+    // check padding
+    EXPECT_EQ(first.padding(), (plssvm::shape{ 0, 0 }));
+    EXPECT_EQ(first.shape_padded(), (plssvm::shape{ 0, 0 }));
 }
 
 TYPED_TEST_P(DevicePtr, swap_member_function) {
@@ -145,10 +239,45 @@ TYPED_TEST_P(DevicePtr, swap_member_function) {
     EXPECT_TRUE(static_cast<bool>(second));
     EXPECT_NE(second.get(), typename device_ptr_type::device_pointer_type{});
     EXPECT_EQ(second.shape(), (plssvm::shape{ 42, 1 }));
+    // check padding
+    EXPECT_EQ(second.padding(), (plssvm::shape{ 0, 0 }));
+    EXPECT_EQ(second.shape_padded(), (plssvm::shape{ 42, 1 }));
 
     EXPECT_FALSE(static_cast<bool>(first));
     EXPECT_EQ(first.get(), typename device_ptr_type::device_pointer_type{});
     EXPECT_EQ(first.shape(), (plssvm::shape{ 0, 0 }));
+    // check padding
+    EXPECT_EQ(first.padding(), (plssvm::shape{ 0, 0 }));
+    EXPECT_EQ(first.shape_padded(), (plssvm::shape{ 0, 0 }));
+}
+
+TYPED_TEST_P(DevicePtr, swap_member_function_with_padding) {
+    using test_type = typename TestFixture::fixture_test_type;
+    using device_ptr_type = typename test_type::device_ptr_type;
+    using queue_type = typename test_type::queue_type;
+    const queue_type &queue = test_type::default_queue();
+
+    // construct two device_ptr
+    device_ptr_type first{ plssvm::shape{ 42, 10 }, plssvm::shape{ 4, 5 }, queue };
+    device_ptr_type second{};
+
+    // swap both device_ptr using the member function
+    first.swap(second);
+
+    // check data
+    EXPECT_TRUE(static_cast<bool>(second));
+    EXPECT_NE(second.get(), typename device_ptr_type::device_pointer_type{});
+    EXPECT_EQ(second.shape(), (plssvm::shape{ 42, 10 }));
+    // check padding
+    EXPECT_EQ(second.padding(), (plssvm::shape{ 4, 5 }));
+    EXPECT_EQ(second.shape_padded(), (plssvm::shape{ 46, 15 }));
+
+    EXPECT_FALSE(static_cast<bool>(first));
+    EXPECT_EQ(first.get(), typename device_ptr_type::device_pointer_type{});
+    EXPECT_EQ(first.shape(), (plssvm::shape{ 0, 0 }));
+    // check padding
+    EXPECT_EQ(first.padding(), (plssvm::shape{ 0, 0 }));
+    EXPECT_EQ(first.shape_padded(), (plssvm::shape{ 0, 0 }));
 }
 
 TYPED_TEST_P(DevicePtr, swap_free_function) {
@@ -169,10 +298,46 @@ TYPED_TEST_P(DevicePtr, swap_free_function) {
     EXPECT_TRUE(static_cast<bool>(second));
     EXPECT_NE(second.get(), typename device_ptr_type::device_pointer_type{});
     EXPECT_EQ(second.shape(), (plssvm::shape{ 42, 1 }));
+    // check padding
+    EXPECT_EQ(second.padding(), (plssvm::shape{ 0, 0 }));
+    EXPECT_EQ(second.shape_padded(), (plssvm::shape{ 42, 1 }));
 
     EXPECT_FALSE(static_cast<bool>(first));
     EXPECT_EQ(first.get(), typename device_ptr_type::device_pointer_type{});
     EXPECT_EQ(first.shape(), (plssvm::shape{ 0, 0 }));
+    // check padding
+    EXPECT_EQ(first.padding(), (plssvm::shape{ 0, 0 }));
+    EXPECT_EQ(first.shape_padded(), (plssvm::shape{ 0, 0 }));
+}
+
+TYPED_TEST_P(DevicePtr, swap_free_function_with_padding) {
+    using test_type = typename TestFixture::fixture_test_type;
+    using device_ptr_type = typename test_type::device_ptr_type;
+    using queue_type = typename test_type::queue_type;
+    const queue_type &queue = test_type::default_queue();
+
+    // construct two device_ptr
+    device_ptr_type first{ plssvm::shape{ 42, 10 }, plssvm::shape{ 4, 5 }, queue };
+    device_ptr_type second;
+
+    // swap both device_ptr using the free function
+    using std::swap;
+    swap(first, second);
+
+    // check data
+    EXPECT_TRUE(static_cast<bool>(second));
+    EXPECT_NE(second.get(), typename device_ptr_type::device_pointer_type{});
+    EXPECT_EQ(second.shape(), (plssvm::shape{ 42, 10 }));
+    // check padding
+    EXPECT_EQ(second.padding(), (plssvm::shape{ 4, 5 }));
+    EXPECT_EQ(second.shape_padded(), (plssvm::shape{ 46, 15 }));
+
+    EXPECT_FALSE(static_cast<bool>(first));
+    EXPECT_EQ(first.get(), typename device_ptr_type::device_pointer_type{});
+    EXPECT_EQ(first.shape(), (plssvm::shape{ 0, 0 }));
+    // check padding
+    EXPECT_EQ(first.padding(), (plssvm::shape{ 0, 0 }));
+    EXPECT_EQ(first.shape_padded(), (plssvm::shape{ 0, 0 }));
 }
 
 TYPED_TEST_P(DevicePtr, operator_bool) {
@@ -204,6 +369,10 @@ TYPED_TEST_P(DevicePtr, size) {
     const device_ptr_type ptr2{ plssvm::shape{ 42, 16 }, queue };
     EXPECT_EQ(ptr2.size(), 42 * 16);
 
+    // construct device_ptr with shape and padding
+    const device_ptr_type ptr3{ plssvm::shape{ 42, 16 }, plssvm::shape{ 3, 3 }, queue };
+    EXPECT_EQ(ptr3.size(), 42 * 16);
+
     // construct empty device_ptr
     const device_ptr_type ptr4{};
     EXPECT_EQ(ptr4.size(), 0);
@@ -222,6 +391,10 @@ TYPED_TEST_P(DevicePtr, shape) {
     // construct device_ptr with shape
     const device_ptr_type ptr2{ plssvm::shape{ 42, 16 }, queue };
     EXPECT_EQ(ptr2.shape(), (plssvm::shape{ 42, 16 }));
+
+    // construct device_ptr with shape and padding
+    const device_ptr_type ptr3{ plssvm::shape{ 42, 16 }, plssvm::shape{ 3, 3 }, queue };
+    EXPECT_EQ(ptr3.shape(), (plssvm::shape{ 42, 16 }));
 
     // construct empty device_ptr
     const device_ptr_type ptr4{};
@@ -243,12 +416,93 @@ TYPED_TEST_P(DevicePtr, empty) {
     EXPECT_FALSE(ptr2.empty());
 
     // construct device_ptr
-    const device_ptr_type ptr3{ plssvm::shape{ 0, 0 }, queue };
-    EXPECT_TRUE(ptr3.empty());
+    const device_ptr_type ptr3{ plssvm::shape{ 42, 16 }, plssvm::shape{ 3, 3 }, queue };
+    EXPECT_FALSE(ptr3.empty());
+
+    // construct device_ptr
+    const device_ptr_type ptr4{ plssvm::shape{ 0, 0 }, plssvm::shape{ 3, 3 }, queue };
+    EXPECT_TRUE(ptr4.empty());
+
+    // construct empty device_ptr
+    const device_ptr_type ptr5{};
+    EXPECT_TRUE(ptr5.empty());
+}
+
+TYPED_TEST_P(DevicePtr, padding) {
+    using test_type = typename TestFixture::fixture_test_type;
+    using device_ptr_type = typename test_type::device_ptr_type;
+    using queue_type = typename test_type::queue_type;
+    const queue_type &queue = test_type::default_queue();
+
+    // construct device_ptr
+    const device_ptr_type ptr{ plssvm::shape{ 42, 16 }, plssvm::shape{ 4, 5 }, queue };
+    EXPECT_EQ(ptr.padding(), (plssvm::shape{ 4, 5 }));
+    ;
+}
+
+TYPED_TEST_P(DevicePtr, size_padded) {
+    using test_type = typename TestFixture::fixture_test_type;
+    using device_ptr_type = typename test_type::device_ptr_type;
+    using queue_type = typename test_type::queue_type;
+    const queue_type &queue = test_type::default_queue();
+
+    // construct device_ptr
+    const device_ptr_type ptr{ plssvm::shape{ 42, 16 }, plssvm::shape{ 4, 5 }, queue };
+    EXPECT_EQ(ptr.size_padded(), (42 + 4) * (16 + 5));
+}
+
+TYPED_TEST_P(DevicePtr, shape_padded) {
+    using test_type = typename TestFixture::fixture_test_type;
+    using device_ptr_type = typename test_type::device_ptr_type;
+    using queue_type = typename test_type::queue_type;
+    const queue_type &queue = test_type::default_queue();
+
+    // construct device_ptr
+    const device_ptr_type ptr1{ 42, queue };
+    EXPECT_EQ(ptr1.shape_padded(), (plssvm::shape{ 42, 1 }));
+
+    // construct device_ptr with shape
+    const device_ptr_type ptr2{ plssvm::shape{ 42, 16 }, queue };
+    EXPECT_EQ(ptr2.shape_padded(), (plssvm::shape{ 42, 16 }));
+
+    // construct device_ptr with shape and padding
+    const device_ptr_type ptr3{ plssvm::shape{ 42, 16 }, plssvm::shape{ 3, 3 }, queue };
+    EXPECT_EQ(ptr3.shape_padded(), (plssvm::shape{ 45, 19 }));
 
     // construct empty device_ptr
     const device_ptr_type ptr4{};
-    EXPECT_TRUE(ptr4.empty());
+    EXPECT_EQ(ptr4.shape_padded(), (plssvm::shape{ 0, 0 }));
+}
+
+TYPED_TEST_P(DevicePtr, is_padded) {
+    using test_type = typename TestFixture::fixture_test_type;
+    using device_ptr_type = typename test_type::device_ptr_type;
+    using queue_type = typename test_type::queue_type;
+    const queue_type &queue = test_type::default_queue();
+
+    // construct device_ptr
+    const device_ptr_type ptr1{ 42, queue };
+    EXPECT_FALSE(ptr1.is_padded());
+
+    // construct device_ptr
+    const device_ptr_type ptr2{ plssvm::shape{ 42, 16 }, queue };
+    EXPECT_FALSE(ptr2.is_padded());
+
+    // construct device_ptr
+    const device_ptr_type ptr3{ plssvm::shape{ 42, 16 }, plssvm::shape{ 3, 3 }, queue };
+    EXPECT_TRUE(ptr3.is_padded());
+
+    // construct device_ptr
+    const device_ptr_type ptr4{ plssvm::shape{ 0, 0 }, plssvm::shape{ 3, 3 }, queue };
+    EXPECT_TRUE(ptr4.is_padded());
+
+    // construct device_ptr
+    const device_ptr_type ptr5{ plssvm::shape{ 42, 16 }, plssvm::shape{ 0, 0 }, queue };
+    EXPECT_FALSE(ptr5.is_padded());
+
+    // construct empty device_ptr
+    const device_ptr_type ptr6{};
+    EXPECT_FALSE(ptr6.is_padded());
 }
 
 TYPED_TEST_P(DevicePtr, memset) {
@@ -800,14 +1054,23 @@ REGISTER_TYPED_TEST_SUITE_P(DevicePtr,
                             default_construct,
                             construct_size,
                             construct_shape,
+                            construct_shape_and_padding,
                             move_construct,
+                            move_construct_with_padding,
                             move_assign,
+                            move_assign_with_padding,
                             swap_member_function,
+                            swap_member_function_with_padding,
                             swap_free_function,
+                            swap_free_function_with_padding,
                             operator_bool,
                             size,
                             shape,
                             empty,
+                            padding,
+                            size_padded,
+                            shape_padded,
+                            is_padded,
                             memset,
                             memset_with_numbytes,
                             memset_invalid_pos,
@@ -874,6 +1137,30 @@ TYPED_TEST_P(DevicePtrLayout, copy_matrix) {
             break;
     }
     EXPECT_FLOATING_POINT_MATRIX_EQ(result, correct_result);
+}
+
+TYPED_TEST_P(DevicePtrLayout, copy_matrix_with_padding) {
+    using test_type = typename TestFixture::fixture_test_type;
+    using device_ptr_type = typename test_type::device_ptr_type;
+    using value_type = typename device_ptr_type::value_type;
+    using queue_type = typename test_type::queue_type;
+    const queue_type &queue = test_type::default_queue();
+    constexpr plssvm::layout_type layout = util::test_parameter_value_at_v<0, TypeParam>;
+
+    // construct device_ptr
+    device_ptr_type ptr{ plssvm::shape{ 5, 3 }, plssvm::shape{ 4, 4 }, queue };
+
+    // create data to copy to the device
+    const plssvm::matrix<value_type, layout> data{ plssvm::shape{ 5, 3 }, value_type{ 42 }, plssvm::shape{ 4, 4 } };
+
+    // copy data to the device
+    ptr.copy_to_device(data);
+    // copy data back to the host
+    plssvm::matrix<value_type, layout> result{ plssvm::shape{ 5, 3 }, value_type{ 0 }, plssvm::shape{ 4, 4 } };
+    ptr.copy_to_host(result);
+
+    // check values for correctness
+    EXPECT_FLOATING_POINT_MATRIX_EQ(result, data);
 }
 
 TYPED_TEST_P(DevicePtrLayout, copy_matrix_different_layouts) {
@@ -964,6 +1251,35 @@ TYPED_TEST_P(DevicePtrLayout, copy_matrix_strided) {
 
     // check values for correctness
     plssvm::matrix<value_type, layout> correct_result{ { { 1.1, 1.2, 1.3 }, { 2.1, 2.2, 2.3 } } };
+    EXPECT_FLOATING_POINT_MATRIX_EQ(result, correct_result);
+}
+
+TYPED_TEST_P(DevicePtrLayout, copy_matrix_strided_with_padding) {
+    using test_type = typename TestFixture::fixture_test_type;
+    using device_ptr_type = typename test_type::device_ptr_type;
+    using value_type = typename device_ptr_type::value_type;
+    using queue_type = typename test_type::queue_type;
+    const queue_type &queue = test_type::default_queue();
+    constexpr plssvm::layout_type layout = util::test_parameter_value_at_v<0, TypeParam>;
+
+    // construct device_ptr
+    device_ptr_type ptr{ plssvm::shape{ 3, 3 }, plssvm::shape{ 4, 4 }, queue };
+
+    // create data to copy to the device
+    const auto data = util::generate_specific_matrix<plssvm::matrix<value_type, layout>>(plssvm::shape{ 5, 3 }, plssvm::shape{ 4, 4 });
+
+    // copy data to the device
+    ptr.copy_to_device_strided(data, 2, 3);
+    // copy data back to the host
+    plssvm::matrix<value_type, layout> result{ plssvm::shape{ 3, 3 }, value_type{ 0 }, plssvm::shape{ 4, 4 } };
+    ptr.copy_to_host(result);
+
+    // check values for correctness
+    plssvm::matrix<value_type, layout> correct_result{ { { 2.1, 2.2, 2.3 },
+                                                         { 3.1, 3.2, 3.3 },
+                                                         { 4.1, 4.2, 4.3 } },
+                                                       plssvm::shape{ 4, 4 } };
+
     EXPECT_FLOATING_POINT_MATRIX_EQ(result, correct_result);
 }
 
@@ -1061,10 +1377,12 @@ TYPED_TEST_P(DevicePtrLayout, copy_matrix_strided_invalid_submatrix) {
 
 REGISTER_TYPED_TEST_SUITE_P(DevicePtrLayout,
                             copy_matrix,
+                            copy_matrix_with_padding,
                             copy_matrix_different_layouts,
                             copy_matrix_too_few_host_elements,
                             copy_matrix_too_few_buffer_elements,
                             copy_matrix_strided,
+                            copy_matrix_strided_with_padding,
                             copy_matrix_strided_different_layouts,
                             copy_full_matrix_strided,
                             copy_matrix_strided_too_few_host_elements,

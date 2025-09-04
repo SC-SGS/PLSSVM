@@ -174,13 +174,13 @@ TEST(MPICommunicator, allreduce_inplace) {
 
     // since MPI is disabled, a call to allreduce_inplace must return a vector containing one value which is equal to the provided one
     {
-        auto matr = util::generate_random_matrix<plssvm::aos_matrix<plssvm::real_type>>(plssvm::shape{ 4, 4 });
+        auto matr = util::generate_random_matrix<plssvm::aos_matrix<plssvm::real_type>>(plssvm::shape{ 4, 4 }, plssvm::shape{ 2, 2 });
         const auto matr_correct = matr;
         comm.allreduce_inplace(matr);
         EXPECT_EQ(matr, matr_correct);
     }
     {
-        auto matr = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ 4, 4 });
+        auto matr = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ 4, 4 }, plssvm::shape{ 2, 2 });
         const auto matr_correct = matr;
         comm.allreduce_inplace(matr);
         EXPECT_EQ(matr, matr_correct);

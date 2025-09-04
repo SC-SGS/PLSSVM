@@ -13,7 +13,7 @@
 #define PLSSVM_DETAIL_IO_LIBSVM_PARSING_HPP_
 #pragma once
 
-#include "plssvm/constants.hpp"                 // plssvm::real_type
+#include "plssvm/constants.hpp"                 // plssvm::real_type, plssvm::PADDING_SIZE
 #include "plssvm/detail/assert.hpp"             // PLSSVM_ASSERT
 #include "plssvm/detail/io/file_reader.hpp"     // plssvm::detail::io::file_reader
 #include "plssvm/detail/memory_size.hpp"        // plssvm::memory_size, custom literals
@@ -130,7 +130,7 @@ template <typename label_type>
     }
 
     // create vector containing the data and label
-    soa_matrix<real_type> data{ shape{ num_data_points, num_features } };
+    soa_matrix<real_type> data{ shape{ num_data_points, num_features }, shape{ PADDING_SIZE, PADDING_SIZE } };
     std::vector<label_type> label(num_data_points);
 
     std::exception_ptr parallel_exception;

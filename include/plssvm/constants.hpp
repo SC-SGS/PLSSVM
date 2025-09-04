@@ -38,6 +38,9 @@ constexpr unsigned INTERNAL_BLOCK_SIZE = PLSSVM_INTERNAL_BLOCK_SIZE;
 constexpr unsigned INTERNAL_BLOCK_SIZE = 4;
 #endif
 
+/// Padding used for the device arrays and matrices to prevent out-of-bounce accesses without ifs.
+constexpr unsigned PADDING_SIZE = THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE;
+
 // perform sanity checks
 static_assert(detail::tuple_contains_v<real_type, detail::supported_real_types>, "Illegal real type provided! See the 'real_type_list' in the type_list.hpp header for a list of the allowed types.");
 static_assert(THREAD_BLOCK_SIZE > 0, "THREAD_BLOCK_SIZE must be greater than 0!");

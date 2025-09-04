@@ -14,7 +14,7 @@
 #pragma once
 
 #include "plssvm/classification_types.hpp"              // plssvm::classification_type
-#include "plssvm/constants.hpp"                         // plssvm::real_type
+#include "plssvm/constants.hpp"                         // plssvm::real_type, plssvm::PADDING_SIZE
 #include "plssvm/data_set/classification_data_set.hpp"  // plssvm::classification_data_set
 #include "plssvm/data_set/data_set.hpp"                 // plssvm::data_set
 #include "plssvm/detail/assert.hpp"                     // PLSSVM_ASSERT
@@ -413,9 +413,9 @@ template <typename label_type>
     }
 
     // create vector containing the data and label
-    soa_matrix<real_type> data{ shape{ num_data_points, num_features } };
+    soa_matrix<real_type> data{ shape{ num_data_points, num_features }, shape{ PADDING_SIZE, PADDING_SIZE } };
     const std::size_t max_num_alpha_values = num_sv_per_class.size();  // OAA needs more alpha values than OAO
-    aos_matrix<real_type> alpha{ shape{ max_num_alpha_values, num_data_points } };
+    aos_matrix<real_type> alpha{ shape{ max_num_alpha_values, num_data_points }, shape{ PADDING_SIZE, PADDING_SIZE } };
     bool is_oaa{ false };
     bool is_oao{ false };
 
@@ -531,7 +531,7 @@ template <typename label_type>
         alpha_vec.resize(calculate_number_of_classifiers(classification_type::oao, num_classes));
         for (std::size_t i = 0; i < num_classes; ++i) {
             for (std::size_t j = i + 1; j < num_classes; ++j) {
-                alpha_vec[oao_x_vs_y_to_idx(i, j, num_classes)] = aos_matrix<real_type>{ shape{ 1, num_sv_per_class[i] + num_sv_per_class[j] } };
+                alpha_vec[oao_x_vs_y_to_idx(i, j, num_classes)] = aos_matrix<real_type>{ shape{ 1, num_sv_per_class[i] + num_sv_per_class[j] }, shape{ PADDING_SIZE, PADDING_SIZE } };
             }
         }
         std::vector<std::size_t> oao_alpha_indices(alpha_vec.size(), 0);

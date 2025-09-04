@@ -34,11 +34,11 @@ TYPED_TEST(CUDADevicePtrConstruct, construct_invalid_queue) {
     // the number of devices
     const std::size_t num_devices = plssvm::cuda::csvc{}.num_available_devices();
 
-    EXPECT_THROW_WHAT_MATCHER((plssvm::cuda::detail::device_ptr<real_type>(plssvm::shape{ 4, 4 }, -1)),
+    EXPECT_THROW_WHAT_MATCHER((plssvm::cuda::detail::device_ptr<real_type>(plssvm::shape{ 4, 4 }, plssvm::shape{ 4, 4 }, -1)),
                               plssvm::cuda::backend_exception,
                               ::testing::HasSubstr(fmt::format("Illegal device ID! Must be in range: [0, {}) but is -1.", num_devices)));
 
-    EXPECT_THROW_WHAT_MATCHER((plssvm::cuda::detail::device_ptr<real_type>(plssvm::shape{ 4, 4 }, num_devices)),
+    EXPECT_THROW_WHAT_MATCHER((plssvm::cuda::detail::device_ptr<real_type>(plssvm::shape{ 4, 4 }, plssvm::shape{ 4, 4 }, num_devices)),
                               plssvm::cuda::backend_exception,
                               ::testing::HasSubstr(fmt::format("Illegal device ID! Must be in range: [0, {}) but is {}.", num_devices, num_devices)));
 }

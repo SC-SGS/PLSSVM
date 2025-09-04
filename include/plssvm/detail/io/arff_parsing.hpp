@@ -13,7 +13,7 @@
 #define PLSSVM_DETAIL_IO_ARFF_PARSING_HPP_
 #pragma once
 
-#include "plssvm/constants.hpp"                 // plssvm::real_type
+#include "plssvm/constants.hpp"                 // plssvm::real_type, plssvm::PADDING_SIZE
 #include "plssvm/detail/io/file_reader.hpp"     // plssvm::detail::io::file_reader
 #include "plssvm/detail/string_conversion.hpp"  // plssvm::detail::convert_to
 #include "plssvm/detail/string_utility.hpp"     // plssvm::detail::{to_upper_case, as_upper_case, starts_with, ends_with}
@@ -256,7 +256,7 @@ template <typename label_type>
     const std::size_t num_attributes = num_features + static_cast<std::size_t>(has_label);
 
     // create data and label vectors
-    soa_matrix<real_type> data{ shape{ num_data_points, num_features } };
+    soa_matrix<real_type> data{ shape{ num_data_points, num_features }, shape{ PADDING_SIZE, PADDING_SIZE } };
     std::vector<label_type> label(num_data_points);
 
     std::exception_ptr parallel_exception;

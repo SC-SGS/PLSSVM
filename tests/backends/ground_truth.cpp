@@ -9,6 +9,7 @@
 
 #include "tests/backends/ground_truth.hpp"
 
+#include "plssvm/constants.hpp"                 // plssvm::PADDING_SIZE
 #include "plssvm/detail/assert.hpp"             // PLSSVM_ASSERT
 #include "plssvm/detail/data_distribution.hpp"  // plssvm::detail::triangular_data_distribution
 #include "plssvm/kernel_function_types.hpp"     // plssvm::kernel_function_type
@@ -240,7 +241,7 @@ plssvm::aos_matrix<real_type> predict_values(const plssvm::parameter &params, co
     const std::size_t num_sv = support_vectors.num_rows();
     const std::size_t num_features = predict_points.num_cols();
 
-    plssvm::aos_matrix<real_type> result{ plssvm::shape{ device_specific_num_rows, num_classes } };
+    plssvm::aos_matrix<real_type> result{ plssvm::shape{ device_specific_num_rows, num_classes }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE } };
 
     switch (params.kernel_type) {
         case plssvm::kernel_function_type::linear:
@@ -435,7 +436,7 @@ template <typename real_type>
 std::vector<real_type> assemble_device_specific_kernel_matrix(const plssvm::parameter &params, const plssvm::soa_matrix<real_type> &data, const std::vector<real_type> &q, const real_type QA_cost, const plssvm::detail::data_distribution &dist, const std::size_t device_id) {
     const auto &tri_dist = dynamic_cast<const plssvm::detail::triangular_data_distribution &>(dist);
     std::vector<real_type> result{};
-    result.reserve(tri_dist.calculate_explicit_kernel_matrix_num_entries(device_id));
+    result.reserve(tri_dist.calculate_explicit_kernel_matrix_num_entries_padded(device_id));
     const std::size_t num_rows_reduced = data.num_rows() - 1;
 
     for (std::size_t row = tri_dist.place_row_offset(device_id); row < tri_dist.place_row_offset(device_id) + tri_dist.place_specific_num_rows(device_id); ++row) {
@@ -445,7 +446,12 @@ std::vector<real_type> assemble_device_specific_kernel_matrix(const plssvm::para
                 result.back() += real_type{ 1.0 } / static_cast<real_type>(params.cost);
             }
         }
+        result.insert(result.cend(), plssvm::PADDING_SIZE, real_type{ 0.0 });
     }
+    const std::size_t remaining_rows = num_rows_reduced - (tri_dist.place_row_offset(device_id) + tri_dist.place_specific_num_rows(device_id));
+    const std::size_t remaining_rows_without_padding = remaining_rows - plssvm::PADDING_SIZE;
+    const std::size_t num_padding_entries = (remaining_rows * (remaining_rows + 1) / 2) - (remaining_rows_without_padding * (remaining_rows_without_padding + 1) / 2);
+    result.insert(result.cend(), num_padding_entries + static_cast<std::size_t>(plssvm::PADDING_SIZE * plssvm::PADDING_SIZE), real_type{ 0.0 });
 
     return result;
 }
@@ -458,7 +464,7 @@ plssvm::aos_matrix<real_type> assemble_full_kernel_matrix(const plssvm::paramete
     PLSSVM_ASSERT(data.num_rows() - 1 == q.size(), "Sizes mismatch!: {} != {}", data.num_rows() - 1, q.size());
 
     const std::size_t num_rows_reduced = data.num_rows() - 1;
-    plssvm::aos_matrix<real_type> result{ plssvm::shape{ num_rows_reduced, num_rows_reduced } };
+    plssvm::aos_matrix<real_type> result{ plssvm::shape{ num_rows_reduced, num_rows_reduced }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE } };
 
     for (std::size_t row = 0; row < num_rows_reduced; ++row) {
         for (std::size_t col = row; col < num_rows_reduced; ++col) {
@@ -539,7 +545,7 @@ template <typename real_type>
 plssvm::soa_matrix<real_type> calculate_w(const plssvm::aos_matrix<real_type> &weights, const plssvm::soa_matrix<real_type> &support_vectors) {
     PLSSVM_ASSERT(support_vectors.num_rows() == weights.num_cols(), "Sizes mismatch!: {} != {}", support_vectors.num_rows(), weights.num_cols());
 
-    plssvm::soa_matrix<real_type> result{ plssvm::shape{ weights.num_rows(), support_vectors.num_cols() } };
+    plssvm::soa_matrix<real_type> result{ plssvm::shape{ weights.num_rows(), support_vectors.num_cols() }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE } };
     for (std::size_t c = 0; c < weights.num_rows(); ++c) {
         for (std::size_t i = 0; i < support_vectors.num_cols(); ++i) {
             for (std::size_t j = 0; j < weights.num_cols(); ++j) {
@@ -562,7 +568,7 @@ plssvm::soa_matrix<real_type> calculate_device_specific_w(const plssvm::aos_matr
 
     const auto &rect_dist = dynamic_cast<const plssvm::detail::rectangular_data_distribution &>(dist);
 
-    plssvm::soa_matrix<real_type> result{ plssvm::shape{ weights.num_rows(), support_vectors.num_cols() } };
+    plssvm::soa_matrix<real_type> result{ plssvm::shape{ weights.num_rows(), support_vectors.num_cols() }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE } };
     for (std::size_t c = 0; c < weights.num_rows(); ++c) {
         for (std::size_t i = 0; i < support_vectors.num_cols(); ++i) {
             for (std::size_t j = rect_dist.place_row_offset(device_id); j < rect_dist.place_row_offset(device_id) + rect_dist.place_specific_num_rows(device_id); ++j) {

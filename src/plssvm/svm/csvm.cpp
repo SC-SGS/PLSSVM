@@ -8,7 +8,7 @@
 
 #include "plssvm/svm/csvm.hpp"
 
-#include "plssvm/constants.hpp"                            // plssvm::real_type
+#include "plssvm/constants.hpp"                            // plssvm::real_type, plssvm::PADDING_SIZE
 #include "plssvm/detail/assert.hpp"                        // PLSSVM_ASSERT
 #include "plssvm/detail/logging/mpi_log.hpp"               // plssvm::detail::log
 #include "plssvm/detail/logging/mpi_log_untracked.hpp"     // plssvm::detail::log_untracked
@@ -62,10 +62,10 @@ std::pair<soa_matrix<real_type>, std::vector<unsigned long long>> csvm::conjugat
     // perform Conjugate Gradients (CG) algorithm
     //
 
-    soa_matrix<real_type> X{ shape{ num_rhs, num_rows }, real_type{ 1.0 } };
+    soa_matrix<real_type> X{ shape{ num_rhs, num_rows }, real_type{ 1.0 }, shape{ PADDING_SIZE, PADDING_SIZE } };
 
     // R = B - A * X
-    soa_matrix<real_type> R{ B };
+    soa_matrix<real_type> R{ B, shape{ PADDING_SIZE, PADDING_SIZE } };
     blas_level_3_times.push_back(this->run_blas_level_3(cg_solver, real_type{ -1.0 }, A, X, real_type{ 1.0 }, R));
     // reduce R matrix on all MPI ranks
     comm_.allreduce_inplace(R);
@@ -74,7 +74,7 @@ std::pair<soa_matrix<real_type>, std::vector<unsigned long long>> csvm::conjugat
     std::vector<real_type> delta = rowwise_dot(R, R);
     const std::vector<real_type> delta0(delta);
 
-    soa_matrix<real_type> D{ R };
+    soa_matrix<real_type> D{ R, shape{ PADDING_SIZE, PADDING_SIZE } };
 
     // get the index of the rhs that has the largest residual difference wrt to its target residual
     const auto rhs_idx_max_residual_difference = [&]() {
@@ -144,7 +144,7 @@ std::pair<soa_matrix<real_type>, std::vector<unsigned long long>> csvm::conjugat
         mask = calculate_rhs_converged_mask(delta, R);
 
         // Q = A * D
-        soa_matrix<real_type> Q{ shape{ D.num_rows(), D.num_cols() } };
+        soa_matrix<real_type> Q{ shape{ D.num_rows(), D.num_cols() }, shape{ PADDING_SIZE, PADDING_SIZE } };
         blas_level_3_times.push_back(this->run_blas_level_3(cg_solver, real_type{ 1.0 }, A, D, real_type{ 0.0 }, Q));
         // reduce Q matrix on all MPI ranks
         comm_.allreduce_inplace(Q);
@@ -158,7 +158,7 @@ std::pair<soa_matrix<real_type>, std::vector<unsigned long long>> csvm::conjugat
         if (iter % 50 == 49) {
             // explicitly recalculate residual to remove accumulating floating point errors
             // R = B - A * X
-            R = soa_matrix<real_type>{ B };
+            R = soa_matrix<real_type>{ B, shape{ PADDING_SIZE, PADDING_SIZE } };
             blas_level_3_times.push_back(this->run_blas_level_3(cg_solver, real_type{ -1.0 }, A, X, real_type{ 1.0 }, R));
             // reduce R matrix on all MPI ranks
             comm_.allreduce_inplace(R);

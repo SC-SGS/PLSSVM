@@ -13,7 +13,7 @@
 #define PLSSVM_DETAIL_IO_REGRESSION_LIBSVM_MODEL_PARSING_HPP_
 #pragma once
 
-#include "plssvm/constants.hpp"                         // plssvm::real_type
+#include "plssvm/constants.hpp"                         // plssvm::real_type, plssvm::PADDING_SIZE
 #include "plssvm/data_set/regression_data_set.hpp"      // plssvm::regression_data_set
 #include "plssvm/detail/assert.hpp"                     // PLSSVM_ASSERT
 #include "plssvm/detail/io/file_reader.hpp"             // plssvm::detail::io::file_reader
@@ -24,7 +24,7 @@
 #include "plssvm/detail/string_utility.hpp"             // plssvm::detail::{trim, trim_left, to_lower_case}
 #include "plssvm/gamma.hpp"                             // plssvm::get_gamma_string
 #include "plssvm/kernel_function_types.hpp"             // plssvm::kernel_function_type
-#include "plssvm/matrix.hpp"                            // plssvm::aos_matrix, plssvm::soa_matrix
+#include "plssvm/matrix.hpp"                            // plssvm::soa_matrix, plssvm::aos_matrix
 #include "plssvm/mpi/communicator.hpp"                  // plssvm::mpi::communicator
 #include "plssvm/parameter.hpp"                         // plssvm::parameter
 #include "plssvm/shape.hpp"                             // plssvm::shape
@@ -269,8 +269,8 @@ namespace plssvm::detail::io {
     }
 
     // create vector containing the data and label
-    soa_matrix<real_type> data{ shape{ num_data_points, num_features } };
-    aos_matrix<real_type> alpha{ shape{ 1, num_data_points } };
+    soa_matrix<real_type> data{ shape{ num_data_points, num_features }, shape{ PADDING_SIZE, PADDING_SIZE } };
+    aos_matrix<real_type> alpha{ shape{ 1, num_data_points }, shape{ PADDING_SIZE, PADDING_SIZE } };
 
     std::exception_ptr parallel_exception;
 

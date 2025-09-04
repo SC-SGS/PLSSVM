@@ -10,7 +10,7 @@
 
 #include "plssvm/model/regression_model.hpp"
 
-#include "plssvm/constants.hpp"              // plssvm::real_type
+#include "plssvm/constants.hpp"              // plssvm::real_type, plssvm::PADDING_SIZE
 #include "plssvm/detail/io/file_reader.hpp"  // plssvm::detail::io::file_reader
 #include "plssvm/kernel_function_types.hpp"  // plssvm::kernel_function_type
 #include "plssvm/matrix.hpp"                 // plssvm::aos_matrix
@@ -118,7 +118,8 @@ TYPED_TEST(RegressionModel, support_vectors) {
                                                                    { plssvm::real_type{ 0.57650218263 }, plssvm::real_type{ 1.0140559662 }, plssvm::real_type{ 0.13009428080 }, plssvm::real_type{ 0.72619138869 } },
                                                                    { plssvm::real_type{ 1.8849404372 }, plssvm::real_type{ 1.0051856432 }, plssvm::real_type{ 0.29849993305 }, plssvm::real_type{ 1.6464627049 } },
                                                                    { plssvm::real_type{ -0.20981208921 }, plssvm::real_type{ 0.60276937379 }, plssvm::real_type{ -0.13086851759 }, plssvm::real_type{ 0.10805254527 } },
-                                                                   { plssvm::real_type{ -1.1256816276 }, plssvm::real_type{ 2.1254153434 }, plssvm::real_type{ -0.16512657655 }, plssvm::real_type{ 2.5164553141 } } } };
+                                                                   { plssvm::real_type{ -1.1256816276 }, plssvm::real_type{ 2.1254153434 }, plssvm::real_type{ -0.16512657655 }, plssvm::real_type{ 2.5164553141 } } },
+                                                                 plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE } };
     EXPECT_FLOATING_POINT_MATRIX_EQ(model.support_vectors(), support_vectors);
 }
 
@@ -142,7 +143,7 @@ TYPED_TEST(RegressionModel, weights) {
     const std::vector<std::vector<plssvm::real_type>> correct_weights{
         { plssvm::real_type{ -1.8568721894e-01 }, plssvm::real_type{ 9.0116552290e-01 }, plssvm::real_type{ -2.2483112395e-01 }, plssvm::real_type{ 1.4909749921e-02 }, plssvm::real_type{ -4.5666857706e-01 }, plssvm::real_type{ -4.8888352876e-02 } }
     };
-    EXPECT_FLOATING_POINT_MATRIX_EQ(model.weights().front(), (plssvm::aos_matrix<plssvm::real_type>{ correct_weights }));
+    EXPECT_FLOATING_POINT_MATRIX_EQ(model.weights().front(), (plssvm::aos_matrix<plssvm::real_type>{ correct_weights, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE } }));
 }
 
 TYPED_TEST(RegressionModel, rho) {

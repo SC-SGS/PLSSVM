@@ -11,7 +11,7 @@
 #include "plssvm/model/classification_model.hpp"
 
 #include "plssvm/classification_types.hpp"   // plssvm::classification_type, plssvm::calculate_number_of_classifiers
-#include "plssvm/constants.hpp"              // plssvm::real_type
+#include "plssvm/constants.hpp"              // plssvm::real_type, plssvm::PADDING_SIZE
 #include "plssvm/detail/io/file_reader.hpp"  // plssvm::detail::io::file_reader
 #include "plssvm/kernel_function_types.hpp"  // plssvm::kernel_function_type
 #include "plssvm/matrix.hpp"                 // plssvm::aos_matrix
@@ -135,7 +135,8 @@ TYPED_TEST(ClassificationModel, support_vectors) {
                                                                    { plssvm::real_type{ 0.57650218263 }, plssvm::real_type{ 1.0140559662 }, plssvm::real_type{ 0.13009428080 }, plssvm::real_type{ 0.72619138869 } },
                                                                    { plssvm::real_type{ 1.8849404372 }, plssvm::real_type{ 1.0051856432 }, plssvm::real_type{ 0.29849993305 }, plssvm::real_type{ 1.6464627049 } },
                                                                    { plssvm::real_type{ -0.20981208921 }, plssvm::real_type{ 0.60276937379 }, plssvm::real_type{ -0.13086851759 }, plssvm::real_type{ 0.10805254527 } },
-                                                                   { plssvm::real_type{ -1.1256816276 }, plssvm::real_type{ 2.1254153434 }, plssvm::real_type{ -0.16512657655 }, plssvm::real_type{ 2.5164553141 } } } };
+                                                                   { plssvm::real_type{ -1.1256816276 }, plssvm::real_type{ 2.1254153434 }, plssvm::real_type{ -0.16512657655 }, plssvm::real_type{ 2.5164553141 } } },
+                                                                 plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE } };
     EXPECT_FLOATING_POINT_MATRIX_EQ(model.support_vectors(), support_vectors);
 }
 
@@ -208,7 +209,7 @@ TYPED_TEST(ClassificationModel, weights) {
             default:
                 FAIL() << "Unreachable!";
         }
-        EXPECT_FLOATING_POINT_MATRIX_EQ(model.weights().front(), (plssvm::aos_matrix<plssvm::real_type>{ correct_weights }));
+        EXPECT_FLOATING_POINT_MATRIX_EQ(model.weights().front(), (plssvm::aos_matrix<plssvm::real_type>{ correct_weights, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE } }));
     } else if constexpr (classification == plssvm::classification_type::oao) {
         // OAO
         ASSERT_EQ(model.weights().size(), num_classes_for_label_type * (num_classes_for_label_type - 1) / 2);
@@ -246,7 +247,7 @@ TYPED_TEST(ClassificationModel, weights) {
         }
         ASSERT_EQ(model.weights().size(), weights.size());
         for (std::size_t i = 0; i < weights.size(); ++i) {
-            EXPECT_FLOATING_POINT_MATRIX_EQ(model.weights()[i], (plssvm::aos_matrix<plssvm::real_type>{ weights[i] }));
+            EXPECT_FLOATING_POINT_MATRIX_EQ(model.weights()[i], (plssvm::aos_matrix<plssvm::real_type>{ weights[i], plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE } }));
         }
     } else {
         FAIL() << "unknown classification type";

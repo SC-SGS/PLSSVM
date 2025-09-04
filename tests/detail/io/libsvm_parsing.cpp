@@ -10,11 +10,11 @@
 
 #include "plssvm/detail/io/libsvm_parsing.hpp"
 
-#include "plssvm/constants.hpp"                    // plssvm::real_type
+#include "plssvm/constants.hpp"                    // plssvm::real_type, plssvm::PADDING_SIZE
 #include "plssvm/detail/arithmetic_type_name.hpp"  // plssvm::detail::arithmetic_type_name
 #include "plssvm/detail/io/file_reader.hpp"        // plssvm::detail::io::file_reader
 #include "plssvm/exceptions/exceptions.hpp"        // plssvm::invalid_file_format_exception
-#include "plssvm/matrix.hpp"                       // plssvm::soa_matrix
+#include "plssvm/matrix.hpp"                       // plssvm::aos_matrix
 #include "plssvm/shape.hpp"                        // plssvm::shape
 
 #include "tests/custom_test_macros.hpp"  // EXPECT_FLOATING_POINT_MATRIX_NEAR, EXPECT_FLOATING_POINT_VECTOR_NEAR, EXPECT_THROW_WHAT
@@ -48,11 +48,11 @@ TEST_P(LIBSVMParseNumFeatures, num_features) {
 
 // clang-format off
 INSTANTIATE_TEST_SUITE_P(LIBSVMParse, LIBSVMParseNumFeatures, ::testing::Values(
-                                                      std::make_pair("/data/libsvm/classification/5x4.libsvm", 4),
-                                                      std::make_pair("/data/libsvm/classification/5x4_sparse.libsvm", 4),
-                                                      std::make_pair("/data/libsvm/3x2_without_label.libsvm", 2),
-                                                      std::make_pair("/data/libsvm/classification/500x200_4.libsvm", 200),
-                                                      std::make_pair("/data/empty.txt", 0)));
+                                                     std::make_pair("/data/libsvm/classification/5x4.libsvm", 4),
+                                                     std::make_pair("/data/libsvm/classification/5x4_sparse.libsvm", 4),
+                                                     std::make_pair("/data/libsvm/3x2_without_label.libsvm", 2),
+                                                     std::make_pair("/data/libsvm/classification/500x200_4.libsvm", 200),
+                                                     std::make_pair("/data/empty.txt", 0)));
 // clang-format on
 
 TEST(LIBSVMParseNumFeatures, index_with_alpha_char_at_the_beginning) {
@@ -95,7 +95,8 @@ class LIBSVMParseDense : public ::testing::Test,
                                                            { plssvm::real_type{ 0.57650218263054642 }, plssvm::real_type{ 1.01405596624706053 }, plssvm::real_type{ 0.13009428079760464 }, plssvm::real_type{ 0.7261913886869387 } },
                                                            { plssvm::real_type{ -0.20981208921241892 }, plssvm::real_type{ 0.60276937379453293 }, plssvm::real_type{ -0.13086851759108944 }, plssvm::real_type{ 0.10805254527169827 } },
                                                            { plssvm::real_type{ 1.88494043717792 }, plssvm::real_type{ 1.00518564317278263 }, plssvm::real_type{ 0.298499933047586044 }, plssvm::real_type{ 1.6464627048813514 } },
-                                                           { plssvm::real_type{ -1.1256816275635 }, plssvm::real_type{ 2.12541534341344414 }, plssvm::real_type{ -0.165126576545454511 }, plssvm::real_type{ 2.5164553141200987 } } } };
+                                                           { plssvm::real_type{ -1.1256816275635 }, plssvm::real_type{ 2.12541534341344414 }, plssvm::real_type{ -0.165126576545454511 }, plssvm::real_type{ 2.5164553141200987 } } },
+                                                         plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE } };
     /// The correct labels.
     std::vector<fixture_label_type> correct_label_{ util::get_correct_data_file_labels<fixture_label_type>() };
 };
@@ -132,7 +133,8 @@ class LIBSVMParseSparse : public ::testing::Test,
                                                            { plssvm::real_type{ 1.01405596624706053 }, plssvm::real_type{ 0.0 }, plssvm::real_type{ 0.0 }, plssvm::real_type{ 0.0 } },
                                                            { plssvm::real_type{ 0.60276937379453293 }, plssvm::real_type{ 0.0 }, plssvm::real_type{ -0.13086851759108944 }, plssvm::real_type{ 0.0 } },
                                                            { plssvm::real_type{ 0.0 }, plssvm::real_type{ 0.0 }, plssvm::real_type{ 0.0 }, plssvm::real_type{ 0.298499933047586044 } },
-                                                           { plssvm::real_type{ 0.0 }, plssvm::real_type{ -1.615267454510097261 }, plssvm::real_type{ 2.098278675127757651 }, plssvm::real_type{ 0.0 } } } };
+                                                           { plssvm::real_type{ 0.0 }, plssvm::real_type{ -1.615267454510097261 }, plssvm::real_type{ 2.098278675127757651 }, plssvm::real_type{ 0.0 } } },
+                                                         plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE } };
     /// The correct labels.
     std::vector<fixture_label_type> correct_label_{ util::get_correct_data_file_labels<fixture_label_type>() };
 };
@@ -197,7 +199,8 @@ TYPED_TEST(LIBSVMParse, read_without_label) {
     // check for correct data
     const plssvm::soa_matrix<plssvm::real_type> correct_data{ { { plssvm::real_type{ 1.5 }, plssvm::real_type{ -2.9 } },
                                                                 { plssvm::real_type{ 0.0 }, plssvm::real_type{ -0.3 } },
-                                                                { plssvm::real_type{ 5.5 }, plssvm::real_type{ 0.0 } } } };
+                                                                { plssvm::real_type{ 5.5 }, plssvm::real_type{ 0.0 } } },
+                                                              plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE } };
     EXPECT_FLOATING_POINT_MATRIX_NEAR(data, correct_data);
     EXPECT_TRUE(label.empty());
 }

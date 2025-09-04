@@ -13,7 +13,7 @@
 #define PLSSVM_SVM_CSVM_HPP_
 #pragma once
 
-#include "plssvm/constants.hpp"                            // plssvm::real_type
+#include "plssvm/constants.hpp"                            // plssvm::real_type, plssvm::PADDING_SIZE
 #include "plssvm/detail/assert.hpp"                        // PLSSVM_ASSERT
 #include "plssvm/detail/data_distribution.hpp"             // plssvm::detail::triangular_data_distribution
 #include "plssvm/detail/data_distribution.hpp"             // plssvm::detail::data_distribution
@@ -276,6 +276,11 @@ void csvm::set_params(Args &&...named_args) {
 template <typename... Args>
 std::tuple<aos_matrix<real_type>, std::vector<real_type>, std::vector<unsigned long long>> csvm::solve_lssvm_system_of_linear_equations(const soa_matrix<real_type> &A, const aos_matrix<real_type> &B, const parameter &params, Args &&...named_args) const {
     PLSSVM_ASSERT(!A.empty(), "The A matrix must not be empty!");
+    PLSSVM_ASSERT(A.is_padded(), "The A matrix must be padded!");
+    PLSSVM_ASSERT((A.padding() == shape{ PADDING_SIZE, PADDING_SIZE }),
+                  "The provided matrix must be padded with {}, but is padded with {}!",
+                  shape{ PADDING_SIZE, PADDING_SIZE },
+                  A.padding());
     PLSSVM_ASSERT(!B.empty(), "The B matrix must not be empty!");
     PLSSVM_ASSERT(A.num_rows() == B.num_cols(), "The number of data points in A ({}) and B ({}) must be the same!", A.num_rows(), B.num_cols());
 
@@ -540,7 +545,7 @@ std::tuple<aos_matrix<real_type>, std::vector<real_type>, std::vector<unsigned l
     std::tie(X, num_iter) = this->conjugate_gradients(kernel_matrix, B_red, used_epsilon, used_max_iter, used_solver);
 
     // calculate bias and undo dimensional reduction
-    aos_matrix<real_type> X_ret{ shape{ num_rhs, A.num_rows() } };
+    aos_matrix<real_type> X_ret{ shape{ num_rhs, A.num_rows() }, shape{ PADDING_SIZE, PADDING_SIZE } };
     std::vector<real_type> bias(num_rhs);
 #pragma omp parallel for default(none) shared(X, q_red, X_ret, bias, b_back_value) firstprivate(num_rhs, num_rows_reduced, QA_cost)
     for (std::size_t i = 0; i < num_rhs; ++i) {

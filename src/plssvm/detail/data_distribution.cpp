@@ -8,7 +8,7 @@
 
 #include "plssvm/detail/data_distribution.hpp"
 
-#include "plssvm/constants.hpp"           // plssvm::real_type
+#include "plssvm/constants.hpp"           // plssvm::PADDING_SIZE
 #include "plssvm/detail/assert.hpp"       // PLSSVM_ASSERT
 #include "plssvm/detail/memory_size.hpp"  // plssvm::detail::memory_size
 #include "plssvm/mpi/communicator.hpp"    // plssvm::mpi::communicator
@@ -26,15 +26,15 @@
 #include <vector>     // std::vector
 
 [[nodiscard]] std::size_t calculate_data_set_num_entries(const std::size_t num_data_points, const std::size_t num_features) noexcept {
-    return num_data_points * num_features;
+    return (num_data_points + plssvm::PADDING_SIZE) * (num_features + plssvm::PADDING_SIZE);
 }
 
 [[nodiscard]] std::size_t calculate_q_red_num_entries(const std::size_t num_data_points) noexcept {
-    return num_data_points - 1;
+    return num_data_points - 1 + plssvm::PADDING_SIZE;
 }
 
 [[nodiscard]] std::size_t calculate_blas_matrix_entries(const std::size_t num_data_points, const std::size_t num_classes) noexcept {
-    return (num_data_points - 1) * num_classes;
+    return (num_data_points - 1 + plssvm::PADDING_SIZE) * (num_classes + plssvm::PADDING_SIZE);
 }
 
 namespace plssvm::detail {
@@ -148,27 +148,28 @@ triangular_data_distribution::triangular_data_distribution(mpi::communicator com
     PLSSVM_ASSERT(std::is_sorted(distribution_.cbegin(), distribution_.cend()), "The distribution must be sorted in an ascending order!");
 }
 
-std::size_t triangular_data_distribution::calculate_explicit_kernel_matrix_num_entries(const std::size_t place) const noexcept {
+std::size_t triangular_data_distribution::calculate_explicit_kernel_matrix_num_entries_padded(const std::size_t place) const noexcept {
     PLSSVM_ASSERT(place < distribution_.size() - 1, "The queried place can at most be {}, but is {}!", distribution_.size() - 1, place);
 
     /*
-     *                        num_rows_
-     *      ______________________________________________
-     *      |               |\                           .
-     *      |               | \                          .
-     *      |      A        |  \     num_entries         .  device_specific_num_rows
-     *      |               | B \                        .
-     *      |_______________|____\........................
-     *          row_offset
+     *                        num_rows_ + PADDING
+     *      ____________________________________________________
+     *      |               |\                           .      |
+     *      |               | \                          .      |
+     *      |      A        |  \     num_entries_padded  .      |  device_specific_num_rows + PADDING
+     *      |               | B \                        .      |
+     *      |_______________|____\........................      |
+     *          row_offset        \           PADDING           |
+     *                             \____________________________|
      *
      *  A + B = values to discard
      */
     const std::size_t device_specific_num_rows = this->place_specific_num_rows(place);
     const std::size_t row_offset = this->place_row_offset(place);
 
-    const std::size_t A = row_offset * device_specific_num_rows;
-    const std::size_t B = (device_specific_num_rows - 1) * device_specific_num_rows / 2;
-    const std::size_t total = device_specific_num_rows * this->num_rows();
+    const std::size_t A = row_offset * (device_specific_num_rows + PADDING_SIZE);
+    const std::size_t B = (device_specific_num_rows + PADDING_SIZE - 1) * (device_specific_num_rows + PADDING_SIZE) / 2;
+    const std::size_t total = (device_specific_num_rows + PADDING_SIZE) * (this->num_rows() + PADDING_SIZE);
 
     // calculate the number of matrix entries
     return total - A - B;
@@ -188,14 +189,14 @@ std::vector<memory_size> triangular_data_distribution::calculate_maximum_explici
             continue;
         }
 
-        // data set including
+        // data set including padding
         const std::size_t data_set_size = ::calculate_data_set_num_entries(num_rows, num_features);
 
         // the size of q_red
         const std::size_t q_red_size = ::calculate_q_red_num_entries(num_rows);
 
         // the size of the explicitly stored kernel matrix
-        const std::size_t kernel_matrix_size{ this->calculate_explicit_kernel_matrix_num_entries(device_id) };
+        const std::size_t kernel_matrix_size{ this->calculate_explicit_kernel_matrix_num_entries_padded(device_id) };
 
         // the B and C matrices for the explicit SYMM kernel
         std::size_t blas_matrices_size = 2 * ::calculate_blas_matrix_entries(num_rows, num_classes);
@@ -225,16 +226,16 @@ std::vector<memory_size> triangular_data_distribution::calculate_maximum_explici
             continue;
         }
 
-        // data set
+        // data set including padding
         const std::size_t data_set_size = ::calculate_data_set_num_entries(num_rows, num_features);
 
-        // the size of q_red
+        // the size of q_red including padding
         const std::size_t q_red_size = ::calculate_q_red_num_entries(num_rows);
 
-        // the size of the explicitly stored kernel matrix
-        const std::size_t kernel_matrix_size{ this->calculate_explicit_kernel_matrix_num_entries(device_id) };
+        // the size of the explicitly stored kernel matrix including padding
+        const std::size_t kernel_matrix_size{ this->calculate_explicit_kernel_matrix_num_entries_padded(device_id) };
 
-        // the size of the B or C matrix for the explicit SYMM kernel
+        // the size of the B or C matrix for the explicit SYMM kernel including padding
         const std::size_t blas_matrix_size = ::calculate_blas_matrix_entries(num_rows, num_classes);
 
         // add up the individual sizes and report the memory size in BYTES
@@ -258,7 +259,7 @@ std::vector<memory_size> triangular_data_distribution::calculate_maximum_implici
             continue;
         }
 
-        // data set
+        // data set including padding
         const std::size_t data_set_size = ::calculate_data_set_num_entries(num_rows, num_features);
 
         // the size of q_red
@@ -292,13 +293,13 @@ std::vector<memory_size> triangular_data_distribution::calculate_maximum_implici
             continue;
         }
 
-        // data set
+        // data set including padding
         const std::size_t data_set_size = ::calculate_data_set_num_entries(num_rows, num_features);
 
-        // the size of q_red
+        // the size of q_red including padding
         const std::size_t q_red_size = ::calculate_q_red_num_entries(num_rows);
 
-        // the size of the B or C matrix for the explicit SYMM kernel
+        // the size of the B or C matrix for the explicit SYMM kernel including padding
         const std::size_t blas_matrix_size = ::calculate_blas_matrix_entries(num_rows, num_classes);
 
         // add up the individual sizes and report the memory size in BYTES

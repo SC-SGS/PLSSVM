@@ -216,7 +216,7 @@ class triangular_data_distribution : public data_distribution {
      * @param[in] place the place (e.g., device) for which the number of matrix entries should be calculated
      * @return the total number of entries, i.e., values to allocate on the @p place (`[[nodiscard]]`)
      */
-    [[nodiscard]] std::size_t calculate_explicit_kernel_matrix_num_entries(std::size_t place) const noexcept;
+    [[nodiscard]] std::size_t calculate_explicit_kernel_matrix_num_entries_padded(std::size_t place) const noexcept;
 
     /**
      * @brief Calculate the theoretical total memory needed per place for explicitly assembling the kernel matrix.
