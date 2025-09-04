@@ -8,7 +8,7 @@
 
 #include "plssvm/detail/tracking/performance_tracker.hpp"
 
-#include "plssvm/constants.hpp"                          // plssvm::real_type, plssvm::THREAD_BLOCK_SIZE
+#include "plssvm/constants.hpp"                          // plssvm::real_type, plssvm::THREAD_BLOCK_SIZE, plssvm::INTERNAL_BLOCK_SIZE
 #include "plssvm/detail/arithmetic_type_name.hpp"        // plssvm::detail::arithmetic_type_name
 #include "plssvm/detail/assert.hpp"                      // PLSSVM_ASSERT, PLSSVM_ASSERT_ENABLED
 #include "plssvm/detail/cmd/parser_predict.hpp"          // plssvm::detail::cmd::parser_predict
@@ -280,7 +280,8 @@ void performance_tracker::save(std::ostream &out) {
         "  fast-math:                         {}\n"
         "  asserts:                           {}\n"
         "  enforce_max_mem_alloc_size:        {}\n"
-        "  THREAD_BLOCK_SIZE:                 {}\n",
+        "  THREAD_BLOCK_SIZE:                 {}\n"
+        "  INTERNAL_BLOCK_SIZE:               {}\n",
         plssvm::detail::current_date_time(),
         version::detail::target_platforms,
         version::git_metadata::commit_sha1().empty() ? "unknown" : version::git_metadata::commit_sha1(),
@@ -292,7 +293,8 @@ void performance_tracker::save(std::ostream &out) {
         fast_math_enabled,
         assert_enabled,
         enforce_max_mem_alloc_size,
-        THREAD_BLOCK_SIZE);
+        THREAD_BLOCK_SIZE,
+        INTERNAL_BLOCK_SIZE);
 
 #if defined(PLSSVM_SYCL_BACKEND_HAS_DPCPP)
     out << fmt::format(
