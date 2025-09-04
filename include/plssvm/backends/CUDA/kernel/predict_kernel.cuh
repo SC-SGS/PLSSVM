@@ -83,11 +83,12 @@ __global__ void device_kernel_w_linear(real_type *w, const real_type *alpha, con
     }
 
     // calculate the indices used in the current thread
-    const auto global_feature_idx = blockIdx_x * blockDim_x + threadIdx_x;
-    const auto global_class_idx = blockIdx_y * blockDim_y + threadIdx_y;
+    const auto global_feature_idx = blockIdx_x * blockDim_x + threadIdx_x;  // num_features
+    const auto global_class_idx = blockIdx_y * blockDim_y + threadIdx_y;    // num_classes
 
+    // be sure to not perform out-of-bounds accesses
     if (global_feature_idx < num_features && global_class_idx < num_classes) {
-        w[global_feature_idx * num_classes + global_class_idx] = temp;
+        w[global_feature_idx * num_classes + global_class_idx] = temp;  // SoA
     }
 }
 
@@ -152,9 +153,10 @@ __global__ void device_kernel_predict_linear(real_type *prediction, const real_t
     }
 
     // calculate the indices used in the current thread
-    const auto global_pp_idx = blockIdx_x * blockDim_x + threadIdx_x;
-    const auto global_class_idx = blockIdx_y * blockDim_y + threadIdx_y;
+    const auto global_pp_idx = blockIdx_x * blockDim_x + threadIdx_x;     // num_predict_points
+    const auto global_class_idx = blockIdx_y * blockDim_y + threadIdx_y;  // num_classes
 
+    // be sure to not perform out-of-bounds accesses
     if (global_pp_idx < num_predict_points && global_class_idx < num_classes) {
         prediction[global_pp_idx * num_classes + global_class_idx] = temp - rho[global_class_idx];
     }
@@ -230,7 +232,7 @@ __global__ void device_kernel_predict(real_type *prediction, const real_type *al
         }
     }
 
-    // apply the final kernel function
+    // update temp using the respective kernel function
     temp = detail::apply_kernel_function<kernel_function>(temp, kernel_function_parameter...);
 
     {
@@ -271,7 +273,7 @@ __global__ void device_kernel_predict(real_type *prediction, const real_type *al
 
             // atomically add the intermediate cached results to the prediction
             if (class_block + threadIdx_y < num_classes && global_pp_idx < num_predict_points) {
-                atomicAdd(&prediction[global_pp_idx * num_classes + class_block + threadIdx_y], out_cache[threadIdx.y][threadIdx.x]);
+                atomicAdd(&prediction[global_pp_idx * num_classes + class_block + threadIdx_y], out_cache[threadIdx.y][threadIdx.x]);  // AoS
             }
             __syncthreads();  // wait until all threads updated their part of the prediction
         }

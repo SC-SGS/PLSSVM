@@ -97,12 +97,10 @@ __global__ void device_kernel_assembly(real_type *kernel_matrix, const real_type
         if (device_global_i_idx < (num_rows - device_row_offset) && device_global_j_idx < device_num_rows && global_i_idx >= global_j_idx) {
             // apply the final kernel function
             temp = detail::apply_kernel_function<kernel_function>(temp, kernel_function_parameter...) + QA_cost - q[global_i_idx] - q[global_j_idx];
-
             // apply the cost on the diagonal
             if (global_i_idx == global_j_idx) {
                 temp += cost;
             }
-
             // update the upper triangular kernel matrix
             kernel_matrix[device_global_j_idx * (num_rows - device_row_offset) - device_global_j_idx * (device_global_j_idx + std::size_t{ 1 }) / std::size_t{ 2 } + device_global_i_idx] = temp;
         }
