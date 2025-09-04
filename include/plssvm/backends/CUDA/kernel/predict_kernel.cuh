@@ -15,7 +15,7 @@
 
 #include "plssvm/backends/CUDA/kernel/detail/atomics.cuh"    // atomicAdd for double precision floating point numbers on older CUDA hardware
 #include "plssvm/backends/CUDA/kernel/kernel_functions.cuh"  // plssvm::cuda::detail::{feature_reduce, apply_kernel_function}
-#include "plssvm/constants.hpp"                              // plssvm::real_type
+#include "plssvm/constants.hpp"                              // plssvm::real_type, plssvm::THREAD_BLOCK_SIZE, plssvm::INTERNAL_BLOCK_SIZE
 #include "plssvm/kernel_function_types.hpp"                  // plssvm::kernel_function_type
 
 #include <cstddef>  // std::size_t
@@ -354,7 +354,7 @@ __global__ void device_kernel_predict(real_type *prediction, const real_type *al
                 const auto global_pp_idx = pp_idx + static_cast<std::size_t>(internal);
 
                 if (class_block + threadIdx_y < num_classes && global_pp_idx < num_predict_points) {
-                    atomicAdd(&prediction[global_pp_idx * num_classes + class_block + threadIdx_y], out_cache[threadIdx.y][internal * THREAD_BLOCK_SIZE + threadIdx.x]);
+                    atomicAdd(&prediction[global_pp_idx * num_classes + class_block + threadIdx_y], out_cache[threadIdx.y][internal * THREAD_BLOCK_SIZE + threadIdx.x]);  // AoS
                 }
             }
             __syncthreads();  // wait until all threads updated their part of the prediction

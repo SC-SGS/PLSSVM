@@ -65,6 +65,7 @@ __global__ void device_kernel_symm(const std::size_t num_rows, const std::size_t
                 A_cache[threadIdx.y][internal * THREAD_BLOCK_SIZE + threadIdx.x] = real_type{ 0.0 };
                 B_cache[threadIdx.y][internal * THREAD_BLOCK_SIZE + threadIdx.x] = real_type{ 0.0 };
             }
+
             // load data into shared memory
             for (unsigned internal = 0; internal < INTERNAL_BLOCK_SIZE; ++internal) {
                 // calculate the indices to access the global data, pays attention to coalesced memory accesses
@@ -72,9 +73,9 @@ __global__ void device_kernel_symm(const std::size_t num_rows, const std::size_t
                 const auto global_j_idx_linear = j_idx_linear + static_cast<std::size_t>(internal) * THREAD_BLOCK_SIZE_uz;
 
                 // store the values in the shared memory
-                // determine on which side of the diagonal we are located
                 if (dim_block + threadIdx_y < num_rows - device_row_offset) {
                     if (global_j_idx_linear < device_num_rows) {
+                        // determine on which side of the diagonal we are located
                         if (dim_block + threadIdx_y < global_j_idx_linear) {
                             A_cache[threadIdx.y][internal * THREAD_BLOCK_SIZE + threadIdx.x] = A[(dim_block + threadIdx_y) * (num_rows - device_row_offset) + global_j_idx_linear - (dim_block + threadIdx_y) * (dim_block + threadIdx_y + std::size_t{ 1 }) / std::size_t{ 2 }];  // SoA, upper triangular matrix only
                         } else {
@@ -212,7 +213,7 @@ __global__ void device_kernel_symm_mirror(const std::size_t num_rows, const std:
 
             // be sure to not perform out-of-bounds accesses
             if (global_i_idx < num_rhs && partial_global_j_idx < num_mirror_rows && global_j_idx < num_rows) {
-                C[global_j_idx * num_rhs + global_i_idx] = alpha * temp[internal_i][internal_j] + beta * C[global_j_idx * num_rhs + global_i_idx];
+                C[global_j_idx * num_rhs + global_i_idx] = alpha * temp[internal_i][internal_j] + beta * C[global_j_idx * num_rhs + global_i_idx];  // SoA
             }
         }
     }

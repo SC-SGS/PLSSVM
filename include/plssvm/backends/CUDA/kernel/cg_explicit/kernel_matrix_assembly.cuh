@@ -55,6 +55,7 @@ __global__ void device_kernel_assembly(real_type *kernel_matrix, const real_type
     __shared__ real_type data_i_cache[THREAD_BLOCK_SIZE][INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE];
     __shared__ real_type data_j_cache[THREAD_BLOCK_SIZE][INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE];
 
+    // only calculate the upper triangular matrix -> can't use threadIdx since all threads in a warp must progress further
     if (blockIdx_x >= blockIdx_y) {
         // create a thread private array used for internal caching
         real_type temp[INTERNAL_BLOCK_SIZE][INTERNAL_BLOCK_SIZE]{};
