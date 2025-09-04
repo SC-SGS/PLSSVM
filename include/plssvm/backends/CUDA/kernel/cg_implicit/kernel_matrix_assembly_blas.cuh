@@ -53,9 +53,9 @@ __global__ void device_kernel_assembly_symm(const real_type alpha, const real_ty
     const auto blockIdx_y = static_cast<std::size_t>(blockIdx.y) + grid_y_offset;  // current block in grid y-dimension + offsets if the grid size is too large
 
     // calculate the indices used in the current thread
-    const auto device_global_i_idx = blockIdx_x * blockDim_x + threadIdx_x;
+    const auto device_global_i_idx = blockIdx_x * blockDim_x + threadIdx_x;  // num_rows - device_row_offset
     const auto global_i_idx = device_row_offset + device_global_i_idx;
-    const auto device_global_j_idx = blockIdx_y * blockDim_y + threadIdx_y;
+    const auto device_global_j_idx = blockIdx_y * blockDim_y + threadIdx_y;  // device_num_rows
     const auto global_j_idx = device_row_offset + device_global_j_idx;
 
     // be sure to not perform out-of-bounds accesses (only using the upper triangular matrix)
@@ -64,10 +64,11 @@ __global__ void device_kernel_assembly_symm(const real_type alpha, const real_ty
         //                   inplace kernel matrix construction                    //
         //*************************************************************************//
         real_type temp{ 0.0 };
+
         // perform the feature reduction calculation
         for (std::size_t feature = 0; feature < num_features; ++feature) {
-            temp += detail::feature_reduce<kernel_function>(data[feature * (num_rows + std::size_t{ 1 }) + global_i_idx],
-                                                            data[feature * (num_rows + std::size_t{ 1 }) + global_j_idx]);
+            temp += detail::feature_reduce<kernel_function>(data[feature * (num_rows + std::size_t{ 1 }) + global_i_idx],   // SoA
+                                                            data[feature * (num_rows + std::size_t{ 1 }) + global_j_idx]);  // SoA
         }
 
         // apply the final kernel function
@@ -81,8 +82,8 @@ __global__ void device_kernel_assembly_symm(const real_type alpha, const real_ty
         //     calculate C += alpha * temp * B for the UPPER triangular matrix     //
         //*************************************************************************//
         for (std::size_t class_idx = 0; class_idx < num_classes; ++class_idx) {
-            const real_type B_cache = alpha * B[global_i_idx * num_classes + class_idx];
-            atomicAdd(&C[global_j_idx * num_classes + class_idx], temp * B_cache);
+            const real_type B_cache = alpha * B[global_i_idx * num_classes + class_idx];  // SoA
+            atomicAdd(&C[global_j_idx * num_classes + class_idx], temp * B_cache);        // SoA
         }
 
         // set potential diagonal entries in temp to 0.0 such that we don't apply the main diagonal twice to C
@@ -94,8 +95,8 @@ __global__ void device_kernel_assembly_symm(const real_type alpha, const real_ty
         //     calculate C += alpha * temp * B for the LOWER triangular matrix     //
         //*************************************************************************//
         for (std::size_t class_idx = 0; class_idx < num_classes; ++class_idx) {
-            const real_type B_cache = alpha * B[global_j_idx * num_classes + class_idx];
-            atomicAdd(&C[global_i_idx * num_classes + class_idx], temp * B_cache);
+            const real_type B_cache = alpha * B[global_j_idx * num_classes + class_idx];  // SOA
+            atomicAdd(&C[global_i_idx * num_classes + class_idx], temp * B_cache);        // SoA
         }
     }
 }
