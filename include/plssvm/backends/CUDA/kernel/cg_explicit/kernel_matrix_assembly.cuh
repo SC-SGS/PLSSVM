@@ -54,8 +54,10 @@ __global__ void device_kernel_assembly(real_type *kernel_matrix, const real_type
     __shared__ real_type data_i_cache[THREAD_BLOCK_SIZE][THREAD_BLOCK_SIZE];
     __shared__ real_type data_j_cache[THREAD_BLOCK_SIZE][THREAD_BLOCK_SIZE];
 
+    // only calculate the upper triangular matrix -> can't use threadIdx since all threads in a warp must progress further
     if (blockIdx_x >= blockIdx_y) {
         real_type temp{ 0.0 };
+
         {
             // calculate the indices used in the current thread, pays attention to coalesced memory accesses
             const auto global_i_idx_linear = device_row_offset + blockIdx_x * blockDim_x + threadIdx_x;  // num_rows - device_row_offset

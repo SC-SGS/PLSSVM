@@ -15,7 +15,7 @@
 
 #include "plssvm/backends/CUDA/kernel/detail/atomics.cuh"    // atomicAdd for double precision floating point numbers on older CUDA hardware
 #include "plssvm/backends/CUDA/kernel/kernel_functions.cuh"  // plssvm::cuda::detail::{feature_reduce, apply_kernel_function}
-#include "plssvm/constants.hpp"                              // plssvm::real_type
+#include "plssvm/constants.hpp"                              // plssvm::real_type, plssvm::THREAD_BLOCK_SIZE
 #include "plssvm/kernel_function_types.hpp"                  // plssvm::kernel_function_type
 
 #include <cstddef>  // std::size_t
@@ -116,7 +116,6 @@ __global__ void device_kernel_assembly_symm(const real_type alpha, const real_ty
         if (i_idx < (num_rows - device_row_offset) && j_idx < device_num_rows && global_i_idx >= global_j_idx) {
             // apply the final kernel function
             temp = detail::apply_kernel_function<kernel_function>(temp, kernel_function_parameter...) + QA_cost - q[global_i_idx] - q[global_j_idx];
-
             // apply the cost on the diagonal
             if (global_i_idx == global_j_idx) {
                 temp += cost;
