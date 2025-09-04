@@ -16,7 +16,7 @@
 #include "plssvm/constants.hpp"             // plssvm::real_type
 #include "plssvm/detail/memory_size.hpp"    // plssvm::detail::memory_size, plssvm::detail::literals
 #include "plssvm/detail/move_only_any.hpp"  // plssvm::detail::move_only_any
-#include "plssvm/matrix.hpp"                // plssvm::aos_matrix
+#include "plssvm/matrix.hpp"                // plssvm::aos_matrix, plssvm::soa_matrix
 #include "plssvm/mpi/communicator.hpp"      // plssvm::mpi::communicator
 #include "plssvm/parameter.hpp"             // plssvm::parameter
 #include "plssvm/solver_types.hpp"          // plssvm::solver_type

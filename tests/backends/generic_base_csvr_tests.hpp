@@ -14,7 +14,7 @@
 #define PLSSVM_TESTS_BACKENDS_GENERIC_BASE_CSVR_TESTS_HPP_
 #pragma once
 
-#include "plssvm/constants.hpp"                     // plssvm::real_type, plssvm::PADDING_SIZE
+#include "plssvm/constants.hpp"                     // plssvm::real_type
 #include "plssvm/data_set/regression_data_set.hpp"  // plssvm::regression_data_set
 #include "plssvm/kernel_function_types.hpp"         // plssvm::kernel_function_type
 #include "plssvm/model/regression_model.hpp"        // plssvm::regression_model

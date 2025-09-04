@@ -24,7 +24,7 @@
 #include "plssvm/detail/string_utility.hpp"             // plssvm::detail::{trim, trim_left, to_lower_case}
 #include "plssvm/gamma.hpp"                             // plssvm::get_gamma_string
 #include "plssvm/kernel_function_types.hpp"             // plssvm::kernel_function_type
-#include "plssvm/matrix.hpp"                            // plssvm::soa_matrix
+#include "plssvm/matrix.hpp"                            // plssvm::soa_matrix, plssvm::aos_matrix
 #include "plssvm/mpi/communicator.hpp"                  // plssvm::mpi::communicator
 #include "plssvm/parameter.hpp"                         // plssvm::parameter
 #include "plssvm/shape.hpp"                             // plssvm::shape

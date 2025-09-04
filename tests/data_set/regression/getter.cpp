@@ -11,7 +11,7 @@
 #include "plssvm/constants.hpp"                     // plssvm::real_type, plssvm::PADDING_SIZE
 #include "plssvm/data_set/min_max_scaler.hpp"       // plssvm::min_max_scaler
 #include "plssvm/data_set/regression_data_set.hpp"  // data set class to test
-#include "plssvm/matrix.hpp"                        // plssvm::aos_matrix
+#include "plssvm/matrix.hpp"                        // plssvm::soa_matrix
 #include "plssvm/shape.hpp"                         // plssvm::shape
 #include "plssvm/svm_types.hpp"                     // plssvm::svm_type
 
@@ -48,7 +48,7 @@ class RegressionDataSetGetter : public ::testing::Test,
     /// The correct labels.
     std::vector<fixture_label_type> label_{ util::get_correct_data_file_labels<fixture_label_type, plssvm::svm_type::csvr>() };
     /// The correct data points.
-    plssvm::soa_matrix<plssvm::real_type> data_points_{ util::generate_specific_matrix<plssvm::aos_matrix<plssvm::real_type>>(plssvm::shape{ label_.size(), 4 }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE }) };
+    plssvm::soa_matrix<plssvm::real_type> data_points_{ util::generate_specific_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ label_.size(), 4 }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE }) };
 };
 
 TYPED_TEST_SUITE(RegressionDataSetGetter, util::regression_label_type_gtest, naming::test_parameter_to_name);

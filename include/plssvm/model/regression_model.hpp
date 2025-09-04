@@ -21,7 +21,7 @@
 #include "plssvm/detail/logging/mpi_log.hpp"                     // plssvm::detail::log
 #include "plssvm/detail/tracking/performance_tracker.hpp"        // PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY, plssvm::detail::tracking::tracking_entry
 #include "plssvm/detail/type_list.hpp"                           // plssvm::detail::{supported_label_types, tuple_contains_v}
-#include "plssvm/matrix.hpp"                                     // plssvm::soa_matrix, plssvm::aos_matrix
+#include "plssvm/matrix.hpp"                                     // plssvm::soa_matrix
 #include "plssvm/model/model.hpp"                                // plssvm::model
 #include "plssvm/mpi/communicator.hpp"                           // plssvm::mpi::communicator
 #include "plssvm/parameter.hpp"                                  // plssvm::parameter
