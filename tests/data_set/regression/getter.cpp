@@ -8,10 +8,10 @@
  * @brief Tests for the regression data set getter member functions.
  */
 
-#include "plssvm/constants.hpp"                     // plssvm::real_type
+#include "plssvm/constants.hpp"                     // plssvm::real_type, plssvm::PADDING_SIZE
 #include "plssvm/data_set/min_max_scaler.hpp"       // plssvm::min_max_scaler
 #include "plssvm/data_set/regression_data_set.hpp"  // data set class to test
-#include "plssvm/matrix.hpp"                        // plssvm::aos_matrix
+#include "plssvm/matrix.hpp"                        // plssvm::soa_matrix
 #include "plssvm/shape.hpp"                         // plssvm::shape
 #include "plssvm/svm_types.hpp"                     // plssvm::svm_type
 
