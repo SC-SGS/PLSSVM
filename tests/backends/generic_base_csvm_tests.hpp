@@ -148,8 +148,8 @@ template <typename csvm_type, typename device_ptr_type, typename matrix_type, ty
 
             // define the full execution grid
             const plssvm::detail::dim_type grid{
-                static_cast<std::size_t>(std::ceil(static_cast<double>(matr.shape().x - 1 - device_row_offset) / static_cast<double>(block.x))),
-                static_cast<std::size_t>(std::ceil(static_cast<double>(device_specific_num_rows) / static_cast<double>(block.y)))
+                static_cast<std::size_t>(std::ceil(static_cast<double>(matr.shape().x - 1 - device_row_offset) / static_cast<double>(block.x * plssvm::INTERNAL_BLOCK_SIZE))),
+                static_cast<std::size_t>(std::ceil(static_cast<double>(device_specific_num_rows) / static_cast<double>(block.y * plssvm::INTERNAL_BLOCK_SIZE)))
             };
 
             // create the final execution range
