@@ -37,6 +37,8 @@ namespace plssvm::cuda::detail {
  */
 __global__ void device_kernel_w_linear(real_type *w, const real_type *alpha, const real_type *support_vectors, const std::size_t num_features, const std::size_t num_classes, const std::size_t num_sv, const std::size_t device_num_sv, const std::size_t device_sv_offset, const std::size_t grid_x_offset, const std::size_t grid_y_offset) {
     // cast all values to 64-bit std::size_t to prevent potential 32-bit overflows
+    constexpr auto THREAD_BLOCK_SIZE_uz = static_cast<std::size_t>(THREAD_BLOCK_SIZE);
+
     const auto threadIdx_x = static_cast<std::size_t>(threadIdx.x);                // current thread in block x-dimension
     const auto threadIdx_y = static_cast<std::size_t>(threadIdx.y);                // current thread in block y-dimension
     const auto blockDim_x = static_cast<std::size_t>(blockDim.x);                  // number of threads in block x-dimension
@@ -44,15 +46,47 @@ __global__ void device_kernel_w_linear(real_type *w, const real_type *alpha, con
     const auto blockIdx_x = static_cast<std::size_t>(blockIdx.x) + grid_x_offset;  // current block in grid x-dimension + offsets if the grid size is too large
     const auto blockIdx_y = static_cast<std::size_t>(blockIdx.y) + grid_y_offset;  // current block in grid y-dimension + offsets if the grid size is too large
 
+    // create two shared memory arrays used for caching
+    __shared__ real_type feature_cache[THREAD_BLOCK_SIZE][THREAD_BLOCK_SIZE];
+    __shared__ real_type alpha_cache[THREAD_BLOCK_SIZE][THREAD_BLOCK_SIZE];
+
+    real_type temp{ 0.0 };
+
+    {
+        // calculate the indices used in the current thread, pays attention to coalesced memory accesses
+        const auto global_feature_idx_linear = blockIdx_x * blockDim_x + threadIdx_x;  // num_features
+        const auto global_class_idx_linear = blockIdx_y * blockDim_y + threadIdx_x;    // num_classes
+
+        // iterate over all support vectors using blocking to be able to cache them for faster memory accesses
+        for (std::size_t sv_block = 0; sv_block < device_num_sv; sv_block += THREAD_BLOCK_SIZE_uz) {
+            // zero-out shared memory
+            feature_cache[threadIdx.y][threadIdx.x] = real_type{ 0.0 };
+            alpha_cache[threadIdx.y][threadIdx.x] = real_type{ 0.0 };
+
+            // load data into shared memory
+            if (sv_block + threadIdx_y < device_num_sv) {
+                if (global_feature_idx_linear < num_features) {
+                    feature_cache[threadIdx.y][threadIdx.x] = support_vectors[global_feature_idx_linear * device_num_sv + sv_block + threadIdx_y];  // SoA
+                }
+                if (global_class_idx_linear < num_classes) {
+                    alpha_cache[threadIdx.y][threadIdx.x] = alpha[global_class_idx_linear * num_sv + sv_block + device_sv_offset + threadIdx_y];  // AoS
+                }
+            }
+            __syncthreads();  // wait until all threads loaded their part of the data
+
+            // perform the dot product calculation
+            for (unsigned sv = 0; sv < THREAD_BLOCK_SIZE; ++sv) {
+                temp += alpha_cache[sv][threadIdx.y] * feature_cache[sv][threadIdx.x];
+            }
+            __syncthreads();  // wait until all threads performed their part of the calculations
+        }
+    }
+
     // calculate the indices used in the current thread
     const auto global_feature_idx = blockIdx_x * blockDim_x + threadIdx_x;
     const auto global_class_idx = blockIdx_y * blockDim_y + threadIdx_y;
 
     if (global_feature_idx < num_features && global_class_idx < num_classes) {
-        real_type temp{ 0.0 };
-        for (std::size_t sv = 0; sv < device_num_sv; ++sv) {
-            temp += alpha[global_class_idx * num_sv + sv + device_sv_offset] * support_vectors[global_feature_idx * device_num_sv + sv];
-        }
         w[global_feature_idx * num_classes + global_class_idx] = temp;
     }
 }
@@ -71,6 +105,8 @@ __global__ void device_kernel_w_linear(real_type *w, const real_type *alpha, con
  */
 __global__ void device_kernel_predict_linear(real_type *prediction, const real_type *w, const real_type *rho, const real_type *predict_points, const std::size_t num_classes, const std::size_t num_predict_points, const std::size_t num_features, const std::size_t grid_x_offset, const std::size_t grid_y_offset) {
     // cast all values to 64-bit std::size_t to prevent potential 32-bit overflows
+    constexpr auto THREAD_BLOCK_SIZE_uz = static_cast<std::size_t>(THREAD_BLOCK_SIZE);
+
     const auto threadIdx_x = static_cast<std::size_t>(threadIdx.x);                // current thread in block x-dimension
     const auto threadIdx_y = static_cast<std::size_t>(threadIdx.y);                // current thread in block y-dimension
     const auto blockDim_x = static_cast<std::size_t>(blockDim.x);                  // number of threads in block x-dimension
@@ -78,15 +114,48 @@ __global__ void device_kernel_predict_linear(real_type *prediction, const real_t
     const auto blockIdx_x = static_cast<std::size_t>(blockIdx.x) + grid_x_offset;  // current block in grid x-dimension + offsets if the grid size is too large
     const auto blockIdx_y = static_cast<std::size_t>(blockIdx.y) + grid_y_offset;  // current block in grid y-dimension + offsets if the grid size is too large
 
+    // create two shared memory arrays used for caching
+    __shared__ real_type pp_cache[THREAD_BLOCK_SIZE][THREAD_BLOCK_SIZE];
+    __shared__ real_type w_cache[THREAD_BLOCK_SIZE][THREAD_BLOCK_SIZE];
+
+    real_type temp{ 0.0 };
+
+    {
+        // calculate the indices used in the current thread, pays attention to coalesced memory accesses
+        const auto global_pp_idx_linear = blockIdx_x * blockDim_x + threadIdx_x;     // num_predict_points
+        const auto global_class_idx_linear = blockIdx_y * blockDim_y + threadIdx_x;  // num_classes
+
+        // iterate over all features using blocking to be able to cache them for faster memory accesses
+        for (std::size_t feature_block = 0; feature_block < num_features; feature_block += THREAD_BLOCK_SIZE_uz) {
+            // zero-out shared memory
+            pp_cache[threadIdx.y][threadIdx.x] = real_type{ 0.0 };
+            w_cache[threadIdx.y][threadIdx.x] = real_type{ 0.0 };
+
+            // load data into shared memory
+            if (feature_block + threadIdx_y < num_features) {
+                if (global_pp_idx_linear < num_predict_points) {
+                    pp_cache[threadIdx.y][threadIdx.x] = predict_points[(feature_block + threadIdx_y) * num_predict_points + global_pp_idx_linear];  // SoA
+                }
+                if (global_class_idx_linear < num_classes) {
+                    w_cache[threadIdx.y][threadIdx.x] = w[(feature_block + threadIdx_y) * num_classes + global_class_idx_linear];  // SoA
+                }
+            }
+
+            __syncthreads();  // wait until all threads loaded their part of the data
+
+            // perform the dot product calculation
+            for (unsigned feature = 0; feature < THREAD_BLOCK_SIZE; ++feature) {
+                temp += w_cache[feature][threadIdx.y] * pp_cache[feature][threadIdx.x];
+            }
+            __syncthreads();  // wait until all threads performed their part of the calculations
+        }
+    }
+
     // calculate the indices used in the current thread
     const auto global_pp_idx = blockIdx_x * blockDim_x + threadIdx_x;
     const auto global_class_idx = blockIdx_y * blockDim_y + threadIdx_y;
 
     if (global_pp_idx < num_predict_points && global_class_idx < num_classes) {
-        real_type temp{ 0.0 };
-        for (std::size_t feature = 0; feature < num_features; ++feature) {
-            temp += w[feature * num_classes + global_class_idx] * predict_points[feature * num_predict_points + global_pp_idx];
-        }
         prediction[global_pp_idx * num_classes + global_class_idx] = temp - rho[global_class_idx];
     }
 }
@@ -111,6 +180,8 @@ __global__ void device_kernel_predict_linear(real_type *prediction, const real_t
 template <kernel_function_type kernel_function, typename... Args>
 __global__ void device_kernel_predict(real_type *prediction, const real_type *alpha, const real_type *rho, const real_type *support_vectors, const real_type *predict_points, const std::size_t num_classes, const std::size_t num_sv, const std::size_t num_predict_points, const std::size_t num_features, const std::size_t grid_x_offset, const std::size_t grid_y_offset, Args... kernel_function_parameter) {
     // cast all values to 64-bit std::size_t to prevent potential 32-bit overflows
+    constexpr auto THREAD_BLOCK_SIZE_uz = static_cast<std::size_t>(THREAD_BLOCK_SIZE);
+
     const auto threadIdx_x = static_cast<std::size_t>(threadIdx.x);                // current thread in block x-dimension
     const auto threadIdx_y = static_cast<std::size_t>(threadIdx.y);                // current thread in block y-dimension
     const auto blockDim_x = static_cast<std::size_t>(blockDim.x);                  // number of threads in block x-dimension
@@ -118,28 +189,91 @@ __global__ void device_kernel_predict(real_type *prediction, const real_type *al
     const auto blockIdx_x = static_cast<std::size_t>(blockIdx.x) + grid_x_offset;  // current block in grid x-dimension + offsets if the grid size is too large
     const auto blockIdx_y = static_cast<std::size_t>(blockIdx.y) + grid_y_offset;  // current block in grid y-dimension + offsets if the grid size is too large
 
-    // calculate the indices used in the current thread
-    const auto global_pp_idx = blockIdx_x * blockDim_x + threadIdx_x;
-    const auto global_sv_idx = blockIdx_y * blockDim_y + threadIdx_y;
+    // create two shared memory arrays used for caching
+    __shared__ real_type cache_one[THREAD_BLOCK_SIZE][THREAD_BLOCK_SIZE];
+    __shared__ real_type cache_two[THREAD_BLOCK_SIZE][THREAD_BLOCK_SIZE];
 
-    if (global_sv_idx < num_sv && global_pp_idx < num_predict_points) {
-        real_type temp{ 0.0 };
-        // perform the feature reduction calculation
-        for (std::size_t feature = 0; feature < num_features; ++feature) {
-            temp += detail::feature_reduce<kernel_function>(support_vectors[feature * num_sv + global_sv_idx],
-                                                            predict_points[feature * num_predict_points + global_pp_idx]);
-        }
+    real_type temp{ 0.0 };
 
-        // apply the final kernel function
-        temp = detail::apply_kernel_function<kernel_function>(temp, kernel_function_parameter...);
+    {
+        // rename the shared memory arrays
+        auto pp_cache = cache_one;
+        auto sv_cache = cache_two;
 
-        for (std::size_t class_idx = 0; class_idx < num_classes; ++class_idx) {
-            real_type out_cache = alpha[class_idx * num_sv + global_sv_idx] * temp;
-            // the bias (rho) must only be applied once for all support vectors
-            if (global_sv_idx == std::size_t{ 0 }) {
-                out_cache -= rho[class_idx];
+        // calculate the indices used in the current thread, pays attention to coalesced memory accesses
+        const auto global_pp_idx_linear = blockIdx_x * blockDim_x + threadIdx_x;  // num_predict_points
+        const auto global_sv_idx_linear = blockIdx_y * blockDim_y + threadIdx_x;  // num_support_vectors
+
+        // iterate over all features using blocking to be able to cache them for faster memory accesses
+        for (std::size_t feature_block = 0; feature_block < num_features; feature_block += THREAD_BLOCK_SIZE_uz) {
+            // zero-out shared memory
+            pp_cache[threadIdx.y][threadIdx.x] = real_type{ 0.0 };
+            sv_cache[threadIdx.y][threadIdx.x] = real_type{ 0.0 };
+
+            // load data into shared memory
+            if (feature_block + threadIdx_y < num_features) {
+                if (global_pp_idx_linear < num_predict_points) {
+                    pp_cache[threadIdx.y][threadIdx.x] = predict_points[(feature_block + threadIdx_y) * num_predict_points + global_pp_idx_linear];  // SoA
+                }
+                if (global_sv_idx_linear < num_sv) {
+                    sv_cache[threadIdx.y][threadIdx.x] = support_vectors[(feature_block + threadIdx_y) * num_sv + global_sv_idx_linear];  // SoA
+                }
             }
-            atomicAdd(&prediction[global_pp_idx * num_classes + class_idx], out_cache);
+            __syncthreads();  // wait until all threads loaded their part of the data
+
+            // perform the feature reduction calculation
+            for (unsigned feature = 0; feature < THREAD_BLOCK_SIZE; ++feature) {
+                temp += detail::feature_reduce<kernel_function>(sv_cache[feature][threadIdx.y],
+                                                                pp_cache[feature][threadIdx.x]);
+            }
+            __syncthreads();  // wait until all threads performed their part of the calculations
+        }
+    }
+
+    // apply the final kernel function
+    temp = detail::apply_kernel_function<kernel_function>(temp, kernel_function_parameter...);
+
+    {
+        // rename the shared memory arrays
+        auto alpha_cache = cache_one;
+        auto out_cache = cache_two;
+
+        // calculate the indices used in the current thread
+        const auto global_pp_idx = blockIdx_x * blockDim_x + threadIdx_x;  // num_predict_points
+        // calculate the indices used in the current thread, pays attention to coalesced memory accesses
+        const auto global_sv_idx_linear = blockIdx_y * blockDim_y + threadIdx_x;  // num_support_vectors
+
+        // iterate over all classes using blocking to be able to cache them for faster memory accesses
+        for (std::size_t class_block = 0; class_block < num_classes; class_block += THREAD_BLOCK_SIZE_uz) {
+            // zero-out shared memory
+            alpha_cache[threadIdx.y][threadIdx.x] = real_type{ 0.0 };
+            out_cache[threadIdx.y][threadIdx.x] = real_type{ 0.0 };
+
+            // load data into shared memory
+            if (class_block + threadIdx_y < num_classes) {
+                if (global_sv_idx_linear < num_sv) {
+                    alpha_cache[threadIdx.y][threadIdx.x] = alpha[(class_block + threadIdx_y) * num_sv + global_sv_idx_linear];  // AoS
+                }
+                // the bias (rho) must only be applied once for all support vectors
+                if (blockIdx_y == std::size_t{ 0 }) {
+                    out_cache[threadIdx.y][threadIdx.x] = -rho[class_block + threadIdx_y];
+                } else {
+                    out_cache[threadIdx.y][threadIdx.x] = real_type{ 0.0 };
+                }
+            }
+            __syncthreads();  // wait until all threads loaded their part of the data
+
+            // calculate intermediate results and store them in shared memory
+            for (unsigned class_idx = 0; class_idx < THREAD_BLOCK_SIZE; ++class_idx) {
+                out_cache[(class_idx + threadIdx.y) % THREAD_BLOCK_SIZE][threadIdx.x] += temp * alpha_cache[(class_idx + threadIdx.y) % THREAD_BLOCK_SIZE][threadIdx.y];
+                __syncthreads();  // wait until all threads performed their part of the calculations
+            }
+
+            // atomically add the intermediate cached results to the prediction
+            if (class_block + threadIdx_y < num_classes && global_pp_idx < num_predict_points) {
+                atomicAdd(&prediction[global_pp_idx * num_classes + class_block + threadIdx_y], out_cache[threadIdx.y][threadIdx.x]);
+            }
+            __syncthreads();  // wait until all threads updated their part of the prediction
         }
     }
 }

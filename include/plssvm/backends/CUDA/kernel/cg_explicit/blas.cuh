@@ -36,6 +36,8 @@ namespace plssvm::cuda::detail {
  */
 __global__ void device_kernel_symm(const std::size_t num_rows, const std::size_t num_rhs, const std::size_t device_num_rows, const std::size_t device_row_offset, const real_type alpha, const real_type *A, const real_type *B, const real_type beta, real_type *C, const std::size_t grid_x_offset, const std::size_t grid_y_offset) {
     // cast all values to 64-bit std::size_t to prevent potential 32-bit overflows
+    constexpr auto THREAD_BLOCK_SIZE_uz = static_cast<std::size_t>(THREAD_BLOCK_SIZE);
+
     const auto threadIdx_x = static_cast<std::size_t>(threadIdx.x);                // current thread in block x-dimension
     const auto threadIdx_y = static_cast<std::size_t>(threadIdx.y);                // current thread in block y-dimension
     const auto blockDim_x = static_cast<std::size_t>(blockDim.x);                  // number of threads in block x-dimension
@@ -43,23 +45,53 @@ __global__ void device_kernel_symm(const std::size_t num_rows, const std::size_t
     const auto blockIdx_x = static_cast<std::size_t>(blockIdx.x) + grid_x_offset;  // current block in grid x-dimension + offsets if the grid size is too large
     const auto blockIdx_y = static_cast<std::size_t>(blockIdx.y) + grid_y_offset;  // current block in grid y-dimension + offsets if the grid size is too large
 
+    // create two shared memory arrays used for caching
+    __shared__ real_type A_cache[THREAD_BLOCK_SIZE][THREAD_BLOCK_SIZE];
+    __shared__ real_type B_cache[THREAD_BLOCK_SIZE][THREAD_BLOCK_SIZE];
+
+    real_type temp{ 0.0 };
+
+    {
+        // calculate the indices used in the current thread, pays attention to coalesced memory accesses
+        const auto global_i_idx_linear = blockIdx_x * blockDim_x + threadIdx_x;  // num_rhs
+        const auto global_j_idx_linear = blockIdx_y * blockDim_y + threadIdx_x;  // device_num_rows
+
+        // iterate over all values using blocking to be able to cache them for faster memory accesses
+        for (std::size_t dim_block = 0; dim_block < (num_rows - device_row_offset); dim_block += THREAD_BLOCK_SIZE_uz) {
+            // zero-out shared memory
+            A_cache[threadIdx.y][threadIdx.x] = real_type{ 0.0 };
+            B_cache[threadIdx.y][threadIdx.x] = real_type{ 0.0 };
+
+            // load data into shared memory
+            if (dim_block + threadIdx_y < num_rows - device_row_offset) {
+                if (global_j_idx_linear < device_num_rows) {
+                    if (dim_block + threadIdx_y < global_j_idx_linear) {
+                        A_cache[threadIdx.y][threadIdx.x] = A[(dim_block + threadIdx_y) * (num_rows - device_row_offset) + global_j_idx_linear - (dim_block + threadIdx_y) * (dim_block + threadIdx_y + std::size_t{ 1 }) / std::size_t{ 2 }];  // SoA, upper triangular matrix only
+                    } else {
+                        A_cache[threadIdx.y][threadIdx.x] = A[global_j_idx_linear * (num_rows - device_row_offset) + dim_block + threadIdx_y - global_j_idx_linear * (global_j_idx_linear + std::size_t{ 1 }) / std::size_t{ 2 }];  // SoA, upper triangular matrix only
+                    }
+                }
+                if (global_i_idx_linear < num_rhs) {
+                    B_cache[threadIdx.y][threadIdx.x] = B[(dim_block + device_row_offset + threadIdx_y) * num_rhs + global_i_idx_linear];  // SoA
+                }
+            }
+            __syncthreads();  // wait until all threads loaded their part of the data
+
+            // perform the dot product calculation
+            for (unsigned dim = 0; dim < THREAD_BLOCK_SIZE; ++dim) {
+                temp += A_cache[dim][threadIdx.y] * B_cache[dim][threadIdx.x];
+            }
+            __syncthreads();  // wait until all threads performed their part of the calculations
+        }
+    }
+
     // calculate the indices used in the current thread
-    const auto global_i_idx = blockIdx_x * blockDim_x + threadIdx_x;
-    const auto device_global_j_idx = blockIdx_y * blockDim_y + threadIdx_y;
+    const auto global_i_idx = blockIdx_x * blockDim_x + threadIdx_x;         // num_rhs
+    const auto device_global_j_idx = blockIdx_y * blockDim_y + threadIdx_y;  // device_num_rows
     const auto global_j_idx = device_row_offset + device_global_j_idx;
 
+    // be sure to not perform out-of-bounds accesses
     if (global_i_idx < num_rhs && device_global_j_idx < device_num_rows && global_j_idx < num_rows) {
-        real_type temp{ 0.0 };
-        for (std::size_t dim = 0; dim < (num_rows - device_row_offset); ++dim) {
-            real_type A_cache{ 0.0 };
-            if (dim < device_global_j_idx) {
-                A_cache = A[dim * (num_rows - device_row_offset) + device_global_j_idx - dim * (dim + std::size_t{ 1 }) / std::size_t{ 2 }];
-            } else {
-                A_cache = A[device_global_j_idx * (num_rows - device_row_offset) + dim - device_global_j_idx * (device_global_j_idx + std::size_t{ 1 }) / std::size_t{ 2 }];
-            }
-            temp += A_cache * B[(device_row_offset + dim) * num_rhs + global_i_idx];
-        }
-
         C[global_j_idx * num_rhs + global_i_idx] = alpha * temp + beta * C[global_j_idx * num_rhs + global_i_idx];
     }
 }
@@ -82,6 +114,8 @@ __global__ void device_kernel_symm(const std::size_t num_rows, const std::size_t
  */
 __global__ void device_kernel_symm_mirror(const std::size_t num_rows, const std::size_t num_rhs, const std::size_t num_mirror_rows, const std::size_t device_num_rows, const std::size_t device_row_offset, const real_type alpha, const real_type *A, const real_type *B, const real_type beta, real_type *C, const std::size_t grid_x_offset, const std::size_t grid_y_offset) {
     // cast all values to 64-bit std::size_t to prevent potential 32-bit overflows
+    constexpr auto THREAD_BLOCK_SIZE_uz = static_cast<std::size_t>(THREAD_BLOCK_SIZE);
+
     const auto threadIdx_x = static_cast<std::size_t>(threadIdx.x);                // current thread in block x-dimension
     const auto threadIdx_y = static_cast<std::size_t>(threadIdx.y);                // current thread in block y-dimension
     const auto blockDim_x = static_cast<std::size_t>(blockDim.x);                  // number of threads in block x-dimension
@@ -89,18 +123,49 @@ __global__ void device_kernel_symm_mirror(const std::size_t num_rows, const std:
     const auto blockIdx_x = static_cast<std::size_t>(blockIdx.x) + grid_x_offset;  // current block in grid x-dimension + offsets if the grid size is too large
     const auto blockIdx_y = static_cast<std::size_t>(blockIdx.y) + grid_y_offset;  // current block in grid y-dimension + offsets if the grid size is too large
 
+    // create two shared memory arrays used for caching
+    __shared__ real_type A_cache[THREAD_BLOCK_SIZE][THREAD_BLOCK_SIZE];
+    __shared__ real_type B_cache[THREAD_BLOCK_SIZE][THREAD_BLOCK_SIZE];
+
+    real_type temp{ 0.0 };
+
+    {
+        // calculate the indices used in the current thread, pays attention to coalesced memory accesses
+        const auto global_i_idx_linear = blockIdx_x * blockDim_x + threadIdx_x;  // num_rhs
+        const auto global_j_idx_linear = blockIdx_y * blockDim_y + threadIdx_x;  // num_mirror_rows
+
+        // iterate over the remaining values using blocking to be able to cache them for faster memory accesses
+        for (std::size_t dim_block = 0; dim_block < device_num_rows; dim_block += THREAD_BLOCK_SIZE_uz) {
+            // zero-out shared memory
+            A_cache[threadIdx.y][threadIdx.x] = real_type{ 0.0 };
+            B_cache[threadIdx.y][threadIdx.x] = real_type{ 0.0 };
+
+            // load data into shared memory
+            if (dim_block + threadIdx_y < device_num_rows) {
+                if (global_j_idx_linear < num_mirror_rows) {
+                    A_cache[threadIdx.y][threadIdx.x] = A[(dim_block + threadIdx_y) * (num_rows - device_row_offset) - (dim_block + threadIdx_y - std::size_t{ 1 }) * (dim_block + threadIdx_y) / std::size_t{ 2 } + device_num_rows - (dim_block + threadIdx_y) + global_j_idx_linear];
+                }
+                if (global_i_idx_linear < num_rhs) {
+                    B_cache[threadIdx.y][threadIdx.x] = B[(dim_block + device_row_offset + threadIdx_y) * num_rhs + global_i_idx_linear];  // SoA
+                }
+            }
+            __syncthreads();  // wait until all threads loaded their part of the data
+
+            // perform the dot product calculation
+            for (unsigned dim = 0; dim < THREAD_BLOCK_SIZE; ++dim) {
+                temp += A_cache[dim][threadIdx.y] * B_cache[dim][threadIdx.x];
+            }
+            __syncthreads();  // wait until all threads performed their part of the calculations
+        }
+    }
+
     // calculate the indices used in the current thread
-    const auto global_i_idx = blockIdx_x * blockDim_x + threadIdx_x;
-    const auto partial_global_j_idx = blockIdx_y * blockDim_y + threadIdx_y;
+    const auto global_i_idx = blockIdx_x * blockDim_x + threadIdx_x;          // num_rhs
+    const auto partial_global_j_idx = blockIdx_y * blockDim_y + threadIdx_y;  // num_mirror_rows
     const auto global_j_idx = device_row_offset + device_num_rows + partial_global_j_idx;
 
+    // be sure to not perform out-of-bounds accesses
     if (global_i_idx < num_rhs && partial_global_j_idx < num_mirror_rows && global_j_idx < num_rows) {
-        real_type temp{ 0.0 };
-        for (std::size_t dim = 0; dim < device_num_rows; ++dim) {
-            temp += A[dim * (num_rows - device_row_offset) - (dim - std::size_t{ 1 }) * dim / std::size_t{ 2 } + device_num_rows - dim + partial_global_j_idx] *
-                    B[(device_row_offset + dim) * num_rhs + global_i_idx];
-        }
-
         C[global_j_idx * num_rhs + global_i_idx] = alpha * temp + beta * C[global_j_idx * num_rhs + global_i_idx];
     }
 }
