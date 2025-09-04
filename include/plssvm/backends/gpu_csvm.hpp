@@ -14,7 +14,7 @@
 #pragma once
 
 #include "plssvm/backends/execution_range.hpp"  // plssvm::detail::{dim_type, execution_range}
-#include "plssvm/constants.hpp"                 // plssvm::real_type
+#include "plssvm/constants.hpp"                 // plssvm::real_type, plssvm::THREAD_BLOCK_SIZE, plssvm::INTERNAL_BLOCK_SIZE
 #include "plssvm/detail/assert.hpp"             // PLSSVM_ASSERT
 #include "plssvm/detail/data_distribution.hpp"  // plssvm::detail::{data_distribution, triangular_data_distribution, rectangular_data_distribution}
 #include "plssvm/detail/move_only_any.hpp"      // plssvm::detail::{move_only_any, move_only_any_cast}
@@ -282,8 +282,8 @@ std::vector<::plssvm::detail::move_only_any> gpu_csvm<device_ptr_t, queue_t, pin
 
         // define the full execution grid
         const dim_type grid{
-            static_cast<std::size_t>(std::ceil(static_cast<double>(num_rows_reduced - device_row_offset) / static_cast<double>(block.x))),
-            static_cast<std::size_t>(std::ceil(static_cast<double>(device_specific_num_rows) / static_cast<double>(block.y)))
+            static_cast<std::size_t>(std::ceil(static_cast<double>(num_rows_reduced - device_row_offset) / static_cast<double>(block.x * INTERNAL_BLOCK_SIZE))),
+            static_cast<std::size_t>(std::ceil(static_cast<double>(device_specific_num_rows) / static_cast<double>(block.y * INTERNAL_BLOCK_SIZE)))
         };
 
         // create the final execution range
@@ -368,8 +368,8 @@ void gpu_csvm<device_ptr_t, queue_t, pinned_memory_t>::blas_level_3(const solver
                 const unsigned long long num_rhs = C_d[device_id].shape().x;
                 const unsigned long long num_rows = C_d[device_id].shape().y;
                 const dim_type grid{
-                    static_cast<std::size_t>(std::ceil(static_cast<double>(num_rows) / static_cast<double>(block.x))),
-                    static_cast<std::size_t>(std::ceil(static_cast<double>(num_rhs) / static_cast<double>(block.y)))
+                    static_cast<std::size_t>(std::ceil(static_cast<double>(num_rows) / static_cast<double>(block.x * INTERNAL_BLOCK_SIZE))),
+                    static_cast<std::size_t>(std::ceil(static_cast<double>(num_rhs) / static_cast<double>(block.y * INTERNAL_BLOCK_SIZE)))
                 };
 
                 // create execution range
@@ -396,13 +396,13 @@ void gpu_csvm<device_ptr_t, queue_t, pinned_memory_t>::blas_level_3(const solver
                     const unsigned long long num_rows = B_d[device_id].shape().y;
                     const unsigned long long device_specific_num_rows = data_distribution_->place_specific_num_rows(device_id);
                     const dim_type grid{
-                        static_cast<std::size_t>(std::ceil(static_cast<double>(num_rhs) / static_cast<double>(block.x))),
-                        static_cast<std::size_t>(std::ceil(static_cast<double>(device_specific_num_rows) / static_cast<double>(block.y)))
+                        static_cast<std::size_t>(std::ceil(static_cast<double>(num_rhs) / static_cast<double>(block.x * INTERNAL_BLOCK_SIZE))),
+                        static_cast<std::size_t>(std::ceil(static_cast<double>(device_specific_num_rows) / static_cast<double>(block.y * INTERNAL_BLOCK_SIZE)))
                     };
                     const unsigned long long num_mirror_rows = num_rows - data_distribution_->place_row_offset(device_id) - device_specific_num_rows;
                     const dim_type mirror_grid{
-                        static_cast<std::size_t>(std::ceil(static_cast<double>(num_rhs) / static_cast<double>(block.x))),
-                        static_cast<std::size_t>(std::ceil(static_cast<double>(num_mirror_rows) / static_cast<double>(block.y)))
+                        static_cast<std::size_t>(std::ceil(static_cast<double>(num_rhs) / static_cast<double>(block.x * INTERNAL_BLOCK_SIZE))),
+                        static_cast<std::size_t>(std::ceil(static_cast<double>(num_mirror_rows) / static_cast<double>(block.y * INTERNAL_BLOCK_SIZE)))
                     };
 
                     // create execution ranges
@@ -437,8 +437,8 @@ void gpu_csvm<device_ptr_t, queue_t, pinned_memory_t>::blas_level_3(const solver
             const unsigned long long num_rhs = C_d[0].shape().x;
             const unsigned long long num_rows = C_d[0].shape().y;
             const dim_type grid{
-                static_cast<std::size_t>(std::ceil(static_cast<double>(num_rows) / static_cast<double>(block.x))),
-                static_cast<std::size_t>(std::ceil(static_cast<double>(num_rhs) / static_cast<double>(block.y)))
+                static_cast<std::size_t>(std::ceil(static_cast<double>(num_rows) / static_cast<double>(block.x * INTERNAL_BLOCK_SIZE))),
+                static_cast<std::size_t>(std::ceil(static_cast<double>(num_rhs) / static_cast<double>(block.y * INTERNAL_BLOCK_SIZE)))
             };
 
             // create execution range
@@ -541,8 +541,8 @@ aos_matrix<real_type> gpu_csvm<device_ptr_t, queue_t, pinned_memory_t>::predict_
 
                 // define the full execution grid
                 const dim_type grid{
-                    static_cast<std::size_t>(std::ceil(static_cast<double>(num_features) / static_cast<double>(block.x))),
-                    static_cast<std::size_t>(std::ceil(static_cast<double>(num_classes) / static_cast<double>(block.y)))
+                    static_cast<std::size_t>(std::ceil(static_cast<double>(num_features) / static_cast<double>(block.x * INTERNAL_BLOCK_SIZE))),
+                    static_cast<std::size_t>(std::ceil(static_cast<double>(num_classes) / static_cast<double>(block.y * INTERNAL_BLOCK_SIZE)))
                 };
 
                 // create execution range
@@ -562,8 +562,8 @@ aos_matrix<real_type> gpu_csvm<device_ptr_t, queue_t, pinned_memory_t>::predict_
                     const unsigned long long num_rhs = w_d[0].shape().x;
                     const unsigned long long num_rows = w_d[0].shape().y;
                     const dim_type add_grid{
-                        static_cast<std::size_t>(std::ceil(static_cast<double>(num_rows) / static_cast<double>(block.x))),
-                        static_cast<std::size_t>(std::ceil(static_cast<double>(num_rhs) / static_cast<double>(block.y)))
+                        static_cast<std::size_t>(std::ceil(static_cast<double>(num_rows) / static_cast<double>(block.x * INTERNAL_BLOCK_SIZE))),
+                        static_cast<std::size_t>(std::ceil(static_cast<double>(num_rhs) / static_cast<double>(block.y * INTERNAL_BLOCK_SIZE)))
                     };
 
                     // create execution range
@@ -655,8 +655,8 @@ aos_matrix<real_type> gpu_csvm<device_ptr_t, queue_t, pinned_memory_t>::predict_
         const unsigned long long device_specific_num_predict_points = predict_points_d[device_id].shape().x;
         const unsigned long long y_dim_size = params.kernel_type == kernel_function_type::linear ? num_classes : num_support_vectors;
         const dim_type grid{
-            static_cast<std::size_t>(std::ceil(static_cast<double>(device_specific_num_predict_points) / static_cast<double>(block.x))),
-            static_cast<std::size_t>(std::ceil(static_cast<double>(y_dim_size) / static_cast<double>(block.y)))
+            static_cast<std::size_t>(std::ceil(static_cast<double>(device_specific_num_predict_points) / static_cast<double>(block.x * INTERNAL_BLOCK_SIZE))),
+            static_cast<std::size_t>(std::ceil(static_cast<double>(y_dim_size) / static_cast<double>(block.y * INTERNAL_BLOCK_SIZE)))
         };
 
         // create execution range

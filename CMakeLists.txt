@@ -590,6 +590,20 @@ if (DEFINED PLSSVM_THREAD_BLOCK_SIZE)
     endif ()
 endif ()
 
+# set specific internal block sizes of requested
+if (DEFINED ENV{PLSSVM_INTERNAL_BLOCK_SIZE})
+    set(PLSSVM_INTERNAL_BLOCK_SIZE $ENV{PLSSVM_INTERNAL_BLOCK_SIZE} CACHE STRING "The used internal block size." FORCE)
+endif ()
+if (DEFINED PLSSVM_INTERNAL_BLOCK_SIZE)
+    if (PLSSVM_INTERNAL_BLOCK_SIZE MATCHES "^[0-9]+$" AND PLSSVM_INTERNAL_BLOCK_SIZE GREATER 0)
+        message(STATUS "Set INTERNAL_BLOCK_SIZE to ${PLSSVM_INTERNAL_BLOCK_SIZE}.")
+        # add target definition
+        target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC PLSSVM_INTERNAL_BLOCK_SIZE=${PLSSVM_INTERNAL_BLOCK_SIZE})
+    else ()
+        message(SEND_ERROR "PLSSVM_INTERNAL_BLOCK_SIZE must be an integer greater than 0 but is \"${PLSSVM_INTERNAL_BLOCK_SIZE}\"!")
+    endif ()
+endif ()
+
 # enforce maximum device memory allocation sizes for the automatic solver type
 option(PLSSVM_ENFORCE_MAX_MEM_ALLOC_SIZE "Enforce the maximum device memory allocation sizes for the automatic plssvm::solver_type." ON)
 if (PLSSVM_ENFORCE_MAX_MEM_ALLOC_SIZE)

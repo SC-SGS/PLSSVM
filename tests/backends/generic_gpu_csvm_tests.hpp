@@ -13,7 +13,7 @@
 #define PLSSVM_TESTS_BACKENDS_GENERIC_GPU_CSVM_TESTS_HPP_
 #pragma once
 
-#include "plssvm/constants.hpp"                         // plssvm::real_type
+#include "plssvm/constants.hpp"                         // plssvm::real_type, plssvm::THREAD_BLOCK_SIZE, plssvm::INTERNAL_BLOCK_SIZE
 #include "plssvm/data_set/classification_data_set.hpp"  // plssvm::classification_data_set
 #include "plssvm/detail/data_distribution.hpp"          // plssvm::detail::{triangular_data_distribution, rectangular_data_distribution}
 #include "plssvm/kernel_function_types.hpp"             // plssvm::kernel_function_type
@@ -131,13 +131,13 @@ TYPED_TEST_P(GenericGPUCSVM, run_blas_level_3_kernel_explicit) {
         const unsigned long long num_rows = B_d.shape().y;
         const unsigned long long device_specific_num_rows = svm.data_distribution_->place_specific_num_rows(device_id);
         const plssvm::detail::dim_type grid{
-            static_cast<std::size_t>(std::ceil(static_cast<double>(num_rhs) / static_cast<double>(block.x))),
-            static_cast<std::size_t>(std::ceil(static_cast<double>(device_specific_num_rows) / static_cast<double>(block.y)))
+            static_cast<std::size_t>(std::ceil(static_cast<double>(num_rhs) / static_cast<double>(block.x * plssvm::INTERNAL_BLOCK_SIZE))),
+            static_cast<std::size_t>(std::ceil(static_cast<double>(device_specific_num_rows) / static_cast<double>(block.y * plssvm::INTERNAL_BLOCK_SIZE)))
         };
         const unsigned long long num_mirror_rows = num_rows - svm.data_distribution_->place_row_offset(device_id) - device_specific_num_rows;
         const plssvm::detail::dim_type mirror_grid{
-            static_cast<std::size_t>(std::ceil(static_cast<double>(num_rhs) / static_cast<double>(block.x))),
-            static_cast<std::size_t>(std::ceil(static_cast<double>(num_mirror_rows) / static_cast<double>(block.y)))
+            static_cast<std::size_t>(std::ceil(static_cast<double>(num_rhs) / static_cast<double>(block.x * plssvm::INTERNAL_BLOCK_SIZE))),
+            static_cast<std::size_t>(std::ceil(static_cast<double>(num_mirror_rows) / static_cast<double>(block.y * plssvm::INTERNAL_BLOCK_SIZE)))
         };
 
         // create execution ranges
@@ -202,8 +202,8 @@ TYPED_TEST_P(GenericGPUCSVM, run_w_kernel) {
 
         // define the full execution grid
         const plssvm::detail::dim_type grid{
-            static_cast<std::size_t>(std::ceil(static_cast<double>(num_features) / static_cast<double>(block.x))),
-            static_cast<std::size_t>(std::ceil(static_cast<double>(num_classes) / static_cast<double>(block.y)))
+            static_cast<std::size_t>(std::ceil(static_cast<double>(num_features) / static_cast<double>(block.x * plssvm::INTERNAL_BLOCK_SIZE))),
+            static_cast<std::size_t>(std::ceil(static_cast<double>(num_classes) / static_cast<double>(block.y * plssvm::INTERNAL_BLOCK_SIZE)))
         };
 
         // create execution range
@@ -259,8 +259,8 @@ TYPED_TEST_P(GenericGPUCSVM, run_inplace_matrix_addition) {
         const unsigned long long num_rhs = A_d.shape().x;
         const unsigned long long num_rows = A_d.shape().y;
         const plssvm::detail::dim_type grid{
-            static_cast<std::size_t>(std::ceil(static_cast<double>(num_rows) / static_cast<double>(block.x))),
-            static_cast<std::size_t>(std::ceil(static_cast<double>(num_rhs) / static_cast<double>(block.y)))
+            static_cast<std::size_t>(std::ceil(static_cast<double>(num_rows) / static_cast<double>(block.x * plssvm::INTERNAL_BLOCK_SIZE))),
+            static_cast<std::size_t>(std::ceil(static_cast<double>(num_rhs) / static_cast<double>(block.y * plssvm::INTERNAL_BLOCK_SIZE)))
         };
 
         // create execution range
@@ -311,8 +311,8 @@ TYPED_TEST_P(GenericGPUCSVM, run_inplace_matrix_scale) {
         const unsigned long long num_rhs = A_d.shape().x;
         const unsigned long long num_rows = A_d.shape().y;
         const plssvm::detail::dim_type grid{
-            static_cast<std::size_t>(std::ceil(static_cast<double>(num_rows) / static_cast<double>(block.x))),
-            static_cast<std::size_t>(std::ceil(static_cast<double>(num_rhs) / static_cast<double>(block.y)))
+            static_cast<std::size_t>(std::ceil(static_cast<double>(num_rows) / static_cast<double>(block.x * plssvm::INTERNAL_BLOCK_SIZE))),
+            static_cast<std::size_t>(std::ceil(static_cast<double>(num_rhs) / static_cast<double>(block.y * plssvm::INTERNAL_BLOCK_SIZE)))
         };
 
         // create execution range
@@ -399,8 +399,8 @@ TYPED_TEST_P(GenericGPUCSVMKernelFunction, run_assemble_kernel_matrix_explicit) 
 
         // define the full execution grid
         const plssvm::detail::dim_type grid{
-            static_cast<std::size_t>(std::ceil(static_cast<double>(num_rows_reduced - device_row_offset) / static_cast<double>(block.x))),
-            static_cast<std::size_t>(std::ceil(static_cast<double>(device_specific_num_rows) / static_cast<double>(block.y)))
+            static_cast<std::size_t>(std::ceil(static_cast<double>(num_rows_reduced - device_row_offset) / static_cast<double>(block.x * plssvm::INTERNAL_BLOCK_SIZE))),
+            static_cast<std::size_t>(std::ceil(static_cast<double>(device_specific_num_rows) / static_cast<double>(block.y * plssvm::INTERNAL_BLOCK_SIZE)))
         };
 
         // create the final execution range
@@ -468,7 +468,7 @@ TYPED_TEST_P(GenericGPUCSVMKernelFunction, run_assemble_kernel_matrix_implicit_b
         device_ptr_type data_d{ data_matr.shape(), device };
         data_d.copy_to_device(data_matr);
 
-        device_ptr_type q_red_d{ q_red.size() , device };
+        device_ptr_type q_red_d{ q_red.size(), device };
         q_red_d.copy_to_device(q_red, 0, q_red.size());
 
         // upload complete BLAS B and C matrices to each device
@@ -487,8 +487,8 @@ TYPED_TEST_P(GenericGPUCSVMKernelFunction, run_assemble_kernel_matrix_implicit_b
 
         // define the full execution grid
         const plssvm::detail::dim_type grid{
-            static_cast<std::size_t>(std::ceil(static_cast<double>(num_rows_reduced - device_row_offset) / static_cast<double>(block.x))),
-            static_cast<std::size_t>(std::ceil(static_cast<double>(device_specific_num_rows) / static_cast<double>(block.y)))
+            static_cast<std::size_t>(std::ceil(static_cast<double>(num_rows_reduced - device_row_offset) / static_cast<double>(block.x * plssvm::INTERNAL_BLOCK_SIZE))),
+            static_cast<std::size_t>(std::ceil(static_cast<double>(device_specific_num_rows) / static_cast<double>(block.y * plssvm::INTERNAL_BLOCK_SIZE)))
         };
 
         // create the final execution range
@@ -578,8 +578,8 @@ TYPED_TEST_P(GenericGPUCSVMKernelFunction, run_predict_kernel) {
         const unsigned long long device_specific_num_predict_points = predict_points_d.shape().x;
         const unsigned long long y_dim_size = params.kernel_type == plssvm::kernel_function_type::linear ? weights_d.shape().x : sv_or_w_d.shape().x;
         const plssvm::detail::dim_type grid{
-            static_cast<std::size_t>(std::ceil(static_cast<double>(device_specific_num_predict_points) / static_cast<double>(block.x))),
-            static_cast<std::size_t>(std::ceil(static_cast<double>(y_dim_size) / static_cast<double>(block.y)))
+            static_cast<std::size_t>(std::ceil(static_cast<double>(device_specific_num_predict_points) / static_cast<double>(block.x * plssvm::INTERNAL_BLOCK_SIZE))),
+            static_cast<std::size_t>(std::ceil(static_cast<double>(y_dim_size) / static_cast<double>(block.y * plssvm::INTERNAL_BLOCK_SIZE)))
         };
 
         // create execution range
