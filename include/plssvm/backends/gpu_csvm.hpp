@@ -501,7 +501,7 @@ aos_matrix<real_type> gpu_csvm<device_ptr_t, queue_t, pinned_memory_t>::predict_
         const queue_type &device = devices_[device_id];
 
         // allocate memory on the device
-        alpha_d[device_id] = device_ptr_type{ alpha.shape(), alpha.padding(),device };
+        alpha_d[device_id] = device_ptr_type{ alpha.shape(), alpha.padding(), device };
     }
 #pragma omp parallel for if (num_devices > 1)
     for (std::size_t device_id = 0; device_id < num_devices; ++device_id) {
@@ -598,7 +598,7 @@ aos_matrix<real_type> gpu_csvm<device_ptr_t, queue_t, pinned_memory_t>::predict_
             const queue_type &device = devices_[device_id];
 
             // allocate memory on the device
-            sv_or_w_d[device_id] = device_ptr_type{ shape{ num_classes, num_features }, shape{ PADDING_SIZE, PADDING_SIZE },device };
+            sv_or_w_d[device_id] = device_ptr_type{ shape{ num_classes, num_features }, shape{ PADDING_SIZE, PADDING_SIZE }, device };
         }
 #pragma omp parallel for if (num_devices > 1)
         for (std::size_t device_id = 0; device_id < num_devices; ++device_id) {

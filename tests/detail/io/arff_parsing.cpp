@@ -60,9 +60,9 @@ TEST_P(ARFFParseHeaderValid, header) {
 
 // clang-format off
 INSTANTIATE_TEST_SUITE_P(ARFFParse, ARFFParseHeaderValid, ::testing::Values(
-                                                    std::make_tuple("/data/arff/classification/5x4.arff", 4, 7, true, 4),
-                                                    std::make_tuple("/data/arff/classification/5x4_sparse.arff", 4, 7, true, 2),
-                                                    std::make_tuple("/data/arff/3x2_without_label.arff", 2, 4, false, 0)));
+                                                     std::make_tuple("/data/arff/classification/5x4.arff", 4, 7, true, 4),
+                                                     std::make_tuple("/data/arff/classification/5x4_sparse.arff", 4, 7, true, 2),
+                                                     std::make_tuple("/data/arff/3x2_without_label.arff", 2, 4, false, 0)));
 // clang-format on
 
 TEST(ARFFParseHeader, class_unquoted_nominal_attribute) {

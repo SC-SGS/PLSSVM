@@ -323,9 +323,9 @@ template <typename T, plssvm::svm_type SVM = plssvm::svm_type::csvc>
         // for LABEL_PLACEHOLDER: [ 1, 1, 2, 3, 2, 4 ]
         // if only two labels, e.g., [ -1, 1 ] are given, the output will look as follows: [ -1, -1, 1, 1, 1, 1 ]
         // clang-format off
-       return std::vector<T>{ labels[std::min<std::size_t>(0, labels.size() - 1)], labels[std::min<std::size_t>(0, labels.size() - 1)],
-                              labels[std::min<std::size_t>(1, labels.size() - 1)], labels[std::min<std::size_t>(2, labels.size() - 1)],
-                              labels[std::min<std::size_t>(1, labels.size() - 1)], labels[std::min<std::size_t>(3, labels.size() - 1)] };
+        return std::vector<T>{ labels[std::min<std::size_t>(0, labels.size() - 1)], labels[std::min<std::size_t>(0, labels.size() - 1)],
+                               labels[std::min<std::size_t>(1, labels.size() - 1)], labels[std::min<std::size_t>(2, labels.size() - 1)],
+                               labels[std::min<std::size_t>(1, labels.size() - 1)], labels[std::min<std::size_t>(3, labels.size() - 1)] };
         // clang-format on
     } else if constexpr (SVM == plssvm::svm_type::csvr) {
         return std::vector<T>{ static_cast<T>(-1.5), static_cast<T>(1.5), static_cast<T>(0.0), static_cast<T>(2.0), static_cast<T>(2.5), static_cast<T>(-1.5) };

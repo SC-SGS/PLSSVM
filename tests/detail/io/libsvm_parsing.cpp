@@ -48,11 +48,11 @@ TEST_P(LIBSVMParseNumFeatures, num_features) {
 
 // clang-format off
 INSTANTIATE_TEST_SUITE_P(LIBSVMParse, LIBSVMParseNumFeatures, ::testing::Values(
-                                                     std::make_pair("/data/libsvm/classification/5x4.libsvm", 4),
-                                                     std::make_pair("/data/libsvm/classification/5x4_sparse.libsvm", 4),
-                                                     std::make_pair("/data/libsvm/3x2_without_label.libsvm", 2),
-                                                     std::make_pair("/data/libsvm/classification/500x200_4.libsvm", 200),
-                                                     std::make_pair("/data/empty.txt", 0)));
+                                                      std::make_pair("/data/libsvm/classification/5x4.libsvm", 4),
+                                                      std::make_pair("/data/libsvm/classification/5x4_sparse.libsvm", 4),
+                                                      std::make_pair("/data/libsvm/3x2_without_label.libsvm", 2),
+                                                      std::make_pair("/data/libsvm/classification/500x200_4.libsvm", 200),
+                                                      std::make_pair("/data/empty.txt", 0)));
 // clang-format on
 
 TEST(LIBSVMParseNumFeatures, index_with_alpha_char_at_the_beginning) {

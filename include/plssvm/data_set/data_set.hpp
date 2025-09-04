@@ -456,31 +456,31 @@ data_set<U>::data_set(mpi::communicator comm, const std::string &filename, file_
 // clang-format off
 template <typename U>
 data_set<U>::data_set(mpi::communicator comm, const std::vector<std::vector<real_type>> &data_points) try :
-   data_set{ std::move(comm), soa_matrix<real_type>{ data_points, shape{ PADDING_SIZE, PADDING_SIZE } } } {}
-   catch (const matrix_exception &e) {
-       throw data_set_exception{ e.what() };
-   }
+    data_set{ std::move(comm), soa_matrix<real_type>{ data_points, shape{ PADDING_SIZE, PADDING_SIZE } } } {}
+    catch (const matrix_exception &e) {
+        throw data_set_exception{ e.what() };
+    }
 
 template <typename U>
 data_set<U>::data_set(mpi::communicator comm, const std::vector<std::vector<real_type>> &data_points, std::vector<label_type> labels) try :
-   data_set{ std::move(comm), soa_matrix<real_type>{ data_points, shape{ PADDING_SIZE, PADDING_SIZE } }, std::move(labels) } {}
-   catch (const matrix_exception &e) {
-       throw data_set_exception{ e.what() };
-   }
+    data_set{ std::move(comm), soa_matrix<real_type>{ data_points, shape{ PADDING_SIZE, PADDING_SIZE } }, std::move(labels) } {}
+    catch (const matrix_exception &e) {
+        throw data_set_exception{ e.what() };
+    }
 
 template <typename U>
 data_set<U>::data_set(mpi::communicator comm, const std::vector<std::vector<real_type>> &data_points, min_max_scaler scaler) try :
-   data_set{ std::move(comm), soa_matrix<real_type>{ data_points, shape{ PADDING_SIZE, PADDING_SIZE } }, std::move(scaler) } {}
-   catch (const matrix_exception &e) {
-       throw data_set_exception{ e.what() };
-   }
+    data_set{ std::move(comm), soa_matrix<real_type>{ data_points, shape{ PADDING_SIZE, PADDING_SIZE } }, std::move(scaler) } {}
+    catch (const matrix_exception &e) {
+        throw data_set_exception{ e.what() };
+    }
 
 template <typename U>
 data_set<U>::data_set(mpi::communicator comm, const std::vector<std::vector<real_type>> &data_points, std::vector<label_type> labels, min_max_scaler scaler) try :
-   data_set{ std::move(comm), soa_matrix<real_type>{ data_points, shape{ PADDING_SIZE, PADDING_SIZE } }, std::move(labels), std::move(scaler) } {}
-   catch (const matrix_exception &e) {
-       throw data_set_exception{ e.what() };
-   }
+    data_set{ std::move(comm), soa_matrix<real_type>{ data_points, shape{ PADDING_SIZE, PADDING_SIZE } }, std::move(labels), std::move(scaler) } {}
+    catch (const matrix_exception &e) {
+        throw data_set_exception{ e.what() };
+    }
 
 // clang-format on
 

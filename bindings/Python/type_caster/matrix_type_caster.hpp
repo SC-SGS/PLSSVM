@@ -13,6 +13,7 @@
 #define PLSSVM_BINDINGS_PYTHON_TYPE_CASTER_MATRIX_TYPE_CASTER_HPP_
 #pragma once
 
+#include "plssvm/constants.hpp"                 // plssvm::PADDING_SIZE
 #include "plssvm/detail/string_conversion.hpp"  // plssvm::detail::convert_to
 #include "plssvm/matrix.hpp"                    // plssvm::matrix, plssvm::layout_type
 #include "plssvm/shape.hpp"                     // plssvm::shape
