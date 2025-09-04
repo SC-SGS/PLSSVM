@@ -44,23 +44,29 @@ __global__ void device_kernel_symm(const std::size_t num_rows, const std::size_t
     const auto blockIdx_y = static_cast<std::size_t>(blockIdx.y) + grid_y_offset;  // current block in grid y-dimension + offsets if the grid size is too large
 
     // calculate the indices used in the current thread
-    const auto global_i_idx = blockIdx_x * blockDim_x + threadIdx_x;
-    const auto device_global_j_idx = blockIdx_y * blockDim_y + threadIdx_y;
+    const auto global_i_idx = blockIdx_x * blockDim_x + threadIdx_x;         // num_rhs
+    const auto device_global_j_idx = blockIdx_y * blockDim_y + threadIdx_y;  // device_num_rows
     const auto global_j_idx = device_row_offset + device_global_j_idx;
 
-    if (global_i_idx < num_rhs && device_global_j_idx < device_num_rows && global_j_idx < num_rows) {
+    // be sure to not perform out-of-bounds accesses
+    if (global_i_idx < num_rhs && device_global_j_idx < device_num_rows) {
         real_type temp{ 0.0 };
+
+        // iterate over all values
         for (std::size_t dim = 0; dim < (num_rows - device_row_offset); ++dim) {
             real_type A_cache{ 0.0 };
+            // determine on which side of the diagonal we are located
             if (dim < device_global_j_idx) {
-                A_cache = A[dim * (num_rows - device_row_offset) + device_global_j_idx - dim * (dim + std::size_t{ 1 }) / std::size_t{ 2 }];
+                A_cache = A[dim * (num_rows - device_row_offset) + device_global_j_idx - dim * (dim + std::size_t{ 1 }) / std::size_t{ 2 }];  // SoA, upper triangular matrix only
             } else {
-                A_cache = A[device_global_j_idx * (num_rows - device_row_offset) + dim - device_global_j_idx * (device_global_j_idx + std::size_t{ 1 }) / std::size_t{ 2 }];
+                A_cache = A[device_global_j_idx * (num_rows - device_row_offset) + dim - device_global_j_idx * (device_global_j_idx + std::size_t{ 1 }) / std::size_t{ 2 }];  // SoA, upper triangular matrix only
             }
-            temp += A_cache * B[global_i_idx * num_rows + device_row_offset + dim];
+            // perform the dot product calculation
+            temp += A_cache * B[global_i_idx * num_rows + device_row_offset + dim];  // AoS
         }
 
-        C[global_i_idx * num_rows + global_j_idx] = alpha * temp + beta * C[global_i_idx * num_rows + global_j_idx];
+        // apply the (partial) BLAS operation and update C
+        C[global_i_idx * num_rows + global_j_idx] = alpha * temp + beta * C[global_i_idx * num_rows + global_j_idx];  // AoS
     }
 }
 
@@ -90,18 +96,23 @@ __global__ void device_kernel_symm_mirror(const std::size_t num_rows, const std:
     const auto blockIdx_y = static_cast<std::size_t>(blockIdx.y) + grid_y_offset;  // current block in grid y-dimension + offsets if the grid size is too large
 
     // calculate the indices used in the current thread
-    const auto global_i_idx = blockIdx_x * blockDim_x + threadIdx_x;
-    const auto partial_global_j_idx = blockIdx_y * blockDim_y + threadIdx_y;
+    const auto global_i_idx = blockIdx_x * blockDim_x + threadIdx_x;          // num_rhs
+    const auto partial_global_j_idx = blockIdx_y * blockDim_y + threadIdx_y;  // num_mirror_rows
     const auto global_j_idx = device_row_offset + device_num_rows + partial_global_j_idx;
 
+    // be sure to not perform out-of-bounds accesses
     if (global_i_idx < num_rhs && partial_global_j_idx < num_mirror_rows && global_j_idx < num_rows) {
         real_type temp{ 0.0 };
+
+        // iterate over all values
         for (std::size_t dim = 0; dim < device_num_rows; ++dim) {
-            temp += A[dim * (num_rows - device_row_offset) - (dim - std::size_t{ 1 }) * dim / std::size_t{ 2 } + device_num_rows - dim + partial_global_j_idx] *
-                    B[global_i_idx * num_rows + device_row_offset + dim];
+            // perform the dot product calculation
+            temp += A[dim * (num_rows - device_row_offset) - (dim - std::size_t{ 1 }) * dim / std::size_t{ 2 } + device_num_rows - dim + partial_global_j_idx] *  // SoA, upper triangular matrix only
+                    B[global_i_idx * num_rows + device_row_offset + dim];                                                                                         // AoS
         }
 
-        C[global_i_idx * num_rows + global_j_idx] = alpha * temp + beta * C[global_i_idx * num_rows + global_j_idx];
+        // apply the (remaining) BLAS operation and update C
+        C[global_i_idx * num_rows + global_j_idx] = alpha * temp + beta * C[global_i_idx * num_rows + global_j_idx];  // AoS
     }
 }
 
@@ -128,7 +139,7 @@ __global__ void device_kernel_inplace_matrix_add(const std::size_t num_rows, con
     const auto global_j_idx = blockIdx_y * blockDim_y + threadIdx_y;  // num_rhs
 
     if (global_i_idx < num_rows && global_j_idx < num_cols) {
-        lhs[global_j_idx * num_rows + global_i_idx] += rhs[global_j_idx * num_rows + global_i_idx];
+        lhs[global_j_idx * num_rows + global_i_idx] += rhs[global_j_idx * num_rows + global_i_idx];  // AoS
     }
 }
 
@@ -155,7 +166,7 @@ __global__ void device_kernel_inplace_matrix_scale(const std::size_t num_rows, c
     const auto global_j_idx = blockIdx_y * blockDim_y + threadIdx_y;  // num_rhs
 
     if (global_i_idx < num_rows && global_j_idx < num_cols) {
-        lhs[global_j_idx * num_rows + global_i_idx] *= scale;
+        lhs[global_j_idx * num_rows + global_i_idx] *= scale;  // AoS
     }
 }
 

@@ -45,15 +45,20 @@ __global__ void device_kernel_w_linear(real_type *w, const real_type *alpha, con
     const auto blockIdx_y = static_cast<std::size_t>(blockIdx.y) + grid_y_offset;  // current block in grid y-dimension + offsets if the grid size is too large
 
     // calculate the indices used in the current thread
-    const auto global_feature_idx = blockIdx_x * blockDim_x + threadIdx_x;
-    const auto global_class_idx = blockIdx_y * blockDim_y + threadIdx_y;
+    const auto global_feature_idx = blockIdx_x * blockDim_x + threadIdx_x;  // num_features
+    const auto global_class_idx = blockIdx_y * blockDim_y + threadIdx_y;    // num_classes
 
+    // be sure to not perform out-of-bounds accesses
     if (global_feature_idx < num_features && global_class_idx < num_classes) {
         real_type temp{ 0.0 };
+
+        // perform the dot product calculation
         for (std::size_t sv = 0; sv < device_num_sv; ++sv) {
-            temp += alpha[global_class_idx * num_sv + sv + device_sv_offset] * support_vectors[sv * num_features + global_feature_idx];
+            temp += alpha[global_class_idx * num_sv + sv + device_sv_offset] *  // AoS
+                    support_vectors[sv * num_features + global_feature_idx];    // AoS
         }
-        w[global_class_idx * num_features + global_feature_idx] = temp;
+
+        w[global_class_idx * num_features + global_feature_idx] = temp;  // AoS
     }
 }
 
@@ -79,14 +84,19 @@ __global__ void device_kernel_predict_linear(real_type *prediction, const real_t
     const auto blockIdx_y = static_cast<std::size_t>(blockIdx.y) + grid_y_offset;  // current block in grid y-dimension + offsets if the grid size is too large
 
     // calculate the indices used in the current thread
-    const auto global_pp_idx = blockIdx_x * blockDim_x + threadIdx_x;
-    const auto global_class_idx = blockIdx_y * blockDim_y + threadIdx_y;
+    const auto global_pp_idx = blockIdx_x * blockDim_x + threadIdx_x;     // num_predict_points
+    const auto global_class_idx = blockIdx_y * blockDim_y + threadIdx_y;  // num_classes
 
+    // be sure to not perform out-of-bounds accesses
     if (global_pp_idx < num_predict_points && global_class_idx < num_classes) {
         real_type temp{ 0.0 };
+
+        // perform the dot product calculation
         for (std::size_t feature = 0; feature < num_features; ++feature) {
-            temp += w[global_class_idx * num_features + feature] * predict_points[global_pp_idx * num_features + feature];
+            temp += w[global_class_idx * num_features + feature] *           // AoS
+                    predict_points[global_pp_idx * num_features + feature];  // AoS
         }
+
         prediction[global_pp_idx * num_classes + global_class_idx] = temp - rho[global_class_idx];
     }
 }
@@ -119,27 +129,32 @@ __global__ void device_kernel_predict(real_type *prediction, const real_type *al
     const auto blockIdx_y = static_cast<std::size_t>(blockIdx.y) + grid_y_offset;  // current block in grid y-dimension + offsets if the grid size is too large
 
     // calculate the indices used in the current thread
-    const auto global_pp_idx = blockIdx_x * blockDim_x + threadIdx_x;
-    const auto global_sv_idx = blockIdx_y * blockDim_y + threadIdx_y;
+    const auto global_pp_idx = blockIdx_x * blockDim_x + threadIdx_x;  // num_predict_points
+    const auto global_sv_idx = blockIdx_y * blockDim_y + threadIdx_y;  // num_support_vectors
 
+    // be sure to not perform out-of-bounds accesses
     if (global_sv_idx < num_sv && global_pp_idx < num_predict_points) {
         real_type temp{ 0.0 };
+
         // perform the feature reduction calculation
         for (std::size_t feature = 0; feature < num_features; ++feature) {
-            temp += detail::feature_reduce<kernel_function>(support_vectors[global_sv_idx * num_features + feature],
-                                                            predict_points[global_pp_idx * num_features + feature]);
+            temp += detail::feature_reduce<kernel_function>(support_vectors[global_sv_idx * num_features + feature],  // AoS
+                                                            predict_points[global_pp_idx * num_features + feature]);  // AoS
         }
 
-        // apply the final kernel function
+        // update temp using the respective kernel function
         temp = detail::apply_kernel_function<kernel_function>(temp, kernel_function_parameter...);
 
+        // iterate over all classes
         for (std::size_t class_idx = 0; class_idx < num_classes; ++class_idx) {
-            real_type out_cache = alpha[class_idx * num_sv + global_sv_idx] * temp;
+            real_type out_cache = alpha[class_idx * num_sv + global_sv_idx] * temp;  // AoS
+
             // the bias (rho) must only be applied once for all support vectors
             if (global_sv_idx == std::size_t{ 0 }) {
                 out_cache -= rho[class_idx];
             }
-            atomicAdd(&prediction[global_pp_idx * num_classes + class_idx], out_cache);
+
+            atomicAdd(&prediction[global_pp_idx * num_classes + class_idx], out_cache);  // AoS
         }
     }
 }

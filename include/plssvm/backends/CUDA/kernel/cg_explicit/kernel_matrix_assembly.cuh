@@ -49,18 +49,19 @@ __global__ void device_kernel_assembly(real_type *kernel_matrix, const real_type
     const auto blockIdx_y = static_cast<std::size_t>(blockIdx.y) + grid_y_offset;  // current block in grid y-dimension + offsets if the grid size is too large
 
     // calculate the indices used in the current thread
-    const auto device_global_i_idx = blockIdx_x * blockDim_x + threadIdx_x;
+    const auto device_global_i_idx = blockIdx_x * blockDim_x + threadIdx_x;  // num_rows - device_row_offset
     const auto global_i_idx = device_row_offset + device_global_i_idx;
-    const auto device_global_j_idx = blockIdx_y * blockDim_y + threadIdx_y;
+    const auto device_global_j_idx = blockIdx_y * blockDim_y + threadIdx_y;  // device_num_rows
     const auto global_j_idx = device_row_offset + device_global_j_idx;
 
     // be sure to not perform out-of-bounds accesses (only using the upper triangular matrix)
     if (device_global_i_idx < (num_rows - device_row_offset) && device_global_j_idx < device_num_rows && global_i_idx >= global_j_idx) {
         real_type temp{ 0.0 };
+
         // perform the feature reduction calculation
         for (std::size_t feature = 0; feature < num_features; ++feature) {
-            temp += detail::feature_reduce<kernel_function>(data[global_i_idx * num_features + feature],
-                                                            data[global_j_idx * num_features + feature]);
+            temp += detail::feature_reduce<kernel_function>(data[global_i_idx * num_features + feature],   // AoS
+                                                            data[global_j_idx * num_features + feature]);  // AoS
         }
 
         // apply the final kernel function
@@ -69,7 +70,6 @@ __global__ void device_kernel_assembly(real_type *kernel_matrix, const real_type
         if (global_i_idx == global_j_idx) {
             temp += cost;
         }
-
         // update the upper triangular kernel matrix
         kernel_matrix[device_global_j_idx * (num_rows - device_row_offset) - device_global_j_idx * (device_global_j_idx + std::size_t{ 1 }) / std::size_t{ 2 } + device_global_i_idx] = temp;
     }
