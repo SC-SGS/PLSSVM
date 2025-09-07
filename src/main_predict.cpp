@@ -275,10 +275,18 @@ int main(int argc, char *argv[]) {
         // -> don't call std::exit directly to gracefully tear down the environment
         return e.exit_code();
     } catch (const plssvm::exception &e) {
+#if defined(PLSSVM_HAS_MPI_ENABLED)
         std::cerr << fmt::format("An exception occurred on MPI rank {}!: {}", comm.rank(), e.what_with_loc()) << std::endl;
+#else
+        std::cerr << "An exception occurred!: " << e.what_with_loc() << std::endl;
+#endif
         return EXIT_FAILURE;
     } catch (const std::exception &e) {
+#if defined(PLSSVM_HAS_MPI_ENABLED)
         std::cerr << fmt::format("An exception occurred on MPI rank {}!: {}", comm.rank(), e.what()) << std::endl;
+#else
+        std::cerr << "An exception occurred!: " << e.what() << std::endl;
+#endif
         return EXIT_FAILURE;
     }
 
