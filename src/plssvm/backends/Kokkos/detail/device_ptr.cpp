@@ -47,7 +47,11 @@ template <typename T>
 device_ptr<T>::device_ptr(const plssvm::shape shape, const plssvm::shape padding, const device_wrapper &device) :
     base_type{ shape, padding, device } {
     data_ = make_device_view_wrapper<T *>(device, this->size_padded());
-    this->memset(0);
+
+    // only non-empty pointers must be memset in the constructor
+    if (this->size_padded() != std::size_t{ 0 }) {
+        this->memset(0);
+    }
 }
 
 template <typename T>
