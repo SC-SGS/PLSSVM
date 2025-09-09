@@ -24,7 +24,7 @@
 #include "plssvm/detail/logging/mpi_log_untracked.hpp"      // plssvm::detail::log_untracked
 #include "plssvm/detail/memory_size.hpp"                    // plssvm::detail::memory_size
 #include "plssvm/detail/tracking/performance_tracker.hpp"   // plssvm::detail::tracking::tracking_entry, PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY
-#include "plssvm/detail/utility.hpp"                        // plssvm::detail::contains
+#include "plssvm/detail/utility.hpp"                        // plssvm::detail::{contains, check_local_memory_usage}
 #include "plssvm/exceptions/exceptions.hpp"                 // plssvm::exception
 #include "plssvm/gamma.hpp"                                 // plssvm::gamma_type
 #include "plssvm/kernel_function_types.hpp"                 // plssvm::kernel_function_type
@@ -49,6 +49,7 @@
 #include <exception>  // std::terminate
 #include <iostream>   // std::cout, std::endl
 #include <limits>     // std::numeric_limits::max
+#include <optional>   // std::optional
 #include <string>     // std::string
 #include <tuple>      // std::tie
 #include <utility>    // std::pair, std::make_pair, std::move
@@ -87,6 +88,11 @@ csvm::csvm(const target_platform target) {
     // get all available OpenCL contexts for the current target including devices with respect to the requested target platform
     std::tie(contexts_, target_) = detail::get_contexts(target);
 
+    // determine the used local memory and check whether it exceeds the maximum necessary value!
+    // NOTE: must be before the JIT compilation. Otherwise, it may already fail there which leads to failing tests since the wrong error is created.
+    // TODO: better solution: rewrite the OpenCL backend JIT compilation that all kernels are only JIT compiled right before they are used and not in the constructor itself!
+    ::plssvm::detail::check_local_memory_usage(this->get_local_memory());
+
     // At this point, target_ may NEVER be target_platform::automatic!
     PLSSVM_ASSERT(target_ != target_platform::automatic, "At this point, the target platform must be determined and must NOT be automatic!");
 
@@ -98,6 +104,9 @@ csvm::csvm(const target_platform target) {
     // create command_queues and JIT compile OpenCL kernels; compile all kernels for float and double
     detail::jit_info info{};
     std::tie(devices_, info) = detail::create_command_queues(comm_, contexts_, target_, params_.kernel_type);
+
+    // for each context exactly ONE command queue must exist!
+    PLSSVM_ASSERT(contexts_.size() == devices_.size(), "For each context ({}), exactly ONE command queue ({}) must exist!", contexts_.size(), devices_.size());
 
     std::vector<std::string> device_names{};
     device_names.reserve(devices_.size());
@@ -245,6 +254,20 @@ std::vector<::plssvm::detail::memory_size> csvm::get_max_mem_alloc_size() const 
         cl_ulong max_alloc_size{};
         PLSSVM_OPENCL_ERROR_CHECK(clGetDeviceInfo(device, CL_DEVICE_MAX_MEM_ALLOC_SIZE, sizeof(cl_ulong), &max_alloc_size, nullptr), "error obtaining device's maximum allocation size")
         res[device_id] = ::plssvm::detail::memory_size{ static_cast<unsigned long long>(max_alloc_size) };
+    }
+    return res;
+}
+
+std::vector<std::optional<::plssvm::detail::memory_size>> csvm::get_local_memory() const {
+    std::vector<std::optional<::plssvm::detail::memory_size>> res(contexts_.size());
+    for (std::size_t device_id = 0; device_id < contexts_.size(); ++device_id) {
+        // get device
+        const cl_device_id device = contexts_[device_id].device;
+
+        // get the local memory size
+        cl_ulong total_local_memory{};
+        PLSSVM_OPENCL_ERROR_CHECK(clGetDeviceInfo(device, CL_DEVICE_LOCAL_MEM_SIZE, sizeof(cl_ulong), &total_local_memory, nullptr), "error obtaining device's local memory size")
+        res[device_id] = ::plssvm::detail::memory_size{ static_cast<unsigned long long>(total_local_memory) };
     }
     return res;
 }

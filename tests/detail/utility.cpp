@@ -10,13 +10,21 @@
 
 #include "plssvm/detail/utility.hpp"
 
-#include "tests/naming.hpp"         // naming::{test_parameter_to_name}
-#include "tests/types_to_test.hpp"  // util::{combine_test_parameters_gtest_t, cartesian_type_product_t, test_parameter_type_at_t}
+#include "plssvm/constants.hpp"                 // plssvm::THREAD_BLOCK_SIZE, plssvm::INTERNAL_BLOCK_SIZE
+#include "plssvm/detail/data_distribution.hpp"  // plssvm::detail::data_distribution::maximum_local_memory_needed
+#include "plssvm/detail/memory_size.hpp"        // plssvm::detail::memory_size
+#include "plssvm/exceptions/exceptions.hpp"     // plssvm::kernel_launch_resources
 
+#include "tests/custom_test_macros.hpp"  // EXPECT_THROW_WHAT
+#include "tests/naming.hpp"              // naming::{test_parameter_to_name}
+#include "tests/types_to_test.hpp"       // util::{combine_test_parameters_gtest_t, cartesian_type_product_t, test_parameter_type_at_t}
+
+#include "fmt/format.h"   // fmt::format
 #include "gmock/gmock.h"  // EXPECT_THAT, ::testing::HasSubstr
-#include "gtest/gtest.h"  // TEST, EXPECT_EQ, EXPECT_TRUE, EXPECT_FALSE, ::testing::Test
+#include "gtest/gtest.h"  // TEST, EXPECT_EQ, EXPECT_TRUE, EXPECT_FALSE, EXPECT_NO_THROW, ::testing::Test
 
 #include <map>            // std::map
+#include <optional>       // std::optional, std::nullopt
 #include <regex>          // std::regex, std::regex::extended, std::regex_match
 #include <set>            // std::set
 #include <string>         // std::string
@@ -205,6 +213,48 @@ TYPED_TEST(UtilityVectorContainer, contains) {
     EXPECT_TRUE(plssvm::detail::contains(this->get_vector(), 1));
     EXPECT_FALSE(plssvm::detail::contains(this->get_vector(), 2));
     EXPECT_FALSE(plssvm::detail::contains(this->get_vector(), -1));
+}
+
+TEST(Utility, check_local_memory_usage_nullopt) {
+    // create a std::vector of std::nullopt
+    const std::vector<std::optional<plssvm::detail::memory_size>> available_local_memory{ std::nullopt, std::nullopt };
+
+    // a vector of nullopt means that the "backend" has no notion of local memory
+    // -> the check function must not throw!
+    EXPECT_NO_THROW(plssvm::detail::check_local_memory_usage(available_local_memory));
+}
+
+TEST(Utility, check_local_memory_usage) {
+    // create a std::vector local memory sizes that will always satisfy the needed amount of local memory
+    constexpr plssvm::detail::memory_size needed_local_memory = plssvm::detail::data_distribution::maximum_local_memory_needed();
+    const std::vector<std::optional<plssvm::detail::memory_size>> available_local_memory{ needed_local_memory * 2, needed_local_memory * 2 };
+
+    // the vector is created such that the requirements are always fulfilled
+    // -> the check function must not throw!
+    EXPECT_NO_THROW(plssvm::detail::check_local_memory_usage(available_local_memory));
+}
+
+TEST(Utility, check_local_memory_usage_too_small) {
+    // create a std::vector local memory sizes that will never satisfy the needed amount of local memory
+    constexpr plssvm::detail::memory_size needed_local_memory = plssvm::detail::data_distribution::maximum_local_memory_needed();
+    const std::vector<std::optional<plssvm::detail::memory_size>> available_local_memory{ needed_local_memory / 2, needed_local_memory / 2 };
+
+    // the vector is created such that the requirements are never fulfilled
+    EXPECT_THROW_WHAT(plssvm::detail::check_local_memory_usage(available_local_memory),
+                      plssvm::kernel_launch_resources,
+                      fmt::format("At least {} of local memory must be available for the hyperparameter combination THREAD_BLOCK_SIZE={} and INTERNAL_BLOCK_SIZE={}, but available are only {}!",
+                                  needed_local_memory,
+                                  plssvm::THREAD_BLOCK_SIZE,
+                                  plssvm::INTERNAL_BLOCK_SIZE,
+                                  needed_local_memory / 2));
+}
+
+TEST(UtilityDeathTest, check_local_memory_usage_empty) {
+    // create a std::vector of std::nullopt
+    const std::vector<std::optional<plssvm::detail::memory_size>> available_local_memory{};
+
+    // the local memory vector may not be empty
+    EXPECT_DEATH(plssvm::detail::check_local_memory_usage(available_local_memory), "At least one local memory value must be available since at least one place must always be present!");
 }
 
 TEST(Utility, current_date_time) {

@@ -36,6 +36,7 @@
 
 #include <chrono>       // std::chrono::steady_clock::time_point
 #include <map>          // std::map
+#include <optional>     // std::optional
 #include <ostream>      // std::ostream
 #include <string>       // std::string
 #include <string_view>  // std::string_view
@@ -345,6 +346,18 @@ void performance_tracker::add_tracking_entry(const tracking_entry<std::vector<T>
             byte_values.reserve(entry.entry_value.size());
             for (const memory_size mem : entry.entry_value) {
                 byte_values.push_back(mem.num_bytes());
+            }
+            entry_value_str = fmt::format("[{}]", fmt::join(byte_values, ", "));
+        } else if constexpr (std::is_same_v<T, std::optional<detail::memory_size>>) {
+            // dump all memory sizes in BYTES to the file, pay attention to possible nullopt values
+            std::vector<std::string> byte_values{};
+            byte_values.reserve(entry.entry_value.size());
+            for (const std::optional<memory_size> &mem : entry.entry_value) {
+                if (mem.has_value()) {
+                    byte_values.push_back(fmt::format("{}", mem.value().num_bytes()));
+                } else {
+                    byte_values.emplace_back("nullopt");
+                }
             }
             entry_value_str = fmt::format("[{}]", fmt::join(byte_values, ", "));
         } else {

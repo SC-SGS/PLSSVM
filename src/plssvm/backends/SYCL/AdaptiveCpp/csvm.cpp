@@ -62,6 +62,7 @@
 #include <exception>  // std::terminate
 #include <iostream>   // std::cout, std::endl
 #include <limits>     // std::numeric_limits::max
+#include <optional>   // std::optional
 #include <string>     // std::string
 #include <tuple>      // std::tie
 #include <utility>    // std::forward
@@ -345,6 +346,14 @@ std::vector<::plssvm::detail::memory_size> csvm::get_max_mem_alloc_size() const 
     std::vector<::plssvm::detail::memory_size> res(this->num_available_devices());
     for (std::size_t device_id = 0; device_id < this->num_available_devices(); ++device_id) {
         res[device_id] = ::plssvm::detail::memory_size{ static_cast<unsigned long long>(devices_[device_id].impl->sycl_queue.get_device().get_info<::sycl::info::device::max_mem_alloc_size>()) };
+    }
+    return res;
+}
+
+std::vector<std::optional<::plssvm::detail::memory_size>> csvm::get_local_memory() const {
+    std::vector<std::optional<::plssvm::detail::memory_size>> res(this->num_available_devices());
+    for (std::size_t device_id = 0; device_id < this->num_available_devices(); ++device_id) {
+        res[device_id] = ::plssvm::detail::memory_size{ static_cast<unsigned long long>(devices_[device_id].impl->sycl_queue.get_device().get_info<::sycl::info::device::local_mem_size>()) };
     }
     return res;
 }

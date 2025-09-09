@@ -50,6 +50,7 @@
 #include <iostream>   // std::cout, std::endl
 #include <limits>     // std::numeric_limits::max
 #include <map>        // std::map
+#include <optional>   // std::optional
 #include <string>     // std::string
 #include <utility>    // std::move, std::forward
 #include <vector>     // std::vector
@@ -425,6 +426,48 @@ std::vector<::plssvm::detail::memory_size> csvm::get_max_mem_alloc_size() const 
             throw backend_exception{ fmt::format("Currently not implemented for the execution space: {}!", space_) };
     }
     return max_mem_alloc_size;
+}
+
+std::vector<std::optional<::plssvm::detail::memory_size>> csvm::get_local_memory() const {
+    PLSSVM_ASSERT(space_ != execution_space::automatic, "The automatic execution_space may not be provided to this function!");
+
+    std::vector<std::optional<::plssvm::detail::memory_size>> local_mem_size(this->num_available_devices());
+    switch (space_) {
+        case execution_space::automatic:
+            throw backend_exception{ "Unsupported execution_space::automatic provided!" };
+        case execution_space::cuda:
+            PLSSVM_KOKKOS_BACKEND_INVOKE_IF_CUDA([&]() {
+                for (std::size_t device_id = 0; device_id < this->num_available_devices(); ++device_id) {
+                    local_mem_size[device_id] = ::plssvm::detail::memory_size{ static_cast<unsigned long long>(devices_[device_id].get<execution_space::cuda>().cuda_device_prop().sharedMemPerBlock) };
+                }
+            });
+            break;
+        case execution_space::hip:
+            PLSSVM_KOKKOS_BACKEND_INVOKE_IF_HIP([&]() {
+                for (std::size_t device_id = 0; device_id < this->num_available_devices(); ++device_id) {
+                    local_mem_size[device_id] = ::plssvm::detail::memory_size{ static_cast<unsigned long long>(devices_[device_id].get<execution_space::hip>().hip_device_prop().sharedMemPerBlock) };
+                }
+            });
+            break;
+        case execution_space::sycl:
+            PLSSVM_KOKKOS_BACKEND_INVOKE_IF_SYCL([&]() {
+                for (std::size_t device_id = 0; device_id < this->num_available_devices(); ++device_id) {
+                    local_mem_size[device_id] = ::plssvm::detail::memory_size{ static_cast<unsigned long long>(devices_[device_id].get<execution_space::sycl>().sycl_queue().get_device().get_info<::sycl::info::device::local_mem_size>()) };
+                }
+            });
+            break;
+        case execution_space::hpx:
+        case execution_space::openmp:
+        case execution_space::threads:
+        case execution_space::serial:
+            local_mem_size = std::vector<std::optional<::plssvm::detail::memory_size>>(this->num_available_devices(), std::nullopt);
+            break;
+        // TODO: implement for Kokkos::Experimental::OpenMPTarget and Kokkos::Experimental::OpenACC
+        case execution_space::openmp_target:
+        case execution_space::openacc:
+            throw backend_exception{ fmt::format("Currently not implemented for the execution space: {}!", space_) };
+    }
+    return local_mem_size;
 }
 
 std::size_t csvm::get_max_work_group_size(const std::size_t device_id) const {
