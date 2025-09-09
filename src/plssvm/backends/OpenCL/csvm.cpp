@@ -229,11 +229,10 @@ csvm::~csvm() {
 }
 
 std::vector<::plssvm::detail::memory_size> csvm::get_device_memory() const {
-    std::vector<::plssvm::detail::memory_size> res(this->num_available_devices());
-    for (std::size_t device_id = 0; device_id < this->num_available_devices(); ++device_id) {
+    std::vector<::plssvm::detail::memory_size> res(contexts_.size());
+    for (std::size_t device_id = 0; device_id < contexts_.size(); ++device_id) {
         // get device
-        cl_device_id device{};
-        PLSSVM_OPENCL_ERROR_CHECK(clGetCommandQueueInfo(devices_[device_id], CL_QUEUE_DEVICE, sizeof(cl_device_id), static_cast<void *>(&device), nullptr), "error obtaining device")
+        cl_device_id device = contexts_[device_id].device;
 
         // get device global memory size
         cl_ulong total_device_memory{};
@@ -244,11 +243,10 @@ std::vector<::plssvm::detail::memory_size> csvm::get_device_memory() const {
 }
 
 std::vector<::plssvm::detail::memory_size> csvm::get_max_mem_alloc_size() const {
-    std::vector<::plssvm::detail::memory_size> res(this->num_available_devices());
-    for (std::size_t device_id = 0; device_id < this->num_available_devices(); ++device_id) {
+    std::vector<::plssvm::detail::memory_size> res(contexts_.size());
+    for (std::size_t device_id = 0; device_id < contexts_.size(); ++device_id) {
         // get device
-        cl_device_id device{};
-        PLSSVM_OPENCL_ERROR_CHECK(clGetCommandQueueInfo(devices_[device_id], CL_QUEUE_DEVICE, sizeof(cl_device_id), static_cast<void *>(&device), nullptr), "error obtaining device")
+        cl_device_id device = contexts_[device_id].device;
 
         // get maximum allocation size
         cl_ulong max_alloc_size{};
@@ -262,7 +260,7 @@ std::vector<std::optional<::plssvm::detail::memory_size>> csvm::get_local_memory
     std::vector<std::optional<::plssvm::detail::memory_size>> res(contexts_.size());
     for (std::size_t device_id = 0; device_id < contexts_.size(); ++device_id) {
         // get device
-        const cl_device_id device = contexts_[device_id].device;
+        cl_device_id device = contexts_[device_id].device;
 
         // get the local memory size
         cl_ulong total_local_memory{};
@@ -273,10 +271,9 @@ std::vector<std::optional<::plssvm::detail::memory_size>> csvm::get_local_memory
 }
 
 std::size_t csvm::get_max_work_group_size(const std::size_t device_id) const {
-    PLSSVM_ASSERT(device_id < this->num_available_devices(), "Invalid device {} requested!", device_id);
+    PLSSVM_ASSERT(device_id < contexts_.size(), "Invalid device {} requested!", device_id);
     // get device
-    cl_device_id device{};
-    PLSSVM_OPENCL_ERROR_CHECK(clGetCommandQueueInfo(devices_[device_id], CL_QUEUE_DEVICE, sizeof(cl_device_id), static_cast<void *>(&device), nullptr), "error obtaining device")
+    cl_device_id device = contexts_[device_id].device;
     // get maximum work group size
     cl_ulong max_work_group_size{};
     PLSSVM_OPENCL_ERROR_CHECK(clGetDeviceInfo(device, CL_DEVICE_MAX_WORK_GROUP_SIZE, sizeof(cl_ulong), &max_work_group_size, nullptr), "error obtaining device's global memory size")
@@ -284,7 +281,7 @@ std::size_t csvm::get_max_work_group_size(const std::size_t device_id) const {
 }
 
 ::plssvm::detail::dim_type csvm::get_max_grid_size([[maybe_unused]] const std::size_t device_id) const {
-    PLSSVM_ASSERT(device_id < this->num_available_devices(), "Invalid device {} requested!", device_id);
+    PLSSVM_ASSERT(device_id < contexts_.size(), "Invalid device {} requested!", device_id);
 
     // TODO: replace with function if there will be one in the future
     // fallback to maximum theoretical value, may break at runtime!
