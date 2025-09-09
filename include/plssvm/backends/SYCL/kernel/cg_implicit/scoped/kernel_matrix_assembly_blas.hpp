@@ -95,7 +95,7 @@ class device_kernel_assembly_symm {
                                    ::sycl::require_local_mem<real_type[THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE]>(),  // cache_two
 
                                    // create a private memory array used for internal caching
-                                   ::sycl::require_private_mem<std::array<std::array<real_type, INTERNAL_BLOCK_SIZE>, INTERNAL_BLOCK_SIZE>>({}),
+                                   ::sycl::require_private_mem<std::array<std::array<real_type, INTERNAL_BLOCK_SIZE>, INTERNAL_BLOCK_SIZE>>(),
                                    [&](auto &i_idx, auto &j_idx, auto &i_idx_linear, auto &j_idx_linear, auto &cache_one, auto &cache_two, auto &temp) {
                                        // initialize private and local variables
                                        ::sycl::distribute_items_and_wait(group, [&](::sycl::s_item<2> idx) {
@@ -115,6 +115,13 @@ class device_kernel_assembly_symm {
                                            // calculate the indices to access the global data, pays attention to coalesced memory accesses
                                            i_idx_linear(idx) = blockIdx_y * blockDim_y * INTERNAL_BLOCK_SIZE_uz + threadIdx_y;
                                            j_idx_linear(idx) = blockIdx_x * blockDim_x * INTERNAL_BLOCK_SIZE_uz + threadIdx_y;
+
+                                           // initialize private temp matrix to zero
+                                           for (unsigned internal_i = 0; internal_i < INTERNAL_BLOCK_SIZE; ++internal_i) {
+                                               for (unsigned internal_j = 0; internal_j < INTERNAL_BLOCK_SIZE; ++internal_j) {
+                                                   temp(idx)[internal_i][internal_j] = real_type{ 0.0 };
+                                               }
+                                           }
                                        });
 
                                        // only calculate the upper triangular matrix -> can't use get_local_id() since all work-items in a work-group must progress further
