@@ -16,6 +16,7 @@
 #include "plssvm/constants.hpp"                         // plssvm::real_type
 #include "plssvm/data_set/classification_data_set.hpp"  // plssvm::classification_data_set
 #include "plssvm/detail/data_distribution.hpp"          // plssvm::detail::{triangular_data_distribution, rectangular_data_distribution}
+#include "plssvm/detail/memory_size.hpp"                // plssvm::detail::memory_size
 #include "plssvm/kernel_function_types.hpp"             // plssvm::kernel_function_type
 #include "plssvm/matrix.hpp"                            // plssvm::aos_matrix, plssvm::soa_matrix
 #include "plssvm/mpi/communicator.hpp"                  // plssvm::mpi::communicator
@@ -31,10 +32,11 @@
 #include "fmt/format.h"   // fmt::format
 #include "gtest/gtest.h"  // TYPED_TEST_SUITE_P, TYPED_TEST_P, REGISTER_TYPED_TEST_SUITE_P, EXPECT_GT, EXPECT_GE, ASSERT_EQ, ::testing::Test
 
-#include <cstddef>  // std::size_t
-#include <memory>   // std::unique_ptr, std::make_unique
-#include <tuple>    // std::ignore
-#include <vector>   // std::vector
+#include <cstddef>   // std::size_t
+#include <memory>    // std::unique_ptr, std::make_unique
+#include <optional>  // std::optional, std::nullopt
+#include <tuple>     // std::ignore
+#include <vector>    // std::vector
 
 //*************************************************************************************************************************************//
 //                                                GPU C-SVM tests depending on nothing                                                 //
@@ -45,6 +47,20 @@ class GenericGPUCSVM : public ::testing::Test,
                        protected util::redirect_output<> { };
 
 TYPED_TEST_SUITE_P(GenericGPUCSVM);
+
+TYPED_TEST_P(GenericGPUCSVM, get_local_memory) {
+    using csvm_test_type = util::test_parameter_type_at_t<0, TypeParam>;
+    using mock_csvm_type = typename csvm_test_type::mock_csvm_type;
+
+    // create C-SVM: must be done using the mock class since the member function to test is private or protected
+    const mock_csvm_type svm = util::construct_from_tuple<mock_csvm_type>(csvm_test_type::additional_arguments);
+
+    // for GPU C-SVMs, the local memory size must NOT be nullopt
+    const std::vector<std::optional<plssvm::detail::memory_size>> local_mem = svm.get_local_memory();
+    for (std::size_t device_id = 0; device_id < svm.num_available_devices(); ++device_id) {
+        EXPECT_NE(local_mem[device_id], std::nullopt);
+    }
+}
 
 TYPED_TEST_P(GenericGPUCSVM, get_max_work_group_size) {
     using csvm_test_type = util::test_parameter_type_at_t<0, TypeParam>;
@@ -331,6 +347,7 @@ TYPED_TEST_P(GenericGPUCSVM, run_inplace_matrix_scale) {
 }
 
 REGISTER_TYPED_TEST_SUITE_P(GenericGPUCSVM,
+                            get_local_memory,
                             get_max_work_group_size,
                             get_max_grid_size,
                             run_blas_level_3_kernel_explicit,

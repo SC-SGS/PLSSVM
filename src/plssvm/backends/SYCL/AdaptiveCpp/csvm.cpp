@@ -32,7 +32,7 @@
 #include "plssvm/backends/SYCL/kernel/predict/hierarchical/predict_kernel.hpp"                   // plssvm::sycl::detail::hierarchical::{device_kernel_w_linear, device_kernel_predict_linear, device_kernel_predict}
 #include "plssvm/backends/SYCL/kernel/predict/scoped/predict_kernel.hpp"                         // plssvm::sycl::detail::scoped::{device_kernel_w_linear, device_kernel_predict_linear, device_kernel_predict}
 #include "plssvm/backends/SYCL/kernel/predict/work_group/predict_kernel.hpp"                     // plssvm::sycl::detail::work_group::{device_kernel_w_linear, device_kernel_predict_linear, device_kernel_predict}
-#include "plssvm/constants.hpp"                                                                  // plssvm::{real_type, THREAD_BLOCK_SIZE, INTERNAL_BLOCK_SIZE, PADDING_SIZE}
+#include "plssvm/constants.hpp"                                                                  // plssvm::real_type
 #include "plssvm/detail/assert.hpp"                                                              // PLSSVM_ASSERT
 #include "plssvm/detail/data_distribution.hpp"                                                   // plssvm::detail::{data_distribution, triangular_data_distribution, rectangular_data_distribution}
 #include "plssvm/detail/logging/log.hpp"                                                         // plssvm::detail::log
@@ -62,6 +62,7 @@
 #include <exception>  // std::terminate
 #include <iostream>   // std::cout, std::endl
 #include <limits>     // std::numeric_limits::max
+#include <optional>   // std::optional
 #include <string>     // std::string
 #include <tuple>      // std::tie
 #include <utility>    // std::forward
@@ -349,6 +350,14 @@ std::vector<::plssvm::detail::memory_size> csvm::get_max_mem_alloc_size() const 
     return res;
 }
 
+std::vector<std::optional<::plssvm::detail::memory_size>> csvm::get_local_memory() const {
+    std::vector<std::optional<::plssvm::detail::memory_size>> res(this->num_available_devices());
+    for (std::size_t device_id = 0; device_id < this->num_available_devices(); ++device_id) {
+        res[device_id] = ::plssvm::detail::memory_size{ static_cast<unsigned long long>(devices_[device_id].impl->sycl_queue.get_device().get_info<::sycl::info::device::local_mem_size>()) };
+    }
+    return res;
+}
+
 std::size_t csvm::get_max_work_group_size(const std::size_t device_id) const {
     PLSSVM_ASSERT(device_id < this->num_available_devices(), "Invalid device {} requested!", device_id);
     return devices_[device_id].impl->sycl_queue.get_device().get_info<::sycl::info::device::max_work_group_size>();
@@ -389,9 +398,9 @@ auto csvm::run_assemble_kernel_matrix_explicit(const std::size_t device_id, cons
 
     // calculate the number of matrix entries
     const ::plssvm::detail::triangular_data_distribution &dist = dynamic_cast<::plssvm::detail::triangular_data_distribution &>(*data_distribution_);
-    const std::size_t num_entries_padded = dist.calculate_explicit_kernel_matrix_num_entries_padded(device_id);
+    const std::size_t num_entries = dist.calculate_explicit_kernel_matrix_num_entries(device_id);
 
-    device_ptr_type kernel_matrix_d{ num_entries_padded, device };  // only explicitly store the upper triangular matrix
+    device_ptr_type kernel_matrix_d{ num_entries, device };  // only explicitly store the upper triangular matrix
     const real_type cost_factor = real_type{ 1.0 } / params.cost;
 
     const auto start = std::chrono::steady_clock::now();
@@ -478,6 +487,7 @@ void csvm::run_blas_level_3_kernel_explicit(const std::size_t device_id, const :
 }
 
 void csvm::run_inplace_matrix_addition(const std::size_t device_id, const ::plssvm::detail::execution_range &exec, device_ptr_type &lhs_d, const device_ptr_type &rhs_d) const {
+    const std::size_t num_rows = lhs_d.shape().y;
     const std::size_t num_rhs = lhs_d.shape().x;
     const queue_type &device = devices_[device_id];
 
@@ -488,20 +498,20 @@ void csvm::run_inplace_matrix_addition(const std::size_t device_id, const ::plss
             case sycl::data_parallel_kernel::basic:
                 device.impl->sycl_queue.submit([&, &partial_grid_ref = partial_grid, &offsets_ref = offsets](::sycl::handler &cgh) {
                     cgh.parallel_for(detail::get_execution_range<sycl::data_parallel_kernel::basic>(partial_grid_ref, exec.block),
-                                     sycl::detail::basic::device_kernel_inplace_matrix_add{ num_rhs, lhs_d.get(), rhs_d.get(), offsets_ref.y, offsets_ref.x });
+                                     sycl::detail::basic::device_kernel_inplace_matrix_add{ num_rows, num_rhs, lhs_d.get(), rhs_d.get(), offsets_ref.y, offsets_ref.x });
                 });
                 break;
             case sycl::data_parallel_kernel::work_group:
                 device.impl->sycl_queue.submit([&, &partial_grid_ref = partial_grid, &offsets_ref = offsets](::sycl::handler &cgh) {
                     cgh.parallel_for(detail::get_execution_range<sycl::data_parallel_kernel::work_group>(partial_grid_ref, exec.block),
-                                     sycl::detail::work_group::device_kernel_inplace_matrix_add{ num_rhs, lhs_d.get(), rhs_d.get(), offsets_ref.y, offsets_ref.x });
+                                     sycl::detail::work_group::device_kernel_inplace_matrix_add{ num_rows, num_rhs, lhs_d.get(), rhs_d.get(), offsets_ref.y, offsets_ref.x });
                 });
                 break;
             case sycl::data_parallel_kernel::hierarchical:
 #if defined(PLSSVM_SYCL_HIERARCHICAL_AND_SCOPED_KERNELS_ENABLED)
                 device.impl->sycl_queue.submit([&, &partial_grid_ref = partial_grid, &offsets_ref = offsets](::sycl::handler &cgh) {
                     const auto exec_range = detail::get_execution_range<sycl::data_parallel_kernel::hierarchical>(partial_grid_ref, exec.block);
-                    cgh.parallel_for_work_group(exec_range.get_global_range(), exec_range.get_local_range(), sycl::detail::hierarchical::device_kernel_inplace_matrix_add{ num_rhs, lhs_d.get(), rhs_d.get(), offsets_ref.y, offsets_ref.x });
+                    cgh.parallel_for_work_group(exec_range.get_global_range(), exec_range.get_local_range(), sycl::detail::hierarchical::device_kernel_inplace_matrix_add{ num_rows, num_rhs, lhs_d.get(), rhs_d.get(), offsets_ref.y, offsets_ref.x });
                 });
 #else
                 throw backend_exception{ "Support for sycl::data_parallel_kernel::hierarchical was disabled!" };
@@ -511,7 +521,7 @@ void csvm::run_inplace_matrix_addition(const std::size_t device_id, const ::plss
 #if defined(PLSSVM_SYCL_HIERARCHICAL_AND_SCOPED_KERNELS_ENABLED)
                 device.impl->sycl_queue.submit([&, &partial_grid_ref = partial_grid, &offsets_ref = offsets](::sycl::handler &cgh) {
                     const auto exec_range = detail::get_execution_range<sycl::data_parallel_kernel::scoped>(partial_grid_ref, exec.block);
-                    cgh.parallel(exec_range.get_global_range(), exec_range.get_local_range(), sycl::detail::scoped::device_kernel_inplace_matrix_add{ num_rhs, lhs_d.get(), rhs_d.get(), offsets_ref.y, offsets_ref.x });
+                    cgh.parallel(exec_range.get_global_range(), exec_range.get_local_range(), sycl::detail::scoped::device_kernel_inplace_matrix_add{ num_rows, num_rhs, lhs_d.get(), rhs_d.get(), offsets_ref.y, offsets_ref.x });
                 });
 #else
                 throw backend_exception{ "Support for sycl::data_parallel_kernel::scoped was disabled!" };
@@ -523,6 +533,7 @@ void csvm::run_inplace_matrix_addition(const std::size_t device_id, const ::plss
 }
 
 void csvm::run_inplace_matrix_scale(const std::size_t device_id, const ::plssvm::detail::execution_range &exec, device_ptr_type &lhs_d, const real_type scale) const {
+    const std::size_t num_rows = lhs_d.shape().y;
     const std::size_t num_rhs = lhs_d.shape().x;
     const queue_type &device = devices_[device_id];
 
@@ -533,20 +544,20 @@ void csvm::run_inplace_matrix_scale(const std::size_t device_id, const ::plssvm:
             case sycl::data_parallel_kernel::basic:
                 device.impl->sycl_queue.submit([&, &partial_grid_ref = partial_grid, &offsets_ref = offsets](::sycl::handler &cgh) {
                     cgh.parallel_for(detail::get_execution_range<sycl::data_parallel_kernel::basic>(partial_grid_ref, exec.block),
-                                     sycl::detail::basic::device_kernel_inplace_matrix_scale{ num_rhs, lhs_d.get(), scale, offsets_ref.y, offsets_ref.x });
+                                     sycl::detail::basic::device_kernel_inplace_matrix_scale{ num_rows, num_rhs, lhs_d.get(), scale, offsets_ref.y, offsets_ref.x });
                 });
                 break;
             case sycl::data_parallel_kernel::work_group:
                 device.impl->sycl_queue.submit([&, &partial_grid_ref = partial_grid, &offsets_ref = offsets](::sycl::handler &cgh) {
                     cgh.parallel_for(detail::get_execution_range<sycl::data_parallel_kernel::work_group>(partial_grid_ref, exec.block),
-                                     sycl::detail::work_group::device_kernel_inplace_matrix_scale{ num_rhs, lhs_d.get(), scale, offsets_ref.y, offsets_ref.x });
+                                     sycl::detail::work_group::device_kernel_inplace_matrix_scale{ num_rows, num_rhs, lhs_d.get(), scale, offsets_ref.y, offsets_ref.x });
                 });
                 break;
             case sycl::data_parallel_kernel::hierarchical:
 #if defined(PLSSVM_SYCL_HIERARCHICAL_AND_SCOPED_KERNELS_ENABLED)
                 device.impl->sycl_queue.submit([&, &partial_grid_ref = partial_grid, &offsets_ref = offsets](::sycl::handler &cgh) {
                     const auto exec_range = detail::get_execution_range<sycl::data_parallel_kernel::hierarchical>(partial_grid_ref, exec.block);
-                    cgh.parallel_for_work_group(exec_range.get_global_range(), exec_range.get_local_range(), sycl::detail::hierarchical::device_kernel_inplace_matrix_scale{ num_rhs, lhs_d.get(), scale, offsets_ref.y, offsets_ref.x });
+                    cgh.parallel_for_work_group(exec_range.get_global_range(), exec_range.get_local_range(), sycl::detail::hierarchical::device_kernel_inplace_matrix_scale{ num_rows, num_rhs, lhs_d.get(), scale, offsets_ref.y, offsets_ref.x });
                 });
 #else
                 throw backend_exception{ "Support for sycl::data_parallel_kernel::hierarchical was disabled!" };
@@ -556,7 +567,7 @@ void csvm::run_inplace_matrix_scale(const std::size_t device_id, const ::plssvm:
 #if defined(PLSSVM_SYCL_HIERARCHICAL_AND_SCOPED_KERNELS_ENABLED)
                 device.impl->sycl_queue.submit([&, &partial_grid_ref = partial_grid, &offsets_ref = offsets](::sycl::handler &cgh) {
                     const auto exec_range = detail::get_execution_range<sycl::data_parallel_kernel::scoped>(partial_grid_ref, exec.block);
-                    cgh.parallel(exec_range.get_global_range(), exec_range.get_local_range(), sycl::detail::scoped::device_kernel_inplace_matrix_scale{ num_rhs, lhs_d.get(), scale, offsets_ref.y, offsets_ref.x });
+                    cgh.parallel(exec_range.get_global_range(), exec_range.get_local_range(), sycl::detail::scoped::device_kernel_inplace_matrix_scale{ num_rows, num_rhs, lhs_d.get(), scale, offsets_ref.y, offsets_ref.x });
                 });
 #else
                 throw backend_exception{ "Support for sycl::data_parallel_kernel::scoped was disabled!" };
@@ -619,7 +630,7 @@ auto csvm::run_w_kernel(const std::size_t device_id, const ::plssvm::detail::exe
     // get the offset of the data points this device is responsible for
     const std::size_t sv_offset = data_distribution_->place_row_offset(device_id);
 
-    device_ptr_type w_d{ shape{ num_classes, num_features }, shape{ PADDING_SIZE, PADDING_SIZE }, device };
+    device_ptr_type w_d{ shape{ num_classes, num_features }, device };
 
     const auto start = std::chrono::steady_clock::now();
     for (const auto &[partial_grid, offsets] : exec.grids) {
@@ -627,16 +638,16 @@ auto csvm::run_w_kernel(const std::size_t device_id, const ::plssvm::detail::exe
             case sycl::data_parallel_kernel::automatic:
                 throw backend_exception{ "Can't determine the sycl::data_parallel_kernel!" };
             case sycl::data_parallel_kernel::basic:
-                dispatch_target_platform<sycl::detail::basic::device_kernel_w_linear>(target_, device, partial_grid, exec.block, w_d.get(), alpha_d.get(), sv_d.get(), num_classes, num_sv, device_specific_num_sv, sv_offset, offsets.y, offsets.x);
+                dispatch_target_platform<sycl::detail::basic::device_kernel_w_linear>(target_, device, partial_grid, exec.block, w_d.get(), alpha_d.get(), sv_d.get(), num_features, num_classes, num_sv, device_specific_num_sv, sv_offset, offsets.y, offsets.x);
                 break;
             case sycl::data_parallel_kernel::work_group:
-                dispatch_target_platform<sycl::detail::work_group::device_kernel_w_linear>(target_, device, partial_grid, exec.block, w_d.get(), alpha_d.get(), sv_d.get(), num_classes, num_sv, device_specific_num_sv, sv_offset, offsets.y, offsets.x);
+                dispatch_target_platform<sycl::detail::work_group::device_kernel_w_linear>(target_, device, partial_grid, exec.block, w_d.get(), alpha_d.get(), sv_d.get(), num_features, num_classes, num_sv, device_specific_num_sv, sv_offset, offsets.y, offsets.x);
                 break;
             case sycl::data_parallel_kernel::hierarchical:
-                dispatch_target_platform<sycl::detail::hierarchical::device_kernel_w_linear>(target_, device, partial_grid, exec.block, w_d.get(), alpha_d.get(), sv_d.get(), num_classes, num_sv, device_specific_num_sv, sv_offset, offsets.y, offsets.x);
+                dispatch_target_platform<sycl::detail::hierarchical::device_kernel_w_linear>(target_, device, partial_grid, exec.block, w_d.get(), alpha_d.get(), sv_d.get(), num_features, num_classes, num_sv, device_specific_num_sv, sv_offset, offsets.y, offsets.x);
                 break;
             case sycl::data_parallel_kernel::scoped:
-                dispatch_target_platform<sycl::detail::scoped::device_kernel_w_linear>(target_, device, partial_grid, exec.block, w_d.get(), alpha_d.get(), sv_d.get(), num_classes, num_sv, device_specific_num_sv, sv_offset, offsets.y, offsets.x);
+                dispatch_target_platform<sycl::detail::scoped::device_kernel_w_linear>(target_, device, partial_grid, exec.block, w_d.get(), alpha_d.get(), sv_d.get(), num_features, num_classes, num_sv, device_specific_num_sv, sv_offset, offsets.y, offsets.x);
         }
     }
     detail::device_synchronize(device);
@@ -654,7 +665,7 @@ auto csvm::run_predict_kernel(const std::size_t device_id, const ::plssvm::detai
     const std::size_t num_sv = sv_or_w_d.shape().x;
     const queue_type &device = devices_[device_id];
 
-    device_ptr_type out_d{ shape{ num_predict_points, num_classes }, shape{ PADDING_SIZE, PADDING_SIZE }, device };
+    device_ptr_type out_d{ shape{ num_predict_points, num_classes }, device };
 
     const auto start = std::chrono::steady_clock::now();
     for (const auto &[partial_grid, offsets] : exec.grids) {

@@ -18,6 +18,7 @@
 #include "plssvm/detail/assert.hpp"                        // PLSSVM_ASSERT
 #include "plssvm/detail/logging/mpi_log.hpp"               // plssvm::detail::log
 #include "plssvm/detail/tracking/performance_tracker.hpp"  // PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_EVENT, plssvm::detail::tracking::tracking_entry
+#include "plssvm/detail/utility.hpp"                       // plssvm::detail::check_local_memory_usage
 #include "plssvm/exceptions/exceptions.hpp"                // plssvm::invalid_parameter_exception, plssvm::mpi_exception
 #include "plssvm/kernel_function_types.hpp"                // plssvm::kernel_function_type
 #include "plssvm/matrix.hpp"                               // plssvm::aos_matrix, plssvm::soa_matrix
@@ -27,6 +28,7 @@
 #include "plssvm/svm/csvm.hpp"                             // plssvm::csvm
 #include "plssvm/verbosity_levels.hpp"                     // plssvm::verbosity_level
 
+#include "fmt/format.h"   // fmt::format
 #include "igor/igor.hpp"  // igor::parser
 
 #include <algorithm>    // std::all_of
@@ -202,6 +204,9 @@ class csvr : virtual public csvm {
         if (comm_ != data.communicator()) {
             throw mpi_exception{ "The MPI communicators provided to the C-SVR and data set must be identical!" };
         }
+
+        // determine the used local memory and check whether it exceeds the maximum necessary value!
+        detail::check_local_memory_usage(this->get_local_memory());
 
         PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_EVENT("predict start");
 

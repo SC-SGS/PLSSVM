@@ -45,6 +45,7 @@
 #include <exception>  // std::terminate
 #include <iostream>   // std::cout, std::endl
 #include <numeric>    // std::iota
+#include <optional>   // std::optional
 #include <string>     // std::string
 #include <utility>    // std::move
 #include <variant>    // std::get
@@ -144,6 +145,16 @@ std::vector<::plssvm::detail::memory_size> csvm::get_device_memory() const {
 
 std::vector<::plssvm::detail::memory_size> csvm::get_max_mem_alloc_size() const {
     return this->get_device_memory();
+}
+
+std::vector<std::optional<::plssvm::detail::memory_size>> csvm::get_local_memory() const {
+    cudaDeviceProp prop{};
+    std::vector<std::optional<::plssvm::detail::memory_size>> res(this->num_available_devices());
+    for (std::size_t device_id = 0; device_id < this->num_available_devices(); ++device_id) {
+        PLSSVM_CUDA_ERROR_CHECK(cudaGetDeviceProperties(&prop, devices_[device_id]))
+        res[device_id] = ::plssvm::detail::memory_size{ static_cast<unsigned long long>(prop.sharedMemPerBlock) };
+    }
+    return res;
 }
 
 std::size_t csvm::get_max_work_group_size(const std::size_t device_id) const {

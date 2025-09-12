@@ -16,7 +16,7 @@
 #include "plssvm/backends/SYCL/data_parallel_kernels.hpp"    // plssvm::sycl::data_parallel_kernel
 #include "plssvm/backends/SYCL/detail/atomics.hpp"           // plssvm::sycl::detail::atomic_op
 #include "plssvm/backends/SYCL/kernel/kernel_functions.hpp"  // plssvm::sycl::detail::{feature_reduce, apply_kernel_function}
-#include "plssvm/constants.hpp"                              // plssvm::{real_type, THREAD_BLOCK_SIZE, INTERNAL_BLOCK_SIZE, PADDING_SIZE}
+#include "plssvm/constants.hpp"                              // plssvm::{real_type, THREAD_BLOCK_SIZE}
 #include "plssvm/kernel_function_types.hpp"                  // plssvm::kernel_function_type
 #include "plssvm/target_platforms.hpp"                       // plssvm::target_platform
 
@@ -81,106 +81,53 @@ class device_kernel_assembly_symm {
      */
     void operator()(::sycl::item<2> idx) const {
         // cast all values to 64-bit std::size_t to prevent potential 32-bit overflows
-        constexpr auto INTERNAL_BLOCK_SIZE_uz = static_cast<std::size_t>(INTERNAL_BLOCK_SIZE);
         constexpr auto THREAD_BLOCK_SIZE_uz = static_cast<std::size_t>(THREAD_BLOCK_SIZE);
-        constexpr auto PADDING_SIZE_uz = static_cast<std::size_t>(PADDING_SIZE);
 
         // calculate the indices used in the current work-item
-        const auto i_idx = (idx.get_id(1) + grid_x_offset_ * THREAD_BLOCK_SIZE_uz) * INTERNAL_BLOCK_SIZE_uz;  // num_rows - device_row_offset
-        const auto j_idx = (idx.get_id(0) + grid_y_offset_ * THREAD_BLOCK_SIZE_uz) * INTERNAL_BLOCK_SIZE_uz;  // device_num_rows
+        const auto device_global_i_idx = idx.get_id(1) + grid_x_offset_ * THREAD_BLOCK_SIZE_uz;  // num_rows - device_row_offset
+        const auto global_i_idx = device_row_offset_ + device_global_i_idx;
+        const auto device_global_j_idx = idx.get_id(0) + grid_y_offset_ * THREAD_BLOCK_SIZE_uz;  // device_num_rows
+        const auto global_j_idx = device_row_offset_ + device_global_j_idx;
 
-        // only calculate the upper triangular matrix
-        if (i_idx >= j_idx) {
-            // create a work-item private array used for internal caching
-            real_type temp[INTERNAL_BLOCK_SIZE][INTERNAL_BLOCK_SIZE]{};
-
+        // be sure to not perform out-of-bounds accesses (only using the upper triangular matrix)
+        if (device_global_i_idx < (num_rows_ - device_row_offset_) && device_global_j_idx < device_num_rows_ && global_i_idx >= global_j_idx) {
             //*************************************************************************//
             //                   inplace kernel matrix construction                    //
             //*************************************************************************//
-            // iterate over all features using blocking
-            for (std::size_t feature_block = 0; feature_block < num_features_; feature_block += THREAD_BLOCK_SIZE_uz) {
-                if constexpr (target == target_platform::cpu) {
-                    // perform the feature reduction calculation, the feature is the fastest moving index
-                    for (unsigned internal_i = 0; internal_i < INTERNAL_BLOCK_SIZE; ++internal_i) {
-                        for (unsigned internal_j = 0; internal_j < INTERNAL_BLOCK_SIZE; ++internal_j) {
-                            // calculate the indices to access the global data
-                            const auto global_i_idx = device_row_offset_ + i_idx + static_cast<std::size_t>(internal_i);
-                            const auto global_j_idx = device_row_offset_ + j_idx + static_cast<std::size_t>(internal_j);
+            real_type temp{ 0.0 };
 
-                            real_type sum{ 0.0 };
-                            for (std::size_t feature = 0; feature < THREAD_BLOCK_SIZE_uz; ++feature) {
-                                sum += detail::feature_reduce<kernel_function>(data_[(feature_block + feature) * (num_rows_ + std::size_t{ 1 } + PADDING_SIZE_uz) + global_i_idx],   // SoA
-                                                                               data_[(feature_block + feature) * (num_rows_ + std::size_t{ 1 } + PADDING_SIZE_uz) + global_j_idx]);  // SoA
-                            }
-                            temp[internal_i][internal_j] += sum;
-                        }
-                    }
-                } else {
-                    // perform the feature reduction calculation, the feature is the slowest moving index
-                    for (std::size_t feature = 0; feature < THREAD_BLOCK_SIZE_uz; ++feature) {
-                        for (unsigned internal_i = 0; internal_i < INTERNAL_BLOCK_SIZE; ++internal_i) {
-                            for (unsigned internal_j = 0; internal_j < INTERNAL_BLOCK_SIZE; ++internal_j) {
-                                // calculate the indices to access the global data
-                                const auto global_i_idx = device_row_offset_ + i_idx + static_cast<std::size_t>(internal_i);
-                                const auto global_j_idx = device_row_offset_ + j_idx + static_cast<std::size_t>(internal_j);
-
-                                temp[internal_i][internal_j] += detail::feature_reduce<kernel_function>(data_[(feature_block + feature) * (num_rows_ + std::size_t{ 1 } + PADDING_SIZE_uz) + global_i_idx],   // SoA
-                                                                                                        data_[(feature_block + feature) * (num_rows_ + std::size_t{ 1 } + PADDING_SIZE_uz) + global_j_idx]);  // SoA
-                            }
-                        }
-                    }
-                }
+            // perform the feature reduction calculation
+            for (std::size_t feature = 0; feature < num_features_; ++feature) {
+                temp += detail::feature_reduce<kernel_function>(data_[global_i_idx * num_features_ + feature],   // AoS
+                                                                data_[global_j_idx * num_features_ + feature]);  // AoS
             }
 
-            // apply the remaining part of the kernel function and store the value in the output kernel matrix
-            for (unsigned internal_i = 0; internal_i < INTERNAL_BLOCK_SIZE; ++internal_i) {
-                for (unsigned internal_j = 0; internal_j < INTERNAL_BLOCK_SIZE; ++internal_j) {
-                    // calculate the indices to access the global data and the data with respect to the current device
-                    const auto device_global_i_idx = i_idx + static_cast<std::size_t>(internal_i);
-                    const auto global_i_idx = device_row_offset_ + device_global_i_idx;
-                    const auto device_global_j_idx = j_idx + static_cast<std::size_t>(internal_j);
-                    const auto global_j_idx = device_row_offset_ + device_global_j_idx;
-
-                    // be sure to not perform out-of-bounds accesses (only using the upper triangular matrix)
-                    if (device_global_i_idx < (num_rows_ - device_row_offset_) && device_global_j_idx < device_num_rows_ && global_i_idx >= global_j_idx) {
-                        // apply the final kernel function
-                        temp[internal_i][internal_j] = detail::apply_kernel_function<kernel_function>(temp[internal_i][internal_j], kernel_function_parameter_) + QA_cost_ - q_[global_i_idx] - q_[global_j_idx];
-                        // apply the cost on the diagonal
-                        if (global_i_idx == global_j_idx) {
-                            temp[internal_i][internal_j] += cost_;
-                        }
-                    } else {
-                        // be sure to set the value to zero otherwise
-                        temp[internal_i][internal_j] = real_type{ 0.0 };
-                    }
-                }
+            // apply the final kernel function
+            temp = detail::apply_kernel_function<kernel_function>(temp, kernel_function_parameter_) + QA_cost_ - q_[global_i_idx] - q_[global_j_idx];
+            // apply the cost on the diagonal
+            if (global_i_idx == global_j_idx) {
+                temp += cost_;
             }
 
             //*************************************************************************//
-            //                     calculate C += alpha * temp * B                     //
+            //     calculate C += alpha * temp * B for the UPPER triangular matrix     //
             //*************************************************************************//
-            for (std::size_t class_block = 0; class_block < num_classes_; class_block += THREAD_BLOCK_SIZE_uz) {
-                for (unsigned internal_i = 0; internal_i < INTERNAL_BLOCK_SIZE; ++internal_i) {
-                    for (unsigned internal_j = 0; internal_j < INTERNAL_BLOCK_SIZE; ++internal_j) {
-                        // calculate the indices to access the global data
-                        const auto global_i_idx = device_row_offset_ + i_idx + static_cast<std::size_t>(internal_i);
-                        const auto global_j_idx = device_row_offset_ + j_idx + static_cast<std::size_t>(internal_j);
+            for (std::size_t class_idx = 0; class_idx < num_classes_; ++class_idx) {
+                const real_type B_cache = alpha_ * B_[class_idx * num_rows_ + global_i_idx];                 // AoS
+                detail::atomic_op<real_type>{ C_[class_idx * num_rows_ + global_j_idx] } += temp * B_cache;  // AoS
+            }
 
-                        if (global_i_idx == global_j_idx) {
-                            // only apply once to the diagonal
-                            for (std::size_t class_idx = 0; class_idx < THREAD_BLOCK_SIZE_uz; ++class_idx) {
-                                detail::atomic_op<real_type>{ C_[global_i_idx * (num_classes_ + PADDING_SIZE_uz) + class_block + class_idx] } += alpha_ * temp[internal_i][internal_j] * B_[global_i_idx * (num_classes_ + PADDING_SIZE_uz) + class_block + class_idx];
-                            }
-                        } else {
-                            // apply it for the upper and lower triangular matrix
-                            for (std::size_t class_idx = 0; class_idx < THREAD_BLOCK_SIZE_uz; ++class_idx) {
-                                detail::atomic_op<real_type>{ C_[global_i_idx * (num_classes_ + PADDING_SIZE_uz) + class_block + class_idx] } += alpha_ * temp[internal_i][internal_j] * B_[global_j_idx * (num_classes_ + PADDING_SIZE_uz) + class_block + class_idx];
-                                // symmetry
-                                detail::atomic_op<real_type>{ C_[global_j_idx * (num_classes_ + PADDING_SIZE_uz) + class_block + class_idx] } += alpha_ * temp[internal_i][internal_j] * B_[global_i_idx * (num_classes_ + PADDING_SIZE_uz) + class_block + class_idx];
-                            }
-                        }
-                    }
-                }
+            // set potential diagonal entries in temp to 0.0 such that we don't apply the main diagonal twice to C
+            if (global_i_idx == global_j_idx) {
+                temp = real_type{ 0.0 };
+            }
+
+            //*************************************************************************//
+            //     calculate C += alpha * temp * B for the LOWER triangular matrix     //
+            //*************************************************************************//
+            for (std::size_t class_idx = 0; class_idx < num_classes_; ++class_idx) {
+                const real_type B_cache = alpha_ * B_[class_idx * num_rows_ + global_j_idx];                 // AoS
+                detail::atomic_op<real_type>{ C_[class_idx * num_rows_ + global_i_idx] } += temp * B_cache;  // AoS
             }
         }
     }
