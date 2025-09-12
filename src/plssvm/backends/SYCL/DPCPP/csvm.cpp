@@ -108,59 +108,30 @@ void run_kernel_functor(const QueueType &device, const plssvm::detail::dim_type 
 /**
  * @brief Dispatch the kernel functor to the correct kernel function type.
  * @tparam KernelFunctor the type of the kernel functor to run
- * @tparam target the target platform to run the kernel on
  * @tparam Args the types of the parameters necessary for the specific kernel functor; stored in a `std::tuple`
  * @param[in] params the parameters used to determine the kernel function type
  * @param[in] args the parameters necessary for the specific kernel functor
  */
-template <template <plssvm::target_platform, plssvm::kernel_function_type, typename...> typename KernelFunctor, plssvm::target_platform target, typename... Args>
-void dispatch_kernel_function_type(const plssvm::parameter &params, Args &&...args) {
+template <template <plssvm::kernel_function_type, typename...> typename KernelFunctor, typename... Args>
+void dispatch_kernel_functor(const plssvm::parameter &params, Args &&...args) {
     switch (params.kernel_type) {
         case plssvm::kernel_function_type::linear:
-            run_kernel_functor<KernelFunctor<target, plssvm::kernel_function_type::linear>>(std::forward<Args>(args)...);
+            run_kernel_functor<KernelFunctor<plssvm::kernel_function_type::linear>>(std::forward<Args>(args)...);
             break;
         case plssvm::kernel_function_type::polynomial:
-            run_kernel_functor<KernelFunctor<target, plssvm::kernel_function_type::polynomial, int, plssvm::real_type, plssvm::real_type>>(std::forward<Args>(args)..., params.degree, std::get<plssvm::real_type>(params.gamma), params.coef0);
+            run_kernel_functor<KernelFunctor<plssvm::kernel_function_type::polynomial, int, plssvm::real_type, plssvm::real_type>>(std::forward<Args>(args)..., params.degree, std::get<plssvm::real_type>(params.gamma), params.coef0);
             break;
         case plssvm::kernel_function_type::rbf:
-            run_kernel_functor<KernelFunctor<target, plssvm::kernel_function_type::rbf, plssvm::real_type>>(std::forward<Args>(args)..., std::get<plssvm::real_type>(params.gamma));
+            run_kernel_functor<KernelFunctor<plssvm::kernel_function_type::rbf, plssvm::real_type>>(std::forward<Args>(args)..., std::get<plssvm::real_type>(params.gamma));
             break;
         case plssvm::kernel_function_type::sigmoid:
-            run_kernel_functor<KernelFunctor<target, plssvm::kernel_function_type::sigmoid, plssvm::real_type, plssvm::real_type>>(std::forward<Args>(args)..., std::get<plssvm::real_type>(params.gamma), params.coef0);
+            run_kernel_functor<KernelFunctor<plssvm::kernel_function_type::sigmoid, plssvm::real_type, plssvm::real_type>>(std::forward<Args>(args)..., std::get<plssvm::real_type>(params.gamma), params.coef0);
             break;
         case plssvm::kernel_function_type::laplacian:
-            run_kernel_functor<KernelFunctor<target, plssvm::kernel_function_type::laplacian, plssvm::real_type>>(std::forward<Args>(args)..., std::get<plssvm::real_type>(params.gamma));
+            run_kernel_functor<KernelFunctor<plssvm::kernel_function_type::laplacian, plssvm::real_type>>(std::forward<Args>(args)..., std::get<plssvm::real_type>(params.gamma));
             break;
         case plssvm::kernel_function_type::chi_squared:
-            run_kernel_functor<KernelFunctor<target, plssvm::kernel_function_type::chi_squared, plssvm::real_type>>(std::forward<Args>(args)..., std::get<plssvm::real_type>(params.gamma));
-            break;
-    }
-}
-
-/**
- * @brief Dispatch the kernel functor to the correct target platform and kernel function type.
- * @tparam KernelFunctor the type of the kernel functor to run
- * @tparam Args the types of the parameters necessary for the specific kernel functor; stored in a `std::tuple`
- * @param[in] target the target platform to run the kernel on
- * @param[in] params the parameters used to determine the kernel function type
- * @param[in] args the parameters necessary for the specific kernel functor
- */
-template <template <plssvm::target_platform, plssvm::kernel_function_type, typename...> typename KernelFunctor, typename... Args>
-void dispatch_target_platform(const plssvm::target_platform target, const plssvm::parameter &params, Args &&...args) {
-    switch (target) {
-        case plssvm::target_platform::automatic:
-            throw plssvm::dpcpp::backend_exception{ "Can't determine the target platform!" };
-        case plssvm::target_platform::gpu_nvidia:
-            dispatch_kernel_function_type<KernelFunctor, plssvm::target_platform::gpu_nvidia>(params, std::forward<Args>(args)...);
-            break;
-        case plssvm::target_platform::gpu_amd:
-            dispatch_kernel_function_type<KernelFunctor, plssvm::target_platform::gpu_amd>(params, std::forward<Args>(args)...);
-            break;
-        case plssvm::target_platform::gpu_intel:
-            dispatch_kernel_function_type<KernelFunctor, plssvm::target_platform::gpu_intel>(params, std::forward<Args>(args)...);
-            break;
-        case plssvm::target_platform::cpu:
-            dispatch_kernel_function_type<KernelFunctor, plssvm::target_platform::cpu>(params, std::forward<Args>(args)...);
+            run_kernel_functor<KernelFunctor<plssvm::kernel_function_type::chi_squared, plssvm::real_type>>(std::forward<Args>(args)..., std::get<plssvm::real_type>(params.gamma));
             break;
     }
 }
@@ -169,27 +140,11 @@ void dispatch_target_platform(const plssvm::target_platform target, const plssvm
  * @brief Dispatch the kernel functor to the correct target platform.
  * @tparam KernelFunctor the type of the kernel functor to run
  * @tparam Args the types of the parameters necessary for the specific kernel functor; stored in a `std::tuple`
- * @param[in] target the target platform to run the kernel on
  * @param[in] args the parameters necessary for the specific kernel functor
  */
-template <template <plssvm::target_platform> typename KernelFunctor, typename... Args>
-void dispatch_target_platform(const plssvm::target_platform target, Args &&...args) {
-    switch (target) {
-        case plssvm::target_platform::automatic:
-            throw plssvm::dpcpp::backend_exception{ "Can't determine the target platform!" };
-        case plssvm::target_platform::gpu_nvidia:
-            run_kernel_functor<KernelFunctor<plssvm::target_platform::gpu_nvidia>>(std::forward<Args>(args)...);
-            break;
-        case plssvm::target_platform::gpu_amd:
-            run_kernel_functor<KernelFunctor<plssvm::target_platform::gpu_amd>>(std::forward<Args>(args)...);
-            break;
-        case plssvm::target_platform::gpu_intel:
-            run_kernel_functor<KernelFunctor<plssvm::target_platform::gpu_intel>>(std::forward<Args>(args)...);
-            break;
-        case plssvm::target_platform::cpu:
-            run_kernel_functor<KernelFunctor<plssvm::target_platform::cpu>>(std::forward<Args>(args)...);
-            break;
-    }
+template <typename KernelFunctor, typename... Args>
+void dispatch_kernel_functor(Args &&...args) {
+    run_kernel_functor<KernelFunctor>(std::forward<Args>(args)...);
 }
 
 }  // namespace
@@ -387,13 +342,13 @@ auto csvm::run_assemble_kernel_matrix_explicit(const std::size_t device_id, cons
                 throw backend_exception{ "Can't determine the sycl::data_parallel_kernel!" };
                 break;
             case sycl::data_parallel_kernel::basic:
-                dispatch_target_platform<sycl::detail::basic::device_kernel_assembly>(target_, params, device, partial_grid, exec.block, kernel_matrix_d.get(), data_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, q_red_d.get(), QA_cost, cost_factor, offsets.y, offsets.x);
+                dispatch_kernel_functor<sycl::detail::basic::device_kernel_assembly>(params, device, partial_grid, exec.block, kernel_matrix_d.get(), data_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, q_red_d.get(), QA_cost, cost_factor, offsets.y, offsets.x);
                 break;
             case sycl::data_parallel_kernel::work_group:
-                dispatch_target_platform<sycl::detail::work_group::device_kernel_assembly>(target_, params, device, partial_grid, exec.block, kernel_matrix_d.get(), data_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, q_red_d.get(), QA_cost, cost_factor, offsets.y, offsets.x);
+                dispatch_kernel_functor<sycl::detail::work_group::device_kernel_assembly>(params, device, partial_grid, exec.block, kernel_matrix_d.get(), data_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, q_red_d.get(), QA_cost, cost_factor, offsets.y, offsets.x);
                 break;
             case sycl::data_parallel_kernel::hierarchical:
-                dispatch_target_platform<sycl::detail::hierarchical::device_kernel_assembly>(target_, params, device, partial_grid, exec.block, kernel_matrix_d.get(), data_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, q_red_d.get(), QA_cost, cost_factor, offsets.y, offsets.x);
+                dispatch_kernel_functor<sycl::detail::hierarchical::device_kernel_assembly>(params, device, partial_grid, exec.block, kernel_matrix_d.get(), data_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, q_red_d.get(), QA_cost, cost_factor, offsets.y, offsets.x);
                 break;
             case sycl::data_parallel_kernel::scoped:
                 throw backend_exception{ "Can't use the sycl::data_parallel_kernel::scoped with DPC++!" };
@@ -423,13 +378,13 @@ void csvm::run_blas_level_3_kernel_explicit(const std::size_t device_id, const :
             case sycl::data_parallel_kernel::automatic:
                 throw backend_exception{ "Can't determine the sycl::data_parallel_kernel!" };
             case sycl::data_parallel_kernel::basic:
-                dispatch_target_platform<sycl::detail::basic::device_kernel_symm>(target_, device, partial_grid, exec.block, num_rows, num_rhs, device_specific_num_rows, row_offset, alpha, A_d.get(), B_d.get(), beta, C_d.get(), offsets.y, offsets.x);
+                dispatch_kernel_functor<sycl::detail::basic::device_kernel_symm>(device, partial_grid, exec.block, num_rows, num_rhs, device_specific_num_rows, row_offset, alpha, A_d.get(), B_d.get(), beta, C_d.get(), offsets.y, offsets.x);
                 break;
             case sycl::data_parallel_kernel::work_group:
-                dispatch_target_platform<sycl::detail::work_group::device_kernel_symm>(target_, device, partial_grid, exec.block, num_rows, num_rhs, device_specific_num_rows, row_offset, alpha, A_d.get(), B_d.get(), beta, C_d.get(), offsets.y, offsets.x);
+                dispatch_kernel_functor<sycl::detail::work_group::device_kernel_symm>(device, partial_grid, exec.block, num_rows, num_rhs, device_specific_num_rows, row_offset, alpha, A_d.get(), B_d.get(), beta, C_d.get(), offsets.y, offsets.x);
                 break;
             case sycl::data_parallel_kernel::hierarchical:
-                dispatch_target_platform<sycl::detail::hierarchical::device_kernel_symm>(target_, device, partial_grid, exec.block, num_rows, num_rhs, device_specific_num_rows, row_offset, alpha, A_d.get(), B_d.get(), beta, C_d.get(), offsets.y, offsets.x);
+                dispatch_kernel_functor<sycl::detail::hierarchical::device_kernel_symm>(device, partial_grid, exec.block, num_rows, num_rhs, device_specific_num_rows, row_offset, alpha, A_d.get(), B_d.get(), beta, C_d.get(), offsets.y, offsets.x);
                 break;
             case sycl::data_parallel_kernel::scoped:
                 throw backend_exception{ "Can't use the sycl::data_parallel_kernel::scoped with DPC++!" };
@@ -444,13 +399,13 @@ void csvm::run_blas_level_3_kernel_explicit(const std::size_t device_id, const :
                 case sycl::data_parallel_kernel::automatic:
                     throw backend_exception{ "Can't determine the sycl::data_parallel_kernel!" };
                 case sycl::data_parallel_kernel::basic:
-                    dispatch_target_platform<sycl::detail::basic::device_kernel_symm_mirror>(target_, device, partial_grid, exec.block, num_rows, num_rhs, num_mirror_rows, device_specific_num_rows, row_offset, alpha, A_d.get(), B_d.get(), beta, C_d.get(), offsets.y, offsets.x);
+                    dispatch_kernel_functor<sycl::detail::basic::device_kernel_symm_mirror>(device, partial_grid, exec.block, num_rows, num_rhs, num_mirror_rows, device_specific_num_rows, row_offset, alpha, A_d.get(), B_d.get(), beta, C_d.get(), offsets.y, offsets.x);
                     break;
                 case sycl::data_parallel_kernel::work_group:
-                    dispatch_target_platform<sycl::detail::work_group::device_kernel_symm_mirror>(target_, device, partial_grid, exec.block, num_rows, num_rhs, num_mirror_rows, device_specific_num_rows, row_offset, alpha, A_d.get(), B_d.get(), beta, C_d.get(), offsets.y, offsets.x);
+                    dispatch_kernel_functor<sycl::detail::work_group::device_kernel_symm_mirror>(device, partial_grid, exec.block, num_rows, num_rhs, num_mirror_rows, device_specific_num_rows, row_offset, alpha, A_d.get(), B_d.get(), beta, C_d.get(), offsets.y, offsets.x);
                     break;
                 case sycl::data_parallel_kernel::hierarchical:
-                    dispatch_target_platform<sycl::detail::hierarchical::device_kernel_symm_mirror>(target_, device, partial_grid, exec.block, num_rows, num_rhs, num_mirror_rows, device_specific_num_rows, row_offset, alpha, A_d.get(), B_d.get(), beta, C_d.get(), offsets.y, offsets.x);
+                    dispatch_kernel_functor<sycl::detail::hierarchical::device_kernel_symm_mirror>(device, partial_grid, exec.block, num_rows, num_rhs, num_mirror_rows, device_specific_num_rows, row_offset, alpha, A_d.get(), B_d.get(), beta, C_d.get(), offsets.y, offsets.x);
                     break;
                 case sycl::data_parallel_kernel::scoped:
                     throw backend_exception{ "Can't use the sycl::data_parallel_kernel::scoped with DPC++!" };
@@ -559,13 +514,13 @@ void csvm::run_assemble_kernel_matrix_implicit_blas_level_3(const std::size_t de
                 throw backend_exception{ "Can't determine the sycl::data_parallel_kernel!" };
                 break;
             case sycl::data_parallel_kernel::basic:
-                dispatch_target_platform<sycl::detail::basic::device_kernel_assembly_symm>(target_, params, device, partial_grid, exec.block, alpha, q_red.get(), A_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, QA_cost, cost_factor, B_d.get(), C_d.get(), num_classes, offsets.y, offsets.x);
+                dispatch_kernel_functor<sycl::detail::basic::device_kernel_assembly_symm>(params, device, partial_grid, exec.block, alpha, q_red.get(), A_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, QA_cost, cost_factor, B_d.get(), C_d.get(), num_classes, offsets.y, offsets.x);
                 break;
             case sycl::data_parallel_kernel::work_group:
-                dispatch_target_platform<sycl::detail::work_group::device_kernel_assembly_symm>(target_, params, device, partial_grid, exec.block, alpha, q_red.get(), A_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, QA_cost, cost_factor, B_d.get(), C_d.get(), num_classes, offsets.y, offsets.x);
+                dispatch_kernel_functor<sycl::detail::work_group::device_kernel_assembly_symm>(params, device, partial_grid, exec.block, alpha, q_red.get(), A_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, QA_cost, cost_factor, B_d.get(), C_d.get(), num_classes, offsets.y, offsets.x);
                 break;
             case sycl::data_parallel_kernel::hierarchical:
-                dispatch_target_platform<sycl::detail::hierarchical::device_kernel_assembly_symm>(target_, params, device, partial_grid, exec.block, alpha, q_red.get(), A_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, QA_cost, cost_factor, B_d.get(), C_d.get(), num_classes, offsets.y, offsets.x);
+                dispatch_kernel_functor<sycl::detail::hierarchical::device_kernel_assembly_symm>(params, device, partial_grid, exec.block, alpha, q_red.get(), A_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, QA_cost, cost_factor, B_d.get(), C_d.get(), num_classes, offsets.y, offsets.x);
                 break;
             case sycl::data_parallel_kernel::scoped:
                 throw backend_exception{ "Can't use the sycl::data_parallel_kernel::scoped with DPC++!" };
@@ -599,13 +554,13 @@ auto csvm::run_w_kernel(const std::size_t device_id, const ::plssvm::detail::exe
             case sycl::data_parallel_kernel::automatic:
                 throw backend_exception{ "Can't determine the sycl::data_parallel_kernel!" };
             case sycl::data_parallel_kernel::basic:
-                dispatch_target_platform<sycl::detail::basic::device_kernel_w_linear>(target_, device, partial_grid, exec.block, w_d.get(), alpha_d.get(), sv_d.get(), num_features, num_classes, num_sv, device_specific_num_sv, sv_offset, offsets.y, offsets.x);
+                dispatch_kernel_functor<sycl::detail::basic::device_kernel_w_linear>(device, partial_grid, exec.block, w_d.get(), alpha_d.get(), sv_d.get(), num_features, num_classes, num_sv, device_specific_num_sv, sv_offset, offsets.y, offsets.x);
                 break;
             case sycl::data_parallel_kernel::work_group:
-                dispatch_target_platform<sycl::detail::work_group::device_kernel_w_linear>(target_, device, partial_grid, exec.block, w_d.get(), alpha_d.get(), sv_d.get(), num_features, num_classes, num_sv, device_specific_num_sv, sv_offset, offsets.y, offsets.x);
+                dispatch_kernel_functor<sycl::detail::work_group::device_kernel_w_linear>(device, partial_grid, exec.block, w_d.get(), alpha_d.get(), sv_d.get(), num_features, num_classes, num_sv, device_specific_num_sv, sv_offset, offsets.y, offsets.x);
                 break;
             case sycl::data_parallel_kernel::hierarchical:
-                dispatch_target_platform<sycl::detail::hierarchical::device_kernel_w_linear>(target_, device, partial_grid, exec.block, w_d.get(), alpha_d.get(), sv_d.get(), num_features, num_classes, num_sv, device_specific_num_sv, sv_offset, offsets.y, offsets.x);
+                dispatch_kernel_functor<sycl::detail::hierarchical::device_kernel_w_linear>(device, partial_grid, exec.block, w_d.get(), alpha_d.get(), sv_d.get(), num_features, num_classes, num_sv, device_specific_num_sv, sv_offset, offsets.y, offsets.x);
                 break;
             case sycl::data_parallel_kernel::scoped:
                 throw backend_exception{ "Can't use the sycl::data_parallel_kernel::scoped with DPC++!" };
@@ -635,13 +590,13 @@ auto csvm::run_predict_kernel(const std::size_t device_id, const ::plssvm::detai
                 case sycl::data_parallel_kernel::automatic:
                     throw backend_exception{ "Can't determine the sycl::data_parallel_kernel!" };
                 case sycl::data_parallel_kernel::basic:
-                    dispatch_target_platform<sycl::detail::basic::device_kernel_predict_linear>(target_, device, partial_grid, exec.block, out_d.get(), sv_or_w_d.get(), rho_d.get(), predict_points_d.get(), num_classes, num_predict_points, num_features, offsets.y, offsets.x);
+                    dispatch_kernel_functor<sycl::detail::basic::device_kernel_predict_linear>(device, partial_grid, exec.block, out_d.get(), sv_or_w_d.get(), rho_d.get(), predict_points_d.get(), num_classes, num_predict_points, num_features, offsets.y, offsets.x);
                     break;
                 case sycl::data_parallel_kernel::work_group:
-                    dispatch_target_platform<sycl::detail::work_group::device_kernel_predict_linear>(target_, device, partial_grid, exec.block, out_d.get(), sv_or_w_d.get(), rho_d.get(), predict_points_d.get(), num_classes, num_predict_points, num_features, offsets.y, offsets.x);
+                    dispatch_kernel_functor<sycl::detail::work_group::device_kernel_predict_linear>(device, partial_grid, exec.block, out_d.get(), sv_or_w_d.get(), rho_d.get(), predict_points_d.get(), num_classes, num_predict_points, num_features, offsets.y, offsets.x);
                     break;
                 case sycl::data_parallel_kernel::hierarchical:
-                    dispatch_target_platform<sycl::detail::hierarchical::device_kernel_predict_linear>(target_, device, partial_grid, exec.block, out_d.get(), sv_or_w_d.get(), rho_d.get(), predict_points_d.get(), num_classes, num_predict_points, num_features, offsets.y, offsets.x);
+                    dispatch_kernel_functor<sycl::detail::hierarchical::device_kernel_predict_linear>(device, partial_grid, exec.block, out_d.get(), sv_or_w_d.get(), rho_d.get(), predict_points_d.get(), num_classes, num_predict_points, num_features, offsets.y, offsets.x);
                     break;
                 case sycl::data_parallel_kernel::scoped:
                     throw backend_exception{ "Can't use the sycl::data_parallel_kernel::scoped with DPC++!" };
@@ -651,13 +606,13 @@ auto csvm::run_predict_kernel(const std::size_t device_id, const ::plssvm::detai
                 case sycl::data_parallel_kernel::automatic:
                     throw backend_exception{ "Can't determine the sycl::data_parallel_kernel!" };
                 case sycl::data_parallel_kernel::basic:
-                    dispatch_target_platform<sycl::detail::basic::device_kernel_predict>(target_, params, device, partial_grid, exec.block, out_d.get(), alpha_d.get(), rho_d.get(), sv_or_w_d.get(), predict_points_d.get(), num_classes, num_sv, num_predict_points, num_features, offsets.y, offsets.x);
+                    dispatch_kernel_functor<sycl::detail::basic::device_kernel_predict>(params, device, partial_grid, exec.block, out_d.get(), alpha_d.get(), rho_d.get(), sv_or_w_d.get(), predict_points_d.get(), num_classes, num_sv, num_predict_points, num_features, offsets.y, offsets.x);
                     break;
                 case sycl::data_parallel_kernel::work_group:
-                    dispatch_target_platform<sycl::detail::work_group::device_kernel_predict>(target_, params, device, partial_grid, exec.block, out_d.get(), alpha_d.get(), rho_d.get(), sv_or_w_d.get(), predict_points_d.get(), num_classes, num_sv, num_predict_points, num_features, offsets.y, offsets.x);
+                    dispatch_kernel_functor<sycl::detail::work_group::device_kernel_predict>(params, device, partial_grid, exec.block, out_d.get(), alpha_d.get(), rho_d.get(), sv_or_w_d.get(), predict_points_d.get(), num_classes, num_sv, num_predict_points, num_features, offsets.y, offsets.x);
                     break;
                 case sycl::data_parallel_kernel::hierarchical:
-                    dispatch_target_platform<sycl::detail::hierarchical::device_kernel_predict>(target_, params, device, partial_grid, exec.block, out_d.get(), alpha_d.get(), rho_d.get(), sv_or_w_d.get(), predict_points_d.get(), num_classes, num_sv, num_predict_points, num_features, offsets.y, offsets.x);
+                    dispatch_kernel_functor<sycl::detail::hierarchical::device_kernel_predict>(params, device, partial_grid, exec.block, out_d.get(), alpha_d.get(), rho_d.get(), sv_or_w_d.get(), predict_points_d.get(), num_classes, num_sv, num_predict_points, num_features, offsets.y, offsets.x);
                     break;
                 case sycl::data_parallel_kernel::scoped:
                     throw backend_exception{ "Can't use the sycl::data_parallel_kernel::scoped with DPC++!" };

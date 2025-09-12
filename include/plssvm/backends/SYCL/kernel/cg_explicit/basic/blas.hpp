@@ -15,7 +15,6 @@
 
 #include "plssvm/backends/SYCL/data_parallel_kernels.hpp"  // plssvm::sycl::data_parallel_kernel
 #include "plssvm/constants.hpp"                            // plssvm::{real_type, THREAD_BLOCK_SIZE}
-#include "plssvm/target_platforms.hpp"                     // plssvm::target_platform
 
 #include "sycl/sycl.hpp"  // sycl::item
 
@@ -26,9 +25,7 @@ namespace plssvm::sycl::detail::basic {
 /**
  * @brief Perform an explicit BLAS SYMM operation: `C = alpha * A * B + beta * C` where @p A is a `m x k` symmetric matrix (memory optimized), @p B is a `k x n` matrix, @p C is a `m x n` matrix, and @p alpha and @p beta are scalars.
  * @details Uses SYCL's basic data parallel kernels.
- * @tparam target the target platform
  */
-template <target_platform target>
 class device_kernel_symm {
   public:
     /// The used SYCL data parallel kernel.
@@ -116,9 +113,7 @@ class device_kernel_symm {
  * @brief Perform an explicit BLAS SYMM operation: `C = alpha * A * B + beta * C` where @p A is a `m x k` symmetric matrix (memory optimized), @p B is a `k x n` matrix, @p C is a `m x n` matrix, and @p alpha and @p beta are scalars.
  * @details In a multi-GPU setting, this function is responsible for mirroring down the columns this device is responsible for!
  *          Uses SYCL's basic data parallel kernels.
- * @tparam target the target platform
  */
-template <target_platform target>
 class device_kernel_symm_mirror {
   public:
     /// The used SYCL data parallel kernel.

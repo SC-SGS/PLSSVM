@@ -26,9 +26,7 @@ namespace plssvm::sycl::detail::work_group {
 /**
  * @brief Perform an explicit BLAS SYMM operation: `C = alpha * A * B + beta * C` where @p A is a `m x k` symmetric matrix (memory optimized), @p B is a `k x n` matrix, @p C is a `m x n` matrix, and @p alpha and @p beta are scalars.
  * @details Uses SYCL's work-group data parallel kernels.
- * @tparam target the target platform
  */
-template <target_platform target>
 class device_kernel_symm {
   public:
     /// The used SYCL data parallel kernel.
@@ -121,9 +119,7 @@ class device_kernel_symm {
  * @brief Perform an explicit BLAS SYMM operation: `C = alpha * A * B + beta * C` where @p A is a `m x k` symmetric matrix (memory optimized), @p B is a `k x n` matrix, @p C is a `m x n` matrix, and @p alpha and @p beta are scalars.
  * @details In a multi-GPU setting, this function is responsible for mirroring down the columns this device is responsible for!
  *          Uses SYCL's work-group data parallel kernels.
- * @tparam target the target platform
  */
-template <target_platform target>
 class device_kernel_symm_mirror {
   public:
     /// The used SYCL data parallel kernel.

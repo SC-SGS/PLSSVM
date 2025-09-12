@@ -17,7 +17,6 @@
 #include "plssvm/backends/SYCL/kernel/kernel_functions.hpp"  // plssvm::sycl::detail::{feature_reduce, apply_kernel_function}
 #include "plssvm/constants.hpp"                              // plssvm::real_type
 #include "plssvm/kernel_function_types.hpp"                  // plssvm::kernel_function_type
-#include "plssvm/target_platforms.hpp"                       // plssvm::target_platform
 
 #include "sycl/sycl.hpp"  // sycl::group, sycl::h_item
 
@@ -30,11 +29,10 @@ namespace plssvm::sycl::detail::hierarchical {
 /**
  * @brief Create the explicit kernel matrix using the @p kernel_function.
  * @details Uses SYCL's hierarchical data parallel kernels.
- * @tparam target the target platform
  * @tparam kernel_function the type of the used kernel function
  * @tparam Args the types of the parameters necessary for the specific kernel function; stored in a `std::tuple`
  */
-template <target_platform target, kernel_function_type kernel_function, typename... Args>
+template <kernel_function_type kernel_function, typename... Args>
 class device_kernel_assembly {
   public:
     /// The used SYCL data parallel kernel.

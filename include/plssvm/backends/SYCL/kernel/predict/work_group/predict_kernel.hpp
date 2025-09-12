@@ -18,7 +18,6 @@
 #include "plssvm/backends/SYCL/kernel/kernel_functions.hpp"  // plssvm::sycl::detail::{feature_reduce, apply_kernel_function}
 #include "plssvm/constants.hpp"                              // plssvm::real_type
 #include "plssvm/kernel_function_types.hpp"                  // plssvm::kernel_function_type
-#include "plssvm/target_platforms.hpp"                       // plssvm::target_platform
 
 #include "sycl/sycl.hpp"  // sycl::handler, sycl::range, sycl::nd_item
 
@@ -30,9 +29,7 @@ namespace plssvm::sycl::detail::work_group {
 /**
  * @brief Calculate the `w` vector used to speedup the prediction using the linear kernel function.
  * @details Uses SYCL's work-group data parallel kernels.
- * @tparam target the target platform
  */
-template <target_platform target>
 class device_kernel_w_linear {
   public:
     /// The used SYCL data parallel kernel.
@@ -112,9 +109,7 @@ class device_kernel_w_linear {
 /**
  * @brief Predict the @p predict_points using the linear kernel speeding up the calculation using the @p w vector.
  * @details Uses SYCL's work-group data parallel kernels.
- * @tparam target the target platform
  */
-template <target_platform target>
 class device_kernel_predict_linear {
   public:
     /// The used SYCL data parallel kernel.
@@ -191,11 +186,10 @@ class device_kernel_predict_linear {
 /**
  * @brief Predict the @p predict_points using the @p kernel_function.
  * @details Uses SYCL's work-group data parallel kernels.
- * @tparam target the target platform
  * @tparam kernel_function the type of the used kernel function
  * @tparam Args the types of the parameters necessary for the specific kernel function; stored in a `std::tuple`
  */
-template <target_platform target, kernel_function_type kernel_function, typename... Args>
+template <kernel_function_type kernel_function, typename... Args>
 class device_kernel_predict {
   public:
     /// The used SYCL data parallel kernel.
