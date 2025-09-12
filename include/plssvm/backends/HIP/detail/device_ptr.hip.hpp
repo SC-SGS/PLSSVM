@@ -68,14 +68,6 @@ class device_ptr : public ::plssvm::detail::gpu_device_ptr<T, int, T *, device_p
      * @throws plssvm::hip::backend_exception if the given device ID is smaller than 0 or greater or equal than the available number of devices
      */
     explicit device_ptr(plssvm::shape shape, queue_type device);
-    /**
-     * @brief Allocates `(shape.x + padding.x) * (shape.y + padding.y) * sizeof(T)` bytes on the device with ID @p device.
-     * @param[in] shape the number of elements represented by the device_ptr
-     * @param[in] padding the number of padding elements added to the extent values
-     * @param[in] device the associated CUDA device
-     * @throws plssvm::cuda::backend_exception if the given device ID is smaller than 0 or greater or equal than the available number of devices
-     */
-    device_ptr(plssvm::shape shape, plssvm::shape padding, queue_type device);
 
     /**
      * @copydoc plssvm::detail::gpu_device_ptr::gpu_device_ptr(const plssvm::detail::gpu_device_ptr &)

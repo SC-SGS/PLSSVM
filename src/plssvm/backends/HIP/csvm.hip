@@ -17,7 +17,7 @@
 #include "plssvm/backends/HIP/kernel/cg_explicit/kernel_matrix_assembly.hip.hpp"       // plssvm::hip::detail::device_kernel_assembly
 #include "plssvm/backends/HIP/kernel/cg_implicit/kernel_matrix_assembly_blas.hip.hpp"  // plssvm::hip::detail::device_kernel_assembly_symm
 #include "plssvm/backends/HIP/kernel/predict_kernel.hip.hpp"                           // plssvm::hip::detail::{device_kernel_w_linear, device_kernel_predict_linear, device_kernel_predict}
-#include "plssvm/constants.hpp"                                                        // plssvm::{real_type, THREAD_BLOCK_SIZE, INTERNAL_BLOCK_SIZE, PADDING_SIZE}
+#include "plssvm/constants.hpp"                                                        // plssvm::real_type
 #include "plssvm/detail/assert.hpp"                                                    // PLSSVM_ASSERT
 #include "plssvm/detail/data_distribution.hpp"                                         // plssvm::detail::{data_distribution, triangular_data_distribution, rectangular_data_distribution}
 #include "plssvm/detail/logging/mpi_log_untracked.hpp"                                 // plssvm::detail::log_untracked
@@ -204,9 +204,9 @@ auto csvm::run_assemble_kernel_matrix_explicit(const std::size_t device_id, cons
 
     // calculate the number of matrix entries
     const ::plssvm::detail::triangular_data_distribution &dist = dynamic_cast<::plssvm::detail::triangular_data_distribution &>(*data_distribution_);
-    const std::size_t num_entries_padded = dist.calculate_explicit_kernel_matrix_num_entries_padded(device_id);
+    const std::size_t num_entries = dist.calculate_explicit_kernel_matrix_num_entries(device_id);
 
-    device_ptr_type kernel_matrix_d{ num_entries_padded, device };  // only explicitly store the upper triangular matrix
+    device_ptr_type kernel_matrix_d{ num_entries, device };  // only explicitly store the upper triangular matrix
     const real_type cost_factor = real_type{ 1.0 } / params.cost;
 
     // convert execution range block to HIP's native dim3
@@ -291,6 +291,7 @@ void csvm::run_blas_level_3_kernel_explicit(const std::size_t device_id, const :
 }
 
 void csvm::run_inplace_matrix_addition(const std::size_t device_id, const ::plssvm::detail::execution_range &exec, device_ptr_type &lhs_d, const device_ptr_type &rhs_d) const {
+    const unsigned long long num_rows = lhs_d.shape().y;
     const unsigned long long num_rhs = lhs_d.shape().x;
     const queue_type &device = devices_[device_id];
 
@@ -302,13 +303,14 @@ void csvm::run_inplace_matrix_addition(const std::size_t device_id, const ::plss
         // convert execution range partial_grid to HIP's native dim3
         const dim3 native_partial_grid = detail::dim_type_to_native(partial_grid);
 
-        detail::device_kernel_inplace_matrix_add<<<native_partial_grid, native_block>>>(num_rhs, lhs_d.get(), rhs_d.get(), offsets.x, offsets.y);
+        detail::device_kernel_inplace_matrix_add<<<native_partial_grid, native_block>>>(num_rows, num_rhs, lhs_d.get(), rhs_d.get(), offsets.x, offsets.y);
     }
     detail::peek_at_last_error();
     detail::device_synchronize(device);
 }
 
 void csvm::run_inplace_matrix_scale(const std::size_t device_id, const ::plssvm::detail::execution_range &exec, device_ptr_type &lhs_d, const real_type scale) const {
+    const unsigned long long num_rows = lhs_d.shape().y;
     const unsigned long long num_rhs = lhs_d.shape().x;
     const queue_type &device = devices_[device_id];
 
@@ -320,7 +322,7 @@ void csvm::run_inplace_matrix_scale(const std::size_t device_id, const ::plssvm:
         // convert execution range partial_grid to HIP's native dim3
         const dim3 native_partial_grid = detail::dim_type_to_native(partial_grid);
 
-        detail::device_kernel_inplace_matrix_scale<<<native_partial_grid, native_block>>>(num_rhs, lhs_d.get(), scale, offsets.x, offsets.y);
+        detail::device_kernel_inplace_matrix_scale<<<native_partial_grid, native_block>>>(num_rows, num_rhs, lhs_d.get(), scale, offsets.x, offsets.y);
     }
     detail::peek_at_last_error();
     detail::device_synchronize(device);
@@ -390,7 +392,7 @@ auto csvm::run_w_kernel(const std::size_t device_id, const ::plssvm::detail::exe
     // get the offset of the data points this device is responsible for
     const unsigned long long sv_offset = data_distribution_->place_row_offset(device_id);
 
-    device_ptr_type w_d{ shape{ num_classes, num_features }, shape{ PADDING_SIZE, PADDING_SIZE }, device };
+    device_ptr_type w_d{ shape{ num_classes, num_features }, device };
 
     // convert execution range block to HIP's native dim3
     const dim3 native_block = detail::dim_type_to_native(exec.block);
@@ -401,7 +403,7 @@ auto csvm::run_w_kernel(const std::size_t device_id, const ::plssvm::detail::exe
         // convert execution range partial_grid to HIP's native dim3
         const dim3 native_partial_grid = detail::dim_type_to_native(partial_grid);
 
-        detail::device_kernel_w_linear<<<native_partial_grid, native_block>>>(w_d.get(), alpha_d.get(), sv_d.get(), num_classes, num_sv, device_specific_num_sv, sv_offset, offsets.x, offsets.y);
+        detail::device_kernel_w_linear<<<native_partial_grid, native_block>>>(w_d.get(), alpha_d.get(), sv_d.get(), num_features, num_classes, num_sv, device_specific_num_sv, sv_offset, offsets.x, offsets.y);
     }
     detail::peek_at_last_error();
     detail::device_synchronize(device);
@@ -419,7 +421,7 @@ auto csvm::run_predict_kernel(const std::size_t device_id, const ::plssvm::detai
     const unsigned long long num_sv = sv_or_w_d.shape().x;
     const queue_type &device = devices_[device_id];
 
-    device_ptr_type out_d{ shape{ num_predict_points, num_classes }, shape{ PADDING_SIZE, PADDING_SIZE }, device };
+    device_ptr_type out_d{ shape{ num_predict_points, num_classes }, device };
 
     // convert execution range block to HIP's native dim3
     const dim3 native_block = detail::dim_type_to_native(exec.block);

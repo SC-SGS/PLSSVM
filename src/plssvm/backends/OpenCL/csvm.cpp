@@ -313,9 +313,9 @@ auto csvm::run_assemble_kernel_matrix_explicit(const std::size_t device_id, cons
 
     // calculate the number of matrix entries
     const ::plssvm::detail::triangular_data_distribution &dist = dynamic_cast<::plssvm::detail::triangular_data_distribution &>(*data_distribution_);
-    const std::size_t num_entries_padded = dist.calculate_explicit_kernel_matrix_num_entries_padded(device_id);
+    const std::size_t num_entries = dist.calculate_explicit_kernel_matrix_num_entries(device_id);
 
-    device_ptr_type kernel_matrix_d{ num_entries_padded, device };  // only explicitly store the upper triangular matrix
+    device_ptr_type kernel_matrix_d{ num_entries, device };  // only explicitly store the upper triangular matrix
     const real_type cost_factor = real_type{ 1.0 } / params.cost;
 
     // convert execution range block to OpenCL's native std::vector
@@ -412,6 +412,7 @@ void csvm::run_blas_level_3_kernel_explicit(const std::size_t device_id, const :
 }
 
 void csvm::run_inplace_matrix_addition(const std::size_t device_id, const ::plssvm::detail::execution_range &exec, device_ptr_type &lhs_d, const device_ptr_type &rhs_d) const {
+    const cl_ulong num_rows = lhs_d.shape().y;
     const cl_ulong num_rhs = lhs_d.shape().x;
     const queue_type &device = devices_[device_id];
 
@@ -428,12 +429,13 @@ void csvm::run_inplace_matrix_addition(const std::size_t device_id, const ::plss
         const cl_ulong grid_offset_x = offsets.x;
         const cl_ulong grid_offset_y = offsets.y;
 
-        detail::run_kernel(device, device.get_kernel(detail::compute_kernel_name::inplace_matrix_add_kernel), native_partial_grid, native_block, num_rhs, lhs_d.get(), rhs_d.get(), grid_offset_x, grid_offset_y);
+        detail::run_kernel(device, device.get_kernel(detail::compute_kernel_name::inplace_matrix_add_kernel), native_partial_grid, native_block, num_rows, num_rhs, lhs_d.get(), rhs_d.get(), grid_offset_x, grid_offset_y);
     }
     detail::device_synchronize(device);
 }
 
 void csvm::run_inplace_matrix_scale(const std::size_t device_id, const ::plssvm::detail::execution_range &exec, device_ptr_type &lhs_d, const real_type scale) const {
+    const cl_ulong num_rows = lhs_d.shape().y;
     const cl_ulong num_rhs = lhs_d.shape().x;
     const queue_type &device = devices_[device_id];
 
@@ -450,7 +452,7 @@ void csvm::run_inplace_matrix_scale(const std::size_t device_id, const ::plssvm:
         const cl_ulong grid_offset_x = offsets.x;
         const cl_ulong grid_offset_y = offsets.y;
 
-        detail::run_kernel(device, device.get_kernel(detail::compute_kernel_name::inplace_matrix_scale_kernel), native_partial_grid, native_block, num_rhs, lhs_d.get(), scale, grid_offset_x, grid_offset_y);
+        detail::run_kernel(device, device.get_kernel(detail::compute_kernel_name::inplace_matrix_scale_kernel), native_partial_grid, native_block, num_rows, num_rhs, lhs_d.get(), scale, grid_offset_x, grid_offset_y);
     }
     detail::device_synchronize(device);
 }
@@ -523,7 +525,7 @@ auto csvm::run_w_kernel(const std::size_t device_id, const ::plssvm::detail::exe
     // get the offset of the data points this device is responsible for
     const cl_ulong sv_offset = data_distribution_->place_row_offset(device_id);
 
-    device_ptr_type w_d{ shape{ num_classes, num_features }, shape{ PADDING_SIZE, PADDING_SIZE }, device };
+    device_ptr_type w_d{ shape{ num_classes, num_features }, device };
 
     // convert execution range block to OpenCL's native std::vector
     const std::vector<std::size_t> native_block = detail::dim_type_to_native<2>(exec.block);
@@ -539,7 +541,7 @@ auto csvm::run_w_kernel(const std::size_t device_id, const ::plssvm::detail::exe
         const cl_ulong grid_offset_x = offsets.x;
         const cl_ulong grid_offset_y = offsets.y;
 
-        detail::run_kernel(device, device.get_kernel(detail::compute_kernel_name::w_kernel), native_partial_grid, native_block, w_d.get(), alpha_d.get(), sv_d.get(), num_classes, num_sv, device_specific_num_sv, sv_offset, grid_offset_x, grid_offset_y);
+        detail::run_kernel(device, device.get_kernel(detail::compute_kernel_name::w_kernel), native_partial_grid, native_block, w_d.get(), alpha_d.get(), sv_d.get(), num_features, num_classes, num_sv, device_specific_num_sv, sv_offset, grid_offset_x, grid_offset_y);
     }
     detail::device_synchronize(device);
     const auto end = std::chrono::steady_clock::now();
@@ -556,7 +558,7 @@ auto csvm::run_predict_kernel(const std::size_t device_id, const ::plssvm::detai
     const cl_ulong num_sv = sv_or_w_d.shape().x;
     const queue_type &device = devices_[device_id];
 
-    device_ptr_type out_d{ shape{ num_predict_points, num_classes }, shape{ PADDING_SIZE, PADDING_SIZE }, device };
+    device_ptr_type out_d{ shape{ num_predict_points, num_classes }, device };
 
     // convert execution range block to OpenCL's native std::vector
     const std::vector<std::size_t> native_block = detail::dim_type_to_native<2>(exec.block);
