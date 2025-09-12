@@ -14,7 +14,6 @@
 #pragma once
 
 #include "plssvm/constants.hpp"         // plssvm::{real_type, THREAD_BLOCK_SIZE}
-#include "plssvm/target_platforms.hpp"  // plssvm::target_platform
 
 #include "Kokkos_Core.hpp"  // KOKKOS_INLINE_FUNCTION, Kokkos::View, Kokkos::TeamPolicy
 
@@ -25,9 +24,8 @@ namespace plssvm::kokkos::detail {
 /**
  * @brief Perform an explicit BLAS SYMM operation: `C = alpha * A * B + beta * C` where @p A is a `m x k` symmetric matrix (memory optimized), @p B is a `k x n` matrix, @p C is a `m x n` matrix, and @p alpha and @p beta are scalars.
  * @tparam ExecutionSpace the Kokkos::ExecutionSpace used to execute the kernel
- * @tparam target the target platform
  */
-template <typename ExecutionSpace, target_platform target>
+template <typename ExecutionSpace>
 class device_kernel_symm {
     /**
      * @brief The type of the used Kokkos::View.
@@ -129,9 +127,8 @@ class device_kernel_symm {
  * @brief Perform an explicit BLAS SYMM operation: `C = alpha * A * B + beta * C` where @p A is a `m x k` symmetric matrix (memory optimized), @p B is a `k x n` matrix, @p C is a `m x n` matrix, and @p alpha and @p beta are scalars.
  * @details In a multi-GPU setting, this function is responsible for mirroring down the columns this device is responsible for!
  * @tparam ExecutionSpace the Kokkos::ExecutionSpace used to execute the kernel
- * @tparam target the target platform
  */
-template <typename ExecutionSpace, target_platform target>
+template <typename ExecutionSpace>
 class device_kernel_symm_mirror {
     /**
      * @brief The type of the used Kokkos::View.

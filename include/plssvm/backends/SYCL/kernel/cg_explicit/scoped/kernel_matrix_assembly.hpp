@@ -30,11 +30,10 @@ namespace plssvm::sycl::detail::scoped {
 /**
  * @brief Create the explicit kernel matrix using the @p kernel_function.
  * @details Uses AdaptiveCpp's scoped parallelism.
- * @tparam target the target platform
  * @tparam kernel_function the type of the used kernel function
  * @tparam Args the types of the parameters necessary for the specific kernel function; stored in a `std::tuple`
  */
-template <target_platform target, kernel_function_type kernel_function, typename... Args>
+template <kernel_function_type kernel_function, typename... Args>
 class device_kernel_assembly {
   public:
     /// The used SYCL data parallel kernel.

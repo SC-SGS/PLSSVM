@@ -17,7 +17,6 @@
 #include "plssvm/backends/Kokkos/kernel/kernel_functions.hpp"       // plssvm::kokkos::detail::{feature_reduce, apply_kernel_function}
 #include "plssvm/constants.hpp"                                     // plssvm::{real_type, THREAD_BLOCK_SIZE}
 #include "plssvm/kernel_function_types.hpp"                         // plssvm::kernel_function_type
-#include "plssvm/target_platforms.hpp"                              // plssvm::target_platform
 
 #include "Kokkos_Core.hpp"  // KOKKOS_INLINE_FUNCTION, Kokkos::View, Kokkos::TeamPolicy, Kokkos::atomic_add
 
@@ -28,11 +27,10 @@ namespace plssvm::kokkos::detail {
 /**
  * @brief Perform an implicit BLAS SYMM-like operation: `C = alpha * A * B + C` where `A` is the implicitly calculated kernel matrix using the @p kernel_function (never actually stored, reducing the amount of needed global memory), @p B and @p C are matrices, and @p alpha is a scalar.
  * @tparam ExecutionSpace the Kokkos::ExecutionSpace used to execute the kernel
- * @tparam target the target platform
  * @tparam kernel_function the type of the used kernel function
  * @tparam Args the types of the parameters necessary for the specific kernel function
  */
-template <typename ExecutionSpace, target_platform target, kernel_function_type kernel_function, typename... Args>
+template <typename ExecutionSpace, kernel_function_type kernel_function, typename... Args>
 class device_kernel_assembly_symm {
     /**
      * @brief The type of the used Kokkos::View.
