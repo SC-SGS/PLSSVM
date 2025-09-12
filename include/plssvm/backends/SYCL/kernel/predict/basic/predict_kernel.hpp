@@ -73,7 +73,7 @@ class device_kernel_w_linear {
 
         // calculate the indices used in the current thread
         const auto global_feature_idx = idx.get_id(1) + grid_x_offset_ * THREAD_BLOCK_SIZE_uz;  // num_features
-        const auto global_class_idx = idx.get_id(0) + grid_x_offset_ * THREAD_BLOCK_SIZE_uz;    // num_classes
+        const auto global_class_idx = idx.get_id(0) + grid_y_offset_ * THREAD_BLOCK_SIZE_uz;    // num_classes
 
         // be sure to not perform out-of-bounds accesses
         if (global_feature_idx < num_features_ && global_class_idx < num_classes_) {
@@ -148,7 +148,7 @@ class device_kernel_predict_linear {
 
         // calculate the indices used in the current work-item
         const auto global_pp_idx = idx.get_id(1) + grid_x_offset_ * THREAD_BLOCK_SIZE_uz;     // num_predict_points
-        const auto global_class_idx = idx.get_id(0) + grid_x_offset_ * THREAD_BLOCK_SIZE_uz;  // num_classes
+        const auto global_class_idx = idx.get_id(0) + grid_y_offset_ * THREAD_BLOCK_SIZE_uz;  // num_classes
 
         // be sure to not perform out-of-bounds accesses
         if (global_pp_idx < num_predict_points_ && global_class_idx < num_classes_) {
