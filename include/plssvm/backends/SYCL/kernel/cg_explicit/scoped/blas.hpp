@@ -13,9 +13,9 @@
 #define PLSSVM_BACKENDS_SYCL_CG_EXPLICIT_SCOPED_BLAS_HPP_
 #pragma once
 
-#include "plssvm/backends/SYCL/data_parallel_kernels.hpp"    // plssvm::sycl::data_parallel_kernel
-#include "plssvm/constants.hpp"                              // plssvm::{real_type, THREAD_BLOCK_SIZE, INTERNAL_BLOCK_SIZE, PADDING_SIZE}
-#include "plssvm/target_platforms.hpp"                       // plssvm::target_platform
+#include "plssvm/backends/SYCL/data_parallel_kernels.hpp"  // plssvm::sycl::data_parallel_kernel
+#include "plssvm/constants.hpp"                            // plssvm::{real_type, THREAD_BLOCK_SIZE, INTERNAL_BLOCK_SIZE, PADDING_SIZE}
+#include "plssvm/target_platforms.hpp"                     // plssvm::target_platform
 
 #include "sycl/sycl.hpp"  // sycl::memory_environment, sycl::require_local_mem, sycl::require_private_mem, sycl::distribute_items_and_wait, sycl::s_item
 
@@ -74,8 +74,18 @@ class device_kernel_symm {
                                    ::sycl::require_local_mem<real_type[THREAD_BLOCK_SIZE][INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE]>(),  // B_cache
 
                                    // create two local memory arrays used for caching
-                                   ::sycl::require_private_mem<std::array<std::array<real_type, INTERNAL_BLOCK_SIZE>, INTERNAL_BLOCK_SIZE>>({}),
+                                   ::sycl::require_private_mem<std::array<std::array<real_type, INTERNAL_BLOCK_SIZE>, INTERNAL_BLOCK_SIZE>>(),
                                    [&](auto &A_cache, auto &B_cache, auto &temp) {
+                                       // initialize private temp matrix to zero
+                                       ::sycl::distribute_items_and_wait(group, [&](::sycl::s_item<2> idx) {
+                                           // initialize private temp matrix to zero
+                                           for (unsigned internal_i = 0; internal_i < INTERNAL_BLOCK_SIZE; ++internal_i) {
+                                               for (unsigned internal_j = 0; internal_j < INTERNAL_BLOCK_SIZE; ++internal_j) {
+                                                   temp(idx)[internal_i][internal_j] = real_type{ 0.0 };
+                                               }
+                                           }
+                                       });
+
                                        // iterate over all values using blocking to be able to cache them for faster memory accesses
                                        for (std::size_t dim_block = 0; dim_block < (num_rows_ - device_row_offset_); dim_block += static_cast<std::size_t>(THREAD_BLOCK_SIZE)) {
                                            // load data into local memory
@@ -251,8 +261,18 @@ class device_kernel_symm_mirror {
                                    ::sycl::require_local_mem<real_type[THREAD_BLOCK_SIZE][INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE]>(),  // B_cache
 
                                    // create a private memory array used for internal caching
-                                   ::sycl::require_private_mem<std::array<std::array<real_type, INTERNAL_BLOCK_SIZE>, INTERNAL_BLOCK_SIZE>>({}),
+                                   ::sycl::require_private_mem<std::array<std::array<real_type, INTERNAL_BLOCK_SIZE>, INTERNAL_BLOCK_SIZE>>(),
                                    [&](auto &A_cache, auto &B_cache, auto &temp) {
+                                       // initialize private temp matrix to zero
+                                       ::sycl::distribute_items_and_wait(group, [&](::sycl::s_item<2> idx) {
+                                           // initialize private temp matrix to zero
+                                           for (unsigned internal_i = 0; internal_i < INTERNAL_BLOCK_SIZE; ++internal_i) {
+                                               for (unsigned internal_j = 0; internal_j < INTERNAL_BLOCK_SIZE; ++internal_j) {
+                                                   temp(idx)[internal_i][internal_j] = real_type{ 0.0 };
+                                               }
+                                           }
+                                       });
+
                                        // iterate over the remaining values using blocking to be able to cache them for faster memory accesses
                                        for (std::size_t dim_block = 0; dim_block < device_num_rows_; dim_block += static_cast<std::size_t>(THREAD_BLOCK_SIZE)) {
                                            // load data into local memory

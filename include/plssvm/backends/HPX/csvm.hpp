@@ -29,6 +29,7 @@
 
 #include <cstddef>      // std::size_t
 #include <memory>       // std::addressof
+#include <optional>     // std::optional
 #include <type_traits>  // std::true_type
 #include <utility>      // std::forward, std::pair
 #include <vector>       // std::vector
@@ -99,6 +100,10 @@ class csvm : virtual public ::plssvm::csvm {
      * @copydoc plssvm::csvm::get_max_mem_alloc_size
      */
     [[nodiscard]] std::vector<::plssvm::detail::memory_size> get_max_mem_alloc_size() const final;
+    /**
+     * @copydoc plssvm::csvm::get_local_memory
+     */
+    [[nodiscard]] std::vector<std::optional<::plssvm::detail::memory_size>> get_local_memory() const final;
 
     //***************************************************//
     //                        fit                        //

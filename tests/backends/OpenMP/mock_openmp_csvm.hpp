@@ -33,6 +33,7 @@ class mock_openmp_csvm final : public plssvm::openmp::csvm {
     using base_type::assemble_kernel_matrix;
     using base_type::blas_level_3;
     using base_type::get_device_memory;
+    using base_type::get_local_memory;
     using base_type::num_available_devices;
 
     using base_type::predict_values;

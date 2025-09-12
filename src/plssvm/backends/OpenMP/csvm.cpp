@@ -38,14 +38,15 @@
 
 #include "fmt/format.h"  // fmt::format
 
-#include <chrono>   // std::chrono::{steady_clock, duration_cast}
-#include <cmath>    // std::fma
-#include <cstddef>  // std::size_t
-#include <cstring>  // std::memset
-#include <tuple>    // std::tuple, std::make_tuple
-#include <utility>  // std::pair, std::make_pair, std::move
-#include <variant>  // std::get
-#include <vector>   // std::vector
+#include <chrono>    // std::chrono::{steady_clock, duration_cast}
+#include <cmath>     // std::fma
+#include <cstddef>   // std::size_t
+#include <cstring>   // std::memset
+#include <optional>  // std::optional, std::nullopt
+#include <tuple>     // std::tuple, std::make_tuple
+#include <utility>   // std::pair, std::make_pair, std::move
+#include <variant>   // std::get
+#include <vector>    // std::vector
 
 namespace plssvm::openmp {
 
@@ -86,11 +87,15 @@ csvm::csvm(const target_platform target) {
 csvm::~csvm() = default;
 
 std::vector<::plssvm::detail::memory_size> csvm::get_device_memory() const {
-    return { ::plssvm::detail::get_system_memory() };
+    return std::vector<::plssvm::detail::memory_size>(this->num_available_devices(), ::plssvm::detail::get_system_memory());
 }
 
 std::vector<::plssvm::detail::memory_size> csvm::get_max_mem_alloc_size() const {
     return this->get_device_memory();
+}
+
+std::vector<std::optional<::plssvm::detail::memory_size>> csvm::get_local_memory() const {
+    return std::vector<std::optional<::plssvm::detail::memory_size>>(this->num_available_devices(), std::nullopt);
 }
 
 //***************************************************//
