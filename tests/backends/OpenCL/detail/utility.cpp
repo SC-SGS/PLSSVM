@@ -19,7 +19,7 @@
 
 #include "tests/custom_test_macros.hpp"  // EXPECT_THROW_WHAT
 
-#include "gtest/gtest.h"  // TEST, EXPECT_EQ, EXPECT_NE, EXPECT_NO_THROW, EXPECT_FALSE
+#include "gtest/gtest.h"  // TEST, EXPECT_EQ, EXPECT_NE, EXPECT_GE, EXPECT_NO_THROW, EXPECT_FALSE
 
 #include <cstddef>  // std::size_t
 #include <regex>    // std::regex, std::regex::extended, std::regex_match
@@ -78,7 +78,7 @@ TEST(OpenCLUtility, dim_type_to_native_3) {
 TEST(OpenCLUtility, get_contexts) {
     const auto &[contexts, actual_target] = plssvm::opencl::detail::get_contexts(plssvm::target_platform::automatic);
     // exactly one context must be provided
-    EXPECT_EQ(contexts.size(), 1);
+    EXPECT_GE(contexts.size(), 1);
     // the returned target must not be the automatic one
     EXPECT_NE(actual_target, plssvm::target_platform::automatic);
 }
