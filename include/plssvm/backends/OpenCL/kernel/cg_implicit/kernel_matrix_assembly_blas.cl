@@ -57,8 +57,8 @@ __kernel void device_kernel_assembly_symm(const real_type alpha, const __global 
 
         // perform the feature reduction calculation
         for (ulong feature = 0; feature < num_features; ++feature) {
-            temp += PLSSVM_OPENCL_FEATURE_REDUCE_FUNCTION(data[global_i_idx * num_features + feature],   // AoS
-                                                          data[global_j_idx * num_features + feature]);  // AoS
+            temp += PLSSVM_OPENCL_FEATURE_REDUCE_FUNCTION(data[feature * (num_rows + (ulong) 1) + global_i_idx],   // SoA
+                                                          data[feature * (num_rows + (ulong) 1) + global_j_idx]);  // SoA
         }
 
         // apply the final kernel function
@@ -72,8 +72,8 @@ __kernel void device_kernel_assembly_symm(const real_type alpha, const __global 
         //     calculate C += alpha * temp * B for the UPPER triangular matrix     //
         //*************************************************************************//
         for (ulong class_idx = 0; class_idx < num_classes; ++class_idx) {
-            const real_type B_cache = alpha * B[class_idx * num_rows + global_i_idx];  // AoS
-            atomicAdd(&C[class_idx * num_rows + global_j_idx], temp * B_cache);        // AoS
+            const real_type B_cache = alpha * B[global_i_idx * num_classes + class_idx];  // SoA
+            atomicAdd(&C[global_j_idx * num_classes + class_idx], temp * B_cache);        // SoA
         }
 
         // set potential diagonal entries in temp to 0.0 such that we don't apply the main diagonal twice to C
@@ -85,8 +85,8 @@ __kernel void device_kernel_assembly_symm(const real_type alpha, const __global 
         //     calculate C += alpha * temp * B for the LOWER triangular matrix     //
         //*************************************************************************//
         for (ulong class_idx = 0; class_idx < num_classes; ++class_idx) {
-            const real_type B_cache = alpha * B[class_idx * num_rows + global_j_idx];  // AoS
-            atomicAdd(&C[class_idx * num_rows + global_i_idx], temp * B_cache);        // AoS
+            const real_type B_cache = alpha * B[global_j_idx * num_classes + class_idx];  // SoA
+            atomicAdd(&C[global_i_idx * num_classes + class_idx], temp * B_cache);        // SoA
         }
     }
 }

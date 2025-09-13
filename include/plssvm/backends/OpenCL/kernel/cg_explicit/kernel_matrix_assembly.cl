@@ -48,8 +48,8 @@ __kernel void device_kernel_assembly(__global real_type *kernel_matrix, const __
 
         // perform the feature reduction calculation
         for (ulong feature = 0; feature < num_features; ++feature) {
-            temp += PLSSVM_OPENCL_FEATURE_REDUCE_FUNCTION(data[global_i_idx * num_features + feature],   // AoS
-                                                          data[global_j_idx * num_features + feature]);  // AoS
+            temp += PLSSVM_OPENCL_FEATURE_REDUCE_FUNCTION(data[feature * (num_rows + (ulong) 1) + global_i_idx],   // SoA
+                                                          data[feature * (num_rows + (ulong) 1) + global_j_idx]);  // SoA
         }
 
         // apply the final kernel function

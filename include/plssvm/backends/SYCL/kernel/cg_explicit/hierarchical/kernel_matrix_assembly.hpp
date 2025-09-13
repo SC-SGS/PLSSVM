@@ -93,8 +93,8 @@ class device_kernel_assembly {
 
                 // perform the feature reduction calculation
                 for (std::size_t feature = 0; feature < num_features_; ++feature) {
-                    temp += detail::feature_reduce<kernel_function>(data_[global_i_idx * num_features_ + feature],   // AoS
-                                                                    data_[global_j_idx * num_features_ + feature]);  // AoS
+                    temp += detail::feature_reduce<kernel_function>(data_[feature * (num_rows_ + std::size_t{ 1 }) + global_i_idx],   // SoA
+                                                                    data_[feature * (num_rows_ + std::size_t{ 1 }) + global_j_idx]);  // SoA
                 }
 
                 // apply the final kernel function

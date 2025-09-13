@@ -105,8 +105,8 @@ class device_kernel_assembly_symm {
 
                                                // perform the feature reduction calculation
                                                for (std::size_t feature = 0; feature < num_features_; ++feature) {
-                                                   temp += detail::feature_reduce<kernel_function>(data_[global_i_idx * num_features_ + feature],   // AoS
-                                                                                                   data_[global_j_idx * num_features_ + feature]);  // AoS
+                                                   temp += detail::feature_reduce<kernel_function>(data_[feature * (num_rows_ + std::size_t{ 1 }) + global_i_idx],   // SoA
+                                                                                                   data_[feature * (num_rows_ + std::size_t{ 1 }) + global_j_idx]);  // SoA
                                                }
 
                                                // apply the final kernel function
@@ -120,8 +120,8 @@ class device_kernel_assembly_symm {
                                                //     calculate C += alpha * temp * B for the UPPER triangular matrix     //
                                                //*************************************************************************//
                                                for (std::size_t class_idx = 0; class_idx < num_classes_; ++class_idx) {
-                                                   const real_type B_cache = alpha_ * B_[class_idx * num_rows_ + global_i_idx];                 // AoS
-                                                   detail::atomic_op<real_type>{ C_[class_idx * num_rows_ + global_j_idx] } += temp * B_cache;  // AoS
+                                                   const real_type B_cache = alpha_ * B_[global_i_idx * num_classes_ + class_idx];                 // SoA
+                                                   detail::atomic_op<real_type>{ C_[global_j_idx * num_classes_ + class_idx] } += temp * B_cache;  // SoA
                                                }
 
                                                // set potential diagonal entries in temp to 0.0 such that we don't apply the main diagonal twice to C
@@ -133,8 +133,8 @@ class device_kernel_assembly_symm {
                                                //     calculate C += alpha * temp * B for the LOWER triangular matrix     //
                                                //*************************************************************************//
                                                for (std::size_t class_idx = 0; class_idx < num_classes_; ++class_idx) {
-                                                   const real_type B_cache = alpha_ * B_[class_idx * num_rows_ + global_j_idx];                 // AoS
-                                                   detail::atomic_op<real_type>{ C_[class_idx * num_rows_ + global_i_idx] } += temp * B_cache;  // AoS
+                                                   const real_type B_cache = alpha_ * B_[global_j_idx * num_classes_ + class_idx];                 // SoA
+                                                   detail::atomic_op<real_type>{ C_[global_i_idx * num_classes_ + class_idx] } += temp * B_cache;  // SoA
                                                }
                                            }
                                        });

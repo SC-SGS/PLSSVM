@@ -48,8 +48,8 @@ __kernel void PLSSVM_DEVICE_KERNEL_PREDICT_NAME(__global real_type *prediction, 
 
         // perform the feature reduction calculation
         for (ulong feature = 0; feature < num_features; ++feature) {
-            temp += PLSSVM_OPENCL_FEATURE_REDUCE_FUNCTION(support_vectors[global_sv_idx * num_features + feature],  // AoS
-                                                          predict_points[global_pp_idx * num_features + feature]);  // AoS
+            temp += PLSSVM_OPENCL_FEATURE_REDUCE_FUNCTION(support_vectors[feature * num_sv + global_sv_idx],              // SoA
+                                                          predict_points[feature * num_predict_points + global_pp_idx]);  // SoA
         }
 
         // update temp using the respective kernel function

@@ -94,11 +94,11 @@ class device_kernel_symm {
                                                        A_cache = A_[device_global_j_idx * (num_rows_ - device_row_offset_) + dim - device_global_j_idx * (device_global_j_idx + std::size_t{ 1 }) / std::size_t{ 2 }];  // SoA, upper triangular matrix only
                                                    }
                                                    // perform the dot product calculation
-                                                   temp += A_cache * B_[global_i_idx * num_rows_ + device_row_offset_ + dim];  // AoS
+                                                   temp += A_cache * B_[(device_row_offset_ + dim) * num_rhs_ + global_i_idx];  // SoA
                                                }
 
                                                // apply the (partial) BLAS operation and update C
-                                               C_[global_i_idx * num_rows_ + global_j_idx] = alpha_ * temp + beta_ * C_[global_i_idx * num_rows_ + global_j_idx];  // AoS
+                                               C_[global_j_idx * num_rhs_ + global_i_idx] = alpha_ * temp + beta_ * C_[global_j_idx * num_rhs_ + global_i_idx];  // SoA
                                            }
                                        });
                                    });
@@ -189,11 +189,11 @@ class device_kernel_symm_mirror {
                                                for (std::size_t dim = 0; dim < device_num_rows_; ++dim) {
                                                    // perform the dot product calculation
                                                    temp += A_[dim * (num_rows_ - device_row_offset_) - (dim - std::size_t{ 1 }) * dim / std::size_t{ 2 } + device_num_rows_ - dim + partial_global_j_idx] *  // SoA, upper triangular matrix only
-                                                           B_[global_i_idx * num_rows_ + device_row_offset_ + dim];                                                                                          // AoS
+                                                           B_[(device_row_offset_ + dim) * num_rhs_ + global_i_idx];                                                                                         // SoA
                                                }
 
                                                // apply the (remaining) BLAS operation and update C
-                                               C_[global_i_idx * num_rows_ + global_j_idx] = alpha_ * temp + beta_ * C_[global_i_idx * num_rows_ + global_j_idx];  // AoS
+                                               C_[global_j_idx * num_rhs_ + global_i_idx] = alpha_ * temp + beta_ * C_[global_j_idx * num_rhs_ + global_i_idx];  // SoA
                                            }
                                        });
                                    });
@@ -264,7 +264,7 @@ class device_kernel_inplace_matrix_add {
                                            const auto global_j_idx = blockIdx_x * blockDim_x + threadIdx_x;  // num_rhs
 
                                            if (global_i_idx < num_rows_ && global_j_idx < num_cols_) {
-                                               lhs_[global_j_idx * num_rows_ + global_i_idx] += rhs_[global_j_idx * num_rows_ + global_i_idx];  // AoS
+                                               lhs_[global_i_idx * num_cols_ + global_j_idx] += rhs_[global_i_idx * num_cols_ + global_j_idx];  // SoA
                                            }
                                        });
                                    });
@@ -329,7 +329,7 @@ class device_kernel_inplace_matrix_scale {
                                            const auto global_j_idx = blockIdx_x * blockDim_x + threadIdx_x;  // num_rhs
 
                                            if (global_i_idx < num_rows_ && global_j_idx < num_cols_) {
-                                               lhs_[global_j_idx * num_rows_ + global_i_idx] *= scale_;  // AoS
+                                               lhs_[global_i_idx * num_cols_ + global_j_idx] *= scale_;  // SoA
                                            }
                                        });
                                    });

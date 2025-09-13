@@ -95,7 +95,7 @@ __global__ void device_kernel_assembly_symm(const real_type alpha, const real_ty
         //     calculate C += alpha * temp * B for the LOWER triangular matrix     //
         //*************************************************************************//
         for (std::size_t class_idx = 0; class_idx < num_classes; ++class_idx) {
-            const real_type B_cache = alpha * B[global_j_idx * num_classes + class_idx];  // SOA
+            const real_type B_cache = alpha * B[global_j_idx * num_classes + class_idx];  // SoA
             atomicAdd(&C[global_i_idx * num_classes + class_idx], temp * B_cache);        // SoA
         }
     }

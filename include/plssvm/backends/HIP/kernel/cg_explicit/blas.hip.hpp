@@ -65,11 +65,11 @@ __global__ void device_kernel_symm(const std::size_t num_rows, const std::size_t
                 A_cache = A[device_global_j_idx * (num_rows - device_row_offset) + dim - device_global_j_idx * (device_global_j_idx + std::size_t{ 1 }) / std::size_t{ 2 }];  // SoA, upper triangular matrix only
             }
             // perform the dot product calculation
-            temp += A_cache * B[global_i_idx * num_rows + device_row_offset + dim];  // AoS
+            temp += A_cache * B[(device_row_offset + dim) * num_rhs + global_i_idx];  // SoA
         }
 
         // apply the (partial) BLAS operation and update C
-        C[global_i_idx * num_rows + global_j_idx] = alpha * temp + beta * C[global_i_idx * num_rows + global_j_idx];  // AoS
+        C[global_j_idx * num_rhs + global_i_idx] = alpha * temp + beta * C[global_j_idx * num_rhs + global_i_idx];  // SoA
     }
 }
 
@@ -111,11 +111,11 @@ __global__ void device_kernel_symm_mirror(const std::size_t num_rows, const std:
         for (std::size_t dim = 0; dim < device_num_rows; ++dim) {
             // perform the dot product calculation
             temp += A[dim * (num_rows - device_row_offset) - (dim - std::size_t{ 1 }) * dim / std::size_t{ 2 } + device_num_rows - dim + partial_global_j_idx] *  // SoA, upper triangular matrix only
-                    B[global_i_idx * num_rows + device_row_offset + dim];                                                                                         // AoS
+                    B[(device_row_offset + dim) * num_rhs + global_i_idx];                                                                                        // SoA
         }
 
         // apply the (remaining) BLAS operation and update C
-        C[global_i_idx * num_rows + global_j_idx] = alpha * temp + beta * C[global_i_idx * num_rows + global_j_idx];  // AoS
+        C[global_j_idx * num_rhs + global_i_idx] = alpha * temp + beta * C[global_j_idx * num_rhs + global_i_idx];  // SoA
     }
 }
 
@@ -142,7 +142,7 @@ __global__ void device_kernel_inplace_matrix_add(const std::size_t num_rows, con
     const auto global_j_idx = blockIdx_y * blockDim_y + threadIdx_y;  // num_rhs
 
     if (global_i_idx < num_rows && global_j_idx < num_cols) {
-        lhs[global_j_idx * num_rows + global_i_idx] += rhs[global_j_idx * num_rows + global_i_idx];  // AoS
+        lhs[global_i_idx * num_cols + global_j_idx] += rhs[global_i_idx * num_cols + global_j_idx];  // SoA
     }
 }
 
@@ -169,7 +169,7 @@ __global__ void device_kernel_inplace_matrix_scale(const std::size_t num_rows, c
     const auto global_j_idx = blockIdx_y * blockDim_y + threadIdx_y;  // num_rhs
 
     if (global_i_idx < num_rows && global_j_idx < num_cols) {
-        lhs[global_j_idx * num_rows + global_i_idx] *= scale;  // AoS
+        lhs[global_i_idx * num_cols + global_j_idx] *= scale;  // SoA
     }
 }
 

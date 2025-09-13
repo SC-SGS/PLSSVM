@@ -57,10 +57,10 @@ __global__ void device_kernel_w_linear(real_type *w, const real_type *alpha, con
         // perform the dot product calculation
         for (std::size_t sv = 0; sv < device_num_sv; ++sv) {
             temp += alpha[global_class_idx * num_sv + sv + device_sv_offset] *  // AoS
-                    support_vectors[sv * num_features + global_feature_idx];    // AoS
+                    support_vectors[global_feature_idx * device_num_sv + sv];   // SoA
         }
 
-        w[global_class_idx * num_features + global_feature_idx] = temp;  // AoS
+        w[global_feature_idx * num_classes + global_class_idx] = temp;  // SoA
     }
 }
 
@@ -95,8 +95,8 @@ __global__ void device_kernel_predict_linear(real_type *prediction, const real_t
 
         // perform the dot product calculation
         for (std::size_t feature = 0; feature < num_features; ++feature) {
-            temp += w[global_class_idx * num_features + feature] *           // AoS
-                    predict_points[global_pp_idx * num_features + feature];  // AoS
+            temp += w[feature * num_classes + global_class_idx] *                  // SoA
+                    predict_points[feature * num_predict_points + global_pp_idx];  // SoA
         }
 
         prediction[global_pp_idx * num_classes + global_class_idx] = temp - rho[global_class_idx];
@@ -140,8 +140,8 @@ __global__ void device_kernel_predict(real_type *prediction, const real_type *al
 
         // perform the feature reduction calculation
         for (std::size_t feature = 0; feature < num_features; ++feature) {
-            temp += detail::feature_reduce<kernel_function>(support_vectors[global_sv_idx * num_features + feature],  // AoS
-                                                            predict_points[global_pp_idx * num_features + feature]);  // AoS
+            temp += detail::feature_reduce<kernel_function>(support_vectors[feature * num_sv + global_sv_idx],              // SoA
+                                                            predict_points[feature * num_predict_points + global_pp_idx]);  // SoA
         }
 
         // update temp using the respective kernel function
