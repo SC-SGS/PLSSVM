@@ -43,7 +43,7 @@ class [[nodiscard]] pinned_memory final : public ::plssvm::detail::host_pinned_m
      */
     template <layout_type layout>
     explicit pinned_memory(const matrix<T, layout> &matr) :
-        pinned_memory{ matr.data(), matr.size_padded() } { }
+        pinned_memory{ matr.data(), matr.size() } { }
 
     /**
      * @brief Register the memory managed by the vector @p vec to use pinned memory.
