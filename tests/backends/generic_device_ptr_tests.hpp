@@ -52,6 +52,23 @@ TYPED_TEST_P(DevicePtr, default_construct) {
     EXPECT_TRUE(ptr.empty());
 }
 
+TYPED_TEST_P(DevicePtr, construct_explicit_empty) {
+    using test_type = typename TestFixture::fixture_test_type;
+    using device_ptr_type = typename test_type::device_ptr_type;
+    using queue_type = typename test_type::queue_type;
+    const queue_type &queue = test_type::default_queue();
+
+    // construct device_ptr
+    const device_ptr_type ptr{ plssvm::shape{ 0, 0 }, queue };
+
+    // empty data
+    EXPECT_FALSE(static_cast<bool>(ptr));
+    EXPECT_EQ(ptr.get(), typename device_ptr_type::device_pointer_type{});
+    EXPECT_EQ(ptr.size(), 0);
+    EXPECT_EQ(ptr.shape(), (plssvm::shape{ 0, 0 }));
+    EXPECT_TRUE(ptr.empty());
+}
+
 TYPED_TEST_P(DevicePtr, construct_size) {
     using test_type = typename TestFixture::fixture_test_type;
     using device_ptr_type = typename test_type::device_ptr_type;
@@ -798,6 +815,7 @@ TYPED_TEST_P(DevicePtr, copy_device_ptr_to_other_device_with_count) {
 
 REGISTER_TYPED_TEST_SUITE_P(DevicePtr,
                             default_construct,
+                            construct_explicit_empty,
                             construct_size,
                             construct_shape,
                             move_construct,

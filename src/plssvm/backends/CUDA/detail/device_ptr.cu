@@ -38,7 +38,7 @@ device_ptr<T>::device_ptr(const plssvm::shape shape, const queue_type device) :
     PLSSVM_CUDA_ERROR_CHECK(cudaMalloc(&data_, this->size() * sizeof(value_type)))
 
     // only non-empty pointers must be memset in the constructor
-    if (!this->empty()) {
+    if (this->size() != std::size_t{ 0 }) {
         this->memset(0);
     }
 }

@@ -331,7 +331,7 @@ __global__ void device_kernel_predict(real_type *prediction, const real_type *al
                     if (blockIdx_y == std::size_t{ 0 }) {
                         out_cache[threadIdx.y][internal * THREAD_BLOCK_SIZE + threadIdx.x] = -rho[class_block + threadIdx_y];
                     } else {
-                        out_cache[threadIdx.y][internal * THREAD_BLOCK_SIZE + threadIdx.x] = real_type{ 0.0 };
+                        out_cache[threadIdx.y][internal * THREAD_BLOCK_SIZE + threadIdx.x] = real_type{ 0.0 };  // TODO: remove else condition??? -> also in other backends -> maybe also in other opt level?!
                     }
                 }
             }

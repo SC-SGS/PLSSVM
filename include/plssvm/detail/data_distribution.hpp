@@ -13,6 +13,7 @@
 #define PLSSVM_DETAIL_DATA_DISTRIBUTION_HPP_
 #pragma once
 
+#include "plssvm/constants.hpp"           // plssvm::real_type, plssvm::THREAD_BLOCK_SIZE, plssvm::INTERNAL_BLOCK_SIZE
 #include "plssvm/detail/memory_size.hpp"  // plssvm:detail::memory_size
 #include "plssvm/mpi/communicator.hpp"    // plssvm::mpi::communicator
 
@@ -88,6 +89,14 @@ class data_distribution {
      * @return the total number of places across all MPI ranks (`[[nodiscard]]`)
      */
     [[nodiscard]] std::size_t total_num_places() const noexcept;
+
+    /**
+     * @brief Get the total amount of local memory needed.
+     * @return the total amount of local memory (`[[nodiscard]]`)
+     */
+    [[nodiscard]] constexpr static memory_size maximum_local_memory_needed() noexcept {
+        return memory_size{ 2L * THREAD_BLOCK_SIZE * THREAD_BLOCK_SIZE * sizeof(real_type) };
+    }
 
   protected:
     /**

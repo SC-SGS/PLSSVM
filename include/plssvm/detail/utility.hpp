@@ -19,10 +19,12 @@
 #include <algorithm>    // std::remove_if, std::find
 #include <cstddef>      // std::size_t
 #include <iterator>     // std::distance
+#include <optional>     // std::optional
 #include <string>       // std::string
 #include <string_view>  // std::string_view
 #include <tuple>        // std::forward_as_tuple, std::get
 #include <type_traits>  // std::underlying_type_t, std::is_enum_v
+#include <vector>       // std::vector
 
 /**
  * @brief Helper function for an extra round of macro expansion inside the PLSSVM_IS_DEFINED macro.
@@ -138,6 +140,14 @@ template <typename Container, typename T, PLSSVM_REQUIRES(is_container_v<Contain
         return c.count(val) > typename Container::size_type{ 0 };
     }
 }
+
+/**
+ * @brief Check whether the maximum needed local memory, as returned by `plssvm::detail::data_distribution::maximum_local_memory_needed()`,
+ *        does not exceed the available local memory per place provided by @p local_memory.
+ * @param[in] local_memory the available local memory per place; if the respective backend has no notion of local memory, the value is a `std::nullopt`
+ * @throws plssvm::kernel_launch_resources if not enough local memory is available
+ */
+void check_local_memory_usage(const std::vector<std::optional<memory_size>> &local_memory);
 
 /**
  * @brief Return the current date time in the format "YYYY-MM-DD hh:mm:ss".
