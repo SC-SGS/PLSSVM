@@ -30,6 +30,10 @@
  * @param[in] PLSSVM_OPENCL_KERNEL_FUNCTION_PARAMETER_LIST a placeholder that is used to string replace the correct kernel parameter (attention: no comma!; Args... only added for Doxygen)
  */
 __kernel void PLSSVM_DEVICE_KERNEL_PREDICT_NAME(__global real_type *prediction, const __global real_type *alpha, const __global real_type *rho, const __global real_type *support_vectors, const __global real_type *predict_points, const ulong num_classes, const ulong num_sv, const ulong num_predict_points, const ulong num_features, const ulong grid_x_offset, const ulong grid_y_offset PLSSVM_OPENCL_KERNEL_FUNCTION_PARAMETER_LIST) {
+    // cast values to 32-bit unsigned int values to prevent implicit conversions
+    const uint local_id_0 = get_local_id(0);
+    const uint local_id_1 = get_local_id(1);
+
     // cast all values to 64-bit unsigned long long to prevent potential 32-bit overflows
     const ulong threadIdx_x = get_local_id(0);                 // current work-item in work-group x-dimension
     const ulong threadIdx_y = get_local_id(1);                 // current work-item in work-group y-dimension
@@ -38,33 +42,91 @@ __kernel void PLSSVM_DEVICE_KERNEL_PREDICT_NAME(__global real_type *prediction, 
     const ulong blockIdx_x = get_group_id(0) + grid_x_offset;  // current work-group in global range x-dimension + offsets if the global range is too large
     const ulong blockIdx_y = get_group_id(1) + grid_y_offset;  // current work-group in global range y-dimension + offsets if the global range is too large
 
-    // calculate the indices used in the current work-item
-    const ulong global_pp_idx = blockIdx_x * blockDim_x + threadIdx_x;  // num_predict_points
-    const ulong global_sv_idx = blockIdx_y * blockDim_y + threadIdx_y;  // num_support_vectors
+    // create two local memory arrays used for caching
+    __local real_type cache_one[THREAD_BLOCK_SIZE * THREAD_BLOCK_SIZE];
+    __local real_type cache_two[THREAD_BLOCK_SIZE * THREAD_BLOCK_SIZE];
 
-    // be sure to not perform out-of-bounds accesses
-    if (global_sv_idx < num_sv && global_pp_idx < num_predict_points) {
-        real_type temp = 0.0;
+    real_type temp = 0.0;
 
-        // perform the feature reduction calculation
-        for (ulong feature = 0; feature < num_features; ++feature) {
-            temp += PLSSVM_OPENCL_FEATURE_REDUCE_FUNCTION(support_vectors[feature * num_sv + global_sv_idx],              // SoA
-                                                          predict_points[feature * num_predict_points + global_pp_idx]);  // SoA
+    {
+        // reinterpret the local memory arrays to be of shape [THREAD_BLOCK_SIZE][THREAD_BLOCK_SIZE]
+         __local real_type(*pp_cache)[THREAD_BLOCK_SIZE] = (__local real_type(*)[THREAD_BLOCK_SIZE]) cache_one;
+         __local real_type(*sv_cache)[THREAD_BLOCK_SIZE] = (__local real_type(*)[THREAD_BLOCK_SIZE]) cache_two;
+
+        // calculate the indices used in the current work-item, pays attention to coalesced memory accesses
+        const ulong global_pp_idx_linear = blockIdx_x * blockDim_x + threadIdx_x;  // num_predict_points
+        const ulong global_sv_idx_linear = blockIdx_y * blockDim_y + threadIdx_x;  // num_support_vectors
+
+        // iterate over all features using blocking to be able to cache them for faster memory accesses
+        for (ulong feature_block = 0; feature_block < num_features; feature_block += THREAD_BLOCK_SIZE_uz) {
+            // zero-out shared memory
+            pp_cache[local_id_1][local_id_0] = (real_type) 0.0;
+            sv_cache[local_id_1][local_id_0] = (real_type) 0.0;
+
+            // load data into local memory
+            if (feature_block + threadIdx_y < num_features) {
+                if (global_pp_idx_linear < num_predict_points) {
+                    pp_cache[local_id_1][local_id_0] = predict_points[(feature_block + threadIdx_y) * num_predict_points + global_pp_idx_linear];  // SoA
+                }
+                if (global_sv_idx_linear < num_sv) {
+                    sv_cache[local_id_1][local_id_0] = support_vectors[(feature_block + threadIdx_y) * num_sv + global_sv_idx_linear];  // SoA
+                }
+            }
+            barrier(CLK_LOCAL_MEM_FENCE);  // wait until all work-items loaded their part of the data
+
+            // perform the feature reduction calculation, the feature is the slowest moving index
+            for (uint feature = 0; feature < THREAD_BLOCK_SIZE; ++feature) {
+                temp += PLSSVM_OPENCL_FEATURE_REDUCE_FUNCTION(sv_cache[feature][local_id_1],
+                                                              pp_cache[feature][local_id_0]);
+            }
+            barrier(CLK_LOCAL_MEM_FENCE);  // wait until all work-items performed their part of the calculations
         }
+    }
 
-        // update temp using the respective kernel function
-        temp = PLSSVM_OPENCL_APPLY_KERNEL_FUNCTION(temp PLSSVM_OPENCL_KERNEL_FUNCTION_PARAMETER);
+    // update temp using the respective kernel function
+    temp = PLSSVM_OPENCL_APPLY_KERNEL_FUNCTION(temp PLSSVM_OPENCL_KERNEL_FUNCTION_PARAMETER);
 
-        // iterate over all classes
-        for (ulong class_idx = 0; class_idx < num_classes; ++class_idx) {
-            real_type out_cache = alpha[class_idx * num_sv + global_sv_idx] * temp;  // AoS
+    {
+        // reinterpret the local memory arrays to be of shape [THREAD_BLOCK_SIZE][THREAD_BLOCK_SIZE]
+         __local real_type(*alpha_cache)[THREAD_BLOCK_SIZE] = (__local real_type(*)[THREAD_BLOCK_SIZE]) cache_one;
+        __local real_type(*out_cache)[THREAD_BLOCK_SIZE] = (__local real_type(*)[THREAD_BLOCK_SIZE]) cache_two;
 
-            // the bias (rho) must only be applied once for all support vectors
-            if (global_sv_idx == (ulong) 0) {
-                out_cache -= rho[class_idx];
+        // calculate the indices used in the current thread
+        const ulong global_pp_idx = blockIdx_x * blockDim_x + threadIdx_x;  // num_predict_points
+        // calculate the indices used in the current thread, pays attention to coalesced memory accesses
+        const ulong global_sv_idx_linear = blockIdx_y * blockDim_y + threadIdx_x;  // num_support_vectors
+
+        // iterate over all classes using blocking to be able to cache them for faster memory accesses
+        for (ulong class_block = 0; class_block < num_classes; class_block += THREAD_BLOCK_SIZE_uz) {
+            // zero-out shared memory
+            alpha_cache[local_id_1][local_id_0] = (real_type) 0.0;
+            out_cache[local_id_1][local_id_0] = (real_type) 0.0;
+
+            // load data into local memory
+            if (class_block + threadIdx_y < num_classes) {
+                if (global_sv_idx_linear < num_sv) {
+                    alpha_cache[local_id_1][local_id_0] = alpha[(class_block + threadIdx_y) * num_sv + global_sv_idx_linear];  // AoS
+                }
+                // the bias (rho) must only be applied once for all support vectors
+                if (blockIdx_y == (ulong) 0) {
+                    out_cache[local_id_1][local_id_0] = -rho[class_block + threadIdx_y];
+                } else {
+                    out_cache[local_id_1][local_id_0] = (real_type) 0.0;
+                }
+            }
+            barrier(CLK_LOCAL_MEM_FENCE);  // wait until all work-items loaded their part of the data
+
+            // calculate intermediate results and store them in local memory
+            for (uint class_idx = 0; class_idx < THREAD_BLOCK_SIZE; ++class_idx) {
+                out_cache[(class_idx + local_id_1) % THREAD_BLOCK_SIZE][local_id_0] += temp * alpha_cache[(class_idx + local_id_1) % THREAD_BLOCK_SIZE][local_id_1];
+                barrier(CLK_LOCAL_MEM_FENCE);  // wait until all work-items performed their part of the calculations
             }
 
-            atomicAdd(&prediction[global_pp_idx * num_classes + class_idx], out_cache);  // AoS
+            // atomically add the intermediate cached results to the prediction
+            if (class_block + threadIdx_y < num_classes && global_pp_idx < num_predict_points) {
+                atomicAdd(&prediction[global_pp_idx * num_classes + class_block + threadIdx_y], out_cache[local_id_1][local_id_0]);  // AoS
+            }
+            barrier(CLK_LOCAL_MEM_FENCE);  // wait until all work-items updated their part of the prediction
         }
     }
 }

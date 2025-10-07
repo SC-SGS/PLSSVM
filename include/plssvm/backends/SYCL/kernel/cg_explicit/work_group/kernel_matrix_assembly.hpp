@@ -53,7 +53,9 @@ class device_kernel_assembly {
      * @param[in] grid_y_offset the offset in y-dimension into the data points if more than one execution grid has to be used
      * @param[in] kernel_function_parameter the parameters necessary to apply the @p kernel_function
      */
-    device_kernel_assembly(::sycl::handler &, real_type *kernel_matrix, const real_type *data, const std::size_t num_rows, const std::size_t device_num_rows, const std::size_t device_row_offset, const std::size_t num_features, const real_type *q, const real_type QA_cost, const real_type cost, const std::size_t grid_x_offset, const std::size_t grid_y_offset, Args... kernel_function_parameter) :
+    device_kernel_assembly(::sycl::handler &cgh, real_type *kernel_matrix, const real_type *data, const std::size_t num_rows, const std::size_t device_num_rows, const std::size_t device_row_offset, const std::size_t num_features, const real_type *q, const real_type QA_cost, const real_type cost, const std::size_t grid_x_offset, const std::size_t grid_y_offset, Args... kernel_function_parameter) :
+        data_i_cache_{ ::sycl::range<2>{ static_cast<std::size_t>(THREAD_BLOCK_SIZE), static_cast<std::size_t>(THREAD_BLOCK_SIZE) }, cgh },
+        data_j_cache_{ ::sycl::range<2>{ static_cast<std::size_t>(THREAD_BLOCK_SIZE), static_cast<std::size_t>(THREAD_BLOCK_SIZE) }, cgh },
         kernel_matrix_{ kernel_matrix },
         data_{ data },
         num_rows_{ num_rows },
@@ -73,6 +75,13 @@ class device_kernel_assembly {
      * @param[in] nd_idx indices representing the current point in the execution space
      */
     void operator()(::sycl::nd_item<2> nd_idx) const {
+        // cast values to 32-bit unsigned int values to prevent implicit conversions
+        const auto local_id_0 = static_cast<unsigned>(nd_idx.get_local_id(0));
+        const auto local_id_1 = static_cast<unsigned>(nd_idx.get_local_id(1));
+
+        // cast all values to 64-bit std::size_t to prevent potential 32-bit overflows
+        constexpr auto THREAD_BLOCK_SIZE_uz = static_cast<std::size_t>(THREAD_BLOCK_SIZE);
+
         const auto threadIdx_x = static_cast<std::size_t>(nd_idx.get_local_id(0));               // current work-item in work-group x-dimension
         const auto threadIdx_y = static_cast<std::size_t>(nd_idx.get_local_id(1));               // current work-item in work-group y-dimension
         const auto blockDim_x = static_cast<std::size_t>(nd_idx.get_local_range(0));             // number of work-items in work-group x-dimension
@@ -80,34 +89,67 @@ class device_kernel_assembly {
         const auto blockIdx_x = static_cast<std::size_t>(nd_idx.get_group(0)) + grid_x_offset_;  // current work-group in global range x-dimension + offsets if the global range is too large
         const auto blockIdx_y = static_cast<std::size_t>(nd_idx.get_group(1)) + grid_y_offset_;  // current work-group in global range y-dimension + offsets if the global range is too large
 
-        // calculate the indices used in the current work-item
-        const auto device_global_i_idx = blockIdx_y * blockDim_y + threadIdx_y;
-        const auto global_i_idx = device_row_offset_ + device_global_i_idx;
-        const auto device_global_j_idx = blockIdx_x * blockDim_x + threadIdx_x;
-        const auto global_j_idx = device_row_offset_ + device_global_j_idx;
-
-        // be sure to not perform out-of-bounds accesses (only using the upper triangular matrix)
-        if (device_global_i_idx < (num_rows_ - device_row_offset_) && device_global_j_idx < device_num_rows_ && global_i_idx >= global_j_idx) {
+        // only calculate the upper triangular matrix -> can't use get_local_id() since all work-items in a work-group must progress further
+        if (blockIdx_y >= blockIdx_x) {
             real_type temp{ 0.0 };
 
-            // perform the feature reduction calculation
-            for (std::size_t feature = 0; feature < num_features_; ++feature) {
-                temp += detail::feature_reduce<kernel_function>(data_[feature * (num_rows_ + std::size_t{ 1 }) + global_i_idx],   // SoA
-                                                                data_[feature * (num_rows_ + std::size_t{ 1 }) + global_j_idx]);  // SoA
+            {
+                // calculate the indices used in the current work-item, pays attention to coalesced memory accesses
+                const auto global_i_idx_linear = device_row_offset_ + blockIdx_y * blockDim_y + threadIdx_y;  // num_rows - device_row_offset
+                const auto global_j_idx_linear = device_row_offset_ + blockIdx_x * blockDim_x + threadIdx_y;  // device_num_rows
+
+                // iterate over all features using blocking to be able to cache them for faster memory accesses
+                for (std::size_t feature_block = 0; feature_block < num_features_; feature_block += THREAD_BLOCK_SIZE_uz) {
+                    // zero-out local memory
+                    data_i_cache_[local_id_0][local_id_1] = real_type{ 0.0 };
+                    data_j_cache_[local_id_0][local_id_1] = real_type{ 0.0 };
+
+                    // load data into local memory
+                    if (feature_block + threadIdx_x < num_features_) {
+                        if (global_i_idx_linear < num_rows_) {
+                            data_i_cache_[local_id_0][local_id_1] = data_[(feature_block + threadIdx_x) * (num_rows_ + std::size_t{ 1 }) + global_i_idx_linear];  // SoA
+                        }
+                        if (global_j_idx_linear < num_rows_) {
+                            data_j_cache_[local_id_0][local_id_1] = data_[(feature_block + threadIdx_x) * (num_rows_ + std::size_t{ 1 }) + global_j_idx_linear];  // SoA
+                        }
+                    }
+                    nd_idx.barrier();  // wait until all work-items loaded their part of the data
+
+                    // perform the feature reduction calculation
+                    for (unsigned feature = 0; feature < THREAD_BLOCK_SIZE; ++feature) {
+                        temp += detail::feature_reduce<kernel_function>(data_i_cache_[feature][local_id_1],
+                                                                        data_j_cache_[feature][local_id_0]);
+                    }
+                    nd_idx.barrier();  // wait until all work-items performed their part of the calculations
+                }
             }
 
-            // apply the final kernel function
-            temp = detail::apply_kernel_function<kernel_function>(temp, kernel_function_parameter_) + QA_cost_ - q_[global_i_idx] - q_[global_j_idx];
-            // apply the cost on the diagonal
-            if (global_i_idx == global_j_idx) {
-                temp += cost_;
+            // calculate the indices used in the current work-item
+            const auto device_global_i_idx = blockIdx_y * blockDim_y + threadIdx_y;
+            const auto global_i_idx = device_row_offset_ + device_global_i_idx;
+            const auto device_global_j_idx = blockIdx_x * blockDim_x + threadIdx_x;
+            const auto global_j_idx = device_row_offset_ + device_global_j_idx;
+
+            // be sure to not perform out-of-bounds accesses (only using the upper triangular matrix)
+            if (device_global_i_idx < (num_rows_ - device_row_offset_) && device_global_j_idx < device_num_rows_ && global_i_idx >= global_j_idx) {
+                // apply the final kernel function
+                temp = detail::apply_kernel_function<kernel_function>(temp, kernel_function_parameter_) + QA_cost_ - q_[global_i_idx] - q_[global_j_idx];
+                // apply the cost on the diagonal
+                if (global_i_idx == global_j_idx) {
+                    temp += cost_;
+                }
+                // update the upper triangular kernel matrix
+                kernel_matrix_[device_global_j_idx * (num_rows_ - device_row_offset_) - device_global_j_idx * (device_global_j_idx + std::size_t{ 1 }) / std::size_t{ 2 } + device_global_i_idx] = temp;
             }
-            // update the upper triangular kernel matrix
-            kernel_matrix_[device_global_j_idx * (num_rows_ - device_row_offset_) - device_global_j_idx * (device_global_j_idx + std::size_t{ 1 }) / std::size_t{ 2 } + device_global_i_idx] = temp;
         }
     }
 
   private:
+    /// Local memory used for internal memory access optimizations.
+    ::sycl::local_accessor<real_type, 2> data_i_cache_;
+    /// Local memory used for internal memory access optimizations.
+    ::sycl::local_accessor<real_type, 2> data_j_cache_;
+
     /// @cond Doxygen_suppress
     real_type *kernel_matrix_;
     const real_type *data_;

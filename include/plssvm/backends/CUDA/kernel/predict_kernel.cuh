@@ -141,7 +141,6 @@ __global__ void device_kernel_predict_linear(real_type *prediction, const real_t
                     w_cache[threadIdx.y][threadIdx.x] = w[(feature_block + threadIdx_y) * num_classes + global_class_idx_linear];  // SoA
                 }
             }
-
             __syncthreads();  // wait until all threads loaded their part of the data
 
             // perform the dot product calculation
@@ -260,7 +259,7 @@ __global__ void device_kernel_predict(real_type *prediction, const real_type *al
                 if (blockIdx_y == std::size_t{ 0 }) {
                     out_cache[threadIdx.y][threadIdx.x] = -rho[class_block + threadIdx_y];
                 } else {
-                    out_cache[threadIdx.y][threadIdx.x] = real_type{ 0.0 };
+                    out_cache[threadIdx.y][threadIdx.x] = real_type{ 0.0 };  // TODO: remove else condition??? -> also in other backends -> maybe also in other opt level?!
                 }
             }
             __syncthreads();  // wait until all threads loaded their part of the data

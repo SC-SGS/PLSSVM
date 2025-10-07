@@ -18,7 +18,7 @@
 #include "plssvm/constants.hpp"                                     // plssvm::{real_type, THREAD_BLOCK_SIZE}
 #include "plssvm/kernel_function_types.hpp"                         // plssvm::kernel_function_type
 
-#include "Kokkos_Core.hpp"  // KOKKOS_INLINE_FUNCTION, Kokkos::View, Kokkos::TeamPolicy
+#include "Kokkos_Core.hpp"  // KOKKOS_INLINE_FUNCTION, Kokkos::View, Kokkos::TeamPolicy, Kokkos::TeamPolicy, Kokkos::mdspan
 
 #include <cstddef>  // std::size_t
 
@@ -45,7 +45,7 @@ class device_kernel_assembly {
      * @param[in] data the data points to calculate the kernel matrix from
      * @param[in] num_rows the number of data points
      * @param[in] device_num_rows the number of rows the current device is responsible for
-     * @param[in] device_row_offset the first row in @p data_d the current device is responsible for
+     * @param[in] device_row_offset the first row in @p data the current device is responsible for
      * @param[in] num_features the number of features per data point
      * @param[in] q the vector used in the dimensional reduction
      * @param[in] QA_cost the scalar used in the dimensional reduction
@@ -77,6 +77,10 @@ class device_kernel_assembly {
      */
     KOKKOS_INLINE_FUNCTION
     void operator()(const typename Kokkos::TeamPolicy<ExecutionSpace>::member_type &team) const {
+        // cast values to 32-bit unsigned int values to prevent implicit conversions
+        const auto team_rank_x = static_cast<unsigned>(team.team_rank()) / THREAD_BLOCK_SIZE;
+        const auto team_rank_y = static_cast<unsigned>(team.team_rank()) % THREAD_BLOCK_SIZE;
+
         // cast all values to 64-bit std::size_t to prevent potential 32-bit overflows
         constexpr auto THREAD_BLOCK_SIZE_uz = static_cast<std::size_t>(THREAD_BLOCK_SIZE);
 
@@ -87,30 +91,64 @@ class device_kernel_assembly {
         const auto blockIdx_x = static_cast<std::size_t>(team.league_rank()) % grid_size_x_ + grid_x_offset_;  // current team in league x-dimension + offsets if the league size is too large
         const auto blockIdx_y = static_cast<std::size_t>(team.league_rank()) / grid_size_x_ + grid_y_offset_;  // current team in league y-dimension + offsets if the league size is too large
 
-        // calculate the indices used in the current thread
-        const auto device_global_i_idx = blockIdx_x * blockDim_x + threadIdx_x;  // num_rows - device_row_offset
-        const auto global_i_idx = device_row_offset_ + device_global_i_idx;
-        const auto device_global_j_idx = blockIdx_y * blockDim_y + threadIdx_y;  // device_num_rows
-        const auto global_j_idx = device_row_offset_ + device_global_j_idx;
+        // create two scratchpad memory arrays used for caching
+        constexpr std::size_t scratchpad_size = THREAD_BLOCK_SIZE_uz * THREAD_BLOCK_SIZE_uz;
+        auto *scratchpad_ptr = static_cast<real_type *>(team.team_shmem().get_shmem(std::size_t{ 2 } * scratchpad_size * sizeof(real_type)));
+        Kokkos::mdspan<real_type, Kokkos::dextents<std::size_t, 2>> data_i_cache{ scratchpad_ptr, THREAD_BLOCK_SIZE_uz, THREAD_BLOCK_SIZE_uz };
+        Kokkos::mdspan<real_type, Kokkos::dextents<std::size_t, 2>> data_j_cache{ scratchpad_ptr + scratchpad_size, THREAD_BLOCK_SIZE_uz, THREAD_BLOCK_SIZE_uz };
 
-        // be sure to not perform out-of-bounds accesses (only using the upper triangular matrix)
-        if (device_global_i_idx < (num_rows_ - device_row_offset_) && device_global_j_idx < device_num_rows_ && global_i_idx >= global_j_idx) {
+        // only calculate the upper triangular matrix -> can't use team.team_rank() since all threads in a team must progress further
+        if (blockIdx_x >= blockIdx_y) {
             real_type temp{ 0.0 };
 
-            // perform the feature reduction calculation
-            for (std::size_t feature = 0; feature < num_features_; ++feature) {
-                temp += detail::feature_reduce<kernel_function>(data_[feature * (num_rows_ + std::size_t{ 1 }) + global_i_idx],   // SoA
-                                                                data_[feature * (num_rows_ + std::size_t{ 1 }) + global_j_idx]);  // SoA
+            {
+                // calculate the indices used in the current thread, pays attention to coalesced memory accesses
+                const auto global_i_idx_linear = device_row_offset_ + blockIdx_x * blockDim_x + threadIdx_x;  // num_rows - device_row_offset
+                const auto global_j_idx_linear = device_row_offset_ + blockIdx_y * blockDim_y + threadIdx_x;  // device_num_rows
+
+                // iterate over all features using blocking to be able to cache them for faster memory accesses
+                for (std::size_t feature_block = 0; feature_block < num_features_; feature_block += THREAD_BLOCK_SIZE_uz) {
+                    // zero-out shared memory
+                    data_i_cache(team_rank_y, team_rank_x) = real_type{ 0.0 };
+                    data_j_cache(team_rank_y, team_rank_x) = real_type{ 0.0 };
+
+                    // load data into scratchpad memory
+                    if (feature_block + threadIdx_y < num_features_) {
+                        if (global_i_idx_linear < num_rows_) {
+                            data_i_cache(team_rank_y, team_rank_x) = data_[(feature_block + threadIdx_y) * (num_rows_ + std::size_t{ 1 }) + global_i_idx_linear];  // SoA
+                        }
+                        if (global_j_idx_linear < num_rows_) {
+                            data_j_cache(team_rank_y, team_rank_x) = data_[(feature_block + threadIdx_y) * (num_rows_ + std::size_t{ 1 }) + global_j_idx_linear];  // SoA
+                        }
+                    }
+                    team.team_barrier();  // wait until all threads loaded their part of the data
+
+                    // perform the feature reduction calculation
+                    for (unsigned feature = 0; feature < THREAD_BLOCK_SIZE; ++feature) {
+                        temp += detail::feature_reduce<kernel_function>(data_i_cache(feature, team_rank_x),
+                                                                        data_j_cache(feature, team_rank_y));
+                    }
+                    team.team_barrier();  // wait until all threads performed their part of the calculations
+                }
             }
 
-            // apply the final kernel function
-            temp = detail::apply_kernel_function<kernel_function>(temp, kernel_function_parameter_) + QA_cost_ - q_[global_i_idx] - q_[global_j_idx];
-            // apply the cost on the diagonal
-            if (global_i_idx == global_j_idx) {
-                temp += cost_;
+            // calculate the indices used in the current thread
+            const auto device_global_i_idx = blockIdx_x * blockDim_x + threadIdx_x;
+            const auto global_i_idx = device_row_offset_ + device_global_i_idx;
+            const auto device_global_j_idx = blockIdx_y * blockDim_y + threadIdx_y;
+            const auto global_j_idx = device_row_offset_ + device_global_j_idx;
+
+            // be sure to not perform out-of-bounds accesses (only using the upper triangular matrix)
+            if (device_global_i_idx < (num_rows_ - device_row_offset_) && device_global_j_idx < device_num_rows_ && global_i_idx >= global_j_idx) {
+                // apply the final kernel function
+                temp = detail::apply_kernel_function<kernel_function>(temp, kernel_function_parameter_) + QA_cost_ - q_[global_i_idx] - q_[global_j_idx];
+                // apply the cost on the diagonal
+                if (global_i_idx == global_j_idx) {
+                    temp += cost_;
+                }
+                // update the upper triangular kernel matrix
+                kernel_matrix_[device_global_j_idx * (num_rows_ - device_row_offset_) - device_global_j_idx * (device_global_j_idx + std::size_t{ 1 }) / std::size_t{ 2 } + device_global_i_idx] = temp;
             }
-            // update the upper triangular kernel matrix
-            kernel_matrix_[device_global_j_idx * (num_rows_ - device_row_offset_) - device_global_j_idx * (device_global_j_idx + std::size_t{ 1 }) / std::size_t{ 2 } + device_global_i_idx] = temp;
         }
     }
 

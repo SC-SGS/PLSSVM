@@ -139,9 +139,8 @@ __global__ void device_kernel_assembly_symm(const real_type alpha, const real_ty
             // iterate over all classes using blocking to be able to cache them for faster memory accesses
             for (std::size_t class_block = 0; class_block < num_classes; class_block += THREAD_BLOCK_SIZE_uz) {
                 // zero-out shared memory
-                B_cache[threadIdx.y][threadIdx.x] = real_type{ 0.0 };
-                C_out_cache[threadIdx.y][threadIdx.x] = real_type{ 0.0 };
-                __syncthreads();  // wait until all threads set the values to zero (necessary since the index order changes in the next load operation)
+                B_cache[threadIdx.x][threadIdx.y] = real_type{ 0.0 };
+                C_out_cache[threadIdx.x][threadIdx.y] = real_type{ 0.0 };
 
                 // load data into shared memory
                 if (class_block + threadIdx_y < num_classes && global_i_idx_linear < num_rows) {

@@ -22,7 +22,7 @@
 #include "plssvm/backends/Kokkos/kernel/predict_kernel.hpp"                           // plssvm::kokkos::detail::{device_kernel_w_linear, device_kernel_predict_linear, device_kernel_predict}
 #include "plssvm/constants.hpp"                                                       // plssvm::real_type
 #include "plssvm/detail/assert.hpp"                                                   // PLSSVM_ASSERT
-#include "plssvm/detail/data_distribution.hpp"                                        // plssvm::detail::triangular_data_distribution
+#include "plssvm/detail/data_distribution.hpp"                                        // plssvm::detail::{triangular_data_distribution, data_distribution::maximum_local_memory_needed}
 #include "plssvm/detail/logging/log_untracked.hpp"                                    // plssvm::detail::log_untracked
 #include "plssvm/detail/logging/mpi_log_untracked.hpp"                                // plssvm::detail::log_untracked
 #include "plssvm/detail/memory_size.hpp"                                              // plssvm::detail::memory_size
@@ -534,7 +534,7 @@ auto csvm::run_assemble_kernel_matrix_explicit(const std::size_t device_id, cons
             // create a Kokkos TeamPolicy
             Kokkos::TeamPolicy<kokkos_execution_space_type> team_policy{ device, native_partial_grid, team_size };
 
-            dispatch_kernel_functor<detail::device_kernel_assembly, kokkos_execution_space_type>(params, fmt::format("assemble_kernel_matrix_explicit_{}", params.kernel_type), team_policy, kernel_matrix_d.get().get<space>(), data_d.get().get<space>(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, q_red_d.get().get<space>(), QA_cost, cost_factor, offsets.x, offsets.y, partial_grid.x);
+            dispatch_kernel_functor<detail::device_kernel_assembly, kokkos_execution_space_type>(params, fmt::format("assemble_kernel_matrix_explicit_{}", params.kernel_type), team_policy.set_scratch_size(0, Kokkos::PerTeam(::plssvm::detail::data_distribution::maximum_local_memory_needed().num_bytes())), kernel_matrix_d.get().get<space>(), data_d.get().get<space>(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, q_red_d.get().get<space>(), QA_cost, cost_factor, offsets.x, offsets.y, partial_grid.x);
         }
         detail::device_synchronize(device);
         const auto end = std::chrono::steady_clock::now();
@@ -569,7 +569,7 @@ void csvm::run_blas_level_3_kernel_explicit(const std::size_t device_id, const :
             // create a Kokkos TeamPolicy
             Kokkos::TeamPolicy<kokkos_execution_space_type> team_policy{ device, native_partial_grid, team_size };
 
-            dispatch_kernel_functor<detail::device_kernel_symm, kokkos_execution_space_type>("blas_level_3_kernel_explicit", team_policy, num_rows, num_rhs, device_specific_num_rows, row_offset, alpha, A_d.get().get<space>(), B_d.get().get<space>(), beta, C_d.get().get<space>(), offsets.x, offsets.y, partial_grid.x);
+            dispatch_kernel_functor<detail::device_kernel_symm, kokkos_execution_space_type>("blas_level_3_kernel_explicit", team_policy.set_scratch_size(0, Kokkos::PerTeam(::plssvm::detail::data_distribution::maximum_local_memory_needed().num_bytes())), num_rows, num_rhs, device_specific_num_rows, row_offset, alpha, A_d.get().get<space>(), B_d.get().get<space>(), beta, C_d.get().get<space>(), offsets.x, offsets.y, partial_grid.x);
         }
 
         // save the team size
@@ -585,7 +585,7 @@ void csvm::run_blas_level_3_kernel_explicit(const std::size_t device_id, const :
                 // create a Kokkos TeamPolicy
                 Kokkos::TeamPolicy<kokkos_execution_space_type> team_policy{ device, native_partial_grid, mirror_team_size };
 
-                dispatch_kernel_functor<detail::device_kernel_symm_mirror, kokkos_execution_space_type>("blas_level_3_kernel_explicit_mirror", team_policy, num_rows, num_rhs, num_mirror_rows, device_specific_num_rows, row_offset, alpha, A_d.get().get<space>(), B_d.get().get<space>(), beta, C_d.get().get<space>(), offsets.x, offsets.y, partial_grid.x);
+                dispatch_kernel_functor<detail::device_kernel_symm_mirror, kokkos_execution_space_type>("blas_level_3_kernel_explicit_mirror", team_policy.set_scratch_size(0, Kokkos::PerTeam(::plssvm::detail::data_distribution::maximum_local_memory_needed().num_bytes())), num_rows, num_rhs, num_mirror_rows, device_specific_num_rows, row_offset, alpha, A_d.get().get<space>(), B_d.get().get<space>(), beta, C_d.get().get<space>(), offsets.x, offsets.y, partial_grid.x);
             }
         }
         detail::device_synchronize(device);
@@ -670,7 +670,7 @@ void csvm::run_assemble_kernel_matrix_implicit_blas_level_3(const std::size_t de
             // create a Kokkos TeamPolicy
             Kokkos::TeamPolicy<kokkos_execution_space_type> team_policy{ device, native_partial_grid, team_size };
 
-            dispatch_kernel_functor<detail::device_kernel_assembly_symm, kokkos_execution_space_type>(params, fmt::format("assemble_kernel_matrix_implicit_blas_level_3_{}", params.kernel_type), team_policy, alpha, q_red.get().get<space>(), A_d.get().get<space>(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, QA_cost, cost_factor, B_d.get().get<space>(), C_d.get().get<space>(), num_classes, offsets.x, offsets.y, partial_grid.x);
+            dispatch_kernel_functor<detail::device_kernel_assembly_symm, kokkos_execution_space_type>(params, fmt::format("assemble_kernel_matrix_implicit_blas_level_3_{}", params.kernel_type), team_policy.set_scratch_size(0, Kokkos::PerTeam(::plssvm::detail::data_distribution::maximum_local_memory_needed().num_bytes())), alpha, q_red.get().get<space>(), A_d.get().get<space>(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, QA_cost, cost_factor, B_d.get().get<space>(), C_d.get().get<space>(), num_classes, offsets.x, offsets.y, partial_grid.x);
         }
         detail::device_synchronize(device);
         const auto end = std::chrono::steady_clock::now();
@@ -709,7 +709,7 @@ auto csvm::run_w_kernel(const std::size_t device_id, const ::plssvm::detail::exe
             // create a Kokkos TeamPolicy
             Kokkos::TeamPolicy<kokkos_execution_space_type> team_policy{ device, native_partial_grid, team_size };
 
-            dispatch_kernel_functor<detail::device_kernel_w_linear, kokkos_execution_space_type>("w_kernel", team_policy, w_d.get().get<space>(), alpha_d.get().get<space>(), sv_d.get().get<space>(), num_features, num_classes, num_sv, device_specific_num_sv, sv_offset, offsets.x, offsets.y, partial_grid.x);
+            dispatch_kernel_functor<detail::device_kernel_w_linear, kokkos_execution_space_type>("w_kernel", team_policy.set_scratch_size(0, Kokkos::PerTeam(::plssvm::detail::data_distribution::maximum_local_memory_needed().num_bytes())), w_d.get().get<space>(), alpha_d.get().get<space>(), sv_d.get().get<space>(), num_features, num_classes, num_sv, device_specific_num_sv, sv_offset, offsets.x, offsets.y, partial_grid.x);
         }
         detail::device_synchronize(device);
         const auto end = std::chrono::steady_clock::now();
@@ -744,9 +744,9 @@ auto csvm::run_predict_kernel(const std::size_t device_id, const ::plssvm::detai
             Kokkos::TeamPolicy<kokkos_execution_space_type> team_policy{ device, native_partial_grid, team_size };
 
             if (params.kernel_type == kernel_function_type::linear) {
-                dispatch_kernel_functor<detail::device_kernel_predict_linear, kokkos_execution_space_type>("predict_kernel_linear", team_policy, out_d.get().get<space>(), sv_or_w_d.get().get<space>(), rho_d.get().get<space>(), predict_points_d.get().get<space>(), num_classes, num_predict_points, num_features, offsets.x, offsets.y, partial_grid.x);
+                dispatch_kernel_functor<detail::device_kernel_predict_linear, kokkos_execution_space_type>("predict_kernel_linear", team_policy.set_scratch_size(0, Kokkos::PerTeam(::plssvm::detail::data_distribution::maximum_local_memory_needed().num_bytes())), out_d.get().get<space>(), sv_or_w_d.get().get<space>(), rho_d.get().get<space>(), predict_points_d.get().get<space>(), num_classes, num_predict_points, num_features, offsets.x, offsets.y, partial_grid.x);
             } else {
-                dispatch_kernel_functor<detail::device_kernel_predict, kokkos_execution_space_type>(params, fmt::format("predict_kernel_linear_{}", params.kernel_type), team_policy, out_d.get().get<space>(), alpha_d.get().get<space>(), rho_d.get().get<space>(), sv_or_w_d.get().get<space>(), predict_points_d.get().get<space>(), num_classes, num_sv, num_predict_points, num_features, offsets.x, offsets.y, partial_grid.x);
+                dispatch_kernel_functor<detail::device_kernel_predict, kokkos_execution_space_type>(params, fmt::format("predict_kernel_linear_{}", params.kernel_type), team_policy.set_scratch_size(0, Kokkos::PerTeam(::plssvm::detail::data_distribution::maximum_local_memory_needed().num_bytes())), out_d.get().get<space>(), alpha_d.get().get<space>(), rho_d.get().get<space>(), sv_or_w_d.get().get<space>(), predict_points_d.get().get<space>(), num_classes, num_sv, num_predict_points, num_features, offsets.x, offsets.y, partial_grid.x);
             }
         }
         detail::device_synchronize(device);

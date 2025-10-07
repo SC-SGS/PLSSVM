@@ -73,40 +73,100 @@ class device_kernel_assembly {
      * @param[in] group indices representing the current point in the execution space
      */
     void operator()(::sycl::group<2> group) const {
-        group.parallel_for_work_item([&](::sycl::h_item<2> idx) {
-            const auto threadIdx_x = static_cast<std::size_t>(idx.get_local_id(0));       // current work-item in work-group x-dimension
-            const auto threadIdx_y = static_cast<std::size_t>(idx.get_local_id(1));       // current work-item in work-group y-dimension
-            const auto blockDim_x = static_cast<std::size_t>(idx.get_local_range(0));     // number of work-items in work-group x-dimension
-            const auto blockDim_y = static_cast<std::size_t>(idx.get_local_range(1));     // number of work-items in work-group y-dimension
-            const auto blockIdx_x = static_cast<std::size_t>(group[0]) + grid_x_offset_;  // current work-group in global range x-dimension + offsets if the global range is too large
-            const auto blockIdx_y = static_cast<std::size_t>(group[1]) + grid_y_offset_;  // current work-group in global range y-dimension + offsets if the global range is too large
+        // create two local memory arrays used for caching
+        real_type data_i_cache[THREAD_BLOCK_SIZE][THREAD_BLOCK_SIZE];
+        real_type data_j_cache[THREAD_BLOCK_SIZE][THREAD_BLOCK_SIZE];
 
-            // calculate the indices used in the current work-item
-            const auto device_global_i_idx = blockIdx_y * blockDim_y + threadIdx_y;
-            const auto global_i_idx = device_row_offset_ + device_global_i_idx;
-            const auto device_global_j_idx = blockIdx_x * blockDim_x + threadIdx_x;
-            const auto global_j_idx = device_row_offset_ + device_global_j_idx;
+        // create a private memory array used for internal caching
+        ::sycl::private_memory<real_type, 2> temp{ group };
 
-            // be sure to not perform out-of-bounds accesses (only using the upper triangular matrix)
-            if (device_global_i_idx < (num_rows_ - device_row_offset_) && device_global_j_idx < device_num_rows_ && global_i_idx >= global_j_idx) {
-                real_type temp{ 0.0 };
+        // only calculate the upper triangular matrix -> can't use get_local_id() since all work-items in a work-group must progress further
+        if (group[1] >= group[0]) {
+            // initialize private temp to zero
+            group.parallel_for_work_item([&](::sycl::h_item<2> idx) {
+                temp(idx) = real_type{ 0.0 };
+            });
+
+            // iterate over all features using blocking to be able to cache them for faster memory accesses
+            for (std::size_t feature_block = 0; feature_block < num_features_; feature_block += static_cast<std::size_t>(THREAD_BLOCK_SIZE)) {
+                // load data into local memory
+                group.parallel_for_work_item([&](::sycl::h_item<2> idx) {
+                    // cast values to 32-bit unsigned int values to prevent implicit conversions
+                    const auto local_id_0 = static_cast<unsigned>(idx.get_local_id(0));
+                    const auto local_id_1 = static_cast<unsigned>(idx.get_local_id(1));
+
+                    const auto threadIdx_x = static_cast<std::size_t>(idx.get_local_id(0));       // current work-item in work-group x-dimension
+                    const auto threadIdx_y = static_cast<std::size_t>(idx.get_local_id(1));       // current work-item in work-group y-dimension
+                    const auto blockDim_x = static_cast<std::size_t>(idx.get_local_range(0));     // number of work-items in work-group x-dimension
+                    const auto blockDim_y = static_cast<std::size_t>(idx.get_local_range(1));     // number of work-items in work-group y-dimension
+                    const auto blockIdx_x = static_cast<std::size_t>(group[0]) + grid_x_offset_;  // current work-group in global range x-dimension + offsets if the global range is too large
+                    const auto blockIdx_y = static_cast<std::size_t>(group[1]) + grid_y_offset_;  // current work-group in global range y-dimension + offsets if the global range is too large
+
+                    // calculate the indices used in the current work-item, pays attention to coalesced memory accesses
+                    const auto global_i_idx_linear = device_row_offset_ + blockIdx_y * blockDim_y + threadIdx_y;  // num_rows - device_row_offset
+                    const auto global_j_idx_linear = device_row_offset_ + blockIdx_x * blockDim_x + threadIdx_y;  // device_num_rows
+
+                    // zero-out local memory
+                    data_i_cache[local_id_0][local_id_1] = real_type{ 0.0 };
+                    data_j_cache[local_id_0][local_id_1] = real_type{ 0.0 };
+
+                    // load data into local memory
+                    if (feature_block + threadIdx_x < num_features_) {
+                        if (global_i_idx_linear < num_rows_) {
+                            data_i_cache[local_id_0][local_id_1] = data_[(feature_block + threadIdx_x) * (num_rows_ + std::size_t{ 1 }) + global_i_idx_linear];  // SoA
+                        }
+                        if (global_j_idx_linear < num_rows_) {
+                            data_j_cache[local_id_0][local_id_1] = data_[(feature_block + threadIdx_x) * (num_rows_ + std::size_t{ 1 }) + global_j_idx_linear];  // SoA
+                        }
+                    }
+                });
+
+                // implicit group barrier
 
                 // perform the feature reduction calculation
-                for (std::size_t feature = 0; feature < num_features_; ++feature) {
-                    temp += detail::feature_reduce<kernel_function>(data_[feature * (num_rows_ + std::size_t{ 1 }) + global_i_idx],   // SoA
-                                                                    data_[feature * (num_rows_ + std::size_t{ 1 }) + global_j_idx]);  // SoA
-                }
+                group.parallel_for_work_item([&](::sycl::h_item<2> idx) {
+                    // cast values to 32-bit unsigned int values to prevent implicit conversions
+                    const auto local_id_0 = static_cast<unsigned>(idx.get_local_id(0));
+                    const auto local_id_1 = static_cast<unsigned>(idx.get_local_id(1));
 
-                // apply the final kernel function
-                temp = detail::apply_kernel_function<kernel_function>(temp, kernel_function_parameter_) + QA_cost_ - q_[global_i_idx] - q_[global_j_idx];
-                // apply the cost on the diagonal
-                if (global_i_idx == global_j_idx) {
-                    temp += cost_;
-                }
-                // update the upper triangular kernel matrix
-                kernel_matrix_[device_global_j_idx * (num_rows_ - device_row_offset_) - device_global_j_idx * (device_global_j_idx + std::size_t{ 1 }) / std::size_t{ 2 } + device_global_i_idx] = temp;
+                    // perform the feature reduction calculation
+                    for (unsigned feature = 0; feature < THREAD_BLOCK_SIZE; ++feature) {
+                        temp(idx) += detail::feature_reduce<kernel_function>(data_i_cache[feature][local_id_1],
+                                                                             data_j_cache[feature][local_id_0]);
+                    }
+                });
+
+                // implicit barrier
             }
-        });
+
+            // apply the remaining part of the kernel function and store the value in the output kernel matrix
+            group.parallel_for_work_item([&](::sycl::h_item<2> idx) {
+                const auto threadIdx_x = static_cast<std::size_t>(idx.get_local_id(0));       // current work-item in work-group x-dimension
+                const auto threadIdx_y = static_cast<std::size_t>(idx.get_local_id(1));       // current work-item in work-group y-dimension
+                const auto blockDim_x = static_cast<std::size_t>(idx.get_local_range(0));     // number of work-items in work-group x-dimension
+                const auto blockDim_y = static_cast<std::size_t>(idx.get_local_range(1));     // number of work-items in work-group y-dimension
+                const auto blockIdx_x = static_cast<std::size_t>(group[0]) + grid_x_offset_;  // current work-group in global range x-dimension + offsets if the global range is too large
+                const auto blockIdx_y = static_cast<std::size_t>(group[1]) + grid_y_offset_;  // current work-group in global range y-dimension + offsets if the global range is too large
+
+                // calculate the indices used in the current work-item
+                const auto device_global_i_idx = blockIdx_y * blockDim_y + threadIdx_y;
+                const auto global_i_idx = device_row_offset_ + device_global_i_idx;
+                const auto device_global_j_idx = blockIdx_x * blockDim_x + threadIdx_x;
+                const auto global_j_idx = device_row_offset_ + device_global_j_idx;
+
+                // be sure to not perform out-of-bounds accesses (only using the upper triangular matrix)
+                if (device_global_i_idx < (num_rows_ - device_row_offset_) && device_global_j_idx < device_num_rows_ && global_i_idx >= global_j_idx) {
+                    // apply the final kernel function
+                    temp(idx) = detail::apply_kernel_function<kernel_function>(temp(idx), kernel_function_parameter_) + QA_cost_ - q_[global_i_idx] - q_[global_j_idx];
+                    // apply the cost on the diagonal
+                    if (global_i_idx == global_j_idx) {
+                        temp(idx) += cost_;
+                    }
+                    // update the upper triangular kernel matrix
+                    kernel_matrix_[device_global_j_idx * (num_rows_ - device_row_offset_) - device_global_j_idx * (device_global_j_idx + std::size_t{ 1 }) / std::size_t{ 2 } + device_global_i_idx] = temp(idx);
+                }
+            });
+        }
     }
 
   private:

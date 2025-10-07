@@ -34,6 +34,10 @@
  * @param[in] PLSSVM_OPENCL_KERNEL_FUNCTION_PARAMETER_LIST a placeholder that is used to string replace the correct kernel parameter (attention: no comma!; Args... only added for Doxygen)
  */
 __kernel void device_kernel_assembly_symm(const real_type alpha, const __global real_type *q, const __global real_type *data, const ulong num_rows, const ulong device_num_rows, const ulong device_row_offset, const ulong num_features, const real_type QA_cost, const real_type cost, const __global real_type *B, __global real_type *C, const ulong num_classes, const ulong grid_x_offset, const ulong grid_y_offset PLSSVM_OPENCL_KERNEL_FUNCTION_PARAMETER_LIST) {
+    // cast values to 32-bit unsigned int values to prevent implicit conversions
+    const uint local_id_0 = get_local_id(0);
+    const uint local_id_1 = get_local_id(1);
+
     // cast all values to 64-bit unsigned long long to prevent potential 32-bit overflows
     const ulong threadIdx_x = get_local_id(0);                 // current work-item in work-group x-dimension
     const ulong threadIdx_y = get_local_id(1);                 // current work-item in work-group y-dimension
@@ -43,50 +47,154 @@ __kernel void device_kernel_assembly_symm(const real_type alpha, const __global 
     const ulong blockIdx_y = get_group_id(1) + grid_y_offset;  // current work-group in global range y-dimension + offsets if the global range is too large
 
     // calculate the indices used in the current work-item
-    const ulong device_global_i_idx = blockIdx_x * blockDim_x + threadIdx_x;  // num_rows - device_row_offset
-    const ulong global_i_idx = device_row_offset + device_global_i_idx;
-    const ulong device_global_j_idx = blockIdx_y * blockDim_y + threadIdx_y;  // device_num_rows
-    const ulong global_j_idx = device_row_offset + device_global_j_idx;
+    const ulong i_idx = blockIdx_x * blockDim_x + threadIdx_x;  // num_rows - device_row_offset
+    const ulong j_idx = blockIdx_y * blockDim_y + threadIdx_y;  // device_num_rows
 
-    // be sure to not perform out-of-bounds accesses (only using the upper triangular matrix)
-    if (device_global_i_idx < (num_rows - device_row_offset) && device_global_j_idx < device_num_rows && global_i_idx >= global_j_idx) {
+    // calculate the indices used in the current work-item, pays attention to coalesced memory accesses
+    const ulong i_idx_linear = blockIdx_x * blockDim_x + threadIdx_x;  // num_rows - device_row_offset
+    const ulong j_idx_linear = blockIdx_y * blockDim_y + threadIdx_x;  // device_num_rows
+
+    // create two local memory arrays used for caching
+    __local real_type cache_one[THREAD_BLOCK_SIZE * THREAD_BLOCK_SIZE];
+    __local real_type cache_two[THREAD_BLOCK_SIZE * THREAD_BLOCK_SIZE];
+
+    // only calculate the upper triangular matrix -> can't use threadIdx since all work-items in a warp must progress further
+    if (blockIdx_x >= blockIdx_y) {
+        real_type temp = 0.0;
+
         //*************************************************************************//
         //                   inplace kernel matrix construction                    //
         //*************************************************************************//
-        real_type temp = 0.0;
+        {
+            // reinterpret the local memory arrays to be of shape [THREAD_BLOCK_SIZE][THREAD_BLOCK_SIZE]
+             __local real_type(*data_i_cache)[THREAD_BLOCK_SIZE] = (__local real_type(*)[THREAD_BLOCK_SIZE]) cache_one;
+             __local real_type(*data_j_cache)[THREAD_BLOCK_SIZE] = (__local real_type(*)[THREAD_BLOCK_SIZE]) cache_two;
 
-        // perform the feature reduction calculation
-        for (ulong feature = 0; feature < num_features; ++feature) {
-            temp += PLSSVM_OPENCL_FEATURE_REDUCE_FUNCTION(data[feature * (num_rows + (ulong) 1) + global_i_idx],   // SoA
-                                                          data[feature * (num_rows + (ulong) 1) + global_j_idx]);  // SoA
+            // calculate the indices to access the global data, pays attention to coalesced memory accesses
+            const ulong global_i_idx_linear = device_row_offset + i_idx_linear;
+            const ulong global_j_idx_linear = device_row_offset + j_idx_linear;
+
+            // iterate over all features using blocking to be able to cache them for faster memory accesses
+            for (ulong feature_block = 0; feature_block < num_features; feature_block += THREAD_BLOCK_SIZE_uz) {
+                // zero-out local memory
+                data_i_cache[local_id_1][local_id_0] = (real_type) 0.0;
+                data_j_cache[local_id_1][local_id_0] = (real_type) 0.0;
+
+                // load data into local memory
+                if (feature_block + threadIdx_y < num_features) {
+                    if (global_i_idx_linear < num_rows) {
+                        data_i_cache[local_id_1][local_id_0] = data[(feature_block + threadIdx_y) * (num_rows + (ulong) 1) + global_i_idx_linear];  // SoA
+                    }
+                    if (global_j_idx_linear < num_rows) {
+                        data_j_cache[local_id_1][local_id_0] = data[(feature_block + threadIdx_y) * (num_rows + (ulong) 1) + global_j_idx_linear];  // SoA
+                    }
+                }
+                barrier(CLK_LOCAL_MEM_FENCE);  // wait until all work-items loaded their part of the data
+
+                // perform the feature reduction calculation
+                for (uint feature = 0; feature < THREAD_BLOCK_SIZE; ++feature) {
+                    temp += PLSSVM_OPENCL_FEATURE_REDUCE_FUNCTION(data_i_cache[feature][local_id_0],
+                                                                  data_j_cache[feature][local_id_1]);
+                }
+                barrier(CLK_LOCAL_MEM_FENCE);  // wait until all work-items performed their part of the calculations
+            }
         }
 
-        // apply the final kernel function
-        temp = PLSSVM_OPENCL_APPLY_KERNEL_FUNCTION(temp PLSSVM_OPENCL_KERNEL_FUNCTION_PARAMETER) + QA_cost - q[global_i_idx] - q[global_j_idx];
-        // apply the cost on the diagonal
-        if (global_i_idx == global_j_idx) {
-            temp += cost;
+        // calculate the indices to access the global data and the data with respect to the current device
+        const ulong global_i_idx = device_row_offset + i_idx;
+        const ulong global_j_idx = device_row_offset + j_idx;
+
+        // be sure to not perform out-of-bounds accesses (only using the upper triangular matrix)
+        if (i_idx < (num_rows - device_row_offset) && j_idx < device_num_rows && global_i_idx >= global_j_idx) {
+            // apply the final kernel function
+            temp = PLSSVM_OPENCL_APPLY_KERNEL_FUNCTION(temp PLSSVM_OPENCL_KERNEL_FUNCTION_PARAMETER) + QA_cost - q[global_i_idx] - q[global_j_idx];
+            // apply the cost on the diagonal
+            if (global_i_idx == global_j_idx) {
+                temp += cost;
+            }
+        } else {
+            // be sure to set the value to zero otherwise
+            temp = (real_type) 0.0;
         }
 
         //*************************************************************************//
         //     calculate C += alpha * temp * B for the UPPER triangular matrix     //
         //*************************************************************************//
-        for (ulong class_idx = 0; class_idx < num_classes; ++class_idx) {
-            const real_type B_cache = alpha * B[global_i_idx * num_classes + class_idx];  // SoA
-            atomicAdd(&C[global_j_idx * num_classes + class_idx], temp * B_cache);        // SoA
+        {
+            // reinterpret the local memory arrays to be of shape [THREAD_BLOCK_SIZE][THREAD_BLOCK_SIZE]
+             __local real_type(*B_cache)[THREAD_BLOCK_SIZE] = (__local real_type(*)[THREAD_BLOCK_SIZE]) cache_one;
+             __local real_type(*C_out_cache)[THREAD_BLOCK_SIZE] = (__local real_type(*)[THREAD_BLOCK_SIZE]) cache_two;
+
+             // calculate the indices to access the global data, pays attention to coalesced memory accesses
+             const ulong global_i_idx_linear = device_row_offset + i_idx_linear;
+
+            // iterate over all classes using blocking to be able to cache them for faster memory accesses
+            for (ulong class_block = 0; class_block < num_classes; class_block += THREAD_BLOCK_SIZE_uz) {
+                // zero-out shared memory
+                B_cache[local_id_0][local_id_1] = (real_type) 0.0;
+                C_out_cache[local_id_0][local_id_1] = (real_type) 0.0;
+
+                // load data into local memory
+                if (class_block + threadIdx_y < num_classes && global_i_idx_linear < num_rows) {
+                    B_cache[local_id_0][local_id_1] = alpha * B[global_i_idx_linear * num_classes + class_block + threadIdx_y];  // SoA
+                }
+                barrier(CLK_LOCAL_MEM_FENCE);  // wait until all work-items loaded their part of the data
+
+                // calculate intermediate results and store them in local memory
+                for (uint class_idx = 0; class_idx < THREAD_BLOCK_SIZE; ++class_idx) {
+                    C_out_cache[local_id_1][(class_idx + local_id_0) % THREAD_BLOCK_SIZE] += temp * B_cache[local_id_0][(class_idx + local_id_0) % THREAD_BLOCK_SIZE];
+                    barrier(CLK_LOCAL_MEM_FENCE);  // wait until all work-items performed their part of the calculations
+                }
+
+                // atomically add the intermediate cached results to the C matrix
+                if (class_block + threadIdx_x < num_classes && global_j_idx < num_rows) {
+                    atomicAdd(&C[global_j_idx * num_classes + class_block + threadIdx_x], C_out_cache[local_id_1][local_id_0]);  // SoA
+                }
+                barrier(CLK_LOCAL_MEM_FENCE);  // wai until all work-items updated C with their values
+            }
         }
 
         // set potential diagonal entries in temp to 0.0 such that we don't apply the main diagonal twice to C
+        // update the diagonal
         if (global_i_idx == global_j_idx) {
-            temp = 0.0;
+            temp = (real_type) 0.0;
         }
 
         //*************************************************************************//
         //     calculate C += alpha * temp * B for the LOWER triangular matrix     //
         //*************************************************************************//
-        for (ulong class_idx = 0; class_idx < num_classes; ++class_idx) {
-            const real_type B_cache = alpha * B[global_j_idx * num_classes + class_idx];  // SoA
-            atomicAdd(&C[global_i_idx * num_classes + class_idx], temp * B_cache);        // SoA
+        {
+            // reinterpret the local memory arrays to be of shape [THREAD_BLOCK_SIZE][THREAD_BLOCK_SIZE]
+             __local real_type(*B_cache)[THREAD_BLOCK_SIZE] = (__local real_type(*)[THREAD_BLOCK_SIZE]) cache_one;
+            __local real_type(*C_out_cache)[THREAD_BLOCK_SIZE] = (__local real_type(*)[THREAD_BLOCK_SIZE]) cache_two;
+
+            // calculate the indices to access the global data, pays attention to coalesced memory accesses
+            const ulong global_j_idx_linear = device_row_offset + j_idx_linear;
+
+            // iterate over all classes using blocking to be able to cache them for faster memory accesses
+            for (ulong class_block = 0; class_block < num_classes; class_block += THREAD_BLOCK_SIZE_uz) {
+                // zero-out local memory
+                B_cache[local_id_1][local_id_0] = (real_type) 0.0;
+                C_out_cache[local_id_1][local_id_0] = (real_type) 0.0;
+
+                // load data into local memory
+                if (class_block + threadIdx_y < num_classes && global_j_idx_linear < num_rows) {
+                    B_cache[local_id_1][local_id_0] = alpha * B[global_j_idx_linear * num_classes + class_block + threadIdx_y];  // SoA
+                }
+                barrier(CLK_LOCAL_MEM_FENCE);  // wait until all work-items loaded their part of the data
+
+                // calculate intermediate results and store them in local memory
+                for (uint class_idx = 0; class_idx < THREAD_BLOCK_SIZE; ++class_idx) {
+                    C_out_cache[(class_idx + local_id_1) % THREAD_BLOCK_SIZE][local_id_0] += temp * B_cache[(class_idx + local_id_1) % THREAD_BLOCK_SIZE][local_id_1];
+                    barrier(CLK_LOCAL_MEM_FENCE);  // wait until all work-items performed their part of the calculations
+                }
+
+                // atomically add the intermediate cached results to the C matrix
+                if (class_block + threadIdx_y < num_classes && global_i_idx < num_rows) {
+                    atomicAdd(&C[global_i_idx * num_classes + class_block + threadIdx_y], C_out_cache[local_id_1][local_id_0]);  // SoA
+                }
+                barrier(CLK_LOCAL_MEM_FENCE);  // wait until all work-items updated C with their values
+            }
         }
     }
 }

@@ -68,7 +68,66 @@ class device_kernel_w_linear {
     template <typename T>
     void operator()(T group) const {
         ::sycl::memory_environment(group,
-                                   [&]() {
+                                   // create two local memory arrays used for caching
+                                   ::sycl::require_local_mem<real_type[THREAD_BLOCK_SIZE][THREAD_BLOCK_SIZE]>(),  // feature_cache
+                                   ::sycl::require_local_mem<real_type[THREAD_BLOCK_SIZE][THREAD_BLOCK_SIZE]>(),  // alpha_cache
+
+                                   // create a private memory array used for internal caching
+                                   ::sycl::require_private_mem<real_type>(),
+                                   [&](auto &feature_cache, auto &alpha_cache, auto &temp) {
+                                       // initialize private temp matrix to zero
+                                       ::sycl::distribute_items_and_wait(group, [&](::sycl::s_item<2> idx) {
+                                           temp(idx) = real_type{ 0.0 };
+                                       });
+
+                                       // iterate over all support vectors using blocking to be able to cache them for faster memory accesses
+                                       for (std::size_t sv_block = 0; sv_block < device_num_sv_; sv_block += THREAD_BLOCK_SIZE) {
+                                           // load data into local memory
+                                           ::sycl::distribute_items_and_wait(group, [&](::sycl::s_item<2> idx) {
+                                               // cast values to 32-bit unsigned int values to prevent implicit conversions
+                                               const auto local_id_0 = static_cast<unsigned>(idx.get_local_id(group, 0));
+                                               const auto local_id_1 = static_cast<unsigned>(idx.get_local_id(group, 1));
+
+                                               const auto threadIdx_x = static_cast<std::size_t>(idx.get_local_id(group, 0));       // current work-item in work-group x-dimension
+                                               const auto threadIdx_y = static_cast<std::size_t>(idx.get_local_id(group, 1));       // current work-item in work-group y-dimension
+                                               const auto blockDim_x = static_cast<std::size_t>(group.get_logical_local_range(0));  // number of work-items in work-group x-dimension
+                                               const auto blockDim_y = static_cast<std::size_t>(group.get_logical_local_range(1));  // number of work-items in work-group y-dimension
+                                               const auto blockIdx_x = static_cast<std::size_t>(group[0]) + grid_x_offset_;         // current work-group in global range x-dimension + offsets if the global range is too large
+                                               const auto blockIdx_y = static_cast<std::size_t>(group[1]) + grid_y_offset_;         // current work-group in global range y-dimension + offsets if the global range is too large
+
+                                               // calculate the indices used in the current work-item, pays attention to coalesced memory accesses
+                                               const auto global_feature_idx_linear = blockIdx_y * blockDim_y + threadIdx_y;  // num_features
+                                               const auto global_class_idx_linear = blockIdx_x * blockDim_x + threadIdx_y;    // num_classes
+
+                                               // zero-out local memory
+                                               feature_cache[local_id_0][local_id_1] = real_type{ 0.0 };
+                                               alpha_cache[local_id_0][local_id_1] = real_type{ 0.0 };
+
+                                               // load data into local memory
+                                               if (sv_block + threadIdx_x < device_num_sv_) {
+                                                   if (global_feature_idx_linear < num_features_) {
+                                                       feature_cache[local_id_0][local_id_1] = support_vectors_[global_feature_idx_linear * device_num_sv_ + sv_block + threadIdx_x];  // SoA
+                                                   }
+                                                   if (global_class_idx_linear < num_classes_) {
+                                                       alpha_cache[local_id_0][local_id_1] = alpha_[global_class_idx_linear * num_sv_ + sv_block + device_sv_offset_ + threadIdx_x];  // AoS
+                                                   }
+                                               }
+                                           });
+
+                                           // perform the dot product calculation
+                                           ::sycl::distribute_items_and_wait(group, [&](::sycl::s_item<2> idx) {
+                                               // cast values to 32-bit unsigned int values to prevent implicit conversions
+                                               const auto local_id_0 = static_cast<unsigned>(idx.get_local_id(group, 0));
+                                               const auto local_id_1 = static_cast<unsigned>(idx.get_local_id(group, 1));
+
+                                               // perform the dot product calculation
+                                               for (unsigned sv = 0; sv < THREAD_BLOCK_SIZE; ++sv) {
+                                                   temp(idx) += alpha_cache[sv][local_id_0] * feature_cache[sv][local_id_1];
+                                               }
+                                           });
+                                       }
+
+                                       // update the global w-vector with the locally cached values
                                        ::sycl::distribute_items_and_wait(group, [&](::sycl::s_item<2> idx) {
                                            const auto threadIdx_x = static_cast<std::size_t>(idx.get_local_id(group, 0));       // current work-item in work-group x-dimension
                                            const auto threadIdx_y = static_cast<std::size_t>(idx.get_local_id(group, 1));       // current work-item in work-group y-dimension
@@ -77,21 +136,13 @@ class device_kernel_w_linear {
                                            const auto blockIdx_x = static_cast<std::size_t>(group[0]) + grid_x_offset_;         // current work-group in global range x-dimension + offsets if the global range is too large
                                            const auto blockIdx_y = static_cast<std::size_t>(group[1]) + grid_y_offset_;         // current work-group in global range y-dimension + offsets if the global range is too large
 
-                                           // calculate the indices used in the current thread
+                                           // calculate the indices used in the current work-item
                                            const auto global_feature_idx = blockIdx_y * blockDim_y + threadIdx_y;  // num_features
                                            const auto global_class_idx = blockIdx_x * blockDim_x + threadIdx_x;    // num_classes
 
                                            // be sure to not perform out-of-bounds accesses
                                            if (global_feature_idx < num_features_ && global_class_idx < num_classes_) {
-                                               real_type temp{ 0.0 };
-
-                                               // perform the dot product calculation
-                                               for (std::size_t sv = 0; sv < device_num_sv_; ++sv) {
-                                                   temp += alpha_[global_class_idx * num_sv_ + sv + device_sv_offset_] *  // AoS
-                                                           support_vectors_[global_feature_idx * device_num_sv_ + sv];    // SoA
-                                               }
-
-                                               w_[global_feature_idx * num_classes_ + global_class_idx] = temp;  // SoA
+                                               w_[global_feature_idx * num_classes_ + global_class_idx] = temp(idx);  // SoA
                                            }
                                        });
                                    });
@@ -152,7 +203,65 @@ class device_kernel_predict_linear {
     template <typename T>
     void operator()(T group) const {
         ::sycl::memory_environment(group,
-                                   [&]() {
+                                   // create two local memory arrays used for caching
+                                   ::sycl::require_local_mem<real_type[THREAD_BLOCK_SIZE][THREAD_BLOCK_SIZE]>(),  // pp_cache
+                                   ::sycl::require_local_mem<real_type[THREAD_BLOCK_SIZE][THREAD_BLOCK_SIZE]>(),  // w_cache
+
+                                   // create a private memory array used for internal caching
+                                   ::sycl::require_private_mem<real_type>(),
+                                   [&](auto &pp_cache, auto &w_cache, auto &temp) {
+                                       // initialize private temp matrix to zero
+                                       ::sycl::distribute_items_and_wait(group, [&](::sycl::s_item<2> idx) {
+                                           temp(idx) = real_type{ 0.0 };
+                                       });
+
+                                       // iterate over all features using blocking to be able to cache them for faster memory accesses
+                                       for (std::size_t feature_block = 0; feature_block < num_features_; feature_block += static_cast<std::size_t>(THREAD_BLOCK_SIZE)) {
+                                           ::sycl::distribute_items_and_wait(group, [&](::sycl::s_item<2> idx) {
+                                               // cast values to 32-bit unsigned int values to prevent implicit conversions
+                                               const auto local_id_0 = static_cast<unsigned>(idx.get_local_id(group, 0));
+                                               const auto local_id_1 = static_cast<unsigned>(idx.get_local_id(group, 1));
+
+                                               const auto threadIdx_x = static_cast<std::size_t>(idx.get_local_id(group, 0));       // current work-item in work-group x-dimension
+                                               const auto threadIdx_y = static_cast<std::size_t>(idx.get_local_id(group, 1));       // current work-item in work-group y-dimension
+                                               const auto blockDim_x = static_cast<std::size_t>(group.get_logical_local_range(0));  // number of work-items in work-group x-dimension
+                                               const auto blockDim_y = static_cast<std::size_t>(group.get_logical_local_range(1));  // number of work-items in work-group y-dimension
+                                               const auto blockIdx_x = static_cast<std::size_t>(group[0]) + grid_x_offset_;         // current work-group in global range x-dimension + offsets if the global range is too large
+                                               const auto blockIdx_y = static_cast<std::size_t>(group[1]) + grid_y_offset_;         // current work-group in global range y-dimension + offsets if the global range is too large
+
+                                               // calculate the indices used in the current thread, pays attention to coalesced memory accesses
+                                               const auto global_pp_idx_linear = blockIdx_y * blockDim_y + threadIdx_y;     // num_predict_points
+                                               const auto global_class_idx_linear = blockIdx_x * blockDim_x + threadIdx_y;  // num_classes
+
+                                               // zero-out local memory
+                                               pp_cache[local_id_0][local_id_1] = real_type{ 0.0 };
+                                               w_cache[local_id_0][local_id_1] = real_type{ 0.0 };
+
+                                               // load data into local memory
+                                               if (feature_block + threadIdx_x < num_features_) {
+                                                   if (global_pp_idx_linear < num_predict_points_) {
+                                                       pp_cache[local_id_0][local_id_1] = predict_points_[(feature_block + threadIdx_x) * num_predict_points_ + global_pp_idx_linear];  // SoA
+                                                   }
+                                                   if (global_class_idx_linear < num_classes_) {
+                                                       w_cache[local_id_0][local_id_1] = w_[(feature_block + threadIdx_x) * num_classes_ + global_class_idx_linear];  // SoA
+                                                   }
+                                               }
+                                           });
+
+                                           // perform the dot product calculation
+                                           ::sycl::distribute_items_and_wait(group, [&](::sycl::s_item<2> idx) {
+                                               // cast values to 32-bit unsigned int values to prevent implicit conversions
+                                               const auto local_id_0 = static_cast<unsigned>(idx.get_local_id(group, 0));
+                                               const auto local_id_1 = static_cast<unsigned>(idx.get_local_id(group, 1));
+
+                                               // perform the dot product calculation, the feature is the slowest moving index
+                                               for (unsigned feature = 0; feature < THREAD_BLOCK_SIZE; ++feature) {
+                                                   temp(idx) += w_cache[feature][local_id_0] * pp_cache[feature][local_id_1];
+                                               }
+                                           });
+                                       }
+
+                                       // update the global array with the local one
                                        ::sycl::distribute_items_and_wait(group, [&](::sycl::s_item<2> idx) {
                                            const auto threadIdx_x = static_cast<std::size_t>(idx.get_local_id(group, 0));       // current work-item in work-group x-dimension
                                            const auto threadIdx_y = static_cast<std::size_t>(idx.get_local_id(group, 1));       // current work-item in work-group y-dimension
@@ -167,15 +276,7 @@ class device_kernel_predict_linear {
 
                                            // be sure to not perform out-of-bounds accesses
                                            if (global_pp_idx < num_predict_points_ && global_class_idx < num_classes_) {
-                                               real_type temp{ 0.0 };
-
-                                               // perform the dot product calculation
-                                               for (std::size_t feature = 0; feature < num_features_; ++feature) {
-                                                   temp += w_[feature * num_classes_ + global_class_idx] *                  // SoA
-                                                           predict_points_[feature * num_predict_points_ + global_pp_idx];  // SoA
-                                               }
-
-                                               prediction_[global_pp_idx * num_classes_ + global_class_idx] = temp - rho_[global_class_idx];
+                                               prediction_[global_pp_idx * num_classes_ + global_class_idx] = temp(idx) - rho_[global_class_idx];  // AoS
                                            }
                                        });
                                    });
@@ -244,45 +345,144 @@ class device_kernel_predict {
     template <typename T>
     void operator()(T group) const {
         ::sycl::memory_environment(group,
-                                   [&]() {
+                                   // create two local memory arrays used for caching
+                                   ::sycl::require_local_mem<real_type[THREAD_BLOCK_SIZE][THREAD_BLOCK_SIZE]>(),  // cache_one
+                                   ::sycl::require_local_mem<real_type[THREAD_BLOCK_SIZE][THREAD_BLOCK_SIZE]>(),  // cache_two
+
+                                   // create a private memory array used for internal caching
+                                   ::sycl::require_private_mem<real_type>(),
+                                   [&](auto &cache_one, auto &cache_two, auto &temp) {
+                                       // initialize private temp matrix to zero
                                        ::sycl::distribute_items_and_wait(group, [&](::sycl::s_item<2> idx) {
-                                           const auto threadIdx_x = static_cast<std::size_t>(idx.get_local_id(group, 0));       // current work-item in work-group x-dimension
-                                           const auto threadIdx_y = static_cast<std::size_t>(idx.get_local_id(group, 1));       // current work-item in work-group y-dimension
-                                           const auto blockDim_x = static_cast<std::size_t>(group.get_logical_local_range(0));  // number of work-items in work-group x-dimension
-                                           const auto blockDim_y = static_cast<std::size_t>(group.get_logical_local_range(1));  // number of work-items in work-group y-dimension
-                                           const auto blockIdx_x = static_cast<std::size_t>(group[0]) + grid_x_offset_;         // current work-group in global range x-dimension + offsets if the global range is too large
-                                           const auto blockIdx_y = static_cast<std::size_t>(group[1]) + grid_y_offset_;         // current work-group in global range y-dimension + offsets if the global range is too large
+                                           temp(idx) = real_type{ 0.0 };
+                                       });
 
-                                           // calculate the indices used in the current work-item
-                                           const auto global_pp_idx = blockIdx_y * blockDim_y + threadIdx_y;  // num_predict_points
-                                           const auto global_sv_idx = blockIdx_x * blockDim_x + threadIdx_x;  // num_support_vectors
+                                       {
+                                           // rename cached arrays
+                                           auto &pp_cache = cache_one;
+                                           auto &sv_cache = cache_two;
 
-                                           // be sure to not perform out-of-bounds accesses
-                                           if (global_sv_idx < num_sv_ && global_pp_idx < num_predict_points_) {
-                                               real_type temp{ 0.0 };
+                                           // iterate over all features using blocking to be able to cache them for faster memory accesses
+                                           for (std::size_t feature_block = 0; feature_block < num_features_; feature_block += static_cast<std::size_t>(THREAD_BLOCK_SIZE)) {
+                                               ::sycl::distribute_items_and_wait(group, [&](::sycl::s_item<2> idx) {
+                                                   // cast values to 32-bit unsigned int values to prevent implicit conversions
+                                                   const auto local_id_0 = static_cast<unsigned>(idx.get_local_id(group, 0));
+                                                   const auto local_id_1 = static_cast<unsigned>(idx.get_local_id(group, 1));
+
+                                                   const auto threadIdx_x = static_cast<std::size_t>(idx.get_local_id(group, 0));       // current work-item in work-group x-dimension
+                                                   const auto threadIdx_y = static_cast<std::size_t>(idx.get_local_id(group, 1));       // current work-item in work-group y-dimension
+                                                   const auto blockDim_x = static_cast<std::size_t>(group.get_logical_local_range(0));  // number of work-items in work-group x-dimension
+                                                   const auto blockDim_y = static_cast<std::size_t>(group.get_logical_local_range(1));  // number of work-items in work-group y-dimension
+                                                   const auto blockIdx_x = static_cast<std::size_t>(group[0]) + grid_x_offset_;         // current work-group in global range x-dimension + offsets if the global range is too large
+                                                   const auto blockIdx_y = static_cast<std::size_t>(group[1]) + grid_y_offset_;         // current work-group in global range y-dimension + offsets if the global range is too large
+
+                                                   // calculate the indices used in the current thread, pays attention to coalesced memory accesses
+                                                   const auto global_pp_idx_linear = blockIdx_y * blockDim_y + threadIdx_y;  // num_predict_points
+                                                   const auto global_sv_idx_linear = blockIdx_x * blockDim_x + threadIdx_y;  // num_support_vectors
+
+                                                   // zero-out local memory
+                                                   pp_cache[local_id_0][local_id_1] = real_type{ 0.0 };
+                                                   sv_cache[local_id_0][local_id_1] = real_type{ 0.0 };
+
+                                                   // load data into local memory
+                                                   if (feature_block + threadIdx_x < num_features_) {
+                                                       if (global_pp_idx_linear < num_predict_points_) {
+                                                           pp_cache[local_id_0][local_id_1] = predict_points_[(feature_block + threadIdx_x) * num_predict_points_ + global_pp_idx_linear];
+                                                       }
+                                                       if (global_sv_idx_linear < num_sv_) {
+                                                           sv_cache[local_id_0][local_id_1] = support_vectors_[(feature_block + threadIdx_x) * num_sv_ + global_sv_idx_linear];
+                                                       }
+                                                   }
+                                               });
 
                                                // perform the feature reduction calculation
-                                               for (std::size_t feature = 0; feature < num_features_; ++feature) {
-                                                   temp += detail::feature_reduce<kernel_function>(support_vectors_[feature * num_sv_ + global_sv_idx],              // SoA
-                                                                                                   predict_points_[feature * num_predict_points_ + global_pp_idx]);  // SoA
-                                               }
+                                               ::sycl::distribute_items_and_wait(group, [&](::sycl::s_item<2> idx) {
+                                                   // cast values to 32-bit unsigned int values to prevent implicit conversions
+                                                   const auto local_id_0 = static_cast<unsigned>(idx.get_local_id(group, 0));
+                                                   const auto local_id_1 = static_cast<unsigned>(idx.get_local_id(group, 1));
 
-                                               // update temp using the respective kernel function
-                                               temp = detail::apply_kernel_function<kernel_function>(temp, kernel_function_parameter_);
-
-                                               // iterate over all classes
-                                               for (std::size_t class_idx = 0; class_idx < num_classes_; ++class_idx) {
-                                                   real_type out_cache = alpha_[class_idx * num_sv_ + global_sv_idx] * temp;  // AoS
-
-                                                   // the bias (rho) must only be applied once for all support vectors
-                                                   if (global_sv_idx == std::size_t{ 0 }) {
-                                                       out_cache -= rho_[class_idx];
+                                                   // perform the feature reduction calculation
+                                                   for (unsigned feature = 0; feature < THREAD_BLOCK_SIZE; ++feature) {
+                                                       temp(idx) += detail::feature_reduce<kernel_function>(sv_cache[feature][local_id_0],
+                                                                                                            pp_cache[feature][local_id_1]);
                                                    }
-
-                                                   detail::atomic_op<real_type>{ prediction_[global_pp_idx * num_classes_ + class_idx] } += out_cache;  // AoS
-                                               }
+                                               });
                                            }
+                                       }
+
+                                       // update temp using the respective kernel function
+                                       ::sycl::distribute_items_and_wait(group, [&](::sycl::s_item<2> idx) {
+                                           temp(idx) = detail::apply_kernel_function<kernel_function>(temp(idx), kernel_function_parameter_);
                                        });
+
+                                       {
+                                           // rename cached arrays
+                                           auto &alpha_cache = cache_one;
+                                           auto &out_cache = cache_two;
+
+                                           // iterate over all classes using blocking to be able to cache them for faster memory accesses
+                                           for (std::size_t class_block = 0; class_block < num_classes_; class_block += static_cast<std::size_t>(THREAD_BLOCK_SIZE)) {
+                                               // load data into local memory
+                                               ::sycl::distribute_items_and_wait(group, [&](::sycl::s_item<2> idx) {
+                                                   // cast values to 32-bit unsigned int values to prevent implicit conversions
+                                                   const auto local_id_0 = static_cast<unsigned>(idx.get_local_id(group, 0));
+                                                   const auto local_id_1 = static_cast<unsigned>(idx.get_local_id(group, 1));
+
+                                                   const auto threadIdx_x = static_cast<std::size_t>(idx.get_local_id(group, 0));       // current work-item in work-group x-dimension
+                                                   const auto threadIdx_y = static_cast<std::size_t>(idx.get_local_id(group, 1));       // current work-item in work-group y-dimension
+                                                   const auto blockDim_x = static_cast<std::size_t>(group.get_logical_local_range(0));  // number of work-items in work-group x-dimension
+                                                   const auto blockIdx_x = static_cast<std::size_t>(group[0]) + grid_x_offset_;         // current work-group in global range x-dimension + offsets if the global range is too large
+
+                                                   // calculate the indices used in the current thread, pays attention to coalesced memory accesses
+                                                   const auto global_sv_idx_linear = blockIdx_x * blockDim_x + threadIdx_y;  // num_support_vectors
+
+                                                   // zero-out local memory
+                                                   alpha_cache[local_id_0][local_id_1] = real_type{ 0.0 };
+                                                   out_cache[local_id_0][local_id_1] = real_type{ 0.0 };
+
+                                                   // load data into local memory
+                                                   if (class_block + threadIdx_x < num_classes_) {
+                                                       if (global_sv_idx_linear < num_sv_) {
+                                                           alpha_cache[local_id_0][local_id_1] = alpha_[(class_block + threadIdx_x) * num_sv_ + global_sv_idx_linear];  // AoS
+                                                       }
+                                                       // the bias (rho) must only be applied once for all support vectors
+                                                       if (blockIdx_x == std::size_t{ 0 }) {
+                                                           out_cache[local_id_0][local_id_1] = -rho_[class_block + threadIdx_x];
+                                                       }
+                                                   }
+                                               });
+
+                                               // calculate intermediate results and store them in local memory
+                                               for (unsigned class_idx = 0; class_idx < THREAD_BLOCK_SIZE; ++class_idx) {
+                                                   ::sycl::distribute_items_and_wait(group, [&](::sycl::s_item<2> idx) {
+                                                       // cast values to 32-bit unsigned int values to prevent implicit conversions
+                                                       const auto local_id_0 = static_cast<unsigned>(idx.get_local_id(group, 0));
+                                                       const auto local_id_1 = static_cast<unsigned>(idx.get_local_id(group, 1));
+
+                                                       cache_two[(class_idx + local_id_0) % THREAD_BLOCK_SIZE][local_id_1] += temp(idx) * cache_one[(class_idx + local_id_0) % THREAD_BLOCK_SIZE][local_id_0];
+                                                   });
+                                               }
+
+                                               // atomically add the intermediate cached results to the prediction
+                                               ::sycl::distribute_items_and_wait(group, [&](::sycl::s_item<2> idx) {
+                                                   // cast values to 32-bit unsigned int values to prevent implicit conversions
+                                                   const auto local_id_0 = static_cast<unsigned>(idx.get_local_id(group, 0));
+                                                   const auto local_id_1 = static_cast<unsigned>(idx.get_local_id(group, 1));
+
+                                                   const auto threadIdx_x = static_cast<std::size_t>(idx.get_local_id(group, 0));       // current work-item in work-group x-dimension
+                                                   const auto threadIdx_y = static_cast<std::size_t>(idx.get_local_id(group, 1));       // current work-item in work-group y-dimension
+                                                   const auto blockDim_y = static_cast<std::size_t>(group.get_logical_local_range(1));  // number of work-items in work-group y-dimension
+                                                   const auto blockIdx_y = static_cast<std::size_t>(group[1]) + grid_y_offset_;         // current work-group in global range y-dimension + offsets if the global range is too large
+
+                                                   // calculate the indices used in the current thread
+                                                   const auto global_pp_idx = blockIdx_y * blockDim_y + threadIdx_y;  // num_predict_points
+
+                                                   if (class_block + threadIdx_x < num_classes_ && global_pp_idx < num_predict_points_) {
+                                                       detail::atomic_op<real_type>{ prediction_[global_pp_idx * num_classes_ + class_block + threadIdx_x] } += cache_two[local_id_0][local_id_1];
+                                                   }
+                                               });
+                                           }
+                                       }
                                    });
     }
 

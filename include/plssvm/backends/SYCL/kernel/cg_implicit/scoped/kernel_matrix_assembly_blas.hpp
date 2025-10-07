@@ -81,7 +81,21 @@ class device_kernel_assembly_symm {
     template <typename T>
     void operator()(T group) const {
         ::sycl::memory_environment(group,
-                                   [&]() {
+                                   // the indices used in the current work-item
+                                   ::sycl::require_private_mem<std::size_t>(),  // num_rows - device_row_offset
+                                   ::sycl::require_private_mem<std::size_t>(),  // device_num_rows
+
+                                   ::sycl::require_private_mem<std::size_t>(),  // num_rows - device_row_offset
+                                   ::sycl::require_private_mem<std::size_t>(),  // device_num_rows
+
+                                   // create two local memory arrays used for caching
+                                   ::sycl::require_local_mem<real_type[THREAD_BLOCK_SIZE][THREAD_BLOCK_SIZE]>(),  // cache_one
+                                   ::sycl::require_local_mem<real_type[THREAD_BLOCK_SIZE][THREAD_BLOCK_SIZE]>(),  // cache_two
+
+                                   // create a private memory array used for internal caching
+                                   ::sycl::require_private_mem<real_type>(),
+                                   [&](auto &i_idx, auto &j_idx, auto &i_idx_linear, auto &j_idx_linear, auto &cache_one, auto &cache_two, auto &temp) {
+                                       // initialize private and local variables
                                        ::sycl::distribute_items_and_wait(group, [&](::sycl::s_item<2> idx) {
                                            const auto threadIdx_x = static_cast<std::size_t>(idx.get_local_id(group, 0));       // current work-item in work-group x-dimension
                                            const auto threadIdx_y = static_cast<std::size_t>(idx.get_local_id(group, 1));       // current work-item in work-group y-dimension
@@ -90,54 +104,223 @@ class device_kernel_assembly_symm {
                                            const auto blockIdx_x = static_cast<std::size_t>(group[0]) + grid_x_offset_;         // current work-group in global range x-dimension + offsets if the global range is too large
                                            const auto blockIdx_y = static_cast<std::size_t>(group[1]) + grid_y_offset_;         // current work-group in global range y-dimension + offsets if the global range is too large
 
-                                           // calculate the indices used in the current work-item
-                                           const auto device_global_i_idx = blockIdx_y * blockDim_y + threadIdx_y;  // num_rows - device_row_offset
-                                           const auto global_i_idx = device_row_offset_ + device_global_i_idx;
-                                           const auto device_global_j_idx = blockIdx_x * blockDim_x + threadIdx_x;  // device_num_rows
-                                           const auto global_j_idx = device_row_offset_ + device_global_j_idx;
+                                           // calculate the indices to access the global data
+                                           i_idx(idx) = blockIdx_y * blockDim_y + threadIdx_y;
+                                           j_idx(idx) = blockIdx_x * blockDim_x + threadIdx_x;
+                                           // calculate the indices to access the global data, pays attention to coalesced memory accesses
+                                           i_idx_linear(idx) = blockIdx_y * blockDim_y + threadIdx_y;
+                                           j_idx_linear(idx) = blockIdx_x * blockDim_x + threadIdx_y;
 
-                                           // be sure to not perform out-of-bounds accesses (only using the upper triangular matrix)
-                                           if (device_global_i_idx < (num_rows_ - device_row_offset_) && device_global_j_idx < device_num_rows_ && global_i_idx >= global_j_idx) {
-                                               //*************************************************************************//
-                                               //                   inplace kernel matrix construction                    //
-                                               //*************************************************************************//
-                                               real_type temp{ 0.0 };
+                                           // initialize private temp to zero
+                                           temp(idx) = real_type{ 0.0 };
+                                       });
 
-                                               // perform the feature reduction calculation
-                                               for (std::size_t feature = 0; feature < num_features_; ++feature) {
-                                                   temp += detail::feature_reduce<kernel_function>(data_[feature * (num_rows_ + std::size_t{ 1 }) + global_i_idx],   // SoA
-                                                                                                   data_[feature * (num_rows_ + std::size_t{ 1 }) + global_j_idx]);  // SoA
-                                               }
+                                       // only calculate the upper triangular matrix -> can't use get_local_id() since all work-items in a work-group must progress further
+                                       if (group[1] >= group[0]) {
+                                           //*************************************************************************//
+                                           //                   inplace kernel matrix construction                    //
+                                           //*************************************************************************//
+                                           {
+                                               // rename the local memory array
+                                               auto &data_i_cache = cache_one;
+                                               auto &data_j_cache = cache_two;
 
-                                               // apply the final kernel function
-                                               temp = detail::apply_kernel_function<kernel_function>(temp, kernel_function_parameter_) + QA_cost_ - q_[global_i_idx] - q_[global_j_idx];
-                                               // apply the cost on the diagonal
-                                               if (global_i_idx == global_j_idx) {
-                                                   temp += cost_;
-                                               }
+                                               // iterate over all features using blocking to be able to cache them for faster memory accesses
+                                               for (std::size_t feature_block = 0; feature_block < num_features_; feature_block += static_cast<std::size_t>(THREAD_BLOCK_SIZE)) {
+                                                   // load data into local memory
+                                                   ::sycl::distribute_items_and_wait(group, [&](::sycl::s_item<2> idx) {
+                                                       // cast values to 32-bit unsigned int values to prevent implicit conversions
+                                                       const auto local_id_0 = static_cast<unsigned>(idx.get_local_id(group, 0));
+                                                       const auto local_id_1 = static_cast<unsigned>(idx.get_local_id(group, 1));
 
-                                               //*************************************************************************//
-                                               //     calculate C += alpha * temp * B for the UPPER triangular matrix     //
-                                               //*************************************************************************//
-                                               for (std::size_t class_idx = 0; class_idx < num_classes_; ++class_idx) {
-                                                   const real_type B_cache = alpha_ * B_[global_i_idx * num_classes_ + class_idx];                 // SoA
-                                                   detail::atomic_op<real_type>{ C_[global_j_idx * num_classes_ + class_idx] } += temp * B_cache;  // SoA
-                                               }
+                                                       const auto threadIdx_x = static_cast<std::size_t>(idx.get_local_id(group, 0));  // current work-item in work-group x-dimension
 
-                                               // set potential diagonal entries in temp to 0.0 such that we don't apply the main diagonal twice to C
-                                               if (global_i_idx == global_j_idx) {
-                                                   temp = real_type{ 0.0 };
-                                               }
+                                                       // zero-out local memory
+                                                       data_i_cache[local_id_0][local_id_1] = real_type{ 0.0 };
+                                                       data_j_cache[local_id_0][local_id_1] = real_type{ 0.0 };
 
-                                               //*************************************************************************//
-                                               //     calculate C += alpha * temp * B for the LOWER triangular matrix     //
-                                               //*************************************************************************//
-                                               for (std::size_t class_idx = 0; class_idx < num_classes_; ++class_idx) {
-                                                   const real_type B_cache = alpha_ * B_[global_j_idx * num_classes_ + class_idx];                 // SoA
-                                                   detail::atomic_op<real_type>{ C_[global_i_idx * num_classes_ + class_idx] } += temp * B_cache;  // SoA
+                                                       // calculate the indices to access the global data, pays attention to coalesced memory accesses
+                                                       const auto global_i_idx_linear = device_row_offset_ + i_idx_linear(idx);
+                                                       const auto global_j_idx_linear = device_row_offset_ + j_idx_linear(idx);
+
+                                                       // load data into local memory
+                                                       if (feature_block + threadIdx_x < num_features_) {
+                                                           if (global_i_idx_linear < num_rows_) {
+                                                               data_i_cache[local_id_0][local_id_1] = data_[(feature_block + threadIdx_x) * (num_rows_ + std::size_t{ 1 }) + global_i_idx_linear];  // SoA
+                                                           }
+                                                           if (global_j_idx_linear < num_rows_) {
+                                                               data_j_cache[local_id_0][local_id_1] = data_[(feature_block + threadIdx_x) * (num_rows_ + std::size_t{ 1 }) + global_j_idx_linear];  // SoA
+                                                           }
+                                                       }
+                                                   });
+
+                                                   // perform the feature reduction calculation
+                                                   ::sycl::distribute_items_and_wait(group, [&](::sycl::s_item<2> idx) {
+                                                       // cast values to 32-bit unsigned int values to prevent implicit conversions
+                                                       const auto local_id_0 = static_cast<unsigned>(idx.get_local_id(group, 0));
+                                                       const auto local_id_1 = static_cast<unsigned>(idx.get_local_id(group, 1));
+
+                                                       // perform the feature reduction calculation
+                                                       for (unsigned feature = 0; feature < THREAD_BLOCK_SIZE; ++feature) {
+                                                           temp(idx) += detail::feature_reduce<kernel_function>(data_i_cache[feature][local_id_1],
+                                                                                                                data_j_cache[feature][local_id_0]);
+                                                       }
+                                                   });
                                                }
                                            }
-                                       });
+
+                                           // apply the remaining part of the kernel function and store the value in the output kernel matrix
+                                           ::sycl::distribute_items_and_wait(group, [&](::sycl::s_item<2> idx) {
+                                               // calculate the indices to access the global data and the data with respect to the current device
+                                               const auto global_i_idx = device_row_offset_ + i_idx(idx);
+                                               const auto global_j_idx = device_row_offset_ + j_idx(idx);
+
+                                               // be sure to not perform out-of-bounds accesses (only using the upper triangular matrix)
+                                               if (i_idx(idx) < (num_rows_ - device_row_offset_) && j_idx(idx) < device_num_rows_ && global_i_idx >= global_j_idx) {
+                                                   // apply the final kernel function
+                                                   temp(idx) = detail::apply_kernel_function<kernel_function>(temp(idx), kernel_function_parameter_) + QA_cost_ - q_[global_i_idx] - q_[global_j_idx];
+                                                   // apply the cost on the diagonal
+                                                   if (global_i_idx == global_j_idx) {
+                                                       temp(idx) += cost_;
+                                                   }
+                                               } else {
+                                                   // be sure to set the value to zero otherwise
+                                                   temp(idx) = real_type{ 0.0 };
+                                               }
+                                           });
+
+                                           //*************************************************************************//
+                                           //     calculate C += alpha * temp * B for the UPPER triangular matrix     //
+                                           //*************************************************************************//
+                                           {
+                                               // rename the local memory array
+                                               auto &B_cache = cache_one;
+                                               auto &C_out_cache = cache_two;
+
+                                               // iterate over all classes using blocking to be able to cache them for faster memory accesses
+                                               for (std::size_t class_block = 0; class_block < num_classes_; class_block += static_cast<std::size_t>(THREAD_BLOCK_SIZE)) {
+                                                   // load data into local memory
+                                                   ::sycl::distribute_items_and_wait(group, [&](::sycl::s_item<2> idx) {
+                                                       // cast values to 32-bit unsigned int values to prevent implicit conversions
+                                                       const auto local_id_0 = static_cast<unsigned>(idx.get_local_id(group, 0));
+                                                       const auto local_id_1 = static_cast<unsigned>(idx.get_local_id(group, 1));
+
+                                                       const auto threadIdx_x = static_cast<std::size_t>(idx.get_local_id(group, 0));  // current work-item in work-group x-dimension
+
+                                                       // calculate the indices to access the global data, pays attention to coalesced memory accesses
+                                                       const auto global_i_idx_linear = device_row_offset_ + i_idx_linear(idx);
+
+                                                       // zero-out local memory
+                                                       B_cache[local_id_1][local_id_0] = real_type{ 0.0 };
+                                                       C_out_cache[local_id_1][local_id_0] = real_type{ 0.0 };
+
+                                                       // load data into shared memory
+                                                       if (class_block + threadIdx_x < num_classes_ && global_i_idx_linear < num_rows_) {
+                                                           B_cache[local_id_1][local_id_0] = alpha_ * B_[global_i_idx_linear * num_classes_ + class_block + threadIdx_x];  // SoA
+                                                       }
+                                                   });
+
+                                                   // calculate intermediate results and store them in local memory
+                                                   for (unsigned class_idx = 0; class_idx < THREAD_BLOCK_SIZE; ++class_idx) {
+                                                       ::sycl::distribute_items_and_wait(group, [&](::sycl::s_item<2> idx) {
+                                                           // cast values to 32-bit unsigned int values to prevent implicit conversions
+                                                           const auto local_id_0 = static_cast<unsigned>(idx.get_local_id(group, 0));
+                                                           const auto local_id_1 = static_cast<unsigned>(idx.get_local_id(group, 1));
+
+                                                           C_out_cache[local_id_0][(class_idx + local_id_1) % THREAD_BLOCK_SIZE] += temp(idx) * B_cache[local_id_1][(class_idx + local_id_1) % THREAD_BLOCK_SIZE];
+                                                       });
+                                                   }
+
+                                                   // atomically add the intermediate cached results to the C matrix
+                                                   ::sycl::distribute_items_and_wait(group, [&](::sycl::s_item<2> idx) {
+                                                       // cast values to 32-bit unsigned int values to prevent implicit conversions
+                                                       const auto local_id_0 = static_cast<unsigned>(idx.get_local_id(group, 0));
+                                                       const auto local_id_1 = static_cast<unsigned>(idx.get_local_id(group, 1));
+
+                                                       const auto threadIdx_y = static_cast<std::size_t>(idx.get_local_id(group, 1));  // current work-item in work-group y-dimension
+
+                                                       // calculate the indices to access the global data
+                                                       const auto global_j_idx = device_row_offset_ + j_idx(idx);
+
+                                                       // atomically add the intermediate cached results to the C matrix
+                                                       if (class_block + threadIdx_y < num_classes_ && global_j_idx < num_rows_) {
+                                                           detail::atomic_op<real_type>{ C_[global_j_idx * num_classes_ + class_block + threadIdx_y] } += C_out_cache[local_id_0][local_id_1];  // SoA
+                                                       }
+                                                   });
+                                               }
+                                           }
+
+                                           // set potential diagonal entries in temp to 0.0 such that we don't apply the main diagonal twice to C
+                                           ::sycl::distribute_items_and_wait(group, [&](::sycl::s_item<2> idx) {
+                                               // calculate the indices to access the global data
+                                               const auto global_i_idx = device_row_offset_ + i_idx(idx);
+                                               const auto global_j_idx = device_row_offset_ + j_idx(idx);
+
+                                               if (global_i_idx == global_j_idx) {
+                                                   temp(idx) = real_type{ 0.0 };
+                                               }
+                                           });
+
+                                           //*************************************************************************//
+                                           //     calculate C += alpha * temp * B for the LOWER triangular matrix     //
+                                           //*************************************************************************//
+                                           {
+                                               // rename the local memory array
+                                               auto &B_cache = cache_one;
+                                               auto &C_out_cache = cache_two;
+
+                                               // iterate over all classes using blocking to be able to cache them for faster memory accesses
+                                               for (std::size_t class_block = 0; class_block < num_classes_; class_block += static_cast<std::size_t>(THREAD_BLOCK_SIZE)) {
+                                                   ::sycl::distribute_items_and_wait(group, [&](::sycl::s_item<2> idx) {
+                                                       // cast values to 32-bit unsigned int values to prevent implicit conversions
+                                                       const auto local_id_0 = static_cast<unsigned>(idx.get_local_id(group, 0));
+                                                       const auto local_id_1 = static_cast<unsigned>(idx.get_local_id(group, 1));
+
+                                                       const auto threadIdx_x = static_cast<std::size_t>(idx.get_local_id(group, 0));  // current work-item in work-group x-dimension
+
+                                                       // calculate the indices to access the global data, pays attention to coalesced memory accesses
+                                                       const auto global_j_idx_linear = device_row_offset_ + j_idx_linear(idx);
+
+                                                       // zero-out local memory
+                                                       B_cache[local_id_0][local_id_1] = real_type{ 0.0 };
+                                                       C_out_cache[local_id_0][local_id_1] = real_type{ 0.0 };
+
+                                                       // load data into local memory
+                                                       if (class_block + threadIdx_x < num_classes_ && global_j_idx_linear < num_rows_) {
+                                                           B_cache[local_id_0][local_id_1] = alpha_ * B_[global_j_idx_linear * num_classes_ + class_block + threadIdx_x];  // SoA
+                                                       }
+                                                   });
+
+                                                   // calculate intermediate results and store them in local memory
+                                                   for (unsigned class_idx = 0; class_idx < THREAD_BLOCK_SIZE; ++class_idx) {
+                                                       ::sycl::distribute_items_and_wait(group, [&](::sycl::s_item<2> idx) {
+                                                           // cast values to 32-bit unsigned int values to prevent implicit conversions
+                                                           const auto local_id_0 = static_cast<unsigned>(idx.get_local_id(group, 0));
+                                                           const auto local_id_1 = static_cast<unsigned>(idx.get_local_id(group, 1));
+
+                                                           C_out_cache[(class_idx + local_id_0) % THREAD_BLOCK_SIZE][local_id_1] += temp(idx) * B_cache[(class_idx + local_id_0) % THREAD_BLOCK_SIZE][local_id_0];
+                                                       });
+                                                   }
+
+                                                   // atomically add the intermediate cached results to the C matrix
+                                                   ::sycl::distribute_items_and_wait(group, [&](::sycl::s_item<2> idx) {
+                                                       // cast values to 32-bit unsigned int values to prevent implicit conversions
+                                                       const auto local_id_0 = static_cast<unsigned>(idx.get_local_id(group, 0));
+                                                       const auto local_id_1 = static_cast<unsigned>(idx.get_local_id(group, 1));
+
+                                                       const auto threadIdx_x = static_cast<std::size_t>(idx.get_local_id(group, 0));  // current work-item in work-group x-dimension
+
+                                                       // calculate the indices to access the global data
+                                                       const auto global_i_idx = device_row_offset_ + i_idx(idx);
+
+                                                       // atomically add the intermediate cached results to the C matrix
+                                                       if (class_block + threadIdx_x < num_classes_ && global_i_idx < num_rows_) {
+                                                           detail::atomic_op<real_type>{ C_[global_i_idx * num_classes_ + class_block + threadIdx_x] } += C_out_cache[local_id_0][local_id_1];  // SoA
+                                                       }
+                                                   });
+                                               }
+                                           }
+                                       }
                                    });
     }
 

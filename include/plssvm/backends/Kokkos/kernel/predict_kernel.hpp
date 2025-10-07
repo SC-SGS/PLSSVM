@@ -17,7 +17,7 @@
 #include "plssvm/constants.hpp"                                // plssvm::{real_type, THREAD_BLOCK_SIZE}
 #include "plssvm/kernel_function_types.hpp"                    // plssvm::kernel_function_type
 
-#include "Kokkos_Core.hpp"  // KOKKOS_INLINE_FUNCTION, Kokkos::View, Kokkos::TeamPolicy, Kokkos::atomic_add
+#include "Kokkos_Core.hpp"  // KOKKOS_INLINE_FUNCTION, Kokkos::View, Kokkos::TeamPolicy, Kokkos::TeamPolicy, Kokkos::mdspan, Kokkos::atomic_add
 
 #include <cstddef>  // std::size_t
 
@@ -69,6 +69,10 @@ class device_kernel_w_linear {
      */
     KOKKOS_INLINE_FUNCTION
     void operator()(const typename Kokkos::TeamPolicy<ExecutionSpace>::member_type &team) const {
+        // cast values to 32-bit unsigned int values to prevent implicit conversions
+        const auto team_rank_x = static_cast<unsigned>(team.team_rank()) / THREAD_BLOCK_SIZE;
+        const auto team_rank_y = static_cast<unsigned>(team.team_rank()) % THREAD_BLOCK_SIZE;
+
         // cast all values to 64-bit std::size_t to prevent potential 32-bit overflows
         constexpr auto THREAD_BLOCK_SIZE_uz = static_cast<std::size_t>(THREAD_BLOCK_SIZE);
 
@@ -79,20 +83,50 @@ class device_kernel_w_linear {
         const auto blockIdx_x = static_cast<std::size_t>(team.league_rank()) % grid_size_x_ + grid_x_offset_;  // current team in league x-dimension + offsets if the league size is too large
         const auto blockIdx_y = static_cast<std::size_t>(team.league_rank()) / grid_size_x_ + grid_y_offset_;  // current team in league y-dimension + offsets if the league size is too large
 
+        // create two scratchpad memory arrays used for caching
+        constexpr std::size_t scratchpad_size = THREAD_BLOCK_SIZE_uz * THREAD_BLOCK_SIZE_uz;
+        real_type *scratchpad_ptr = static_cast<real_type *>(team.team_shmem().get_shmem(std::size_t{ 2 } * scratchpad_size * sizeof(real_type)));
+        Kokkos::mdspan<real_type, Kokkos::dextents<std::size_t, 2>> feature_cache{ scratchpad_ptr, THREAD_BLOCK_SIZE_uz, THREAD_BLOCK_SIZE_uz };
+        Kokkos::mdspan<real_type, Kokkos::dextents<std::size_t, 2>> alpha_cache{ scratchpad_ptr + scratchpad_size, THREAD_BLOCK_SIZE_uz, THREAD_BLOCK_SIZE_uz };
+
+        real_type temp{ 0.0 };
+
+        {
+            // calculate the indices used in the current thread, pays attention to coalesced memory accesses
+            const auto global_feature_idx_linear = blockIdx_x * blockDim_x + threadIdx_x;  // num_features
+            const auto global_class_idx_linear = blockIdx_y * blockDim_y + threadIdx_x;    // num_classes
+
+            // iterate over all support vectors using blocking to be able to cache them for faster memory accesses
+            for (std::size_t sv_block = 0; sv_block < device_num_sv_; sv_block += THREAD_BLOCK_SIZE_uz) {
+                // zero-out shared memory
+                feature_cache(team_rank_y, team_rank_x) = real_type{ 0.0 };
+                alpha_cache(team_rank_y, team_rank_x) = real_type{ 0.0 };
+
+                // load data into shared memory
+                if (sv_block + threadIdx_y < device_num_sv_) {
+                    if (global_feature_idx_linear < num_features_) {
+                        feature_cache(team_rank_y, team_rank_x) = support_vectors_[global_feature_idx_linear * device_num_sv_ + sv_block + threadIdx_y];  // SoA
+                    }
+                    if (global_class_idx_linear < num_classes_) {
+                        alpha_cache(team_rank_y, team_rank_x) = alpha_[global_class_idx_linear * num_sv_ + sv_block + device_sv_offset_ + threadIdx_y];  // AoS
+                    }
+                }
+                team.team_barrier();  // wait until all threads loaded their part of the data
+
+                // perform the dot product calculation
+                for (unsigned sv = 0; sv < THREAD_BLOCK_SIZE; ++sv) {
+                    temp += alpha_cache(sv, team_rank_y) * feature_cache(sv, team_rank_x);
+                }
+                team.team_barrier();  // wait until all threads performed their part of the calculations
+            }
+        }
+
         // calculate the indices used in the current thread
         const auto global_feature_idx = blockIdx_x * blockDim_x + threadIdx_x;  // num_features
         const auto global_class_idx = blockIdx_y * blockDim_y + threadIdx_y;    // num_classes
 
         // be sure to not perform out-of-bounds accesses
         if (global_feature_idx < num_features_ && global_class_idx < num_classes_) {
-            real_type temp{ 0.0 };
-
-            // perform the dot product calculation
-            for (std::size_t sv = 0; sv < device_num_sv_; ++sv) {
-                temp += alpha_[global_class_idx * num_sv_ + sv + device_sv_offset_] *  // AoS
-                        support_vectors_[global_feature_idx * device_num_sv_ + sv];    // SoA
-            }
-
             w_[global_feature_idx * num_classes_ + global_class_idx] = temp;  // SoA
         }
     }
@@ -157,6 +191,10 @@ class device_kernel_predict_linear {
      */
     KOKKOS_INLINE_FUNCTION
     void operator()(const typename Kokkos::TeamPolicy<ExecutionSpace>::member_type &team) const {
+        // cast values to 32-bit unsigned int values to prevent implicit conversions
+        const auto team_rank_x = static_cast<unsigned>(team.team_rank()) / THREAD_BLOCK_SIZE;
+        const auto team_rank_y = static_cast<unsigned>(team.team_rank()) % THREAD_BLOCK_SIZE;
+
         // cast all values to 64-bit std::size_t to prevent potential 32-bit overflows
         constexpr auto THREAD_BLOCK_SIZE_uz = static_cast<std::size_t>(THREAD_BLOCK_SIZE);
 
@@ -167,20 +205,50 @@ class device_kernel_predict_linear {
         const auto blockIdx_x = static_cast<std::size_t>(team.league_rank()) % grid_size_x_ + grid_x_offset_;  // current team in league x-dimension + offsets if the league size is too large
         const auto blockIdx_y = static_cast<std::size_t>(team.league_rank()) / grid_size_x_ + grid_y_offset_;  // current team in league y-dimension + offsets if the league size is too large
 
+        // create two scratchpad memory arrays used for caching
+        constexpr std::size_t scratchpad_size = THREAD_BLOCK_SIZE_uz * THREAD_BLOCK_SIZE_uz;
+        real_type *scratchpad_ptr = static_cast<real_type *>(team.team_shmem().get_shmem(std::size_t{ 2 } * scratchpad_size * sizeof(real_type)));
+        Kokkos::mdspan<real_type, Kokkos::dextents<std::size_t, 2>> pp_cache{ scratchpad_ptr, THREAD_BLOCK_SIZE_uz, THREAD_BLOCK_SIZE_uz };
+        Kokkos::mdspan<real_type, Kokkos::dextents<std::size_t, 2>> w_cache{ scratchpad_ptr + scratchpad_size, THREAD_BLOCK_SIZE_uz, THREAD_BLOCK_SIZE_uz };
+
+        real_type temp{ 0.0 };
+
+        {
+            // calculate the indices used in the current thread, pays attention to coalesced memory accesses
+            const auto global_pp_idx_linear = blockIdx_x * blockDim_x + threadIdx_x;     // num_predict_points
+            const auto global_class_idx_linear = blockIdx_y * blockDim_y + threadIdx_x;  // num_classes
+
+            // iterate over all features using blocking to be able to cache them for faster memory accesses
+            for (std::size_t feature_block = 0; feature_block < num_features_; feature_block += THREAD_BLOCK_SIZE_uz) {
+                // zero-out shared memory
+                pp_cache(team_rank_y, team_rank_x) = real_type{ 0.0 };
+                w_cache(team_rank_y, team_rank_x) = real_type{ 0.0 };
+
+                // load data into shared memory
+                if (feature_block + threadIdx_y < num_features_) {
+                    if (global_pp_idx_linear < num_predict_points_) {
+                        pp_cache(team_rank_y, team_rank_x) = predict_points_[(feature_block + threadIdx_y) * num_predict_points_ + global_pp_idx_linear];  // SoA
+                    }
+                    if (global_class_idx_linear < num_classes_) {
+                        w_cache(team_rank_y, team_rank_x) = w_[(feature_block + threadIdx_y) * num_classes_ + global_class_idx_linear];  // SoA
+                    }
+                }
+                team.team_barrier();  // wait until all threads loaded their part of the data
+
+                // perform the dot product calculation
+                for (unsigned feature = 0; feature < THREAD_BLOCK_SIZE; ++feature) {
+                    temp += w_cache(feature, team_rank_y) * pp_cache(feature, team_rank_x);
+                }
+                team.team_barrier();  // wait until all threads performed their part of the calculations
+            }
+        }
+
         // calculate the indices used in the current thread
         const auto global_pp_idx = blockIdx_x * blockDim_x + threadIdx_x;     // num_predict_points
         const auto global_class_idx = blockIdx_y * blockDim_y + threadIdx_y;  // num_classes
 
         // be sure to not perform out-of-bounds accesses
         if (global_pp_idx < num_predict_points_ && global_class_idx < num_classes_) {
-            real_type temp{ 0.0 };
-
-            // perform the dot product calculation
-            for (std::size_t feature = 0; feature < num_features_; ++feature) {
-                temp += w_[feature * num_classes_ + global_class_idx] *                  // SoA
-                        predict_points_[feature * num_predict_points_ + global_pp_idx];  // SoA
-            }
-
             prediction_[global_pp_idx * num_classes_ + global_class_idx] = temp - rho_[global_class_idx];
         }
     }
@@ -252,6 +320,10 @@ class device_kernel_predict {
      */
     KOKKOS_INLINE_FUNCTION
     void operator()(const typename Kokkos::TeamPolicy<ExecutionSpace>::member_type &team) const {
+        // cast values to 32-bit unsigned int values to prevent implicit conversions
+        const auto team_rank_x = static_cast<unsigned>(team.team_rank()) / THREAD_BLOCK_SIZE;
+        const auto team_rank_y = static_cast<unsigned>(team.team_rank()) % THREAD_BLOCK_SIZE;
+
         // cast all values to 64-bit std::size_t to prevent potential 32-bit overflows
         constexpr auto THREAD_BLOCK_SIZE_uz = static_cast<std::size_t>(THREAD_BLOCK_SIZE);
 
@@ -262,33 +334,91 @@ class device_kernel_predict {
         const auto blockIdx_x = static_cast<std::size_t>(team.league_rank()) % grid_size_x_ + grid_x_offset_;  // current team in league x-dimension + offsets if the league size is too large
         const auto blockIdx_y = static_cast<std::size_t>(team.league_rank()) / grid_size_x_ + grid_y_offset_;  // current team in league y-dimension + offsets if the league size is too large
 
-        // calculate the indices used in the current thread
-        const auto global_pp_idx = blockIdx_x * blockDim_x + threadIdx_x;  // num_predict_points
-        const auto global_sv_idx = blockIdx_y * blockDim_y + threadIdx_y;  // num_support_vectors
+        // get the scratchpad memory pointer for later usage
+        constexpr std::size_t scratchpad_size = THREAD_BLOCK_SIZE_uz * THREAD_BLOCK_SIZE_uz;
+        real_type *scratchpad_ptr = static_cast<real_type *>(team.team_shmem().get_shmem(std::size_t{ 2 } * scratchpad_size * sizeof(real_type)));
 
-        // be sure to not perform out-of-bounds accesses
-        if (global_sv_idx < num_sv_ && global_pp_idx < num_predict_points_) {
-            real_type temp{ 0.0 };
+        real_type temp{ 0.0 };
 
-            // perform the feature reduction calculation
-            for (std::size_t feature = 0; feature < num_features_; ++feature) {
-                temp += detail::feature_reduce<kernel_function>(support_vectors_[feature * num_sv_ + global_sv_idx],              // SoA
-                                                                predict_points_[feature * num_predict_points_ + global_pp_idx]);  // SoA
+        {
+            // reinterpret the scratchpad memory to be of shape [THREAD_BLOCK_SIZE][THREAD_BLOCK_SIZE]
+            Kokkos::mdspan<real_type, Kokkos::dextents<std::size_t, 2>> pp_cache{ scratchpad_ptr, THREAD_BLOCK_SIZE_uz, THREAD_BLOCK_SIZE_uz };
+            Kokkos::mdspan<real_type, Kokkos::dextents<std::size_t, 2>> sv_cache{ scratchpad_ptr + scratchpad_size, THREAD_BLOCK_SIZE_uz, THREAD_BLOCK_SIZE_uz };
+
+            // calculate the indices used in the current thread, pays attention to coalesced memory accesses
+            const auto global_pp_idx_linear = blockIdx_x * blockDim_x + threadIdx_x;  // num_predict_points
+            const auto global_sv_idx_linear = blockIdx_y * blockDim_y + threadIdx_x;  // num_support_vectors
+
+            // iterate over all features using blocking to be able to cache them for faster memory accesses
+            for (std::size_t feature_block = 0; feature_block < num_features_; feature_block += THREAD_BLOCK_SIZE_uz) {
+                // zero-out shared memory
+                pp_cache(team_rank_y, team_rank_x) = real_type{ 0.0 };
+                sv_cache(team_rank_y, team_rank_x) = real_type{ 0.0 };
+
+                // load data into shared memory
+                if (feature_block + threadIdx_y < num_features_) {
+                    if (global_pp_idx_linear < num_predict_points_) {
+                        pp_cache(team_rank_y, team_rank_x) = predict_points_[(feature_block + threadIdx_y) * num_predict_points_ + global_pp_idx_linear];  // SoA
+                    }
+                    if (global_sv_idx_linear < num_sv_) {
+                        sv_cache(team_rank_y, team_rank_x) = support_vectors_[(feature_block + threadIdx_y) * num_sv_ + global_sv_idx_linear];  // SoA
+                    }
+                }
+                team.team_barrier();  // wait until all threads loaded their part of the data
+
+                // perform the feature reduction calculation
+                for (unsigned feature = 0; feature < THREAD_BLOCK_SIZE; ++feature) {
+                    temp += detail::feature_reduce<kernel_function>(sv_cache(feature, team_rank_y),
+                                                                    pp_cache(feature, team_rank_x));
+                }
+                team.team_barrier();  // wait until all threads performed their part of the calculations
             }
+        }
 
-            // update temp using the respective kernel function
-            temp = detail::apply_kernel_function<kernel_function>(temp, kernel_function_parameter_);
+        // update temp using the respective kernel function
+        temp = detail::apply_kernel_function<kernel_function>(temp, kernel_function_parameter_);
 
-            // iterate over all classes
-            for (std::size_t class_idx = 0; class_idx < num_classes_; ++class_idx) {
-                real_type out_cache = alpha_[class_idx * num_sv_ + global_sv_idx] * temp;  // AoS
+        {
+            // reinterpret the scratchpad memory to be of shape [THREAD_BLOCK_SIZE][THREAD_BLOCK_SIZE]
+            Kokkos::mdspan<real_type, Kokkos::dextents<std::size_t, 2>> alpha_cache{ scratchpad_ptr, THREAD_BLOCK_SIZE_uz, THREAD_BLOCK_SIZE_uz };
+            Kokkos::mdspan<real_type, Kokkos::dextents<std::size_t, 2>> out_cache{ scratchpad_ptr + scratchpad_size, THREAD_BLOCK_SIZE_uz, THREAD_BLOCK_SIZE_uz };
 
-                // the bias (rho) must only be applied once for all support vectors
-                if (global_sv_idx == std::size_t{ 0 }) {
-                    out_cache -= rho_[class_idx];
+            // calculate the indices used in the current thread
+            const auto global_pp_idx = blockIdx_x * blockDim_x + threadIdx_x;  // num_predict_points
+            // calculate the indices used in the current thread, pays attention to coalesced memory accesses
+            const auto global_sv_idx_linear = blockIdx_y * blockDim_y + threadIdx_x;  // num_support_vectors
+
+            // iterate over all classes using blocking to be able to cache them for faster memory accesses
+            for (std::size_t class_block = 0; class_block < num_classes_; class_block += THREAD_BLOCK_SIZE_uz) {
+                // zero-out shared memory
+                alpha_cache(team_rank_y, team_rank_x) = real_type{ 0.0 };
+                out_cache(team_rank_y, team_rank_x) = real_type{ 0.0 };
+
+                // load data into shared memory
+                if (class_block + threadIdx_y < num_classes_) {
+                    if (global_sv_idx_linear < num_sv_) {
+                        alpha_cache(team_rank_y, team_rank_x) = alpha_[(class_block + threadIdx_y) * num_sv_ + global_sv_idx_linear];  // AoS
+                    }
+                    // the bias (rho) must only be applied once for all support vectors
+                    if (blockIdx_y == std::size_t{ 0 }) {
+                        out_cache(team_rank_y, team_rank_x) = -rho_[class_block + threadIdx_y];
+                    } else {
+                        out_cache(team_rank_y, team_rank_x) = real_type{ 0.0 };
+                    }
+                }
+                team.team_barrier();  // wait until all threads loaded their part of the data
+
+                // calculate intermediate results and store them in scratchpad memory
+                for (unsigned class_idx = 0; class_idx < THREAD_BLOCK_SIZE; ++class_idx) {
+                    out_cache((class_idx + team_rank_y) % THREAD_BLOCK_SIZE, team_rank_x) += temp * alpha_cache((class_idx + team_rank_y) % THREAD_BLOCK_SIZE, team_rank_y);
+                    team.team_barrier();  // wait until all threads performed their part of the calculations
                 }
 
-                Kokkos::atomic_add(&prediction_[global_pp_idx * num_classes_ + class_idx], out_cache);  // AoS
+                // atomically add the intermediate cached results to the prediction
+                if (class_block + threadIdx_y < num_classes_ && global_pp_idx < num_predict_points_) {
+                    Kokkos::atomic_add(&prediction_[global_pp_idx * num_classes_ + class_block + threadIdx_y], out_cache(team_rank_y, team_rank_x));
+                }
+                team.team_barrier();  // wait until all threads updated their part of the prediction
             }
         }
     }
