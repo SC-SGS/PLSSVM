@@ -95,7 +95,7 @@ class data_distribution {
      * @return the total amount of local memory (`[[nodiscard]]`)
      */
     [[nodiscard]] constexpr static memory_size maximum_local_memory_needed() noexcept {
-        return memory_size{ 2L * THREAD_BLOCK_SIZE * THREAD_BLOCK_SIZE * sizeof(real_type) };
+        return memory_size{ 2L * THREAD_BLOCK_SIZE * THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE * sizeof(real_type) };
     }
 
   protected:

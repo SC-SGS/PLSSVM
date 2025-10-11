@@ -40,54 +40,77 @@ __kernel void device_kernel_symm(const ulong num_rows, const ulong num_rhs, cons
     const ulong blockIdx_y = get_group_id(1) + grid_y_offset;  // current work-group in global range y-dimension + offsets if the global range is too large
 
     // create two local memory arrays used for caching
-    __local real_type A_cache[THREAD_BLOCK_SIZE][THREAD_BLOCK_SIZE];
-    __local real_type B_cache[THREAD_BLOCK_SIZE][THREAD_BLOCK_SIZE];
+    __local real_type A_cache[THREAD_BLOCK_SIZE][INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE];
+    __local real_type B_cache[THREAD_BLOCK_SIZE][INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE];
 
-    real_type temp = 0.0;
+    // create a work-item private array used for internal caching
+    real_type temp[INTERNAL_BLOCK_SIZE][INTERNAL_BLOCK_SIZE] = { (real_type) 0.0 };
 
     {
         // calculate the indices used in the current work-item, pays attention to coalesced memory accesses
-        const ulong global_i_idx_linear = blockIdx_x * blockDim_x + threadIdx_x;  // num_rhs
-        const ulong global_j_idx_linear = blockIdx_y * blockDim_y + threadIdx_x;  // device_num_rows
+        const ulong i_idx_linear = blockIdx_x * blockDim_x * INTERNAL_BLOCK_SIZE_uz + threadIdx_x;  // num_rhs
+        const ulong j_idx_linear = blockIdx_y * blockDim_y * INTERNAL_BLOCK_SIZE_uz + threadIdx_x;  // device_num_rows
 
         // iterate over all values using blocking to be able to cache them for faster memory accesses
         for (ulong dim_block = 0; dim_block < (num_rows - device_row_offset); dim_block += THREAD_BLOCK_SIZE_uz) {
-            // zero-out local memory
-            A_cache[local_id_1][local_id_0] = (real_type) 0.0;
-            B_cache[local_id_1][local_id_0] = (real_type) 0.0;
+            // zero-out shared memory
+            for (uint internal = 0; internal < INTERNAL_BLOCK_SIZE; ++internal) {
+                A_cache[local_id_1][internal * THREAD_BLOCK_SIZE + local_id_0] = (real_type) 0.0;
+                B_cache[local_id_1][internal * THREAD_BLOCK_SIZE + local_id_0] = (real_type) 0.0;
+            }
 
             // load data into local memory
-            if (dim_block + threadIdx_y < num_rows - device_row_offset) {
-                if (global_j_idx_linear < device_num_rows) {
-                    // determine on which side of the diagonal we are located
-                    if (dim_block + threadIdx_y < global_j_idx_linear) {
-                        A_cache[local_id_1][local_id_0] = A[(dim_block + threadIdx_y) * (num_rows - device_row_offset) + global_j_idx_linear - (dim_block + threadIdx_y) * (dim_block + threadIdx_y + (ulong) 1) / (ulong) 2];  // SoA, upper triangular matrix only
-                    } else {
-                        A_cache[local_id_1][local_id_0] = A[global_j_idx_linear * (num_rows - device_row_offset) + dim_block + threadIdx_y - global_j_idx_linear * (global_j_idx_linear + (ulong) 1) / (ulong) 2];  // SoA, upper triangular matrix only
+            for (uint internal = 0; internal < INTERNAL_BLOCK_SIZE; ++internal) {
+                // calculate the indices to access the global data, pays attention to coalesced memory accesses
+                const ulong global_i_idx_linear = i_idx_linear + (ulong) internal * THREAD_BLOCK_SIZE_uz;
+                const ulong global_j_idx_linear = j_idx_linear + (ulong) internal * THREAD_BLOCK_SIZE_uz;
+
+                // store the values in the local memory
+                if (dim_block + threadIdx_y < num_rows - device_row_offset) {
+                    if (global_j_idx_linear < device_num_rows) {
+                        // determine on which side of the diagonal we are located
+                        if (dim_block + threadIdx_y < global_j_idx_linear) {
+                            A_cache[local_id_1][internal * THREAD_BLOCK_SIZE + local_id_0] = A[(dim_block + threadIdx_y) * (num_rows - device_row_offset) + global_j_idx_linear - (dim_block + threadIdx_y) * (dim_block + threadIdx_y + (ulong) 1) / (ulong) 2];  // SoA, upper triangular matrix only
+                        } else {
+                            A_cache[local_id_1][internal * THREAD_BLOCK_SIZE + local_id_0] = A[global_j_idx_linear * (num_rows - device_row_offset) + dim_block + threadIdx_y - global_j_idx_linear * (global_j_idx_linear + (ulong) 1) / (ulong) 2];  // SoA, upper triangular matrix only
+                        }
                     }
-                }
-                if (global_i_idx_linear < num_rhs) {
-                    B_cache[local_id_1][local_id_0] = B[(dim_block + device_row_offset + threadIdx_y) * num_rhs + global_i_idx_linear];  // SoA
+                    if (global_i_idx_linear < num_rhs) {
+                        B_cache[local_id_1][internal * THREAD_BLOCK_SIZE + local_id_0] = B[(dim_block + device_row_offset + threadIdx_y) * num_rhs + global_i_idx_linear];  // SoA
+                    }
                 }
             }
             barrier(CLK_LOCAL_MEM_FENCE);  // wait until all work-items loaded their part of the data
 
             // perform the dot product calculation
             for (uint dim = 0; dim < THREAD_BLOCK_SIZE; ++dim) {
-                temp += A_cache[dim][local_id_1] * B_cache[dim][local_id_0];
+                for (uint internal_i = 0; internal_i < INTERNAL_BLOCK_SIZE; ++internal_i) {
+                    for (uint internal_j = 0; internal_j < INTERNAL_BLOCK_SIZE; ++internal_j) {
+                        temp[internal_i][internal_j] += A_cache[dim][local_id_1 * INTERNAL_BLOCK_SIZE + internal_j] * B_cache[dim][local_id_0 * INTERNAL_BLOCK_SIZE + internal_i];
+                    }
+                }
             }
             barrier(CLK_LOCAL_MEM_FENCE);  // wait until all work-items performed their part of the calculations
         }
     }
 
     // calculate the indices used in the current work-item
-    const ulong global_i_idx = blockIdx_x * blockDim_x + threadIdx_x;         // num_rhs
-    const ulong device_global_j_idx = blockIdx_y * blockDim_y + threadIdx_y;  // device_num_rows
-    const ulong global_j_idx = device_row_offset + device_global_j_idx;
+    const ulong i_idx = (blockIdx_x * blockDim_x + threadIdx_x) * INTERNAL_BLOCK_SIZE_uz;  // num_rhs
+    const ulong j_idx = (blockIdx_y * blockDim_y + threadIdx_y) * INTERNAL_BLOCK_SIZE_uz;  // device_num_rows
 
-    // be sure to not perform out-of-bounds accesses
-    if (global_i_idx < num_rhs && device_global_j_idx < device_num_rows && global_j_idx < num_rows) {
-        C[global_j_idx * num_rhs + global_i_idx] = alpha * temp + beta * C[global_j_idx * num_rhs + global_i_idx];  // SoA
+    // apply the (partial) BLAS operation and update C
+    for (uint internal_i = 0; internal_i < INTERNAL_BLOCK_SIZE; ++internal_i) {
+        for (uint internal_j = 0; internal_j < INTERNAL_BLOCK_SIZE; ++internal_j) {
+            // calculate the indices to access the global data and the data with respect to the current device
+            const ulong global_i_idx = i_idx + (ulong) internal_i;
+            const ulong device_global_j_idx = j_idx + (ulong) internal_j;
+            const ulong global_j_idx = device_row_offset + device_global_j_idx;
+
+            // be sure to not perform out-of-bounds accesses
+            if (global_i_idx < num_rhs && device_global_j_idx < device_num_rows && global_j_idx < num_rows) {
+                C[global_j_idx * num_rhs + global_i_idx] = alpha * temp[internal_i][internal_j] + beta * C[global_j_idx * num_rhs + global_i_idx];  // SoA
+            }
+        }
     }
 }
 
@@ -121,50 +144,72 @@ __kernel void device_kernel_symm_mirror(const ulong num_rows, const ulong num_rh
     const ulong blockIdx_y = get_group_id(1) + grid_y_offset;  // current work-group in global range y-dimension + offsets if the global range is too large
 
     // create two local memory arrays used for caching
-    __local real_type A_cache[THREAD_BLOCK_SIZE][THREAD_BLOCK_SIZE];
-    __local real_type B_cache[THREAD_BLOCK_SIZE][THREAD_BLOCK_SIZE];
+    __local real_type A_cache[THREAD_BLOCK_SIZE][INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE];
+    __local real_type B_cache[THREAD_BLOCK_SIZE][INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE];
 
     // create a work-item private array used for internal caching
-    real_type temp = 0.0;
+    real_type temp[INTERNAL_BLOCK_SIZE][INTERNAL_BLOCK_SIZE] = { (real_type) 0.0 };
 
     {
         // calculate the indices used in the current work-item, pays attention to coalesced memory accesses
-        const ulong global_i_idx_linear = blockIdx_x * blockDim_x + threadIdx_x;  // num_rhs
-        const ulong global_j_idx_linear = blockIdx_y * blockDim_y + threadIdx_x;  // num_mirror_rows
+        const ulong i_idx_linear = blockIdx_x * blockDim_x * INTERNAL_BLOCK_SIZE_uz + threadIdx_x;  // num_rhs
+        const ulong j_idx_linear = blockIdx_y * blockDim_y * INTERNAL_BLOCK_SIZE_uz + threadIdx_x;  // num_mirror_rows
 
         // iterate over the remaining values using blocking to be able to cache them for faster memory accesses
         for (ulong dim_block = 0; dim_block < device_num_rows; dim_block += THREAD_BLOCK_SIZE_uz) {
             // zero-out shared memory
-            A_cache[local_id_1][local_id_0] = (real_type) 0.0;
-            B_cache[local_id_1][local_id_0] = (real_type) 0.0;
+            for (uint internal = 0; internal < INTERNAL_BLOCK_SIZE; ++internal) {
+                A_cache[local_id_1][internal * THREAD_BLOCK_SIZE + local_id_0] = (real_type) 0.0;
+                B_cache[local_id_1][internal * THREAD_BLOCK_SIZE + local_id_0] = (real_type) 0.0;
+            }
 
             // load data into local memory
-            if (dim_block + threadIdx_y < device_num_rows) {
-                if (global_j_idx_linear < num_mirror_rows) {
-                    A_cache[local_id_1][local_id_0] = A[(dim_block + threadIdx_y) * (num_rows - device_row_offset) - (dim_block + threadIdx_y - (ulong) 1) * (dim_block + threadIdx_y) / (ulong) 2 + device_num_rows - (dim_block + threadIdx_y) + global_j_idx_linear];
-                }
-                if (global_i_idx_linear < num_rhs) {
-                    B_cache[local_id_1][local_id_0] = B[(dim_block + device_row_offset + threadIdx_y) * num_rhs + global_i_idx_linear];  // SoA
+            for (uint internal = 0; internal < INTERNAL_BLOCK_SIZE; ++internal) {
+                // calculate the indices to access the global data, pays attention to coalesced memory accesses
+                const ulong global_i_idx_linear = i_idx_linear + (ulong) internal * THREAD_BLOCK_SIZE_uz;
+                const ulong global_j_idx_linear = j_idx_linear + (ulong) internal * THREAD_BLOCK_SIZE_uz;
+
+                // store the values in the local memory
+                if (dim_block + threadIdx_y < device_num_rows) {
+                    if (global_j_idx_linear < num_mirror_rows) {
+                        A_cache[local_id_1][internal * THREAD_BLOCK_SIZE + local_id_0] = A[(dim_block + threadIdx_y) * (num_rows - device_row_offset) - (dim_block + threadIdx_y - (ulong) 1) * (dim_block + threadIdx_y) / (ulong) 2 + device_num_rows - (dim_block + threadIdx_y) + global_j_idx_linear];
+                    }
+                    if (global_i_idx_linear < num_rhs) {
+                        B_cache[local_id_1][internal * THREAD_BLOCK_SIZE + local_id_0] = B[(dim_block + device_row_offset + threadIdx_y) * num_rhs + global_i_idx_linear];  // SoA
+                    }
                 }
             }
             barrier(CLK_LOCAL_MEM_FENCE);  // wait until all work-items loaded their part of the data
 
             // perform the dot product calculation
             for (uint dim = 0; dim < THREAD_BLOCK_SIZE; ++dim) {
-                temp += A_cache[dim][local_id_1] * B_cache[dim][local_id_0];
+                for (uint internal_i = 0; internal_i < INTERNAL_BLOCK_SIZE; ++internal_i) {
+                    for (uint internal_j = 0; internal_j < INTERNAL_BLOCK_SIZE; ++internal_j) {
+                        temp[internal_i][internal_j] += A_cache[dim][local_id_1 * INTERNAL_BLOCK_SIZE + internal_j] * B_cache[dim][local_id_0 * INTERNAL_BLOCK_SIZE + internal_i];
+                    }
+                }
             }
             barrier(CLK_LOCAL_MEM_FENCE);  // wait until all work-items performed their part of the calculations
         }
     }
 
     // calculate the indices used in the current work-item
-    const ulong global_i_idx = blockIdx_x * blockDim_x + threadIdx_x;          // num_rhs
-    const ulong partial_global_j_idx = blockIdx_y * blockDim_y + threadIdx_y;  // num_mirror_rows
-    const ulong global_j_idx = device_row_offset + device_num_rows + partial_global_j_idx;
+    const ulong i_idx = (blockIdx_x * blockDim_x + threadIdx_x) * INTERNAL_BLOCK_SIZE_uz;  // num_rhs
+    const ulong j_idx = (blockIdx_y * blockDim_y + threadIdx_y) * INTERNAL_BLOCK_SIZE_uz;  // num_mirror_rows
 
-    // be sure to not perform out-of-bounds accesses
-    if (global_i_idx < num_rhs && partial_global_j_idx < num_mirror_rows && global_j_idx < num_rows) {
-        C[global_j_idx * num_rhs + global_i_idx] = alpha * temp + beta * C[global_j_idx * num_rhs + global_i_idx];  // SoA
+    // apply the (remaining) BLAS operation and update C
+    for (uint internal_i = 0; internal_i < INTERNAL_BLOCK_SIZE; ++internal_i) {
+        for (uint internal_j = 0; internal_j < INTERNAL_BLOCK_SIZE; ++internal_j) {
+            // calculate the indices to access the global data and the data with respect to the current device
+            const ulong global_i_idx = i_idx + (ulong) internal_i;
+            const ulong partial_global_j_idx = j_idx + (ulong) internal_j;
+            const ulong global_j_idx = device_row_offset + device_num_rows + partial_global_j_idx;
+
+            // be sure to not perform out-of-bounds accesses
+            if (global_i_idx < num_rhs && partial_global_j_idx < num_mirror_rows && global_j_idx < num_rows) {
+                C[global_j_idx * num_rhs + global_i_idx] = alpha * temp[internal_i][internal_j] + beta * C[global_j_idx * num_rhs + global_i_idx];  // SoA
+            }
+        }
     }
 }
 
@@ -187,11 +232,19 @@ __kernel void device_kernel_inplace_matrix_add(const ulong num_rows, const ulong
     const ulong blockIdx_y = get_group_id(1) + grid_y_offset;  // current work-group in global range y-dimension + offsets if the global range is too large
 
     // calculate the indices used in the current work-item
-    const ulong global_i_idx = blockIdx_x * blockDim_x + threadIdx_x;  // num_rows
-    const ulong global_j_idx = blockIdx_y * blockDim_y + threadIdx_y;  // num_rhs
+    const ulong i_idx = (blockIdx_x * blockDim_x + threadIdx_x) * INTERNAL_BLOCK_SIZE_uz;  // num_rows
+    const ulong j_idx = (blockIdx_y * blockDim_y + threadIdx_y) * INTERNAL_BLOCK_SIZE_uz;  // num_rhs
 
-    if (global_i_idx < num_rows && global_j_idx < num_cols) {
-        lhs[global_i_idx * num_cols + global_j_idx] += rhs[global_i_idx * num_cols + global_j_idx];  // SoA
+    for (uint internal_i = 0; internal_i < INTERNAL_BLOCK_SIZE; ++internal_i) {
+        for (uint internal_j = 0; internal_j < INTERNAL_BLOCK_SIZE; ++internal_j) {
+            // calculate the indices to access the global data
+            const ulong global_i_idx = i_idx + (ulong) internal_i;
+            const ulong global_j_idx = j_idx + (ulong) internal_j;
+
+            if (global_i_idx < num_rows && global_j_idx < num_cols) {
+                lhs[global_i_idx * num_cols + global_j_idx] += rhs[global_i_idx * num_cols + global_j_idx];  // SoA
+            }
+        }
     }
 }
 
@@ -214,10 +267,18 @@ __kernel void device_kernel_inplace_matrix_scale(const ulong num_rows, const ulo
     const ulong blockIdx_y = get_group_id(1) + grid_y_offset;  // current work-group in global range y-dimension + offsets if the global range is too large
 
     // calculate the indices used in the current work-item
-    const ulong global_i_idx = blockIdx_x * blockDim_x + threadIdx_x;  // num_rows
-    const ulong global_j_idx = blockIdx_y * blockDim_y + threadIdx_y;  // num_rhs
+    const ulong i_idx = (blockIdx_x * blockDim_x + threadIdx_x) * INTERNAL_BLOCK_SIZE_uz;  // num_rows
+    const ulong j_idx = (blockIdx_y * blockDim_y + threadIdx_y) * INTERNAL_BLOCK_SIZE_uz;  // num_rhs
 
-    if (global_i_idx < num_rows && global_j_idx < num_cols) {
-        lhs[global_i_idx * num_cols + global_j_idx] *= scale;  // SoA
+    for (uint internal_i = 0; internal_i < INTERNAL_BLOCK_SIZE; ++internal_i) {
+        for (uint internal_j = 0; internal_j < INTERNAL_BLOCK_SIZE; ++internal_j) {
+            // calculate the indices to access the global data
+            const ulong global_i_idx = i_idx + (ulong) internal_i;
+            const ulong global_j_idx = j_idx + (ulong) internal_j;
+
+            if (global_i_idx < num_rows && global_j_idx < num_cols) {
+                lhs[global_i_idx * num_cols + global_j_idx] *= scale;  // SoA
+            }
+        }
     }
 }

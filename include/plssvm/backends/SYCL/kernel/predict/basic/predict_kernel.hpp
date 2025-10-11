@@ -66,23 +66,50 @@ class device_kernel_w_linear {
      */
     void operator()(::sycl::item<2> idx) const {
         // cast all values to 64-bit std::size_t to prevent potential 32-bit overflows
+        constexpr auto INTERNAL_BLOCK_SIZE_uz = static_cast<std::size_t>(INTERNAL_BLOCK_SIZE);
         constexpr auto THREAD_BLOCK_SIZE_uz = static_cast<std::size_t>(THREAD_BLOCK_SIZE);
 
-        // calculate the indices used in the current thread
-        const auto global_feature_idx = idx.get_id(1) + grid_x_offset_ * THREAD_BLOCK_SIZE_uz;  // num_features
-        const auto global_class_idx = idx.get_id(0) + grid_y_offset_ * THREAD_BLOCK_SIZE_uz;    // num_classes
+        // calculate the indices used in the current work-item
+        const auto feature_idx = (idx.get_id(1) + grid_x_offset_ * THREAD_BLOCK_SIZE_uz) * INTERNAL_BLOCK_SIZE_uz;  // num_features
+        const auto class_idx = (idx.get_id(0) + grid_y_offset_ * THREAD_BLOCK_SIZE_uz) * INTERNAL_BLOCK_SIZE_uz;    // num_classes
 
-        // be sure to not perform out-of-bounds accesses
-        if (global_feature_idx < num_features_ && global_class_idx < num_classes_) {
-            real_type temp{ 0.0 };
+        // create a work-item private array used for internal caching
+        real_type temp[INTERNAL_BLOCK_SIZE][INTERNAL_BLOCK_SIZE]{};
 
-            // perform the dot product calculation
-            for (std::size_t sv = 0; sv < device_num_sv_; ++sv) {
-                temp += alpha_[global_class_idx * num_sv_ + sv + device_sv_offset_] *  // AoS
-                        support_vectors_[global_feature_idx * device_num_sv_ + sv];    // SoA
+        // perform the dot product calculation
+        for (std::size_t sv = 0; sv < device_num_sv_; ++sv) {
+            for (unsigned internal_feature = 0; internal_feature < INTERNAL_BLOCK_SIZE; ++internal_feature) {
+                for (unsigned internal_class = 0; internal_class < INTERNAL_BLOCK_SIZE; ++internal_class) {
+                    // calculate the indices to access the global data
+                    const auto global_class_idx = class_idx + static_cast<std::size_t>(internal_class);
+                    const auto global_feature_idx = feature_idx + static_cast<std::size_t>(internal_feature);
+
+                    real_type alpha_cache = 0.0;
+                    if (global_class_idx < num_classes_) {
+                        alpha_cache = alpha_[global_class_idx * num_sv_ + sv + device_sv_offset_];  // AoS
+                    }
+                    real_type sv_cache = 0.0;
+                    if (global_feature_idx < num_features_) {
+                        sv_cache = support_vectors_[global_feature_idx * device_num_sv_ + sv];  // SoA
+                    }
+
+                    temp[internal_feature][internal_class] += alpha_cache * sv_cache;
+                }
             }
+        }
 
-            w_[global_feature_idx * num_classes_ + global_class_idx] = temp;  // SoA
+        // update the global w-vector with the locally cached values
+        for (unsigned internal_feature = 0; internal_feature < INTERNAL_BLOCK_SIZE; ++internal_feature) {
+            for (unsigned internal_class = 0; internal_class < INTERNAL_BLOCK_SIZE; ++internal_class) {
+                // calculate the indices to access the global data
+                const auto global_feature_idx = feature_idx + static_cast<std::size_t>(internal_feature);
+                const auto global_class_idx = class_idx + static_cast<std::size_t>(internal_class);
+
+                // be sure to not perform out-of-bounds accesses
+                if (global_feature_idx < num_features_ && global_class_idx < num_classes_) {
+                    w_[global_feature_idx * num_classes_ + global_class_idx] = temp[internal_feature][internal_class];  // SoA
+                }
+            }
         }
     }
 
@@ -139,23 +166,49 @@ class device_kernel_predict_linear {
      */
     void operator()(::sycl::item<2> idx) const {
         // cast all values to 64-bit std::size_t to prevent potential 32-bit overflows
+        constexpr auto INTERNAL_BLOCK_SIZE_uz = static_cast<std::size_t>(INTERNAL_BLOCK_SIZE);
         constexpr auto THREAD_BLOCK_SIZE_uz = static_cast<std::size_t>(THREAD_BLOCK_SIZE);
 
         // calculate the indices used in the current work-item
-        const auto global_pp_idx = idx.get_id(1) + grid_x_offset_ * THREAD_BLOCK_SIZE_uz;     // num_predict_points
-        const auto global_class_idx = idx.get_id(0) + grid_y_offset_ * THREAD_BLOCK_SIZE_uz;  // num_classes
+        const auto pp_idx = (idx.get_id(1) + grid_x_offset_ * THREAD_BLOCK_SIZE_uz) * INTERNAL_BLOCK_SIZE_uz;     // num_predict_points
+        const auto class_idx = (idx.get_id(0) + grid_y_offset_ * THREAD_BLOCK_SIZE_uz) * INTERNAL_BLOCK_SIZE_uz;  // num_classes
 
-        // be sure to not perform out-of-bounds accesses
-        if (global_pp_idx < num_predict_points_ && global_class_idx < num_classes_) {
-            real_type temp{ 0.0 };
+        // create a work-item private array used for internal caching
+        real_type temp[INTERNAL_BLOCK_SIZE][INTERNAL_BLOCK_SIZE]{};
 
-            // perform the dot product calculation
-            for (std::size_t feature = 0; feature < num_features_; ++feature) {
-                temp += w_[feature * num_classes_ + global_class_idx] *                  // SoA
-                        predict_points_[feature * num_predict_points_ + global_pp_idx];  // SoA
+        // perform the dot product calculation
+        for (std::size_t feature = 0; feature < num_features_; ++feature) {
+            for (unsigned internal_pp = 0; internal_pp < INTERNAL_BLOCK_SIZE; ++internal_pp) {
+                for (unsigned internal_class = 0; internal_class < INTERNAL_BLOCK_SIZE; ++internal_class) {
+                    // calculate the indices to access the global data
+                    const auto global_pp_idx = pp_idx + static_cast<std::size_t>(internal_pp);
+                    const auto global_class_idx = class_idx + static_cast<std::size_t>(internal_class);
+
+                    real_type w_cache = 0.0;
+                    if (global_class_idx < num_classes_) {
+                        w_cache = w_[feature * num_classes_ + global_class_idx];
+                    }
+                    real_type pp_cache = 0.0;
+                    if (global_pp_idx < num_predict_points_) {
+                        pp_cache = predict_points_[feature * num_predict_points_ + global_pp_idx];  // SoA
+                    }
+
+                    temp[internal_pp][internal_class] += w_cache * pp_cache;
+                }
             }
+        }
 
-            prediction_[global_pp_idx * num_classes_ + global_class_idx] = temp - rho_[global_class_idx];
+        // update the global array with the local one
+        for (unsigned internal_pp = 0; internal_pp < INTERNAL_BLOCK_SIZE; ++internal_pp) {
+            for (unsigned internal_class = 0; internal_class < INTERNAL_BLOCK_SIZE; ++internal_class) {
+                // calculate the indices to access the global data
+                const auto global_pp_idx = pp_idx + static_cast<std::size_t>(internal_pp);
+                const auto global_class_idx = class_idx + static_cast<std::size_t>(internal_class);
+
+                if (global_pp_idx < num_predict_points_ && global_class_idx < num_classes_) {
+                    prediction_[global_pp_idx * num_classes_ + global_class_idx] = temp[internal_pp][internal_class] - rho_[global_class_idx];  // AoS
+                }
+            }
         }
     }
 
@@ -220,35 +273,75 @@ class device_kernel_predict {
      */
     void operator()(::sycl::item<2> idx) const {
         // cast all values to 64-bit std::size_t to prevent potential 32-bit overflows
+        constexpr auto INTERNAL_BLOCK_SIZE_uz = static_cast<std::size_t>(INTERNAL_BLOCK_SIZE);
         constexpr auto THREAD_BLOCK_SIZE_uz = static_cast<std::size_t>(THREAD_BLOCK_SIZE);
 
         // calculate the indices used in the current work-item
-        const auto global_pp_idx = idx.get_id(1) + grid_x_offset_ * THREAD_BLOCK_SIZE_uz;  // num_predict_points
-        const auto global_sv_idx = idx.get_id(0) + grid_x_offset_ * THREAD_BLOCK_SIZE_uz;  // num_support_vectors
+        const auto pp_idx = (idx.get_id(1) + grid_x_offset_ * THREAD_BLOCK_SIZE_uz) * INTERNAL_BLOCK_SIZE_uz;  // num_predict_points
+        const auto sv_idx = (idx.get_id(0) + grid_y_offset_ * THREAD_BLOCK_SIZE_uz) * INTERNAL_BLOCK_SIZE_uz;  // num_support_vectors
 
-        // be sure to not perform out-of-bounds accesses
-        if (global_sv_idx < num_sv_ && global_pp_idx < num_predict_points_) {
-            real_type temp{ 0.0 };
+        // create a work-item private array used for internal caching
+        real_type temp[INTERNAL_BLOCK_SIZE][INTERNAL_BLOCK_SIZE]{};
 
-            // perform the feature reduction calculation
-            for (std::size_t feature = 0; feature < num_features_; ++feature) {
-                temp += detail::feature_reduce<kernel_function>(support_vectors_[feature * num_sv_ + global_sv_idx],              // SoA
-                                                                predict_points_[feature * num_predict_points_ + global_pp_idx]);  // SoA
+        // perform the feature reduction calculation
+        for (std::size_t feature = 0; feature < num_features_; ++feature) {
+            for (unsigned internal_pp = 0; internal_pp < INTERNAL_BLOCK_SIZE; ++internal_pp) {
+                for (unsigned internal_sv = 0; internal_sv < INTERNAL_BLOCK_SIZE; ++internal_sv) {
+                    // calculate the indices to access the global data
+                    const auto global_pp_idx = pp_idx + static_cast<std::size_t>(internal_pp);
+                    const auto global_sv_idx = sv_idx + static_cast<std::size_t>(internal_sv);
+
+                    real_type sv_cache = 0.0;
+                    if (global_sv_idx < num_sv_) {
+                        sv_cache = support_vectors_[feature * num_sv_ + global_sv_idx];  // SoA
+                    }
+                    real_type pp_cache = 0.0;
+                    if (global_pp_idx < num_predict_points_) {
+                        pp_cache = predict_points_[feature * num_predict_points_ + global_pp_idx];  // SoA
+                    }
+                    temp[internal_pp][internal_sv] += detail::feature_reduce<kernel_function>(sv_cache, pp_cache);
+                }
+            }
+        }
+
+        // update temp using the respective kernel function
+        for (unsigned internal_pp = 0; internal_pp < INTERNAL_BLOCK_SIZE; ++internal_pp) {
+            for (unsigned internal_sv = 0; internal_sv < INTERNAL_BLOCK_SIZE; ++internal_sv) {
+                temp[internal_pp][internal_sv] = detail::apply_kernel_function<kernel_function>(temp[internal_pp][internal_sv], kernel_function_parameter_);
+            }
+        }
+
+        // iterate over all classes using blocking
+        for (std::size_t class_block = 0; class_block < num_classes_; class_block += THREAD_BLOCK_SIZE_uz) {
+            if (sv_idx == 0) {
+                for (std::size_t class_idx = 0; class_idx < THREAD_BLOCK_SIZE_uz; ++class_idx) {
+                    for (unsigned internal_pp = 0; internal_pp < INTERNAL_BLOCK_SIZE; ++internal_pp) {
+                        // calculate the index to access the global data
+                        const auto global_pp_idx = pp_idx + static_cast<std::size_t>(internal_pp);
+
+                        if (global_pp_idx < num_predict_points_ && class_block + class_idx < num_classes_) {
+                            detail::atomic_op<real_type>{ prediction_[global_pp_idx * num_classes_ + class_block + class_idx] } += -rho_[class_block + class_idx];
+                        }
+                    }
+                }
             }
 
-            // update temp using the respective kernel function
-            temp = detail::apply_kernel_function<kernel_function>(temp, kernel_function_parameter_);
+            // atomically add the results to the prediction
+            for (unsigned internal_pp = 0; internal_pp < INTERNAL_BLOCK_SIZE; ++internal_pp) {
+                for (unsigned internal_sv = 0; internal_sv < INTERNAL_BLOCK_SIZE; ++internal_sv) {
+                    // calculate the indices to access the global data
+                    const auto global_pp_idx = pp_idx + static_cast<std::size_t>(internal_pp);
+                    const auto global_sv_idx = sv_idx + static_cast<std::size_t>(internal_sv);
 
-            // iterate over all classes
-            for (std::size_t class_idx = 0; class_idx < num_classes_; ++class_idx) {
-                real_type out_cache = alpha_[class_idx * num_sv_ + global_sv_idx] * temp;  // AoS
-
-                // the bias (rho) must only be applied once for all support vectors
-                if (global_sv_idx == std::size_t{ 0 }) {
-                    out_cache -= rho_[class_idx];
+                    if (global_pp_idx < num_predict_points_) {
+                        for (std::size_t class_idx = 0; class_idx < THREAD_BLOCK_SIZE_uz; ++class_idx) {
+                            if (class_block + class_idx < num_classes_) {
+                                detail::atomic_op<real_type>{ prediction_[global_pp_idx * num_classes_ + class_block + class_idx] } +=
+                                    temp[internal_pp][internal_sv] * alpha_[(class_block + class_idx) * num_sv_ + global_sv_idx];
+                            }
+                        }
+                    }
                 }
-
-                detail::atomic_op<real_type>{ prediction_[global_pp_idx * num_classes_ + class_idx] } += out_cache;  // AoS
             }
         }
     }

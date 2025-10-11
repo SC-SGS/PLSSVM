@@ -40,48 +40,70 @@ __kernel void device_kernel_w_linear(__global real_type *w, const __global real_
     const ulong blockIdx_y = get_group_id(1) + grid_y_offset;  // current work-group in global range y-dimension + offsets if the global range is too large
 
     // create two local memory arrays used for caching
-    __local real_type feature_cache[THREAD_BLOCK_SIZE][THREAD_BLOCK_SIZE];
-    __local real_type alpha_cache[THREAD_BLOCK_SIZE][THREAD_BLOCK_SIZE];
+    __local real_type feature_cache[THREAD_BLOCK_SIZE][INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE];
+    __local real_type alpha_cache[THREAD_BLOCK_SIZE][INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE];
 
-    real_type temp = 0.0;
+    // create a work-item private array used for internal caching
+    real_type temp[INTERNAL_BLOCK_SIZE][INTERNAL_BLOCK_SIZE] = { (real_type) 0.0 };
 
     {
         // calculate the indices used in the current work-item, pays attention to coalesced memory accesses
-        const ulong global_feature_idx_linear = blockIdx_x * blockDim_x + threadIdx_x;  // num_features
-        const ulong global_class_idx_linear = blockIdx_y * blockDim_y + threadIdx_x;    // num_classes
+        const ulong feature_idx_linear = blockIdx_x * blockDim_x * INTERNAL_BLOCK_SIZE_uz + threadIdx_x;  // num_features
+        const ulong class_idx_linear = blockIdx_y * blockDim_y * INTERNAL_BLOCK_SIZE_uz + threadIdx_x;    // num_classes
 
         // iterate over all support vectors using blocking to be able to cache them for faster memory accesses
         for (ulong sv_block = 0; sv_block < device_num_sv; sv_block += THREAD_BLOCK_SIZE_uz) {
             // zero-out shared memory
-            feature_cache[local_id_1][local_id_0] = (real_type) 0.0;
-            alpha_cache[local_id_1][local_id_0] = (real_type) 0.0;
+            for (uint internal = 0; internal < INTERNAL_BLOCK_SIZE; ++internal) {
+                feature_cache[local_id_1][internal * THREAD_BLOCK_SIZE + local_id_0] = (real_type) 0.0;
+                alpha_cache[local_id_1][internal * THREAD_BLOCK_SIZE + local_id_0] = (real_type) 0.0;
+            }
 
             // load data into local memory
-            if (sv_block + threadIdx_y < device_num_sv) {
-                if (global_feature_idx_linear < num_features) {
-                    feature_cache[local_id_1][local_id_0] = support_vectors[global_feature_idx_linear * device_num_sv + sv_block + threadIdx_y];  // SoA
-                }
-                if (global_class_idx_linear < num_classes) {
-                    alpha_cache[local_id_1][local_id_0] = alpha[global_class_idx_linear * num_sv + sv_block + device_sv_offset + threadIdx_y];  // AoS
+            for (uint internal = 0; internal < INTERNAL_BLOCK_SIZE; ++internal) {
+                // calculate the indices to access the global data, pays attention to coalesced memory accesses
+                const ulong global_feature_idx_linear = feature_idx_linear + (ulong) internal * THREAD_BLOCK_SIZE_uz;
+                const ulong global_class_idx_linear = class_idx_linear + (ulong) internal * THREAD_BLOCK_SIZE_uz;
+
+                // store the values in the local memory
+                if (sv_block + threadIdx_y < device_num_sv) {
+                    if (global_feature_idx_linear < num_features) {
+                        feature_cache[local_id_1][internal * THREAD_BLOCK_SIZE + local_id_0] = support_vectors[global_feature_idx_linear * device_num_sv + sv_block + threadIdx_y];  // SoA
+                    }
+                    if (global_class_idx_linear < num_classes) {
+                        alpha_cache[local_id_1][internal * THREAD_BLOCK_SIZE + local_id_0] = alpha[global_class_idx_linear * num_sv + sv_block + device_sv_offset + threadIdx_y];  // AoS
+                    }
                 }
             }
             barrier(CLK_LOCAL_MEM_FENCE);  // wait until all work-items loaded their part of the data
 
             // perform the dot product calculation
             for (uint sv = 0; sv < THREAD_BLOCK_SIZE; ++sv) {
-                temp += alpha_cache[sv][local_id_1] * feature_cache[sv][local_id_0];
+                for (uint internal_feature = 0; internal_feature < INTERNAL_BLOCK_SIZE; ++internal_feature) {
+                    for (uint internal_class = 0; internal_class < INTERNAL_BLOCK_SIZE; ++internal_class) {
+                        temp[internal_feature][internal_class] += alpha_cache[sv][local_id_1 * INTERNAL_BLOCK_SIZE + internal_class] * feature_cache[sv][local_id_0 * INTERNAL_BLOCK_SIZE + internal_feature];
+                    }
+                }
             }
             barrier(CLK_LOCAL_MEM_FENCE);  // wait until all work-items performed their part of the calculations
         }
     }
 
     // calculate the indices used in the current work-item
-    const ulong global_feature_idx = blockIdx_x * blockDim_x + threadIdx_x;  // num_features
-    const ulong global_class_idx = blockIdx_y * blockDim_y + threadIdx_y;    // num_classes
+    const ulong feature_idx = (blockIdx_x * blockDim_x + threadIdx_x) * INTERNAL_BLOCK_SIZE_uz;  // num_features
+    const ulong class_idx = (blockIdx_y * blockDim_y + threadIdx_y) * INTERNAL_BLOCK_SIZE_uz;    // num_classes
 
-    // be sure to not perform out-of-bounds accesses
-    if (global_feature_idx < num_features && global_class_idx < num_classes) {
-        w[global_feature_idx * num_classes + global_class_idx] = temp;  // SoA
+    // update the global w-vector with the locally cached values
+    for (uint internal_feature = 0; internal_feature < INTERNAL_BLOCK_SIZE; ++internal_feature) {
+        for (uint internal_class = 0; internal_class < INTERNAL_BLOCK_SIZE; ++internal_class) {
+            // calculate the indices to access the global data
+            const ulong global_feature_idx = feature_idx + (ulong) internal_feature;
+            const ulong global_class_idx = class_idx + (ulong) internal_class;
+
+            if (global_feature_idx < num_features && global_class_idx < num_classes) {
+                w[global_feature_idx * num_classes + global_class_idx] = temp[internal_feature][internal_class];  // SoA
+            }
+        }
     }
 }
 
@@ -111,47 +133,69 @@ __kernel void device_kernel_predict_linear(__global real_type *prediction, const
     const ulong blockIdx_y = get_group_id(1) + grid_y_offset;  // current work-group in global range y-dimension + offsets if the global range is too large
 
     // create two local memory arrays used for caching
-    __local real_type pp_cache[THREAD_BLOCK_SIZE][THREAD_BLOCK_SIZE];
-    __local real_type w_cache[THREAD_BLOCK_SIZE][THREAD_BLOCK_SIZE];
+    __local real_type pp_cache[THREAD_BLOCK_SIZE][INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE];
+    __local real_type w_cache[THREAD_BLOCK_SIZE][INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE];
 
-    real_type temp = 0.0;
+    // create a work-item private array used for internal caching
+    real_type temp[INTERNAL_BLOCK_SIZE][INTERNAL_BLOCK_SIZE] = { (real_type) 0.0 };
 
     {
         // calculate the indices used in the current work-item, pays attention to coalesced memory accesses
-        const ulong global_pp_idx_linear = blockIdx_x * blockDim_x + threadIdx_x;     // num_predict_points
-        const ulong global_class_idx_linear = blockIdx_y * blockDim_y + threadIdx_x;  // num_classes
+        const ulong pp_idx_linear = blockIdx_x * blockDim_x * INTERNAL_BLOCK_SIZE_uz + threadIdx_x;     // num_predict_points
+        const ulong class_idx_linear = blockIdx_y * blockDim_y * INTERNAL_BLOCK_SIZE_uz + threadIdx_x;  // num_classes
 
         // iterate over all features using blocking to be able to cache them for faster memory accesses
         for (ulong feature_block = 0; feature_block < num_features; feature_block += THREAD_BLOCK_SIZE_uz) {
             // zero-out shared memory
-            pp_cache[local_id_1][local_id_0] = (real_type) 0.0;
-            w_cache[local_id_1][local_id_0] = (real_type) 0.0;
+            for (uint internal = 0; internal < INTERNAL_BLOCK_SIZE; ++internal) {
+                pp_cache[local_id_1][internal * THREAD_BLOCK_SIZE + local_id_0] = (real_type) 0.0;
+                w_cache[local_id_1][internal * THREAD_BLOCK_SIZE + local_id_0] = (real_type) 0.0;
+            }
 
             // load data into local memory
-            if (feature_block + threadIdx_y < num_features) {
-                if (global_pp_idx_linear < num_predict_points) {
-                    pp_cache[local_id_1][local_id_0] = predict_points[(feature_block + threadIdx_y) * num_predict_points + global_pp_idx_linear];  // SoA
-                }
-                if (global_class_idx_linear < num_classes) {
-                    w_cache[local_id_1][local_id_0] = w[(feature_block + threadIdx_y) * num_classes + global_class_idx_linear];  // SoA
+            for (uint internal = 0; internal < INTERNAL_BLOCK_SIZE; ++internal) {
+                // calculate the indices to access the global data, pays attention to coalesced memory accesses
+                const ulong global_pp_idx_linear = pp_idx_linear + (ulong) internal * THREAD_BLOCK_SIZE_uz;
+                const ulong global_class_idx_linear = class_idx_linear + (ulong) internal * THREAD_BLOCK_SIZE_uz;
+
+                // store the values in the local memory
+                if (feature_block + threadIdx_y < num_features) {
+                    if (global_pp_idx_linear < num_predict_points) {
+                        pp_cache[local_id_1][internal * THREAD_BLOCK_SIZE + local_id_0] = predict_points[(feature_block + threadIdx_y) * num_predict_points + global_pp_idx_linear];  // SoA
+                    }
+                    if (global_class_idx_linear < num_classes) {
+                        w_cache[local_id_1][internal * THREAD_BLOCK_SIZE + local_id_0] = w[(feature_block + threadIdx_y) * num_classes + global_class_idx_linear];  // SoA
+                    }
                 }
             }
             barrier(CLK_LOCAL_MEM_FENCE);  // wait until all work-items loaded their part of the data
 
             // perform the feature reduction calculation
             for (uint feature = 0; feature < THREAD_BLOCK_SIZE; ++feature) {
-                temp += w_cache[feature][local_id_1] * pp_cache[feature][local_id_0];
+                for (uint internal_pp = 0; internal_pp < INTERNAL_BLOCK_SIZE; ++internal_pp) {
+                    for (uint internal_class = 0; internal_class < INTERNAL_BLOCK_SIZE; ++internal_class) {
+                        temp[internal_pp][internal_class] += w_cache[feature][local_id_1 * INTERNAL_BLOCK_SIZE + internal_class] * pp_cache[feature][local_id_0 * INTERNAL_BLOCK_SIZE + internal_pp];
+                    }
+                }
             }
             barrier(CLK_LOCAL_MEM_FENCE);  // wait until all work-items performed their part of the calculations
         }
     }
 
     // calculate the indices used in the current work-item
-    const ulong global_pp_idx = blockIdx_x * blockDim_x + threadIdx_x;     // num_predict_points
-    const ulong global_class_idx = blockIdx_y * blockDim_y + threadIdx_y;  // num_classes
+    const ulong pp_idx = (blockIdx_x * blockDim_x + threadIdx_x) * INTERNAL_BLOCK_SIZE_uz;     // num_predict_points
+    const ulong class_idx = (blockIdx_y * blockDim_y + threadIdx_y) * INTERNAL_BLOCK_SIZE_uz;  // num_classes
 
-    // be sure to not perform out-of-bounds accesses
-    if (global_pp_idx < num_predict_points && global_class_idx < num_classes) {
-        prediction[global_pp_idx * num_classes + global_class_idx] = temp - rho[global_class_idx];
+    // update the global array with the local one
+    for (uint internal_pp = 0; internal_pp < INTERNAL_BLOCK_SIZE; ++internal_pp) {
+        for (uint internal_class = 0; internal_class < INTERNAL_BLOCK_SIZE; ++internal_class) {
+            // calculate the indices to access the global data
+            const ulong global_pp_idx = pp_idx + (ulong) internal_pp;
+            const ulong global_class_idx = class_idx + (ulong) internal_class;
+
+            if (global_pp_idx < num_predict_points && global_class_idx < num_classes) {
+                prediction[global_pp_idx * num_classes + global_class_idx] = temp[internal_pp][internal_class] - rho[global_class_idx];
+            }
+        }
     }
 }

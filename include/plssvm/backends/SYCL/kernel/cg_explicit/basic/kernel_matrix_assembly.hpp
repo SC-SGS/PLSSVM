@@ -73,32 +73,57 @@ class device_kernel_assembly {
      */
     void operator()(::sycl::item<2> idx) const {
         // cast all values to 64-bit std::size_t to prevent potential 32-bit overflows
+        constexpr auto INTERNAL_BLOCK_SIZE_uz = static_cast<std::size_t>(INTERNAL_BLOCK_SIZE);
         constexpr auto THREAD_BLOCK_SIZE_uz = static_cast<std::size_t>(THREAD_BLOCK_SIZE);
 
         // calculate the indices used in the current work-item
-        const auto device_global_i_idx = idx.get_id(1) + grid_x_offset_ * THREAD_BLOCK_SIZE_uz;
-        const auto global_i_idx = device_row_offset_ + device_global_i_idx;
-        const auto device_global_j_idx = idx.get_id(0) + grid_y_offset_ * THREAD_BLOCK_SIZE_uz;
-        const auto global_j_idx = device_row_offset_ + device_global_j_idx;
+        const auto i_idx = (idx.get_id(1) + grid_x_offset_ * THREAD_BLOCK_SIZE_uz) * INTERNAL_BLOCK_SIZE_uz;  // num_rows - device_row_offset
+        const auto j_idx = (idx.get_id(0) + grid_y_offset_ * THREAD_BLOCK_SIZE_uz) * INTERNAL_BLOCK_SIZE_uz;  // device_num_rows
 
-        // be sure to not perform out-of-bounds accesses (only using the upper triangular matrix)
-        if (device_global_i_idx < (num_rows_ - device_row_offset_) && device_global_j_idx < device_num_rows_ && global_i_idx >= global_j_idx) {
-            real_type temp{ 0.0 };
+        // only calculate the upper triangular matrix
+        if (i_idx >= j_idx) {
+            // create a private memory array used for internal caching
+            real_type temp[INTERNAL_BLOCK_SIZE][INTERNAL_BLOCK_SIZE]{};
 
             // perform the feature reduction calculation
             for (std::size_t feature = 0; feature < num_features_; ++feature) {
-                temp += detail::feature_reduce<kernel_function>(data_[feature * (num_rows_ + std::size_t{ 1 }) + global_i_idx],   // SoA
-                                                                data_[feature * (num_rows_ + std::size_t{ 1 }) + global_j_idx]);  // SoA
+                for (unsigned internal_i = 0; internal_i < INTERNAL_BLOCK_SIZE; ++internal_i) {
+                    for (unsigned internal_j = 0; internal_j < INTERNAL_BLOCK_SIZE; ++internal_j) {
+                        // calculate the indices to access the global data
+                        const auto global_i_idx = device_row_offset_ + i_idx + static_cast<std::size_t>(internal_i);
+                        const auto global_j_idx = device_row_offset_ + j_idx + static_cast<std::size_t>(internal_j);
+
+                        if (global_i_idx < num_rows_ && global_j_idx < num_rows_) {
+                            temp[internal_i][internal_j] += detail::feature_reduce<kernel_function>(data_[feature * (num_rows_ + std::size_t{ 1 }) + global_i_idx],   // SoA
+                                                                                                    data_[feature * (num_rows_ + std::size_t{ 1 }) + global_j_idx]);  // SoA
+                        }
+                    }
+                }
             }
 
-            // apply the final kernel function
-            temp = detail::apply_kernel_function<kernel_function>(temp, kernel_function_parameter_) + QA_cost_ - q_[global_i_idx] - q_[global_j_idx];
-            // apply the cost on the diagonal
-            if (global_i_idx == global_j_idx) {
-                temp += cost_;
+            // apply the remaining part of the kernel function and store the value in the output kernel matrix
+            for (unsigned internal_i = 0; internal_i < INTERNAL_BLOCK_SIZE; ++internal_i) {
+                for (unsigned internal_j = 0; internal_j < INTERNAL_BLOCK_SIZE; ++internal_j) {
+                    // calculate the indices to access the global data and the data with respect to the current device
+                    const auto device_global_i_idx = i_idx + static_cast<std::size_t>(internal_i);
+                    const auto global_i_idx = device_row_offset_ + device_global_i_idx;
+                    const auto device_global_j_idx = j_idx + static_cast<std::size_t>(internal_j);
+                    const auto global_j_idx = device_row_offset_ + device_global_j_idx;
+
+                    // be sure to not perform out-of-bounds accesses (only using the upper triangular matrix)
+                    if (device_global_i_idx < (num_rows_ - device_row_offset_) && device_global_j_idx < device_num_rows_ && global_i_idx >= global_j_idx) {
+                        real_type temp_ij = temp[internal_i][internal_j];
+                        // apply the final kernel function
+                        temp_ij = detail::apply_kernel_function<kernel_function>(temp_ij, kernel_function_parameter_) + QA_cost_ - q_[global_i_idx] - q_[global_j_idx];
+                        // apply the cost on the diagonal
+                        if (global_i_idx == global_j_idx) {
+                            temp_ij += cost_;
+                        }
+                        // update the upper triangular kernel matrix
+                        kernel_matrix_[device_global_j_idx * (num_rows_ - device_row_offset_) - device_global_j_idx * (device_global_j_idx + std::size_t{ 1 }) / std::size_t{ 2 } + device_global_i_idx] = temp_ij;
+                    }
+                }
             }
-            // update the upper triangular kernel matrix
-            kernel_matrix_[device_global_j_idx * (num_rows_ - device_row_offset_) - device_global_j_idx * (device_global_j_idx + std::size_t{ 1 }) / std::size_t{ 2 } + device_global_i_idx] = temp;
         }
     }
 
