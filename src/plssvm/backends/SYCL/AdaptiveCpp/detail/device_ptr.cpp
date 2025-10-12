@@ -28,15 +28,19 @@ namespace plssvm::adaptivecpp::detail {
 
 template <typename T>
 device_ptr<T>::device_ptr(const size_type size, const queue &q) :
-    device_ptr{ plssvm::shape{ size, 1 }, q } { }
+    device_ptr{ plssvm::shape{ size, 1 }, plssvm::shape{ 0, 0 }, q } { }
 
 template <typename T>
 device_ptr<T>::device_ptr(const plssvm::shape shape, const queue &q) :
-    base_type{ shape, q } {
-    data_ = ::sycl::malloc_device<value_type>(this->size(), queue_.impl->sycl_queue);
+    device_ptr{ shape, plssvm::shape{ 0, 0 }, q } { }
+
+template <typename T>
+device_ptr<T>::device_ptr(const plssvm::shape shape, const plssvm::shape padding, const queue &q) :
+    base_type{ shape, padding, q } {
+    data_ = ::sycl::malloc_device<value_type>(this->size_padded(), queue_.impl->sycl_queue);
 
     // only non-empty pointers must be memset in the constructor
-    if (this->size() != std::size_t{ 0 }) {
+    if (this->size_padded() != std::size_t{ 0 }) {
         this->memset(0);
     }
 }
@@ -53,10 +57,10 @@ void device_ptr<T>::memset(const int pattern, const size_type pos, const size_ty
     PLSSVM_ASSERT(data_ != nullptr, "Invalid data pointer! Maybe *this has been default constructed?");
     PLSSVM_ASSERT(queue_.impl != nullptr, "Invalid sycl::queue!");
 
-    if (pos >= this->size()) {
-        throw backend_exception{ fmt::format("Illegal access in memset!: {} >= {}", pos, this->size()) };
+    if (pos >= this->size_padded()) {
+        throw backend_exception{ fmt::format("Illegal access in memset!: {} >= {}", pos, this->size_padded()) };
     }
-    const size_type rnum_bytes = std::min(num_bytes, (this->size() - pos) * sizeof(value_type));
+    const size_type rnum_bytes = std::min(num_bytes, (this->size_padded() - pos) * sizeof(value_type));
 
     ::sycl::queue &queue = queue_.impl->sycl_queue;
     // using our OpenMP enhanced 0 memset functions has dramatically better performance on the OpenMP CPU backend
@@ -72,10 +76,10 @@ void device_ptr<T>::fill(const value_type value, const size_type pos, const size
     PLSSVM_ASSERT(data_ != nullptr, "Invalid data pointer! Maybe *this has been default constructed?");
     PLSSVM_ASSERT(queue_.impl != nullptr, "Invalid sycl::queue!");
 
-    if (pos >= this->size()) {
-        throw backend_exception{ fmt::format("Illegal access in fill!: {} >= {}", pos, this->size()) };
+    if (pos >= this->size_padded()) {
+        throw backend_exception{ fmt::format("Illegal access in fill!: {} >= {}", pos, this->size_padded()) };
     }
-    const size_type rcount = std::min(count, this->size() - pos);
+    const size_type rcount = std::min(count, this->size_padded() - pos);
     queue_.impl->sycl_queue.fill(static_cast<void *>(data_ + pos), value, rcount).wait();
 }
 
@@ -85,7 +89,7 @@ void device_ptr<T>::copy_to_device(const_host_pointer_type data_to_copy, const s
     PLSSVM_ASSERT(data_to_copy != nullptr, "Invalid host pointer for the data to copy!");
     PLSSVM_ASSERT(queue_.impl != nullptr, "Invalid sycl::queue!");
 
-    const size_type rcount = std::min(count, this->size() - pos);
+    const size_type rcount = std::min(count, this->size_padded() - pos);
     queue_.impl->sycl_queue.copy(data_to_copy, data_ + pos, rcount).wait();
 }
 
@@ -103,11 +107,11 @@ void device_ptr<T>::copy_to_device_strided(const_host_pointer_type data_to_copy,
         // can use normal copy since we have no line strides
         this->copy_to_device(data_to_copy, 0, width * height);
     } else {
-        std::vector<value_type> temp(this->shape().x * height, value_type{ 0.0 });
+        std::vector<value_type> temp(this->shape_padded().x * height, value_type{ 0.0 });
         value_type *pos = temp.data();
         for (std::size_t row = 0; row < height; ++row) {
             std::memcpy(pos, data_to_copy + row * spitch, width * sizeof(value_type));
-            pos += this->shape().x;
+            pos += this->shape_padded().x;
         }
         this->copy_to_device(temp);
     }
@@ -119,7 +123,7 @@ void device_ptr<T>::copy_to_host(host_pointer_type buffer, const size_type pos, 
     PLSSVM_ASSERT(buffer != nullptr, "Invalid host pointer for the data to copy!");
     PLSSVM_ASSERT(queue_.impl != nullptr, "Invalid sycl::queue!");
 
-    const size_type rcount = std::min(count, this->size() - pos);
+    const size_type rcount = std::min(count, this->size_padded() - pos);
     queue_.impl->sycl_queue.copy(data_ + pos, buffer, rcount).wait();
 }
 
@@ -128,9 +132,9 @@ void device_ptr<T>::copy_to_other_device(device_ptr &target, const size_type pos
     PLSSVM_ASSERT(data_ != nullptr, "Invalid data pointer! Maybe *this has been default constructed?");
     PLSSVM_ASSERT(target.get() != nullptr, "Invalid target pointer! Maybe target has been default constructed?");
 
-    const size_type rcount = std::min(count, this->size() - pos);
-    if (target.size() < rcount) {
-        throw backend_exception{ fmt::format("Buffer too small to perform copy (needed: {}, provided: {})!", rcount, target.size()) };
+    const size_type rcount = std::min(count, this->size_padded() - pos);
+    if (target.size_padded() < rcount) {
+        throw backend_exception{ fmt::format("Buffer too small to perform copy (needed: {}, provided: {})!", rcount, target.size_padded()) };
     }
 
     // TODO: direct copy between devices in AdaptiveCpp currently not possible

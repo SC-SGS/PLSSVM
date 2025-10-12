@@ -33,11 +33,11 @@ TYPED_TEST(HIPDevicePtrConstruct, construct_invalid_queue) {
     // the number of devices
     const std::size_t num_devices = plssvm::hip::csvc{}.num_available_devices();
 
-    EXPECT_THROW_WHAT_MATCHER((plssvm::hip::detail::device_ptr<real_type>(plssvm::shape{ 4, 4 }, -1)),
+    EXPECT_THROW_WHAT_MATCHER((plssvm::hip::detail::device_ptr<real_type>(plssvm::shape{ 4, 4 }, plssvm::shape{ 4, 4 }, -1)),
                               plssvm::hip::backend_exception,
                               ::testing::HasSubstr(fmt::format("Illegal device ID! Must be in range: [0, {}) but is -1.", num_devices)));
 
-    EXPECT_THROW_WHAT_MATCHER((plssvm::hip::detail::device_ptr<real_type>(plssvm::shape{ 4, 4 }, num_devices)),
+    EXPECT_THROW_WHAT_MATCHER((plssvm::hip::detail::device_ptr<real_type>(plssvm::shape{ 4, 4 }, plssvm::shape{ 4, 4 }, num_devices)),
                               plssvm::hip::backend_exception,
                               ::testing::HasSubstr(fmt::format("Illegal device ID! Must be in range: [0, {}) but is {}.", num_devices, num_devices)));
 }

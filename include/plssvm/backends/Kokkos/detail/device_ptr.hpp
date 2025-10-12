@@ -68,6 +68,13 @@ class device_ptr : public ::plssvm::detail::gpu_device_ptr<T, device_wrapper, de
      * @param[in] device the device wrapper
      */
     explicit device_ptr(plssvm::shape shape, const device_wrapper &device);
+    /**
+     * @brief Allocates `(shape.x + padding.x) * (shape.y + padding.y) * sizeof(T)` bytes in the Kokkos execution space @p exec.
+     * @param[in] shape the number of elements represented by the device_ptr
+     * @param[in] padding the number of padding elements added to the extent values
+     * @param[in] device the device wrapper
+     */
+    device_ptr(plssvm::shape shape, plssvm::shape padding, const device_wrapper &device);
 
     /**
      * @copydoc plssvm::detail::gpu_device_ptr::gpu_device_ptr(const plssvm::detail::gpu_device_ptr &)

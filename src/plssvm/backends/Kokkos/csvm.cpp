@@ -514,9 +514,9 @@ auto csvm::run_assemble_kernel_matrix_explicit(const std::size_t device_id, cons
 
     // calculate the number of matrix entries
     const ::plssvm::detail::triangular_data_distribution &dist = dynamic_cast<::plssvm::detail::triangular_data_distribution &>(*data_distribution_);
-    const std::size_t num_entries = dist.calculate_explicit_kernel_matrix_num_entries(device_id);
+    const std::size_t num_entries_padded = dist.calculate_explicit_kernel_matrix_num_entries_padded(device_id);
 
-    device_ptr_type kernel_matrix_d{ num_entries, devices_[device_id] };  // only explicitly store the upper triangular matrix
+    device_ptr_type kernel_matrix_d{ num_entries_padded, devices_[device_id] };  // only explicitly store the upper triangular matrix
     const real_type cost_factor = real_type{ 1.0 } / params.cost;
 
     // save the team size
@@ -596,7 +596,6 @@ void csvm::run_blas_level_3_kernel_explicit(const std::size_t device_id, const :
 }
 
 void csvm::run_inplace_matrix_addition(const std::size_t device_id, const ::plssvm::detail::execution_range &exec, device_ptr_type &lhs_d, const device_ptr_type &rhs_d) const {
-    const unsigned long long num_rows = lhs_d.shape().y;
     const unsigned long long num_rhs = lhs_d.shape().x;
 
     devices_[device_id].execute([&](auto &device) {
@@ -613,14 +612,13 @@ void csvm::run_inplace_matrix_addition(const std::size_t device_id, const ::plss
             // create a Kokkos TeamPolicy
             const Kokkos::TeamPolicy<kokkos_execution_space_type> team_policy{ device, native_partial_grid, team_size };
 
-            Kokkos::parallel_for("inplace_matrix_addition", team_policy, detail::device_kernel_inplace_matrix_add<kokkos_execution_space_type>{ num_rows, num_rhs, lhs_d.get().get<space>(), rhs_d.get().get<space>(), offsets.x, offsets.y, partial_grid.x });
+            Kokkos::parallel_for("inplace_matrix_addition", team_policy, detail::device_kernel_inplace_matrix_add<kokkos_execution_space_type>{ num_rhs, lhs_d.get().get<space>(), rhs_d.get().get<space>(), offsets.x, offsets.y, partial_grid.x });
         }
         detail::device_synchronize(device);
     });
 }
 
 void csvm::run_inplace_matrix_scale(const std::size_t device_id, const ::plssvm::detail::execution_range &exec, device_ptr_type &lhs_d, const real_type scale) const {
-    const unsigned long long num_rows = lhs_d.shape().y;
     const unsigned long long num_rhs = lhs_d.shape().x;
 
     devices_[device_id].execute([&](auto &device) {
@@ -637,7 +635,7 @@ void csvm::run_inplace_matrix_scale(const std::size_t device_id, const ::plssvm:
             // create a Kokkos TeamPolicy
             const Kokkos::TeamPolicy<kokkos_execution_space_type> team_policy{ device, native_partial_grid, team_size };
 
-            Kokkos::parallel_for("inplace_matrix_scale", team_policy, detail::device_kernel_inplace_matrix_scale<kokkos_execution_space_type>{ num_rows, num_rhs, lhs_d.get().get<space>(), scale, offsets.x, offsets.y, partial_grid.x });
+            Kokkos::parallel_for("inplace_matrix_scale", team_policy, detail::device_kernel_inplace_matrix_scale<kokkos_execution_space_type>{ num_rhs, lhs_d.get().get<space>(), scale, offsets.x, offsets.y, partial_grid.x });
         }
         detail::device_synchronize(device);
     });
@@ -692,7 +690,7 @@ auto csvm::run_w_kernel(const std::size_t device_id, const ::plssvm::detail::exe
     // get the offset of the data points this device is responsible for
     const unsigned long long sv_offset = data_distribution_->place_row_offset(device_id);
 
-    device_ptr_type w_d{ shape{ num_classes, num_features }, devices_[device_id] };
+    device_ptr_type w_d{ shape{ num_classes, num_features }, shape{ PADDING_SIZE, PADDING_SIZE }, devices_[device_id] };
 
     // save the team size
     const int team_size = detail::dim_type_to_native(exec.block);
@@ -709,7 +707,7 @@ auto csvm::run_w_kernel(const std::size_t device_id, const ::plssvm::detail::exe
             // create a Kokkos TeamPolicy
             Kokkos::TeamPolicy<kokkos_execution_space_type> team_policy{ device, native_partial_grid, team_size };
 
-            dispatch_kernel_functor<detail::device_kernel_w_linear, kokkos_execution_space_type>("w_kernel", team_policy.set_scratch_size(0, Kokkos::PerTeam(::plssvm::detail::data_distribution::maximum_local_memory_needed().num_bytes())), w_d.get().get<space>(), alpha_d.get().get<space>(), sv_d.get().get<space>(), num_features, num_classes, num_sv, device_specific_num_sv, sv_offset, offsets.x, offsets.y, partial_grid.x);
+            dispatch_kernel_functor<detail::device_kernel_w_linear, kokkos_execution_space_type>("w_kernel", team_policy.set_scratch_size(0, Kokkos::PerTeam(::plssvm::detail::data_distribution::maximum_local_memory_needed().num_bytes())), w_d.get().get<space>(), alpha_d.get().get<space>(), sv_d.get().get<space>(), num_classes, num_sv, device_specific_num_sv, sv_offset, offsets.x, offsets.y, partial_grid.x);
         }
         detail::device_synchronize(device);
         const auto end = std::chrono::steady_clock::now();
@@ -726,7 +724,7 @@ auto csvm::run_predict_kernel(const std::size_t device_id, const ::plssvm::detai
     const unsigned long long num_features = predict_points_d.shape().y;
     const unsigned long long num_sv = sv_or_w_d.shape().x;
 
-    device_ptr_type out_d{ shape{ num_predict_points, num_classes }, devices_[device_id] };
+    device_ptr_type out_d{ shape{ num_predict_points, num_classes }, shape{ PADDING_SIZE, PADDING_SIZE }, devices_[device_id] };
 
     // save the team size
     const int team_size = detail::dim_type_to_native(exec.block);

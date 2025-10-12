@@ -40,7 +40,6 @@ class device_kernel_w_linear {
      * @param[in,out] w the vector to speedup the linear prediction
      * @param[in] alpha the previously learned weights
      * @param[in] support_vectors the support vectors
-     * @param[in] num_features the number of features
      * @param[in] num_classes the number of classes
      * @param[in] num_sv the number of support vectors
      * @param[in] device_num_sv the number of support vectors the current device is responsible for
@@ -48,11 +47,10 @@ class device_kernel_w_linear {
      * @param[in] grid_x_offset the offset in x-dimension into the data points if more than one execution grid has to be used
      * @param[in] grid_y_offset the offset in y-dimension into the data points if more than one execution grid has to be used
      */
-    device_kernel_w_linear(real_type *w, const real_type *alpha, const real_type *support_vectors, const std::size_t num_features, const std::size_t num_classes, const std::size_t num_sv, const std::size_t device_num_sv, const std::size_t device_sv_offset, const std::size_t grid_x_offset, const std::size_t grid_y_offset) :
+    device_kernel_w_linear(real_type *w, const real_type *alpha, const real_type *support_vectors, const std::size_t num_classes, const std::size_t num_sv, const std::size_t device_num_sv, const std::size_t device_sv_offset, const std::size_t grid_x_offset, const std::size_t grid_y_offset) :
         w_{ w },
         alpha_{ alpha },
         support_vectors_{ support_vectors },
-        num_features_{ num_features },
         num_classes_{ num_classes },
         num_sv_{ num_sv },
         device_num_sv_{ device_num_sv },
@@ -68,6 +66,7 @@ class device_kernel_w_linear {
         // cast all values to 64-bit std::size_t to prevent potential 32-bit overflows
         constexpr auto INTERNAL_BLOCK_SIZE_uz = static_cast<std::size_t>(INTERNAL_BLOCK_SIZE);
         constexpr auto THREAD_BLOCK_SIZE_uz = static_cast<std::size_t>(THREAD_BLOCK_SIZE);
+        constexpr auto PADDING_SIZE_uz = static_cast<std::size_t>(PADDING_SIZE);
 
         // calculate the indices used in the current work-item
         const auto feature_idx = (idx.get_id(1) + grid_x_offset_ * THREAD_BLOCK_SIZE_uz) * INTERNAL_BLOCK_SIZE_uz;  // num_features
@@ -84,16 +83,8 @@ class device_kernel_w_linear {
                     const auto global_class_idx = class_idx + static_cast<std::size_t>(internal_class);
                     const auto global_feature_idx = feature_idx + static_cast<std::size_t>(internal_feature);
 
-                    real_type alpha_cache = 0.0;
-                    if (global_class_idx < num_classes_) {
-                        alpha_cache = alpha_[global_class_idx * num_sv_ + sv + device_sv_offset_];  // AoS
-                    }
-                    real_type sv_cache = 0.0;
-                    if (global_feature_idx < num_features_) {
-                        sv_cache = support_vectors_[global_feature_idx * device_num_sv_ + sv];  // SoA
-                    }
-
-                    temp[internal_feature][internal_class] += alpha_cache * sv_cache;
+                    temp[internal_feature][internal_class] += alpha_[global_class_idx * (num_sv_ + PADDING_SIZE_uz) + sv + device_sv_offset_] *  // AoS
+                                                              support_vectors_[global_feature_idx * (device_num_sv_ + PADDING_SIZE_uz) + sv];    // SoA
                 }
             }
         }
@@ -105,10 +96,7 @@ class device_kernel_w_linear {
                 const auto global_feature_idx = feature_idx + static_cast<std::size_t>(internal_feature);
                 const auto global_class_idx = class_idx + static_cast<std::size_t>(internal_class);
 
-                // be sure to not perform out-of-bounds accesses
-                if (global_feature_idx < num_features_ && global_class_idx < num_classes_) {
-                    w_[global_feature_idx * num_classes_ + global_class_idx] = temp[internal_feature][internal_class];  // SoA
-                }
+                w_[global_feature_idx * (num_classes_ + PADDING_SIZE_uz) + global_class_idx] = temp[internal_feature][internal_class];  // SoA
             }
         }
     }
@@ -118,7 +106,6 @@ class device_kernel_w_linear {
     real_type *w_;
     const real_type *alpha_;
     const real_type *support_vectors_;
-    const std::size_t num_features_;
     const std::size_t num_classes_;
     const std::size_t num_sv_;
     const std::size_t device_num_sv_;
@@ -168,6 +155,7 @@ class device_kernel_predict_linear {
         // cast all values to 64-bit std::size_t to prevent potential 32-bit overflows
         constexpr auto INTERNAL_BLOCK_SIZE_uz = static_cast<std::size_t>(INTERNAL_BLOCK_SIZE);
         constexpr auto THREAD_BLOCK_SIZE_uz = static_cast<std::size_t>(THREAD_BLOCK_SIZE);
+        constexpr auto PADDING_SIZE_uz = static_cast<std::size_t>(PADDING_SIZE);
 
         // calculate the indices used in the current work-item
         const auto pp_idx = (idx.get_id(1) + grid_x_offset_ * THREAD_BLOCK_SIZE_uz) * INTERNAL_BLOCK_SIZE_uz;     // num_predict_points
@@ -184,16 +172,8 @@ class device_kernel_predict_linear {
                     const auto global_pp_idx = pp_idx + static_cast<std::size_t>(internal_pp);
                     const auto global_class_idx = class_idx + static_cast<std::size_t>(internal_class);
 
-                    real_type w_cache = 0.0;
-                    if (global_class_idx < num_classes_) {
-                        w_cache = w_[feature * num_classes_ + global_class_idx];
-                    }
-                    real_type pp_cache = 0.0;
-                    if (global_pp_idx < num_predict_points_) {
-                        pp_cache = predict_points_[feature * num_predict_points_ + global_pp_idx];  // SoA
-                    }
-
-                    temp[internal_pp][internal_class] += w_cache * pp_cache;
+                    temp[internal_pp][internal_class] += w_[feature * (num_classes_ + PADDING_SIZE_uz) + global_class_idx] *                  // SoA
+                                                         predict_points_[feature * (num_predict_points_ + PADDING_SIZE_uz) + global_pp_idx];  // SoA
                 }
             }
         }
@@ -205,9 +185,7 @@ class device_kernel_predict_linear {
                 const auto global_pp_idx = pp_idx + static_cast<std::size_t>(internal_pp);
                 const auto global_class_idx = class_idx + static_cast<std::size_t>(internal_class);
 
-                if (global_pp_idx < num_predict_points_ && global_class_idx < num_classes_) {
-                    prediction_[global_pp_idx * num_classes_ + global_class_idx] = temp[internal_pp][internal_class] - rho_[global_class_idx];  // AoS
-                }
+                prediction_[global_pp_idx * (num_classes_ + PADDING_SIZE_uz) + global_class_idx] = temp[internal_pp][internal_class] - rho_[global_class_idx];  // AoS
             }
         }
     }
@@ -275,6 +253,7 @@ class device_kernel_predict {
         // cast all values to 64-bit std::size_t to prevent potential 32-bit overflows
         constexpr auto INTERNAL_BLOCK_SIZE_uz = static_cast<std::size_t>(INTERNAL_BLOCK_SIZE);
         constexpr auto THREAD_BLOCK_SIZE_uz = static_cast<std::size_t>(THREAD_BLOCK_SIZE);
+        constexpr auto PADDING_SIZE_uz = static_cast<std::size_t>(PADDING_SIZE);
 
         // calculate the indices used in the current work-item
         const auto pp_idx = (idx.get_id(1) + grid_x_offset_ * THREAD_BLOCK_SIZE_uz) * INTERNAL_BLOCK_SIZE_uz;  // num_predict_points
@@ -291,15 +270,8 @@ class device_kernel_predict {
                     const auto global_pp_idx = pp_idx + static_cast<std::size_t>(internal_pp);
                     const auto global_sv_idx = sv_idx + static_cast<std::size_t>(internal_sv);
 
-                    real_type sv_cache = 0.0;
-                    if (global_sv_idx < num_sv_) {
-                        sv_cache = support_vectors_[feature * num_sv_ + global_sv_idx];  // SoA
-                    }
-                    real_type pp_cache = 0.0;
-                    if (global_pp_idx < num_predict_points_) {
-                        pp_cache = predict_points_[feature * num_predict_points_ + global_pp_idx];  // SoA
-                    }
-                    temp[internal_pp][internal_sv] += detail::feature_reduce<kernel_function>(sv_cache, pp_cache);
+                    temp[internal_pp][internal_sv] += detail::feature_reduce<kernel_function>(support_vectors_[feature * (num_sv_ + PADDING_SIZE_uz) + global_sv_idx],              // SoA
+                                                                                              predict_points_[feature * (num_predict_points_ + PADDING_SIZE_uz) + global_pp_idx]);  // SoA
                 }
             }
         }
@@ -319,9 +291,7 @@ class device_kernel_predict {
                         // calculate the index to access the global data
                         const auto global_pp_idx = pp_idx + static_cast<std::size_t>(internal_pp);
 
-                        if (global_pp_idx < num_predict_points_ && class_block + class_idx < num_classes_) {
-                            detail::atomic_op<real_type>{ prediction_[global_pp_idx * num_classes_ + class_block + class_idx] } += -rho_[class_block + class_idx];
-                        }
+                        detail::atomic_op<real_type>{ prediction_[global_pp_idx * (num_classes_ + PADDING_SIZE_uz) + class_block + class_idx] } += -rho_[class_block + class_idx];
                     }
                 }
             }
@@ -333,13 +303,9 @@ class device_kernel_predict {
                     const auto global_pp_idx = pp_idx + static_cast<std::size_t>(internal_pp);
                     const auto global_sv_idx = sv_idx + static_cast<std::size_t>(internal_sv);
 
-                    if (global_pp_idx < num_predict_points_) {
-                        for (std::size_t class_idx = 0; class_idx < THREAD_BLOCK_SIZE_uz; ++class_idx) {
-                            if (class_block + class_idx < num_classes_) {
-                                detail::atomic_op<real_type>{ prediction_[global_pp_idx * num_classes_ + class_block + class_idx] } +=
-                                    temp[internal_pp][internal_sv] * alpha_[(class_block + class_idx) * num_sv_ + global_sv_idx];
-                            }
-                        }
+                    for (std::size_t class_idx = 0; class_idx < THREAD_BLOCK_SIZE_uz; ++class_idx) {
+                        detail::atomic_op<real_type>{ prediction_[global_pp_idx * (num_classes_ + PADDING_SIZE_uz) + class_block + class_idx] } +=
+                            temp[internal_pp][internal_sv] * alpha_[(class_block + class_idx) * (num_sv_ + PADDING_SIZE_uz) + global_sv_idx];
                     }
                 }
             }

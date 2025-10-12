@@ -40,7 +40,6 @@ class device_kernel_w_linear {
      * @param[in,out] w the vector to speedup the linear prediction
      * @param[in] alpha the previously learned weights
      * @param[in] support_vectors the support vectors
-     * @param[in] num_features the number of features
      * @param[in] num_classes the number of classes
      * @param[in] num_sv the number of support vectors
      * @param[in] device_num_sv the number of support vectors the current device is responsible for
@@ -48,11 +47,10 @@ class device_kernel_w_linear {
      * @param[in] grid_x_offset the offset in x-dimension into the data points if more than one execution grid has to be used
      * @param[in] grid_y_offset the offset in y-dimension into the data points if more than one execution grid has to be used
      */
-    device_kernel_w_linear(real_type *w, const real_type *alpha, const real_type *support_vectors, const std::size_t num_features, const std::size_t num_classes, const std::size_t num_sv, const std::size_t device_num_sv, const std::size_t device_sv_offset, const std::size_t grid_x_offset, const std::size_t grid_y_offset) :
+    device_kernel_w_linear(real_type *w, const real_type *alpha, const real_type *support_vectors, const std::size_t num_classes, const std::size_t num_sv, const std::size_t device_num_sv, const std::size_t device_sv_offset, const std::size_t grid_x_offset, const std::size_t grid_y_offset) :
         w_{ w },
         alpha_{ alpha },
         support_vectors_{ support_vectors },
-        num_features_{ num_features },
         num_classes_{ num_classes },
         num_sv_{ num_sv },
         device_num_sv_{ device_num_sv },
@@ -95,6 +93,7 @@ class device_kernel_w_linear {
                                                // cast all values to 64-bit std::size_t to prevent potential 32-bit overflows
                                                constexpr auto INTERNAL_BLOCK_SIZE_uz = static_cast<std::size_t>(INTERNAL_BLOCK_SIZE);
                                                constexpr auto THREAD_BLOCK_SIZE_uz = static_cast<std::size_t>(THREAD_BLOCK_SIZE);
+                                               constexpr auto PADDING_SIZE_uz = static_cast<std::size_t>(PADDING_SIZE);
 
                                                const auto threadIdx_x = static_cast<std::size_t>(idx.get_local_id(group, 0));       // current work-item in work-group x-dimension
                                                const auto threadIdx_y = static_cast<std::size_t>(idx.get_local_id(group, 1));       // current work-item in work-group y-dimension
@@ -107,25 +106,13 @@ class device_kernel_w_linear {
                                                const auto feature_idx_linear = blockIdx_y * blockDim_y * INTERNAL_BLOCK_SIZE_uz + threadIdx_y;  // num_features
                                                const auto class_idx_linear = blockIdx_x * blockDim_x * INTERNAL_BLOCK_SIZE_uz + threadIdx_y;    // num_classes
 
-                                               // zero-out local memory
-                                               for (unsigned internal = 0; internal < INTERNAL_BLOCK_SIZE; ++internal) {
-                                                   feature_cache[local_id_0][internal * THREAD_BLOCK_SIZE + local_id_1] = real_type{ 0.0 };
-                                                   alpha_cache[local_id_0][internal * THREAD_BLOCK_SIZE + local_id_1] = real_type{ 0.0 };
-                                               }
-
                                                for (unsigned internal = 0; internal < INTERNAL_BLOCK_SIZE; ++internal) {
                                                    // calculate the indices to access the global data, pays attention to coalesced memory accesses
                                                    const auto global_feature_idx_linear = feature_idx_linear + static_cast<std::size_t>(internal) * THREAD_BLOCK_SIZE_uz;
                                                    const auto global_class_idx_linear = class_idx_linear + static_cast<std::size_t>(internal) * THREAD_BLOCK_SIZE_uz;
 
-                                                   if (sv_block + threadIdx_x < device_num_sv_) {
-                                                       if (global_feature_idx_linear < num_features_) {
-                                                           feature_cache[local_id_0][internal * THREAD_BLOCK_SIZE + local_id_1] = support_vectors_[global_feature_idx_linear * device_num_sv_ + sv_block + threadIdx_x];  // SoA
-                                                       }
-                                                       if (global_class_idx_linear < num_classes_) {
-                                                           alpha_cache[local_id_0][internal * THREAD_BLOCK_SIZE + local_id_1] = alpha_[global_class_idx_linear * num_sv_ + sv_block + device_sv_offset_ + threadIdx_x];  // AoS
-                                                       }
-                                                   }
+                                                   feature_cache[local_id_0][internal * THREAD_BLOCK_SIZE + local_id_1] = support_vectors_[global_feature_idx_linear * (device_num_sv_ + PADDING_SIZE_uz) + sv_block + threadIdx_x];  // SoA
+                                                   alpha_cache[local_id_0][internal * THREAD_BLOCK_SIZE + local_id_1] = alpha_[global_class_idx_linear * (num_sv_ + PADDING_SIZE_uz) + sv_block + device_sv_offset_ + threadIdx_x];   // AoS
                                                }
                                            });
 
@@ -150,6 +137,7 @@ class device_kernel_w_linear {
                                        ::sycl::distribute_items_and_wait(group, [&](::sycl::s_item<2> idx) {
                                            // cast all values to 64-bit std::size_t to prevent potential 32-bit overflows
                                            constexpr auto INTERNAL_BLOCK_SIZE_uz = static_cast<std::size_t>(INTERNAL_BLOCK_SIZE);
+                                           constexpr auto PADDING_SIZE_uz = static_cast<std::size_t>(PADDING_SIZE);
 
                                            const auto threadIdx_x = static_cast<std::size_t>(idx.get_local_id(group, 0));       // current work-item in work-group x-dimension
                                            const auto threadIdx_y = static_cast<std::size_t>(idx.get_local_id(group, 1));       // current work-item in work-group y-dimension
@@ -168,10 +156,7 @@ class device_kernel_w_linear {
                                                    const auto global_feature_idx = feature_idx + static_cast<std::size_t>(internal_feature);
                                                    const auto global_class_idx = class_idx + static_cast<std::size_t>(internal_class);
 
-                                                   // be sure to not perform out-of-bounds accesses
-                                                   if (global_feature_idx < num_features_ && global_class_idx < num_classes_) {
-                                                       w_[global_feature_idx * num_classes_ + global_class_idx] = temp(idx)[internal_feature][internal_class];  // SoA
-                                                   }
+                                                   w_[global_feature_idx * (num_classes_ + PADDING_SIZE_uz) + global_class_idx] = temp(idx)[internal_feature][internal_class];  // SoA
                                                }
                                            }
                                        });
@@ -183,7 +168,6 @@ class device_kernel_w_linear {
     real_type *w_;
     const real_type *alpha_;
     const real_type *support_vectors_;
-    const std::size_t num_features_;
     const std::size_t num_classes_;
     const std::size_t num_sv_;
     const std::size_t device_num_sv_;
@@ -258,6 +242,7 @@ class device_kernel_predict_linear {
                                                // cast all values to 64-bit std::size_t to prevent potential 32-bit overflows
                                                constexpr auto INTERNAL_BLOCK_SIZE_uz = static_cast<std::size_t>(INTERNAL_BLOCK_SIZE);
                                                constexpr auto THREAD_BLOCK_SIZE_uz = static_cast<std::size_t>(THREAD_BLOCK_SIZE);
+                                               constexpr auto PADDING_SIZE_uz = static_cast<std::size_t>(PADDING_SIZE);
 
                                                const auto threadIdx_x = static_cast<std::size_t>(idx.get_local_id(group, 0));       // current work-item in work-group x-dimension
                                                const auto threadIdx_y = static_cast<std::size_t>(idx.get_local_id(group, 1));       // current work-item in work-group y-dimension
@@ -270,12 +255,6 @@ class device_kernel_predict_linear {
                                                const auto pp_idx_linear = blockIdx_y * blockDim_y * INTERNAL_BLOCK_SIZE_uz + threadIdx_y;     // num_predict_points
                                                const auto class_idx_linear = blockIdx_x * blockDim_x * INTERNAL_BLOCK_SIZE_uz + threadIdx_y;  // num_classes
 
-                                               // zero-out local memory
-                                               for (unsigned internal = 0; internal < INTERNAL_BLOCK_SIZE; ++internal) {
-                                                   pp_cache[local_id_0][internal * THREAD_BLOCK_SIZE + local_id_1] = real_type{ 0.0 };
-                                                   w_cache[local_id_0][internal * THREAD_BLOCK_SIZE + local_id_1] = real_type{ 0.0 };
-                                               }
-
                                                // load data into local memory
                                                for (unsigned internal = 0; internal < INTERNAL_BLOCK_SIZE; ++internal) {
                                                    // calculate the indices to access the global data, pays attention to coalesced memory accesses
@@ -283,14 +262,8 @@ class device_kernel_predict_linear {
                                                    const auto global_class_idx_linear = class_idx_linear + static_cast<std::size_t>(internal) * THREAD_BLOCK_SIZE_uz;
 
                                                    // store the values in the local memory
-                                                   if (feature_block + threadIdx_x < num_features_) {
-                                                       if (global_pp_idx_linear < num_predict_points_) {
-                                                           pp_cache[local_id_0][internal * THREAD_BLOCK_SIZE + local_id_1] = predict_points_[(feature_block + threadIdx_x) * num_predict_points_ + global_pp_idx_linear];  // SoA
-                                                       }
-                                                       if (global_class_idx_linear < num_classes_) {
-                                                           w_cache[local_id_0][internal * THREAD_BLOCK_SIZE + local_id_1] = w_[(feature_block + threadIdx_x) * num_classes_ + global_class_idx_linear];  // SoA
-                                                       }
-                                                   }
+                                                   pp_cache[local_id_0][internal * THREAD_BLOCK_SIZE + local_id_1] = predict_points_[(feature_block + threadIdx_x) * (num_predict_points_ + PADDING_SIZE_uz) + global_pp_idx_linear];  // SoA
+                                                   w_cache[local_id_0][internal * THREAD_BLOCK_SIZE + local_id_1] = w_[(feature_block + threadIdx_x) * (num_classes_ + PADDING_SIZE_uz) + global_class_idx_linear];                    // SoA
                                                }
                                            });
 
@@ -315,6 +288,7 @@ class device_kernel_predict_linear {
                                        ::sycl::distribute_items_and_wait(group, [&](::sycl::s_item<2> idx) {
                                            // cast all values to 64-bit std::size_t to prevent potential 32-bit overflows
                                            constexpr auto INTERNAL_BLOCK_SIZE_uz = static_cast<std::size_t>(INTERNAL_BLOCK_SIZE);
+                                           constexpr auto PADDING_SIZE_uz = static_cast<std::size_t>(PADDING_SIZE);
 
                                            const auto threadIdx_x = static_cast<std::size_t>(idx.get_local_id(group, 0));       // current work-item in work-group x-dimension
                                            const auto threadIdx_y = static_cast<std::size_t>(idx.get_local_id(group, 1));       // current work-item in work-group y-dimension
@@ -333,10 +307,7 @@ class device_kernel_predict_linear {
                                                    const auto global_pp_idx = pp_idx + static_cast<std::size_t>(internal_pp);
                                                    const auto global_class_idx = class_idx + static_cast<std::size_t>(internal_class);
 
-                                                   // be sure to not perform out-of-bounds accesses
-                                                   if (global_pp_idx < num_predict_points_ && global_class_idx < num_classes_) {
-                                                       prediction_[global_pp_idx * num_classes_ + global_class_idx] = temp(idx)[internal_pp][internal_class] - rho_[global_class_idx];  // AoS
-                                                   }
+                                                   prediction_[global_pp_idx * (num_classes_ + PADDING_SIZE_uz) + global_class_idx] = temp(idx)[internal_pp][internal_class] - rho_[global_class_idx];  // AoS
                                                }
                                            }
                                        });
@@ -437,6 +408,7 @@ class device_kernel_predict {
                                                    // cast all values to 64-bit std::size_t to prevent potential 32-bit overflows
                                                    constexpr auto INTERNAL_BLOCK_SIZE_uz = static_cast<std::size_t>(INTERNAL_BLOCK_SIZE);
                                                    constexpr auto THREAD_BLOCK_SIZE_uz = static_cast<std::size_t>(THREAD_BLOCK_SIZE);
+                                                   constexpr auto PADDING_SIZE_uz = static_cast<std::size_t>(PADDING_SIZE);
 
                                                    const auto threadIdx_x = static_cast<std::size_t>(idx.get_local_id(group, 0));       // current work-item in work-group x-dimension
                                                    const auto threadIdx_y = static_cast<std::size_t>(idx.get_local_id(group, 1));       // current work-item in work-group y-dimension
@@ -449,12 +421,6 @@ class device_kernel_predict {
                                                    const auto pp_idx_linear = blockIdx_y * blockDim_y * INTERNAL_BLOCK_SIZE_uz + threadIdx_y;  // num_predict_points
                                                    const auto sv_idx_linear = blockIdx_x * blockDim_x * INTERNAL_BLOCK_SIZE_uz + threadIdx_y;  // num_support_vectors
 
-                                                   // zero-out local memory
-                                                   for (unsigned internal = 0; internal < INTERNAL_BLOCK_SIZE; ++internal) {
-                                                       pp_cache[local_id_0][internal * THREAD_BLOCK_SIZE + local_id_1] = real_type{ 0.0 };
-                                                       sv_cache[local_id_0][internal * THREAD_BLOCK_SIZE + local_id_1] = real_type{ 0.0 };
-                                                   }
-
                                                    // load data into local memory
                                                    for (unsigned internal = 0; internal < INTERNAL_BLOCK_SIZE; ++internal) {
                                                        // calculate the indices to access the global data, pays attention to coalesced memory accesses
@@ -462,14 +428,8 @@ class device_kernel_predict {
                                                        const auto global_sv_idx_linear = sv_idx_linear + static_cast<std::size_t>(internal) * THREAD_BLOCK_SIZE_uz;
 
                                                        // store the values in the local memory
-                                                       if (feature_block + threadIdx_x < num_features_) {
-                                                           if (global_pp_idx_linear < num_predict_points_) {
-                                                               pp_cache[local_id_0][internal * THREAD_BLOCK_SIZE + local_id_1] = predict_points_[(feature_block + threadIdx_x) * num_predict_points_ + global_pp_idx_linear];
-                                                           }
-                                                           if (global_sv_idx_linear < num_sv_) {
-                                                               sv_cache[local_id_0][internal * THREAD_BLOCK_SIZE + local_id_1] = support_vectors_[(feature_block + threadIdx_x) * num_sv_ + global_sv_idx_linear];
-                                                           }
-                                                       }
+                                                       pp_cache[local_id_0][internal * THREAD_BLOCK_SIZE + local_id_1] = predict_points_[(feature_block + threadIdx_x) * (num_predict_points_ + PADDING_SIZE_uz) + global_pp_idx_linear];
+                                                       sv_cache[local_id_0][internal * THREAD_BLOCK_SIZE + local_id_1] = support_vectors_[(feature_block + threadIdx_x) * (num_sv_ + PADDING_SIZE_uz) + global_sv_idx_linear];
                                                    }
                                                });
 
@@ -517,6 +477,7 @@ class device_kernel_predict {
                                                    // cast all values to 64-bit std::size_t to prevent potential 32-bit overflows
                                                    constexpr auto INTERNAL_BLOCK_SIZE_uz = static_cast<std::size_t>(INTERNAL_BLOCK_SIZE);
                                                    constexpr auto THREAD_BLOCK_SIZE_uz = static_cast<std::size_t>(THREAD_BLOCK_SIZE);
+                                                   constexpr auto PADDING_SIZE_uz = static_cast<std::size_t>(PADDING_SIZE);
 
                                                    const auto threadIdx_x = static_cast<std::size_t>(idx.get_local_id(group, 0));       // current work-item in work-group x-dimension
                                                    const auto threadIdx_y = static_cast<std::size_t>(idx.get_local_id(group, 1));       // current work-item in work-group y-dimension
@@ -526,25 +487,17 @@ class device_kernel_predict {
                                                    // calculate the indices used in the current thread, pays attention to coalesced memory accesses
                                                    const auto sv_idx_linear = blockIdx_x * blockDim_x * INTERNAL_BLOCK_SIZE_uz + threadIdx_y;  // num_support_vectors
 
-                                                   // zero-out local memory
-                                                   for (unsigned internal = 0; internal < INTERNAL_BLOCK_SIZE; ++internal) {
-                                                       alpha_cache[local_id_0][internal * THREAD_BLOCK_SIZE + local_id_1] = real_type{ 0.0 };
-                                                       out_cache[local_id_0][internal * THREAD_BLOCK_SIZE + local_id_1] = real_type{ 0.0 };
-                                                   }
-
                                                    for (unsigned internal = 0; internal < INTERNAL_BLOCK_SIZE; ++internal) {
                                                        // calculate the indices to access the global data, pays attention to coalesced memory accesses
                                                        const auto global_sv_idx_linear = sv_idx_linear + static_cast<std::size_t>(internal) * THREAD_BLOCK_SIZE_uz;
 
                                                        // store the values in the local memory
-                                                       if (class_block + threadIdx_x < num_classes_) {
-                                                           if (global_sv_idx_linear < num_sv_) {
-                                                               alpha_cache[local_id_0][internal * THREAD_BLOCK_SIZE + local_id_1] = alpha_[(class_block + threadIdx_x) * num_sv_ + global_sv_idx_linear];  // AoS
-                                                           }
-                                                           // the bias (rho) must only be applied once for all support vectors
-                                                           if (blockIdx_x == std::size_t{ 0 }) {
-                                                               out_cache[local_id_0][internal * THREAD_BLOCK_SIZE + local_id_1] = -rho_[class_block + threadIdx_x];
-                                                           }
+                                                       alpha_cache[local_id_0][internal * THREAD_BLOCK_SIZE + local_id_1] = alpha_[(class_block + threadIdx_x) * (num_sv_ + PADDING_SIZE_uz) + global_sv_idx_linear];  // AoS
+                                                       // the bias (rho) must only be applied once for all support vectors
+                                                       if (blockIdx_x == std::size_t{ 0 }) {
+                                                           out_cache[local_id_0][internal * THREAD_BLOCK_SIZE + local_id_1] = -rho_[class_block + threadIdx_x];
+                                                       } else {
+                                                           out_cache[local_id_0][internal * THREAD_BLOCK_SIZE + local_id_1] = real_type{ 0.0 };
                                                        }
                                                    }
                                                });
@@ -573,6 +526,7 @@ class device_kernel_predict {
 
                                                    // cast all values to 64-bit std::size_t to prevent potential 32-bit overflows
                                                    constexpr auto INTERNAL_BLOCK_SIZE_uz = static_cast<std::size_t>(INTERNAL_BLOCK_SIZE);
+                                                   constexpr auto PADDING_SIZE_uz = static_cast<std::size_t>(PADDING_SIZE);
 
                                                    const auto threadIdx_x = static_cast<std::size_t>(idx.get_local_id(group, 0));       // current work-item in work-group x-dimension
                                                    const auto threadIdx_y = static_cast<std::size_t>(idx.get_local_id(group, 1));       // current work-item in work-group y-dimension
@@ -586,9 +540,7 @@ class device_kernel_predict {
                                                        // calculate the indices to access the global data
                                                        const auto global_pp_idx = pp_idx + static_cast<std::size_t>(internal);
 
-                                                       if (class_block + threadIdx_x < num_classes_ && global_pp_idx < num_predict_points_) {
-                                                           detail::atomic_op<real_type>{ prediction_[global_pp_idx * num_classes_ + class_block + threadIdx_x] } += out_cache[local_id_0][internal * THREAD_BLOCK_SIZE + local_id_1];
-                                                       }
+                                                       detail::atomic_op<real_type>{ prediction_[global_pp_idx * (num_classes_ + PADDING_SIZE_uz) + class_block + threadIdx_x] } += out_cache[local_id_0][internal * THREAD_BLOCK_SIZE + local_id_1];
                                                    }
                                                });
                                            }

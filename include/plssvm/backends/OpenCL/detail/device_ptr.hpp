@@ -68,6 +68,13 @@ class device_ptr : public ::plssvm::detail::gpu_device_ptr<T, const command_queu
      * @param[in] queue the associated command queue
      */
     device_ptr(plssvm::shape shape, const command_queue &queue);
+    /**
+     * @brief Allocates `(shape.x + padding.x) * (shape.y + padding.y) * sizeof(T)` bytes on the device associated with @p queue.
+     * @param[in] shape the number of elements represented by the device_ptr
+     * @param[in] padding the number of padding elements added to the extent values
+     * @param[in] queue the associated command queue
+     */
+    device_ptr(plssvm::shape shape, plssvm::shape padding, const command_queue &queue);
 
     /**
      * @copydoc plssvm::detail::gpu_device_ptr::gpu_device_ptr(const plssvm::detail::gpu_device_ptr &)

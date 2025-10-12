@@ -99,6 +99,7 @@ template <>
 
 /**
  * @brief Compute the feature reduction for the chi-squared kernel function.
+ * @note Be sure that the denominator isn't 0.0 which may be the case for padding values.
  * @param[in] val1 the first feature value
  * @param[in] val2 the second feature value
  * @return the reduced value (`[[nodiscard]]`)

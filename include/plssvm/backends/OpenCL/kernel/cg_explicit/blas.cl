@@ -53,12 +53,6 @@ __kernel void device_kernel_symm(const ulong num_rows, const ulong num_rhs, cons
 
         // iterate over all values using blocking to be able to cache them for faster memory accesses
         for (ulong dim_block = 0; dim_block < (num_rows - device_row_offset); dim_block += THREAD_BLOCK_SIZE_uz) {
-            // zero-out shared memory
-            for (uint internal = 0; internal < INTERNAL_BLOCK_SIZE; ++internal) {
-                A_cache[local_id_1][internal * THREAD_BLOCK_SIZE + local_id_0] = (real_type) 0.0;
-                B_cache[local_id_1][internal * THREAD_BLOCK_SIZE + local_id_0] = (real_type) 0.0;
-            }
-
             // load data into local memory
             for (uint internal = 0; internal < INTERNAL_BLOCK_SIZE; ++internal) {
                 // calculate the indices to access the global data, pays attention to coalesced memory accesses
@@ -66,19 +60,13 @@ __kernel void device_kernel_symm(const ulong num_rows, const ulong num_rhs, cons
                 const ulong global_j_idx_linear = j_idx_linear + (ulong) internal * THREAD_BLOCK_SIZE_uz;
 
                 // store the values in the local memory
-                if (dim_block + threadIdx_y < num_rows - device_row_offset) {
-                    if (global_j_idx_linear < device_num_rows) {
-                        // determine on which side of the diagonal we are located
-                        if (dim_block + threadIdx_y < global_j_idx_linear) {
-                            A_cache[local_id_1][internal * THREAD_BLOCK_SIZE + local_id_0] = A[(dim_block + threadIdx_y) * (num_rows - device_row_offset) + global_j_idx_linear - (dim_block + threadIdx_y) * (dim_block + threadIdx_y + (ulong) 1) / (ulong) 2];  // SoA, upper triangular matrix only
-                        } else {
-                            A_cache[local_id_1][internal * THREAD_BLOCK_SIZE + local_id_0] = A[global_j_idx_linear * (num_rows - device_row_offset) + dim_block + threadIdx_y - global_j_idx_linear * (global_j_idx_linear + (ulong) 1) / (ulong) 2];  // SoA, upper triangular matrix only
-                        }
-                    }
-                    if (global_i_idx_linear < num_rhs) {
-                        B_cache[local_id_1][internal * THREAD_BLOCK_SIZE + local_id_0] = B[(dim_block + device_row_offset + threadIdx_y) * num_rhs + global_i_idx_linear];  // SoA
-                    }
+                // determine on which side of the diagonal we are located
+                if (dim_block + get_local_id(1) < global_j_idx_linear) {
+                    A_cache[local_id_1][internal * THREAD_BLOCK_SIZE + local_id_0] = A[(dim_block + threadIdx_y) * (num_rows - device_row_offset + PADDING_SIZE_uz) + global_j_idx_linear - (dim_block + threadIdx_y) * (dim_block + threadIdx_y + (ulong) 1) / (ulong) 2];  // SoA, upper triangular matrix only
+                } else {
+                    A_cache[local_id_1][internal * THREAD_BLOCK_SIZE + local_id_0] = A[global_j_idx_linear * (num_rows - device_row_offset + PADDING_SIZE_uz) + dim_block + threadIdx_y - global_j_idx_linear * (global_j_idx_linear + (ulong) 1) / (ulong) 2];  // SoA, upper triangular matrix only
                 }
+                B_cache[local_id_1][internal * THREAD_BLOCK_SIZE + local_id_0] = B[(dim_block + device_row_offset + threadIdx_y) * (num_rhs + PADDING_SIZE_uz) + global_i_idx_linear];  // SoA
             }
             barrier(CLK_LOCAL_MEM_FENCE);  // wait until all work-items loaded their part of the data
 
@@ -107,8 +95,8 @@ __kernel void device_kernel_symm(const ulong num_rows, const ulong num_rhs, cons
             const ulong global_j_idx = device_row_offset + device_global_j_idx;
 
             // be sure to not perform out-of-bounds accesses
-            if (global_i_idx < num_rhs && device_global_j_idx < device_num_rows && global_j_idx < num_rows) {
-                C[global_j_idx * num_rhs + global_i_idx] = alpha * temp[internal_i][internal_j] + beta * C[global_j_idx * num_rhs + global_i_idx];  // SoA
+            if (global_i_idx < num_rhs && device_global_j_idx < device_num_rows) {
+                C[global_j_idx * (num_rhs + PADDING_SIZE_uz) + global_i_idx] = alpha * temp[internal_i][internal_j] + beta * C[global_j_idx * (num_rhs + PADDING_SIZE_uz) + global_i_idx];  // SoA
             }
         }
     }
@@ -157,12 +145,6 @@ __kernel void device_kernel_symm_mirror(const ulong num_rows, const ulong num_rh
 
         // iterate over the remaining values using blocking to be able to cache them for faster memory accesses
         for (ulong dim_block = 0; dim_block < device_num_rows; dim_block += THREAD_BLOCK_SIZE_uz) {
-            // zero-out shared memory
-            for (uint internal = 0; internal < INTERNAL_BLOCK_SIZE; ++internal) {
-                A_cache[local_id_1][internal * THREAD_BLOCK_SIZE + local_id_0] = (real_type) 0.0;
-                B_cache[local_id_1][internal * THREAD_BLOCK_SIZE + local_id_0] = (real_type) 0.0;
-            }
-
             // load data into local memory
             for (uint internal = 0; internal < INTERNAL_BLOCK_SIZE; ++internal) {
                 // calculate the indices to access the global data, pays attention to coalesced memory accesses
@@ -170,14 +152,8 @@ __kernel void device_kernel_symm_mirror(const ulong num_rows, const ulong num_rh
                 const ulong global_j_idx_linear = j_idx_linear + (ulong) internal * THREAD_BLOCK_SIZE_uz;
 
                 // store the values in the local memory
-                if (dim_block + threadIdx_y < device_num_rows) {
-                    if (global_j_idx_linear < num_mirror_rows) {
-                        A_cache[local_id_1][internal * THREAD_BLOCK_SIZE + local_id_0] = A[(dim_block + threadIdx_y) * (num_rows - device_row_offset) - (dim_block + threadIdx_y - (ulong) 1) * (dim_block + threadIdx_y) / (ulong) 2 + device_num_rows - (dim_block + threadIdx_y) + global_j_idx_linear];
-                    }
-                    if (global_i_idx_linear < num_rhs) {
-                        B_cache[local_id_1][internal * THREAD_BLOCK_SIZE + local_id_0] = B[(dim_block + device_row_offset + threadIdx_y) * num_rhs + global_i_idx_linear];  // SoA
-                    }
-                }
+                A_cache[local_id_1][internal * THREAD_BLOCK_SIZE + local_id_0] = A[(dim_block + threadIdx_y) * (num_rows - device_row_offset + PADDING_SIZE_uz) - (dim_block + threadIdx_y - (ulong) 1) * (dim_block + threadIdx_y) / (ulong) 2 + device_num_rows - (dim_block + threadIdx_y) + global_j_idx_linear];  // SoA, upper triangular matrix only
+                B_cache[local_id_1][internal * THREAD_BLOCK_SIZE + local_id_0] = B[(device_row_offset + dim_block + threadIdx_y) * (num_rhs + PADDING_SIZE_uz) + global_i_idx_linear];                                                                                                                                 // SoA
             }
             barrier(CLK_LOCAL_MEM_FENCE);  // wait until all work-items loaded their part of the data
 
@@ -206,8 +182,8 @@ __kernel void device_kernel_symm_mirror(const ulong num_rows, const ulong num_rh
             const ulong global_j_idx = device_row_offset + device_num_rows + partial_global_j_idx;
 
             // be sure to not perform out-of-bounds accesses
-            if (global_i_idx < num_rhs && partial_global_j_idx < num_mirror_rows && global_j_idx < num_rows) {
-                C[global_j_idx * num_rhs + global_i_idx] = alpha * temp[internal_i][internal_j] + beta * C[global_j_idx * num_rhs + global_i_idx];  // SoA
+            if (global_i_idx < num_rhs && partial_global_j_idx < num_mirror_rows) {
+                C[global_j_idx * (num_rhs + PADDING_SIZE_uz) + global_i_idx] = alpha * temp[internal_i][internal_j] + beta * C[global_j_idx * (num_rhs + PADDING_SIZE_uz) + global_i_idx];  // SoA
             }
         }
     }
@@ -215,14 +191,13 @@ __kernel void device_kernel_symm_mirror(const ulong num_rows, const ulong num_rh
 
 /**
  * @brief Perform a simple inplace matrix addition: lhs += rhs.
- * @param[in] num_rows the number of rows in both matrices
  * @param[in] num_cols the number of columns in both matrices
  * @param[in,out] lhs the first matrix (updated inplace)
  * @param[in] rhs the second matrix
  * @param[in] grid_x_offset the offset in x-dimension into the data points if more than one execution grid has to be used
  * @param[in] grid_y_offset the offset in y-dimension into the data points if more than one execution grid has to be used
  */
-__kernel void device_kernel_inplace_matrix_add(const ulong num_rows, const ulong num_cols, real_type __global *lhs, const real_type __global *rhs, const ulong grid_x_offset, const ulong grid_y_offset) {
+__kernel void device_kernel_inplace_matrix_add(const ulong num_cols, real_type __global *lhs, const real_type __global *rhs, const ulong grid_x_offset, const ulong grid_y_offset) {
     // cast all values to 64-bit unsigned long long to prevent potential 32-bit overflows
     const ulong threadIdx_x = get_local_id(0);                 // current work-item in work-group x-dimension
     const ulong threadIdx_y = get_local_id(1);                 // current work-item in work-group y-dimension
@@ -241,23 +216,20 @@ __kernel void device_kernel_inplace_matrix_add(const ulong num_rows, const ulong
             const ulong global_i_idx = i_idx + (ulong) internal_i;
             const ulong global_j_idx = j_idx + (ulong) internal_j;
 
-            if (global_i_idx < num_rows && global_j_idx < num_cols) {
-                lhs[global_i_idx * num_cols + global_j_idx] += rhs[global_i_idx * num_cols + global_j_idx];  // SoA
-            }
+            lhs[global_i_idx * (num_cols + PADDING_SIZE_uz) + global_j_idx] += rhs[global_i_idx * (num_cols + PADDING_SIZE_uz) + global_j_idx];  // SoA
         }
     }
 }
 
 /**
  * @brief Perform a simple inplace matrix scale: lhs *= scalar.
- * @param[in] num_rows the number of rows in both matrices
  * @param[in] num_cols the number of columns in the matrix
  * @param[in,out] lhs the matrix (updated inplace)
  * @param[in] scale the value to scale
  * @param[in] grid_x_offset the offset in x-dimension into the data points if more than one execution grid has to be used
  * @param[in] grid_y_offset the offset in y-dimension into the data points if more than one execution grid has to be used
  */
-__kernel void device_kernel_inplace_matrix_scale(const ulong num_rows, const ulong num_cols, real_type __global *lhs, const real_type scale, const ulong grid_x_offset, const ulong grid_y_offset) {
+__kernel void device_kernel_inplace_matrix_scale(const ulong num_cols, real_type __global *lhs, const real_type scale, const ulong grid_x_offset, const ulong grid_y_offset) {
     // cast all values to 64-bit unsigned long long to prevent potential 32-bit overflows
     const ulong threadIdx_x = get_local_id(0);                 // current work-item in work-group x-dimension
     const ulong threadIdx_y = get_local_id(1);                 // current work-item in work-group y-dimension
@@ -276,9 +248,7 @@ __kernel void device_kernel_inplace_matrix_scale(const ulong num_rows, const ulo
             const ulong global_i_idx = i_idx + (ulong) internal_i;
             const ulong global_j_idx = j_idx + (ulong) internal_j;
 
-            if (global_i_idx < num_rows && global_j_idx < num_cols) {
-                lhs[global_i_idx * num_cols + global_j_idx] *= scale;  // SoA
-            }
+            lhs[global_i_idx * (num_cols + PADDING_SIZE_uz) + global_j_idx] *= scale;  // SoA
         }
     }
 }

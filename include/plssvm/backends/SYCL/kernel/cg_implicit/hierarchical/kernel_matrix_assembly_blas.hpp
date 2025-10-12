@@ -141,14 +141,9 @@ class device_kernel_assembly_symm {
 
                         // cast all values to 64-bit std::size_t to prevent potential 32-bit overflows
                         constexpr auto THREAD_BLOCK_SIZE_uz = static_cast<std::size_t>(THREAD_BLOCK_SIZE);
+                        constexpr auto PADDING_SIZE_uz = static_cast<std::size_t>(PADDING_SIZE);
 
                         const auto threadIdx_x = static_cast<std::size_t>(idx.get_local_id(0));  // current work-item in work-group x-dimension
-
-                        // zero-out local memory
-                        for (unsigned internal = 0; internal < INTERNAL_BLOCK_SIZE; ++internal) {
-                            data_i_cache[local_id_0][internal * THREAD_BLOCK_SIZE + local_id_1] = real_type{ 0.0 };
-                            data_j_cache[local_id_0][internal * THREAD_BLOCK_SIZE + local_id_1] = real_type{ 0.0 };
-                        }
 
                         for (unsigned internal = 0; internal < INTERNAL_BLOCK_SIZE; ++internal) {
                             // calculate the indices to access the global data, pays attention to coalesced memory accesses
@@ -156,14 +151,8 @@ class device_kernel_assembly_symm {
                             const auto global_j_idx_linear = device_row_offset_ + j_idx_linear(idx) + static_cast<std::size_t>(internal) * THREAD_BLOCK_SIZE_uz;
 
                             // store the values in the local memory
-                            if (feature_block + threadIdx_x < num_features_) {
-                                if (global_i_idx_linear < num_rows_) {
-                                    data_i_cache[local_id_0][internal * THREAD_BLOCK_SIZE + local_id_1] = data_[(feature_block + threadIdx_x) * (num_rows_ + std::size_t{ 1 }) + global_i_idx_linear];  // SoA
-                                }
-                                if (global_j_idx_linear < num_rows_) {
-                                    data_j_cache[local_id_0][internal * THREAD_BLOCK_SIZE + local_id_1] = data_[(feature_block + threadIdx_x) * (num_rows_ + std::size_t{ 1 }) + global_j_idx_linear];  // SoA
-                                }
-                            }
+                            data_i_cache[local_id_0][internal * THREAD_BLOCK_SIZE + local_id_1] = data_[(feature_block + threadIdx_x) * (num_rows_ + std::size_t{ 1 } + PADDING_SIZE_uz) + global_i_idx_linear];  // SoA
+                            data_j_cache[local_id_0][internal * THREAD_BLOCK_SIZE + local_id_1] = data_[(feature_block + threadIdx_x) * (num_rows_ + std::size_t{ 1 } + PADDING_SIZE_uz) + global_j_idx_linear];  // SoA
                         }
                     });
 
@@ -236,23 +225,17 @@ class device_kernel_assembly_symm {
 
                         // cast all values to 64-bit std::size_t to prevent potential 32-bit overflows
                         constexpr auto THREAD_BLOCK_SIZE_uz = static_cast<std::size_t>(THREAD_BLOCK_SIZE);
+                        constexpr auto PADDING_SIZE_uz = static_cast<std::size_t>(PADDING_SIZE);
 
                         const auto threadIdx_x = static_cast<std::size_t>(idx.get_local_id(0));  // current work-item in work-group x-dimension
-
-                        // zero-out local memory
-                        for (unsigned internal = 0; internal < INTERNAL_BLOCK_SIZE; ++internal) {
-                            B_cache[internal * THREAD_BLOCK_SIZE + local_id_1][local_id_0] = real_type{ 0.0 };
-                            C_out_cache[internal * THREAD_BLOCK_SIZE + local_id_1][local_id_0] = real_type{ 0.0 };
-                        }
 
                         for (unsigned internal = 0; internal < INTERNAL_BLOCK_SIZE; ++internal) {
                             // calculate the indices to access the global data, pays attention to coalesced memory accesses
                             const auto global_i_idx_linear = device_row_offset_ + i_idx_linear(idx) + static_cast<std::size_t>(internal) * THREAD_BLOCK_SIZE_uz;
 
                             // store the values in the local memory
-                            if (class_block + threadIdx_x < num_classes_ && global_i_idx_linear < num_rows_) {
-                                B_cache[internal * THREAD_BLOCK_SIZE + local_id_1][local_id_0] = alpha_ * B_[global_i_idx_linear * num_classes_ + class_block + threadIdx_x];  // SoA
-                            }
+                            B_cache[internal * THREAD_BLOCK_SIZE + local_id_1][local_id_0] = alpha_ * B_[global_i_idx_linear * (num_classes_ + PADDING_SIZE_uz) + class_block + threadIdx_x];  // SoA
+                            C_out_cache[internal * THREAD_BLOCK_SIZE + local_id_1][local_id_0] = real_type{ 0.0 };                                                                             // SoA
                         }
                     });
 
@@ -282,15 +265,16 @@ class device_kernel_assembly_symm {
                         const auto local_id_0 = static_cast<unsigned>(idx.get_local_id(0));
                         const auto local_id_1 = static_cast<unsigned>(idx.get_local_id(1));
 
+                        // cast all values to 64-bit std::size_t to prevent potential 32-bit overflows
+                        constexpr auto PADDING_SIZE_uz = static_cast<std::size_t>(PADDING_SIZE);
+
                         const auto threadIdx_y = static_cast<std::size_t>(idx.get_local_id(1));  // current work-item in work-group y-dimension
 
                         for (unsigned internal = 0; internal < INTERNAL_BLOCK_SIZE; ++internal) {
                             // calculate the indices to access the global data
                             const auto global_j_idx = device_row_offset_ + j_idx(idx) + static_cast<std::size_t>(internal);
 
-                            if (class_block + threadIdx_y < num_classes_ && global_j_idx < num_rows_) {
-                                detail::atomic_op<real_type>{ C_[global_j_idx * num_classes_ + class_block + threadIdx_y] } += C_out_cache[local_id_0 * INTERNAL_BLOCK_SIZE + internal][local_id_1];  // SoA
-                            }
+                            detail::atomic_op<real_type>{ C_[global_j_idx * (num_classes_ + PADDING_SIZE_uz) + class_block + threadIdx_y] } += C_out_cache[local_id_0 * INTERNAL_BLOCK_SIZE + internal][local_id_1];  // SoA
                         }
                     });
 
@@ -332,14 +316,9 @@ class device_kernel_assembly_symm {
 
                         // cast all values to 64-bit std::size_t to prevent potential 32-bit overflows
                         constexpr auto THREAD_BLOCK_SIZE_uz = static_cast<std::size_t>(THREAD_BLOCK_SIZE);
+                        constexpr auto PADDING_SIZE_uz = static_cast<std::size_t>(PADDING_SIZE);
 
                         const auto threadIdx_x = static_cast<std::size_t>(idx.get_local_id(0));  // current work-item in work-group x-dimension
-
-                        // zero-out local memory
-                        for (unsigned internal = 0; internal < INTERNAL_BLOCK_SIZE; ++internal) {
-                            B_cache[local_id_0][internal * THREAD_BLOCK_SIZE + local_id_1] = real_type{ 0.0 };
-                            C_out_cache[local_id_0][internal * THREAD_BLOCK_SIZE + local_id_1] = real_type{ 0.0 };
-                        }
 
                         // load data into local memory
                         for (unsigned internal = 0; internal < INTERNAL_BLOCK_SIZE; ++internal) {
@@ -347,9 +326,8 @@ class device_kernel_assembly_symm {
                             const auto global_j_idx_linear = device_row_offset_ + j_idx_linear(idx) + static_cast<std::size_t>(internal) * THREAD_BLOCK_SIZE_uz;
 
                             // store the values in the local memory
-                            if (class_block + threadIdx_x < num_classes_ && global_j_idx_linear < num_rows_) {
-                                B_cache[local_id_0][internal * THREAD_BLOCK_SIZE + local_id_1] = alpha_ * B_[global_j_idx_linear * num_classes_ + class_block + threadIdx_x];  // SoA
-                            }
+                            B_cache[local_id_0][internal * THREAD_BLOCK_SIZE + local_id_1] = alpha_ * B_[global_j_idx_linear * (num_classes_ + PADDING_SIZE_uz) + class_block + threadIdx_x];  // SoA
+                            C_out_cache[local_id_0][internal * THREAD_BLOCK_SIZE + local_id_1] = real_type{ 0.0 };
                         }
                     });
 
@@ -379,15 +357,16 @@ class device_kernel_assembly_symm {
                         const auto local_id_0 = static_cast<unsigned>(idx.get_local_id(0));
                         const auto local_id_1 = static_cast<unsigned>(idx.get_local_id(1));
 
+                        // cast all values to 64-bit std::size_t to prevent potential 32-bit overflows
+                        constexpr auto PADDING_SIZE_uz = static_cast<std::size_t>(PADDING_SIZE);
+
                         const auto threadIdx_x = static_cast<std::size_t>(idx.get_local_id(0));  // current work-item in work-group x-dimension
 
                         for (unsigned internal = 0; internal < INTERNAL_BLOCK_SIZE; ++internal) {
                             // calculate the indices to access the global data
                             const auto global_i_idx = device_row_offset_ + i_idx(idx) + static_cast<std::size_t>(internal);
 
-                            if (class_block + threadIdx_x < num_classes_ && global_i_idx < num_rows_) {
-                                detail::atomic_op<real_type>{ C_[global_i_idx * num_classes_ + class_block + threadIdx_x] } += C_out_cache[local_id_0][internal * THREAD_BLOCK_SIZE + local_id_1];  // SoA
-                            }
+                            detail::atomic_op<real_type>{ C_[global_i_idx * (num_classes_ + PADDING_SIZE_uz) + class_block + threadIdx_x] } += C_out_cache[local_id_0][internal * THREAD_BLOCK_SIZE + local_id_1];  // SoA
                         }
                     });
 

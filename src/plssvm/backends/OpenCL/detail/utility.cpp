@@ -368,9 +368,11 @@ std::pair<std::vector<command_queue>, jit_info> create_command_queues(const mpi:
     // replace the size_t variants -> BEFORE replacing the "normal" values
     ::plssvm::detail::replace_all(kernel_src_string, "THREAD_BLOCK_SIZE_uz", fmt::format("(ulong) {}", THREAD_BLOCK_SIZE));
     ::plssvm::detail::replace_all(kernel_src_string, "INTERNAL_BLOCK_SIZE_uz", fmt::format("(ulong) {}", INTERNAL_BLOCK_SIZE));
+    ::plssvm::detail::replace_all(kernel_src_string, "PADDING_SIZE_uz", fmt::format("(ulong) {}", PADDING_SIZE));
     // replace the normal variants
     ::plssvm::detail::replace_all(kernel_src_string, "THREAD_BLOCK_SIZE", fmt::format("{}", THREAD_BLOCK_SIZE));
     ::plssvm::detail::replace_all(kernel_src_string, "INTERNAL_BLOCK_SIZE", fmt::format("{}", INTERNAL_BLOCK_SIZE));
+    ::plssvm::detail::replace_all(kernel_src_string, "PADDING_SIZE", fmt::format("{}", PADDING_SIZE));
 
     // set compile definition checking whether we are executing on a CPU or not
     for (std::string &options : compile_options) {

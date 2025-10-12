@@ -82,6 +82,7 @@ class device_kernel_assembly {
         // cast all values to 64-bit std::size_t to prevent potential 32-bit overflows
         constexpr auto INTERNAL_BLOCK_SIZE_uz = static_cast<std::size_t>(INTERNAL_BLOCK_SIZE);
         constexpr auto THREAD_BLOCK_SIZE_uz = static_cast<std::size_t>(THREAD_BLOCK_SIZE);
+        constexpr auto PADDING_SIZE_uz = static_cast<std::size_t>(PADDING_SIZE);
 
         const auto threadIdx_x = static_cast<std::size_t>(nd_idx.get_local_id(0));               // current work-item in work-group x-dimension
         const auto threadIdx_y = static_cast<std::size_t>(nd_idx.get_local_id(1));               // current work-item in work-group y-dimension
@@ -102,12 +103,6 @@ class device_kernel_assembly {
 
                 // iterate over all features using blocking to be able to cache them for faster memory accesses
                 for (std::size_t feature_block = 0; feature_block < num_features_; feature_block += THREAD_BLOCK_SIZE_uz) {
-                    // zero-out local memory
-                    for (unsigned internal = 0; internal < INTERNAL_BLOCK_SIZE; ++internal) {
-                        data_i_cache_[local_id_0][internal * THREAD_BLOCK_SIZE + local_id_1] = real_type{ 0.0 };
-                        data_j_cache_[local_id_0][internal * THREAD_BLOCK_SIZE + local_id_1] = real_type{ 0.0 };
-                    }
-
                     // load data into local memory
                     for (unsigned internal = 0; internal < INTERNAL_BLOCK_SIZE; ++internal) {
                         // calculate the indices to access the global data, pays attention to coalesced memory accesses
@@ -115,14 +110,8 @@ class device_kernel_assembly {
                         const auto global_j_idx_linear = device_row_offset_ + j_idx_linear + static_cast<std::size_t>(internal) * THREAD_BLOCK_SIZE_uz;
 
                         // store the values in the local memory
-                        if (feature_block + threadIdx_x < num_features_) {
-                            if (global_i_idx_linear < num_rows_) {
-                                data_i_cache_[local_id_0][internal * THREAD_BLOCK_SIZE + local_id_1] = data_[(feature_block + threadIdx_x) * (num_rows_ + std::size_t{ 1 }) + global_i_idx_linear];  // SoA
-                            }
-                            if (global_j_idx_linear < num_rows_) {
-                                data_j_cache_[local_id_0][internal * THREAD_BLOCK_SIZE + local_id_1] = data_[(feature_block + threadIdx_x) * (num_rows_ + std::size_t{ 1 }) + global_j_idx_linear];  // SoA
-                            }
-                        }
+                        data_i_cache_[local_id_0][internal * THREAD_BLOCK_SIZE + local_id_1] = data_[(feature_block + threadIdx_x) * (num_rows_ + std::size_t{ 1 } + PADDING_SIZE_uz) + global_i_idx_linear];  // SoA
+                        data_j_cache_[local_id_0][internal * THREAD_BLOCK_SIZE + local_id_1] = data_[(feature_block + threadIdx_x) * (num_rows_ + std::size_t{ 1 } + PADDING_SIZE_uz) + global_j_idx_linear];  // SoA
                     }
                     nd_idx.barrier();  // wait until all work-items loaded their part of the data
 
@@ -162,7 +151,7 @@ class device_kernel_assembly {
                             temp_ij += cost_;
                         }
                         // update the upper triangular kernel matrix
-                        kernel_matrix_[device_global_j_idx * (num_rows_ - device_row_offset_) - device_global_j_idx * (device_global_j_idx + std::size_t{ 1 }) / std::size_t{ 2 } + device_global_i_idx] = temp_ij;
+                        kernel_matrix_[device_global_j_idx * (num_rows_ - device_row_offset_ + PADDING_SIZE_uz) - device_global_j_idx * (device_global_j_idx + std::size_t{ 1 }) / std::size_t{ 2 } + device_global_i_idx] = temp_ij;
                     }
                 }
             }

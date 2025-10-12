@@ -75,6 +75,7 @@ class device_kernel_assembly {
         // cast all values to 64-bit std::size_t to prevent potential 32-bit overflows
         constexpr auto INTERNAL_BLOCK_SIZE_uz = static_cast<std::size_t>(INTERNAL_BLOCK_SIZE);
         constexpr auto THREAD_BLOCK_SIZE_uz = static_cast<std::size_t>(THREAD_BLOCK_SIZE);
+        constexpr auto PADDING_SIZE_uz = static_cast<std::size_t>(PADDING_SIZE);
 
         // calculate the indices used in the current work-item
         const auto i_idx = (idx.get_id(1) + grid_x_offset_ * THREAD_BLOCK_SIZE_uz) * INTERNAL_BLOCK_SIZE_uz;  // num_rows - device_row_offset
@@ -93,10 +94,8 @@ class device_kernel_assembly {
                         const auto global_i_idx = device_row_offset_ + i_idx + static_cast<std::size_t>(internal_i);
                         const auto global_j_idx = device_row_offset_ + j_idx + static_cast<std::size_t>(internal_j);
 
-                        if (global_i_idx < num_rows_ && global_j_idx < num_rows_) {
-                            temp[internal_i][internal_j] += detail::feature_reduce<kernel_function>(data_[feature * (num_rows_ + std::size_t{ 1 }) + global_i_idx],   // SoA
-                                                                                                    data_[feature * (num_rows_ + std::size_t{ 1 }) + global_j_idx]);  // SoA
-                        }
+                        temp[internal_i][internal_j] += detail::feature_reduce<kernel_function>(data_[feature * (num_rows_ + std::size_t{ 1 } + PADDING_SIZE_uz) + global_i_idx],   // SoA
+                                                                                                data_[feature * (num_rows_ + std::size_t{ 1 } + PADDING_SIZE_uz) + global_j_idx]);  // SoA
                     }
                 }
             }
@@ -120,7 +119,7 @@ class device_kernel_assembly {
                             temp_ij += cost_;
                         }
                         // update the upper triangular kernel matrix
-                        kernel_matrix_[device_global_j_idx * (num_rows_ - device_row_offset_) - device_global_j_idx * (device_global_j_idx + std::size_t{ 1 }) / std::size_t{ 2 } + device_global_i_idx] = temp_ij;
+                        kernel_matrix_[device_global_j_idx * (num_rows_ - device_row_offset_ + PADDING_SIZE_uz) - device_global_j_idx * (device_global_j_idx + std::size_t{ 1 }) / std::size_t{ 2 } + device_global_i_idx] = temp_ij;
                     }
                 }
             }
