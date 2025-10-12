@@ -15,11 +15,10 @@
 
 #include "plssvm/backends/SYCL/data_parallel_kernels.hpp"    // plssvm::sycl::data_parallel_kernel
 #include "plssvm/backends/SYCL/kernel/kernel_functions.hpp"  // plssvm::sycl::detail::{feature_reduce, apply_kernel_function}
-#include "plssvm/constants.hpp"                              // plssvm::{real_type, THREAD_BLOCK_SIZE, INTERNAL_BLOCK_SIZE, PADDING_SIZE}
+#include "plssvm/constants.hpp"                              // plssvm::real_type
 #include "plssvm/kernel_function_types.hpp"                  // plssvm::kernel_function_type
-#include "plssvm/target_platforms.hpp"                       // plssvm::target_platform
 
-#include "sycl/sycl.hpp"  // sycl::handler, sycl::range, sycl::nd_item, sycl::local_accessor
+#include "sycl/sycl.hpp"  // sycl::handler, sycl::range, sycl::nd_item
 
 #include <cstddef>  // std::size_t
 #include <tuple>    // std::tuple, std::make_tuple
@@ -29,11 +28,10 @@ namespace plssvm::sycl::detail::work_group {
 /**
  * @brief Create the explicit kernel matrix using the @p kernel_function.
  * @details Uses SYCL's work-group data parallel kernels.
- * @tparam target the target platform
  * @tparam kernel_function the type of the used kernel function
  * @tparam Args the types of the parameters necessary for the specific kernel function; stored in a `std::tuple`
  */
-template <target_platform target, kernel_function_type kernel_function, typename... Args>
+template <kernel_function_type kernel_function, typename... Args>
 class device_kernel_assembly {
   public:
     /// The used SYCL data parallel kernel.
@@ -84,7 +82,6 @@ class device_kernel_assembly {
         // cast all values to 64-bit std::size_t to prevent potential 32-bit overflows
         constexpr auto INTERNAL_BLOCK_SIZE_uz = static_cast<std::size_t>(INTERNAL_BLOCK_SIZE);
         constexpr auto THREAD_BLOCK_SIZE_uz = static_cast<std::size_t>(THREAD_BLOCK_SIZE);
-        constexpr auto PADDING_SIZE_uz = static_cast<std::size_t>(PADDING_SIZE);
 
         const auto threadIdx_x = static_cast<std::size_t>(nd_idx.get_local_id(0));               // current work-item in work-group x-dimension
         const auto threadIdx_y = static_cast<std::size_t>(nd_idx.get_local_id(1));               // current work-item in work-group y-dimension
@@ -105,6 +102,12 @@ class device_kernel_assembly {
 
                 // iterate over all features using blocking to be able to cache them for faster memory accesses
                 for (std::size_t feature_block = 0; feature_block < num_features_; feature_block += THREAD_BLOCK_SIZE_uz) {
+                    // zero-out local memory
+                    for (unsigned internal = 0; internal < INTERNAL_BLOCK_SIZE; ++internal) {
+                        data_i_cache_[local_id_0][internal * THREAD_BLOCK_SIZE + local_id_1] = real_type{ 0.0 };
+                        data_j_cache_[local_id_0][internal * THREAD_BLOCK_SIZE + local_id_1] = real_type{ 0.0 };
+                    }
+
                     // load data into local memory
                     for (unsigned internal = 0; internal < INTERNAL_BLOCK_SIZE; ++internal) {
                         // calculate the indices to access the global data, pays attention to coalesced memory accesses
@@ -112,31 +115,23 @@ class device_kernel_assembly {
                         const auto global_j_idx_linear = device_row_offset_ + j_idx_linear + static_cast<std::size_t>(internal) * THREAD_BLOCK_SIZE_uz;
 
                         // store the values in the local memory
-                        data_i_cache_[local_id_0][internal * THREAD_BLOCK_SIZE + local_id_1] = data_[(feature_block + threadIdx_x) * (num_rows_ + std::size_t{ 1 } + PADDING_SIZE_uz) + global_i_idx_linear];  // SoA
-                        data_j_cache_[local_id_0][internal * THREAD_BLOCK_SIZE + local_id_1] = data_[(feature_block + threadIdx_x) * (num_rows_ + std::size_t{ 1 } + PADDING_SIZE_uz) + global_j_idx_linear];  // SoA
+                        if (feature_block + threadIdx_x < num_features_) {
+                            if (global_i_idx_linear < num_rows_) {
+                                data_i_cache_[local_id_0][internal * THREAD_BLOCK_SIZE + local_id_1] = data_[(feature_block + threadIdx_x) * (num_rows_ + std::size_t{ 1 }) + global_i_idx_linear];  // SoA
+                            }
+                            if (global_j_idx_linear < num_rows_) {
+                                data_j_cache_[local_id_0][internal * THREAD_BLOCK_SIZE + local_id_1] = data_[(feature_block + threadIdx_x) * (num_rows_ + std::size_t{ 1 }) + global_j_idx_linear];  // SoA
+                            }
+                        }
                     }
                     nd_idx.barrier();  // wait until all work-items loaded their part of the data
 
-                    if constexpr (target == target_platform::cpu) {
-                        // perform the feature reduction calculation, the feature is the fastest moving index
+                    // perform the feature reduction calculation
+                    for (unsigned feature = 0; feature < THREAD_BLOCK_SIZE; ++feature) {
                         for (unsigned internal_i = 0; internal_i < INTERNAL_BLOCK_SIZE; ++internal_i) {
                             for (unsigned internal_j = 0; internal_j < INTERNAL_BLOCK_SIZE; ++internal_j) {
-                                real_type sum{ 0.0 };
-                                for (unsigned feature = 0; feature < THREAD_BLOCK_SIZE; ++feature) {
-                                    sum += detail::feature_reduce<kernel_function>(data_i_cache_[feature][local_id_1 * INTERNAL_BLOCK_SIZE + internal_i],
-                                                                                   data_j_cache_[feature][local_id_0 * INTERNAL_BLOCK_SIZE + internal_j]);
-                                }
-                                temp[internal_i][internal_j] += sum;
-                            }
-                        }
-                    } else {
-                        // perform the feature reduction calculation, the feature is the slowest moving index
-                        for (unsigned feature = 0; feature < THREAD_BLOCK_SIZE; ++feature) {
-                            for (unsigned internal_i = 0; internal_i < INTERNAL_BLOCK_SIZE; ++internal_i) {
-                                for (unsigned internal_j = 0; internal_j < INTERNAL_BLOCK_SIZE; ++internal_j) {
-                                    temp[internal_i][internal_j] += detail::feature_reduce<kernel_function>(data_i_cache_[feature][local_id_1 * INTERNAL_BLOCK_SIZE + internal_i],
-                                                                                                            data_j_cache_[feature][local_id_0 * INTERNAL_BLOCK_SIZE + internal_j]);
-                                }
+                                temp[internal_i][internal_j] += detail::feature_reduce<kernel_function>(data_i_cache_[feature][local_id_1 * INTERNAL_BLOCK_SIZE + internal_i],
+                                                                                                        data_j_cache_[feature][local_id_0 * INTERNAL_BLOCK_SIZE + internal_j]);
                             }
                         }
                     }
@@ -167,7 +162,7 @@ class device_kernel_assembly {
                             temp_ij += cost_;
                         }
                         // update the upper triangular kernel matrix
-                        kernel_matrix_[device_global_j_idx * (num_rows_ - device_row_offset_ + PADDING_SIZE_uz) - device_global_j_idx * (device_global_j_idx + std::size_t{ 1 }) / std::size_t{ 2 } + device_global_i_idx] = temp_ij;
+                        kernel_matrix_[device_global_j_idx * (num_rows_ - device_row_offset_) - device_global_j_idx * (device_global_j_idx + std::size_t{ 1 }) / std::size_t{ 2 } + device_global_i_idx] = temp_ij;
                     }
                 }
             }

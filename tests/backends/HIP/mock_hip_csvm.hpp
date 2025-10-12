@@ -47,6 +47,7 @@ class mock_hip_csvm final : public plssvm::hip::csvm {
     using base_type::assemble_kernel_matrix;
     using base_type::blas_level_3;
     using base_type::get_device_memory;
+    using base_type::get_local_memory;
     using base_type::get_max_work_group_size;
     using base_type::num_available_devices;
 

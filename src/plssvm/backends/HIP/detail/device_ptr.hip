@@ -30,21 +30,21 @@ namespace plssvm::hip::detail {
 
 template <typename T>
 device_ptr<T>::device_ptr(const size_type size, const queue_type device) :
-    device_ptr{ plssvm::shape{ size, 1 }, plssvm::shape{ 0, 0 }, device } { }
+    device_ptr{ plssvm::shape{ size, 1 }, device } { }
 
 template <typename T>
 device_ptr<T>::device_ptr(const plssvm::shape shape, const queue_type device) :
-    device_ptr{ shape, plssvm::shape{ 0, 0 }, device } { }
-
-template <typename T>
-device_ptr<T>::device_ptr(const plssvm::shape shape, const plssvm::shape padding, const queue_type device) :
-    base_type{ shape, padding, device } {
+    base_type{ shape, device } {
     if (queue_ < 0 || queue_ >= static_cast<int>(get_device_count())) {
         throw backend_exception{ fmt::format("Illegal device ID! Must be in range: [0, {}) but is {}.", get_device_count(), queue_) };
     }
     detail::set_device(queue_);
-    PLSSVM_HIP_ERROR_CHECK(hipMalloc(&data_, this->size_padded() * sizeof(value_type)))
-    this->memset(0);
+    PLSSVM_HIP_ERROR_CHECK(hipMalloc(&data_, this->size() * sizeof(value_type)))
+
+    // only non-empty pointers must be memset in the constructor
+    if (this->size() != std::size_t{ 0 }) {
+        this->memset(0);
+    }
 }
 
 template <typename T>
@@ -63,12 +63,12 @@ template <typename T>
 void device_ptr<T>::memset(const int pattern, const size_type pos, const size_type num_bytes) {
     PLSSVM_ASSERT(data_ != nullptr, "Invalid data pointer! Maybe *this has been default constructed?");
 
-    if (pos >= this->size_padded()) {
-        throw backend_exception{ fmt::format("Illegal access in memset!: {} >= {}", pos, this->size_padded()) };
+    if (pos >= this->size()) {
+        throw backend_exception{ fmt::format("Illegal access in memset!: {} >= {}", pos, this->size()) };
     }
 
     detail::set_device(queue_);
-    const size_type rnum_bytes = std::min(num_bytes, (this->size_padded() - pos) * sizeof(value_type));
+    const size_type rnum_bytes = std::min(num_bytes, (this->size() - pos) * sizeof(value_type));
     PLSSVM_HIP_ERROR_CHECK(hipMemset(data_ + pos, pattern, rnum_bytes))
 }
 
@@ -76,14 +76,14 @@ template <typename T>
 void device_ptr<T>::fill(const value_type value, const size_type pos, const size_type count) {
     PLSSVM_ASSERT(data_ != nullptr, "Invalid data pointer! Maybe *this has been default constructed?");
 
-    if (pos >= this->size_padded()) {
-        throw backend_exception{ fmt::format("Illegal access in fill!: {} >= {}", pos, this->size_padded()) };
+    if (pos >= this->size()) {
+        throw backend_exception{ fmt::format("Illegal access in fill!: {} >= {}", pos, this->size()) };
     }
 
     detail::set_device(queue_);
 
     // run GPU kernel
-    const size_type rcount = std::min(count, this->size_padded() - pos);
+    const size_type rcount = std::min(count, this->size() - pos);
     constexpr unsigned int block_size = 512;
     const unsigned int grid_size = (static_cast<unsigned int>(rcount) + block_size - 1) / block_size;
     detail::fill_array<<<grid_size, block_size>>>(data_, value, pos, rcount);
@@ -98,7 +98,7 @@ void device_ptr<T>::copy_to_device(const_host_pointer_type data_to_copy, const s
     PLSSVM_ASSERT(data_to_copy != nullptr, "Invalid host pointer for the data to copy!");
 
     detail::set_device(queue_);
-    const size_type rcount = std::min(count, this->size_padded() - pos);
+    const size_type rcount = std::min(count, this->size() - pos);
     PLSSVM_HIP_ERROR_CHECK(hipMemcpy(data_ + pos, data_to_copy, rcount * sizeof(value_type), hipMemcpyHostToDevice))
 }
 
@@ -112,7 +112,7 @@ void device_ptr<T>::copy_to_device_strided(const_host_pointer_type data_to_copy,
     }
 
     detail::set_device(queue_);
-    PLSSVM_HIP_ERROR_CHECK(hipMemcpy2D(data_, this->shape_padded().x * sizeof(value_type), data_to_copy, spitch * sizeof(value_type), width * sizeof(value_type), height, hipMemcpyHostToDevice));
+    PLSSVM_HIP_ERROR_CHECK(hipMemcpy2D(data_, this->shape().x * sizeof(value_type), data_to_copy, spitch * sizeof(value_type), width * sizeof(value_type), height, hipMemcpyHostToDevice));
 }
 
 template <typename T>
@@ -121,7 +121,7 @@ void device_ptr<T>::copy_to_host(host_pointer_type buffer, const size_type pos, 
     PLSSVM_ASSERT(buffer != nullptr, "Invalid host pointer for the data to copy!");
 
     detail::set_device(queue_);
-    const size_type rcount = std::min(count, this->size_padded() - pos);
+    const size_type rcount = std::min(count, this->size() - pos);
     PLSSVM_HIP_ERROR_CHECK(hipMemcpy(buffer, data_ + pos, rcount * sizeof(value_type), hipMemcpyDeviceToHost))
 }
 
@@ -131,9 +131,9 @@ void device_ptr<T>::copy_to_other_device(device_ptr &target, const size_type pos
     PLSSVM_ASSERT(target.get() != nullptr, "Invalid target pointer! Maybe target has been default constructed?");
 
     detail::set_device(queue_);
-    const size_type rcount = std::min(count, this->size_padded() - pos);
-    if (target.size_padded() < rcount) {
-        throw backend_exception{ fmt::format("Buffer too small to perform copy (needed: {}, provided: {})!", rcount, target.size_padded()) };
+    const size_type rcount = std::min(count, this->size() - pos);
+    if (target.size() < rcount) {
+        throw backend_exception{ fmt::format("Buffer too small to perform copy (needed: {}, provided: {})!", rcount, target.size()) };
     }
     PLSSVM_HIP_ERROR_CHECK(hipMemcpy(target.get(), data_ + pos, rcount * sizeof(value_type), hipMemcpyDeviceToDevice))
 }

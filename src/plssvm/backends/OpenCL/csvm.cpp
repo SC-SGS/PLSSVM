@@ -24,7 +24,7 @@
 #include "plssvm/detail/logging/mpi_log_untracked.hpp"      // plssvm::detail::log_untracked
 #include "plssvm/detail/memory_size.hpp"                    // plssvm::detail::memory_size
 #include "plssvm/detail/tracking/performance_tracker.hpp"   // plssvm::detail::tracking::tracking_entry, PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY
-#include "plssvm/detail/utility.hpp"                        // plssvm::detail::contains
+#include "plssvm/detail/utility.hpp"                        // plssvm::detail::{contains, check_local_memory_usage}
 #include "plssvm/exceptions/exceptions.hpp"                 // plssvm::exception
 #include "plssvm/gamma.hpp"                                 // plssvm::gamma_type
 #include "plssvm/kernel_function_types.hpp"                 // plssvm::kernel_function_type
@@ -49,6 +49,7 @@
 #include <exception>  // std::terminate
 #include <iostream>   // std::cout, std::endl
 #include <limits>     // std::numeric_limits::max
+#include <optional>   // std::optional
 #include <string>     // std::string
 #include <tuple>      // std::tie
 #include <utility>    // std::pair, std::make_pair, std::move
@@ -87,6 +88,11 @@ csvm::csvm(const target_platform target) {
     // get all available OpenCL contexts for the current target including devices with respect to the requested target platform
     std::tie(contexts_, target_) = detail::get_contexts(target);
 
+    // determine the used local memory and check whether it exceeds the maximum necessary value!
+    // NOTE: must be before the JIT compilation. Otherwise, it may already fail there which leads to failing tests since the wrong error is created.
+    // TODO: better solution: rewrite the OpenCL backend JIT compilation that all kernels are only JIT compiled right before they are used and not in the constructor itself!
+    ::plssvm::detail::check_local_memory_usage(this->get_local_memory());
+
     // At this point, target_ may NEVER be target_platform::automatic!
     PLSSVM_ASSERT(target_ != target_platform::automatic, "At this point, the target platform must be determined and must NOT be automatic!");
 
@@ -98,6 +104,9 @@ csvm::csvm(const target_platform target) {
     // create command_queues and JIT compile OpenCL kernels; compile all kernels for float and double
     detail::jit_info info{};
     std::tie(devices_, info) = detail::create_command_queues(comm_, contexts_, target_, params_.kernel_type);
+
+    // for each context exactly ONE command queue must exist!
+    PLSSVM_ASSERT(contexts_.size() == devices_.size(), "For each context ({}), exactly ONE command queue ({}) must exist!", contexts_.size(), devices_.size());
 
     std::vector<std::string> device_names{};
     device_names.reserve(devices_.size());
@@ -220,11 +229,10 @@ csvm::~csvm() {
 }
 
 std::vector<::plssvm::detail::memory_size> csvm::get_device_memory() const {
-    std::vector<::plssvm::detail::memory_size> res(this->num_available_devices());
-    for (std::size_t device_id = 0; device_id < this->num_available_devices(); ++device_id) {
+    std::vector<::plssvm::detail::memory_size> res(contexts_.size());
+    for (std::size_t device_id = 0; device_id < contexts_.size(); ++device_id) {
         // get device
-        cl_device_id device{};
-        PLSSVM_OPENCL_ERROR_CHECK(clGetCommandQueueInfo(devices_[device_id], CL_QUEUE_DEVICE, sizeof(cl_device_id), static_cast<void *>(&device), nullptr), "error obtaining device")
+        cl_device_id device = contexts_[device_id].device;
 
         // get device global memory size
         cl_ulong total_device_memory{};
@@ -235,11 +243,10 @@ std::vector<::plssvm::detail::memory_size> csvm::get_device_memory() const {
 }
 
 std::vector<::plssvm::detail::memory_size> csvm::get_max_mem_alloc_size() const {
-    std::vector<::plssvm::detail::memory_size> res(this->num_available_devices());
-    for (std::size_t device_id = 0; device_id < this->num_available_devices(); ++device_id) {
+    std::vector<::plssvm::detail::memory_size> res(contexts_.size());
+    for (std::size_t device_id = 0; device_id < contexts_.size(); ++device_id) {
         // get device
-        cl_device_id device{};
-        PLSSVM_OPENCL_ERROR_CHECK(clGetCommandQueueInfo(devices_[device_id], CL_QUEUE_DEVICE, sizeof(cl_device_id), static_cast<void *>(&device), nullptr), "error obtaining device")
+        cl_device_id device = contexts_[device_id].device;
 
         // get maximum allocation size
         cl_ulong max_alloc_size{};
@@ -249,11 +256,24 @@ std::vector<::plssvm::detail::memory_size> csvm::get_max_mem_alloc_size() const 
     return res;
 }
 
+std::vector<std::optional<::plssvm::detail::memory_size>> csvm::get_local_memory() const {
+    std::vector<std::optional<::plssvm::detail::memory_size>> res(contexts_.size());
+    for (std::size_t device_id = 0; device_id < contexts_.size(); ++device_id) {
+        // get device
+        cl_device_id device = contexts_[device_id].device;
+
+        // get the local memory size
+        cl_ulong total_local_memory{};
+        PLSSVM_OPENCL_ERROR_CHECK(clGetDeviceInfo(device, CL_DEVICE_LOCAL_MEM_SIZE, sizeof(cl_ulong), &total_local_memory, nullptr), "error obtaining device's local memory size")
+        res[device_id] = ::plssvm::detail::memory_size{ static_cast<unsigned long long>(total_local_memory) };
+    }
+    return res;
+}
+
 std::size_t csvm::get_max_work_group_size(const std::size_t device_id) const {
-    PLSSVM_ASSERT(device_id < this->num_available_devices(), "Invalid device {} requested!", device_id);
+    PLSSVM_ASSERT(device_id < contexts_.size(), "Invalid device {} requested!", device_id);
     // get device
-    cl_device_id device{};
-    PLSSVM_OPENCL_ERROR_CHECK(clGetCommandQueueInfo(devices_[device_id], CL_QUEUE_DEVICE, sizeof(cl_device_id), static_cast<void *>(&device), nullptr), "error obtaining device")
+    cl_device_id device = contexts_[device_id].device;
     // get maximum work group size
     cl_ulong max_work_group_size{};
     PLSSVM_OPENCL_ERROR_CHECK(clGetDeviceInfo(device, CL_DEVICE_MAX_WORK_GROUP_SIZE, sizeof(cl_ulong), &max_work_group_size, nullptr), "error obtaining device's global memory size")
@@ -261,7 +281,7 @@ std::size_t csvm::get_max_work_group_size(const std::size_t device_id) const {
 }
 
 ::plssvm::detail::dim_type csvm::get_max_grid_size([[maybe_unused]] const std::size_t device_id) const {
-    PLSSVM_ASSERT(device_id < this->num_available_devices(), "Invalid device {} requested!", device_id);
+    PLSSVM_ASSERT(device_id < contexts_.size(), "Invalid device {} requested!", device_id);
 
     // TODO: replace with function if there will be one in the future
     // fallback to maximum theoretical value, may break at runtime!
@@ -293,9 +313,9 @@ auto csvm::run_assemble_kernel_matrix_explicit(const std::size_t device_id, cons
 
     // calculate the number of matrix entries
     const ::plssvm::detail::triangular_data_distribution &dist = dynamic_cast<::plssvm::detail::triangular_data_distribution &>(*data_distribution_);
-    const std::size_t num_entries_padded = dist.calculate_explicit_kernel_matrix_num_entries_padded(device_id);
+    const std::size_t num_entries = dist.calculate_explicit_kernel_matrix_num_entries(device_id);
 
-    device_ptr_type kernel_matrix_d{ num_entries_padded, device };  // only explicitly store the upper triangular matrix
+    device_ptr_type kernel_matrix_d{ num_entries, device };  // only explicitly store the upper triangular matrix
     const real_type cost_factor = real_type{ 1.0 } / params.cost;
 
     // convert execution range block to OpenCL's native std::vector
@@ -392,6 +412,7 @@ void csvm::run_blas_level_3_kernel_explicit(const std::size_t device_id, const :
 }
 
 void csvm::run_inplace_matrix_addition(const std::size_t device_id, const ::plssvm::detail::execution_range &exec, device_ptr_type &lhs_d, const device_ptr_type &rhs_d) const {
+    const cl_ulong num_rows = lhs_d.shape().y;
     const cl_ulong num_rhs = lhs_d.shape().x;
     const queue_type &device = devices_[device_id];
 
@@ -408,12 +429,13 @@ void csvm::run_inplace_matrix_addition(const std::size_t device_id, const ::plss
         const cl_ulong grid_offset_x = offsets.x;
         const cl_ulong grid_offset_y = offsets.y;
 
-        detail::run_kernel(device, device.get_kernel(detail::compute_kernel_name::inplace_matrix_add_kernel), native_partial_grid, native_block, num_rhs, lhs_d.get(), rhs_d.get(), grid_offset_x, grid_offset_y);
+        detail::run_kernel(device, device.get_kernel(detail::compute_kernel_name::inplace_matrix_add_kernel), native_partial_grid, native_block, num_rows, num_rhs, lhs_d.get(), rhs_d.get(), grid_offset_x, grid_offset_y);
     }
     detail::device_synchronize(device);
 }
 
 void csvm::run_inplace_matrix_scale(const std::size_t device_id, const ::plssvm::detail::execution_range &exec, device_ptr_type &lhs_d, const real_type scale) const {
+    const cl_ulong num_rows = lhs_d.shape().y;
     const cl_ulong num_rhs = lhs_d.shape().x;
     const queue_type &device = devices_[device_id];
 
@@ -430,7 +452,7 @@ void csvm::run_inplace_matrix_scale(const std::size_t device_id, const ::plssvm:
         const cl_ulong grid_offset_x = offsets.x;
         const cl_ulong grid_offset_y = offsets.y;
 
-        detail::run_kernel(device, device.get_kernel(detail::compute_kernel_name::inplace_matrix_scale_kernel), native_partial_grid, native_block, num_rhs, lhs_d.get(), scale, grid_offset_x, grid_offset_y);
+        detail::run_kernel(device, device.get_kernel(detail::compute_kernel_name::inplace_matrix_scale_kernel), native_partial_grid, native_block, num_rows, num_rhs, lhs_d.get(), scale, grid_offset_x, grid_offset_y);
     }
     detail::device_synchronize(device);
 }
@@ -503,7 +525,7 @@ auto csvm::run_w_kernel(const std::size_t device_id, const ::plssvm::detail::exe
     // get the offset of the data points this device is responsible for
     const cl_ulong sv_offset = data_distribution_->place_row_offset(device_id);
 
-    device_ptr_type w_d{ shape{ num_classes, num_features }, shape{ PADDING_SIZE, PADDING_SIZE }, device };
+    device_ptr_type w_d{ shape{ num_classes, num_features }, device };
 
     // convert execution range block to OpenCL's native std::vector
     const std::vector<std::size_t> native_block = detail::dim_type_to_native<2>(exec.block);
@@ -519,7 +541,7 @@ auto csvm::run_w_kernel(const std::size_t device_id, const ::plssvm::detail::exe
         const cl_ulong grid_offset_x = offsets.x;
         const cl_ulong grid_offset_y = offsets.y;
 
-        detail::run_kernel(device, device.get_kernel(detail::compute_kernel_name::w_kernel), native_partial_grid, native_block, w_d.get(), alpha_d.get(), sv_d.get(), num_classes, num_sv, device_specific_num_sv, sv_offset, grid_offset_x, grid_offset_y);
+        detail::run_kernel(device, device.get_kernel(detail::compute_kernel_name::w_kernel), native_partial_grid, native_block, w_d.get(), alpha_d.get(), sv_d.get(), num_features, num_classes, num_sv, device_specific_num_sv, sv_offset, grid_offset_x, grid_offset_y);
     }
     detail::device_synchronize(device);
     const auto end = std::chrono::steady_clock::now();
@@ -536,7 +558,7 @@ auto csvm::run_predict_kernel(const std::size_t device_id, const ::plssvm::detai
     const cl_ulong num_sv = sv_or_w_d.shape().x;
     const queue_type &device = devices_[device_id];
 
-    device_ptr_type out_d{ shape{ num_predict_points, num_classes }, shape{ PADDING_SIZE, PADDING_SIZE }, device };
+    device_ptr_type out_d{ shape{ num_predict_points, num_classes }, device };
 
     // convert execution range block to OpenCL's native std::vector
     const std::vector<std::size_t> native_block = detail::dim_type_to_native<2>(exec.block);

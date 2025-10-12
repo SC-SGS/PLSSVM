@@ -6,6 +6,9 @@
 
 list(APPEND CMAKE_MESSAGE_INDENT "OpenMP:  ")
 
+# TODO: maybe also implement the different optimization stages?
+message(FATAL_ERROR "The OpenMP backend currently does not implement the different optimization stages. Please use one of the native GPU backends: CUDA, HIP, OpenCL, SYCL, or Kokkos.")
+
 # check if OpenMP can be enabled
 message(CHECK_START "Checking for OpenMP backend")
 

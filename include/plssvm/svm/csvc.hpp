@@ -21,7 +21,7 @@
 #include "plssvm/detail/logging/mpi_log.hpp"               // plssvm::detail::log
 #include "plssvm/detail/logging/mpi_log_untracked.hpp"     // plssvm::detail::log_untracked
 #include "plssvm/detail/tracking/performance_tracker.hpp"  // PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_EVENT, plssvm::detail::tracking::tracking_entry
-#include "plssvm/detail/utility.hpp"                       // plssvm::detail::contains
+#include "plssvm/detail/utility.hpp"                       // plssvm::detail::{contains, check_local_memory_usage}
 #include "plssvm/exceptions/exceptions.hpp"                // plssvm::invalid_parameter_exception, plssvm::mpi_exception
 #include "plssvm/gamma.hpp"                                // plssvm::calculate_gamma_value
 #include "plssvm/kernel_function_types.hpp"                // plssvm::kernel_function_type
@@ -32,6 +32,7 @@
 #include "plssvm/svm/csvm.hpp"                             // plssvm::csvm
 #include "plssvm/verbosity_levels.hpp"                     // plssvm::verbosity_level
 
+#include "fmt/format.h"   // fmt::format
 #include "igor/igor.hpp"  // igor::parser
 
 #include <algorithm>    // std::all_of, std::merge
@@ -334,6 +335,9 @@ class csvc : virtual public csvm {
         if (comm_ != data.communicator()) {
             throw mpi_exception{ "The MPI communicators provided to the C-SVC and data set must be identical!" };
         }
+
+        // determine the used local memory and check whether it exceeds the maximum necessary value!
+        detail::check_local_memory_usage(this->get_local_memory());
 
         PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_EVENT("predict start");
 

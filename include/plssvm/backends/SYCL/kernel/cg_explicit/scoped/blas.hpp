@@ -13,9 +13,8 @@
 #define PLSSVM_BACKENDS_SYCL_CG_EXPLICIT_SCOPED_BLAS_HPP_
 #pragma once
 
-#include "plssvm/backends/SYCL/data_parallel_kernels.hpp"    // plssvm::sycl::data_parallel_kernel
-#include "plssvm/constants.hpp"                              // plssvm::{real_type, THREAD_BLOCK_SIZE, INTERNAL_BLOCK_SIZE, PADDING_SIZE}
-#include "plssvm/target_platforms.hpp"                       // plssvm::target_platform
+#include "plssvm/backends/SYCL/data_parallel_kernels.hpp"  // plssvm::sycl::data_parallel_kernel
+#include "plssvm/constants.hpp"                            // plssvm::real_type
 
 #include "sycl/sycl.hpp"  // sycl::memory_environment, sycl::require_local_mem, sycl::require_private_mem, sycl::distribute_items_and_wait, sycl::s_item
 
@@ -26,9 +25,7 @@ namespace plssvm::sycl::detail::scoped {
 /**
  * @brief Perform an explicit BLAS SYMM operation: `C = alpha * A * B + beta * C` where @p A is a `m x k` symmetric matrix (memory optimized), @p B is a `k x n` matrix, @p C is a `m x n` matrix, and @p alpha and @p beta are scalars.
  * @details Uses AdaptiveCpp's scoped parallelism.
- * @tparam target the target platform
  */
-template <target_platform target>
 class device_kernel_symm {
   public:
     /// The used SYCL data parallel kernel.
@@ -74,8 +71,18 @@ class device_kernel_symm {
                                    ::sycl::require_local_mem<real_type[THREAD_BLOCK_SIZE][INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE]>(),  // B_cache
 
                                    // create two local memory arrays used for caching
-                                   ::sycl::require_private_mem<std::array<std::array<real_type, INTERNAL_BLOCK_SIZE>, INTERNAL_BLOCK_SIZE>>({}),
+                                   ::sycl::require_private_mem<std::array<std::array<real_type, INTERNAL_BLOCK_SIZE>, INTERNAL_BLOCK_SIZE>>(),
                                    [&](auto &A_cache, auto &B_cache, auto &temp) {
+                                       // initialize private temp matrix to zero
+                                       ::sycl::distribute_items_and_wait(group, [&](::sycl::s_item<2> idx) {
+                                           // initialize private temp matrix to zero
+                                           for (unsigned internal_i = 0; internal_i < INTERNAL_BLOCK_SIZE; ++internal_i) {
+                                               for (unsigned internal_j = 0; internal_j < INTERNAL_BLOCK_SIZE; ++internal_j) {
+                                                   temp(idx)[internal_i][internal_j] = real_type{ 0.0 };
+                                               }
+                                           }
+                                       });
+
                                        // iterate over all values using blocking to be able to cache them for faster memory accesses
                                        for (std::size_t dim_block = 0; dim_block < (num_rows_ - device_row_offset_); dim_block += static_cast<std::size_t>(THREAD_BLOCK_SIZE)) {
                                            // load data into local memory
@@ -87,7 +94,6 @@ class device_kernel_symm {
                                                // cast all values to 64-bit std::size_t to prevent potential 32-bit overflows
                                                constexpr auto THREAD_BLOCK_SIZE_uz = static_cast<std::size_t>(THREAD_BLOCK_SIZE);
                                                constexpr auto INTERNAL_BLOCK_SIZE_uz = static_cast<std::size_t>(INTERNAL_BLOCK_SIZE);
-                                               constexpr auto PADDING_SIZE_uz = static_cast<std::size_t>(PADDING_SIZE);
 
                                                const auto threadIdx_x = static_cast<std::size_t>(idx.get_local_id(group, 0));       // current work-item in work-group x-dimension
                                                const auto threadIdx_y = static_cast<std::size_t>(idx.get_local_id(group, 1));       // current work-item in work-group y-dimension
@@ -100,20 +106,31 @@ class device_kernel_symm {
                                                const auto i_idx_linear = blockIdx_y * blockDim_y * INTERNAL_BLOCK_SIZE_uz + threadIdx_y;  // num_rhs
                                                const auto j_idx_linear = blockIdx_x * blockDim_x * INTERNAL_BLOCK_SIZE_uz + threadIdx_y;  // device_num_rows
 
+                                               // zero-out local memory
+                                               for (unsigned internal = 0; internal < INTERNAL_BLOCK_SIZE; ++internal) {
+                                                   A_cache[local_id_0][internal * THREAD_BLOCK_SIZE + local_id_1] = real_type{ 0.0 };
+                                                   B_cache[local_id_0][internal * THREAD_BLOCK_SIZE + local_id_1] = real_type{ 0.0 };
+                                               }
+
                                                for (unsigned internal = 0; internal < INTERNAL_BLOCK_SIZE; ++internal) {
                                                    // calculate the indices to access the global data, pays attention to coalesced memory accesses
                                                    const auto global_i_idx_linear = i_idx_linear + static_cast<std::size_t>(internal) * THREAD_BLOCK_SIZE_uz;
                                                    const auto global_j_idx_linear = j_idx_linear + static_cast<std::size_t>(internal) * THREAD_BLOCK_SIZE_uz;
 
                                                    // store the values in the local memory
-                                                   // determine on which side of the diagonal we are located
-                                                   if (dim_block + threadIdx_x < global_j_idx_linear) {
-                                                       A_cache[local_id_0][internal * THREAD_BLOCK_SIZE + local_id_1] = A_[(dim_block + threadIdx_x) * (num_rows_ - device_row_offset_ + PADDING_SIZE_uz) + global_j_idx_linear - (dim_block + threadIdx_x) * (dim_block + threadIdx_x + std::size_t{ 1 }) / std::size_t{ 2 }];  // SoA, upper triangular matrix only
-                                                   } else {
-                                                       A_cache[local_id_0][internal * THREAD_BLOCK_SIZE + local_id_1] = A_[global_j_idx_linear * (num_rows_ - device_row_offset_ + PADDING_SIZE_uz) + dim_block + threadIdx_x - global_j_idx_linear * (global_j_idx_linear + std::size_t{ 1 }) / std::size_t{ 2 }];  // SoA, upper triangular matrix only
+                                                   if (dim_block + threadIdx_x < num_rows_ - device_row_offset_) {
+                                                       if (global_j_idx_linear < device_num_rows_) {
+                                                           // determine on which side of the diagonal we are located
+                                                           if (dim_block + threadIdx_x < global_j_idx_linear) {
+                                                               A_cache[local_id_0][internal * THREAD_BLOCK_SIZE + local_id_1] = A_[(dim_block + threadIdx_x) * (num_rows_ - device_row_offset_) + global_j_idx_linear - (dim_block + threadIdx_x) * (dim_block + threadIdx_x + std::size_t{ 1 }) / std::size_t{ 2 }];  // SoA, upper triangular matrix only
+                                                           } else {
+                                                               A_cache[local_id_0][internal * THREAD_BLOCK_SIZE + local_id_1] = A_[global_j_idx_linear * (num_rows_ - device_row_offset_) + dim_block + threadIdx_x - global_j_idx_linear * (global_j_idx_linear + std::size_t{ 1 }) / std::size_t{ 2 }];  // SoA, upper triangular matrix only
+                                                           }
+                                                       }
+                                                       if (global_i_idx_linear < num_rhs_) {
+                                                           B_cache[local_id_0][internal * THREAD_BLOCK_SIZE + local_id_1] = B_[(dim_block + device_row_offset_ + threadIdx_x) * num_rhs_ + global_i_idx_linear];  // SoA
+                                                       }
                                                    }
-
-                                                   B_cache[local_id_0][internal * THREAD_BLOCK_SIZE + local_id_1] = B_[(dim_block + device_row_offset_ + threadIdx_x) * (num_rhs_ + PADDING_SIZE_uz) + global_i_idx_linear];  // SoA
                                                }
                                            });
 
@@ -123,24 +140,11 @@ class device_kernel_symm {
                                                const auto local_id_0 = static_cast<unsigned>(idx.get_local_id(group, 0));
                                                const auto local_id_1 = static_cast<unsigned>(idx.get_local_id(group, 1));
 
-                                               if constexpr (target == target_platform::cpu) {
-                                                   // perform the dot product calculation, the dim is the fastest moving index
+                                               // perform the dot product calculation
+                                               for (unsigned dim = 0; dim < THREAD_BLOCK_SIZE; ++dim) {
                                                    for (unsigned internal_i = 0; internal_i < INTERNAL_BLOCK_SIZE; ++internal_i) {
                                                        for (unsigned internal_j = 0; internal_j < INTERNAL_BLOCK_SIZE; ++internal_j) {
-                                                           real_type sum{ 0.0 };
-                                                           for (unsigned dim = 0; dim < THREAD_BLOCK_SIZE; ++dim) {
-                                                               sum += A_cache[dim][local_id_0 * INTERNAL_BLOCK_SIZE + internal_j] * B_cache[dim][local_id_1 * INTERNAL_BLOCK_SIZE + internal_i];
-                                                           }
-                                                           temp(idx)[internal_i][internal_j] += sum;
-                                                       }
-                                                   }
-                                               } else {
-                                                   // perform the dot product calculation, the dim is the slowest moving index
-                                                   for (unsigned dim = 0; dim < THREAD_BLOCK_SIZE; ++dim) {
-                                                       for (unsigned internal_i = 0; internal_i < INTERNAL_BLOCK_SIZE; ++internal_i) {
-                                                           for (unsigned internal_j = 0; internal_j < INTERNAL_BLOCK_SIZE; ++internal_j) {
-                                                               temp(idx)[internal_i][internal_j] += A_cache[dim][local_id_0 * INTERNAL_BLOCK_SIZE + internal_j] * B_cache[dim][local_id_1 * INTERNAL_BLOCK_SIZE + internal_i];
-                                                           }
+                                                           temp(idx)[internal_i][internal_j] += A_cache[dim][local_id_0 * INTERNAL_BLOCK_SIZE + internal_j] * B_cache[dim][local_id_1 * INTERNAL_BLOCK_SIZE + internal_i];
                                                        }
                                                    }
                                                }
@@ -151,7 +155,6 @@ class device_kernel_symm {
                                        ::sycl::distribute_items_and_wait(group, [&](::sycl::s_item<2> idx) {
                                            // cast all values to 64-bit std::size_t to prevent potential 32-bit overflows
                                            constexpr auto INTERNAL_BLOCK_SIZE_uz = static_cast<std::size_t>(INTERNAL_BLOCK_SIZE);
-                                           constexpr auto PADDING_SIZE_uz = static_cast<std::size_t>(PADDING_SIZE);
 
                                            const auto threadIdx_x = static_cast<std::size_t>(idx.get_local_id(group, 0));       // current work-item in work-group x-dimension
                                            const auto threadIdx_y = static_cast<std::size_t>(idx.get_local_id(group, 1));       // current work-item in work-group y-dimension
@@ -172,8 +175,8 @@ class device_kernel_symm {
                                                    const auto global_j_idx = device_row_offset_ + device_global_j_idx;
 
                                                    // be sure to not perform out-of-bounds accesses
-                                                   if (global_i_idx < num_rhs_ && device_global_j_idx < device_num_rows_) {
-                                                       C_[global_j_idx * (num_rhs_ + PADDING_SIZE_uz) + global_i_idx] = alpha_ * temp(idx)[internal_i][internal_j] + beta_ * C_[global_j_idx * (num_rhs_ + PADDING_SIZE_uz) + global_i_idx];  // SoA
+                                                   if (global_i_idx < num_rhs_ && device_global_j_idx < device_num_rows_ && global_j_idx < num_rows_) {
+                                                       C_[global_j_idx * num_rhs_ + global_i_idx] = alpha_ * temp(idx)[internal_i][internal_j] + beta_ * C_[global_j_idx * num_rhs_ + global_i_idx];  // SoA
                                                    }
                                                }
                                            }
@@ -201,9 +204,7 @@ class device_kernel_symm {
  * @brief Perform an explicit BLAS SYMM operation: `C = alpha * A * B + beta * C` where @p A is a `m x k` symmetric matrix (memory optimized), @p B is a `k x n` matrix, @p C is a `m x n` matrix, and @p alpha and @p beta are scalars.
  * @details In a multi-GPU setting, this function is responsible for mirroring down the columns this device is responsible for!
  *          Uses AdaptiveCpp's scoped parallelism.
- * @tparam target the target platform
  */
-template <target_platform target>
 class device_kernel_symm_mirror {
   public:
     /// The used SYCL data parallel kernel.
@@ -251,8 +252,18 @@ class device_kernel_symm_mirror {
                                    ::sycl::require_local_mem<real_type[THREAD_BLOCK_SIZE][INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE]>(),  // B_cache
 
                                    // create a private memory array used for internal caching
-                                   ::sycl::require_private_mem<std::array<std::array<real_type, INTERNAL_BLOCK_SIZE>, INTERNAL_BLOCK_SIZE>>({}),
+                                   ::sycl::require_private_mem<std::array<std::array<real_type, INTERNAL_BLOCK_SIZE>, INTERNAL_BLOCK_SIZE>>(),
                                    [&](auto &A_cache, auto &B_cache, auto &temp) {
+                                       // initialize private temp matrix to zero
+                                       ::sycl::distribute_items_and_wait(group, [&](::sycl::s_item<2> idx) {
+                                           // initialize private temp matrix to zero
+                                           for (unsigned internal_i = 0; internal_i < INTERNAL_BLOCK_SIZE; ++internal_i) {
+                                               for (unsigned internal_j = 0; internal_j < INTERNAL_BLOCK_SIZE; ++internal_j) {
+                                                   temp(idx)[internal_i][internal_j] = real_type{ 0.0 };
+                                               }
+                                           }
+                                       });
+
                                        // iterate over the remaining values using blocking to be able to cache them for faster memory accesses
                                        for (std::size_t dim_block = 0; dim_block < device_num_rows_; dim_block += static_cast<std::size_t>(THREAD_BLOCK_SIZE)) {
                                            // load data into local memory
@@ -264,7 +275,6 @@ class device_kernel_symm_mirror {
                                                // cast all values to 64-bit std::size_t to prevent potential 32-bit overflows
                                                constexpr auto INTERNAL_BLOCK_SIZE_uz = static_cast<std::size_t>(INTERNAL_BLOCK_SIZE);
                                                constexpr auto THREAD_BLOCK_SIZE_uz = static_cast<std::size_t>(THREAD_BLOCK_SIZE);
-                                               constexpr auto PADDING_SIZE_uz = static_cast<std::size_t>(PADDING_SIZE);
 
                                                const auto threadIdx_x = static_cast<std::size_t>(idx.get_local_id(group, 0));       // current work-item in work-group x-dimension
                                                const auto threadIdx_y = static_cast<std::size_t>(idx.get_local_id(group, 1));       // current work-item in work-group y-dimension
@@ -277,14 +287,26 @@ class device_kernel_symm_mirror {
                                                const auto i_idx_linear = blockIdx_y * blockDim_y * INTERNAL_BLOCK_SIZE_uz + threadIdx_y;
                                                const auto j_idx_linear = blockIdx_x * blockDim_x * INTERNAL_BLOCK_SIZE_uz + threadIdx_y;
 
+                                               // zero-out local memory
+                                               for (unsigned internal = 0; internal < INTERNAL_BLOCK_SIZE; ++internal) {
+                                                   A_cache[local_id_0][internal * THREAD_BLOCK_SIZE + local_id_1] = real_type{ 0.0 };
+                                                   B_cache[local_id_0][internal * THREAD_BLOCK_SIZE + local_id_1] = real_type{ 0.0 };
+                                               }
+
                                                for (unsigned internal = 0; internal < INTERNAL_BLOCK_SIZE; ++internal) {
                                                    // calculate the indices to access the global data, pays attention to coalesced memory accesses
                                                    const auto global_i_idx_linear = i_idx_linear + static_cast<std::size_t>(internal) * THREAD_BLOCK_SIZE_uz;
                                                    const auto global_j_idx_linear = j_idx_linear + static_cast<std::size_t>(internal) * THREAD_BLOCK_SIZE_uz;
 
                                                    // store the values in the local memory
-                                                   A_cache[local_id_0][internal * THREAD_BLOCK_SIZE + local_id_1] = A_[(dim_block + threadIdx_x) * (num_rows_ - device_row_offset_ + PADDING_SIZE_uz) - (dim_block + threadIdx_x - std::size_t{ 1 }) * (dim_block + threadIdx_x) / std::size_t{ 2 } + device_num_rows_ - (dim_block + threadIdx_x) + global_j_idx_linear];  // SoA, upper triangular matrix only
-                                                   B_cache[local_id_0][internal * THREAD_BLOCK_SIZE + local_id_1] = B_[(device_row_offset_ + dim_block + threadIdx_x) * (num_rhs_ + PADDING_SIZE_uz) + global_i_idx_linear];                                                                                                                                                // SoA
+                                                   if (dim_block + threadIdx_x < device_num_rows_) {
+                                                       if (global_j_idx_linear < num_mirror_rows_) {
+                                                           A_cache[local_id_0][internal * THREAD_BLOCK_SIZE + local_id_1] = A_[(dim_block + threadIdx_x) * (num_rows_ - device_row_offset_) - (dim_block + threadIdx_x - std::size_t{ 1 }) * (dim_block + threadIdx_x) / std::size_t{ 2 } + device_num_rows_ - (dim_block + threadIdx_x) + global_j_idx_linear];  // SoA, upper triangular matrix only
+                                                       }
+                                                       if (global_i_idx_linear < num_rhs_) {
+                                                           B_cache[local_id_0][internal * THREAD_BLOCK_SIZE + local_id_1] = B_[(device_row_offset_ + dim_block + threadIdx_x) * num_rhs_ + global_i_idx_linear];  // SoA
+                                                       }
+                                                   }
                                                }
                                            });
 
@@ -294,24 +316,11 @@ class device_kernel_symm_mirror {
                                                const auto local_id_0 = static_cast<unsigned>(idx.get_local_id(group, 0));
                                                const auto local_id_1 = static_cast<unsigned>(idx.get_local_id(group, 1));
 
-                                               if constexpr (target == target_platform::cpu) {
-                                                   // perform the dot product calculation, the dim is the fastest moving index
+                                               // perform the dot product calculation
+                                               for (unsigned dim = 0; dim < THREAD_BLOCK_SIZE; ++dim) {
                                                    for (unsigned internal_i = 0; internal_i < INTERNAL_BLOCK_SIZE; ++internal_i) {
                                                        for (unsigned internal_j = 0; internal_j < INTERNAL_BLOCK_SIZE; ++internal_j) {
-                                                           real_type sum{ 0.0 };
-                                                           for (unsigned dim = 0; dim < THREAD_BLOCK_SIZE; ++dim) {
-                                                               sum += A_cache[dim][local_id_0 * INTERNAL_BLOCK_SIZE + internal_j] * B_cache[dim][local_id_1 * INTERNAL_BLOCK_SIZE + internal_i];
-                                                           }
-                                                           temp(idx)[internal_i][internal_j] += sum;
-                                                       }
-                                                   }
-                                               } else {
-                                                   // perform the dot product calculation, the dim is the slowest moving index
-                                                   for (unsigned dim = 0; dim < THREAD_BLOCK_SIZE; ++dim) {
-                                                       for (unsigned internal_i = 0; internal_i < INTERNAL_BLOCK_SIZE; ++internal_i) {
-                                                           for (unsigned internal_j = 0; internal_j < INTERNAL_BLOCK_SIZE; ++internal_j) {
-                                                               temp(idx)[internal_i][internal_j] += A_cache[dim][local_id_0 * INTERNAL_BLOCK_SIZE + internal_j] * B_cache[dim][local_id_1 * INTERNAL_BLOCK_SIZE + internal_i];
-                                                           }
+                                                           temp(idx)[internal_i][internal_j] += A_cache[dim][local_id_0 * INTERNAL_BLOCK_SIZE + internal_j] * B_cache[dim][local_id_1 * INTERNAL_BLOCK_SIZE + internal_i];
                                                        }
                                                    }
                                                }
@@ -322,7 +331,6 @@ class device_kernel_symm_mirror {
                                        ::sycl::distribute_items_and_wait(group, [&](::sycl::s_item<2> idx) {
                                            // cast all values to 64-bit std::size_t to prevent potential 32-bit overflows
                                            constexpr auto INTERNAL_BLOCK_SIZE_uz = static_cast<std::size_t>(INTERNAL_BLOCK_SIZE);
-                                           constexpr auto PADDING_SIZE_uz = static_cast<std::size_t>(PADDING_SIZE);
 
                                            const auto threadIdx_x = static_cast<std::size_t>(idx.get_local_id(group, 0));       // current work-item in work-group x-dimension
                                            const auto threadIdx_y = static_cast<std::size_t>(idx.get_local_id(group, 1));       // current work-item in work-group y-dimension
@@ -344,7 +352,7 @@ class device_kernel_symm_mirror {
 
                                                    // be sure to not perform out-of-bounds accesses
                                                    if (global_i_idx < num_rhs_ && partial_global_j_idx < num_mirror_rows_) {
-                                                       C_[global_j_idx * (num_rhs_ + PADDING_SIZE_uz) + global_i_idx] = alpha_ * temp(idx)[internal_i][internal_j] + beta_ * C_[global_j_idx * (num_rhs_ + PADDING_SIZE_uz) + global_i_idx];  // SoA
+                                                       C_[global_j_idx * num_rhs_ + global_i_idx] = alpha_ * temp(idx)[internal_i][internal_j] + beta_ * C_[global_j_idx * num_rhs_ + global_i_idx];  // SoA
                                                    }
                                                }
                                            }
@@ -380,13 +388,15 @@ class device_kernel_inplace_matrix_add {
 
     /**
      * @brief Initialize the SYCL kernel function object.
+     * @param[in] num_rows the number of rows in both matrices
      * @param[in] num_cols the number of columns in both matrices
      * @param[in,out] lhs the first matrix (updated inplace)
      * @param[in] rhs the second matrix
      * @param[in] grid_x_offset the offset in x-dimension into the data points if more than one execution grid has to be used
      * @param[in] grid_y_offset the offset in y-dimension into the data points if more than one execution grid has to be used
      */
-    device_kernel_inplace_matrix_add(const std::size_t num_cols, real_type *lhs, const real_type *rhs, const std::size_t grid_x_offset, const std::size_t grid_y_offset) :
+    device_kernel_inplace_matrix_add(const std::size_t num_rows, const std::size_t num_cols, real_type *lhs, const real_type *rhs, const std::size_t grid_x_offset, const std::size_t grid_y_offset) :
+        num_rows_{ num_rows },
         num_cols_{ num_cols },
         lhs_{ lhs },
         rhs_{ rhs },
@@ -405,7 +415,6 @@ class device_kernel_inplace_matrix_add {
                                        ::sycl::distribute_items_and_wait(group, [&](::sycl::s_item<2> idx) {
                                            // cast all values to 64-bit std::size_t to prevent potential 32-bit overflows
                                            constexpr auto INTERNAL_BLOCK_SIZE_uz = static_cast<std::size_t>(INTERNAL_BLOCK_SIZE);
-                                           constexpr auto PADDING_SIZE_uz = static_cast<std::size_t>(PADDING_SIZE);
 
                                            const auto threadIdx_x = static_cast<std::size_t>(idx.get_local_id(group, 0));       // current work-item in work-group x-dimension
                                            const auto threadIdx_y = static_cast<std::size_t>(idx.get_local_id(group, 1));       // current work-item in work-group y-dimension
@@ -424,7 +433,9 @@ class device_kernel_inplace_matrix_add {
                                                    const auto global_i_idx = i_idx + static_cast<std::size_t>(internal_i);
                                                    const auto global_j_idx = j_idx + static_cast<std::size_t>(internal_j);
 
-                                                   lhs_[global_i_idx * (num_cols_ + PADDING_SIZE_uz) + global_j_idx] += rhs_[global_i_idx * (num_cols_ + PADDING_SIZE_uz) + global_j_idx];  // SoA
+                                                   if (global_i_idx < num_rows_ && global_j_idx < num_cols_) {
+                                                       lhs_[global_i_idx * num_cols_ + global_j_idx] += rhs_[global_i_idx * num_cols_ + global_j_idx];  // SoA
+                                                   }
                                                }
                                            }
                                        });
@@ -433,6 +444,7 @@ class device_kernel_inplace_matrix_add {
 
   private:
     /// @cond Doxygen_suppress
+    const std::size_t num_rows_;
     const std::size_t num_cols_;
     real_type *lhs_;
     const real_type *rhs_;
@@ -452,13 +464,15 @@ class device_kernel_inplace_matrix_scale {
 
     /**
      * @brief Initialize the SYCL kernel function object.
+     * @param[in] num_rows the number of rows in the matrix
      * @param[in] num_cols the number of columns in the matrix
      * @param[in,out] lhs the first matrix (updated inplace)
      * @param[in] scale the value to scale
      * @param[in] grid_x_offset the offset in x-dimension into the data points if more than one execution grid has to be used
      * @param[in] grid_y_offset the offset in y-dimension into the data points if more than one execution grid has to be used
      */
-    device_kernel_inplace_matrix_scale(const std::size_t num_cols, real_type *lhs, const real_type scale, const std::size_t grid_x_offset, const std::size_t grid_y_offset) :
+    device_kernel_inplace_matrix_scale(const std::size_t num_rows, const std::size_t num_cols, real_type *lhs, const real_type scale, const std::size_t grid_x_offset, const std::size_t grid_y_offset) :
+        num_rows_{ num_rows },
         num_cols_{ num_cols },
         lhs_{ lhs },
         scale_{ scale },
@@ -477,7 +491,6 @@ class device_kernel_inplace_matrix_scale {
                                        ::sycl::distribute_items_and_wait(group, [&](::sycl::s_item<2> idx) {
                                            // cast all values to 64-bit std::size_t to prevent potential 32-bit overflows
                                            constexpr auto INTERNAL_BLOCK_SIZE_uz = static_cast<std::size_t>(INTERNAL_BLOCK_SIZE);
-                                           constexpr auto PADDING_SIZE_uz = static_cast<std::size_t>(PADDING_SIZE);
 
                                            const auto threadIdx_x = static_cast<std::size_t>(idx.get_local_id(group, 0));       // current work-item in work-group x-dimension
                                            const auto threadIdx_y = static_cast<std::size_t>(idx.get_local_id(group, 1));       // current work-item in work-group y-dimension
@@ -496,7 +509,9 @@ class device_kernel_inplace_matrix_scale {
                                                    const auto global_i_idx = i_idx + static_cast<std::size_t>(internal_i);
                                                    const auto global_j_idx = j_idx + static_cast<std::size_t>(internal_j);
 
-                                                   lhs_[global_i_idx * (num_cols_ + PADDING_SIZE_uz) + global_j_idx] *= scale_;  // SoA
+                                                   if (global_i_idx < num_rows_ && global_j_idx < num_cols_) {
+                                                       lhs_[global_i_idx * num_cols_ + global_j_idx] *= scale_;  // SoA
+                                                   }
                                                }
                                            }
                                        });
@@ -505,6 +520,7 @@ class device_kernel_inplace_matrix_scale {
 
   private:
     /// @cond Doxygen_suppress
+    const std::size_t num_rows_;
     const std::size_t num_cols_;
     real_type *lhs_;
     const real_type scale_;

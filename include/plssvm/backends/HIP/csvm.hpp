@@ -28,6 +28,7 @@
 #include "plssvm/target_platforms.hpp"                       // plssvm::target_platform
 
 #include <cstddef>      // std::size_t
+#include <optional>     // std::optional
 #include <type_traits>  // std::true_type
 #include <utility>      // std::forward
 #include <vector>       // std::vector
@@ -94,6 +95,10 @@ class csvm : public ::plssvm::detail::gpu_csvm<detail::device_ptr, int, detail::
      * @copydoc plssvm::csvm::get_max_mem_alloc_size
      */
     [[nodiscard]] std::vector<::plssvm::detail::memory_size> get_max_mem_alloc_size() const final;
+    /**
+     * @copydoc plssvm::csvm::get_local_memory
+     */
+    [[nodiscard]] std::vector<std::optional<::plssvm::detail::memory_size>> get_local_memory() const final;
     /**
      * @copydoc plssvm::detail::gpu_csvm::get_max_work_group_size
      */

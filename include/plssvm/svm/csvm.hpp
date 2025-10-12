@@ -24,6 +24,7 @@
 #include "plssvm/detail/move_only_any.hpp"                 // plssvm::detail::move_only_any
 #include "plssvm/detail/tracking/performance_tracker.hpp"  // PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY, PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_EVENT, plssvm::detail::tracking::tracking_entry
 #include "plssvm/detail/type_traits.hpp"                   // PLSSVM_REQUIRES, plssvm::detail::remove_cvref_t
+#include "plssvm/detail/utility.hpp"                       // plssvm::detail::{check_local_memory_usage, get_system_memory}
 #include "plssvm/exceptions/exceptions.hpp"                // plssvm::invalid_parameter_exception
 #include "plssvm/matrix.hpp"                               // plssvm::aos_matrix
 #include "plssvm/mpi/communicator.hpp"                     // plssvm::mpi::communicator
@@ -42,6 +43,7 @@
 #include <chrono>       // std::chrono::{time_point, steady_clock, duration_cast, milliseconds}
 #include <cstddef>      // std::size_t
 #include <memory>       // std::unique_ptr
+#include <optional>     // std::optional
 #include <ratio>        // std::milli
 #include <string>       // std::string
 #include <tuple>        // std::tie, std::tuple, std::make_tuple
@@ -158,6 +160,12 @@ class csvm {
      * @return the maximum (single) allocation size per device (`[[nodiscard]]`)
      */
     [[nodiscard]] virtual std::vector<detail::memory_size> get_max_mem_alloc_size() const = 0;
+    /**
+     * @brief Calculate the total available local memory for all devices based on the used backend.
+     * @details If the backend has no notion of local memory, returns a std::nullopt.
+     * @return the total local memory per device (`[[nodiscard]]`)
+     */
+    [[nodiscard]] virtual std::vector<std::optional<detail::memory_size>> get_local_memory() const = 0;
 
     /**
      * @brief Explicitly assemble the kernel matrix using potentially multiple devices. Backend specific!
@@ -326,6 +334,9 @@ std::tuple<aos_matrix<real_type>, std::vector<real_type>, std::vector<unsigned l
     const std::size_t num_rows_reduced = num_rows - 1;
     const std::size_t num_rhs = B.num_rows();
 
+    // determine the used local memory and check whether it exceeds the maximum necessary value!
+    detail::check_local_memory_usage(this->get_local_memory());
+
     // determine the correct solver type, if the automatic solver type has been provided
     if (used_solver == solver_type::automatic) {
         using namespace detail::literals;
@@ -381,17 +392,17 @@ std::tuple<aos_matrix<real_type>, std::vector<real_type>, std::vector<unsigned l
                         "  - maximum memory needed (cg_implicit): {7}\n",
                         static_cast<double>(percentual_safety_margin * 100.0L),
                         minimal_safety_margin,
-                        detail::tracking::tracking_entry{ "solver", "system_memory", total_system_memory },
-                        detail::tracking::tracking_entry{ "solver", "usable_system_memory_with_safety_margin", usable_system_memory },
+                        detail::tracking::tracking_entry{ "resource_constraints", "system_memory", total_system_memory },
+                        detail::tracking::tracking_entry{ "resource_constraints", "usable_system_memory_with_safety_margin", usable_system_memory },
                         format_vector(total_device_memory_per_device),
                         format_vector(usable_device_memory_per_device),
                         format_vector(total_memory_needed_explicit_per_device),
                         format_vector(total_memory_needed_implicit_per_device));
         }
-        PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((detail::tracking::tracking_entry{ "solver", "device_memory", total_device_memory_per_device }));
-        PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((detail::tracking::tracking_entry{ "solver", "usable_device_memory_with_safety_margin", usable_device_memory_per_device }));
-        PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((detail::tracking::tracking_entry{ "solver", "needed_device_memory_cg_explicit", total_memory_needed_explicit_per_device }));
-        PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((detail::tracking::tracking_entry{ "solver", "needed_device_memory_cg_implicit", total_memory_needed_implicit_per_device }));
+        PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((detail::tracking::tracking_entry{ "resource_constraints", "device_memory", total_device_memory_per_device }));
+        PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((detail::tracking::tracking_entry{ "resource_constraints", "usable_device_memory_with_safety_margin", usable_device_memory_per_device }));
+        PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((detail::tracking::tracking_entry{ "resource_constraints", "needed_device_memory_cg_explicit", total_memory_needed_explicit_per_device }));
+        PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((detail::tracking::tracking_entry{ "resource_constraints", "needed_device_memory_cg_implicit", total_memory_needed_implicit_per_device }));
 
         // helper function to check whether ALL devices fulfill the requested memory constraint for the specific solver type
         const auto check_sizes = [](const auto &needed_memory_per_device, const auto &memory_constraint) -> std::vector<std::size_t> {
@@ -450,9 +461,9 @@ std::tuple<aos_matrix<real_type>, std::vector<real_type>, std::vector<unsigned l
                                   format_vector(max_single_allocation_cg_explicit_size_per_device),
                                   format_vector(max_single_allocation_cg_implicit_size_per_device));
         }
-        PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((detail::tracking::tracking_entry{ "solver", "device_max_single_mem_alloc_size", max_mem_alloc_size_per_device }));
-        PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((detail::tracking::tracking_entry{ "solver", "device_max_mem_alloc_size_cg_explicit", max_single_allocation_cg_explicit_size_per_device }));
-        PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((detail::tracking::tracking_entry{ "solver", "device_max_mem_alloc_size_cg_implicit", max_single_allocation_cg_implicit_size_per_device }));
+        PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((detail::tracking::tracking_entry{ "resource_constraints", "device_max_single_mem_alloc_size", max_mem_alloc_size_per_device }));
+        PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((detail::tracking::tracking_entry{ "resource_constraints", "device_max_mem_alloc_size_cg_explicit", max_single_allocation_cg_explicit_size_per_device }));
+        PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((detail::tracking::tracking_entry{ "resource_constraints", "device_max_mem_alloc_size_cg_implicit", max_single_allocation_cg_implicit_size_per_device }));
 
         // check whether the maximum single memory allocation sizes per device can be satisfied
         // check whether the maximum single cg_explicit memory allocation size can be satisfied

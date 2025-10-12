@@ -39,14 +39,15 @@
 #include "gtest/gtest.h"  // TYPED_TEST_SUITE_P, TYPED_TEST_P, REGISTER_TYPED_TEST_SUITE_P, EXPECT_EQ, EXPECT_NE, EXPECT_GT, EXPECT_TRUE, EXPECT_DEATH,
                           // ASSERT_EQ, SUCCEED, ::testing::Test
 
-#include <cmath>    // std::sqrt, std::abs
-#include <cstddef>  // std::size_t
-#include <cstring>  // std::memcpy
-#include <limits>   // std::numeric_limits::epsilon
-#include <memory>   // std::unique_ptr, std::make_unique
-#include <tuple>    // std::ignore, std::tuple, std::make_tuple
-#include <utility>  // std::move
-#include <vector>   // std::vector
+#include <cmath>     // std::sqrt, std::abs
+#include <cstddef>   // std::size_t
+#include <cstring>   // std::memcpy
+#include <limits>    // std::numeric_limits::epsilon
+#include <memory>    // std::unique_ptr, std::make_unique
+#include <optional>  // std::optional
+#include <tuple>     // std::ignore, std::tuple, std::make_tuple
+#include <utility>   // std::move
+#include <vector>    // std::vector
 
 namespace util {
 
@@ -279,6 +280,28 @@ TYPED_TEST_P(GenericCSVM, get_max_mem_alloc_size) {
     }
 }
 
+TYPED_TEST_P(GenericCSVM, get_local_memory) {
+    using namespace plssvm::detail::literals;
+    using csvm_test_type = util::test_parameter_type_at_t<0, TypeParam>;
+    using csvm_type = typename csvm_test_type::csvm_type;
+    using mock_csvm_type = typename csvm_test_type::mock_csvm_type;
+
+    // create C-SVM: must be done using the mock class since the member function to test is private or protected
+    const mock_csvm_type svm = util::construct_from_tuple<mock_csvm_type>(csvm_test_type::additional_arguments);
+
+    // the maximum memory allocation size should be greater than 0!
+    const std::vector<std::optional<plssvm::detail::memory_size>> local_mem = svm.get_local_memory();
+    EXPECT_GE(local_mem.size(), 1);
+    for (const std::optional<plssvm::detail::memory_size> ms : local_mem) {
+        if constexpr (plssvm::csvm_to_backend_type_v<csvm_type> == plssvm::backend_type::openmp || plssvm::csvm_to_backend_type_v<csvm_type> == plssvm::backend_type::stdpar || plssvm::csvm_to_backend_type_v<csvm_type> == plssvm::backend_type::hpx) {
+            // some backends inherently do not have the capability of local memory
+            EXPECT_EQ(ms, std::nullopt);
+        } else {
+            EXPECT_GT(ms.value(), 0_B);
+        }
+    }
+}
+
 TYPED_TEST_P(GenericCSVM, blas_level_3_explicit_without_C) {
     using csvm_test_type = util::test_parameter_type_at_t<0, TypeParam>;
     using csvm_type = typename csvm_test_type::csvm_type;
@@ -441,6 +464,7 @@ TYPED_TEST_P(GenericCSVM, conjugate_gradients) {
 REGISTER_TYPED_TEST_SUITE_P(GenericCSVM,
                             get_target_platform,
                             get_device_memory,
+                            get_local_memory,
                             get_max_mem_alloc_size,
                             num_available_devices,
                             blas_level_3_explicit_without_C,

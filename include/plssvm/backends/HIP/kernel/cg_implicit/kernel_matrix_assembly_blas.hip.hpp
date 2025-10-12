@@ -14,7 +14,7 @@
 #pragma once
 
 #include "plssvm/backends/HIP/kernel/kernel_functions.hip.hpp"  // plssvm::hip::detail::{feature_reduce, apply_kernel_function}
-#include "plssvm/constants.hpp"                                 // plssvm::{real_type, THREAD_BLOCK_SIZE, INTERNAL_BLOCK_SIZE, PADDING_SIZE}
+#include "plssvm/constants.hpp"                                 // plssvm::real_type, plssvm::THREAD_BLOCK_SIZE
 #include "plssvm/kernel_function_types.hpp"                     // plssvm::kernel_function_type
 
 #include "hip/hip_runtime.h"
@@ -49,7 +49,6 @@ __global__ void device_kernel_assembly_symm(const real_type alpha, const real_ty
     // cast all values to 64-bit std::size_t to prevent potential 32-bit overflows
     constexpr auto INTERNAL_BLOCK_SIZE_uz = static_cast<std::size_t>(INTERNAL_BLOCK_SIZE);
     constexpr auto THREAD_BLOCK_SIZE_uz = static_cast<std::size_t>(THREAD_BLOCK_SIZE);
-    constexpr auto PADDING_SIZE_uz = static_cast<std::size_t>(PADDING_SIZE);
 
     const auto threadIdx_x = static_cast<std::size_t>(threadIdx.x);                // current thread in block x-dimension
     const auto threadIdx_y = static_cast<std::size_t>(threadIdx.y);                // current thread in block y-dimension
@@ -70,7 +69,7 @@ __global__ void device_kernel_assembly_symm(const real_type alpha, const real_ty
     __shared__ real_type cache_one[THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE];
     __shared__ real_type cache_two[THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE];
 
-    // only calculate the upper triangular matrix -> can't use threadIdx since all threads in a wavefront must progress further
+    // only calculate the upper triangular matrix -> can't use threadIdx since all threads in a warp must progress further
     if (blockIdx_x >= blockIdx_y) {
         // create a thread private array used for internal caching
         real_type temp[INTERNAL_BLOCK_SIZE][INTERNAL_BLOCK_SIZE]{};
@@ -85,6 +84,12 @@ __global__ void device_kernel_assembly_symm(const real_type alpha, const real_ty
 
             // iterate over all features using blocking to be able to cache them for faster memory accesses
             for (std::size_t feature_block = 0; feature_block < num_features; feature_block += THREAD_BLOCK_SIZE_uz) {
+                // zero-out shared memory
+                for (unsigned internal = 0; internal < INTERNAL_BLOCK_SIZE; ++internal) {
+                    data_i_cache[threadIdx.y][internal * THREAD_BLOCK_SIZE + threadIdx.x] = real_type{ 0.0 };
+                    data_j_cache[threadIdx.y][internal * THREAD_BLOCK_SIZE + threadIdx.x] = real_type{ 0.0 };
+                }
+
                 // load data into shared memory
                 for (unsigned internal = 0; internal < INTERNAL_BLOCK_SIZE; ++internal) {
                     // calculate the indices to access the global data, pays attention to coalesced memory accesses
@@ -92,8 +97,14 @@ __global__ void device_kernel_assembly_symm(const real_type alpha, const real_ty
                     const auto global_j_idx_linear = device_row_offset + j_idx_linear + static_cast<std::size_t>(internal) * THREAD_BLOCK_SIZE_uz;
 
                     // store the values in the shared memory
-                    data_i_cache[threadIdx.y][internal * THREAD_BLOCK_SIZE + threadIdx.x] = data[(feature_block + threadIdx_y) * (num_rows + std::size_t{ 1 } + PADDING_SIZE_uz) + global_i_idx_linear];  // SoA
-                    data_j_cache[threadIdx.y][internal * THREAD_BLOCK_SIZE + threadIdx.x] = data[(feature_block + threadIdx_y) * (num_rows + std::size_t{ 1 } + PADDING_SIZE_uz) + global_j_idx_linear];  // SoA
+                    if (feature_block + threadIdx_y < num_features) {
+                        if (global_i_idx_linear < num_rows) {
+                            data_i_cache[threadIdx.y][internal * THREAD_BLOCK_SIZE + threadIdx.x] = data[(feature_block + threadIdx_y) * (num_rows + std::size_t{ 1 }) + global_i_idx_linear];  // SoA
+                        }
+                        if (global_j_idx_linear < num_rows) {
+                            data_j_cache[threadIdx.y][internal * THREAD_BLOCK_SIZE + threadIdx.x] = data[(feature_block + threadIdx_y) * (num_rows + std::size_t{ 1 }) + global_j_idx_linear];  // SoA
+                        }
+                    }
                 }
                 __syncthreads();  // wait until all threads loaded their part of the data
 
@@ -144,14 +155,21 @@ __global__ void device_kernel_assembly_symm(const real_type alpha, const real_ty
 
             // iterate over all classes using blocking to be able to cache them for faster memory accesses
             for (std::size_t class_block = 0; class_block < num_classes; class_block += THREAD_BLOCK_SIZE_uz) {
+                // zero-out shared memory
+                for (unsigned internal = 0; internal < INTERNAL_BLOCK_SIZE; ++internal) {
+                    B_cache[internal * THREAD_BLOCK_SIZE + threadIdx.x][threadIdx.y] = real_type{ 0.0 };
+                    C_out_cache[internal * THREAD_BLOCK_SIZE + threadIdx.x][threadIdx.y] = real_type{ 0.0 };
+                }
+
                 // load data into shared memory
                 for (unsigned internal = 0; internal < INTERNAL_BLOCK_SIZE; ++internal) {
                     // calculate the indices to access the global data, pays attention to coalesced memory accesses
                     const auto global_i_idx_linear = device_row_offset + i_idx_linear + static_cast<std::size_t>(internal) * THREAD_BLOCK_SIZE_uz;
 
                     // store the values in the shared memory
-                    B_cache[internal * THREAD_BLOCK_SIZE + threadIdx.x][threadIdx.y] = alpha * B[global_i_idx_linear * (num_classes + PADDING_SIZE_uz) + class_block + threadIdx_y];  // SoA
-                    C_out_cache[internal * THREAD_BLOCK_SIZE + threadIdx.x][threadIdx.y] = real_type{ 0.0 };                                                                          // SoA
+                    if (class_block + threadIdx_y < num_classes && global_i_idx_linear < num_rows) {
+                        B_cache[internal * THREAD_BLOCK_SIZE + threadIdx.x][threadIdx.y] = alpha * B[global_i_idx_linear * num_classes + class_block + threadIdx_y];  // SoA
+                    }
                 }
                 __syncthreads();  // wait until all threads loaded their part of the data
 
@@ -171,9 +189,11 @@ __global__ void device_kernel_assembly_symm(const real_type alpha, const real_ty
                     // calculate the indices to access the global data
                     const auto global_j_idx = device_row_offset + j_idx + static_cast<std::size_t>(internal);
 
-                    atomicAdd(&C[global_j_idx * (num_classes + PADDING_SIZE_uz) + class_block + threadIdx_x], C_out_cache[threadIdx.y * INTERNAL_BLOCK_SIZE + internal][threadIdx.x]);  // SoA
+                    if (class_block + threadIdx_x < num_classes && global_j_idx < num_rows) {
+                        atomicAdd(&C[global_j_idx * num_classes + class_block + threadIdx_x], C_out_cache[threadIdx.y * INTERNAL_BLOCK_SIZE + internal][threadIdx.x]);  // SoA
+                    }
                 }
-                __syncthreads();  // wai until all threads updated C with their values
+                __syncthreads();  // wait until all threads updated C with their values
             }
         }
 
@@ -201,14 +221,21 @@ __global__ void device_kernel_assembly_symm(const real_type alpha, const real_ty
 
             // iterate over all classes using blocking to be able to cache them for faster memory accesses
             for (std::size_t class_block = 0; class_block < num_classes; class_block += THREAD_BLOCK_SIZE_uz) {
+                // zero-out shared memory
+                for (unsigned internal = 0; internal < INTERNAL_BLOCK_SIZE; ++internal) {
+                    B_cache[threadIdx.y][internal * THREAD_BLOCK_SIZE + threadIdx.x] = real_type{ 0.0 };
+                    C_out_cache[threadIdx.y][internal * THREAD_BLOCK_SIZE + threadIdx.x] = real_type{ 0.0 };
+                }
+
                 // load data into shared memory
                 for (unsigned internal = 0; internal < INTERNAL_BLOCK_SIZE; ++internal) {
                     // calculate the indices to access the global data, pays attention to coalesced memory accesses
                     const auto global_j_idx_linear = device_row_offset + j_idx_linear + static_cast<std::size_t>(internal) * THREAD_BLOCK_SIZE_uz;
 
                     // store the values in the shared memory
-                    B_cache[threadIdx.y][internal * THREAD_BLOCK_SIZE + threadIdx.x] = alpha * B[global_j_idx_linear * (num_classes + PADDING_SIZE_uz) + class_block + threadIdx_y];  // SoA
-                    C_out_cache[threadIdx.y][internal * THREAD_BLOCK_SIZE + threadIdx.x] = real_type{ 0.0 };
+                    if (class_block + threadIdx_y < num_classes && global_j_idx_linear < num_rows) {
+                        B_cache[threadIdx.y][internal * THREAD_BLOCK_SIZE + threadIdx.x] = alpha * B[global_j_idx_linear * num_classes + class_block + threadIdx_y];  // SoA
+                    }
                 }
                 __syncthreads();  // wait until all threads loaded their part of the data
 
@@ -228,7 +255,9 @@ __global__ void device_kernel_assembly_symm(const real_type alpha, const real_ty
                     // calculate the indices to access the global data
                     const auto global_i_idx = device_row_offset + i_idx + static_cast<std::size_t>(internal);
 
-                    atomicAdd(&C[global_i_idx * (num_classes + PADDING_SIZE_uz) + class_block + threadIdx_y], C_out_cache[threadIdx.y][internal * THREAD_BLOCK_SIZE + threadIdx.x]);  // SoA
+                    if (class_block + threadIdx_y < num_classes && global_i_idx < num_rows) {
+                        atomicAdd(&C[global_i_idx * num_classes + class_block + threadIdx_y], C_out_cache[threadIdx.y][internal * THREAD_BLOCK_SIZE + threadIdx.x]);  // SoA
+                    }
                 }
                 __syncthreads();  // wait until all threads updated C with their values
             }

@@ -15,11 +15,11 @@
 
 #include "plssvm/backends/SYCL/data_parallel_kernels.hpp"    // plssvm::sycl::data_parallel_kernel
 #include "plssvm/backends/SYCL/kernel/kernel_functions.hpp"  // plssvm::sycl::detail::{feature_reduce, apply_kernel_function}
-#include "plssvm/constants.hpp"                              // plssvm::{real_type, THREAD_BLOCK_SIZE, INTERNAL_BLOCK_SIZE, PADDING_SIZE}
+#include "plssvm/constants.hpp"                              // plssvm::real_type
 #include "plssvm/kernel_function_types.hpp"                  // plssvm::kernel_function_type
 #include "plssvm/target_platforms.hpp"                       // plssvm::target_platform
 
-#include "sycl/sycl.hpp"  // sycl::memory_environment, sycl::require_local_mem, sycl::require_private_mem, sycl::distribute_items_and_wait, sycl::s_item
+#include "sycl/sycl.hpp"  // sycl::memory_environment, sycl::distribute_items_and_wait, sycl::s_item
 
 #include <array>    // std::array
 #include <cstddef>  // std::size_t
@@ -30,11 +30,10 @@ namespace plssvm::sycl::detail::scoped {
 /**
  * @brief Create the explicit kernel matrix using the @p kernel_function.
  * @details Uses AdaptiveCpp's scoped parallelism.
- * @tparam target the target platform
  * @tparam kernel_function the type of the used kernel function
  * @tparam Args the types of the parameters necessary for the specific kernel function; stored in a `std::tuple`
  */
-template <target_platform target, kernel_function_type kernel_function, typename... Args>
+template <kernel_function_type kernel_function, typename... Args>
 class device_kernel_assembly {
   public:
     /// The used SYCL data parallel kernel.
@@ -83,10 +82,19 @@ class device_kernel_assembly {
                                    ::sycl::require_local_mem<real_type[THREAD_BLOCK_SIZE][INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE]>(),  // data_j_cache
 
                                    // create a private memory array used for internal caching
-                                   ::sycl::require_private_mem<std::array<std::array<real_type, INTERNAL_BLOCK_SIZE>, INTERNAL_BLOCK_SIZE>>({}),  // temp
+                                   ::sycl::require_private_mem<std::array<std::array<real_type, INTERNAL_BLOCK_SIZE>, INTERNAL_BLOCK_SIZE>>(),  // temp
                                    [&](auto &data_i_cache, auto &data_j_cache, auto &temp) {
                                        // only calculate the upper triangular matrix -> can't use get_local_id() since all work-items in a work-group must progress further
                                        if (group[1] >= group[0]) {
+                                           // initialize private temp matrix to zero
+                                           ::sycl::distribute_items_and_wait(group, [&](::sycl::s_item<2> idx) {
+                                               for (unsigned internal_i = 0; internal_i < INTERNAL_BLOCK_SIZE; ++internal_i) {
+                                                   for (unsigned internal_j = 0; internal_j < INTERNAL_BLOCK_SIZE; ++internal_j) {
+                                                       temp(idx)[internal_i][internal_j] = real_type{ 0.0 };
+                                                   }
+                                               }
+                                           });
+
                                            // iterate over all features using blocking to be able to cache them for faster memory accesses
                                            for (std::size_t feature_block = 0; feature_block < num_features_; feature_block += static_cast<std::size_t>(THREAD_BLOCK_SIZE)) {
                                                // load data into local memory
@@ -98,7 +106,6 @@ class device_kernel_assembly {
                                                    // cast all values to 64-bit std::size_t to prevent potential 32-bit overflows
                                                    constexpr auto INTERNAL_BLOCK_SIZE_uz = static_cast<std::size_t>(INTERNAL_BLOCK_SIZE);
                                                    constexpr auto THREAD_BLOCK_SIZE_uz = static_cast<std::size_t>(THREAD_BLOCK_SIZE);
-                                                   constexpr auto PADDING_SIZE_uz = static_cast<std::size_t>(PADDING_SIZE);
 
                                                    const auto threadIdx_x = static_cast<std::size_t>(idx.get_local_id(group, 0));       // current work-item in work-group x-dimension
                                                    const auto threadIdx_y = static_cast<std::size_t>(idx.get_local_id(group, 1));       // current work-item in work-group y-dimension
@@ -111,14 +118,26 @@ class device_kernel_assembly {
                                                    const auto i_idx_linear = blockIdx_y * blockDim_y * INTERNAL_BLOCK_SIZE_uz + threadIdx_y;  // num_rows - device_row_offset
                                                    const auto j_idx_linear = blockIdx_x * blockDim_x * INTERNAL_BLOCK_SIZE_uz + threadIdx_y;  // device_num_rows
 
+                                                   // zero-out local memory
+                                                   for (unsigned internal = 0; internal < INTERNAL_BLOCK_SIZE; ++internal) {
+                                                       data_i_cache[local_id_0][internal * THREAD_BLOCK_SIZE + local_id_1] = real_type{ 0.0 };
+                                                       data_j_cache[local_id_0][internal * THREAD_BLOCK_SIZE + local_id_1] = real_type{ 0.0 };
+                                                   }
+
                                                    for (unsigned internal = 0; internal < INTERNAL_BLOCK_SIZE; ++internal) {
                                                        // calculate the indices to access the global data, pays attention to coalesced memory accesses
                                                        const auto global_i_idx_linear = device_row_offset_ + i_idx_linear + static_cast<std::size_t>(internal) * THREAD_BLOCK_SIZE_uz;
                                                        const auto global_j_idx_linear = device_row_offset_ + j_idx_linear + static_cast<std::size_t>(internal) * THREAD_BLOCK_SIZE_uz;
 
                                                        // store the values in the local memory
-                                                       data_i_cache[local_id_0][internal * THREAD_BLOCK_SIZE + local_id_1] = data_[(feature_block + threadIdx_x) * (num_rows_ + std::size_t{ 1 } + PADDING_SIZE_uz) + global_i_idx_linear];  // SoA
-                                                       data_j_cache[local_id_0][internal * THREAD_BLOCK_SIZE + local_id_1] = data_[(feature_block + threadIdx_x) * (num_rows_ + std::size_t{ 1 } + PADDING_SIZE_uz) + global_j_idx_linear];  // SoA
+                                                       if (feature_block + threadIdx_x < num_features_) {
+                                                           if (global_i_idx_linear < num_rows_) {
+                                                               data_i_cache[local_id_0][internal * THREAD_BLOCK_SIZE + local_id_1] = data_[(feature_block + threadIdx_x) * (num_rows_ + std::size_t{ 1 }) + global_i_idx_linear];  // SoA
+                                                           }
+                                                           if (global_j_idx_linear < num_rows_) {
+                                                               data_j_cache[local_id_0][internal * THREAD_BLOCK_SIZE + local_id_1] = data_[(feature_block + threadIdx_x) * (num_rows_ + std::size_t{ 1 }) + global_j_idx_linear];  // SoA
+                                                           }
+                                                       }
                                                    }
                                                });
 
@@ -128,26 +147,12 @@ class device_kernel_assembly {
                                                    const auto local_id_0 = static_cast<unsigned>(idx.get_local_id(group, 0));
                                                    const auto local_id_1 = static_cast<unsigned>(idx.get_local_id(group, 1));
 
-                                                   if constexpr (target == target_platform::cpu) {
-                                                       // perform the feature reduction calculation, the feature is the fastest moving index
+                                                   // perform the feature reduction calculation
+                                                   for (unsigned feature = 0; feature < THREAD_BLOCK_SIZE; ++feature) {
                                                        for (unsigned internal_i = 0; internal_i < INTERNAL_BLOCK_SIZE; ++internal_i) {
                                                            for (unsigned internal_j = 0; internal_j < INTERNAL_BLOCK_SIZE; ++internal_j) {
-                                                               real_type sum{ 0.0 };
-                                                               for (unsigned feature = 0; feature < THREAD_BLOCK_SIZE; ++feature) {
-                                                                   sum += detail::feature_reduce<kernel_function>(data_i_cache[feature][local_id_1 * INTERNAL_BLOCK_SIZE + internal_i],
-                                                                                                                  data_j_cache[feature][local_id_0 * INTERNAL_BLOCK_SIZE + internal_j]);
-                                                               }
-                                                               temp(idx)[internal_i][internal_j] += sum;
-                                                           }
-                                                       }
-                                                   } else {
-                                                       // perform the feature reduction calculation, the feature is the slowest moving index
-                                                       for (unsigned feature = 0; feature < THREAD_BLOCK_SIZE; ++feature) {
-                                                           for (unsigned internal_i = 0; internal_i < INTERNAL_BLOCK_SIZE; ++internal_i) {
-                                                               for (unsigned internal_j = 0; internal_j < INTERNAL_BLOCK_SIZE; ++internal_j) {
-                                                                   temp(idx)[internal_i][internal_j] += detail::feature_reduce<kernel_function>(data_i_cache[feature][local_id_1 * INTERNAL_BLOCK_SIZE + internal_i],
-                                                                                                                                                data_j_cache[feature][local_id_0 * INTERNAL_BLOCK_SIZE + internal_j]);
-                                                               }
+                                                               temp(idx)[internal_i][internal_j] += detail::feature_reduce<kernel_function>(data_i_cache[feature][local_id_1 * INTERNAL_BLOCK_SIZE + internal_i],
+                                                                                                                                            data_j_cache[feature][local_id_0 * INTERNAL_BLOCK_SIZE + internal_j]);
                                                            }
                                                        }
                                                    }
@@ -158,7 +163,6 @@ class device_kernel_assembly {
                                            ::sycl::distribute_items_and_wait(group, [&](::sycl::s_item<2> idx) {
                                                // cast all values to 64-bit std::size_t to prevent potential 32-bit overflows
                                                constexpr auto INTERNAL_BLOCK_SIZE_uz = static_cast<std::size_t>(INTERNAL_BLOCK_SIZE);
-                                               constexpr auto PADDING_SIZE_uz = static_cast<std::size_t>(PADDING_SIZE);
 
                                                const auto threadIdx_x = static_cast<std::size_t>(idx.get_local_id(group, 0));       // current work-item in work-group x-dimension
                                                const auto threadIdx_y = static_cast<std::size_t>(idx.get_local_id(group, 1));       // current work-item in work-group y-dimension
@@ -189,7 +193,7 @@ class device_kernel_assembly {
                                                                temp_ij += cost_;
                                                            }
                                                            // update the upper triangular kernel matrix
-                                                           kernel_matrix_[device_global_j_idx * (num_rows_ - device_row_offset_ + PADDING_SIZE_uz) - device_global_j_idx * (device_global_j_idx + std::size_t{ 1 }) / std::size_t{ 2 } + device_global_i_idx] = temp_ij;
+                                                           kernel_matrix_[device_global_j_idx * (num_rows_ - device_row_offset_) - device_global_j_idx * (device_global_j_idx + std::size_t{ 1 }) / std::size_t{ 2 } + device_global_i_idx] = temp_ij;
                                                        }
                                                    }
                                                }

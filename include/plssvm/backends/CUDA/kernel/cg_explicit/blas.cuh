@@ -161,7 +161,7 @@ __global__ void device_kernel_symm_mirror(const std::size_t num_rows, const std:
 
                 // store the values in the shared memory
                 A_cache[threadIdx.y][internal * THREAD_BLOCK_SIZE + threadIdx.x] = A[(dim_block + threadIdx_y) * (num_rows - device_row_offset + PADDING_SIZE_uz) - (dim_block + threadIdx_y - std::size_t{ 1 }) * (dim_block + threadIdx_y) / std::size_t{ 2 } + device_num_rows - (dim_block + threadIdx_y) + global_j_idx_linear];  // SoA, upper triangular matrix only
-                B_cache[threadIdx.y][internal * THREAD_BLOCK_SIZE + threadIdx.x] = B[(device_row_offset + dim_block + threadIdx_y) * (num_rhs + PADDING_SIZE_uz) + global_i_idx_linear];                                                                                                                                               // SoA
+                B_cache[threadIdx.y][internal * THREAD_BLOCK_SIZE + threadIdx.x] = B[(dim_block + device_row_offset + threadIdx_y) * (num_rhs + PADDING_SIZE_uz) + global_i_idx_linear];                                                                                                                                               // SoA
             }
             __syncthreads();  // wait until all threads loaded their part of the data
 

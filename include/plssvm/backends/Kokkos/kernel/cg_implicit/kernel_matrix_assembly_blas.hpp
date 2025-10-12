@@ -15,11 +15,10 @@
 
 #include "plssvm/backends/Kokkos/detail/standard_layout_tuple.hpp"  // plssvm::kokkos::detail::standard_layout_tuple
 #include "plssvm/backends/Kokkos/kernel/kernel_functions.hpp"       // plssvm::kokkos::detail::{feature_reduce, apply_kernel_function}
-#include "plssvm/constants.hpp"                                     // plssvm::{real_type, THREAD_BLOCK_SIZE, INTERNAL_BLOCK_SIZE, PADDING_SIZE}
+#include "plssvm/constants.hpp"                                     // plssvm::{real_type, THREAD_BLOCK_SIZE}
 #include "plssvm/kernel_function_types.hpp"                         // plssvm::kernel_function_type
-#include "plssvm/target_platforms.hpp"                              // plssvm::target_platform
 
-#include "Kokkos_Core.hpp"  // KOKKOS_INLINE_FUNCTION, Kokkos::View, Kokkos::TeamPolicy, Kokkos::mdspan, Kokkos::dextents, Kokkos::atomic_add
+#include "Kokkos_Core.hpp"  // KOKKOS_INLINE_FUNCTION, Kokkos::View, Kokkos::TeamPolicy, Kokkos::TeamPolicy, Kokkos::mdspan, Kokkos::atomic_add
 
 #include <cstddef>  // std::size_t
 
@@ -28,11 +27,10 @@ namespace plssvm::kokkos::detail {
 /**
  * @brief Perform an implicit BLAS SYMM-like operation: `C = alpha * A * B + C` where `A` is the implicitly calculated kernel matrix using the @p kernel_function (never actually stored, reducing the amount of needed global memory), @p B and @p C are matrices, and @p alpha is a scalar.
  * @tparam ExecutionSpace the Kokkos::ExecutionSpace used to execute the kernel
- * @tparam target the target platform
  * @tparam kernel_function the type of the used kernel function
  * @tparam Args the types of the parameters necessary for the specific kernel function
  */
-template <typename ExecutionSpace, target_platform target, kernel_function_type kernel_function, typename... Args>
+template <typename ExecutionSpace, kernel_function_type kernel_function, typename... Args>
 class device_kernel_assembly_symm {
     /**
      * @brief The type of the used Kokkos::View.
@@ -91,7 +89,6 @@ class device_kernel_assembly_symm {
         // cast all values to 64-bit std::size_t to prevent potential 32-bit overflows
         constexpr auto INTERNAL_BLOCK_SIZE_uz = static_cast<std::size_t>(INTERNAL_BLOCK_SIZE);
         constexpr auto THREAD_BLOCK_SIZE_uz = static_cast<std::size_t>(THREAD_BLOCK_SIZE);
-        constexpr auto PADDING_SIZE_uz = static_cast<std::size_t>(PADDING_SIZE);
 
         const auto threadIdx_x = static_cast<std::size_t>(team.team_rank()) / THREAD_BLOCK_SIZE_uz;            // current thread in team x-dimension
         const auto threadIdx_y = static_cast<std::size_t>(team.team_rank()) % THREAD_BLOCK_SIZE_uz;            // current thread in team y-dimension
@@ -127,6 +124,12 @@ class device_kernel_assembly_symm {
 
                 // iterate over all features using blocking to be able to cache them for faster memory accesses
                 for (std::size_t feature_block = 0; feature_block < num_features_; feature_block += THREAD_BLOCK_SIZE_uz) {
+                    // zero-out shared memory
+                    for (unsigned internal = 0; internal < INTERNAL_BLOCK_SIZE; ++internal) {
+                        data_i_cache(team_rank_y, internal * THREAD_BLOCK_SIZE + team_rank_x) = real_type{ 0.0 };
+                        data_j_cache(team_rank_y, internal * THREAD_BLOCK_SIZE + team_rank_x) = real_type{ 0.0 };
+                    }
+
                     // load data into scratchpad memory
                     for (unsigned internal = 0; internal < INTERNAL_BLOCK_SIZE; ++internal) {
                         // calculate the indices to access the global data, pays attention to coalesced memory accesses
@@ -134,31 +137,23 @@ class device_kernel_assembly_symm {
                         const auto global_j_idx_linear = device_row_offset_ + j_idx_linear + static_cast<std::size_t>(internal) * THREAD_BLOCK_SIZE_uz;
 
                         // store the values in the scratchpad memory
-                        data_i_cache(team_rank_y, internal * THREAD_BLOCK_SIZE + team_rank_x) = data_[(feature_block + threadIdx_y) * (num_rows_ + std::size_t{ 1 } + PADDING_SIZE_uz) + global_i_idx_linear];  // SoA
-                        data_j_cache(team_rank_y, internal * THREAD_BLOCK_SIZE + team_rank_x) = data_[(feature_block + threadIdx_y) * (num_rows_ + std::size_t{ 1 } + PADDING_SIZE_uz) + global_j_idx_linear];  // SoA
+                        if (feature_block + threadIdx_y < num_features_) {
+                            if (global_i_idx_linear < num_rows_) {
+                                data_i_cache(team_rank_y, internal * THREAD_BLOCK_SIZE + team_rank_x) = data_[(feature_block + threadIdx_y) * (num_rows_ + std::size_t{ 1 }) + global_i_idx_linear];  // SoA
+                            }
+                            if (global_j_idx_linear < num_rows_) {
+                                data_j_cache(team_rank_y, internal * THREAD_BLOCK_SIZE + team_rank_x) = data_[(feature_block + threadIdx_y) * (num_rows_ + std::size_t{ 1 }) + global_j_idx_linear];  // SoA
+                            }
+                        }
                     }
                     team.team_barrier();  // wait until all threads loaded their part of the data
 
-                    if constexpr (target == target_platform::cpu) {
-                        // perform the feature reduction calculation, the feature is the fastest moving index
+                    // perform the feature reduction calculation
+                    for (unsigned feature = 0; feature < THREAD_BLOCK_SIZE; ++feature) {
                         for (unsigned internal_i = 0; internal_i < INTERNAL_BLOCK_SIZE; ++internal_i) {
                             for (unsigned internal_j = 0; internal_j < INTERNAL_BLOCK_SIZE; ++internal_j) {
-                                real_type sum{ 0.0 };
-                                for (unsigned feature = 0; feature < THREAD_BLOCK_SIZE; ++feature) {
-                                    sum += detail::feature_reduce<kernel_function>(data_i_cache(feature, team_rank_x * INTERNAL_BLOCK_SIZE + internal_i),
-                                                                                   data_j_cache(feature, team_rank_y * INTERNAL_BLOCK_SIZE + internal_j));
-                                }
-                                temp[internal_i][internal_j] += sum;
-                            }
-                        }
-                    } else {
-                        // perform the feature reduction calculation, the feature is the slowest moving index
-                        for (unsigned feature = 0; feature < THREAD_BLOCK_SIZE; ++feature) {
-                            for (unsigned internal_i = 0; internal_i < INTERNAL_BLOCK_SIZE; ++internal_i) {
-                                for (unsigned internal_j = 0; internal_j < INTERNAL_BLOCK_SIZE; ++internal_j) {
-                                    temp[internal_i][internal_j] += detail::feature_reduce<kernel_function>(data_i_cache(feature, team_rank_x * INTERNAL_BLOCK_SIZE + internal_i),
-                                                                                                            data_j_cache(feature, team_rank_y * INTERNAL_BLOCK_SIZE + internal_j));
-                                }
+                                temp[internal_i][internal_j] += detail::feature_reduce<kernel_function>(data_i_cache(feature, team_rank_x * INTERNAL_BLOCK_SIZE + internal_i),
+                                                                                                        data_j_cache(feature, team_rank_y * INTERNAL_BLOCK_SIZE + internal_j));
                             }
                         }
                     }
@@ -200,14 +195,21 @@ class device_kernel_assembly_symm {
 
                 // iterate over all classes using blocking to be able to cache them for faster memory accesses
                 for (std::size_t class_block = 0; class_block < num_classes_; class_block += THREAD_BLOCK_SIZE_uz) {
+                    // zero-out shared memory
+                    for (unsigned internal = 0; internal < INTERNAL_BLOCK_SIZE; ++internal) {
+                        B_cache(internal * THREAD_BLOCK_SIZE + team_rank_x, team_rank_y) = real_type{ 0.0 };
+                        C_out_cache(internal * THREAD_BLOCK_SIZE + team_rank_x, team_rank_y) = real_type{ 0.0 };
+                    }
+
                     // load data into scratchpad memory
                     for (unsigned internal = 0; internal < INTERNAL_BLOCK_SIZE; ++internal) {
                         // calculate the indices to access the global data, pays attention to coalesced memory accesses
                         const auto global_i_idx_linear = device_row_offset_ + i_idx_linear + static_cast<std::size_t>(internal) * THREAD_BLOCK_SIZE_uz;
 
                         // store the values in the scratchpad memory
-                        B_cache(internal * THREAD_BLOCK_SIZE + team_rank_x, team_rank_y) = alpha_ * B_[global_i_idx_linear * (num_classes_ + PADDING_SIZE_uz) + class_block + threadIdx_y];  // SoA
-                        C_out_cache(internal * THREAD_BLOCK_SIZE + team_rank_x, team_rank_y) = real_type{ 0.0 };                                                                             // SoA
+                        if (class_block + threadIdx_y < num_classes_ && global_i_idx_linear < num_rows_) {
+                            B_cache(internal * THREAD_BLOCK_SIZE + team_rank_x, team_rank_y) = alpha_ * B_[global_i_idx_linear * num_classes_ + class_block + threadIdx_y];  // SoA
+                        }
                     }
                     team.team_barrier();  // wait until all threads loaded their part of the data
 
@@ -227,7 +229,9 @@ class device_kernel_assembly_symm {
                         // calculate the indices to access the global data
                         const auto global_j_idx = device_row_offset_ + j_idx + static_cast<std::size_t>(internal);
 
-                        Kokkos::atomic_add(&C_[global_j_idx * (num_classes_ + PADDING_SIZE_uz) + class_block + threadIdx_x], C_out_cache(team_rank_y * INTERNAL_BLOCK_SIZE + internal, team_rank_x));  // SoA
+                        if (class_block + threadIdx_x < num_classes_ && global_j_idx < num_rows_) {
+                            Kokkos::atomic_add(&C_[global_j_idx * num_classes_ + class_block + threadIdx_x], C_out_cache(team_rank_y * INTERNAL_BLOCK_SIZE + internal, team_rank_x));  // SoA
+                        }
                     }
                     team.team_barrier();  // wai until all threads updated C with their values
                 }
@@ -256,14 +260,21 @@ class device_kernel_assembly_symm {
 
                 // iterate over all classes using blocking to be able to cache them for faster memory accesses
                 for (std::size_t class_block = 0; class_block < num_classes_; class_block += THREAD_BLOCK_SIZE_uz) {
+                    // zero-out shared memory
+                    for (unsigned internal = 0; internal < INTERNAL_BLOCK_SIZE; ++internal) {
+                        B_cache(team_rank_y, internal * THREAD_BLOCK_SIZE + team_rank_x) = real_type{ 0.0 };
+                        C_out_cache(team_rank_y, internal * THREAD_BLOCK_SIZE + team_rank_x) = real_type{ 0.0 };
+                    }
+
                     // load data into scratchpad memory
                     for (unsigned internal = 0; internal < INTERNAL_BLOCK_SIZE; ++internal) {
                         // calculate the indices to access the global data, pays attention to coalesced memory accesses
                         const auto global_j_idx_linear = device_row_offset_ + j_idx_linear + static_cast<std::size_t>(internal) * THREAD_BLOCK_SIZE_uz;
 
                         // store the values in the scratchpad memory
-                        B_cache(team_rank_y, internal * THREAD_BLOCK_SIZE + team_rank_x) = alpha_ * B_[global_j_idx_linear * (num_classes_ + PADDING_SIZE_uz) + class_block + threadIdx_y];  // SoA
-                        C_out_cache(team_rank_y, internal * THREAD_BLOCK_SIZE + team_rank_x) = real_type{ 0.0 };
+                        if (class_block + threadIdx_y < num_classes_ && global_j_idx_linear < num_rows_) {
+                            B_cache(team_rank_y, internal * THREAD_BLOCK_SIZE + team_rank_x) = alpha_ * B_[global_j_idx_linear * num_classes_ + class_block + threadIdx_y];  // SoA
+                        }
                     }
                     team.team_barrier();  // wait until all threads loaded their part of the data
 
@@ -283,7 +294,9 @@ class device_kernel_assembly_symm {
                         // calculate the indices to access the global data
                         const auto global_i_idx = device_row_offset_ + i_idx + static_cast<std::size_t>(internal);
 
-                        Kokkos::atomic_add(&C_[global_i_idx * (num_classes_ + PADDING_SIZE_uz) + class_block + threadIdx_y], C_out_cache(team_rank_y, internal * THREAD_BLOCK_SIZE + team_rank_x));  // SoA
+                        if (class_block + threadIdx_y < num_classes_ && global_i_idx < num_rows_) {
+                            Kokkos::atomic_add(&C_[global_i_idx * num_classes_ + class_block + threadIdx_y], C_out_cache(team_rank_y, internal * THREAD_BLOCK_SIZE + team_rank_x));  // SoA
+                        }
                     }
                     team.team_barrier();  // wait until all threads updated C with their values
                 }
