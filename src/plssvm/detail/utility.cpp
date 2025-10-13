@@ -11,7 +11,7 @@
 #include "plssvm/constants.hpp"                            // plssvm::THREAD_BLOCK_SIZE, plssvm::INTERNAL_BLOCK_SIZE
 #include "plssvm/detail/assert.hpp"                        // PLSSVM_ASSERT
 #include "plssvm/detail/data_distribution.hpp"             // plssvm::detail::data_distribution::maximum_local_memory_needed
-#include "plssvm/detail/memory_size.hpp"                   // plssvm::detail::memory_size
+#include "plssvm/detail/memory_size.hpp"                   // plssvm::detail::memory_size, custom memory size literals
 #include "plssvm/detail/tracking/performance_tracker.hpp"  // PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY, plssvm::detail::tracking::tracking_entry
 #include "plssvm/exceptions/exceptions.hpp"                // plssvm::kernel_launch_resources
 
@@ -26,6 +26,7 @@
     #define PLSSVM_WINDOWS_AVAILABLE_MEMORY
 #endif
 
+#include <cstddef>   // std::size_t
 #include <ctime>     // std::time
 #include <optional>  // std::optional
 #include <string>    // std::string
@@ -49,7 +50,15 @@ void check_local_memory_usage(const std::vector<std::optional<memory_size>> &loc
         }
     }
     PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((detail::tracking::tracking_entry{ "resource_constraints", "needed_local_memory", required_local_memory_per_device }));
-    PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((detail::tracking::tracking_entry{ "resource_constraints", "available_local_memory_per_place", local_memory }));
+#if defined(PLSSVM_PERFORMANCE_TRACKER_ENABLED)
+    using namespace plssvm::detail::literals;
+    // post-process the local_memory vector for a better performance tracker output
+    std::vector<memory_size> processed_local_memory(local_memory.size());
+    for (std::size_t i = 0; i < processed_local_memory.size(); ++i) {
+        processed_local_memory[i] = local_memory[i].value_or(0_B);
+    }
+    PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((detail::tracking::tracking_entry{ "resource_constraints", "available_local_memory_per_place", processed_local_memory }));
+#endif
 }
 
 std::string current_date_time() {
