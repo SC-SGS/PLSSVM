@@ -111,16 +111,16 @@ class device_kernel_w_linear {
                     }
                 }
             }
+        }
 
-            // update the global w-vector with the locally cached values
-            for (unsigned internal_feature = 0; internal_feature < INTERNAL_BLOCK_SIZE; ++internal_feature) {
-                for (unsigned internal_class = 0; internal_class < INTERNAL_BLOCK_SIZE; ++internal_class) {
-                    // calculate the indices to access the global data
-                    const auto global_feature_idx = feature_idx + static_cast<std::size_t>(internal_feature);
-                    const auto global_class_idx = class_idx + static_cast<std::size_t>(internal_class);
+        // update the global w-vector with the locally cached values
+        for (unsigned internal_feature = 0; internal_feature < INTERNAL_BLOCK_SIZE; ++internal_feature) {
+            for (unsigned internal_class = 0; internal_class < INTERNAL_BLOCK_SIZE; ++internal_class) {
+                // calculate the indices to access the global data
+                const auto global_feature_idx = feature_idx + static_cast<std::size_t>(internal_feature);
+                const auto global_class_idx = class_idx + static_cast<std::size_t>(internal_class);
 
-                    w_[global_feature_idx * (num_classes_ + PADDING_SIZE_uz) + global_class_idx] = temp[internal_feature][internal_class];  // SoA
-                }
+                w_[global_feature_idx * (num_classes_ + PADDING_SIZE_uz) + global_class_idx] = temp[internal_feature][internal_class];  // SoA
             }
         }
     }
