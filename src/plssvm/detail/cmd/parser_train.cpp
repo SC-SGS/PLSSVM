@@ -113,7 +113,7 @@ parser_train::parser_train(const mpi::communicator &comm, int argc, char **argv)
     }
 
     // print help message and exit
-    if (result.count("help")) {
+    if (result.contains("help")) {
         if (comm.is_main_rank()) {
             std::cout << options.help() << std::endl;
         }
@@ -121,7 +121,7 @@ parser_train::parser_train(const mpi::communicator &comm, int argc, char **argv)
     }
 
     // print version info
-    if (result.count("version")) {
+    if (result.contains("version")) {
         if (comm.is_main_rank()) {
             std::cout << version::detail::get_version_info("plssvm-train") << std::endl;
         }
@@ -138,22 +138,22 @@ parser_train::parser_train(const mpi::communicator &comm, int argc, char **argv)
     }
 
     // parse svm_type and cast the value to the respective enum
-    if (result.count("svm_type")) {
+    if (result.contains("svm_type")) {
         svm = result["svm_type"].as<decltype(svm)>();
     }
 
     // parse kernel_type and cast the value to the respective enum
-    if (result.count("kernel_type")) {
+    if (result.contains("kernel_type")) {
         csvm_params.kernel_type = result["kernel_type"].as<decltype(csvm_params.kernel_type)>();
     }
 
     // parse degree
-    if (result.count("degree")) {
+    if (result.contains("degree")) {
         csvm_params.degree = result["degree"].as<decltype(csvm_params.degree)>();
     }
 
     // parse gamma
-    if (result.count("gamma")) {
+    if (result.contains("gamma")) {
         const decltype(csvm_params.gamma) gamma_input = result["gamma"].as<decltype(csvm_params.gamma)>();
         // check if the provided gamma is legal iff a real_type has been provided
         if (std::holds_alternative<real_type>(gamma_input) && std::get<real_type>(gamma_input) <= real_type{ 0.0 }) {
@@ -168,22 +168,22 @@ parser_train::parser_train(const mpi::communicator &comm, int argc, char **argv)
     }
 
     // parse coef0
-    if (result.count("coef0")) {
+    if (result.contains("coef0")) {
         csvm_params.coef0 = result["coef0"].as<decltype(csvm_params.coef0)>();
     }
 
     // parse cost
-    if (result.count("cost")) {
+    if (result.contains("cost")) {
         csvm_params.cost = result["cost"].as<decltype(csvm_params.cost)>();
     }
 
     // parse epsilon
-    if (result.count("epsilon")) {
+    if (result.contains("epsilon")) {
         epsilon = result["epsilon"].as<decltype(epsilon)>();
     }
 
     // parse max_iter
-    if (result.count("max_iter")) {
+    if (result.contains("max_iter")) {
         const auto max_iter_input = result["max_iter"].as<long long int>();
         // check if the provided max_iter is legal
         if (max_iter_input <= decltype(max_iter_input){ 0 }) {
@@ -198,7 +198,7 @@ parser_train::parser_train(const mpi::communicator &comm, int argc, char **argv)
     }
 
     // parse the classification type
-    if (result.count("classification")) {
+    if (result.contains("classification")) {
         classification = result["classification"].as<decltype(classification)>();
 
         // warn if a classification type has been provided, but the SVM type is a C-SVR (regression)
@@ -247,7 +247,7 @@ parser_train::parser_train(const mpi::communicator &comm, int argc, char **argv)
     }
 
     // parse input data filename
-    if (!result.count("input")) {
+    if (!result.contains("input")) {
         if (comm.is_main_rank()) {
             std::cerr << fmt::format(fmt::fg(fmt::color::red), "ERROR: missing input file!\n") << std::endl;
             std::cout << options.help() << std::endl;
@@ -257,7 +257,7 @@ parser_train::parser_train(const mpi::communicator &comm, int argc, char **argv)
     input_filename = result["input"].as<decltype(input_filename)>();
 
     // parse output model filename
-    if (result.count("model")) {
+    if (result.contains("model")) {
         model_filename = result["model"].as<decltype(model_filename)>();
     } else {
         const std::filesystem::path input_path{ input_filename };
@@ -265,7 +265,7 @@ parser_train::parser_train(const mpi::communicator &comm, int argc, char **argv)
     }
 
     // parse performance tracking filename
-    if (result.count("performance_tracking")) {
+    if (result.contains("performance_tracking")) {
         performance_tracking_filename = result["performance_tracking"].as<decltype(performance_tracking_filename)>();
     }
 

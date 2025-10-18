@@ -96,7 +96,7 @@ parser_predict::parser_predict(const mpi::communicator &comm, int argc, char **a
     }
 
     // print help message and exit
-    if (result.count("help")) {
+    if (result.contains("help")) {
         if (comm.is_main_rank()) {
             std::cout << options.help() << std::endl;
         }
@@ -104,7 +104,7 @@ parser_predict::parser_predict(const mpi::communicator &comm, int argc, char **a
     }
 
     // print version info
-    if (result.count("version")) {
+    if (result.contains("version")) {
         if (comm.is_main_rank()) {
             std::cout << version::detail::get_version_info("plssvm-predict") << std::endl;
         }
@@ -149,7 +149,7 @@ parser_predict::parser_predict(const mpi::communicator &comm, int argc, char **a
     }
 
     // parse test data filename
-    if (!result.count("test")) {
+    if (!result.contains("test")) {
         if (comm.is_main_rank()) {
             std::cerr << fmt::format(fmt::fg(fmt::color::red), "ERROR: missing test file!\n") << std::endl;
             std::cout << options.help() << std::endl;
@@ -159,7 +159,7 @@ parser_predict::parser_predict(const mpi::communicator &comm, int argc, char **a
     input_filename = result["test"].as<decltype(input_filename)>();
 
     // parse model filename
-    if (!result.count("model")) {
+    if (!result.contains("model")) {
         if (comm.is_main_rank()) {
             std::cerr << fmt::format(fmt::fg(fmt::color::red), "ERROR: missing model file!\n") << std::endl;
             std::cout << options.help() << std::endl;
@@ -169,7 +169,7 @@ parser_predict::parser_predict(const mpi::communicator &comm, int argc, char **a
     model_filename = result["model"].as<decltype(model_filename)>();
 
     // parse output filename
-    if (result.count("output")) {
+    if (result.contains("output")) {
         predict_filename = result["output"].as<decltype(predict_filename)>();
     } else {
         const std::filesystem::path input_path{ input_filename };
@@ -177,7 +177,7 @@ parser_predict::parser_predict(const mpi::communicator &comm, int argc, char **a
     }
 
     // parse performance tracking filename
-    if (result.count("performance_tracking")) {
+    if (result.contains("performance_tracking")) {
         performance_tracking_filename = result["performance_tracking"].as<decltype(performance_tracking_filename)>();
     }
 

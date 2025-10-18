@@ -678,8 +678,8 @@ include(FetchContent)
 list(APPEND CMAKE_MESSAGE_INDENT "Dependencies:  ")
 
 # try finding cxxopts
-set(PLSSVM_cxxopts_VERSION v3.2.0)
-find_package(cxxopts 3.2.0 QUIET)
+set(PLSSVM_cxxopts_VERSION v3.3.1)
+find_package(cxxopts 3.3.1 QUIET)
 if (cxxopts_FOUND)
     message(STATUS "Found package cxxopts.")
     target_include_directories(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC ${cxxopts_INCLUDE_DIR})
