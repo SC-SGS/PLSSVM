@@ -707,8 +707,8 @@ endif ()
 # ~~~
 set(PLSSVM_FAST_FLOAT_WRAPPER_LIBRARY_NAME plssvm-fast_float-wrapper)
 add_library(${PLSSVM_FAST_FLOAT_WRAPPER_LIBRARY_NAME} SHARED ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/fast_float_wrapper.cpp)
-set(PLSSVM_fast_float_VERSION v8.0.2)
-find_package(fast_float 8.0.0 QUIET)
+set(PLSSVM_fast_float_VERSION v8.1.0)
+find_package(fast_float 8.1.0 QUIET)
 if (fast_float_FOUND)
     message(STATUS "Found package fast_float.")
     target_include_directories(${PLSSVM_FAST_FLOAT_WRAPPER_LIBRARY_NAME} PUBLIC ${fast_float_INCLUDE_DIR})
@@ -747,7 +747,7 @@ target_link_libraries(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC ${PLSSVM_FAST_FLOAT_WRA
 list(APPEND PLSSVM_TARGETS_TO_INSTALL "${PLSSVM_FAST_FLOAT_WRAPPER_LIBRARY_NAME}")
 
 # try finding igor
-set(PLSSVM_igor_VERSION a5224c60d266974d3f407191583fe266cbe1c93d)
+set(PLSSVM_igor_VERSION fef608b458ab2fca736ac8e415e4d4160a48745d) # can't use a newer commit since igor switch to mandatory C++20
 find_package(igor QUIET)
 if (igor_FOUND)
     message(STATUS "Found package igor.")
