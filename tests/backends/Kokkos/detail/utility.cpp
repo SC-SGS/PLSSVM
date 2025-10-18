@@ -72,13 +72,15 @@ TEST(KokkosUtility, available_target_platform_to_execution_space_mapping) {
 struct device_name_test {
     template <typename ExecutionSpace>
     void operator()() const {
-        // get the device name of the default Kokkos execution space
-        const std::string name = plssvm::kokkos::detail::get_device_name(plssvm::kokkos::detail::device_wrapper{ ExecutionSpace{} });
-        SCOPED_TRACE(name);
+        // get the device name of the specified Kokkos execution space
+        const std::string device_name = plssvm::kokkos::detail::get_device_name(plssvm::kokkos::detail::device_wrapper{ ExecutionSpace{} });
+        SCOPED_TRACE(device_name);
 
-        // the returned device name may not be empty or unknown
-        EXPECT_FALSE(name.empty());
-        EXPECT_NE(name, std::string{ "unknown" });
+        // must not be empty
+        EXPECT_FALSE(device_name.empty());
+        // must not start or end with whitespace
+        const std::regex reg{ R"([^\s](?:.*[^\s])?)" };
+        EXPECT_TRUE(std::regex_match(device_name, reg));
     }
 };
 

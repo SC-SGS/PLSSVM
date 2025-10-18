@@ -23,7 +23,8 @@
 #include "gmock/gmock.h"  // ::testing::StartsWith
 #include "gtest/gtest.h"  // TEST, EXPECT_GE, EXPECT_NO_THROW
 
-#include <regex>  // std::regex, std::regex::extended, std::regex_match
+#include <regex>   // std::regex, std::regex::extended, std::regex_match
+#include <string>  // std::string
 
 TEST(HIPUtility, error_check) {
     // hipSuccess must not throw
@@ -71,6 +72,15 @@ TEST(HIPUtility, device_synchronize) {
     EXPECT_THROW_WHAT(plssvm::hip::detail::device_synchronize(plssvm::hip::detail::get_device_count()),
                       plssvm::hip::backend_exception,
                       fmt::format("Illegal device ID! Must be in range: [0, {}) but is {}!", plssvm::hip::detail::get_device_count(), plssvm::hip::detail::get_device_count()));
+}
+
+TEST(HIPUtility, get_device_name) {
+    const std::string device_name = plssvm::hip::detail::get_device_name(0);
+    // must not be empty
+    EXPECT_FALSE(device_name.empty());
+    // must not start or end with whitespace
+    const std::regex reg{ R"([^\s](?:.*[^\s])?)" };
+    EXPECT_TRUE(std::regex_match(device_name, reg));
 }
 
 TEST(HIPUtility, get_runtime_version) {

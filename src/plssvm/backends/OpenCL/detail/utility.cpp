@@ -19,7 +19,7 @@
 #include "plssvm/detail/logging/mpi_log_untracked.hpp"      // plssvm::detail::log_untracked
 #include "plssvm/detail/sha256.hpp"                         // plssvm::detail::sha256
 #include "plssvm/detail/string_conversion.hpp"              // plssvm::detail::extract_first_integer_from_string
-#include "plssvm/detail/string_utility.hpp"                 // plssvm::detail::replace_all, plssvm::detail::to_lower_case, plssvm::detail::contains
+#include "plssvm/detail/string_utility.hpp"                 // plssvm::detail::{replace_all, to_lower_case, contains, trim}
 #include "plssvm/detail/tracking/performance_tracker.hpp"   // PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY, plssvm::detail::tracking::tracking_entry
 #include "plssvm/detail/utility.hpp"                        // plssvm::detail::erase_if
 #include "plssvm/exceptions/exceptions.hpp"                 // plssvm::platform_devices_empty
@@ -185,7 +185,7 @@ std::string get_device_name(const command_queue &queue) {
     PLSSVM_OPENCL_ERROR_CHECK(clGetDeviceInfo(device_id, CL_DEVICE_NAME, 0, nullptr, &name_length), "error obtaining device name size")
     std::string device_name(name_length - 1, '\0');
     PLSSVM_OPENCL_ERROR_CHECK(clGetDeviceInfo(device_id, CL_DEVICE_NAME, name_length, device_name.data(), nullptr), "error obtaining device name")
-    return device_name;
+    return std::string{ ::plssvm::detail::trim(device_name) };
 }
 
 std::vector<std::pair<compute_kernel_name, std::string>> kernel_type_to_function_names() {

@@ -116,9 +116,9 @@ csvm::csvm(const target_platform target) {
     if (comm_.size() > 1) {
         // use MPI rank specific command line output
         for (const queue_type &device : devices_) {
-            device_names.emplace_back(detail::get_device_name(device));
+            device_names.push_back(detail::get_device_name(device));
             // get the target platform's driver version
-            driver_versions.emplace_back(detail::get_driver_version(device));
+            driver_versions.push_back(detail::get_driver_version(device));
         }
 
         mpi::detail::gather_and_print_csvm_information(comm_, plssvm::backend_type::opencl, target_, device_names, detail::create_jit_report(info));
@@ -145,13 +145,12 @@ csvm::csvm(const target_platform target) {
                                       target_);
 
         for (typename std::vector<queue_type>::size_type device = 0; device < devices_.size(); ++device) {
-            const std::string device_name = detail::get_device_name(devices_[device]);
+            device_names.push_back(detail::get_device_name(devices_[device]));
             plssvm::detail::log_untracked(verbosity_level::full,
                                           comm_,
                                           "  [{}, {}]\n",
                                           device,
-                                          device_name);
-            device_names.emplace_back(device_name);
+                                          device_names.back());
 
             // get the target platform's driver version
             driver_versions.emplace_back(detail::get_driver_version(devices_[device]));

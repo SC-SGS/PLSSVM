@@ -14,6 +14,7 @@
 #include "plssvm/backends/OpenCL/detail/command_queue.hpp"  // plssvm::opencl::detail::command_queue
 #include "plssvm/backends/OpenCL/detail/context.hpp"        // plssvm::opencl::detail::context
 #include "plssvm/backends/OpenCL/exceptions.hpp"            // plssvm::opencl::backend_exception
+#include "plssvm/target_platforms.hpp"                      // plssvm::target_platform
 
 #include "CL/cl.h"  // CL_SUCCESS, CL_DEVICE_NOT_FOUND
 
@@ -100,10 +101,16 @@ TEST(OpenCLUtility, get_driver_version) {
 TEST(OpenCLUtility, get_device_name) {
     // create a valid command queue
     const std::vector<plssvm::opencl::detail::context> contexts{ plssvm::opencl::detail::get_contexts(plssvm::target_platform::automatic).first };
+    // at least one context must be available
+    EXPECT_FALSE(contexts.empty());
     const plssvm::opencl::detail::command_queue queue{ contexts[0], contexts[0].device };
-    // the device name should not be empty
-    const std::string name = plssvm::opencl::detail::get_device_name(queue);
-    EXPECT_FALSE(name.empty());
+
+    const std::string device_name = plssvm::opencl::detail::get_device_name(queue);
+    // must not be empty
+    EXPECT_FALSE(device_name.empty());
+    // must not start or end with whitespace
+    const std::regex reg{ R"([^\s](?:.*[^\s])?)" };
+    EXPECT_TRUE(std::regex_match(device_name, reg));
 }
 
 TEST(OpenCLUtility, kernel_type_to_function_names) {

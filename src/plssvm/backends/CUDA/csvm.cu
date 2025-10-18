@@ -10,7 +10,7 @@
 
 #include "plssvm/backend_types.hpp"                                                 // plssvm::backend_type
 #include "plssvm/backends/CUDA/detail/device_ptr.cuh"                               // plssvm::cuda::detail::device_ptr
-#include "plssvm/backends/CUDA/detail/utility.cuh"                                  // PLSSVM_CUDA_ERROR_CHECK, plssvm::cuda::detail::{dim_type_to_native, device_synchronize, get_device_count, set_device, peek_at_last_error, get_runtime_version}
+#include "plssvm/backends/CUDA/detail/utility.cuh"                                  // PLSSVM_CUDA_ERROR_CHECK, plssvm::cuda::detail::{dim_type_to_native, device_synchronize, get_device_count, set_device, peek_at_last_error, get_device_name, get_runtime_version}
 #include "plssvm/backends/CUDA/exceptions.hpp"                                      // plssvm::cuda::backend_exception
 #include "plssvm/backends/CUDA/kernel/cg_explicit/blas.cuh"                         // plssvm::cuda::detail::{device_kernel_symm, device_kernel_symm_mirror, device_kernel_inplace_matrix_add, device_kernel_inplace_matrix_scale}
 #include "plssvm/backends/CUDA/kernel/cg_explicit/kernel_matrix_assembly.cuh"       // plssvm::cuda::detail::device_kernel_assembly
@@ -81,9 +81,7 @@ csvm::csvm(const target_platform target) {
     if (comm_.size() > 1) {
         // use MPI rank specific command line output
         for (const queue_type &device : devices_) {
-            cudaDeviceProp prop{};
-            PLSSVM_CUDA_ERROR_CHECK(cudaGetDeviceProperties(&prop, device))
-            device_names.emplace_back(prop.name);
+            device_names.push_back(detail::get_device_name(device));
         }
 
         mpi::detail::gather_and_print_csvm_information(comm_, plssvm::backend_type::cuda, target_, device_names);
@@ -97,16 +95,16 @@ csvm::csvm(const target_platform target) {
                                       devices_.size());
 
         for (const queue_type &device : devices_) {
+            device_names.push_back(detail::get_device_name(device));
             cudaDeviceProp prop{};
             PLSSVM_CUDA_ERROR_CHECK(cudaGetDeviceProperties(&prop, device))
             plssvm::detail::log_untracked(verbosity_level::full,
                                           comm_,
                                           "  [{}, {}, {}.{}]\n",
                                           device,
-                                          prop.name,
+                                          device_names.back(),
                                           prop.major,
                                           prop.minor);
-            device_names.emplace_back(prop.name);
         }
     }
 

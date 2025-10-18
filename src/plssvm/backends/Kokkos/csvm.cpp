@@ -295,7 +295,7 @@ void csvm::init(const target_platform target) {
     if (comm_.size() > 1) {
         // use MPI rank specific command line output
         for (const queue_type &device : devices_) {
-            device_names.emplace_back(detail::get_device_name(device));
+            device_names.push_back(detail::get_device_name(device));
         }
 
         mpi::detail::gather_and_print_csvm_information(comm_, plssvm::backend_type::kokkos, target_, device_names, fmt::format("{}", space_));
@@ -319,12 +319,11 @@ void csvm::init(const target_platform target) {
                                       target_);
 
         for (typename std::vector<queue_type>::size_type device = 0; device < devices_.size(); ++device) {
-            const std::string device_name = detail::get_device_name(devices_[device]);
+            device_names.push_back(detail::get_device_name(devices_[device]));
             plssvm::detail::log_untracked(verbosity_level::full,
                                           "  [{}, {}]\n",
                                           device,
-                                          device_name);
-            device_names.emplace_back(device_name);
+                                          device_names.back());
         }
     }
 

@@ -14,11 +14,14 @@
 #include "plssvm/backends/stdpar/implementation_types.hpp"  // plssvm::stdpar::implementation_type
 #include "plssvm/detail/logging/log.hpp"                    // plssvm::detail::log
 #include "plssvm/detail/logging/log_untracked.hpp"          // plssvm::detail::log_untracked
+#include "plssvm/detail/string_utility.hpp"                 // plssvm::detail::trim
 #include "plssvm/detail/tracking/performance_tracker.hpp"   // plssvm::detail::tracking::tracking_entry, PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY
 #include "plssvm/target_platforms.hpp"                      // plssvm::target_platform
 #include "plssvm/verbosity_levels.hpp"                      // plssvm::verbosity_level
 
 #include "fmt/format.h"  // fmt::format
+
+#include <vector>  // std::vector
 
 namespace plssvm::stdpar {
 
@@ -59,13 +62,13 @@ csvm::csvm(const target_platform target) {
     }
 
     std::vector<std::string> device_names{};
+#if defined(PLSSVM_STDPAR_BACKEND_NVHPC_GPU)
+    cudaDeviceProp prop{};
+    cudaGetDeviceProperties(&prop, 0);
+    device_names.emplace_back(::plssvm::detail::trim(prop.name));
+#endif
 
     if (comm_.size() > 1) {
-#if defined(PLSSVM_STDPAR_BACKEND_NVHPC_GPU)
-        cudaDeviceProp prop{};
-        cudaGetDeviceProperties(&prop, 0);
-        device_names.emplace_back(prop.name);
-#endif
         mpi::detail::gather_and_print_csvm_information(comm_, plssvm::backend_type::stdpar, target_, device_names, fmt::format("{}", this->get_implementation_type()));
     } else {
         // use more detailed single rank command line output
@@ -82,13 +85,10 @@ csvm::csvm(const target_platform target) {
                                       this->num_available_devices(),
                                       target_);
 #if defined(PLSSVM_STDPAR_BACKEND_NVHPC_GPU)
-        cudaDeviceProp prop{};
-        cudaGetDeviceProperties(&prop, 0);
-        device_names.emplace_back(prop.name);
         plssvm::detail::log_untracked(verbosity_level::full,
                                       comm_,
                                       "  [0, {}, {}.{}]\n",
-                                      prop.name,
+                                      device_names.back(),
                                       prop.major,
                                       prop.minor);
 #endif

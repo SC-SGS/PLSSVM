@@ -10,6 +10,7 @@
 // main header
 
 #include "plssvm/backends/execution_range.hpp"  // plssvm::detail::dim_type
+#include "plssvm/detail/string_utility.hpp"     // plssvm::detail::trim
 
 #include "hip/hip_runtime_api.h"  // hipGetDeviceCount, hipSetDevice, hipPeekAtLastError, hipDeviceSynchronize, hipRuntimeGetVersion
 
@@ -66,6 +67,12 @@ std::string get_runtime_version() {
 #else
     return "unknown";
 #endif
+}
+
+std::string get_device_name(const int device) {
+    hipDeviceProp_t prop{};
+    PLSSVM_HIP_ERROR_CHECK(hipGetDeviceProperties(&prop, device))
+    return std::string{ ::plssvm::detail::trim(prop.name) };
 }
 
 std::string get_runtime() {

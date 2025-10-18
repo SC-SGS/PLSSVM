@@ -9,6 +9,7 @@
 #include "plssvm/backends/CUDA/detail/utility.cuh"
 
 #include "plssvm/backends/execution_range.hpp"  // plssvm::detail::dim_type
+#include "plssvm/detail/string_utility.hpp"     // plssvm::detail::trim
 
 #include "fmt/format.h"  // fmt::format
 
@@ -44,6 +45,12 @@ void device_synchronize(const int device) {
     peek_at_last_error();
     set_device(device);
     PLSSVM_CUDA_ERROR_CHECK(cudaDeviceSynchronize())
+}
+
+std::string get_device_name(const int device) {
+    cudaDeviceProp prop{};
+    PLSSVM_CUDA_ERROR_CHECK(cudaGetDeviceProperties(&prop, device))
+    return std::string{ ::plssvm::detail::trim(prop.name) };
 }
 
 std::string get_runtime_version() {

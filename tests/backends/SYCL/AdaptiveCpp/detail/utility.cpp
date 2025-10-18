@@ -10,9 +10,9 @@
 
 #include "plssvm/backends/SYCL/AdaptiveCpp/detail/utility.hpp"
 
-#include "plssvm/backends/execution_range.hpp"               // plssvm::detail::dim_type
-#include "plssvm/backends/SYCL/data_parallel_kernels.hpp"    // plssvm::sycl::data_parallel_kernel
-#include "plssvm/target_platforms.hpp"                       // plssvm::target_platform
+#include "plssvm/backends/execution_range.hpp"             // plssvm::detail::dim_type
+#include "plssvm/backends/SYCL/data_parallel_kernels.hpp"  // plssvm::sycl::data_parallel_kernel
+#include "plssvm/target_platforms.hpp"                     // plssvm::target_platform
 
 #include "sycl/sycl.hpp"  // sycl::range, sycl::nd_range
 
@@ -111,6 +111,19 @@ TEST(AdaptiveCppUtility, get_device_list) {
     EXPECT_FALSE(queues.empty());
     // the returned target must not be the automatic one
     EXPECT_NE(actual_target, plssvm::target_platform::automatic);
+}
+
+TEST(AdaptiveCppUtility, get_device_name) {
+    const auto &[queues, actual_target] = plssvm::adaptivecpp::detail::get_device_list(plssvm::target_platform::automatic);
+    // at least one queue must be available
+    EXPECT_FALSE(queues.empty());
+
+    const std::string device_name = plssvm::adaptivecpp::detail::get_device_name(queues.front());
+    // must not be empty
+    EXPECT_FALSE(device_name.empty());
+    // must not start or end with whitespace
+    const std::regex reg{ R"([^\s](?:.*[^\s])?)" };
+    EXPECT_TRUE(std::regex_match(device_name, reg));
 }
 
 TEST(AdaptiveCppUtility, get_adaptivecpp_version_short) {

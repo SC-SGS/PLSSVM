@@ -23,6 +23,8 @@
 
 #include "fmt/format.h"  // fmt::format
 
+#include <vector>  // std::vector
+
 namespace plssvm::stdpar {
 
 csvm::csvm(const target_platform target) {
@@ -61,13 +63,14 @@ csvm::csvm(const target_platform target) {
 
     // IntelLLVM stdpar per default uses the sycl default device
     const ::sycl::device default_device{};
+    const std::vector<std::string> device_names{ std::string{ plssvm::detail::trim(default_device.get_info<::sycl::info::device::name>()) } };
+
+    // check that the default device supports the requested target platform
     if (!detail::default_device_equals_target(default_device, target_)) {
         throw backend_exception{ fmt::format("The default device {} doesn't match the requested target platform {}! Please set the environment variable ONEAPI_DEVICE_SELECTOR or change the target platform.",
-                                             default_device.get_info<::sycl::info::device::name>(),
+                                             device_names.front(),
                                              target_) };
     }
-
-    const std::vector<std::string> device_names{ std::string{ plssvm::detail::trim(default_device.get_info<::sycl::info::device::name>()) } };
 
     if (comm_.size() > 1) {
         mpi::detail::gather_and_print_csvm_information(comm_, plssvm::backend_type::stdpar, target_, device_names, fmt::format("{}", this->get_implementation_type()));

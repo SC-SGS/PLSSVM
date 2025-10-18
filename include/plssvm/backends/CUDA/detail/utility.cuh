@@ -70,6 +70,13 @@ void peek_at_last_error();
 void device_synchronize(int device);
 
 /**
+ * @brief Get the name of the CUDA @p device.
+ * @param[in] device the device
+ * @return the CUDA device name (`[[nodiscard]]`)
+ */
+[[nodiscard]] std::string get_device_name(int device);
+
+/**
  * @brief Get the CUDA runtime version as pretty string.
  * @details Parses the returned integer according to: https://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART____VERSION.html#group__CUDART____VERSION_1g0e3952c7802fd730432180f1f4a6cdc6
  * @return the CUDA runtime version (`[[nodiscard]]`)

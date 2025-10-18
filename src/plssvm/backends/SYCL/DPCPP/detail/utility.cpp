@@ -11,7 +11,7 @@
 #include "plssvm/backends/SYCL/DPCPP/detail/queue.hpp"       // plssvm::adaptivecpp::detail::queue
 #include "plssvm/backends/SYCL/DPCPP/detail/queue_impl.hpp"  // plssvm::dpcpp::detail::queue (PImpl implementation)
 #include "plssvm/detail/assert.hpp"                          // PLSSVM_ASSERT
-#include "plssvm/detail/string_utility.hpp"                  // plssvm::detail::{as_lower_case, contains}
+#include "plssvm/detail/string_utility.hpp"                  // plssvm::detail::{as_lower_case, contains, trim}
 #include "plssvm/detail/utility.hpp"                         // plssvm::detail::contains
 #include "plssvm/exceptions/exceptions.hpp"                  // plssvm::platform_devices_empty
 #include "plssvm/target_platforms.hpp"                       // plssvm::target_platform, plssvm::determine_default_target_platform
@@ -102,11 +102,15 @@ void device_synchronize(const queue &q) {
 }
 
 queue get_default_queue() {
-     const auto &[devices, target] = detail::get_device_list(determine_default_target_platform());
-     // at least one platform must be present
-     PLSSVM_ASSERT(!devices.empty(), "At least one device must be available!");
-     // per default, use the first device for the tests
-     return devices.front();
+    const auto &[devices, target] = detail::get_device_list(determine_default_target_platform());
+    // at least one platform must be present
+    PLSSVM_ASSERT(!devices.empty(), "At least one device must be available!");
+    // per default, use the first device for the tests
+    return devices.front();
+}
+
+std::string get_device_name(const queue &q) {
+    return std::string{ ::plssvm::detail::trim(q.impl->sycl_queue.get_device().get_info<::sycl::info::device::name>()) };
 }
 
 std::string get_dpcpp_version() {

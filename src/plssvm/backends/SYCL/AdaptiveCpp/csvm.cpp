@@ -12,7 +12,7 @@
 #include "plssvm/backends/execution_range.hpp"                                                   // plssvm::detail::{dim_type, execution_range}
 #include "plssvm/backends/SYCL/AdaptiveCpp/detail/device_ptr.hpp"                                // plssvm::adaptivecpp::detail::::device_ptr
 #include "plssvm/backends/SYCL/AdaptiveCpp/detail/queue_impl.hpp"                                // plssvm::adaptivecpp::detail::queue (PImpl implementation)
-#include "plssvm/backends/SYCL/AdaptiveCpp/detail/utility.hpp"                                   // plssvm::adaptivecpp::detail::{get_device_list, device_synchronize, get_adaptivecpp_version_short, get_adaptivecpp_version}
+#include "plssvm/backends/SYCL/AdaptiveCpp/detail/utility.hpp"                                   // plssvm::adaptivecpp::detail::{get_device_list, device_synchronize, get_device_name, get_adaptivecpp_version_short, get_adaptivecpp_version}
 #include "plssvm/backends/SYCL/data_parallel_kernels.hpp"                                        // plssvm::sycl::data_parallel_kernel
 #include "plssvm/backends/SYCL/exceptions.hpp"                                                   // plssvm::adaptivecpp::backend_exception
 #include "plssvm/backends/SYCL/implementation_types.hpp"                                         // plssvm::sycl::implementation_type
@@ -265,7 +265,7 @@ void csvm::init(const target_platform target) {
     if (comm_.size() > 1) {
         // use MPI rank specific command line output
         for (const queue_type &device : devices_) {
-            device_names.emplace_back(device.impl->sycl_queue.get_device().template get_info<::sycl::info::device::name>());
+            device_names.push_back(detail::get_device_name(device));
         }
 
         mpi::detail::gather_and_print_csvm_information(comm_, plssvm::backend_type::sycl, target_, device_names, fmt::format("{}", data_parallel_kernel_type_));
@@ -290,13 +290,12 @@ void csvm::init(const target_platform target) {
                                       target_);
 
         for (typename std::vector<queue_type>::size_type device = 0; device < devices_.size(); ++device) {
-            const std::string device_name = devices_[device].impl->sycl_queue.get_device().template get_info<::sycl::info::device::name>();
+            device_names.push_back(detail::get_device_name(devices_[device]));
             plssvm::detail::log_untracked(verbosity_level::full,
                                           comm_,
                                           "  [{}, {}]\n",
                                           device,
-                                          device_name);
-            device_names.emplace_back(device_name);
+                                          device_names.back());
         }
     }
 

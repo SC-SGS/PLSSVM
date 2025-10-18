@@ -100,10 +100,18 @@ void device_synchronize(const queue &q);
 [[nodiscard]] queue get_default_queue();
 
 /**
+ * @brief Get the name of the compute device associated with @p q.
+ * @param[in] q the SYCL queue representing the compute device
+ * @return the compute device name (`[[nodiscard]]`)
+ */
+[[nodiscard]] std::string get_device_name(const queue &q);
+
+/**
  * @brief Return the short AdaptiveCpp version, i.e., major.minor.patch.
  * @return the short AdaptiveCpp version (`[[nodiscard]]`)
  */
 [[nodiscard]] std::string get_adaptivecpp_version_short();
+
 /**
  * @brief Return the full AdaptiveCpp version including git information.
  * @return the full AdaptiveCpp version (`[[nodiscard]]`)

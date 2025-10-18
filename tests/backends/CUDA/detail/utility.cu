@@ -19,7 +19,8 @@
 #include "gmock/gmock.h"  // ::testing::StartsWith
 #include "gtest/gtest.h"  // TEST, EXPECT_GE, EXPECT_NO_THROW
 
-#include <regex>  // std::regex, std::regex::extended, std::regex_match
+#include <regex>   // std::regex, std::regex::extended, std::regex_match
+#include <string>  // std::string
 
 TEST(CUDAUtility, error_check) {
     // cudaSuccess must not throw
@@ -61,6 +62,15 @@ TEST(CUDAUtility, device_synchronize) {
     EXPECT_THROW_WHAT(plssvm::cuda::detail::device_synchronize(plssvm::cuda::detail::get_device_count()),
                       plssvm::cuda::backend_exception,
                       fmt::format("Illegal device ID! Must be in range: [0, {}) but is {}!", plssvm::cuda::detail::get_device_count(), plssvm::cuda::detail::get_device_count()));
+}
+
+TEST(CUDAUtility, get_device_name) {
+    const std::string device_name = plssvm::cuda::detail::get_device_name(0);
+    // must not be empty
+    EXPECT_FALSE(device_name.empty());
+    // must not start or end with whitespace
+    const std::regex reg{ R"([^\s](?:.*[^\s])?)" };
+    EXPECT_TRUE(std::regex_match(device_name, reg));
 }
 
 TEST(CUDAUtility, get_runtime_version) {

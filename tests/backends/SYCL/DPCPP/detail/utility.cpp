@@ -101,6 +101,19 @@ TEST(DPCPPUtility, get_device_list) {
     EXPECT_NE(actual_target, plssvm::target_platform::automatic);
 }
 
+TEST(DPCPPUtility, get_device_name) {
+    const auto &[queues, actual_target] = plssvm::dpcpp::detail::get_device_list(plssvm::target_platform::automatic);
+    // at least one queue must be available
+    EXPECT_FALSE(queues.empty());
+
+    const std::string device_name = plssvm::dpcpp::detail::get_device_name(queues.front());
+    // must not be empty
+    EXPECT_FALSE(device_name.empty());
+    // must not start or end with whitespace
+    const std::regex reg{ R"([^\s](?:.*[^\s])?)" };
+    EXPECT_TRUE(std::regex_match(device_name, reg));
+}
+
 TEST(DPCPPUtility, get_dpcpp_version) {
     const std::regex reg{ "[0-9]+\\.[0-9]+\\.[0-9]+", std::regex::extended };
     EXPECT_TRUE(std::regex_match(plssvm::dpcpp::detail::get_dpcpp_version(), reg));
