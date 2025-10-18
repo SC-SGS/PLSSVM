@@ -27,6 +27,7 @@
 #include <optional>       // std::optional, std::nullopt
 #include <regex>          // std::regex, std::regex::extended, std::regex_match
 #include <set>            // std::set
+#include <stdlib.h>       // setenv (not available on Windows)
 #include <string>         // std::string
 #include <tuple>          // std::tuple
 #include <unordered_map>  // std::unordered_map
@@ -266,4 +267,21 @@ TEST(Utility, current_date_time) {
 TEST(Utility, get_system_memory) {
     // the available system memory must be greater than 0!
     EXPECT_GT(plssvm::detail::get_system_memory().num_bytes(), 0ULL);
+}
+
+TEST(Utility, get_existing_env_variable) {
+#if defined(_WIN32) || defined(_WIN64)
+    GTEST_SKIP() << "Can't set an environment variable from within C++ on Windows!";
+#else
+    // set an env variable so we can be sure that it exists
+    setenv("PLSSVM_ENV_VARIABLE_THAT_WILL_ONLY_EVER_EXIST_IN_TESTS", "gpu_nvidia:0", 1);
+    // check the created environment variable
+    const std::optional<std::string> env_variable = plssvm::detail::get_env_variable("PLSSVM_ENV_VARIABLE_THAT_WILL_ONLY_EVER_EXIST_IN_TESTS");
+    ASSERT_TRUE(env_variable.has_value());
+    EXPECT_EQ(env_variable.value(), std::string{ "gpu_nvidia:0" });
+#endif
+}
+
+TEST(Utility, get_none_existing_env_variable) {
+    EXPECT_FALSE(plssvm::detail::get_env_variable("PLSSVM_ENV_VARIABLE_THAT_WILL_NEVER_EXIST").has_value());
 }

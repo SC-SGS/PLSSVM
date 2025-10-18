@@ -73,6 +73,7 @@ template <std::size_t I>
  * @brief Returns the context listing all devices matching the target platform @p target and the actually used target platform
  *        (only interesting if the provided @p target was automatic).
  * @details If the selected target platform is plssvm::target_platform::automatic the selector tries to find devices according to plssvm::determine_default_target_platform.
+ * @note The environment variable `PLSSVM_OPENCL_DEVICE_FILTER` can be used to filter the available devices. Syntax: `target_platform:device_id;...`, e.g., `gpu_nvidia:1;cpu:0`.
  * @param[in] target the target platform for which the devices must match
  * @return the command queues and used target platform (`[[nodiscard]]`)
  */

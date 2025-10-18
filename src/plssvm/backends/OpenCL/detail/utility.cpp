@@ -13,6 +13,7 @@
 #include "plssvm/backends/OpenCL/detail/error_code.hpp"     // plssvm::opencl::detail::error_code
 #include "plssvm/backends/OpenCL/detail/jit_info.hpp"       // plssvm::opencl::detail::jit_info
 #include "plssvm/backends/OpenCL/detail/kernel.hpp"         // plssvm::opencl::detail::compute_kernel_name, plssvm::opencl::detail::kernel
+#include "plssvm/backends/OpenCL/exceptions.hpp"            // plssvm::opencl::backend_exception
 #include "plssvm/constants.hpp"                             // plssvm::{real_type, THREAD_BLOCK_SIZE, INTERNAL_BLOCK_SIZE, PADDING_SIZE}
 #include "plssvm/detail/arithmetic_type_name.hpp"           // plssvm::detail::arithmetic_type_name
 #include "plssvm/detail/assert.hpp"                         // PLSSVM_ASSERT
@@ -21,7 +22,7 @@
 #include "plssvm/detail/string_conversion.hpp"              // plssvm::detail::extract_first_integer_from_string
 #include "plssvm/detail/string_utility.hpp"                 // plssvm::detail::{replace_all, to_lower_case, contains, trim}
 #include "plssvm/detail/tracking/performance_tracker.hpp"   // PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY, plssvm::detail::tracking::tracking_entry
-#include "plssvm/detail/utility.hpp"                        // plssvm::detail::erase_if
+#include "plssvm/detail/utility.hpp"                        // plssvm::detail::{erase_if, get_env_variable}
 #include "plssvm/exceptions/exceptions.hpp"                 // plssvm::platform_devices_empty
 #include "plssvm/kernel_function_types.hpp"                 // plssvm::kernel_function_type
 #include "plssvm/mpi/communicator.hpp"                      // plssvm::mpi::communicator
@@ -49,6 +50,9 @@
 #include <iterator>      // std::istreambuf_iterator
 #include <limits>        // std::numeric_limits
 #include <map>           // std::map
+#include <optional>      // std::optional
+#include <regex>         // std::regex, std::regex::ECMAScript
+#include <sstream>       // std::istringstream
 #include <string>        // std::string
 #include <string_view>   // std::string_view
 #include <system_error>  // std::error_code
@@ -56,10 +60,77 @@
 #include <utility>       // std::pair, std::make_pair, std::move
 #include <vector>        // std::vector
 
+namespace {
+
+/**
+ * @brief Given a @p filter element represented as a string like `"gpu_nvidia:0"`, convert it to the corresponding plssvm::target_platform and device ID as `std::size_t`.
+ * @param[in] filter the device filter
+ * @return { the plssvm::target_platform, the device ID } (`[[nodiscard]]`)
+ */
+[[nodiscard]] std::pair<plssvm::target_platform, std::size_t> extract_filter_information(const std::string_view filter) {
+    const std::vector<std::string_view> split = plssvm::detail::split(filter, ':');
+    // exactly two entries must be present: target_platform and device_num
+    PLSSVM_ASSERT(split.size(), 2);
+
+    // parse the target platform
+    std::istringstream iss{ std::string{ split[0] } };
+    plssvm::target_platform target{};
+    iss >> target;
+
+    // parse the device number
+    const auto device_num = plssvm::detail::convert_to<std::size_t>(split[1]);
+
+    return std::make_pair(target, device_num);
+}
+
+}  // namespace
+
 namespace plssvm::opencl::detail {
 
 [[nodiscard]] std::pair<std::vector<context>, target_platform> get_contexts(target_platform target) {
     error_code err;
+
+    // check if the PLSSVM OpenCL device filter env variable is set
+    std::optional<std::map<target_platform, std::vector<std::size_t>>> opt_filters_to_apply{ std::nullopt };
+    if (const std::optional<std::string> &device_filter = ::plssvm::detail::get_env_variable("PLSSVM_OPENCL_DEVICE_FILTER"); device_filter.has_value()) {
+        // check that the device filter has the correct format
+        constexpr static const char *regex_pattern = R"(^((gpu_nvidia|gpu_amd|gpu_intel|cpu):[0-9]+)(;((gpu_nvidia|gpu_amd|gpu_intel|cpu):[0-9]+))*$)";
+        if (!std::regex_match(device_filter.value(), std::regex{ regex_pattern, std::regex::ECMAScript })) {
+            throw backend_exception{ fmt::format(R"(Invalid device filter "{}". The filter must be of form: "{}".)", device_filter.value(), regex_pattern) };
+        }
+
+        // parse the provided filter
+        std::map<target_platform, std::vector<std::size_t>> filters_to_apply{};
+        for (const std::string_view filter : ::plssvm::detail::split(device_filter.value(), ';')) {
+            // filter is of the form: target_platform:device_num
+            const auto &[filter_target, filter_device_id] = extract_filter_information(filter);
+            filters_to_apply[filter_target].push_back(filter_device_id);
+        }
+
+        // update the filter
+        opt_filters_to_apply = std::make_optional(std::move(filters_to_apply));
+    }
+
+    // a map that counts all occurrences of devices per target platform IGNORING potentially different OpenCL platforms
+    std::map<target_platform, std::size_t> device_count_per_platform{};
+
+    // utility function to check whether a filter applies; if PLSSVM_OPENCL_DEVICE_FILTER isn't set, always returns true
+    const auto &does_opt_filter_apply = [&opt_filters_to_apply, &device_count_per_platform](const target_platform t) {
+        if (!opt_filters_to_apply.has_value()) {
+            // no filter available -> applies per definition
+            return true;
+        } else {
+            // filter available -> check if the filter itself applies
+            if (::plssvm::detail::contains(opt_filters_to_apply.value(), t)) {
+                for (const std::size_t id : opt_filters_to_apply.value()[t]) {
+                    if (device_count_per_platform[t] == id) {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+    };
 
     // iterate over all platforms and save all available devices
     std::map<std::pair<cl_platform_id, target_platform>, std::vector<cl_device_id>> platform_devices;
@@ -91,7 +162,12 @@ namespace plssvm::opencl::detail {
                 // the current device is a CPU
                 // -> check if the CPU target has been enabled
                 if (::plssvm::detail::contains(available_target_platforms, target_platform::cpu)) {
-                    platform_devices[std::make_pair(platform, target_platform::cpu)].push_back(device);
+                    // check if a filter is provided and matches this device
+                    if (does_opt_filter_apply(target_platform::cpu)) {
+                        platform_devices[std::make_pair(platform, target_platform::cpu)].push_back(device);
+                    }
+                    // increment the CPU device count
+                    ++device_count_per_platform[target_platform::cpu];
                 }
             } else if (device_type == CL_DEVICE_TYPE_GPU) {
                 // the current device is a GPU
@@ -105,12 +181,27 @@ namespace plssvm::opencl::detail {
 
                 // check vendor string and insert to correct target platform
                 if (::plssvm::detail::contains(vendor_string, "nvidia") && ::plssvm::detail::contains(available_target_platforms, target_platform::gpu_nvidia)) {
-                    platform_devices[std::make_pair(platform, target_platform::gpu_nvidia)].push_back(device);
+                    // check if a filter is provided and matches this device
+                    if (does_opt_filter_apply(target_platform::gpu_nvidia)) {
+                        platform_devices[std::make_pair(platform, target_platform::gpu_nvidia)].push_back(device);
+                    }
+                    // increment the NVIDIA GPU device count
+                    ++device_count_per_platform[target_platform::gpu_nvidia];
                 } else if ((::plssvm::detail::contains(vendor_string, "amd") || ::plssvm::detail::contains(vendor_string, "advanced micro devices"))
                            && ::plssvm::detail::contains(available_target_platforms, target_platform::gpu_amd)) {
-                    platform_devices[std::make_pair(platform, target_platform::gpu_amd)].push_back(device);
+                    // check if a filter is provided and matches this device
+                    if (does_opt_filter_apply(target_platform::gpu_amd)) {
+                        platform_devices[std::make_pair(platform, target_platform::gpu_amd)].push_back(device);
+                    }
+                    // increment the AMD GPU device count
+                    ++device_count_per_platform[target_platform::gpu_amd];
                 } else if (::plssvm::detail::contains(vendor_string, "intel") && ::plssvm::detail::contains(available_target_platforms, target_platform::gpu_intel)) {
-                    platform_devices[std::make_pair(platform, target_platform::gpu_intel)].push_back(device);
+                    // check if a filter is provided and matches this device
+                    if (does_opt_filter_apply(target_platform::gpu_intel)) {
+                        platform_devices[std::make_pair(platform, target_platform::gpu_intel)].push_back(device);
+                    }
+                    // increment the Intel GPU device count
+                    ++device_count_per_platform[target_platform::gpu_intel];
                 }
             }
         }
@@ -126,7 +217,13 @@ namespace plssvm::opencl::detail {
         }
         // the system devices should not be empty!
         if (system_devices.empty()) {
-            throw platform_devices_empty{ "No appropriate devices could be found!" };
+            if (opt_filters_to_apply.has_value()) {
+                // add a more concrete error message in case of a PLSSVM_OPENCL_DEVICE_FILTER was provided
+                // since a wrong device filter may lead to no found device
+                throw platform_devices_empty{ fmt::format("No appropriate devices could be found! Maybe the PLSSVM_OPENCL_DEVICE_FILTER=\"{}\" is incorrect?", ::plssvm::detail::get_env_variable("PLSSVM_OPENCL_DEVICE_FILTER").value()) };
+            } else {
+                throw platform_devices_empty{ "No appropriate devices could be found!" };
+            }
         }
         // determine the target_platform
         target = determine_default_target_platform(system_devices);

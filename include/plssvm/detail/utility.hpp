@@ -162,6 +162,13 @@ void check_local_memory_usage(const std::vector<std::optional<memory_size>> &loc
  */
 [[nodiscard]] memory_size get_system_memory();
 
+/**
+ * @brief Get the environment variable @p env_variable if it has been set, otherwise returns an empty optional.
+ * @param[in] env_variable the environment variable to retrieve
+ * @return the value of the environment variable if set, otherwise std::nullopt (`[[nodiscard]]`)
+ */
+[[nodiscard]] std::optional<std::string> get_env_variable(const std::string &env_variable);
+
 }  // namespace plssvm::detail
 
 #endif  // PLSSVM_DETAIL_UTILITY_HPP_

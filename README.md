@@ -912,6 +912,22 @@ Our MPI implementation, however, currently has some limitations:
 - **only** the **main** MPI rank (per default rank 0) writes the output files
 - `plssvm-scale` **does not** support more than one MPI rank
 
+### Device Filtering
+
+Since PLSSVM supports devices from different target platforms as well as multiple devices from a single target platform,
+it may be necessary to filter them at runtime to, e.g., select only a single GPU in a multi-GPU setup.
+In general, this device filtering is done using environment variables. 
+However, the exact environment variable and syntax depends on the used backend:
+
+- `CUDA`: use [`CUDA_VISIBLE_DEVICES`](https://docs.nvidia.com/deploy/topics/topic_5_2_1.html) (e.g., `CUDA_VISIBLE_DEVICES=0,2`)
+- `HIP`: use [`HIP_VISIBLE_DEVICES`](https://rocm.docs.amd.com/en/latest/conceptual/gpu-isolation.html#hip-visible-devices) (e.g., `HIP_VISIBLE_DEVICES=0,2`)
+- `OpenCL`: use the PLSSVM specific `PLSSVM_OPENCL_DEVICE_FILTER` variable (e.g., `PLSSVM_OPENCL_DEVICE_FILTER=gpu_nvidia:0;gpu_nvidia:2`) with the syntax: `target_platform:device_id;...`;
+alternatively, in many cases the respective vendor mechanism can also be used
+- `SYCL` using DPC++/icpx: use [`ONEAPI_DEVICE_SELECTOR`](https://intel.github.io/llvm/EnvironmentVariables.html#oneapi-device-selector) (e.g., `ONEAPI_DEVICE_SELECTOR=cuda:0,2`)
+- `SYCL` using AdaptiveCpp: use [`ACPP_VISIBILITY_MASK`](https://github.com/AdaptiveCpp/AdaptiveCpp/blob/develop/doc/env_variables.md) for a broader backend level selector and the respective vendor specific environment variables for a more fine-grained selection mechanism
+- `Kokkos`: use the mechanism form the respective execution space
+- `stdpar`: use the mechanism from the respective implementation
+
 ### Example Code for PLSSVM Used as a Library
 
 A simple C++ program (`main_classification.cpp`) using PLSSVM as a library for classification could look like:
