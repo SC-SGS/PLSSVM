@@ -36,7 +36,10 @@ To predict to which class a new, unseen data point belongs, the SVM simply has t
 This is very efficient since it only involves a single scalar product of the size corresponding to the numer of features per data point in the data set.
 
 <p align="center">
-  <img alt="Basic idea of an Support Vector Machine as classification model." src="https://github.com/SC-SGS/PLSSVM/raw/main/.figures/support_vector_machine.png" width="50%">
+  <img 
+    alt="Basic idea of an Support Vector Machine as classification model." 
+    src="https://github.com/SC-SGS/PLSSVM/raw/main/.figures/support_vector_machine.png" 
+    style="max-width:600px; width:50%; height:auto;">
 </p>
 
 However, normal SVMs suffer from their potential parallelizability.
@@ -667,7 +670,7 @@ An example invocation generating a linear regression data set consisting of 1000
 python3 generate_data.py --output data_file --format libsvm --problem linear --samples 1000 --features 200 regression
 ```
 
-### Training using `plssvm-train`
+### Training using plssvm-train
 
 ```bash
 ./plssvm-train --help
@@ -763,7 +766,7 @@ If the `--sycl_data_parallel_kernel` is `automatic`, the `work_group` data paral
 If the `--sycl_implementation_type` is `automatic`, the used SYCL implementation is determined by the `PLSSVM_SYCL_BACKEND_PREFERRED_IMPLEMENTATION` CMake flag.
 If the `--kokkos_execution_space` is `automatic`, uses the best fitting execution space based on the provided and/or available target platforms.
 
-### Predicting using `plssvm-predict`
+### Predicting using plssvm-predict
 
 Our `plssvm-predict` utility is fully conforming to LIBSVM's model files. 
 This means that our `plssvm-predict` can be used on model files learned with, e.g., LIBSVM's `svm-train`. 
@@ -842,7 +845,7 @@ Another example targeting NVIDIA GPUs using the SYCL backend looks like:
 
 The `--target_platform=automatic` and `--sycl_implementation_type` flags work like in the training (`./plssvm-train`) case.
 
-### Data Scaling using `plssvm-scale`
+### Data Scaling using plssvm-scale
 
 ```bash
 ./plssvm-scale --help
@@ -1064,7 +1067,7 @@ endforeach ()
 The `examples/python` directory contains the same examples using our PLSSVM Python bindings. 
 Additionally, it contains Python examples leveraging MPI to target distributed memory systems. 
 
-### Example Using the `sklearn` like Python Bindings Available For PLSSVM
+### Example Using the sklearn like Python Bindings Available For PLSSVM
 
 A classification example using PLSSVM's `SVC` Python binding and sklearn's breast cancer data set:
 
@@ -1139,7 +1142,10 @@ weighted avg       0.91      0.91      0.91       569
 Score: 91.39%
 ```
 <p align="center">
-  <img alt="Example classification task breast cancer decision boundary output." src="https://github.com/SC-SGS/PLSSVM/raw/regression/.figures/classification_example.png" width="80%">
+  <img 
+    alt="Example classification task breast cancer decision boundary output." 
+    src="https://github.com/SC-SGS/PLSSVM/raw/develop/.figures/classification_example.png" 
+    style="max-width:600px; width:80%; height:auto;">
 </p>
 
 A regression example comparing PLSSVM's `SVR` Python binding and `sklearn.SVR` using a sine curve:
@@ -1206,14 +1212,17 @@ plt.show()
 ```
 with an example output:
 <p align="center">
-  <img alt="Example regression output using a sine curve." src="https://github.com/SC-SGS/PLSSVM/raw/regression/.figures/regression_example.png" width="80%">
+  <img 
+    alt="Example regression output using a sine curve." 
+    src="https://github.com/SC-SGS/PLSSVM/raw/develop/.figures/regression_example.png" 
+    style="max-width:600px; width:50%; height:auto;">
 </p>
 
 Note that currently not all sklearn `SVC` and `SVR` functionality has been implemented in PLSSVM.
 The respective functions will throw a Python `AttributeError` if called.
 For a detailed overview of the functions that are currently implemented, see [our API documentation](bindings/Python/README.md).
 
-There are more examples located in the `examples/python/sklearn` directory that are copied from the sklearn repository and slightly changed for PLSSVM.
+There are more examples located in the [examples/python/sklearn](examples/python/sklearn/README.md) directory that are copied from the sklearn repository and slightly changed for PLSSVM.
 
 ## Citing PLSSVM
 
