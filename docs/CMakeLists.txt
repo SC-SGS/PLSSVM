@@ -75,10 +75,8 @@ if (PLSSVM_HAS_SED)
         " -e 's/^# The Python3 Bindings/@tableofcontents{HTML:3}/g'"
     )
     string(JOIN " " DOXYGEN_MD_FILTER_CMD ${DOXYGEN_MD_FILTER})
-    
-    set(DOXYGEN_FILTER_PATTERNS
-        "*.md=sed ${DOXYGEN_MD_FILTER_CMD}"
-    )
+
+    set(DOXYGEN_FILTER_PATTERNS "*.md=sed ${DOXYGEN_MD_FILTER_CMD}")
     list(APPEND DOXYGEN_FILTER_PATTERNS
          "*.cl=sed -e 's/ PLSSVM_OPENCL_KERNEL_FUNCTION_PARAMETER_LIST)/, Args... PLSSVM_OPENCL_KERNEL_FUNCTION_PARAMETER_LIST)/g'"
     )

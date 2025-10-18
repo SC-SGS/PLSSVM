@@ -648,20 +648,17 @@ if (PLSSVM_NUM_CPU_TARGET_ARCHS EQUAL 1)
     if (${PLSSVM_CPU_TARGET_ARCHS} STREQUAL "avx512")
         message(STATUS "Enabling AVX512 support for the auto-vectorizers (-mprefer-vector-width=512).")
         target_compile_options(
-                ${PLSSVM_BASE_LIBRARY_NAME}
-                PUBLIC $<$<COMPILE_LANGUAGE:CXX>:$<$<CXX_COMPILER_ID:GNU,Clang,IntelLLVM>:-mprefer-vector-width=512>>
+            ${PLSSVM_BASE_LIBRARY_NAME} PUBLIC $<$<COMPILE_LANGUAGE:CXX>:$<$<CXX_COMPILER_ID:GNU,Clang,IntelLLVM>:-mprefer-vector-width=512>>
         )
     elseif (${PLSSVM_CPU_TARGET_ARCHS} STREQUAL "avx2" OR ${PLSSVM_CPU_TARGET_ARCHS} STREQUAL "avx")
         message(STATUS "Enabling AVX/AVX2 support for the auto-vectorizers (-mprefer-vector-width=256).")
         target_compile_options(
-                ${PLSSVM_BASE_LIBRARY_NAME}
-                PUBLIC $<$<COMPILE_LANGUAGE:CXX>:$<$<CXX_COMPILER_ID:GNU,Clang,IntelLLVM>:-mprefer-vector-width=256>>
+            ${PLSSVM_BASE_LIBRARY_NAME} PUBLIC $<$<COMPILE_LANGUAGE:CXX>:$<$<CXX_COMPILER_ID:GNU,Clang,IntelLLVM>:-mprefer-vector-width=256>>
         )
     elseif (${PLSSVM_CPU_TARGET_ARCHS} MATCHES "^sse")
         message(STATUS "Enabling SSE for the auto-vectorizers (-mprefer-vector-width=128).")
         target_compile_options(
-                ${PLSSVM_BASE_LIBRARY_NAME}
-                PUBLIC $<$<COMPILE_LANGUAGE:CXX>:$<$<CXX_COMPILER_ID:GNU,Clang,IntelLLVM>:-mprefer-vector-width=128>>
+            ${PLSSVM_BASE_LIBRARY_NAME} PUBLIC $<$<COMPILE_LANGUAGE:CXX>:$<$<CXX_COMPILER_ID:GNU,Clang,IntelLLVM>:-mprefer-vector-width=128>>
         )
     else ()
         message(FATAL_ERROR "Unrecognized CPU target architecture \"${PLSSVM_CPU_TARGET_ARCHS}\". Allowed values are: avx512, avx2, avx, sse.")
