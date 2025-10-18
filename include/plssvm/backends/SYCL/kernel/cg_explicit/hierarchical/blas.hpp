@@ -13,9 +13,9 @@
 #define PLSSVM_BACKENDS_SYCL_CG_EXPLICIT_HIERARCHICAL_BLAS_HPP_
 #pragma once
 
-#include "plssvm/backends/SYCL/data_parallel_kernels.hpp"    // plssvm::sycl::data_parallel_kernel
-#include "plssvm/constants.hpp"                              // plssvm::{real_type, THREAD_BLOCK_SIZE, INTERNAL_BLOCK_SIZE, PADDING_SIZE}
-#include "plssvm/target_platforms.hpp"                       // plssvm::target_platform
+#include "plssvm/backends/SYCL/data_parallel_kernels.hpp"  // plssvm::sycl::data_parallel_kernel
+#include "plssvm/constants.hpp"                            // plssvm::{real_type, THREAD_BLOCK_SIZE, INTERNAL_BLOCK_SIZE, PADDING_SIZE}
+#include "plssvm/target_platforms.hpp"                     // plssvm::target_platform
 
 #include "sycl/sycl.hpp"  // sycl::group, sycl::private_memory, sycl::h_item
 

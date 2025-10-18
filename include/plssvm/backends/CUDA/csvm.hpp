@@ -28,8 +28,8 @@
 #include "plssvm/target_platforms.hpp"                    // plssvm::target_platform
 
 #include <cstddef>      // std::size_t
-#include <type_traits>  // std::true_type
 #include <optional>     // std::optional
+#include <type_traits>  // std::true_type
 #include <utility>      // std::forward
 #include <vector>       // std::vector
 

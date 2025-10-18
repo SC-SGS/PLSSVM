@@ -10,9 +10,9 @@
 
 #include "plssvm/backends/SYCL/DPCPP/detail/utility.hpp"
 
-#include "plssvm/backends/execution_range.hpp"               // plssvm::detail::dim_type
-#include "plssvm/backends/SYCL/data_parallel_kernels.hpp"    // plssvm::sycl::data_parallel_kernel
-#include "plssvm/target_platforms.hpp"                       // plssvm::target_platform
+#include "plssvm/backends/execution_range.hpp"             // plssvm::detail::dim_type
+#include "plssvm/backends/SYCL/data_parallel_kernels.hpp"  // plssvm::sycl::data_parallel_kernel
+#include "plssvm/target_platforms.hpp"                     // plssvm::target_platform
 
 #include "sycl/sycl.hpp"  // sycl::range, sycl::nd_range
 
