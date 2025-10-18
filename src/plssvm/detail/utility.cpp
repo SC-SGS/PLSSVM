@@ -27,7 +27,7 @@
 #endif
 
 #include <cstddef>   // std::size_t
-#include <ctime>     // std::time
+#include <ctime>     // std::time_t, std::time, std:tm, std::localtime
 #include <optional>  // std::optional
 #include <string>    // std::string
 #include <vector>    // std::vector
@@ -62,7 +62,9 @@ void check_local_memory_usage(const std::vector<std::optional<memory_size>> &loc
 }
 
 std::string current_date_time() {
-    return fmt::format("{:%Y-%m-%d %H:%M:%S}", fmt::localtime(std::time(nullptr)));
+    const std::time_t t = std::time(nullptr);
+    const std::tm tm = *std::localtime(&t);
+    return fmt::format("{:%Y-%m-%d %H:%M:%S}", tm);
 }
 
 memory_size get_system_memory() {
