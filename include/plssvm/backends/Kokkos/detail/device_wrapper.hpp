@@ -83,7 +83,7 @@ class device_wrapper {
      * @tparam ExecutionSpace the used Kokkos::ExecutionSpace type
      * @param[in] exec the Kokkos::ExecutionSpace instance
      */
-    template <typename ExecutionSpace>
+    template <typename ExecutionSpace, PLSSVM_REQUIRES(Kokkos::is_execution_space_v<ExecutionSpace>)>
     explicit device_wrapper(ExecutionSpace &&exec) :
         v_{ std::forward<ExecutionSpace>(exec) } { }
 
