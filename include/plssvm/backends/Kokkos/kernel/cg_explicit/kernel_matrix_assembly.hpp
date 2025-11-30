@@ -23,6 +23,7 @@
 
 #include <array>    // std::array
 #include <cstddef>  // std::size_t
+#include <utility>  // std::move
 
 namespace plssvm::kokkos::detail {
 
@@ -59,13 +60,13 @@ class device_kernel_assembly {
      * @param[in] kernel_function_parameter the parameters necessary to apply the @p kernel_function
      */
     device_kernel_assembly(device_view_type<real_type> kernel_matrix, device_view_type<real_type> data, const std::size_t num_rows, const std::size_t device_num_rows, const std::size_t device_row_offset, const std::size_t num_features, device_view_type<real_type> q, const real_type QA_cost, const real_type cost, const std::size_t grid_x_offset, const std::size_t grid_y_offset, const std::size_t grid_size_x, Args... kernel_function_parameter) :
-        kernel_matrix_{ kernel_matrix },
-        data_{ data },
+        kernel_matrix_{ std::move(kernel_matrix) },
+        data_{ std::move(data) },
         num_rows_{ num_rows },
         device_num_rows_{ device_num_rows },
         device_row_offset_{ device_row_offset },
         num_features_{ num_features },
-        q_{ q },
+        q_{ std::move(q) },
         QA_cost_{ QA_cost },
         cost_{ cost },
         grid_x_offset_{ grid_x_offset },
@@ -99,8 +100,8 @@ class device_kernel_assembly {
         // create two scratchpad memory arrays used for caching
         constexpr std::size_t scratchpad_size = THREAD_BLOCK_SIZE_uz * THREAD_BLOCK_SIZE_uz * INTERNAL_BLOCK_SIZE_uz;
         auto *scratchpad_ptr = static_cast<real_type *>(team.team_shmem().get_shmem(std::size_t{ 2 } * scratchpad_size * sizeof(real_type)));
-        Kokkos::mdspan<real_type, Kokkos::dextents<std::size_t, 2>> data_i_cache{ scratchpad_ptr, THREAD_BLOCK_SIZE_uz, INTERNAL_BLOCK_SIZE_uz * THREAD_BLOCK_SIZE_uz };
-        Kokkos::mdspan<real_type, Kokkos::dextents<std::size_t, 2>> data_j_cache{ scratchpad_ptr + scratchpad_size, THREAD_BLOCK_SIZE_uz, INTERNAL_BLOCK_SIZE_uz * THREAD_BLOCK_SIZE_uz };
+        const Kokkos::mdspan<real_type, Kokkos::dextents<std::size_t, 2>> data_i_cache{ scratchpad_ptr, THREAD_BLOCK_SIZE_uz, INTERNAL_BLOCK_SIZE_uz * THREAD_BLOCK_SIZE_uz };
+        const Kokkos::mdspan<real_type, Kokkos::dextents<std::size_t, 2>> data_j_cache{ scratchpad_ptr + scratchpad_size, THREAD_BLOCK_SIZE_uz, INTERNAL_BLOCK_SIZE_uz * THREAD_BLOCK_SIZE_uz };
 
         // only calculate the upper triangular matrix -> can't use team.team_rank() since all threads in a team must progress further
         if (blockIdx_x >= blockIdx_y) {

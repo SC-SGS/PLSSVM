@@ -20,6 +20,7 @@
 
 #include <array>    // std:array
 #include <cstddef>  // std::size_t
+#include <utility>  // std::move
 
 namespace plssvm::kokkos::detail {
 
@@ -58,10 +59,10 @@ class device_kernel_symm {
         device_num_rows_{ device_num_rows },
         device_row_offset_{ device_row_offset },
         alpha_{ alpha },
-        A_{ A },
-        B_{ B },
+        A_{ std::move(A) },
+        B_{ std::move(B) },
         beta_{ beta },
-        C_{ C },
+        C_{ std::move(C) },
         grid_x_offset_{ grid_x_offset },
         grid_y_offset_{ grid_y_offset },
         grid_size_x_{ grid_size_x } { }
@@ -90,9 +91,9 @@ class device_kernel_symm {
 
         // create two scratchpad memory arrays used for caching
         constexpr std::size_t scratchpad_size = THREAD_BLOCK_SIZE_uz * THREAD_BLOCK_SIZE_uz * INTERNAL_BLOCK_SIZE_uz;
-        real_type *scratchpad_ptr = static_cast<real_type *>(team.team_shmem().get_shmem(std::size_t{ 2 } * scratchpad_size * sizeof(real_type)));
-        Kokkos::mdspan<real_type, Kokkos::dextents<std::size_t, 2>> A_cache{ scratchpad_ptr, THREAD_BLOCK_SIZE_uz, INTERNAL_BLOCK_SIZE_uz * THREAD_BLOCK_SIZE_uz };
-        Kokkos::mdspan<real_type, Kokkos::dextents<std::size_t, 2>> B_cache{ scratchpad_ptr + scratchpad_size, THREAD_BLOCK_SIZE_uz, INTERNAL_BLOCK_SIZE_uz * THREAD_BLOCK_SIZE_uz };
+        auto *scratchpad_ptr = static_cast<real_type *>(team.team_shmem().get_shmem(std::size_t{ 2 } * scratchpad_size * sizeof(real_type)));
+        const Kokkos::mdspan<real_type, Kokkos::dextents<std::size_t, 2>> A_cache{ scratchpad_ptr, THREAD_BLOCK_SIZE_uz, INTERNAL_BLOCK_SIZE_uz * THREAD_BLOCK_SIZE_uz };
+        const Kokkos::mdspan<real_type, Kokkos::dextents<std::size_t, 2>> B_cache{ scratchpad_ptr + scratchpad_size, THREAD_BLOCK_SIZE_uz, INTERNAL_BLOCK_SIZE_uz * THREAD_BLOCK_SIZE_uz };
 
         // create a thread private array used for internal caching
         std::array<std::array<real_type, INTERNAL_BLOCK_SIZE>, INTERNAL_BLOCK_SIZE> temp{};
@@ -222,10 +223,10 @@ class device_kernel_symm_mirror {
         device_num_rows_{ device_num_rows },
         device_row_offset_{ device_row_offset },
         alpha_{ alpha },
-        A_{ A },
-        B_{ B },
+        A_{ std::move(A) },
+        B_{ std::move(B) },
         beta_{ beta },
-        C_{ C },
+        C_{ std::move(C) },
         grid_x_offset_{ grid_x_offset },
         grid_y_offset_{ grid_y_offset },
         grid_size_x_{ grid_size_x } { }
@@ -254,9 +255,9 @@ class device_kernel_symm_mirror {
 
         // create two shared memory arrays used for caching
         constexpr std::size_t scratchpad_size = THREAD_BLOCK_SIZE_uz * THREAD_BLOCK_SIZE_uz * INTERNAL_BLOCK_SIZE_uz;
-        real_type *scratchpad_ptr = static_cast<real_type *>(team.team_shmem().get_shmem(std::size_t{ 2 } * scratchpad_size * sizeof(real_type)));
-        Kokkos::mdspan<real_type, Kokkos::dextents<std::size_t, 2>> A_cache{ scratchpad_ptr, THREAD_BLOCK_SIZE_uz, INTERNAL_BLOCK_SIZE_uz * THREAD_BLOCK_SIZE_uz };
-        Kokkos::mdspan<real_type, Kokkos::dextents<std::size_t, 2>> B_cache{ scratchpad_ptr + scratchpad_size, THREAD_BLOCK_SIZE_uz, INTERNAL_BLOCK_SIZE_uz * THREAD_BLOCK_SIZE_uz };
+        auto *scratchpad_ptr = static_cast<real_type *>(team.team_shmem().get_shmem(std::size_t{ 2 } * scratchpad_size * sizeof(real_type)));
+        const Kokkos::mdspan<real_type, Kokkos::dextents<std::size_t, 2>> A_cache{ scratchpad_ptr, THREAD_BLOCK_SIZE_uz, INTERNAL_BLOCK_SIZE_uz * THREAD_BLOCK_SIZE_uz };
+        const Kokkos::mdspan<real_type, Kokkos::dextents<std::size_t, 2>> B_cache{ scratchpad_ptr + scratchpad_size, THREAD_BLOCK_SIZE_uz, INTERNAL_BLOCK_SIZE_uz * THREAD_BLOCK_SIZE_uz };
 
         // create a thread private array used for internal caching
         std::array<std::array<real_type, INTERNAL_BLOCK_SIZE>, INTERNAL_BLOCK_SIZE> temp{};
@@ -367,8 +368,8 @@ class device_kernel_inplace_matrix_add {
      */
     device_kernel_inplace_matrix_add(const std::size_t num_cols, device_view_type<real_type> lhs, device_view_type<const real_type> rhs, const std::size_t grid_x_offset, const std::size_t grid_y_offset, const std::size_t grid_size_x) :
         num_cols_{ num_cols },
-        lhs_{ lhs },
-        rhs_{ rhs },
+        lhs_{ std::move(lhs) },
+        rhs_{ std::move(rhs) },
         grid_x_offset_{ grid_x_offset },
         grid_y_offset_{ grid_y_offset },
         grid_size_x_{ grid_size_x } { }
@@ -441,7 +442,7 @@ class device_kernel_inplace_matrix_scale {
      */
     device_kernel_inplace_matrix_scale(const std::size_t num_cols, device_view_type<real_type> lhs, const real_type scale, const std::size_t grid_x_offset, const std::size_t grid_y_offset, const std::size_t grid_size_x) :
         num_cols_{ num_cols },
-        lhs_{ lhs },
+        lhs_{ std::move(lhs) },
         scale_{ scale },
         grid_x_offset_{ grid_x_offset },
         grid_y_offset_{ grid_y_offset },

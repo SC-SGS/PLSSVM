@@ -23,6 +23,7 @@
 
 #include <array>    // std::array
 #include <cstddef>  // std::size_t
+#include <utility>  // std::move
 
 namespace plssvm::kokkos::detail {
 
@@ -54,9 +55,9 @@ class device_kernel_w_linear {
      * @param[in] grid_size_x the size of the execution grid in x-dimension
      */
     device_kernel_w_linear(device_view_type<real_type> w, device_view_type<const real_type> alpha, device_view_type<const real_type> support_vectors, const std::size_t num_classes, const std::size_t num_sv, const std::size_t device_num_sv, const std::size_t device_sv_offset, const std::size_t grid_x_offset, const std::size_t grid_y_offset, const std::size_t grid_size_x) :
-        w_{ w },
-        alpha_{ alpha },
-        support_vectors_{ support_vectors },
+        w_{ std::move(w) },
+        alpha_{ std::move(alpha) },
+        support_vectors_{ std::move(support_vectors) },
         num_classes_{ num_classes },
         num_sv_{ num_sv },
         device_num_sv_{ device_num_sv },
@@ -89,9 +90,9 @@ class device_kernel_w_linear {
 
         // create two scratchpad memory arrays used for caching
         constexpr std::size_t scratchpad_size = THREAD_BLOCK_SIZE_uz * THREAD_BLOCK_SIZE_uz * INTERNAL_BLOCK_SIZE_uz;
-        real_type *scratchpad_ptr = static_cast<real_type *>(team.team_shmem().get_shmem(std::size_t{ 2 } * scratchpad_size * sizeof(real_type)));
-        Kokkos::mdspan<real_type, Kokkos::dextents<std::size_t, 2>> feature_cache{ scratchpad_ptr, THREAD_BLOCK_SIZE_uz, INTERNAL_BLOCK_SIZE_uz * THREAD_BLOCK_SIZE_uz };
-        Kokkos::mdspan<real_type, Kokkos::dextents<std::size_t, 2>> alpha_cache{ scratchpad_ptr + scratchpad_size, THREAD_BLOCK_SIZE_uz, INTERNAL_BLOCK_SIZE_uz * THREAD_BLOCK_SIZE_uz };
+        auto *scratchpad_ptr = static_cast<real_type *>(team.team_shmem().get_shmem(std::size_t{ 2 } * scratchpad_size * sizeof(real_type)));
+        const Kokkos::mdspan<real_type, Kokkos::dextents<std::size_t, 2>> feature_cache{ scratchpad_ptr, THREAD_BLOCK_SIZE_uz, INTERNAL_BLOCK_SIZE_uz * THREAD_BLOCK_SIZE_uz };
+        const Kokkos::mdspan<real_type, Kokkos::dextents<std::size_t, 2>> alpha_cache{ scratchpad_ptr + scratchpad_size, THREAD_BLOCK_SIZE_uz, INTERNAL_BLOCK_SIZE_uz * THREAD_BLOCK_SIZE_uz };
 
         // create a thread private array used for internal caching
         std::array<std::array<real_type, INTERNAL_BLOCK_SIZE>, INTERNAL_BLOCK_SIZE> temp{};
@@ -199,10 +200,10 @@ class device_kernel_predict_linear {
      * @param[in] grid_size_x the size of the execution grid in x-dimension
      */
     device_kernel_predict_linear(device_view_type<real_type> prediction, device_view_type<const real_type> w, device_view_type<const real_type> rho, device_view_type<const real_type> predict_points, const std::size_t num_classes, const std::size_t num_predict_points, const std::size_t num_features, const std::size_t grid_x_offset, const std::size_t grid_y_offset, const std::size_t grid_size_x) :
-        prediction_{ prediction },
-        w_{ w },
-        rho_{ rho },
-        predict_points_{ predict_points },
+        prediction_{ std::move(prediction) },
+        w_{ std::move(w) },
+        rho_{ std::move(rho) },
+        predict_points_{ std::move(predict_points) },
         num_classes_{ num_classes },
         num_predict_points_{ num_predict_points },
         num_features_{ num_features },
@@ -234,9 +235,9 @@ class device_kernel_predict_linear {
 
         // create two scratchpad memory arrays used for caching
         constexpr std::size_t scratchpad_size = THREAD_BLOCK_SIZE_uz * THREAD_BLOCK_SIZE_uz * INTERNAL_BLOCK_SIZE_uz;
-        real_type *scratchpad_ptr = static_cast<real_type *>(team.team_shmem().get_shmem(std::size_t{ 2 } * scratchpad_size * sizeof(real_type)));
-        Kokkos::mdspan<real_type, Kokkos::dextents<std::size_t, 2>> pp_cache{ scratchpad_ptr, THREAD_BLOCK_SIZE_uz, INTERNAL_BLOCK_SIZE_uz * THREAD_BLOCK_SIZE_uz };
-        Kokkos::mdspan<real_type, Kokkos::dextents<std::size_t, 2>> w_cache{ scratchpad_ptr + scratchpad_size, THREAD_BLOCK_SIZE_uz, INTERNAL_BLOCK_SIZE_uz * THREAD_BLOCK_SIZE_uz };
+        auto *scratchpad_ptr = static_cast<real_type *>(team.team_shmem().get_shmem(std::size_t{ 2 } * scratchpad_size * sizeof(real_type)));
+        const Kokkos::mdspan<real_type, Kokkos::dextents<std::size_t, 2>> pp_cache{ scratchpad_ptr, THREAD_BLOCK_SIZE_uz, INTERNAL_BLOCK_SIZE_uz * THREAD_BLOCK_SIZE_uz };
+        const Kokkos::mdspan<real_type, Kokkos::dextents<std::size_t, 2>> w_cache{ scratchpad_ptr + scratchpad_size, THREAD_BLOCK_SIZE_uz, INTERNAL_BLOCK_SIZE_uz * THREAD_BLOCK_SIZE_uz };
 
         // create a thread private array used for internal caching
         std::array<std::array<real_type, INTERNAL_BLOCK_SIZE>, INTERNAL_BLOCK_SIZE> temp{};
@@ -349,11 +350,11 @@ class device_kernel_predict {
      * @param[in] kernel_function_parameter the parameters necessary to apply the @p kernel_function
      */
     device_kernel_predict(device_view_type<real_type> prediction, device_view_type<const real_type> alpha, device_view_type<const real_type> rho, device_view_type<const real_type> support_vectors, device_view_type<const real_type> predict_points, const std::size_t num_classes, const std::size_t num_sv, const std::size_t num_predict_points, const std::size_t num_features, const std::size_t grid_x_offset, const std::size_t grid_y_offset, const std::size_t grid_size_x, Args... kernel_function_parameter) :
-        prediction_{ prediction },
-        alpha_{ alpha },
-        rho_{ rho },
-        support_vectors_{ support_vectors },
-        predict_points_{ predict_points },
+        prediction_{ std::move(prediction) },
+        alpha_{ std::move(alpha) },
+        rho_{ std::move(rho) },
+        support_vectors_{ std::move(support_vectors) },
+        predict_points_{ std::move(predict_points) },
         num_classes_{ num_classes },
         num_sv_{ num_sv },
         num_predict_points_{ num_predict_points },
@@ -387,15 +388,15 @@ class device_kernel_predict {
 
         // get the scratchpad memory pointer for later usage
         constexpr std::size_t scratchpad_size = THREAD_BLOCK_SIZE_uz * THREAD_BLOCK_SIZE_uz * INTERNAL_BLOCK_SIZE_uz;
-        real_type *scratchpad_ptr = static_cast<real_type *>(team.team_shmem().get_shmem(std::size_t{ 2 } * scratchpad_size * sizeof(real_type)));
+        auto *scratchpad_ptr = static_cast<real_type *>(team.team_shmem().get_shmem(std::size_t{ 2 } * scratchpad_size * sizeof(real_type)));
 
         // create a thread private array used for internal caching
         std::array<std::array<real_type, INTERNAL_BLOCK_SIZE>, INTERNAL_BLOCK_SIZE> temp{};
 
         {
             // reinterpret the scratchpad memory to be of shape [THREAD_BLOCK_SIZE][INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE]
-            Kokkos::mdspan<real_type, Kokkos::dextents<std::size_t, 2>> pp_cache{ scratchpad_ptr, THREAD_BLOCK_SIZE_uz, INTERNAL_BLOCK_SIZE_uz * THREAD_BLOCK_SIZE_uz };
-            Kokkos::mdspan<real_type, Kokkos::dextents<std::size_t, 2>> sv_cache{ scratchpad_ptr + scratchpad_size, THREAD_BLOCK_SIZE_uz, INTERNAL_BLOCK_SIZE_uz * THREAD_BLOCK_SIZE_uz };
+            const Kokkos::mdspan<real_type, Kokkos::dextents<std::size_t, 2>> pp_cache{ scratchpad_ptr, THREAD_BLOCK_SIZE_uz, INTERNAL_BLOCK_SIZE_uz * THREAD_BLOCK_SIZE_uz };
+            const Kokkos::mdspan<real_type, Kokkos::dextents<std::size_t, 2>> sv_cache{ scratchpad_ptr + scratchpad_size, THREAD_BLOCK_SIZE_uz, INTERNAL_BLOCK_SIZE_uz * THREAD_BLOCK_SIZE_uz };
 
             // calculate the indices used in the current thread, pays attention to coalesced memory accesses
             const auto pp_idx_linear = blockIdx_x * blockDim_x * INTERNAL_BLOCK_SIZE_uz + threadIdx_x;  // num_predict_points
@@ -451,8 +452,8 @@ class device_kernel_predict {
 
         {
             // reinterpret the scratchpad memory to be of shape [INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE][THREAD_BLOCK_SIZE]
-            Kokkos::mdspan<real_type, Kokkos::dextents<std::size_t, 2>> alpha_cache{ scratchpad_ptr, THREAD_BLOCK_SIZE_uz, INTERNAL_BLOCK_SIZE_uz * THREAD_BLOCK_SIZE_uz };
-            Kokkos::mdspan<real_type, Kokkos::dextents<std::size_t, 2>> out_cache{ scratchpad_ptr + scratchpad_size, THREAD_BLOCK_SIZE_uz, INTERNAL_BLOCK_SIZE_uz * THREAD_BLOCK_SIZE_uz };
+            const Kokkos::mdspan<real_type, Kokkos::dextents<std::size_t, 2>> alpha_cache{ scratchpad_ptr, THREAD_BLOCK_SIZE_uz, INTERNAL_BLOCK_SIZE_uz * THREAD_BLOCK_SIZE_uz };
+            const Kokkos::mdspan<real_type, Kokkos::dextents<std::size_t, 2>> out_cache{ scratchpad_ptr + scratchpad_size, THREAD_BLOCK_SIZE_uz, INTERNAL_BLOCK_SIZE_uz * THREAD_BLOCK_SIZE_uz };
 
             // calculate the indices used in the current thread
             const auto pp_idx = (blockIdx_x * blockDim_x + threadIdx_x) * INTERNAL_BLOCK_SIZE_uz;  // num_predict_points

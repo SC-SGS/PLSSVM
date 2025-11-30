@@ -23,6 +23,7 @@
 
 #include <array>    // std::array
 #include <cstddef>  // std::size_t
+#include <utility>  // std::move
 
 namespace plssvm::kokkos::detail {
 
@@ -63,16 +64,16 @@ class device_kernel_assembly_symm {
      */
     device_kernel_assembly_symm(const real_type alpha, device_view_type<const real_type> q, device_view_type<const real_type> data, const std::size_t num_rows, const std::size_t device_num_rows, const std::size_t device_row_offset, const std::size_t num_features, const real_type QA_cost, const real_type cost, device_view_type<const real_type> B, device_view_type<real_type> C, const std::size_t num_classes, const std::size_t grid_x_offset, const std::size_t grid_y_offset, const std::size_t grid_size_x, Args... kernel_function_parameter) :
         alpha_{ alpha },
-        q_{ q },
-        data_{ data },
+        q_{ std::move(q) },
+        data_{ std::move(data) },
         num_rows_{ num_rows },
         device_num_rows_{ device_num_rows },
         device_row_offset_{ device_row_offset },
         num_features_{ num_features },
         QA_cost_{ QA_cost },
         cost_{ cost },
-        B_{ B },
-        C_{ C },
+        B_{ std::move(B) },
+        C_{ std::move(C) },
         num_classes_{ num_classes },
         grid_x_offset_{ grid_x_offset },
         grid_y_offset_{ grid_y_offset },
@@ -111,7 +112,7 @@ class device_kernel_assembly_symm {
 
         // get the scratchpad memory pointer for later usage
         constexpr std::size_t scratchpad_size = THREAD_BLOCK_SIZE_uz * THREAD_BLOCK_SIZE_uz * INTERNAL_BLOCK_SIZE_uz;
-        real_type *scratchpad_ptr = static_cast<real_type *>(team.team_shmem().get_shmem(std::size_t{ 2 } * scratchpad_size * sizeof(real_type)));
+        auto *scratchpad_ptr = static_cast<real_type *>(team.team_shmem().get_shmem(std::size_t{ 2 } * scratchpad_size * sizeof(real_type)));
 
         // only calculate the upper triangular matrix -> can't use team.team_rank() since all threads in a team must progress further
         if (blockIdx_x >= blockIdx_y) {
@@ -123,8 +124,8 @@ class device_kernel_assembly_symm {
             //*************************************************************************//
             {
                 // reinterpret the scratchpad memory to be of shape [THREAD_BLOCK_SIZE][INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE]
-                Kokkos::mdspan<real_type, Kokkos::dextents<std::size_t, 2>> data_i_cache{ scratchpad_ptr, THREAD_BLOCK_SIZE_uz, INTERNAL_BLOCK_SIZE_uz * THREAD_BLOCK_SIZE_uz };
-                Kokkos::mdspan<real_type, Kokkos::dextents<std::size_t, 2>> data_j_cache{ scratchpad_ptr + scratchpad_size, THREAD_BLOCK_SIZE_uz, INTERNAL_BLOCK_SIZE_uz * THREAD_BLOCK_SIZE_uz };
+                const Kokkos::mdspan<real_type, Kokkos::dextents<std::size_t, 2>> data_i_cache{ scratchpad_ptr, THREAD_BLOCK_SIZE_uz, INTERNAL_BLOCK_SIZE_uz * THREAD_BLOCK_SIZE_uz };
+                const Kokkos::mdspan<real_type, Kokkos::dextents<std::size_t, 2>> data_j_cache{ scratchpad_ptr + scratchpad_size, THREAD_BLOCK_SIZE_uz, INTERNAL_BLOCK_SIZE_uz * THREAD_BLOCK_SIZE_uz };
 
                 // iterate over all features using blocking to be able to cache them for faster memory accesses
                 for (std::size_t feature_block = 0; feature_block < num_features_; feature_block += THREAD_BLOCK_SIZE_uz) {
@@ -196,8 +197,8 @@ class device_kernel_assembly_symm {
             //*************************************************************************//
             {
                 // reinterpret the scratchpad memory to be of shape [INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE][THREAD_BLOCK_SIZE]
-                Kokkos::mdspan<real_type, Kokkos::dextents<std::size_t, 2>> B_cache{ scratchpad_ptr, INTERNAL_BLOCK_SIZE_uz * THREAD_BLOCK_SIZE_uz, THREAD_BLOCK_SIZE_uz };
-                Kokkos::mdspan<real_type, Kokkos::dextents<std::size_t, 2>> C_out_cache{ scratchpad_ptr + scratchpad_size, INTERNAL_BLOCK_SIZE_uz * THREAD_BLOCK_SIZE_uz, THREAD_BLOCK_SIZE_uz };
+                const Kokkos::mdspan<real_type, Kokkos::dextents<std::size_t, 2>> B_cache{ scratchpad_ptr, INTERNAL_BLOCK_SIZE_uz * THREAD_BLOCK_SIZE_uz, THREAD_BLOCK_SIZE_uz };
+                const Kokkos::mdspan<real_type, Kokkos::dextents<std::size_t, 2>> C_out_cache{ scratchpad_ptr + scratchpad_size, INTERNAL_BLOCK_SIZE_uz * THREAD_BLOCK_SIZE_uz, THREAD_BLOCK_SIZE_uz };
 
                 // iterate over all classes using blocking to be able to cache them for faster memory accesses
                 for (std::size_t class_block = 0; class_block < num_classes_; class_block += THREAD_BLOCK_SIZE_uz) {
@@ -252,8 +253,8 @@ class device_kernel_assembly_symm {
             //*************************************************************************//
             {
                 // reinterpret the scratchpad memory to be of shape [THREAD_BLOCK_SIZE][INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE]
-                Kokkos::mdspan<real_type, Kokkos::dextents<std::size_t, 2>> B_cache{ scratchpad_ptr, THREAD_BLOCK_SIZE_uz, INTERNAL_BLOCK_SIZE_uz * THREAD_BLOCK_SIZE_uz };
-                Kokkos::mdspan<real_type, Kokkos::dextents<std::size_t, 2>> C_out_cache{ scratchpad_ptr + scratchpad_size, THREAD_BLOCK_SIZE_uz, INTERNAL_BLOCK_SIZE_uz * THREAD_BLOCK_SIZE_uz };
+                const Kokkos::mdspan<real_type, Kokkos::dextents<std::size_t, 2>> B_cache{ scratchpad_ptr, THREAD_BLOCK_SIZE_uz, INTERNAL_BLOCK_SIZE_uz * THREAD_BLOCK_SIZE_uz };
+                const Kokkos::mdspan<real_type, Kokkos::dextents<std::size_t, 2>> C_out_cache{ scratchpad_ptr + scratchpad_size, THREAD_BLOCK_SIZE_uz, INTERNAL_BLOCK_SIZE_uz * THREAD_BLOCK_SIZE_uz };
 
                 // iterate over all classes using blocking to be able to cache them for faster memory accesses
                 for (std::size_t class_block = 0; class_block < num_classes_; class_block += THREAD_BLOCK_SIZE_uz) {
