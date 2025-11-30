@@ -261,7 +261,7 @@ class csvc : virtual public csvm {
                                               data.mapping_->get_label_by_mapped_index(j),
                                               pos + 1,
                                               calculate_number_of_classifiers(classification_type::oao, num_classes));
-                        const auto &[alpha, rho, num_iter] = this->solve_lssvm_system_of_linear_equations(binary_data, binary_y, params, std::forward<Args>(named_args)...);
+                        const auto &[alpha, rho, num_iter] = this->solve_lssvm_system_of_linear_equations(binary_data, binary_y, params, named_args...);
                         (*csvc_model.alpha_ptr_)[pos] = std::move(alpha);
                         (*csvc_model.rho_ptr_)[pos] = rho.front();  // prevents std::tie
                         num_iters.push_back(num_iter.front());

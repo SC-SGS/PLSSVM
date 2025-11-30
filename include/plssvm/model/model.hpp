@@ -199,7 +199,7 @@ model<U>::model(mpi::communicator comm) :
 
 template <typename U>
 model<U>::model(parameter params, std::shared_ptr<data_set<label_type>> data) :
-    params_{ std::move(params) },
+    params_{ params },
     data_{ std::move(data) },
     num_support_vectors_{ data_->num_data_points() },
     num_features_{ data_->num_features() },

@@ -132,7 +132,7 @@ namespace plssvm::opencl::detail {
     };
 
     // iterate over all platforms and save all available devices
-    std::map<std::pair<cl_platform_id, target_platform>, std::vector<cl_device_id>> platform_devices;
+    std::map<std::pair<cl_platform_id, target_platform>, std::vector<cl_device_id>> platform_devices{};
     // get number of platforms
     cl_uint num_platforms{};
     PLSSVM_OPENCL_ERROR_CHECK(clGetPlatformIDs(0, nullptr, &num_platforms), "error retrieving the number of available platforms")
@@ -460,7 +460,7 @@ std::pair<std::vector<command_queue>, jit_info> create_command_queues(const mpi:
         replace_kernel_function_type_placeholders(temp, predict_kernel_functions);
 
         // append correct kernel sources to final string
-        kernel_src_string.append(std::move(temp));
+        kernel_src_string.append(temp);
     }
 
     // replace types in kernel_src_string

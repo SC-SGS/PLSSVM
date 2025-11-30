@@ -26,7 +26,7 @@
 namespace plssvm::detail::tracking {
 
 void events::add_event(event e) {
-    this->time_points_.push_back(std::move(e.time_point));
+    this->time_points_.push_back(e.time_point);
     this->names_.push_back(fmt::format("{}", std::move(e.name)));
 
     PLSSVM_ASSERT(this->num_events() == this->time_points_.size(), "Error: number of event members mismatch!");
@@ -34,7 +34,7 @@ void events::add_event(event e) {
 }
 
 void events::add_event(decltype(event::time_point) time_point, decltype(event::name) name) {
-    this->time_points_.push_back(std::move(time_point));
+    this->time_points_.push_back(time_point);
     this->names_.push_back(fmt::format("{}", std::move(name)));
 
     PLSSVM_ASSERT(this->num_events() == this->time_points_.size(), "Error: number of event members mismatch!");

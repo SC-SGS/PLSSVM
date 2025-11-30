@@ -84,7 +84,8 @@ class csvm : public ::plssvm::detail::gpu_csvm<detail::device_ptr, detail::queue
 #if !defined(PLSSVM_SYCL_HIERARCHICAL_AND_SCOPED_KERNELS_ENABLED)
             if (data_parallel_kernel_type_ == sycl::data_parallel_kernel::hierarchical) {
                 throw ::plssvm::invalid_parameter_exception{ "The provided sycl::data_parallel_kernel::hierarchical is disabled for the AdaptiveCpp SYCL backend!" };
-            } else if (data_parallel_kernel_type_ == sycl::data_parallel_kernel::scoped) {
+            }
+            if (data_parallel_kernel_type_ == sycl::data_parallel_kernel::scoped) {
                 throw ::plssvm::invalid_parameter_exception{ "he provided sycl::data_parallel_kernel::scoped is disabled for the AdaptiveCpp SYCL backend!" };
             }
 #endif

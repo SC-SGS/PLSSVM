@@ -170,7 +170,7 @@ std::vector<::plssvm::detail::move_only_any> csvm::assemble_kernel_matrix(const 
             case solver_type::cg_implicit:
                 {
                     // simply return data since in implicit we don't assembly the kernel matrix here!
-                    kernel_matrices_parts[0] = ::plssvm::detail::move_only_any{ std::make_tuple(std::move(A), params, std::move(q_red), QA_cost) };
+                    kernel_matrices_parts[0] = ::plssvm::detail::move_only_any{ std::make_tuple(std::cref(A), params, std::cref(q_red), QA_cost) };
                 }
                 break;
         }
@@ -234,7 +234,7 @@ void csvm::blas_level_3(const solver_type solver, const real_type alpha, const s
                 break;
             case solver_type::cg_implicit:
                 {
-                    const auto &[matr_A, params, q_red, QA_cost] = ::plssvm::detail::move_only_any_cast<const std::tuple<soa_matrix<real_type>, parameter, std::vector<real_type>, real_type> &>(A.front());
+                    const auto &[matr_A, params, q_red, QA_cost] = ::plssvm::detail::move_only_any_cast<const std::tuple<const soa_matrix<real_type> &, parameter, const std::vector<real_type> &, real_type> &>(A.front());
                     PLSSVM_ASSERT(!matr_A.empty(), "The A matrix must not be empty!");
                     PLSSVM_ASSERT(!q_red.empty(), "The q_red vector must not be empty!");
                     const real_type cost = real_type{ 1.0 } / params.cost;
