@@ -549,7 +549,13 @@ class [[nodiscard]] scope_guard {
      * @brief Finalize all previously initialized backends.
      */
     ~scope_guard() {
-        finalize(backends_);
+        try {
+            finalize(backends_);
+        } catch (const environment_exception &e) {
+            std::cout << e.what_with_loc() << std::endl;
+        } catch (const std::exception &e) {
+            std::cout << e.what() << std::endl;
+        }
     }
 
   private:
