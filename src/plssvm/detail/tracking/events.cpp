@@ -58,18 +58,17 @@ std::string events::generate_yaml_string(const std::chrono::steady_clock::time_p
     if (this->empty()) {
         // no events -> return empty string
         return std::string{};
-    } else {
-        std::vector<std::string> quoted_names(this->num_events());
-#pragma omp parallel for
-        for (std::size_t i = 0; i < this->num_events(); ++i) {
-            quoted_names[i] = fmt::format("\"{}\"", names_[i]);
-        }
-        // assemble string
-        return fmt::format("    time_points: [{}]\n"
-                           "    names: [{}]",
-                           fmt::join(durations_from_reference_time(time_points_, start_time_point), ", "),
-                           fmt::join(quoted_names, ", "));
     }
+    std::vector<std::string> quoted_names(this->num_events());
+#pragma omp parallel for
+    for (std::size_t i = 0; i < this->num_events(); ++i) {
+        quoted_names[i] = fmt::format("\"{}\"", names_[i]);
+    }
+    // assemble string
+    return fmt::format("    time_points: [{}]\n"
+                       "    names: [{}]",
+                       fmt::join(durations_from_reference_time(time_points_, start_time_point), ", "),
+                       fmt::join(quoted_names, ", "));
 }
 
 std::ostream &operator<<(std::ostream &out, const events::event &e) {

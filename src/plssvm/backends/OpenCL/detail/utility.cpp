@@ -119,17 +119,16 @@ namespace plssvm::opencl::detail {
         if (!opt_filters_to_apply.has_value()) {
             // no filter available -> applies per definition
             return true;
-        } else {
-            // filter available -> check if the filter itself applies
-            if (::plssvm::detail::contains(opt_filters_to_apply.value(), t)) {
-                for (const std::size_t id : opt_filters_to_apply.value()[t]) {
-                    if (device_count_per_platform[t] == id) {
-                        return true;
-                    }
+        }
+        // filter available -> check if the filter itself applies
+        if (::plssvm::detail::contains(opt_filters_to_apply.value(), t)) {
+            for (const std::size_t id : opt_filters_to_apply.value()[t]) {
+                if (device_count_per_platform[t] == id) {
+                    return true;
                 }
             }
-            return false;
         }
+        return false;
     };
 
     // iterate over all platforms and save all available devices
@@ -220,10 +219,9 @@ namespace plssvm::opencl::detail {
             if (opt_filters_to_apply.has_value()) {
                 // add a more concrete error message in case of a PLSSVM_OPENCL_DEVICE_FILTER was provided
                 // since a wrong device filter may lead to no found device
-                throw platform_devices_empty{ fmt::format("No appropriate devices could be found! Maybe the PLSSVM_OPENCL_DEVICE_FILTER=\"{}\" is incorrect?", ::plssvm::detail::get_env_variable("PLSSVM_OPENCL_DEVICE_FILTER").value()) };
-            } else {
-                throw platform_devices_empty{ "No appropriate devices could be found!" };
+                throw platform_devices_empty{ fmt::format("No appropriate devices could be found! Maybe the PLSSVM_OPENCL_DEVICE_FILTER=\"{}\" is incorrect?", device_filter_env.value()) };
             }
+            throw platform_devices_empty{ "No appropriate devices could be found!" };
         }
         // determine the target_platform
         target = determine_default_target_platform(system_devices);

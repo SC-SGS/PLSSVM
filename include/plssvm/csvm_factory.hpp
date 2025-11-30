@@ -103,7 +103,7 @@ template <typename base_csvm_type, typename backend_csvm_type, typename... Args>
 template <typename base_csvm_type, typename... Args>
 [[nodiscard]] inline std::unique_ptr<base_csvm_type> make_csvm_sycl_impl([[maybe_unused]] Args &&...args) {
     // check igor parameter
-    igor::parser parser{ args... };
+    const igor::parser parser{ args... };
 
     // get the SYCL implementation type to use
     sycl::implementation_type impl_type = sycl::implementation_type::automatic;  // NOLINT: can be modified in compile-time if later on

@@ -145,11 +145,11 @@ int main(int argc, char *argv[]) {
             const std::unique_ptr<csvm_type> svm = [&]() {
                 if (use_sycl_as_backend) {
                     return plssvm::make_csvm<csvm_type>(cmd_parser.backend, comm, cmd_parser.target, plssvm::sycl_implementation_type = cmd_parser.sycl_implementation_type, plssvm::sycl_data_parallel_kernel = cmd_parser.sycl_data_parallel_kernel);
-                } else if (use_kokkos_as_backend) {
-                    return plssvm::make_csvm<csvm_type>(cmd_parser.backend, comm, cmd_parser.target, plssvm::kokkos_execution_space = cmd_parser.kokkos_execution_space);
-                } else {
-                    return plssvm::make_csvm<csvm_type>(cmd_parser.backend, comm, cmd_parser.target);
                 }
+                if (use_kokkos_as_backend) {
+                    return plssvm::make_csvm<csvm_type>(cmd_parser.backend, comm, cmd_parser.target, plssvm::kokkos_execution_space = cmd_parser.kokkos_execution_space);
+                }
+                return plssvm::make_csvm<csvm_type>(cmd_parser.backend, comm, cmd_parser.target);
             }();
 
             // create model

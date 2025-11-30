@@ -656,7 +656,8 @@ template <typename T, layout_type layout_>
 matrix<T, layout_>::value_type matrix<T, layout_>::at(const size_type row, const size_type col) const {
     if (row >= this->num_rows_padded()) {
         throw matrix_exception{ fmt::format("The current row ({}) must be smaller than the number of rows including padding ({} + {})!", row, this->num_rows(), padding_.x) };
-    } else if (row >= this->num_rows()) {
+    }
+    if (row >= this->num_rows()) {
         detail::log_untracked(verbosity_level::full | verbosity_level::warning,
                               "WARNING: attempting to access padding row {} (only {} real rows exist)!\n",
                               row,
@@ -664,7 +665,8 @@ matrix<T, layout_>::value_type matrix<T, layout_>::at(const size_type row, const
     }
     if (col >= this->num_cols_padded()) {
         throw matrix_exception{ fmt::format("The current column ({}) must be smaller than the number of columns including padding ({} + {})!", col, this->num_cols(), padding_.y) };
-    } else if (col >= this->num_cols()) {
+    }
+    if (col >= this->num_cols()) {
         detail::log_untracked(verbosity_level::full | verbosity_level::warning,
                               "WARNING: attempting to access padding column {} (only {} real columns exist)!\n",
                               col,
@@ -678,7 +680,8 @@ template <typename T, layout_type layout_>
 matrix<T, layout_>::reference matrix<T, layout_>::at(const size_type row, const size_type col) {
     if (row >= this->num_rows_padded()) {
         throw matrix_exception{ fmt::format("The current row ({}) must be smaller than the number of rows including padding ({} + {})!", row, this->num_rows(), padding_.x) };
-    } else if (row >= this->num_rows()) {
+    }
+    if (row >= this->num_rows()) {
         detail::log_untracked(verbosity_level::full | verbosity_level::warning,
                               "WARNING: attempting to access padding row {} (only {} real rows exist)!\n",
                               row,
@@ -686,7 +689,8 @@ matrix<T, layout_>::reference matrix<T, layout_>::at(const size_type row, const 
     }
     if (col >= this->num_cols_padded()) {
         throw matrix_exception{ fmt::format("The current column ({}) must be smaller than the number of columns including padding ({} + {})!", col, this->num_cols(), padding_.y) };
-    } else if (col >= this->num_cols()) {
+    }
+    if (col >= this->num_cols()) {
         detail::log_untracked(verbosity_level::full | verbosity_level::warning,
                               "WARNING: attempting to access padding column {} (only {} real columns exist)!\n",
                               col,

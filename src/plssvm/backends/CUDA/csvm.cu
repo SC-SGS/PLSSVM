@@ -53,11 +53,10 @@ csvm::csvm(const target_platform target) {
     // check if supported target platform has been selected
     if (target != target_platform::automatic && target != target_platform::gpu_nvidia) {
         throw backend_exception{ fmt::format("Invalid target platform '{}' for the CUDA backend!", target) };
-    } else {
-#if !defined(PLSSVM_HAS_NVIDIA_TARGET)
-        throw backend_exception{ "Requested target platform 'gpu_nvidia' that hasn't been enabled using PLSSVM_TARGET_PLATFORMS!" };
-#endif
     }
+#if !defined(PLSSVM_HAS_NVIDIA_TARGET)
+    throw backend_exception{ "Requested target platform 'gpu_nvidia' that hasn't been enabled using PLSSVM_TARGET_PLATFORMS!" };
+#endif
 
     // update the target platform
     target_ = plssvm::target_platform::gpu_nvidia;

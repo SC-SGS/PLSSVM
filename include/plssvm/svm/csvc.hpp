@@ -416,12 +416,12 @@ class csvc : virtual public csvm {
                         if (num_classes == 2) {
                             // no special assembly needed in binary case
                             return model.support_vectors();
-                        } else {
-                            // note: if this is changed, it must also be changed in the libsvm_model_parsing.hpp in the calculate_alpha_idx function!!!
-                            // order the indices in increasing order
-                            soa_matrix<real_type> temp{ shape{ num_data_points_in_sub_matrix, num_features }, shape{ PADDING_SIZE, PADDING_SIZE } };
-                            std::vector<std::size_t> sorted_indices(num_data_points_in_sub_matrix);
-                            std::merge(index_sets[i].cbegin(), index_sets[i].cend(), index_sets[j].cbegin(), index_sets[j].cend(), sorted_indices.begin());
+                        }
+                        // note: if this is changed, it must also be changed in the libsvm_model_parsing.hpp in the calculate_alpha_idx function!!!
+                        // order the indices in increasing order
+                        soa_matrix<real_type> temp{ shape{ num_data_points_in_sub_matrix, num_features }, shape{ PADDING_SIZE, PADDING_SIZE } };
+                        std::vector<std::size_t> sorted_indices(num_data_points_in_sub_matrix);
+                        std::merge(index_sets[i].cbegin(), index_sets[i].cend(), index_sets[j].cbegin(), index_sets[j].cend(), sorted_indices.begin());
 // copy the support vectors to the binary support vectors
 // NOTE: it seems that MSVC doesn't like the collapse clause inside a lambda function
 #if defined(_MSC_VER)
@@ -429,13 +429,12 @@ class csvc : virtual public csvm {
 #else
     #pragma omp parallel for collapse(2)
 #endif
-                            for (std::size_t si = 0; si < num_data_points_in_sub_matrix; ++si) {
-                                for (std::size_t dim = 0; dim < num_features; ++dim) {
-                                    temp(si, dim) = model.support_vectors()(sorted_indices[si], dim);
-                                }
+                        for (std::size_t si = 0; si < num_data_points_in_sub_matrix; ++si) {
+                            for (std::size_t dim = 0; dim < num_features; ++dim) {
+                                temp(si, dim) = model.support_vectors()(sorted_indices[si], dim);
                             }
-                            return temp;
                         }
+                        return temp;
                     }();
 
                     // predict binary pair

@@ -123,9 +123,11 @@ namespace detail {
     if (!is_initialized) {
         // Note: ::hpx::is_stopped does return true even before calling finalize once
         return status::uninitialized;
-    } else if (is_initialized && !is_finalized) {
+    }
+    if (is_initialized && !is_finalized) {
         return status::initialized;
-    } else if (is_finalized) {
+    }
+    if (is_finalized) {
         return status::finalized;
     }
     // should never be reached!
@@ -338,10 +340,9 @@ inline void get_filtered_backends(std::vector<backend_type> &backends, const sta
                        if (backend == backend_type::automatic) {
                            // always remove the automatic backend
                            return true;
-                       } else {
-                           // remove all backends for which the filter isn't true
-                           return get_backend_status(backend) != s;
                        }
+                       // remove all backends for which the filter isn't true
+                       return get_backend_status(backend) != s;
                    }),
                    backends.end());
 }

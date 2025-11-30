@@ -50,9 +50,8 @@ std::string get_openmp_version() {
     // return sanitized version or plain _OPENMP if the version isn't found
     if (::plssvm::detail::contains(version_map, _OPENMP)) {
         return version_map.at(_OPENMP);
-    } else {
-        return fmt::format("{}", _OPENMP);
     }
+    return fmt::format("{}", _OPENMP);
 }
 
 }  // namespace plssvm::openmp::detail

@@ -373,9 +373,8 @@ std::tuple<aos_matrix<real_type>, std::vector<real_type>, std::vector<unsigned l
         const auto format_vector = [](const auto &vec) -> std::string {
             if (vec.size() == 1) {
                 return fmt::format("{}", vec.front());
-            } else {
-                return fmt::format("[{}]", fmt::join(vec, ", "));
             }
+            return fmt::format("[{}]", fmt::join(vec, ", "));
         };
 
         if (comm_.size() <= 1) {

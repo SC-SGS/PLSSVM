@@ -316,7 +316,7 @@ template <typename T>
  * @return the contained object (`[[nodiscard]]`)
  */
 template <typename T>
-[[nodiscard]] inline T move_only_any_cast(move_only_any &&operand) {
+[[nodiscard]] inline T move_only_any_cast(move_only_any &&operand) {  // NOLINT(cppcoreguidelines-rvalue-reference-param-not-moved): the object is moved after the cast
     using U = detail::remove_cvref_t<T>;
     static_assert(std::is_constructible_v<T, U>);
     if (auto *ptr = move_only_any_cast<U>(&operand)) {
@@ -340,7 +340,8 @@ template <typename T>
     if (operand == nullptr) {
         // return a nullptr if a nullptr is provided
         return nullptr;
-    } else if (auto *ptr = dynamic_cast<const move_only_any::type_erasure_wrapper<U> *>(std::addressof(*operand->object_ptr_))) {
+    }
+    if (auto *ptr = dynamic_cast<const move_only_any::type_erasure_wrapper<U> *>(std::addressof(*operand->object_ptr_)); ptr != nullptr) {
         return std::addressof(ptr->wrapped_object_);
     }
     return nullptr;
@@ -359,7 +360,8 @@ template <typename T>
     if (operand == nullptr) {
         // return a nullptr if a nullptr is provided
         return nullptr;
-    } else if (auto *ptr = dynamic_cast<move_only_any::type_erasure_wrapper<U> *>(std::addressof(*operand->object_ptr_))) {
+    }
+    if (auto *ptr = dynamic_cast<move_only_any::type_erasure_wrapper<U> *>(std::addressof(*operand->object_ptr_)); ptr != nullptr) {
         return std::addressof(ptr->wrapped_object_);
     }
     return nullptr;

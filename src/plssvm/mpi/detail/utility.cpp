@@ -27,9 +27,8 @@ void mpi_error_check([[maybe_unused]] const int err) {
         const int res = MPI_Error_string(err, err_str.data(), &err_str_len);
         if (res == MPI_SUCCESS) {
             throw plssvm::mpi_exception{ fmt::format("MPI error {}: {}", err, err_str.substr(0, err_str.find_first_of('\0'))) };
-        } else {
-            throw plssvm::mpi_exception{ fmt::format("MPI error {}", err) };
         }
+        throw plssvm::mpi_exception{ fmt::format("MPI error {}", err) };
     }
 #endif
 }

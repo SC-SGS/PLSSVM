@@ -88,9 +88,8 @@ memory_size get_system_memory() {
 std::optional<std::string> get_env_variable(const std::string &env_variable) {
     if (const char *env_value = std::getenv(env_variable.c_str()); env_value != nullptr) {
         return std::make_optional(env_value);
-    } else {
-        return std::nullopt;
     }
+    return std::nullopt;
 }
 
 #undef PLSSVM_UNIX_AVAILABLE_MEMORY

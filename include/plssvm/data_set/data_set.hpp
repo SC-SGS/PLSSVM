@@ -390,7 +390,7 @@ class data_set {
     size_type num_features_{ 0 };
 
     /// The used MPI communicator.
-    mpi::communicator comm_{};
+    mpi::communicator comm_;
 
     /// A pointer to the two-dimensional data points.
     std::shared_ptr<soa_matrix<real_type>> data_ptr_{ nullptr };

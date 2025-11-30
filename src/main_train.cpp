@@ -71,9 +71,8 @@ template <typename svm_type, typename label_type>
 [[nodiscard]] plssvm::classification_model<label_type> fit_csvc(const svm_type &svm, const plssvm::classification_data_set<label_type> &data, const plssvm::detail::cmd::parser_train &cmd_parser) {
     if (cmd_parser.max_iter == std::size_t{ 0 }) {
         return svm.fit(data, plssvm::epsilon = cmd_parser.epsilon, plssvm::classification = cmd_parser.classification, plssvm::solver = cmd_parser.solver);
-    } else {
-        return svm.fit(data, plssvm::epsilon = cmd_parser.epsilon, plssvm::max_iter = cmd_parser.max_iter, plssvm::classification = cmd_parser.classification, plssvm::solver = cmd_parser.solver);
     }
+    return svm.fit(data, plssvm::epsilon = cmd_parser.epsilon, plssvm::max_iter = cmd_parser.max_iter, plssvm::classification = cmd_parser.classification, plssvm::solver = cmd_parser.solver);
 }
 
 /**
@@ -89,9 +88,8 @@ template <typename svm_type, typename label_type>
 [[nodiscard]] plssvm::regression_model<label_type> fit_csvr(const svm_type &svm, const plssvm::regression_data_set<label_type> &data, const plssvm::detail::cmd::parser_train &cmd_parser) {
     if (cmd_parser.max_iter == std::size_t{ 0 }) {
         return svm.fit(data, plssvm::epsilon = cmd_parser.epsilon, plssvm::solver = cmd_parser.solver);
-    } else {
-        return svm.fit(data, plssvm::epsilon = cmd_parser.epsilon, plssvm::max_iter = cmd_parser.max_iter, plssvm::solver = cmd_parser.solver);
     }
+    return svm.fit(data, plssvm::epsilon = cmd_parser.epsilon, plssvm::max_iter = cmd_parser.max_iter, plssvm::solver = cmd_parser.solver);
 }
 
 int main(int argc, char *argv[]) {
@@ -182,11 +180,11 @@ int main(int argc, char *argv[]) {
             const std::unique_ptr<csvm_type> svm = [&]() {
                 if (use_sycl_as_backend) {
                     return plssvm::make_csvm<csvm_type>(cmd_parser.backend, comm, cmd_parser.target, cmd_parser.csvm_params, plssvm::sycl_implementation_type = cmd_parser.sycl_implementation_type, plssvm::sycl_data_parallel_kernel = cmd_parser.sycl_data_parallel_kernel);
-                } else if (use_kokkos_as_backend) {
-                    return plssvm::make_csvm<csvm_type>(cmd_parser.backend, comm, cmd_parser.target, cmd_parser.csvm_params, plssvm::kokkos_execution_space = cmd_parser.kokkos_execution_space);
-                } else {
-                    return plssvm::make_csvm<csvm_type>(cmd_parser.backend, comm, cmd_parser.target, cmd_parser.csvm_params);
                 }
+                if (use_kokkos_as_backend) {
+                    return plssvm::make_csvm<csvm_type>(cmd_parser.backend, comm, cmd_parser.target, cmd_parser.csvm_params, plssvm::kokkos_execution_space = cmd_parser.kokkos_execution_space);
+                }
+                return plssvm::make_csvm<csvm_type>(cmd_parser.backend, comm, cmd_parser.target, cmd_parser.csvm_params);
             }();
 
             // only specify the named arguments available for the respective SVM type

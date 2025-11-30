@@ -136,9 +136,8 @@ class min_max_scaler {
     [[nodiscard]] std::optional<std::vector<factors>> scaling_factors() const {
         if (scaling_factors_.empty()) {
             return std::nullopt;  // nothing scaled yet
-        } else {
-            return std::make_optional(scaling_factors_);
         }
+        return std::make_optional(scaling_factors_);
     }
 
     /**

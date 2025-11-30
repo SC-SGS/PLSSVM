@@ -37,7 +37,8 @@ execution_range::execution_range(const dim_type block_p, const unsigned long lon
     // check whether the provided block size is valid
     if (this->num_threads_in_block() == 0) {
         throw kernel_launch_resources{ "At least one thread must be given per block! Maybe one dimension is zero?" };
-    } else if (max_allowed_block_size < this->num_threads_in_block()) {
+    }
+    if (max_allowed_block_size < this->num_threads_in_block()) {
         throw kernel_launch_resources{ fmt::format("Not enough work-items allowed for a work-groups of size {}x{}x{} (#threads: {}; max allowed: {})! Try reducing THREAD_BLOCK_SIZE.", block.x, block.y, block.z, this->num_threads_in_block(), max_allowed_block_size) };
     }
 
@@ -79,11 +80,10 @@ void swap(execution_range &lhs, execution_range &rhs) noexcept {
 std::ostream &operator<<(std::ostream &out, const execution_range &exec) {
     if (exec.grids.size() == 1) {
         return out << fmt::format("grid: {}; block: {}", exec.grids.front().first, exec.block);
-    } else {
-        std::vector<dim_type> transformed_vec(exec.grids.size());
-        std::transform(exec.grids.cbegin(), exec.grids.cend(), transformed_vec.begin(), [](const execution_range::grid_type &grid) { return grid.first; });
-        return out << fmt::format("grids: [{}]; block: {}", fmt::join(transformed_vec, ", "), exec.block);
     }
+    std::vector<dim_type> transformed_vec(exec.grids.size());
+    std::transform(exec.grids.cbegin(), exec.grids.cend(), transformed_vec.begin(), [](const execution_range::grid_type &grid) { return grid.first; });
+    return out << fmt::format("grids: [{}]; block: {}", fmt::join(transformed_vec, ", "), exec.block);
 }
 
 }  // namespace plssvm::detail

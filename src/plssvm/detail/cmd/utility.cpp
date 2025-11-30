@@ -173,14 +173,13 @@ std::optional<verbosity_level> parse_verbosity(const cxxopts::ParseResult &resul
                                   "WARNING: explicitly set the -q/--quiet flag, but the provided verbosity level isn't \"quiet\"; setting --verbosity={} to --verbosity=quiet\n",
                                   verb);
             return verbosity_level::quiet;
-        } else {
-            return verb;
         }
-    } else if (quiet) {
-        return verbosity_level::quiet;
-    } else {
-        return std::nullopt;
+        return verb;
     }
+    if (quiet) {
+        return verbosity_level::quiet;
+    }
+    return std::nullopt;
 }
 
 }  // namespace plssvm::detail::cmd
