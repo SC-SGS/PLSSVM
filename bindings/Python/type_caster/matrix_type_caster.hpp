@@ -55,9 +55,11 @@ struct type_caster<plssvm::matrix<T, layout>> {
      * @details If the PLSSVM matrix's memory layout is AoS, uses a Numpy ndarray with c_style layout,
      *          if the PLSSVM matrix's memory layout is SoA, uses a Numpy ndarray with f_style layout.
      * @param[in] matr the PLSSVM matrix to convert to a Numpy ndarray
+     * @params[in] rvp *unused*
+     * @params[in] h *unused*
      * @return a Pybind11 handle to the Numpy ndarray
      */
-    static py::handle cast(const matrix_type &matr, py::return_value_policy, py::handle) {
+    static py::handle cast(const matrix_type &matr, [[maybe_unused]] const py::return_value_policy rvp, [[maybe_unused]] const py::handle h) {
         const std::size_t num_data_points = matr.num_rows();
         const std::size_t num_features = matr.num_cols();
 
@@ -161,13 +163,14 @@ struct type_caster<plssvm::matrix<T, layout>> {
      * @brief Try converting a Python object @p obj to a plssvm::matrix.
      * @detauls Honors different Numpy ndarray memory layouts (c_style or f_style) and PLSSVM matrix layout types.
      * @param[in] obj the object to convert
+     * @params[in] allow_implicit_conversion *unused*
      * @return `true` if the conversion was successful, `false` otherwise
      * @throws py::value_error if the provided Python list is empty (or one-dimensional)
      * @throws py::value_error if the provided 2D Python list has inhomogeneous shape
      * @throws py::value_error if @p obj is not a Numpy ndarray, Pandas DataFrame, SciPy sparse matrix, or Python 2D list
      * @throws py::value_error if the Numpy ndarray doesn't have a two-dimensional shape
      */
-    bool load(py::handle obj, bool) {
+    bool load(py::handle obj, [[maybe_unused]] const bool allow_implicit_conversion) {
         // special case py::list
         if (py::isinstance<py::list>(obj)) {
             // provided obj is a Python list -> check if it is a correct py::list of py::list

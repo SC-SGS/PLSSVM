@@ -101,9 +101,10 @@ struct svr {
     /**
      * @brief Return the currently used params.
      * @details Necessary for the same Python function and also the string representation.
+     * @params[in] deep_copy *unused*
      * @return a Python dictionary containing the used parameter (`[[nodiscard]]`)
      */
-    [[nodiscard]] py::dict get_params(const bool) const {
+    [[nodiscard]] py::dict get_params([[maybe_unused]] const bool deep_copy) const {
         const plssvm::parameter params = svm_->get_params();
 
         // fill a Python dictionary with the supported keys and values

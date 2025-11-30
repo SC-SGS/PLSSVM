@@ -39,9 +39,11 @@ struct type_caster<plssvm::mpi::communicator> {
     /**
      * @brief Convert a plssvm::mpi::communicator to a mpi4py communicator.
      * @param[in] comm the PLSSVM MPI communicator wrapper
+     * @params[in] rvp *unused*
+     * @params[in] h *unused*
      * @return a Pybind11 handle to the mpi4py communicator
      */
-    static py::handle cast([[maybe_unused]] const plssvm::mpi::communicator &comm, py::return_value_policy, py::handle) {
+    static py::handle cast([[maybe_unused]] const plssvm::mpi::communicator &comm, [[maybe_unused]] const py::return_value_policy rvp, [[maybe_unused]] const py::handle h) {
 #if defined(PLSSVM_HAS_MPI_ENABLED)
         // we have MPI enabled
         try {
@@ -61,10 +63,11 @@ struct type_caster<plssvm::mpi::communicator> {
     /**
      * @brief Try converting a Python object @p obj to a plssvm::mpi::communicator.
      * @param[in] obj the object to convert
+     * @params[in] allow_implicit_conversions *unused*
      * @return `true` if the conversion was successful, `false` otherwise
      * @throws py::value_error if PLSSVM was built without MPI support, but a communicator was explicitly provided in Python
      */
-    bool load([[maybe_unused]] py::handle obj, bool) {
+    bool load([[maybe_unused]] py::handle obj, [[maybe_unused]] const bool allow_implicit_conversion) {
 #if defined(PLSSVM_HAS_MPI_ENABLED)
         try {
             // check if we can find mpi4py
