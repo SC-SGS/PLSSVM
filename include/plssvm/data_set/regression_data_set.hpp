@@ -533,9 +533,10 @@ class regression_data_set : public data_set<U> {
     void init();
 
     /**
-     * @copydoc plssvm::data_set::map_label
+     * @brief Create the mapping between the provided labels and the internally used values.
+     * @throws plssvm::data_set_exception any exception of the plssvm::data_set::label_mapper class
      */
-    void map_label() override;
+    void map_label();
 };
 
 //*************************************************************************************************************************************//

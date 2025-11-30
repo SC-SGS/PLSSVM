@@ -290,7 +290,7 @@ class data_set {
     /**
      * @brief Virtual destructor to allow derived classes to clean up properly.
      */
-    virtual ~data_set() = default;
+    virtual ~data_set() = 0;
 
     /**
      * @brief Save the data points and potential labels of this data set to the file @p filename using the file @p format type.
@@ -368,12 +368,6 @@ class data_set {
      */
     data_set() :
         data_ptr_{ std::make_shared<soa_matrix<real_type>>() } { }
-
-    /**
-     * @brief Create the mapping between the provided labels and the internally used values.
-     * @throws plssvm::data_set_exception any exception of the plssvm::data_set::label_mapper class
-     */
-    virtual void map_label() = 0;
 
     /**
      * @brief Read the data points and potential labels from the file @p filename assuming the plssvm::file_format_type @p format.
@@ -621,6 +615,9 @@ data_set<U>::data_set(mpi::communicator comm, soa_matrix<real_type> &&data_point
     // scale data set
     scaler_->scale(*data_ptr_);
 }
+
+template <typename U>
+data_set<U>::~data_set() = default;
 
 template <typename U>
 void data_set<U>::save(const std::string &filename, const file_format_type format) const {
