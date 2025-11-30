@@ -400,7 +400,7 @@ void file_reader::open_file(const char *filename) {
         fallback_file_content_.resize(num_bytes_);
         for (std::streamsize i = 0; i < static_cast<std::streamsize>(std::ceil(static_cast<double>(num_bytes_) / INT32_MAX)); ++i) {
             // read the whole file in chunks of up to INT32_MAX bytes at once
-            if (!f.read(fallback_file_content_.data() + i * INT32_MAX, std::min<std::streamsize>(INT32_MAX, num_bytes_ - i * INT32_MAX))) {
+            if (!f.read(&fallback_file_content_[i * INT32_MAX], std::min<std::streamsize>(INT32_MAX, num_bytes_ - i * INT32_MAX))) {
                 throw invalid_file_format_exception{ fmt::format("Error while reading file: '{}'!", filename) };
             }
         }
