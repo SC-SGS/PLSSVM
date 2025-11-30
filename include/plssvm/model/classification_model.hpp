@@ -116,7 +116,13 @@ class classification_model : public model<U> {
      * @details If the support vectors contain the labels `std::vector<int>{ -1, 1, 1, -1, -1, 1 }`, this function returns the classes `{ -1, 1 }`.
      * @return all classes (`[[nodiscard]]`)
      */
-    [[nodiscard]] std::vector<label_type> classes() const { return dynamic_cast<classification_data_set<label_type> &>(*data_).classes().value(); }
+    [[nodiscard]] std::vector<label_type> classes() const {
+        const auto classes_opt = dynamic_cast<const classification_data_set<label_type> &>(*data_).classes();
+        if (!classes_opt.has_value()) {
+            throw exception{ "No classes provided (this should NEVER be the case)!" };
+        }
+        return classes_opt.value();
+    }
 
     /**
      * @brief Returns the multi-class classification strategy used to ft this model.

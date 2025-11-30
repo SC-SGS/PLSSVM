@@ -159,7 +159,7 @@ const std::optional<std::vector<std::size_t>> &communicator::get_load_balancing_
     PLSSVM_ASSERT(and_result == or_result, "Some MPI ranks have load balancing weights and some don't!");
 
     // if all MPI ranks have load balancing weights, check that they are the same
-    if (and_result) {
+    if (and_result && load_balancing_weights_.has_value()) {
         // check that the balancing weights are the same for all MPI ranks
         std::vector<std::size_t> reference_weights(load_balancing_weights_->size());
         if (this->is_main_rank()) {

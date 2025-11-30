@@ -273,7 +273,7 @@ class matrix {
      * @brief Checks whether this matrix contains any padding entries.
      * @return `true` if this matrix is padded, `false` otherwise (`[[nodiscard]]`)
      */
-    [[nodiscard]] bool is_padded() const noexcept { return !(padding_.x == 0 && padding_.y == 0); }
+    [[nodiscard]] bool is_padded() const noexcept { return padding_.x != 0 || padding_.y != 0; }
 
     /**
      * @brief Restore the padding entries, i.e., explicitly set all padding entries to `0` again.

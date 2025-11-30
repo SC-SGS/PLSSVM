@@ -185,7 +185,7 @@ void min_max_scaler::scale(plssvm::matrix<real_type, layout> &data) {
             }
 
             // add scaling factor only if min_value != 0.0 AND max_value != 0.0
-            if (!(min_value == real_type{ 0.0 } && max_value == real_type{ 0.0 })) {
+            if (min_value != real_type{ 0.0 } || max_value != real_type{ 0.0 }) {
                 scaling_factors_.emplace_back(feature, min_value, max_value);
             }
         }

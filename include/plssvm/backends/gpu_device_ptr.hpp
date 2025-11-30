@@ -198,7 +198,7 @@ class gpu_device_ptr {
      * @return `true` if the wrapped device_ptr is padded, `false` otherwise (`[[nodiscard]]`)
      */
     [[nodiscard]] bool is_padded() const noexcept {
-        return !(padding_.x == 0 && padding_.y == 0);
+        return padding_.x != 0 || padding_.y != 0;
     }
 
     /**

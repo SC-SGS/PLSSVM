@@ -515,7 +515,8 @@ template <typename label_type>
     if (is_oaa && is_oao) {
         // invalid model file
         throw invalid_file_format_exception{ "Can't distinguish between OAA and OAO in the given model file!" };
-    } else if (is_oaa) {
+    }
+    if (is_oaa) {
         // every class has the same number of weights
         // -> use a vector with one entry containing a matrix with all weights!
         classification = classification_type::oaa;
@@ -594,6 +595,8 @@ template <typename label_type>
 template <typename label_type>
 [[nodiscard]] inline std::vector<label_type> write_libsvm_model_header_classification(fmt::ostream &out, const mpi::communicator &comm, const plssvm::parameter &params, const std::vector<real_type> &rho, const classification_data_set<label_type> &data) {
     PLSSVM_ASSERT(data.has_labels(), "Cannot write a model file that does not include labels!");
+    PLSSVM_ASSERT(data.classes().has_value(), "No original labels provided!");
+    PLSSVM_ASSERT(data.labels().has_value(), "No mapped labels provided!");
     PLSSVM_ASSERT(!rho.empty(), "At least one rho value must be provided!");
 
     // save model file header
@@ -616,23 +619,30 @@ template <typename label_type>
     }
 
     // get the original labels (not the mapped once)
-    const std::vector<label_type> classes = data.classes().value();
+    const std::optional<std::vector<label_type>> classes = data.classes();
+
+    // get the mapped labels
+    const auto &labels = data.labels();
+
+    // check that labels are present (should NEVER trigger)
+    if (!classes.has_value() || !labels.has_value()) {
+        throw data_set_exception{ "The data set does not contain any labels, but they are required to output a model file!" };
+    }
 
     // count the occurrence of each label
     std::map<label_type, std::size_t> label_counts_map;
-    const std::vector<label_type> labels = data.labels().value();
-    for (const label_type &l : labels) {
+    for (const label_type &l : labels.value().get()) {
         ++label_counts_map[l];
     }
     // fill vector with number of occurrences in correct order
     std::vector<std::size_t> label_counts(data.num_classes());
     for (typename data_set<label_type>::size_type i = 0; i < data.num_classes(); ++i) {
-        label_counts[i] = label_counts_map[classes[i]];
+        label_counts[i] = label_counts_map[classes.value()[i]];
     }
 
     out_string += fmt::format("nr_class {}\nlabel {}\ntotal_sv {}\nnr_sv {}\nrho {:.10e}\nSV\n",
                               data.num_classes(),
-                              fmt::join(classes, " "),
+                              fmt::join(classes.value(), " "),
                               data.num_data_points(),
                               fmt::join(label_counts, " "),
                               fmt::join(rho, " "));
@@ -645,7 +655,7 @@ template <typename label_type>
     // write model header to file
     out.print("{}", out_string);
 
-    return classes;
+    return classes.value();
 }
 
 /**
@@ -684,6 +694,7 @@ template <typename label_type>
 inline void write_libsvm_model_data_classification(const std::string &filename, const mpi::communicator &comm, const plssvm::parameter &params, const classification_type classification, const std::vector<real_type> &rho, const std::vector<aos_matrix<real_type>> &alpha, const std::vector<std::vector<std::size_t>> &index_sets, const classification_data_set<label_type> &data) {
     PLSSVM_ASSERT(!filename.empty(), "The provided model filename must not be empty!");
     PLSSVM_ASSERT(data.has_labels(), "Cannot write a model file that does not include labels!");
+    PLSSVM_ASSERT(data.labels().has_value(), "No mapped labels provided!");
     PLSSVM_ASSERT(rho.size() == calculate_number_of_classifiers(classification, data.num_classes()),
                   "The number of rho values is {} but must be {} ({})!",
                   rho.size(),
@@ -730,7 +741,7 @@ inline void write_libsvm_model_data_classification(const std::string &filename, 
     }
 
     const soa_matrix<real_type> &support_vectors = data.data();
-    const std::vector<label_type> &labels = *data.labels();
+    const std::vector<label_type> &labels = labels_opt.value();
     const std::size_t num_features = data.num_features();
     const std::size_t num_classes = data.num_classes();
     const std::size_t num_alpha_per_point = classification == classification_type::oaa ? num_classes : num_classes - 1;

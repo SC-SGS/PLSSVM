@@ -142,7 +142,7 @@ std::optional<std::pair<sycl::data_parallel_kernel, sycl::implementation_type>> 
 std::optional<std::vector<std::size_t>> parse_and_check_mpi_options_if_available([[maybe_unused]] const cxxopts::ParseResult &result, [[maybe_unused]] const cxxopts::Options &options, [[maybe_unused]] const mpi::communicator &comm) {
 #if defined(PLSSVM_HAS_MPI_ENABLED)
     // parse MPI load balancing factors
-    if (result.count("mpi_load_balancing_weights")) {
+    if (result.contains("mpi_load_balancing_weights")) {
         std::vector<std::size_t> mpi_load_balancing_weights = result["mpi_load_balancing_weights"].as<std::vector<std::size_t>>();
 
         // sanity-check provided balance factors
@@ -165,7 +165,7 @@ std::optional<verbosity_level> parse_verbosity(const cxxopts::ParseResult &resul
     // parse whether output is quiet or not
     const bool quiet = result["quiet"].as<bool>();
 
-    if (result["verbosity"].count()) {
+    if (result.contains("verbosity")) {
         const verbosity_level verb = result["verbosity"].as<verbosity_level>();
         if (quiet && verb != verbosity_level::quiet) {
             detail::log_untracked(verbosity_level::full | verbosity_level::warning,

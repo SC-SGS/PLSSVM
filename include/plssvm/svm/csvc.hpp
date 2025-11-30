@@ -535,7 +535,8 @@ class csvc : virtual public csvm {
     template <typename label_type>
     [[nodiscard]] real_type score(const classification_model<label_type> &model, const classification_data_set<label_type> &data) const {
         // the data set must contain labels in order to score the learned model
-        if (!data.has_labels()) {
+        const std::optional<std::vector<label_type>> &correct_labels_opt = data.labels();
+        if (!correct_labels_opt.has_value()) {
             throw invalid_parameter_exception{ "The data set to score must have labels!" };
         }
         // the number of features must be equal
@@ -554,7 +555,7 @@ class csvc : virtual public csvm {
         // predict labels
         const std::vector<label_type> predicted_labels = this->predict(model, data);
         // correct labels
-        const std::vector<label_type> &correct_labels = *data.labels();
+        const std::vector<label_type> &correct_labels = correct_labels_opt.value();
 
         // calculate the accuracy
         typename std::vector<label_type>::size_type correct{ 0 };

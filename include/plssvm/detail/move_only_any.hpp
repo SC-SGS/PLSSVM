@@ -283,7 +283,7 @@ template <typename T>
 [[nodiscard]] inline T move_only_any_cast(const move_only_any &operand) {
     using U = detail::remove_cvref_t<T>;
     static_assert(std::is_constructible_v<T, const U &>);
-    if (auto *ptr = move_only_any_cast<U>(&operand)) {
+    if (auto *ptr = move_only_any_cast<U>(&operand); ptr != nullptr) {
         // get the value if possible
         return static_cast<T>(*ptr);
     }
@@ -301,7 +301,7 @@ template <typename T>
 [[nodiscard]] inline T move_only_any_cast(move_only_any &operand) {
     using U = detail::remove_cvref_t<T>;
     static_assert(std::is_constructible_v<T, U &>);
-    if (auto *ptr = move_only_any_cast<U>(&operand)) {
+    if (auto *ptr = move_only_any_cast<U>(&operand); ptr != nullptr) {
         // get the value if possible
         return static_cast<T>(*ptr);
     }
@@ -319,7 +319,7 @@ template <typename T>
 [[nodiscard]] inline T move_only_any_cast(move_only_any &&operand) {  // NOLINT(cppcoreguidelines-rvalue-reference-param-not-moved): the object is moved after the cast
     using U = detail::remove_cvref_t<T>;
     static_assert(std::is_constructible_v<T, U>);
-    if (auto *ptr = move_only_any_cast<U>(&operand)) {
+    if (auto *ptr = move_only_any_cast<U>(&operand); ptr != nullptr) {
         // get the value if possible
         return static_cast<T>(std::move(*ptr));
     }
