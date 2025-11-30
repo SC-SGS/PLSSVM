@@ -22,8 +22,8 @@ namespace plssvm::mpi::detail {
 std::string mpi_library_version() {
 #if defined(PLSSVM_HAS_MPI_ENABLED)
     std::string version(MPI_MAX_LIBRARY_VERSION_STRING, '\0');
-    int resultlen{};
-    PLSSVM_MPI_ERROR_CHECK(MPI_Get_library_version(version.data(), &resultlen));
+    int result_len{};
+    PLSSVM_MPI_ERROR_CHECK(MPI_Get_library_version(version.data(), &result_len));
     return version.substr(0, version.find_first_of('\0'));
 #else
     return std::string{ "unknown/unused" };

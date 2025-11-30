@@ -36,8 +36,8 @@ void mpi_error_check([[maybe_unused]] const int err) {
 std::string node_name() {
 #if defined(PLSSVM_HAS_MPI_ENABLED)
     std::string name(MPI_MAX_PROCESSOR_NAME, '\0');
-    int resultlen{};
-    PLSSVM_MPI_ERROR_CHECK(MPI_Get_processor_name(name.data(), &resultlen));
+    int result_len{};
+    PLSSVM_MPI_ERROR_CHECK(MPI_Get_processor_name(name.data(), &result_len));
     return name.substr(0, name.find_first_of('\0'));
 #else
     return std::string{ "unknown/unused" };
