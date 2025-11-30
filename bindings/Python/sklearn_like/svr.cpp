@@ -339,7 +339,7 @@ void init_sklearn_svr(py::module_ &m) {
                 try {
                     return self.svm_->score(std::get<plssvm::regression_model<label_type>>(*self.model_), data_to_score);
                 } catch (const std::exception &) {
-                    throw py::value_error{ fmt::format("The dtype of the labels to score is \"{}\", but the model was fitted with \"{}\". Please use the same types for fit and score!", labels.dtype.attr("name").cast<std::string>(), self.py_dtype_.attr("name").cast<std::string>()) };
+                    throw py::value_error{ fmt::format(R"(The dtype of the labels to score is "{}", but the model was fitted with "{}". Please use the same types for fit and score!)", labels.dtype.attr("name").cast<std::string>(), self.py_dtype_.attr("name").cast<std::string>()) };
                 }
             }, labels.labels); }, "Return the mean accuracy on the given test data and labels.", py::arg("X"), py::arg("y"), py::pos_only(), py::arg("sample_weight") = std::nullopt)
         .def("set_fit_request", [](const svr &) { throw py::attribute_error{ "'SVR' object has no function 'set_fit_request' (not implemented)" }; }, "Request metadata passed to the fit method.")

@@ -26,6 +26,6 @@ void init_svm_types(py::module_ &m) {
 
     // bind free functions
     m.def("list_available_svm_types", &plssvm::list_available_svm_types, "list the available SVM types");
-    m.def("svm_type_to_task_name", &plssvm::svm_type_to_task_name, "get the task name (e.g., \"classification\" or \"regression\") based on the provided SVMType", py::arg("svm_type"));
+    m.def("svm_type_to_task_name", &plssvm::svm_type_to_task_name, R"(get the task name (e.g., "classification" or "regression") based on the provided SVMType)", py::arg("svm_type"));
     m.def("svm_type_from_model_file", &plssvm::svm_type_from_model_file, "determine the SVMType based on the provided LIBSVM model file", py::arg("filename"));
 }
