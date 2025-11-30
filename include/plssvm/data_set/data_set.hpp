@@ -423,7 +423,7 @@ template <typename U>
 data_set<U>::data_set(mpi::communicator comm, const std::string &filename, min_max_scaler scaler) :
     data_set{ std::move(comm), filename } {
     // check whether the data set and scaler MPI communicators are identical
-    if (comm != scaler.communicator()) {
+    if (comm_ != scaler.communicator()) {
         throw mpi_exception{ "The MPI communicators provided to the data set and scaler must be identical!" };
     }
 
@@ -437,7 +437,7 @@ template <typename U>
 data_set<U>::data_set(mpi::communicator comm, const std::string &filename, file_format_type format, min_max_scaler scaler) :
     data_set{ std::move(comm), filename, format } {
     // check whether the data set and scaler MPI communicators are identical
-    if (comm != scaler.communicator()) {
+    if (comm_ != scaler.communicator()) {
         throw mpi_exception{ "The MPI communicators provided to the data set and scaler must be identical!" };
     }
 
@@ -520,7 +520,7 @@ template <layout_type layout>
 data_set<U>::data_set(mpi::communicator comm, const matrix<real_type, layout> &data_points, min_max_scaler scaler) :
     data_set{ std::move(comm), data_points } {
     // check whether the data set and scaler MPI communicators are identical
-    if (comm != scaler.communicator()) {
+    if (comm_ != scaler.communicator()) {
         throw mpi_exception{ "The MPI communicators provided to the data set and scaler must be identical!" };
     }
 
@@ -535,7 +535,7 @@ template <layout_type layout>
 data_set<U>::data_set(mpi::communicator comm, const matrix<real_type, layout> &data_points, std::vector<label_type> labels, min_max_scaler scaler) :
     data_set{ std::move(comm), data_points, std::move(labels) } {
     // check whether the data set and scaler MPI communicators are identical
-    if (comm != scaler.communicator()) {
+    if (comm_ != scaler.communicator()) {
         throw mpi_exception{ "The MPI communicators provided to the data set and scaler must be identical!" };
     }
 
@@ -592,7 +592,7 @@ template <typename U>
 data_set<U>::data_set(mpi::communicator comm, soa_matrix<real_type> &&data_points, min_max_scaler scaler) :
     data_set{ std::move(comm), std::move(data_points) } {
     // check whether the data set and scaler MPI communicators are identical
-    if (comm != scaler.communicator()) {
+    if (comm_ != scaler.communicator()) {
         throw mpi_exception{ "The MPI communicators provided to the data set and scaler must be identical!" };
     }
 
@@ -606,7 +606,7 @@ template <typename U>
 data_set<U>::data_set(mpi::communicator comm, soa_matrix<real_type> &&data_points, std::vector<label_type> &&labels, min_max_scaler scaler) :
     data_set{ std::move(comm), std::move(data_points), std::move(labels) } {
     // check whether the data set and scaler MPI communicators are identical
-    if (comm != scaler.communicator()) {
+    if (comm_ != scaler.communicator()) {
         throw mpi_exception{ "The MPI communicators provided to the data set and scaler must be identical!" };
     }
 
