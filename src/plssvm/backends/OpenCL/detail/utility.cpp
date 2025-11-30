@@ -92,16 +92,17 @@ namespace plssvm::opencl::detail {
 
     // check if the PLSSVM OpenCL device filter env variable is set
     std::optional<std::map<target_platform, std::vector<std::size_t>>> opt_filters_to_apply{ std::nullopt };
-    if (const std::optional<std::string> &device_filter = ::plssvm::detail::get_env_variable("PLSSVM_OPENCL_DEVICE_FILTER"); device_filter.has_value()) {
+    const std::optional<std::string> &device_filter_env = ::plssvm::detail::get_env_variable("PLSSVM_OPENCL_DEVICE_FILTER");
+    if (device_filter_env.has_value()) {
         // check that the device filter has the correct format
         constexpr static const char *regex_pattern = R"(^((gpu_nvidia|gpu_amd|gpu_intel|cpu):[0-9]+)(;((gpu_nvidia|gpu_amd|gpu_intel|cpu):[0-9]+))*$)";
-        if (!std::regex_match(device_filter.value(), std::regex{ regex_pattern, std::regex::ECMAScript })) {
-            throw backend_exception{ fmt::format(R"(Invalid device filter "{}". The filter must be of form: "{}".)", device_filter.value(), regex_pattern) };
+        if (!std::regex_match(device_filter_env.value(), std::regex{ regex_pattern, std::regex::ECMAScript })) {
+            throw backend_exception{ fmt::format(R"(Invalid device filter "{}". The filter must be of form: "{}".)", device_filter_env.value(), regex_pattern) };
         }
 
         // parse the provided filter
         std::map<target_platform, std::vector<std::size_t>> filters_to_apply{};
-        for (const std::string_view filter : ::plssvm::detail::split(device_filter.value(), ';')) {
+        for (const std::string_view filter : ::plssvm::detail::split(device_filter_env.value(), ';')) {
             // filter is of the form: target_platform:device_num
             const auto &[filter_target, filter_device_id] = extract_filter_information(filter);
             filters_to_apply[filter_target].push_back(filter_device_id);
@@ -216,7 +217,7 @@ namespace plssvm::opencl::detail {
         }
         // the system devices should not be empty!
         if (system_devices.empty()) {
-            if (opt_filters_to_apply.has_value()) {
+            if (device_filter_env.has_value()) {
                 // add a more concrete error message in case of a PLSSVM_OPENCL_DEVICE_FILTER was provided
                 // since a wrong device filter may lead to no found device
                 throw platform_devices_empty{ fmt::format("No appropriate devices could be found! Maybe the PLSSVM_OPENCL_DEVICE_FILTER=\"{}\" is incorrect?", device_filter_env.value()) };
