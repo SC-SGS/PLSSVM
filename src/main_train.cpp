@@ -94,10 +94,18 @@ template <typename svm_type, typename label_type>
     return svm.fit(data, plssvm::epsilon = cmd_parser.epsilon, plssvm::max_iter = cmd_parser.max_iter, plssvm::solver = cmd_parser.solver);
 }
 
-int main(int argc, char *argv[]) {
-    // initialize MPI environment only via the plssvm::scope_guard (by explicitly specifying NO backend)
-    [[maybe_unused]] plssvm::environment::scope_guard mpi_guard{ {} };
 }  // namespace
+
+int main(int argc, char **argv) {
+    // may throw an exception if the required level of MPI parallelism isn't available (really rare)
+    std::unique_ptr<plssvm::environment::scope_guard> mpi_guard{};
+    try {
+        // initialize MPI environment only via the plssvm::scope_guard (by explicitly specifying NO backend)
+        mpi_guard = std::make_unique<plssvm::environment::scope_guard>(std::vector<plssvm::backend_type>{});
+    } catch (const plssvm::mpi_exception &e) {
+        std::cerr << "An exception occurred while setting up MPI!: " << e.what_with_loc() << std::endl;
+    }
+
     // create a PLSSVM communicator -> use MPI_COMM_WORLD for our executables
     // if MPI is not supported, does nothing
     plssvm::mpi::communicator comm{};

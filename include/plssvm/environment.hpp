@@ -25,7 +25,9 @@
 
 #if defined(PLSSVM_HAS_HPX_BACKEND) || defined(PLSSVM_KOKKOS_BACKEND_ENABLE_HPX)
     #include "hpx/execution.hpp"  // ::hpx::post
-    #include "hpx/hpx_main.hpp"   // disable support for HPX's short command line aliases
+    #if !defined(PLSSVM_HPX_DO_NOT_INCLUDE_HPX_MAIN)
+        #include "hpx/hpx_main.hpp"  // disable support for HPX's short command line aliases
+    #endif
     #include "hpx/hpx_start.hpp"  // ::hpx::{start, stop, finalize}
     #include "hpx/runtime.hpp"    // ::hpx::{is_running, is_stopped}
 #endif
