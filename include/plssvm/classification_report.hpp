@@ -152,7 +152,7 @@ class classification_report {
 
   private:
     /// The confusion matrix.
-    aos_matrix<unsigned long long> confusion_matrix_{};
+    aos_matrix<unsigned long long> confusion_matrix_;
     /// The metrics for each label: precision, recall, f1 score, and support.
     std::vector<std::pair<std::string, metric>> metrics_;
     /// The global accuracy.

@@ -49,7 +49,7 @@ struct parser_train {
     parser_train(const mpi::communicator &comm, int argc, char **argv);
 
     /// Other base C-SVM parameters
-    plssvm::parameter csvm_params{};
+    plssvm::parameter csvm_params;
 
     /// The error tolerance parameter for the CG algorithm.
     real_type epsilon{ DEFAULT_EPSILON };
@@ -81,15 +81,15 @@ struct parser_train {
 
     /// Load balancing weights for MPI used if different hardware per MPI process is used. The number must match the number of spawned MPI processes.
     /// Providing [1, 1] means every process gets the same amount of work, providing [1, 3] means that the second process has three times the work to do compared to process zero.
-    std::vector<std::size_t> mpi_load_balancing_weights{};
+    std::vector<std::size_t> mpi_load_balancing_weights;
 
     /// The name of the data/test file to parse.
-    std::string input_filename{};
+    std::string input_filename;
     /// The name of the model file to write the learned support vectors to/to parse the saved model from.
-    std::string model_filename{};
+    std::string model_filename;
 
     /// If performance tracking has been enabled, provides the name of the file where the performance tracking results are saved to. If the filename is empty, the results are dumped using std::clog instead.
-    std::string performance_tracking_filename{};
+    std::string performance_tracking_filename;
 };
 
 /**

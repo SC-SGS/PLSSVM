@@ -172,7 +172,7 @@ class device_wrapper {
      * @param[in] rhs the second device wrapper
      * @return `true` if both underlying `std::variant`s are equal, otherwise `false` (`[[nodiscard]]`)
      */
-    [[nodiscard]] friend bool operator==(const device_wrapper &lhs, const device_wrapper &rhs) noexcept {
+    [[nodiscard]] friend bool operator==(const device_wrapper &lhs, const device_wrapper &rhs) {
         return lhs.v_ == rhs.v_;
     }
 
@@ -188,7 +188,7 @@ class device_wrapper {
 
   private:
     /// The wrapped `std::variant` type.
-    variant_type v_{};
+    variant_type v_;
 };
 
 /**

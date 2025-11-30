@@ -236,7 +236,7 @@ class communicator {
     MPI_Comm comm_{ MPI_COMM_WORLD };
 #endif
     /// The MPI load balancing weights. Always guaranteed to be the same size as the communicator size.
-    std::optional<std::vector<std::size_t>> load_balancing_weights_{ std::nullopt };
+    std::optional<std::vector<std::size_t>> load_balancing_weights_;
 };
 
 }  // namespace plssvm::mpi

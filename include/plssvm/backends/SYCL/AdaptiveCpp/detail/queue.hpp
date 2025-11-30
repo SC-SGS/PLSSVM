@@ -25,7 +25,7 @@ class queue {
     /// The struct used in the PImpl idiom (encapsulates the actual SYCL queue).
     struct queue_impl;
     /// A pointer to the implementation hidden in a private header.
-    std::shared_ptr<queue_impl> impl{};
+    std::shared_ptr<queue_impl> impl;
 };
 
 }  // namespace plssvm::adaptivecpp::detail

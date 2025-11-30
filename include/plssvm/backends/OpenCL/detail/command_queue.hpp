@@ -93,7 +93,7 @@ class command_queue {
     /// The wrapped cl_command_queue.
     cl_command_queue queue{};
     /// All OpenCL device kernel associated with the device corresponding to this command queue.
-    std::map<compute_kernel_name, kernel> kernels{};
+    std::map<compute_kernel_name, kernel> kernels;
 };
 
 }  // namespace plssvm::opencl::detail

@@ -45,7 +45,7 @@ namespace plssvm::detail {
  * @return the name of `T` (`[[nodiscard]]`)
  */
 template <typename T>
-[[nodiscard]] constexpr inline std::string_view arithmetic_type_name() = delete;
+[[nodiscard]] constexpr std::string_view arithmetic_type_name() = delete;
 
 PLSSVM_CREATE_ARITHMETIC_TYPE_NAME(bool)
 

@@ -369,9 +369,9 @@ class gpu_device_ptr {
     /// The device queue used to manage the device memory associated with this device pointer.
     queue_type queue_{};
     /// The size of the managed memory.
-    plssvm::shape shape_{};
+    plssvm::shape shape_;
     /// The padding size of the managed memory.
-    plssvm::shape padding_{};
+    plssvm::shape padding_;
     /// The device pointer pointing to the managed memory.
     device_pointer_type data_{};
 };

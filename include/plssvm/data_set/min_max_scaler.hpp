@@ -151,12 +151,12 @@ class min_max_scaler {
 
   private:
     /// The user-provided scaling interval. After scaling, all feature values are scaled to [lower, upper].
-    std::pair<real_type, real_type> scaling_interval_{};
+    std::pair<real_type, real_type> scaling_interval_;
     /// The scaling factors for all features.
-    std::vector<factors> scaling_factors_{};
+    std::vector<factors> scaling_factors_;
 
     /// The used MPI communicator.
-    mpi::communicator comm_{};
+    mpi::communicator comm_;
 };
 
 template <layout_type layout>

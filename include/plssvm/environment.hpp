@@ -551,7 +551,7 @@ class [[nodiscard]] scope_guard {
 
   private:
     /// The backends that should be initialized IF it is necessary for them or all available if empty.
-    std::vector<backend_type> backends_{};
+    std::vector<backend_type> backends_;
 };
 
 }  // namespace plssvm::environment

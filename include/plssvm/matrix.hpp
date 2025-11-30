@@ -403,9 +403,9 @@ class matrix {
     }
 
     /// The shape of the matrix.
-    plssvm::shape shape_{};
+    plssvm::shape shape_;
     /// The shape of the padding for each row and column.
-    plssvm::shape padding_{};
+    plssvm::shape padding_;
     /// The (linearized, either in AoS or SoA layout) data.
     std::vector<value_type> data_{};
 };

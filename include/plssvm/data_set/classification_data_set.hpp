@@ -731,8 +731,8 @@ void classification_data_set<U>::map_label() {
     PLSSVM_ASSERT(labels_ptr_ != nullptr, "Can't create mapping if no labels are provided!");
 
     // create vector containing unique classes
-    std::set<label_type> unique_labels(labels_ptr_->cbegin(), labels_ptr_->cend());
-    std::vector<label_type> classes(unique_labels.cbegin(), unique_labels.cend());
+    const std::set<label_type> unique_labels(labels_ptr_->cbegin(), labels_ptr_->cend());
+    const std::vector<label_type> classes(unique_labels.cbegin(), unique_labels.cend());
 
     // create label mapping
     label_mapper mapper{ classes };

@@ -85,9 +85,9 @@ struct tracking_entry {
     ~tracking_entry() = default;
 
     /// The category to which this tracking entry belongs; used for grouping in the resulting YAML file.
-    const std::string entry_category{};
+    const std::string entry_category;
     /// The name of the tracking entry displayed in the YAML file.
-    const std::string entry_name{};
+    const std::string entry_name;
     /// The tracked value in the YAML file.
     const T entry_value{};
 };
@@ -292,7 +292,7 @@ class performance_tracker {
 
   private:
     /// All tracking entries grouped by their specified categories.
-    std::map<std::string, std::map<std::string, std::vector<std::string>>> tracking_entries_{};
+    std::map<std::string, std::map<std::string, std::vector<std::string>>> tracking_entries_;
     /// The reference time point used for the performance tracking and hardware samples entries.
     std::chrono::steady_clock::time_point reference_time_{ std::chrono::steady_clock::now() };
     /// All special events mainly used for hardware sampling.

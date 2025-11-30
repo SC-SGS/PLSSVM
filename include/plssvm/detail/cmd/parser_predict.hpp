@@ -61,17 +61,17 @@ struct parser_predict {
 
     /// Load balancing weights for MPI used if different hardware per MPI process is used. The number must match the number of spawned MPI processes.
     /// Providing [1, 1] means every process gets the same amount of work, providing [1, 3] means that the second process has three times the work to do compared to process zero.
-    std::vector<std::size_t> mpi_load_balancing_weights{};
+    std::vector<std::size_t> mpi_load_balancing_weights;
 
     /// The name of the data file to predict.
-    std::string input_filename{};
+    std::string input_filename;
     /// The name of the model file containing the support vectors and weights used for prediction.
-    std::string model_filename{};
+    std::string model_filename;
     /// The name of the file to write the predicted labels to.
-    std::string predict_filename{};
+    std::string predict_filename;
 
     /// If performance tracking has been enabled, provides the name of the file where the performance tracking results are saved to. If the filename is empty, the results are dumped using std::clog instead.
-    std::string performance_tracking_filename{};
+    std::string performance_tracking_filename;
 };
 
 /**

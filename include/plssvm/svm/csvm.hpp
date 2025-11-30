@@ -248,13 +248,13 @@ class csvm {
     [[nodiscard]] aos_matrix<real_type> run_predict_values(const parameter &params, const soa_matrix<real_type> &support_vectors, const aos_matrix<real_type> &alpha, const std::vector<real_type> &rho, soa_matrix<real_type> &w, const soa_matrix<real_type> &predict_points) const;
 
     /// The SVM parameter (e.g., cost, degree, gamma, coef0) currently in use.
-    parameter params_{};
+    parameter params_;
     /// The target platform of this SVM.
     target_platform target_{ plssvm::target_platform::automatic };
     /// The data distribution on the available devices.
-    mutable std::unique_ptr<detail::data_distribution> data_distribution_{};
+    mutable std::unique_ptr<detail::data_distribution> data_distribution_;
     /// The used MPI communicator.
-    mpi::communicator comm_{};
+    mpi::communicator comm_;
 };
 
 inline csvm::csvm(mpi::communicator comm, parameter params) :
