@@ -73,7 +73,7 @@ if (TARGET ${PLSSVM_HPX_BACKEND_LIBRARY_NAME})
 endif ()
 if (TARGET ${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME})
 
-    # AdaptiveCpp stdpar only support on the CPU when using our Python bindings
+    # AdaptiveCpp stdpar only support the CPU as target in our Python bindings
     if (PLSSVM_STDPAR_BACKEND STREQUAL "ACPP" AND (DEFINED PLSSVM_NVIDIA_TARGET_ARCHS OR DEFINED PLSSVM_AMD_TARGET_ARCHS OR DEFINED PLSSVM_INTEL_TARGET_ARCHS))
         message(
             FATAL_ERROR
