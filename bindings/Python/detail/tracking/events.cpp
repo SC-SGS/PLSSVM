@@ -21,7 +21,7 @@ namespace py = pybind11;
 
 void init_events(py::module_ &m) {
     // use a detail.tracking.PerformanceTracker submodule for the performance tracking bindings
-    py::module_ tracking_module = m.def_submodule("performance_tracking", "a module containing performance tracking functionality");
+    const py::module_ tracking_module = m.def_submodule("performance_tracking", "a module containing performance tracking functionality");
 
     using event_type = plssvm::detail::tracking::events::event;
 

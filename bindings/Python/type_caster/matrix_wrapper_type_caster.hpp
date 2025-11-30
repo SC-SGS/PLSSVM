@@ -101,7 +101,7 @@ struct type_caster<plssvm::bindings::python::util::matrix_wrapper<T, layout>> {
                 const auto &list = obj.attr("columns").cast<py::list>();
                 std::vector<std::string> column_names{};
                 column_names.reserve(list.size());
-                for (py::handle item : list) {
+                for (const py::handle &item : list) {
                     // note: column names are only set if they are ALL strings
                     if (!py::isinstance<py::str>(item)) {
                         throw py::type_error{

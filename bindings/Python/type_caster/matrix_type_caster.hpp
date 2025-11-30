@@ -66,7 +66,7 @@ struct type_caster<plssvm::matrix<T, layout>> {
 
         // create the Python numpy array
         py_array_type arr({ num_data_points, num_features });
-        py::buffer_info buffer = arr.request();
+        const py::buffer_info buffer = arr.request();
         T *ptr = static_cast<T *>(buffer.ptr);
 
         // check if the provided matrix has padding entries -> must be removed
@@ -103,7 +103,7 @@ struct type_caster<plssvm::matrix<T, layout>> {
         const std::size_t num_cols = arr.shape(1);
 
         // get the underlying raw memory
-        py::buffer_info buffer = arr.request();
+        const py::buffer_info buffer = arr.request();
         const T *ptr = static_cast<T *>(buffer.ptr);
 
         // note: the conversions use OpenMP -> remove Python's Global Interpreter Lock
@@ -237,7 +237,7 @@ struct type_caster<plssvm::matrix<T, layout>> {
             value = matrix_type{ plssvm::shape{ num_rows, num_cols }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE } };
 
             // get the underlying buffer
-            py::buffer_info buffer = arr.request();
+            const py::buffer_info buffer = arr.request();
 
             // check the memory layout of the Python Numpy array
             if (plssvm::bindings::python::util::is_c_contiguous<T>(buffer)) {

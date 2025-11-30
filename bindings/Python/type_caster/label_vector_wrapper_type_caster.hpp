@@ -102,7 +102,7 @@ template <typename possible_vector_types>
     }
 
     // the type used in the py::array
-    py::dtype type = arr.dtype();
+    const py::dtype type = arr.dtype();
 
     PLSSVM_CREATE_PYARRAY_TO_VECTOR_MAPPINGS(bool)
     PLSSVM_CREATE_PYARRAY_TO_VECTOR_MAPPINGS(std::int8_t)
@@ -203,9 +203,9 @@ template <typename possible_vector_types>
     py::type highest_type{ py::module_::import("builtins").attr("bool") };
     int highest_precedence{ -1 };
     for (std::size_t i = 0; i < py::len(list); ++i) {
-        py::object item = list[i];
-        py::type type = py::type::of(item);
-        int precedence = precedence_map.at(type);
+        const py::object item = list[i];
+        const py::type type = py::type::of(item);
+        const int precedence = precedence_map.at(type);
         if (precedence > highest_precedence) {
             highest_precedence = precedence;
             highest_type = type;

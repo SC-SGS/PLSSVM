@@ -38,7 +38,7 @@ void init_regression_model(py::module_ &m) {
     using plssvm::bindings::python::util::regression_model_wrapper;
 
     py::class_<regression_model_wrapper>(m, "RegressionModel", "Implements a class encapsulating the result of a call to the C-SVR fit function. A model is used to predict the labels of a new data set.")
-        .def(py::init([](const std::string &filename, const std::optional<py::type> type, plssvm::mpi::communicator comm) {
+        .def(py::init([](const std::string &filename, const std::optional<py::type> &type, plssvm::mpi::communicator comm) {
                  if (type.has_value()) {
                      return std::make_unique<regression_model_wrapper>(plssvm::bindings::python::util::create_instance<plssvm::regression_model, typename regression_model_wrapper::possible_model_types>(type.value(), std::move(comm), filename));
                  }

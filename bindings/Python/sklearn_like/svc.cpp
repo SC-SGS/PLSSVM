@@ -451,9 +451,8 @@ void init_sklearn_svc(py::module_ &m) {
                                     reduced_votes[i] = -votes(i, 0);
                                 }
                                 return plssvm::bindings::python::util::vector_to_pyarray(reduced_votes);
-                            } else {
-                                return py::cast(votes);
                             }
+                            return py::cast(votes);
                         }
                     case plssvm::classification_type::oao:
                         {
@@ -483,12 +482,12 @@ void init_sklearn_svc(py::module_ &m) {
                                         if (num_classes == 2) {
                                             // no special assembly needed in binary case
                                             return model.support_vectors();
-                                        } else {
-                                            // note: if this is changed, it must also be changed in the libsvm_model_parsing.hpp in the calculate_alpha_idx function!!!
-                                            // order the indices in increasing order
-                                            plssvm::soa_matrix<plssvm::real_type> temp{ plssvm::shape{ num_data_points_in_sub_matrix, num_features }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE } };
-                                            std::vector<std::size_t> sorted_indices(num_data_points_in_sub_matrix);
-                                            std::merge(index_sets[i].cbegin(), index_sets[i].cend(), index_sets[j].cbegin(), index_sets[j].cend(), sorted_indices.begin());
+                                        }
+                                        // note: if this is changed, it must also be changed in the libsvm_model_parsing.hpp in the calculate_alpha_idx function!!!
+                                        // order the indices in increasing order
+                                        plssvm::soa_matrix<plssvm::real_type> temp{ plssvm::shape{ num_data_points_in_sub_matrix, num_features }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE } };
+                                        std::vector<std::size_t> sorted_indices(num_data_points_in_sub_matrix);
+                                        std::merge(index_sets[i].cbegin(), index_sets[i].cend(), index_sets[j].cbegin(), index_sets[j].cend(), sorted_indices.begin());
 // copy the support vectors to the binary support vectors
 // NOTE: it seems that MSVC doesn't like the collapse clause inside a lambda function
 #if defined(_MSC_VER)
@@ -496,13 +495,12 @@ void init_sklearn_svc(py::module_ &m) {
 #else
     #pragma omp parallel for collapse(2)
 #endif
-                                            for (std::size_t si = 0; si < num_data_points_in_sub_matrix; ++si) {
-                                                for (std::size_t dim = 0; dim < num_features; ++dim) {
-                                                    temp(si, dim) = model.support_vectors()(sorted_indices[si], dim);
-                                                }
+                                        for (std::size_t si = 0; si < num_data_points_in_sub_matrix; ++si) {
+                                            for (std::size_t dim = 0; dim < num_features; ++dim) {
+                                                temp(si, dim) = model.support_vectors()(sorted_indices[si], dim);
                                             }
-                                            return temp;
                                         }
+                                        return temp;
                                     }();
 
                                     // we don't use the w optimization for the linear kernel here due to code simplicity
@@ -527,9 +525,8 @@ void init_sklearn_svc(py::module_ &m) {
                                     votes_access(pp, pos) *= plssvm::real_type{ -1.0 };
                                 }
                                 return votes.reshape(py::array::ShapeContainer{ votes.size() });
-                            } else {
-                                return votes;
                             }
+                            return votes;
                         }
                 }
                 // unreachable
@@ -592,8 +589,8 @@ void init_sklearn_svc(py::module_ &m) {
                 // predict the data
                 return plssvm::bindings::python::util::vector_to_pyarray(self.svm_->predict(model, data_to_predict));
             }, *self.model_); }, "Perform classification on samples in X.", py::arg("X"))
-        .def("predict_log_proba", [](const svc &, py::array_t<plssvm::real_type>) { throw py::attribute_error{ "'SVC' object has no function 'predict_log_proba' (not implemented)" }; }, "Compute log probabilities of possible outcomes for samples in X.", py::arg("X"))
-        .def("predict_proba", [](const svc &, py::array_t<plssvm::real_type>) { throw py::attribute_error{ "'SVC' object has no function 'predict_proba' (not implemented)" }; }, "Compute probabilities of possible outcomes for samples in X.", py::arg("X"))
+        .def("predict_log_proba", [](const svc &, const py::array_t<plssvm::real_type> &) { throw py::attribute_error{ "'SVC' object has no function 'predict_log_proba' (not implemented)" }; }, "Compute log probabilities of possible outcomes for samples in X.", py::arg("X"))
+        .def("predict_proba", [](const svc &, const py::array_t<plssvm::real_type> &) { throw py::attribute_error{ "'SVC' object has no function 'predict_proba' (not implemented)" }; }, "Compute probabilities of possible outcomes for samples in X.", py::arg("X"))
         .def("score", [](svc &self, plssvm::soa_matrix<plssvm::real_type> data, plssvm::bindings::python::util::label_vector_wrapper<typename svc::possible_vector_types> labels, const std::optional<std::vector<plssvm::real_type>> &sample_weight) -> plssvm::real_type {
             PLSSVM_ASSERT(self.svm_ != nullptr, "svm_ may not be a nullptr! Maybe you forgot to initialize it?");
             // sanity check parameter
@@ -702,8 +699,8 @@ void init_sklearn_svc(py::module_ &m) {
             return new_svc; }, "Clone the estimator.")
         .def("__repr__", [](const svc &self) {
             // get the currently used parameters
-            py::dict used_params = self.get_params(true);
-            py::dict default_params = svc{}.get_params(true);
+            const py::dict used_params = self.get_params(true);
+            const py::dict default_params = svc{}.get_params(true);
 
             std::vector<std::string> non_default_values{};
 

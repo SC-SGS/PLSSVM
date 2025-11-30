@@ -62,7 +62,7 @@ void init_min_max_scaler(py::module_ &m) {
              py::arg("interval"),
              py::kw_only(),
              py::arg("comm") = plssvm::mpi::communicator{})
-        .def(py::init([](const py::tuple interval, plssvm::mpi::communicator comm) {
+        .def(py::init([](const py::tuple &interval, plssvm::mpi::communicator comm) {
                  if (interval.size() != 2) {
                      throw py::value_error{ fmt::format("MinMaxScaler can only be created from two interval values (lower, upper), but {} were provided!", interval.size()) };
                  }

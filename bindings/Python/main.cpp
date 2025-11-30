@@ -66,6 +66,7 @@ PYBIND11_MODULE(plssvm, m) {
     // register PLSSVM base exception
     static py::exception<plssvm::exception> base_exception(m, "PLSSVMError");
     py::register_exception_translator([](std::exception_ptr p) {
+    static const py::exception<plssvm::exception> base_exception(m, "PLSSVMError");
         try {
             if (p) {
                 std::rethrow_exception(p);

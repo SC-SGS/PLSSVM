@@ -40,7 +40,7 @@ void init_regression_data_set(py::module_ &m) {
     using plssvm::bindings::python::util::regression_data_set_wrapper;
 
     py::class_<regression_data_set_wrapper>(m, "RegressionDataSet", "Encapsulate all necessary data that is needed for training or predicting using an C-SVR.")
-        .def(py::init([](const std::string &filename, const std::optional<py::type> type, const plssvm::file_format_type format, const std::optional<plssvm::min_max_scaler> scaler, plssvm::mpi::communicator comm) {
+        .def(py::init([](const std::string &filename, const std::optional<py::type> &type, const plssvm::file_format_type format, const std::optional<plssvm::min_max_scaler> &scaler, plssvm::mpi::communicator comm) {
                  if (type.has_value()) {
                      if (scaler.has_value()) {
                          return std::make_unique<regression_data_set_wrapper>(plssvm::bindings::python::util::create_instance<plssvm::regression_data_set, typename regression_data_set_wrapper::possible_data_set_types>(type.value(), std::move(comm), filename, format, scaler.value()));
@@ -59,7 +59,7 @@ void init_regression_data_set(py::module_ &m) {
              py::arg("format") = plssvm::file_format_type::libsvm,
              py::arg("scaler") = std::nullopt,
              py::arg("comm") = plssvm::mpi::communicator{})
-        .def(py::init([](plssvm::soa_matrix<plssvm::real_type> data, const std::optional<py::type> type, const std::optional<plssvm::min_max_scaler> scaler, plssvm::mpi::communicator comm) {
+        .def(py::init([](plssvm::soa_matrix<plssvm::real_type> data, const std::optional<py::type> &type, const std::optional<plssvm::min_max_scaler> &scaler, plssvm::mpi::communicator comm) {
                  if (type.has_value()) {
                      if (scaler.has_value()) {
                          return std::make_unique<regression_data_set_wrapper>(plssvm::bindings::python::util::create_instance<plssvm::regression_data_set, typename regression_data_set_wrapper::possible_data_set_types>(type.value(), std::move(comm), std::move(data), scaler.value()));

@@ -413,8 +413,8 @@ void init_sklearn_svr(py::module_ &m) {
             return new_svr; }, "Clone the estimator.")
         .def("__repr__", [](const svr &self) {
             // get the currently used parameters
-            py::dict used_params = self.get_params(true);
-            py::dict default_params = svr{}.get_params(true);
+            const py::dict used_params = self.get_params(true);
+            const py::dict default_params = svr{}.get_params(true);
 
             std::vector<std::string> non_default_values{};
 
