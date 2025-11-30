@@ -465,6 +465,19 @@ However, these additional options can be enabled using normal CMake options.
 
 **Note**: the only difference between the dpcpp and icpx presets is the automatically set `CMAKE_CXX_COMPILER`. Internally, both presets use the same SYCL implementation.
 
+#### HPX and including the hpx_main.hpp header
+
+HPX defines some command line options to change its runtime behavior, e.g., `--hpx:threads`.
+However, it also defines some shortcuts for these command line options like `-t`.
+The problem is that these shortcut command line options are likely to collide with other command line options. 
+In the example above the HPX `-t` option to set the number of used threads collides with PLSSVM's `-t` option to determine the kernel function leading to unwanted behavior.
+The only way to disable HPX's shortcut command line options is by including `"hpx/hpx_main.hpp"` which is automatically done in our `"plssvm/environment.hpp"` header.
+However, the [HPX documentation](https://hpx-docs.stellar-group.org/latest/html/manual/starting_the_hpx_runtime.html) states that this header should only be included in the main executable or otherwise linker errors wil occur.
+If the `"plssvm/environment.hpp"` header is included in another file, like in our case the custom GoogleTest main implementation, the `"hpx/hpx_main.cpp"` should not be included.
+This can be achieved by specifying `PLSSVM_HPX_DO_NOT_INCLUDE_HPX_MAIN` before including our header.
+
+All of this also applies to the Kokkos::HPX execution space.
+
 ### Running the Tests
 
 To run the tests after building the library (with `PLSSVM_ENABLE_TESTING` set to `ON`) use:
