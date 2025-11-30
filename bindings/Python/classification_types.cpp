@@ -8,6 +8,7 @@
 
 #include "plssvm/classification_types.hpp"  // plssvm::classification_type, plssvm::classification_type_to_full_string, plssvm::calculate_number_of_classifiers
 
+#include "bindings/Python/bindings_fwd.hpp"  // forward declare all helper functions to create the Python bindings
 #include "pybind11/native_enum.h"  // py::native_enum
 #include "pybind11/pybind11.h"     // py::module_, py::arg
 

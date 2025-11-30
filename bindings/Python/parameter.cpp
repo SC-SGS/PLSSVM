@@ -12,6 +12,8 @@
 #include "plssvm/gamma.hpp"                  // plssvm::gamma_type
 #include "plssvm/kernel_function_types.hpp"  // plssvm::kernel_function_type
 
+#include "bindings/Python/bindings_fwd.hpp"  // forward declare all helper functions to create the Python bindings
+
 #include "fmt/format.h"          // fmt::format
 #include "pybind11/operators.h"  // support for operators
 #include "pybind11/pybind11.h"   // py::module_, py::class_, py::init, py::return_value_policy, py::self, py::tuple, py::pickle

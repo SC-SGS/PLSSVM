@@ -10,6 +10,7 @@
 
 #include "plssvm/detail/type_traits.hpp"  // plssvm::detail::remove_cvref_t
 
+#include "bindings/Python/bindings_fwd.hpp"                             // forward declare all helper functions to create the Python bindings
 #include "bindings/Python/data_set/variant_wrapper.hpp"                 // plssvm::bindings::python::util::regression_data_set_wrapper
 #include "bindings/Python/type_caster/label_vector_wrapper_caster.hpp"  // a custom Pybind11 type caster for a plssvm::bindings::python::util::label_vector_wrapper
 

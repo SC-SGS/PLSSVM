@@ -13,6 +13,7 @@
 #include "plssvm/matrix.hpp"              // plssvm::aos_matrix
 #include "plssvm/mpi/communicator.hpp"    // plssvm::mpi::communicator
 
+#include "bindings/Python/bindings_fwd.hpp"                 // forward declare all helper functions to create the Python bindings
 #include "bindings/Python/model/variant_wrapper.hpp"        // plssvm::bindings::python::util::classification_model_wrapper
 #include "bindings/Python/type_caster/mpi_type_caster.hpp"  // a custom Pybind11 type caster for a plssvm::mpi::communicator
 #include "bindings/Python/utility.hpp"                      // plssvm::bindings::python::util::{python_type_name_mapping, create_instance, vector_to_pyarray}

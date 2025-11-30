@@ -12,6 +12,7 @@
 #include "plssvm/matrix.hpp"     // plssvm::aos_matrix
 
 #include "bindings/Python/type_caster/matrix_type_caster.hpp"  // a custom Pybind11 type caster for a plssvm::matrix
+#include "bindings/Python/bindings_fwd.hpp"                    // forward declare all helper functions to create the Python bindings
 
 #include "pybind11/native_enum.h"  // py::native_enum
 #include "pybind11/pybind11.h"     // py::module_

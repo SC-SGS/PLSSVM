@@ -8,6 +8,8 @@
 
 #include "plssvm/target_platforms.hpp"  // plssvm::target_platform, plssvm::list_available_target_platforms, plssvm::determine_default_target_platform
 
+#include "bindings/Python/bindings_fwd.hpp"  // forward declare all helper functions to create the Python bindings
+
 #include "pybind11/native_enum.h"  // py::native_enum
 #include "pybind11/pybind11.h"     // py::module_
 #include "pybind11/stl.h"          // support for STL types: std::vector

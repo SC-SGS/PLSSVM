@@ -9,6 +9,7 @@
 #include "plssvm/exceptions/exceptions.hpp"  // PLSSVM specific exceptions
 
 #include "bindings/Python/utility.hpp"  // plssvm::bindings::python::util::register_py_exception
+#include "bindings/Python/bindings_fwd.hpp"  // forward declare all helper functions to create the Python bindings
 
 #include "pybind11/pybind11.h"  // py::module_, py::exception
 

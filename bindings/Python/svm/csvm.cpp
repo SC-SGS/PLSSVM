@@ -14,6 +14,7 @@
 #include "plssvm/parameter.hpp"              // plssvm::parameter, named arguments
 
 #include "bindings/Python/utility.hpp"  // plssvm::bindings::python::util::check_kwargs_for_correctness
+#include "bindings/Python/bindings_fwd.hpp"  // forward declare all helper functions to create the Python bindings
 
 #include "pybind11/pybind11.h"  // py::module_, py::class_, py::arg, py::kwargs, py::module_local
 #include "pybind11/stl.h"       // support for STL types: std::variant

@@ -12,6 +12,7 @@
 #include "plssvm/mpi/communicator.hpp"  // plssvm::mpi::communicator
 
 #include "bindings/Python/type_caster/mpi_type_caster.hpp"  // a custom Pybind11 type caster for a plssvm::mpi::communicator
+#include "bindings/Python/bindings_fwd.hpp"                 // forward declare all helper functions to create the Python bindings
 #include "bindings/Python/utility.hpp"                      // plssvm::bindings::python::util::vector_to_pyarray
 
 #include "fmt/format.h"         // fmt::format

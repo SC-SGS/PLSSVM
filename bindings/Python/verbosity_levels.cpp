@@ -8,6 +8,8 @@
 
 #include "plssvm/verbosity_levels.hpp"  // plssvm::verbosity_level, bitwise operator overloads, plssvm::verbosity
 
+#include "bindings/Python/bindings_fwd.hpp"  // forward declare all helper functions to create the Python bindings
+
 #include "pybind11/cast.h"
 #include "pybind11/native_enum.h"  // py::native_enum
 #include "pybind11/operators.h"    // pybind operator overloading

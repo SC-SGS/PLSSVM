@@ -21,6 +21,7 @@
 #include "plssvm/solver_types.hpp"                      // plssvm::solver_type
 #include "plssvm/target_platforms.hpp"                  // plssvm::target_platform
 
+#include "bindings/Python/bindings_fwd.hpp"                 // forward declare all helper functions to create the Python bindings
 #include "bindings/Python/data_set/variant_wrapper.hpp"     // plssvm::bindings::python::util::classification_data_set_wrapper
 #include "bindings/Python/model/variant_wrapper.hpp"        // plssvm::bindings::python::util::classification_model_wrapper
 #include "bindings/Python/svm/utility.hpp"                  // plssvm::bindings::python::util::assemble_csvm

@@ -13,6 +13,7 @@
 #include "plssvm/kernel_function_types.hpp"  // plssvm::kernel_function_type
 #include "plssvm/parameter.hpp"              // plssvm::parameter
 
+#include "bindings/Python/bindings_fwd.hpp"  // forward declare all helper functions to create the Python bindings
 #include "pybind11/pybind11.h"  // py::module_, py::arg, py::kw_only
 #include "pybind11/stl.h"       // support for STL types: std::vector
 

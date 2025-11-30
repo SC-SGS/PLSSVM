@@ -14,6 +14,7 @@
 #include "pybind11/chrono.h"    // automatic bindings for std::chrono::milliseconds
 #include "pybind11/pybind11.h"  // py::module_
 #include "pybind11/stl.h"       // automatic bindings for std::optional and std::vector
+#include "bindings/Python/bindings_fwd.hpp"  // forward declare all helper functions to create the Python bindings
 
 #include <chrono>  // std::chrono::steady_clock::time_point
 #include <string>  // std::string

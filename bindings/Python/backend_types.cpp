@@ -9,6 +9,7 @@
 
 #include "plssvm/backend_types.hpp"  // plssvm::backend_type, plssvm::list_available_backends, plssvm::determine_default_backend
 
+#include "bindings/Python/bindings_fwd.hpp"  // forward declare all helper functions to create the Python bindings
 #include "pybind11/native_enum.h"  // py::native_enum
 #include "pybind11/pybind11.h"     // py::module_
 #include "pybind11/stl.h"          // support for STL types: std::vector
