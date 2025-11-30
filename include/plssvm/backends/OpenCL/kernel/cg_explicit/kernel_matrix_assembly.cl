@@ -94,8 +94,8 @@ __kernel void device_kernel_assembly(__global real_type *kernel_matrix, const __
         }
 
         // calculate the indices used in the current work-item
-        const ulong i_idx = (blockIdx_x * blockDim_x + threadIdx_x) * INTERNAL_BLOCK_SIZE_uz;
-        const ulong j_idx = (blockIdx_y * blockDim_y + threadIdx_y) * INTERNAL_BLOCK_SIZE_uz;
+        const ulong i_idx = (blockIdx_x * blockDim_x + threadIdx_x) * INTERNAL_BLOCK_SIZE_uz;  // num_rows - device_row_offset
+        const ulong j_idx = (blockIdx_y * blockDim_y + threadIdx_y) * INTERNAL_BLOCK_SIZE_uz;  // device_num_rows
 
         // apply the remaining part of the kernel function and store the value in the output kernel matrix
         for (uint internal_i = 0; internal_i < INTERNAL_BLOCK_SIZE; ++internal_i) {

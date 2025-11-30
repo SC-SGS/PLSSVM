@@ -374,7 +374,8 @@ class device_kernel_predict {
 
                     for (std::size_t class_idx = 0; class_idx < THREAD_BLOCK_SIZE_uz; ++class_idx) {
                         detail::atomic_op<real_type>{ prediction_[global_pp_idx * (num_classes_ + PADDING_SIZE_uz) + class_block + class_idx] } +=
-                            temp[internal_pp][internal_sv] * alpha_[(class_block + class_idx) * (num_sv_ + PADDING_SIZE_uz) + global_sv_idx];
+                            alpha_[(class_block + class_idx) * (num_sv_ + PADDING_SIZE_uz) + global_sv_idx] *  // AoS
+                            temp[internal_pp][internal_sv];
                     }
                 }
             }

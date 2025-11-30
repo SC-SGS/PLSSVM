@@ -378,8 +378,8 @@ class device_kernel_predict {
 
         {
             // rename cached arrays
-            auto &pp_cache = cache_one_;
-            auto &sv_cache = cache_two_;
+            const auto &pp_cache = cache_one_;
+            const auto &sv_cache = cache_two_;
 
             // calculate the indices used in the current thread, pays attention to coalesced memory accesses
             const auto pp_idx_linear = blockIdx_y * blockDim_y * INTERNAL_BLOCK_SIZE_uz + threadIdx_y;  // num_predict_points
@@ -435,8 +435,8 @@ class device_kernel_predict {
 
         {
             // rename cached arrays
-            auto &alpha_cache = cache_one_;
-            auto &out_cache = cache_two_;
+            const auto &alpha_cache = cache_one_;
+            const auto &out_cache = cache_two_;
 
             // calculate the indices used in the current work-item
             const auto pp_idx = (blockIdx_y * blockDim_y + threadIdx_y) * INTERNAL_BLOCK_SIZE_uz;  // num_predict_points

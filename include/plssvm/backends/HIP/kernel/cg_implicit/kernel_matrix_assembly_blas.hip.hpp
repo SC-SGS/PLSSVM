@@ -174,7 +174,7 @@ __global__ void device_kernel_assembly_symm(const real_type alpha, const real_ty
 
                     atomicAdd(&C[global_j_idx * (num_classes + PADDING_SIZE_uz) + class_block + threadIdx_x], C_out_cache[threadIdx.y * INTERNAL_BLOCK_SIZE + internal][threadIdx.x]);  // SoA
                 }
-                __syncthreads();  // wai until all threads updated C with their values
+                __syncthreads();  // wait until all threads updated C with their values
             }
         }
 

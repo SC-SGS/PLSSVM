@@ -256,7 +256,7 @@ __global__ void device_kernel_predict(real_type *prediction, const real_type *al
     }
 
     // update temp using the respective kernel function
-    for (unsigned internal_pp = 0; internal_pp < INTERNAL_BLOCK_SIZE; ++internal_pp) {
+    for (unsigned internal_pp = 0; internal_pp < INTERNAL_BLOCK_SIZE; ++internal_pp) {  // NOLINT(modernize-loop-convert): false positive range-based for loop modernize
         for (unsigned internal_sv = 0; internal_sv < INTERNAL_BLOCK_SIZE; ++internal_sv) {
             temp[internal_pp][internal_sv] = detail::apply_kernel_function<kernel_function>(temp[internal_pp][internal_sv], kernel_function_parameter...);
         }

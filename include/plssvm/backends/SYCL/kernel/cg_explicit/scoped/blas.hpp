@@ -294,8 +294,8 @@ class device_kernel_symm_mirror {
                                                const auto blockIdx_y = static_cast<std::size_t>(group[1]) + grid_y_offset_;         // current work-group in global range y-dimension + offsets if the global range is too large
 
                                                // calculate the indices to access the global data, pays attention to coalesced memory accesses
-                                               const auto i_idx_linear = blockIdx_y * blockDim_y * INTERNAL_BLOCK_SIZE_uz + threadIdx_y;
-                                               const auto j_idx_linear = blockIdx_x * blockDim_x * INTERNAL_BLOCK_SIZE_uz + threadIdx_y;
+                                               const auto i_idx_linear = blockIdx_y * blockDim_y * INTERNAL_BLOCK_SIZE_uz + threadIdx_y;  // num_rhs
+                                               const auto j_idx_linear = blockIdx_x * blockDim_x * INTERNAL_BLOCK_SIZE_uz + threadIdx_y;  // num_mirror_rows
 
                                                for (unsigned internal = 0; internal < INTERNAL_BLOCK_SIZE; ++internal) {
                                                    // calculate the indices to access the global data, pays attention to coalesced memory accesses
@@ -352,8 +352,8 @@ class device_kernel_symm_mirror {
                                            const auto blockIdx_y = static_cast<std::size_t>(group[1]) + grid_y_offset_;         // current work-group in global range y-dimension + offsets if the global range is too large
 
                                            // calculate the indices to access the global data
-                                           const auto i_idx = (blockIdx_y * blockDim_y + threadIdx_y) * INTERNAL_BLOCK_SIZE_uz;
-                                           const auto j_idx = (blockIdx_x * blockDim_x + threadIdx_x) * INTERNAL_BLOCK_SIZE_uz;
+                                           const auto i_idx = (blockIdx_y * blockDim_y + threadIdx_y) * INTERNAL_BLOCK_SIZE_uz;  // num_rhs
+                                           const auto j_idx = (blockIdx_x * blockDim_x + threadIdx_x) * INTERNAL_BLOCK_SIZE_uz;  // num_mirror_rows
 
                                            for (unsigned internal_i = 0; internal_i < INTERNAL_BLOCK_SIZE; ++internal_i) {
                                                for (unsigned internal_j = 0; internal_j < INTERNAL_BLOCK_SIZE; ++internal_j) {
@@ -441,8 +441,8 @@ class device_kernel_inplace_matrix_add {
                                            for (std::size_t internal_i = 0; internal_i < INTERNAL_BLOCK_SIZE_uz; ++internal_i) {
                                                for (std::size_t internal_j = 0; internal_j < INTERNAL_BLOCK_SIZE_uz; ++internal_j) {
                                                    // calculate the indices to access the global data
-                                                   const auto global_i_idx = i_idx + static_cast<std::size_t>(internal_i);
-                                                   const auto global_j_idx = j_idx + static_cast<std::size_t>(internal_j);
+                                                   const auto global_i_idx = i_idx + internal_i;
+                                                   const auto global_j_idx = j_idx + internal_j;
 
                                                    lhs_[global_i_idx * (num_cols_ + PADDING_SIZE_uz) + global_j_idx] += rhs_[global_i_idx * (num_cols_ + PADDING_SIZE_uz) + global_j_idx];  // SoA
                                                }

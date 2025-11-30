@@ -13,6 +13,8 @@
 #define PLSSVM_BACKENDS_CUDA_KERNEL_DETAIL_FILL_KERNEL_CUH_
 #pragma once
 
+// NOLINTBEGIN(misc-use-internal-linkage): false positive diagnostic for .cuh files
+
 namespace plssvm::cuda::detail {
 
 /**
@@ -35,5 +37,6 @@ __global__ void fill_array(value_type *data, const value_type value, const size_
 
 }  // namespace plssvm::cuda::detail
 
-#endif  // PLSSVM_BACKENDS_CUDA_KERNEL_DETAIL_FILL_KERNEL_HPP_
+// NOLINTEND(misc-use-internal-linkage)
+
 #endif  // PLSSVM_BACKENDS_CUDA_KERNEL_DETAIL_FILL_KERNEL_CUH_
