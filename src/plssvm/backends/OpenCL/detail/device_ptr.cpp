@@ -44,14 +44,13 @@ device_ptr<T>::device_ptr(const plssvm::shape shape, const command_queue &queue)
 template <typename T>
 device_ptr<T>::device_ptr(const plssvm::shape shape, const plssvm::shape padding, const command_queue &queue) :
     base_type{ shape, padding, &queue } {
-    error_code err{};
-    cl_context cont{};
-    PLSSVM_OPENCL_ERROR_CHECK(clGetCommandQueueInfo(queue_->queue, CL_QUEUE_CONTEXT, sizeof(cl_context), static_cast<void *>(&cont), nullptr), "error retrieving the command queue context")
-    data_ = clCreateBuffer(cont, CL_MEM_READ_WRITE, this->size_padded() * sizeof(value_type), nullptr, &err);
-    PLSSVM_OPENCL_ERROR_CHECK(err, "error creating the buffer")
-
-    // only non-empty pointers must be memset in the constructor
+    // only non-empty pointers must be initialized (and memset)
     if (this->size_padded() != std::size_t{ 0 }) {
+        error_code err{};
+        cl_context cont{};
+        PLSSVM_OPENCL_ERROR_CHECK(clGetCommandQueueInfo(queue_->queue, CL_QUEUE_CONTEXT, sizeof(cl_context), static_cast<void *>(&cont), nullptr), "error retrieving the command queue context")
+        data_ = clCreateBuffer(cont, CL_MEM_READ_WRITE, this->size_padded() * sizeof(value_type), nullptr, &err);
+        PLSSVM_OPENCL_ERROR_CHECK(err, "error creating the buffer")
         this->memset(0);
     }
 }
