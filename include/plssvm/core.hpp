@@ -122,17 +122,13 @@ namespace plssvm::opencl { }
 namespace plssvm::opencl::detail { }
 
 /// Namespace containing the C-SVM using the SYCL backend with DPC++ as SYCL implementation.
-namespace plssvm::dpcpp {
-using namespace plssvm::sycl;
-}
+namespace plssvm::dpcpp { }
 
 /// Namespace containing the C-SVM using the SYCL backend with DPC++ as SYCL implementation. **Should not** directly be used by users.
 namespace plssvm::dpcpp::detail { }
 
 /// Namespace containing the C-SVM using the SYCL backend with AdaptiveCpp as SYCL implementation.
-namespace plssvm::adaptivecpp {
-using namespace plssvm::sycl;
-}
+namespace plssvm::adaptivecpp { }
 
 /// Namespace containing the C-SVM using the SYCL backend with AdaptiveCpp as SYCL implementation. **Should not** directly be used by users.
 namespace plssvm::adaptivecpp::detail { }

@@ -43,7 +43,6 @@
     #include "plssvm/backends/OpenCL/csvm.hpp"  // plssvm::opencl::csvm, plssvm::csvm_backend_exists_v
 #endif
 #if defined(PLSSVM_HAS_SYCL_BACKEND)
-using namespace plssvm::PLSSVM_SYCL_BACKEND_PREFERRED_IMPLEMENTATION;
     #if defined(PLSSVM_SYCL_BACKEND_HAS_DPCPP)
         #include "plssvm/backends/SYCL/DPCPP/csvm.hpp"  // plssvm::dpcpp::csvm, plssvm::csvm_backend_exists_v
     #endif
