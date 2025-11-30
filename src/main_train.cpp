@@ -58,6 +58,8 @@
 
 using namespace std::chrono_literals;
 
+namespace {
+
 /**
  * @brief Fit a C-SVC model using the provided C-SVC, classification data set and command line parser.
  * @tparam svm_type the type of the C-SVC
@@ -95,6 +97,7 @@ template <typename svm_type, typename label_type>
 int main(int argc, char *argv[]) {
     // initialize MPI environment only via the plssvm::scope_guard (by explicitly specifying NO backend)
     [[maybe_unused]] plssvm::environment::scope_guard mpi_guard{ {} };
+}  // namespace
     // create a PLSSVM communicator -> use MPI_COMM_WORLD for our executables
     // if MPI is not supported, does nothing
     plssvm::mpi::communicator comm{};
