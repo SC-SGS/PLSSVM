@@ -9,8 +9,8 @@
  * @brief Implements a `move_only_any` class based on [`std::any`](https://en.cppreference.com/w/cpp/utility/any) that works with move-only types.
  */
 
-#ifndef PLSSVM_DETAIL_move_only_any_HPP_
-#define PLSSVM_DETAIL_move_only_any_HPP_
+#ifndef PLSSVM_DETAIL_MOVE_ONLY_ANY_HPP_
+#define PLSSVM_DETAIL_MOVE_ONLY_ANY_HPP_
 #pragma once
 
 #include "plssvm/detail/type_traits.hpp"  // PLSSVM_REQUIRES, plssvm::detail::remove_cvref_t
@@ -393,4 +393,4 @@ template <typename T, typename U, typename... Args>
 
 }  // namespace plssvm::detail
 
-#endif  // PLSSVM_DETAIL_move_only_any_HPP_
+#endif  // PLSSVM_DETAIL_MOVE_ONLY_ANY_HPP_

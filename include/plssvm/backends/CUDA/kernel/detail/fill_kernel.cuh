@@ -9,8 +9,8 @@
  * @brief Defines a CUDA function for filling a device pointer with a specific value.
  */
 
-#ifndef PLSSVM_BACKENDS_CUDA_KERNEL_DETAIL_FILL_KERNEL_HPP_
-#define PLSSVM_BACKENDS_CUDA_KERNEL_DETAIL_FILL_KERNEL_HPP_
+#ifndef PLSSVM_BACKENDS_CUDA_KERNEL_DETAIL_FILL_KERNEL_CUH_
+#define PLSSVM_BACKENDS_CUDA_KERNEL_DETAIL_FILL_KERNEL_CUH_
 #pragma once
 
 namespace plssvm::cuda::detail {
@@ -36,3 +36,4 @@ __global__ void fill_array(value_type *data, const value_type value, const size_
 }  // namespace plssvm::cuda::detail
 
 #endif  // PLSSVM_BACKENDS_CUDA_KERNEL_DETAIL_FILL_KERNEL_HPP_
+#endif  // PLSSVM_BACKENDS_CUDA_KERNEL_DETAIL_FILL_KERNEL_CUH_

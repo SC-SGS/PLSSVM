@@ -9,8 +9,8 @@
  * @brief Implement the different kernel functions on the GPU using CUDA.
  */
 
-#ifndef PLSSVM_BACKENDS_CUDA_KERNEL_KERNEL_FUNCTIONS_HPP_
-#define PLSSVM_BACKENDS_CUDA_KERNEL_KERNEL_FUNCTIONS_HPP_
+#ifndef PLSSVM_BACKENDS_CUDA_KERNEL_KERNEL_FUNCTIONS_CUH_
+#define PLSSVM_BACKENDS_CUDA_KERNEL_KERNEL_FUNCTIONS_CUH_
 #pragma once
 
 #include "plssvm/constants.hpp"              // plssvm::real_type
@@ -196,4 +196,4 @@ template <>
 
 }  // namespace plssvm::cuda::detail
 
-#endif  // PLSSVM_BACKENDS_CUDA_KERNEL_KERNEL_FUNCTIONS_HPP_
+#endif  // PLSSVM_BACKENDS_CUDA_KERNEL_KERNEL_FUNCTIONS_CUH_

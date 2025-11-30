@@ -11,6 +11,7 @@
 
 #ifndef PLSSVM_BACKENDS_KOKKOS_DETAIL_DEVICE_VIEW_WRAPPER_HPP_
 #define PLSSVM_BACKENDS_KOKKOS_DETAIL_DEVICE_VIEW_WRAPPER_HPP_
+#pragma once
 
 #include "plssvm/backends/Kokkos/detail/constexpr_available_execution_spaces.hpp"  // plssvm::kokkos::detail::constexpr_available_execution_spaces
 #include "plssvm/backends/Kokkos/detail/device_wrapper.hpp"                        // plssvm::kokkos::detail::device_wrapper

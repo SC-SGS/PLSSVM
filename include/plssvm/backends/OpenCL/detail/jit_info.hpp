@@ -11,6 +11,7 @@
 
 #ifndef PLSSVM_BACKENDS_OPENCL_DETAIL_JIT_INFO_HPP_
 #define PLSSVM_BACKENDS_OPENCL_DETAIL_JIT_INFO_HPP_
+#pragma once
 
 #include "fmt/base.h"     // fmt::formatter
 #include "fmt/ostream.h"  // fmt::ostream_formatter

@@ -9,8 +9,8 @@
  * @brief Defines an atomic add function for double precision floating point types for older CUDA architectures.
  */
 
-#ifndef PLSSVM_BACKENDS_CUDA_KERNEL_DETAIL_ATOMICS_HPP_
-#define PLSSVM_BACKENDS_CUDA_KERNEL_DETAIL_ATOMICS_HPP_
+#ifndef PLSSVM_BACKENDS_CUDA_KERNEL_DETAIL_ATOMICS_CUH_
+#define PLSSVM_BACKENDS_CUDA_KERNEL_DETAIL_ATOMICS_CUH_
 #pragma once
 
 namespace plssvm::cuda::detail {
@@ -36,4 +36,4 @@ __device__ __forceinline__ double atomicAdd(double *addr, const double val) {
 
 }  // namespace plssvm::cuda::detail
 
-#endif  // PLSSVM_BACKENDS_CUDA_KERNEL_DETAIL_ATOMICS_HPP_
+#endif  // PLSSVM_BACKENDS_CUDA_KERNEL_DETAIL_ATOMICS_CUH_

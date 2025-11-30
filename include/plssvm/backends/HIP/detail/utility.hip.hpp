@@ -9,8 +9,8 @@
  * @brief Utility functions for the HIP backend.
  */
 
-#ifndef PLSSVM_BACKENDS_HIP_DETAIL_UTILITY_HPP_
-#define PLSSVM_BACKENDS_HIP_DETAIL_UTILITY_HPP_
+#ifndef PLSSVM_BACKENDS_HIP_DETAIL_UTILITY_HIP_HPP_
+#define PLSSVM_BACKENDS_HIP_DETAIL_UTILITY_HIP_HPP_
 #pragma once
 
 #include "plssvm/backends/execution_range.hpp"  // plssvm::detail::dim_type
@@ -99,4 +99,4 @@ struct fmt::formatter<hipError_t> : fmt::ostream_formatter { };
 
 /// @endcond
 
-#endif  // PLSSVM_BACKENDS_HIP_DETAIL_UTILITY_HPP_
+#endif  // PLSSVM_BACKENDS_HIP_DETAIL_UTILITY_HIP_HPP_

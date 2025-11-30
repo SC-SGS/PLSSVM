@@ -9,8 +9,8 @@
  * @brief Implement the different kernel functions on the GPU using HIP.
  */
 
-#ifndef PLSSVM_BACKENDS_HIP_KERNEL_KERNEL_FUNCTIONS_HPP_
-#define PLSSVM_BACKENDS_HIP_KERNEL_KERNEL_FUNCTIONS_HPP_
+#ifndef PLSSVM_BACKENDS_HIP_KERNEL_KERNEL_FUNCTIONS_HIP_HPP_
+#define PLSSVM_BACKENDS_HIP_KERNEL_KERNEL_FUNCTIONS_HIP_HPP_
 #pragma once
 
 #include "plssvm/constants.hpp"              // plssvm::real_type
@@ -196,4 +196,4 @@ template <>
 
 }  // namespace plssvm::hip::detail
 
-#endif  // PLSSVM_BACKENDS_HIP_KERNEL_KERNEL_FUNCTIONS_HPP_
+#endif  // PLSSVM_BACKENDS_HIP_KERNEL_KERNEL_FUNCTIONS_HIP_HPP_

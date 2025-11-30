@@ -9,8 +9,8 @@
  * @brief Defines the functions used for prediction for the C-SVM using the CUDA backend.
  */
 
-#ifndef PLSSVM_BACKENDS_CUDA_KERNEL_PREDICT_KERNEL_HPP_
-#define PLSSVM_BACKENDS_CUDA_KERNEL_PREDICT_KERNEL_HPP_
+#ifndef PLSSVM_BACKENDS_CUDA_KERNEL_PREDICT_KERNEL_CUH_
+#define PLSSVM_BACKENDS_CUDA_KERNEL_PREDICT_KERNEL_CUH_
 #pragma once
 
 #include "plssvm/backends/CUDA/kernel/detail/atomics.cuh"    // atomicAdd for double precision floating point numbers on older CUDA hardware
@@ -314,4 +314,4 @@ __global__ void device_kernel_predict(real_type *prediction, const real_type *al
 
 }  // namespace plssvm::cuda::detail
 
-#endif  // PLSSVM_BACKENDS_CUDA_KERNEL_PREDICT_KERNEL_HPP_
+#endif  // PLSSVM_BACKENDS_CUDA_KERNEL_PREDICT_KERNEL_CUH_

@@ -11,6 +11,7 @@
 
 #ifndef PLSSVM_BACKENDS_EXECUTION_RANGE_HPP_
 #define PLSSVM_BACKENDS_EXECUTION_RANGE_HPP_
+#pragma once
 
 #include "plssvm/backend_types.hpp"  // plssvm::backend_type
 

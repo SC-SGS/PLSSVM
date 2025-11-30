@@ -9,8 +9,8 @@
  * @brief Defines a matrix class used to hiding the data linearization using AoS and SoA.
  */
 
-#ifndef PLSSVM_DETAIL_MATRIX_HPP_
-#define PLSSVM_DETAIL_MATRIX_HPP_
+#ifndef PLSSVM_MATRIX_HPP_
+#define PLSSVM_MATRIX_HPP_
 #pragma once
 
 #include "plssvm/detail/assert.hpp"                 // PLSSVM_ASSERT
@@ -1199,4 +1199,4 @@ struct fmt::formatter<plssvm::matrix<T, layout>> {
 
 /// @endcond
 
-#endif  // PLSSVM_DETAIL_MATRIX_HPP_
+#endif  // PLSSVM_MATRIX_HPP_

@@ -9,8 +9,8 @@
  * @brief Utility functions for the CUDA backend.
  */
 
-#ifndef PLSSVM_BACKENDS_CUDA_DETAIL_UTILITY_HPP_
-#define PLSSVM_BACKENDS_CUDA_DETAIL_UTILITY_HPP_
+#ifndef PLSSVM_BACKENDS_CUDA_DETAIL_UTILITY_CUH_
+#define PLSSVM_BACKENDS_CUDA_DETAIL_UTILITY_CUH_
 #pragma once
 
 #include "plssvm/backends/CUDA/exceptions.hpp"  // plssvm::cuda::backend_exception
@@ -92,4 +92,4 @@ struct fmt::formatter<cudaError_t> : fmt::ostream_formatter { };
 
 /// @endcond
 
-#endif  // PLSSVM_BACKENDS_CUDA_DETAIL_UTILITY_HPP_
+#endif  // PLSSVM_BACKENDS_CUDA_DETAIL_UTILITY_CUH_

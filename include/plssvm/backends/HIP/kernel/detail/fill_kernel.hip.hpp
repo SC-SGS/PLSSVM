@@ -9,8 +9,8 @@
  * @brief Defines a HIP function for filling a device pointer with a specific value.
  */
 
-#ifndef PLSSVM_BACKENDS_HIP_DETAIL_FILL_KERNEL_HPP_
-#define PLSSVM_BACKENDS_HIP_DETAIL_FILL_KERNEL_HPP_
+#ifndef PLSSVM_BACKENDS_HIP_KERNEL_DETAIL_FILL_KERNEL_HIP_HPP_
+#define PLSSVM_BACKENDS_HIP_KERNEL_DETAIL_FILL_KERNEL_HIP_HPP_
 #pragma once
 
 #include "hip/hip_runtime.h"      // HIP runtime functions
@@ -38,4 +38,4 @@ __global__ void fill_array(value_type *data, const value_type value, const size_
 
 }  // namespace plssvm::hip::detail
 
-#endif  // PLSSVM_BACKENDS_HIP_DETAIL_FILL_KERNEL_HPP_
+#endif  // PLSSVM_BACKENDS_HIP_KERNEL_DETAIL_FILL_KERNEL_HIP_HPP_

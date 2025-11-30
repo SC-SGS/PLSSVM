@@ -12,6 +12,7 @@
 
 #ifndef PLSSVM_DETAIL_MAKE_UNIQUE_FOR_OVERWRITE_HPP_
 #define PLSSVM_DETAIL_MAKE_UNIQUE_FOR_OVERWRITE_HPP_
+#pragma once
 
 #include "plssvm/detail/assert.hpp"  // PLSSVM_ASSERT
 
