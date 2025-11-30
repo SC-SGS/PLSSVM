@@ -70,7 +70,7 @@ namespace {
 [[nodiscard]] std::pair<plssvm::target_platform, std::size_t> extract_filter_information(const std::string_view filter) {
     const std::vector<std::string_view> split = plssvm::detail::split(filter, ':');
     // exactly two entries must be present: target_platform and device_num
-    PLSSVM_ASSERT(split.size(), 2);
+    PLSSVM_ASSERT(split.size() == 2, "The filter must by of form, e.g., gpu_nvidia:0, i.e., splitting it by : must return two elements.");
 
     // parse the target platform
     std::istringstream iss{ std::string{ split[0] } };
