@@ -13,6 +13,9 @@ project(
     DESCRIPTION "A Least Squares Support Vector Machine implementation using different backends."
 )
 
+# generate a compile_commands.json file (used by clang-tidy and other tools)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON CACHE INTERNAL "Generate a compile_commands.json file." FORCE)
+
 # include some generally used utility scripts
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/add_coverage_build_type.cmake)
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/utility_macros.cmake)
@@ -299,7 +302,7 @@ list(
 ########################################################################################################################
 # coverage analysis only possible with the Coverage CMAKE_BUILD_TYPE
 if (uppercase_CMAKE_BUILD_TYPE MATCHES COVERAGE)
-    list(APPEND CMAKE_MESSAGE_INDENT "coverage:  ")
+    list(APPEND CMAKE_MESSAGE_INDENT "Coverage:  ")
     # must be linux
     if (WIN32 OR APPLE)
         message(FATAL_ERROR "Only Linux is supported for the coverage analysis.")
@@ -334,7 +337,7 @@ if (uppercase_CMAKE_BUILD_TYPE MATCHES COVERAGE)
         set(PLSSVM_DEMANGLE_USING_CPPFILT --demangle-cpp)
     endif ()
 
-    # Create the coverage target. Run coverage tests with 'ctest --build . --target coverage'
+    # Create the coverage target. Run coverage tests with 'cmake --build --preset XXX --target coverage'.
     set(PLSSVM_COVERAGE_REPORT_OUTPUT_DIRECTORY "coverage_report")
     add_custom_target(
         coverage
@@ -374,11 +377,12 @@ if (uppercase_CMAKE_BUILD_TYPE MATCHES COVERAGE)
     # add custom target `make clean_coverage` which calls `make clean` and also removes all generate *.gcda and *.gcno files
     add_custom_target(clean_coverage)
     add_custom_command(
-        DEPENDS clean
+        POST_BUILD
+        TARGET clean_coverage
         COMMENT "remove all coverage files"
         COMMAND ${CMAKE_MAKE_PROGRAM} clean
         COMMAND ${CMAKE_COMMAND} -E remove -f coverage.info coverage_init.info coverage_tests.info ${PLSSVM_COVERAGE_REPORT_OUTPUT_DIRECTORY}
-        COMMAND ${CMAKE_COMMAND} -P "${CMAKE_CURRENT_SOURCE_DIR}/cmake/delete_coverage_files.cmake" TARGET clean_coverage
+        COMMAND ${CMAKE_COMMAND} -P "${CMAKE_CURRENT_SOURCE_DIR}/cmake/delete_coverage_files.cmake"
     )
     list(POP_BACK CMAKE_MESSAGE_INDENT)
 endif ()
@@ -799,6 +803,7 @@ else ()
     )
     FetchContent_MakeAvailable(fmt)
     set_property(TARGET fmt PROPERTY POSITION_INDEPENDENT_CODE ON)
+    set_target_properties(fmt PROPERTIES CXX_CLANG_TIDY "")
     target_compile_definitions(fmt PRIVATE FMT_USE_FULL_CACHE_DRAGONBOX)
     if (${CMAKE_SYSTEM_PROCESSOR} MATCHES "ppc64le")
         target_compile_definitions(fmt PUBLIC FMT_USE_FLOAT128=0)
@@ -836,6 +841,53 @@ if (PLSSVM_ENABLE_FORMATTING)
         FetchContent_MakeAvailable(format)
     endif ()
 
+    list(POP_BACK CMAKE_MESSAGE_INDENT)
+endif ()
+
+########################################################################################################################
+#                                       enable clang-tidy static analyzer checks                                       #
+########################################################################################################################
+option(PLSSVM_ENABLE_CLANG_TIDY "Enable clang-tidy static code analysis." OFF)
+if (PLSSVM_ENABLE_CLANG_TIDY)
+    list(APPEND CMAKE_MESSAGE_INDENT "clang-tidy:  ")
+    message(CHECK_START "Checking for clang-tidy executable")
+    
+    # check if the clang-tidy executable is available
+    find_program(PLSSVM_CLANG_TIDY_EXE clang-tidy) # usage as part of the compilation process (can't analyse headers)
+    find_program(PLSSVM_RUN_CLANG_TIDY_EXE run-clang-tidy) # usage as standalone target (can analyse headers)
+    if (NOT PLSSVM_CLANG_TIDY_EXE OR NOT PLSSVM_RUN_CLANG_TIDY_EXE)
+        # clang-tidy executable not found
+        message(CHECK_FAIL "not found")
+        message(SEND_ERROR "Cannot find requested clang-tidy/run-clang-tidy for static analysis!")
+    else ()
+        # clang-tidy executable found -> enable it
+        message(CHECK_PASS "found")
+        
+        # clang-tidy support during compilation
+        message(STATUS "Enabling static analysis via clang-tidy during compilation.")
+        set(CMAKE_CXX_CLANG_TIDY "clang-tidy;-quiet")
+        
+        # custom clang-tidy target that also supports headers
+        message(STATUS "Enabling custom clang-tidy-all target.")
+        
+        # create a custom command that filters unwanted flags
+        add_custom_target(filter_compile_commands
+                COMMAND ${CMAKE_COMMAND} -DPLSSVM_COMPILE_COMMANDS_JSON_FILE=${CMAKE_BINARY_DIR}/compile_commands.json -P ${CMAKE_SOURCE_DIR}/cmake/filter_compile_commands.cmake
+                COMMENT "Generating a sanitized compile_commands.json"
+                VERBATIM
+        )
+        
+        # create the custom target
+        add_custom_target(clang-tidy-all
+            COMMAND ${PLSSVM_RUN_CLANG_TIDY_EXE} -p "${CMAKE_BINARY_DIR}" -quiet "${PROJECT_SOURCE_DIR}/src" "${PROJECT_SOURCE_DIR}/bindings/Python" "${PROJECT_SOURCE_DIR}/tests"
+            DEPENDS filter_compile_commands
+        )
+        
+        # clang-tidy is not supported by all backends
+        message(WARNING "Since some backends use special compilers with custom compiler flags that are NOT understood by clang-tidy, the target may fail to correctly build! "
+                        "Some precautions are taken to make the clang-tidy-all target more compatible with these special compilers, but it does not work in all cases!")
+    endif ()
+    
     list(POP_BACK CMAKE_MESSAGE_INDENT)
 endif ()
 

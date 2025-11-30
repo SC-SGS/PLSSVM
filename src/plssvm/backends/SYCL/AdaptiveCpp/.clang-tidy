@@ -1,0 +1,10 @@
+---
+Checks: '
+-cppcoreguidelines-avoid-const-or-ref-data-members,
+
+-clang-analyzer-core.CallAndMessage,
+
+-misc-include-cleaner,
+'
+
+InheritParentConfig: true
