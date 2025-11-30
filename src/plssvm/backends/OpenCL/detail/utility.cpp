@@ -357,7 +357,7 @@ std::pair<std::vector<command_queue>, jit_info> create_command_queues(const mpi:
     // only use PTX inline assembly if enabled during CMake configuration
 #if defined(PLSSVM_OPENCL_BACKEND_USE_PTX_INLINE_ASSEMBLY)
     for (std::size_t idx = 0; idx < contexts.size(); ++idx) {
-        auto &context = contexts[idx];
+        const auto &context = contexts[idx];
 
         std::size_t platform_vendor_size{ 0 };
         clGetPlatformInfo(context.platform, CL_PLATFORM_VENDOR, 0, nullptr, &platform_vendor_size);
@@ -488,7 +488,7 @@ std::pair<std::vector<command_queue>, jit_info> create_command_queues(const mpi:
 
     // get all device names
     std::vector<std::string> device_names{};
-    for (auto &context : contexts) {
+    for (const auto &context : contexts) {
         // get device name
         std::size_t name_length{};
         PLSSVM_OPENCL_ERROR_CHECK(clGetDeviceInfo(context.device, CL_DEVICE_NAME, 0, nullptr, &name_length), "error obtaining device name size")
@@ -564,8 +564,8 @@ std::pair<std::vector<command_queue>, jit_info> create_command_queues(const mpi:
         }
 
         for (std::size_t idx = 0; idx < contexts.size(); ++idx) {
-            auto &context = contexts[idx];
-            auto &device = context.device;
+            const auto &context = contexts[idx];
+            const auto &device = context.device;
 
             // create and build program
             cl_program program = clCreateProgramWithSource(context, 1, &kernel_src_ptr, nullptr, &err);
@@ -666,8 +666,8 @@ std::pair<std::vector<command_queue>, jit_info> create_command_queues(const mpi:
 
     // compile kernels for each context, i.e., each device
     for (std::size_t idx = 0; idx < contexts.size(); ++idx) {
-        auto &context = contexts[idx];
-        auto &device = context.device;
+        const auto &context = contexts[idx];
+        const auto &device = context.device;
 
         // build from binaries
         cl_program binary_program = clCreateProgramWithBinary(context, static_cast<cl_uint>(1), &device, binary_sizes.data(), const_cast<const unsigned char **>(&binaries_ptr[idx]), &err_bin, &err);

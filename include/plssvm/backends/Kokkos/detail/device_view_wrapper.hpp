@@ -148,7 +148,7 @@ class device_view_wrapper {
      * @param[in] rhs the second device view wrapper
      * @return `true` if both underlying `std::variant`s are equal, otherwise `false` (`[[nodiscard]]`)
      */
-    [[nodiscard]] friend bool operator==(const device_view_wrapper &lhs, const device_view_wrapper &rhs) noexcept {
+    [[nodiscard]] friend bool operator==(const device_view_wrapper &lhs, const device_view_wrapper &rhs) {
         return lhs.v_ == rhs.v_;
     }
 
@@ -158,7 +158,7 @@ class device_view_wrapper {
      * @param[in] rhs the second device view wrapper
      * @return `true` if both underlying `std::variant`s are unequal, otherwise `false` (`[[nodiscard]]`)
      */
-    [[nodiscard]] friend bool operator!=(const device_view_wrapper &lhs, const device_view_wrapper &rhs) noexcept {
+    [[nodiscard]] friend bool operator!=(const device_view_wrapper &lhs, const device_view_wrapper &rhs) {
         return !(lhs == rhs);
     }
 

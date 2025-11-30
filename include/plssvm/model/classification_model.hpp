@@ -109,7 +109,7 @@ class classification_model : public model<U> {
      *          It is the same as: `model.classes().size()`
      * @return the number of classes (`[[nodiscard]]`)
      */
-    [[nodiscard]] size_type num_classes() const noexcept { return dynamic_cast<classification_data_set<label_type> &>(*data_).num_classes(); }
+    [[nodiscard]] size_type num_classes() const noexcept { return dynamic_cast<const classification_data_set<label_type> &>(*data_).num_classes(); }
 
     /**
      * @brief Returns the classes of the support vectors.

@@ -38,6 +38,8 @@
         throw plssvm::cuda::backend_exception{ fmt::format("CUDA assert '{}' ({}): {}", cudaGetErrorName(err), err, cudaGetErrorString(err)) }; \
     }
 
+// NOLINTBEGIN(misc-use-internal-linkage): false positive diagnostic for .cuh files
+
 namespace plssvm::cuda::detail {
 
 /**
@@ -90,6 +92,8 @@ void device_synchronize(int device);
 }  // namespace plssvm::cuda::detail
 
 /// @cond Doxygen_suppress
+
+// NOLINTEND(misc-use-internal-linkage)
 
 template <>
 struct fmt::formatter<cudaError_t> : fmt::ostream_formatter { };

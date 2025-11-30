@@ -101,7 +101,7 @@ class device_wrapper {
      * @copydoc plssvm::kokkos::detail::device_wrapper::get
      */
     template <execution_space space>
-    const execution_space_to_kokkos_type_t<space> &get() const {
+    [[nodiscard]] const execution_space_to_kokkos_type_t<space> &get() const {
         return std::get<execution_space_to_kokkos_type_t<space>>(v_);
     }
 
@@ -182,7 +182,7 @@ class device_wrapper {
      * @param[in] rhs the second device wrapper
      * @return `true` if both underlying `std::variant`s are unequal, otherwise `false` (`[[nodiscard]]`)
      */
-    [[nodiscard]] friend bool operator!=(const device_wrapper &lhs, const device_wrapper &rhs) noexcept {
+    [[nodiscard]] friend bool operator!=(const device_wrapper &lhs, const device_wrapper &rhs) {
         return !(lhs == rhs);
     }
 

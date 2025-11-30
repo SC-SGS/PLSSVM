@@ -101,7 +101,7 @@ class csvc : virtual public csvm {
     /**
      * @copydoc plssvm::csvm::~csvm() noexcept
      */
-    ~csvc() noexcept = default;
+    ~csvc() noexcept override = default;
 
     //*************************************************************************************************************************************//
     //                                                              fit model                                                              //
@@ -144,7 +144,7 @@ class csvc : virtual public csvm {
 
         PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_EVENT("fit start");
 
-        igor::parser parser{ named_args... };
+        const igor::parser parser{ named_args... };
 
         // set default values
         // note: if the default value is changed, they must also be changed in the Python bindings!

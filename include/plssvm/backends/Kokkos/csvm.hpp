@@ -70,7 +70,7 @@ class csvm : public ::plssvm::detail::gpu_csvm<detail::device_ptr, detail::devic
     template <typename... Args, PLSSVM_REQUIRES(::plssvm::detail::has_only_kokkos_parameter_named_args_v<Args...>)>
     explicit csvm(const target_platform target = target_platform::automatic, Args &&...named_args) {
         // check igor parameter
-        igor::parser parser{ std::forward<Args>(named_args)... };
+        const igor::parser parser{ std::forward<Args>(named_args)... };
 
         // check whether a specific Kokkos execution space has been requested
         if constexpr (parser.has(kokkos_execution_space)) {

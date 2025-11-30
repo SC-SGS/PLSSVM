@@ -176,7 +176,7 @@ struct parameter {
      * @param[in] other the other parameter set compared to this one
      * @return `true` if both parameter sets are equivalent, `false` otherwise (`[[nodiscard]]`)
      */
-    [[nodiscard]] constexpr bool equivalent(const parameter &other) const noexcept {
+    [[nodiscard]] constexpr bool equivalent(const parameter &other) const {
         // equality check, but only the member variables that a necessary for the current kernel type are compared!
         // cannot be equal if both parameters have different kernel types
         if (kernel_type != other.kernel_type) {
@@ -209,7 +209,7 @@ struct parameter {
      */
     template <typename... Args>
     void set_named_arguments(Args &&...named_args) {
-        igor::parser parser{ std::forward<Args>(named_args)... };
+        const igor::parser parser{ std::forward<Args>(named_args)... };
 
         // compile time check: only named parameter are permitted
         static_assert(!parser.has_unnamed_arguments(), "Can only use named parameter!");
@@ -310,7 +310,7 @@ struct parameter {
  * @param[in] rhs the second parameter set
  * @return `true` if both parameter sets are equal, `false` otherwise (`[[nodiscard]]`)
  */
-[[nodiscard]] constexpr bool operator==(const parameter &lhs, const parameter &rhs) noexcept {
+[[nodiscard]] constexpr bool operator==(const parameter &lhs, const parameter &rhs) {
     return lhs.kernel_type == rhs.kernel_type && lhs.degree == rhs.degree && lhs.gamma == rhs.gamma && lhs.coef0 == rhs.coef0 && lhs.cost == rhs.cost;
 }
 
@@ -321,7 +321,7 @@ struct parameter {
  * @param[in] rhs the second parameter set
  * @return `true` if both parameter sets are unequal, `false` otherwise (`[[nodiscard]]`)
  */
-[[nodiscard]] constexpr bool operator!=(const parameter &lhs, const parameter &rhs) noexcept {
+[[nodiscard]] constexpr bool operator!=(const parameter &lhs, const parameter &rhs) {
     return !(lhs == rhs);
 }
 
@@ -334,7 +334,7 @@ struct parameter {
  * @param[in] rhs the second parameter set
  * @return `true` if both parameter sets are equivalent, `false` otherwise (`[[nodiscard]]`)
  */
-[[nodiscard]] constexpr bool equivalent(const parameter &lhs, const parameter &rhs) noexcept {
+[[nodiscard]] constexpr bool equivalent(const parameter &lhs, const parameter &rhs) {
     return lhs.equivalent(rhs);
 }
 

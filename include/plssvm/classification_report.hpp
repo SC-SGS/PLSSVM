@@ -191,7 +191,7 @@ classification_report::classification_report(const std::vector<label_type> &corr
         throw classification_report_exception{ fmt::format("The number of correct labels ({}) and predicted labels ({}) must be the same!", correct_label.size(), predicted_label.size()) };
     }
 
-    igor::parser parser{ std::forward<Args>(named_args)... };
+    const igor::parser parser{ std::forward<Args>(named_args)... };
 
     // compile time check: only named parameter are permitted
     static_assert(!parser.has_unnamed_arguments(), "Can only use named parameter!");

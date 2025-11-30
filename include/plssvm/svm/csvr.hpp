@@ -91,7 +91,7 @@ class csvr : virtual public csvm {
     /**
      * @copydoc plssvm::csvm::~csvm() noexcept
      */
-    ~csvr() noexcept = default;
+    ~csvr() noexcept override = default;
 
     //*************************************************************************************************************************************//
     //                                                              fit model                                                              //
@@ -134,7 +134,7 @@ class csvr : virtual public csvm {
 
         PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_EVENT("fit start");
 
-        igor::parser parser{ named_args... };
+        const igor::parser parser{ named_args... };
 
         // compile time check: only named parameters are permitted
         static_assert(!parser.has_unnamed_arguments(), "Can only use named parameter!");

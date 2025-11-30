@@ -285,7 +285,7 @@ class matrix {
      * @details The layout type is either Array-of-Structs (AoS) or Struct-of-Arrays (SoA).
      * @return the layout type (`[[nodiscard]]`)
      */
-    [[nodiscard]] static constexpr layout_type layout() noexcept { return layout_; }
+    [[nodiscard]] constexpr static layout_type layout() noexcept { return layout_; }
 
     /**
      * @brief Returns the value at @p row and @p col as defined by the matrix's layout type.

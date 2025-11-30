@@ -213,7 +213,7 @@ void performance_tracker::add_hws_entry(const hws::system_hardware_sampler &entr
 }
 #endif
 
-void performance_tracker::add_event(const std::string name) {
+void performance_tracker::add_event(std::string name) {
     events_.add_event(std::chrono::steady_clock::now(), std::move(name));
 }
 

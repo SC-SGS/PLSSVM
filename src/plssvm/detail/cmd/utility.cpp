@@ -40,6 +40,8 @@
 
 namespace plssvm::detail::cmd {
 
+// NOLINTBEGIN(cppcoreguidelines-pro-bounds-pointer-arithmetic): pointer arithmetic necessary due to char** from the main function
+
 std::vector<char *> filter_argv(int argc, char **argv, const std::vector<std::string> &prefix_filter) {
     // We ignore all command line options starting with --hpx: like --hpx:threads=42.
     // We also ignore all command line options starting with --kokkos-.
@@ -63,6 +65,8 @@ std::vector<char *> filter_argv(int argc, char **argv, const std::vector<std::st
 
     return filtered_argv;
 }
+
+// NOLINTEND(cppcoreguidelines-pro-bounds-pointer-arithmetic)
 
 std::string kernel_type_help_message() {
     // create the help message for the kernel function type

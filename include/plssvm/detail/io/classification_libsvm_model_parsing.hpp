@@ -720,8 +720,14 @@ inline void write_libsvm_model_data_classification(const std::string &filename, 
             break;
     }
 #endif
-    using namespace literals;
     using namespace literals;  // NOLINT(google-build-using-namespace): only imports custom user-defined literals into this namespace
+
+    const auto &labels_opt = data.labels();
+
+    // check that labels are present (should NEVER trigger)
+    if (!labels_opt.has_value()) {
+        throw data_set_exception{ "The data set does not contain any labels, but they are required to output a model file!" };
+    }
 
     const soa_matrix<real_type> &support_vectors = data.data();
     const std::vector<label_type> &labels = *data.labels();

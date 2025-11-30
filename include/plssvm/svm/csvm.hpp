@@ -291,7 +291,7 @@ std::tuple<aos_matrix<real_type>, std::vector<real_type>, std::vector<unsigned l
     PLSSVM_ASSERT(!B.empty(), "The B matrix must not be empty!");
     PLSSVM_ASSERT(A.num_rows() == B.num_cols(), "The number of data points in A ({}) and B ({}) must be the same!", A.num_rows(), B.num_cols());
 
-    igor::parser parser{ std::forward<Args>(named_args)... };
+    const igor::parser parser{ std::forward<Args>(named_args)... };
 
     // set default values
     auto used_epsilon{ DEFAULT_EPSILON };
