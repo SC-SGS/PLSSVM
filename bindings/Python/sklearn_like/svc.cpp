@@ -192,7 +192,7 @@ struct svc {
 
             std::map<label_type, std::vector<int>> indices_per_class{};
             // init index-map map
-            for (const label_type &label : model.classes()) {
+            for (const label_type &label : model.classes()) {  // NOLINT(performance-implicit-conversion-in-loop): the types ARE identical
                 indices_per_class.insert({ label, std::vector<int>{} });
             }
             // sort the indices into the respective bucket based on their associated class
@@ -396,7 +396,7 @@ void init_sklearn_svc(py::module_ &m) {
 
                 std::map<label_type, std::int32_t> occurrences{};
                 // init count map
-                for (const label_type &label : model.classes()) {
+                for (const label_type &label : model.classes()) {  // NOLINT(performance-implicit-conversion-in-loop): the types ARE identical
                     occurrences.insert({ label, std::int32_t{ 0 } });
                 }
                 // count occurrences
@@ -730,7 +730,7 @@ void init_sklearn_svc(py::module_ &m) {
                 // return a tuple that fully encodes the state of the object
                 return py::make_tuple(self.svm_->get_params(), self.epsilon_, self.max_iter_, self.classification_);
             },
-            [](py::tuple t) {  // __setstate__
+            [](py::tuple t) {  // NOLINT: __setstate__
                 if (t.size() != 4) {
                     throw std::runtime_error{ "Invalid state!" };
                 }

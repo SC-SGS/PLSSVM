@@ -67,6 +67,7 @@ PYBIND11_MODULE(plssvm, m) {
     static py::exception<plssvm::exception> base_exception(m, "PLSSVMError");
     py::register_exception_translator([](std::exception_ptr p) {
     static const py::exception<plssvm::exception> base_exception(m, "PLSSVMError");
+    py::register_exception_translator([](std::exception_ptr p) {  // NOLINT: must be copied for each invocation
         try {
             if (p) {
                 std::rethrow_exception(p);

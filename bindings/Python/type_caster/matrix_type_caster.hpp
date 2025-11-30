@@ -112,7 +112,7 @@ struct type_caster<plssvm::matrix<T, layout>> {
         const py::gil_scoped_release release;
 
         // check the memory layout of the Python Numpy array
-        if constexpr (static_cast<bool>(Flags & py::array::c_style)) {
+        if constexpr (static_cast<bool>(Flags & py::array::c_style)) {  // NOLINT(hicpp-signed-bitwise): Pybind11 way to do this
             // the provided Python Numpy array has C style layout
             if constexpr (layout == plssvm::layout_type::aos) {
                 // memory layout of Python Numpy array and PLSSVM matrix are the same -> can use memcpy to convert
@@ -132,7 +132,7 @@ struct type_caster<plssvm::matrix<T, layout>> {
                 // unsupported PLSSVM matrix memory layout
                 return false;
             }
-        } else if constexpr (static_cast<bool>(Flags & py::array::f_style)) {
+        } else if constexpr (static_cast<bool>(Flags & py::array::f_style)) {  // NOLINT(hicpp-signed-bitwise): Pybind11 way to do this
             if constexpr (layout == plssvm::layout_type::aos) {
                 // the memory layouts don't match -> must use loops to convert layouts
 #pragma omp parallel for collapse(2)

@@ -444,7 +444,7 @@ void init_sklearn_svr(py::module_ &m) {
                 // return a tuple that fully encodes the state of the object
                 return py::make_tuple(self.svm_->get_params(), self.epsilon_, self.max_iter_);
             },
-            [](py::tuple t) {  // __setstate__
+            [](py::tuple t) {  // NOLINT: __setstate__
                 if (t.size() != 3) {
                     throw std::runtime_error{ "Invalid state!" };
                 }

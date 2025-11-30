@@ -71,8 +71,8 @@ void init_parameter(py::module_ &m) {
             py::return_value_policy::reference,
             "change the cost parameter for the C-SVM")
         .def("equivalent", &plssvm::parameter::equivalent, "check whether two parameter objects are equivalent, i.e., the SVM hyper-parameters important for the current 'kernel_type' are the same")
-        .def(py::self == py::self, "check whether two parameter objects are identical")
-        .def(py::self != py::self, "check whether two parameter objects are different")
+        .def(py::self == py::self, "check whether two parameter objects are identical")  // NOLINT(misc-redundant-expression): the idiomatic Pybind11 way
+        .def(py::self != py::self, "check whether two parameter objects are different")  // NOLINT(misc-redundant-expression): the idiomatic Pybind11 way
         .def("__repr__", [](const plssvm::parameter &self) {
             return fmt::format("<plssvm.Parameter with {{ kernel_type: {}, degree: {}, gamma: {}, coef0: {}, cost: {} }}>",
                                self.kernel_type,

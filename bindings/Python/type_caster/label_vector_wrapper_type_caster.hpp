@@ -97,7 +97,7 @@ template <typename T>
 template <typename possible_vector_types>
 [[nodiscard]] possible_vector_types generic_pyarray_to_vector(const py::array &arr) {
     // sanity check the passed py::array
-    if (!(arr.flags() & py::array::c_style)) {
+    if (!(arr.flags() & py::array::c_style)) {  // NOLINT(hicpp-signed-bitwise): Pybind11 way to do this
         throw py::value_error{ "The py::array must be C-contiguous" };
     }
 

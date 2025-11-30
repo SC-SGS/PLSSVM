@@ -115,6 +115,7 @@ void register_py_exception(py::module_ &m, const std::string &py_exception_name,
     static py::exception<Exception> py_exception(m, py_exception_name.c_str(), base_exception.ptr());
     py::register_exception_translator([](std::exception_ptr p) {
     static const py::exception<Exception> py_exception(m, py_exception_name.c_str(), base_exception.ptr());
+    py::register_exception_translator([](std::exception_ptr p) {  // NOLINT(performance-unnecessary-value-param): const & does not compile
         try {
             if (p) {
                 std::rethrow_exception(p);
