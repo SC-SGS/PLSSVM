@@ -92,8 +92,6 @@ set_local_and_parent(PLSSVM_CUDA_BACKEND_LIBRARY_NAME plssvm-CUDA)
 add_library(${PLSSVM_CUDA_BACKEND_LIBRARY_NAME} SHARED ${PLSSVM_CUDA_SOURCES})
 if (CMAKE_CUDA_COMPILER_ID STREQUAL "NVIDIA")
     set_target_properties(${PLSSVM_CUDA_BACKEND_LIBRARY_NAME} PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
-    # silence warning in {fmt} library
-    target_compile_options(${PLSSVM_CUDA_BACKEND_LIBRARY_NAME} PUBLIC -Wno-stringop-overflow)
 endif ()
 if (CMAKE_CUDA_COMPILER_ID STREQUAL "Clang")
     target_compile_options(${PLSSVM_CUDA_BACKEND_LIBRARY_NAME} PUBLIC -fPIC)
