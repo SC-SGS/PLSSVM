@@ -15,7 +15,6 @@
 #include "plssvm/detail/tracking/performance_tracker.hpp"  // PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY, plssvm::detail::tracking::tracking_entry
 #include "plssvm/exceptions/exceptions.hpp"                // plssvm::kernel_launch_resources
 
-#include "fmt/chrono.h"  // fmt::localtime
 #include "fmt/format.h"  // fmt::format
 
 #if __has_include(<unistd.h>)
@@ -26,7 +25,10 @@
     #define PLSSVM_WINDOWS_AVAILABLE_MEMORY
 #endif
 
-#include <cstddef>   // std::size_t
+#if defined(PLSSVM_PERFORMANCE_TRACKER_ENABLED)
+    #include <cstddef>  // std::size_t
+#endif
+
 #include <cstdlib>   // std::getenv
 #include <ctime>     // std::time_t, std::time, std:tm, std::localtime
 #include <optional>  // std::optional, std::make_optional, std::nullopt

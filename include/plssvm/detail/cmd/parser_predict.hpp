@@ -14,7 +14,7 @@
 #pragma once
 
 #include "plssvm/backend_types.hpp"                        // plssvm::backend_type
-#include "plssvm/backends/Kokkos/execution_space.hpp"      // plssvm::kokkos::execution_space
+#include "plssvm/backends/Kokkos/execution_spaces.hpp"     // plssvm::kokkos::execution_space
 #include "plssvm/backends/SYCL/data_parallel_kernels.hpp"  // plssvm::sycl::data_parallel_kernel
 #include "plssvm/backends/SYCL/implementation_types.hpp"   // plssvm::sycl::implementation_type
 #include "plssvm/mpi/communicator.hpp"                     // plssvm::mpi::communicator
@@ -23,9 +23,10 @@
 #include "fmt/base.h"     // fmt::formatter
 #include "fmt/ostream.h"  // fmt::ostream_formatter
 
-#include <iosfwd>  // forward declare std::ostream
-#include <string>  // std::string
-#include <vector>  // std::vector
+#include <cstddef>  // std::size_t
+#include <iosfwd>   // forward declare std::ostream
+#include <string>   // std::string
+#include <vector>   // std::vector
 
 namespace plssvm::detail::cmd {
 

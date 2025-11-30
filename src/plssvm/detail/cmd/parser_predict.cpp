@@ -9,14 +9,13 @@
 #include "plssvm/detail/cmd/parser_predict.hpp"
 
 #include "plssvm/backend_types.hpp"                        // plssvm::list_available_backends
-#include "plssvm/backends/Kokkos/execution_space.hpp"      // plssvm::kokkos::{list_available_execution_spaces, execution_space}
+#include "plssvm/backends/Kokkos/execution_spaces.hpp"     // plssvm::kokkos::{list_available_execution_spaces, execution_space}
 #include "plssvm/backends/SYCL/data_parallel_kernels.hpp"  // plssvm::sycl::{list_available_sycl_data_parallel_kernels, data_parallel_kernels}
 #include "plssvm/backends/SYCL/implementation_types.hpp"   // plssvm::sycl::{list_available_sycl_implementations, implementation_type}
 #include "plssvm/constants.hpp"                            // plssvm::real_type
 #include "plssvm/detail/assert.hpp"                        // PLSSVM_ASSERT
 #include "plssvm/detail/cmd/utility.hpp"                   // plssvm::detail::cmd::{filter_argv, kernel_type_help_message, parse_and_check_sycl_options_if_available,
-                                                           // parse_and_check_kokkos_options_if_available, parse_and_check_mpi_options_if_available, parse_verbosity}
-#include "plssvm/detail/logging/mpi_log_untracked.hpp"     // plssvm::detail::log_untracked
+                                                           // parse_and_check_kokkos_options_if_available, parse_and_check_mpi_options_if_available, parse_verbosity, max_cmd_width}
 #include "plssvm/exceptions/exceptions.hpp"                // plssvm::cmd_parser_exit
 #include "plssvm/mpi/communicator.hpp"                     // plssvm::mpi::communicator
 #include "plssvm/target_platforms.hpp"                     // plssvm::target_platform, plssvm::list_available_target_platforms

@@ -73,8 +73,11 @@ namespace plssvm::mpi { }
 /// Namespace containing implementation details for our MPI wrapper functionality. **Should not** directly be used by users.
 namespace plssvm::mpi::detail { }
 
-/// Namespace containing implementation details for the performance tracking and hardware sampling functionality. **Should not** directly be used by users.
+/// Namespace containing implementation details for the performance tracking functionality. **Should not** directly be used by users.
 namespace plssvm::detail::tracking { }
+
+/// Namespace containing implementation details for the performance tracking functionality. **Should not** directly be used by users.
+namespace plssvm::detail::tracking::impl { }
 
 /// Namespace containing implementation details for the custom literals representing memory sizes. **Should not** directly be used by users.
 namespace plssvm::detail::literals { }
@@ -140,10 +143,25 @@ namespace plssvm::sycl { }
 /// Namespace containing the C-SVM using the SYCL backend with the preferred SYCL implementation. **Should not** directly be used by users.
 namespace plssvm::sycl::detail { }
 
+/// Namespace containing the C-SVM using the SYCL backend with the preferred SYCL implementation. Specific to the basic data parallel kernel. **Should not** directly be used by users.
+namespace plssvm::sycl::detail::basic { }
+
+/// Namespace containing the C-SVM using the SYCL backend with the preferred SYCL implementation. Specific to the work-group data parallel kernel. **Should not** directly be used by users.
+namespace plssvm::sycl::detail::work_group { }
+
+/// Namespace containing the C-SVM using the SYCL backend with the preferred SYCL implementation. Specific to the hierarchical data parallel kernel. **Should not** directly be used by users.
+namespace plssvm::sycl::detail::hierarchical { }
+
+/// Namespace containing the C-SVM using the SYCL backend with the preferred SYCL implementation. Specific to the scoped parallelism kernel. **Should not** directly be used by users.
+namespace plssvm::sycl::detail::scoped { }
+
 /// Namespace containing the C-SVM using the Kokkos backend.
 namespace plssvm::kokkos { }
 
 /// Namespace containing Kokkos backend specific implementation details. **Should not** directly be used by users.
 namespace plssvm::kokkos::detail { }
+
+/// Namespace containing Kokkos backend specific implementation details. **Should not** directly be used by users.
+namespace plssvm::kokkos::detail::impl { }
 
 #endif  // PLSSVM_CORE_HPP_

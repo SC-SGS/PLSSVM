@@ -6,6 +6,8 @@
  *          See the LICENSE.md file in the project root for full license information.
  */
 
+#include "plssvm/backends/OpenMP/detail/utility.hpp"
+
 #include "plssvm/detail/utility.hpp"  // plssvm::detail::contains
 
 #include "omp.h"  // omp_get_num_threads, _OPENMP

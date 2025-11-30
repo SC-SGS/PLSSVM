@@ -8,26 +8,36 @@
  * @brief Main function compiled to the `plssvm-scale` executable used for scaling a data set to a specified range.
  */
 
-#include "plssvm/core.hpp"
+#include "plssvm/backend_types.hpp"                        // plssvm::backend_type
+#include "plssvm/constants.hpp"                            // plssvm::real_type
+#include "plssvm/data_set/data_set.hpp"                    // plssvm::optional_ref
 #include "plssvm/detail/cmd/data_set_variants.hpp"         // plssvm::detail::cmd::data_set_factory
 #include "plssvm/detail/cmd/parser_scale.hpp"              // plssvm::detail::cmd::parser_scale
 #include "plssvm/detail/logging/mpi_log.hpp"               // plssvm::detail::log
 #include "plssvm/detail/logging/mpi_log_untracked.hpp"     // plssvm::detail::log_untracked
 #include "plssvm/detail/tracking/performance_tracker.hpp"  // plssvm::detail::tracking::tracking_entry, PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_SAVE,
+#include "plssvm/detail/type_traits.hpp"                   // plssvm::detail::remove_cvref_t
+#include "plssvm/exceptions/exceptions.hpp"                // plssvm::exception, plssvm::cmd_parser_exit
+#include "plssvm/mpi/communicator.hpp"                     // plssvm::mpi::communicator
+#include "plssvm/verbosity_levels.hpp"                     // plssvm::verbosity_level
                                                            // PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_HWS_ENTRY, PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_SET_REFERENCE_TIME
 #include "plssvm/detail/utility.hpp"                       // PLSSVM_IS_DEFINED
+#include "plssvm/environment.hpp"                          // plssvm::environment_scope_guard
 
 #if defined(PLSSVM_HARDWARE_SAMPLING_ENABLED)
     #include "hws/system_hardware_sampler.hpp"  // hws::system_hardware_sampler
 #endif
 
-#include "fmt/format.h"  // fmt::format
+#include "fmt/base.h"     // fmt::print
+#include "fmt/compile.h"  // FMT_COMPILE
+#include "fmt/format.h"   // fmt::format
 
 #include <chrono>     // std::chrono::{steady_clock, duration}, std::chrono_literals namespace
 #include <cstddef>    // std::size_t
 #include <cstdlib>    // EXIT_SUCCESS, EXIT_FAILURE
 #include <exception>  // std::exception
 #include <iostream>   // std::cerr, std::endl
+#include <memory>     // std::unique_ptr, std::make_unique
 #include <variant>    // std::visit
 #include <vector>     // std::vector
 

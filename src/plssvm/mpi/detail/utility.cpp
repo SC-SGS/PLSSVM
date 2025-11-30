@@ -8,12 +8,11 @@
 
 #include "plssvm/mpi/detail/utility.hpp"
 
-#include "plssvm/exceptions/exceptions.hpp"  // plssvm::mpi_exception
-
-#include "fmt/format.h"  // fmt::format
-
 #if defined(PLSSVM_HAS_MPI_ENABLED)
-    #include "mpi.h"  // MPI_Get_processor_name
+    #include "plssvm/exceptions/exceptions.hpp"  // plssvm::mpi_exception
+
+    #include "fmt/format.h"  // fmt::format
+    #include "mpi.h"         // MPI_Get_processor_name
 #endif
 
 #include <string>  // std::string

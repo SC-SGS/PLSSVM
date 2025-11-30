@@ -24,6 +24,7 @@
 #include "plssvm/detail/memory_size.hpp"                // plssvm::memory_size, custom literals
 #include "plssvm/detail/string_conversion.hpp"          // plssvm::detail::{convert_to, split_as}
 #include "plssvm/detail/string_utility.hpp"             // plssvm::detail::{trim, trim_left, to_lower_case}
+#include "plssvm/exceptions/exceptions.hpp"             // plssvm::file_format_exception, plssvm::data_set_exception
 #include "plssvm/gamma.hpp"                             // plssvm::get_gamma_string
 #include "plssvm/kernel_function_types.hpp"             // plssvm::kernel_function_type
 #include "plssvm/matrix.hpp"                            // plssvm::soa_matrix

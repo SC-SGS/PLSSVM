@@ -17,7 +17,6 @@
 #include "plssvm/detail/fast_float_wrapper.hpp"    // plssvm::detail::convert_to_floating_point
 #include "plssvm/detail/string_utility.hpp"        // plssvm::detail::{trim, trim_left, as_lower_case, starts_with}
 #include "plssvm/detail/type_traits.hpp"           // PLSSVM_REQUIRES, plssvm::detail::remove_cvref_t
-#include "plssvm/detail/utility.hpp"               // plssvm::detail::unreachable
 
 #include "fmt/format.h"  // fmt::format
 
@@ -27,7 +26,6 @@
 #include <string_view>   // std::string_view
 #include <system_error>  // std:errc
 #include <type_traits>   // std::is_arithmetic_v, std::is_same_v, std::is_floating_point_v, std::is_integral_v
-#include <utility>       // std::pair
 #include <vector>        // std::vector
 
 namespace plssvm::detail {

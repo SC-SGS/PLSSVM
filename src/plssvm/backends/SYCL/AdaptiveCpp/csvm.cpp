@@ -41,8 +41,6 @@
 #include "plssvm/detail/memory_size.hpp"                                                         // plssvm::detail::memory_size
 #include "plssvm/detail/tracking/performance_tracker.hpp"                                        // plssvm::detail::tracking::tracking_entry, PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY
 #include "plssvm/detail/utility.hpp"                                                             // plssvm::detail::get_system_memory
-#include "plssvm/exceptions/exceptions.hpp"                                                      // plssvm::exception
-#include "plssvm/gamma.hpp"                                                                      // plssvm::gamma_type
 #include "plssvm/kernel_function_types.hpp"                                                      // plssvm::kernel_type
 #include "plssvm/mpi/communicator.hpp"                                                           // plssvm::mpi::communicator
 #include "plssvm/mpi/detail/information.hpp"                                                     // plssvm::mpi::detail::gather_and_print_csvm_information
@@ -64,9 +62,8 @@
 #include <limits>     // std::numeric_limits::max
 #include <optional>   // std::optional
 #include <string>     // std::string
-#include <tuple>      // std::tie
+#include <tuple>      // std::tie, std::get
 #include <utility>    // std::forward
-#include <variant>    // std::get
 #include <vector>     // std::vector
 
 namespace {

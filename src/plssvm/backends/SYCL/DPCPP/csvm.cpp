@@ -34,10 +34,7 @@
 #include "plssvm/detail/logging/log_untracked.hpp"                                               // plssvm::detail::log_untracked
 #include "plssvm/detail/logging/mpi_log_untracked.hpp"                                           // plssvm::detail::log_untracked
 #include "plssvm/detail/memory_size.hpp"                                                         // plssvm::detail::memory_size
-#include "plssvm/detail/string_utility.hpp"                                                      // plssvm::detail::trim
 #include "plssvm/detail/tracking/performance_tracker.hpp"                                        // plssvm::detail::tracking::tracking_entry, PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY
-#include "plssvm/exceptions/exceptions.hpp"                                                      // plssvm::exception
-#include "plssvm/gamma.hpp"                                                                      // plssvm::gamma_type
 #include "plssvm/kernel_function_types.hpp"                                                      // plssvm::kernel_type
 #include "plssvm/mpi/communicator.hpp"                                                           // plssvm::mpi::communicator
 #include "plssvm/mpi/detail/information.hpp"                                                     // plssvm::mpi::detail::gather_and_print_csvm_information
@@ -59,10 +56,8 @@
 #include <limits>       // std::numeric_limits::max
 #include <optional>     // std::optional
 #include <string>       // std::string
-#include <string_view>  // std::string_view
-#include <tuple>        // std::tie
+#include <tuple>        // std::tie, std::get
 #include <utility>      // std::forward
-#include <variant>      // std::get
 #include <vector>       // std::vector
 
 namespace {

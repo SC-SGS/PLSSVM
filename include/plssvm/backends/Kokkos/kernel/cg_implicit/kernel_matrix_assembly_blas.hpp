@@ -9,8 +9,8 @@
  * @brief Functions for implicitly assembling the kernel matrix using the Kokkos backend.
  */
 
-#ifndef PLSSVM_BACKENDS_KOKKOS_CG_IMPLICIT_KERNEL_MATRIX_ASSEMBLY_BLAS_HPP_
-#define PLSSVM_BACKENDS_KOKKOS_CG_IMPLICIT_KERNEL_MATRIX_ASSEMBLY_BLAS_HPP_
+#ifndef PLSSVM_BACKENDS_KOKKOS_KERNEL_CG_IMPLICIT_KERNEL_MATRIX_ASSEMBLY_BLAS_HPP_
+#define PLSSVM_BACKENDS_KOKKOS_KERNEL_CG_IMPLICIT_KERNEL_MATRIX_ASSEMBLY_BLAS_HPP_
 #pragma once
 
 #include "plssvm/backends/Kokkos/detail/standard_layout_tuple.hpp"  // plssvm::kokkos::detail::standard_layout_tuple
@@ -314,4 +314,4 @@ class device_kernel_assembly_symm {
 
 }  // namespace plssvm::kokkos::detail
 
-#endif  // PLSSVM_BACKENDS_KOKKOS_CG_IMPLICIT_KERNEL_MATRIX_ASSEMBLY_BLAS_HPP_
+#endif  // PLSSVM_BACKENDS_KOKKOS_KERNEL_CG_IMPLICIT_KERNEL_MATRIX_ASSEMBLY_BLAS_HPP_

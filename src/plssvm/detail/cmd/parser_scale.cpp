@@ -8,11 +8,12 @@
 
 #include "plssvm/detail/cmd/parser_scale.hpp"
 
+#include "plssvm/constants.hpp"                         // plssvm::real_type
 #include "plssvm/detail/assert.hpp"                     // PLSSVM_ASSERT
+#include "plssvm/detail/cmd/utility.hpp"                // plssvm::detail::cmd::max_cmd_width
 #include "plssvm/detail/logging/mpi_log_untracked.hpp"  // plssvm::detail::log_untracked
 #include "plssvm/exceptions/exceptions.hpp"             // plssvm::cmd_parser_exit
 #include "plssvm/mpi/communicator.hpp"                  // plssvm::mpi::communicator
-#include "plssvm/mpi/environment.hpp"                   // plssvm::mpi::{is_active, finalize}
 #include "plssvm/verbosity_levels.hpp"                  // plssvm::verbosity, plssvm::verbosity_level
 #include "plssvm/version/version.hpp"                   // plssvm::version::detail::get_version_info
 

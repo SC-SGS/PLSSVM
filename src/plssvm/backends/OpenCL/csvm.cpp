@@ -8,32 +8,29 @@
 
 #include "plssvm/backends/OpenCL/csvm.hpp"
 
-#include "plssvm/backend_types.hpp"                         // plssvm::backend_type
-#include "plssvm/backends/execution_range.hpp"              // plssvm::detail::{dim_type, execution_range}
-#include "plssvm/backends/OpenCL/detail/command_queue.hpp"  // plssvm::opencl::detail::command_queue
-#include "plssvm/backends/OpenCL/detail/context.hpp"        // plssvm::opencl::detail::context
-#include "plssvm/backends/OpenCL/detail/device_ptr.hpp"     // plssvm::opencl::detail::device_ptr
-#include "plssvm/backends/OpenCL/detail/jit_info.hpp"       // plssvm::opencl::detail::create_jit_report
-#include "plssvm/backends/OpenCL/detail/kernel.hpp"         // plssvm::opencl::detail::{compute_kernel_name, kernel}
-#include "plssvm/backends/OpenCL/detail/utility.hpp"        // PLSSVM_OPENCL_ERROR_CHECK, plssvm::opencl::detail::{get_contexts, create_command_queues, run_kernel, kernel_type_to_function_name, device_synchronize, get_opencl_target_version, get_driver_version}
-#include "plssvm/backends/OpenCL/exceptions.hpp"            // plssvm::opencl::backend_exception
-#include "plssvm/constants.hpp"                             // plssvm::{real_type, THREAD_BLOCK_SIZE, INTERNAL_BLOCK_SIZE, PADDING_SIZE}
-#include "plssvm/detail/assert.hpp"                         // PLSSVM_ASSERT
-#include "plssvm/detail/data_distribution.hpp"              // plssvm::detail::{data_distribution, triangular_data_distribution, rectangular_data_distribution}
-#include "plssvm/detail/logging/log_untracked.hpp"          // plssvm::detail::log_untracked
-#include "plssvm/detail/logging/mpi_log_untracked.hpp"      // plssvm::detail::log_untracked
-#include "plssvm/detail/memory_size.hpp"                    // plssvm::detail::memory_size
-#include "plssvm/detail/tracking/performance_tracker.hpp"   // plssvm::detail::tracking::tracking_entry, PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY
-#include "plssvm/detail/utility.hpp"                        // plssvm::detail::{contains, check_local_memory_usage}
-#include "plssvm/exceptions/exceptions.hpp"                 // plssvm::exception
-#include "plssvm/gamma.hpp"                                 // plssvm::gamma_type
-#include "plssvm/kernel_function_types.hpp"                 // plssvm::kernel_function_type
-#include "plssvm/mpi/communicator.hpp"                      // plssvm::mpi::communicator
-#include "plssvm/mpi/detail/information.hpp"                // plssvm::mpi::detail::gather_and_print_csvm_information
-#include "plssvm/parameter.hpp"                             // plssvm::parameter, plssvm::detail::parameter
-#include "plssvm/shape.hpp"                                 // plssvm::shape
-#include "plssvm/target_platforms.hpp"                      // plssvm::target_platform
-#include "plssvm/verbosity_levels.hpp"                      // plssvm::verbosity_level
+#include "plssvm/backend_types.hpp"                        // plssvm::backend_type
+#include "plssvm/backends/execution_range.hpp"             // plssvm::detail::{dim_type, execution_range}
+#include "plssvm/backends/OpenCL/detail/jit_info.hpp"      // plssvm::opencl::detail::create_jit_report
+#include "plssvm/backends/OpenCL/detail/kernel.hpp"        // plssvm::opencl::detail::{compute_kernel_name, kernel}
+#include "plssvm/backends/OpenCL/detail/utility.hpp"       // PLSSVM_OPENCL_ERROR_CHECK, plssvm::opencl::detail::{get_contexts, create_command_queues, run_kernel, kernel_type_to_function_name, device_synchronize, get_opencl_target_version, get_driver_version}
+#include "plssvm/backends/OpenCL/exceptions.hpp"           // plssvm::opencl::backend_exception
+#include "plssvm/constants.hpp"                            // plssvm::{real_type, THREAD_BLOCK_SIZE, INTERNAL_BLOCK_SIZE, PADDING_SIZE}
+#include "plssvm/detail/assert.hpp"                        // PLSSVM_ASSERT
+#include "plssvm/detail/data_distribution.hpp"             // plssvm::detail::{data_distribution, triangular_data_distribution, rectangular_data_distribution}
+#include "plssvm/detail/logging/log_untracked.hpp"         // NOLINT: plssvm::detail::log_untracked
+#include "plssvm/detail/logging/mpi_log_untracked.hpp"     // plssvm::detail::log_untracked
+#include "plssvm/detail/memory_size.hpp"                   // plssvm::detail::memory_size
+#include "plssvm/detail/operators.hpp"                     // operator overloads for std::vector (+ scalars)
+#include "plssvm/detail/tracking/performance_tracker.hpp"  // plssvm::detail::tracking::tracking_entry, PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY
+#include "plssvm/detail/utility.hpp"                       // plssvm::detail::{contains, check_local_memory_usage}
+#include "plssvm/exceptions/exceptions.hpp"                // plssvm::exception
+#include "plssvm/kernel_function_types.hpp"                // plssvm::kernel_function_type
+#include "plssvm/mpi/communicator.hpp"                     // plssvm::mpi::communicator
+#include "plssvm/mpi/detail/information.hpp"               // plssvm::mpi::detail::gather_and_print_csvm_information
+#include "plssvm/parameter.hpp"                            // plssvm::parameter, plssvm::detail::parameter
+#include "plssvm/shape.hpp"                                // plssvm::shape
+#include "plssvm/target_platforms.hpp"                     // plssvm::target_platform
+#include "plssvm/verbosity_levels.hpp"                     // plssvm::verbosity_level
 
 #include "CL/cl.h"           // CL_QUEUE_DEVICE, CL_DEVICE_GLOBAL_MEM_SIZE, CL_DEVICE_MAX_MEM_ALLOC_SIZE, CL_DEVICE_MAX_WORK_GROUP_SIZE
                              // clGetCommandQueueInfo, clGetDeviceInfo, cl_device_id
@@ -51,9 +48,8 @@
 #include <limits>     // std::numeric_limits::max
 #include <optional>   // std::optional
 #include <string>     // std::string
-#include <tuple>      // std::tie
+#include <tuple>      // std::tie, std::get
 #include <utility>    // std::pair, std::make_pair, std::move
-#include <variant>    // std::get
 #include <vector>     // std::vector
 
 namespace plssvm::opencl {

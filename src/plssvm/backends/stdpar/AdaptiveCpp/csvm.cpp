@@ -24,6 +24,7 @@
 
 #include "fmt/format.h"  // fmt::format
 
+#include <string>  // std::string
 #include <vector>  // std::vector
 
 namespace plssvm::stdpar {

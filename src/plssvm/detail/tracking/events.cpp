@@ -12,7 +12,7 @@
 #include "plssvm/detail/tracking/utility.hpp"  // plssvm::detail::tracking::{durations_from_reference_time, time_points_to_epoch}
 #include "plssvm/exceptions/exceptions.hpp"    // plssvm::exception
 
-#include "fmt/chrono.h"  // format std::chrono types
+#include "fmt/chrono.h"  // NOLINT(misc-include-cleaner): false positive, header is used to format std::chrono types
 #include "fmt/format.h"  // fmt::format
 #include "fmt/ranges.h"  // fmt::join
 

@@ -8,25 +8,30 @@
 
 #include "plssvm/mpi/communicator.hpp"
 
-#include "plssvm/detail/assert.hpp"            // PLSSVM_ASSERT
-#include "plssvm/exceptions/exceptions.hpp"    // plssvm::mpi_exception
-#include "plssvm/mpi/detail/mpi_datatype.hpp"  // plssvm::mpi::detail::mpi_datatype
-#include "plssvm/mpi/detail/utility.hpp"       // PLSSVM_MPI_ERROR_CHECK
+#include "plssvm/exceptions/exceptions.hpp"  // plssvm::mpi_exception
 
 #if defined(PLSSVM_HAS_MPI_ENABLED)
+    #include "plssvm/mpi/detail/mpi_datatype.hpp"  // plssvm::mpi::detail::mpi_datatype
+    #include "plssvm/mpi/detail/utility.hpp"       // PLSSVM_MPI_ERROR_CHECK
+
     #include "mpi.h"  // MPI_Comm, MPI_Comm_size, MPI_Comm_rank, MPI_Barrier, MPI_Gatherv, MPI_Gather, MPI_Bcast, MPI_Comm_compare, MPI_IDENT
+
+    #include <algorithm>  // std::transform
+    #include <cstdint>    // std::int64_t
+#endif
+
+#if defined(PLSSVM_ENABLE_ASSERTS) && defined(PLSSVM_HAS_MPI_ENABLED)
+    #include "plssvm/detail/assert.hpp"  // PLSSVM_ASSERT
 #endif
 
 #include "fmt/format.h"  // fmt::format
 
-#include <algorithm>  // std::transform
-#include <chrono>     // std::chrono::milliseconds
-#include <cstddef>    // std::size_t
-#include <cstdint>    // std::int64_t
-#include <optional>   // std::optional, std::nullopt
-#include <string>     // std::string
-#include <utility>    // std::move
-#include <vector>     // std::vector
+#include <chrono>    // std::chrono::milliseconds
+#include <cstddef>   // std::size_t
+#include <optional>  // std::optional, std::nullopt
+#include <string>    // std::string
+#include <utility>   // std::move
+#include <vector>    // std::vector
 
 namespace plssvm::mpi {
 

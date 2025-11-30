@@ -8,13 +8,12 @@
 
 #include "plssvm/mpi/detail/version.hpp"
 
-#include "plssvm/mpi/detail/utility.hpp"  // PLSSVM_MPI_ERROR_CHECK
-
 #if defined(PLSSVM_HAS_MPI_ENABLED)
-    #include "mpi.h"  // MPI_Get_library_version, MPI_Get_version
-#endif
+    #include "plssvm/mpi/detail/utility.hpp"  // PLSSVM_MPI_ERROR_CHECK
 
-#include "fmt/format.h"  // fmt::format
+    #include "fmt/format.h"  // fmt::format
+    #include "mpi.h"         // MPI_Get_library_version, MPI_Get_version
+#endif
 
 #include <string>  // std::string
 

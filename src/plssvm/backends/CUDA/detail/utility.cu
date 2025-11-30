@@ -11,6 +11,10 @@
 #include "plssvm/backends/execution_range.hpp"  // plssvm::detail::dim_type
 #include "plssvm/detail/string_utility.hpp"     // plssvm::detail::trim
 
+#include "cuda_runtime_api.h"  // cudaGetDeviceCount, cudaSetDevice, cudaPeekAtLastError, cudaDeviceSynchronize, cudaGetDeviceProperties, cudaRuntimeGetVersion
+#include "driver_types.h"      // cudaError_t
+#include "vector_types.h"      // dim3, cudaDeviceProp
+
 #include "fmt/format.h"  // fmt::format
 
 #include <string>  // std::string

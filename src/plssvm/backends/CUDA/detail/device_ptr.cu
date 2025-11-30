@@ -15,6 +15,8 @@
 #include "plssvm/exceptions/exceptions.hpp"                    // plssvm::exception
 #include "plssvm/shape.hpp"                                    // plssvm::shape
 
+#include "driver_types.h"  // cudaMemcpyHostToDevice, cudaMemcpyDeviceToHost, cudaMemcpyDeviceToDevice
+
 #include "fmt/format.h"  // fmt::format
 
 #include <algorithm>  // std::min

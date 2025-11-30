@@ -18,7 +18,6 @@
 
 #include "plssvm/backend_types.hpp"          // plssvm::backend_type, plssvm::list_available_backends
 #include "plssvm/detail/assert.hpp"          // PLSSVM_ASSERT
-#include "plssvm/detail/cmd/utility.hpp"     // plssvm::detail::cmd::filter_argv
 #include "plssvm/detail/string_utility.hpp"  // plssvm::detail::to_lower_case
 #include "plssvm/detail/utility.hpp"         // plssvm::detail::{contains, unreachable}
 #include "plssvm/exceptions/exceptions.hpp"  // plssvm::environment_exception
@@ -31,6 +30,8 @@
     #include "hpx/runtime.hpp"    // ::hpx::{is_running, is_stopped}
 #endif
 #if defined(PLSSVM_HAS_KOKKOS_BACKEND)
+    #include "plssvm/detail/cmd/utility.hpp"  // plssvm::detail::cmd::filter_argv
+
     #include "Kokkos_Core.hpp"  // Kokkos::is_initialized, Kokkos::is_finalized, Kokkos::initialize, Kokkos::finalize
 #endif
 
@@ -40,7 +41,9 @@
 #include "fmt/ranges.h"   // fmt::join
 
 #include <algorithm>  // std::remove_if
+#include <exception>  // std::exception
 #include <ios>        // std::ios::failbit
+#include <iostream>   // std::cout, std::endl
 #include <istream>    // std::istream
 #include <ostream>    // std::ostream
 #include <string>     // std::string
@@ -194,7 +197,6 @@ template <auto is_initialized_function, auto is_finalized_function>
  */
 constexpr bool is_initialization_necessary([[maybe_unused]] const backend_type backend) {
     // Note: must be implemented for the backends that need environmental setup
-    // currently false for all available backends
     return backend == backend_type::hpx || backend == backend_type::kokkos;
 }
 

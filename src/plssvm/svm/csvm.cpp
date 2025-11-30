@@ -13,9 +13,8 @@
 #include "plssvm/detail/logging/mpi_log.hpp"               // plssvm::detail::log
 #include "plssvm/detail/logging/mpi_log_untracked.hpp"     // plssvm::detail::log_untracked
 #include "plssvm/detail/move_only_any.hpp"                 // plssvm::detail::move_only_any
-#include "plssvm/detail/operators.hpp"                     // plssvm operator overloads for vectors
+#include "plssvm/detail/operators.hpp"                     // operator overloads for std::vector (+ scalars)
 #include "plssvm/detail/tracking/performance_tracker.hpp"  // PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY, PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_EVENT, plssvm::detail::tracking::tracking_entry
-#include "plssvm/gamma.hpp"                                // plssvm::gamma_type
 #include "plssvm/kernel_function_types.hpp"                // plssvm::kernel_function_type
 #include "plssvm/kernel_functions.hpp"                     // plssvm::kernel_function
 #include "plssvm/matrix.hpp"                               // plssvm::soa_matrix
@@ -24,17 +23,16 @@
 #include "plssvm/solver_types.hpp"                         // plssvm::solver_type
 #include "plssvm/verbosity_levels.hpp"                     // plssvm::verbosity_level
 
-#include "fmt/format.h"  // fmt::format
+#if defined(PLSSVM_PERFORMANCE_TRACKER_ENABLED)
+    #include "fmt/format.h"  // fmt::format
+#endif
 
-#include <algorithm>   // std::count
-#include <chrono>      // std::chrono::{steady_clock, duration_cast, milliseconds}
-#include <cstddef>     // std::size_t
-#include <functional>  // std::plus
-#include <numeric>     // std::inner_product
-#include <utility>     // std::move
-#include <utility>     // std::pair, std::make_pair
-#include <variant>     // std::get
-#include <vector>      // std::vector
+#include <algorithm>  // std::count
+#include <chrono>     // std::chrono::{steady_clock, duration_cast, milliseconds}
+#include <cstddef>    // std::size_t
+#include <ratio>      // std::milli
+#include <utility>    // std::move, std::pair, std::make_pair, std::get
+#include <vector>     // std::vector
 
 namespace plssvm {
 

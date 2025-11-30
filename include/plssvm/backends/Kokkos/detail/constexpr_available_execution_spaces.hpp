@@ -23,7 +23,7 @@
     #define PLSSVM_KOKKOS_BACKEND_NUM_AVAILABLE_EXECUTION_SPACES 0
 #endif
 
-#include "plssvm/backends/Kokkos/execution_space.hpp"  // plssvm::kokkos::execution_space
+#include "plssvm/backends/Kokkos/execution_spaces.hpp"  // plssvm::kokkos::execution_space
 
 #include <array>  // std::array
 

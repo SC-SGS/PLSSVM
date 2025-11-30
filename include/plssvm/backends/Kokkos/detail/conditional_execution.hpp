@@ -14,7 +14,7 @@
 #pragma once
 
 #include "plssvm/backends/Kokkos/exceptions.hpp"       // plssvm::kokkos::backend_exception
-#include "plssvm/backends/Kokkos/execution_space.hpp"  // plssvm::kokkos::execution_space
+#include "plssvm/backends/Kokkos/execution_spaces.hpp"  // plssvm::kokkos::execution_space
 
 #include "Kokkos_Core.hpp"  // Kokkos macros
 

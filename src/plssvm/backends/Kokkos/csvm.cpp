@@ -11,11 +11,10 @@
 #include "plssvm/backend_types.hpp"                                                   // plssvm::backend_type
 #include "plssvm/backends/execution_range.hpp"                                        // plssvm::detail::{execution_range, dim_type}
 #include "plssvm/backends/Kokkos/detail/conditional_execution.hpp"                    // PLSSVM_KOKKOS_BACKEND_INVOKE_RETURN_IF_*, PLSSVM_KOKKOS_BACKEND_INVOKE_IF_
-#include "plssvm/backends/Kokkos/detail/device_ptr.hpp"                               // plssvm::kokkos::detail::device_ptr
 #include "plssvm/backends/Kokkos/detail/device_wrapper.hpp"                           // plssvm::kokkos::detail::{device_wrapper, get_device_list}
 #include "plssvm/backends/Kokkos/detail/utility.hpp"                                  // plssvm::kokkos::detail::{available_target_platform_to_execution_space_mapping, get_kokkos_version, dim_type_to_native, get_device_name, device_synchronize}
 #include "plssvm/backends/Kokkos/exceptions.hpp"                                      // plssvm::kokkos::backend_exception
-#include "plssvm/backends/Kokkos/execution_space.hpp"                                 // plssvm::kokkos::{execution_space, list_available_execution_spaces}
+#include "plssvm/backends/Kokkos/execution_spaces.hpp"                                // plssvm::kokkos::{execution_space, list_available_execution_spaces}
 #include "plssvm/backends/Kokkos/kernel/cg_explicit/blas.hpp"                         // plssvm::kokkos::detail::{device_kernel_symm, device_kernel_symm_mirror, device_kernel_inplace_matrix_add, device_kernel_inplace_matrix_scale}
 #include "plssvm/backends/Kokkos/kernel/cg_explicit/kernel_matrix_assembly.hpp"       // plssvm::kokkos::detail::device_kernel_assembly
 #include "plssvm/backends/Kokkos/kernel/cg_implicit/kernel_matrix_assembly_blas.hpp"  // plssvm::kokkos::detail::device_kernel_assembly_symm
@@ -40,8 +39,8 @@
 #include "Kokkos_Core.hpp"  // Kokkos::TeamPolicy, Kokkos::ParallelForTag, Kokkos::parallel_for, Kokkos::PerTeam
                             // Kokkos::Experimental::HPX::impl_max_hardware_threads, Kokkos::OpenMP::impl_max_hardware_threads, Kokkos::Threads::impl_max_hardware_threads
 
-#include "fmt/core.h"    // fmt::format
 #include "fmt/format.h"  // fmt::format
+#include "fmt/ranges.h"  // fmt::join
 
 #include <chrono>     // std::chrono::{steady_clock, duration_cast}
 #include <cmath>      // std::sqrt

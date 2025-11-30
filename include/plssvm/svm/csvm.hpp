@@ -15,8 +15,7 @@
 
 #include "plssvm/constants.hpp"                            // plssvm::real_type, plssvm::PADDING_SIZE
 #include "plssvm/detail/assert.hpp"                        // PLSSVM_ASSERT
-#include "plssvm/detail/data_distribution.hpp"             // plssvm::detail::triangular_data_distribution
-#include "plssvm/detail/data_distribution.hpp"             // plssvm::detail::data_distribution
+#include "plssvm/detail/data_distribution.hpp"             // plssvm::detail::{data_distribution, triangular_data_distribution}
 #include "plssvm/detail/igor_utility.hpp"                  // plssvm::detail::{get_value_from_named_parameter, has_only_parameter_named_args_v}
 #include "plssvm/detail/logging/mpi_log.hpp"               // plssvm::detail::log
 #include "plssvm/detail/logging/mpi_log_untracked.hpp"     // plssvm::detail::log_untracked
@@ -231,7 +230,7 @@ class csvm {
      * @details Reduces the resulting dimension by `2` compared to the original LS-SVM formulation.
      * @param[in] params the parameter used for the kernel matrix
      * @param[in] A the data used for the kernel matrix
-     * @return the reduction vector ´q_red` and the bottom-right value `QA_cost` (`[[nodiscard]]`)
+     * @return the reduction vector `q_red` and the bottom-right value `QA_cost` (`[[nodiscard]]`)
      */
     [[nodiscard]] std::pair<std::vector<real_type>, real_type> perform_dimensional_reduction(const parameter &params, const soa_matrix<real_type> &A) const;
 

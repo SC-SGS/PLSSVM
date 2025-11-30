@@ -14,10 +14,13 @@
 #pragma once
 
 #include "plssvm/backends/Kokkos/detail/constexpr_available_execution_spaces.hpp"  // plssvm::kokkos::detail::constexpr_available_execution_spaces
-#include "plssvm/backends/Kokkos/execution_space.hpp"                              // plssvm::kokkos::execution_space
 #include "plssvm/backends/Kokkos/execution_space_type_traits.hpp"                  // plssvm::kokkos::execution_space_to_kokkos_type_t
+#include "plssvm/backends/Kokkos/execution_spaces.hpp"                             // plssvm::kokkos::execution_space
+#include "plssvm/detail/type_traits.hpp"                                           // PLSSVM_REQUIRES
 #include "plssvm/mpi/communicator.hpp"                                             // plssvm::mpi::communicator
 #include "plssvm/target_platforms.hpp"                                             // plssvm::target_platform
+
+#include "Kokkos_Core.hpp"  // Kokkos::is_execution_space_v
 
 #include <array>       // std::array
 #include <cstddef>     // std::size_t

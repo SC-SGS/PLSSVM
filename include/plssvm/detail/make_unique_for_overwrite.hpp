@@ -31,14 +31,14 @@ template <typename T>
 struct is_unbounded_array : std::false_type { };
 
 /**
- * @brief Specialization of @ref plssvm::detail::is_unbounded_array for unbounded arrays.
+ * @brief Specialization of plssvm::detail::is_unbounded_array for unbounded arrays.
  * @tparam T the array type
  */
 template <typename T>
 struct is_unbounded_array<T[]> : std::true_type { };
 
 /**
- * @brief Shortcut for @ref plssvm::detail::is_unbounded_array.
+ * @brief Shortcut for plssvm::detail::is_unbounded_array.
  * @tparam T the array type
  */
 template <typename T>
@@ -52,7 +52,7 @@ template <typename T>
 struct is_bounded_array : std::false_type { };
 
 /**
- * @brief Specialization of @ref plssvm::detail::is_bounded_array for unbounded arrays.
+ * @brief Specialization of plssvm::detail::is_bounded_array for unbounded arrays.
  * @tparam T the array type
  * @tparam N the size of the array
  */
@@ -60,7 +60,7 @@ template <typename T, std::size_t N>
 struct is_bounded_array<T[N]> : std::true_type { };
 
 /**
- * @brief Shortcut for @ref plssvm::detail::is_bounded_array.
+ * @brief Shortcut for plssvm::detail::is_bounded_array.
  * @tparam T the array type
  */
 template <typename T>

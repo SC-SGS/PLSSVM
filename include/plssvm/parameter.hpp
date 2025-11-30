@@ -126,7 +126,7 @@ struct parameter {
         gamma{ gamma_p },
         coef0{ coef0_p },
         cost{ cost_p } {
-        // sanity check the provided parameter values
+        // check the provided parameter values
         this->sanity_check_parameter();
     }
 
@@ -140,7 +140,7 @@ struct parameter {
     explicit parameter(const parameter &params, Args &&...named_args) :
         parameter{ params } {
         this->set_named_arguments(std::forward<Args>(named_args)...);
-        // sanity check the provided parameter values
+        // check the provided parameter values
         this->sanity_check_parameter();
     }
 
@@ -152,7 +152,7 @@ struct parameter {
     template <typename... Args, PLSSVM_REQUIRES(detail::has_only_named_args_v<Args...>)>
     constexpr explicit parameter(Args &&...named_args) {
         this->set_named_arguments(std::forward<Args>(named_args)...);
-        // sanity check the provided parameter values
+        // check the provided parameter values
         this->sanity_check_parameter();
     }
 

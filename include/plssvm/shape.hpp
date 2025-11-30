@@ -40,7 +40,7 @@ struct [[nodiscard]] shape {
     explicit shape(std::size_t x_p, std::size_t y_p) noexcept;
 
     /**
-     * @brief Swap the shape dimensions of `*this* with the ones of @p other.
+     * @brief Swap the shape dimensions of `*this` with the ones of @p other.
      * @param[in,out] other the other shape
      */
     void swap(shape &other) noexcept;

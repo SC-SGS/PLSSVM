@@ -14,7 +14,7 @@
 #pragma once
 
 #include "plssvm/backend_types.hpp"                        // plssvm::backend_type
-#include "plssvm/backends/Kokkos/execution_space.hpp"      // plssvm::kokkos::execution_space
+#include "plssvm/backends/Kokkos/execution_spaces.hpp"     // plssvm::kokkos::execution_space
 #include "plssvm/backends/SYCL/data_parallel_kernels.hpp"  // plssvm::sycl::data_parallel_kernels
 #include "plssvm/backends/SYCL/implementation_types.hpp"   // plssvm::sycl::implementation_type
 #include "plssvm/mpi/communicator.hpp"                     // plssvm::mpi::communicator

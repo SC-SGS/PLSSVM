@@ -17,8 +17,10 @@
 #include <cstddef>        // std::size_t
 #include <deque>          // std::deque
 #include <forward_list>   // std::forward_list
+#include <functional>     // std::reference_wrapper
 #include <list>           // std::list
 #include <map>            // std::map, std::multimap
+#include <optional>       // std::optional
 #include <set>            // std::set, std::multiset
 #include <string>         // std::basic_string
 #include <type_traits>    // std::enable_if_t, std::remove_cv_t, std::remove_reference_t, std::is_same_v, std::false_type, std::true_type, std::is_same_v

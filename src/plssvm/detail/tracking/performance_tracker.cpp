@@ -14,28 +14,32 @@
 #include "plssvm/detail/cmd/parser_predict.hpp"          // plssvm::detail::cmd::parser_predict
 #include "plssvm/detail/cmd/parser_scale.hpp"            // plssvm::detail::cmd::parser_scale
 #include "plssvm/detail/cmd/parser_train.hpp"            // plssvm::detail::cmd::parser_train
-#include "plssvm/detail/string_utility.hpp"              // plssvm::detail::replace_all
 #include "plssvm/detail/utility.hpp"                     // plssvm::detail::current_date_time, PLSSVM_IS_DEFINED
 #include "plssvm/gamma.hpp"                              // plssvm::get_gamma_string
 #include "plssvm/mpi/communicator.hpp"                   // plssvm::mpi::communicator
-#include "plssvm/mpi/detail/utility.hpp"                 // plssvm::mpi::detail::node_name
-#include "plssvm/mpi/detail/version.hpp"                 // plssvm::mpi::detail::{mpi_library_version, mpi_version}
 #include "plssvm/parameter.hpp"                          // plssvm::parameter
 #include "plssvm/version/git_metadata/git_metadata.hpp"  // plssvm::version::git_metadata::commit_sha1
 #include "plssvm/version/version.hpp"                    // plssvm::version::{version, detail::target_platforms}
 
+#if defined(PLSSVM_HAS_MPI_ENABLED)
+    #include "plssvm/mpi/detail/utility.hpp"  // plssvm::mpi::detail::node_name
+    #include "plssvm/mpi/detail/version.hpp"  // plssvm::mpi::detail::{mpi_library_version, mpi_version}
+#endif
+
 #if defined(PLSSVM_HARDWARE_SAMPLING_ENABLED)
+    #include "plssvm/detail/string_utility.hpp"  // plssvm::detail::replace_all
     #include "plssvm/detail/tracking/utility.hpp"
 
     #include "hws/hardware_sampler.hpp"         // hws::hardware_sampler
     #include "hws/system_hardware_sampler.hpp"  // hws::system_hardware_sampler
     #include "hws/version.hpp"                  // hws::version::version
+    #include <memory>                           // std::unique_ptr
 #endif
 
 #include "cxxopts.hpp"                // CXXOPTS__VERSION_MAJOR, CXXOPTS__VERSION_MINOR, CXXOPTS__VERSION_MINOR
 #include "fast_float/float_common.h"  // FASTFLOAT_VERSION_MAJOR, FASTFLOAT_VERSION_MINOR, FASTFLOAT_VERSION_PATCH
 #include "fmt/base.h"                 // FMT_VERSION
-#include "fmt/chrono.h"               // format std::chrono types
+#include "fmt/chrono.h"               // NOLINT(misc-include-cleaner): false positive, header is used to format std::chrono types
 #include "fmt/format.h"               // fmt::format
 #include "fmt/ranges.h"               // fmt::join
 
@@ -70,7 +74,6 @@
 #include <fstream>      // std::ofstream
 #include <iostream>     // std::ios_base::app, std::ostream, std::clog, std::endl
 #include <map>          // std::map
-#include <memory>       // std::unique_ptr
 #include <string>       // std::string
 #include <string_view>  // std::string_view
 #include <utility>      // std::move

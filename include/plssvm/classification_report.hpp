@@ -180,7 +180,7 @@ namespace detail {
 
 template <typename label_type, typename... Args>
 classification_report::classification_report(const std::vector<label_type> &correct_label, const std::vector<label_type> &predicted_label, Args &&...named_args) {
-    // sanity check for input correct sizes
+    // perform sanity checks on the sizes of the input vectors
     if (correct_label.empty()) {
         throw classification_report_exception{ "The correct labels list must not be empty!" };
     }

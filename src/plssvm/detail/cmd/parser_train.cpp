@@ -9,18 +9,19 @@
 #include "plssvm/detail/cmd/parser_train.hpp"
 
 #include "plssvm/backend_types.hpp"                        // plssvm::list_available_backends
-#include "plssvm/backends/Kokkos/execution_space.hpp"      // plssvm::kokkos::{list_available_execution_spaces, execution_space}
+#include "plssvm/backends/Kokkos/execution_spaces.hpp"     // plssvm::kokkos::{list_available_execution_spaces, execution_space}
 #include "plssvm/backends/SYCL/data_parallel_kernels.hpp"  // plssvm::sycl::{list_available_sycl_data_parallel_kernels, data_parallel_kernels}
 #include "plssvm/backends/SYCL/implementation_types.hpp"   // plssvm::sycl::{list_available_sycl_implementations, implementation_type}
 #include "plssvm/classification_types.hpp"                 // plssvm::classification_type, plssvm::classification_type_to_full_string
 #include "plssvm/constants.hpp"                            // plssvm::real_type
 #include "plssvm/detail/assert.hpp"                        // PLSSVM_ASSERT
 #include "plssvm/detail/cmd/utility.hpp"                   // plssvm::detail::cmd::{filter_argv, kernel_type_help_message, parse_and_check_sycl_options_if_available,
-                                                           // parse_and_check_kokkos_options_if_available, parse_and_check_mpi_options_if_available, parse_verbosity}
+                                                           // parse_and_check_kokkos_options_if_available, parse_and_check_mpi_options_if_available, parse_verbosity, max_cmd_width}
 #include "plssvm/detail/logging/mpi_log_untracked.hpp"     // plssvm::detail::log_untracked
 #include "plssvm/detail/utility.hpp"                       // plssvm::detail::to_underlying
 #include "plssvm/exceptions/exceptions.hpp"                // plssvm::cmd_parser_exit
 #include "plssvm/gamma.hpp"                                // plssvm::get_gamma_string
+#include "plssvm/kernel_function_types.hpp"                // plssvm::kernel_function_type, plssvm::kernel_function_type_to_math_string
 #include "plssvm/mpi/communicator.hpp"                     // plssvm::mpi::communicator
 #include "plssvm/svm_types.hpp"                            // plssvm::svm_type
 #include "plssvm/target_platforms.hpp"                     // plssvm::target_platform, plssvm::list_available_target_platforms

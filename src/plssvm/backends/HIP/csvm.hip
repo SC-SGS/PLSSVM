@@ -24,11 +24,10 @@
 #include "plssvm/detail/memory_size.hpp"                                               // plssvm::detail::memory_size
 #include "plssvm/detail/tracking/performance_tracker.hpp"                              // plssvm::detail::tracking::tracking_entry, PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY
 #include "plssvm/exceptions/exceptions.hpp"                                            // plssvm::exception
-#include "plssvm/gamma.hpp"                                                            // plssvm::gamma_type
 #include "plssvm/kernel_function_types.hpp"                                            // plssvm::kernel_function_type
 #include "plssvm/mpi/communicator.hpp"                                                 // plssvm::mpi::communicator
 #include "plssvm/mpi/detail/information.hpp"                                           // plssvm::mpi::detail::gather_and_print_csvm_information
-#include "plssvm/parameter.hpp"                                                        // plssvm::parameter, plssvm::detail::parameter
+#include "plssvm/parameter.hpp"                                                        // plssvm::parameter
 #include "plssvm/shape.hpp"                                                            // plssvm::shape
 #include "plssvm/target_platforms.hpp"                                                 // plssvm::target_platform
 #include "plssvm/verbosity_levels.hpp"                                                 // plssvm::verbosity_level
@@ -38,7 +37,6 @@
 #include "fmt/format.h"  // fmt::format
 
 #include <chrono>     // std::chrono::{steady_clock, duration_cast}
-#include <cmath>      // std::ceil
 #include <cstddef>    // std::size_t
 #include <exception>  // std::terminate
 #include <iostream>   // std::cout, std::endl

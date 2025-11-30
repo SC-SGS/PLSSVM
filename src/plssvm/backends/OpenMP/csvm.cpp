@@ -22,9 +22,9 @@
 #include "plssvm/detail/make_unique_for_overwrite.hpp"                                // plssvm::detail::{make_unique_for_overwrite, parallel_zero_memset}
 #include "plssvm/detail/memory_size.hpp"                                              // plssvm::detail::memory_size
 #include "plssvm/detail/move_only_any.hpp"                                            // plssvm::detail::{move_only_any, move_only_any_cast}
+#include "plssvm/detail/operators.hpp"                                                // NOLINT: operator overloads for std::vector (+ scalars)
 #include "plssvm/detail/tracking/performance_tracker.hpp"                             // plssvm::detail::tracking::tracking_entry, PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY
 #include "plssvm/detail/utility.hpp"                                                  // plssvm::detail::get_system_memory
-#include "plssvm/gamma.hpp"                                                           // plssvm::gamma_type
 #include "plssvm/kernel_function_types.hpp"                                           // plssvm::kernel_function_type
 #include "plssvm/matrix.hpp"                                                          // plssvm::aos_matrix, plssvm::soa_matrix
 #include "plssvm/mpi/communicator.hpp"                                                // plssvm::mpi::communicator
@@ -32,21 +32,21 @@
 #include "plssvm/parameter.hpp"                                                       // plssvm::parameter
 #include "plssvm/shape.hpp"                                                           // plssvm::shape
 #include "plssvm/solver_types.hpp"                                                    // plssvm::solver_type
-#include "plssvm/svm/csvm.hpp"                                                        // plssvm::csvm
 #include "plssvm/target_platforms.hpp"                                                // plssvm::target_platform
 #include "plssvm/verbosity_levels.hpp"                                                // plssvm::verbosity_level
 
 #include "fmt/format.h"  // fmt::format
 
-#include <chrono>    // std::chrono::{steady_clock, duration_cast}
-#include <cmath>     // std::fma
-#include <cstddef>   // std::size_t
-#include <cstring>   // std::memset
-#include <optional>  // std::optional, std::nullopt
-#include <tuple>     // std::tuple, std::make_tuple
-#include <utility>   // std::pair, std::make_pair, std::move
-#include <variant>   // std::get
-#include <vector>    // std::vector
+#include <chrono>      // std::chrono::{steady_clock, duration_cast}
+#include <cmath>       // std::fma
+#include <cstddef>     // std::size_t
+#include <cstring>     // std::memset
+#include <functional>  // std::cref
+#include <memory>      // std::make_unique
+#include <optional>    // std::optional, std::nullopt
+#include <tuple>       // std::tuple, std::make_tuple
+#include <utility>     // std::pair, std::make_pair, std::move, std::get
+#include <vector>      // std::vector
 
 namespace plssvm::openmp {
 

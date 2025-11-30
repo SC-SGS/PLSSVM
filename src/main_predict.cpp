@@ -8,36 +8,51 @@
  * @brief Main function compiled to the `plssvm-predict` executable used for predicting a data set using a previously computed C-SVM model.
  */
 
-#include "plssvm/core.hpp"
+#include "plssvm/backend_types.hpp"                        // plssvm::backend_type, plssvm::determin_default_backend
+#include "plssvm/classification_report.hpp"                // plssvm::classification_report
+#include "plssvm/csvm_factory.hpp"                         // plssvm::make_csvm
 #include "plssvm/detail/cmd/data_set_variants.hpp"         // plssvm::detail::cmd::data_set_factory
 #include "plssvm/detail/cmd/parser_predict.hpp"            // plssvm::detail::cmd::parser_predict
 #include "plssvm/detail/logging/mpi_log.hpp"               // plssvm::detail::log
 #include "plssvm/detail/logging/mpi_log_untracked.hpp"     // plssvm::detail::log_untracked
-#include "plssvm/detail/tracking/performance_tracker.hpp"  // plssvm::detail::tracking::tracking_entry, PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_SAVE,
-                                                           // PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY, PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_HWS_ENTRY
-                                                           // PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_SET_REFERENCE_TIME
-#include "plssvm/detail/assert.hpp"                        // PLSSVM_ASSERT
+#include "plssvm/detail/tracking/performance_tracker.hpp"  // plssvm::detail::tracking::tracking_entry, performance tracking macros
 #include "plssvm/detail/utility.hpp"                       // PLSSVM_IS_DEFINED
-#include "plssvm/mpi/environment.hpp"                      // plssvm::mpi::is_executed_via_mpirun
+#include "plssvm/environment.hpp"                          // plssvm::environment::scope_guard
+#include "plssvm/exceptions/exceptions.hpp"                // plssvm::exception, plssvm::cmd_parser_exit
+#include "plssvm/gamma.hpp"                                // plssvm::get_gamma_string
+#include "plssvm/kernel_function_types.hpp"                // plssvm::kernel_function_type, plssvm::kernel_function_type_to_math_string
+#include "plssvm/mpi/communicator.hpp"                     // plssvm::mpi::communicator
+#include "plssvm/parameter.hpp"                            // plssvm::parameter, plssvm::kokkos_execution_space, plssvm::sycl_data_parallel_kernel, plssvm::sycl_implementation_type
+#include "plssvm/regression_report.hpp"                    // plssvm::regression_report
+#include "plssvm/svm/csvc.hpp"                             // plssvm::csvc
+#include "plssvm/svm/csvr.hpp"                             // plssvm::csvr
+#include "plssvm/verbosity_levels.hpp"                     // plssvm::verbosity_level
 
 #if defined(PLSSVM_HARDWARE_SAMPLING_ENABLED)
     #include "hws/system_hardware_sampler.hpp"  // hws::system_hardware_sampler
 #endif
 
-#include "fmt/format.h"  // fmt::format
+#if defined(PLSSVM_HAS_MPI_ENABLED)
+    #include "fmt/format.h"  // fmt::format
+
+    #include <filesystem>  // std::filesystem::path
+#endif
+
+#if !defined(PLSSVM_HAS_MPI_ENABLED)
+    #include "plssvm/mpi/environment.hpp"  // plssvm::mpi::is_executed_via_mpirun
+#endif
+
 #include "fmt/os.h"      // fmt::ostream, fmt::output_file
 #include "fmt/ranges.h"  // fmt::join
 
 #include <chrono>       // std::chrono::{time_point, steady_clock, duration_cast, milliseconds}, std::chrono_literals namespace
 #include <cstdlib>      // EXIT_SUCCESS, EXIT_FAILURE
 #include <exception>    // std::exception
-#include <filesystem>   // std::filesystem::path
 #include <iostream>     // std::cerr, std::endl
 #include <memory>       // std::unique_ptr, std::make_unique
 #include <string>       // std::string
 #include <string_view>  // std::string_view
 #include <type_traits>  // std::remove_reference_t, std::is_same_v
-#include <utility>      // std::pair
 #include <variant>      // std::visit
 #include <vector>       // std::vector
 

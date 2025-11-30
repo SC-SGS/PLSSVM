@@ -30,8 +30,7 @@
 #include <cstddef>  // std::size_t
 #include <memory>   // std::make_shared
 #include <string>   // std::string
-#include <utility>  // std::forward
-#include <utility>  // std::move
+#include <utility>  // std::move, std::forward
 #include <vector>   // std::vector
 
 namespace plssvm {

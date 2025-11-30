@@ -19,6 +19,7 @@
 #include "plssvm/detail/make_unique_for_overwrite.hpp"                                // plssvm::detail::{make_unique_for_overwrite, parallel_zero_memset}
 #include "plssvm/detail/memory_size.hpp"                                              // plssvm::detail::memory_size
 #include "plssvm/detail/move_only_any.hpp"                                            // plssvm::detail::{move_only_any, move_only_any_cast}
+#include "plssvm/detail/operators.hpp"                                                // NOLINT: operator overloads for std::vector (+ scalars)
 #include "plssvm/detail/tracking/performance_tracker.hpp"                             // plssvm::detail::tracking::tracking_entry, PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY
 #include "plssvm/detail/utility.hpp"                                                  // plssvm::detail::{get_system_memory, unreachable}
 #include "plssvm/kernel_function_types.hpp"                                           // plssvm::kernel_function_type
@@ -26,15 +27,16 @@
 #include "plssvm/parameter.hpp"                                                       // plssvm::parameter
 #include "plssvm/shape.hpp"                                                           // plssvm::shape
 #include "plssvm/solver_types.hpp"                                                    // plssvm::solver_type
-#include "plssvm/svm/csvm.hpp"                                                        // plssvm::csvm
 #include "plssvm/target_platforms.hpp"                                                // plssvm::target_platform
 
-#include <chrono>    // std::chrono::{steady_clock, duration_cast}
-#include <cstddef>   // std::size_t
-#include <optional>  // std::optional, std::nullopt
-#include <tuple>     // std::tuple, std::make_tuple
-#include <utility>   // std::move, std::forward
-#include <vector>    // std::vector
+#include <chrono>      // std::chrono::{steady_clock, duration_cast}
+#include <cstddef>     // std::size_t
+#include <functional>  // std::cref
+#include <memory>      // std::unique_ptr, std::make_unique
+#include <optional>    // std::optional, std::nullopt
+#include <tuple>       // std::tuple, std::make_tuple
+#include <utility>     // std::move, std::forward
+#include <vector>      // std::vector
 
 namespace {
 

@@ -119,7 +119,7 @@ class gpu_device_ptr {
 
     /**
      * @brief Checks whether `*this` currently wraps a device pointer.
-     * @details Same as `device_ptr::get() != nullptr`.
+     * @details Same as `device_ptr::get() != device_ptr::device_ptr()`.
      * @return `true` if `*this` wraps a device pointer, `false` otherwise (`[[nodiscard]]`)
      */
     [[nodiscard]] explicit operator bool() const noexcept {

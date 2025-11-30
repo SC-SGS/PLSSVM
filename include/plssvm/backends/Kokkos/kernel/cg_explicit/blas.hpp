@@ -9,8 +9,8 @@
  * @brief Functions for explicitly performing a BLAS GEMM like matrix-matrix multiplication using the Kokkos backend.
  */
 
-#ifndef PLSSVM_BACKENDS_KOKKOS_CG_EXPLICIT_BLAS_HPP_
-#define PLSSVM_BACKENDS_KOKKOS_CG_EXPLICIT_BLAS_HPP_
+#ifndef PLSSVM_BACKENDS_KOKKOS_KERNEL_CG_EXPLICIT_BLAS_HPP_
+#define PLSSVM_BACKENDS_KOKKOS_KERNEL_CG_EXPLICIT_BLAS_HPP_
 #pragma once
 
 #include "plssvm/constants.hpp"         // plssvm::{real_type, THREAD_BLOCK_SIZE, INTERNAL_BLOCK_SIZE, PADDING_SIZE}
@@ -492,4 +492,4 @@ class device_kernel_inplace_matrix_scale {
 
 }  // namespace plssvm::kokkos::detail
 
-#endif  // PLSSVM_BACKENDS_KOKKOS_CG_EXPLICIT_BLAS_HPP_
+#endif  // PLSSVM_BACKENDS_KOKKOS_KERNEL_CG_EXPLICIT_BLAS_HPP_

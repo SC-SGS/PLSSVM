@@ -18,7 +18,7 @@
 
 #include "Kokkos_Core.hpp"  // Kokkos::View, Kokkos::HostSpace, Kokkos::MemoryUnmanaged, Kokkos::subview, Kokkos::parallel_for, Kokkos::deep_copy
 
-#include "fmt/core.h"  // fmt::format
+#include "fmt/format.h"  // fmt::format
 
 #include <algorithm>  // std::min
 #include <cstddef>    // std::size_t

@@ -28,14 +28,15 @@
 
 #ifdef _OPENMP
     #include "omp.h"
+
+    #include <cstddef>  // std::size_t
+    #include <deque>    // std::deque
 #endif
 
 #include <algorithm>    // std::min
 #include <climits>      // INT32_MAX
 #include <cmath>        // std::ceil
-#include <cstddef>      // std::size_t
 #include <cstdint>      // INT_MAX
-#include <deque>        // std::deque
 #include <filesystem>   // std::filesystem::path
 #include <fstream>      // std::ifstream
 #include <ios>          // std::ios, std::streamsize

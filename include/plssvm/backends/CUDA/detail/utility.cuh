@@ -16,6 +16,10 @@
 #include "plssvm/backends/CUDA/exceptions.hpp"  // plssvm::cuda::backend_exception
 #include "plssvm/backends/execution_range.hpp"  // plssvm::detail::dim_type
 
+#include "cuda_runtime_api.h"  // cudaGetErrorName, cudaGetErrorString
+#include "driver_types.h"      // cudaError_t, cudaSuccess
+#include "vector_types.h"      // dim3
+
 #include "fmt/base.h"     // fmt::formatter
 #include "fmt/format.h"   // fmt::format
 #include "fmt/ostream.h"  // fmt::ostream_formatter

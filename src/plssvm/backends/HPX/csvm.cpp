@@ -9,6 +9,8 @@
 
 #include "plssvm/backends/HPX/csvm.hpp"
 
+#include "plssvm/backend_types.hpp"                                                // plssvm::backend_type
+#include "plssvm/backends/HPX/detail/utility.hpp"                                  // plssvm::hpx::detail::{get_hpx_version, get_num_threads}
 #include "plssvm/backends/HPX/exceptions.hpp"                                      // plssvm::hpx::backend_exception
 #include "plssvm/backends/HPX/kernel/cg_explicit/blas.hpp"                         // plssvm::hpx::detail::device_kernel_symm
 #include "plssvm/backends/HPX/kernel/cg_explicit/kernel_matrix_assembly.hpp"       // plssvm::hpx::detail::device_kernel_assembly
@@ -30,17 +32,22 @@
 #include "plssvm/parameter.hpp"                                                    // plssvm::parameter
 #include "plssvm/shape.hpp"                                                        // plssvm::shape
 #include "plssvm/solver_types.hpp"                                                 // plssvm::solver_type
-#include "plssvm/svm/csvm.hpp"                                                     // plssvm::csvm
 #include "plssvm/target_platforms.hpp"                                             // plssvm::target_platform
+#include "plssvm/verbosity_levels.hpp"                                             // plssvm::verbosity_level
 
-#include "hpx/future.hpp"  // hpx::future, hpx::async
+#include "hpx/async.hpp"   // hpx::async
+#include "hpx/future.hpp"  // hpx::future
 
-#include <chrono>    // std::chrono::{steady_clock, duration_cast}
-#include <cstddef>   // std::size_t
-#include <optional>  // std::optional, std::nullopt
-#include <tuple>     // std::tuple, std::make_tuple
-#include <utility>   // std::move
-#include <vector>    // std::vector
+#include "fmt/format.h"  // fmt::format
+
+#include <chrono>      // std::chrono::{steady_clock, duration_cast}
+#include <cstddef>     // std::size_t
+#include <functional>  // std::cref
+#include <memory>      // std::make_unique, std::unique_ptr
+#include <optional>    // std::optional, std::nullopt
+#include <tuple>       // std::tuple, std::make_tuple
+#include <utility>     // std::move
+#include <vector>      // std::vector
 
 namespace plssvm::hpx {
 

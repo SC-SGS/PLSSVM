@@ -37,7 +37,7 @@
 
 #include "fmt/format.h"  // fmt::format
 #include "fmt/ranges.h"  // fmt::join
-#include "fmt/std.h"     // format std::filesystem::path
+#include "fmt/std.h"     // NOLINT: format std::filesystem::path
 
 #include <algorithm>     // std::count_if
 #include <array>         // std::array

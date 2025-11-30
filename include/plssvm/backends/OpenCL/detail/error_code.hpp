@@ -13,7 +13,8 @@
 #define PLSSVM_BACKENDS_OPENCL_DETAIL_ERROR_CODE_HPP_
 #pragma once
 
-#include "CL/cl.h"  // cl_int, CL_SUCCESS
+#include "CL/cl.h"           // CL_SUCCESS
+#include "CL/cl_platform.h"  // cl_int
 
 #include "fmt/base.h"     // fmt::formatter
 #include "fmt/ostream.h"  // fmt::ostream_formatter

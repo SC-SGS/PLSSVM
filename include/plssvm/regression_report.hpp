@@ -21,11 +21,12 @@
 #include "fmt/ostream.h"  // fmt::ostream_formatter
 #include "igor/igor.hpp"  // IGOR_MAKE_NAMED_ARGUMENT, igor::parser, igor::has_unnamed_arguments, igor::has_other_than
 
-#include <algorithm>  // std::clamp
-#include <cmath>      // std::abs
-#include <cstddef>    // std::size_t
-#include <iosfwd>     // std::ostream
-#include <vector>     // std::vector
+#include <cmath>    // std::abs, std::isnan
+#include <cstddef>  // std::size_t
+#include <iosfwd>   // std::ostream
+#include <limits>   // std::numeric_limits::infinity
+#include <utility>  // std::forward
+#include <vector>   // std::vector
 
 namespace plssvm {
 
@@ -83,7 +84,7 @@ class regression_report {
 
 template <typename label_type, typename... Args>
 regression_report::regression_report(const std::vector<label_type> &correct_label, const std::vector<label_type> &predicted_label, Args &&...named_args) {
-    // sanity check for input correct sizes
+    // perform sanity checks on the sizes of the input vectors
     if (correct_label.empty()) {
         throw regression_report_exception{ "The correct labels list must not be empty!" };
     }

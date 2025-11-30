@@ -12,13 +12,19 @@
 #include "plssvm/backends/SYCL/DPCPP/detail/queue_impl.hpp"  // plssvm::dpcpp::detail::queue (PImpl implementation)
 #include "plssvm/backends/SYCL/exceptions.hpp"               // plssvm::dpcpp::backend_exception
 #include "plssvm/detail/assert.hpp"                          // PLSSVM_ASSERT
+#include "plssvm/shape.hpp"                                  // plssvm::shape
 
 #include "sycl/sycl.hpp"  // ::sycl::malloc_device, ::sycl::free
 
 #include "fmt/format.h"  // fmt::format
 
 #include <algorithm>  // std::min
+#include <cstddef>    // std::size_t
 #include <vector>     // std::vector
+
+#if !defined(SYCL_EXT_ONEAPI_MEMCPY2D)
+    #include <cstring>  // std::memcpy
+#endif
 
 namespace plssvm::dpcpp::detail {
 

@@ -14,11 +14,11 @@
 #pragma once
 
 #include "plssvm/backend_types.hpp"                        // plssvm::backend_type
-#include "plssvm/backends/Kokkos/execution_space.hpp"      // plssvm::kokkos::execution_space
+#include "plssvm/backends/Kokkos/execution_spaces.hpp"     // plssvm::kokkos::execution_space
 #include "plssvm/backends/SYCL/data_parallel_kernels.hpp"  // plssvm::sycl::data_parallel_kernel
 #include "plssvm/backends/SYCL/implementation_types.hpp"   // plssvm::sycl::implementation_type
 #include "plssvm/classification_types.hpp"                 // plssvm::classification_type
-#include "plssvm/constants.hpp"                            // plssvm::real_type
+#include "plssvm/constants.hpp"                            // plssvm::real_type, plssvm::DEFAULT_EPSILON
 #include "plssvm/mpi/communicator.hpp"                     // plssvm::mpi::communicator
 #include "plssvm/parameter.hpp"                            // plssvm::parameter
 #include "plssvm/solver_types.hpp"                         // plssvm::solving_type

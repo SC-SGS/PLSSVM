@@ -8,7 +8,6 @@
 
 #include "plssvm/backends/OpenCL/detail/device_ptr.hpp"
 
-#include "plssvm/backends/gpu_device_ptr.hpp"               // plssvm::detail::gpu_device_ptr
 #include "plssvm/backends/OpenCL/detail/command_queue.hpp"  // plssvm::opencl::detail::command_queue
 #include "plssvm/backends/OpenCL/detail/error_code.hpp"     // plssvm::opencl::detail::error_code
 #include "plssvm/backends/OpenCL/detail/kernel.hpp"         // plssvm::opencl::detail::{kernel, compute_kernel_name}
@@ -19,8 +18,8 @@
 #include "plssvm/exceptions/exceptions.hpp"                 // plssvm::exception
 #include "plssvm/shape.hpp"                                 // plssvm::shape
 
-#include "CL/cl.h"  // cl_uchar, cl_ulong, cl_mem, CL_MEM_READ_WRITE, CL_TRUE,
-                    // clFinish, clCreateBuffer, clReleaseMemObject, clEnqueueFillBuffer, clEnqueueWriteBuffer, clEnqueueReadBuffer, clSetKernelArg, clEnqueueNDRangeKernel
+#include "CL/cl.h"           // cl_mem, CL_MEM_READ_WRITE, CL_TRUE, clFinish, clCreateBuffer, clReleaseMemObject, clEnqueueFillBuffer, clEnqueueWriteBuffer, clEnqueueReadBuffer, clSetKernelArg, clEnqueueNDRangeKernel
+#include "CL/cl_platform.h"  // cl_uchar, cl_ulong
 
 #include "fmt/format.h"  // fmt::format
 
@@ -30,7 +29,7 @@
 #include <exception>    // std::terminate
 #include <iostream>     // std::cerr, std::endl
 #include <type_traits>  // std::is_same_v
-#include <vector>       // std::vector
+#include <vector>       // NOLINT: std::vector
 
 namespace plssvm::opencl::detail {
 
