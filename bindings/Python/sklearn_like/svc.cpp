@@ -289,7 +289,7 @@ void init_sklearn_svc(py::module_ &m) {
             const auto size = static_cast<int>(std::visit([](auto &&model) { return model.num_classes(); }, *self.model_));
             py::array_t<plssvm::real_type, py::array::c_style> py_array(size);
             const py::buffer_info buffer = py_array.request();
-            auto ptr = static_cast<plssvm::real_type *>(buffer.ptr);
+            auto *ptr = static_cast<plssvm::real_type *>(buffer.ptr);
             std::fill(ptr, ptr + size, plssvm::real_type{ 1.0 });
             return py_array; }, "Multipliers of parameter C for each class. ndarray of shape (n_classes,)")
         .def_property_readonly("classes_", [](const svc &self) -> py::array {
