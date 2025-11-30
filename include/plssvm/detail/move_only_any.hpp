@@ -48,15 +48,15 @@ class move_only_any {
   private:
     // forward declare cast functions as friends
     template <typename T>
-    friend T move_only_any_cast(const move_only_any &);
+    friend T move_only_any_cast(const move_only_any &operand);
     template <typename T>
-    friend T move_only_any_cast(move_only_any &);
+    friend T move_only_any_cast(move_only_any &operand);
     template <typename T>
-    friend T move_only_any_cast(move_only_any &&);
+    friend T move_only_any_cast(move_only_any &&operand);
     template <typename T>
-    friend const T *move_only_any_cast(const move_only_any *) noexcept;
+    friend const T *move_only_any_cast(const move_only_any *operand) noexcept;
     template <typename T>
-    friend T *move_only_any_cast(move_only_any *) noexcept;
+    friend T *move_only_any_cast(move_only_any *operand) noexcept;
 
     /**
      * @brief Type erase base class, such that `plssvm::detail::move_only_any` does not have to hold a templated member (which is not possible in C++).
@@ -140,8 +140,7 @@ class move_only_any {
      * @tparam ValueType the contained object will have the type `std::decay_t<ValueType>`
      * @param[in,out] value the object to type erase
      */
-    template <typename ValueType,
-              PLSSVM_REQUIRES(!std::is_same_v<std::decay_t<ValueType>, move_only_any>)>
+    template <typename ValueType, PLSSVM_REQUIRES(!std::is_same_v<std::decay_t<ValueType>, move_only_any>)>
     explicit move_only_any(ValueType &&value) :
         object_ptr_{ std::make_unique<type_erasure_wrapper<std::decay_t<ValueType>>>(std::forward<ValueType>(value)) } { }
 
@@ -149,10 +148,11 @@ class move_only_any {
      * @brief Construct a `plssvm::detail::move_only_any` holding an object of type @p ValueType inplace using @p args.
      * @tparam ValueType the contained object will have the type `std::decay_t<ValueType>`
      * @tparam Args the types used to construct @p ValueType
+     * @param[in] in_place_tag used for constructor overloading
      * @param[in,out] args the parameters used to construct an object of type @p ValueType inplace
      */
     template <typename ValueType, typename... Args, PLSSVM_REQUIRES(std::is_constructible_v<std::decay_t<ValueType>, Args...>)>
-    explicit move_only_any(std::in_place_type_t<ValueType>, Args &&...args) :
+    explicit move_only_any([[maybe_unused]] std::in_place_type_t<ValueType> in_place_tag, Args &&...args) :
         object_ptr_{ std::make_unique<type_erasure_wrapper<std::decay_t<ValueType>>>(std::forward<Args>(args)...) } { }
 
     /**
@@ -160,11 +160,12 @@ class move_only_any {
      * @tparam ValueType the contained object will have the type `std::decay_t<ValueType>`
      * @tparam U the types in the `std::initializer_list`
      * @tparam Args the types used to construct @p ValueType
+     * @param[in] in_place_tag used for constructor overloading
      * @param[in] il the `std::initializer_list` to construct an object of type @p ValueType
      * @param[in,out] args the parameters used to construct an object of type @p ValueType inplace
      */
     template <typename ValueType, typename U, typename... Args, PLSSVM_REQUIRES(std::is_constructible_v<std::decay_t<ValueType>, std::initializer_list<U>, Args...>)>
-    explicit move_only_any(std::in_place_type_t<ValueType>, std::initializer_list<U> il, Args &&...args) :
+    explicit move_only_any([[maybe_unused]] std::in_place_type_t<ValueType> in_place_tag, std::initializer_list<U> il, Args &&...args) :
         object_ptr_{ std::make_unique<type_erasure_wrapper<std::decay_t<ValueType>>>(il, std::forward<Args>(args)...) } { }
 
     /**
