@@ -13,12 +13,13 @@
 #define PLSSVM_BACKENDS_SYCL_KERNEL_CG_IMPLICIT_HIERARCHICAL_KERNEL_MATRIX_ASSEMBLY_BLAS_HPP_
 #pragma once
 
-#include "plssvm/backends/SYCL/data_parallel_kernels.hpp"    // plssvm::sycl::data_parallel_kernel
-#include "plssvm/backends/SYCL/detail/atomics.hpp"           // plssvm::sycl::detail::atomic_op
-#include "plssvm/backends/SYCL/kernel/kernel_functions.hpp"  // plssvm::sycl::detail::{feature_reduce, apply_kernel_function}
-#include "plssvm/constants.hpp"                              // plssvm::{real_type, THREAD_BLOCK_SIZE, INTERNAL_BLOCK_SIZE, PADDING_SIZE}
-#include "plssvm/kernel_function_types.hpp"                  // plssvm::kernel_function_type
-#include "plssvm/target_platforms.hpp"                       // plssvm::target_platform
+#include "plssvm/backends/SYCL/data_parallel_kernels.hpp"            // plssvm::sycl::data_parallel_kernel
+#include "plssvm/backends/SYCL/detail/atomics.hpp"                   // plssvm::sycl::detail::atomic_op
+#include "plssvm/backends/SYCL/kernel/detail/reinterpret_array.hpp"  // plssvm::sycl::detail::reinterpret_array
+#include "plssvm/backends/SYCL/kernel/kernel_functions.hpp"          // plssvm::sycl::detail::{feature_reduce, apply_kernel_function}
+#include "plssvm/constants.hpp"                                      // plssvm::{real_type, THREAD_BLOCK_SIZE, INTERNAL_BLOCK_SIZE, PADDING_SIZE}
+#include "plssvm/kernel_function_types.hpp"                          // plssvm::kernel_function_type
+#include "plssvm/target_platforms.hpp"                               // plssvm::target_platform
 
 #include "sycl/sycl.hpp"  // sycl::group, sycl::private_memory, sycl::h_item
 
@@ -130,8 +131,8 @@ class device_kernel_assembly_symm {
             //*************************************************************************//
             {
                 // reinterpret the local memory arrays to be of shape [THREAD_BLOCK_SIZE][INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE]
-                auto data_i_cache = reinterpret_cast<real_type(*)[INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE]>(cache_one);
-                auto data_j_cache = reinterpret_cast<real_type(*)[INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE]>(cache_two);
+                auto *data_i_cache = reinterpret_array<INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE>(cache_one);
+                auto *data_j_cache = reinterpret_array<INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE>(cache_two);
 
                 // iterate over all features using blocking to be able to cache them for faster memory accesses
                 for (std::size_t feature_block = 0; feature_block < num_features_; feature_block += static_cast<std::size_t>(THREAD_BLOCK_SIZE)) {
@@ -228,8 +229,8 @@ class device_kernel_assembly_symm {
             //*************************************************************************//
             {
                 // reinterpret the local memory arrays to be of shape [INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE][THREAD_BLOCK_SIZE]
-                auto B_cache = reinterpret_cast<real_type(*)[THREAD_BLOCK_SIZE]>(cache_one);
-                auto C_out_cache = reinterpret_cast<real_type(*)[THREAD_BLOCK_SIZE]>(cache_two);
+                auto *B_cache = reinterpret_array<THREAD_BLOCK_SIZE>(cache_one);
+                auto *C_out_cache = reinterpret_array<THREAD_BLOCK_SIZE>(cache_two);
 
                 // iterate over all classes using blocking to be able to cache them for faster memory accesses
                 for (std::size_t class_block = 0; class_block < num_classes_; class_block += static_cast<std::size_t>(THREAD_BLOCK_SIZE)) {
@@ -320,8 +321,8 @@ class device_kernel_assembly_symm {
             //*************************************************************************//
             {
                 // reinterpret the local memory arrays to be of shape [THREAD_BLOCK_SIZE][INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE]
-                auto B_cache = reinterpret_cast<real_type(*)[INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE]>(cache_one);
-                auto C_out_cache = reinterpret_cast<real_type(*)[INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE]>(cache_two);
+                auto *B_cache = reinterpret_array<INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE>(cache_one);
+                auto *C_out_cache = reinterpret_array<INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE>(cache_two);
 
                 // iterate over all classes using blocking to be able to cache them for faster memory accesses
                 for (std::size_t class_block = 0; class_block < num_classes_; class_block += static_cast<std::size_t>(THREAD_BLOCK_SIZE)) {
