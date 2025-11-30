@@ -87,8 +87,9 @@ void init_parameter(py::module_ &m) {
                 // return a tuple that fully encodes the state of the object
                 return py::make_tuple(self.kernel_type, self.degree, self.gamma, self.coef0, self.cost);
             },
-            [](py::tuple t) {  // __setstate__
-                if (t.size() != 5) {
+            [](py::tuple t) {  // NOLINT: __setstate__
+                constexpr std::size_t num_member_variables_of_plssvm_parameter = 5;
+                if (t.size() != num_member_variables_of_plssvm_parameter) {
                     throw std::runtime_error{ "Invalid state!" };
                 }
                 // create a new C++ instance

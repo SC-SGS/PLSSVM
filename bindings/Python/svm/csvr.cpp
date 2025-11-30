@@ -87,7 +87,7 @@ void init_csvr(py::module_ &m) {
                 }, data_set.data_set); }, "fit a model using the current C-SVR on the provided data",
                 py::arg("data"),
                 py::kw_only(),
-                py::arg("epsilon") = plssvm::real_type{ 1e-10 },
+                py::arg("epsilon") = plssvm::DEFAULT_EPSILON,
                 py::arg("max_iter") = std::nullopt,
                 py::arg("solver") = plssvm::solver_type::automatic)
         .def("predict", [](const plssvm::csvr &self, const regression_model_wrapper &trained_model, const regression_data_set_wrapper &data_set) {

@@ -179,7 +179,7 @@ void init_sklearn_svr(py::module_ &m) {
                py::arg("degree") = 3,
                py::arg("gamma") = plssvm::gamma_coefficient_type::scale,
                py::arg("coef0") = 0.0,
-               py::arg("tol") = 1e-10,
+               py::arg("tol") = plssvm::DEFAULT_EPSILON,
                py::arg("C") = 1.0,
                // py::arg("epsilon") = 0.1,
                // py::arg("shrinking") = true,     // true

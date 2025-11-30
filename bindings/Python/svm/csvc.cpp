@@ -91,7 +91,7 @@ void init_csvc(py::module_ &m) {
                 }, data_set.data_set); }, "fit a model using the current C-SVC on the provided data",
                 py::arg("data"),
                 py::kw_only(),
-                py::arg("epsilon") = plssvm::real_type{ 1e-10 },
+                py::arg("epsilon") = plssvm::DEFAULT_EPSILON,
                 py::arg("max_iter") = std::nullopt,
                 py::arg("classification") = plssvm::classification_type::oaa,
                 py::arg("solver") = plssvm::solver_type::automatic)

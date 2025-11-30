@@ -265,7 +265,7 @@ void init_sklearn_svc(py::module_ &m) {
                py::arg("coef0") = 0.0,
                // py::arg("shrinking") = true,
                // py::arg("probability") = false,
-               py::arg("tol") = 1e-10,
+               py::arg("tol") = plssvm::DEFAULT_EPSILON,
                // py::arg("cache_size") = 200,
                // py::arg("class_weight") = py::none{},
                py::arg("verbose") = false,
