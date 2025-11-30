@@ -44,7 +44,7 @@ set(DOXYGEN_ENABLE_PREPROCESSING "YES")
 set(DOXYGEN_MACRO_EXPANSION "YES")
 set(DOXYGEN_EXPAND_ONLY_PREDEF "YES")
 set(DOXYGEN_EXPAND_AS_DEFINED "YES")
-set(DOXYGEN_PREDEFINED "__attribute__((x))=;__CUDA_ARCH__=0")
+set(DOXYGEN_PREDEFINED "__attribute__((x))=;__CUDA_ARCH__=0;PLSSVM_BACKENDS_CUDA_DETAIL_UTILITY_CUH_")
 
 set(DOXYGEN_VERBATIM_VARS DOXYGEN_ALIASES)
 set(DOXYGEN_ALIASES [[license="\par License^^\parblock^^"  ]])
@@ -52,6 +52,7 @@ set(DOXYGEN_ALIASES [[license="\par License^^\parblock^^"  ]])
 # sanitize README formulas for Doxygen if the sed utility is available
 find_program(PLSSVM_HAS_SED "sed")
 if (PLSSVM_HAS_SED)
+    message(STATUS "Found the sed utility used to sanitize the READMEs for a better Doxygen output.")
     set(DOXYGEN_MD_FILTER
         # replace markdown math syntax with the corresponding Doxygen syntax, BUT ONLY in the first 350 lines
         " -e '1,350 s/\\$/\\\\f\\$/g'"
@@ -81,6 +82,8 @@ if (PLSSVM_HAS_SED)
          "*.cl=sed -e 's/ PLSSVM_OPENCL_KERNEL_FUNCTION_PARAMETER_LIST)/, Args... PLSSVM_OPENCL_KERNEL_FUNCTION_PARAMETER_LIST)/g'"
     )
 endif ()
+
+message(STATUS "Add custom doc target.")
 
 # add doxygen as target
 doxygen_add_docs(
