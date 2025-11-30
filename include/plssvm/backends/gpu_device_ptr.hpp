@@ -38,6 +38,9 @@ class gpu_device_ptr {
     static_assert(detail::tuple_contains_v<T, detail::supported_real_types>,
                   "Illegal real type provided! See the 'real_type_list' in the type_list.hpp header for a list of the allowed types.");
 
+    /// Befriend device_ptr base class so we can make the gpu_device_ptr constructor private.
+    friend derived_gpu_device_ptr;
+
   public:
     /// The type of the values used in the device_ptr.
     using value_type = T;
@@ -52,6 +55,7 @@ class gpu_device_ptr {
     /// The type of the device pointer.
     using device_pointer_type = device_pointer_t;
 
+  private:
     /**
      * @brief Default construct a gpu_device_ptr with a size of 0.
      */
