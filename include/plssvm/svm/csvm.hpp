@@ -294,10 +294,9 @@ std::tuple<aos_matrix<real_type>, std::vector<real_type>, std::vector<unsigned l
     igor::parser parser{ std::forward<Args>(named_args)... };
 
     // set default values
-    // note: if the default values are changed, they must also be changed in the Python bindings!
-    auto used_epsilon{ plssvm::real_type{ 1e-10 } };
-    unsigned long long used_max_iter{ A.num_rows() - 1 };  // account for later dimensional reduction
     auto used_epsilon{ DEFAULT_EPSILON };
+    // NOTE: account for later dimensional reduction
+    unsigned long long used_max_iter{ A.num_rows() - 1 };  // NOLINT: can be modified in compile-time if later on
     solver_type used_solver{ solver_type::automatic };
 
     // compile time check: only named parameters are permitted

@@ -53,6 +53,22 @@
 namespace plssvm::detail {
 
 /**
+ * @brief Struct to overload the `operator()` for multiple std::variant members.
+ * @details See: https://en.cppreference.com/w/cpp/utility/variant/visit.
+ * @tparam Ts the overloaded types
+ */
+template <class... Ts>
+struct overloaded : Ts... {
+    using Ts::operator()...;
+};
+
+/**
+ * @brief Custom deduction guide for the `overloaded` struct.
+ */
+template <class... Ts>
+overloaded(Ts...) -> overloaded<Ts...>;
+
+/**
  * @brief Invokes undefined behavior. Used to mark code paths that may never be reachable.
  * @details See: C++23 [`std::unreachable`](https://en.cppreference.com/w/cpp/utility/unreachable)
  */
