@@ -16,6 +16,7 @@
 #include "plssvm/backends/execution_range.hpp"                // plssvm::detail::dim_type
 #include "plssvm/backends/SYCL/AdaptiveCpp/detail/queue.hpp"  // plssvm::adaptivecpp::detail::queue (PImpl)
 #include "plssvm/backends/SYCL/data_parallel_kernels.hpp"     // plssvm::sycl::data_parallel_kernel
+#include "plssvm/detail/type_traits.hpp"                      // plssvm::detail::always_false_non_type_v
 #include "plssvm/detail/utility.hpp"                          // plssvm::detail::unreachable
 #include "plssvm/target_platforms.hpp"                        // plssvm::target_platform
 
@@ -44,7 +45,7 @@ template <std::size_t I>
     } else if constexpr (I == 3) {
         return ::sycl::range<I>{ static_cast<std::size_t>(dims.z), static_cast<std::size_t>(dims.y), static_cast<std::size_t>(dims.x) };
     } else {
-        static_assert(I != I, "Invalid number of native sycl::range dimension!");
+        static_assert(::plssvm::detail::always_false_non_type_v<I>, "Invalid number of native sycl::range dimension!");
     }
 }
 

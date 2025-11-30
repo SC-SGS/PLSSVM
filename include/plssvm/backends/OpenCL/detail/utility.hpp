@@ -21,6 +21,7 @@
 #include "plssvm/backends/OpenCL/detail/kernel.hpp"         // plssvm::opencl::detail::compute_kernel_name
 #include "plssvm/backends/OpenCL/exceptions.hpp"            // plssvm::opencl::backend_exception
 #include "plssvm/detail/assert.hpp"                         // PLSSVM_ASSERT
+#include "plssvm/detail/type_traits.hpp"                    // plssvm::detail::always_false_non_type_v
 #include "plssvm/kernel_function_types.hpp"                 // plssvm::kernel_function_type
 #include "plssvm/mpi/communicator.hpp"                      // plssvm::mpi::communicator
 #include "plssvm/target_platforms.hpp"                      // plssvm::target_platform
@@ -65,7 +66,7 @@ template <std::size_t I>
     } else if constexpr (I == 3) {
         return { static_cast<std::size_t>(dims.x), static_cast<std::size_t>(dims.y), static_cast<std::size_t>(dims.z) };
     } else {
-        static_assert(I != I, "Invalid number of native OpenCL range dimension!");
+        static_assert(::plssvm::detail::always_false_non_type_v<I>, "Invalid number of native OpenCL range dimension!");
     }
 }
 

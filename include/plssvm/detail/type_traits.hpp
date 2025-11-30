@@ -42,6 +42,12 @@ template <typename>
 constexpr bool always_false_v = false;
 
 /**
+ * @brief Type-dependent expression that always evaluates to `false`.
+ */
+template <auto>
+constexpr bool always_false_non_type_v = false;
+
+/**
  * @brief Remove the topmost reference- and cv-qualifiers.
  * @details For more information see [`std::remove_cvref_t`](https://en.cppreference.com/w/cpp/types/remove_cvref).
  */
@@ -343,6 +349,44 @@ constexpr bool is_unordered_associative_container_v = is_unordered_set_v<T> || i
  */
 template <typename T>
 constexpr bool is_container_v = is_sequence_container_v<T> || is_associative_container_v<T> || is_unordered_associative_container_v<T>;
+
+/**
+ * @brief Type trait to check whether @p T is a `std::optional`.
+ * @tparam T the type to check
+ */
+template <typename T>
+struct is_optional : std::false_type { };
+
+/**
+ * @copybrief plssvm::detail::is_optional
+ */
+template <typename T>
+struct is_optional<std::optional<T>> : std::true_type { };
+
+/**
+ * @copybrief plssvm::detail::is_optional
+ */
+template <typename T>
+constexpr bool is_optional_v = is_optional<T>::value;
+
+/**
+ * @brief Type trait to check whether @p T is a `std::reference_wrapper`.
+ * @tparam T the type to check
+ */
+template <typename T>
+struct is_reference_wrapper : std::false_type { };
+
+/**
+ * @copybrief plssvm::detail::is_reference_wrapper
+ */
+template <typename T>
+struct is_reference_wrapper<std::reference_wrapper<T>> : std::true_type { };
+
+/**
+ * @copybrief plssvm::detail::is_reference_wrapper
+ */
+template <typename T>
+constexpr bool is_reference_wrapper_v = is_reference_wrapper<T>::value;
 
 /**
  * @brief Check whether @p T is in the type set @p Types.
