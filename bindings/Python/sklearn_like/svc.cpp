@@ -385,7 +385,7 @@ void init_sklearn_svc(py::module_ &m) {
             }
 
             // convert 2D vector back to plssvm::matrix
-            return py::cast(plssvm::aos_matrix<plssvm::real_type>{ std::move(sorted_sv) }); }, "Support vectors. ndarray of shape (n_SV, n_features)")
+            return py::cast(plssvm::aos_matrix<plssvm::real_type>{ sorted_sv }); }, "Support vectors. ndarray of shape (n_SV, n_features)")
         .def_property_readonly("n_support_", [](const svc &self) -> py::array {
             if (self.model_ == nullptr) {
                 throw py::attribute_error{ "'SVC' object has no attribute 'n_support_'" };
@@ -554,7 +554,7 @@ void init_sklearn_svc(py::module_ &m) {
                 using possible_model_types = typename svc::possible_model_types;
 
                 // create the data set to fit
-                plssvm::classification_data_set<label_type> train_data{ std::move(data.matrix), std::move(labels_vector) };
+                plssvm::classification_data_set<label_type> train_data{ std::move(data.matrix), std::forward<decltype(labels_vector)>(labels_vector) };
 
                 // fit the model
                 if (self.max_iter_.has_value()) {
@@ -607,7 +607,7 @@ void init_sklearn_svc(py::module_ &m) {
                 // get the label types
                 using label_type = typename plssvm::detail::remove_cvref_t<decltype(labels_vector)>::value_type;
                 // create the data set to score
-                const plssvm::classification_data_set<label_type> data_to_score{ std::move(data), std::move(labels_vector) };
+                const plssvm::classification_data_set<label_type> data_to_score{ std::move(data), std::forward<decltype(labels_vector)>(labels_vector) };
                 // score the data
                 try {
                     return self.svm_->score(std::get<plssvm::classification_model<label_type>>(*self.model_), data_to_score);

@@ -288,7 +288,7 @@ void init_sklearn_svr(py::module_ &m) {
                 using possible_model_types = typename svr::possible_model_types;
 
                 // create the data set to fit
-                plssvm::regression_data_set<label_type> train_data{ std::move(data.matrix), std::move(labels_vector) };
+                plssvm::regression_data_set<label_type> train_data{ std::move(data.matrix), std::forward<decltype(labels_vector)>(labels_vector) };
 
                 // fit the model using potentially provided keyword arguments
                 if (self.max_iter_.has_value()) {
@@ -335,7 +335,7 @@ void init_sklearn_svr(py::module_ &m) {
                 // get the label types
                 using label_type = typename plssvm::detail::remove_cvref_t<decltype(labels_vector)>::value_type;
                 // create the data set to score
-                const plssvm::regression_data_set<label_type> data_to_score{ std::move(data), std::move(labels_vector) };
+                const plssvm::regression_data_set<label_type> data_to_score{ std::move(data), std::forward<decltype(labels_vector)>(labels_vector) };
                 // score the data
                 try {
                     return self.svm_->score(std::get<plssvm::regression_model<label_type>>(*self.model_), data_to_score);
