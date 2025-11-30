@@ -49,7 +49,7 @@ void init_regression_model(py::module_ &m) {
              py::kw_only(),
              py::arg("type") = std::nullopt,
              py::arg("comm") = plssvm::mpi::communicator{})
-        .def("save", [](const regression_model_wrapper &self, const std::string &filename) { return std::visit([&filename](auto &&model) { model.save(filename); }, self.model); }, "save the current model to a file", py::arg("filename"))
+        .def("save", [](const regression_model_wrapper &self, const std::string &filename) { std::visit([&filename](auto &&model) { model.save(filename); }, self.model); }, "save the current model to a file", py::arg("filename"))
         .def("num_support_vectors", [](const regression_model_wrapper &self) { return std::visit([](auto &&model) { return model.num_support_vectors(); }, self.model); }, "the number of support vectors (note: all training points become support vectors for LS-SVMs)")
         .def("num_features", [](const regression_model_wrapper &self) { return std::visit([](auto &&model) { return model.num_features(); }, self.model); }, "the number of features of the support vectors")
         .def("get_params", [](const regression_model_wrapper &self) { return std::visit([](auto &&model) { return model.get_params(); }, self.model); }, "the C-SVR hyper-parameters used to learn this model")
