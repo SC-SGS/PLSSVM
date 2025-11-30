@@ -36,6 +36,8 @@ cl_int error_code::value() const noexcept {
     return err_;
 }
 
+// NOLINTBEGIN: magic numbers are intentional (OpenCL error codes)
+
 std::string_view error_code::message() const noexcept {
     switch (err_) {
         case 0:
@@ -169,10 +171,13 @@ std::string_view error_code::message() const noexcept {
     }
 }
 
+// NOLINTEND
+
 error_code::operator bool() const noexcept {
     return err_ == CL_SUCCESS;
 }
 
+// NOLINTNEXTLINE(google-runtime-operator): overload is intentional to reduce explicit casts in OpenCL interfaces
 cl_int *error_code::operator&() noexcept {
     return &err_;
 }

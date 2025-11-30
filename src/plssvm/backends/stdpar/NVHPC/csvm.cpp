@@ -68,7 +68,7 @@ csvm::csvm(const target_platform target) {
         target_ = target;
     }
 
-    std::vector<std::string> device_names{};
+    std::vector<std::string> device_names{};  // NOLINT(misc-const-correctness): cannot be const if the device is GPU
 #if defined(PLSSVM_STDPAR_BACKEND_NVHPC_GPU)
     cudaDeviceProp prop{};
     cudaGetDeviceProperties(&prop, 0);
@@ -89,7 +89,7 @@ csvm::csvm(const target_platform target) {
 #endif
                                       this->get_implementation_type(),
                                       detail::get_stdpar_version(),
-                                      this->num_available_devices(),
+                                      this->num_available_devices(),  // NOLINT: safe to call this virtual function in the constructor
                                       target_);
 #if defined(PLSSVM_STDPAR_BACKEND_NVHPC_GPU)
         plssvm::detail::log_untracked(verbosity_level::full,
@@ -109,7 +109,7 @@ csvm::csvm(const target_platform target) {
     PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "backend", "stdpar_implementation", this->get_implementation_type() }));
     PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "backend", "backend", plssvm::backend_type::stdpar }));
     PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "backend", "target_platform", target_ }));
-    PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "backend", "num_devices", this->num_available_devices() }));
+    PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "backend", "num_devices", this->num_available_devices() }));  // NOLINT: safe to call this virtual function in the constructor
     if (!device_names.empty()) {
         // NVHPC does not provide us with a device name if compiled for CPUs
         PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "backend", "device", device_names }));

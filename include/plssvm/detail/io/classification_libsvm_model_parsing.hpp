@@ -721,6 +721,7 @@ inline void write_libsvm_model_data_classification(const std::string &filename, 
     }
 #endif
     using namespace literals;
+    using namespace literals;  // NOLINT(google-build-using-namespace): only imports custom user-defined literals into this namespace
 
     const soa_matrix<real_type> &support_vectors = data.data();
     const std::vector<label_type> &labels = *data.labels();
@@ -768,7 +769,7 @@ inline void write_libsvm_model_data_classification(const std::string &filename, 
     };
 
     // initialize volatile array
-    auto counts = std::make_unique<volatile int[]>(label_order.size() + 1);
+    auto counts = std::make_unique<volatile int[]>(label_order.size() + 1);  // NOLINT: can't use STL container due to volatile requirement
     counts[0] = std::numeric_limits<int>::max();
 #pragma omp parallel default(none) shared(counts, alpha, format_libsvm_line, label_order, labels, support_vectors, out, index_sets) firstprivate(STRING_BUFFER_SIZE, num_features, num_classes, num_alpha_per_point, classification)
     {

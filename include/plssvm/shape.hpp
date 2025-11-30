@@ -108,7 +108,7 @@ struct hash<plssvm::shape> {
     std::size_t operator()(const plssvm::shape &s) const noexcept {
         // based on boost::hash<std::pair<T, U>>>
         const auto hash_combine = [](std::size_t &seed, const std::size_t val) {
-            seed ^= std::hash<std::size_t>{}(val) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+            seed ^= std::hash<std::size_t>{}(val) + 0x9e3779b9 + (seed << 6) + (seed >> 2);  // NOLINT: taken from boost::hash_combine
         };
 
         std::size_t seed = 0;

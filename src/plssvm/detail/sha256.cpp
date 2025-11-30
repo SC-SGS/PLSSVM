@@ -18,6 +18,7 @@
 
 namespace plssvm::detail {
 
+// NOLINTBEGIN
 std::string sha256::operator()(std::string input) const {
     // Initialize hash values: (first 32 bits of the fractional parts of the square roots of the first 8 primes 2..19):
     std::array<std::uint32_t, 8> hash_values = { 0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a, 0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19 };
@@ -35,7 +36,6 @@ std::string sha256::operator()(std::string input) const {
     const std::uint32_t K = CHUNK_SIZE - (L + 1 + 8) % CHUNK_SIZE;
     input.resize(L + 1 + K + 8);
 
-    // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast): cast necessary to use the correct character type for the sha256 algorithm
     auto *input_unsigned_ptr = reinterpret_cast<unsigned char *>(input.data());
 
     // append L as an 8-byte big-endian integer, making the total post-processed length a multiple of 64 byte
@@ -120,5 +120,6 @@ std::uint32_t sha256::rotr32(const std::uint32_t value, int count) {
     count &= mask;
     return (value >> count) | (value << (-count & mask));
 }
+// NOLINTEND
 
 }  // namespace plssvm::detail

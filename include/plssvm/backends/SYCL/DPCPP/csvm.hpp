@@ -43,6 +43,8 @@ namespace plssvm {
 
 namespace dpcpp {
 
+using namespace plssvm::sycl;  // NOLINT(google-build-using-namespace): necessary to make general SYCL functionality available in the DPC++ specific namespace
+
 /**
  * @brief A C-SVM implementation using DPC++ as SYCL backend.
  */

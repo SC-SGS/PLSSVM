@@ -111,7 +111,7 @@ std::ostream &operator<<(std::ostream &out, const data_distribution &dist) {
 //*************************************************************************************************************************************//
 //                                                     specific data distributions                                                     //
 //*************************************************************************************************************************************//
-using namespace literals;
+using namespace literals;  // NOLINT(google-build-using-namespace): only imports custom user-defined literals into this namespace
 
 triangular_data_distribution::triangular_data_distribution(mpi::communicator comm, const std::size_t num_rows, const std::size_t num_places) :
     data_distribution{ std::move(comm), num_rows, num_places } {

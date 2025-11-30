@@ -81,7 +81,7 @@ csvm::csvm(const target_platform target) {
     PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "backend", "backend", plssvm::backend_type::openmp }));
     PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "backend", "target_platform", target_ }));
     PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "backend", "num_threads", detail::get_num_threads() }));
-    PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "backend", "num_devices", this->num_available_devices() }));
+    PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "backend", "num_devices", this->num_available_devices() }));  // NOLINT: safe to call this virtual function in the constructor
 }
 
 csvm::~csvm() = default;
@@ -135,7 +135,7 @@ std::vector<::plssvm::detail::move_only_any> csvm::assemble_kernel_matrix(const 
                     const std::size_t num_entries = dist.calculate_explicit_kernel_matrix_num_entries_padded(0);
 
                     // only explicitly store the upper triangular matrix
-                    auto kernel_matrix = ::plssvm::detail::make_unique_for_overwrite<real_type[]>(num_entries);
+                    auto kernel_matrix = ::plssvm::detail::make_unique_for_overwrite<real_type[]>(num_entries);  // NOLINT: C-style array must be used with make_unique_for_overwrite
                     // initialize kernel matrix to all zeros in parallel
                     ::plssvm::detail::parallel_zero_memset(kernel_matrix.get(), num_entries);
 
@@ -189,7 +189,7 @@ void csvm::blas_level_3(const solver_type solver, const real_type alpha, const s
     PLSSVM_ASSERT(B.shape() == C.shape(), "The B ({}) and C ({}) matrices must have the same shape!", B.shape(), C.shape());
     PLSSVM_ASSERT(B.padding() == C.padding(), "The B ({}) and C ({}) matrices must have the same padding!", B.padding(), C.padding());
 
-    using namespace operators;
+    using namespace operators;  // NOLINT(google-build-using-namespace): only imports custom math operations on vectors (and scalars)
 
     // get the triangular data distribution
     const ::plssvm::detail::triangular_data_distribution &dist = dynamic_cast<::plssvm::detail::triangular_data_distribution &>(*data_distribution_);
@@ -215,7 +215,7 @@ void csvm::blas_level_3(const solver_type solver, const real_type alpha, const s
                 break;
             case solver_type::cg_explicit:
                 {
-                    const auto &explicit_A = ::plssvm::detail::move_only_any_cast<const std::unique_ptr<real_type[]> &>(A.front());
+                    const auto &explicit_A = ::plssvm::detail::move_only_any_cast<const std::unique_ptr<real_type[]> &>(A.front());  // NOLINT: C-style array must be used
                     PLSSVM_ASSERT(explicit_A != nullptr, "The A matrix must not be empty!");
 
                     const auto start = std::chrono::steady_clock::now();

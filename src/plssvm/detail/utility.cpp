@@ -54,7 +54,7 @@ void check_local_memory_usage(const std::vector<std::optional<memory_size>> &loc
     }
     PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((detail::tracking::tracking_entry{ "resource_constraints", "needed_local_memory", required_local_memory_per_device }));
 #if defined(PLSSVM_PERFORMANCE_TRACKER_ENABLED)
-    using namespace plssvm::detail::literals;
+    using namespace plssvm::detail::literals;  // NOLINT(google-build-using-namespace): only imports custom user-defined literals into this namespace
     // post-process the local_memory vector for a better performance tracker output
     std::vector<memory_size> processed_local_memory(local_memory.size());
     for (std::size_t i = 0; i < processed_local_memory.size(); ++i) {

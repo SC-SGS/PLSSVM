@@ -245,7 +245,7 @@ inline void write_libsvm_data_impl(const std::string &filename, const soa_matrix
     } else {
         PLSSVM_ASSERT(label.empty(), "has_label is 'false' but labels were provided!");
     }
-    using namespace literals;
+    using namespace literals;  // NOLINT(google-build-using-namespace): only imports custom user-defined literals into this namespace
 
     // create output file
     fmt::ostream out = fmt::output_file(filename);

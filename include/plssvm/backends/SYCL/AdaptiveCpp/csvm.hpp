@@ -43,6 +43,8 @@ namespace plssvm {
 
 namespace adaptivecpp {
 
+using namespace plssvm::sycl;  // NOLINT(google-build-using-namespace): necessary to make general SYCL functionality available in the AdaptiveCpp specific namespace
+
 /**
  * @brief A C-SVM implementation using AdaptiveCpp as SYCL backend.
  */

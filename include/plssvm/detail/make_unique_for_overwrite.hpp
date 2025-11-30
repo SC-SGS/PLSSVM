@@ -35,7 +35,7 @@ struct is_unbounded_array : std::false_type { };
  * @tparam T the array type
  */
 template <typename T>
-struct is_unbounded_array<T[]> : std::true_type { };
+struct is_unbounded_array<T[]> : std::true_type { };  // NOLINT: see https://en.cppreference.com/w/cpp/memory/unique_ptr/make_unique
 
 /**
  * @brief Shortcut for plssvm::detail::is_unbounded_array.
@@ -57,7 +57,7 @@ struct is_bounded_array : std::false_type { };
  * @tparam N the size of the array
  */
 template <typename T, std::size_t N>
-struct is_bounded_array<T[N]> : std::true_type { };
+struct is_bounded_array<T[N]> : std::true_type { };  // NOLINT: see https://en.cppreference.com/w/cpp/memory/unique_ptr/make_unique
 
 /**
  * @brief Shortcut for plssvm::detail::is_bounded_array.
@@ -84,7 +84,7 @@ template <typename T, std::enable_if_t<std::is_array_v<T>, bool> = true>
  * @param[in] n the size of the array to create
  * @return a unique pointer to the newly created object (`[[nodiscard]]`)
  */
-template <typename T, std::enable_if_t<is_unbounded_array_v<T>, bool> = true>
+template <typename T, std::enable_if_t<is_unbounded_array_v<T>, bool> = true>  // NOLINT: see https://en.cppreference.com/w/cpp/memory/unique_ptr/make_unique
 std::unique_ptr<T> make_unique_for_overwrite(const std::size_t n) {
     return std::unique_ptr<T>(new std::remove_extent_t<T>[n]);
 }
@@ -97,7 +97,7 @@ std::unique_ptr<T> make_unique_for_overwrite(const std::size_t n) {
  * @param[in] args the arguments to pass to the constructor
  * @return a unique pointer to the newly created object (`[[nodiscard]]`)
  */
-template <typename T, typename... Args, std::enable_if_t<is_bounded_array_v<T>, bool> = true>
+template <typename T, typename... Args, std::enable_if_t<is_bounded_array_v<T>, bool> = true>  // NOLINT: see https://en.cppreference.com/w/cpp/memory/unique_ptr/make_unique
 auto make_unique_for_overwrite(Args &&...args) = delete;
 
 /**

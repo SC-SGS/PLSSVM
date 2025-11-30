@@ -198,7 +198,7 @@ class communicator {
      * @brief Add implicit conversion operator back to a native MPI communicator.
      * @return The wrapped MPI communicator (`[[nodiscard]]`)
      */
-    [[nodiscard]] operator MPI_Comm() const { return comm_; }
+    [[nodiscard]] operator MPI_Comm() const { return comm_; }  // NOLINT: implicit conversion desired
 #endif
 
     /**

@@ -68,6 +68,7 @@ void device_ptr<T>::memset(const int pattern, const size_type pos, const size_ty
             using kokkos_execution_space_type = ::plssvm::detail::remove_cvref_t<decltype(exec)>;
 
             // create view of the device data cast to unsigned char
+            // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast): reinterpret_cast necessary (only set values on a byte level)
             const Kokkos::View<unsigned char *, kokkos_execution_space_type> view{ reinterpret_cast<unsigned char *>(data.data() + pos), rnum_bytes };
             // fill the view with the pattern -> acts like a memset
             Kokkos::deep_copy(exec, view, static_cast<unsigned char>(pattern));

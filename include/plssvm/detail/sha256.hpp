@@ -46,7 +46,7 @@ class sha256 {
     template <typename T, PLSSVM_REQUIRES(std::is_unsigned_v<T>)>
     static void unpack(const T x, unsigned char *str) {
         for (std::size_t i = 0; i < sizeof(T); ++i) {
-            str[i] = static_cast<unsigned char>(x >> ((sizeof(T) - i - 1) * 8));
+            str[i] = static_cast<unsigned char>(x >> ((sizeof(T) - i - 1) * 8));  // NOLINT
         }
     }
 

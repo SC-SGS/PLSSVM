@@ -146,14 +146,14 @@ inline typename Container::size_type erase_if(Container &c, Pred pred) {
  * @param[in] val the value to check
  * @return `true` if the @p val exists in the container @p c, otherwise `false` (`[[nodiscard]]`)
  */
-template <typename Container, typename T, PLSSVM_REQUIRES(is_container_v<Container> && !is_string_v<Container>)>
+template <typename Container, typename T, PLSSVM_REQUIRES(is_container_v<Container> && !is_string_v<Container>)>  // NOLINT: false positive
 [[nodiscard]] inline bool contains(const Container &c, const T &val) {
     if constexpr (is_sequence_container_v<Container>) {
         // use std::find for sequence containers
         return std::find(c.cbegin(), c.cend(), val) != c.cend();
     } else {
         // use count otherwise
-        return c.count(val) > typename Container::size_type{ 0 };
+        return c.count(val) > typename Container::size_type{ 0 };  // NOLINT: false positive (do not implicitly decay an array into a pointer?)
     }
 }
 

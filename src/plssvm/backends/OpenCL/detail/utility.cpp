@@ -239,7 +239,11 @@ namespace plssvm::opencl::detail {
     std::vector<context> contexts;
     for (auto &[platform, devices] : platform_devices) {
         // create context and associated OpenCL platform with it
-        std::array<cl_context_properties, 3> context_properties = { CL_CONTEXT_PLATFORM, reinterpret_cast<cl_context_properties>(platform.first), 0 };
+        std::array<cl_context_properties, 3> context_properties = {
+            CL_CONTEXT_PLATFORM,
+            reinterpret_cast<cl_context_properties>(platform.first),  // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast): recommended way to do this
+            0
+        };
         for (auto &device : devices) {
             cl_context cont = clCreateContext(context_properties.data(), cl_uint{ 1 }, &device, nullptr, nullptr, &err);
             PLSSVM_OPENCL_ERROR_CHECK(err, "error creating the OpenCL context")
@@ -342,7 +346,7 @@ std::pair<std::vector<command_queue>, jit_info> create_command_queues(const mpi:
     //**************************************************************************//
 
     // determine OpenCL compile options per device
-    std::string global_compile_options{ "-cl-mad-enable -cl-no-signed-zeros" };
+    std::string global_compile_options{ "-cl-mad-enable -cl-no-signed-zeros" };  // NOLINT: can be modified if fast-math is enabled
 #if defined(PLSSVM_ENABLE_FAST_MATH)
     global_compile_options += " -cl-fast-relaxed-math";
 #endif
@@ -534,6 +538,7 @@ std::pair<std::vector<command_queue>, jit_info> create_command_queues(const mpi:
         // get directory iterator
         auto dirIter = std::filesystem::directory_iterator(cache_dir_name);
         // get files in directory -> account for stored preprocessed source file
+        // NOLINTNEXTLINE(misc-include-cleaner): false positive -> included via <filesystem>
         if (static_cast<std::size_t>(std::count_if(std::filesystem::begin(dirIter), std::filesystem::end(dirIter), [](const auto &entry) { return entry.is_regular_file(); })) != contexts.size() + 1) {
             info.cache_state = jit_info::caching_status::error_invalid_number_of_cached_files;
         }
@@ -604,7 +609,7 @@ std::pair<std::vector<command_queue>, jit_info> create_command_queues(const mpi:
         for (std::vector<std::size_t>::size_type i = 0; i < binary_sizes.size(); ++i) {
             std::ofstream out{ cache_dir_name / fmt::format("device_{}.bin", i) };
             PLSSVM_ASSERT(out.good(), fmt::format("couldn't create binary cache file ({}) for device {}", cache_dir_name / fmt::format("device_{}.bin", i), i));
-            out.write(reinterpret_cast<char *>(binaries_ptr[i]), static_cast<std::streamsize>(binary_sizes[i]));
+            out.write(reinterpret_cast<const char *>(binaries_ptr[i]), static_cast<std::streamsize>(binary_sizes[i]));  // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast): recommended way to do this
         }
         {
             // save preprocessed source string in temporary directory
@@ -641,7 +646,7 @@ std::pair<std::vector<command_queue>, jit_info> create_command_queues(const mpi:
             // allocate the necessary buffer
             std::vector<unsigned char> file_content(num_bytes);
             // read the whole file in one go
-            f.read(reinterpret_cast<char *>(file_content.data()), num_bytes);
+            f.read(reinterpret_cast<char *>(file_content.data()), num_bytes);  // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast): recommended way to do this
             return std::make_pair(file_content, static_cast<std::size_t>(num_bytes));
         };
 

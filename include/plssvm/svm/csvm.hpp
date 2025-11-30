@@ -338,7 +338,7 @@ std::tuple<aos_matrix<real_type>, std::vector<real_type>, std::vector<unsigned l
 
     // determine the correct solver type, if the automatic solver type has been provided
     if (used_solver == solver_type::automatic) {
-        using namespace detail::literals;
+        using namespace detail::literals;  // NOLINT(google-build-using-namespace): only imports custom user-defined literals into this namespace
 
         // define used safety margin constants
         constexpr detail::memory_size minimal_safety_margin = 512_MiB;
@@ -389,7 +389,7 @@ std::tuple<aos_matrix<real_type>, std::vector<real_type>, std::vector<unsigned l
                         "  - usable device memory (with safety margin of min({0} %, {1}): {5}\n"
                         "  - maximum memory needed (cg_explicit): {6}\n"
                         "  - maximum memory needed (cg_implicit): {7}\n",
-                        static_cast<double>(percentual_safety_margin * 100.0L),
+                        static_cast<double>(percentual_safety_margin * 100.0L),  // NOLINT: convert float to percent by multiplying it with 100
                         minimal_safety_margin,
                         detail::tracking::tracking_entry{ "resource_constraints", "system_memory", total_system_memory },
                         detail::tracking::tracking_entry{ "resource_constraints", "usable_system_memory_with_safety_margin", usable_system_memory },

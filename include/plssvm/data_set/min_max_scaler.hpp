@@ -92,14 +92,14 @@ class min_max_scaler {
      * @param[in] filename the filename to read the scaling information from
      * @throws plssvm::invalid_file_format_exception all exceptions thrown by the plssvm::detail::io::parse_scaling_factors function
      */
-    min_max_scaler(const std::string &filename);  // can't be explicit due to the data_set_variant
+    min_max_scaler(const std::string &filename);  // NOLINT: can't be explicit due to the data_set_variant
     /**
      * @brief Read the scaling interval and factors from the provided file @p filename.
      * @param[in] comm the used MPI communicator (**note**: current only used to restrict logging outputs to the main MPI rank)
      * @param[in] filename the filename to read the scaling information from
      * @throws plssvm::invalid_file_format_exception all exceptions thrown by the plssvm::detail::io::parse_scaling_factors function
      */
-    min_max_scaler(mpi::communicator comm, const std::string &filename);  // can't be explicit due to the data_set_variant
+    min_max_scaler(mpi::communicator comm, const std::string &filename);
 
     /**
      * @brief Save the scaling factors to the file @p filename.

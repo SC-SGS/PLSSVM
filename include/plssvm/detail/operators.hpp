@@ -119,7 +119,7 @@ PLSSVM_GENERATE_VECTOR_ARITHMETIC_OPERATION(/)
 template <typename T>
 struct transposed {
     /// The encapsulated vector.
-    const std::vector<T> &vec;
+    const std::vector<T> &vec;  // NOLINT(cppcoreguidelines-avoid-const-or-ref-data-members): transposed struct only used for function overload selection
 };
 
 /**

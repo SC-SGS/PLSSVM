@@ -23,7 +23,7 @@
 
 namespace plssvm {
 
-verbosity_level verbosity = verbosity_level::full;
+verbosity_level verbosity = verbosity_level::full;  // NOLINT: variable must be global or too many interfaces would change
 
 std::ostream &operator<<(std::ostream &out, const verbosity_level verb) {
     if (verb == verbosity_level::quiet) {
@@ -85,7 +85,7 @@ std::istream &operator>>(std::istream &in, verbosity_level &verb) {
 }
 
 verbosity_level operator|(const verbosity_level lhs, const verbosity_level rhs) {
-    return static_cast<verbosity_level>(detail::to_underlying(lhs) | detail::to_underlying(rhs));
+    return static_cast<verbosity_level>(detail::to_underlying(lhs) | detail::to_underlying(rhs));  // NOLINT: allow combination of different enum values
 }
 
 verbosity_level operator|=(verbosity_level &lhs, const verbosity_level rhs) {
@@ -94,7 +94,7 @@ verbosity_level operator|=(verbosity_level &lhs, const verbosity_level rhs) {
 }
 
 verbosity_level operator&(const verbosity_level lhs, const verbosity_level rhs) {
-    return static_cast<verbosity_level>(detail::to_underlying(lhs) & detail::to_underlying(rhs));
+    return static_cast<verbosity_level>(detail::to_underlying(lhs) & detail::to_underlying(rhs));  // NOLINT: allow combination of different enum values
 }
 
 verbosity_level operator&=(verbosity_level &lhs, const verbosity_level rhs) {

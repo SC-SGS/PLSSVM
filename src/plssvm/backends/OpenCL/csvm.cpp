@@ -54,6 +54,8 @@
 
 namespace plssvm::opencl {
 
+using namespace plssvm::operators;  // NOLINT(google-build-using-namespace): only imports custom math operations on vectors (and scalars)
+
 csvm::csvm(const target_platform target) {
     // check whether the requested target platform has been enabled
     switch (target) {
@@ -316,8 +318,6 @@ auto csvm::run_assemble_kernel_matrix_explicit(const std::size_t device_id, cons
     // convert execution range block to OpenCL's native std::vector
     const std::vector<std::size_t> native_block = detail::dim_type_to_native<2>(exec.block);
 
-    using namespace plssvm::operators;
-
     const auto start = std::chrono::steady_clock::now();
     for (const auto &[partial_grid, offsets] : exec.grids) {
         // convert execution range partial_grid to OpenCL's native std::vector
@@ -369,8 +369,6 @@ void csvm::run_blas_level_3_kernel_explicit(const std::size_t device_id, const :
     // convert execution range block to OpenCL's native std::vector
     const std::vector<std::size_t> native_block = detail::dim_type_to_native<2>(exec.block);
 
-    using namespace plssvm::operators;
-
     const auto start = std::chrono::steady_clock::now();
     for (const auto &[partial_grid, offsets] : exec.grids) {
         // convert execution range grid[i] to OpenCL's native std::vector
@@ -413,8 +411,6 @@ void csvm::run_inplace_matrix_addition(const std::size_t device_id, const ::plss
     // convert execution range block to OpenCL's native std::vector
     const std::vector<std::size_t> native_block = detail::dim_type_to_native<2>(exec.block);
 
-    using namespace plssvm::operators;
-
     for (const auto &[partial_grid, offsets] : exec.grids) {
         // convert execution range partial_grid to OpenCL's native std::vector
         const std::vector<std::size_t> native_partial_grid = detail::dim_type_to_native<2>(partial_grid) * native_block;
@@ -434,8 +430,6 @@ void csvm::run_inplace_matrix_scale(const std::size_t device_id, const ::plssvm:
 
     // convert execution range block to OpenCL's native std::vector
     const std::vector<std::size_t> native_block = detail::dim_type_to_native<2>(exec.block);
-
-    using namespace plssvm::operators;
 
     for (const auto &[partial_grid, offsets] : exec.grids) {
         // convert execution range partial_grid to OpenCL's native std::vector
@@ -465,8 +459,6 @@ void csvm::run_assemble_kernel_matrix_implicit_blas_level_3(const std::size_t de
 
     // convert execution range block to OpenCL's native std::vector
     const std::vector<std::size_t> native_block = detail::dim_type_to_native<2>(exec.block);
-
-    using namespace plssvm::operators;
 
     const auto start = std::chrono::steady_clock::now();
     for (const auto &[partial_grid, offsets] : exec.grids) {
@@ -523,8 +515,6 @@ auto csvm::run_w_kernel(const std::size_t device_id, const ::plssvm::detail::exe
     // convert execution range block to OpenCL's native std::vector
     const std::vector<std::size_t> native_block = detail::dim_type_to_native<2>(exec.block);
 
-    using namespace plssvm::operators;
-
     const auto start = std::chrono::steady_clock::now();
     for (const auto &[partial_grid, offsets] : exec.grids) {
         // convert execution range partial_grid to OpenCL's native std::vector
@@ -555,8 +545,6 @@ auto csvm::run_predict_kernel(const std::size_t device_id, const ::plssvm::detai
 
     // convert execution range block to OpenCL's native std::vector
     const std::vector<std::size_t> native_block = detail::dim_type_to_native<2>(exec.block);
-
-    using namespace plssvm::operators;
 
     const auto start = std::chrono::steady_clock::now();
     for (const auto &[partial_grid, offsets] : exec.grids) {

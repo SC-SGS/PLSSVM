@@ -104,7 +104,7 @@ regression_report::regression_report(const std::vector<label_type> &correct_labe
     // compile time check: only some named parameters are allowed
     static_assert(!parser.has_other_than(plssvm::regression_report::force_finite), "An illegal named parameter has been passed!");
 
-    bool force_finite_value{ true };
+    bool force_finite_value{ true };  // NOLINT: can be modified in compile-time if later on
     // compile time/runtime check: the values must have the correct types
     if constexpr (parser.has(plssvm::regression_report::force_finite)) {
         // get the value of the provided named parameter

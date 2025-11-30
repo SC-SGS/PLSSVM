@@ -61,14 +61,14 @@ class gpu_device_ptr {
      * @param[in] size the size of the managed memory
      * @param[in] queue the queue (or similar) to manage the device_ptr
      */
-    gpu_device_ptr(size_type size, const queue_type queue);
+    gpu_device_ptr(size_type size, const queue_type queue);  // NOLINT: queue_type can be a pointer type where const qualification makes a difference
     /**
      * @brief Construct a device_ptr for the device managed by @p queue with the provided @p shape.
      * @details The managed memory size is: extents[0] * extents[1].
      * @param[in] shape the 2D size of the managed memory; size = shape.x * shape.y
      * @param[in] queue the queue (or similar) to manage the device_ptr
      */
-    gpu_device_ptr(plssvm::shape shape, const queue_type queue);
+    gpu_device_ptr(plssvm::shape shape, const queue_type queue);  // NOLINT: queue_type can be a pointer type where const qualification makes a difference
     /**
      * @brief Construct a device_ptr for the device managed by @p queue with the provided @p shape including @p padding.
      * @details The managed memory size is: (shape.x + padding.x) * (shape.y + padding.y).
@@ -76,17 +76,19 @@ class gpu_device_ptr {
      * @param[in] padding the padding applied to the extents
      * @param[in] queue the queue (or similar) to manage the device_ptr
      */
-    gpu_device_ptr(plssvm::shape shape, plssvm::shape padding, const queue_type queue);
+    gpu_device_ptr(plssvm::shape shape, plssvm::shape padding, const queue_type queue);  // NOLINT: queue_type can be a pointer type where const qualification makes a difference
 
-    /**
-     * @brief Delete copy-constructor to make device_ptr a move only type.
-     */
-    gpu_device_ptr(const gpu_device_ptr &) = delete;
     /**
      * @brief Move-constructor as device_ptr is a move-only type.
      * @param[in,out] other the device_ptr to move-construct from
      */
     gpu_device_ptr(gpu_device_ptr &&other) noexcept;
+
+  public:
+    /**
+     * @brief Delete copy-constructor to make device_ptr a move only type.
+     */
+    gpu_device_ptr(const gpu_device_ptr &) = delete;  // NOLINT(bugprone-crtp-constructor-accessibility): deleted constructor should be public
 
     /**
      * @brief Delete copy-assignment-operator to make device_ptr a move only type.
@@ -398,7 +400,7 @@ gpu_device_ptr<T, queue_t, device_pointer_t, derived_gpu_device_ptr>::gpu_device
     data_{ std::exchange(other.data_, device_pointer_type{}) } { }
 
 template <typename T, typename queue_t, typename device_pointer_t, typename derived_gpu_device_ptr>
-auto gpu_device_ptr<T, queue_t, device_pointer_t, derived_gpu_device_ptr>::operator=(gpu_device_ptr &&other) noexcept -> gpu_device_ptr & {
+gpu_device_ptr<T, queue_t, device_pointer_t, derived_gpu_device_ptr>::gpu_device_ptr & gpu_device_ptr<T, queue_t, device_pointer_t, derived_gpu_device_ptr>::operator=(gpu_device_ptr &&other) noexcept {
     // guard against self-assignment
     if (this != std::addressof(other)) {
         queue_ = std::exchange(other.queue_, queue_type{});

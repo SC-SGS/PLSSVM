@@ -366,7 +366,7 @@ void performance_tracker::save(std::ostream &out) {
     out << "dependencies:\n";
 
     // calculate the number of padding whitespaces for the "dependencies" category
-    std::size_t max_dependency_entry_name_length = 18;  // fast_float_version
+    std::size_t max_dependency_entry_name_length = std::string_view{ "fast_float_version" }.size();
     if (detail::contains(tracking_entries_, "dependencies")) {
         for (const auto &[entry_name, entry_value] : tracking_entries_["dependencies"]) {
             max_dependency_entry_name_length = std::max(max_dependency_entry_name_length, entry_name.size());

@@ -16,14 +16,14 @@
 #if defined(PLSSVM_HAS_SYCL_BACKEND)
 // define the default used SYCL implementation
 namespace plssvm::sycl {
-using namespace plssvm::PLSSVM_SYCL_BACKEND_PREFERRED_IMPLEMENTATION;
+using namespace plssvm::PLSSVM_SYCL_BACKEND_PREFERRED_IMPLEMENTATION;  // NOLINT: set default SYCL implementation
 }
 #else
 // define dpcpp as default SYCL namespace if no SYCL backend is available (to prevent compiler errors)
 namespace plssvm::dpcpp { }  // namespace plssvm::dpcpp
 
 namespace plssvm::sycl {
-using namespace plssvm::dpcpp;
+using namespace plssvm::dpcpp;  // NOLINT: set default SYCL implementation
 }
 #endif
 

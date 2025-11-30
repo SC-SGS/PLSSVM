@@ -38,7 +38,7 @@ class error_code {
      * @brief Construct a new error code wrapping the OpenCL @p error code.
      * @param[in] error the OpenCL error code
      */
-    error_code(cl_int error) noexcept;
+    error_code(cl_int error) noexcept;  // NOLINT: implicit conversions are explicitly wanted
 
     /**
      * @brief Assign the OpenCL @p error code to `*this`.
@@ -76,7 +76,7 @@ class error_code {
      * @brief Overloads the addressof operator to be able to set the wrapped error code value using an out-parameter in calls to OpenCL functions.
      * @return pointer to the wrapped OpenCL error code (`[[nodiscard]]`)
      */
-    [[nodiscard]] cl_int *operator&() noexcept;
+    [[nodiscard]] cl_int *operator&() noexcept;  // NOLINT(google-runtime-operator): overload is intentional to reduce explicit casts in OpenCL interfaces
 
   private:
     /// The wrapped OpenCL error code.

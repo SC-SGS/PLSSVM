@@ -106,7 +106,7 @@ template <typename base_csvm_type, typename... Args>
     igor::parser parser{ args... };
 
     // get the SYCL implementation type to use
-    sycl::implementation_type impl_type = sycl::implementation_type::automatic;
+    sycl::implementation_type impl_type = sycl::implementation_type::automatic;  // NOLINT: can be modified in compile-time if later on
     // check whether a specific SYCL implementation type has been requested
     if constexpr (parser.has(sycl_implementation_type)) {
         // compile time check: the value must have the correct type
