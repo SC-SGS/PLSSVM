@@ -72,7 +72,7 @@ csvm::csvm(const target_platform target) {
 #if defined(PLSSVM_STDPAR_BACKEND_NVHPC_GPU)
     cudaDeviceProp prop{};
     cudaGetDeviceProperties(&prop, 0);
-    device_names.emplace_back(::plssvm::detail::trim(prop.name));
+    device_names.emplace_back(::plssvm::detail::trim(static_cast<const char *>(prop.name)));
 #endif
 
     if (comm_.size() > 1) {

@@ -37,7 +37,7 @@ device_ptr<T>::device_ptr(const plssvm::shape shape, const queue_type device) :
 template <typename T>
 device_ptr<T>::device_ptr(const plssvm::shape shape, const plssvm::shape padding, const queue_type device) :
     base_type{ shape, padding, device } {
-    if (queue_ < 0 || queue_ >= static_cast<int>(get_device_count())) {
+    if (queue_ < 0 || queue_ >= get_device_count()) {
         throw backend_exception{ fmt::format("Illegal device ID! Must be in range: [0, {}) but is {}.", get_device_count(), queue_) };
     }
     detail::set_device(queue_);

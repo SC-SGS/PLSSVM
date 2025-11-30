@@ -35,7 +35,7 @@ context &context::operator=(context &&other) noexcept {
 }
 
 context::~context() {
-    if (device_context) {
+    if (static_cast<bool>(device_context)) {
         clReleaseContext(device_context);
     }
 }

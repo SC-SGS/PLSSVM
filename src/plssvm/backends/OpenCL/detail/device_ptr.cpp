@@ -95,7 +95,7 @@ void device_ptr<T>::memset(const int pattern, const size_type pos, const size_ty
     PLSSVM_ASSERT(device_kernel != nullptr, "The device kernel pointer is invalid!");
 
     // set the kernel arguments and run the kernel
-    PLSSVM_OPENCL_ERROR_CHECK(clSetKernelArg(*device_kernel, cl_uint{ 0 }, sizeof(cl_mem), &data_), "error setting device_ptr memset data_ argument");
+    PLSSVM_OPENCL_ERROR_CHECK(clSetKernelArg(*device_kernel, cl_uint{ 0 }, sizeof(cl_mem), static_cast<const void *>(&data_)), "error setting device_ptr memset data_ argument");
     PLSSVM_OPENCL_ERROR_CHECK(clSetKernelArg(*device_kernel, cl_uint{ 1 }, sizeof(cl_uchar), &correct_pattern), "error setting device_ptr memset pattern argument");
     PLSSVM_OPENCL_ERROR_CHECK(clSetKernelArg(*device_kernel, cl_uint{ 2 }, sizeof(cl_ulong), &pos), "error setting device_ptr memset pos argument");
     PLSSVM_OPENCL_ERROR_CHECK(clSetKernelArg(*device_kernel, cl_uint{ 3 }, sizeof(cl_ulong), &rcount), "error setting device_ptr memset size argument");
@@ -124,7 +124,7 @@ void device_ptr<T>::fill(const value_type value, const size_type pos, const size
     PLSSVM_ASSERT(device_kernel != nullptr, "The device kernel pointer is invalid!");
 
     // set the kernel arguments and run the kernel
-    PLSSVM_OPENCL_ERROR_CHECK(clSetKernelArg(*device_kernel, cl_uint{ 0 }, sizeof(cl_mem), &data_), "error setting device_ptr fill data_ argument");
+    PLSSVM_OPENCL_ERROR_CHECK(clSetKernelArg(*device_kernel, cl_uint{ 0 }, sizeof(cl_mem), static_cast<const void *>(&data_)), "error setting device_ptr fill data_ argument");
     PLSSVM_OPENCL_ERROR_CHECK(clSetKernelArg(*device_kernel, cl_uint{ 1 }, sizeof(value_type), &value), "error setting device_ptr fill pattern argument");
     PLSSVM_OPENCL_ERROR_CHECK(clSetKernelArg(*device_kernel, cl_uint{ 2 }, sizeof(cl_ulong), &pos), "error setting device_ptr fill pos argument");
     PLSSVM_OPENCL_ERROR_CHECK(clSetKernelArg(*device_kernel, cl_uint{ 3 }, sizeof(cl_ulong), &rcount), "error setting device_ptr fill size argument");

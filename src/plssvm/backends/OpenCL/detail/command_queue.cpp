@@ -50,7 +50,7 @@ command_queue &command_queue::operator=(command_queue &&other) noexcept {
 command_queue::~command_queue() {
     // avoid compiler warnings
     try {
-        if (queue) {
+        if (static_cast<bool>(queue)) {
             PLSSVM_OPENCL_ERROR_CHECK(clReleaseCommandQueue(queue), "error releasing cl_command_queue")
         }
     } catch (const plssvm::exception &e) {

@@ -54,7 +54,7 @@ void device_synchronize(const int device) {
 std::string get_device_name(const int device) {
     cudaDeviceProp prop{};
     PLSSVM_CUDA_ERROR_CHECK(cudaGetDeviceProperties(&prop, device))
-    return std::string{ ::plssvm::detail::trim(prop.name) };
+    return std::string{ ::plssvm::detail::trim(static_cast<const char *>(prop.name)) };
 }
 
 std::string get_runtime_version() {

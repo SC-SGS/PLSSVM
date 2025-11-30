@@ -146,7 +146,7 @@ inline void set_kernel_args(cl_kernel kernel, Args... args) {
     cl_uint i = 0;
     // iterate over parameter pack and set OpenCL kernel
     ([&](auto &arg) {
-        const error_code ec = clSetKernelArg(kernel, i++, sizeof(decltype(arg)), &arg);
+        const error_code ec = clSetKernelArg(kernel, i++, sizeof(decltype(arg)), static_cast<const void *>(&arg));
         PLSSVM_OPENCL_ERROR_CHECK(ec, fmt::format("error setting OpenCL kernel argument {}", i - 1))
     }(args),
      ...);

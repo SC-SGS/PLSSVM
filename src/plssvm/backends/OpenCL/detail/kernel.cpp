@@ -36,7 +36,7 @@ kernel &kernel::operator=(kernel &&other) noexcept {
 kernel::~kernel() {
     // avoid compiler warnings
     try {
-        if (compute_kernel) {
+        if (static_cast<bool>(compute_kernel)) {
             PLSSVM_OPENCL_ERROR_CHECK(clReleaseKernel(compute_kernel), "error releasing cl_kernel")
         }
     } catch (const plssvm::exception &e) {

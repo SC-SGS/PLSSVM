@@ -584,11 +584,11 @@ std::pair<std::vector<command_queue>, jit_info> create_command_queues(const mpi:
             binaries_ptr[idx] = binaries[idx].data();  // only necessary for OpenCL's void ** calls!
 
             // get binaries
-            err = clGetProgramInfo(program, CL_PROGRAM_BINARIES, sizeof(unsigned char *), &binaries_ptr[idx], nullptr);
+            err = clGetProgramInfo(program, CL_PROGRAM_BINARIES, sizeof(unsigned char *), static_cast<void *>(&binaries_ptr[idx]), nullptr);
             PLSSVM_OPENCL_ERROR_CHECK(err, "error retrieving the kernel binaries")
 
             // release resource
-            if (program) {
+            if (static_cast<bool>(program)) {
                 PLSSVM_OPENCL_ERROR_CHECK(clReleaseProgram(program), "error releasing OpenCL program resources")
             }
         }
@@ -689,7 +689,7 @@ std::pair<std::vector<command_queue>, jit_info> create_command_queues(const mpi:
         }
 
         // release resource
-        if (binary_program) {
+        if (static_cast<bool>(binary_program)) {
             PLSSVM_OPENCL_ERROR_CHECK(clReleaseProgram(binary_program), "error releasing OpenCL binary program resources")
         }
 

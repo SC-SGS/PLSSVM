@@ -129,11 +129,11 @@ std::string get_device_name([[maybe_unused]] const device_wrapper &dev) {
             throw backend_exception{ "Unsupported execution_space::automatic provided!" };
         case execution_space::cuda:
             PLSSVM_KOKKOS_BACKEND_INVOKE_RETURN_IF_CUDA([&]() {
-                return std::string{ ::plssvm::detail::trim(dev.get<execution_space::cuda>().cuda_device_prop().name) };
+                return std::string{ ::plssvm::detail::trim(static_cast<const char *>(dev.get<execution_space::cuda>().cuda_device_prop().name)) };
             });
         case execution_space::hip:
             PLSSVM_KOKKOS_BACKEND_INVOKE_RETURN_IF_HIP([&]() {
-                return std::string{ ::plssvm::detail::trim(dev.get<execution_space::hip>().hip_device_prop().name) };
+                return std::string{ ::plssvm::detail::trim(static_cast<const char *>(dev.get<execution_space::hip>().hip_device_prop().name)) };
             });
         case execution_space::sycl:
             PLSSVM_KOKKOS_BACKEND_INVOKE_RETURN_IF_SYCL([&]() {
