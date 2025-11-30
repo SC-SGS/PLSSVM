@@ -243,21 +243,21 @@ struct type_caster<plssvm::matrix<T, layout>> {
             if (plssvm::bindings::python::util::is_c_contiguous<T>(buffer)) {
                 // array is already c_style -> no need to force cast
                 return copy_pyarray_to_matrix(arr.cast<py::array_t<T, py::array::c_style>>());
-            } else if (plssvm::bindings::python::util::is_f_contiguous<T>(buffer)) {
+            }
+            if (plssvm::bindings::python::util::is_f_contiguous<T>(buffer)) {
                 // array is already f_style -> no need to force cast
                 return copy_pyarray_to_matrix(arr.cast<py::array_t<T, py::array::f_style>>());
-            } else {
-                // array is non-contiguous
-                if constexpr (layout == plssvm::layout_type::aos) {
-                    // if we want to get a PLSSVM matrix in AoS layout, force casting to c_style is more performant
-                    return copy_pyarray_to_matrix(arr.cast<py::array_t<T, py::array::c_style | py::array::forcecast>>());
-                } else if constexpr (layout == plssvm::layout_type::soa) {
-                    // if we want to get a PLSSVM matrix in SoA layout, force casting to f_style is more performant
-                    return copy_pyarray_to_matrix(arr.cast<py::array_t<T, py::array::f_style | py::array::forcecast>>());
-                } else {
-                    return false;
-                }
             }
+            // array is non-contiguous
+            if constexpr (layout == plssvm::layout_type::aos) {
+                // if we want to get a PLSSVM matrix in AoS layout, force casting to c_style is more performant
+                return copy_pyarray_to_matrix(arr.cast<py::array_t<T, py::array::c_style | py::array::forcecast>>());
+            }
+            if constexpr (layout == plssvm::layout_type::soa) {
+                // if we want to get a PLSSVM matrix in SoA layout, force casting to f_style is more performant
+                return copy_pyarray_to_matrix(arr.cast<py::array_t<T, py::array::f_style | py::array::forcecast>>());
+            }
+            return false;
         }
 
         return true;

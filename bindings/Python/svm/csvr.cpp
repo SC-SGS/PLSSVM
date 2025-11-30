@@ -80,11 +80,10 @@ void init_csvr(py::module_ &m) {
                                                                       plssvm::epsilon = epsilon,
                                                                       plssvm::max_iter = max_iter.value(),
                                                                       plssvm::solver = solver) };
-                    } else {
-                        return regression_model_wrapper{ self.fit(data,
-                                                                      plssvm::epsilon = epsilon,
-                                                                      plssvm::solver = solver) };
                     }
+                    return regression_model_wrapper{ self.fit(data,
+                                                                  plssvm::epsilon = epsilon,
+                                                                  plssvm::solver = solver) };
                 }, data_set.data_set); }, "fit a model using the current C-SVR on the provided data",
                 py::arg("data"),
                 py::kw_only(),

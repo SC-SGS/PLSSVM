@@ -75,31 +75,28 @@ struct type_caster<plssvm::mpi::communicator> {
                 const MPI_Fint f_handle = obj.attr("py2f")().cast<MPI_Fint>();
                 value = plssvm::mpi::communicator{ MPI_Comm_f2c(f_handle) };
                 return true;
-            } else {
-                // something else was provided -> abort type casting
-                return false;
             }
+            // something else was provided -> abort type casting
+            return false;
         } catch (const py::error_already_set &) {
             // we couldn't find mpi4py
             if (obj.is_none()) {
                 // but "comm" wasn't set -> we can use our default plssvm::mpi::communicator
                 value = plssvm::mpi::communicator{};
                 return true;
-            } else {
-                // something was provided -> abort type casting
-                return false;
             }
+            // something was provided -> abort type casting
+            return false;
         }
 #else
         // we haven't MPI enabled -> check whether the "comm" argument has been provided
         if (!obj.is_none()) {
             // "comm" has been provided -> we can't use it -> throw an exception
             throw py::value_error{ "ERROR: an MPI communicator was explicitly provided, but PLSSVM was built without support for MPI!" };
-        } else {
-            // "comm" was not provided -> use a default constructed plssvm::mpi::communicator that essentially does nothing
-            value = plssvm::mpi::communicator{};
-            return true;
         }
+        // "comm" was not provided -> use a default constructed plssvm::mpi::communicator that essentially does nothing
+        value = plssvm::mpi::communicator{};
+        return true;
 #endif
     }
 };

@@ -72,11 +72,10 @@ template <typename T>
     if (arr.size() == 0) {
         // return an empty vector
         return std::vector<T>{};
-    } else {
-        // convert py::array to std::vector
-        auto arr_t = arr.cast<py::array_t<T>>();
-        return std::vector<T>(arr_t.data(0), arr_t.data(0) + arr_t.shape(0));
     }
+    // convert py::array to std::vector
+    auto arr_t = arr.cast<py::array_t<T>>();
+    return std::vector<T>(arr_t.data(0), arr_t.data(0) + arr_t.shape(0));
 }
 
 /**
@@ -127,14 +126,13 @@ template <typename possible_vector_types>
             if (arr.size() == 0) {
                 // return an empty vector
                 return std::vector<std::string>{};
-            } else {
-                std::vector<std::string> result;
-                result.reserve(arr.shape(0));
-                for (py::handle item : arr) {
-                    result.push_back(py::cast<std::string>(item));
-                }
-                return result;
             }
+            std::vector<std::string> result;
+            result.reserve(arr.shape(0));
+            for (const py::handle &item : arr) {
+                result.push_back(py::cast<std::string>(item));
+            }
+            return result;
         }
     }
 

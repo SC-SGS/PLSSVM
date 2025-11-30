@@ -41,9 +41,8 @@ void init_classification_model(py::module_ &m) {
         .def(py::init([](const std::string &filename, const std::optional<py::type> type, plssvm::mpi::communicator comm) {
                  if (type.has_value()) {
                      return std::make_unique<classification_model_wrapper>(plssvm::bindings::python::util::create_instance<plssvm::classification_model, typename classification_model_wrapper::possible_model_types>(type.value(), std::move(comm), filename));
-                 } else {
-                     return std::make_unique<classification_model_wrapper>(plssvm::classification_model<std::string>{ std::move(comm), filename });
                  }
+                 return std::make_unique<classification_model_wrapper>(plssvm::classification_model<std::string>{ std::move(comm), filename });
              }),
              "load a previously learned classification model from a file",
              py::arg("filename"),
@@ -60,9 +59,8 @@ void init_classification_model(py::module_ &m) {
             return std::visit([](auto &&model) -> std::optional<py::array> {
                 if (model.labels().has_value()) {
                     return std::make_optional(plssvm::bindings::python::util::vector_to_pyarray(model.labels()->get()));
-                } else {
-                    return std::nullopt;
                 }
+                return std::nullopt;
             }, self.model); }, "the labels")
         .def("weights", [](const classification_model_wrapper &self) {
             return std::visit([](auto &&model) {

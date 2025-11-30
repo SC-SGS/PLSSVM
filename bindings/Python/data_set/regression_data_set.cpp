@@ -44,16 +44,13 @@ void init_regression_data_set(py::module_ &m) {
                  if (type.has_value()) {
                      if (scaler.has_value()) {
                          return std::make_unique<regression_data_set_wrapper>(plssvm::bindings::python::util::create_instance<plssvm::regression_data_set, typename regression_data_set_wrapper::possible_data_set_types>(type.value(), std::move(comm), filename, format, scaler.value()));
-                     } else {
-                         return std::make_unique<regression_data_set_wrapper>(plssvm::bindings::python::util::create_instance<plssvm::regression_data_set, typename regression_data_set_wrapper::possible_data_set_types>(type.value(), std::move(comm), filename, format));
                      }
-                 } else {
-                     if (scaler.has_value()) {
-                         return std::make_unique<regression_data_set_wrapper>(plssvm::regression_data_set<double>{ std::move(comm), filename, format, scaler.value() });
-                     } else {
-                         return std::make_unique<regression_data_set_wrapper>(plssvm::regression_data_set<double>{ std::move(comm), filename, format });
-                     }
+                     return std::make_unique<regression_data_set_wrapper>(plssvm::bindings::python::util::create_instance<plssvm::regression_data_set, typename regression_data_set_wrapper::possible_data_set_types>(type.value(), std::move(comm), filename, format));
                  }
+                 if (scaler.has_value()) {
+                     return std::make_unique<regression_data_set_wrapper>(plssvm::regression_data_set<double>{ std::move(comm), filename, format, scaler.value() });
+                 }
+                 return std::make_unique<regression_data_set_wrapper>(plssvm::regression_data_set<double>{ std::move(comm), filename, format });
              }),
              "create a new data set from the provided file and additional optional parameters",
              py::arg("filename"),
@@ -66,16 +63,13 @@ void init_regression_data_set(py::module_ &m) {
                  if (type.has_value()) {
                      if (scaler.has_value()) {
                          return std::make_unique<regression_data_set_wrapper>(plssvm::bindings::python::util::create_instance<plssvm::regression_data_set, typename regression_data_set_wrapper::possible_data_set_types>(type.value(), std::move(comm), std::move(data), scaler.value()));
-                     } else {
-                         return std::make_unique<regression_data_set_wrapper>(plssvm::bindings::python::util::create_instance<plssvm::regression_data_set, typename regression_data_set_wrapper::possible_data_set_types>(type.value(), std::move(comm), std::move(data)));
                      }
-                 } else {
-                     if (scaler.has_value()) {
-                         return std::make_unique<regression_data_set_wrapper>(plssvm::regression_data_set<double>{ std::move(comm), std::move(data), scaler.value() });
-                     } else {
-                         return std::make_unique<regression_data_set_wrapper>(plssvm::regression_data_set<double>{ std::move(comm), std::move(data) });
-                     }
+                     return std::make_unique<regression_data_set_wrapper>(plssvm::bindings::python::util::create_instance<plssvm::regression_data_set, typename regression_data_set_wrapper::possible_data_set_types>(type.value(), std::move(comm), std::move(data)));
                  }
+                 if (scaler.has_value()) {
+                     return std::make_unique<regression_data_set_wrapper>(plssvm::regression_data_set<double>{ std::move(comm), std::move(data), scaler.value() });
+                 }
+                 return std::make_unique<regression_data_set_wrapper>(plssvm::regression_data_set<double>{ std::move(comm), std::move(data) });
              }),
              "create a new data set from the provided file and additional optional parameters",
              py::arg("X"),
@@ -87,10 +81,9 @@ void init_regression_data_set(py::module_ &m) {
                  return std::visit([&](auto &&labels_vector) {
                      using label_type = typename plssvm::detail::remove_cvref_t<decltype(labels_vector)>::value_type;
                      if (scaler.has_value()) {
-                         return std::make_unique<regression_data_set_wrapper>(plssvm::regression_data_set<label_type>(std::move(comm), std::move(data), std::move(labels_vector), scaler.value()));
-                     } else {
-                         return std::make_unique<regression_data_set_wrapper>(plssvm::regression_data_set<label_type>(std::move(comm), std::move(data), std::move(labels_vector)));
+                         return std::make_unique<regression_data_set_wrapper>(plssvm::regression_data_set<label_type>(std::move(comm), std::move(data), std::forward<decltype(labels_vector)>(labels_vector), scaler.value()));
                      }
+                     return std::make_unique<regression_data_set_wrapper>(plssvm::regression_data_set<label_type>(std::move(comm), std::move(data), std::forward<decltype(labels_vector)>(labels_vector)));
                  },
                                    labels.labels);
              }),
@@ -108,9 +101,8 @@ void init_regression_data_set(py::module_ &m) {
             return std::visit([](auto &&data) {
                 if (!data.has_labels()) {
                     throw py::attribute_error{ "'RegressionDataSet' object has no function 'labels'. Maybe this RegressionDataSet was created without labels?" };
-                } else {
-                    return plssvm::bindings::python::util::vector_to_pyarray(data.labels()->get());
                 }
+                return plssvm::bindings::python::util::vector_to_pyarray(data.labels()->get());
             }, self.data_set); }, "the labels")
         // clang-format on
         .def("num_data_points", [](const regression_data_set_wrapper &self) { return std::visit([](auto &&data) { return data.num_data_points(); }, self.data_set); }, "the number of data points in the data set")
@@ -119,9 +111,8 @@ void init_regression_data_set(py::module_ &m) {
         .def("scaling_factors", [](const regression_data_set_wrapper &self) { return std::visit([](auto &&data) {
             if (!data.is_scaled()) {
                 throw py::attribute_error{ "'RegressionDataSet' object has no function 'scaling_factors'. Maybe this RegressionDataSet has not been scaled?" };
-            } else {
-                return data.scaling_factors().value();
-            } }, self.data_set); }, py::return_value_policy::reference_internal, "the factors used to scale this data set")
+            }
+            return data.scaling_factors().value(); }, self.data_set); }, py::return_value_policy::reference_internal, "the factors used to scale this data set")
         // clang-format off
         .def("communicator", [](const regression_data_set_wrapper &self) { return std::visit([](auto &&data) { return data.communicator(); }, self.data_set); }, "the associated MPI communicator")
         .def("__repr__", [](const regression_data_set_wrapper &self) {

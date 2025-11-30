@@ -83,12 +83,11 @@ void init_csvc(py::module_ &m) {
                                                                       plssvm::max_iter = max_iter.value(),
                                                                       plssvm::classification = classification,
                                                                       plssvm::solver = solver) };
-                    } else {
-                        return classification_model_wrapper{ self.fit(data,
-                                                                      plssvm::epsilon = epsilon,
-                                                                      plssvm::classification = classification,
-                                                                      plssvm::solver = solver) };
                     }
+                    return classification_model_wrapper{ self.fit(data,
+                                                                  plssvm::epsilon = epsilon,
+                                                                  plssvm::classification = classification,
+                                                                  plssvm::solver = solver) };
                 }, data_set.data_set); }, "fit a model using the current C-SVC on the provided data",
                 py::arg("data"),
                 py::kw_only(),

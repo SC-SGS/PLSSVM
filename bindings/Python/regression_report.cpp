@@ -50,8 +50,7 @@ void init_regression_report(py::module_ &m) {
                  dict["r2_score"] = metrics.r2_score;
                  dict["squared_correlation_coefficient"] = metrics.squared_correlation_coefficient;
                  return dict;
-             } else {
-                 return py::str(fmt::format("{}", report));
              }
+             return py::str(fmt::format("{}", report));
          }, y_true.labels); }, "create a new regression report by calculating all metrics between the correct and predicted labels", py::arg("y_true"), py::arg("y_pred"), py::kw_only(), py::arg("force_finite") = true, py::arg("output_dict") = false);
 }
