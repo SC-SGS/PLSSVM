@@ -12,7 +12,6 @@
 
 #include "pybind11/cast.h"
 #include "pybind11/native_enum.h"  // py::native_enum
-#include "pybind11/operators.h"    // pybind operator overloading
 #include "pybind11/pybind11.h"     // py::module_, py::self, py::arg
 
 namespace py = pybind11;

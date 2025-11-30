@@ -7,7 +7,7 @@
  */
 
 #include "plssvm/classification_types.hpp"              // plssvm::classification_type
-#include "plssvm/constants.hpp"                         // plssvm::real_type
+#include "plssvm/constants.hpp"                         // plssvm::real_type, plssvm::DEFAULT_EPSILON
 #include "plssvm/csvm_factory.hpp"                      // plssvm::make_csvc
 #include "plssvm/data_set/classification_data_set.hpp"  // plssvm::classification_data_set
 #include "plssvm/detail/assert.hpp"                     // PLSSVM_ASSERT
@@ -23,24 +23,24 @@
 #include "bindings/Python/bindings_fwd.hpp"                             // forward declare all helper functions to create the Python bindings
 #include "bindings/Python/data_set/variant_wrapper.hpp"                 // plssvm::bindings::python::util::classification_data_set_wrapper
 #include "bindings/Python/model/variant_wrapper.hpp"                    // plssvm::bindings::python::util::classification_model_wrapper
-#include "bindings/Python/type_caster/label_vector_wrapper_caster.hpp"  // a custom Pybind11 type caster for a plssvm::bindings::python::label_vector_wrapper
-#include "bindings/Python/type_caster/matrix_type_caster.hpp"           // a custom Pybind11 type caster for a plssvm::matrix
+#include "bindings/Python/type_caster/label_vector_wrapper_type_caster.hpp"  // a custom Pybind11 type caster for a plssvm::bindings::python::label_vector_wrapper
+#include "bindings/Python/type_caster/matrix_type_caster.hpp"           // NOLINT: a custom Pybind11 type caster for a plssvm::matrix
 #include "bindings/Python/type_caster/matrix_wrapper_type_caster.hpp"   // a custom Pybind11 type caster for a plssvm::bindings::python::util::matrix_wrapper
 #include "bindings/Python/utility.hpp"                                  // plssvm::bindings::python::util::{check_kwargs_for_correctness, vector_to_pyarray}
 
-#include "fmt/format.h"          // fmt::format
-#include "fmt/ranges.h"          // fmt::join
-#include "pybind11/cast.h"       // py::cast
-#include "pybind11/numpy.h"      // support for STL types
-#include "pybind11/operators.h"  // support for operators
-#include "pybind11/pybind11.h"   // py::module_, py::class_, py::init, py::arg, py::return_value_policy, py::self, py::dynamic_attr, py::value_error, py::attribute_error, py::tuple, py::pickle
-#include "pybind11/pytypes.h"    // py::dict, py::kwargs, py::str
-#include "pybind11/stl.h"        // support for STL types
+#include "fmt/format.h"            // fmt::format
+#include "fmt/ranges.h"            // fmt::join
+#include "pybind11/buffer_info.h"  // py::buffer_info
+#include "pybind11/cast.h"         // py::cast, py::arg
+#include "pybind11/numpy.h"        // support for STL types
+#include "pybind11/operators.h"    // NOLINT: support for operators
+#include "pybind11/pybind11.h"     // py::module_, py::class_, py::init, py::return_value_policy, py::self, py::dynamic_attr, py::value_error, py::attribute_error, py::tuple, py::pickle
+#include "pybind11/pytypes.h"      // py::dict, py::kwargs, py::str
+#include "pybind11/stl.h"          // NOLINT: support for STL types
 
 #include <algorithm>  // std::fill
 #include <cstddef>    // std::size_t
 #include <cstdint>    // std::int32_t
-#include <cstdint>    // fixed-width integers
 #include <exception>  // std::exception
 #include <map>        // std::map
 #include <memory>     // std::unique_ptr, std::make_unique

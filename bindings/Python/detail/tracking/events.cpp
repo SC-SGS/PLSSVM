@@ -8,13 +8,14 @@
 
 #include "plssvm/detail/tracking/events.hpp"  // plssvm::detail::tracking::events
 
-#include "fmt/chrono.h"         // format std::chrono types
 #include "bindings/Python/bindings_fwd.hpp"  // forward declare all helper functions to create the Python bindings
 
+#include "fmt/chrono.h"         // NOLINT: format std::chrono types
 #include "fmt/format.h"         // fmt::format
-#include "pybind11/chrono.h"    // bind std::chrono types
-#include "pybind11/pybind11.h"  // py::module_
-#include "pybind11/stl.h"       // bind STL types
+#include "pybind11/cast.h"      // py::arg
+#include "pybind11/chrono.h"    // NOLINT: bind std::chrono types
+#include "pybind11/pybind11.h"  // py::module_, py::overload_cast
+#include "pybind11/stl.h"       // NOLINT: bind STL types
 
 namespace py = pybind11;
 

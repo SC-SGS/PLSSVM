@@ -12,7 +12,7 @@
 
 #include "pybind11/native_enum.h"  // py::native_enum
 #include "pybind11/pybind11.h"     // py::module_
-#include "pybind11/stl.h"          // support for STL types: std::vector
+#include "pybind11/stl.h"          // NOLINT: support for STL types: std::vector
 
 namespace py = pybind11;
 

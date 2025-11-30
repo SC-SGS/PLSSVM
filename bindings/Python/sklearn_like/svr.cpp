@@ -6,9 +6,10 @@
  *          See the LICENSE.md file in the project root for full license information.
  */
 
-#include "plssvm/constants.hpp"                     // plssvm::real_type
+#include "plssvm/constants.hpp"                     // plssvm::real_type, plssvm::DEFAULT_EPSILON
 #include "plssvm/csvm_factory.hpp"                  // plssvm::make_csvr
 #include "plssvm/data_set/regression_data_set.hpp"  // plssvm::regression_data_set
+#include "plssvm/detail/assert.hpp"                 // PLSSVM_ASSERT
 #include "plssvm/detail/type_traits.hpp"            // plssvm::detail::remove_cvref_t
 #include "plssvm/gamma.hpp"                         // plssvm::gamma_coefficient_type, plssvm::gamma_type
 #include "plssvm/kernel_function_types.hpp"         // plssvm::kernel_function_type
@@ -21,28 +22,29 @@
 #include "bindings/Python/bindings_fwd.hpp"                             // forward declare all helper functions to create the Python bindings
 #include "bindings/Python/data_set/variant_wrapper.hpp"                 // plssvm::bindings::python::util::regression_data_set_wrapper
 #include "bindings/Python/model/variant_wrapper.hpp"                    // plssvm::bindings::python::util::regression_model_wrapper
-#include "bindings/Python/type_caster/label_vector_wrapper_caster.hpp"  // a custom Pybind11 type caster for a plssvm::bindings::python::util::label_vector_wrapper
-#include "bindings/Python/type_caster/matrix_type_caster.hpp"           // a custom Pybind11 type caster for a plssvm::matrix
+#include "bindings/Python/type_caster/label_vector_wrapper_type_caster.hpp"  // a custom Pybind11 type caster for a plssvm::bindings::python::util::label_vector_wrapper
+#include "bindings/Python/type_caster/matrix_type_caster.hpp"           // NOLINT: a custom Pybind11 type caster for a plssvm::matrix
 #include "bindings/Python/type_caster/matrix_wrapper_type_caster.hpp"   // a custom Pybind11 type caster for a plssvm::bindings::python::util::matrix_wrapper
 #include "bindings/Python/utility.hpp"                                  // plssvm::bindings::python::util::{check_kwargs_for_correctness, vector_to_pyarray}
 
 #include "fmt/format.h"          // fmt::format
 #include "fmt/ranges.h"          // fmt::join
-#include "pybind11/cast.h"       // py::cast
+#include "pybind11/cast.h"       // py::cast, py::arg
 #include "pybind11/numpy.h"      // support for STL types
-#include "pybind11/operators.h"  // support for operators
-#include "pybind11/pybind11.h"   // py::module_, py::class_, py::init, py::arg, py::return_value_policy, py::self, py::dynamic_attr, py::value_error, py::attribute_error, py::tuple, py::pickle
+#include "pybind11/operators.h"  // NOLINT: support for operators
+#include "pybind11/pybind11.h"   // py::module_, py::class_, py::init, py::return_value_policy, py::self, py::dynamic_attr, py::value_error, py::attribute_error, py::tuple, py::pickle
 #include "pybind11/pytypes.h"    // py::dict, py::kwargs, py::str
-#include "pybind11/stl.h"        // support for STL types
+#include "pybind11/stl.h"        // NOLINT: support for STL types
 
 #include <cstdint>    // std::int32_t
+#include <exception>  // std::exception
 #include <memory>     // std::unique_ptr, std::make_unique
 #include <numeric>    // std::iota
 #include <optional>   // std::optional, std::nullopt
 #include <stdexcept>  // std::runtime_error
 #include <string>     // std::string
 #include <tuple>      // std::make_tuple
-#include <utility>    // std::move
+#include <utility>    // std::move, std::forward
 #include <variant>    // std::holds_alternative
 #include <vector>     // std::vector
 

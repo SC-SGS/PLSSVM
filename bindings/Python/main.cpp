@@ -16,8 +16,10 @@
 #include "plssvm/verbosity_levels.hpp"                  // plssvm::verbosity_level
 #include "plssvm/version/version.hpp"                   // plssvm::version::{version, major, minor, patch}
 
-#include "pybind11/pybind11.h"  // PYBIND11_MODULE, py::module_, py::exception, py::register_exception_translator, py::make_tuple
 #include "bindings/Python/bindings_fwd.hpp"  // forward declare all helper functions to create the Python bindings
+
+#include "pybind11/cast.h"      // py::make_tuple
+#include "pybind11/pybind11.h"  // PYBIND11_MODULE, py::module_, py::exception, py::register_exception_translator
 #include "pybind11/pytypes.h"   // py::set_error
 
 #include <exception>  // std::exception_ptr, std::rethrow_exception

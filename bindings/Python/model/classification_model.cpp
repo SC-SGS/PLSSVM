@@ -15,14 +15,16 @@
 
 #include "bindings/Python/bindings_fwd.hpp"                 // forward declare all helper functions to create the Python bindings
 #include "bindings/Python/model/variant_wrapper.hpp"        // plssvm::bindings::python::util::classification_model_wrapper
-#include "bindings/Python/type_caster/mpi_type_caster.hpp"  // a custom Pybind11 type caster for a plssvm::mpi::communicator
+#include "bindings/Python/type_caster/mpi_type_caster.hpp"  // NOLINT: a custom Pybind11 type caster for a plssvm::mpi::communicator
 #include "bindings/Python/utility.hpp"                      // plssvm::bindings::python::util::{python_type_name_mapping, create_instance, vector_to_pyarray}
 
 #include "fmt/format.h"         // fmt::format
 #include "fmt/ranges.h"         // fmt::join
-#include "pybind11/pybind11.h"  // py::module_, py::class_, py::init, py::arg, py::kw_only, py::array, py::list
-#include "pybind11/pytypes.h"   // py::type
-#include "pybind11/stl.h"       // support for STL types: std::vector
+#include "pybind11/cast.h"      // py::arg, py::kw_only, py::cast
+#include "pybind11/numpy.h"     // py::array
+#include "pybind11/pybind11.h"  // py::module_, py::class_, py::init
+#include "pybind11/pytypes.h"   // py::type py::list
+#include "pybind11/stl.h"       // NOLINT: support for STL types
 
 #include <memory>    // std::make_unique
 #include <optional>  // std::optional, std::make_optional, std::nullopt

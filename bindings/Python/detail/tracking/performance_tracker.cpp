@@ -11,10 +11,12 @@
 #include "plssvm/detail/tracking/events.hpp"  // plssvm::detail::tracking::events
 #include "plssvm/parameter.hpp"               // plssvm::parameter
 
-#include "pybind11/chrono.h"    // automatic bindings for std::chrono::milliseconds
-#include "pybind11/pybind11.h"  // py::module_
-#include "pybind11/stl.h"       // automatic bindings for std::optional and std::vector
 #include "bindings/Python/bindings_fwd.hpp"  // forward declare all helper functions to create the Python bindings
+
+#include "pybind11/cast.h"      // py::arg
+#include "pybind11/chrono.h"    // NOLINT: automatic bindings for std::chrono::milliseconds
+#include "pybind11/pybind11.h"  // py::module_, py::return_value_policy
+#include "pybind11/stl.h"       // NOLINT: automatic bindings for std::optional and std::vector
 
 #include <chrono>  // std::chrono::steady_clock::time_point
 #include <string>  // std::string

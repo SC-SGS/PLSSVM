@@ -14,8 +14,10 @@
 #include "plssvm/parameter.hpp"              // plssvm::parameter
 
 #include "bindings/Python/bindings_fwd.hpp"  // forward declare all helper functions to create the Python bindings
+
+#include "pybind11/cast.h"      // py::arg
 #include "pybind11/pybind11.h"  // py::module_, py::arg, py::kw_only
-#include "pybind11/stl.h"       // support for STL types: std::vector
+#include "pybind11/stl.h"       // NOLINT: support for STL types: std::vector
 
 #include <variant>  // std::holds_alternative, std::get
 #include <vector>   // std::vector

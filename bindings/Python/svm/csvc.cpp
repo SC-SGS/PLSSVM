@@ -10,12 +10,11 @@
 
 #include "plssvm/backend_types.hpp"                     // plssvm::backend_type
 #include "plssvm/classification_types.hpp"              // plssvm::classification_type
-#include "plssvm/constants.hpp"                         // plssvm::real_type
+#include "plssvm/constants.hpp"                         // plssvm::real_type, plssvm::DEFAULT_EPSILON
 #include "plssvm/data_set/classification_data_set.hpp"  // plssvm::classification_data_set
 #include "plssvm/detail/type_traits.hpp"                // plssvm::detail::remove_cvref_t
 #include "plssvm/gamma.hpp"                             // plssvm::gamma_type
 #include "plssvm/kernel_function_types.hpp"             // plssvm::kernel_function_type
-#include "plssvm/model/classification_model.hpp"        // plssvm::classification_model
 #include "plssvm/mpi/communicator.hpp"                  // plssvm::mpi::communicator
 #include "plssvm/parameter.hpp"                         // plssvm::parameter, named arguments
 #include "plssvm/solver_types.hpp"                      // plssvm::solver_type
@@ -25,12 +24,14 @@
 #include "bindings/Python/data_set/variant_wrapper.hpp"     // plssvm::bindings::python::util::classification_data_set_wrapper
 #include "bindings/Python/model/variant_wrapper.hpp"        // plssvm::bindings::python::util::classification_model_wrapper
 #include "bindings/Python/svm/utility.hpp"                  // plssvm::bindings::python::util::assemble_csvm
-#include "bindings/Python/type_caster/mpi_type_caster.hpp"  // a custom Pybind11 type caster for a plssvm::mpi::communicator
+#include "bindings/Python/type_caster/mpi_type_caster.hpp"  // NOLINT: a custom Pybind11 type caster for a plssvm::mpi::communicator
 #include "bindings/Python/utility.hpp"                      // plssvm::bindings::python::util::{python_type_name_mapping, vector_to_pyarray}
 
 #include "fmt/format.h"         // fmt::format
-#include "pybind11/pybind11.h"  // py::module_, py::class_, py::init, py::arg, py::kw_only, py::kwargs, py::value_error
-#include "pybind11/stl.h"       // support for STL types: std::optional
+#include "pybind11/cast.h"      // py::arg
+#include "pybind11/pybind11.h"  // py::module_, py::class_, py::init, py::kw_only, py::value_error
+#include "pybind11/pytypes.h"   // py::kwargs
+#include "pybind11/stl.h"       // NOLINT: support for STL types: std::optional
 
 #include <exception>    // std::exception
 #include <optional>     // std::optional, std::nullopt

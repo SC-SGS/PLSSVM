@@ -11,8 +11,8 @@
 #include "plssvm/backends/SYCL/implementation_types.hpp"   // plssvm::sycl::{implementation_type, list_available_sycl_implementations}
 #include "plssvm/exceptions/exceptions.hpp"                // plssvm::exception
 
-#include "bindings/Python/utility.hpp"  // plssvm::bindings::python::util::register_py_exception
 #include "bindings/Python/bindings_fwd.hpp"  // forward declare all helper functions to create the Python bindings
+#include "bindings/Python/utility.hpp"       // plssvm::bindings::python::util::register_py_exception
 
 #include "pybind11/native_enum.h"  // py::native_enum
 #include "pybind11/pybind11.h"     // py::module_, py::exception

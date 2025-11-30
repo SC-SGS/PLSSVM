@@ -9,6 +9,8 @@
 #include "plssvm/svm_types.hpp"  // plssvm::svm_type, plssvm::list_available_svm_types, plssvm::svm_type_from_model_file
 
 #include "bindings/Python/bindings_fwd.hpp"  // forward declare all helper functions to create the Python bindings
+
+#include "pybind11/cast.h"         // py::arg
 #include "pybind11/native_enum.h"  // py::native_enum
 #include "pybind11/pybind11.h"     // py::module_
 

@@ -17,17 +17,17 @@
 
 #include "bindings/Python/bindings_fwd.hpp"                             // forward declare all helper functions to create the Python bindings
 #include "bindings/Python/data_set/variant_wrapper.hpp"                 // plssvm::bindings::python::util::classification_data_set_wrapper
-#include "bindings/Python/type_caster/label_vector_wrapper_caster.hpp"  // a custom Pybind11 type caster for a plssvm::bindings::python::util::label_vector_wrapper
-#include "bindings/Python/type_caster/matrix_type_caster.hpp"           // a custom Pybind11 type caster for a plssvm::matrix
-#include "bindings/Python/type_caster/mpi_type_caster.hpp"              // a custom Pybind11 type caster for a plssvm::mpi::communicator
+#include "bindings/Python/type_caster/label_vector_wrapper_type_caster.hpp"  // a custom Pybind11 type caster for a plssvm::bindings::python::util::label_vector_wrapper
+#include "bindings/Python/type_caster/matrix_type_caster.hpp"           // NOLINT: a custom Pybind11 type caster for a plssvm::matrix
+#include "bindings/Python/type_caster/mpi_type_caster.hpp"              // NOLINT: a custom Pybind11 type caster for a plssvm::mpi::communicator
 #include "bindings/Python/utility.hpp"                                  // plssvm::bindings::python::util::{create_instance, python_type_name_mapping, vector_to_pyarray}
 
 #include "fmt/format.h"         // fmt::format
 #include "fmt/ranges.h"         // fmt::join
-#include "pybind11/numpy.h"     // py::array_t, py::array
-#include "pybind11/pybind11.h"  // py::module_, py::class_, py::init, py::arg, py::kw_only, py::attribute_error
+#include "pybind11/cast.h"      // py::arg
+#include "pybind11/pybind11.h"  // py::module_, py::class_, py::init, py::kw_only, py::attribute_error, py::return_value_policy
 #include "pybind11/pytypes.h"   // py::type
-#include "pybind11/stl.h"       // support for STL types
+#include "pybind11/stl.h"       // NOLINT: support for STL types
 
 #include <memory>    // std::make_unique
 #include <optional>  // std::optional, std::nullopt

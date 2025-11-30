@@ -12,12 +12,12 @@
 
 #include "bindings/Python/bindings_fwd.hpp"                             // forward declare all helper functions to create the Python bindings
 #include "bindings/Python/data_set/variant_wrapper.hpp"                 // plssvm::bindings::python::util::regression_data_set_wrapper
-#include "bindings/Python/type_caster/label_vector_wrapper_caster.hpp"  // a custom Pybind11 type caster for a plssvm::bindings::python::util::label_vector_wrapper
+#include "bindings/Python/type_caster/label_vector_wrapper_type_caster.hpp"  // a custom Pybind11 type caster for a plssvm::bindings::python::util::label_vector_wrapper
 
 #include "fmt/format.h"         // fmt::format
 #include "pybind11/pybind11.h"  // py::module_, py::init, py::arg, py::kw_only, py::value_error
 #include "pybind11/pytypes.h"   // py::object
-#include "pybind11/stl.h"       // support for STL types
+#include "pybind11/stl.h"       // NOLINT: support for STL types
 
 #include <string>   // std::string
 #include <variant>  // std::visit, std::get
