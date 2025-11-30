@@ -112,8 +112,6 @@ inline void check_kwargs_for_correctness(const py::kwargs &args, const std::vect
  */
 template <typename Exception, typename BaseException>
 void register_py_exception(py::module_ &m, const std::string &py_exception_name, BaseException &base_exception) {
-    static py::exception<Exception> py_exception(m, py_exception_name.c_str(), base_exception.ptr());
-    py::register_exception_translator([](std::exception_ptr p) {
     static const py::exception<Exception> py_exception(m, py_exception_name.c_str(), base_exception.ptr());
     py::register_exception_translator([](std::exception_ptr p) {  // NOLINT(performance-unnecessary-value-param): const & does not compile
         try {
