@@ -129,21 +129,21 @@ struct svr {
     }
 
     /// Pointer to the the stored PLSSVM C-SVR instance.
-    std::unique_ptr<plssvm::csvr> svm_{};
+    std::unique_ptr<plssvm::csvr> svm_;
     /// The CG termination criterion if provided.
     plssvm::real_type epsilon_{};
     /// The maximum number of CG iterations if provided.
-    std::optional<unsigned long long> max_iter_{};
+    std::optional<unsigned long long> max_iter_;
 
     /// The data type of the labels.
-    py::dtype py_dtype_{};
+    py::dtype py_dtype_;
     /// Pointer to the regression data set wrapper (represents data sets with all possible label types).
-    std::unique_ptr<possible_data_set_types> data_{};
+    std::unique_ptr<possible_data_set_types> data_;
     /// Pointer to the regression model wrapper (represents models with all possible label types).
-    std::unique_ptr<possible_model_types> model_{};
+    std::unique_ptr<possible_model_types> model_;
 
     /// The name of the features. Can only be provided via a Pandas DataFrame.
-    std::optional<std::vector<std::string>> feature_names_{};
+    std::optional<std::vector<std::string>> feature_names_;
 };
 
 void init_sklearn_svr(py::module_ &m) {

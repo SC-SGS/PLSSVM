@@ -261,7 +261,7 @@ struct label_vector_wrapper {
     /// The labels.
     PossibleTypes labels{};
     /// The actually used Python dtype.
-    py::dtype dtype{};
+    py::dtype dtype;
 };
 
 }  // namespace plssvm::bindings::python::util

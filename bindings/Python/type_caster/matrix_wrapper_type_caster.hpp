@@ -41,7 +41,7 @@ struct matrix_wrapper {
     /// The PLSSVM matrix.
     plssvm::matrix<T, layout> matrix{};
     /// The optionally available feature names.
-    std::optional<std::vector<std::string>> feature_names{};
+    std::optional<std::vector<std::string>> feature_names;
 };
 
 /**
