@@ -158,7 +158,7 @@ namespace plssvm::opencl::detail {
             cl_device_type device_type{};
             PLSSVM_OPENCL_ERROR_CHECK(clGetDeviceInfo(device, CL_DEVICE_TYPE, sizeof(cl_device_type), &device_type, nullptr), "error retrieving the device type")
 
-            if (device_type == CL_DEVICE_TYPE_CPU) {
+            if (device_type == (CL_DEVICE_TYPE_CPU)) {
                 // the current device is a CPU
                 // -> check if the CPU target has been enabled
                 if (::plssvm::detail::contains(available_target_platforms, target_platform::cpu)) {
@@ -169,7 +169,7 @@ namespace plssvm::opencl::detail {
                     // increment the CPU device count
                     ++device_count_per_platform[target_platform::cpu];
                 }
-            } else if (device_type == CL_DEVICE_TYPE_GPU) {
+            } else if (device_type == (CL_DEVICE_TYPE_GPU)) {
                 // the current device is a GPU
                 // get vendor string
                 std::size_t vendor_string_size{};
@@ -552,7 +552,8 @@ std::pair<std::vector<command_queue>, jit_info> create_command_queues(const mpi:
     std::vector<std::vector<unsigned char>> binaries(contexts.size());
     std::vector<unsigned char *> binaries_ptr(binaries.size());
 
-    error_code err, err_bin;
+    error_code err;
+    error_code err_bin;
 
     if (info.cache_state != jit_info::caching_status::success) {
         if (comm.size() == 1) {

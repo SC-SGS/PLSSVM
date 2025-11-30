@@ -887,7 +887,8 @@ template <typename T, layout_type layout>
  */
 template <typename T, layout_type layout>
 [[nodiscard]] matrix<T, layout> operator*(const T scale, matrix<T, layout> matr) {
-    return matr * scale;
+    matr *= scale;
+    return matr;
 }
 
 /**
@@ -1147,8 +1148,8 @@ struct fmt::formatter<plssvm::matrix<T, layout>> {
      */
     template <typename ParseContext>
     constexpr auto parse(ParseContext &ctx) {
-        auto it = ctx.begin(), end = ctx.end();
-        if (it == end) {
+        auto it = ctx.begin();
+        if (it == ctx.end()) {
             return it;
         }
         // check whether the format specifier p has been provided
