@@ -79,11 +79,11 @@ class device_kernel_assembly {
     void operator()(T group) const {
         ::sycl::memory_environment(group,
                                    // create two local memory arrays used for caching
-                                   ::sycl::require_local_mem<real_type[THREAD_BLOCK_SIZE][INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE]>(),  // data_i_cache
-                                   ::sycl::require_local_mem<real_type[THREAD_BLOCK_SIZE][INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE]>(),  // data_j_cache
+                                   ::sycl::require_local_mem<std::array<std::array<real_type, static_cast<std::size_t>(INTERNAL_BLOCK_SIZE) * static_cast<std::size_t>(THREAD_BLOCK_SIZE)>, static_cast<std::size_t>(THREAD_BLOCK_SIZE)>>(),  // data_i_cache
+                                   ::sycl::require_local_mem<std::array<std::array<real_type, static_cast<std::size_t>(INTERNAL_BLOCK_SIZE) * static_cast<std::size_t>(THREAD_BLOCK_SIZE)>, static_cast<std::size_t>(THREAD_BLOCK_SIZE)>>(),  // data_j_cache
 
                                    // create a private memory array used for internal caching
-                                   ::sycl::require_private_mem<std::array<std::array<real_type, INTERNAL_BLOCK_SIZE>, INTERNAL_BLOCK_SIZE>>(),  // temp
+                                   ::sycl::require_private_mem<std::array<std::array<real_type, static_cast<std::size_t>(INTERNAL_BLOCK_SIZE)>, static_cast<std::size_t>(INTERNAL_BLOCK_SIZE)>>(),  // temp
                                    [&](auto &data_i_cache, auto &data_j_cache, auto &temp) {
                                        // only calculate the upper triangular matrix -> can't use get_local_id() since all work-items in a work-group must progress further
                                        if (group[1] >= group[0]) {

@@ -21,6 +21,7 @@
 
 #include "sycl/sycl.hpp"  // sycl::handler, sycl::range, sycl::nd_item, sycl::local_accessor
 
+#include <array>    // std::array
 #include <cstddef>  // std::size_t
 #include <tuple>    // std::tuple, std::make_tuple
 
@@ -96,7 +97,7 @@ class device_kernel_assembly {
         // only calculate the upper triangular matrix -> can't use get_local_id() since all work-items in a work-group must progress further
         if (blockIdx_y >= blockIdx_x) {
             // create a private memory array used for internal caching
-            real_type temp[INTERNAL_BLOCK_SIZE][INTERNAL_BLOCK_SIZE]{};
+            std::array<std::array<real_type, INTERNAL_BLOCK_SIZE_uz>, INTERNAL_BLOCK_SIZE_uz> temp{};
 
             {
                 // calculate the indices used in the current work-item, pays attention to coalesced memory accesses

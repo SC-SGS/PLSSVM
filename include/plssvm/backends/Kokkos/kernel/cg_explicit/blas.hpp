@@ -18,6 +18,7 @@
 
 #include "Kokkos_Core.hpp"  // KOKKOS_INLINE_FUNCTION, Kokkos::View, Kokkos::TeamPolicy, Kokkos::mdspan, Kokkos::dextents
 
+#include <array>    // std:array
 #include <cstddef>  // std::size_t
 
 namespace plssvm::kokkos::detail {
@@ -94,7 +95,7 @@ class device_kernel_symm {
         Kokkos::mdspan<real_type, Kokkos::dextents<std::size_t, 2>> B_cache{ scratchpad_ptr + scratchpad_size, THREAD_BLOCK_SIZE_uz, INTERNAL_BLOCK_SIZE_uz * THREAD_BLOCK_SIZE_uz };
 
         // create a thread private array used for internal caching
-        real_type temp[INTERNAL_BLOCK_SIZE][INTERNAL_BLOCK_SIZE]{};
+        std::array<std::array<real_type, INTERNAL_BLOCK_SIZE>, INTERNAL_BLOCK_SIZE> temp{};
 
         {
             // calculate the indices used in the current thread, pays attention to coalesced memory accesses
@@ -258,7 +259,7 @@ class device_kernel_symm_mirror {
         Kokkos::mdspan<real_type, Kokkos::dextents<std::size_t, 2>> B_cache{ scratchpad_ptr + scratchpad_size, THREAD_BLOCK_SIZE_uz, INTERNAL_BLOCK_SIZE_uz * THREAD_BLOCK_SIZE_uz };
 
         // create a thread private array used for internal caching
-        real_type temp[INTERNAL_BLOCK_SIZE][INTERNAL_BLOCK_SIZE]{};
+        std::array<std::array<real_type, INTERNAL_BLOCK_SIZE>, INTERNAL_BLOCK_SIZE> temp{};
 
         {
             // calculate the indices used in the current thread, pays attention to coalesced memory accesses

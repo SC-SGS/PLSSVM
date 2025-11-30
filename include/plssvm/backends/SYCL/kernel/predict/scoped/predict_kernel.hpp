@@ -22,6 +22,7 @@
 
 #include "sycl/sycl.hpp"  // sycl::memory_environment, sycl::require_local_mem, sycl::require_private_mem, sycl::distribute_items_and_wait, sycl::s_item
 
+#include <array>    // std::array
 #include <cstddef>  // std::size_t
 #include <tuple>    // std::tuple, std::make_tuple
 
@@ -70,11 +71,11 @@ class device_kernel_w_linear {
     void operator()(T group) const {
         ::sycl::memory_environment(group,
                                    // create two local memory arrays used for caching
-                                   ::sycl::require_local_mem<real_type[THREAD_BLOCK_SIZE][INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE]>(),  // feature_cache
-                                   ::sycl::require_local_mem<real_type[THREAD_BLOCK_SIZE][INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE]>(),  // alpha_cache
+                                   ::sycl::require_local_mem<std::array<std::array<real_type, static_cast<std::size_t>(INTERNAL_BLOCK_SIZE) * static_cast<std::size_t>(THREAD_BLOCK_SIZE)>, static_cast<std::size_t>(THREAD_BLOCK_SIZE)>>(),  // feature_cache
+                                   ::sycl::require_local_mem<std::array<std::array<real_type, static_cast<std::size_t>(INTERNAL_BLOCK_SIZE) * static_cast<std::size_t>(THREAD_BLOCK_SIZE)>, static_cast<std::size_t>(THREAD_BLOCK_SIZE)>>(),  // alpha_cache
 
                                    // create a private memory array used for internal caching
-                                   ::sycl::require_private_mem<std::array<std::array<real_type, INTERNAL_BLOCK_SIZE>, INTERNAL_BLOCK_SIZE>>(),
+                                   ::sycl::require_private_mem<std::array<std::array<real_type, static_cast<std::size_t>(INTERNAL_BLOCK_SIZE)>, static_cast<std::size_t>(INTERNAL_BLOCK_SIZE)>>(),
                                    [&](auto &feature_cache, auto &alpha_cache, auto &temp) {
                                        // initialize private temp matrix to zero
                                        ::sycl::distribute_items_and_wait(group, [&](::sycl::s_item<2> idx) {
@@ -236,11 +237,11 @@ class device_kernel_predict_linear {
     void operator()(T group) const {
         ::sycl::memory_environment(group,
                                    // create two local memory arrays used for caching
-                                   ::sycl::require_local_mem<real_type[THREAD_BLOCK_SIZE][INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE]>(),  // pp_cache
-                                   ::sycl::require_local_mem<real_type[THREAD_BLOCK_SIZE][INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE]>(),  // w_cache
+                                   ::sycl::require_local_mem<std::array<std::array<real_type, static_cast<std::size_t>(INTERNAL_BLOCK_SIZE) * static_cast<std::size_t>(THREAD_BLOCK_SIZE)>, static_cast<std::size_t>(THREAD_BLOCK_SIZE)>>(),  // pp_cache
+                                   ::sycl::require_local_mem<std::array<std::array<real_type, static_cast<std::size_t>(INTERNAL_BLOCK_SIZE) * static_cast<std::size_t>(THREAD_BLOCK_SIZE)>, static_cast<std::size_t>(THREAD_BLOCK_SIZE)>>(),  // w_cache
 
                                    // create a private memory array used for internal caching
-                                   ::sycl::require_private_mem<std::array<std::array<real_type, INTERNAL_BLOCK_SIZE>, INTERNAL_BLOCK_SIZE>>(),
+                                   ::sycl::require_private_mem<std::array<std::array<real_type, static_cast<std::size_t>(INTERNAL_BLOCK_SIZE)>, static_cast<std::size_t>(INTERNAL_BLOCK_SIZE)>>(),
                                    [&](auto &pp_cache, auto &w_cache, auto &temp) {
                                        // initialize private temp matrix to zero
                                        ::sycl::distribute_items_and_wait(group, [&](::sycl::s_item<2> idx) {
@@ -410,11 +411,11 @@ class device_kernel_predict {
     void operator()(T group) const {
         ::sycl::memory_environment(group,
                                    // create two local memory arrays used for caching
-                                   ::sycl::require_local_mem<real_type[THREAD_BLOCK_SIZE][INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE]>(),  // cache_one
-                                   ::sycl::require_local_mem<real_type[THREAD_BLOCK_SIZE][INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE]>(),  // cache_two
+                                   ::sycl::require_local_mem<std::array<std::array<real_type, static_cast<std::size_t>(INTERNAL_BLOCK_SIZE) * static_cast<std::size_t>(THREAD_BLOCK_SIZE)>, static_cast<std::size_t>(THREAD_BLOCK_SIZE)>>(),  // cache_one
+                                   ::sycl::require_local_mem<std::array<std::array<real_type, static_cast<std::size_t>(INTERNAL_BLOCK_SIZE) * static_cast<std::size_t>(THREAD_BLOCK_SIZE)>, static_cast<std::size_t>(THREAD_BLOCK_SIZE)>>(),  // cache_two
 
                                    // create a private memory array used for internal caching
-                                   ::sycl::require_private_mem<std::array<std::array<real_type, INTERNAL_BLOCK_SIZE>, INTERNAL_BLOCK_SIZE>>(),
+                                   ::sycl::require_private_mem<std::array<std::array<real_type, static_cast<std::size_t>(INTERNAL_BLOCK_SIZE)>, static_cast<std::size_t>(INTERNAL_BLOCK_SIZE)>>(),
                                    [&](auto &cache_one, auto &cache_two, auto &temp) {
                                        // initialize private temp matrix to zero
                                        ::sycl::distribute_items_and_wait(group, [&](::sycl::s_item<2> idx) {

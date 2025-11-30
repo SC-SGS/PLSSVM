@@ -19,6 +19,7 @@
 
 #include "sycl/sycl.hpp"  // sycl::group, sycl::private_memory, sycl::h_item
 
+#include <array>    // std::array
 #include <cstddef>  // std::size_t
 
 namespace plssvm::sycl::detail::hierarchical {
@@ -67,11 +68,11 @@ class device_kernel_symm {
      */
     void operator()(::sycl::group<2> group) const {
         // create two local memory arrays used for caching
-        real_type A_cache[THREAD_BLOCK_SIZE][INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE];
-        real_type B_cache[THREAD_BLOCK_SIZE][INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE];
+        std::array<std::array<real_type, static_cast<std::size_t>(INTERNAL_BLOCK_SIZE) * static_cast<std::size_t>(THREAD_BLOCK_SIZE)>, static_cast<std::size_t>(THREAD_BLOCK_SIZE)> A_cache{};
+        std::array<std::array<real_type, static_cast<std::size_t>(INTERNAL_BLOCK_SIZE) * static_cast<std::size_t>(THREAD_BLOCK_SIZE)>, static_cast<std::size_t>(THREAD_BLOCK_SIZE)> B_cache{};
 
         // create a private memory array used for internal caching
-        ::sycl::private_memory<real_type[INTERNAL_BLOCK_SIZE][INTERNAL_BLOCK_SIZE], 2> temp{ group };
+        ::sycl::private_memory<std::array<std::array<real_type, static_cast<std::size_t>(INTERNAL_BLOCK_SIZE)>, static_cast<std::size_t>(INTERNAL_BLOCK_SIZE)>, 2> temp{ group };
 
         // initialize private temp matrix to zero
         group.parallel_for_work_item([&](::sycl::h_item<2> idx) {
@@ -254,11 +255,11 @@ class device_kernel_symm_mirror {
      */
     void operator()(::sycl::group<2> group) const {
         // create two local memory arrays used for caching
-        real_type A_cache[THREAD_BLOCK_SIZE][INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE];
-        real_type B_cache[THREAD_BLOCK_SIZE][INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE];
+        std::array<std::array<real_type, static_cast<std::size_t>(INTERNAL_BLOCK_SIZE) * static_cast<std::size_t>(THREAD_BLOCK_SIZE)>, static_cast<std::size_t>(THREAD_BLOCK_SIZE)> A_cache{};
+        std::array<std::array<real_type, static_cast<std::size_t>(INTERNAL_BLOCK_SIZE) * static_cast<std::size_t>(THREAD_BLOCK_SIZE)>, static_cast<std::size_t>(THREAD_BLOCK_SIZE)> B_cache{};
 
         // create a private memory array used for internal caching
-        ::sycl::private_memory<real_type[INTERNAL_BLOCK_SIZE][INTERNAL_BLOCK_SIZE], 2> temp{ group };
+        ::sycl::private_memory<std::array<std::array<real_type, static_cast<std::size_t>(INTERNAL_BLOCK_SIZE)>, static_cast<std::size_t>(INTERNAL_BLOCK_SIZE)>, 2> temp{ group };
 
         // initialize private temp matrix to zero
         group.parallel_for_work_item([&](::sycl::h_item<2> idx) {
@@ -290,8 +291,8 @@ class device_kernel_symm_mirror {
                 const auto blockIdx_y = static_cast<std::size_t>(group[1]) + grid_y_offset_;  // current work-group in global range y-dimension + offsets if the global range is too large
 
                 // calculate the indices to access the global data, pays attention to coalesced memory accesses
-                const auto i_idx_linear = blockIdx_y * blockDim_y * INTERNAL_BLOCK_SIZE_uz + threadIdx_y;
-                const auto j_idx_linear = blockIdx_x * blockDim_x * INTERNAL_BLOCK_SIZE_uz + threadIdx_y;
+                const auto i_idx_linear = blockIdx_y * blockDim_y * INTERNAL_BLOCK_SIZE_uz + threadIdx_y;  // num_rhs
+                const auto j_idx_linear = blockIdx_x * blockDim_x * INTERNAL_BLOCK_SIZE_uz + threadIdx_y;  // num_mirror_rows
 
                 for (unsigned internal = 0; internal < INTERNAL_BLOCK_SIZE; ++internal) {
                     // calculate the indices to access the global data, pays attention to coalesced memory accesses

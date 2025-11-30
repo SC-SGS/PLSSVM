@@ -21,6 +21,7 @@
 
 #include "Kokkos_Core.hpp"  // KOKKOS_INLINE_FUNCTION, Kokkos::View, Kokkos::TeamPolicy, Kokkos::mdspan, Kokkos::dextents
 
+#include <array>    // std::array
 #include <cstddef>  // std::size_t
 
 namespace plssvm::kokkos::detail {
@@ -104,7 +105,7 @@ class device_kernel_assembly {
         // only calculate the upper triangular matrix -> can't use team.team_rank() since all threads in a team must progress further
         if (blockIdx_x >= blockIdx_y) {
             // create a thread private array used for internal caching
-            real_type temp[INTERNAL_BLOCK_SIZE][INTERNAL_BLOCK_SIZE]{};
+            std::array<std::array<real_type, INTERNAL_BLOCK_SIZE>, INTERNAL_BLOCK_SIZE> temp{};
 
             {
                 // calculate the indices used in the current thread, pays attention to coalesced memory accesses

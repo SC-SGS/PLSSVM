@@ -22,6 +22,7 @@
 
 #include "sycl/sycl.hpp"  // sycl::handler, sycl::range, sycl::nd_item, sycl::local_accessor
 
+#include <array>    // std::array
 #include <cstddef>  // std::size_t
 #include <tuple>    // std::tuple, std::make_tuple
 
@@ -110,15 +111,15 @@ class device_kernel_assembly_symm {
         // only calculate the upper triangular matrix -> can't use get_local_id() since all work-items in a work-group must progress further
         if (blockIdx_y >= blockIdx_x) {
             // create a work-item private array used for internal caching
-            real_type temp[INTERNAL_BLOCK_SIZE][INTERNAL_BLOCK_SIZE]{};
+            std::array<std::array<real_type, INTERNAL_BLOCK_SIZE_uz>, INTERNAL_BLOCK_SIZE_uz> temp{};
 
             //*************************************************************************//
             //                   inplace kernel matrix construction                    //
             //*************************************************************************//
             {
                 // rename cached arrays
-                auto &data_i_cache = cache_one_;  // [THREAD_BLOCK_SIZE][INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE]
-                auto &data_j_cache = cache_two_;  // [THREAD_BLOCK_SIZE][INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE]
+                const auto &data_i_cache = cache_one_;  // [THREAD_BLOCK_SIZE][INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE]
+                const auto &data_j_cache = cache_two_;  // [THREAD_BLOCK_SIZE][INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE]
 
                 // iterate over all features using blocking to be able to cache them for faster memory accesses
                 for (std::size_t feature_block = 0; feature_block < num_features_; feature_block += THREAD_BLOCK_SIZE_uz) {
@@ -190,8 +191,8 @@ class device_kernel_assembly_symm {
             //*************************************************************************//
             {
                 // rename cached arrays
-                auto &B_cache = cache_one_;      // [INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE][THREAD_BLOCK_SIZE]
-                auto &C_out_cache = cache_two_;  // [INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE][THREAD_BLOCK_SIZE]
+                const auto &B_cache = cache_one_;      // [INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE][THREAD_BLOCK_SIZE]
+                const auto &C_out_cache = cache_two_;  // [INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE][THREAD_BLOCK_SIZE]
 
                 // iterate over all classes using blocking to be able to cache them for faster memory accesses
                 for (std::size_t class_block = 0; class_block < num_classes_; class_block += THREAD_BLOCK_SIZE_uz) {
@@ -247,8 +248,8 @@ class device_kernel_assembly_symm {
             //*************************************************************************//
             {
                 // rename cached arrays
-                auto &B_cache = cache_one_;      // [THREAD_BLOCK_SIZE][INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE]
-                auto &C_out_cache = cache_two_;  // [THREAD_BLOCK_SIZE][INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE]
+                const auto &B_cache = cache_one_;      // [THREAD_BLOCK_SIZE][INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE]
+                const auto &C_out_cache = cache_two_;  // [THREAD_BLOCK_SIZE][INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE]
 
                 // iterate over all classes using blocking to be able to cache them for faster memory accesses
                 for (std::size_t class_block = 0; class_block < num_classes_; class_block += THREAD_BLOCK_SIZE_uz) {
