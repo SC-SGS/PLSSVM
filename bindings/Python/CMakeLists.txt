@@ -116,7 +116,8 @@ target_compile_definitions(${PLSSVM_PYTHON_BINDINGS_LIBRARY_NAME} PRIVATE PYBIND
 
 # disable clang compiler warning
 target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC $<$<COMPILE_LANG_AND_ID:CXX,Clang,IntelLLVM>:-Wno-self-assign-overloaded>)
-target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC -fPIC -Wno-null-dereference)
+target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC $<$<COMPILE_LANG_AND_ID:CXX,GNU,Clang,IntelLLVM>:-Wno-null-dereference>)
+target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC -fPIC)
 
 include(GNUInstallDirs)
 # install Python library
