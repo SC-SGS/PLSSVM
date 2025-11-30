@@ -13,7 +13,7 @@
 #define PLSSVM_SVM_CSVM_HPP_
 #pragma once
 
-#include "plssvm/constants.hpp"                            // plssvm::real_type, plssvm::PADDING_SIZE
+#include "plssvm/constants.hpp"                            // plssvm::real_type, plssvm::PADDING_SIZE, plssvm::DEFAULT_EPSILON
 #include "plssvm/detail/assert.hpp"                        // PLSSVM_ASSERT
 #include "plssvm/detail/data_distribution.hpp"             // plssvm::detail::{data_distribution, triangular_data_distribution}
 #include "plssvm/detail/igor_utility.hpp"                  // plssvm::detail::{get_value_from_named_parameter, has_only_parameter_named_args_v}
@@ -297,6 +297,7 @@ std::tuple<aos_matrix<real_type>, std::vector<real_type>, std::vector<unsigned l
     // note: if the default values are changed, they must also be changed in the Python bindings!
     auto used_epsilon{ plssvm::real_type{ 1e-10 } };
     unsigned long long used_max_iter{ A.num_rows() - 1 };  // account for later dimensional reduction
+    auto used_epsilon{ DEFAULT_EPSILON };
     solver_type used_solver{ solver_type::automatic };
 
     // compile time check: only named parameters are permitted
@@ -344,8 +345,8 @@ std::tuple<aos_matrix<real_type>, std::vector<real_type>, std::vector<unsigned l
         constexpr detail::memory_size minimal_safety_margin = 512_MiB;
         constexpr long double percentual_safety_margin = 0.05L;
         const auto reduce_total_memory = [=](const detail::memory_size total_memory) {
-            if (total_memory < 512_MiB) {
-                throw kernel_launch_resources{ fmt::format("At least {} of memory must be available, but available are only {}!", 512_MiB, total_memory) };
+            if (total_memory < minimal_safety_margin) {
+                throw kernel_launch_resources{ fmt::format("At least {} of memory must be available, but available are only {}!", minimal_safety_margin, total_memory) };
             }
             return total_memory - std::max(total_memory * percentual_safety_margin, minimal_safety_margin);
         };

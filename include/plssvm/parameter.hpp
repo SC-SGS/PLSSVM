@@ -30,6 +30,7 @@
 
 #include <iosfwd>       // forward declare std::ostream and std::istream
 #include <string_view>  // std::string_view
+#include <type_traits>  // std::underlying_type_t
 #include <utility>      // std::forward
 #include <variant>      // std::variant, std::holds_alternative, std::get
 
@@ -276,9 +277,10 @@ struct parameter {
      * @throws plssvm::invalid_parameter_exception if the gamma value for the polynomial or radial basis function kernel is **not** greater than zero
      */
     void sanity_check_parameter() const {
+        constexpr static std::underlying_type_t<kernel_function_type> num_kernel_functions = 6;
         // kernel: valid kernel function
         const auto kernel_type_value = detail::to_underlying(kernel_type);
-        if (kernel_type_value < 0 || kernel_type_value >= 6) {
+        if (kernel_type_value < 0 || kernel_type_value >= num_kernel_functions) {
             throw invalid_parameter_exception{ fmt::format("Invalid kernel function with value {} given!", kernel_type_value) };
         }
 

@@ -8,7 +8,7 @@
 
 #include "plssvm/svm/csvm.hpp"
 
-#include "plssvm/constants.hpp"                            // plssvm::real_type, plssvm::PADDING_SIZE
+#include "plssvm/constants.hpp"                            // plssvm::real_type, plssvm::PADDING_SIZE, plssvm::NUM_ITER_BEFORE_EXPLICIT_CG_RESIDUAL_RECALCULATION
 #include "plssvm/detail/assert.hpp"                        // PLSSVM_ASSERT
 #include "plssvm/detail/logging/mpi_log.hpp"               // plssvm::detail::log
 #include "plssvm/detail/logging/mpi_log_untracked.hpp"     // plssvm::detail::log_untracked
@@ -153,7 +153,7 @@ std::pair<soa_matrix<real_type>, std::vector<unsigned long long>> csvm::conjugat
         // X = X + alpha * D
         X += masked_rowwise_scale(mask, alpha, D);
 
-        if (iter % 50 == 49) {
+        if (iter % NUM_ITER_BEFORE_EXPLICIT_CG_RESIDUAL_RECALCULATION == NUM_ITER_BEFORE_EXPLICIT_CG_RESIDUAL_RECALCULATION - 1) {
             // explicitly recalculate residual to remove accumulating floating point errors
             // R = B - A * X
             R = soa_matrix<real_type>{ B, shape{ PADDING_SIZE, PADDING_SIZE } };

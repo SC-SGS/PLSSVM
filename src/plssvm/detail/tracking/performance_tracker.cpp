@@ -395,14 +395,14 @@ void performance_tracker::save(std::ostream &out) {
         "  oneDPL_version: {}\n"
         "  tbb_version: {}\n"
         "  hws_version: {}\n\n",
-        fmt::format("{:<{}}\"{}\"", "", max_dependency_entry_name_length - 15, cxxopts_version),
-        fmt::format("{:<{}}\"{}\"", "", max_dependency_entry_name_length - 11, fmt_version),
-        fmt::format("{:<{}}\"{}\"", "", max_dependency_entry_name_length - 18, fast_float_version),
-        fmt::format("{:<{}}\"{}\"", "", max_dependency_entry_name_length - 12, igor_version),
-        fmt::format("{:<{}}\"{}\"", "", max_dependency_entry_name_length - 13, boost_version),
-        fmt::format("{:<{}}\"{}\"", "", max_dependency_entry_name_length - 14, oneDPL_version),
-        fmt::format("{:<{}}\"{}\"", "", max_dependency_entry_name_length - 11, tbb_version),
-        fmt::format("{:<{}}\"{}\"", "", max_dependency_entry_name_length - 11, hws_version));
+        fmt::format("{:<{}}\"{}\"", "", max_dependency_entry_name_length - std::string_view{ "cxxopts_version" }.size(), cxxopts_version),
+        fmt::format("{:<{}}\"{}\"", "", max_dependency_entry_name_length - std::string_view{ "fmt_version" }.size(), fmt_version),
+        fmt::format("{:<{}}\"{}\"", "", max_dependency_entry_name_length - std::string_view{ "fast_float_version" }.size(), fast_float_version),
+        fmt::format("{:<{}}\"{}\"", "", max_dependency_entry_name_length - std::string_view{ "igor_version" }.size(), igor_version),
+        fmt::format("{:<{}}\"{}\"", "", max_dependency_entry_name_length - std::string_view{ "boost_version" }.size(), boost_version),
+        fmt::format("{:<{}}\"{}\"", "", max_dependency_entry_name_length - std::string_view{ "oneDPL_version" }.size(), oneDPL_version),
+        fmt::format("{:<{}}\"{}\"", "", max_dependency_entry_name_length - std::string_view{ "tbb_version" }.size(), tbb_version),
+        fmt::format("{:<{}}\"{}\"", "", max_dependency_entry_name_length - std::string_view{ "hws_version" }.size(), hws_version));
 
     //*************************************************************************************************************************************//
     //                                                          events, if present                                                         //

@@ -56,13 +56,17 @@ std::string get_runtime_version() {
     PLSSVM_HIP_ERROR_CHECK(hipRuntimeGetVersion(&runtime_version))
 #if defined(PLSSVM_HIP_BACKEND_USE_HIP_RUNTIME)
     // parse it to a more useful string
-    int major_version = runtime_version / 10'000'000;
-    int minor_version = runtime_version % 10'000'000 / 100'000;
+    constexpr int major_version_mask = 10'000'000;
+    constexpr int minor_version_mask = 100'000;
+    const int major_version = runtime_version / major_version_mask;
+    const int minor_version = runtime_version % major_version_mask / minor_version_mask;
     return fmt::format("{}.{}", major_version, minor_version);
 #elif defined(PLSSVM_HIP_BACKEND_USE_CUDA_RUNTIME)
     // parse it to a more useful string
-    int major_version = runtime_version / 1000;
-    int minor_version = runtime_version % 1000 / 10;
+    constexpr int major_version_mask = 1000;
+    constexpr int minor_version_mask = 10;
+    const int major_version = runtime_version / major_version_mask;
+    const int minor_version = runtime_version % major_version_mask / minor_version_mask;
     return fmt::format("{}.{}", major_version, minor_version);
 #else
     return "unknown";

@@ -256,8 +256,10 @@ void device_synchronize(const command_queue &queue) {
 }
 
 std::string get_opencl_target_version() {
-    int major_version = CL_TARGET_OPENCL_VERSION / 100;
-    int minor_version = CL_TARGET_OPENCL_VERSION % 100 / 10;
+    constexpr int major_version_mask = 100;
+    constexpr int minor_version_mask = 10;
+    const int major_version = CL_TARGET_OPENCL_VERSION / major_version_mask;
+    const int minor_version = CL_TARGET_OPENCL_VERSION % major_version_mask / minor_version_mask;
     return fmt::format("{}.{}", major_version, minor_version);
 }
 

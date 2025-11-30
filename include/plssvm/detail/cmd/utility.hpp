@@ -31,6 +31,9 @@
 
 namespace plssvm::detail::cmd {
 
+/// The maximum number of characters in one cmd line.
+constexpr std::size_t max_cmd_width = 150;
+
 /**
  * @brief Filter the provided command line options starting with the @p prefix_filter.
  * @details Currently, per default filters out all options starting with "--hpx:" and "--kokkos-".

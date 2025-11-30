@@ -40,7 +40,7 @@ parser_scale::parser_scale(const mpi::communicator &comm, int argc, char **argv)
         .positional_help("input_file [scaled_file]")
         .show_positional_help();
     options
-        .set_width(150)
+        .set_width(max_cmd_width)
         .set_tab_expansion()
         // clang-format off
        .add_options()

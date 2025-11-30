@@ -59,8 +59,10 @@ std::string get_stdpar_version() {
     int runtime_version{};
     cudaRuntimeGetVersion(&runtime_version);
     // parse it to a more useful string
-    int major_version = runtime_version / 1000;
-    int minor_version = runtime_version % 1000 / 10;
+    constexpr int major_version_mask = 1000;
+    constexpr int minor_version_mask = 10;
+    const int major_version = runtime_version / major_version_mask;
+    const int minor_version = runtime_version % major_version_mask / minor_version_mask;
     return fmt::format("{}.{}.{}; {}.{}", __NVCOMPILER_MAJOR__, __NVCOMPILER_MINOR__, __NVCOMPILER_PATCHLEVEL__, major_version, minor_version);
     #else
     return fmt::format("{}.{}.{}", __NVCOMPILER_MAJOR__, __NVCOMPILER_MINOR__, __NVCOMPILER_PATCHLEVEL__);

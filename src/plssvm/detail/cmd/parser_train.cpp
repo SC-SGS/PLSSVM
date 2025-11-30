@@ -62,7 +62,7 @@ parser_train::parser_train(const mpi::communicator &comm, int argc, char **argv)
         .positional_help("training_set_file [model_file]")
         .show_positional_help();
     options
-        .set_width(150)
+        .set_width(max_cmd_width)
         .set_tab_expansion()
         // clang-format off
        .add_options()

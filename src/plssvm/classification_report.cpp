@@ -54,7 +54,7 @@ double sanitize_nan(const double dividend, const double divisor, const classific
 
 std::ostream &operator<<(std::ostream &out, const classification_report &report) {
     // calculate the maximum size of the label for better table alignment
-    std::size_t max_label_string_size = 12;  // weighted avg = 12 characters
+    std::size_t max_label_string_size = std::string_view{ "weighted avg" }.size();
     for (const auto &[key, val] : report.metrics_) {
         max_label_string_size = std::max(max_label_string_size, key.size());
     }

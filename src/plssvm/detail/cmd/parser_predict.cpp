@@ -52,7 +52,7 @@ parser_predict::parser_predict(const mpi::communicator &comm, int argc, char **a
         .positional_help("test_file model_file [output_file]")
         .show_positional_help();
     options
-        .set_width(150)
+        .set_width(max_cmd_width)
         .set_tab_expansion()
         // clang-format off
         .add_options()

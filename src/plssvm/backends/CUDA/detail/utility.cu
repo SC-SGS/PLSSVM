@@ -62,8 +62,10 @@ std::string get_runtime_version() {
     int runtime_version{};
     PLSSVM_CUDA_ERROR_CHECK(cudaRuntimeGetVersion(&runtime_version))
     // parse it to a more useful string
-    int major_version = runtime_version / 1000;
-    int minor_version = runtime_version % 1000 / 10;
+    constexpr int major_version_mask = 1000;
+    constexpr int minor_version_mask = 10;
+    const int major_version = runtime_version / major_version_mask;
+    const int minor_version = runtime_version % major_version_mask / minor_version_mask;
     return fmt::format("{}.{}", major_version, minor_version);
 }
 
