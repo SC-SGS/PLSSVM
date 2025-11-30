@@ -248,7 +248,7 @@ void csvm::init(const target_platform target) {
     if (data_parallel_kernel_type_ == sycl::data_parallel_kernel::automatic) {
         // always use work_group for AdaptiveCpp
         data_parallel_kernel_type_ = sycl::data_parallel_kernel::work_group;
-        if (target_ == target_platform::cpu) {  // TODO: set to hierarchical or scoped?!
+        if (target_ == target_platform::cpu) {
 #if !defined(__ACPP_USE_ACCELERATED_CPU__) && defined(__ACPP_ENABLE_OMPHOST_TARGET__)
             plssvm::detail::log_untracked(verbosity_level::full | verbosity_level::warning,
                                           "WARNING: the AdaptiveCpp automatic target for the CPU is set to work_group, but AdaptiveCpp hasn't been build with the \"omp.accelerated\" compilation flow resulting in major performance losses!\n");
