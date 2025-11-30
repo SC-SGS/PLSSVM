@@ -25,9 +25,6 @@
 
 namespace py = pybind11;
 
-py::module_ init_adaptivecpp_csvm(py::module_ &, const py::exception<plssvm::exception> &);
-py::module_ init_dpcpp_csvm(py::module_ &, const py::exception<plssvm::exception> &);
-
 void init_sycl(py::module_ &m, const py::exception<plssvm::exception> &base_exception) {
     // use its own submodule for the SYCL specific bindings
     py::module_ sycl_module = m.def_submodule("sycl", "a module containing all SYCL backend specific functionality");
