@@ -214,7 +214,7 @@ TEST_F(Events, GenerateYAMLString) {
 
 TEST_F(Events, GenerateYAMLStringNoEvents) {
     // create events wrapper
-    plssvm::detail::tracking::events events{};
+    const plssvm::detail::tracking::events events{};
 
     // get the YAML string
     const std::string yaml = events.generate_yaml_string(std::chrono::steady_clock::now());

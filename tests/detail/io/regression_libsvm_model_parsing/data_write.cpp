@@ -41,7 +41,7 @@ class LIBSVMRegressionModelDataWrite : public ::testing::Test,
      * @brief Return the used MPI communicator.
      * @return the MPI communicator (`[[nodiscard]]`)
      */
-    [[nodiscard]] const plssvm::mpi::communicator get_comm() const noexcept { return comm_; }
+    [[nodiscard]] const plssvm::mpi::communicator &get_comm() const noexcept { return comm_; }
 
   private:
     /// The MPI communicator (unused during testing since we do not support MPI runtime tests).

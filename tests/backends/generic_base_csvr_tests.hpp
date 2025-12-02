@@ -116,7 +116,7 @@ TYPED_TEST_P(GenericCSVRKernelFunction, Predict) {
     }
 
     // create normal C-SVR
-    const csvr_type svr = util::construct_from_tuple<csvr_type>(params, csvm_test_type::additional_arguments);
+    const auto svr = util::construct_from_tuple<csvr_type>(params, csvm_test_type::additional_arguments);
 
     // fitting the test data will ALWAYS score 100% accuracy
     const plssvm::regression_model<label_type> model = svr.fit(test_data, plssvm::epsilon = 1e-16);
@@ -156,7 +156,7 @@ TYPED_TEST_P(GenericCSVRKernelFunction, ScoreModel) {
     }
 
     // create normal C-SVR
-    const csvr_type svr = util::construct_from_tuple<csvr_type>(params, csvm_test_type::additional_arguments);
+    const auto svr = util::construct_from_tuple<csvr_type>(params, csvm_test_type::additional_arguments);
 
     // fitting the test data will ALWAYS score 100% accuracy
     const plssvm::regression_model<label_type> model = svr.fit(test_data, plssvm::epsilon = 1e-16);
@@ -192,7 +192,7 @@ TYPED_TEST_P(GenericCSVRKernelFunction, Score) {
     }
 
     // create normal C-SVR
-    const csvr_type svr = util::construct_from_tuple<csvr_type>(params, csvm_test_type::additional_arguments);
+    const auto svr = util::construct_from_tuple<csvr_type>(params, csvm_test_type::additional_arguments);
 
     // fitting the test data will ALWAYS score 100% accuracy
     const plssvm::regression_model<label_type> model = svr.fit(test_data, plssvm::epsilon = 1e-16);

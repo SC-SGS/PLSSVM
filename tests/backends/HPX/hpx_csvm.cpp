@@ -153,7 +153,7 @@ struct hpx_csvm_test_type {
     using csvc_type = plssvm::hpx::csvc;
     using csvr_type = plssvm::hpx::csvr;
     using device_ptr_type = const plssvm::soa_matrix<plssvm::real_type> *;
-    inline constexpr static auto additional_arguments = std::make_tuple();
+    constexpr static auto additional_arguments = std::make_tuple();
 };
 
 // a tuple containing the test structs

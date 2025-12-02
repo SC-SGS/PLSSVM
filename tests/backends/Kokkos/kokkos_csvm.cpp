@@ -314,7 +314,7 @@ TYPED_TEST(KokkosCSVMConstructor, ConstructTargetAndExecutionSpaceAndParameter) 
     const plssvm::parameter params{};
 
     // list all possible execution spaces
-    std::vector<plssvm::kokkos::execution_space> all_execution_spaces{
+    const std::vector<plssvm::kokkos::execution_space> all_execution_spaces{
         plssvm::kokkos::execution_space::cuda,
         plssvm::kokkos::execution_space::hip,
         plssvm::kokkos::execution_space::sycl,
@@ -656,7 +656,7 @@ TYPED_TEST(KokkosCSVMConstructor, ConstructTargetAndExecutionSpaceAndNamedArgs) 
     using csvm_type = typename TestFixture::fixture_csvm_type;
 
     // list all possible execution spaces
-    std::vector<plssvm::kokkos::execution_space> all_execution_spaces{
+    const std::vector<plssvm::kokkos::execution_space> all_execution_spaces{
         plssvm::kokkos::execution_space::cuda,
         plssvm::kokkos::execution_space::hip,
         plssvm::kokkos::execution_space::sycl,

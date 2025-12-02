@@ -144,7 +144,7 @@ struct opencl_csvm_test_type {
     using csvc_type = plssvm::opencl::csvc;
     using csvr_type = plssvm::opencl::csvr;
     using device_ptr_type = typename csvm_type::device_ptr_type;
-    inline constexpr static auto additional_arguments = std::make_tuple();
+    constexpr static auto additional_arguments = std::make_tuple();
 };
 
 // a tuple containing the test structs

@@ -35,7 +35,7 @@ TEST(TriangularDataDistribution, Construct) {
     const plssvm::detail::triangular_data_distribution dist{ plssvm::mpi::communicator{}, 1024, 4 };
 
     // test getter
-    const std::vector<std::size_t> dist_vec = dist.distribution();
+    const std::vector<std::size_t> &dist_vec = dist.distribution();
     EXPECT_EQ(dist_vec.size(), 5);
     EXPECT_EQ(dist_vec.front(), 0);                                   // the distribution must start with 0
     EXPECT_EQ(dist_vec.back(), 1024);                                 // the distribution must end with the number of rows
@@ -49,7 +49,7 @@ TEST(TriangularDataDistribution, ConstructWithWeights) {
     const plssvm::detail::triangular_data_distribution dist{ plssvm::mpi::communicator{ std::vector<std::size_t>{ std::size_t{ 2 } } }, 1024, 4 };
 
     // test getter
-    const std::vector<std::size_t> dist_vec = dist.distribution();
+    const std::vector<std::size_t> &dist_vec = dist.distribution();
     EXPECT_EQ(dist_vec.size(), 5);
     EXPECT_EQ(dist_vec.front(), 0);                                   // the distribution must start with 0
     EXPECT_EQ(dist_vec.back(), 1024);                                 // the distribution must end with the number of rows
@@ -84,7 +84,7 @@ TEST(TriangularDataDistribution, Distribution) {
     const plssvm::detail::triangular_data_distribution dist{ plssvm::mpi::communicator{}, 1024, 4 };
 
     // check the distribution for sanity
-    const std::vector<std::size_t> dist_vec = dist.distribution();
+    const std::vector<std::size_t> &dist_vec = dist.distribution();
     EXPECT_EQ(dist_vec.size(), 5);
     EXPECT_EQ(dist_vec.front(), 0);                                   // the distribution must start with 0
     EXPECT_EQ(dist_vec.back(), 1024);                                 // the distribution must end with the number of rows
@@ -96,7 +96,7 @@ TEST(TriangularDataDistribution, DistributionOnePlace) {
     const plssvm::detail::triangular_data_distribution dist{ plssvm::mpi::communicator{}, 1024, 1 };
 
     // check the distribution for sanity
-    const std::vector<std::size_t> dist_vec = dist.distribution();
+    const std::vector<std::size_t> &dist_vec = dist.distribution();
     EXPECT_EQ(dist_vec.size(), 2);
     EXPECT_EQ(dist_vec.front(), 0);    // the distribution must start with 0
     EXPECT_EQ(dist_vec.back(), 1024);  // the distribution must end with the number of rows
@@ -107,7 +107,7 @@ TEST(TriangularDataDistribution, DistributionFewerRowsThanPlaces) {
     const plssvm::detail::triangular_data_distribution dist{ plssvm::mpi::communicator{}, 6, 8 };
 
     // check the distribution for sanity
-    const std::vector<std::size_t> dist_vec = dist.distribution();
+    const std::vector<std::size_t> &dist_vec = dist.distribution();
     EXPECT_EQ(dist_vec.size(), 9);
     EXPECT_EQ(dist_vec.front(), 0);                                   // the distribution must start with 0
     EXPECT_EQ(dist_vec.back(), 6);                                    // the distribution must end with the number of rows
@@ -216,7 +216,7 @@ TEST(RectangularDataDistribution, Construct) {
     const plssvm::detail::rectangular_data_distribution dist{ plssvm::mpi::communicator{}, 1024, 4 };
 
     // test getter
-    const std::vector<std::size_t> dist_vec = dist.distribution();
+    const std::vector<std::size_t> &dist_vec = dist.distribution();
     EXPECT_EQ(dist_vec.size(), 5);
     EXPECT_EQ(dist_vec.front(), 0);                                   // the distribution must start with 0
     EXPECT_EQ(dist_vec.back(), 1024);                                 // the distribution must end with the number of rows
@@ -230,7 +230,7 @@ TEST(RectangularDataDistribution, ConstructWithWeights) {
     const plssvm::detail::rectangular_data_distribution dist{ plssvm::mpi::communicator{ std::vector<std::size_t>{ std::size_t{ 3 } } }, 1024, 4 };
 
     // test getter
-    const std::vector<std::size_t> dist_vec = dist.distribution();
+    const std::vector<std::size_t> &dist_vec = dist.distribution();
     EXPECT_EQ(dist_vec.size(), 5);
     EXPECT_EQ(dist_vec.front(), 0);                                   // the distribution must start with 0
     EXPECT_EQ(dist_vec.back(), 1024);                                 // the distribution must end with the number of rows
@@ -265,7 +265,7 @@ TEST(RectangularDataDistribution, Distribution) {
     const plssvm::detail::rectangular_data_distribution dist{ plssvm::mpi::communicator{}, 1024, 4 };
 
     // check the distribution for sanity
-    const std::vector<std::size_t> dist_vec = dist.distribution();
+    const std::vector<std::size_t> &dist_vec = dist.distribution();
     EXPECT_EQ(dist_vec.size(), 5);
     EXPECT_EQ(dist_vec.front(), 0);                                   // the distribution must start with 0
     EXPECT_EQ(dist_vec.back(), 1024);                                 // the distribution must end with the number of rows
@@ -277,7 +277,7 @@ TEST(RectangularDataDistribution, DistributionOnePlace) {
     const plssvm::detail::rectangular_data_distribution dist{ plssvm::mpi::communicator{}, 1024, 1 };
 
     // check the distribution for sanity
-    const std::vector<std::size_t> dist_vec = dist.distribution();
+    const std::vector<std::size_t> &dist_vec = dist.distribution();
     EXPECT_EQ(dist_vec.size(), 2);
     EXPECT_EQ(dist_vec.front(), 0);    // the distribution must start with 0
     EXPECT_EQ(dist_vec.back(), 1024);  // the distribution must end with the number of rows
@@ -288,7 +288,7 @@ TEST(RectangularDataDistribution, DistributionFewerRowsThanPlaces) {
     const plssvm::detail::rectangular_data_distribution dist{ plssvm::mpi::communicator{}, 6, 8 };
 
     // check the distribution for sanity
-    const std::vector<std::size_t> dist_vec = dist.distribution();
+    const std::vector<std::size_t> &dist_vec = dist.distribution();
     EXPECT_EQ(dist_vec.size(), 9);
     EXPECT_EQ(dist_vec.front(), 0);                                   // the distribution must start with 0
     EXPECT_EQ(dist_vec.back(), 6);                                    // the distribution must end with the number of rows

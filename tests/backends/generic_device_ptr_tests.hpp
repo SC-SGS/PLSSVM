@@ -748,7 +748,7 @@ TYPED_TEST_P(DevicePtr, CopyVectorTooFewHostElements) {
     device_ptr_type ptr{ 10, queue };
 
     // try copying data to the device with too few elements
-    std::vector<value_type> data(8, 42);
+    const std::vector<value_type> data(8, 42);
     EXPECT_THROW_WHAT(ptr.copy_to_device(data), plssvm::gpu_device_ptr_exception, "Too few data to perform copy (needed: 10, provided: 8)!");
 }
 
@@ -760,7 +760,7 @@ TYPED_TEST_P(DevicePtr, CopyVectorTooFewBufferElements) {
     const queue_type &queue = test_type::default_queue();
 
     // construct device_ptr
-    device_ptr_type ptr{ 10, queue };
+    const device_ptr_type ptr{ 10, queue };
 
     // try copying data back to the host with a buffer with too few elements
     std::vector<value_type> buffer(8);
@@ -778,7 +778,7 @@ TYPED_TEST_P(DevicePtr, CopyVectorWithCountTooFewHostElements) {
     device_ptr_type ptr{ 10, queue };
 
     // try copying data to the device with too few elements
-    std::vector<value_type> data(4, 42);
+    const std::vector<value_type> data(4, 42);
     EXPECT_THROW_WHAT(ptr.copy_to_device(data, 1, 7), plssvm::gpu_device_ptr_exception, "Too few data to perform copy (needed: 7, provided: 4)!");
 }
 
@@ -790,7 +790,7 @@ TYPED_TEST_P(DevicePtr, CopyVectorWithCountTooFewBufferElements) {
     const queue_type &queue = test_type::default_queue();
 
     // construct device_ptr
-    device_ptr_type ptr{ 6, queue };
+    const device_ptr_type ptr{ 6, queue };
 
     // try copying data back to the host with a buffer with too few elements
     std::vector<value_type> buffer(4);
@@ -833,7 +833,7 @@ TYPED_TEST_P(DevicePtr, CopyVectorStridedInvalidSpitchWidthCombination) {
     device_ptr_type ptr{ plssvm::shape{ 2, 2 }, queue };
 
     // create data to copy to the device
-    std::vector<value_type> data(20);  // 5 x 4
+    const std::vector<value_type> data(20);  // 5 x 4
 
     // copy data to the device
     EXPECT_THROW_WHAT(ptr.copy_to_device_strided(data, 5, 6, 2), plssvm::gpu_device_ptr_exception, "Invalid width and spitch combination specified (width: 6 <= spitch: 5)!");
@@ -850,7 +850,7 @@ TYPED_TEST_P(DevicePtr, CopyVectorStridedSubmatrixTooBig) {
     device_ptr_type ptr{ plssvm::shape{ 2, 2 }, queue };
 
     // create data to copy to the device
-    std::vector<value_type> data(20);  // 5 x 4
+    const std::vector<value_type> data(20);  // 5 x 4
 
     // copy data to the device
     EXPECT_THROW_WHAT(ptr.copy_to_device_strided(data, 5, 5, 5), plssvm::gpu_device_ptr_exception, "The sub-matrix (5x5) to copy is to big (20)!");
@@ -867,7 +867,7 @@ TYPED_TEST_P(DevicePtr, CopyPointer) {
     device_ptr_type ptr{ 10, queue };
 
     // create data to copy to the device
-    std::vector<value_type> data(14, 42);
+    const std::vector<value_type> data(14, 42);
 
     // copy data to the device
     ptr.copy_to_device(data.data());
@@ -890,7 +890,7 @@ TYPED_TEST_P(DevicePtr, CopyPointerWithCountCopyBackAll) {
     device_ptr_type ptr{ 6, queue };
 
     // create data to copy to the device
-    std::vector<value_type> data(6, 42);
+    const std::vector<value_type> data(6, 42);
 
     // copy data to the device
     ptr.copy_to_device(data.data(), 1, 3);
@@ -913,7 +913,7 @@ TYPED_TEST_P(DevicePtr, CopyPointerWithCountCopyBackSome) {
     device_ptr_type ptr{ 6, queue };
 
     // create data to copy to the device
-    std::vector<value_type> data(6, 42);
+    const std::vector<value_type> data(6, 42);
 
     // copy data to the device
     ptr.copy_to_device(data.data(), 1, 3);
@@ -936,7 +936,7 @@ TYPED_TEST_P(DevicePtr, CopyPointerWithCountCopyToTooMany) {
     device_ptr_type ptr{ 6, queue };
 
     // create data to copy to the device
-    std::vector<value_type> data(6, 42);
+    const std::vector<value_type> data(6, 42);
 
     // copy data to the device
     ptr.copy_to_device(data.data(), 2, 6);
@@ -984,7 +984,7 @@ TYPED_TEST_P(DevicePtr, CopyPointerStridedInvalidSpitchWidthCombination) {
     device_ptr_type ptr{ plssvm::shape{ 2, 2 }, queue };
 
     // create data to copy to the device
-    std::vector<value_type> data(20);  // 5 x 4
+    const std::vector<value_type> data(20);  // 5 x 4
 
     // copy data to the device
     EXPECT_THROW_WHAT(ptr.copy_to_device_strided(data.data(), 5, 6, 2), plssvm::exception, "Invalid width and spitch combination specified (width: 6 <= spitch: 5)!");
@@ -1001,7 +1001,7 @@ TYPED_TEST_P(DevicePtr, CopyDevicePtrToOtherDevice) {
     device_ptr_type ptr{ 10, queue };
 
     // create data to copy to the device
-    std::vector<value_type> data(14, 42);
+    const std::vector<value_type> data(14, 42);
 
     // copy data to the device
     ptr.copy_to_device(data);
@@ -1029,7 +1029,7 @@ TYPED_TEST_P(DevicePtr, CopyDevicePtrToOtherDeviceTooFewDeviceElements) {
     device_ptr_type ptr{ 10, queue };
 
     // create data to copy to the device
-    std::vector<value_type> data(14, 42);
+    const std::vector<value_type> data(14, 42);
 
     // copy data to the device
     ptr.copy_to_device(data);
@@ -1050,7 +1050,7 @@ TYPED_TEST_P(DevicePtr, CopyDevicePtrToOtherDeviceWithCount) {
     device_ptr_type ptr{ 10, queue };
 
     // create data to copy to the device
-    std::vector<value_type> data(14, 42);
+    const std::vector<value_type> data(14, 42);
 
     // copy data to the device
     ptr.copy_to_device(data);
@@ -1227,7 +1227,7 @@ TYPED_TEST_P(DevicePtrLayout, CopyMatrixTooFewHostElements) {
     device_ptr_type ptr{ 10, queue };
 
     // try copying data to the device with too few elements
-    plssvm::matrix<value_type, layout> data{ plssvm::shape{ 2, 4 }, value_type{ 42 } };
+    const plssvm::matrix<value_type, layout> data{ plssvm::shape{ 2, 4 }, value_type{ 42 } };
     EXPECT_THROW_WHAT(ptr.copy_to_device(data), plssvm::gpu_device_ptr_exception, "Too few data to perform copy (needed: 10, provided: 8)!");
 }
 
@@ -1240,7 +1240,7 @@ TYPED_TEST_P(DevicePtrLayout, CopyMatrixTooFewBufferElements) {
     constexpr plssvm::layout_type layout = util::test_parameter_value_at_v<0, TypeParam>;
 
     // construct device_ptr
-    device_ptr_type ptr{ 10, queue };
+    const device_ptr_type ptr{ 10, queue };
 
     // try copying data back to the host with a buffer with too few elements
     plssvm::matrix<value_type, layout> buffer{ plssvm::shape{ 2, 4 } };
@@ -1268,7 +1268,7 @@ TYPED_TEST_P(DevicePtrLayout, CopyMatrixStrided) {
     ptr.copy_to_host(result);
 
     // check values for correctness
-    plssvm::matrix<value_type, layout> correct_result{ { { 1.1, 1.2, 1.3 }, { 2.1, 2.2, 2.3 } } };
+    const plssvm::matrix<value_type, layout> correct_result{ { { 1.1, 1.2, 1.3 }, { 2.1, 2.2, 2.3 } } };
     EXPECT_FLOATING_POINT_MATRIX_EQ(result, correct_result);
 }
 
@@ -1293,10 +1293,10 @@ TYPED_TEST_P(DevicePtrLayout, CopyMatrixStridedWithPadding) {
     ptr.copy_to_host(result);
 
     // check values for correctness
-    plssvm::matrix<value_type, layout> correct_result{ { { 2.1, 2.2, 2.3 },
-                                                         { 3.1, 3.2, 3.3 },
-                                                         { 4.1, 4.2, 4.3 } },
-                                                       plssvm::shape{ 4, 4 } };
+    const plssvm::matrix<value_type, layout> correct_result{ { { 2.1, 2.2, 2.3 },
+                                                               { 3.1, 3.2, 3.3 },
+                                                               { 4.1, 4.2, 4.3 } },
+                                                             plssvm::shape{ 4, 4 } };
 
     EXPECT_FLOATING_POINT_MATRIX_EQ(result, correct_result);
 }
@@ -1372,7 +1372,7 @@ TYPED_TEST_P(DevicePtrLayout, CopyMatrixStridedTooFewHostElements) {
     device_ptr_type ptr{ plssvm::shape{ 2, 5 }, queue };
 
     // try copying data to the device with too few elements
-    plssvm::matrix<value_type, layout> data{ plssvm::shape{ 2, 4 }, value_type{ 42 } };
+    const plssvm::matrix<value_type, layout> data{ plssvm::shape{ 2, 4 }, value_type{ 42 } };
     EXPECT_THROW_WHAT(ptr.copy_to_device_strided(data, 1, 1), plssvm::gpu_device_ptr_exception, "Too few data to perform copy (needed: 10, provided: 4)!");
 }
 
@@ -1388,7 +1388,7 @@ TYPED_TEST_P(DevicePtrLayout, CopyMatrixStridedInvalidSubmatrix) {
     device_ptr_type ptr{ plssvm::shape{ 2, 5 }, queue };
 
     // try copying data to the device with too few elements
-    plssvm::matrix<value_type, layout> data{ plssvm::shape{ 4, 5 }, value_type{ 42 } };
+    const plssvm::matrix<value_type, layout> data{ plssvm::shape{ 4, 5 }, value_type{ 42 } };
     EXPECT_THROW_WHAT(ptr.copy_to_device_strided(data, 4, 1), plssvm::gpu_device_ptr_exception, "Tried to copy lines 4-4 (zero-based index) to the device, but the matrix has only 4 lines!");
     EXPECT_THROW_WHAT(ptr.copy_to_device_strided(data, 3, 3), plssvm::gpu_device_ptr_exception, "Tried to copy lines 3-5 (zero-based index) to the device, but the matrix has only 4 lines!");
 }

@@ -50,7 +50,7 @@ TYPED_TEST_P(Exception, ThrowingException) {
 TYPED_TEST_P(Exception, ExceptionSourceLocation) {
     using exception_type = typename TypeParam::exception_type;
 
-    const exception_type exc = dummy<exception_type>("exception message");
+    const auto exc = dummy<exception_type>("exception message");
 
     EXPECT_EQ(exc.loc().file_name(), std::string{ __builtin_FILE() });
     EXPECT_THAT(exc.loc().function_name(), ::testing::HasSubstr("dummy"));
@@ -63,7 +63,7 @@ TYPED_TEST_P(Exception, ExceptionWhatWithSourceLocation) {
     using exception_type = typename TypeParam::exception_type;
     constexpr std::string_view exception_name = TypeParam::name;
 
-    const exception_type exc = dummy<exception_type>("exception message");
+    const auto exc = dummy<exception_type>("exception message");
 
     // get exception message with source location information split into a vector of separate lines
     const std::string what = exc.what_with_loc();

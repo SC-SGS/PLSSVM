@@ -816,7 +816,7 @@ TEST_P(ParserTrainOutput, Parsing) {
     };
 
     // test output string
-    std::string correct = fmt::format(
+    const std::string correct = fmt::format(
         "svm_type: csvc\n"
         "{}"
         "cost: 1\n"

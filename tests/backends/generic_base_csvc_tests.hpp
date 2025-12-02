@@ -115,7 +115,7 @@ TYPED_TEST_P(GenericCSVCKernelFunctionClassification, Predict) {
     }
 
     // create normal C-SVC
-    const csvc_type svc = util::construct_from_tuple<csvc_type>(params, csvm_test_type::additional_arguments);
+    const auto svc = util::construct_from_tuple<csvc_type>(params, csvm_test_type::additional_arguments);
 
     // fitting the test data will ALWAYS score 100% accuracy
     const plssvm::classification_model<label_type> model = svc.fit(test_data, plssvm::epsilon = 1e-16, plssvm::classification = classification);
@@ -156,7 +156,7 @@ TYPED_TEST_P(GenericCSVCKernelFunctionClassification, ScoreModel) {
     }
 
     // create normal C-SVC
-    const csvc_type svc = util::construct_from_tuple<csvc_type>(params, csvm_test_type::additional_arguments);
+    const auto svc = util::construct_from_tuple<csvc_type>(params, csvm_test_type::additional_arguments);
 
     // fitting the test data will ALWAYS score 100% accuracy
     const plssvm::classification_model<label_type> model = svc.fit(test_data, plssvm::epsilon = 1e-16, plssvm::classification = classification);
@@ -191,7 +191,7 @@ TYPED_TEST_P(GenericCSVCKernelFunctionClassification, Score) {
     }
 
     // create normal C-SVC
-    const csvc_type svc = util::construct_from_tuple<csvc_type>(params, csvm_test_type::additional_arguments);
+    const auto svc = util::construct_from_tuple<csvc_type>(params, csvm_test_type::additional_arguments);
 
     // fitting the test data will ALWAYS score 100% accuracy
     const plssvm::classification_model<label_type> model = svc.fit(test_data, plssvm::epsilon = 1e-16, plssvm::classification = classification);
@@ -248,7 +248,7 @@ TYPED_TEST_P(GenericCSVCSolverKernelFunctionClassification, Fit) {
     }
 
     // create normal C-SVC
-    const csvc_type svc = util::construct_from_tuple<csvc_type>(params, csvm_test_type::additional_arguments);
+    const auto svc = util::construct_from_tuple<csvc_type>(params, csvm_test_type::additional_arguments);
 
     // call fit
     const plssvm::classification_model<label_type> model = svc.fit(test_data, plssvm::epsilon = 1e-10, plssvm::solver = solver, plssvm::classification = classification);

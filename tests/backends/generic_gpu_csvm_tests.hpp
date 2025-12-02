@@ -54,7 +54,7 @@ TYPED_TEST_P(GenericGPUCSVM, GetLocalMemory) {
     using mock_csvm_type = typename csvm_test_type::mock_csvm_type;
 
     // create C-SVM: must be done using the mock class since the member function to test is private or protected
-    const mock_csvm_type svm = util::construct_from_tuple<mock_csvm_type>(csvm_test_type::additional_arguments);
+    const auto svm = util::construct_from_tuple<mock_csvm_type>(csvm_test_type::additional_arguments);
 
     // for GPU C-SVMs, the local memory size must NOT be nullopt
     const std::vector<std::optional<plssvm::detail::memory_size>> local_mem = svm.get_local_memory();
@@ -68,7 +68,7 @@ TYPED_TEST_P(GenericGPUCSVM, GetMaxWorkGroupSize) {
     using mock_csvm_type = typename csvm_test_type::mock_csvm_type;
 
     // create C-SVM: must be done using the mock class since the member function to test is private or protected
-    const mock_csvm_type svm = util::construct_from_tuple<mock_csvm_type>(csvm_test_type::additional_arguments);
+    const auto svm = util::construct_from_tuple<mock_csvm_type>(csvm_test_type::additional_arguments);
 
     // the maximum allowed work-group size should be greater than 0!
     for (std::size_t device_id = 0; device_id < svm.num_available_devices(); ++device_id) {
@@ -81,7 +81,7 @@ TYPED_TEST_P(GenericGPUCSVM, GetMaxGridSize) {
     using mock_csvm_type = typename csvm_test_type::mock_csvm_type;
 
     // create C-SVM: must be done using the mock class since the member function to test is private or protected
-    const mock_csvm_type svm = util::construct_from_tuple<mock_csvm_type>(csvm_test_type::additional_arguments);
+    const auto svm = util::construct_from_tuple<mock_csvm_type>(csvm_test_type::additional_arguments);
 
     // the maximum allowed work-group size should be greater than 0!
     for (std::size_t device_id = 0; device_id < svm.num_available_devices(); ++device_id) {
@@ -101,7 +101,7 @@ TYPED_TEST_P(GenericGPUCSVM, RunBlasLevel3KernelExplicit) {
     const plssvm::classification_data_set data{ PLSSVM_CLASSIFICATION_TEST_FILE };
 
     // create C-SVM: must be done using the mock class since the member function to test is private or protected
-    const mock_csvm_type svm = util::construct_from_tuple<mock_csvm_type>(csvm_test_type::additional_arguments);
+    const auto svm = util::construct_from_tuple<mock_csvm_type>(csvm_test_type::additional_arguments);
     const std::size_t num_devices = svm.num_available_devices();
     // be sure to use the correct data distribution
     svm.data_distribution_ = std::make_unique<plssvm::detail::triangular_data_distribution>(plssvm::mpi::communicator{}, data.num_data_points() - 1, num_devices);
@@ -191,7 +191,7 @@ TYPED_TEST_P(GenericGPUCSVM, RunWKernel) {
     const auto weights = util::generate_specific_matrix<plssvm::aos_matrix<plssvm::real_type>>(plssvm::shape{ 3, data.num_data_points() }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE });
 
     // create C-SVM: must be done using the mock class since the member function to test is private or protected
-    const mock_csvm_type svm = util::construct_from_tuple<mock_csvm_type>(csvm_test_type::additional_arguments);
+    const auto svm = util::construct_from_tuple<mock_csvm_type>(csvm_test_type::additional_arguments);
     const std::size_t num_devices = svm.num_available_devices();
     // be sure to use the correct data distribution
     svm.data_distribution_ = std::make_unique<plssvm::detail::rectangular_data_distribution>(plssvm::mpi::communicator{}, data.num_data_points(), num_devices);
@@ -255,7 +255,7 @@ TYPED_TEST_P(GenericGPUCSVM, RunInplaceMatrixAddition) {
     const plssvm::soa_matrix<plssvm::real_type> &matr = data.data();
 
     // create C-SVM: must be done using the mock class since the member function to test is private or protected
-    const mock_csvm_type svm = util::construct_from_tuple<mock_csvm_type>(csvm_test_type::additional_arguments);
+    const auto svm = util::construct_from_tuple<mock_csvm_type>(csvm_test_type::additional_arguments);
     const std::size_t num_devices = svm.num_available_devices();
 
     // calculate correct output
@@ -309,7 +309,7 @@ TYPED_TEST_P(GenericGPUCSVM, RunInplaceMatrixScale) {
     const plssvm::real_type scaling_factor = 3.1415;
 
     // create C-SVM: must be done using the mock class since the member function to test is private or protected
-    const mock_csvm_type svm = util::construct_from_tuple<mock_csvm_type>(csvm_test_type::additional_arguments);
+    const auto svm = util::construct_from_tuple<mock_csvm_type>(csvm_test_type::additional_arguments);
     const std::size_t num_devices = svm.num_available_devices();
 
     // calculate correct output
@@ -386,7 +386,7 @@ TYPED_TEST_P(GenericGPUCSVMKernelFunction, RunAssembleKernelMatrixExplicit) {
     }
 
     // create C-SVM: must be done using the mock class since the member function to test is private or protected
-    const mock_csvm_type svm = util::construct_from_tuple<mock_csvm_type>(params, csvm_test_type::additional_arguments);
+    const auto svm = util::construct_from_tuple<mock_csvm_type>(params, csvm_test_type::additional_arguments);
     const std::size_t num_devices = svm.num_available_devices();
     // be sure to use the correct data distribution
     svm.data_distribution_ = std::make_unique<plssvm::detail::triangular_data_distribution>(plssvm::mpi::communicator{}, data.num_data_points() - 1, num_devices);
@@ -461,7 +461,7 @@ TYPED_TEST_P(GenericGPUCSVMKernelFunction, RunAssembleKernelMatrixImplicitBlasLe
     }
 
     // create C-SVM: must be done using the mock class since the member function to test is private or protected
-    const mock_csvm_type svm = util::construct_from_tuple<mock_csvm_type>(params, csvm_test_type::additional_arguments);
+    const auto svm = util::construct_from_tuple<mock_csvm_type>(params, csvm_test_type::additional_arguments);
     const std::size_t num_devices = svm.num_available_devices();
     // be sure to use the correct data distribution
     svm.data_distribution_ = std::make_unique<plssvm::detail::triangular_data_distribution>(plssvm::mpi::communicator{}, data.num_data_points() - 1, num_devices);
@@ -555,7 +555,7 @@ TYPED_TEST_P(GenericGPUCSVMKernelFunction, RunPredictKernel) {
     const plssvm::soa_matrix<plssvm::real_type> correct_w = ground_truth::calculate_w(weights, data_matr);
 
     // create C-SVM: must be done using the mock class since the member function to test is private or protected
-    const mock_csvm_type svm = util::construct_from_tuple<mock_csvm_type>(params, csvm_test_type::additional_arguments);
+    const auto svm = util::construct_from_tuple<mock_csvm_type>(params, csvm_test_type::additional_arguments);
     const std::size_t num_devices = svm.num_available_devices();
     // be sure to use the correct data distribution
     svm.data_distribution_ = std::make_unique<plssvm::detail::rectangular_data_distribution>(plssvm::mpi::communicator{}, predict_points.num_rows(), num_devices);
@@ -638,7 +638,7 @@ TYPED_TEST_P(GenericGPUCSVMDeathTest, GetMaxWorkGroupSizeOutOfRange) {
     using mock_csvm_type = typename csvm_test_type::mock_csvm_type;
 
     // create C-SVM: must be done using the mock class since the member function to test is private or protected
-    const mock_csvm_type svm = util::construct_from_tuple<mock_csvm_type>(csvm_test_type::additional_arguments);
+    const auto svm = util::construct_from_tuple<mock_csvm_type>(csvm_test_type::additional_arguments);
     const std::size_t num_devices = svm.num_available_devices();
 
     // try querying an invalid device_id
@@ -650,7 +650,7 @@ TYPED_TEST_P(GenericGPUCSVMDeathTest, GetMaxGridSizeOutOfRange) {
     using mock_csvm_type = typename csvm_test_type::mock_csvm_type;
 
     // create C-SVM: must be done using the mock class since the member function to test is private or protected
-    const mock_csvm_type svm = util::construct_from_tuple<mock_csvm_type>(csvm_test_type::additional_arguments);
+    const auto svm = util::construct_from_tuple<mock_csvm_type>(csvm_test_type::additional_arguments);
     const std::size_t num_devices = svm.num_available_devices();
 
     // try querying an invalid device_id
