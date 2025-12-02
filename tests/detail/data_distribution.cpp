@@ -24,7 +24,7 @@
 #include <iostream>   // std::cout, std::endl
 #include <vector>     // std::vector
 
-using namespace plssvm::detail::literals;
+using namespace plssvm::detail::literals;  // NOLINT(google-build-using-namespace): only imports custom user-defined literals into this namespace
 
 //*************************************************************************************************************************************//
 //                                                    triangular data distributions                                                    //

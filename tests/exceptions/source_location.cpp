@@ -21,10 +21,14 @@
 
 #include <cstdint>  // std::uint_least32_t
 
+namespace {
+
 // dummy function to be able to specify the function name
 [[nodiscard]] plssvm::source_location dummy() {
     return plssvm::source_location::current();
 }
+
+}  // namespace
 
 TEST(SourceLocation, DefaultConstruct) {
     const plssvm::source_location loc{};
@@ -41,14 +45,13 @@ TEST(SourceLocation, CurrentLocation) {
 
     EXPECT_EQ(loc.file_name(), __builtin_FILE());
     EXPECT_THAT(loc.function_name(), ::testing::HasSubstr("dummy"));
-    EXPECT_EQ(loc.line(), std::uint_least32_t{ 22 });   // attention: hardcoded line!
+    EXPECT_EQ(loc.line(), std::uint_least32_t{ 28 });   // attention: hardcoded line!
     EXPECT_EQ(loc.column(), std::uint_least32_t{ 0 });  // attention: always 0!
 
     if (plssvm::mpi::is_active()) {
 #if defined(PLSSVM_HAS_MPI_ENABLED)
-        ASSERT_TRUE(loc.world_rank().has_value());
         // since MPI is disabled, the world rank must always be zero
-        EXPECT_EQ(loc.world_rank().value(), 0);
+        EXPECT_OPTIONAL_EQ(loc.world_rank(), 0);
 #else
         EXPECT_FALSE(loc.world_rank().has_value());
 #endif

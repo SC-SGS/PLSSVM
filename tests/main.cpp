@@ -60,9 +60,13 @@ GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(Exception);
     #pragma clang diagnostic pop
 #endif
 
-static void ensure_finalization() {
+namespace {
+
+void ensure_finalization() {
     plssvm::environment::finalize();
 }
+
+}  // namespace
 
 int main(int argc, char **argv) {
     ::testing::InitGoogleTest(&argc, argv);

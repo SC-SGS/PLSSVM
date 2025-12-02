@@ -37,7 +37,7 @@
 #include <utility>     // std::move
 #include <vector>      // std::vector
 
-using namespace plssvm::detail::literals;
+using namespace plssvm::detail::literals;  // NOLINT(google-build-using-namespace): only imports custom user-defined literals into this namespace
 
 template <typename T>
 class TrackingEntry : public ::testing::Test,

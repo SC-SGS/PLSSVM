@@ -51,7 +51,7 @@ class mock_csvm : virtual public plssvm::csvm {
 
   private:
     void fake_functions() const {
-        using namespace plssvm::detail::literals;
+        using namespace plssvm::detail::literals;  // NOLINT(google-build-using-namespace): only imports custom user-defined literals into this namespace
         ON_CALL(*this, get_device_memory()).WillByDefault(::testing::Return(std::vector<plssvm::detail::memory_size>{ 1_GiB, 1_GiB }));
         ON_CALL(*this, get_max_mem_alloc_size()).WillByDefault(::testing::Return(std::vector<plssvm::detail::memory_size>{ 512_MiB, 256_MiB }));
         ON_CALL(*this, get_local_memory()).WillByDefault(::testing::Return(std::vector<std::optional<plssvm::detail::memory_size>>{ 512_MiB, 256_MiB }));

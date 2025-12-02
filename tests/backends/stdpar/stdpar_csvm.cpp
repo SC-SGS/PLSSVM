@@ -81,7 +81,8 @@ INSTANTIATE_TYPED_TEST_SUITE_P(stdparCSVMDeathTest, GenericCSVMSolverDeathTest, 
 INSTANTIATE_TYPED_TEST_SUITE_P(stdparCSVMDeathTest, GenericCSVMKernelFunctionDeathTest, stdpar_kernel_function_type_gtest, naming::test_parameter_to_name);
 INSTANTIATE_TYPED_TEST_SUITE_P(stdparCSVMDeathTest, GenericCSVMSolverKernelFunctionDeathTest, stdpar_solver_and_kernel_function_type_gtest, naming::test_parameter_to_name);
 
-// TODO: better without that much code cuplication
+namespace {
+
 // define the exact functions to be used in the generic header
 template <plssvm::kernel_function_type kernel_function, typename... Args>
 void device_kernel_assembly(plssvm::real_type *kernel_matrix, const plssvm::soa_matrix<plssvm::real_type> &data, const std::size_t device_num_rows, const std::size_t device_row_offset, const std::vector<plssvm::real_type> &q, const plssvm::real_type QA_cost, const plssvm::real_type cost, Args... kernel_function_parameter) {
@@ -225,6 +226,8 @@ void device_kernel_predict(plssvm::aos_matrix<plssvm::real_type> &prediction, co
             break;
     }
 }
+
+}  // namespace
 
 #include "tests/backends/generic_csvm_tests.hpp"  // generic backend C-SVM tests to instantiate
 

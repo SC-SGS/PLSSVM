@@ -270,6 +270,8 @@ TEST(FileReader, SwapMemberFunction) {
     EXPECT_EQ(reader2.buffer(), nullptr);
 }
 
+namespace {
+
 // clang-format off
 const auto & get_file_lines() {
     static const std::array<std::tuple<std::basic_string<char>, char, std::vector<std::basic_string_view<char>>>, 3> lines{
@@ -314,6 +316,8 @@ std::vector<std::string_view> filter_lines(const std::vector<std::string_view> &
     }
     return filtered_lines;
 }
+
+}  // namespace
 
 class FileReaderLines : public ::testing::TestWithParam<std::tuple<std::string, char, std::vector<std::string_view>>> { };
 

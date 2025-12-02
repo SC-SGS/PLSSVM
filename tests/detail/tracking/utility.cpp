@@ -27,7 +27,7 @@ TEST(TrackingUtility, DurationsFromReferenceTime) {
     const std::vector<std::chrono::milliseconds> durations = plssvm::detail::tracking::durations_from_reference_time(time_points, time_points.front());
 
     // check the durations
-    using namespace std::chrono_literals;
+    using namespace std::chrono_literals;  // NOLINT: included via <chrono>
     ASSERT_EQ(durations.size(), 4);
     EXPECT_EQ(durations, (std::vector<std::chrono::milliseconds>{ 0ms, 50ms, 100ms, 150ms }));
 }

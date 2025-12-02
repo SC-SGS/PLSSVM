@@ -27,8 +27,8 @@
     [[nodiscard]] constexpr std::string_view exception_type_name<type>() { return #type; }
 
 namespace util {
-// used that `exception_type_name` doesn't also print plssvm::
-using namespace plssvm;
+
+using namespace plssvm;  // NOLINT(google-build-using-namespace): used that `exception_type_name` doesn't also print plssvm::
 
 /**
  * @brief Tries to convert the given exception to its name as string representation.

@@ -582,7 +582,7 @@ TYPED_TEST(BaseCSVCFit, FitOutOfResources) {
         const mock_csvc csvc{ plssvm::parameter{ plssvm::kernel_type = kernel } };
 
         // override on call
-        using namespace plssvm::detail::literals;
+        using namespace plssvm::detail::literals;  // NOLINT(google-build-using-namespace): only imports custom user-defined literals into this namespace
         ON_CALL(csvc, get_device_memory()).WillByDefault(::testing::Return(std::vector<plssvm::detail::memory_size>{ 512_MiB + 1_KiB, 512_MiB + 1_KiB }));
 
         // clang-format off
@@ -637,7 +637,7 @@ TYPED_TEST(BaseCSVCFit, FitDeviceMemoryTooSmall) {
         const mock_csvc csvc{ plssvm::parameter{ plssvm::kernel_type = kernel } };
 
         // override on call
-        using namespace plssvm::detail::literals;
+        using namespace plssvm::detail::literals;  // NOLINT(google-build-using-namespace): only imports custom user-defined literals into this namespace
         ON_CALL(csvc, get_device_memory()).WillByDefault(::testing::Return(std::vector<plssvm::detail::memory_size>{ 1_KiB, 1_KiB }));
 
         // clang-format off

@@ -245,8 +245,8 @@ TYPED_TEST_P(GenericGPUCSVM, RunWKernel) {
     }
 }
 
-    using namespace plssvm::operators;
 TYPED_TEST_P(GenericGPUCSVM, RunInplaceMatrixAddition) {
+    using namespace plssvm::operators;  // NOLINT(google-build-using-namespace): only imports custom math operations on vectors (and scalars)
     using csvm_test_type = util::test_parameter_type_at_t<0, TypeParam>;
     using mock_csvm_type = typename csvm_test_type::mock_csvm_type;
     using device_ptr_type = typename csvm_test_type::device_ptr_type;
@@ -298,8 +298,8 @@ TYPED_TEST_P(GenericGPUCSVM, RunInplaceMatrixAddition) {
     }
 }
 
-    using namespace plssvm::operators;
 TYPED_TEST_P(GenericGPUCSVM, RunInplaceMatrixScale) {
+    using namespace plssvm::operators;  // NOLINT(google-build-using-namespace): only imports custom math operations on vectors (and scalars)
     using csvm_test_type = util::test_parameter_type_at_t<0, TypeParam>;
     using mock_csvm_type = typename csvm_test_type::mock_csvm_type;
     using device_ptr_type = typename csvm_test_type::device_ptr_type;

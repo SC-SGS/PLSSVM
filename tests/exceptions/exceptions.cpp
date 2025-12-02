@@ -27,11 +27,20 @@
 #include <tuple>        // std::tuple
 #include <vector>       // std::vector
 
+namespace {
+
 // helper function returning an exception used to be able to name the source location function
 template <typename Exception>
 Exception dummy(const std::string &msg) {
     return Exception{ msg };
 }
+
+// helper function returning a cmd_parser_exit exception used to be able to name the source location function
+plssvm::cmd_parser_exit dummy_exit(const int exit_code) {
+    return plssvm::cmd_parser_exit{ exit_code };
+}
+
+}  // namespace
 
 // clang-format off
 // enumerate all custom exception types; ATTENTION: don't forget to also specialize the PLSSVM_CREATE_EXCEPTION_TYPE_NAME macro if a new exception type is added
@@ -92,11 +101,6 @@ TYPED_TEST(Exceptions, ExceptionWhatWithSourceLocation) {
     EXPECT_EQ(what_lines[2], fmt::format("  in file      {}", __builtin_FILE()));
     EXPECT_THAT(std::string{ what_lines[3] }, ::testing::ContainsRegex("  in function  .*dummy.*"));
     EXPECT_THAT(std::string{ what_lines[4] }, ::testing::StartsWith("  @ line       "));  // attention: some line must be given, hardcoded value not feasible
-}
-
-// helper function returning an exception used to be able to name the source location function
-plssvm::cmd_parser_exit dummy_exit(const int exit_code) {
-    return plssvm::cmd_parser_exit{ exit_code };
 }
 
 // check whether throwing exceptions works as intended

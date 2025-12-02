@@ -224,8 +224,8 @@ TYPED_TEST_P(GenericCSVM, GetTargetPlatform) {
     EXPECT_NE(svm.get_target_platform(), plssvm::target_platform::automatic);
 }
 
-    using namespace plssvm::detail::literals;
 TYPED_TEST_P(GenericCSVM, NumAvailableDevices) {
+    using namespace plssvm::detail::literals;  // NOLINT(google-build-using-namespace): only imports custom user-defined literals into this namespace
     using csvm_test_type = util::test_parameter_type_at_t<0, TypeParam>;
     using csvm_type = typename csvm_test_type::csvm_type;
     using mock_csvm_type = typename csvm_test_type::mock_csvm_type;
@@ -241,8 +241,8 @@ TYPED_TEST_P(GenericCSVM, NumAvailableDevices) {
     }
 }
 
-    using namespace plssvm::detail::literals;
 TYPED_TEST_P(GenericCSVM, GetDeviceMemory) {
+    using namespace plssvm::detail::literals;  // NOLINT(google-build-using-namespace): only imports custom user-defined literals into this namespace
     using csvm_test_type = util::test_parameter_type_at_t<0, TypeParam>;
     using mock_csvm_type = typename csvm_test_type::mock_csvm_type;
 
@@ -257,8 +257,8 @@ TYPED_TEST_P(GenericCSVM, GetDeviceMemory) {
     }
 }
 
-    using namespace plssvm::detail::literals;
 TYPED_TEST_P(GenericCSVM, GetMaxMemAllocSize) {
+    using namespace plssvm::detail::literals;  // NOLINT(google-build-using-namespace): only imports custom user-defined literals into this namespace
     using csvm_test_type = util::test_parameter_type_at_t<0, TypeParam>;
     using mock_csvm_type = typename csvm_test_type::mock_csvm_type;
 

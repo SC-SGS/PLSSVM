@@ -20,7 +20,7 @@
 #include <vector>  // std::vector
 
 // make all operator overloads available in all tests
-using namespace plssvm::operators;
+using namespace plssvm::operators;  // NOLINT(google-build-using-namespace): only imports custom math operations on vectors (and scalars)
 
 //*************************************************************************************************************************************//
 //                                                          scalar operations                                                          //

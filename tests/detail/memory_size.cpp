@@ -318,7 +318,7 @@ TEST(MemorySizeLiterals, BaseTenUnsignedLongLong) {
 
 TEST(MemorySizeLiterals, BaseTenLongDouble) {
     // check if literals are correct
-    using namespace plssvm::detail::literals;
+    using namespace plssvm::detail::literals;  // NOLINT(google-build-using-namespace): only imports custom user-defined literals into this namespace
 
     EXPECT_EQ(0.0_B, plssvm::detail::memory_size{ 0ULL });
     EXPECT_EQ(8.0_B, plssvm::detail::memory_size{ 8ULL });
@@ -335,7 +335,7 @@ TEST(MemorySizeLiterals, BaseTenLongDouble) {
 
 TEST(MemorySizeLiterals, BaseTwoUnsignedLongLong) {
     // check if literals are correct
-    using namespace plssvm::detail::literals;
+    using namespace plssvm::detail::literals;  // NOLINT(google-build-using-namespace): only imports custom user-defined literals into this namespace
 
     EXPECT_EQ(1_KB, plssvm::detail::memory_size{ 1000ULL });
     EXPECT_EQ(2_KB, plssvm::detail::memory_size{ 2000ULL });
@@ -350,7 +350,7 @@ TEST(MemorySizeLiterals, BaseTwoUnsignedLongLong) {
 
 TEST(MemorySizeLiterals, BaseTwoLongDouble) {
     // check if literals are correct
-    using namespace plssvm::detail::literals;
+    using namespace plssvm::detail::literals;  // NOLINT(google-build-using-namespace): only imports custom user-defined literals into this namespace
 
     EXPECT_EQ(1.0_KB, plssvm::detail::memory_size{ 1000ULL });
     EXPECT_EQ(0.5_KB, plssvm::detail::memory_size{ 500ULL });

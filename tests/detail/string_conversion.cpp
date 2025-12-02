@@ -27,6 +27,8 @@
 #include <tuple>        // std::tuple, std::ignore
 #include <vector>       // std::vector
 
+namespace {
+
 /**
  * @brief Checks the plssvm::detail::convert_to function.
  * @tparam T the type to convert the input values to
@@ -43,8 +45,7 @@ void check_convert_to(const std::vector<std::string_view> &input, const std::vec
     }
 }
 
-TEST(StringConversion, string_conversion) {
-    using namespace plssvm::detail;
+}  // namespace
 
 TEST(StringConversion, StringConversion) {
     const std::vector<std::string_view> input = { "-3", "-1.5", "0.0", "1.5", "3", "   5", "  6 ", "7  " };
