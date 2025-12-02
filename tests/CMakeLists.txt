@@ -215,6 +215,10 @@ set(PLSSVM_BASE_TEST_SOURCES
     ${CMAKE_CURRENT_LIST_DIR}/detail/utility.cpp
     ${CMAKE_CURRENT_LIST_DIR}/exceptions/exceptions.cpp
     ${CMAKE_CURRENT_LIST_DIR}/exceptions/source_location.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/matrix/constructors.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/matrix/layout_type.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/matrix/member_and_free_functions.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/matrix/operators.cpp
     ${CMAKE_CURRENT_LIST_DIR}/model/classification_model.cpp
     ${CMAKE_CURRENT_LIST_DIR}/model/regression_model.cpp
     ${CMAKE_CURRENT_LIST_DIR}/mpi/detail/information.cpp
@@ -238,7 +242,6 @@ set(PLSSVM_BASE_TEST_SOURCES
     ${CMAKE_CURRENT_LIST_DIR}/gamma.cpp
     ${CMAKE_CURRENT_LIST_DIR}/kernel_function_types.cpp
     ${CMAKE_CURRENT_LIST_DIR}/kernel_functions.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/matrix.cpp
     ${CMAKE_CURRENT_LIST_DIR}/parameter.cpp
     ${CMAKE_CURRENT_LIST_DIR}/regression_report.cpp
     ${CMAKE_CURRENT_LIST_DIR}/shape.cpp
