@@ -27,7 +27,7 @@ namespace plssvm::cuda::detail {
  * @return the array of the newly specified dimensions (`[[nodiscard]]`)
  */
 template <std::size_t SIZE, typename T, std::size_t N, std::size_t M>
-[[nodiscard]] inline __device__ auto *reinterpret_array(T (&input)[N][M]) noexcept {
+inline __device__ auto *reinterpret_array(T (&input)[N][M]) noexcept {
     return reinterpret_cast<T(*)[SIZE]>(input);  // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast): reinterpret_cast necessary
 }
 
@@ -40,7 +40,7 @@ template <std::size_t SIZE, typename T, std::size_t N, std::size_t M>
  * @return the array of the newly specified dimensions (`[[nodiscard]]`)
  */
 template <std::size_t SIZE, typename T, std::size_t N>
-[[nodiscard]] inline __device__ auto *reinterpret_array(T (&input)[N]) noexcept {
+inline __device__ auto *reinterpret_array(T (&input)[N]) noexcept {
     return reinterpret_cast<T(*)[SIZE]>(input);  // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast): reinterpret_cast necessary
 }
 

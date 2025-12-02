@@ -404,7 +404,7 @@ gpu_device_ptr<T, queue_t, device_pointer_t, derived_gpu_device_ptr>::gpu_device
     data_{ std::exchange(other.data_, device_pointer_type{}) } { }
 
 template <typename T, typename queue_t, typename device_pointer_t, typename derived_gpu_device_ptr>
-gpu_device_ptr<T, queue_t, device_pointer_t, derived_gpu_device_ptr>::gpu_device_ptr & gpu_device_ptr<T, queue_t, device_pointer_t, derived_gpu_device_ptr>::operator=(gpu_device_ptr &&other) noexcept {
+typename gpu_device_ptr<T, queue_t, device_pointer_t, derived_gpu_device_ptr>::gpu_device_ptr & gpu_device_ptr<T, queue_t, device_pointer_t, derived_gpu_device_ptr>::operator=(gpu_device_ptr &&other) noexcept {
     // guard against self-assignment
     if (this != std::addressof(other)) {
         queue_ = std::exchange(other.queue_, queue_type{});

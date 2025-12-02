@@ -625,7 +625,7 @@ void matrix<T, layout_>::restore_padding() noexcept {
 }
 
 template <typename T, layout_type layout_>
-matrix<T, layout_>::value_type matrix<T, layout_>::operator()(const size_type row, const size_type col) const {
+typename matrix<T, layout_>::value_type matrix<T, layout_>::operator()(const size_type row, const size_type col) const {
     PLSSVM_ASSERT(row < this->num_rows_padded(), fmt::format("The current row ({}) must be smaller than the number of padded rows ({})!", row, this->num_rows_padded()));
     PLSSVM_ASSERT(col < this->num_cols_padded(), fmt::format("The current column ({}) must be smaller than the number of padded columns ({})!", col, this->num_cols_padded()));
     if constexpr (layout_ == layout_type::aos) {
@@ -639,7 +639,7 @@ matrix<T, layout_>::value_type matrix<T, layout_>::operator()(const size_type ro
 }
 
 template <typename T, layout_type layout_>
-matrix<T, layout_>::reference matrix<T, layout_>::operator()(const size_type row, const size_type col) {
+typename matrix<T, layout_>::reference matrix<T, layout_>::operator()(const size_type row, const size_type col) {
     PLSSVM_ASSERT(row < this->num_rows_padded(), fmt::format("The current row ({}) must be smaller than the number of padded rows ({})!", row, this->num_rows_padded()));
     PLSSVM_ASSERT(col < this->num_cols_padded(), fmt::format("The current column ({}) must be smaller than the number of padded columns ({})!", col, this->num_cols_padded()));
     if constexpr (layout_ == layout_type::aos) {
@@ -653,7 +653,7 @@ matrix<T, layout_>::reference matrix<T, layout_>::operator()(const size_type row
 }
 
 template <typename T, layout_type layout_>
-matrix<T, layout_>::value_type matrix<T, layout_>::at(const size_type row, const size_type col) const {
+typename matrix<T, layout_>::value_type matrix<T, layout_>::at(const size_type row, const size_type col) const {
     if (row >= this->num_rows_padded()) {
         throw matrix_exception{ fmt::format("The current row ({}) must be smaller than the number of rows including padding ({} + {})!", row, this->num_rows(), padding_.x) };
     }
@@ -677,7 +677,7 @@ matrix<T, layout_>::value_type matrix<T, layout_>::at(const size_type row, const
 }
 
 template <typename T, layout_type layout_>
-matrix<T, layout_>::reference matrix<T, layout_>::at(const size_type row, const size_type col) {
+typename matrix<T, layout_>::reference matrix<T, layout_>::at(const size_type row, const size_type col) {
     if (row >= this->num_rows_padded()) {
         throw matrix_exception{ fmt::format("The current row ({}) must be smaller than the number of rows including padding ({} + {})!", row, this->num_rows(), padding_.x) };
     }
@@ -701,19 +701,19 @@ matrix<T, layout_>::reference matrix<T, layout_>::at(const size_type row, const 
 }
 
 template <typename T, layout_type layout_>
-matrix<T, layout_>::value_type matrix<T, layout_>::operator[](const size_type idx) const {
+typename matrix<T, layout_>::value_type matrix<T, layout_>::operator[](const size_type idx) const {
     PLSSVM_ASSERT(idx < this->size_padded(), fmt::format("The current index ({}) must be smaller than the total number of matrix entries ({})!", idx, this->size_padded()));
     return data_[idx];
 }
 
 template <typename T, layout_type layout_>
-matrix<T, layout_>::reference matrix<T, layout_>::operator[](const size_type idx) {
+typename matrix<T, layout_>::reference matrix<T, layout_>::operator[](const size_type idx) {
     PLSSVM_ASSERT(idx < this->size_padded(), fmt::format("The current index ({}) must be smaller than the total number of matrix entries ({})!", idx, this->size_padded()));
     return data_[idx];
 }
 
 template <typename T, layout_type layout_>
-matrix<T, layout_>::value_type matrix<T, layout_>::at(const size_type idx) const {
+typename matrix<T, layout_>::value_type matrix<T, layout_>::at(const size_type idx) const {
     if (idx >= this->size_padded()) {
         throw matrix_exception{ fmt::format("The current index ({}) must be smaller than the total number of matrix entries ({})!", idx, this->size_padded()) };
     }
@@ -721,7 +721,7 @@ matrix<T, layout_>::value_type matrix<T, layout_>::at(const size_type idx) const
 }
 
 template <typename T, layout_type layout_>
-matrix<T, layout_>::reference matrix<T, layout_>::at(const size_type idx) {
+typename matrix<T, layout_>::reference matrix<T, layout_>::at(const size_type idx) {
     if (idx >= this->size_padded()) {
         throw matrix_exception{ fmt::format("The current index ({}) must be smaller than the total number of matrix entries ({})!", idx, this->size_padded()) };
     }
