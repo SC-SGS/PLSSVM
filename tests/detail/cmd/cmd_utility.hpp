@@ -9,8 +9,8 @@
  * @brief Utility functions and classes (fixtures) for testing the parameter_* classes' functionality.
  */
 
-#ifndef PLSSVM_TESTS_DETAIL_CMD_UTILITY_HPP_
-#define PLSSVM_TESTS_DETAIL_CMD_UTILITY_HPP_
+#ifndef PLSSVM_TESTS_DETAIL_CMD_CMD_UTILITY_HPP_
+#define PLSSVM_TESTS_DETAIL_CMD_CMD_UTILITY_HPP_
 #pragma once
 
 #include "plssvm/mpi/communicator.hpp"  // plssvm::mpi::communicator
@@ -89,4 +89,4 @@ class ParameterBase : public ::testing::Test,
 
 }  // namespace util
 
-#endif  // PLSSVM_TESTS_DETAIL_CMD_UTILITY_HPP_
+#endif  // PLSSVM_TESTS_DETAIL_CMD_CMD_UTILITY_HPP_
