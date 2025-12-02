@@ -23,7 +23,7 @@
 //                                                              dim_type                                                               //
 //*************************************************************************************************************************************//
 
-TEST(DimType, default_construct) {
+TEST(DimType, DefaultConstruct) {
     // a default constructed dim_type should be all ones
     constexpr plssvm::detail::dim_type dim{};
 
@@ -32,7 +32,7 @@ TEST(DimType, default_construct) {
     EXPECT_EQ(dim.z, 1ull);
 }
 
-TEST(DimType, one_argument) {
+TEST(DimType, OneArgument) {
     // a default constructed dim_type should be all ones
     constexpr plssvm::detail::dim_type dim{ 64ull };
 
@@ -41,7 +41,7 @@ TEST(DimType, one_argument) {
     EXPECT_EQ(dim.z, 1ull);
 }
 
-TEST(DimType, two_arguments) {
+TEST(DimType, TwoArguments) {
     // a default constructed dim_type should be all ones
     constexpr plssvm::detail::dim_type dim{ 64ull, 32ull };
 
@@ -50,7 +50,7 @@ TEST(DimType, two_arguments) {
     EXPECT_EQ(dim.z, 1ull);
 }
 
-TEST(DimType, three_arguments) {
+TEST(DimType, ThreeArguments) {
     // a default constructed dim_type should be all ones
     constexpr plssvm::detail::dim_type dim{ 64ull, 32ull, 16ull };
 
@@ -59,7 +59,7 @@ TEST(DimType, three_arguments) {
     EXPECT_EQ(dim.z, 16ull);
 }
 
-TEST(DimType, swap_member_function) {
+TEST(DimType, SwapMemberFunction) {
     plssvm::detail::dim_type dim1{ 64ull };
     plssvm::detail::dim_type dim2{ 32ull, 16ull };
 
@@ -76,7 +76,7 @@ TEST(DimType, swap_member_function) {
     EXPECT_EQ(dim2.z, 1ull);
 }
 
-TEST(DimType, swap_free_function) {
+TEST(DimType, SwapFreeFunction) {
     plssvm::detail::dim_type dim1{ 64ull };
     plssvm::detail::dim_type dim2{ 32ull, 16ull };
 
@@ -94,7 +94,7 @@ TEST(DimType, swap_free_function) {
     EXPECT_EQ(dim2.z, 1ull);
 }
 
-TEST(DimType, equality) {
+TEST(DimType, Equality) {
     // create dim types
     constexpr plssvm::detail::dim_type dim_1{};
     constexpr plssvm::detail::dim_type dim_2{ 64ull };
@@ -117,7 +117,7 @@ TEST(DimType, equality) {
     EXPECT_FALSE(dim_4 == dim_7);
 }
 
-TEST(DimType, inequality) {
+TEST(DimType, Inequality) {
     // create dim types
     constexpr plssvm::detail::dim_type dim_1{};
     constexpr plssvm::detail::dim_type dim_2{ 64ull };
@@ -140,7 +140,7 @@ TEST(DimType, inequality) {
     EXPECT_TRUE(dim_4 != dim_7);
 }
 
-TEST(DimType, to_string) {
+TEST(DimType, ToString) {
     constexpr plssvm::detail::dim_type dim{ 64ull, 32ull, 16ull };
 
     // convert it to a string
@@ -154,7 +154,7 @@ TEST(DimType, to_string) {
 //                                                           execution_range                                                           //
 //*************************************************************************************************************************************//
 
-TEST(ExecutionRange, construct_single_grid) {
+TEST(ExecutionRange, ConstructSingleGrid) {
     // create execution range
     const plssvm::detail::execution_range exec{ plssvm::detail::dim_type{ 16ull, 16ull, 2ull }, 1024ull, plssvm::detail::dim_type{ 64ull, 64ull, 64ull }, plssvm::detail::dim_type{ 1024ull, 1024ull, 1024ull } };
 
@@ -167,7 +167,7 @@ TEST(ExecutionRange, construct_single_grid) {
     EXPECT_EQ(exec.grids.front().second, (plssvm::detail::dim_type{ 0ull, 0ull, 0ull }));
 }
 
-TEST(ExecutionRange, construct_multiple_grids) {
+TEST(ExecutionRange, ConstructMultipleGrids) {
     // create execution range
     const plssvm::detail::execution_range exec{ plssvm::detail::dim_type{ 16ull, 16ull, 4ull }, 1024ull, plssvm::detail::dim_type{ 128ull, 127ull, 126ull }, plssvm::detail::dim_type{ 64ull, 64ull, 64ull } };
 
@@ -197,28 +197,28 @@ TEST(ExecutionRange, construct_multiple_grids) {
     EXPECT_EQ(exec.grids[7].second, (plssvm::detail::dim_type{ 64ull, 64ull, 64ull }));
 }
 
-TEST(ExecutionRange, construct_block_zero_threads) {
+TEST(ExecutionRange, ConstructBlockZeroThreads) {
     // at least one thread must be present!
     EXPECT_THROW_WHAT((plssvm::detail::execution_range{ plssvm::detail::dim_type{ 0ull, 0ull, 0ull }, 16ull, plssvm::detail::dim_type{ 64ull, 64ull, 64ull }, plssvm::detail::dim_type{ 1024ull, 1024ull, 1024ull } }),
                       plssvm::kernel_launch_resources,
                       "At least one thread must be given per block! Maybe one dimension is zero?");
 }
 
-TEST(ExecutionRange, construct_block_zero_threads_in_single_dimension) {
+TEST(ExecutionRange, ConstructBlockZeroThreadsInSingleDimension) {
     // EACH dimension must at least consist of a single thread!
     EXPECT_THROW_WHAT((plssvm::detail::execution_range{ plssvm::detail::dim_type{ 4ull, 4ull, 0ull }, 16ull, plssvm::detail::dim_type{ 64ull, 64ull, 64ull }, plssvm::detail::dim_type{ 1024ull, 1024ull, 1024ull } }),
                       plssvm::kernel_launch_resources,
                       "At least one thread must be given per block! Maybe one dimension is zero?");
 }
 
-TEST(ExecutionRange, construct_block_too_many_threads) {
+TEST(ExecutionRange, ConstructBlockTooManyThreads) {
     // the product of the block dimensions may not exceed to total number of threads allowed in a block
     EXPECT_THROW_WHAT((plssvm::detail::execution_range{ plssvm::detail::dim_type{ 16ull, 16ull, 4ull }, 16ull, plssvm::detail::dim_type{ 64ull, 64ull, 64ull }, plssvm::detail::dim_type{ 1024ull, 1024ull, 1024ull } }),
                       plssvm::kernel_launch_resources,
                       "Not enough work-items allowed for a work-groups of size 16x16x4 (#threads: 1024; max allowed: 16)! Try reducing THREAD_BLOCK_SIZE.");
 }
 
-TEST(ExecutionRange, swap_member_function) {
+TEST(ExecutionRange, SwapMemberFunction) {
     plssvm::detail::execution_range exec1{ plssvm::detail::dim_type{ 16ull, 16ull, 4ull }, 1024ull, plssvm::detail::dim_type{ 64ull, 64ull, 64ull }, plssvm::detail::dim_type{ 1024ull, 1024ull, 1024ull } };
     plssvm::detail::execution_range exec2{ plssvm::detail::dim_type{ 4ull, 4ull, 4ull }, 1024ull, plssvm::detail::dim_type{ 128ull, 128ull, 128ull }, plssvm::detail::dim_type{ 64ull, 64ull, 64ull } };
 
@@ -234,7 +234,7 @@ TEST(ExecutionRange, swap_member_function) {
     EXPECT_EQ(exec2.grids.front().first, (plssvm::detail::dim_type{ 64ull, 64ull, 64ull }));
 }
 
-TEST(ExecutionRange, swap_free_function) {
+TEST(ExecutionRange, SwapFreeFunction) {
     plssvm::detail::execution_range exec1{ plssvm::detail::dim_type{ 16ull, 16ull, 4ull }, 1024ull, plssvm::detail::dim_type{ 64ull, 64ull, 64ull }, plssvm::detail::dim_type{ 1024ull, 1024ull, 1024ull } };
     plssvm::detail::execution_range exec2{ plssvm::detail::dim_type{ 4ull, 4ull, 4ull }, 1024ull, plssvm::detail::dim_type{ 128ull, 128ull, 128ull }, plssvm::detail::dim_type{ 64ull, 64ull, 64ull } };
 
@@ -251,7 +251,7 @@ TEST(ExecutionRange, swap_free_function) {
     EXPECT_EQ(exec2.grids.front().first, (plssvm::detail::dim_type{ 64ull, 64ull, 64ull }));
 }
 
-TEST(ExecutionRange, equality) {
+TEST(ExecutionRange, Equality) {
     // create execution ranges
     const plssvm::detail::execution_range exec1{ plssvm::detail::dim_type{ 16ull, 16ull }, 1024ull, plssvm::detail::dim_type{ 64ull, 64ull }, plssvm::detail::dim_type{ 1024ull, 1024ull } };
     const plssvm::detail::execution_range exec2{ plssvm::detail::dim_type{ 16ull, 16ull }, 1024ull, plssvm::detail::dim_type{ 64ull, 64ull }, plssvm::detail::dim_type{ 64ull, 64ull } };
@@ -267,7 +267,7 @@ TEST(ExecutionRange, equality) {
     EXPECT_TRUE(exec4 == exec4);
 }
 
-TEST(ExecutionRange, inequality) {
+TEST(ExecutionRange, Inequality) {
     // create execution ranges
     const plssvm::detail::execution_range exec1{ plssvm::detail::dim_type{ 16ull, 16ull }, 1024ull, plssvm::detail::dim_type{ 64ull, 64ull }, plssvm::detail::dim_type{ 1024ull, 1024ull } };
     const plssvm::detail::execution_range exec2{ plssvm::detail::dim_type{ 16ull, 16ull }, 1024ull, plssvm::detail::dim_type{ 64ull, 64ull }, plssvm::detail::dim_type{ 64ull, 64ull } };
@@ -283,7 +283,7 @@ TEST(ExecutionRange, inequality) {
     EXPECT_FALSE(exec4 != exec4);
 }
 
-TEST(ExecutionRange, to_string_single_grid) {
+TEST(ExecutionRange, ToStringSingleGrid) {
     const plssvm::detail::execution_range exec{ plssvm::detail::dim_type{ 16ull, 16ull }, 1024ull, plssvm::detail::dim_type{ 64ull, 64ull }, plssvm::detail::dim_type{ 1024ull, 1024ull } };
 
     // convert it to a string
@@ -293,7 +293,7 @@ TEST(ExecutionRange, to_string_single_grid) {
     EXPECT_EQ(str, std::string{ "grid: [64, 64, 1]; block: [16, 16, 1]" });
 }
 
-TEST(ExecutionRange, to_string_multiple_grids) {
+TEST(ExecutionRange, ToStringMultipleGrids) {
     const plssvm::detail::execution_range exec{ plssvm::detail::dim_type{ 32ull, 32ull }, 1024ull, plssvm::detail::dim_type{ 128ull, 128ull }, plssvm::detail::dim_type{ 64ull, 64ull } };
 
     // convert it to a string

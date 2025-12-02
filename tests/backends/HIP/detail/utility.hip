@@ -26,7 +26,7 @@
 #include <regex>   // std::regex, std::regex::extended, std::regex_match
 #include <string>  // std::string
 
-TEST(HIPUtility, error_check) {
+TEST(HIPUtility, ErrorCheck) {
     // hipSuccess must not throw
     EXPECT_NO_THROW(PLSSVM_HIP_ERROR_CHECK(hipSuccess));
 
@@ -42,7 +42,7 @@ TEST(HIPUtility, error_check) {
 #endif
 }
 
-TEST(HIPUtility, dim_type_to_native) {
+TEST(HIPUtility, DimTypeToNative) {
     // create a dim_type
     constexpr plssvm::detail::dim_type dim{ 128ull, 64ull, 32ull };
 
@@ -55,26 +55,26 @@ TEST(HIPUtility, dim_type_to_native) {
     EXPECT_EQ(native_dim.z, dim.z);
 }
 
-TEST(HIPUtility, get_device_count) {
+TEST(HIPUtility, GetDeviceCount) {
     // must not return a negative number
     EXPECT_GE(plssvm::hip::detail::get_device_count(), 0);
 }
 
-TEST(HIPUtility, set_device) {
+TEST(HIPUtility, SetDevice) {
     // exception must be thrown if an illegal device ID has been provided
     EXPECT_THROW_WHAT(plssvm::hip::detail::set_device(plssvm::hip::detail::get_device_count()),
                       plssvm::hip::backend_exception,
                       fmt::format("Illegal device ID! Must be in range: [0, {}) but is {}!", plssvm::hip::detail::get_device_count(), plssvm::hip::detail::get_device_count()));
 }
 
-TEST(HIPUtility, device_synchronize) {
+TEST(HIPUtility, DeviceSynchronize) {
     // exception must be thrown if an illegal device ID has been provided
     EXPECT_THROW_WHAT(plssvm::hip::detail::device_synchronize(plssvm::hip::detail::get_device_count()),
                       plssvm::hip::backend_exception,
                       fmt::format("Illegal device ID! Must be in range: [0, {}) but is {}!", plssvm::hip::detail::get_device_count(), plssvm::hip::detail::get_device_count()));
 }
 
-TEST(HIPUtility, get_device_name) {
+TEST(HIPUtility, GetDeviceName) {
     const std::string device_name = plssvm::hip::detail::get_device_name(0);
     // must not be empty
     EXPECT_FALSE(device_name.empty());
@@ -83,12 +83,12 @@ TEST(HIPUtility, get_device_name) {
     EXPECT_TRUE(std::regex_match(device_name, reg));
 }
 
-TEST(HIPUtility, get_runtime_version) {
+TEST(HIPUtility, GetRuntimeVersion) {
     const std::regex reg{ "[0-9]+\\.[0-9]+", std::regex::extended };
     EXPECT_TRUE(std::regex_match(plssvm::hip::detail::get_runtime_version(), reg));
 }
 
-TEST(HIPUtility, get_runtime) {
+TEST(HIPUtility, GetRuntime) {
     const std::regex reg{ "HIP|CUDA", std::regex::extended };
     EXPECT_TRUE(std::regex_match(plssvm::hip::detail::get_runtime(), reg));
 }

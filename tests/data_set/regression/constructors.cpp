@@ -59,7 +59,7 @@ class RegressionDataSetConstructors : public ::testing::Test,
 
 TYPED_TEST_SUITE(RegressionDataSetConstructors, util::regression_label_type_gtest, naming::test_parameter_to_name);
 
-TYPED_TEST(RegressionDataSetConstructors, typedefs) {
+TYPED_TEST(RegressionDataSetConstructors, Typedefs) {
     using label_type = typename TestFixture::fixture_label_type;
 
     // create a data_set using an existing LIBSVM data set file
@@ -74,7 +74,7 @@ TYPED_TEST(RegressionDataSetConstructors, typedefs) {
 //                                                         construct from file                                                         //
 //*************************************************************************************************************************************//
 
-TYPED_TEST(RegressionDataSetConstructors, construct_arff_from_file_with_label) {
+TYPED_TEST(RegressionDataSetConstructors, ConstructARFFFromFileWithLabel) {
     using label_type = typename TestFixture::fixture_label_type;
 
     // create data set
@@ -95,7 +95,7 @@ TYPED_TEST(RegressionDataSetConstructors, construct_arff_from_file_with_label) {
     EXPECT_FALSE(data.scaling_factors().has_value());
 }
 
-TYPED_TEST(RegressionDataSetConstructors, construct_arff_from_file_without_label) {
+TYPED_TEST(RegressionDataSetConstructors, ConstructARFFFromFileWithoutLabel) {
     using label_type = typename TestFixture::fixture_label_type;
 
     // create data set
@@ -118,7 +118,7 @@ TYPED_TEST(RegressionDataSetConstructors, construct_arff_from_file_without_label
     EXPECT_FALSE(data.scaling_factors().has_value());
 }
 
-TYPED_TEST(RegressionDataSetConstructors, construct_libsvm_from_file_with_label) {
+TYPED_TEST(RegressionDataSetConstructors, ConstructLIBSVMFromFileWithLabel) {
     using label_type = typename TestFixture::fixture_label_type;
 
     // create data set
@@ -139,7 +139,7 @@ TYPED_TEST(RegressionDataSetConstructors, construct_libsvm_from_file_with_label)
     EXPECT_FALSE(data.scaling_factors().has_value());
 }
 
-TYPED_TEST(RegressionDataSetConstructors, construct_libsvm_from_file_without_label) {
+TYPED_TEST(RegressionDataSetConstructors, ConstructLIBSVMFromFileWithoutLabel) {
     using label_type = typename TestFixture::fixture_label_type;
 
     // create data set
@@ -162,7 +162,7 @@ TYPED_TEST(RegressionDataSetConstructors, construct_libsvm_from_file_without_lab
     EXPECT_FALSE(data.scaling_factors().has_value());
 }
 
-TYPED_TEST(RegressionDataSetConstructors, construct_explicit_arff_from_file) {
+TYPED_TEST(RegressionDataSetConstructors, ConstructExplicitARFFFromFile) {
     using label_type = typename TestFixture::fixture_label_type;
 
     // create data set
@@ -183,7 +183,7 @@ TYPED_TEST(RegressionDataSetConstructors, construct_explicit_arff_from_file) {
     EXPECT_FALSE(data.scaling_factors().has_value());
 }
 
-TYPED_TEST(RegressionDataSetConstructors, construct_explicit_libsvm_from_file) {
+TYPED_TEST(RegressionDataSetConstructors, ConstructExplicitLIBSVMFromFile) {
     using label_type = typename TestFixture::fixture_label_type;
 
     // create data set
@@ -204,7 +204,7 @@ TYPED_TEST(RegressionDataSetConstructors, construct_explicit_libsvm_from_file) {
     EXPECT_FALSE(data.scaling_factors().has_value());
 }
 
-TYPED_TEST(RegressionDataSetConstructors, construct_scaled_arff_from_file) {
+TYPED_TEST(RegressionDataSetConstructors, ConstructScaledARFFFromFile) {
     using label_type = typename TestFixture::fixture_label_type;
 
     // create data set
@@ -236,7 +236,7 @@ TYPED_TEST(RegressionDataSetConstructors, construct_scaled_arff_from_file) {
 
 #if defined(PLSSVM_HAS_MPI_ENABLED)
 
-TYPED_TEST(RegressionDataSetConstructors, construct_scaled_arff_from_file_comm_mismatch) {
+TYPED_TEST(RegressionDataSetConstructors, ConstructScaledARFFFromFileCommMismatch) {
     using label_type = typename TestFixture::fixture_label_type;
 
     // create a duplicated communicator
@@ -254,7 +254,7 @@ TYPED_TEST(RegressionDataSetConstructors, construct_scaled_arff_from_file_comm_m
 
 #endif
 
-TYPED_TEST(RegressionDataSetConstructors, construct_scaled_libsvm_from_file) {
+TYPED_TEST(RegressionDataSetConstructors, ConstructScaledLIBSVMFromFile) {
     using label_type = typename TestFixture::fixture_label_type;
 
     // create data set
@@ -286,7 +286,7 @@ TYPED_TEST(RegressionDataSetConstructors, construct_scaled_libsvm_from_file) {
 
 #if defined(PLSSVM_HAS_MPI_ENABLED)
 
-TYPED_TEST(RegressionDataSetConstructors, construct_scaled_libsvm_from_file_comm_mismatch) {
+TYPED_TEST(RegressionDataSetConstructors, ConstructScaledLIBSVMFromFileCommMismatch) {
     using label_type = typename TestFixture::fixture_label_type;
 
     // create a duplicated communicator
@@ -304,7 +304,7 @@ TYPED_TEST(RegressionDataSetConstructors, construct_scaled_libsvm_from_file_comm
 
 #endif
 
-TYPED_TEST(RegressionDataSetConstructors, construct_scaled_explicit_arff_from_file) {
+TYPED_TEST(RegressionDataSetConstructors, ConstructScaledExplicitARFFFromFile) {
     using label_type = typename TestFixture::fixture_label_type;
 
     // create data set
@@ -336,7 +336,7 @@ TYPED_TEST(RegressionDataSetConstructors, construct_scaled_explicit_arff_from_fi
 
 #if defined(PLSSVM_HAS_MPI_ENABLED)
 
-TYPED_TEST(RegressionDataSetConstructors, construct_scaled_explicit_arff_from_file_comm_mismatch) {
+TYPED_TEST(RegressionDataSetConstructors, ConstructScaledExplicitARFFFromFileCommMismatch) {
     using label_type = typename TestFixture::fixture_label_type;
 
     // create a duplicated communicator
@@ -354,7 +354,7 @@ TYPED_TEST(RegressionDataSetConstructors, construct_scaled_explicit_arff_from_fi
 
 #endif
 
-TYPED_TEST(RegressionDataSetConstructors, construct_scaled_explicit_libsvm_from_file) {
+TYPED_TEST(RegressionDataSetConstructors, ConstructScaledExplicitLIBSVMFromFile) {
     using label_type = typename TestFixture::fixture_label_type;
 
     // create data set
@@ -386,7 +386,7 @@ TYPED_TEST(RegressionDataSetConstructors, construct_scaled_explicit_libsvm_from_
 
 #if defined(PLSSVM_HAS_MPI_ENABLED)
 
-TYPED_TEST(RegressionDataSetConstructors, construct_scaled_explicit_libsvm_from_file_comm_mismatch) {
+TYPED_TEST(RegressionDataSetConstructors, ConstructScaledExplicitLIBSVMFromFileCommMismatch) {
     using label_type = typename TestFixture::fixture_label_type;
 
     // create a duplicated communicator
@@ -408,7 +408,7 @@ TYPED_TEST(RegressionDataSetConstructors, construct_scaled_explicit_libsvm_from_
 //                                                      construct from 2D vector                                                       //
 //*************************************************************************************************************************************//
 
-TYPED_TEST(RegressionDataSetConstructors, construct_from_vector_without_label) {
+TYPED_TEST(RegressionDataSetConstructors, ConstructFromVectorWithoutLabel) {
     using label_type = typename TestFixture::fixture_label_type;
 
     // create data points
@@ -429,7 +429,7 @@ TYPED_TEST(RegressionDataSetConstructors, construct_from_vector_without_label) {
     EXPECT_FALSE(data.scaling_factors().has_value());
 }
 
-TYPED_TEST(RegressionDataSetConstructors, construct_from_empty_vector) {
+TYPED_TEST(RegressionDataSetConstructors, ConstructFromEmptyVector) {
     using label_type = typename TestFixture::fixture_label_type;
 
     // creating a data set from an empty vector is illegal
@@ -438,7 +438,7 @@ TYPED_TEST(RegressionDataSetConstructors, construct_from_empty_vector) {
                       "Data vector is empty!");
 }
 
-TYPED_TEST(RegressionDataSetConstructors, construct_from_vector_with_differing_num_features) {
+TYPED_TEST(RegressionDataSetConstructors, ConstructFromVectorWithDifferentNumFeatures) {
     using label_type = typename TestFixture::fixture_label_type;
 
     // create data points
@@ -453,7 +453,7 @@ TYPED_TEST(RegressionDataSetConstructors, construct_from_vector_with_differing_n
                       "Each row in the matrix must contain the same amount of columns!");
 }
 
-TYPED_TEST(RegressionDataSetConstructors, construct_from_vector_with_no_features) {
+TYPED_TEST(RegressionDataSetConstructors, ConstructFromVectorWithNoFeatures) {
     using label_type = typename TestFixture::fixture_label_type;
 
     // create data points
@@ -465,7 +465,7 @@ TYPED_TEST(RegressionDataSetConstructors, construct_from_vector_with_no_features
                       "The data to create the matrix must at least have one column!");
 }
 
-TYPED_TEST(RegressionDataSetConstructors, construct_from_vector_with_label) {
+TYPED_TEST(RegressionDataSetConstructors, ConstructFromVectorWithLabel) {
     using label_type = typename TestFixture::fixture_label_type;
 
     // create data points and labels
@@ -488,7 +488,7 @@ TYPED_TEST(RegressionDataSetConstructors, construct_from_vector_with_label) {
     EXPECT_FALSE(data.scaling_factors().has_value());
 }
 
-TYPED_TEST(RegressionDataSetConstructors, construct_from_empty_vector_and_labels) {
+TYPED_TEST(RegressionDataSetConstructors, ConstructFromEmptyVectorAndLabels) {
     using label_type = typename TestFixture::fixture_label_type;
 
     const std::vector<label_type> labels = util::get_correct_data_file_labels<label_type>();
@@ -499,7 +499,7 @@ TYPED_TEST(RegressionDataSetConstructors, construct_from_empty_vector_and_labels
                       "Data vector is empty!");
 }
 
-TYPED_TEST(RegressionDataSetConstructors, construct_from_vector_mismatching_num_data_points_and_labels) {
+TYPED_TEST(RegressionDataSetConstructors, ConstructFromVectorMismatchingNumDataPointsAndLabels) {
     using label_type = typename TestFixture::fixture_label_type;
 
     // create data points and labels
@@ -513,7 +513,7 @@ TYPED_TEST(RegressionDataSetConstructors, construct_from_vector_mismatching_num_
                       fmt::format("Number of labels ({}) must match the number of data points ({})!", labels.size(), correct_data_points.num_rows()));
 }
 
-TYPED_TEST(RegressionDataSetConstructors, construct_scaled_from_vector_without_label) {
+TYPED_TEST(RegressionDataSetConstructors, ConstructScaledFromVectorWithoutLabel) {
     using label_type = typename TestFixture::fixture_label_type;
 
     // create data points
@@ -545,7 +545,7 @@ TYPED_TEST(RegressionDataSetConstructors, construct_scaled_from_vector_without_l
 
 #if defined(PLSSVM_HAS_MPI_ENABLED)
 
-TYPED_TEST(RegressionDataSetConstructors, construct_scaled_from_vector_without_label_comm_mismatch) {
+TYPED_TEST(RegressionDataSetConstructors, ConstructScaledFromVectorWithoutLabelCommMismatch) {
     using label_type = typename TestFixture::fixture_label_type;
 
     // create a duplicated communicator
@@ -564,7 +564,7 @@ TYPED_TEST(RegressionDataSetConstructors, construct_scaled_from_vector_without_l
 
 #endif
 
-TYPED_TEST(RegressionDataSetConstructors, construct_scaled_from_vector_with_label) {
+TYPED_TEST(RegressionDataSetConstructors, ConstructScaledFromVectorWithLabel) {
     using label_type = typename TestFixture::fixture_label_type;
 
     // create data points and labels
@@ -598,7 +598,7 @@ TYPED_TEST(RegressionDataSetConstructors, construct_scaled_from_vector_with_labe
 
 #if defined(PLSSVM_HAS_MPI_ENABLED)
 
-TYPED_TEST(RegressionDataSetConstructors, construct_scaled_from_vector_with_label_comm_mismatch) {
+TYPED_TEST(RegressionDataSetConstructors, ConstructScaledFromVectorWithLabelCommMismatch) {
     using label_type = typename TestFixture::fixture_label_type;
 
     // create a duplicated communicator
@@ -631,7 +631,7 @@ class RegressionDataSetMatrixConstructors : public RegressionDataSetConstructors
 
 TYPED_TEST_SUITE(RegressionDataSetMatrixConstructors, util::regression_label_type_layout_type_gtest, naming::test_parameter_to_name);
 
-TYPED_TEST(RegressionDataSetMatrixConstructors, construct_from_matrix_without_label_no_padding) {
+TYPED_TEST(RegressionDataSetMatrixConstructors, ConstructFromMatrixWithoutLabelNoPadding) {
     using label_type = typename TestFixture::fixture_label_type;
     constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
 
@@ -654,7 +654,7 @@ TYPED_TEST(RegressionDataSetMatrixConstructors, construct_from_matrix_without_la
     EXPECT_FALSE(data.scaling_factors().has_value());
 }
 
-TYPED_TEST(RegressionDataSetMatrixConstructors, construct_from_matrix_without_label) {
+TYPED_TEST(RegressionDataSetMatrixConstructors, ConstructFromMatrixWithoutLabel) {
     using label_type = typename TestFixture::fixture_label_type;
     constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
 
@@ -676,7 +676,7 @@ TYPED_TEST(RegressionDataSetMatrixConstructors, construct_from_matrix_without_la
     EXPECT_FALSE(data.scaling_factors().has_value());
 }
 
-TYPED_TEST(RegressionDataSetMatrixConstructors, construct_from_empty_matrix_no_padding) {
+TYPED_TEST(RegressionDataSetMatrixConstructors, ConstructFromEmptyMatrixNoPadding) {
     using label_type = typename TestFixture::fixture_label_type;
     constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
 
@@ -688,7 +688,7 @@ TYPED_TEST(RegressionDataSetMatrixConstructors, construct_from_empty_matrix_no_p
                       "Data vector is empty!");
 }
 
-TYPED_TEST(RegressionDataSetMatrixConstructors, construct_from_empty_matrix) {
+TYPED_TEST(RegressionDataSetMatrixConstructors, ConstructFromEmptyMatrix) {
     using label_type = typename TestFixture::fixture_label_type;
     constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
 
@@ -700,7 +700,7 @@ TYPED_TEST(RegressionDataSetMatrixConstructors, construct_from_empty_matrix) {
                       "Data vector is empty!");
 }
 
-TYPED_TEST(RegressionDataSetMatrixConstructors, construct_from_matrix_with_label_no_padding) {
+TYPED_TEST(RegressionDataSetMatrixConstructors, ConstructFromMatrixWithLabelNoPadding) {
     using label_type = typename TestFixture::fixture_label_type;
     constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
 
@@ -725,7 +725,7 @@ TYPED_TEST(RegressionDataSetMatrixConstructors, construct_from_matrix_with_label
     EXPECT_FALSE(data.scaling_factors().has_value());
 }
 
-TYPED_TEST(RegressionDataSetMatrixConstructors, construct_from_matrix_with_label) {
+TYPED_TEST(RegressionDataSetMatrixConstructors, ConstructFromMatrixWithLabel) {
     using label_type = typename TestFixture::fixture_label_type;
     constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
 
@@ -749,7 +749,7 @@ TYPED_TEST(RegressionDataSetMatrixConstructors, construct_from_matrix_with_label
     EXPECT_FALSE(data.scaling_factors().has_value());
 }
 
-TYPED_TEST(RegressionDataSetMatrixConstructors, construct_from_empty_matrix_with_label) {
+TYPED_TEST(RegressionDataSetMatrixConstructors, ConstructFromEmptyMatrixWithLabel) {
     using label_type = typename TestFixture::fixture_label_type;
     constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
 
@@ -763,7 +763,7 @@ TYPED_TEST(RegressionDataSetMatrixConstructors, construct_from_empty_matrix_with
                       "Data vector is empty!");
 }
 
-TYPED_TEST(RegressionDataSetMatrixConstructors, construct_from_matrix_with_label_size_mismatch) {
+TYPED_TEST(RegressionDataSetMatrixConstructors, ConstructFromMatrixWithLabelSizeMismatch) {
     using label_type = typename TestFixture::fixture_label_type;
     constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
 
@@ -777,7 +777,7 @@ TYPED_TEST(RegressionDataSetMatrixConstructors, construct_from_matrix_with_label
                               ::testing::HasSubstr(fmt::format("Number of labels ({}) must match the number of data points ({})!", labels.size(), labels.size() - 1)));
 }
 
-TYPED_TEST(RegressionDataSetMatrixConstructors, construct_scaled_from_matrix_without_label_no_padding) {
+TYPED_TEST(RegressionDataSetMatrixConstructors, ConstructScaledFromMatrixWithoutLabelNoPadding) {
     using label_type = typename TestFixture::fixture_label_type;
     constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
 
@@ -811,7 +811,7 @@ TYPED_TEST(RegressionDataSetMatrixConstructors, construct_scaled_from_matrix_wit
 
 #if defined(PLSSVM_HAS_MPI_ENABLED)
 
-TYPED_TEST(RegressionDataSetMatrixConstructors, construct_scaled_from_matrix_without_label_no_padding_comm_mismatch) {
+TYPED_TEST(RegressionDataSetMatrixConstructors, ConstructScaledFromMatrixWithoutLabelNoPaddingCommMismatch) {
     using label_type = typename TestFixture::fixture_label_type;
     constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
 
@@ -831,7 +831,7 @@ TYPED_TEST(RegressionDataSetMatrixConstructors, construct_scaled_from_matrix_wit
 
 #endif
 
-TYPED_TEST(RegressionDataSetMatrixConstructors, construct_scaled_from_matrix_without_label) {
+TYPED_TEST(RegressionDataSetMatrixConstructors, ConstructScaledFromMatrixWithoutLabel) {
     using label_type = typename TestFixture::fixture_label_type;
     constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
 
@@ -864,7 +864,7 @@ TYPED_TEST(RegressionDataSetMatrixConstructors, construct_scaled_from_matrix_wit
 
 #if defined(PLSSVM_HAS_MPI_ENABLED)
 
-TYPED_TEST(RegressionDataSetMatrixConstructors, construct_scaled_from_matrix_without_label_comm_mismatch) {
+TYPED_TEST(RegressionDataSetMatrixConstructors, ConstructScaledFromMatrixWithoutLabelCommMismatch) {
     using label_type = typename TestFixture::fixture_label_type;
     constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
 
@@ -884,7 +884,7 @@ TYPED_TEST(RegressionDataSetMatrixConstructors, construct_scaled_from_matrix_wit
 
 #endif
 
-TYPED_TEST(RegressionDataSetMatrixConstructors, construct_scaled_from_matrix_with_label_no_padding) {
+TYPED_TEST(RegressionDataSetMatrixConstructors, ConstructScaledFromMatrixWithLabelNoPadding) {
     using label_type = typename TestFixture::fixture_label_type;
     constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
 
@@ -920,7 +920,7 @@ TYPED_TEST(RegressionDataSetMatrixConstructors, construct_scaled_from_matrix_wit
 
 #if defined(PLSSVM_HAS_MPI_ENABLED)
 
-TYPED_TEST(RegressionDataSetMatrixConstructors, construct_scaled_from_matrix_with_label_no_padding_comm_mismatch) {
+TYPED_TEST(RegressionDataSetMatrixConstructors, ConstructScaledFromMatrixWithLabelNoPaddingCommMismatch) {
     using label_type = typename TestFixture::fixture_label_type;
     constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
 
@@ -940,7 +940,7 @@ TYPED_TEST(RegressionDataSetMatrixConstructors, construct_scaled_from_matrix_wit
 }
 #endif
 
-TYPED_TEST(RegressionDataSetMatrixConstructors, construct_scaled_from_matrix_with_label) {
+TYPED_TEST(RegressionDataSetMatrixConstructors, ConstructScaledFromMatrixWithLabel) {
     using label_type = typename TestFixture::fixture_label_type;
     constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
 
@@ -975,7 +975,7 @@ TYPED_TEST(RegressionDataSetMatrixConstructors, construct_scaled_from_matrix_wit
 
 #if defined(PLSSVM_HAS_MPI_ENABLED)
 
-TYPED_TEST(RegressionDataSetMatrixConstructors, construct_scaled_from_matrix_with_label_comm_mismatch) {
+TYPED_TEST(RegressionDataSetMatrixConstructors, ConstructScaledFromMatrixWithLabelCommMismatch) {
     using label_type = typename TestFixture::fixture_label_type;
     constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
 
@@ -1009,7 +1009,7 @@ class RegressionDataSetRValueMatrixConstructors : public RegressionDataSetConstr
 
 TYPED_TEST_SUITE(RegressionDataSetRValueMatrixConstructors, util::regression_label_type_gtest, naming::test_parameter_to_name);
 
-TYPED_TEST(RegressionDataSetRValueMatrixConstructors, construct_from_rvalue_matrix_without_label) {
+TYPED_TEST(RegressionDataSetRValueMatrixConstructors, ConstructFromRvalueMatrixWithoutLabel) {
     using label_type = typename TestFixture::fixture_label_type;
 
     // create data points
@@ -1032,7 +1032,7 @@ TYPED_TEST(RegressionDataSetRValueMatrixConstructors, construct_from_rvalue_matr
     EXPECT_FALSE(data.scaling_factors().has_value());
 }
 
-TYPED_TEST(RegressionDataSetRValueMatrixConstructors, construct_from_empty_rvalue_matrix) {
+TYPED_TEST(RegressionDataSetRValueMatrixConstructors, ConstructFromEmptyRvalueMatrix) {
     using label_type = typename TestFixture::fixture_label_type;
 
     plssvm::soa_matrix<plssvm::real_type> data_points{ plssvm::shape{ 0, 0 }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE } };
@@ -1043,7 +1043,7 @@ TYPED_TEST(RegressionDataSetRValueMatrixConstructors, construct_from_empty_rvalu
                       "Data vector is empty!");
 }
 
-TYPED_TEST(RegressionDataSetRValueMatrixConstructors, construct_from_rvalue_matrix_wrong_padding) {
+TYPED_TEST(RegressionDataSetRValueMatrixConstructors, ConstructFromRvalueMatrixWrongPadding) {
     using label_type = typename TestFixture::fixture_label_type;
 
     plssvm::soa_matrix<plssvm::real_type> data_points{ plssvm::shape{ 4, 4 }, plssvm::shape{ 0, 0 } };
@@ -1054,7 +1054,7 @@ TYPED_TEST(RegressionDataSetRValueMatrixConstructors, construct_from_rvalue_matr
                       "Data vector has the wring padding ([0, 0])!");
 }
 
-TYPED_TEST(RegressionDataSetRValueMatrixConstructors, construct_from_rvalue_matrix_with_label) {
+TYPED_TEST(RegressionDataSetRValueMatrixConstructors, ConstructFromRvalueMatrixWithLabel) {
     using label_type = typename TestFixture::fixture_label_type;
 
     // create data points and labels
@@ -1079,7 +1079,7 @@ TYPED_TEST(RegressionDataSetRValueMatrixConstructors, construct_from_rvalue_matr
     EXPECT_FALSE(data.scaling_factors().has_value());
 }
 
-TYPED_TEST(RegressionDataSetRValueMatrixConstructors, construct_from_rvalue_matrix_with_label_wrong_padding) {
+TYPED_TEST(RegressionDataSetRValueMatrixConstructors, ConstructFromRvalueMatrixWithLabelWrongPadding) {
     using label_type = typename TestFixture::fixture_label_type;
 
     std::vector<label_type> labels = util::get_correct_data_file_labels<label_type, plssvm::svm_type::csvr>();
@@ -1091,7 +1091,7 @@ TYPED_TEST(RegressionDataSetRValueMatrixConstructors, construct_from_rvalue_matr
                       "Data vector has the wring padding ([0, 0])!");
 }
 
-TYPED_TEST(RegressionDataSetRValueMatrixConstructors, construct_scaled_from_rvalue_matrix_without_label) {
+TYPED_TEST(RegressionDataSetRValueMatrixConstructors, ConstructScaledFromRvalueMatrixWithoutLabel) {
     using label_type = typename TestFixture::fixture_label_type;
 
     // create data points
@@ -1124,7 +1124,7 @@ TYPED_TEST(RegressionDataSetRValueMatrixConstructors, construct_scaled_from_rval
 
 #if defined(PLSSVM_HAS_MPI_ENABLED)
 
-TYPED_TEST(RegressionDataSetRValueMatrixConstructors, construct_scaled_from_rvalue_matrix_without_label_comm_mismatch) {
+TYPED_TEST(RegressionDataSetRValueMatrixConstructors, ConstructScaledFromRvalueMatrixWithoutLabelCommMismatch) {
     using label_type = typename TestFixture::fixture_label_type;
 
     // create a duplicated communicator
@@ -1143,7 +1143,7 @@ TYPED_TEST(RegressionDataSetRValueMatrixConstructors, construct_scaled_from_rval
 
 #endif
 
-TYPED_TEST(RegressionDataSetRValueMatrixConstructors, construct_scaled_from_rvalue_matrix_with_label) {
+TYPED_TEST(RegressionDataSetRValueMatrixConstructors, ConstructScaledFromRvalueMatrixWithLabel) {
     using label_type = typename TestFixture::fixture_label_type;
 
     // create data points and labels
@@ -1179,7 +1179,7 @@ TYPED_TEST(RegressionDataSetRValueMatrixConstructors, construct_scaled_from_rval
 
 #if defined(PLSSVM_HAS_MPI_ENABLED)
 
-TYPED_TEST(RegressionDataSetRValueMatrixConstructors, construct_scaled_from_rvalue_matrix_with_label_comm_mismatch) {
+TYPED_TEST(RegressionDataSetRValueMatrixConstructors, ConstructScaledFromRvalueMatrixWithLabelCommMismatch) {
     using label_type = typename TestFixture::fixture_label_type;
 
     // create a duplicated communicator

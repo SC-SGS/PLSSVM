@@ -19,7 +19,7 @@
 #include <type_traits>  // std::result_of_t
 #include <vector>       // std::vector
 
-TEST(TrackingUtility, durations_from_reference_time) {
+TEST(TrackingUtility, DurationsFromReferenceTime) {
     // create different time points
     std::vector<std::chrono::steady_clock::time_point> time_points{ std::chrono::steady_clock::now() };
     for (std::size_t i = 0; i < 3; ++i) {
@@ -35,7 +35,7 @@ TEST(TrackingUtility, durations_from_reference_time) {
     EXPECT_EQ(durations, (std::vector<std::chrono::milliseconds>{ 0ms, 50ms, 100ms, 150ms }));
 }
 
-TEST(TrackingUtility, time_points_to_epoch) {
+TEST(TrackingUtility, TimePointsToEpoch) {
     // create different time points
     std::vector<std::chrono::steady_clock::time_point> time_points{ std::chrono::steady_clock::now() };
     for (std::size_t i = 0; i < 3; ++i) {

@@ -51,7 +51,7 @@ class LIBSVMClassificationModelDataWrite : public ::testing::Test,
 
 TYPED_TEST_SUITE(LIBSVMClassificationModelDataWrite, util::classification_label_type_classification_type_gtest, naming::test_parameter_to_name);
 
-TYPED_TEST(LIBSVMClassificationModelDataWrite, write) {
+TYPED_TEST(LIBSVMClassificationModelDataWrite, Write) {
     using label_type = util::test_parameter_type_at_t<0, TypeParam>;
     constexpr plssvm::classification_type classification = util::test_parameter_value_at_v<0, TypeParam>;
 
@@ -322,7 +322,7 @@ class LIBSVMClassificationModelDataWriteDeathTest : public LIBSVMClassificationM
 
 TYPED_TEST_SUITE(LIBSVMClassificationModelDataWriteDeathTest, util::classification_label_type_classification_type_gtest, naming::test_parameter_to_name);
 
-TYPED_TEST(LIBSVMClassificationModelDataWriteDeathTest, empty_filename) {
+TYPED_TEST(LIBSVMClassificationModelDataWriteDeathTest, EmptyFilename) {
     constexpr plssvm::classification_type classification = TestFixture::fixture_classification;
 
     // try writing the LIBSVM model header
@@ -330,7 +330,7 @@ TYPED_TEST(LIBSVMClassificationModelDataWriteDeathTest, empty_filename) {
                  "The provided model filename must not be empty!");
 }
 
-TYPED_TEST(LIBSVMClassificationModelDataWriteDeathTest, missing_labels) {
+TYPED_TEST(LIBSVMClassificationModelDataWriteDeathTest, MissingLabels) {
     using label_type = typename TestFixture::fixture_label_type;
     constexpr plssvm::classification_type classification = TestFixture::fixture_classification;
 
@@ -342,7 +342,7 @@ TYPED_TEST(LIBSVMClassificationModelDataWriteDeathTest, missing_labels) {
                  "Cannot write a model file that does not include labels!");
 }
 
-TYPED_TEST(LIBSVMClassificationModelDataWriteDeathTest, invalid_number_of_rho_values) {
+TYPED_TEST(LIBSVMClassificationModelDataWriteDeathTest, InvalidNumberOfRhoValues) {
     constexpr plssvm::classification_type classification = TestFixture::fixture_classification;
 
     // create invalid parameter
@@ -353,7 +353,7 @@ TYPED_TEST(LIBSVMClassificationModelDataWriteDeathTest, invalid_number_of_rho_va
                  ::testing::HasSubstr(fmt::format("The number of rho values is 42 but must be {} ({})!", this->num_classifiers(), classification)));
 }
 
-TYPED_TEST(LIBSVMClassificationModelDataWriteDeathTest, invalid_alpha_vector) {
+TYPED_TEST(LIBSVMClassificationModelDataWriteDeathTest, InvalidAlphaVector) {
     constexpr plssvm::classification_type classification = TestFixture::fixture_classification;
 
     if constexpr (classification == plssvm::classification_type::oaa) {
@@ -394,7 +394,7 @@ TYPED_TEST(LIBSVMClassificationModelDataWriteDeathTest, invalid_alpha_vector) {
     }
 }
 
-TYPED_TEST(LIBSVMClassificationModelDataWriteDeathTest, invalid_number_of_index_sets) {
+TYPED_TEST(LIBSVMClassificationModelDataWriteDeathTest, InvalidNumberOfIndexSets) {
     constexpr plssvm::classification_type classification = TestFixture::fixture_classification;
 
     // create invalid parameter
@@ -413,7 +413,7 @@ TYPED_TEST(LIBSVMClassificationModelDataWriteDeathTest, invalid_number_of_index_
     }
 }
 
-TYPED_TEST(LIBSVMClassificationModelDataWriteDeathTest, invalid_number_of_indices) {
+TYPED_TEST(LIBSVMClassificationModelDataWriteDeathTest, InvalidNumberOfIndices) {
     constexpr plssvm::classification_type classification = TestFixture::fixture_classification;
 
     // create invalid parameter
@@ -432,7 +432,7 @@ TYPED_TEST(LIBSVMClassificationModelDataWriteDeathTest, invalid_number_of_indice
     }
 }
 
-TYPED_TEST(LIBSVMClassificationModelDataWriteDeathTest, indices_not_sorted) {
+TYPED_TEST(LIBSVMClassificationModelDataWriteDeathTest, IndicesNotSorted) {
     constexpr plssvm::classification_type classification = TestFixture::fixture_classification;
 
     // create invalid parameter
@@ -451,7 +451,7 @@ TYPED_TEST(LIBSVMClassificationModelDataWriteDeathTest, indices_not_sorted) {
     }
 }
 
-TYPED_TEST(LIBSVMClassificationModelDataWriteDeathTest, indices_in_one_index_set_not_unique) {
+TYPED_TEST(LIBSVMClassificationModelDataWriteDeathTest, IndicesInOneIndexSetNotUnique) {
     constexpr plssvm::classification_type classification = TestFixture::fixture_classification;
 
     // create invalid parameter
@@ -470,7 +470,7 @@ TYPED_TEST(LIBSVMClassificationModelDataWriteDeathTest, indices_in_one_index_set
     }
 }
 
-TYPED_TEST(LIBSVMClassificationModelDataWriteDeathTest, index_sets_not_disjoint) {
+TYPED_TEST(LIBSVMClassificationModelDataWriteDeathTest, IndexSetsNotDisjoint) {
     constexpr plssvm::classification_type classification = TestFixture::fixture_classification;
 
     // create invalid parameter

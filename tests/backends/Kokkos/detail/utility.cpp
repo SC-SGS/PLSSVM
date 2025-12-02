@@ -32,7 +32,7 @@
 #include <variant>  // std::variant
 #include <vector>   // std::vector
 
-TEST(KokkosUtility, is_type_in_variant) {
+TEST(KokkosUtility, IsTypeInVariant) {
     // check type trait that determines if a type is contained in a type trait
     using variant_type = std::variant<int, double, bool, std::string>;
 
@@ -44,7 +44,7 @@ TEST(KokkosUtility, is_type_in_variant) {
     EXPECT_FALSE((plssvm::kokkos::detail::impl::is_type_in_variant_v<float, variant_type>) );
 }
 
-TEST(KokkosUtility, dim_type_to_native) {
+TEST(KokkosUtility, DimTypeToNative) {
     // create a dim_type
     constexpr plssvm::detail::dim_type dim{ 128ull, 64ull, 32ull };
 
@@ -55,7 +55,7 @@ TEST(KokkosUtility, dim_type_to_native) {
     EXPECT_EQ(native_dim, 262'144);  // = 128 * 64 * 32
 }
 
-TEST(KokkosUtility, available_target_platform_to_execution_space_mapping) {
+TEST(KokkosUtility, AvailableTargetPlatformToExecutionSpaceMapping) {
     // get the target_platform <-> execution_space mappings
     const std::map<plssvm::target_platform, std::vector<plssvm::kokkos::execution_space>> mapping = plssvm::kokkos::detail::available_target_platform_to_execution_space_mapping();
 
@@ -84,12 +84,12 @@ struct device_name_test {
     }
 };
 
-TEST(KokkosUtility, get_device_name) {
+TEST(KokkosUtility, GetDeviceName) {
     using variant_type = typename plssvm::kokkos::detail::impl::create_device_variant_type::type;
     util::for_each_variant_type<variant_type>(device_name_test{});
 }
 
-TEST(KokkosUtility, get_kokkos_version) {
+TEST(KokkosUtility, GetKokkosVersion) {
     const std::regex reg{ "[0-9]+\\.[0-9]+\\.[0-9]+", std::regex::extended };
     EXPECT_TRUE(std::regex_match(plssvm::kokkos::detail::get_kokkos_version(), reg));
 }

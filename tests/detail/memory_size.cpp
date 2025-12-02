@@ -20,7 +20,7 @@
 #include <sstream>     // std::istringstream
 #include <string>      // std::string
 
-TEST(MemorySize, default_construct) {
+TEST(MemorySize, DefaultConstruct) {
     // default construct a memory size object
     const plssvm::detail::memory_size mem{};
 
@@ -28,20 +28,20 @@ TEST(MemorySize, default_construct) {
     EXPECT_EQ(mem.num_bytes(), 0ULL);
 }
 
-TEST(MemorySize, construct_from_ull) {
+TEST(MemorySize, ConstructFromUll) {
     // construct a memory size object using an unsigned long long
     const plssvm::detail::memory_size mem{ 1024ULL };
     EXPECT_EQ(mem.num_bytes(), 1024ULL);
 }
 
-TEST(MemorySize, num_bytes) {
+TEST(MemorySize, NumBytes) {
     // create memory size object
     const plssvm::detail::memory_size mem{ 512 };
     // check getter
     EXPECT_EQ(mem.num_bytes(), 512ULL);
 }
 
-TEST(MemorySize, member_swap) {
+TEST(MemorySize, MemberSwap) {
     // construct two memory sizes
     plssvm::detail::memory_size mem1{ 1024ULL };
     plssvm::detail::memory_size mem2{ 500ULL };
@@ -54,7 +54,7 @@ TEST(MemorySize, member_swap) {
     EXPECT_EQ(mem2.num_bytes(), 1024ULL);
 }
 
-TEST(MemorySize, free_swap) {
+TEST(MemorySize, FreeSwap) {
     // construct two memory sizes
     plssvm::detail::memory_size mem1{ 1024ULL };
     plssvm::detail::memory_size mem2{ 500ULL };
@@ -68,7 +68,7 @@ TEST(MemorySize, free_swap) {
     EXPECT_EQ(mem2.num_bytes(), 1024ULL);
 }
 
-TEST(MemorySize, operator_compound_add) {
+TEST(MemorySize, OperatorCompoundAdd) {
     // create two memory size objects
     plssvm::detail::memory_size mem1{ 1024ULL };
     const plssvm::detail::memory_size mem2{ 512ULL };
@@ -80,7 +80,7 @@ TEST(MemorySize, operator_compound_add) {
     EXPECT_EQ(mem2.num_bytes(), 512ULL);
 }
 
-TEST(MemorySize, operator_add) {
+TEST(MemorySize, OperatorAdd) {
     // create two memory size objects
     const plssvm::detail::memory_size mem1{ 1024ULL };
     const plssvm::detail::memory_size mem2{ 512ULL };
@@ -92,7 +92,7 @@ TEST(MemorySize, operator_add) {
     EXPECT_EQ(mem2.num_bytes(), 512ULL);
 }
 
-TEST(MemorySize, operator_compound_subtract) {
+TEST(MemorySize, OperatorCompoundSubtract) {
     // create two memory size objects
     plssvm::detail::memory_size mem1{ 1024ULL };
     const plssvm::detail::memory_size mem2{ 512ULL };
@@ -104,7 +104,7 @@ TEST(MemorySize, operator_compound_subtract) {
     EXPECT_EQ(mem2.num_bytes(), 512ULL);
 }
 
-TEST(MemorySize, operator_subtract) {
+TEST(MemorySize, OperatorSubtract) {
     // create two memory size objects
     const plssvm::detail::memory_size mem1{ 1024ULL };
     const plssvm::detail::memory_size mem2{ 512ULL };
@@ -116,7 +116,7 @@ TEST(MemorySize, operator_subtract) {
     EXPECT_EQ(mem2.num_bytes(), 512ULL);
 }
 
-TEST(MemorySize, operator_compound_scale_mul) {
+TEST(MemorySize, OperatorCompoundScaleMultiply) {
     // create a memory size object
     plssvm::detail::memory_size mem{ 1024ULL };
 
@@ -125,7 +125,7 @@ TEST(MemorySize, operator_compound_scale_mul) {
     EXPECT_EQ(mem.num_bytes(), 512ULL);
 }
 
-TEST(MemorySize, operator_scale_mul) {
+TEST(MemorySize, OperatorScaleMultiply) {
     // create a memory size object
     const plssvm::detail::memory_size mem{ 1024ULL };
 
@@ -138,7 +138,7 @@ TEST(MemorySize, operator_scale_mul) {
     EXPECT_EQ(mem.num_bytes(), 1024ULL);
 }
 
-TEST(MemorySize, operator_compound_scale_div) {
+TEST(MemorySize, OperatorCompoundScaleDivide) {
     // create a memory size object
     plssvm::detail::memory_size mem{ 1024ULL };
 
@@ -147,7 +147,7 @@ TEST(MemorySize, operator_compound_scale_div) {
     EXPECT_EQ(mem.num_bytes(), 512ULL);
 }
 
-TEST(MemorySize, operator_scale_div) {
+TEST(MemorySize, OperatorScaleDivide) {
     // create a memory size object
     const plssvm::detail::memory_size mem{ 1024ULL };
 
@@ -157,7 +157,7 @@ TEST(MemorySize, operator_scale_div) {
     EXPECT_EQ(mem.num_bytes(), 1024ULL);
 }
 
-TEST(MemorySize, operator_factor) {
+TEST(MemorySize, OperatorDivide) {
     // create two memory size objects
     const plssvm::detail::memory_size mem1{ 1024ULL };
     const plssvm::detail::memory_size mem2{ 512ULL };
@@ -167,7 +167,7 @@ TEST(MemorySize, operator_factor) {
     EXPECT_EQ(factor, 2.0L);
 }
 
-TEST(MemorySize, relational_equal) {
+TEST(MemorySize, Equal) {
     // create memory objects
     const plssvm::detail::memory_size mem1{ 1024ULL };
     const plssvm::detail::memory_size mem2{ 512ULL };
@@ -179,7 +179,7 @@ TEST(MemorySize, relational_equal) {
     EXPECT_FALSE(mem3 == mem1);
 }
 
-TEST(MemorySize, relational_inequal) {
+TEST(MemorySize, Unequal) {
     // create memory objects
     const plssvm::detail::memory_size mem1{ 1024ULL };
     const plssvm::detail::memory_size mem2{ 512ULL };
@@ -191,7 +191,7 @@ TEST(MemorySize, relational_inequal) {
     EXPECT_TRUE(mem3 != mem1);
 }
 
-TEST(MemorySize, relational_less) {
+TEST(MemorySize, LessThan) {
     // create memory objects
     const plssvm::detail::memory_size mem1{ 1024ULL };
     const plssvm::detail::memory_size mem2{ 512ULL };
@@ -203,7 +203,7 @@ TEST(MemorySize, relational_less) {
     EXPECT_TRUE(mem3 < mem1);
 }
 
-TEST(MemorySize, relational_greater) {
+TEST(MemorySize, GreaterThan) {
     // create memory objects
     const plssvm::detail::memory_size mem1{ 1024ULL };
     const plssvm::detail::memory_size mem2{ 512ULL };
@@ -215,7 +215,7 @@ TEST(MemorySize, relational_greater) {
     EXPECT_FALSE(mem3 > mem1);
 }
 
-TEST(MemorySize, relational_less_or_equal) {
+TEST(MemorySize, LessOrEqualThan) {
     // create memory objects
     const plssvm::detail::memory_size mem1{ 1024ULL };
     const plssvm::detail::memory_size mem2{ 512ULL };
@@ -227,7 +227,7 @@ TEST(MemorySize, relational_less_or_equal) {
     EXPECT_TRUE(mem3 <= mem1);
 }
 
-TEST(MemorySize, relational_greater_or_equal) {
+TEST(MemorySize, GreaterOrEqualThan) {
     // create memory objects
     const plssvm::detail::memory_size mem1{ 1024ULL };
     const plssvm::detail::memory_size mem2{ 512ULL };
@@ -239,7 +239,7 @@ TEST(MemorySize, relational_greater_or_equal) {
     EXPECT_FALSE(mem3 >= mem1);
 }
 
-TEST(MemorySize, to_string) {
+TEST(MemorySize, ToString) {
     // check conversions to std::string
     EXPECT_CONVERSION_TO_STRING(plssvm::detail::memory_size{ 0ULL }, "0 B");
     EXPECT_CONVERSION_TO_STRING(plssvm::detail::memory_size{ 8ULL }, "8 B");
@@ -254,7 +254,7 @@ TEST(MemorySize, to_string) {
     EXPECT_CONVERSION_TO_STRING(plssvm::detail::memory_size{ 1'125'899'906'842'624ULL }, "1024.00 TiB");
 }
 
-TEST(MemorySize, from_string) {
+TEST(MemorySize, FromString) {
     // check conversions to std::string
     EXPECT_CONVERSION_FROM_STRING("0 B", plssvm::detail::memory_size{ 0ULL });
     EXPECT_CONVERSION_FROM_STRING("8 B", plssvm::detail::memory_size{ 8ULL });
@@ -268,7 +268,7 @@ TEST(MemorySize, from_string) {
     EXPECT_CONVERSION_FROM_STRING("0.2TB", plssvm::detail::memory_size{ 200'000'000'000ULL });
 }
 
-TEST(MemorySize, from_string_unknown) {
+TEST(MemorySize, FromStringInvalid) {
     // foo isn't a valid backend_type
     std::istringstream input{ "0Bit" };
     plssvm::detail::memory_size mem{};
@@ -276,7 +276,7 @@ TEST(MemorySize, from_string_unknown) {
     EXPECT_TRUE(input.fail());
 }
 
-TEST(MemorySize, constexpr_pow) {
+TEST(MemorySize, ConstexprPow) {
     // check custom constexpr power function
     EXPECT_EQ(plssvm::detail::constexpr_pow(0, 1), 0);
     EXPECT_EQ(plssvm::detail::constexpr_pow(2, 0), 1);
@@ -284,7 +284,7 @@ TEST(MemorySize, constexpr_pow) {
     EXPECT_EQ(plssvm::detail::constexpr_pow(1024, 2), 1'048'576);
 }
 
-TEST(MemorySize, hash) {
+TEST(MemorySize, Hash) {
     // hash a memory size
     const plssvm::detail::memory_size mem{ 1024ULL };
     const std::size_t hash_value = std::hash<plssvm::detail::memory_size>{}(mem);
@@ -299,9 +299,9 @@ TEST(MemorySize, hash) {
 //*************************************************************************************************************************************//
 //                                                           custom literals                                                           //
 //*************************************************************************************************************************************//
-TEST(MemorySizeLiterals, base_ten_ull) {
+TEST(MemorySizeLiterals, BaseTenUnsignedLongLong) {
     // check if literals are correct
-    using namespace plssvm::detail::literals;
+    using namespace plssvm::detail::literals;  // NOLINT(google-build-using-namespace): only imports custom user-defined literals into this namespace
 
     EXPECT_EQ(0_B, plssvm::detail::memory_size{ 0ULL });
     EXPECT_EQ(8_B, plssvm::detail::memory_size{ 8ULL });
@@ -316,7 +316,7 @@ TEST(MemorySizeLiterals, base_ten_ull) {
     EXPECT_EQ(1024_TiB, plssvm::detail::memory_size{ 1'125'899'906'842'624ULL });
 }
 
-TEST(MemorySizeLiterals, base_ten_l) {
+TEST(MemorySizeLiterals, BaseTenLongDouble) {
     // check if literals are correct
     using namespace plssvm::detail::literals;
 
@@ -333,7 +333,7 @@ TEST(MemorySizeLiterals, base_ten_l) {
     EXPECT_EQ(0.0009765625_TiB, plssvm::detail::memory_size{ 1'073'741'824ULL });
 }
 
-TEST(MemorySizeLiterals, base_two_ull) {
+TEST(MemorySizeLiterals, BaseTwoUnsignedLongLong) {
     // check if literals are correct
     using namespace plssvm::detail::literals;
 
@@ -348,7 +348,7 @@ TEST(MemorySizeLiterals, base_two_ull) {
     EXPECT_EQ(1024_TB, plssvm::detail::memory_size{ 1'024'000'000'000'000ULL });
 }
 
-TEST(MemorySizeLiterals, base_two_l) {
+TEST(MemorySizeLiterals, BaseTwoLongDouble) {
     // check if literals are correct
     using namespace plssvm::detail::literals;
 

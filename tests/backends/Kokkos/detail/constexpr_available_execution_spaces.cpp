@@ -12,7 +12,7 @@
 
 #include "gtest/gtest.h"  // TEST, EXPECT_TRUE, EXPECT_FALSE
 
-TEST(KokkosConstexprAvailableExecutionSpaces, constexpr_available_execution_spaces) {
+TEST(KokkosConstexprAvailableExecutionSpaces, ConstexprAvailableExecutionSpaces) {
     // at least one execution space must always be available
     EXPECT_FALSE(plssvm::kokkos::detail::constexpr_available_execution_spaces().empty());
 }

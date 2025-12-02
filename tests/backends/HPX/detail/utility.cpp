@@ -15,10 +15,10 @@
 
 #include <string>  // std::string
 
-TEST(HPXUtility, get_num_threads) {
+TEST(HPXUtility, GetNumThreads) {
     EXPECT_GT(plssvm::hpx::detail::get_num_threads(), 0);
 }
 
-TEST(HPXUtility, get_hpx_version) {
+TEST(HPXUtility, GetHpxVersion) {
     EXPECT_FALSE(plssvm::hpx::detail::get_hpx_version().empty());
 }

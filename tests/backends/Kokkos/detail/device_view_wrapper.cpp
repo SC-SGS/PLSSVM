@@ -19,7 +19,7 @@
 
 #include <cstddef>  // std::size_t
 
-TEST(KokkosDeviceViewWrapper, default_construct) {
+TEST(KokkosDeviceViewWrapper, DefaultConstruct) {
     // default construct a device view wrapper
     const plssvm::kokkos::detail::device_view_wrapper<double *> view{};
 
@@ -29,7 +29,7 @@ TEST(KokkosDeviceViewWrapper, default_construct) {
     EXPECT_EQ(view.get_execution_space(), spaces.front());
 }
 
-TEST(KokkosDeviceViewWrapper, construct) {
+TEST(KokkosDeviceViewWrapper, Construct) {
     // construct a device view wrapper using the current Kokkos::DefaultExecutionSpace
     const plssvm::kokkos::detail::device_view_wrapper view{ Kokkos::View<double *, Kokkos::DefaultExecutionSpace>{} };
 
@@ -37,7 +37,7 @@ TEST(KokkosDeviceViewWrapper, construct) {
     EXPECT_EQ(view.get_execution_space(), plssvm::kokkos::kokkos_type_to_execution_space_v<Kokkos::DefaultExecutionSpace>);
 }
 
-TEST(KokkosDeviceViewWrapper, get) {
+TEST(KokkosDeviceViewWrapper, Get) {
     // construct a device view wrapper using the current Kokkos::DefaultExecutionSpace
     plssvm::kokkos::detail::device_view_wrapper view{ Kokkos::View<double *, Kokkos::DefaultExecutionSpace>{} };
 
@@ -46,7 +46,7 @@ TEST(KokkosDeviceViewWrapper, get) {
     ::testing::StaticAssertTypeEq<decltype(view.get<space>()), Kokkos::View<double *, Kokkos::DefaultExecutionSpace> &>();
 }
 
-TEST(KokkosDeviceViewWrapper, get_const) {
+TEST(KokkosDeviceViewWrapper, GetConst) {
     // construct a device view wrapper using the current Kokkos::DefaultExecutionSpace
     const plssvm::kokkos::detail::device_view_wrapper view{ Kokkos::View<int **, Kokkos::DefaultExecutionSpace>{} };
 
@@ -55,7 +55,7 @@ TEST(KokkosDeviceViewWrapper, get_const) {
     ::testing::StaticAssertTypeEq<decltype(view.get<space>()), const Kokkos::View<int **, Kokkos::DefaultExecutionSpace> &>();
 }
 
-TEST(KokkosDeviceViewWrapper, get_execution_space) {
+TEST(KokkosDeviceViewWrapper, GetExecutionSpace) {
     // construct a device wrapper using the current Kokkos::DefaultExecutionSpace
     const plssvm::kokkos::detail::device_view_wrapper view{ Kokkos::View<double *, Kokkos::DefaultExecutionSpace>{} };
 
@@ -63,7 +63,7 @@ TEST(KokkosDeviceViewWrapper, get_execution_space) {
     EXPECT_EQ(view.get_execution_space(), plssvm::kokkos::kokkos_type_to_execution_space_v<Kokkos::DefaultExecutionSpace>);
 }
 
-TEST(KokkosDeviceViewWrapper, equality) {
+TEST(KokkosDeviceViewWrapper, Equality) {
     const plssvm::kokkos::detail::device_view_wrapper view1{ Kokkos::View<double *, Kokkos::DefaultExecutionSpace>{} };
     const plssvm::kokkos::detail::device_view_wrapper view2{ Kokkos::View<double *, Kokkos::DefaultExecutionSpace>{} };
 
@@ -71,7 +71,7 @@ TEST(KokkosDeviceViewWrapper, equality) {
     EXPECT_TRUE(view1 == view2);
 }
 
-TEST(KokkosDeviceViewWrapper, inequality) {
+TEST(KokkosDeviceViewWrapper, Inequality) {
     const plssvm::kokkos::detail::device_view_wrapper view1{ Kokkos::View<double *, Kokkos::DefaultExecutionSpace>{} };
     const plssvm::kokkos::detail::device_view_wrapper view2{ Kokkos::View<double *, Kokkos::DefaultExecutionSpace>{} };
 
@@ -79,7 +79,7 @@ TEST(KokkosDeviceViewWrapper, inequality) {
     EXPECT_FALSE(view1 != view2);
 }
 
-TEST(KokkosDeviceViewWrapper, make_device_view_wrapper) {
+TEST(KokkosDeviceViewWrapper, MakeDeviceViewWrapper) {
     // create a device wrapper for the Kokkos::DefaultExecutionSpace
     const plssvm::kokkos::detail::device_wrapper device{ Kokkos::DefaultExecutionSpace{} };
 

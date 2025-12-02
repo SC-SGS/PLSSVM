@@ -58,7 +58,7 @@ class HPXCSVMConstructor : public ::testing::Test,
 TYPED_TEST_SUITE(HPXCSVMConstructor, hpx_csvm_types_gtest, naming::test_parameter_to_name);
 
 // check whether the constructor correctly fails when using an incompatible target platform
-TYPED_TEST(HPXCSVMConstructor, default_construct) {
+TYPED_TEST(HPXCSVMConstructor, DefaultConstruct) {
     using csvm_type = typename TestFixture::fixture_csvm_type;
 
 #if defined(PLSSVM_HAS_CPU_TARGET)
@@ -71,7 +71,7 @@ TYPED_TEST(HPXCSVMConstructor, default_construct) {
 #endif
 }
 
-TYPED_TEST(HPXCSVMConstructor, construct_parameter) {
+TYPED_TEST(HPXCSVMConstructor, ConstructParameter) {
     using csvm_type = typename TestFixture::fixture_csvm_type;
 
 #if defined(PLSSVM_HAS_CPU_TARGET)
@@ -84,7 +84,7 @@ TYPED_TEST(HPXCSVMConstructor, construct_parameter) {
 #endif
 }
 
-TYPED_TEST(HPXCSVMConstructor, construct_target_and_parameter) {
+TYPED_TEST(HPXCSVMConstructor, ConstructTargetAndParameter) {
     using csvm_type = typename TestFixture::fixture_csvm_type;
 
     // create parameter struct
@@ -115,7 +115,7 @@ TYPED_TEST(HPXCSVMConstructor, construct_target_and_parameter) {
                       "Invalid target platform 'gpu_intel' for the HPX backend!");
 }
 
-TYPED_TEST(HPXCSVMConstructor, construct_named_args) {
+TYPED_TEST(HPXCSVMConstructor, ConstructNamedArgs) {
     using csvm_type = typename TestFixture::fixture_csvm_type;
 
 #if defined(PLSSVM_HAS_CPU_TARGET)
@@ -129,7 +129,7 @@ TYPED_TEST(HPXCSVMConstructor, construct_named_args) {
 #endif
 }
 
-TYPED_TEST(HPXCSVMConstructor, construct_target_and_named_args) {
+TYPED_TEST(HPXCSVMConstructor, ConstructTargetAndNamedArgs) {
     using csvm_type = typename TestFixture::fixture_csvm_type;
 
 #if defined(PLSSVM_HAS_CPU_TARGET)

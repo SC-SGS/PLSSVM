@@ -21,7 +21,7 @@
 
 class Sha256 : public ::testing::TestWithParam<std::pair<std::string, std::string_view>> { };
 
-TEST_P(Sha256, correct_encoding) {
+TEST_P(Sha256, CorrectEncoding) {
     // get generated parameter
     const auto [input, encoded_output] = GetParam();
 

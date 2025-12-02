@@ -17,7 +17,7 @@
 #include <sstream>  // std::istringstream
 
 // check whether the plssvm::kokkos::execution_space -> std::string conversions are correct
-TEST(KokkosExecutionSpace, to_string) {
+TEST(KokkosExecutionSpace, ToString) {
     // check conversions to std::string
     EXPECT_CONVERSION_TO_STRING(plssvm::kokkos::execution_space::automatic, "automatic");
     EXPECT_CONVERSION_TO_STRING(plssvm::kokkos::execution_space::cuda, "Cuda");
@@ -31,13 +31,13 @@ TEST(KokkosExecutionSpace, to_string) {
     EXPECT_CONVERSION_TO_STRING(plssvm::kokkos::execution_space::serial, "Serial");
 }
 
-TEST(KokkosExecutionSpace, to_string_unknown) {
+TEST(KokkosExecutionSpace, ToStringUnknown) {
     // check conversions to std::string from unknown execution_space
     EXPECT_CONVERSION_TO_STRING(static_cast<plssvm::kokkos::execution_space>(10), "unknown");
 }
 
 // check whether the std::string -> plssvm::kokkos::execution_space conversions are correct
-TEST(KokkosExecutionSpace, from_string) {
+TEST(KokkosExecutionSpace, FromString) {
     // check conversion from std::string
     EXPECT_CONVERSION_FROM_STRING("Automatic", plssvm::kokkos::execution_space::automatic);
     EXPECT_CONVERSION_FROM_STRING("AUTO", plssvm::kokkos::execution_space::automatic);
@@ -62,7 +62,7 @@ TEST(KokkosExecutionSpace, from_string) {
     EXPECT_CONVERSION_FROM_STRING("SERIAL", plssvm::kokkos::execution_space::serial);
 }
 
-TEST(KokkosExecutionSpace, from_string_unknown) {
+TEST(KokkosExecutionSpace, FromStringUnknown) {
     // foo isn't a valid execution_space
     std::istringstream input{ "foo" };
     plssvm::kokkos::execution_space space{};
@@ -70,7 +70,7 @@ TEST(KokkosExecutionSpace, from_string_unknown) {
     EXPECT_TRUE(input.fail());
 }
 
-TEST(KokkosExecutionSpace, list_available_execution_spaces) {
+TEST(KokkosExecutionSpace, ListAvailableExecutionSpaces) {
     const std::vector<plssvm::kokkos::execution_space> execution_spaces = plssvm::kokkos::list_available_execution_spaces();
 
     // at least one must be available (automatic)!

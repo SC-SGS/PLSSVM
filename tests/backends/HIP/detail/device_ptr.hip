@@ -27,7 +27,7 @@ class HIPDevicePtrConstruct : public ::testing::Test { };
 
 TYPED_TEST_SUITE(HIPDevicePtrConstruct, util::real_type_gtest, naming::test_parameter_to_name);
 
-TYPED_TEST(HIPDevicePtrConstruct, construct_invalid_queue) {
+TYPED_TEST(HIPDevicePtrConstruct, ConstructInvalidQueue) {
     using real_type = util::test_parameter_type_at_t<0, TypeParam>;
 
     // the number of devices

@@ -49,7 +49,7 @@ class LIBSVMRegressionModelDataWrite : public ::testing::Test,
 
 TYPED_TEST_SUITE(LIBSVMRegressionModelDataWrite, util::regression_label_type_gtest, naming::test_parameter_to_name);
 
-TYPED_TEST(LIBSVMRegressionModelDataWrite, write) {
+TYPED_TEST(LIBSVMRegressionModelDataWrite, Write) {
     using label_type = util::test_parameter_type_at_t<0, TypeParam>;
 
     // define data to write
@@ -105,7 +105,7 @@ TYPED_TEST(LIBSVMRegressionModelDataWrite, write) {
     SUCCEED();
 }
 
-TYPED_TEST(LIBSVMRegressionModelDataWrite, write_without_label) {
+TYPED_TEST(LIBSVMRegressionModelDataWrite, WriteWithoutLabel) {
     using label_type = util::test_parameter_type_at_t<0, TypeParam>;
 
     // define data to write
@@ -204,13 +204,13 @@ class LIBSVMRegressionModelDataWriteDeathTest : public LIBSVMRegressionModelData
 
 TYPED_TEST_SUITE(LIBSVMRegressionModelDataWriteDeathTest, util::regression_label_type_gtest, naming::test_parameter_to_name);
 
-TYPED_TEST(LIBSVMRegressionModelDataWriteDeathTest, empty_filename) {
+TYPED_TEST(LIBSVMRegressionModelDataWriteDeathTest, EmptyFilename) {
     // try writing the LIBSVM model header
     EXPECT_DEATH((plssvm::detail::io::write_libsvm_model_data_regression("", this->get_comm(), this->get_params(), this->get_rho(), this->get_alpha(), this->get_data_set())),
                  "The provided model filename must not be empty!");
 }
 
-TYPED_TEST(LIBSVMRegressionModelDataWriteDeathTest, invalid_number_of_rho_values) {
+TYPED_TEST(LIBSVMRegressionModelDataWriteDeathTest, InvalidNumberOfRhoValues) {
     // create invalid parameter
     const std::vector<plssvm::real_type> rho = util::generate_random_vector<plssvm::real_type>(42);
 
@@ -219,7 +219,7 @@ TYPED_TEST(LIBSVMRegressionModelDataWriteDeathTest, invalid_number_of_rho_values
                  "The number of rho values is 42 but must be exactly 1!");
 }
 
-TYPED_TEST(LIBSVMRegressionModelDataWriteDeathTest, invalid_alpha_vector) {
+TYPED_TEST(LIBSVMRegressionModelDataWriteDeathTest, InvalidAlphaVector) {
     {
         // alpha vector too large
         const std::vector<plssvm::aos_matrix<plssvm::real_type>> alpha(2);

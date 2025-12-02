@@ -49,7 +49,7 @@ class LIBSVMClassificationModelHeaderWrite : public ::testing::Test,
 
 TYPED_TEST_SUITE(LIBSVMClassificationModelHeaderWrite, util::classification_label_type_gtest, naming::test_parameter_to_name);
 
-TYPED_TEST(LIBSVMClassificationModelHeaderWrite, write_linear) {
+TYPED_TEST(LIBSVMClassificationModelHeaderWrite, WriteLinear) {
     using label_type = util::test_parameter_type_at_t<0, TypeParam>;
 
     // define data to write
@@ -88,7 +88,7 @@ TYPED_TEST(LIBSVMClassificationModelHeaderWrite, write_linear) {
     EXPECT_EQ(reader.line(7), "SV");
 }
 
-TYPED_TEST(LIBSVMClassificationModelHeaderWrite, write_polynomial) {
+TYPED_TEST(LIBSVMClassificationModelHeaderWrite, WritePolynomial) {
     using label_type = util::test_parameter_type_at_t<0, TypeParam>;
 
     // define data to write
@@ -130,7 +130,7 @@ TYPED_TEST(LIBSVMClassificationModelHeaderWrite, write_polynomial) {
     EXPECT_EQ(reader.line(10), "SV");
 }
 
-TYPED_TEST(LIBSVMClassificationModelHeaderWrite, write_rbf) {
+TYPED_TEST(LIBSVMClassificationModelHeaderWrite, WriteRadialBasisFunction) {
     using label_type = util::test_parameter_type_at_t<0, TypeParam>;
 
     // define data to write
@@ -170,7 +170,7 @@ TYPED_TEST(LIBSVMClassificationModelHeaderWrite, write_rbf) {
     EXPECT_EQ(reader.line(8), "SV");
 }
 
-TYPED_TEST(LIBSVMClassificationModelHeaderWrite, write_sigmoid) {
+TYPED_TEST(LIBSVMClassificationModelHeaderWrite, WriteSigmoid) {
     using label_type = util::test_parameter_type_at_t<0, TypeParam>;
 
     // define data to write
@@ -211,7 +211,7 @@ TYPED_TEST(LIBSVMClassificationModelHeaderWrite, write_sigmoid) {
     EXPECT_EQ(reader.line(9), "SV");
 }
 
-TYPED_TEST(LIBSVMClassificationModelHeaderWrite, write_laplacian) {
+TYPED_TEST(LIBSVMClassificationModelHeaderWrite, WriteLaplacian) {
     using label_type = util::test_parameter_type_at_t<0, TypeParam>;
 
     // define data to write
@@ -251,7 +251,7 @@ TYPED_TEST(LIBSVMClassificationModelHeaderWrite, write_laplacian) {
     EXPECT_EQ(reader.line(8), "SV");
 }
 
-TYPED_TEST(LIBSVMClassificationModelHeaderWrite, write_chi_squared) {
+TYPED_TEST(LIBSVMClassificationModelHeaderWrite, WriteChiSquared) {
     using label_type = util::test_parameter_type_at_t<0, TypeParam>;
 
     // define data to write
@@ -297,7 +297,7 @@ class LIBSVMClassificationModelHeaderWriteDeathTest : public LIBSVMClassificatio
 
 TYPED_TEST_SUITE(LIBSVMClassificationModelHeaderWriteDeathTest, util::classification_label_type_gtest, naming::test_parameter_to_name);
 
-TYPED_TEST(LIBSVMClassificationModelHeaderWriteDeathTest, write_header_without_label) {
+TYPED_TEST(LIBSVMClassificationModelHeaderWriteDeathTest, WriteHeaderWithoutLabel) {
     using label_type = util::test_parameter_type_at_t<0, TypeParam>;
 
     // create necessary parameter
@@ -314,7 +314,7 @@ TYPED_TEST(LIBSVMClassificationModelHeaderWriteDeathTest, write_header_without_l
                  "Cannot write a model file that does not include labels!");
 }
 
-TYPED_TEST(LIBSVMClassificationModelHeaderWriteDeathTest, write_header_invalid_number_of_rho_values) {
+TYPED_TEST(LIBSVMClassificationModelHeaderWriteDeathTest, WriteHeaderInvalidNumberOfRhoValues) {
     using label_type = util::test_parameter_type_at_t<0, TypeParam>;
 
     // create necessary parameter

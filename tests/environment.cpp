@@ -22,7 +22,7 @@
 #include <vector>  // std::vector
 
 // check whether the plssvm::environment::status -> std::string conversions are correct
-TEST(EnvironmentStatus, to_string) {
+TEST(EnvironmentStatus, ToString) {
     // check conversions to std::string
     EXPECT_CONVERSION_TO_STRING(plssvm::environment::status::uninitialized, "uninitialized");
     EXPECT_CONVERSION_TO_STRING(plssvm::environment::status::initialized, "initialized");
@@ -30,13 +30,13 @@ TEST(EnvironmentStatus, to_string) {
     EXPECT_CONVERSION_TO_STRING(plssvm::environment::status::unnecessary, "unnecessary");
 }
 
-TEST(EnvironmentStatus, to_string_unknown) {
+TEST(EnvironmentStatus, ToStringUnknown) {
     // check conversions to std::string from unknown environment status
     EXPECT_CONVERSION_TO_STRING(static_cast<plssvm::environment::status>(4), "unknown");
 }
 
 // check whether the std::string -> plssvm::environment::status conversions are correct
-TEST(EnvironmentStatus, from_string) {
+TEST(EnvironmentStatus, FromString) {
     // check conversion from std::string
     EXPECT_CONVERSION_FROM_STRING("uninitialized", plssvm::environment::status::uninitialized);
     EXPECT_CONVERSION_FROM_STRING("UNINITIALIZED", plssvm::environment::status::uninitialized);
@@ -48,7 +48,7 @@ TEST(EnvironmentStatus, from_string) {
     EXPECT_CONVERSION_FROM_STRING("UNNECESSARY", plssvm::environment::status::unnecessary);
 }
 
-TEST(EnvironmentStatus, from_string_unknown) {
+TEST(EnvironmentStatus, FromStringUnknown) {
     // foo isn't a valid environment status
     std::istringstream input{ "foo" };
     plssvm::environment::status status{};
@@ -56,7 +56,7 @@ TEST(EnvironmentStatus, from_string_unknown) {
     EXPECT_TRUE(input.fail());
 }
 
-TEST(Environment, get_backend_status) {
+TEST(Environment, GetBackendStatus) {
     // check the backend statis for all supported backends
 
     // the automatic backend may not be used and throws an exception
@@ -84,17 +84,17 @@ TEST(Environment, get_backend_status) {
 #endif
 }
 
-TEST(EnvironmentDeathTest, initialize_backend) {
+TEST(EnvironmentDeathTest, InitializeBackend) {
     // the function may never be called with the automatic backend
     EXPECT_DEATH(plssvm::environment::detail::initialize_backend(plssvm::backend_type::automatic), "The automatic backend may never be initialized!");
 }
 
-TEST(EnvironmentDeathTest, finalize_backend) {
+TEST(EnvironmentDeathTest, FinalizeBackend) {
     // the function may never be called with the automatic backend
     EXPECT_DEATH(plssvm::environment::detail::finalize_backend(plssvm::backend_type::automatic), "The automatic backend may never be finalized!");
 }
 
-TEST(Environment, initialize_impl) {
+TEST(Environment, InitializeImpl) {
     // the function may never be called with a backend that hasn't been enabled
     const std::vector<plssvm::backend_type> all_backends{
         plssvm::backend_type::openmp,
@@ -119,13 +119,13 @@ TEST(Environment, initialize_impl) {
     }
 }
 
-TEST(Environment, initialize_impl_automatic) {
+TEST(Environment, InitializeImplAutomatic) {
     // the function may never be called with the automatic backend
     const std::vector<plssvm::backend_type> backends{ plssvm::backend_type::automatic };
     EXPECT_THROW_WHAT(plssvm::environment::detail::initialize_impl(backends), plssvm::environment_exception, "The automatic backend cannot be initialized!");
 }
 
-TEST(Environment, finalize) {
+TEST(Environment, Finalize) {
     // the function may never be called with a backend that hasn't been enabled
     const std::vector<plssvm::backend_type> all_backends{
         plssvm::backend_type::openmp,
@@ -150,7 +150,7 @@ TEST(Environment, finalize) {
     }
 }
 
-TEST(Environment, finalize_automatic) {
+TEST(Environment, FinalizeAutomatic) {
     // the function may never be called with the automatic backend
     const std::vector<plssvm::backend_type> backends{ plssvm::backend_type::automatic };
     EXPECT_THROW_WHAT(plssvm::environment::finalize(backends), plssvm::environment_exception, "The automatic backend cannot be finalized!");

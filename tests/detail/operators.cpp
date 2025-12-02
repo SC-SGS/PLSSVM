@@ -30,14 +30,14 @@ class ScalarOperations : public ::testing::Test { };
 
 TYPED_TEST_SUITE(ScalarOperations, util::real_type_gtest, naming::test_parameter_to_name);
 
-TYPED_TEST(ScalarOperations, operator_sign_positive) {
+TYPED_TEST(ScalarOperations, OperatorSignPositive) {
     using real_type = util::test_parameter_type_at_t<0, TypeParam>;
 
     EXPECT_FLOATING_POINT_EQ(sign(real_type{ 1.6 }), real_type{ 1 });
     EXPECT_FLOATING_POINT_EQ(sign(real_type{ 3 }), real_type{ 1 });
 }
 
-TYPED_TEST(ScalarOperations, operator_sign_negative) {
+TYPED_TEST(ScalarOperations, OperatorSignNegative) {
     using real_type = util::test_parameter_type_at_t<0, TypeParam>;
 
     EXPECT_FLOATING_POINT_EQ(sign(real_type{ -2.4 }), real_type{ -1 });
@@ -127,7 +127,7 @@ class VectorOperationsDeathTest : public ::testing::Test {
 
 TYPED_TEST_SUITE(VectorOperationsDeathTest, util::real_type_gtest, naming::test_parameter_to_name);
 
-TYPED_TEST(VectorOperations, operator_add_binary) {
+TYPED_TEST(VectorOperations, OperatorAddBinary) {
     using real_type = typename TestFixture::fixture_real_type;
 
     // binary addition using two vectors
@@ -136,7 +136,7 @@ TYPED_TEST(VectorOperations, operator_add_binary) {
     EXPECT_FLOATING_POINT_VECTOR_NEAR(this->get_b() + this->get_a(), c);
 }
 
-TYPED_TEST(VectorOperations, operator_add_compound) {
+TYPED_TEST(VectorOperations, OperatorAddCompound) {
     using real_type = typename TestFixture::fixture_real_type;
 
     // compound addition using two vectors
@@ -144,7 +144,7 @@ TYPED_TEST(VectorOperations, operator_add_compound) {
     EXPECT_FLOATING_POINT_VECTOR_NEAR(this->get_a() += this->get_b(), c);
 }
 
-TYPED_TEST(VectorOperations, operator_add_scalar_binary) {
+TYPED_TEST(VectorOperations, OperatorAddScalarBinary) {
     using real_type = typename TestFixture::fixture_real_type;
 
     // binary addition using a vector and a scalar
@@ -153,7 +153,7 @@ TYPED_TEST(VectorOperations, operator_add_scalar_binary) {
     EXPECT_FLOATING_POINT_VECTOR_NEAR(this->get_scalar() + this->get_a(), c);
 }
 
-TYPED_TEST(VectorOperations, operator_add_scalar_compound) {
+TYPED_TEST(VectorOperations, OperatorAddScalarCompound) {
     using real_type = typename TestFixture::fixture_real_type;
 
     // compound addition using a vector and a scalar
@@ -161,40 +161,40 @@ TYPED_TEST(VectorOperations, operator_add_scalar_compound) {
     EXPECT_FLOATING_POINT_VECTOR_NEAR(this->get_a() += this->get_scalar(), c);
 }
 
-TYPED_TEST(VectorOperations, operator_add_binary_empty) {
+TYPED_TEST(VectorOperations, OperatorAddBinaryEmpty) {
     // binary addition using two empty vectors
     EXPECT_FLOATING_POINT_VECTOR_NEAR(this->get_empty() + this->get_empty(), this->get_empty());
 }
 
-TYPED_TEST(VectorOperations, operator_add_compound_empty) {
+TYPED_TEST(VectorOperations, OperatorAddCompoundEmpty) {
     // compound addition using two empty vectors
     EXPECT_EQ(this->get_empty() += this->get_empty(), this->get_empty());
 }
 
-TYPED_TEST(VectorOperations, operator_add_scalar_binary_empty) {
+TYPED_TEST(VectorOperations, OperatorAddScalarBinaryEmpty) {
     // binary addition using an empty vector and a scalar
     EXPECT_EQ(this->get_empty() + this->get_scalar(), this->get_empty());
     EXPECT_EQ(this->get_scalar() + this->get_empty(), this->get_empty());
 }
 
-TYPED_TEST(VectorOperations, operator_add_scalar_compound_empty) {
+TYPED_TEST(VectorOperations, OperatorAddScalarCompoundEmpty) {
     // compound addition using an empty vector and a scalar
     EXPECT_EQ(this->get_empty() += this->get_scalar(), this->get_empty());
 }
 
-TYPED_TEST(VectorOperationsDeathTest, operator_add_binary) {
+TYPED_TEST(VectorOperationsDeathTest, OperatorAddBinary) {
     // try to binary add vectors with different sizes
     EXPECT_DEATH(std::ignore = this->get_a() + this->get_b(), "Sizes mismatch!: 4 != 2");
     EXPECT_DEATH(std::ignore = this->get_b() + this->get_a(), "Sizes mismatch!: 2 != 4");
 }
 
-TYPED_TEST(VectorOperationsDeathTest, operator_add_compound) {
+TYPED_TEST(VectorOperationsDeathTest, OperatorAddCompound) {
     // try to compound add vectors with different sizes
     EXPECT_DEATH(this->get_a() += this->get_b(), "Sizes mismatch!: 4 != 2");
     EXPECT_DEATH(this->get_b() += this->get_a(), "Sizes mismatch!: 2 != 4");
 }
 
-TYPED_TEST(VectorOperations, operator_subtract_binary) {
+TYPED_TEST(VectorOperations, OperatorSubtractBinary) {
     using real_type = typename TestFixture::fixture_real_type;
 
     // binary subtraction using two vectors
@@ -208,7 +208,7 @@ TYPED_TEST(VectorOperations, operator_subtract_binary) {
     }
 }
 
-TYPED_TEST(VectorOperations, operator_subtract_compound) {
+TYPED_TEST(VectorOperations, OperatorSubtractCompound) {
     using real_type = typename TestFixture::fixture_real_type;
 
     // compound subtraction using two vectors
@@ -216,7 +216,7 @@ TYPED_TEST(VectorOperations, operator_subtract_compound) {
     EXPECT_FLOATING_POINT_VECTOR_NEAR(this->get_a() -= this->get_b(), c);
 }
 
-TYPED_TEST(VectorOperations, operator_subtract_scalar_binary) {
+TYPED_TEST(VectorOperations, OperatorSubtractScalarBinary) {
     using real_type = typename TestFixture::fixture_real_type;
 
     // binary subtraction using a vector and a scalar
@@ -230,7 +230,7 @@ TYPED_TEST(VectorOperations, operator_subtract_scalar_binary) {
     }
 }
 
-TYPED_TEST(VectorOperations, operator_subtract_scalar_compound) {
+TYPED_TEST(VectorOperations, OperatorSubtractScalarCompound) {
     using real_type = typename TestFixture::fixture_real_type;
 
     // compound subtraction using a vector and a scalar
@@ -238,40 +238,40 @@ TYPED_TEST(VectorOperations, operator_subtract_scalar_compound) {
     EXPECT_FLOATING_POINT_VECTOR_NEAR(this->get_a() -= this->get_scalar(), c);
 }
 
-TYPED_TEST(VectorOperations, operator_subtract_binary_empty) {
+TYPED_TEST(VectorOperations, OperatorSubtractBinaryEmpty) {
     // binary subtraction using two empty vectors
     EXPECT_EQ(this->get_empty() - this->get_empty(), this->get_empty());
 }
 
-TYPED_TEST(VectorOperations, operator_subtract_compound_empty) {
+TYPED_TEST(VectorOperations, OperatorSubtractCompoundEmpty) {
     // compound subtraction using two empty vectors
     EXPECT_EQ(this->get_empty() -= this->get_empty(), this->get_empty());
 }
 
-TYPED_TEST(VectorOperations, operator_subtract_scalar_binary_empty) {
+TYPED_TEST(VectorOperations, OperatorSubtractScalarBinaryEmpty) {
     // binary subtraction using an empty vector and a scalar
     EXPECT_EQ(this->get_empty() - this->get_scalar(), this->get_empty());
     EXPECT_EQ(this->get_scalar() - this->get_empty(), this->get_empty());
 }
 
-TYPED_TEST(VectorOperations, operator_subtract_scalar_compound_empty) {
+TYPED_TEST(VectorOperations, OperatorSubtractScalarCompoundEmpty) {
     // compound subtraction using an empty vector and a scalar
     EXPECT_EQ(this->get_empty() -= this->get_scalar(), this->get_empty());
 }
 
-TYPED_TEST(VectorOperationsDeathTest, operator_subtract_binary) {
+TYPED_TEST(VectorOperationsDeathTest, OperatorSubtractBinary) {
     // try to binary subtract vectors with different sizes
     EXPECT_DEATH(std::ignore = this->get_a() - this->get_b(), "Sizes mismatch!: 4 != 2");
     EXPECT_DEATH(std::ignore = this->get_b() - this->get_a(), "Sizes mismatch!: 2 != 4");
 }
 
-TYPED_TEST(VectorOperationsDeathTest, operator_subtract_compound) {
+TYPED_TEST(VectorOperationsDeathTest, OperatorSubtractCompound) {
     // try to compound subtract vectors with different sizes
     EXPECT_DEATH(this->get_a() -= this->get_b(), "Sizes mismatch!: 4 != 2");
     EXPECT_DEATH(this->get_b() -= this->get_a(), "Sizes mismatch!: 2 != 4");
 }
 
-TYPED_TEST(VectorOperations, operator_multiply_binary) {
+TYPED_TEST(VectorOperations, OperatorMultiplyBinary) {
     using real_type = typename TestFixture::fixture_real_type;
 
     // binary multiplication using two vectors
@@ -280,7 +280,7 @@ TYPED_TEST(VectorOperations, operator_multiply_binary) {
     EXPECT_FLOATING_POINT_VECTOR_NEAR(this->get_b() * this->get_a(), c);
 }
 
-TYPED_TEST(VectorOperations, operator_multiply_compound) {
+TYPED_TEST(VectorOperations, OperatorMultiplyCompound) {
     using real_type = typename TestFixture::fixture_real_type;
 
     // compound multiplication using two vectors
@@ -288,7 +288,7 @@ TYPED_TEST(VectorOperations, operator_multiply_compound) {
     EXPECT_FLOATING_POINT_VECTOR_NEAR(this->get_a() *= this->get_b(), c);
 }
 
-TYPED_TEST(VectorOperations, operator_multiply_scalar_binary) {
+TYPED_TEST(VectorOperations, OperatorMultiplyScalarBinary) {
     using real_type = typename TestFixture::fixture_real_type;
 
     // binary multiplication using a vector and a scalar
@@ -297,7 +297,7 @@ TYPED_TEST(VectorOperations, operator_multiply_scalar_binary) {
     EXPECT_FLOATING_POINT_VECTOR_NEAR(this->get_scalar() * this->get_a(), c);
 }
 
-TYPED_TEST(VectorOperations, operator_multiply_scalar_compound) {
+TYPED_TEST(VectorOperations, OperatorMultiplyScalarCompound) {
     using real_type = typename TestFixture::fixture_real_type;
 
     // compound multiplication using a vector and a scalar
@@ -305,40 +305,40 @@ TYPED_TEST(VectorOperations, operator_multiply_scalar_compound) {
     EXPECT_FLOATING_POINT_VECTOR_NEAR(this->get_a() *= this->get_scalar(), c);
 }
 
-TYPED_TEST(VectorOperations, operator_multiply_binary_empty) {
+TYPED_TEST(VectorOperations, OperatorMultiplyBinaryEmpty) {
     // binary multiplication using two empty vectors
     EXPECT_EQ(this->get_empty() * this->get_empty(), this->get_empty());
 }
 
-TYPED_TEST(VectorOperations, operator_multiply_compound_empty) {
+TYPED_TEST(VectorOperations, OperatorMultiplyCompoundEmpty) {
     // compound multiplication using two empty vectors
     EXPECT_EQ(this->get_empty() *= this->get_empty(), this->get_empty());
 }
 
-TYPED_TEST(VectorOperations, operator_multiply_scalar_binary_empty) {
+TYPED_TEST(VectorOperations, OperatorMultiplyScalarBinaryEmpty) {
     // binary multiplication using an empty vector and a scalar
     EXPECT_EQ(this->get_empty() * this->get_scalar(), this->get_empty());
     EXPECT_EQ(this->get_scalar() * this->get_empty(), this->get_empty());
 }
 
-TYPED_TEST(VectorOperations, operator_multiply_scalar_compound_empty) {
+TYPED_TEST(VectorOperations, OperatorMultiplyScalarCompoundEmpty) {
     // compound multiplication using an empty vector and a scalar
     EXPECT_EQ(this->get_empty() *= this->get_scalar(), this->get_empty());
 }
 
-TYPED_TEST(VectorOperationsDeathTest, operator_multiply_binary) {
+TYPED_TEST(VectorOperationsDeathTest, OperatorMultiplyBinary) {
     // try to binary multiply vectors with different sizes
     EXPECT_DEATH(std::ignore = this->get_a() * this->get_b(), "Sizes mismatch!: 4 != 2");
     EXPECT_DEATH(std::ignore = this->get_b() * this->get_a(), "Sizes mismatch!: 2 != 4");
 }
 
-TYPED_TEST(VectorOperationsDeathTest, operator_multiply_compound) {
+TYPED_TEST(VectorOperationsDeathTest, OperatorMultiplyCompound) {
     // try to compound multiply vectors with different sizes
     EXPECT_DEATH(this->get_a() *= this->get_b(), "Sizes mismatch!: 4 != 2");
     EXPECT_DEATH(this->get_b() *= this->get_a(), "Sizes mismatch!: 2 != 4");
 }
 
-TYPED_TEST(VectorOperations, operator_divide_binary) {
+TYPED_TEST(VectorOperations, OperatorDivideBinary) {
     using real_type = typename TestFixture::fixture_real_type;
 
     // binary division using two vectors
@@ -352,7 +352,7 @@ TYPED_TEST(VectorOperations, operator_divide_binary) {
     }
 }
 
-TYPED_TEST(VectorOperations, operator_divide_compound) {
+TYPED_TEST(VectorOperations, OperatorDivideCompound) {
     using real_type = typename TestFixture::fixture_real_type;
 
     // compound division using two vectors
@@ -360,7 +360,7 @@ TYPED_TEST(VectorOperations, operator_divide_compound) {
     EXPECT_FLOATING_POINT_VECTOR_NEAR(this->get_a() /= this->get_b(), c);
 }
 
-TYPED_TEST(VectorOperations, operator_divide_scalar_binary) {
+TYPED_TEST(VectorOperations, OperatorDivideScalarBinary) {
     using real_type = typename TestFixture::fixture_real_type;
 
     // binary division using a vector and a scalar
@@ -374,7 +374,7 @@ TYPED_TEST(VectorOperations, operator_divide_scalar_binary) {
     }
 }
 
-TYPED_TEST(VectorOperations, operator_divide_scalar_compound) {
+TYPED_TEST(VectorOperations, OperatorDivideScalarCompound) {
     using real_type = typename TestFixture::fixture_real_type;
 
     // compound division using a vector and a scalar
@@ -382,86 +382,86 @@ TYPED_TEST(VectorOperations, operator_divide_scalar_compound) {
     EXPECT_FLOATING_POINT_VECTOR_NEAR(this->get_a() /= this->get_scalar(), c);
 }
 
-TYPED_TEST(VectorOperations, operator_divide_binary_empty) {
+TYPED_TEST(VectorOperations, OperatorDivideBinaryEmpty) {
     // binary division using two empty vectors
     EXPECT_EQ(this->get_empty() / this->get_empty(), this->get_empty());
 }
 
-TYPED_TEST(VectorOperations, operator_divide_compound_empty) {
+TYPED_TEST(VectorOperations, OperatorDivideCompoundEmpty) {
     // compound division using two empty vectors
     EXPECT_EQ(this->get_empty() /= this->get_empty(), this->get_empty());
 }
 
-TYPED_TEST(VectorOperations, operator_divide_scalar_binary_empty) {
+TYPED_TEST(VectorOperations, OperatorDivideScalarBinaryEmpty) {
     // binary division using an empty vector and a scalar
     EXPECT_EQ(this->get_empty() / this->get_scalar(), this->get_empty());
     EXPECT_EQ(this->get_scalar() / this->get_empty(), this->get_empty());
 }
 
-TYPED_TEST(VectorOperations, operator_divide_scalar_compound_empty) {
+TYPED_TEST(VectorOperations, OperatorDivideScalarCompoundEmpty) {
     // compound division using an empty vector and a scalar
     EXPECT_EQ(this->get_empty() /= this->get_scalar(), this->get_empty());
 }
 
-TYPED_TEST(VectorOperationsDeathTest, operator_divide_binary) {
+TYPED_TEST(VectorOperationsDeathTest, OperatorDivideBinary) {
     // try to binary division vectors with different sizes
     EXPECT_DEATH(std::ignore = this->get_a() / this->get_b(), "Sizes mismatch!: 4 != 2");
     EXPECT_DEATH(std::ignore = this->get_b() / this->get_a(), "Sizes mismatch!: 2 != 4");
 }
 
-TYPED_TEST(VectorOperationsDeathTest, operator_divide_compound) {
+TYPED_TEST(VectorOperationsDeathTest, OperatorDivideCompound) {
     // try to compound division vectors with different sizes
     EXPECT_DEATH(this->get_a() /= this->get_b(), "Sizes mismatch!: 4 != 2");
     EXPECT_DEATH(this->get_b() /= this->get_a(), "Sizes mismatch!: 2 != 4");
 }
 
-TYPED_TEST(VectorOperations, operator_dot_function) {
+TYPED_TEST(VectorOperations, OperatorDotFunction) {
     // calculate dot product using the dot function
     EXPECT_FLOATING_POINT_NEAR(dot(this->get_a(), this->get_b()), 62.5);
     EXPECT_FLOATING_POINT_NEAR(dot(this->get_b(), this->get_a()), 62.5);
 }
 
-TYPED_TEST(VectorOperations, operator_dot_transposed) {
+TYPED_TEST(VectorOperations, OperatorDotTransposed) {
     // calculate dot product using the transposed overload function
     EXPECT_FLOATING_POINT_NEAR(transposed{ this->get_a() } * this->get_b(), 62.5);
     EXPECT_FLOATING_POINT_NEAR(transposed{ this->get_b() } * this->get_a(), 62.5);
 }
 
-TYPED_TEST(VectorOperationsDeathTest, operator_dot_function) {
+TYPED_TEST(VectorOperationsDeathTest, OperatorDotFunction) {
     // try to calculate the dot product with vectors of different sizes
     EXPECT_DEATH(std::ignore = dot(this->get_a(), this->get_b()), "Sizes mismatch!: 4 != 2");
     EXPECT_DEATH(std::ignore = dot(this->get_b(), this->get_a()), "Sizes mismatch!: 2 != 4");
 }
 
-TYPED_TEST(VectorOperationsDeathTest, operator_dot_transposed) {
+TYPED_TEST(VectorOperationsDeathTest, OperatorDotTransposed) {
     // try to calculate the dot product with vectors of different sizes
     EXPECT_DEATH(std::ignore = transposed{ this->get_a() } * this->get_b(), "Sizes mismatch!: 4 != 2");
     EXPECT_DEATH(std::ignore = transposed{ this->get_b() } * this->get_a(), "Sizes mismatch!: 2 != 4");
 }
 
-TYPED_TEST(VectorOperations, operator_sum) {
+TYPED_TEST(VectorOperations, OperatorSum) {
     // sum vector elements
     EXPECT_FLOATING_POINT_NEAR(sum(this->get_a()), 15);
     EXPECT_FLOATING_POINT_NEAR(sum(this->get_b()), 17.5);
 }
 
-TYPED_TEST(VectorOperations, operator_squared_euclidean_dist) {
+TYPED_TEST(VectorOperations, OperatorSquaredEuclideanDist) {
     // calculate the squared Euclidean distance between two vectors
     EXPECT_FLOATING_POINT_NEAR(squared_euclidean_dist(this->get_a(), this->get_b()), 1.25);
 }
 
-TYPED_TEST(VectorOperationsDeathTest, operator_squared_euclidean_dist) {
+TYPED_TEST(VectorOperationsDeathTest, OperatorSquaredEuclideanDist) {
     // try to calculate the squared Euclidean distance between two vectors with different distance
     EXPECT_DEATH(std::ignore = squared_euclidean_dist(this->get_a(), this->get_b()), "Sizes mismatch!: 4 != 2");
     EXPECT_DEATH(std::ignore = squared_euclidean_dist(this->get_b(), this->get_a()), "Sizes mismatch!: 2 != 4");
 }
 
-TYPED_TEST(VectorOperations, operator_manhattan_dist) {
+TYPED_TEST(VectorOperations, OperatorManhattanDist) {
     // calculate the Manhattan distance between two vectors
     EXPECT_FLOATING_POINT_NEAR(manhattan_dist(this->get_a(), this->get_b()), 2.5);
 }
 
-TYPED_TEST(VectorOperationsDeathTest, operator_manhattan_dist) {
+TYPED_TEST(VectorOperationsDeathTest, OperatorManhattanDist) {
     // try to calculate the Manhattan distance between two vectors with different distance
     EXPECT_DEATH(std::ignore = manhattan_dist(this->get_a(), this->get_b()), "Sizes mismatch!: 4 != 2");
     EXPECT_DEATH(std::ignore = manhattan_dist(this->get_b(), this->get_a()), "Sizes mismatch!: 2 != 4");

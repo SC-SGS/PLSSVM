@@ -25,13 +25,13 @@
 #include <unordered_set>  // std::unordered_set, std::unordered_multiset
 #include <vector>         // std::vector
 
-TEST(TypeTraits, always_false) {
+TEST(TypeTraits, AlwaysFalse) {
     EXPECT_FALSE(plssvm::detail::always_false_v<void>);
     EXPECT_FALSE(plssvm::detail::always_false_v<int>);
     EXPECT_FALSE(plssvm::detail::always_false_v<double>);
 }
 
-TEST(TypeTraits, remove_cvref_t) {
+TEST(TypeTraits, RemoveCvrefT) {
     EXPECT_TRUE((std::is_same_v<double, plssvm::detail::remove_cvref_t<double>>) );
     EXPECT_TRUE((std::is_same_v<double, plssvm::detail::remove_cvref_t<const double>>) );
     EXPECT_TRUE((std::is_same_v<double, plssvm::detail::remove_cvref_t<volatile double>>) );
@@ -42,7 +42,7 @@ TEST(TypeTraits, remove_cvref_t) {
     EXPECT_TRUE((std::is_same_v<double, plssvm::detail::remove_cvref_t<const volatile double &>>) );
 }
 
-TEST(TypeTraits, is_string) {
+TEST(TypeTraits, IsString) {
     // sequence containers
     EXPECT_TRUE((plssvm::detail::is_string_v<std::string>) );
     EXPECT_FALSE((plssvm::detail::is_string_v<std::array<int, 2>>) );
@@ -64,7 +64,7 @@ TEST(TypeTraits, is_string) {
     EXPECT_FALSE((plssvm::detail::is_string_v<int[2]>) );
 }
 
-TEST(TypeTraits, is_array) {
+TEST(TypeTraits, IsArray) {
     // sequence containers
     EXPECT_FALSE((plssvm::detail::is_array_v<std::string>) );
     EXPECT_TRUE((plssvm::detail::is_array_v<std::array<int, 2>>) );
@@ -86,7 +86,7 @@ TEST(TypeTraits, is_array) {
     EXPECT_FALSE((plssvm::detail::is_array_v<int[2]>) );
 }
 
-TEST(TypeTraits, is_vector) {
+TEST(TypeTraits, IsVector) {
     // sequence containers
     EXPECT_FALSE((plssvm::detail::is_vector_v<std::string>) );
     EXPECT_FALSE((plssvm::detail::is_vector_v<std::array<int, 2>>) );
@@ -108,7 +108,7 @@ TEST(TypeTraits, is_vector) {
     EXPECT_FALSE((plssvm::detail::is_vector_v<int[2]>) );
 }
 
-TEST(TypeTraits, is_deque) {
+TEST(TypeTraits, IsDeque) {
     // sequence containers
     EXPECT_FALSE((plssvm::detail::is_deque_v<std::string>) );
     EXPECT_FALSE((plssvm::detail::is_deque_v<std::array<int, 2>>) );
@@ -130,7 +130,7 @@ TEST(TypeTraits, is_deque) {
     EXPECT_FALSE((plssvm::detail::is_deque_v<int[2]>) );
 }
 
-TEST(TypeTraits, is_forward_list) {
+TEST(TypeTraits, IsForwardList) {
     // sequence containers
     EXPECT_FALSE((plssvm::detail::is_forward_list_v<std::string>) );
     EXPECT_FALSE((plssvm::detail::is_forward_list_v<std::array<int, 2>>) );
@@ -152,7 +152,7 @@ TEST(TypeTraits, is_forward_list) {
     EXPECT_FALSE((plssvm::detail::is_forward_list_v<int[2]>) );
 }
 
-TEST(TypeTraits, is_list) {
+TEST(TypeTraits, IsList) {
     // sequence containers
     EXPECT_FALSE((plssvm::detail::is_list_v<std::string>) );
     EXPECT_FALSE((plssvm::detail::is_list_v<std::array<int, 2>>) );
@@ -174,7 +174,7 @@ TEST(TypeTraits, is_list) {
     EXPECT_FALSE((plssvm::detail::is_list_v<int[2]>) );
 }
 
-TEST(TypeTraits, is_set) {
+TEST(TypeTraits, IsSet) {
     // sequence containers
     EXPECT_FALSE((plssvm::detail::is_set_v<std::string>) );
     EXPECT_FALSE((plssvm::detail::is_set_v<std::array<int, 2>>) );
@@ -196,7 +196,7 @@ TEST(TypeTraits, is_set) {
     EXPECT_FALSE((plssvm::detail::is_set_v<int[2]>) );
 }
 
-TEST(TypeTraits, is_map) {
+TEST(TypeTraits, IsMap) {
     // sequence containers
     EXPECT_FALSE((plssvm::detail::is_map_v<std::string>) );
     EXPECT_FALSE((plssvm::detail::is_map_v<std::array<int, 2>>) );
@@ -218,7 +218,7 @@ TEST(TypeTraits, is_map) {
     EXPECT_FALSE((plssvm::detail::is_map_v<int[2]>) );
 }
 
-TEST(TypeTraits, is_multiset) {
+TEST(TypeTraits, IsMultiset) {
     // sequence containers
     EXPECT_FALSE((plssvm::detail::is_multiset_v<std::string>) );
     EXPECT_FALSE((plssvm::detail::is_multiset_v<std::array<int, 2>>) );
@@ -240,7 +240,7 @@ TEST(TypeTraits, is_multiset) {
     EXPECT_FALSE((plssvm::detail::is_multiset_v<int[2]>) );
 }
 
-TEST(TypeTraits, is_multimap) {
+TEST(TypeTraits, IsMultimap) {
     // sequence containers
     EXPECT_FALSE((plssvm::detail::is_multimap_v<std::string>) );
     EXPECT_FALSE((plssvm::detail::is_multimap_v<std::array<int, 2>>) );
@@ -262,7 +262,7 @@ TEST(TypeTraits, is_multimap) {
     EXPECT_FALSE((plssvm::detail::is_multimap_v<int[2]>) );
 }
 
-TEST(TypeTraits, is_unordered_set) {
+TEST(TypeTraits, IsUnorderedSet) {
     // sequence containers
     EXPECT_FALSE((plssvm::detail::is_unordered_set_v<std::string>) );
     EXPECT_FALSE((plssvm::detail::is_unordered_set_v<std::array<int, 2>>) );
@@ -284,7 +284,7 @@ TEST(TypeTraits, is_unordered_set) {
     EXPECT_FALSE((plssvm::detail::is_unordered_set_v<int[2]>) );
 }
 
-TEST(TypeTraits, is_unordered_map) {
+TEST(TypeTraits, IsUnorderedMap) {
     // sequence containers
     EXPECT_FALSE((plssvm::detail::is_unordered_map_v<std::string>) );
     EXPECT_FALSE((plssvm::detail::is_unordered_map_v<std::array<int, 2>>) );
@@ -306,7 +306,7 @@ TEST(TypeTraits, is_unordered_map) {
     EXPECT_FALSE((plssvm::detail::is_unordered_map_v<int[2]>) );
 }
 
-TEST(TypeTraits, is_unordered_multiset) {
+TEST(TypeTraits, IsUnorderedMultiset) {
     // sequence containers
     EXPECT_FALSE((plssvm::detail::is_unordered_multiset_v<std::string>) );
     EXPECT_FALSE((plssvm::detail::is_unordered_multiset_v<std::array<int, 2>>) );
@@ -328,7 +328,7 @@ TEST(TypeTraits, is_unordered_multiset) {
     EXPECT_FALSE((plssvm::detail::is_unordered_multiset_v<int[2]>) );
 }
 
-TEST(TypeTraits, is_unordered_multimap) {
+TEST(TypeTraits, IsUnorderedMultimap) {
     // sequence containers
     EXPECT_FALSE((plssvm::detail::is_unordered_multimap_v<std::string>) );
     EXPECT_FALSE((plssvm::detail::is_unordered_multimap_v<std::array<int, 2>>) );
@@ -350,7 +350,7 @@ TEST(TypeTraits, is_unordered_multimap) {
     EXPECT_FALSE((plssvm::detail::is_unordered_multimap_v<int[2]>) );
 }
 
-TEST(TypeTraits, is_contiguous_container) {
+TEST(TypeTraits, IsContiguousContainer) {
     // sequence containers
     EXPECT_TRUE((plssvm::detail::is_contiguous_container_v<std::string>) );
     EXPECT_TRUE((plssvm::detail::is_contiguous_container_v<std::array<int, 2>>) );
@@ -372,7 +372,7 @@ TEST(TypeTraits, is_contiguous_container) {
     EXPECT_FALSE((plssvm::detail::is_contiguous_container_v<int[2]>) );
 }
 
-TEST(TypeTraits, is_sequence_container) {
+TEST(TypeTraits, IsSequenceContainer) {
     // sequence containers
     EXPECT_TRUE((plssvm::detail::is_sequence_container_v<std::string>) );
     EXPECT_TRUE((plssvm::detail::is_sequence_container_v<std::array<int, 2>>) );
@@ -394,7 +394,7 @@ TEST(TypeTraits, is_sequence_container) {
     EXPECT_FALSE((plssvm::detail::is_sequence_container_v<int[2]>) );
 }
 
-TEST(TypeTraits, is_associative_container) {
+TEST(TypeTraits, IsAssociativeContainer) {
     // sequence containers
     EXPECT_FALSE((plssvm::detail::is_associative_container_v<std::string>) );
     EXPECT_FALSE((plssvm::detail::is_associative_container_v<std::array<int, 2>>) );
@@ -416,7 +416,7 @@ TEST(TypeTraits, is_associative_container) {
     EXPECT_FALSE((plssvm::detail::is_associative_container_v<int[2]>) );
 }
 
-TEST(TypeTraits, is_unordered_associative_container) {
+TEST(TypeTraits, IsUnorderedAssociativeContainer) {
     // sequence containers
     EXPECT_FALSE((plssvm::detail::is_unordered_associative_container_v<std::string>) );
     EXPECT_FALSE((plssvm::detail::is_unordered_associative_container_v<std::array<int, 2>>) );
@@ -438,7 +438,7 @@ TEST(TypeTraits, is_unordered_associative_container) {
     EXPECT_FALSE((plssvm::detail::is_unordered_associative_container_v<int[2]>) );
 }
 
-TEST(TypeTraits, is_container) {
+TEST(TypeTraits, IsContainer) {
     // sequence containers
     EXPECT_TRUE((plssvm::detail::is_container_v<std::string>) );
     EXPECT_TRUE((plssvm::detail::is_container_v<std::array<int, 2>>) );

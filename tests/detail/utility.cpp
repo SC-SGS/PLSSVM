@@ -34,7 +34,7 @@
 #include <unordered_set>  // std::unordered_set
 #include <vector>         // std::vector
 
-TEST(Utility, plssvm_is_defined_macro) {
+TEST(Utility, PlssvmIsDefinedMacro) {
     // the following macro is ALWAYS defined in PLSSVM
     constexpr bool is_defined = PLSSVM_IS_DEFINED(PLSSVM_BUILD_TYPE);
     EXPECT_TRUE(is_defined);
@@ -44,7 +44,7 @@ TEST(Utility, plssvm_is_defined_macro) {
     EXPECT_FALSE(not_defined);
 }
 
-TEST(Utility, get) {
+TEST(Utility, Get) {
     EXPECT_EQ(plssvm::detail::get<0>(0, 1, 2, 3, 4), 0);
     EXPECT_EQ(plssvm::detail::get<1>(0, 1.5, 2, 3, 4), 1.5);
     EXPECT_EQ(plssvm::detail::get<2>(0, 1, -2, 3, 4), -2);
@@ -52,7 +52,7 @@ TEST(Utility, get) {
     EXPECT_EQ(plssvm::detail::get<4>(0, 1, 2, 3, std::string{ "abc" }), std::string{ "abc" });
 }
 
-TEST(Utility, to_underlying_int) {
+TEST(Utility, ToUnderlyingInt) {
     // clang-format off
     enum class int_enum { a, b, c = 10 };
     // clang-format on
@@ -62,7 +62,7 @@ TEST(Utility, to_underlying_int) {
     EXPECT_EQ(plssvm::detail::to_underlying(int_enum::c), 10);
 }
 
-TEST(Utility, to_underlying_char) {
+TEST(Utility, ToUnderlyingChar) {
     // clang-format off
     enum class char_enum : char { a = 'a', b = 'b', c = 'c' };
     // clang-format on
@@ -104,7 +104,7 @@ class UtilityMapContainer : public ::testing::Test {
 
 TYPED_TEST_SUITE(UtilityMapContainer, map_types_gtest, naming::test_parameter_to_name);
 
-TYPED_TEST(UtilityMapContainer, erase_if) {
+TYPED_TEST(UtilityMapContainer, EraseIf) {
     EXPECT_EQ(plssvm::detail::erase_if(this->get_map(), [](const typename TestFixture::map_type::value_type value) { return value.second % 2 == 0; }), 1);
     EXPECT_EQ(this->get_map().size(), 1);
     EXPECT_EQ(plssvm::detail::erase_if(this->get_map(), [](const typename TestFixture::map_type::value_type value) { return value.second % 2 == 0; }), 0);
@@ -113,7 +113,7 @@ TYPED_TEST(UtilityMapContainer, erase_if) {
     EXPECT_TRUE(this->get_map().empty());
 }
 
-TYPED_TEST(UtilityMapContainer, contains) {
+TYPED_TEST(UtilityMapContainer, Contains) {
     EXPECT_TRUE(plssvm::detail::contains(this->get_map(), 0));
     EXPECT_TRUE(plssvm::detail::contains(this->get_map(), 1));
     EXPECT_FALSE(plssvm::detail::contains(this->get_map(), 2));
@@ -152,7 +152,7 @@ class UtilitySetContainer : public ::testing::Test {
 
 TYPED_TEST_SUITE(UtilitySetContainer, set_types_gtest, naming::test_parameter_to_name);
 
-TYPED_TEST(UtilitySetContainer, erase_if) {
+TYPED_TEST(UtilitySetContainer, EraseIf) {
     EXPECT_EQ(plssvm::detail::erase_if(this->get_set(), [](const typename TestFixture::set_type::value_type value) { return value % 2 == 0; }), 1);
     EXPECT_EQ(this->get_set().size(), 1);
     EXPECT_EQ(plssvm::detail::erase_if(this->get_set(), [](const typename TestFixture::set_type::value_type value) { return value % 2 == 0; }), 0);
@@ -161,7 +161,7 @@ TYPED_TEST(UtilitySetContainer, erase_if) {
     EXPECT_TRUE(this->get_set().empty());
 }
 
-TYPED_TEST(UtilitySetContainer, contains) {
+TYPED_TEST(UtilitySetContainer, Contains) {
     EXPECT_TRUE(plssvm::detail::contains(this->get_set(), 0));
     EXPECT_TRUE(plssvm::detail::contains(this->get_set(), 1));
     EXPECT_FALSE(plssvm::detail::contains(this->get_set(), 2));
@@ -200,7 +200,7 @@ class UtilityVectorContainer : public ::testing::Test {
 
 TYPED_TEST_SUITE(UtilityVectorContainer, vector_types_gtest, naming::test_parameter_to_name);
 
-TYPED_TEST(UtilityVectorContainer, erase_if) {
+TYPED_TEST(UtilityVectorContainer, EraseIf) {
     EXPECT_EQ(plssvm::detail::erase_if(this->get_vector(), [](const typename TestFixture::vector_type::value_type value) { return value % 2 == 0; }), 1);
     EXPECT_EQ(this->get_vector().size(), 1);
     EXPECT_EQ(plssvm::detail::erase_if(this->get_vector(), [](const typename TestFixture::vector_type::value_type value) { return value % 2 == 0; }), 0);
@@ -209,14 +209,14 @@ TYPED_TEST(UtilityVectorContainer, erase_if) {
     EXPECT_TRUE(this->get_vector().empty());
 }
 
-TYPED_TEST(UtilityVectorContainer, contains) {
+TYPED_TEST(UtilityVectorContainer, Contains) {
     EXPECT_TRUE(plssvm::detail::contains(this->get_vector(), 0));
     EXPECT_TRUE(plssvm::detail::contains(this->get_vector(), 1));
     EXPECT_FALSE(plssvm::detail::contains(this->get_vector(), 2));
     EXPECT_FALSE(plssvm::detail::contains(this->get_vector(), -1));
 }
 
-TEST(Utility, check_local_memory_usage_nullopt) {
+TEST(Utility, CheckLocalMemoryUsageNullopt) {
     // create a std::vector of std::nullopt
     const std::vector<std::optional<plssvm::detail::memory_size>> available_local_memory{ std::nullopt, std::nullopt };
 
@@ -225,7 +225,7 @@ TEST(Utility, check_local_memory_usage_nullopt) {
     EXPECT_NO_THROW(plssvm::detail::check_local_memory_usage(available_local_memory));
 }
 
-TEST(Utility, check_local_memory_usage) {
+TEST(Utility, CheckLocalMemoryUsage) {
     // create a std::vector local memory sizes that will always satisfy the needed amount of local memory
     constexpr plssvm::detail::memory_size needed_local_memory = plssvm::detail::data_distribution::maximum_local_memory_needed();
     const std::vector<std::optional<plssvm::detail::memory_size>> available_local_memory{ needed_local_memory * 2, needed_local_memory * 2 };
@@ -235,7 +235,7 @@ TEST(Utility, check_local_memory_usage) {
     EXPECT_NO_THROW(plssvm::detail::check_local_memory_usage(available_local_memory));
 }
 
-TEST(Utility, check_local_memory_usage_too_small) {
+TEST(Utility, CheckLocalMemoryUsageTooSmall) {
     // create a std::vector local memory sizes that will never satisfy the needed amount of local memory
     constexpr plssvm::detail::memory_size needed_local_memory = plssvm::detail::data_distribution::maximum_local_memory_needed();
     const std::vector<std::optional<plssvm::detail::memory_size>> available_local_memory{ needed_local_memory / 2, needed_local_memory / 2 };
@@ -258,18 +258,18 @@ TEST(UtilityDeathTest, check_local_memory_usage_empty) {
     EXPECT_DEATH(plssvm::detail::check_local_memory_usage(available_local_memory), "At least one local memory value must be available since at least one place must always be present!");
 }
 
-TEST(Utility, current_date_time) {
+TEST(Utility, CurrentDateTime) {
     // test if the current date time matches the pattern
     EXPECT_TRUE(std::regex_match(std::string{ plssvm::detail::current_date_time() },
                                  std::regex{ "[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}", std::regex::extended }));
 }
 
-TEST(Utility, get_system_memory) {
+TEST(Utility, GetSystemMemory) {
     // the available system memory must be greater than 0!
     EXPECT_GT(plssvm::detail::get_system_memory().num_bytes(), 0ULL);
 }
 
-TEST(Utility, get_existing_env_variable) {
+TEST(Utility, GetExistingEnvVariable) {
 #if defined(_WIN32) || defined(_WIN64)
     GTEST_SKIP() << "Can't set an environment variable from within C++ on Windows!";
 #else
@@ -282,6 +282,6 @@ TEST(Utility, get_existing_env_variable) {
 #endif
 }
 
-TEST(Utility, get_none_existing_env_variable) {
+TEST(Utility, GetNotExistingEnvVariable) {
     EXPECT_FALSE(plssvm::detail::get_env_variable("PLSSVM_ENV_VARIABLE_THAT_WILL_NEVER_EXIST").has_value());
 }

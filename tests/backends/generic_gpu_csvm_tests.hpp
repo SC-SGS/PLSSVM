@@ -48,7 +48,7 @@ class GenericGPUCSVM : public ::testing::Test,
 
 TYPED_TEST_SUITE_P(GenericGPUCSVM);
 
-TYPED_TEST_P(GenericGPUCSVM, get_local_memory) {
+TYPED_TEST_P(GenericGPUCSVM, GetLocalMemory) {
     using csvm_test_type = util::test_parameter_type_at_t<0, TypeParam>;
     using mock_csvm_type = typename csvm_test_type::mock_csvm_type;
 
@@ -62,7 +62,7 @@ TYPED_TEST_P(GenericGPUCSVM, get_local_memory) {
     }
 }
 
-TYPED_TEST_P(GenericGPUCSVM, get_max_work_group_size) {
+TYPED_TEST_P(GenericGPUCSVM, GetMaxWorkGroupSize) {
     using csvm_test_type = util::test_parameter_type_at_t<0, TypeParam>;
     using mock_csvm_type = typename csvm_test_type::mock_csvm_type;
 
@@ -75,7 +75,7 @@ TYPED_TEST_P(GenericGPUCSVM, get_max_work_group_size) {
     }
 }
 
-TYPED_TEST_P(GenericGPUCSVM, get_max_grid_size) {
+TYPED_TEST_P(GenericGPUCSVM, GetMaxGridSize) {
     using csvm_test_type = util::test_parameter_type_at_t<0, TypeParam>;
     using mock_csvm_type = typename csvm_test_type::mock_csvm_type;
 
@@ -91,7 +91,7 @@ TYPED_TEST_P(GenericGPUCSVM, get_max_grid_size) {
     }
 }
 
-TYPED_TEST_P(GenericGPUCSVM, run_blas_level_3_kernel_explicit) {
+TYPED_TEST_P(GenericGPUCSVM, RunBlasLevel3KernelExplicit) {
     using csvm_test_type = util::test_parameter_type_at_t<0, TypeParam>;
     using mock_csvm_type = typename csvm_test_type::mock_csvm_type;
     using device_ptr_type = typename csvm_test_type::device_ptr_type;
@@ -177,7 +177,7 @@ TYPED_TEST_P(GenericGPUCSVM, run_blas_level_3_kernel_explicit) {
     }
 }
 
-TYPED_TEST_P(GenericGPUCSVM, run_w_kernel) {
+TYPED_TEST_P(GenericGPUCSVM, RunWKernel) {
     using csvm_test_type = util::test_parameter_type_at_t<0, TypeParam>;
     using mock_csvm_type = typename csvm_test_type::mock_csvm_type;
     using device_ptr_type = typename csvm_test_type::device_ptr_type;
@@ -244,8 +244,8 @@ TYPED_TEST_P(GenericGPUCSVM, run_w_kernel) {
     }
 }
 
-TYPED_TEST_P(GenericGPUCSVM, run_inplace_matrix_addition) {
     using namespace plssvm::operators;
+TYPED_TEST_P(GenericGPUCSVM, RunInplaceMatrixAddition) {
     using csvm_test_type = util::test_parameter_type_at_t<0, TypeParam>;
     using mock_csvm_type = typename csvm_test_type::mock_csvm_type;
     using device_ptr_type = typename csvm_test_type::device_ptr_type;
@@ -297,8 +297,8 @@ TYPED_TEST_P(GenericGPUCSVM, run_inplace_matrix_addition) {
     }
 }
 
-TYPED_TEST_P(GenericGPUCSVM, run_inplace_matrix_scale) {
     using namespace plssvm::operators;
+TYPED_TEST_P(GenericGPUCSVM, RunInplaceMatrixScale) {
     using csvm_test_type = util::test_parameter_type_at_t<0, TypeParam>;
     using mock_csvm_type = typename csvm_test_type::mock_csvm_type;
     using device_ptr_type = typename csvm_test_type::device_ptr_type;
@@ -350,13 +350,13 @@ TYPED_TEST_P(GenericGPUCSVM, run_inplace_matrix_scale) {
 }
 
 REGISTER_TYPED_TEST_SUITE_P(GenericGPUCSVM,
-                            get_local_memory,
-                            get_max_work_group_size,
-                            get_max_grid_size,
-                            run_blas_level_3_kernel_explicit,
-                            run_w_kernel,
-                            run_inplace_matrix_addition,
-                            run_inplace_matrix_scale);
+                            GetLocalMemory,
+                            GetMaxWorkGroupSize,
+                            GetMaxGridSize,
+                            RunBlasLevel3KernelExplicit,
+                            RunWKernel,
+                            RunInplaceMatrixAddition,
+                            RunInplaceMatrixScale);
 
 //*************************************************************************************************************************************//
 //                                        GPU C-SVM tests depending on the kernel function type                                        //
@@ -367,7 +367,7 @@ class GenericGPUCSVMKernelFunction : public GenericGPUCSVM<T> { };
 
 TYPED_TEST_SUITE_P(GenericGPUCSVMKernelFunction);
 
-TYPED_TEST_P(GenericGPUCSVMKernelFunction, run_assemble_kernel_matrix_explicit) {
+TYPED_TEST_P(GenericGPUCSVMKernelFunction, RunAssembleKernelMatrixExplicit) {
     using csvm_test_type = util::test_parameter_type_at_t<0, TypeParam>;
     using mock_csvm_type = typename csvm_test_type::mock_csvm_type;
     using device_ptr_type = typename csvm_test_type::device_ptr_type;
@@ -442,7 +442,7 @@ TYPED_TEST_P(GenericGPUCSVMKernelFunction, run_assemble_kernel_matrix_explicit) 
     }
 }
 
-TYPED_TEST_P(GenericGPUCSVMKernelFunction, run_assemble_kernel_matrix_implicit_blas_level_3) {
+TYPED_TEST_P(GenericGPUCSVMKernelFunction, RunAssembleKernelMatrixImplicitBlasLevel3) {
     using csvm_test_type = util::test_parameter_type_at_t<0, TypeParam>;
     using mock_csvm_type = typename csvm_test_type::mock_csvm_type;
     using device_ptr_type = typename csvm_test_type::device_ptr_type;
@@ -530,7 +530,7 @@ TYPED_TEST_P(GenericGPUCSVMKernelFunction, run_assemble_kernel_matrix_implicit_b
     }
 }
 
-TYPED_TEST_P(GenericGPUCSVMKernelFunction, run_predict_kernel) {
+TYPED_TEST_P(GenericGPUCSVMKernelFunction, RunPredictKernel) {
     using csvm_test_type = util::test_parameter_type_at_t<0, TypeParam>;
     using mock_csvm_type = typename csvm_test_type::mock_csvm_type;
     using device_ptr_type = typename csvm_test_type::device_ptr_type;
@@ -623,16 +623,16 @@ TYPED_TEST_P(GenericGPUCSVMKernelFunction, run_predict_kernel) {
 }
 
 REGISTER_TYPED_TEST_SUITE_P(GenericGPUCSVMKernelFunction,
-                            run_assemble_kernel_matrix_explicit,
-                            run_assemble_kernel_matrix_implicit_blas_level_3,
-                            run_predict_kernel);
+                            RunAssembleKernelMatrixExplicit,
+                            RunAssembleKernelMatrixImplicitBlasLevel3,
+                            RunPredictKernel);
 
 template <typename T>
 class GenericGPUCSVMDeathTest : public GenericGPUCSVM<T> { };
 
 TYPED_TEST_SUITE_P(GenericGPUCSVMDeathTest);
 
-TYPED_TEST_P(GenericGPUCSVMDeathTest, get_max_work_group_size_out_of_range) {
+TYPED_TEST_P(GenericGPUCSVMDeathTest, GetMaxWorkGroupSizeOutOfRange) {
     using csvm_test_type = util::test_parameter_type_at_t<0, TypeParam>;
     using mock_csvm_type = typename csvm_test_type::mock_csvm_type;
 
@@ -644,7 +644,7 @@ TYPED_TEST_P(GenericGPUCSVMDeathTest, get_max_work_group_size_out_of_range) {
     EXPECT_DEATH(std::ignore = svm.get_max_work_group_size(num_devices), fmt::format("Invalid device {} requested!", num_devices));
 }
 
-TYPED_TEST_P(GenericGPUCSVMDeathTest, get_max_grid_size_out_of_range) {
+TYPED_TEST_P(GenericGPUCSVMDeathTest, GetMaxGridSizeOutOfRange) {
     using csvm_test_type = util::test_parameter_type_at_t<0, TypeParam>;
     using mock_csvm_type = typename csvm_test_type::mock_csvm_type;
 
@@ -657,7 +657,7 @@ TYPED_TEST_P(GenericGPUCSVMDeathTest, get_max_grid_size_out_of_range) {
 }
 
 REGISTER_TYPED_TEST_SUITE_P(GenericGPUCSVMDeathTest,
-                            get_max_work_group_size_out_of_range,
-                            get_max_grid_size_out_of_range);
+                            GetMaxWorkGroupSizeOutOfRange,
+                            GetMaxGridSizeOutOfRange);
 
 #endif  // PLSSVM_TESTS_BACKENDS_GENERIC_GPU_CSVM_TESTS_HPP_

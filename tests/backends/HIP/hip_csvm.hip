@@ -42,7 +42,7 @@ class HIPCSVMConstructor : public ::testing::Test,
 TYPED_TEST_SUITE(HIPCSVMConstructor, hip_csvm_types_gtest, naming::test_parameter_to_name);
 
 // check whether the constructor correctly fails when using an incompatible target platform
-TYPED_TEST(HIPCSVMConstructor, default_construct) {
+TYPED_TEST(HIPCSVMConstructor, DefaultConstruct) {
     using csvm_type = typename TestFixture::fixture_csvm_type;
 
 #if defined(PLSSVM_HIP_BACKEND_USE_HIP_RUNTIME)
@@ -66,7 +66,7 @@ TYPED_TEST(HIPCSVMConstructor, default_construct) {
 #endif
 }
 
-TYPED_TEST(HIPCSVMConstructor, construct_parameter) {
+TYPED_TEST(HIPCSVMConstructor, ConstructParameter) {
     using csvm_type = typename TestFixture::fixture_csvm_type;
 
 #if defined(PLSSVM_HIP_BACKEND_USE_HIP_RUNTIME)
@@ -90,7 +90,7 @@ TYPED_TEST(HIPCSVMConstructor, construct_parameter) {
 #endif
 }
 
-TYPED_TEST(HIPCSVMConstructor, construct_target_and_parameter) {
+TYPED_TEST(HIPCSVMConstructor, ConstructTargetAndParameter) {
     using csvm_type = typename TestFixture::fixture_csvm_type;
 
     // create parameter struct
@@ -147,7 +147,7 @@ TYPED_TEST(HIPCSVMConstructor, construct_target_and_parameter) {
 #endif
 }
 
-TYPED_TEST(HIPCSVMConstructor, construct_named_args) {
+TYPED_TEST(HIPCSVMConstructor, ConstructNamedArgs) {
     using csvm_type = typename TestFixture::fixture_csvm_type;
 
 #if defined(PLSSVM_HIP_BACKEND_USE_HIP_RUNTIME)
@@ -179,7 +179,7 @@ TYPED_TEST(HIPCSVMConstructor, construct_named_args) {
 #endif
 }
 
-TYPED_TEST(HIPCSVMConstructor, construct_target_and_named_args) {
+TYPED_TEST(HIPCSVMConstructor, ConstructTargetAndNamedArgs) {
     using csvm_type = typename TestFixture::fixture_csvm_type;
 
 #if defined(PLSSVM_HIP_BACKEND_USE_HIP_RUNTIME)

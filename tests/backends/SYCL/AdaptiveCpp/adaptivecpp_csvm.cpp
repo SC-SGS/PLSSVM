@@ -44,7 +44,7 @@ class AdaptiveCppCSVMConstructor : public ::testing::Test,
 TYPED_TEST_SUITE(AdaptiveCppCSVMConstructor, adaptivecpp_csvm_types_gtest, naming::test_parameter_to_name);
 
 // check whether the constructor correctly fails when using an incompatible target platform
-TYPED_TEST(AdaptiveCppCSVMConstructor, default_construct) {
+TYPED_TEST(AdaptiveCppCSVMConstructor, DefaultConstruct) {
     using csvm_type = typename TestFixture::fixture_csvm_type;
 
     // default constructor must always work
@@ -52,7 +52,7 @@ TYPED_TEST(AdaptiveCppCSVMConstructor, default_construct) {
     EXPECT_NO_THROW((csvm_type{ plssvm::sycl_data_parallel_kernel = plssvm::sycl::data_parallel_kernel::work_group }));
 }
 
-TYPED_TEST(AdaptiveCppCSVMConstructor, construct_parameter) {
+TYPED_TEST(AdaptiveCppCSVMConstructor, ConstructParameter) {
     using csvm_type = typename TestFixture::fixture_csvm_type;
 
     // the automatic target platform must always be available
@@ -60,7 +60,7 @@ TYPED_TEST(AdaptiveCppCSVMConstructor, construct_parameter) {
     EXPECT_NO_THROW((csvm_type{ plssvm::parameter{}, plssvm::sycl_data_parallel_kernel = plssvm::sycl::data_parallel_kernel::work_group }));
 }
 
-TYPED_TEST(AdaptiveCppCSVMConstructor, construct_target_and_parameter) {
+TYPED_TEST(AdaptiveCppCSVMConstructor, ConstructTargetAndParameter) {
     using csvm_type = typename TestFixture::fixture_csvm_type;
 
     // create parameter struct
@@ -101,7 +101,7 @@ TYPED_TEST(AdaptiveCppCSVMConstructor, construct_target_and_parameter) {
 #endif
 }
 
-TYPED_TEST(AdaptiveCppCSVMConstructor, construct_named_args) {
+TYPED_TEST(AdaptiveCppCSVMConstructor, ConstructNamedArgs) {
     using csvm_type = typename TestFixture::fixture_csvm_type;
 
     // every target is allowed for SYCL
@@ -110,7 +110,7 @@ TYPED_TEST(AdaptiveCppCSVMConstructor, construct_named_args) {
     EXPECT_NO_THROW((csvm_type{ plssvm::sycl_data_parallel_kernel = plssvm::sycl::data_parallel_kernel::work_group }));
 }
 
-TYPED_TEST(AdaptiveCppCSVMConstructor, construct_target_and_named_args) {
+TYPED_TEST(AdaptiveCppCSVMConstructor, ConstructTargetAndNamedArgs) {
     using csvm_type = typename TestFixture::fixture_csvm_type;
 
     // every target is allowed for SYCL
@@ -164,7 +164,7 @@ TYPED_TEST(AdaptiveCppCSVMConstructor, construct_target_and_named_args) {
 #endif
 }
 
-TYPED_TEST(AdaptiveCppCSVMConstructor, get_data_parallel_kernel) {
+TYPED_TEST(AdaptiveCppCSVMConstructor, GetDataParallelKernel) {
     using csvm_type = typename TestFixture::fixture_csvm_type;
 
     // construct default C-SVM

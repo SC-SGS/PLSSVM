@@ -17,7 +17,7 @@
 
 #if defined(PLSSVM_HAS_MPI_ENABLED)
 
-TEST(MPIDataTypes, mpi_datatype) {
+TEST(MPIDataTypes, MPIDatatype) {
     // check type conversions
     EXPECT_EQ(plssvm::mpi::detail::mpi_datatype<bool>(), MPI_C_BOOL);
 
@@ -51,7 +51,7 @@ TEST(MPIDataTypes, mpi_datatype) {
 enum class dummy1 : int {};
 enum class dummy2 : char {};
 
-TEST(MPIDataTypes, mpi_datatype_from_enum) {
+TEST(MPIDataTypes, MPIDatatypeFromEnum) {
     // check type conversions from enum's underlying type
     EXPECT_EQ(plssvm::mpi::detail::mpi_datatype<dummy1>(), MPI_INT);
     EXPECT_EQ(plssvm::mpi::detail::mpi_datatype<dummy2>(), MPI_CHAR);

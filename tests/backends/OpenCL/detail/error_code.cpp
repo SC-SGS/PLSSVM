@@ -18,17 +18,17 @@
 
 #include <string>  // std::string
 
-TEST(OpenCLErrorCode, default_construct) {
+TEST(OpenCLErrorCode, DefaultConstruct) {
     // the default error code should signal success
     EXPECT_EQ(plssvm::opencl::detail::error_code{}.value(), CL_SUCCESS);
 }
 
-TEST(OpenCLErrorCode, construct) {
+TEST(OpenCLErrorCode, Construct) {
     // construct from an OpenCL error code
     EXPECT_EQ(plssvm::opencl::detail::error_code{ CL_DEVICE_NOT_FOUND }.value(), CL_DEVICE_NOT_FOUND);
 }
 
-TEST(OpenCLErrorCode, operator_assign) {
+TEST(OpenCLErrorCode, OperatorAssign) {
     // default construct the error code
     plssvm::opencl::detail::error_code errc{};
     EXPECT_EQ(errc.value(), CL_SUCCESS);
@@ -37,7 +37,7 @@ TEST(OpenCLErrorCode, operator_assign) {
     EXPECT_EQ(errc.value(), CL_DEVICE_NOT_FOUND);
 }
 
-TEST(OpenCLErrorCode, assign) {
+TEST(OpenCLErrorCode, Assign) {
     // default construct the error code
     plssvm::opencl::detail::error_code errc{};
     EXPECT_EQ(errc.value(), CL_SUCCESS);
@@ -46,7 +46,7 @@ TEST(OpenCLErrorCode, assign) {
     EXPECT_EQ(errc.value(), CL_DEVICE_NOT_FOUND);
 }
 
-TEST(OpenCLErrorCode, clear) {
+TEST(OpenCLErrorCode, Clear) {
     // construct from an OpenCL error code
     plssvm::opencl::detail::error_code errc{ CL_DEVICE_NOT_FOUND };
     EXPECT_EQ(errc.value(), CL_DEVICE_NOT_FOUND);
@@ -55,21 +55,21 @@ TEST(OpenCLErrorCode, clear) {
     EXPECT_EQ(errc.value(), CL_SUCCESS);
 }
 
-TEST(OpenCLErrorCode, value) {
+TEST(OpenCLErrorCode, Value) {
     // default construct the error code
     const plssvm::opencl::detail::error_code errc{};
     // get the value
     EXPECT_EQ(errc.value(), CL_SUCCESS);
 }
 
-TEST(OpenCLErrorCode, message) {
+TEST(OpenCLErrorCode, Message) {
     // default construct the error code
     const plssvm::opencl::detail::error_code errc{};
     // get the value as a string
     EXPECT_EQ(errc.message(), "CL_SUCCESS");
 }
 
-TEST(OpenCLErrorCode, possible_message_error_codes) {
+TEST(OpenCLErrorCode, PossibleMessageErrorCodes) {
     // any error code greater than zero is unknown
     std::string msg = std::string{ plssvm::opencl::detail::error_code{ 1 }.message() };
     EXPECT_EQ(msg, "UNKNOWN ERROR_CODE");
@@ -87,19 +87,19 @@ TEST(OpenCLErrorCode, possible_message_error_codes) {
     }
 }
 
-TEST(OpenCLErrorCode, operator_bool) {
+TEST(OpenCLErrorCode, OperatorBool) {
     // conversion to bool must be true if the error code is CL_SUCCESS
     EXPECT_TRUE(static_cast<bool>(plssvm::opencl::detail::error_code{}));
     // must return false otherwise
     EXPECT_FALSE(static_cast<bool>(plssvm::opencl::detail::error_code{ CL_DEVICE_NOT_FOUND }));
 }
 
-TEST(OpenCLErrorCode, operator_ostream) {
+TEST(OpenCLErrorCode, OperatorOstream) {
     EXPECT_CONVERSION_TO_STRING(plssvm::opencl::detail::error_code{ CL_SUCCESS }, "0: CL_SUCCESS");
     EXPECT_CONVERSION_TO_STRING(plssvm::opencl::detail::error_code{ CL_DEVICE_NOT_FOUND }, "-1: CL_DEVICE_NOT_FOUND");
 }
 
-TEST(OpenCLErrorCode, operator_equal) {
+TEST(OpenCLErrorCode, OperatorEqual) {
     // test two error codes for equality
     const plssvm::opencl::detail::error_code errc1{};
     const plssvm::opencl::detail::error_code errc2{ CL_SUCCESS };
@@ -111,7 +111,7 @@ TEST(OpenCLErrorCode, operator_equal) {
     EXPECT_FALSE(errc2 == errc3);
 }
 
-TEST(OpenCLErrorCode, operator_unequal) {
+TEST(OpenCLErrorCode, OperatorUnequal) {
     // test two error codes for equality
     const plssvm::opencl::detail::error_code errc1{};
     const plssvm::opencl::detail::error_code errc2{ CL_SUCCESS };

@@ -18,7 +18,7 @@
 class Logger : public ::testing::Test,
                public util::redirect_output<> { };
 
-TEST_F(Logger, enabled_logging) {
+TEST_F(Logger, EnabledLogging) {
     // explicitly enable logging
     plssvm::verbosity = plssvm::verbosity_level::full;
 
@@ -29,7 +29,7 @@ TEST_F(Logger, enabled_logging) {
     EXPECT_EQ(this->get_capture(), "Hello, World!");
 }
 
-TEST_F(Logger, enabled_logging_with_args) {
+TEST_F(Logger, EnabledLoggingWithArgs) {
     // explicitly enable logging
     plssvm::verbosity = plssvm::verbosity_level::full;
 
@@ -40,7 +40,7 @@ TEST_F(Logger, enabled_logging_with_args) {
     EXPECT_EQ(this->get_capture(), "int: 42, float: 1.5, str: abc");
 }
 
-TEST_F(Logger, disabled_logging) {
+TEST_F(Logger, DisabledLogging) {
     // explicitly disable logging
     plssvm::verbosity = plssvm::verbosity_level::quiet;
 
@@ -51,7 +51,7 @@ TEST_F(Logger, disabled_logging) {
     EXPECT_TRUE(this->get_capture().empty());
 }
 
-TEST_F(Logger, disabled_logging_with_args) {
+TEST_F(Logger, DisabledLoggingWithArgs) {
     // explicitly disable logging
     plssvm::verbosity = plssvm::verbosity_level::quiet;
 
@@ -62,7 +62,7 @@ TEST_F(Logger, disabled_logging_with_args) {
     EXPECT_TRUE(this->get_capture().empty());
 }
 
-TEST_F(Logger, mismatching_verbosity_level) {
+TEST_F(Logger, MismatchingVerbosityLevel) {
     // set verbosity_level to libsvm
     plssvm::verbosity = plssvm::verbosity_level::libsvm;
 
@@ -77,7 +77,7 @@ TEST_F(Logger, mismatching_verbosity_level) {
 class WarningLogger : public ::testing::Test,
                       public util::redirect_output<&std::clog> { };
 
-TEST_F(WarningLogger, enabled_logging_warning) {
+TEST_F(WarningLogger, EnabledLoggingWarning) {
     // explicitly enable logging
     plssvm::verbosity = plssvm::verbosity_level::full;
 

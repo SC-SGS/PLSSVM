@@ -36,7 +36,7 @@ class GenericCSVR : public ::testing::Test,
 
 TYPED_TEST_SUITE_P(GenericCSVR);
 
-TYPED_TEST_P(GenericCSVR, move_constructor) {
+TYPED_TEST_P(GenericCSVR, MoveConstructor) {
     using csvm_test_type = util::test_parameter_type_at_t<0, TypeParam>;
     using csvr_type = typename csvm_test_type::csvr_type;
 
@@ -55,7 +55,7 @@ TYPED_TEST_P(GenericCSVR, move_constructor) {
     EXPECT_EQ(new_svr.get_target_platform(), target);
 }
 
-TYPED_TEST_P(GenericCSVR, move_assignment) {
+TYPED_TEST_P(GenericCSVR, MoveAssignment) {
     using csvm_test_type = util::test_parameter_type_at_t<0, TypeParam>;
     using csvr_type = typename csvm_test_type::csvr_type;
 
@@ -78,8 +78,8 @@ TYPED_TEST_P(GenericCSVR, move_assignment) {
 }
 
 REGISTER_TYPED_TEST_SUITE_P(GenericCSVR,
-                            move_constructor,
-                            move_assignment);
+                            MoveConstructor,
+                            MoveAssignment);
 
 //*************************************************************************************************************************************//
 //                                            C-SVR tests depending on the kernel function                                             //
@@ -90,7 +90,7 @@ class GenericCSVRKernelFunction : public GenericCSVR<T> { };
 
 TYPED_TEST_SUITE_P(GenericCSVRKernelFunction);
 
-TYPED_TEST_P(GenericCSVRKernelFunction, predict) {
+TYPED_TEST_P(GenericCSVRKernelFunction, Predict) {
     using label_type = util::test_parameter_type_at_t<1, TypeParam>;
     using csvm_test_type = util::test_parameter_type_at_t<0, TypeParam>;
     using csvr_type = typename csvm_test_type::csvr_type;
@@ -134,7 +134,7 @@ TYPED_TEST_P(GenericCSVRKernelFunction, predict) {
     EXPECT_EQ(calculated, test_data.labels().value().get());
 }
 
-TYPED_TEST_P(GenericCSVRKernelFunction, score_model) {
+TYPED_TEST_P(GenericCSVRKernelFunction, ScoreModel) {
     using label_type = util::test_parameter_type_at_t<1, TypeParam>;
     using csvm_test_type = util::test_parameter_type_at_t<0, TypeParam>;
     using csvr_type = typename csvm_test_type::csvr_type;
@@ -170,7 +170,7 @@ TYPED_TEST_P(GenericCSVRKernelFunction, score_model) {
     EXPECT_INCLUSIVE_RANGE(calculated, plssvm::real_type{ 0.0 }, plssvm::real_type{ 1.0 });
 }
 
-TYPED_TEST_P(GenericCSVRKernelFunction, score) {
+TYPED_TEST_P(GenericCSVRKernelFunction, Score) {
     using label_type = util::test_parameter_type_at_t<1, TypeParam>;
     using csvm_test_type = util::test_parameter_type_at_t<0, TypeParam>;
     using csvr_type = typename csvm_test_type::csvr_type;
@@ -207,9 +207,9 @@ TYPED_TEST_P(GenericCSVRKernelFunction, score) {
 }
 
 REGISTER_TYPED_TEST_SUITE_P(GenericCSVRKernelFunction,
-                            predict,
-                            score_model,
-                            score);
+                            Predict,
+                            ScoreModel,
+                            Score);
 
 //*************************************************************************************************************************************//
 //                                       C-SVR tests depending on the solver and kernel function                                       //
@@ -220,7 +220,7 @@ class GenericCSVRSolverKernelFunction : public GenericCSVR<T> { };
 
 TYPED_TEST_SUITE_P(GenericCSVRSolverKernelFunction);
 
-TYPED_TEST_P(GenericCSVRSolverKernelFunction, fit) {
+TYPED_TEST_P(GenericCSVRSolverKernelFunction, Fit) {
     // note: only quantitative tests, doesn't check the real weights and rho values
     using label_type = util::test_parameter_type_at_t<1, TypeParam>;
     using csvm_test_type = util::test_parameter_type_at_t<0, TypeParam>;
@@ -260,6 +260,6 @@ TYPED_TEST_P(GenericCSVRSolverKernelFunction, fit) {
 }
 
 REGISTER_TYPED_TEST_SUITE_P(GenericCSVRSolverKernelFunction,
-                            fit);
+                            Fit);
 
 #endif  // PLSSVM_TESTS_BACKENDS_GENERIC_BASE_CSVR_TESTS_HPP_

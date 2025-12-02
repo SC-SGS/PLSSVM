@@ -12,7 +12,7 @@
 
 #include "gtest/gtest.h"  // TEST, EXPECT_EQ, ::testing::StaticAssertTypeEq
 
-TEST(KokkosExecutionSpaceTypeTraits, execution_space_to_kokkos_type) {
+TEST(KokkosExecutionSpaceTypeTraits, ExecutionSpaceToKokkosType) {
     // check conversions
 #if defined(KOKKOS_ENABLE_CUDA)
     ::testing::StaticAssertTypeEq<plssvm::kokkos::execution_space_to_kokkos_type_t<plssvm::kokkos::execution_space::cuda>, Kokkos::Cuda>();
@@ -43,7 +43,7 @@ TEST(KokkosExecutionSpaceTypeTraits, execution_space_to_kokkos_type) {
 #endif
 }
 
-TEST(KokkosExecutionSpaceTypeTraits, kokkos_type_to_execution_space) {
+TEST(KokkosExecutionSpaceTypeTraits, KokkosTypeToExecutionSpace) {
     // check conversions
 #if defined(KOKKOS_ENABLE_CUDA)
     EXPECT_EQ(plssvm::kokkos::kokkos_type_to_execution_space_v<Kokkos::Cuda>, plssvm::kokkos::execution_space::cuda);

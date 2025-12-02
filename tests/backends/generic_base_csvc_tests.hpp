@@ -39,7 +39,7 @@ class GenericCSVC : public ::testing::Test,
 
 TYPED_TEST_SUITE_P(GenericCSVC);
 
-TYPED_TEST_P(GenericCSVC, move_constructor) {
+TYPED_TEST_P(GenericCSVC, MoveConstructor) {
     using csvm_test_type = util::test_parameter_type_at_t<0, TypeParam>;
     using csvc_type = typename csvm_test_type::csvc_type;
 
@@ -58,7 +58,7 @@ TYPED_TEST_P(GenericCSVC, move_constructor) {
     EXPECT_EQ(new_svc.get_target_platform(), target);
 }
 
-TYPED_TEST_P(GenericCSVC, move_assignment) {
+TYPED_TEST_P(GenericCSVC, MoveAssignment) {
     using csvm_test_type = util::test_parameter_type_at_t<0, TypeParam>;
     using csvc_type = typename csvm_test_type::csvc_type;
 
@@ -81,8 +81,8 @@ TYPED_TEST_P(GenericCSVC, move_assignment) {
 }
 
 REGISTER_TYPED_TEST_SUITE_P(GenericCSVC,
-                            move_constructor,
-                            move_assignment);
+                            MoveConstructor,
+                            MoveAssignment);
 
 //*************************************************************************************************************************************//
 //                                C-SVC tests depending on the kernel function and classification type                                 //
@@ -93,7 +93,7 @@ class GenericCSVCKernelFunctionClassification : public GenericCSVC<T> { };
 
 TYPED_TEST_SUITE_P(GenericCSVCKernelFunctionClassification);
 
-TYPED_TEST_P(GenericCSVCKernelFunctionClassification, predict) {
+TYPED_TEST_P(GenericCSVCKernelFunctionClassification, Predict) {
     using label_type = util::test_parameter_type_at_t<1, TypeParam>;
     using csvm_test_type = util::test_parameter_type_at_t<0, TypeParam>;
     using csvc_type = typename csvm_test_type::csvc_type;
@@ -134,7 +134,7 @@ TYPED_TEST_P(GenericCSVCKernelFunctionClassification, predict) {
     }
 }
 
-TYPED_TEST_P(GenericCSVCKernelFunctionClassification, score_model) {
+TYPED_TEST_P(GenericCSVCKernelFunctionClassification, ScoreModel) {
     using label_type = util::test_parameter_type_at_t<1, TypeParam>;
     using csvm_test_type = util::test_parameter_type_at_t<0, TypeParam>;
     using csvc_type = typename csvm_test_type::csvc_type;
@@ -169,7 +169,7 @@ TYPED_TEST_P(GenericCSVCKernelFunctionClassification, score_model) {
     EXPECT_EQ(calculated, plssvm::real_type{ 1.0 });
 }
 
-TYPED_TEST_P(GenericCSVCKernelFunctionClassification, score) {
+TYPED_TEST_P(GenericCSVCKernelFunctionClassification, Score) {
     using label_type = util::test_parameter_type_at_t<1, TypeParam>;
     using csvm_test_type = util::test_parameter_type_at_t<0, TypeParam>;
     using csvc_type = typename csvm_test_type::csvc_type;
@@ -205,9 +205,9 @@ TYPED_TEST_P(GenericCSVCKernelFunctionClassification, score) {
 }
 
 REGISTER_TYPED_TEST_SUITE_P(GenericCSVCKernelFunctionClassification,
-                            predict,
-                            score_model,
-                            score);
+                            Predict,
+                            ScoreModel,
+                            Score);
 
 //*************************************************************************************************************************************//
 //                            C-SVC tests depending on the solver, kernel function, and classification type                            //
@@ -227,7 +227,7 @@ class GenericCSVCSolverKernelFunctionClassification : public GenericCSVC<T>,
 
 TYPED_TEST_SUITE_P(GenericCSVCSolverKernelFunctionClassification);
 
-TYPED_TEST_P(GenericCSVCSolverKernelFunctionClassification, fit) {
+TYPED_TEST_P(GenericCSVCSolverKernelFunctionClassification, Fit) {
     // note: only quantitative tests, doesn't check the real weights and rho values
     using label_type = util::test_parameter_type_at_t<1, TypeParam>;
     using csvm_test_type = util::test_parameter_type_at_t<0, TypeParam>;
@@ -275,6 +275,6 @@ TYPED_TEST_P(GenericCSVCSolverKernelFunctionClassification, fit) {
 }
 
 REGISTER_TYPED_TEST_SUITE_P(GenericCSVCSolverKernelFunctionClassification,
-                            fit);
+                            Fit);
 
 #endif  // PLSSVM_TESTS_BACKENDS_GENERIC_BASE_CSVC_TESTS_HPP_

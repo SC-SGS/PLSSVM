@@ -273,41 +273,41 @@ include(${PROJECT_SOURCE_DIR}/cmake/discover_tests_with_death_test_filter.cmake)
 discover_tests_with_death_test_filter(${PLSSVM_BASE_TEST_NAME})
 
 # add test for help messages
-add_test(NAME MainTrain/executable_help COMMAND ${PLSSVM_EXECUTABLE_TRAIN_NAME} --help)
-add_test(NAME MainPredict/executable_help COMMAND ${PLSSVM_EXECUTABLE_PREDICT_NAME} --help)
-add_test(NAME MainScale/executable_help COMMAND ${PLSSVM_EXECUTABLE_SCALE_NAME} --help)
+add_test(NAME MainTrain/ExecutableHelp COMMAND ${PLSSVM_EXECUTABLE_TRAIN_NAME} --help)
+add_test(NAME MainPredict/ExecutableHelp COMMAND ${PLSSVM_EXECUTABLE_PREDICT_NAME} --help)
+add_test(NAME MainScale/ExecutableHelp COMMAND ${PLSSVM_EXECUTABLE_SCALE_NAME} --help)
 
 # add test for version messages
-add_test(NAME MainTrain/executable_version COMMAND ${PLSSVM_EXECUTABLE_TRAIN_NAME} --version)
-add_test(NAME MainPredict/executable_version COMMAND ${PLSSVM_EXECUTABLE_PREDICT_NAME} --version)
-add_test(NAME MainScale/executable_version COMMAND ${PLSSVM_EXECUTABLE_SCALE_NAME} --version)
+add_test(NAME MainTrain/ExecutableVersion COMMAND ${PLSSVM_EXECUTABLE_TRAIN_NAME} --version)
+add_test(NAME MainPredict/ExecutableVersion COMMAND ${PLSSVM_EXECUTABLE_PREDICT_NAME} --version)
+add_test(NAME MainScale/ExecutableVersion COMMAND ${PLSSVM_EXECUTABLE_SCALE_NAME} --version)
 
 # add minimal run test for scaling
-add_test(NAME MainScale/executable_minimal COMMAND ${PLSSVM_EXECUTABLE_SCALE_NAME} "${PLSSVM_CLASSIFICATION_TEST_FILE}"
-                                                   "${CMAKE_CURRENT_BINARY_DIR}/test_classification.libsvm.scaled"
+add_test(NAME MainScale/ExecutableMinimal COMMAND ${PLSSVM_EXECUTABLE_SCALE_NAME} "${PLSSVM_CLASSIFICATION_TEST_FILE}"
+                                                  "${CMAKE_CURRENT_BINARY_DIR}/test_classification.libsvm.scaled"
 )
-add_test(NAME MainScale/executable_minimal_cmd_output COMMAND ${PLSSVM_EXECUTABLE_SCALE_NAME} "${PLSSVM_CLASSIFICATION_TEST_FILE}")
-add_test(NAME MainScale/executable_save_scaling_factors
+add_test(NAME MainScale/ExecutableMinimalCmdOutput COMMAND ${PLSSVM_EXECUTABLE_SCALE_NAME} "${PLSSVM_CLASSIFICATION_TEST_FILE}")
+add_test(NAME MainScale/ExecutableSaveScalingFactors
          COMMAND ${PLSSVM_EXECUTABLE_SCALE_NAME} -s "${CMAKE_CURRENT_BINARY_DIR}/scaling_parameter.txt" # the file the scaling parameters are saved to
                  "${PLSSVM_CLASSIFICATION_TEST_FILE}" # the file to scale
                  "${CMAKE_CURRENT_BINARY_DIR}/test_classification.libsvm.scaled" # the scaled file (result)
 )
 
 # add minimal run test for the classification task
-add_test(NAME MainTrainClassification/executable_minimal COMMAND ${PLSSVM_EXECUTABLE_TRAIN_NAME} -s 0 -i 10 "${PLSSVM_CLASSIFICATION_TEST_FILE}"
-                                                                 "${CMAKE_CURRENT_BINARY_DIR}/test_classification.libsvm.model"
+add_test(NAME MainTrainClassification/ExecutableMinimal COMMAND ${PLSSVM_EXECUTABLE_TRAIN_NAME} -s 0 -i 10 "${PLSSVM_CLASSIFICATION_TEST_FILE}"
+                                                                "${CMAKE_CURRENT_BINARY_DIR}/test_classification.libsvm.model"
 )
-add_test(NAME MainPredictClassification/executable_minimal
+add_test(NAME MainPredictClassification/ExecutableMinimal
          COMMAND ${PLSSVM_EXECUTABLE_PREDICT_NAME} "${CMAKE_CURRENT_LIST_DIR}/data/libsvm/classification/5x4.libsvm" # test file
                  "${CMAKE_CURRENT_LIST_DIR}/data/model/classification/5x4.libsvm.model" # model file
                  "${CMAKE_CURRENT_BINARY_DIR}/test_classification.libsvm.predict" # predict file (result)
 )
 
 # add minimal run test for the regression task
-add_test(NAME MainTrainRegression/executable_minimal COMMAND ${PLSSVM_EXECUTABLE_TRAIN_NAME} -s 1 -i 10 "${PLSSVM_REGRESSION_TEST_FILE}"
-                                                             "${CMAKE_CURRENT_BINARY_DIR}/test_regression.libsvm.model"
+add_test(NAME MainTrainRegression/ExecutableMinimal COMMAND ${PLSSVM_EXECUTABLE_TRAIN_NAME} -s 1 -i 10 "${PLSSVM_REGRESSION_TEST_FILE}"
+                                                            "${CMAKE_CURRENT_BINARY_DIR}/test_regression.libsvm.model"
 )
-add_test(NAME MainPredictRegression/executable_minimal
+add_test(NAME MainPredictRegression/ExecutableMinimal
          COMMAND ${PLSSVM_EXECUTABLE_PREDICT_NAME} "${CMAKE_CURRENT_LIST_DIR}/data/libsvm/regression/5x4.libsvm" # test file
                  "${CMAKE_CURRENT_LIST_DIR}/data/model/regression/5x4.libsvm.model" # model file
                  "${CMAKE_CURRENT_BINARY_DIR}/test_regression.libsvm.predict" # predict file (result)
@@ -315,12 +315,12 @@ add_test(NAME MainPredictRegression/executable_minimal
 
 # if performance tracking is enabled, also add minimal run tests
 if (PLSSVM_ENABLE_PERFORMANCE_TRACKING)
-    add_test(NAME MainTrainPerformanceTracking/executable_minimal
+    add_test(NAME MainTrainPerformanceTracking/ExecutableMinimal
              COMMAND ${PLSSVM_EXECUTABLE_TRAIN_NAME} -s 0 --performance_tracking "${CMAKE_CURRENT_BINARY_DIR}/track.yaml" "${PLSSVM_CLASSIFICATION_TEST_FILE}"
                      "${CMAKE_CURRENT_BINARY_DIR}/test_classification.libsvm.model"
     )
     add_test(
-        NAME MainPredictPerformanceTracking/executable_minimal
+        NAME MainPredictPerformanceTracking/ExecutableMinimal
         COMMAND
             ${PLSSVM_EXECUTABLE_PREDICT_NAME} --performance_tracking "${CMAKE_CURRENT_BINARY_DIR}/track.yaml"
             "${CMAKE_CURRENT_LIST_DIR}/data/libsvm/classification/5x4.libsvm" # test file
@@ -330,12 +330,12 @@ if (PLSSVM_ENABLE_PERFORMANCE_TRACKING)
 endif ()
 
 # add failing test (must return with a non-zero exit code)
-add_test(NAME MainTrain/executable_fail COMMAND ${PLSSVM_EXECUTABLE_TRAIN_NAME} " ")
-set_tests_properties(MainTrain/executable_fail PROPERTIES WILL_FAIL TRUE)
-add_test(NAME MainPredict/executable_fail COMMAND ${PLSSVM_EXECUTABLE_PREDICT_NAME} " " " ")
-set_tests_properties(MainPredict/executable_fail PROPERTIES WILL_FAIL TRUE)
-add_test(NAME MainScale/executable_fail COMMAND ${PLSSVM_EXECUTABLE_SCALE_NAME} " ")
-set_tests_properties(MainScale/executable_fail PROPERTIES WILL_FAIL TRUE)
+add_test(NAME MainTrain/ExecutableFail COMMAND ${PLSSVM_EXECUTABLE_TRAIN_NAME} " ")
+set_tests_properties(MainTrain/ExecutableFail PROPERTIES WILL_FAIL TRUE)
+add_test(NAME MainPredict/ExecutableFail COMMAND ${PLSSVM_EXECUTABLE_PREDICT_NAME} " " " ")
+set_tests_properties(MainPredict/ExecutableFail PROPERTIES WILL_FAIL TRUE)
+add_test(NAME MainScale/ExecutableFail COMMAND ${PLSSVM_EXECUTABLE_SCALE_NAME} " ")
+set_tests_properties(MainScale/ExecutableFail PROPERTIES WILL_FAIL TRUE)
 
 # add test as coverage dependency
 if (TARGET coverage)

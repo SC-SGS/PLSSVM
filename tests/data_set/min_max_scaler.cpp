@@ -24,7 +24,7 @@
 #include <regex>    // std::regex, std::regex::extended, std::regex_match
 #include <vector>   // std::vector
 
-TEST(MinMaxScaler, default_construct_factor) {
+TEST(MinMaxScaler, DefaultConstructFactor) {
     // create factor
     const plssvm::min_max_scaler::factors factor{};
 
@@ -34,7 +34,7 @@ TEST(MinMaxScaler, default_construct_factor) {
     EXPECT_FLOATING_POINT_EQ(factor.upper, plssvm::real_type{});
 }
 
-TEST(MinMaxScaler, construct_factor) {
+TEST(MinMaxScaler, ConstructFactor) {
     // create factor
     const plssvm::min_max_scaler::factors factor{ 1, plssvm::real_type{ -2.5 }, plssvm::real_type{ 2.5 } };
 
@@ -44,7 +44,7 @@ TEST(MinMaxScaler, construct_factor) {
     EXPECT_FLOATING_POINT_EQ(factor.upper, plssvm::real_type{ 2.5 });
 }
 
-TEST(MinMaxScaler, construct_interval) {
+TEST(MinMaxScaler, ConstructInterval) {
     // create scaling class
     const plssvm::min_max_scaler scaler{ plssvm::real_type{ -1.0 }, plssvm::real_type{ 1.0 } };
 
@@ -54,14 +54,14 @@ TEST(MinMaxScaler, construct_interval) {
     EXPECT_FALSE(scaler.scaling_factors().has_value());
 }
 
-TEST(MinMaxScaler, construct_invalid_interval) {
+TEST(MinMaxScaler, ConstructInvalidInterval) {
     // create scaling class with an invalid interval
     EXPECT_THROW_WHAT((plssvm::min_max_scaler{ plssvm::real_type{ 1.0 }, plssvm::real_type{ -1.0 } }),
                       plssvm::min_max_scaler_exception,
                       "Inconsistent scaling interval specification: lower (1) must be less than upper (-1)!");
 }
 
-TEST(MinMaxScaler, construct_from_file) {
+TEST(MinMaxScaler, ConstructFromFile) {
     using factors_type = plssvm::min_max_scaler::factors;
 
     // create scaling class
@@ -85,7 +85,7 @@ TEST(MinMaxScaler, construct_from_file) {
     }
 }
 
-TEST(MinMaxScaler, save) {
+TEST(MinMaxScaler, Save) {
     // create scaling class
     const plssvm::min_max_scaler scaler{ PLSSVM_TEST_PATH "/data/scaling_factors/scaling_factors.txt" };
 
@@ -109,7 +109,7 @@ TEST(MinMaxScaler, save) {
     }
 }
 
-TEST(MinMaxScaler, save_empty_scaling_factors) {
+TEST(MinMaxScaler, SaveEmptyScalingFactors) {
     // create scaling class
     const plssvm::min_max_scaler scaler{ plssvm::real_type{ -1.0 }, plssvm::real_type{ 1.0 } };
 
@@ -129,7 +129,7 @@ TEST(MinMaxScaler, save_empty_scaling_factors) {
     EXPECT_TRUE(std::regex_match(std::string{ reader.line(1) }, reg));
 }
 
-TEST(MinMaxScaler, scale_scaling_factors_empty) {
+TEST(MinMaxScaler, ScaleScalingFactorsEmpty) {
     // create scaling class
     plssvm::min_max_scaler scaler{ plssvm::real_type{ -1.0 }, plssvm::real_type{ 1.0 } };
 
@@ -144,7 +144,7 @@ TEST(MinMaxScaler, scale_scaling_factors_empty) {
     EXPECT_FLOATING_POINT_MATRIX_NEAR(data, data_scaled);
 }
 
-TEST(MinMaxScaler, scale_scaling_factors) {
+TEST(MinMaxScaler, ScaleScalingFactors) {
     // create temporary file
     const util::temporary_file tmp_file{};  // automatically removes the created file at the end of its scope
 
@@ -173,7 +173,7 @@ TEST(MinMaxScaler, scale_scaling_factors) {
     EXPECT_FLOATING_POINT_MATRIX_NEAR(data_2, data_scaled);
 }
 
-TEST(MinMaxScaler, scale_too_many_scaling_factors) {
+TEST(MinMaxScaler, ScaleTooManyScalingFactors) {
     // create scaling class
     plssvm::min_max_scaler scaler{ PLSSVM_TEST_PATH "/data/scaling_factors/scaling_factors.txt" };
 
@@ -184,7 +184,7 @@ TEST(MinMaxScaler, scale_too_many_scaling_factors) {
     EXPECT_THROW_WHAT_MATCHER(scaler.scale(data), plssvm::min_max_scaler_exception, ::testing::HasSubstr("Need at most as much scaling factors as features in the data set are present (3), but 4 were given!"));
 }
 
-TEST(MinMaxScaler, scale_feature_index_too_big) {
+TEST(MinMaxScaler, ScaleFeatureIndexTooBig) {
     // create scaling class
     plssvm::min_max_scaler scaler{ PLSSVM_TEST_PATH "/data/scaling_factors/scaling_factors.txt" };
 
@@ -195,7 +195,7 @@ TEST(MinMaxScaler, scale_feature_index_too_big) {
     EXPECT_THROW_WHAT(scaler.scale(data), plssvm::min_max_scaler_exception, "The maximum scaling feature index most not be greater or equal than 4, but is 4!");
 }
 
-TEST(MinMaxScaler, scale_scaling_factor_more_than_once) {
+TEST(MinMaxScaler, ScaleScalingFactorMoreThanOnce) {
     // create scaling class
     plssvm::min_max_scaler scaler{ PLSSVM_TEST_PATH "/data/scaling_factors/invalid/feature_index_more_than_once.txt" };
 

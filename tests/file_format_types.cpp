@@ -17,19 +17,19 @@
 #include <sstream>  // std::istringstream
 
 // check whether the plssvm::file_format_type -> std::string conversions are correct
-TEST(FileFormatType, to_string) {
+TEST(FileFormatType, ToString) {
     // check conversions to std::string
     EXPECT_CONVERSION_TO_STRING(plssvm::file_format_type::libsvm, "libsvm");
     EXPECT_CONVERSION_TO_STRING(plssvm::file_format_type::arff, "arff");
 }
 
-TEST(FileFormatType, to_string_unknown) {
+TEST(FileFormatType, ToStringUnknown) {
     // check conversions to std::string from unknown file_format_type
     EXPECT_CONVERSION_TO_STRING(static_cast<plssvm::file_format_type>(2), "unknown");
 }
 
 // check whether the std::string -> plssvm::file_format_type conversions are correct
-TEST(FileFormatType, from_string) {
+TEST(FileFormatType, FromString) {
     // check conversion from std::string
     EXPECT_CONVERSION_FROM_STRING("LIBSVM", plssvm::file_format_type::libsvm);
     EXPECT_CONVERSION_FROM_STRING("libsvm", plssvm::file_format_type::libsvm);
@@ -37,7 +37,7 @@ TEST(FileFormatType, from_string) {
     EXPECT_CONVERSION_FROM_STRING("arff", plssvm::file_format_type::arff);
 }
 
-TEST(FileFormatType, from_string_unknown) {
+TEST(FileFormatType, FromStringUnknown) {
     // foo isn't a valid file_format_type
     std::istringstream input{ "foo" };
     plssvm::file_format_type file_format{};

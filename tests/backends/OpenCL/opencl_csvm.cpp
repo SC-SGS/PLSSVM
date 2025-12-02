@@ -42,21 +42,21 @@ class OpenCLCSVMConstructor : public ::testing::Test,
 TYPED_TEST_SUITE(OpenCLCSVMConstructor, opencl_csvm_types_gtest, naming::test_parameter_to_name);
 
 // check whether the constructor correctly fails when using an incompatible target platform
-TYPED_TEST(OpenCLCSVMConstructor, default_construct) {
+TYPED_TEST(OpenCLCSVMConstructor, DefaultConstruct) {
     using csvm_type = typename TestFixture::fixture_csvm_type;
 
     // default constructor must always work
     EXPECT_NO_THROW(csvm_type{});
 }
 
-TYPED_TEST(OpenCLCSVMConstructor, construct_parameter) {
+TYPED_TEST(OpenCLCSVMConstructor, ConstructParameter) {
     using csvm_type = typename TestFixture::fixture_csvm_type;
 
     // the automatic target platform must always be available
     EXPECT_NO_THROW(csvm_type{ plssvm::parameter{} });
 }
 
-TYPED_TEST(OpenCLCSVMConstructor, construct_target_and_parameter) {
+TYPED_TEST(OpenCLCSVMConstructor, ConstructTargetAndParameter) {
     using csvm_type = typename TestFixture::fixture_csvm_type;
 
     // create parameter struct
@@ -93,7 +93,7 @@ TYPED_TEST(OpenCLCSVMConstructor, construct_target_and_parameter) {
 #endif
 }
 
-TYPED_TEST(OpenCLCSVMConstructor, construct_named_args) {
+TYPED_TEST(OpenCLCSVMConstructor, ConstructNamedArgs) {
     using csvm_type = typename TestFixture::fixture_csvm_type;
 
     // every target is allowed for OpenCL
@@ -101,7 +101,7 @@ TYPED_TEST(OpenCLCSVMConstructor, construct_named_args) {
     EXPECT_NO_THROW((csvm_type{ plssvm::cost = 2.0 }));
 }
 
-TYPED_TEST(OpenCLCSVMConstructor, construct_target_and_named_args) {
+TYPED_TEST(OpenCLCSVMConstructor, ConstructTargetAndNamedArgs) {
     using csvm_type = typename TestFixture::fixture_csvm_type;
 
     // every target is allowed for OpenCL

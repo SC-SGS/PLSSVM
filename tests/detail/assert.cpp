@@ -18,16 +18,16 @@
 // only test if assertions are enabled
 #if defined(PLSSVM_ENABLE_ASSERTS)
 
-TEST(PLSSVMAssert, assert_true) {
+TEST(PLSSVMAssert, AssertTrue) {
     // must not trigger an assertion
     PLSSVM_ASSERT(true, "TRUE");
 }
 
-TEST(PLSSVMAssert, assert_false) {
+TEST(PLSSVMAssert, AssertFalse) {
     ASSERT_DEATH(PLSSVM_ASSERT(false, "FALSE"), ::testing::ContainsRegex("Assertion '.*false.*' failed!"));
 }
 
-TEST(PLSSVMAssertDeathTest, check_assertion_false) {
+TEST(PLSSVMAssertDeathTest, CheckAssertionFalse) {
     const auto loc = plssvm::source_location::current();
 
     // test regex
@@ -46,7 +46,7 @@ TEST(PLSSVMAssertDeathTest, check_assertion_false) {
 #endif
 
 // check the internal check_assertion function
-TEST(PLSSVMAssert, check_assertion_true) {
+TEST(PLSSVMAssert, CheckAssertionTrue) {
     // calling check assertion with true shouldn't do anything
     plssvm::detail::check_assertion(true, "", plssvm::source_location::current(), "");
 }

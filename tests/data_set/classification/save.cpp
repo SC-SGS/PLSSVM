@@ -58,7 +58,7 @@ class ClassificationDataSetSave : public ::testing::Test,
 
 TYPED_TEST_SUITE(ClassificationDataSetSave, util::classification_label_type_gtest, naming::test_parameter_to_name);
 
-TYPED_TEST(ClassificationDataSetSave, save_libsvm_with_label) {
+TYPED_TEST(ClassificationDataSetSave, SaveLIBSVMWithLabel) {
     using label_type = typename TestFixture::fixture_label_type;
 
     // create data set with labels
@@ -78,7 +78,7 @@ TYPED_TEST(ClassificationDataSetSave, save_libsvm_with_label) {
     }
 }
 
-TYPED_TEST(ClassificationDataSetSave, save_libsvm_without_label) {
+TYPED_TEST(ClassificationDataSetSave, SaveLIBSVMWithoutLabel) {
     using label_type = typename TestFixture::fixture_label_type;
 
     // create data set without labels
@@ -98,7 +98,7 @@ TYPED_TEST(ClassificationDataSetSave, save_libsvm_without_label) {
     }
 }
 
-TYPED_TEST(ClassificationDataSetSave, save_libsvm_automatic_format) {
+TYPED_TEST(ClassificationDataSetSave, SaveLIBSVMAutomaticFormat) {
     using label_type = typename TestFixture::fixture_label_type;
 
     // create data set with labels
@@ -122,7 +122,7 @@ TYPED_TEST(ClassificationDataSetSave, save_libsvm_automatic_format) {
     }
 }
 
-TYPED_TEST(ClassificationDataSetSave, save_arff_with_label) {
+TYPED_TEST(ClassificationDataSetSave, SaveARFFWithLabel) {
     using label_type = typename TestFixture::fixture_label_type;
 
     // create data set with labels
@@ -152,7 +152,7 @@ TYPED_TEST(ClassificationDataSetSave, save_arff_with_label) {
     }
 }
 
-TYPED_TEST(ClassificationDataSetSave, save_arff_without_label) {
+TYPED_TEST(ClassificationDataSetSave, SaveARFFWithoutLabel) {
     using label_type = typename TestFixture::fixture_label_type;
 
     // create data set with labels
@@ -181,7 +181,7 @@ TYPED_TEST(ClassificationDataSetSave, save_arff_without_label) {
     }
 }
 
-TYPED_TEST(ClassificationDataSetSave, save_arff_automatic_format) {
+TYPED_TEST(ClassificationDataSetSave, SaveARFFAutomaticFormat) {
     using label_type = typename TestFixture::fixture_label_type;
 
     // create data set with labels

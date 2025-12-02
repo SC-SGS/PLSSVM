@@ -57,7 +57,7 @@ class OpenMPCSVMConstructor : public ::testing::Test,
 TYPED_TEST_SUITE(OpenMPCSVMConstructor, openmp_csvm_types_gtest, naming::test_parameter_to_name);
 
 // check whether the constructor correctly fails when using an incompatible target platform
-TYPED_TEST(OpenMPCSVMConstructor, default_construct) {
+TYPED_TEST(OpenMPCSVMConstructor, DefaultConstruct) {
     using csvm_type = typename TestFixture::fixture_csvm_type;
 
 #if defined(PLSSVM_HAS_CPU_TARGET)
@@ -70,7 +70,7 @@ TYPED_TEST(OpenMPCSVMConstructor, default_construct) {
 #endif
 }
 
-TYPED_TEST(OpenMPCSVMConstructor, construct_parameter) {
+TYPED_TEST(OpenMPCSVMConstructor, ConstructParameter) {
     using csvm_type = typename TestFixture::fixture_csvm_type;
 
 #if defined(PLSSVM_HAS_CPU_TARGET)
@@ -83,7 +83,7 @@ TYPED_TEST(OpenMPCSVMConstructor, construct_parameter) {
 #endif
 }
 
-TYPED_TEST(OpenMPCSVMConstructor, construct_target_and_parameter) {
+TYPED_TEST(OpenMPCSVMConstructor, ConstructTargetAndParameter) {
     using csvm_type = typename TestFixture::fixture_csvm_type;
 
     // create parameter struct
@@ -114,7 +114,7 @@ TYPED_TEST(OpenMPCSVMConstructor, construct_target_and_parameter) {
                       "Invalid target platform 'gpu_intel' for the OpenMP backend!");
 }
 
-TYPED_TEST(OpenMPCSVMConstructor, construct_named_args) {
+TYPED_TEST(OpenMPCSVMConstructor, ConstructNamedArgs) {
     using csvm_type = typename TestFixture::fixture_csvm_type;
 
 #if defined(PLSSVM_HAS_CPU_TARGET)
@@ -131,7 +131,7 @@ TYPED_TEST(OpenMPCSVMConstructor, construct_named_args) {
 #endif
 }
 
-TYPED_TEST(OpenMPCSVMConstructor, construct_target_and_named_args) {
+TYPED_TEST(OpenMPCSVMConstructor, ConstructTargetAndNamedArgs) {
     using csvm_type = typename TestFixture::fixture_csvm_type;
 
 #if defined(PLSSVM_HAS_CPU_TARGET)

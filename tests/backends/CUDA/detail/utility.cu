@@ -22,7 +22,7 @@
 #include <regex>   // std::regex, std::regex::extended, std::regex_match
 #include <string>  // std::string
 
-TEST(CUDAUtility, error_check) {
+TEST(CUDAUtility, ErrorCheck) {
     // cudaSuccess must not throw
     EXPECT_NO_THROW(PLSSVM_CUDA_ERROR_CHECK(cudaSuccess));
 
@@ -32,7 +32,7 @@ TEST(CUDAUtility, error_check) {
                               ::testing::StartsWith("CUDA assert 'cudaErrorInvalidValue' (1):"));
 }
 
-TEST(CUDAUtility, dim_type_to_native) {
+TEST(CUDAUtility, DimTypeToNative) {
     // create a dim_type
     constexpr plssvm::detail::dim_type dim{ 128ull, 64ull, 32ull };
 
@@ -45,26 +45,26 @@ TEST(CUDAUtility, dim_type_to_native) {
     EXPECT_EQ(native_dim.z, dim.z);
 }
 
-TEST(CUDAUtility, get_device_count) {
+TEST(CUDAUtility, GetDeviceCount) {
     // must not return a negative number
     EXPECT_GE(plssvm::cuda::detail::get_device_count(), 0);
 }
 
-TEST(CUDAUtility, set_device) {
+TEST(CUDAUtility, SetDevice) {
     // exception must be thrown if an illegal device ID has been provided
     EXPECT_THROW_WHAT(plssvm::cuda::detail::set_device(plssvm::cuda::detail::get_device_count()),
                       plssvm::cuda::backend_exception,
                       fmt::format("Illegal device ID! Must be in range: [0, {}) but is {}!", plssvm::cuda::detail::get_device_count(), plssvm::cuda::detail::get_device_count()));
 }
 
-TEST(CUDAUtility, device_synchronize) {
+TEST(CUDAUtility, DeviceSynchronize) {
     // exception must be thrown if an illegal device ID has been provided
     EXPECT_THROW_WHAT(plssvm::cuda::detail::device_synchronize(plssvm::cuda::detail::get_device_count()),
                       plssvm::cuda::backend_exception,
                       fmt::format("Illegal device ID! Must be in range: [0, {}) but is {}!", plssvm::cuda::detail::get_device_count(), plssvm::cuda::detail::get_device_count()));
 }
 
-TEST(CUDAUtility, get_device_name) {
+TEST(CUDAUtility, GetDeviceName) {
     const std::string device_name = plssvm::cuda::detail::get_device_name(0);
     // must not be empty
     EXPECT_FALSE(device_name.empty());
@@ -73,7 +73,7 @@ TEST(CUDAUtility, get_device_name) {
     EXPECT_TRUE(std::regex_match(device_name, reg));
 }
 
-TEST(CUDAUtility, get_runtime_version) {
+TEST(CUDAUtility, GetRuntimeVersion) {
     const std::regex reg{ "[0-9]+\\.[0-9]+", std::regex::extended };
     EXPECT_TRUE(std::regex_match(plssvm::cuda::detail::get_runtime_version(), reg));
 }

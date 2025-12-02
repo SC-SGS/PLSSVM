@@ -22,7 +22,7 @@
     return plssvm::source_location::current();
 }
 
-TEST(SourceLocation, default_construct) {
+TEST(SourceLocation, DefaultConstruct) {
     const plssvm::source_location loc{};
 
     EXPECT_EQ(loc.file_name(), std::string{ "unknown" });
@@ -32,7 +32,7 @@ TEST(SourceLocation, default_construct) {
     EXPECT_FALSE(loc.world_rank().has_value());
 }
 
-TEST(SourceLocation, current_location) {
+TEST(SourceLocation, CurrentLocation) {
     const plssvm::source_location loc = dummy();
 
     EXPECT_EQ(loc.file_name(), __builtin_FILE());

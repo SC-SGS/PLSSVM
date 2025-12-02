@@ -22,7 +22,7 @@
 #include <string>       // std::string
 #include <type_traits>  // std::remove_const_t
 
-TEST(AdaptiveCppUtility, dim_type_to_native_1) {
+TEST(AdaptiveCppUtility, DimTypeToNativeOneDimensional) {
     // create a dim_type
     constexpr plssvm::detail::dim_type dim{ 128ull, 64ull, 32ull };
 
@@ -34,7 +34,7 @@ TEST(AdaptiveCppUtility, dim_type_to_native_1) {
     EXPECT_EQ(native_dim[0], dim.x);
 }
 
-TEST(AdaptiveCppUtility, dim_type_to_native_2) {
+TEST(AdaptiveCppUtility, DimTypeToNativeTwoDimensional) {
     // create a dim_type
     constexpr plssvm::detail::dim_type dim{ 128ull, 64ull, 32ull };
 
@@ -47,7 +47,7 @@ TEST(AdaptiveCppUtility, dim_type_to_native_2) {
     EXPECT_EQ(native_dim[1], dim.x);
 }
 
-TEST(AdaptiveCppUtility, dim_type_to_native_3) {
+TEST(AdaptiveCppUtility, DimTypeToNativeThreeDimensional) {
     // create a dim_type
     constexpr plssvm::detail::dim_type dim{ 128ull, 64ull, 32ull };
 
@@ -61,7 +61,7 @@ TEST(AdaptiveCppUtility, dim_type_to_native_3) {
     EXPECT_EQ(native_dim[2], dim.x);
 }
 
-TEST(AdaptiveCppUtility, get_execution_range_basic) {
+TEST(AdaptiveCppUtility, GetExecutionRangeBasic) {
     // create a grid
     const plssvm::detail::dim_type grid{ 64ull, 64ull };
     const plssvm::detail::dim_type block{ 8ull, 8ull };
@@ -72,7 +72,7 @@ TEST(AdaptiveCppUtility, get_execution_range_basic) {
     EXPECT_EQ(exec, (sycl::range<2>{ 512ull, 512ull }));
 }
 
-TEST(AdaptiveCppUtility, get_execution_range_work_group) {
+TEST(AdaptiveCppUtility, GetExecutionRangeWorkGroup) {
     // create a grid
     const plssvm::detail::dim_type grid{ 64ull, 64ull };
     const plssvm::detail::dim_type block{ 8ull, 8ull };
@@ -83,7 +83,7 @@ TEST(AdaptiveCppUtility, get_execution_range_work_group) {
     EXPECT_EQ(exec, (::sycl::nd_range<2>{ ::sycl::range<2>{ 512ull, 512ull }, ::sycl::range<2>{ 8ull, 8ull } }));
 }
 
-TEST(AdaptiveCppUtility, get_execution_range_hierarchical) {
+TEST(AdaptiveCppUtility, GetExecutionRangeHierarchical) {
     // create a grid
     const plssvm::detail::dim_type grid{ 64ull, 64ull };
     const plssvm::detail::dim_type block{ 8ull, 8ull };
@@ -94,7 +94,7 @@ TEST(AdaptiveCppUtility, get_execution_range_hierarchical) {
     EXPECT_EQ(exec, (::sycl::nd_range<2>{ ::sycl::range<2>{ 64ull, 64ull }, ::sycl::range<2>{ 8ull, 8ull } }));
 }
 
-TEST(AdaptiveCppUtility, get_execution_range_scoped) {
+TEST(AdaptiveCppUtility, GetExecutionRangeScoped) {
     // create a grid
     const plssvm::detail::dim_type grid{ 64ull, 64ull };
     const plssvm::detail::dim_type block{ 8ull, 8ull };
@@ -105,7 +105,7 @@ TEST(AdaptiveCppUtility, get_execution_range_scoped) {
     EXPECT_EQ(exec, (::sycl::nd_range<2>{ ::sycl::range<2>{ 64ull, 64ull }, ::sycl::range<2>{ 8ull, 8ull } }));
 }
 
-TEST(AdaptiveCppUtility, get_device_list) {
+TEST(AdaptiveCppUtility, GetDeviceList) {
     const auto &[queues, actual_target] = plssvm::adaptivecpp::detail::get_device_list(plssvm::target_platform::automatic);
     // at least one queue must be provided
     EXPECT_FALSE(queues.empty());
@@ -113,7 +113,7 @@ TEST(AdaptiveCppUtility, get_device_list) {
     EXPECT_NE(actual_target, plssvm::target_platform::automatic);
 }
 
-TEST(AdaptiveCppUtility, get_device_name) {
+TEST(AdaptiveCppUtility, GetDeviceName) {
     const auto &[queues, actual_target] = plssvm::adaptivecpp::detail::get_device_list(plssvm::target_platform::automatic);
     // at least one queue must be available
     EXPECT_FALSE(queues.empty());
@@ -126,12 +126,12 @@ TEST(AdaptiveCppUtility, get_device_name) {
     EXPECT_TRUE(std::regex_match(device_name, reg));
 }
 
-TEST(AdaptiveCppUtility, get_adaptivecpp_version_short) {
+TEST(AdaptiveCppUtility, GetAdaptiveCppVersionShort) {
     const std::regex reg{ "[0-9]+\\.[0-9]+\\.[0-9]+", std::regex::extended };
     EXPECT_TRUE(std::regex_match(plssvm::adaptivecpp::detail::get_adaptivecpp_version_short(), reg));
 }
 
-TEST(AdaptiveCppUtility, get_adaptivecpp_version) {
+TEST(AdaptiveCppUtility, GetAdaptiveCppVersion) {
     const std::string version = plssvm::adaptivecpp::detail::get_adaptivecpp_version();
     EXPECT_FALSE(version.empty());
 }

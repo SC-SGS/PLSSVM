@@ -27,30 +27,30 @@ using stdpar_csvm_types_list = std::tuple<plssvm::stdpar::csvc, plssvm::stdpar::
 using stdpar_csvm_types_gtest = util::combine_test_parameters_gtest_t<util::cartesian_type_product_t<stdpar_csvm_types_list>>;
 
 template <typename T>
-class intel_llvm_stdparCSVMConstructor : public ::testing::Test,
+class IntelLLVMStdparCSVMConstructor : public ::testing::Test,
                                          private util::redirect_output<> {
   protected:
     using fixture_csvm_type = util::test_parameter_type_at_t<0, T>;
 };
 
-TYPED_TEST_SUITE(intel_llvm_stdparCSVMConstructor, stdpar_csvm_types_gtest, naming::test_parameter_to_name);
+TYPED_TEST_SUITE(IntelLLVMStdparCSVMConstructor, stdpar_csvm_types_gtest, naming::test_parameter_to_name);
 
 // check whether the constructor correctly fails when using an incompatible target platform
-TYPED_TEST(intel_llvm_stdparCSVMConstructor, default_construct) {
+TYPED_TEST(IntelLLVMStdparCSVMConstructor, DefaultConstruct) {
     using csvm_type = typename TestFixture::fixture_csvm_type;
 
     // default constructor must always work
     EXPECT_NO_THROW(csvm_type{});
 }
 
-TYPED_TEST(intel_llvm_stdparCSVMConstructor, construct_parameter) {
+TYPED_TEST(IntelLLVMStdparCSVMConstructor, ConstructParameter) {
     using csvm_type = typename TestFixture::fixture_csvm_type;
 
     // the automatic target platform must always be available
     EXPECT_NO_THROW(csvm_type{ plssvm::parameter{} });
 }
 
-TYPED_TEST(intel_llvm_stdparCSVMConstructor, construct_target_and_parameter) {
+TYPED_TEST(IntelLLVMStdparCSVMConstructor, ConstructTargetAndParameter) {
     using csvm_type = typename TestFixture::fixture_csvm_type;
 
     // create parameter struct
@@ -87,7 +87,7 @@ TYPED_TEST(intel_llvm_stdparCSVMConstructor, construct_target_and_parameter) {
 #endif
 }
 
-TYPED_TEST(intel_llvm_stdparCSVMConstructor, construct_named_args) {
+TYPED_TEST(IntelLLVMStdparCSVMConstructor, ConstructNamedArgs) {
     using csvm_type = typename TestFixture::fixture_csvm_type;
 
     // every target is allowed for the stdpar backend using Intel LLVM as implementation
@@ -95,7 +95,7 @@ TYPED_TEST(intel_llvm_stdparCSVMConstructor, construct_named_args) {
     EXPECT_NO_THROW((csvm_type{ plssvm::cost = 2.0 }));
 }
 
-TYPED_TEST(intel_llvm_stdparCSVMConstructor, construct_target_and_named_args) {
+TYPED_TEST(IntelLLVMStdparCSVMConstructor, ConstructTargetAndNamedArgs) {
     using csvm_type = typename TestFixture::fixture_csvm_type;
 
 // every target is allowed for the stdpar backend using Intel LLVM as implementation

@@ -53,7 +53,7 @@ class RegressionDataSetGetter : public ::testing::Test,
 
 TYPED_TEST_SUITE(RegressionDataSetGetter, util::regression_label_type_gtest, naming::test_parameter_to_name);
 
-TYPED_TEST(RegressionDataSetGetter, data) {
+TYPED_TEST(RegressionDataSetGetter, Data) {
     using label_type = typename TestFixture::fixture_label_type;
 
     // create data set without labels
@@ -62,7 +62,7 @@ TYPED_TEST(RegressionDataSetGetter, data) {
     EXPECT_FLOATING_POINT_MATRIX_EQ(data.data(), this->get_data_points());
 }
 
-TYPED_TEST(RegressionDataSetGetter, has_labels) {
+TYPED_TEST(RegressionDataSetGetter, HasLabels) {
     using label_type = typename TestFixture::fixture_label_type;
 
     // create data set without labels
@@ -75,7 +75,7 @@ TYPED_TEST(RegressionDataSetGetter, has_labels) {
     EXPECT_TRUE(data_with_labels.has_labels());
 }
 
-TYPED_TEST(RegressionDataSetGetter, labels) {
+TYPED_TEST(RegressionDataSetGetter, Labels) {
     using label_type = typename TestFixture::fixture_label_type;
 
     // create data set without labels
@@ -89,7 +89,7 @@ TYPED_TEST(RegressionDataSetGetter, labels) {
     EXPECT_EQ(data_with_labels.labels()->get(), this->get_label());
 }
 
-TYPED_TEST(RegressionDataSetGetter, num_data_points) {
+TYPED_TEST(RegressionDataSetGetter, NumDataPoints) {
     using label_type = typename TestFixture::fixture_label_type;
 
     // create data set
@@ -98,7 +98,7 @@ TYPED_TEST(RegressionDataSetGetter, num_data_points) {
     EXPECT_EQ(data.num_data_points(), this->get_data_points().num_rows());
 }
 
-TYPED_TEST(RegressionDataSetGetter, num_features) {
+TYPED_TEST(RegressionDataSetGetter, NumFeatures) {
     using label_type = typename TestFixture::fixture_label_type;
 
     // create data set
@@ -107,7 +107,7 @@ TYPED_TEST(RegressionDataSetGetter, num_features) {
     EXPECT_EQ(data.num_features(), this->get_data_points().num_cols());
 }
 
-TYPED_TEST(RegressionDataSetGetter, is_scaled) {
+TYPED_TEST(RegressionDataSetGetter, IsScaled) {
     using label_type = typename TestFixture::fixture_label_type;
 
     // create data set
@@ -121,7 +121,7 @@ TYPED_TEST(RegressionDataSetGetter, is_scaled) {
     EXPECT_TRUE(data_scaled.is_scaled());
 }
 
-TYPED_TEST(RegressionDataSetGetter, scaling_factors) {
+TYPED_TEST(RegressionDataSetGetter, ScalingFactors) {
     using label_type = typename TestFixture::fixture_label_type;
 
     // create data set

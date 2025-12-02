@@ -16,10 +16,8 @@
 #include <regex>   // std::regex, std::regex::extended, std::regex_match
 #include <string>  // std::string
 
-using namespace plssvm::version;
-
-TEST(GitMetadata, author_name) {
-    if (git_metadata::is_populated()) {
+TEST(GitMetadata, AuthorName) {
+    if (plssvm::version::git_metadata::is_populated()) {
         // if we are inside a Git repository, the author name must not be empty
         EXPECT_FALSE(git_metadata::author_name().empty());
     } else {
@@ -30,6 +28,7 @@ TEST(GitMetadata, author_name) {
 
 TEST(GitMetadata, author_email) {
     if (git_metadata::is_populated()) {
+TEST(GitMetadata, AuthorEmail) {
         // if we are inside a Git repository, the author email must not be empty
         EXPECT_FALSE(git_metadata::author_email().empty());
         // check for a valid email address
@@ -43,6 +42,7 @@ TEST(GitMetadata, author_email) {
 
 TEST(GitMetadata, commit_sha1) {
     if (git_metadata::is_populated()) {
+TEST(GitMetadata, CommitSha1) {
         // if we are inside a Git repository, the commit sha1 must not be empty
         EXPECT_FALSE(git_metadata::commit_sha1().empty());
         // test for valid commit sha1 characters
@@ -56,6 +56,7 @@ TEST(GitMetadata, commit_sha1) {
 
 TEST(GitMetadata, commit_date) {
     if (git_metadata::is_populated()) {
+TEST(GitMetadata, CommitDate) {
         // if we are inside a Git repository, the commit date must not be empty
         EXPECT_FALSE(git_metadata::commit_date().empty());
     } else {
@@ -66,6 +67,7 @@ TEST(GitMetadata, commit_date) {
 
 TEST(GitMetadata, commit_subject) {
     if (git_metadata::is_populated()) {
+TEST(GitMetadata, CommitSubject) {
         // if we are inside a Git repository, the commit subject must not be empty
         EXPECT_FALSE(git_metadata::commit_subject().empty());
     } else {
@@ -76,6 +78,7 @@ TEST(GitMetadata, commit_subject) {
 
 TEST(GitMetadata, commit_body) {
     if (!git_metadata::is_populated()) {
+TEST(GitMetadata, CommitBody) {
         // if we are outside a Git repository, the commit body must be empty
         EXPECT_TRUE(git_metadata::commit_subject().empty());
     }
@@ -83,6 +86,7 @@ TEST(GitMetadata, commit_body) {
 
 TEST(GitMetadata, describe) {
     if (git_metadata::is_populated()) {
+TEST(GitMetadata, Describe) {
         // if we are inside a Git repository, the description message must not be empty
         EXPECT_FALSE(git_metadata::describe().empty());
     } else {
@@ -93,6 +97,7 @@ TEST(GitMetadata, describe) {
 
 TEST(GitMetadata, branch) {
     if (git_metadata::is_populated()) {
+TEST(GitMetadata, Branch) {
         // if we are inside a Git repository, the branch must not be empty
         EXPECT_FALSE(git_metadata::branch().empty());
         // check whether the branch name is valid
@@ -121,6 +126,7 @@ TEST(GitMetadata, branch) {
 
 TEST(GitMetadata, remote_url) {
     if (git_metadata::is_populated()) {
+TEST(GitMetadata, RemoteURL) {
         // if we are inside a Git repository, the remote URL must not be empty
         EXPECT_FALSE(git_metadata::remote_url().empty());
         // check whether the remote URL is valid

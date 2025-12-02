@@ -28,7 +28,7 @@ class CUDAFillUtility : public ::testing::Test {
 
 TYPED_TEST_SUITE(CUDAFillUtility, util::real_type_gtest, naming::test_parameter_to_name);
 
-TYPED_TEST(CUDAFillUtility, fill_kernel) {
+TYPED_TEST(CUDAFillUtility, FillKernel) {
     using real_type = typename TestFixture::fixture_real_type;
 
     // allocate array on the host
@@ -54,7 +54,7 @@ TYPED_TEST(CUDAFillUtility, fill_kernel) {
     EXPECT_TRUE(std::all_of(vec.cbegin(), vec.cend(), [](const real_type val) { return val == real_type{ 42.0 }; }));
 }
 
-TYPED_TEST(CUDAFillUtility, fill_kernel_partial) {
+TYPED_TEST(CUDAFillUtility, FillKernelPartial) {
     using real_type = typename TestFixture::fixture_real_type;
 
     // allocate array on the host

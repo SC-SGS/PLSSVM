@@ -45,7 +45,7 @@ class LIBSVMRegressionModelHeaderWrite : public ::testing::Test,
 
 TYPED_TEST_SUITE(LIBSVMRegressionModelHeaderWrite, util::regression_label_type_gtest, naming::test_parameter_to_name);
 
-TYPED_TEST(LIBSVMRegressionModelHeaderWrite, write_linear) {
+TYPED_TEST(LIBSVMRegressionModelHeaderWrite, WriteLinear) {
     using label_type = util::test_parameter_type_at_t<0, TypeParam>;
 
     // define data to write
@@ -76,7 +76,7 @@ TYPED_TEST(LIBSVMRegressionModelHeaderWrite, write_linear) {
     EXPECT_EQ(reader.line(5), "SV");
 }
 
-TYPED_TEST(LIBSVMRegressionModelHeaderWrite, write_linear_without_label) {
+TYPED_TEST(LIBSVMRegressionModelHeaderWrite, WriteLinearWithoutLabel) {
     using label_type = util::test_parameter_type_at_t<0, TypeParam>;
 
     // define data to write
@@ -106,7 +106,7 @@ TYPED_TEST(LIBSVMRegressionModelHeaderWrite, write_linear_without_label) {
     EXPECT_EQ(reader.line(5), "SV");
 }
 
-TYPED_TEST(LIBSVMRegressionModelHeaderWrite, write_polynomial) {
+TYPED_TEST(LIBSVMRegressionModelHeaderWrite, WritePolynomial) {
     using label_type = util::test_parameter_type_at_t<0, TypeParam>;
 
     // define data to write
@@ -140,7 +140,7 @@ TYPED_TEST(LIBSVMRegressionModelHeaderWrite, write_polynomial) {
     EXPECT_EQ(reader.line(8), "SV");
 }
 
-TYPED_TEST(LIBSVMRegressionModelHeaderWrite, write_polynomial_without_label) {
+TYPED_TEST(LIBSVMRegressionModelHeaderWrite, WritePolynomialWithoutLabel) {
     using label_type = util::test_parameter_type_at_t<0, TypeParam>;
 
     // define data to write
@@ -173,7 +173,7 @@ TYPED_TEST(LIBSVMRegressionModelHeaderWrite, write_polynomial_without_label) {
     EXPECT_EQ(reader.line(8), "SV");
 }
 
-TYPED_TEST(LIBSVMRegressionModelHeaderWrite, write_rbf) {
+TYPED_TEST(LIBSVMRegressionModelHeaderWrite, WriteRadialBasisFunction) {
     using label_type = util::test_parameter_type_at_t<0, TypeParam>;
 
     // define data to write
@@ -205,7 +205,7 @@ TYPED_TEST(LIBSVMRegressionModelHeaderWrite, write_rbf) {
     EXPECT_EQ(reader.line(6), "SV");
 }
 
-TYPED_TEST(LIBSVMRegressionModelHeaderWrite, write_rbf_without_label) {
+TYPED_TEST(LIBSVMRegressionModelHeaderWrite, WriteRadialBasisFunctionWithoutLabel) {
     using label_type = util::test_parameter_type_at_t<0, TypeParam>;
 
     // define data to write
@@ -236,7 +236,7 @@ TYPED_TEST(LIBSVMRegressionModelHeaderWrite, write_rbf_without_label) {
     EXPECT_EQ(reader.line(6), "SV");
 }
 
-TYPED_TEST(LIBSVMRegressionModelHeaderWrite, write_sigmoid) {
+TYPED_TEST(LIBSVMRegressionModelHeaderWrite, WriteSigmoid) {
     using label_type = util::test_parameter_type_at_t<0, TypeParam>;
 
     // define data to write
@@ -269,7 +269,7 @@ TYPED_TEST(LIBSVMRegressionModelHeaderWrite, write_sigmoid) {
     EXPECT_EQ(reader.line(7), "SV");
 }
 
-TYPED_TEST(LIBSVMRegressionModelHeaderWrite, write_sigmoid_without_label) {
+TYPED_TEST(LIBSVMRegressionModelHeaderWrite, WriteSigmoidWithoutLabel) {
     using label_type = util::test_parameter_type_at_t<0, TypeParam>;
 
     // define data to write
@@ -301,7 +301,7 @@ TYPED_TEST(LIBSVMRegressionModelHeaderWrite, write_sigmoid_without_label) {
     EXPECT_EQ(reader.line(7), "SV");
 }
 
-TYPED_TEST(LIBSVMRegressionModelHeaderWrite, write_laplacian) {
+TYPED_TEST(LIBSVMRegressionModelHeaderWrite, WriteLaplacian) {
     using label_type = util::test_parameter_type_at_t<0, TypeParam>;
 
     // define data to write
@@ -333,7 +333,7 @@ TYPED_TEST(LIBSVMRegressionModelHeaderWrite, write_laplacian) {
     EXPECT_EQ(reader.line(6), "SV");
 }
 
-TYPED_TEST(LIBSVMRegressionModelHeaderWrite, write_laplacian_without_label) {
+TYPED_TEST(LIBSVMRegressionModelHeaderWrite, WriteLaplacianWithoutLabel) {
     using label_type = util::test_parameter_type_at_t<0, TypeParam>;
 
     // define data to write
@@ -364,7 +364,7 @@ TYPED_TEST(LIBSVMRegressionModelHeaderWrite, write_laplacian_without_label) {
     EXPECT_EQ(reader.line(6), "SV");
 }
 
-TYPED_TEST(LIBSVMRegressionModelHeaderWrite, write_chi_squared) {
+TYPED_TEST(LIBSVMRegressionModelHeaderWrite, WriteChiSquared) {
     using label_type = util::test_parameter_type_at_t<0, TypeParam>;
 
     // define data to write
@@ -396,7 +396,7 @@ TYPED_TEST(LIBSVMRegressionModelHeaderWrite, write_chi_squared) {
     EXPECT_EQ(reader.line(6), "SV");
 }
 
-TYPED_TEST(LIBSVMRegressionModelHeaderWrite, write_chi_squared_without_label) {
+TYPED_TEST(LIBSVMRegressionModelHeaderWrite, WriteChiSquaredWithoutLabel) {
     using label_type = util::test_parameter_type_at_t<0, TypeParam>;
 
     // define data to write
@@ -433,7 +433,7 @@ class LIBSVMRegressionModelHeaderWriteDeathTest : public LIBSVMRegressionModelHe
 
 TYPED_TEST_SUITE(LIBSVMRegressionModelHeaderWriteDeathTest, util::regression_label_type_gtest, naming::test_parameter_to_name);
 
-TYPED_TEST(LIBSVMRegressionModelHeaderWriteDeathTest, write_header_invalid_number_of_rho_values) {
+TYPED_TEST(LIBSVMRegressionModelHeaderWriteDeathTest, WriteHeaderInvalidNumberOfRhoValues) {
     using label_type = util::test_parameter_type_at_t<0, TypeParam>;
 
     // create necessary parameter

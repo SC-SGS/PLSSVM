@@ -27,7 +27,7 @@
 #include <string>   // std::string
 #include <vector>   // std::vector
 
-TEST(OpenCLUtility, error_check) {
+TEST(OpenCLUtility, ErrorCheck) {
     // CL_SUCCESS must not throw
     EXPECT_NO_THROW(PLSSVM_OPENCL_ERROR_CHECK(CL_SUCCESS, "success!"));
 
@@ -37,7 +37,7 @@ TEST(OpenCLUtility, error_check) {
                       "OpenCL assert 'CL_DEVICE_NOT_FOUND' (-1): error!");
 }
 
-TEST(OpenCLUtility, dim_type_to_native_1) {
+TEST(OpenCLUtility, DimTypeToNativeOneDimensional) {
     // create a dim_type
     constexpr plssvm::detail::dim_type dim{ 128ull, 64ull, 32ull };
 
@@ -49,7 +49,7 @@ TEST(OpenCLUtility, dim_type_to_native_1) {
     EXPECT_EQ(native_dim[0], dim.x);
 }
 
-TEST(OpenCLUtility, dim_type_to_native_2) {
+TEST(OpenCLUtility, DimTypeToNativeTwoDimensional) {
     // create a dim_type
     constexpr plssvm::detail::dim_type dim{ 128ull, 64ull, 32ull };
 
@@ -62,7 +62,7 @@ TEST(OpenCLUtility, dim_type_to_native_2) {
     EXPECT_EQ(native_dim[1], dim.y);
 }
 
-TEST(OpenCLUtility, dim_type_to_native_3) {
+TEST(OpenCLUtility, DimTypeToNativeThreeDimensional) {
     // create a dim_type
     constexpr plssvm::detail::dim_type dim{ 128ull, 64ull, 32ull };
 
@@ -76,7 +76,7 @@ TEST(OpenCLUtility, dim_type_to_native_3) {
     EXPECT_EQ(native_dim[2], dim.z);
 }
 
-TEST(OpenCLUtility, get_contexts) {
+TEST(OpenCLUtility, GetContexts) {
     const auto &[contexts, actual_target] = plssvm::opencl::detail::get_contexts(plssvm::target_platform::automatic);
     // exactly one context must be provided
     EXPECT_GE(contexts.size(), 1);
@@ -84,12 +84,12 @@ TEST(OpenCLUtility, get_contexts) {
     EXPECT_NE(actual_target, plssvm::target_platform::automatic);
 }
 
-TEST(OpenCLUtility, get_opencl_target_version) {
+TEST(OpenCLUtility, GetOpenCLTargetVersion) {
     const std::regex reg{ "[0-9]+\\.[0-9]+", std::regex::extended };
     EXPECT_TRUE(std::regex_match(plssvm::opencl::detail::get_opencl_target_version(), reg));
 }
 
-TEST(OpenCLUtility, get_driver_version) {
+TEST(OpenCLUtility, GetDriverVersion) {
     // create a valid command queue
     const std::vector<plssvm::opencl::detail::context> contexts{ plssvm::opencl::detail::get_contexts(plssvm::target_platform::automatic).first };
     const plssvm::opencl::detail::command_queue queue{ contexts[0], contexts[0].device };
@@ -98,7 +98,7 @@ TEST(OpenCLUtility, get_driver_version) {
     EXPECT_FALSE(driver_version.empty());
 }
 
-TEST(OpenCLUtility, get_device_name) {
+TEST(OpenCLUtility, GetDeviceName) {
     // create a valid command queue
     const std::vector<plssvm::opencl::detail::context> contexts{ plssvm::opencl::detail::get_contexts(plssvm::target_platform::automatic).first };
     // at least one context must be available
@@ -113,7 +113,7 @@ TEST(OpenCLUtility, get_device_name) {
     EXPECT_TRUE(std::regex_match(device_name, reg));
 }
 
-TEST(OpenCLUtility, kernel_type_to_function_names) {
+TEST(OpenCLUtility, KernelTypeToFunctionNames) {
     // retrieve the function names
     const auto function_name_map = plssvm::opencl::detail::kernel_type_to_function_names();
     // the map must not be empty!

@@ -49,7 +49,7 @@
 
 class BaseCSVC : public ::testing::Test { };
 
-TEST(BaseCSVC, csvc_backend_exists) {
+TEST(BaseCSVC, CsvcBackendExists) {
     // test whether the given C-SVC backend exist
 #if defined(PLSSVM_HAS_OPENMP_BACKEND)
     EXPECT_TRUE(plssvm::csvm_backend_exists_v<plssvm::openmp::csvc>);
@@ -118,7 +118,7 @@ TEST(BaseCSVC, csvc_backend_exists) {
 #endif
 }
 
-TEST(BaseCSVC, backend_csvm_type) {
+TEST(BaseCSVC, BackendCsvmType) {
 #if defined(PLSSVM_HAS_OPENMP_BACKEND)
     ::testing::StaticAssertTypeEq<plssvm::openmp::backend_csvm_type<plssvm::csvc>::type, plssvm::openmp::csvc>();
     ::testing::StaticAssertTypeEq<plssvm::openmp::backend_csvm_type_t<plssvm::csvc>, plssvm::openmp::csvc>();
@@ -223,7 +223,7 @@ class BaseCSVCFit : public BaseCSVC,
 
 TYPED_TEST_SUITE(BaseCSVCFit, util::classification_label_type_solver_and_kernel_function_and_classification_type_gtest, naming::test_parameter_to_name);
 
-TYPED_TEST(BaseCSVCFit, fit) {
+TYPED_TEST(BaseCSVCFit, Fit) {
     using label_type = typename TestFixture::fixture_label_type;
     constexpr plssvm::solver_type solver = TestFixture::fixture_solver;
     constexpr plssvm::kernel_function_type kernel = TestFixture::fixture_kernel;
@@ -289,7 +289,7 @@ TYPED_TEST(BaseCSVCFit, fit) {
     EXPECT_EQ(std::get<plssvm::real_type>(model.get_params().gamma), plssvm::real_type{ 0.25 });
 }
 
-TYPED_TEST(BaseCSVCFit, fit_named_parameters) {
+TYPED_TEST(BaseCSVCFit, FitNamedParameters) {
     using label_type = typename TestFixture::fixture_label_type;
     constexpr plssvm::solver_type solver = TestFixture::fixture_solver;
     constexpr plssvm::kernel_function_type kernel = TestFixture::fixture_kernel;
@@ -360,7 +360,7 @@ TYPED_TEST(BaseCSVCFit, fit_named_parameters) {
     EXPECT_EQ(std::get<plssvm::real_type>(model.get_params().gamma), plssvm::real_type{ 0.25 });
 }
 
-TYPED_TEST(BaseCSVCFit, fit_named_parameters_invalid_epsilon) {
+TYPED_TEST(BaseCSVCFit, FitNamedParametersInvalidEpsilon) {
     using label_type = typename TestFixture::fixture_label_type;
     constexpr plssvm::solver_type solver = TestFixture::fixture_solver;
     constexpr plssvm::kernel_function_type kernel = TestFixture::fixture_kernel;
@@ -409,7 +409,7 @@ TYPED_TEST(BaseCSVCFit, fit_named_parameters_invalid_epsilon) {
                       "epsilon must be less than 0.0, but is 0!");
 }
 
-TYPED_TEST(BaseCSVCFit, fit_named_parameters_invalid_max_iter) {
+TYPED_TEST(BaseCSVCFit, FitNamedParametersInvalidMaxIter) {
     using label_type = typename TestFixture::fixture_label_type;
     constexpr plssvm::solver_type solver = TestFixture::fixture_solver;
     constexpr plssvm::kernel_function_type kernel = TestFixture::fixture_kernel;
@@ -460,7 +460,7 @@ TYPED_TEST(BaseCSVCFit, fit_named_parameters_invalid_max_iter) {
 
 #if defined(PLSSVM_HAS_MPI_ENABLED)
 
-TYPED_TEST(BaseCSVCFit, fit_communicator_mismatch) {
+TYPED_TEST(BaseCSVCFit, FitCommunicatorMismatch) {
     using label_type = typename TestFixture::fixture_label_type;
     constexpr plssvm::solver_type solver = TestFixture::fixture_solver;
     constexpr plssvm::kernel_function_type kernel = TestFixture::fixture_kernel;
@@ -518,7 +518,7 @@ TYPED_TEST(BaseCSVCFit, fit_communicator_mismatch) {
 
 #endif
 
-TYPED_TEST(BaseCSVCFit, fit_no_label) {
+TYPED_TEST(BaseCSVCFit, FitNoLabel) {
     using label_type = typename TestFixture::fixture_label_type;
     constexpr plssvm::solver_type solver = TestFixture::fixture_solver;
     constexpr plssvm::kernel_function_type kernel = TestFixture::fixture_kernel;
@@ -565,7 +565,7 @@ TYPED_TEST(BaseCSVCFit, fit_no_label) {
                       "No labels given for training! Maybe the data is only usable for prediction?");
 }
 
-TYPED_TEST(BaseCSVCFit, fit_out_of_resources) {
+TYPED_TEST(BaseCSVCFit, FitOutOfResources) {
     using label_type = typename TestFixture::fixture_label_type;
     constexpr plssvm::solver_type solver = TestFixture::fixture_solver;
     constexpr plssvm::kernel_function_type kernel = TestFixture::fixture_kernel;
@@ -620,7 +620,7 @@ TYPED_TEST(BaseCSVCFit, fit_out_of_resources) {
     }
 }
 
-TYPED_TEST(BaseCSVCFit, fit_device_memory_too_small) {
+TYPED_TEST(BaseCSVCFit, FitDeviceMemoryTooSmall) {
     using label_type = typename TestFixture::fixture_label_type;
     constexpr plssvm::solver_type solver = TestFixture::fixture_solver;
     constexpr plssvm::kernel_function_type kernel = TestFixture::fixture_kernel;
@@ -675,7 +675,7 @@ TYPED_TEST(BaseCSVCFit, fit_device_memory_too_small) {
     }
 }
 
-TYPED_TEST(BaseCSVCFit, fit_local_memory_too_small) {
+TYPED_TEST(BaseCSVCFit, FitLocalMemoryTooSmall) {
     using label_type = typename TestFixture::fixture_label_type;
     constexpr plssvm::solver_type solver = TestFixture::fixture_solver;
     constexpr plssvm::kernel_function_type kernel = TestFixture::fixture_kernel;
@@ -739,7 +739,7 @@ class BaseCSVCPredict : public BaseCSVCMemberBase<T> { };
 
 TYPED_TEST_SUITE(BaseCSVCPredict, util::classification_label_type_classification_type_gtest, naming::test_parameter_to_name);
 
-TYPED_TEST(BaseCSVCPredict, predict) {
+TYPED_TEST(BaseCSVCPredict, Predict) {
     using label_type = typename TestFixture::fixture_label_type;
     constexpr plssvm::classification_type classification = TestFixture::fixture_classification;
 
@@ -773,7 +773,7 @@ TYPED_TEST(BaseCSVCPredict, predict) {
     EXPECT_EQ(prediction.size(), 6);
 }
 
-TYPED_TEST(BaseCSVCPredict, predict_num_feature_mismatch) {
+TYPED_TEST(BaseCSVCPredict, PredictNumFeatureMismatch) {
     using label_type = typename TestFixture::fixture_label_type;
 
     // create C-SVC: must be done using the mock class since the csvc base class is pure virtual
@@ -803,7 +803,7 @@ TYPED_TEST(BaseCSVCPredict, predict_num_feature_mismatch) {
 
 #if defined(PLSSVM_HAS_MPI_ENABLED)
 
-TYPED_TEST(BaseCSVCPredict, predict_communicator_mismatch) {
+TYPED_TEST(BaseCSVCPredict, PredictCommismatch) {
     using label_type = typename TestFixture::fixture_label_type;
 
     // create C-SVC: must be done using the mock class since the csvc base class is pure virtual
@@ -850,7 +850,7 @@ class BaseCSVCScore : public BaseCSVCMemberBase<T> { };
 
 TYPED_TEST_SUITE(BaseCSVCScore, util::classification_label_type_classification_type_gtest, naming::test_parameter_to_name);
 
-TYPED_TEST(BaseCSVCScore, score_model) {
+TYPED_TEST(BaseCSVCScore, ScoreModel) {
     using label_type = typename TestFixture::fixture_label_type;
     constexpr plssvm::classification_type classification = TestFixture::fixture_classification;
 
@@ -883,7 +883,7 @@ TYPED_TEST(BaseCSVCScore, score_model) {
     EXPECT_INCLUSIVE_RANGE(score, plssvm::real_type{ 0.0 }, plssvm::real_type{ 1.0 });
 }
 
-TYPED_TEST(BaseCSVCScore, score_data_set) {
+TYPED_TEST(BaseCSVCScore, ScoreDataSet) {
     using label_type = typename TestFixture::fixture_label_type;
     constexpr plssvm::classification_type classification = TestFixture::fixture_classification;
 
@@ -917,7 +917,7 @@ TYPED_TEST(BaseCSVCScore, score_data_set) {
     EXPECT_INCLUSIVE_RANGE(score, plssvm::real_type{ 0.0 }, plssvm::real_type{ 1.0 });
 }
 
-TYPED_TEST(BaseCSVCScore, score_data_set_no_label) {
+TYPED_TEST(BaseCSVCScore, ScoreDataSetNoLabel) {
     using label_type = typename TestFixture::fixture_label_type;
 
     // create C-SVC: must be done using the mock class since the csvc base class is pure virtual
@@ -944,7 +944,7 @@ TYPED_TEST(BaseCSVCScore, score_data_set_no_label) {
     EXPECT_THROW_WHAT(std::ignore = csvc.score(learned_model, data_to_score), plssvm::invalid_parameter_exception, "The data set to score must have labels!");
 }
 
-TYPED_TEST(BaseCSVCScore, score_data_set_num_features_mismatch) {
+TYPED_TEST(BaseCSVCScore, ScoreDataSetNumFeaturesMismatch) {
     using label_type = typename TestFixture::fixture_label_type;
 
     // create C-SVC: must be done using the mock class since the csvc base class is pure virtual
@@ -980,7 +980,7 @@ TYPED_TEST(BaseCSVCScore, score_data_set_num_features_mismatch) {
 
 #if defined(PLSSVM_HAS_MPI_ENABLED)
 
-TYPED_TEST(BaseCSVCScore, predict_communicator_mismatch) {
+TYPED_TEST(BaseCSVCScore, PredictCommMismatch) {
     using label_type = typename TestFixture::fixture_label_type;
 
     // create C-SVC: must be done using the mock class since the csvc base class is pure virtual
@@ -1022,7 +1022,7 @@ TYPED_TEST(BaseCSVCScore, predict_communicator_mismatch) {
 
 #endif
 
-TYPED_TEST(BaseCSVCScore, predict_local_memory_too_small) {
+TYPED_TEST(BaseCSVCScore, PredictLocalMemoryTooSmall) {
     using label_type = typename TestFixture::fixture_label_type;
 
     // create C-SVC: must be done using the mock class since the csvc base class is pure virtual

@@ -220,7 +220,7 @@ class GenericCSVM : public ::testing::Test,
 
 TYPED_TEST_SUITE_P(GenericCSVM);
 
-TYPED_TEST_P(GenericCSVM, get_target_platform) {
+TYPED_TEST_P(GenericCSVM, GetTargetPlatform) {
     using csvm_test_type = util::test_parameter_type_at_t<0, TypeParam>;
     using mock_csvm_type = typename csvm_test_type::mock_csvm_type;
 
@@ -231,8 +231,8 @@ TYPED_TEST_P(GenericCSVM, get_target_platform) {
     EXPECT_NE(svm.get_target_platform(), plssvm::target_platform::automatic);
 }
 
-TYPED_TEST_P(GenericCSVM, num_available_devices) {
     using namespace plssvm::detail::literals;
+TYPED_TEST_P(GenericCSVM, NumAvailableDevices) {
     using csvm_test_type = util::test_parameter_type_at_t<0, TypeParam>;
     using csvm_type = typename csvm_test_type::csvm_type;
     using mock_csvm_type = typename csvm_test_type::mock_csvm_type;
@@ -248,8 +248,8 @@ TYPED_TEST_P(GenericCSVM, num_available_devices) {
     }
 }
 
-TYPED_TEST_P(GenericCSVM, get_device_memory) {
     using namespace plssvm::detail::literals;
+TYPED_TEST_P(GenericCSVM, GetDeviceMemory) {
     using csvm_test_type = util::test_parameter_type_at_t<0, TypeParam>;
     using mock_csvm_type = typename csvm_test_type::mock_csvm_type;
 
@@ -264,8 +264,8 @@ TYPED_TEST_P(GenericCSVM, get_device_memory) {
     }
 }
 
-TYPED_TEST_P(GenericCSVM, get_max_mem_alloc_size) {
     using namespace plssvm::detail::literals;
+TYPED_TEST_P(GenericCSVM, GetMaxMemAllocSize) {
     using csvm_test_type = util::test_parameter_type_at_t<0, TypeParam>;
     using mock_csvm_type = typename csvm_test_type::mock_csvm_type;
 
@@ -280,8 +280,8 @@ TYPED_TEST_P(GenericCSVM, get_max_mem_alloc_size) {
     }
 }
 
-TYPED_TEST_P(GenericCSVM, get_local_memory) {
     using namespace plssvm::detail::literals;
+TYPED_TEST_P(GenericCSVM, GetLocalMemory) {
     using csvm_test_type = util::test_parameter_type_at_t<0, TypeParam>;
     using csvm_type = typename csvm_test_type::csvm_type;
     using mock_csvm_type = typename csvm_test_type::mock_csvm_type;
@@ -302,7 +302,7 @@ TYPED_TEST_P(GenericCSVM, get_local_memory) {
     }
 }
 
-TYPED_TEST_P(GenericCSVM, blas_level_3_explicit_without_C) {
+TYPED_TEST_P(GenericCSVM, BlasLevel3ExplicitWithoutC) {
     using csvm_test_type = util::test_parameter_type_at_t<0, TypeParam>;
     using csvm_type = typename csvm_test_type::csvm_type;
     using mock_csvm_type = typename csvm_test_type::mock_csvm_type;
@@ -347,7 +347,7 @@ TYPED_TEST_P(GenericCSVM, blas_level_3_explicit_without_C) {
     EXPECT_FLOATING_POINT_MATRIX_EQ(C2, C);
 }
 
-TYPED_TEST_P(GenericCSVM, blas_level_3_explicit) {
+TYPED_TEST_P(GenericCSVM, BlasLevel3Explicit) {
     using csvm_test_type = util::test_parameter_type_at_t<0, TypeParam>;
     using csvm_type = typename csvm_test_type::csvm_type;
     using mock_csvm_type = typename csvm_test_type::mock_csvm_type;
@@ -392,7 +392,7 @@ TYPED_TEST_P(GenericCSVM, blas_level_3_explicit) {
     EXPECT_FLOATING_POINT_MATRIX_EQ(C2, C);
 }
 
-TYPED_TEST_P(GenericCSVM, conjugate_gradients_trivial) {
+TYPED_TEST_P(GenericCSVM, ConjugateGradientsTrivial) {
     using csvm_test_type = util::test_parameter_type_at_t<0, TypeParam>;
     using csvm_type = typename csvm_test_type::csvm_type;
     using mock_csvm_type = typename csvm_test_type::mock_csvm_type;
@@ -426,7 +426,7 @@ TYPED_TEST_P(GenericCSVM, conjugate_gradients_trivial) {
     EXPECT_THAT(num_iters, ::testing::Each(::testing::Gt(0)));
 }
 
-TYPED_TEST_P(GenericCSVM, conjugate_gradients) {
+TYPED_TEST_P(GenericCSVM, ConjugateGradients) {
     using csvm_test_type = util::test_parameter_type_at_t<0, TypeParam>;
     using csvm_type = typename csvm_test_type::csvm_type;
     using mock_csvm_type = typename csvm_test_type::mock_csvm_type;
@@ -462,15 +462,15 @@ TYPED_TEST_P(GenericCSVM, conjugate_gradients) {
 }
 
 REGISTER_TYPED_TEST_SUITE_P(GenericCSVM,
-                            get_target_platform,
-                            get_device_memory,
-                            get_local_memory,
-                            get_max_mem_alloc_size,
-                            num_available_devices,
-                            blas_level_3_explicit_without_C,
-                            blas_level_3_explicit,
-                            conjugate_gradients_trivial,
-                            conjugate_gradients);
+                            GetTargetPlatform,
+                            GetDeviceMemory,
+                            GetLocalMemory,
+                            GetMaxMemAllocSize,
+                            NumAvailableDevices,
+                            BlasLevel3ExplicitWithoutC,
+                            BlasLevel3Explicit,
+                            ConjugateGradientsTrivial,
+                            ConjugateGradients);
 
 //*************************************************************************************************************************************//
 //                                          C-SVM tests depending on the kernel function type                                          //
@@ -481,7 +481,7 @@ class GenericCSVMKernelFunction : public GenericCSVM<T> { };
 
 TYPED_TEST_SUITE_P(GenericCSVMKernelFunction);
 
-TYPED_TEST_P(GenericCSVMKernelFunction, blas_level_3_assembly_implicit_without_C) {
+TYPED_TEST_P(GenericCSVMKernelFunction, BlasLevel3AssemblyImplicitWithoutC) {
     using csvm_test_type = util::test_parameter_type_at_t<0, TypeParam>;
     using csvm_type = typename csvm_test_type::csvm_type;
     using mock_csvm_type = typename csvm_test_type::mock_csvm_type;
@@ -538,7 +538,7 @@ TYPED_TEST_P(GenericCSVMKernelFunction, blas_level_3_assembly_implicit_without_C
     EXPECT_FLOATING_POINT_MATRIX_EQ(C, C2);
 }
 
-TYPED_TEST_P(GenericCSVMKernelFunction, blas_level_3_assembly_implicit) {
+TYPED_TEST_P(GenericCSVMKernelFunction, BlasLevel3AssemblyImplicit) {
     using csvm_test_type = util::test_parameter_type_at_t<0, TypeParam>;
     using csvm_type = typename csvm_test_type::csvm_type;
     using mock_csvm_type = typename csvm_test_type::mock_csvm_type;
@@ -595,7 +595,7 @@ TYPED_TEST_P(GenericCSVMKernelFunction, blas_level_3_assembly_implicit) {
     EXPECT_FLOATING_POINT_MATRIX_EQ(C, C2);
 }
 
-TYPED_TEST_P(GenericCSVMKernelFunction, predict_values) {
+TYPED_TEST_P(GenericCSVMKernelFunction, PredictValues) {
     using csvm_test_type = util::test_parameter_type_at_t<0, TypeParam>;
     using mock_csvm_type = typename csvm_test_type::mock_csvm_type;
     constexpr plssvm::kernel_function_type kernel = util::test_parameter_value_at_v<0, TypeParam>;
@@ -655,7 +655,7 @@ TYPED_TEST_P(GenericCSVMKernelFunction, predict_values) {
     }
 }
 
-TYPED_TEST_P(GenericCSVMKernelFunction, predict_values_provided_w) {
+TYPED_TEST_P(GenericCSVMKernelFunction, PredictValuesProvidedW) {
     using csvm_test_type = util::test_parameter_type_at_t<0, TypeParam>;
     using mock_csvm_type = typename csvm_test_type::mock_csvm_type;
     constexpr plssvm::kernel_function_type kernel = util::test_parameter_value_at_v<0, TypeParam>;
@@ -710,7 +710,7 @@ TYPED_TEST_P(GenericCSVMKernelFunction, predict_values_provided_w) {
     }
 }
 
-TYPED_TEST_P(GenericCSVMKernelFunction, perform_dimensional_reduction) {
+TYPED_TEST_P(GenericCSVMKernelFunction, PerformDimensionalReduction) {
     using csvm_test_type = util::test_parameter_type_at_t<0, TypeParam>;
     using mock_csvm_type = typename csvm_test_type::mock_csvm_type;
     constexpr plssvm::kernel_function_type kernel = util::test_parameter_value_at_v<0, TypeParam>;
@@ -737,11 +737,11 @@ TYPED_TEST_P(GenericCSVMKernelFunction, perform_dimensional_reduction) {
 }
 
 REGISTER_TYPED_TEST_SUITE_P(GenericCSVMKernelFunction,
-                            blas_level_3_assembly_implicit_without_C,
-                            blas_level_3_assembly_implicit,
-                            predict_values,
-                            predict_values_provided_w,
-                            perform_dimensional_reduction);
+                            BlasLevel3AssemblyImplicitWithoutC,
+                            BlasLevel3AssemblyImplicit,
+                            PredictValues,
+                            PredictValuesProvidedW,
+                            PerformDimensionalReduction);
 
 //*************************************************************************************************************************************//
 //                                              C-SVM tests depending on the solver type                                               //
@@ -752,7 +752,7 @@ class GenericCSVMSolver : public GenericCSVM<T> { };
 
 TYPED_TEST_SUITE_P(GenericCSVMSolver);
 
-TYPED_TEST_P(GenericCSVMSolver, solve_lssvm_system_of_linear_equations_trivial) {
+TYPED_TEST_P(GenericCSVMSolver, SolveLssvmSystemOfLinearEquationsTrivial) {
     using csvm_test_type = util::test_parameter_type_at_t<0, TypeParam>;
     using mock_csvm_type = typename csvm_test_type::mock_csvm_type;
     constexpr plssvm::solver_type solver = util::test_parameter_value_at_v<0, TypeParam>;
@@ -796,7 +796,7 @@ TYPED_TEST_P(GenericCSVMSolver, solve_lssvm_system_of_linear_equations_trivial) 
     EXPECT_THAT(num_iters, ::testing::Each(::testing::Gt(0)));
 }
 
-TYPED_TEST_P(GenericCSVMSolver, solve_lssvm_system_of_linear_equations) {
+TYPED_TEST_P(GenericCSVMSolver, SolveLssvmSystemOfLinearEquations) {
     using csvm_test_type = util::test_parameter_type_at_t<0, TypeParam>;
     using mock_csvm_type = typename csvm_test_type::mock_csvm_type;
     constexpr plssvm::solver_type solver = util::test_parameter_value_at_v<0, TypeParam>;
@@ -839,8 +839,8 @@ TYPED_TEST_P(GenericCSVMSolver, solve_lssvm_system_of_linear_equations) {
 }
 
 REGISTER_TYPED_TEST_SUITE_P(GenericCSVMSolver,
-                            solve_lssvm_system_of_linear_equations_trivial,
-                            solve_lssvm_system_of_linear_equations);
+                            SolveLssvmSystemOfLinearEquationsTrivial,
+                            SolveLssvmSystemOfLinearEquations);
 
 //*************************************************************************************************************************************//
 //                                    C-SVM tests depending on the solver and kernel function type                                     //
@@ -851,7 +851,7 @@ class GenericCSVMSolverKernelFunction : public GenericCSVM<T> { };
 
 TYPED_TEST_SUITE_P(GenericCSVMSolverKernelFunction);
 
-TYPED_TEST_P(GenericCSVMSolverKernelFunction, assemble_kernel_matrix_minimal) {
+TYPED_TEST_P(GenericCSVMSolverKernelFunction, AssembleKernelMatrixMinimal) {
     using csvm_test_type = util::test_parameter_type_at_t<0, TypeParam>;
     using csvm_type = typename csvm_test_type::csvm_type;
     using mock_csvm_type = typename csvm_test_type::mock_csvm_type;
@@ -967,7 +967,7 @@ TYPED_TEST_P(GenericCSVMSolverKernelFunction, assemble_kernel_matrix_minimal) {
     }
 }
 
-TYPED_TEST_P(GenericCSVMSolverKernelFunction, assemble_kernel_matrix) {
+TYPED_TEST_P(GenericCSVMSolverKernelFunction, AssembleKernelMatrix) {
     using csvm_test_type = util::test_parameter_type_at_t<0, TypeParam>;
     using csvm_type = typename csvm_test_type::csvm_type;
     using mock_csvm_type = typename csvm_test_type::mock_csvm_type;
@@ -1081,8 +1081,8 @@ TYPED_TEST_P(GenericCSVMSolverKernelFunction, assemble_kernel_matrix) {
 }
 
 REGISTER_TYPED_TEST_SUITE_P(GenericCSVMSolverKernelFunction,
-                            assemble_kernel_matrix_minimal,
-                            assemble_kernel_matrix);
+                            AssembleKernelMatrixMinimal,
+                            AssembleKernelMatrix);
 
 //*************************************************************************************************************************************//
 //                                                          C-SVM DeathTests                                                           //
@@ -1093,7 +1093,7 @@ class GenericCSVMDeathTest : public GenericCSVM<T> { };
 
 TYPED_TEST_SUITE_P(GenericCSVMDeathTest);
 
-TYPED_TEST_P(GenericCSVMDeathTest, blas_level_3_automatic) {
+TYPED_TEST_P(GenericCSVMDeathTest, BlasLevel3Automatic) {
     using csvm_test_type = util::test_parameter_type_at_t<0, TypeParam>;
     using csvm_type = typename csvm_test_type::csvm_type;
     using mock_csvm_type = typename csvm_test_type::mock_csvm_type;
@@ -1128,14 +1128,14 @@ TYPED_TEST_P(GenericCSVMDeathTest, blas_level_3_automatic) {
 }
 
 REGISTER_TYPED_TEST_SUITE_P(GenericCSVMDeathTest,
-                            blas_level_3_automatic);
+                            BlasLevel3Automatic);
 
 template <typename T>
 class GenericCSVMSolverDeathTest : public GenericCSVM<T> { };
 
 TYPED_TEST_SUITE_P(GenericCSVMSolverDeathTest);
 
-TYPED_TEST_P(GenericCSVMSolverDeathTest, conjugate_gradients_empty_B) {
+TYPED_TEST_P(GenericCSVMSolverDeathTest, ConjugateGradientsEmptyB) {
     using csvm_test_type = util::test_parameter_type_at_t<0, TypeParam>;
     using mock_csvm_type = typename csvm_test_type::mock_csvm_type;
     using csvm_type = typename csvm_test_type::csvm_type;
@@ -1161,7 +1161,7 @@ TYPED_TEST_P(GenericCSVMSolverDeathTest, conjugate_gradients_empty_B) {
     EXPECT_DEATH(std::ignore = svm.conjugate_gradients(A, empty_matr, plssvm::real_type{ 0.001 }, 6, solver), "The right-hand sides must not be empty!");
 }
 
-TYPED_TEST_P(GenericCSVMSolverDeathTest, conjugate_gradients_invalid_eps) {
+TYPED_TEST_P(GenericCSVMSolverDeathTest, ConjugateGradientsInvalidEps) {
     using csvm_test_type = util::test_parameter_type_at_t<0, TypeParam>;
     using mock_csvm_type = typename csvm_test_type::mock_csvm_type;
     using csvm_type = typename csvm_test_type::csvm_type;
@@ -1187,7 +1187,7 @@ TYPED_TEST_P(GenericCSVMSolverDeathTest, conjugate_gradients_invalid_eps) {
     EXPECT_DEATH(std::ignore = svm.conjugate_gradients(A, B, -0.5, 6, solver), "The epsilon value must be greater than 0.0!");
 }
 
-TYPED_TEST_P(GenericCSVMSolverDeathTest, conjugate_gradients_invalid_max_cg_iter) {
+TYPED_TEST_P(GenericCSVMSolverDeathTest, ConjugateGradientsInvalidMaxCgIter) {
     using csvm_test_type = util::test_parameter_type_at_t<0, TypeParam>;
     using mock_csvm_type = typename csvm_test_type::mock_csvm_type;
     using csvm_type = typename csvm_test_type::csvm_type;
@@ -1212,7 +1212,7 @@ TYPED_TEST_P(GenericCSVMSolverDeathTest, conjugate_gradients_invalid_max_cg_iter
     EXPECT_DEATH(std::ignore = svm.conjugate_gradients(A, B, plssvm::real_type{ 0.001 }, 0, solver), "The maximum number of iterations must be greater than 0!");
 }
 
-TYPED_TEST_P(GenericCSVMSolverDeathTest, run_blas_level_3_wrong_number_of_kernel_matrix_parts) {
+TYPED_TEST_P(GenericCSVMSolverDeathTest, RunBlasLevel3WrongNumberOfKernelMatrixParts) {
     using csvm_test_type = util::test_parameter_type_at_t<0, TypeParam>;
     using mock_csvm_type = typename csvm_test_type::mock_csvm_type;
     using csvm_type = typename csvm_test_type::csvm_type;
@@ -1244,7 +1244,7 @@ TYPED_TEST_P(GenericCSVMSolverDeathTest, run_blas_level_3_wrong_number_of_kernel
     }
 }
 
-TYPED_TEST_P(GenericCSVMSolverDeathTest, blas_level_3_empty_matrices) {
+TYPED_TEST_P(GenericCSVMSolverDeathTest, BlasLevel3EmptyMatrices) {
     using csvm_test_type = util::test_parameter_type_at_t<0, TypeParam>;
     using mock_csvm_type = typename csvm_test_type::mock_csvm_type;
     using csvm_type = typename csvm_test_type::csvm_type;
@@ -1275,7 +1275,7 @@ TYPED_TEST_P(GenericCSVMSolverDeathTest, blas_level_3_empty_matrices) {
     }
 }
 
-TYPED_TEST_P(GenericCSVMSolverDeathTest, blas_level_3_missing_padding) {
+TYPED_TEST_P(GenericCSVMSolverDeathTest, BlasLevel3MissingPadding) {
     using csvm_test_type = util::test_parameter_type_at_t<0, TypeParam>;
     using mock_csvm_type = typename csvm_test_type::mock_csvm_type;
     using csvm_type = typename csvm_test_type::csvm_type;
@@ -1306,7 +1306,7 @@ TYPED_TEST_P(GenericCSVMSolverDeathTest, blas_level_3_missing_padding) {
     }
 }
 
-TYPED_TEST_P(GenericCSVMSolverDeathTest, blas_level_3_matrix_shape_mismatch) {
+TYPED_TEST_P(GenericCSVMSolverDeathTest, BlasLevel3MatrixShapeMismatch) {
     using csvm_test_type = util::test_parameter_type_at_t<0, TypeParam>;
     using mock_csvm_type = typename csvm_test_type::mock_csvm_type;
     using csvm_type = typename csvm_test_type::csvm_type;
@@ -1337,7 +1337,7 @@ TYPED_TEST_P(GenericCSVMSolverDeathTest, blas_level_3_matrix_shape_mismatch) {
     }
 }
 
-TYPED_TEST_P(GenericCSVMSolverDeathTest, blas_level_3_matrix_padding_mismatch) {
+TYPED_TEST_P(GenericCSVMSolverDeathTest, BlasLevel3MatrixPaddingMismatch) {
     using csvm_test_type = util::test_parameter_type_at_t<0, TypeParam>;
     using mock_csvm_type = typename csvm_test_type::mock_csvm_type;
     using csvm_type = typename csvm_test_type::csvm_type;
@@ -1369,21 +1369,21 @@ TYPED_TEST_P(GenericCSVMSolverDeathTest, blas_level_3_matrix_padding_mismatch) {
 }
 
 REGISTER_TYPED_TEST_SUITE_P(GenericCSVMSolverDeathTest,
-                            conjugate_gradients_empty_B,
-                            conjugate_gradients_invalid_eps,
-                            conjugate_gradients_invalid_max_cg_iter,
-                            run_blas_level_3_wrong_number_of_kernel_matrix_parts,
-                            blas_level_3_empty_matrices,
-                            blas_level_3_missing_padding,
-                            blas_level_3_matrix_shape_mismatch,
-                            blas_level_3_matrix_padding_mismatch);
+                            ConjugateGradientsEmptyB,
+                            ConjugateGradientsInvalidEps,
+                            ConjugateGradientsInvalidMaxCgIter,
+                            RunBlasLevel3WrongNumberOfKernelMatrixParts,
+                            BlasLevel3EmptyMatrices,
+                            BlasLevel3MissingPadding,
+                            BlasLevel3MatrixShapeMismatch,
+                            BlasLevel3MatrixPaddingMismatch);
 
 template <typename T>
 class GenericCSVMKernelFunctionDeathTest : public GenericCSVMKernelFunction<T> { };
 
 TYPED_TEST_SUITE_P(GenericCSVMKernelFunctionDeathTest);
 
-TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, solve_lssvm_system_of_linear_equations_empty_A) {
+TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, SolveLssvmSystemOfLinearEquationsEmptyA) {
     using csvm_test_type = util::test_parameter_type_at_t<0, TypeParam>;
     using mock_csvm_type = typename csvm_test_type::mock_csvm_type;
     constexpr plssvm::kernel_function_type kernel = util::test_parameter_value_at_v<0, TypeParam>;
@@ -1404,7 +1404,7 @@ TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, solve_lssvm_system_of_linear_eq
     EXPECT_DEATH(std::ignore = svm.solve_lssvm_system_of_linear_equations(empty_matr, B, params), "The A matrix must not be empty!");
 }
 
-TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, solve_lssvm_system_of_linear_equations_A_without_padding) {
+TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, SolveLssvmSystemOfLinearEquationsAWithoutPadding) {
     using csvm_test_type = util::test_parameter_type_at_t<0, TypeParam>;
     using mock_csvm_type = typename csvm_test_type::mock_csvm_type;
     constexpr plssvm::kernel_function_type kernel = util::test_parameter_value_at_v<0, TypeParam>;
@@ -1425,7 +1425,7 @@ TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, solve_lssvm_system_of_linear_eq
     EXPECT_DEATH(std::ignore = svm.solve_lssvm_system_of_linear_equations(A, B, params), "The A matrix must be padded!");
 }
 
-TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, solve_lssvm_system_of_linear_equations_A_wrong_padding_sizes) {
+TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, SolveLssvmSystemOfLinearEquationsAWrongPaddingSizes) {
     using csvm_test_type = util::test_parameter_type_at_t<0, TypeParam>;
     using mock_csvm_type = typename csvm_test_type::mock_csvm_type;
     constexpr plssvm::kernel_function_type kernel = util::test_parameter_value_at_v<0, TypeParam>;
@@ -1447,7 +1447,7 @@ TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, solve_lssvm_system_of_linear_eq
                  ::testing::HasSubstr(fmt::format("The provided matrix must be padded with [{}, {}], but is padded with [0, 1]!", plssvm::PADDING_SIZE, plssvm::PADDING_SIZE)));
 }
 
-TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, solve_lssvm_system_of_linear_equations_empty_B) {
+TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, SolveLssvmSystemOfLinearEquationsEmptyB) {
     using csvm_test_type = util::test_parameter_type_at_t<0, TypeParam>;
     using mock_csvm_type = typename csvm_test_type::mock_csvm_type;
     constexpr plssvm::kernel_function_type kernel = util::test_parameter_value_at_v<0, TypeParam>;
@@ -1468,7 +1468,7 @@ TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, solve_lssvm_system_of_linear_eq
     EXPECT_DEATH(std::ignore = svm.solve_lssvm_system_of_linear_equations(A, empty_matr, params), "The B matrix must not be empty!");
 }
 
-TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, solve_lssvm_system_of_linear_equations_size_mismatch) {
+TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, SolveLssvmSystemOfLinearEquationsSizeMismatch) {
     using csvm_test_type = util::test_parameter_type_at_t<0, TypeParam>;
     using mock_csvm_type = typename csvm_test_type::mock_csvm_type;
     constexpr plssvm::kernel_function_type kernel = util::test_parameter_value_at_v<0, TypeParam>;
@@ -1489,7 +1489,7 @@ TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, solve_lssvm_system_of_linear_eq
     EXPECT_DEATH(std::ignore = svm.solve_lssvm_system_of_linear_equations(A, B, params), ::testing::HasSubstr("The number of data points in A (6) and B (3) must be the same!"));
 }
 
-TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, perform_dimensional_reduction_empty_A) {
+TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, PerformDimensionalReductionEmptyA) {
     using csvm_test_type = util::test_parameter_type_at_t<0, TypeParam>;
     using mock_csvm_type = typename csvm_test_type::mock_csvm_type;
     constexpr plssvm::kernel_function_type kernel = util::test_parameter_value_at_v<0, TypeParam>;
@@ -1509,7 +1509,7 @@ TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, perform_dimensional_reduction_e
     EXPECT_DEATH(std::ignore = svm.perform_dimensional_reduction(params, empty_matr), "The matrix must not be empty!");
 }
 
-TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, assemble_kernel_matrix_automatic) {
+TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, AssembleKernelMatrixAutomatic) {
     using csvm_test_type = util::test_parameter_type_at_t<0, TypeParam>;
     using mock_csvm_type = typename csvm_test_type::mock_csvm_type;
     constexpr plssvm::kernel_function_type kernel = util::test_parameter_value_at_v<0, TypeParam>;
@@ -1535,7 +1535,7 @@ TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, assemble_kernel_matrix_automati
     EXPECT_DEATH(std::ignore = svm.assemble_kernel_matrix(plssvm::solver_type::automatic, params, A, q_red, QA_cost), ::testing::HasSubstr("An explicit solver type must be provided instead of solver_type::automatic!"));
 }
 
-TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, predict_values_empty_matrices) {
+TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, PredictValuesEmptyMatrices) {
     using csvm_test_type = util::test_parameter_type_at_t<0, TypeParam>;
     using mock_csvm_type = typename csvm_test_type::mock_csvm_type;
     constexpr plssvm::kernel_function_type kernel = util::test_parameter_value_at_v<0, TypeParam>;
@@ -1571,7 +1571,7 @@ TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, predict_values_empty_matrices) 
     EXPECT_DEATH(std::ignore = svm.predict_values(params, support_vectors, weights, rho, w, empty_soa_matr), "The data points to predict must not be empty!");
 }
 
-TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, predict_values_missing_padding) {
+TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, PredictValuesMissingPadding) {
     using csvm_test_type = util::test_parameter_type_at_t<0, TypeParam>;
     using mock_csvm_type = typename csvm_test_type::mock_csvm_type;
     constexpr plssvm::kernel_function_type kernel = util::test_parameter_value_at_v<0, TypeParam>;
@@ -1613,7 +1613,7 @@ TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, predict_values_missing_padding)
     EXPECT_DEATH(std::ignore = svm.predict_values(params, support_vectors, weights, rho, w, data_without_padding), "The data points to predict must be padded!");
 }
 
-TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, predict_values_sv_alpha_size_mismatch) {
+TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, PredictValuesSvAlphaSizeMismatch) {
     using csvm_test_type = util::test_parameter_type_at_t<0, TypeParam>;
     using mock_csvm_type = typename csvm_test_type::mock_csvm_type;
     constexpr plssvm::kernel_function_type kernel = util::test_parameter_value_at_v<0, TypeParam>;
@@ -1641,7 +1641,7 @@ TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, predict_values_sv_alpha_size_mi
     EXPECT_DEATH(std::ignore = svm.predict_values(params, support_vectors, weights, rho, w, data), ::testing::HasSubstr("The number of support vectors (3) and number of weights (4) must be the same!"));
 }
 
-TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, predict_values_rho_alpha_size_mismatch) {
+TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, PredictValuesRhoAlphaSizeMismatch) {
     using csvm_test_type = util::test_parameter_type_at_t<0, TypeParam>;
     using mock_csvm_type = typename csvm_test_type::mock_csvm_type;
     constexpr plssvm::kernel_function_type kernel = util::test_parameter_value_at_v<0, TypeParam>;
@@ -1669,7 +1669,7 @@ TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, predict_values_rho_alpha_size_m
     EXPECT_DEATH(std::ignore = svm.predict_values(params, support_vectors, weights, rho, w, data), ::testing::HasSubstr("The number of rho values (1) and the number of weight vectors (2) must be the same!"));
 }
 
-TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, predict_values_w_size_mismatch) {
+TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, PredictValuesWSizeMismatch) {
     using csvm_test_type = util::test_parameter_type_at_t<0, TypeParam>;
     using mock_csvm_type = typename csvm_test_type::mock_csvm_type;
     constexpr plssvm::kernel_function_type kernel = util::test_parameter_value_at_v<0, TypeParam>;
@@ -1700,7 +1700,7 @@ TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, predict_values_w_size_mismatch)
     EXPECT_DEATH(std::ignore = svm.predict_values(params, support_vectors, weights, rho, w, data), ::testing::HasSubstr("Either w must be empty or contain exactly the same number of vectors (3) as the alpha vector (2)!"));
 }
 
-TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, predict_values_num_features_mismatch) {
+TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, PredictValuesNumFeaturesMismatch) {
     using csvm_test_type = util::test_parameter_type_at_t<0, TypeParam>;
     using mock_csvm_type = typename csvm_test_type::mock_csvm_type;
     constexpr plssvm::kernel_function_type kernel = util::test_parameter_value_at_v<0, TypeParam>;
@@ -1729,26 +1729,26 @@ TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, predict_values_num_features_mis
 }
 
 REGISTER_TYPED_TEST_SUITE_P(GenericCSVMKernelFunctionDeathTest,
-                            solve_lssvm_system_of_linear_equations_empty_A,
-                            solve_lssvm_system_of_linear_equations_A_without_padding,
-                            solve_lssvm_system_of_linear_equations_A_wrong_padding_sizes,
-                            solve_lssvm_system_of_linear_equations_empty_B,
-                            solve_lssvm_system_of_linear_equations_size_mismatch,
-                            perform_dimensional_reduction_empty_A,
-                            assemble_kernel_matrix_automatic,
-                            predict_values_empty_matrices,
-                            predict_values_missing_padding,
-                            predict_values_sv_alpha_size_mismatch,
-                            predict_values_rho_alpha_size_mismatch,
-                            predict_values_w_size_mismatch,
-                            predict_values_num_features_mismatch);
+                            SolveLssvmSystemOfLinearEquationsEmptyA,
+                            SolveLssvmSystemOfLinearEquationsAWithoutPadding,
+                            SolveLssvmSystemOfLinearEquationsAWrongPaddingSizes,
+                            SolveLssvmSystemOfLinearEquationsEmptyB,
+                            SolveLssvmSystemOfLinearEquationsSizeMismatch,
+                            PerformDimensionalReductionEmptyA,
+                            AssembleKernelMatrixAutomatic,
+                            PredictValuesEmptyMatrices,
+                            PredictValuesMissingPadding,
+                            PredictValuesSvAlphaSizeMismatch,
+                            PredictValuesRhoAlphaSizeMismatch,
+                            PredictValuesWSizeMismatch,
+                            PredictValuesNumFeaturesMismatch);
 
 template <typename T>
 class GenericCSVMSolverKernelFunctionDeathTest : public GenericCSVMSolverKernelFunction<T> { };
 
 TYPED_TEST_SUITE_P(GenericCSVMSolverKernelFunctionDeathTest);
 
-TYPED_TEST_P(GenericCSVMSolverKernelFunctionDeathTest, assemble_kernel_matrix_empty_matrices) {
+TYPED_TEST_P(GenericCSVMSolverKernelFunctionDeathTest, AssembleKernelMatrixEmptyMatrices) {
     using csvm_test_type = util::test_parameter_type_at_t<0, TypeParam>;
     using mock_csvm_type = typename csvm_test_type::mock_csvm_type;
     constexpr plssvm::solver_type solver = util::test_parameter_value_at_v<0, TypeParam>;
@@ -1784,7 +1784,7 @@ TYPED_TEST_P(GenericCSVMSolverKernelFunctionDeathTest, assemble_kernel_matrix_em
     }
 }
 
-TYPED_TEST_P(GenericCSVMSolverKernelFunctionDeathTest, assemble_kernel_matrix_A_not_padded) {
+TYPED_TEST_P(GenericCSVMSolverKernelFunctionDeathTest, AssembleKernelMatrixANotPadded) {
     using csvm_test_type = util::test_parameter_type_at_t<0, TypeParam>;
     using mock_csvm_type = typename csvm_test_type::mock_csvm_type;
     constexpr plssvm::solver_type solver = util::test_parameter_value_at_v<0, TypeParam>;
@@ -1815,7 +1815,7 @@ TYPED_TEST_P(GenericCSVMSolverKernelFunctionDeathTest, assemble_kernel_matrix_A_
     }
 }
 
-TYPED_TEST_P(GenericCSVMSolverKernelFunctionDeathTest, assemble_kernel_matrix_size_mismatch) {
+TYPED_TEST_P(GenericCSVMSolverKernelFunctionDeathTest, AssembleKernelMatrixSizeMismatch) {
     using csvm_test_type = util::test_parameter_type_at_t<0, TypeParam>;
     using mock_csvm_type = typename csvm_test_type::mock_csvm_type;
     constexpr plssvm::solver_type solver = util::test_parameter_value_at_v<0, TypeParam>;
@@ -1847,8 +1847,8 @@ TYPED_TEST_P(GenericCSVMSolverKernelFunctionDeathTest, assemble_kernel_matrix_si
 }
 
 REGISTER_TYPED_TEST_SUITE_P(GenericCSVMSolverKernelFunctionDeathTest,
-                            assemble_kernel_matrix_empty_matrices,
-                            assemble_kernel_matrix_A_not_padded,
-                            assemble_kernel_matrix_size_mismatch);
+                            AssembleKernelMatrixEmptyMatrices,
+                            AssembleKernelMatrixANotPadded,
+                            AssembleKernelMatrixSizeMismatch);
 
 #endif  // PLSSVM_TESTS_BACKENDS_GENERIC_BASE_CSVM_TESTS_HPP_

@@ -48,7 +48,7 @@ class KokkosCSVMConstructor : public ::testing::Test,
 
 TYPED_TEST_SUITE(KokkosCSVMConstructor, kokkos_csvm_types_gtest, naming::test_parameter_to_name);
 
-TYPED_TEST(KokkosCSVMConstructor, default_construct) {  // execution_space automatic, target_platform automatic
+TYPED_TEST(KokkosCSVMConstructor, DefaultConstruct) {  // execution_space automatic, target_platform automatic
     using csvm_type = typename TestFixture::fixture_csvm_type;
 
     // check whether the execution space would be automatically determined as either OpenMPTarget or OpenACC
@@ -71,7 +71,7 @@ TYPED_TEST(KokkosCSVMConstructor, default_construct) {  // execution_space autom
     }
 }
 
-TYPED_TEST(KokkosCSVMConstructor, construct_parameter) {  // execution_space automatic, target_platform automatic
+TYPED_TEST(KokkosCSVMConstructor, ConstructParameter) {  // execution_space automatic, target_platform automatic
     using csvm_type = typename TestFixture::fixture_csvm_type;
 
     // check whether the execution space would be automatically determined as either OpenMPTarget or OpenACC
@@ -94,7 +94,7 @@ TYPED_TEST(KokkosCSVMConstructor, construct_parameter) {  // execution_space aut
     }
 }
 
-TYPED_TEST(KokkosCSVMConstructor, construct_target_and_parameter) {  // execution_space automatic, target_platform explicit
+TYPED_TEST(KokkosCSVMConstructor, ConstructTargetAndParameter) {  // execution_space automatic, target_platform explicit
     using csvm_type = typename TestFixture::fixture_csvm_type;
 
     // create parameter struct
@@ -165,7 +165,7 @@ TYPED_TEST(KokkosCSVMConstructor, construct_target_and_parameter) {  // executio
 #endif
 }
 
-TYPED_TEST(KokkosCSVMConstructor, construct_execution_space_and_parameter) {  // execution_space explicit, target_platform automatic
+TYPED_TEST(KokkosCSVMConstructor, ConstructExecutionSpaceAndParameter) {  // execution_space explicit, target_platform automatic
     using csvm_type = typename TestFixture::fixture_csvm_type;
 
     // create parameter struct
@@ -306,7 +306,7 @@ TYPED_TEST(KokkosCSVMConstructor, construct_execution_space_and_parameter) {  //
 #endif
 }
 
-TYPED_TEST(KokkosCSVMConstructor, construct_target_and_execution_space_and_parameter) {  // execution_space explicit, target_platform explicit
+TYPED_TEST(KokkosCSVMConstructor, ConstructTargetAndExecutionSpaceAndParameter) {  // execution_space explicit, target_platform explicit
     using csvm_type = typename TestFixture::fixture_csvm_type;
 
     // create parameter struct
@@ -421,7 +421,7 @@ TYPED_TEST(KokkosCSVMConstructor, construct_target_and_execution_space_and_param
 #endif
 }
 
-TYPED_TEST(KokkosCSVMConstructor, construct_named_args) {  // execution_space automatic, target_platform automatic
+TYPED_TEST(KokkosCSVMConstructor, ConstructNamedArgs) {  // execution_space automatic, target_platform automatic
     using csvm_type = typename TestFixture::fixture_csvm_type;
 
     // check whether the execution space would be automatically determined as either OpenMPTarget or OpenACC
@@ -445,7 +445,7 @@ TYPED_TEST(KokkosCSVMConstructor, construct_named_args) {  // execution_space au
     }
 }
 
-TYPED_TEST(KokkosCSVMConstructor, construct_target_and_named_args) {  // execution_space automatic, target_platform explicit
+TYPED_TEST(KokkosCSVMConstructor, ConstructTargetAndNamedArgs) {  // execution_space automatic, target_platform explicit
     using csvm_type = typename TestFixture::fixture_csvm_type;
 
     // automatic should always work
@@ -513,7 +513,7 @@ TYPED_TEST(KokkosCSVMConstructor, construct_target_and_named_args) {  // executi
 #endif
 }
 
-TYPED_TEST(KokkosCSVMConstructor, construct_execution_space_and_named_args) {  // execution_space explicit, target_platform automatic
+TYPED_TEST(KokkosCSVMConstructor, ConstructExecutionSpaceAndNamedArgs) {  // execution_space explicit, target_platform automatic
     using csvm_type = typename TestFixture::fixture_csvm_type;
 
     // automatic should always work
@@ -651,7 +651,7 @@ TYPED_TEST(KokkosCSVMConstructor, construct_execution_space_and_named_args) {  /
 #endif
 }
 
-TYPED_TEST(KokkosCSVMConstructor, construct_target_and_execution_space_and_named_args) {  // execution_space explicit, target_platform explicit
+TYPED_TEST(KokkosCSVMConstructor, ConstructTargetAndExecutionSpaceAndNamedArgs) {  // execution_space explicit, target_platform explicit
     using csvm_type = typename TestFixture::fixture_csvm_type;
 
     // list all possible execution spaces
@@ -763,7 +763,7 @@ TYPED_TEST(KokkosCSVMConstructor, construct_target_and_execution_space_and_named
 #endif
 }
 
-TYPED_TEST(KokkosCSVMConstructor, get_execution_space) {
+TYPED_TEST(KokkosCSVMConstructor, GetExecutionSpace) {
     using csvm_type = typename TestFixture::fixture_csvm_type;
 
     // construct default C-SVM
