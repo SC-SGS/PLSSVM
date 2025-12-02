@@ -10,12 +10,14 @@
 
 #include "plssvm/svm/csvc.hpp"  // plssvm::csvc
 
-#include "plssvm/backend_types.hpp"                     // plssvm::csvm_backend_exists, plssvm::csvm_backend_exists_v, plssvm::backend_csvm_type, plssvm::backend_csvm_type_t
+#include "plssvm/backend_types.hpp"                     // plssvm::csvm_backend_exists, plssvm::backend_csvm_type, plssvm::backend_csvm_type_t
+#include "plssvm/backends/SYCL/detail/constants.hpp"    // NOLINT: namespace plssvm::sycl
 #include "plssvm/classification_types.hpp"              // plssvm::classification_type
 #include "plssvm/constants.hpp"                         // plssvm::real_type, plssvm::THREAD_BLOCK_SIZE, plssvm::INTERNAL_BLOCK_SIZE, plssvm::PADDING_SIZE
-#include "plssvm/core.hpp"                              // sycl namespace handling
+#include "plssvm/core.hpp"                              // NOLINT: include all csvm_backend_exists_v specializations
 #include "plssvm/data_set/classification_data_set.hpp"  // plssvm::classification_data_set
 #include "plssvm/detail/data_distribution.hpp"          // plssvm::detail::data_distribution::maximum_local_memory_needed
+#include "plssvm/detail/memory_size.hpp"                // plssvm::detail::memory_size
 #include "plssvm/detail/move_only_any.hpp"              // plssvm::detail::move_only_any
 #include "plssvm/exceptions/exceptions.hpp"             // plssvm::invalid_parameter_exception
 #include "plssvm/kernel_function_types.hpp"             // plssvm::kernel_function_type
@@ -23,6 +25,7 @@
 #include "plssvm/model/classification_model.hpp"        // plssvm::classification_model
 #include "plssvm/parameter.hpp"                         // plssvm::parameter
 #include "plssvm/solver_types.hpp"                      // plssvm::solver_type
+#include "plssvm/svm/csvm.hpp"                          // plssvm::csvm_backend_exists_v
 
 #include "tests/custom_test_macros.hpp"  // EXPECT_THROW_WHAT, EXPECT_THROW_WHAT_MATCHER, EXPECT_INCLUSIVE_RANGE
 #include "tests/naming.hpp"              // naming::parameter_definition_to_name
@@ -32,6 +35,8 @@
                                          // generate_random_matrix, get_correct_data_file_labels}
 
 #if defined(PLSSVM_HAS_MPI_ENABLED)
+    #include "plssvm/mpi/communicator.hpp"  // plssvm::mpi::communicator
+
     #include "mpi.h"  // MPI_COMM_WORLD, MPI_Comm_dup, MPI_Comm_free
 #endif
 

@@ -14,15 +14,16 @@
 #include "plssvm/exceptions/exceptions.hpp"             // plssvm::data_set_exception, plssvm::mpi_exception
 #include "plssvm/file_format_types.hpp"                 // plssvm::file_format_type
 #include "plssvm/matrix.hpp"                            // plssvm::matrix, plssvm::layout_type
-#include "plssvm/mpi/communicator.hpp"                  // plssvm::mpi::communicator
 #include "plssvm/shape.hpp"                             // plssvm::shape
 
-#include "tests/custom_test_macros.hpp"  // EXPECT_FLOATING_POINT_MATRIX_EQ, EXPECT_FLOATING_POINT_MATRIX_NEAR, EXPECT_FLOATING_POINT_NEAR, EXPECT_THROW_WHAT
+#include "tests/custom_test_macros.hpp"  // EXPECT_FLOATING_POINT_MATRIX_EQ, EXPECT_FLOATING_POINT_MATRIX_NEAR, EXPECT_FLOATING_POINT_NEAR, EXPECT_THROW_WHAT, EXPECT_OPTIONAL_EQ
 #include "tests/naming.hpp"              // naming::test_parameter_to_name
 #include "tests/types_to_test.hpp"       // util::{classification_label_type_gtest, classification_label_type_layout_type_gtest, test_parameter_type_at_t, test_parameter_value_at_v}
 #include "tests/utility.hpp"             // util::{redirect_output, temporary_file, instantiate_template_file, get_distinct_label, get_correct_data_file_labels, generate_specific_matrix, scale}
 
 #if defined(PLSSVM_HAS_MPI_ENABLED)
+    #include "plssvm/mpi/communicator.hpp"  // plssvm::mpi::communicator
+
     #include "mpi.h"  // MPI_COMM_WORLD, MPI_Comm_dup, MPI_Comm_free
 #endif
 
@@ -31,6 +32,7 @@
 #include <cstddef>      // std::size_t
 #include <tuple>        // std::get
 #include <type_traits>  // std::is_integral_v
+#include <utility>      // std::move
 #include <vector>       // std::vector
 
 template <typename T>

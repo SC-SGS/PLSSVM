@@ -14,7 +14,6 @@
 #include "plssvm/detail/cmd/parser_predict.hpp"  // plssvm::detail::cmd::parser_predict
 #include "plssvm/detail/cmd/parser_scale.hpp"    // plssvm::detail::cmd::parser_scale
 #include "plssvm/detail/cmd/parser_train.hpp"    // plssvm::detail::cmd::parser_train
-#include "plssvm/mpi/communicator.hpp"           // plssvm::mpi::communicator
 #include "plssvm/svm_types.hpp"                  // plssvm::svm_type
 
 #include "tests/detail/cmd/cmd_utility.hpp"  // util::ParameterBase

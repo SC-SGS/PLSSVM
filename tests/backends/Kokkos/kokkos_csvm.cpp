@@ -11,8 +11,8 @@
 #include "plssvm/backends/Kokkos/csvm.hpp"             // plssvm::kokkos::{csvm, csvc, csvr}
 #include "plssvm/backends/Kokkos/detail/utility.hpp"   // plssvm::kokkos::detail::available_target_platform_to_execution_space_mapping
 #include "plssvm/backends/Kokkos/exceptions.hpp"       // plssvm::kokkos::backend_exception
-#include "plssvm/backends/Kokkos/execution_space.hpp"  // plssvm::kokkos::execution_space
-#include "plssvm/detail/type_list.hpp"                 // plssvm::detail::label_type_list
+#include "plssvm/backends/Kokkos/execution_spaces.hpp"  // plssvm::kokkos::execution_space
+#include "plssvm/detail/utility.hpp"                   // plssvm::detail::contains
 #include "plssvm/kernel_function_types.hpp"            // plssvm::kernel_function_type
 #include "plssvm/parameter.hpp"                        // plssvm::parameter
 #include "plssvm/target_platforms.hpp"                 // plssvm::target_platform, plssvm::list_available_target_platforms
@@ -28,12 +28,13 @@
 #include "tests/types_to_test.hpp"                     // util::{cartesian_type_product_t, combine_test_parameters_gtest_t}
 #include "tests/utility.hpp"                           // util::redirect_output
 
+#include "fmt/format.h"   // fmt::format
+#include "fmt/ranges.h"   // fmt::join
 #include "gtest/gtest.h"  // TEST_F, EXPECT_NO_THROW, INSTANTIATE_TYPED_TEST_SUITE_P, ::testing::Test
 
-#include <array>    // std::array
-#include <cstddef>  // std::size_t
 #include <map>      // std::map
 #include <tuple>    // std::make_tuple, std::tuple
+#include <utility>  // std::make_pair
 #include <vector>   // std::vector
 
 using kokkos_csvm_types_list = std::tuple<plssvm::kokkos::csvc, plssvm::kokkos::csvr>;

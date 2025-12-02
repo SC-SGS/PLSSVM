@@ -17,6 +17,8 @@
 #include "gmock/gmock.h"  // EXPECT_THAT, ::testing::HasSubstr
 #include "gtest/gtest.h"  // TEST_F, EXPECT_EQ, EXPECT_TRUE, ::testing::Test
 
+#include <iostream>  // std::clog
+
 class LoggerUntracked : public ::testing::Test,
                         public util::redirect_output<> { };
 

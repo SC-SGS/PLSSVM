@@ -21,7 +21,7 @@
 #include "gtest/gtest.h"  // TYPED_TEST, TYPED_TEST_SUITE, EXPECT_EQ, ASSERT_EQ, ::testing::Test
 
 #include <cstddef>  // std::size_t
-#include <variant>  // std::get
+#include <utility>  // std::get
 
 template <typename T>
 class LIBSVMRegressionModelHeaderParseValid : public ::testing::Test {

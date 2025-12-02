@@ -14,6 +14,8 @@
 #include "plssvm/detail/string_utility.hpp"         // plssvm::detail::as_lower_case
 #include "plssvm/file_format_types.hpp"             // plssvm::file_format_type
 #include "plssvm/matrix.hpp"                        // plssvm::aos_matrix
+#include "plssvm/shape.hpp"                         // plssvm::shape
+#include "plssvm/svm_types.hpp"                     // plssvm::svm_type
 
 #include "tests/naming.hpp"         // naming::test_parameter_to_name
 #include "tests/types_to_test.hpp"  // util::{regression_label_type_gtest, test_parameter_type_at_t}

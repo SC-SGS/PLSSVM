@@ -10,9 +10,8 @@
 
 #include "plssvm/gamma.hpp"
 
-#include "plssvm/constants.hpp"              // plssvm::real_type
-#include "plssvm/exceptions/exceptions.hpp"  // plssvm::exception
-#include "plssvm/matrix.hpp"                 // plssvm::aos_matrix
+#include "plssvm/constants.hpp"  // plssvm::real_type
+#include "plssvm/matrix.hpp"     // plssvm::aos_matrix
 
 #include "tests/custom_test_macros.hpp"  // EXPECT_CONVERSION_TO_STRING, EXPECT_CONVERSION_FROM_STRING, EXPECT_THROW_WHAT
 #include "tests/utility.hpp"             // util::generate_specific_matrix
@@ -22,7 +21,6 @@
 
 #include <sstream>  // std::istringstream
 #include <string>   // std::string
-#include <tuple>    // std::ignore
 #include <variant>  // std::variant, std::holds_alternative, std::get
 
 // check whether the plssvm::gamma_coefficient_type -> std::string conversions are correct

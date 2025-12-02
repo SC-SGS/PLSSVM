@@ -18,7 +18,6 @@
 
 #include "gtest/gtest.h"  // TEST, TEST_F, EXPECT_EQ, EXPECT_TRUE, EXPECT_FALSE, ::testing::Test
 
-#include <cmath>     // std::isnan
 #include <iostream>  // std::cout
 #include <sstream>   // std::istringstream
 #include <string>    // std::string

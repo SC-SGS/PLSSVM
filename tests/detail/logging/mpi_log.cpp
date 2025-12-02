@@ -11,11 +11,14 @@
 #include "plssvm/detail/logging/mpi_log.hpp"
 
 #include "plssvm/mpi/communicator.hpp"  // plssvm::mpi::communicator
+#include "plssvm/verbosity_levels.hpp"  // plssvm::verbosity, plssvm::verbosity_level
 
 #include "tests/utility.hpp"  // util::redirect_output
 
 #include "gmock/gmock.h"  // EXPECT_THAT, ::testing::HasSubstr
 #include "gtest/gtest.h"  // TEST_F, EXPECT_EQ, EXPECT_TRUE, ::testing::Test
+
+#include <iostream>  // std::clog
 
 class MPILogger : public ::testing::Test,
                   public util::redirect_output<> { };

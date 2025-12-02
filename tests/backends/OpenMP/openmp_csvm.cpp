@@ -15,34 +15,24 @@
 #include "plssvm/backends/OpenMP/kernel/cg_explicit/kernel_matrix_assembly.hpp"       // plssvm::openmp::device_kernel_assembly
 #include "plssvm/backends/OpenMP/kernel/cg_implicit/kernel_matrix_assembly_blas.hpp"  // plssvm::openmp::device_kernel_assembly_symm
 #include "plssvm/backends/OpenMP/kernel/predict_kernel.hpp"                           // plssvm::openmp::{device_kernel_w_linear, device_kernel_predict_linear, device_kernel_predict}
-#include "plssvm/constants.hpp"                                                       // plssvm::PADDING_SIZE
-#include "plssvm/data_set/classification_data_set.hpp"                                // plssvm::classification_data_set
-#include "plssvm/detail/arithmetic_type_name.hpp"                                     // plssvm::detail::arithmetic_type_name
-#include "plssvm/detail/data_distribution.hpp"                                        // plssvm::detail::triangular_data_distribution
-#include "plssvm/detail/type_list.hpp"                                                // plssvm::detail::supported_label_types
+#include "plssvm/constants.hpp"                                                       // plssvm::real_type
 #include "plssvm/kernel_function_types.hpp"                                           // plssvm::kernel_function_type
 #include "plssvm/matrix.hpp"                                                          // plssvm::soa_matrix
 #include "plssvm/parameter.hpp"                                                       // plssvm::parameter, plssvm::detail::parameter, plssvm::kernel_type, plssvm::cost
-#include "plssvm/shape.hpp"                                                           // plssvm::shape
 #include "plssvm/target_platforms.hpp"                                                // plssvm::target_platform
 
-#include "tests/backends/generic_base_csvc_tests.hpp"  // generic C-SVC tests to instantiate
-#include "tests/backends/generic_base_csvm_tests.hpp"  // generic C-SVM tests to instantiate
-#include "tests/backends/generic_base_csvr_tests.hpp"  // generic C-SVR tests to instantiate
-#include "tests/backends/ground_truth.hpp"             // ground_truth::{perform_dimensional_reduction, assemble_device_specific_kernel_matrix, assemble_full_kernel_matrix, gemm, calculate_w}
+#include "tests/backends/generic_base_csvc_tests.hpp"  // NOLINT: generic C-SVC tests to instantiate
+#include "tests/backends/generic_base_csvm_tests.hpp"  // NOLINT: generic C-SVM tests to instantiate
+#include "tests/backends/generic_base_csvr_tests.hpp"  // NOLINT: generic C-SVR tests to instantiate
 #include "tests/backends/OpenMP/mock_openmp_csvm.hpp"  // mock_openmp_csvm
 #include "tests/custom_test_macros.hpp"                // EXPECT_THROW_WHAT
-#include "tests/naming.hpp"                            // naming::test_parameter_to_name
-#include "tests/types_to_test.hpp"                     // util::{cartesian_type_product_t, combine_test_parameters_gtest_t}
-#include "tests/utility.hpp"                           // util::redirect_output
+#include "tests/naming.hpp"                            // NOLINT: naming::test_parameter_to_name
+#include "tests/types_to_test.hpp"                     // NOLINT: util::{cartesian_type_product_t, combine_test_parameters_gtest_t}
+#include "tests/utility.hpp"                           // NOLINT: util::redirect_output
 
-#include "fmt/format.h"   // fmt::format
-#include "gtest/gtest.h"  // TYPED_TEST, TYPED_TEST_SUITE, TEST_F, EXPECT_NO_THROW, INSTANTIATE_TYPED_TEST_SUITE_P, ::testing::Test
+#include "gtest/gtest.h"  // TYPED_TEST, TYPED_TEST_SUITE, EXPECT_NO_THROW, INSTANTIATE_TYPED_TEST_SUITE_P, ::testing::Test
 
-#include <algorithm>  // std::min
-#include <cstddef>    // std::size_t
-#include <tuple>      // std::make_tuple, std::tuple
-#include <vector>     // std::vector
+#include <tuple>  // std::make_tuple, std::tuple
 
 using openmp_csvm_types_list = std::tuple<plssvm::openmp::csvc, plssvm::openmp::csvr>;
 using openmp_csvm_types_gtest = util::combine_test_parameters_gtest_t<util::cartesian_type_product_t<openmp_csvm_types_list>>;

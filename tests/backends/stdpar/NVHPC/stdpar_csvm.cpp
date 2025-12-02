@@ -19,7 +19,7 @@
 #include "tests/types_to_test.hpp"       // util::{cartesian_type_product_t, test_parameter_type_at_t}
 #include "tests/utility.hpp"             // util::redirect_output
 
-#include "fmt/format.h"   // fmt::format
+#include "fmt/format.h"   // NOLINT: fmt::format
 #include "gtest/gtest.h"  // TYPED_TEST, TYPED_TEST_SUITE, EXPECT_NO_THROW, ::testing::Test
 
 #include <tuple>  // std::tuple

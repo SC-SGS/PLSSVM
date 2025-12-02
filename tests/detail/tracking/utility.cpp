@@ -10,13 +10,10 @@
 
 #include "plssvm/detail/tracking/utility.hpp"
 
-#include "gtest/gtest.h"  // TEST, ASSERT_EQ, EXPECT_EQ, ::testing::StaticAssertTypeEq
+#include "gtest/gtest.h"  // TEST, ASSERT_EQ, EXPECT_EQ
 
-#include <chrono>       // std::chrono::steady_clock::{time_point, now}, std::chrono::milliseconds
+#include <chrono>       // std::chrono::steady_clock::{time_point, now}, std::chrono::milliseconds, std::chrono literals
 #include <cstddef>      // std::size_t
-#include <optional>     // std::optional, std::nullopt
-#include <string>       // std::string
-#include <type_traits>  // std::result_of_t
 #include <vector>       // std::vector
 
 TEST(TrackingUtility, DurationsFromReferenceTime) {

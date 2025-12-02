@@ -11,9 +11,9 @@
 
 #include "plssvm/mpi/detail/utility.hpp"
 
-#include "plssvm/exceptions/exceptions.hpp"  // plssvm::mpi_exception
-
 #if defined(PLSSVM_HAS_MPI_ENABLED)
+    #include "plssvm/exceptions/exceptions.hpp"  // plssvm::mpi_exception
+
     #include "mpi.h"  // MPI_SUCCESS, MPI_ERR_COMM
 #endif
 

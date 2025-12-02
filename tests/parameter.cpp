@@ -10,11 +10,12 @@
 
 #include "plssvm/parameter.hpp"
 
-#include "plssvm/backends/Kokkos/execution_space.hpp"      // plssvm::kokkos::execution_space
+#include "plssvm/backends/Kokkos/execution_spaces.hpp"     // plssvm::kokkos::execution_space
 #include "plssvm/backends/SYCL/data_parallel_kernels.hpp"  // plssvm::sycl::data_parallel_kernel
 #include "plssvm/backends/SYCL/implementation_types.hpp"   // plssvm::sycl::implementation_type
 #include "plssvm/constants.hpp"                            // plssvm::real_type
 #include "plssvm/detail/arithmetic_type_name.hpp"          // plssvm::detail::arithmetic_type_name
+#include "plssvm/exceptions/exceptions.hpp"                // plssvm::invalid_parameter_exception
 #include "plssvm/gamma.hpp"                                // plssvm::gamma_coefficient_type
 #include "plssvm/kernel_function_types.hpp"                // plssvm::kernel_function_type
 

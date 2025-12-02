@@ -10,10 +10,15 @@
 
 #include "plssvm/detail/assert.hpp"
 
-#include "gmock/gmock.h"  // ::testing::ContainsRegex
-#include "gtest/gtest.h"  // TEST, ASSERT_DEATH, EXPECT_DEATH
+#include "plssvm/exceptions/source_location.hpp"  // plssvm::source_location
 
-#include <string>  // std::string
+#if defined(PLSSVM_ENABLE_ASSERTS)
+    #include "fmt/format.h"  // fmt::format
+
+    #include <string>  // std::string
+#endif
+
+#include "gtest/gtest.h"  // TEST, ASSERT_DEATH, EXPECT_DEATH, ::testing::ContainsRegex
 
 // only test if assertions are enabled
 #if defined(PLSSVM_ENABLE_ASSERTS)

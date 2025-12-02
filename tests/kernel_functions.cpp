@@ -29,8 +29,7 @@
 #include <array>    // std::array
 #include <cstddef>  // std::size_t
 #include <tuple>    // std::tuple, std::ignore
-#include <utility>  // std::pair
-#include <variant>  // std::get
+#include <utility>  // std::pair, std::get
 #include <vector>   // std::vector
 
 //*************************************************************************************************************************************//

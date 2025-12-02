@@ -10,8 +10,10 @@
 
 #include "plssvm/backends/Kokkos/detail/device_view_wrapper.hpp"
 
-#include "plssvm/backends/Kokkos/detail/device_wrapper.hpp"  // plssvm::kokkos::detail::device_wrapper
-#include "plssvm/backends/Kokkos/execution_space.hpp"        // plssvm::kokkos::{execution_space, kokkos_type_to_execution_space_v}
+#include "plssvm/backends/Kokkos/detail/constexpr_available_execution_spaces.hpp"  // plssvm::kokkos::detail::constexpr_available_execution_spaces
+#include "plssvm/backends/Kokkos/detail/device_wrapper.hpp"                        // plssvm::kokkos::detail::device_wrapper
+#include "plssvm/backends/Kokkos/execution_space_type_traits.hpp"                  // plssvm::kokkos::kokkos_type_to_execution_space_v
+#include "plssvm/backends/Kokkos/execution_spaces.hpp"                             // plssvm::kokkos::execution_space
 
 #include "Kokkos_Core.hpp"  // Kokkos::DefaultExecutionSpace, Kokkos::View
 

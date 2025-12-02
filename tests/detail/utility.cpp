@@ -20,19 +20,21 @@
 #include "tests/types_to_test.hpp"       // util::{combine_test_parameters_gtest_t, cartesian_type_product_t, test_parameter_type_at_t}
 
 #include "fmt/format.h"   // fmt::format
-#include "gmock/gmock.h"  // EXPECT_THAT, ::testing::HasSubstr
 #include "gtest/gtest.h"  // TEST, EXPECT_EQ, EXPECT_TRUE, EXPECT_FALSE, EXPECT_NO_THROW, ::testing::Test
 
 #include <map>            // std::map
 #include <optional>       // std::optional, std::nullopt
 #include <regex>          // std::regex, std::regex::extended, std::regex_match
 #include <set>            // std::set
-#include <stdlib.h>       // setenv (not available on Windows)
 #include <string>         // std::string
 #include <tuple>          // std::tuple
 #include <unordered_map>  // std::unordered_map
 #include <unordered_set>  // std::unordered_set
 #include <vector>         // std::vector
+
+#if !defined(_WIN32) && !defined(_WIN64)
+    #include <stdlib.h>  // NOLINT: setenv (not available on Windows)
+#endif
 
 TEST(Utility, PlssvmIsDefinedMacro) {
     // the following macro is ALWAYS defined in PLSSVM

@@ -10,10 +10,14 @@
 
 #include "plssvm/detail/logging/log.hpp"
 
+#include "plssvm/verbosity_levels.hpp"  // plssvm::verbosity, plssvm::verbosity_level
+
 #include "tests/utility.hpp"  // util::redirect_output
 
 #include "gmock/gmock.h"  // EXPECT_THAT, ::testing::HasSubstr
 #include "gtest/gtest.h"  // TEST_F, EXPECT_EQ, EXPECT_TRUE, ::testing::Test
+
+#include <iostream>  // std::clog
 
 class Logger : public ::testing::Test,
                public util::redirect_output<> { };

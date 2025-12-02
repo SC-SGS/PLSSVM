@@ -16,6 +16,7 @@
 #include "plssvm/constants.hpp"                         // plssvm::real_type, plssvm::PADDING_SIZE
 #include "plssvm/data_set/classification_data_set.hpp"  // plssvm::classification_data_set
 #include "plssvm/detail/data_distribution.hpp"          // plssvm::detail::{triangular_data_distribution, rectangular_data_distribution}
+#include "plssvm/detail/operators.hpp"                  // operator overloads for std::vector (+ scalars)
 #include "plssvm/kernel_function_types.hpp"             // plssvm::kernel_function_type
 #include "plssvm/matrix.hpp"                            // plssvm::aos_matrix
 #include "plssvm/mpi/communicator.hpp"                  // plssvm::mpi::communicator
@@ -31,9 +32,10 @@
 #include "fmt/format.h"   // fmt::format
 #include "gtest/gtest.h"  // TYPED_TEST_SUITE_P, TYPED_TEST_P, REGISTER_TYPED_TEST_SUITE_P, EXPECT_GT, EXPECT_GE, ASSERT_EQ, ::testing::Test
 
-#include <cstddef>  // std::size_t
-#include <tuple>    // std::get
-#include <vector>   // std::vector
+#include <algorithm>  // std::min
+#include <cstddef>    // std::size_t
+#include <tuple>      // std::get
+#include <vector>     // std::vector
 
 //*************************************************************************************************************************************//
 //                                              non-GPU C-SVM tests depending on nothing                                               //

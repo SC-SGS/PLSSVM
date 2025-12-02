@@ -12,19 +12,12 @@
 
 #include "plssvm/backends/execution_range.hpp"               // plssvm::detail::dim_type
 #include "plssvm/backends/Kokkos/detail/device_wrapper.hpp"  // plssvm::kokkos::detail::device_wrapper
-#include "plssvm/backends/Kokkos/exceptions.hpp"             // plssvm::kokkos::backend_exception
-#include "plssvm/backends/Kokkos/execution_space.hpp"        // plssvm::kokkos::{execution_space, kokkos_type_to_execution_space_v}
-#include "plssvm/detail/utility.hpp"                         // plssvm::detail::contains
+#include "plssvm/backends/Kokkos/execution_spaces.hpp"       // plssvm::kokkos::execution_space
 #include "plssvm/target_platforms.hpp"                       // plssvm::target_platform
 
-#include "Kokkos_Core.hpp"  // Kokkos::ExecutionSpace
+#include "tests/utility.hpp"  // util::for_each_variant_type
 
-#include "tests/custom_test_macros.hpp"  // EXPECT_THROW_WHAT
-#include "tests/utility.hpp"             // util::for_each_variant_type
-
-#include "fmt/core.h"     // fmt::format
-#include "gmock/gmock.h"  // EXPECT_THAT; ::testing::AnyOf
-#include "gtest/gtest.h"  // TEST, EXPECT_NE
+#include "gtest/gtest.h"  // TEST, EXPECT_EQ, EXPECT_NE, EXPECT_TRUE, EXPECT_FALSE, EXPECT_GE, SCOPED_TRACE
 
 #include <map>      // std::map
 #include <regex>    // std::regex, std::regex::extended, std::regex_match

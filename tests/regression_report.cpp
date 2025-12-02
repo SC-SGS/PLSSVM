@@ -10,6 +10,7 @@
 
 #include "plssvm/regression_report.hpp"
 
+#include "plssvm/constants.hpp"              // plssvm::real_type
 #include "plssvm/exceptions/exceptions.hpp"  // plssvm::regression_report_exception
 
 #include "tests/custom_test_macros.hpp"  // EXPECT_THROW_WHAT, EXPECT_CONVERSION_TO_STRING, EXPECT_FLOATING_POINT_NEAR, EXPECT_FLOATING_POINT_NEAR_EPS

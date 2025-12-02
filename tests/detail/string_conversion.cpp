@@ -17,7 +17,7 @@
 #include "tests/types_to_test.hpp"       // util::{combine_test_parameters_gtest_t, cartesian_type_product_t, test_parameter_type_at_t}
 
 #include "fmt/format.h"   // fmt::format
-#include "fmt/std.h"      // format std::vector<bool>::operator[] proxy type
+#include "fmt/std.h"      // NOLINT: format std::vector<bool>::operator[] proxy type
 #include "gtest/gtest.h"  // TEST, ASSERT_EQ, EXPECT_EQ, EXPECT_TRUE, TYPED_TEST, TYPED_TEST_SUITE, TEST_P, INSTANTIATE_TEST_SUITE_P
                           // ::testing::{Test, TestWithParam, Types, Values}
 
@@ -25,7 +25,6 @@
 #include <string>       // std::string
 #include <string_view>  // std::string_view
 #include <tuple>        // std::tuple, std::ignore
-#include <utility>      // std::pair, std::make_pair
 #include <vector>       // std::vector
 
 /**

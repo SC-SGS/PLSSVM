@@ -25,7 +25,6 @@
 
 #include <cstddef>  // std::size_t
 #include <string>   // std::string
-#include <variant>  // std::get
 #include <vector>   // std::vector
 
 template <typename T>

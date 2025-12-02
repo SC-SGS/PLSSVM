@@ -27,11 +27,12 @@
 #include "plssvm/svm_types.hpp"                         // plssvm::svm_type
 
 #include "fmt/format.h"   // fmt::format
-#include "fmt/std.h"      // format std::vector<bool>::operator[] proxy type
+#include "fmt/std.h"      // NOLINT: format std::vector<bool>::operator[] proxy type
 #include "gtest/gtest.h"  // FAIL
 
 #if defined(__unix__)
-    #include <cstdlib>  // mkstemp
+    #include <cstdlib>   // mkstemp
+    #include <unistd.h>  // close
 #endif
 
 #include <algorithm>    // std::generate, std::min, std::max

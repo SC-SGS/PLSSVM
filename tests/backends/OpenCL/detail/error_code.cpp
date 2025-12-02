@@ -10,10 +10,12 @@
 
 #include "plssvm/backends/OpenCL/detail/error_code.hpp"  // plssvm::opencl::detail::error_code
 
-#include "CL/cl.h"  // CL_SUCCESS, CL_DEVICE_NOT_FOUND, cl_int
+#include "CL/cl.h"           // CL_SUCCESS, CL_DEVICE_NOT_FOUND
+#include "CL/cl_platform.h"  // cl_int
 
 #include "tests/custom_test_macros.hpp"  // EXPECT_CONVERSION_TO_STRING
 
+#include "fmt/format.h"   // fmt::format
 #include "gtest/gtest.h"  // TEST, EXPECT_EQ, EXPECT_NE, EXPECT_TRUE, EXPECT_FALSE
 
 #include <string>  // std::string

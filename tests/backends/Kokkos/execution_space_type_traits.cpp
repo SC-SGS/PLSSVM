@@ -10,6 +10,10 @@
 
 #include "plssvm/backends/Kokkos/execution_space_type_traits.hpp"
 
+#include "plssvm/backends/Kokkos/execution_spaces.hpp"  // plssvm::kokkos::execution_space
+
+#include "Kokkos_Core.hpp"  // Kokkos ExecutionSpace types
+
 #include "gtest/gtest.h"  // TEST, EXPECT_EQ, ::testing::StaticAssertTypeEq
 
 TEST(KokkosExecutionSpaceTypeTraits, ExecutionSpaceToKokkosType) {

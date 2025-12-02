@@ -12,8 +12,12 @@
 
 #include "plssvm/mpi/environment.hpp"  // plssvm::mpi::is_active
 
+#if defined(PLSSVM_HAS_MPI_ENABLED)
+    #include "tests/custom_test_macros.hpp"  // EXPECT_OPTIONAL_EQ
+#endif
+
 #include "gmock/gmock.h"  // EXPECT_THAT, ::testing::HasSubstr
-#include "gtest/gtest.h"  // TEST, EXPECT_EQ
+#include "gtest/gtest.h"  // TEST, EXPECT_EQ, EXPECT_FALSE
 
 #include <cstdint>  // std::uint_least32_t
 

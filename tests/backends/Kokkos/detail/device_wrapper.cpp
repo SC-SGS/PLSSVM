@@ -10,11 +10,13 @@
 
 #include "plssvm/backends/Kokkos/detail/device_wrapper.hpp"
 
-#include "plssvm/backends/Kokkos/detail/utility.hpp"   // plssvm::kokkos::detail::available_target_platform_to_execution_space_mapping
-#include "plssvm/backends/Kokkos/execution_space.hpp"  // plssvm::kokkos::{execution_space, kokkos_type_to_execution_space_v}
-#include "plssvm/detail/utility.hpp"                   // plssvm::detail::contains
-#include "plssvm/mpi/communicator.hpp"                 // plssvm::mpi::communicator
-#include "plssvm/target_platforms.hpp"                 // plssvm::target_platform
+#include "plssvm/backends/Kokkos/detail/constexpr_available_execution_spaces.hpp"  // plssvm::kokkos::detail::constexpr_available_execution_spaces
+#include "plssvm/backends/Kokkos/detail/utility.hpp"                               // plssvm::kokkos::detail::available_target_platform_to_execution_space_mapping
+#include "plssvm/backends/Kokkos/execution_space_type_traits.hpp"                  // plssvm::kokkos::kokkos_type_to_execution_space_v
+#include "plssvm/backends/Kokkos/execution_spaces.hpp"                             // plssvm::kokkos::execution_space
+#include "plssvm/detail/utility.hpp"                                               // plssvm::detail::contains
+#include "plssvm/mpi/communicator.hpp"                                             // plssvm::mpi::communicator
+#include "plssvm/target_platforms.hpp"                                             // plssvm::target_platform
 
 #include "Kokkos_Core.hpp"  // Kokkos::DefaultExecutionSpace
 

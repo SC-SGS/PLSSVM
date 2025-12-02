@@ -25,11 +25,10 @@
 
 #include "tests/types_to_test.hpp"  // util::{test_parameter_type_at_t, test_parameter_value_at_v}
 #include "tests/utility.hpp"        // util::{redirect_output, construct_from_tuple, temporary_file, instantiate_template_file}
+#include "tests/custom_test_macros.hpp" // EXPECT_OPTIONAL_EQ
 
-#include "fmt/format.h"   // fmt::format
 #include "gtest/gtest.h"  // TYPED_TEST_SUITE_P, TYPED_TEST_P, REGISTER_TYPED_TEST_SUITE_P, EXPECT_EQ, EXPECT_TRUE, ::testing::Test
 
-#include <string>   // std::string
 #include <utility>  // std::move
 #include <vector>   // std::vector
 

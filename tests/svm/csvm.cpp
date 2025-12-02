@@ -10,17 +10,16 @@
 
 #include "plssvm/svm/csvm.hpp"
 
-#include "plssvm/backend_types.hpp"          // plssvm::csvm_backend_exists, plssvm::csvm_backend_exists_v, plssvm::backend_csvm_type, plssvm::backend_csvm_type_t
-#include "plssvm/constants.hpp"              // plssvm::real_type
-#include "plssvm/core.hpp"                   // sycl namespace handling
-#include "plssvm/exceptions/exceptions.hpp"  // plssvm::invalid_parameter_exception
-#include "plssvm/kernel_function_types.hpp"  // plssvm::kernel_function_type
-#include "plssvm/parameter.hpp"              // plssvm::parameter
-#include "plssvm/target_platforms.hpp"       // plssvm::target_platform
+#include "plssvm/backend_types.hpp"                   // plssvm::csvm_backend_exists, plssvm::csvm_backend_exists_v, plssvm::backend_csvm_type, plssvm::backend_csvm_type_t
+#include "plssvm/backends/SYCL/detail/constants.hpp"  // NOLINT: namespace plssvm::sycl
+#include "plssvm/constants.hpp"                       // plssvm::real_type
+#include "plssvm/core.hpp"                            // NOLINT: include all csvm_backend_exists_v specializations
+#include "plssvm/kernel_function_types.hpp"           // plssvm::kernel_function_type
+#include "plssvm/parameter.hpp"                       // plssvm::parameter
+#include "plssvm/target_platforms.hpp"                // plssvm::target_platform
 
-#include "tests/custom_test_macros.hpp"  // EXPECT_THROW_WHAT
-#include "tests/svm/mock_csvm.hpp"       // mock_csvm
-#include "tests/utility.hpp"             // util::redirect_output
+#include "tests/svm/mock_csvm.hpp"  // mock_csvm
+#include "tests/utility.hpp"        // util::redirect_output
 
 #include "gmock/gmock.h"  // EXPECT_THAT, ::testing::HasSubstr
 #include "gtest/gtest.h"  // TEST, EXPECT_EQ, EXPECT_TRUE, EXPECT_FALSE, EXPECT_THAT

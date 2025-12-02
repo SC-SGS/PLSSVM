@@ -39,15 +39,16 @@
 #include "gtest/gtest.h"  // TYPED_TEST_SUITE_P, TYPED_TEST_P, REGISTER_TYPED_TEST_SUITE_P, EXPECT_EQ, EXPECT_NE, EXPECT_GT, EXPECT_TRUE, EXPECT_DEATH,
                           // ASSERT_EQ, SUCCEED, ::testing::Test
 
-#include <cmath>     // std::sqrt, std::abs
-#include <cstddef>   // std::size_t
-#include <cstring>   // std::memcpy
-#include <limits>    // std::numeric_limits::epsilon
-#include <memory>    // std::unique_ptr, std::make_unique
-#include <optional>  // std::optional
-#include <tuple>     // std::ignore, std::tuple, std::make_tuple
-#include <utility>   // std::move
-#include <vector>    // std::vector
+#include <cmath>       // std::sqrt, std::abs
+#include <cstddef>     // std::size_t
+#include <cstring>     // std::memcpy
+#include <functional>  // std::cref
+#include <limits>      // std::numeric_limits::epsilon
+#include <memory>      // std::unique_ptr, std::make_unique
+#include <optional>    // std::optional
+#include <tuple>       // std::ignore, std::tuple, std::make_tuple
+#include <utility>     // std::move
+#include <vector>      // std::vector
 
 namespace util {
 

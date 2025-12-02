@@ -13,7 +13,6 @@
 #include "plssvm/constants.hpp"              // plssvm::real_type
 #include "plssvm/exceptions/exceptions.hpp"  // plssvm::cmd_parser_exit
 #include "plssvm/file_format_types.hpp"      // plssvm::file_format_type
-#include "plssvm/mpi/communicator.hpp"       // plssvm::mpi::communicator
 #include "plssvm/verbosity_levels.hpp"       // plssvm::verbosity
 
 #include "tests/custom_test_macros.hpp"      // EXPECT_CONVERSION_TO_STRING, EXPECT_THROW_WHAT

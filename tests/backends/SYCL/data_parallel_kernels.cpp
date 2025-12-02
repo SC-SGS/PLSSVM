@@ -16,6 +16,7 @@
 #include "gtest/gtest.h"  // TEST, EXPECT_TRUE, EXPECT_GE
 
 #include <sstream>  // std::istringstream
+#include <vector>   // std::vector
 
 // check whether the plssvm::sycl::data_parallel_kernel -> std::string conversions are correct
 TEST(SYCLDataParallelKernel, ToString) {

@@ -11,11 +11,11 @@
 
 #include "plssvm/mpi/detail/mpi_datatype.hpp"
 
-#include "gtest/gtest.h"  // TEST, EXPECT_FALSE, EXPECT_DEATH
-
-#include <complex>  // std::complex
-
 #if defined(PLSSVM_HAS_MPI_ENABLED)
+    #include "gtest/gtest.h"  // TEST, EXPECT_FALSE, EXPECT_DEATH
+    #include "mpi.h"          // MPI data types
+
+    #include <complex>  // std::complex
 
 TEST(MPIDataTypes, MPIDatatype) {
     // check type conversions

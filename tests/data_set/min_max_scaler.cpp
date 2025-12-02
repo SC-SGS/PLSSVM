@@ -14,10 +14,12 @@
 #include "plssvm/detail/io/file_reader.hpp"     // plssvm::detail::io::file_reader
 #include "plssvm/detail/string_conversion.hpp"  // plssvm::detail::convert_to
 #include "plssvm/exceptions/exceptions.hpp"     // plssvm::min_max_scaler_exception
+#include "plssvm/matrix.hpp"                    // plssvm::soa_matrix
 
 #include "tests/custom_test_macros.hpp"  // EXPECT_FLOATING_POINT_EQ, EXPECT_THROW_WHAT
 #include "tests/utility.hpp"             // util::{temporary_file, redirect_output}
 
+#include "gmock/gmock.h"  // ::testing::HasSubstr
 #include "gtest/gtest.h"  // TEST, EXPECT_EQ, EXPECT_TRUE, ASSERT_EQ, ASSERT_GE, ASSERT_TRUE, ::testing::Test
 
 #include <cstddef>  // std::size_t

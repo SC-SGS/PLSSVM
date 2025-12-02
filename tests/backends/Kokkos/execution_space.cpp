@@ -8,13 +8,15 @@
  * @brief Tests for functions related to the different Kokkos execution spaces.
  */
 
-#include "plssvm/backends/Kokkos/execution_space.hpp"
+#include "plssvm/backends/Kokkos/execution_spaces.hpp"
 
 #include "tests/custom_test_macros.hpp"  // EXPECT_CONVERSION_TO_STRING, EXPECT_CONVERSION_FROM_STRING
 
+#include "gmock/gmock.h"  // EXPECT_THAT, testing::contains
 #include "gtest/gtest.h"  // TEST, EXPECT_TRUE, EXPECT_FALSE
 
 #include <sstream>  // std::istringstream
+#include <vector>   // std::vector
 
 // check whether the plssvm::kokkos::execution_space -> std::string conversions are correct
 TEST(KokkosExecutionSpace, ToString) {

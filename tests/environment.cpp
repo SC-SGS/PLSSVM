@@ -16,10 +16,13 @@
 
 #include "tests/custom_test_macros.hpp"  // EXPECT_CONVERSION_TO_STRING, EXPECT_CONVERSION_FROM_STRING, EXPECT_THROW_WHAT
 
+#include "fmt/format.h"   // fmt::format
+#include "fmt/ranges.h"   // fmt::join
 #include "gtest/gtest.h"  // TEST, EXPECT_EQ, EXPECT_NE, EXPECT_DEATH
 
-#include <tuple>   // std::ignore
-#include <vector>  // std::vector
+#include <sstream>  // std::istringstream
+#include <tuple>    // std::ignore
+#include <vector>   // std::vector
 
 // check whether the plssvm::environment::status -> std::string conversions are correct
 TEST(EnvironmentStatus, ToString) {

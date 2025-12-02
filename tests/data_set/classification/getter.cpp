@@ -13,8 +13,9 @@
 #include "plssvm/data_set/min_max_scaler.hpp"           // plssvm::min_max_scaler
 #include "plssvm/matrix.hpp"                            // plssvm::soa_matrix
 #include "plssvm/shape.hpp"                             // plssvm::shape
+#include "plssvm/svm_types.hpp"                         // plssvm::svm_type
 
-#include "tests/custom_test_macros.hpp"  // EXPECT_FLOATING_POINT_MATRIX_EQ, EXPECT_FLOATING_POINT_EQ, EXPECT_FLOATING_POINT_NEAR
+#include "tests/custom_test_macros.hpp"  // EXPECT_FLOATING_POINT_MATRIX_EQ, EXPECT_FLOATING_POINT_EQ, EXPECT_FLOATING_POINT_NEAR, EXPECT_OPTIONAL_EQ
 #include "tests/naming.hpp"              // naming::test_parameter_to_name
 #include "tests/types_to_test.hpp"       // util::{classification_label_type_gtest, test_parameter_type_at_t}
 #include "tests/utility.hpp"             // util::{redirect_output, scale}
@@ -22,7 +23,7 @@
 #include "gtest/gtest.h"  // TYPED_TEST, TYPED_TEST_SUITE, EXPECT_TRUE, EXPECT_FALSE, EXPECT_EQ, ASSERT_TRUE, ::testing::Test
 
 #include <cstddef>  // std::size_t
-#include <tuple>    // std::get
+#include <utility>  // std::get
 #include <vector>   // std::vector
 
 template <typename T>

@@ -10,6 +10,10 @@
 
 #include "plssvm/backends/CUDA/kernel/detail/fill_kernel.cuh"
 
+#include "cuda_runtime_api.h"  // cudaDeviceSynchronize
+#include "driver_types.h"      // cudaMemcpyDeviceToHost
+#include "vector_types.h"      // dim3
+
 #include "tests/naming.hpp"         // util::test_parameter_to_name
 #include "tests/types_to_test.hpp"  // util::{real_type_gtest, test_parameter_type_at_t}
 

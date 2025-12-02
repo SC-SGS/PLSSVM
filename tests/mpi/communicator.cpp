@@ -16,7 +16,7 @@
 #include "plssvm/matrix.hpp"                 // plssvm::aos_matrix, plssvm::soa_matrix
 #include "plssvm/shape.hpp"                  // plssvm::shape
 
-#include "tests/custom_test_macros.hpp"  // EXPECT_THROW_WHAT
+#include "tests/custom_test_macros.hpp"  // EXPECT_THROW_WHAT, EXPECT_OPTIONAL_EQ
 #include "tests/utility.hpp"             // util::generate_random_matrix
 
 #if defined(PLSSVM_HAS_MPI_ENABLED)

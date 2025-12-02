@@ -14,6 +14,7 @@
 #include "plssvm/detail/io/regression_libsvm_model_parsing.hpp"  // functions to test
 #include "plssvm/kernel_function_types.hpp"                      // plssvm::kernel_function_type
 #include "plssvm/matrix.hpp"                                     // plssvm::aos_matrix
+#include "plssvm/mpi/communicator.hpp"                           // plssvm::mpi::communicator
 #include "plssvm/parameter.hpp"                                  // plssvm::parameter
 #include "plssvm/shape.hpp"                                      // plssvm::shape
 

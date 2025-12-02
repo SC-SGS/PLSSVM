@@ -34,6 +34,7 @@
 #include <iostream>    // std::cout, std::clog
 #include <map>         // std::map
 #include <string>      // std::string
+#include <utility>     // std::move
 #include <vector>      // std::vector
 
 using namespace plssvm::detail::literals;

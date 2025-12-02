@@ -19,7 +19,6 @@
 
 #include "gtest/gtest.h"  // TEST_F, EXPECT_EQ, ASSERT_EQ, FAIL, ::testing::Test
 
-#include <cstddef>  // std::size_t
 #include <vector>   // std::vector
 
 class LIBSVMRegressionModelDataParseValid : public ::testing::Test,

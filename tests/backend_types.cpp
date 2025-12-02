@@ -11,7 +11,7 @@
 
 #include "plssvm/backend_types.hpp"
 
-#include "plssvm/backends/SYCL/detail/constants.hpp"      // namespace plssvm::sycl
+#include "plssvm/backends/SYCL/detail/constants.hpp"      // NOLINT: namespace plssvm::sycl
 #include "plssvm/backends/SYCL/implementation_types.hpp"  // plssvm::sycl::implementation_type
 #include "plssvm/exceptions/exceptions.hpp"               // plssvm::unsupported_backend_exception
 #include "plssvm/target_platforms.hpp"                    // plssvm::target_platform

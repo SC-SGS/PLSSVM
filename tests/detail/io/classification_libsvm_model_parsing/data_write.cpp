@@ -15,6 +15,7 @@
 #include "plssvm/detail/io/file_reader.hpp"                          // plssvm::detail::io::file_reader
 #include "plssvm/kernel_function_types.hpp"                          // plssvm::kernel_function_type
 #include "plssvm/matrix.hpp"                                         // plssvm::aos_matrix
+#include "plssvm/mpi/communicator.hpp"                               // plssvm::mpi::communicator
 #include "plssvm/parameter.hpp"                                      // plssvm::parameter
 #include "plssvm/shape.hpp"                                          // plssvm::shape
 

@@ -23,7 +23,6 @@
 #include "tests/exceptions/utility.hpp"  // util::exception_type_name
 
 #include "fmt/format.h"   // fmt::format
-#include "fmt/ostream.h"  // directly output types with an operator<< overload using fmt
 #include "fmt/ranges.h"   // fmt::join, directly output a std::tuple
 #include "gtest/gtest.h"  // ::testing::TestParamInfo
 

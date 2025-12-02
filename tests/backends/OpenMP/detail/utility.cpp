@@ -10,9 +10,8 @@
 
 #include "plssvm/backends/OpenMP/detail/utility.hpp"
 
-#include "gtest/gtest.h"  // TEST, EXPECT_EQ, EXPECT_NE, EXPECT_NO_THROW, EXPECT_FALSE
+#include "gtest/gtest.h"  // TEST, EXPECT_EQ, EXPECT_FALSE
 
-#include <regex>   // std::regex, std::regex::extended, std::regex_match
 #include <string>  // std::string
 
 TEST(OpenMPUtility, GetNumThreads) {

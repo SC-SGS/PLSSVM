@@ -12,7 +12,6 @@
 #include "plssvm/backends/SYCL/AdaptiveCpp/csvm.hpp"       // plssvm::adaptivecpp::{csvm, csvc, csvr}
 #include "plssvm/backends/SYCL/data_parallel_kernels.hpp"  // plssvm::sycl::data_parallel_kernel
 #include "plssvm/backends/SYCL/exceptions.hpp"             // plssvm::adaptivecpp::backend_exception
-#include "plssvm/detail/arithmetic_type_name.hpp"          // plssvm::detail::arithmetic_type_name
 #include "plssvm/kernel_function_types.hpp"                // plssvm::kernel_function_type
 #include "plssvm/parameter.hpp"                            // plssvm::parameter, plssvm::kernel_type, plssvm::cost, plssvm::sycl_data_parallel_kernel
 #include "plssvm/target_platforms.hpp"                     // plssvm::target_platform
@@ -29,7 +28,8 @@
 
 #include "gtest/gtest.h"  // TYPED_TEST, EXPECT_NO_THROW, INSTANTIATE_TYPED_TEST_SUITE_P, ::testing::Test
 
-#include <tuple>  // std::make_tuple, std::tuple
+#include <tuple>    // std::make_tuple, std::tuple
+#include <utility>  // std::make_pair
 
 using adaptivecpp_csvm_types_list = std::tuple<plssvm::adaptivecpp::csvc, plssvm::adaptivecpp::csvr>;
 using adaptivecpp_csvm_types_gtest = util::combine_test_parameters_gtest_t<util::cartesian_type_product_t<adaptivecpp_csvm_types_list>>;

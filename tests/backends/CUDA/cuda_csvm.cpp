@@ -10,7 +10,6 @@
 
 #include "plssvm/backends/CUDA/csvm.hpp"        // plssvm::cuda::{csvm, csvc, csvr}
 #include "plssvm/backends/CUDA/exceptions.hpp"  // plssvm::cuda::backend_exception
-#include "plssvm/detail/type_list.hpp"          // plssvm::detail::label_type_list
 #include "plssvm/kernel_function_types.hpp"     // plssvm::kernel_function_type
 #include "plssvm/parameter.hpp"                 // plssvm::parameter
 #include "plssvm/target_platforms.hpp"          // plssvm::target_platform

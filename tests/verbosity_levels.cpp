@@ -13,7 +13,6 @@
 #include "plssvm/detail/utility.hpp"  // plssvm::detail::to_underlying
 
 #include "tests/custom_test_macros.hpp"  // EXPECT_CONVERSION_TO_STRING, EXPECT_CONVERSION_FROM_STRING
-#include "tests/utility.hpp"             // util::redirect_output
 
 #include "gtest/gtest.h"  // TEST, EXPECT_EQ, EXPECT_TRUE
 

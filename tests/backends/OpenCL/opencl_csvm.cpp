@@ -6,14 +6,12 @@
  *          See the LICENSE.md file in the project root for full license information.
  */
 
-#include "plssvm/backend_types.hpp"                // plssvm::csvm_to_backend_type_v
-#include "plssvm/backends/OpenCL/csvm.hpp"         // plssvm::opencl::{csvm, csvc, csvr}
-#include "plssvm/backends/OpenCL/exceptions.hpp"   // plssvm::opencl::backend_exception
-#include "plssvm/detail/arithmetic_type_name.hpp"  // plssvm::detail::arithmetic_type_name
-#include "plssvm/detail/type_list.hpp"             // plssvm::detail::label_type_list
-#include "plssvm/kernel_function_types.hpp"        // plssvm::kernel_function_type
-#include "plssvm/parameter.hpp"                    // plssvm::parameter, plssvm::kernel_type, plssvm::cost
-#include "plssvm/target_platforms.hpp"             // plssvm::target_platform
+#include "plssvm/backend_types.hpp"               // plssvm::csvm_to_backend_type_v
+#include "plssvm/backends/OpenCL/csvm.hpp"        // plssvm::opencl::{csvm, csvc, csvr}
+#include "plssvm/backends/OpenCL/exceptions.hpp"  // plssvm::opencl::backend_exception
+#include "plssvm/kernel_function_types.hpp"       // plssvm::kernel_function_type
+#include "plssvm/parameter.hpp"                   // plssvm::parameter, plssvm::kernel_type, plssvm::cost
+#include "plssvm/target_platforms.hpp"            // plssvm::target_platform
 
 #include "tests/backends/generic_base_csvc_tests.hpp"  // generic C-SVC tests to instantiate
 #include "tests/backends/generic_base_csvm_tests.hpp"  // generic C-SVM tests to instantiate
