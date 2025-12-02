@@ -30,6 +30,12 @@ TEST(TypeTraits, AlwaysFalse) {
     EXPECT_FALSE(plssvm::detail::always_false_v<double>);
 }
 
+TEST (TypeTraits, AlwaysFalseNonType) {
+    EXPECT_FALSE(plssvm::detail::always_false_non_type_v<42>);
+    EXPECT_FALSE(plssvm::detail::always_false_non_type_v<'a'>);
+    EXPECT_FALSE(plssvm::detail::always_false_non_type_v<true>);
+}
+
 TEST(TypeTraits, RemoveCvrefT) {
     EXPECT_TRUE((std::is_same_v<double, plssvm::detail::remove_cvref_t<double>>) );
     EXPECT_TRUE((std::is_same_v<double, plssvm::detail::remove_cvref_t<const double>>) );
@@ -457,4 +463,36 @@ TEST(TypeTraits, IsContainer) {
     EXPECT_TRUE((plssvm::detail::is_container_v<std::unordered_multimap<int, int>>) );
     // other
     EXPECT_FALSE((plssvm::detail::is_container_v<int[2]>) );  // NOLINT: using a C-style array is part of the test and necessary
+}
+
+TEST(TypeTraits, IsOptional) {
+    // optionals
+    EXPECT_TRUE((plssvm::detail::is_optional_v<std::optional<int>>));
+    EXPECT_TRUE((plssvm::detail::is_optional_v<std::optional<double>>));
+    EXPECT_TRUE((plssvm::detail::is_optional_v<std::optional<std::string>>));
+    EXPECT_TRUE((plssvm::detail::is_optional_v<std::optional<std::reference_wrapper<std::vector<double>>>>));
+    // no optionals
+    EXPECT_FALSE((plssvm::detail::is_optional_v<int>));
+    EXPECT_FALSE((plssvm::detail::is_optional_v<std::nullptr_t>));
+    EXPECT_FALSE((plssvm::detail::is_optional_v<std::string>));
+    EXPECT_FALSE((plssvm::detail::is_optional_v<std::vector<int>>));
+}
+
+TEST(TypeTraits, IsReferenceWrapper) {
+    // reference wrapper
+    EXPECT_TRUE((plssvm::detail::is_reference_wrapper_v<std::reference_wrapper<int>>));
+    EXPECT_TRUE((plssvm::detail::is_reference_wrapper_v<std::reference_wrapper<double>>));
+    EXPECT_TRUE((plssvm::detail::is_reference_wrapper_v<std::reference_wrapper<std::string>>));
+    EXPECT_TRUE((plssvm::detail::is_reference_wrapper_v<std::reference_wrapper<std::vector<double>>>));
+    // no reference wrapper
+    EXPECT_FALSE((plssvm::detail::is_reference_wrapper_v<int>));
+    EXPECT_FALSE((plssvm::detail::is_reference_wrapper_v<std::nullptr_t>));
+    EXPECT_FALSE((plssvm::detail::is_reference_wrapper_v<std::string>));
+    EXPECT_FALSE((plssvm::detail::is_reference_wrapper_v<std::vector<int>>));
+}
+
+TEST(TypeTrais, IsOneTypeOf) {
+    EXPECT_TRUE((plssvm::detail::is_one_type_of_v<double, float, double, long double>));
+    EXPECT_TRUE((plssvm::detail::is_one_type_of_v<int, char, short, int, long, long long>));
+    EXPECT_FALSE((plssvm::detail::is_one_type_of_v<char, bool, std::string>));
 }
