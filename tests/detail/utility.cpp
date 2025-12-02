@@ -280,7 +280,7 @@ TEST(Utility, GetExistingEnvVariable) {
     // check the created environment variable
     const std::optional<std::string> env_variable = plssvm::detail::get_env_variable("PLSSVM_ENV_VARIABLE_THAT_WILL_ONLY_EVER_EXIST_IN_TESTS");
     ASSERT_TRUE(env_variable.has_value());
-    EXPECT_EQ(env_variable.value(), std::string{ "gpu_nvidia:0" });
+    EXPECT_EQ(env_variable.value(), std::string{ "gpu_nvidia:0" });  // NOLINT(bugprone-unchecked-optional-access): optional checked with ASSERT_TRUE
 #endif
 }
 

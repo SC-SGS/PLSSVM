@@ -46,7 +46,7 @@ TEST(KokkosDeviceWrapper, Construct) {
 
 TEST(KokkosDeviceWrapper, Get) {
     // construct a device wrapper using the current Kokkos::DefaultExecutionSpace
-    plssvm::kokkos::detail::device_wrapper device{ Kokkos::DefaultExecutionSpace{} };
+    plssvm::kokkos::detail::device_wrapper device{ Kokkos::DefaultExecutionSpace{} };  // NOLINT(misc-const-correctness): want to test the non-const overload
 
     // check that the returned Kokkos::ExecutionSpace has the correct type
     constexpr plssvm::kokkos::execution_space space = plssvm::kokkos::kokkos_type_to_execution_space_v<Kokkos::DefaultExecutionSpace>;

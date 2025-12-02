@@ -97,7 +97,7 @@ TYPED_TEST_P(GenericCSVRKernelFunction, Predict) {
     constexpr plssvm::kernel_function_type kernel = util::test_parameter_value_at_v<0, TypeParam>;
 
     // create parameter struct
-    plssvm::parameter params{ plssvm::cost = 1000.0, plssvm::kernel_type = kernel };
+    plssvm::parameter params{ plssvm::cost = 1000.0, plssvm::kernel_type = kernel };  // NOLINT(misc-const-correctness): can't be const for the chi-squared kernel
     if constexpr (kernel == plssvm::kernel_function_type::polynomial) {
         params.degree = 1;
         params.gamma = 1.0;
@@ -107,7 +107,7 @@ TYPED_TEST_P(GenericCSVRKernelFunction, Predict) {
     }
 
     // create data set that is always classifiable
-    plssvm::regression_data_set<label_type> test_data = util::generate_trivially_solvable_regression_data_set<label_type>();
+    plssvm::regression_data_set<label_type> test_data = util::generate_trivially_solvable_regression_data_set<label_type>();  // NOLINT(misc-const-correctness): can't be const for the chi-squared kernel
     if constexpr (kernel == plssvm::kernel_function_type::chi_squared) {
         // chi-squared is well-defined for non-negative values only
         const auto& labels_opt = test_data.labels();
@@ -123,13 +123,13 @@ TYPED_TEST_P(GenericCSVRKernelFunction, Predict) {
     const plssvm::regression_model<label_type> model = svr.fit(test_data, plssvm::epsilon = 1e-16);
 
     // actual TEST: predict label
-    std::vector<label_type> calculated = svr.predict(model, test_data);
+    std::vector<label_type> calculated = svr.predict(model, test_data);  // NOLINT(misc-const-correctness): can't be const for floating point label types
 
     // check the calculated result for correctness
     if constexpr (std::is_floating_point_v<label_type>) {
         // convert a floating point label_type back to a plain integer
         for (label_type &val : calculated) {
-            val = static_cast<label_type>(std::round(val));
+            val = static_cast<label_type>(std::round(val));  // NOLINT(misc-const-correctness): can't be const for floating point label types
         }
     }
     EXPECT_OPTIONAL_EQ(calculated, test_data.labels());
@@ -142,13 +142,13 @@ TYPED_TEST_P(GenericCSVRKernelFunction, ScoreModel) {
     constexpr plssvm::kernel_function_type kernel = util::test_parameter_value_at_v<0, TypeParam>;
 
     // create parameter struct
-    plssvm::parameter params{ plssvm::kernel_type = kernel };
+    plssvm::parameter params{ plssvm::kernel_type = kernel };  // NOLINT(misc-const-correctness): can't be const for the chi-squared kernel
     if constexpr (kernel != plssvm::kernel_function_type::linear) {
         params.gamma = plssvm::real_type{ 1.0 };
     }
 
     // create data set that is always classifiable
-    plssvm::regression_data_set<label_type> test_data = util::generate_trivially_solvable_regression_data_set<label_type>();
+    plssvm::regression_data_set<label_type> test_data = util::generate_trivially_solvable_regression_data_set<label_type>();  // NOLINT(misc-const-correctness): can't be const for the chi-squared kernel
     if constexpr (kernel == plssvm::kernel_function_type::chi_squared) {
         // chi-squared is well-defined for non-negative values only
         const auto& labels_opt = test_data.labels();
@@ -179,13 +179,13 @@ TYPED_TEST_P(GenericCSVRKernelFunction, Score) {
     constexpr plssvm::kernel_function_type kernel = util::test_parameter_value_at_v<0, TypeParam>;
 
     // create parameter struct
-    plssvm::parameter params{ plssvm::kernel_type = kernel };
+    plssvm::parameter params{ plssvm::kernel_type = kernel };  // NOLINT(misc-const-correctness): can't be const for the chi-squared kernel
     if constexpr (kernel != plssvm::kernel_function_type::linear) {
         params.gamma = plssvm::real_type{ 1.0 };
     }
 
     // create data set that is always classifiable
-    plssvm::regression_data_set<label_type> test_data = util::generate_trivially_solvable_regression_data_set<label_type>();
+    plssvm::regression_data_set<label_type> test_data = util::generate_trivially_solvable_regression_data_set<label_type>();  // NOLINT(misc-const-correctness): can't be const for the chi-squared kernel
     if constexpr (kernel == plssvm::kernel_function_type::chi_squared) {
         // chi-squared is well-defined for non-negative values only
         const auto& labels_opt = test_data.labels();
@@ -235,7 +235,7 @@ TYPED_TEST_P(GenericCSVRSolverKernelFunction, Fit) {
     const plssvm::parameter params{ plssvm::kernel_type = kernel };
 
     // create data set to be used
-    plssvm::regression_data_set<label_type> test_data{ PLSSVM_TEST_PATH "/data/libsvm/regression/6x4.libsvm" };
+    plssvm::regression_data_set<label_type> test_data{ PLSSVM_TEST_PATH "/data/libsvm/regression/6x4.libsvm" };  // NOLINT(misc-const-correctness): can't be const for the chi-squared kernel
     if constexpr (kernel == plssvm::kernel_function_type::chi_squared) {
         // chi-squared is well-defined for non-negative values only
         const auto& labels_opt = test_data.labels();

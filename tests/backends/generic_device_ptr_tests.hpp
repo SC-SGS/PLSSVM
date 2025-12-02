@@ -143,12 +143,14 @@ TYPED_TEST_P(DevicePtr, MoveConstruct) {
     EXPECT_EQ(second.shape_padded(), (plssvm::shape{ 42, 1 }));
 
     // check moved-from data
+    // NOLINTBEGIN: use after move wanted since this is tested here
     EXPECT_FALSE(static_cast<bool>(first));
     EXPECT_EQ(first.get(), typename device_ptr_type::device_pointer_type{});
     EXPECT_EQ(first.shape(), (plssvm::shape{ 0, 0 }));
     // check padding
     EXPECT_EQ(first.padding(), (plssvm::shape{ 0, 0 }));
     EXPECT_EQ(first.shape_padded(), (plssvm::shape{ 0, 0 }));
+    // NOLINTEND
 }
 
 TYPED_TEST_P(DevicePtr, MoveConstructWithPadding) {
@@ -171,12 +173,14 @@ TYPED_TEST_P(DevicePtr, MoveConstructWithPadding) {
     EXPECT_EQ(second.shape_padded(), (plssvm::shape{ 46, 15 }));
 
     // check moved-from data
+    // NOLINTBEGIN: use after move wanted since this is tested here
     EXPECT_FALSE(static_cast<bool>(first));
     EXPECT_EQ(first.get(), typename device_ptr_type::device_pointer_type{});
     EXPECT_EQ(first.shape(), (plssvm::shape{ 0, 0 }));
     // check padding
     EXPECT_EQ(first.padding(), (plssvm::shape{ 0, 0 }));
     EXPECT_EQ(first.shape_padded(), (plssvm::shape{ 0, 0 }));
+    // NOLINTEND
 }
 
 TYPED_TEST_P(DevicePtr, MoveAssign) {
@@ -201,12 +205,14 @@ TYPED_TEST_P(DevicePtr, MoveAssign) {
     EXPECT_EQ(second.shape_padded(), (plssvm::shape{ 42, 1 }));
 
     // check moved-from data
+    // NOLINTBEGIN: use after move wanted since this is tested here
     EXPECT_FALSE(static_cast<bool>(first));
     EXPECT_EQ(first.get(), typename device_ptr_type::device_pointer_type{});
     EXPECT_EQ(first.shape(), (plssvm::shape{ 0, 0 }));
     // check padding
     EXPECT_EQ(first.padding(), (plssvm::shape{ 0, 0 }));
     EXPECT_EQ(first.shape_padded(), (plssvm::shape{ 0, 0 }));
+    // NOLINTEND
 }
 
 TYPED_TEST_P(DevicePtr, MoveAssignWithPadding) {
@@ -231,12 +237,14 @@ TYPED_TEST_P(DevicePtr, MoveAssignWithPadding) {
     EXPECT_EQ(second.shape_padded(), (plssvm::shape{ 46, 15 }));
 
     // check moved-from data
+    // NOLINTBEGIN: use after move wanted since this is tested here
     EXPECT_FALSE(static_cast<bool>(first));
     EXPECT_EQ(first.get(), typename device_ptr_type::device_pointer_type{});
     EXPECT_EQ(first.shape(), (plssvm::shape{ 0, 0 }));
     // check padding
     EXPECT_EQ(first.padding(), (plssvm::shape{ 0, 0 }));
     EXPECT_EQ(first.shape_padded(), (plssvm::shape{ 0, 0 }));
+    // NOLINTEND
 }
 
 TYPED_TEST_P(DevicePtr, SwapMemberFunction) {

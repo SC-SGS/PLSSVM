@@ -29,7 +29,7 @@ TEST(TrackingUtility, DurationsFromReferenceTime) {
     // check the durations
     using namespace std::chrono_literals;  // NOLINT: included via <chrono>
     ASSERT_EQ(durations.size(), 4);
-    EXPECT_EQ(durations, (std::vector<std::chrono::milliseconds>{ 0ms, 50ms, 100ms, 150ms }));
+    EXPECT_EQ(durations, (std::vector<std::chrono::milliseconds>{ 0ms, 50ms, 100ms, 150ms }));  // NOLINT(misc-include-cleaner): included via <chrono>
 }
 
 TEST(TrackingUtility, TimePointsToEpoch) {

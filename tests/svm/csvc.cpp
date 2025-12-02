@@ -275,7 +275,7 @@ TYPED_TEST(BaseCSVCFit, Fit) {
     // clang-format on
 
     // create data set
-    plssvm::classification_data_set<label_type> training_data{ this->get_data_filename() };
+    plssvm::classification_data_set<label_type> training_data{ this->get_data_filename() };  // NOLINT(misc-const-correctness): can't be const for the chi-squared kernel
     if constexpr (kernel == plssvm::kernel_function_type::chi_squared) {
         // chi-squared is well-defined for non-negative values only
         const auto &labels_opt = training_data.labels();
@@ -343,7 +343,7 @@ TYPED_TEST(BaseCSVCFit, FitNamedParameters) {
     // clang-format on
 
     // create data set
-    plssvm::classification_data_set<label_type> training_data{ this->get_data_filename() };
+    plssvm::classification_data_set<label_type> training_data{ this->get_data_filename() };  // NOLINT(misc-const-correctness): can't be const for the chi-squared kernel
     if constexpr (kernel == plssvm::kernel_function_type::chi_squared) {
         // chi-squared is well-defined for non-negative values only
         const auto &labels_opt = training_data.labels();
@@ -402,7 +402,7 @@ TYPED_TEST(BaseCSVCFit, FitNamedParametersInvalidEpsilon) {
     // clang-format on
 
     // create data set
-    plssvm::classification_data_set<label_type> training_data{ this->get_data_filename() };
+    plssvm::classification_data_set<label_type> training_data{ this->get_data_filename() };  // NOLINT(misc-const-correctness): can't be const for the chi-squared kernel
     if constexpr (kernel == plssvm::kernel_function_type::chi_squared) {
         // chi-squared is well-defined for non-negative values only
         const auto &labels_opt = training_data.labels();
@@ -452,7 +452,7 @@ TYPED_TEST(BaseCSVCFit, FitNamedParametersInvalidMaxIter) {
     // clang-format on
 
     // create data set
-    plssvm::classification_data_set<label_type> training_data{ this->get_data_filename() };
+    plssvm::classification_data_set<label_type> training_data{ this->get_data_filename() };  // NOLINT(misc-const-correctness): can't be const for the chi-squared kernel
     if constexpr (kernel == plssvm::kernel_function_type::chi_squared) {
         // chi-squared is well-defined for non-negative values only
         const auto &labels_opt = training_data.labels();
@@ -509,7 +509,7 @@ TYPED_TEST(BaseCSVCFit, FitCommunicatorMismatch) {
     const plssvm::mpi::communicator comm{ duplicated_mpi_comm };
 
     // create data set
-    plssvm::classification_data_set<label_type> training_data{ comm, this->get_data_filename() };
+    plssvm::classification_data_set<label_type> training_data{ comm, this->get_data_filename() };  // NOLINT(misc-const-correctness): can't be const for the chi-squared kernel
     if constexpr (kernel == plssvm::kernel_function_type::chi_squared) {
         // chi-squared is well-defined for non-negative values only
         const auto &labels_opt = training_data.labels();
@@ -563,7 +563,7 @@ TYPED_TEST(BaseCSVCFit, FitNoLabel) {
     // clang-format on
 
     // create data set without labels
-    plssvm::classification_data_set<label_type> training_data{ PLSSVM_TEST_PATH "/data/libsvm/3x2_without_label.libsvm" };
+    plssvm::classification_data_set<label_type> training_data{ PLSSVM_TEST_PATH "/data/libsvm/3x2_without_label.libsvm" };  // NOLINT(misc-const-correctness): can't be const for the chi-squared kernel
     if constexpr (kernel == plssvm::kernel_function_type::chi_squared) {
         // chi-squared is well-defined for non-negative values only
         training_data = plssvm::classification_data_set<label_type>{ util::matrix_abs(training_data.data()) };
@@ -615,7 +615,7 @@ TYPED_TEST(BaseCSVCFit, FitOutOfResources) {
         // clang-format on
 
         // create data set
-        plssvm::classification_data_set<label_type> training_data{ this->get_data_filename() };
+        plssvm::classification_data_set<label_type> training_data{ this->get_data_filename() };  // NOLINT(misc-const-correctness): can't be const for the chi-squared kernel
         if constexpr (kernel == plssvm::kernel_function_type::chi_squared) {
             // chi-squared is well-defined for non-negative values only
             const auto &labels_opt = training_data.labels();
@@ -671,7 +671,7 @@ TYPED_TEST(BaseCSVCFit, FitDeviceMemoryTooSmall) {
         // clang-format on
 
         // create data set
-        plssvm::classification_data_set<label_type> training_data{ this->get_data_filename() };
+        plssvm::classification_data_set<label_type> training_data{ this->get_data_filename() };  // NOLINT(misc-const-correctness): can't be const for the chi-squared kernel
         if constexpr (kernel == plssvm::kernel_function_type::chi_squared) {
             // chi-squared is well-defined for non-negative values only
             const auto &labels_opt = training_data.labels();
@@ -728,7 +728,7 @@ TYPED_TEST(BaseCSVCFit, FitLocalMemoryTooSmall) {
     }
 
     // create data set
-    plssvm::classification_data_set<label_type> training_data{ this->get_data_filename() };
+    plssvm::classification_data_set<label_type> training_data{ this->get_data_filename() };  // NOLINT(misc-const-correctness): can't be const for the chi-squared kernel
     if constexpr (kernel == plssvm::kernel_function_type::chi_squared) {
         // chi-squared is well-defined for non-negative values only
         const auto &labels_opt = training_data.labels();

@@ -60,7 +60,7 @@ TEST(TypeTraits, IsString) {
     EXPECT_FALSE((plssvm::detail::is_string_v<std::unordered_multiset<int>>) );
     EXPECT_FALSE((plssvm::detail::is_string_v<std::unordered_multimap<int, int>>) );
     // other
-    EXPECT_FALSE((plssvm::detail::is_string_v<int[2]>) );
+    EXPECT_FALSE((plssvm::detail::is_string_v<int[2]>) );  // NOLINT: using a C-style array is part of the test and necessary
 }
 
 TEST(TypeTraits, IsArray) {
@@ -82,7 +82,7 @@ TEST(TypeTraits, IsArray) {
     EXPECT_FALSE((plssvm::detail::is_array_v<std::unordered_multiset<int>>) );
     EXPECT_FALSE((plssvm::detail::is_array_v<std::unordered_multimap<int, int>>) );
     // other
-    EXPECT_FALSE((plssvm::detail::is_array_v<int[2]>) );
+    EXPECT_FALSE((plssvm::detail::is_array_v<int[2]>) );  // NOLINT: using a C-style array is part of the test and necessary
 }
 
 TEST(TypeTraits, IsVector) {
@@ -104,7 +104,7 @@ TEST(TypeTraits, IsVector) {
     EXPECT_FALSE((plssvm::detail::is_vector_v<std::unordered_multiset<int>>) );
     EXPECT_FALSE((plssvm::detail::is_vector_v<std::unordered_multimap<int, int>>) );
     // other
-    EXPECT_FALSE((plssvm::detail::is_vector_v<int[2]>) );
+    EXPECT_FALSE((plssvm::detail::is_vector_v<int[2]>) );  // NOLINT: using a C-style array is part of the test and necessary
 }
 
 TEST(TypeTraits, IsDeque) {
@@ -126,7 +126,7 @@ TEST(TypeTraits, IsDeque) {
     EXPECT_FALSE((plssvm::detail::is_deque_v<std::unordered_multiset<int>>) );
     EXPECT_FALSE((plssvm::detail::is_deque_v<std::unordered_multimap<int, int>>) );
     // other
-    EXPECT_FALSE((plssvm::detail::is_deque_v<int[2]>) );
+    EXPECT_FALSE((plssvm::detail::is_deque_v<int[2]>) );  // NOLINT: using a C-style array is part of the test and necessary
 }
 
 TEST(TypeTraits, IsForwardList) {
@@ -148,7 +148,7 @@ TEST(TypeTraits, IsForwardList) {
     EXPECT_FALSE((plssvm::detail::is_forward_list_v<std::unordered_multiset<int>>) );
     EXPECT_FALSE((plssvm::detail::is_forward_list_v<std::unordered_multimap<int, int>>) );
     // other
-    EXPECT_FALSE((plssvm::detail::is_forward_list_v<int[2]>) );
+    EXPECT_FALSE((plssvm::detail::is_forward_list_v<int[2]>) );  // NOLINT: using a C-style array is part of the test and necessary
 }
 
 TEST(TypeTraits, IsList) {
@@ -170,7 +170,7 @@ TEST(TypeTraits, IsList) {
     EXPECT_FALSE((plssvm::detail::is_list_v<std::unordered_multiset<int>>) );
     EXPECT_FALSE((plssvm::detail::is_list_v<std::unordered_multimap<int, int>>) );
     // other
-    EXPECT_FALSE((plssvm::detail::is_list_v<int[2]>) );
+    EXPECT_FALSE((plssvm::detail::is_list_v<int[2]>) );  // NOLINT: using a C-style array is part of the test and necessary
 }
 
 TEST(TypeTraits, IsSet) {
@@ -192,7 +192,7 @@ TEST(TypeTraits, IsSet) {
     EXPECT_FALSE((plssvm::detail::is_set_v<std::unordered_multiset<int>>) );
     EXPECT_FALSE((plssvm::detail::is_set_v<std::unordered_multimap<int, int>>) );
     // other
-    EXPECT_FALSE((plssvm::detail::is_set_v<int[2]>) );
+    EXPECT_FALSE((plssvm::detail::is_set_v<int[2]>) );  // NOLINT: using a C-style array is part of the test and necessary
 }
 
 TEST(TypeTraits, IsMap) {
@@ -214,7 +214,7 @@ TEST(TypeTraits, IsMap) {
     EXPECT_FALSE((plssvm::detail::is_map_v<std::unordered_multiset<int>>) );
     EXPECT_FALSE((plssvm::detail::is_map_v<std::unordered_multimap<int, int>>) );
     // other
-    EXPECT_FALSE((plssvm::detail::is_map_v<int[2]>) );
+    EXPECT_FALSE((plssvm::detail::is_map_v<int[2]>) );  // NOLINT: using a C-style array is part of the test and necessary
 }
 
 TEST(TypeTraits, IsMultiset) {
@@ -236,7 +236,7 @@ TEST(TypeTraits, IsMultiset) {
     EXPECT_FALSE((plssvm::detail::is_multiset_v<std::unordered_multiset<int>>) );
     EXPECT_FALSE((plssvm::detail::is_multiset_v<std::unordered_multimap<int, int>>) );
     // other
-    EXPECT_FALSE((plssvm::detail::is_multiset_v<int[2]>) );
+    EXPECT_FALSE((plssvm::detail::is_multiset_v<int[2]>) );  // NOLINT: using a C-style array is part of the test and necessary
 }
 
 TEST(TypeTraits, IsMultimap) {
@@ -258,7 +258,7 @@ TEST(TypeTraits, IsMultimap) {
     EXPECT_FALSE((plssvm::detail::is_multimap_v<std::unordered_multiset<int>>) );
     EXPECT_FALSE((plssvm::detail::is_multimap_v<std::unordered_multimap<int, int>>) );
     // other
-    EXPECT_FALSE((plssvm::detail::is_multimap_v<int[2]>) );
+    EXPECT_FALSE((plssvm::detail::is_multimap_v<int[2]>) );  // NOLINT: using a C-style array is part of the test and necessary
 }
 
 TEST(TypeTraits, IsUnorderedSet) {
@@ -280,7 +280,7 @@ TEST(TypeTraits, IsUnorderedSet) {
     EXPECT_FALSE((plssvm::detail::is_unordered_set_v<std::unordered_multiset<int>>) );
     EXPECT_FALSE((plssvm::detail::is_unordered_set_v<std::unordered_multimap<int, int>>) );
     // other
-    EXPECT_FALSE((plssvm::detail::is_unordered_set_v<int[2]>) );
+    EXPECT_FALSE((plssvm::detail::is_unordered_set_v<int[2]>) );  // NOLINT: using a C-style array is part of the test and necessary
 }
 
 TEST(TypeTraits, IsUnorderedMap) {
@@ -302,7 +302,7 @@ TEST(TypeTraits, IsUnorderedMap) {
     EXPECT_FALSE((plssvm::detail::is_unordered_map_v<std::unordered_multiset<int>>) );
     EXPECT_FALSE((plssvm::detail::is_unordered_map_v<std::unordered_multimap<int, int>>) );
     // other
-    EXPECT_FALSE((plssvm::detail::is_unordered_map_v<int[2]>) );
+    EXPECT_FALSE((plssvm::detail::is_unordered_map_v<int[2]>) );  // NOLINT: using a C-style array is part of the test and necessary
 }
 
 TEST(TypeTraits, IsUnorderedMultiset) {
@@ -324,7 +324,7 @@ TEST(TypeTraits, IsUnorderedMultiset) {
     EXPECT_TRUE((plssvm::detail::is_unordered_multiset_v<std::unordered_multiset<int>>) );
     EXPECT_FALSE((plssvm::detail::is_unordered_multiset_v<std::unordered_multimap<int, int>>) );
     // other
-    EXPECT_FALSE((plssvm::detail::is_unordered_multiset_v<int[2]>) );
+    EXPECT_FALSE((plssvm::detail::is_unordered_multiset_v<int[2]>) );  // NOLINT: using a C-style array is part of the test and necessary
 }
 
 TEST(TypeTraits, IsUnorderedMultimap) {
@@ -346,7 +346,7 @@ TEST(TypeTraits, IsUnorderedMultimap) {
     EXPECT_FALSE((plssvm::detail::is_unordered_multimap_v<std::unordered_multiset<int>>) );
     EXPECT_TRUE((plssvm::detail::is_unordered_multimap_v<std::unordered_multimap<int, int>>) );
     // other
-    EXPECT_FALSE((plssvm::detail::is_unordered_multimap_v<int[2]>) );
+    EXPECT_FALSE((plssvm::detail::is_unordered_multimap_v<int[2]>) );  // NOLINT: using a C-style array is part of the test and necessary
 }
 
 TEST(TypeTraits, IsContiguousContainer) {
@@ -368,7 +368,7 @@ TEST(TypeTraits, IsContiguousContainer) {
     EXPECT_FALSE((plssvm::detail::is_contiguous_container_v<std::unordered_multiset<int>>) );
     EXPECT_FALSE((plssvm::detail::is_contiguous_container_v<std::unordered_multimap<int, int>>) );
     // other
-    EXPECT_FALSE((plssvm::detail::is_contiguous_container_v<int[2]>) );
+    EXPECT_FALSE((plssvm::detail::is_contiguous_container_v<int[2]>) );  // NOLINT: using a C-style array is part of the test and necessary
 }
 
 TEST(TypeTraits, IsSequenceContainer) {
@@ -390,7 +390,7 @@ TEST(TypeTraits, IsSequenceContainer) {
     EXPECT_FALSE((plssvm::detail::is_sequence_container_v<std::unordered_multiset<int>>) );
     EXPECT_FALSE((plssvm::detail::is_sequence_container_v<std::unordered_multimap<int, int>>) );
     // other
-    EXPECT_FALSE((plssvm::detail::is_sequence_container_v<int[2]>) );
+    EXPECT_FALSE((plssvm::detail::is_sequence_container_v<int[2]>) );  // NOLINT: using a C-style array is part of the test and necessary
 }
 
 TEST(TypeTraits, IsAssociativeContainer) {
@@ -412,7 +412,7 @@ TEST(TypeTraits, IsAssociativeContainer) {
     EXPECT_FALSE((plssvm::detail::is_associative_container_v<std::unordered_multiset<int>>) );
     EXPECT_FALSE((plssvm::detail::is_associative_container_v<std::unordered_multimap<int, int>>) );
     // other
-    EXPECT_FALSE((plssvm::detail::is_associative_container_v<int[2]>) );
+    EXPECT_FALSE((plssvm::detail::is_associative_container_v<int[2]>) );  // NOLINT: using a C-style array is part of the test and necessary
 }
 
 TEST(TypeTraits, IsUnorderedAssociativeContainer) {
@@ -434,7 +434,7 @@ TEST(TypeTraits, IsUnorderedAssociativeContainer) {
     EXPECT_TRUE((plssvm::detail::is_unordered_associative_container_v<std::unordered_multiset<int>>) );
     EXPECT_TRUE((plssvm::detail::is_unordered_associative_container_v<std::unordered_multimap<int, int>>) );
     // other
-    EXPECT_FALSE((plssvm::detail::is_unordered_associative_container_v<int[2]>) );
+    EXPECT_FALSE((plssvm::detail::is_unordered_associative_container_v<int[2]>) );  // NOLINT: using a C-style array is part of the test and necessary
 }
 
 TEST(TypeTraits, IsContainer) {
@@ -456,5 +456,5 @@ TEST(TypeTraits, IsContainer) {
     EXPECT_TRUE((plssvm::detail::is_container_v<std::unordered_multiset<int>>) );
     EXPECT_TRUE((plssvm::detail::is_container_v<std::unordered_multimap<int, int>>) );
     // other
-    EXPECT_FALSE((plssvm::detail::is_container_v<int[2]>) );
+    EXPECT_FALSE((plssvm::detail::is_container_v<int[2]>) );  // NOLINT: using a C-style array is part of the test and necessary
 }

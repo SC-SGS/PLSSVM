@@ -121,6 +121,7 @@ TEST_F(ParserScale, AllArgumentsOutput) {
     const plssvm::detail::cmd::parser_scale parser{ this->get_comm(), this->get_argc(), this->get_argv() };
 
     // test output string
+    // NOLINTNEXTLINE(misc-const-correctness): can't be const due to performance tracking
     std::string correct = fmt::format(
         "lower: -2\n"
         "upper: 2.5\n"

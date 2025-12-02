@@ -100,13 +100,13 @@ TYPED_TEST_P(GenericCSVCKernelFunctionClassification, Predict) {
     constexpr plssvm::classification_type classification = util::test_parameter_value_at_v<1, TypeParam>;
 
     // create parameter struct
-    plssvm::parameter params{ plssvm::kernel_type = kernel };
+    plssvm::parameter params{ plssvm::kernel_type = kernel };  // NOLINT(misc-const-correctness): can change based on the kernel function
     if constexpr (kernel != plssvm::kernel_function_type::linear) {
         params.gamma = plssvm::real_type{ 1.0 };
     }
 
     // create data set that is always classifiable
-    plssvm::classification_data_set<label_type> test_data = util::generate_trivially_solvable_classification_data_set<label_type>();
+    plssvm::classification_data_set<label_type> test_data = util::generate_trivially_solvable_classification_data_set<label_type>();  // NOLINT(misc-const-correctness): can't be const for the chi-squared kernel
     if constexpr (kernel == plssvm::kernel_function_type::chi_squared) {
         // chi-squared is well-defined for non-negative values only
         const auto& labels_opt = test_data.labels();
@@ -142,13 +142,13 @@ TYPED_TEST_P(GenericCSVCKernelFunctionClassification, ScoreModel) {
     constexpr plssvm::classification_type classification = util::test_parameter_value_at_v<1, TypeParam>;
 
     // create parameter struct
-    plssvm::parameter params{ plssvm::kernel_type = kernel };
+    plssvm::parameter params{ plssvm::kernel_type = kernel };  // NOLINT(misc-const-correctness): can change based on the kernel function
     if constexpr (kernel != plssvm::kernel_function_type::linear) {
         params.gamma = plssvm::real_type{ 1.0 };
     }
 
     // create data set that is always classifiable
-    plssvm::classification_data_set<label_type> test_data = util::generate_trivially_solvable_classification_data_set<label_type>();
+    plssvm::classification_data_set<label_type> test_data = util::generate_trivially_solvable_classification_data_set<label_type>();  // NOLINT(misc-const-correctness): can't be const for the chi-squared kernel
     if constexpr (kernel == plssvm::kernel_function_type::chi_squared) {
         // chi-squared is well-defined for non-negative values only
         const auto& labels_opt = test_data.labels();
@@ -178,13 +178,13 @@ TYPED_TEST_P(GenericCSVCKernelFunctionClassification, Score) {
     constexpr plssvm::classification_type classification = util::test_parameter_value_at_v<1, TypeParam>;
 
     // create parameter struct
-    plssvm::parameter params{ plssvm::kernel_type = kernel };
+    plssvm::parameter params{ plssvm::kernel_type = kernel };  // NOLINT(misc-const-correctness): can change based on the kernel function
     if constexpr (kernel != plssvm::kernel_function_type::linear) {
         params.gamma = plssvm::real_type{ 1.0 };
     }
 
     // create data set that is always classifiable
-    plssvm::classification_data_set<label_type> test_data = util::generate_trivially_solvable_classification_data_set<label_type>();
+    plssvm::classification_data_set<label_type> test_data = util::generate_trivially_solvable_classification_data_set<label_type>();  // NOLINT(misc-const-correctness): can't be const for the chi-squared kernel
     if constexpr (kernel == plssvm::kernel_function_type::chi_squared) {
         // chi-squared is well-defined for non-negative values only
         const auto& labels_opt = test_data.labels();
@@ -242,7 +242,7 @@ TYPED_TEST_P(GenericCSVCSolverKernelFunctionClassification, Fit) {
     const plssvm::parameter params{ plssvm::kernel_type = kernel };
 
     // create data set to be used
-    plssvm::classification_data_set<label_type> test_data{ this->filename };
+    plssvm::classification_data_set<label_type> test_data{ this->filename };  // NOLINT(misc-const-correctness): can't be const for the chi-squared kernel
     if constexpr (kernel == plssvm::kernel_function_type::chi_squared) {
         // chi-squared is well-defined for non-negative values only
         const auto& labels_opt = test_data.labels();

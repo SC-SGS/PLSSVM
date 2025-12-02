@@ -374,12 +374,12 @@ TYPED_TEST_P(GenericGPUCSVMKernelFunction, RunAssembleKernelMatrixExplicit) {
     using device_ptr_type = typename csvm_test_type::device_ptr_type;
     constexpr plssvm::kernel_function_type kernel = util::test_parameter_value_at_v<0, TypeParam>;
 
-    plssvm::parameter params{ plssvm::kernel_type = kernel };
+    plssvm::parameter params{ plssvm::kernel_type = kernel };  // NOLINT(misc-const-correctness): can't be const for the chi-squared kernel
     if constexpr (kernel != plssvm::kernel_function_type::linear) {
         params.gamma = plssvm::real_type{ 0.001 };
     }
     const plssvm::classification_data_set data{ PLSSVM_CLASSIFICATION_TEST_FILE };
-    auto data_matr{ data.data() };
+    auto data_matr{ data.data() };  // NOLINT: can't be const for the chi-squared kernel
     if constexpr (kernel == plssvm::kernel_function_type::chi_squared) {
         // chi-squared is well-defined for non-negative values only
         data_matr = util::matrix_abs(data_matr);
@@ -449,12 +449,12 @@ TYPED_TEST_P(GenericGPUCSVMKernelFunction, RunAssembleKernelMatrixImplicitBlasLe
     using device_ptr_type = typename csvm_test_type::device_ptr_type;
     constexpr plssvm::kernel_function_type kernel = util::test_parameter_value_at_v<0, TypeParam>;
 
-    plssvm::parameter params{ plssvm::kernel_type = kernel };
+    plssvm::parameter params{ plssvm::kernel_type = kernel };  // NOLINT(misc-const-correctness): can't be const for the chi-squared kernel
     if constexpr (kernel != plssvm::kernel_function_type::linear) {
         params.gamma = plssvm::real_type{ 0.001 };
     }
     const plssvm::classification_data_set data{ PLSSVM_CLASSIFICATION_TEST_FILE };
-    auto data_matr{ data.data() };
+    auto data_matr{ data.data() };  // NOLINT: can't be const for the chi-squared kernel
     if constexpr (kernel == plssvm::kernel_function_type::chi_squared) {
         // chi-squared is well-defined for non-negative values only
         data_matr = util::matrix_abs(data_matr);
@@ -537,13 +537,13 @@ TYPED_TEST_P(GenericGPUCSVMKernelFunction, RunPredictKernel) {
     using device_ptr_type = typename csvm_test_type::device_ptr_type;
     constexpr plssvm::kernel_function_type kernel = util::test_parameter_value_at_v<0, TypeParam>;
 
-    plssvm::parameter params{ plssvm::kernel_type = kernel };
+    plssvm::parameter params{ plssvm::kernel_type = kernel };  // NOLINT(misc-const-correctness): can't be const for the chi-squared kernel
     if constexpr (kernel != plssvm::kernel_function_type::linear) {
         params.gamma = plssvm::real_type{ 1.0 };
     }
 
     const plssvm::classification_data_set data{ PLSSVM_CLASSIFICATION_TEST_FILE };
-    auto data_matr{ data.data() };
+    auto data_matr{ data.data() };  // NOLINT: can't be const for the chi-squared kernel
     if constexpr (kernel == plssvm::kernel_function_type::chi_squared) {
         // chi-squared is well-defined for non-negative values only
         data_matr = util::matrix_abs(data_matr);

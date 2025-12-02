@@ -49,7 +49,7 @@ TEST(OpenCLJITInfo, Construct) {
         true,
         plssvm::opencl::detail::jit_info::caching_status::error_no_cached_files,
         "jit/file/path",
-        250ms
+        250ms  // NOLINT(misc-include-cleaner): included via <chrono>
     };
 
     EXPECT_TRUE(info.use_ptx_inline);
@@ -66,7 +66,7 @@ TEST(OpenCLJITInfo, CreateJitReport) {
         true,
         plssvm::opencl::detail::jit_info::caching_status::error_invalid_number_of_cached_files,
         "jit/file/path",
-        250ms
+        250ms  // NOLINT(misc-include-cleaner): included via <chrono>
     };
 
     EXPECT_THAT(plssvm::opencl::detail::create_jit_report(info), ::testing::HasSubstr("250ms; PTX inline; cache: invalid number of cached files (jit/file/path)"));

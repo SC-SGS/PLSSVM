@@ -90,7 +90,7 @@ template <typename csvm_type, typename device_ptr_type, typename matrix_type, ty
     if constexpr (plssvm::csvm_to_backend_type_v<csvm_type> == plssvm::backend_type::openmp || plssvm::csvm_to_backend_type_v<csvm_type> == plssvm::backend_type::stdpar || plssvm::csvm_to_backend_type_v<csvm_type> == plssvm::backend_type::hpx) {
         // only a single device for OpenMP, stdpar, and HPX on the CPU
         const std::vector<real_type> partial_kernel_matrix = calculate_partial_kernel_matrix(0, matr.num_rows());
-        auto ptr = std::make_unique<real_type[]>(partial_kernel_matrix.size());
+        auto ptr = std::make_unique<real_type[]>(partial_kernel_matrix.size());  // NOLINT: C-style array must be used here to align with real implementation
         std::memcpy(ptr.get(), partial_kernel_matrix.data(), partial_kernel_matrix.size() * sizeof(real_type));
         result[0] = plssvm::detail::move_only_any{ std::move(ptr) };
     } else {
@@ -485,7 +485,7 @@ TYPED_TEST_P(GenericCSVMKernelFunction, BlasLevel3AssemblyImplicitWithoutC) {
     constexpr plssvm::solver_type solver = plssvm::solver_type::cg_implicit;
 
     // create parameter struct
-    plssvm::parameter params{ plssvm::kernel_type = kernel, plssvm::cost = 2.0 };
+    plssvm::parameter params{ plssvm::kernel_type = kernel, plssvm::cost = 2.0 };  // NOLINT(misc-const-correctness): can change based on the kernel function
     if constexpr (kernel != plssvm::kernel_function_type::linear) {
         params.gamma = plssvm::real_type{ 1.0 };
     }
@@ -501,7 +501,7 @@ TYPED_TEST_P(GenericCSVMKernelFunction, BlasLevel3AssemblyImplicitWithoutC) {
 
     const plssvm::real_type alpha{ 1.0 };
 
-    const auto matr_A = util::generate_specific_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ 4, 4 });
+    const auto matr_A = util::generate_specific_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ 4, 4 }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE });
     const auto [q, QA_cost] = ground_truth::perform_dimensional_reduction(params, matr_A);
 
     // be sure to use the correct data distribution
@@ -542,7 +542,7 @@ TYPED_TEST_P(GenericCSVMKernelFunction, BlasLevel3AssemblyImplicit) {
     constexpr plssvm::solver_type solver = plssvm::solver_type::cg_implicit;
 
     // create parameter struct
-    plssvm::parameter params{ plssvm::kernel_type = kernel, plssvm::cost = 2.0 };
+    plssvm::parameter params{ plssvm::kernel_type = kernel, plssvm::cost = 2.0 };  // NOLINT(misc-const-correctness): can change based on the kernel function
     if constexpr (kernel != plssvm::kernel_function_type::linear) {
         params.gamma = plssvm::real_type{ 1.0 };
     }
@@ -558,7 +558,7 @@ TYPED_TEST_P(GenericCSVMKernelFunction, BlasLevel3AssemblyImplicit) {
 
     const plssvm::real_type alpha{ 1.0 };
 
-    const auto matr_A = util::generate_specific_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ 4, 4 });
+    const auto matr_A = util::generate_specific_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ 4, 4 }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE });
     const auto [q, QA_cost] = ground_truth::perform_dimensional_reduction(params, matr_A);
 
     // be sure to use the correct data distribution
@@ -594,7 +594,7 @@ TYPED_TEST_P(GenericCSVMKernelFunction, PredictValues) {
     constexpr plssvm::kernel_function_type kernel = util::test_parameter_value_at_v<0, TypeParam>;
 
     // create parameter struct
-    plssvm::parameter params{ plssvm::kernel_type = kernel, plssvm::cost = 2.0 };
+    plssvm::parameter params{ plssvm::kernel_type = kernel, plssvm::cost = 2.0 };  // NOLINT(misc-const-correctness): can change based on the kernel function
     if constexpr (kernel != plssvm::kernel_function_type::linear) {
         params.gamma = plssvm::real_type{ 1.0 };
     }
@@ -657,7 +657,7 @@ TYPED_TEST_P(GenericCSVMKernelFunction, PredictValuesProvidedW) {
         SUCCEED() << "Test is only applicable for the linear kernel function!";
     } else {
         // create parameter struct
-        plssvm::parameter params{ plssvm::kernel_type = kernel, plssvm::cost = 2.0 };
+        plssvm::parameter params{ plssvm::kernel_type = kernel, plssvm::cost = 2.0 };  // NOLINT(misc-const-correctness): can change based on the kernel function
         if constexpr (kernel != plssvm::kernel_function_type::linear) {
             params.gamma = plssvm::real_type{ 1.0 };
         }
@@ -709,7 +709,7 @@ TYPED_TEST_P(GenericCSVMKernelFunction, PerformDimensionalReduction) {
     constexpr plssvm::kernel_function_type kernel = util::test_parameter_value_at_v<0, TypeParam>;
 
     // create parameter struct
-    plssvm::parameter params{ plssvm::kernel_type = kernel };
+    plssvm::parameter params{ plssvm::kernel_type = kernel };  // NOLINT(misc-const-correctness): can change based on the kernel function
     if constexpr (kernel != plssvm::kernel_function_type::linear) {
         params.gamma = plssvm::real_type{ 1.0 };
     }
@@ -753,7 +753,7 @@ TYPED_TEST_P(GenericCSVMSolver, SolveLssvmSystemOfLinearEquationsTrivial) {
     constexpr plssvm::kernel_function_type kernel = plssvm::kernel_function_type::linear;
 
     // create parameter struct
-    plssvm::parameter params{ plssvm::kernel_type = kernel, plssvm::cost = 2.0 };
+    plssvm::parameter params{ plssvm::kernel_type = kernel, plssvm::cost = 2.0 };  // NOLINT(misc-const-correctness): can change based on the kernel function
     if constexpr (kernel != plssvm::kernel_function_type::linear) {
         params.gamma = plssvm::real_type{ 1.0 };
     }
@@ -797,7 +797,7 @@ TYPED_TEST_P(GenericCSVMSolver, SolveLssvmSystemOfLinearEquations) {
     constexpr plssvm::kernel_function_type kernel = plssvm::kernel_function_type::linear;
 
     // create parameter struct
-    plssvm::parameter params{ plssvm::kernel_type = kernel, plssvm::cost = 1.0 };
+    plssvm::parameter params{ plssvm::kernel_type = kernel, plssvm::cost = 1.0 };  // NOLINT(misc-const-correctness): can change based on the kernel function
     if constexpr (kernel != plssvm::kernel_function_type::linear) {
         params.gamma = plssvm::real_type{ 1.0 };
     }
@@ -852,7 +852,7 @@ TYPED_TEST_P(GenericCSVMSolverKernelFunction, AssembleKernelMatrixMinimal) {
     constexpr plssvm::solver_type solver = util::test_parameter_value_at_v<0, TypeParam>;
     constexpr plssvm::kernel_function_type kernel = util::test_parameter_value_at_v<1, TypeParam>;
 
-    plssvm::parameter params{ plssvm::kernel_type = kernel, plssvm::cost = 1.0 };
+    plssvm::parameter params{ plssvm::kernel_type = kernel, plssvm::cost = 1.0 };  // NOLINT(misc-const-correctness): can change based on the kernel function
     if constexpr (kernel != plssvm::kernel_function_type::linear) {
         params.gamma = plssvm::real_type{ 1.0 };
     }
@@ -904,7 +904,7 @@ TYPED_TEST_P(GenericCSVMSolverKernelFunction, AssembleKernelMatrixMinimal) {
                 // get result based on used backend
                 std::vector<plssvm::real_type> kernel_matrix{};
                 if constexpr (plssvm::csvm_to_backend_type_v<csvm_type> == plssvm::backend_type::openmp || plssvm::csvm_to_backend_type_v<csvm_type> == plssvm::backend_type::stdpar || plssvm::csvm_to_backend_type_v<csvm_type> == plssvm::backend_type::hpx) {
-                    const auto &kernel_matrix_d_ptr = plssvm::detail::move_only_any_cast<const std::unique_ptr<plssvm::real_type[]> &>(kernel_matrix_d[device_id]);  // std::unique_ptr<plssvm::real_type[]>
+                    const auto &kernel_matrix_d_ptr = plssvm::detail::move_only_any_cast<const std::unique_ptr<plssvm::real_type[]> &>(kernel_matrix_d[device_id]);  // NOLINT: C-style array must be used here to align with real implementation
                     kernel_matrix.resize(dist.calculate_explicit_kernel_matrix_num_entries_padded(0));
                     std::memcpy(kernel_matrix.data(), kernel_matrix_d_ptr.get(), kernel_matrix.size() * sizeof(plssvm::real_type));
                 } else {
@@ -968,7 +968,7 @@ TYPED_TEST_P(GenericCSVMSolverKernelFunction, AssembleKernelMatrix) {
     constexpr plssvm::solver_type solver = util::test_parameter_value_at_v<0, TypeParam>;
     constexpr plssvm::kernel_function_type kernel = util::test_parameter_value_at_v<1, TypeParam>;
 
-    plssvm::parameter params{ plssvm::kernel_type = kernel };
+    plssvm::parameter params{ plssvm::kernel_type = kernel };  // NOLINT(misc-const-correctness): can change based on the kernel function
     if constexpr (kernel != plssvm::kernel_function_type::linear) {
         params.gamma = plssvm::real_type{ 1.0 / 3.0 };
     }
@@ -1017,7 +1017,7 @@ TYPED_TEST_P(GenericCSVMSolverKernelFunction, AssembleKernelMatrix) {
                 // get result based on used backend
                 std::vector<plssvm::real_type> kernel_matrix{};
                 if constexpr (plssvm::csvm_to_backend_type_v<csvm_type> == plssvm::backend_type::openmp || plssvm::csvm_to_backend_type_v<csvm_type> == plssvm::backend_type::stdpar || plssvm::csvm_to_backend_type_v<csvm_type> == plssvm::backend_type::hpx) {
-                    const auto &kernel_matrix_d_ptr = plssvm::detail::move_only_any_cast<const std::unique_ptr<plssvm::real_type[]> &>(kernel_matrix_d[device_id]);  // std::unique_ptr<plssvm::real_type[]>
+                    const auto &kernel_matrix_d_ptr = plssvm::detail::move_only_any_cast<const std::unique_ptr<plssvm::real_type[]> &>(kernel_matrix_d[device_id]);  // NOLINT: C-style array must be used here to align with real implementation
                     kernel_matrix.resize(dist.calculate_explicit_kernel_matrix_num_entries_padded(0));
                     std::memcpy(kernel_matrix.data(), kernel_matrix_d_ptr.get(), kernel_matrix.size() * sizeof(plssvm::real_type));
                 } else {
@@ -1138,7 +1138,7 @@ TYPED_TEST_P(GenericCSVMSolverDeathTest, ConjugateGradientsEmptyB) {
     // create C-SVM: must be done using the mock class since the member function to test is private or protected
     const mock_csvm_type svm{};
 
-    const plssvm::soa_matrix<plssvm::real_type> matr_A{ plssvm::shape{ 4, 4 } };
+    const plssvm::soa_matrix<plssvm::real_type> matr_A{ plssvm::shape{ 4, 4 }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE } };
     // parameter necessary for cg_implicit
     const plssvm::parameter params{ plssvm::gamma = plssvm::real_type{ 1.0 } };
     const std::vector<plssvm::real_type> q_red(matr_A.num_rows() - 1);
@@ -1164,7 +1164,7 @@ TYPED_TEST_P(GenericCSVMSolverDeathTest, ConjugateGradientsInvalidEps) {
     // create C-SVM: must be done using the mock class since the member function to test is private or protected
     const mock_csvm_type svm{};
 
-    const plssvm::soa_matrix<plssvm::real_type> matr_A{ plssvm::shape{ 4, 4 } };
+    const plssvm::soa_matrix<plssvm::real_type> matr_A{ plssvm::shape{ 4, 4 }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE } };
     // parameter necessary for cg_implicit
     const plssvm::parameter params{ plssvm::gamma = plssvm::real_type{ 1.0 } };
     const std::vector<plssvm::real_type> q_red(matr_A.num_rows() - 1);
@@ -1190,7 +1190,7 @@ TYPED_TEST_P(GenericCSVMSolverDeathTest, ConjugateGradientsInvalidMaxCgIter) {
     // create C-SVM: must be done using the mock class since the member function to test is private or protected
     const mock_csvm_type svm{};
 
-    const plssvm::soa_matrix<plssvm::real_type> matr_A{ plssvm::shape{ 4, 4 } };
+    const plssvm::soa_matrix<plssvm::real_type> matr_A{ plssvm::shape{ 4, 4 }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE } };
     // parameter necessary for cg_implicit
     const plssvm::parameter params{ plssvm::gamma = plssvm::real_type{ 1.0 } };
     const std::vector<plssvm::real_type> q_red(matr_A.num_rows() - 1);
@@ -1218,7 +1218,7 @@ TYPED_TEST_P(GenericCSVMSolverDeathTest, RunBlasLevel3WrongNumberOfKernelMatrixP
         // create C-SVM: must be done using the mock class since the member function to test is private or protected
         const mock_csvm_type svm{};
 
-        const plssvm::soa_matrix<plssvm::real_type> matr_A{ plssvm::shape{ 4, 4 } };
+        const plssvm::soa_matrix<plssvm::real_type> matr_A{ plssvm::shape{ 4, 4 }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE } };
         // parameter necessary for cg_implicit
         const plssvm::parameter params{ plssvm::gamma = plssvm::real_type{ 1.0 } };
         const std::vector<plssvm::real_type> q_red(matr_A.num_rows() - 1);
@@ -1250,7 +1250,7 @@ TYPED_TEST_P(GenericCSVMSolverDeathTest, BlasLevel3EmptyMatrices) {
         // create C-SVM: must be done using the mock class since the member function to test is private or protected
         const mock_csvm_type svm{};
 
-        const plssvm::soa_matrix<plssvm::real_type> matr_A{ plssvm::shape{ 4, 4 } };
+        const plssvm::soa_matrix<plssvm::real_type> matr_A{ plssvm::shape{ 4, 4 }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE } };
         // parameter necessary for cg_implicit
         const plssvm::parameter params{ plssvm::gamma = plssvm::real_type{ 1.0 } };
         const std::vector<plssvm::real_type> q_red(matr_A.num_rows() - 1);
@@ -1281,7 +1281,7 @@ TYPED_TEST_P(GenericCSVMSolverDeathTest, BlasLevel3MissingPadding) {
         // create C-SVM: must be done using the mock class since the member function to test is private or protected
         const mock_csvm_type svm{};
 
-        const plssvm::soa_matrix<plssvm::real_type> matr_A{ plssvm::shape{ 4, 4 } };
+        const plssvm::soa_matrix<plssvm::real_type> matr_A{ plssvm::shape{ 4, 4 }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE } };
         // parameter necessary for cg_implicit
         const plssvm::parameter params{ plssvm::gamma = plssvm::real_type{ 1.0 } };
         const std::vector<plssvm::real_type> q_red(matr_A.num_rows() - 1);
@@ -1312,7 +1312,7 @@ TYPED_TEST_P(GenericCSVMSolverDeathTest, BlasLevel3MatrixShapeMismatch) {
         // create C-SVM: must be done using the mock class since the member function to test is private or protected
         const mock_csvm_type svm{};
 
-        const plssvm::soa_matrix<plssvm::real_type> matr_A{ plssvm::shape{ 4, 4 } };
+        const plssvm::soa_matrix<plssvm::real_type> matr_A{ plssvm::shape{ 4, 4 }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE } };
         // parameter necessary for cg_implicit
         const plssvm::parameter params{ plssvm::gamma = plssvm::real_type{ 1.0 } };
         const std::vector<plssvm::real_type> q_red(matr_A.num_rows() - 1);
@@ -1343,7 +1343,7 @@ TYPED_TEST_P(GenericCSVMSolverDeathTest, BlasLevel3MatrixPaddingMismatch) {
         // create C-SVM: must be done using the mock class since the member function to test is private or protected
         const mock_csvm_type svm{};
 
-        const plssvm::soa_matrix<plssvm::real_type> matr_A{ plssvm::shape{ 4, 4 } };
+        const plssvm::soa_matrix<plssvm::real_type> matr_A{ plssvm::shape{ 4, 4 }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE } };
         // parameter necessary for cg_implicit
         const plssvm::parameter params{ plssvm::gamma = plssvm::real_type{ 1.0 } };
         const std::vector<plssvm::real_type> q_red(matr_A.num_rows() - 1);
@@ -1382,7 +1382,7 @@ TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, SolveLssvmSystemOfLinearEquatio
     constexpr plssvm::kernel_function_type kernel = util::test_parameter_value_at_v<0, TypeParam>;
 
     // create parameter
-    plssvm::parameter params{ plssvm::kernel_type = kernel };
+    plssvm::parameter params{ plssvm::kernel_type = kernel };  // NOLINT(misc-const-correctness): can't be const for the chi-squared kernel
     if constexpr (kernel != plssvm::kernel_function_type::linear) {
         params.gamma = plssvm::real_type{ 1.0 };
     }
@@ -1403,7 +1403,7 @@ TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, SolveLssvmSystemOfLinearEquatio
     constexpr plssvm::kernel_function_type kernel = util::test_parameter_value_at_v<0, TypeParam>;
 
     // create parameter
-    plssvm::parameter params{ plssvm::kernel_type = kernel };
+    plssvm::parameter params{ plssvm::kernel_type = kernel };  // NOLINT(misc-const-correctness): can't be const for the chi-squared kernel
     if constexpr (kernel != plssvm::kernel_function_type::linear) {
         params.gamma = plssvm::real_type{ 1.0 };
     }
@@ -1424,7 +1424,7 @@ TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, SolveLssvmSystemOfLinearEquatio
     constexpr plssvm::kernel_function_type kernel = util::test_parameter_value_at_v<0, TypeParam>;
 
     // create parameter
-    plssvm::parameter params{ plssvm::kernel_type = kernel };
+    plssvm::parameter params{ plssvm::kernel_type = kernel };  // NOLINT(misc-const-correctness): can't be const for the chi-squared kernel
     if constexpr (kernel != plssvm::kernel_function_type::linear) {
         params.gamma = plssvm::real_type{ 1.0 };
     }
@@ -1446,7 +1446,7 @@ TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, SolveLssvmSystemOfLinearEquatio
     constexpr plssvm::kernel_function_type kernel = util::test_parameter_value_at_v<0, TypeParam>;
 
     // create parameter
-    plssvm::parameter params{ plssvm::kernel_type = kernel };
+    plssvm::parameter params{ plssvm::kernel_type = kernel };  // NOLINT(misc-const-correctness): can't be const for the chi-squared kernel
     if constexpr (kernel != plssvm::kernel_function_type::linear) {
         params.gamma = plssvm::real_type{ 1.0 };
     }
@@ -1467,7 +1467,7 @@ TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, SolveLssvmSystemOfLinearEquatio
     constexpr plssvm::kernel_function_type kernel = util::test_parameter_value_at_v<0, TypeParam>;
 
     // create parameter
-    plssvm::parameter params{ plssvm::kernel_type = kernel };
+    plssvm::parameter params{ plssvm::kernel_type = kernel };  // NOLINT(misc-const-correctness): can't be const for the chi-squared kernel
     if constexpr (kernel != plssvm::kernel_function_type::linear) {
         params.gamma = plssvm::real_type{ 1.0 };
     }
@@ -1488,7 +1488,7 @@ TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, PerformDimensionalReductionEmpt
     constexpr plssvm::kernel_function_type kernel = util::test_parameter_value_at_v<0, TypeParam>;
 
     // create parameter
-    plssvm::parameter params{ plssvm::kernel_type = kernel };
+    plssvm::parameter params{ plssvm::kernel_type = kernel };  // NOLINT(misc-const-correctness): can't be const for the chi-squared kernel
     if constexpr (kernel != plssvm::kernel_function_type::linear) {
         params.gamma = plssvm::real_type{ 1.0 };
     }
@@ -1508,7 +1508,7 @@ TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, AssembleKernelMatrixAutomatic) 
     constexpr plssvm::kernel_function_type kernel = util::test_parameter_value_at_v<0, TypeParam>;
 
     // create parameter
-    plssvm::parameter params{ plssvm::kernel_type = kernel };
+    plssvm::parameter params{ plssvm::kernel_type = kernel };  // NOLINT(misc-const-correctness): can't be const for the chi-squared kernel
     if constexpr (kernel != plssvm::kernel_function_type::linear) {
         params.gamma = plssvm::real_type{ 1.0 };
     }
@@ -1534,7 +1534,7 @@ TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, PredictValuesEmptyMatrices) {
     constexpr plssvm::kernel_function_type kernel = util::test_parameter_value_at_v<0, TypeParam>;
 
     // create parameter
-    plssvm::parameter params{ plssvm::kernel_type = kernel };
+    plssvm::parameter params{ plssvm::kernel_type = kernel };  // NOLINT(misc-const-correctness): can't be const for the chi-squared kernel
     if constexpr (kernel != plssvm::kernel_function_type::linear) {
         params.gamma = plssvm::real_type{ 1.0 };
     }
@@ -1570,7 +1570,7 @@ TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, PredictValuesMissingPadding) {
     constexpr plssvm::kernel_function_type kernel = util::test_parameter_value_at_v<0, TypeParam>;
 
     // create parameter
-    plssvm::parameter params{ plssvm::kernel_type = kernel };
+    plssvm::parameter params{ plssvm::kernel_type = kernel };  // NOLINT(misc-const-correctness): can't be const for the chi-squared kernel
     if constexpr (kernel != plssvm::kernel_function_type::linear) {
         params.gamma = plssvm::real_type{ 1.0 };
     }
@@ -1612,7 +1612,7 @@ TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, PredictValuesSvAlphaSizeMismatc
     constexpr plssvm::kernel_function_type kernel = util::test_parameter_value_at_v<0, TypeParam>;
 
     // create parameter
-    plssvm::parameter params{ plssvm::kernel_type = kernel };
+    plssvm::parameter params{ plssvm::kernel_type = kernel };  // NOLINT(misc-const-correctness): can't be const for the chi-squared kernel
     if constexpr (kernel != plssvm::kernel_function_type::linear) {
         params.gamma = plssvm::real_type{ 1.0 };
     }
@@ -1640,7 +1640,7 @@ TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, PredictValuesRhoAlphaSizeMismat
     constexpr plssvm::kernel_function_type kernel = util::test_parameter_value_at_v<0, TypeParam>;
 
     // create parameter
-    plssvm::parameter params{ plssvm::kernel_type = kernel };
+    plssvm::parameter params{ plssvm::kernel_type = kernel };  // NOLINT(misc-const-correctness): can't be const for the chi-squared kernel
     if constexpr (kernel != plssvm::kernel_function_type::linear) {
         params.gamma = plssvm::real_type{ 1.0 };
     }
@@ -1668,7 +1668,7 @@ TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, PredictValuesWSizeMismatch) {
     constexpr plssvm::kernel_function_type kernel = util::test_parameter_value_at_v<0, TypeParam>;
 
     // create parameter
-    plssvm::parameter params{ plssvm::kernel_type = kernel };
+    plssvm::parameter params{ plssvm::kernel_type = kernel };  // NOLINT(misc-const-correctness): can't be const for the chi-squared kernel
     if constexpr (kernel != plssvm::kernel_function_type::linear) {
         params.gamma = plssvm::real_type{ 1.0 };
     }
@@ -1699,7 +1699,7 @@ TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, PredictValuesNumFeaturesMismatc
     constexpr plssvm::kernel_function_type kernel = util::test_parameter_value_at_v<0, TypeParam>;
 
     // create parameter
-    plssvm::parameter params{ plssvm::kernel_type = kernel };
+    plssvm::parameter params{ plssvm::kernel_type = kernel };  // NOLINT(misc-const-correctness): can't be const for the chi-squared kernel
     if constexpr (kernel != plssvm::kernel_function_type::linear) {
         params.gamma = plssvm::real_type{ 1.0 };
     }
@@ -1751,7 +1751,7 @@ TYPED_TEST_P(GenericCSVMSolverKernelFunctionDeathTest, AssembleKernelMatrixEmpty
         SUCCEED() << "Test not applicable for the automatic solver type!";
     } else {
         // create parameter
-        plssvm::parameter params{ plssvm::kernel_type = kernel };
+        plssvm::parameter params{ plssvm::kernel_type = kernel };  // NOLINT(misc-const-correctness): can change based on the kernel function
         if constexpr (kernel != plssvm::kernel_function_type::linear) {
             params.gamma = plssvm::real_type{ 1.0 };
         }
@@ -1787,7 +1787,7 @@ TYPED_TEST_P(GenericCSVMSolverKernelFunctionDeathTest, AssembleKernelMatrixANotP
         SUCCEED() << "Test not applicable for the automatic solver type!";
     } else {
         // create parameter
-        plssvm::parameter params{ plssvm::kernel_type = kernel };
+        plssvm::parameter params{ plssvm::kernel_type = kernel };  // NOLINT(misc-const-correctness): can change based on the kernel function
         if constexpr (kernel != plssvm::kernel_function_type::linear) {
             params.gamma = plssvm::real_type{ 1.0 };
         }
@@ -1818,7 +1818,7 @@ TYPED_TEST_P(GenericCSVMSolverKernelFunctionDeathTest, AssembleKernelMatrixSizeM
         SUCCEED() << "Test not applicable for the automatic solver type!";
     } else {
         // create parameter
-        plssvm::parameter params{ plssvm::kernel_type = kernel };
+        plssvm::parameter params{ plssvm::kernel_type = kernel };  // NOLINT(misc-const-correctness): can change based on the kernel function
         if constexpr (kernel != plssvm::kernel_function_type::linear) {
             params.gamma = plssvm::real_type{ 1.0 };
         }

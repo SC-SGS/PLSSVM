@@ -67,7 +67,7 @@ TYPED_TEST(LIBSVMClassificationModelDataWrite, Write) {
     // create necessary parameter
     const plssvm::parameter params{ plssvm::kernel_type = plssvm::kernel_function_type::linear };
     const std::vector<plssvm::real_type> rho(num_classifiers, plssvm::real_type{ 3.1415 });
-    std::vector<std::vector<std::size_t>> index_sets{};
+    std::vector<std::vector<std::size_t>> index_sets{};  // NOLINT(misc-const-correctness): is modified in case of OAO
     if constexpr (classification == plssvm::classification_type::oao) {
         switch (num_classes) {
             case 2:

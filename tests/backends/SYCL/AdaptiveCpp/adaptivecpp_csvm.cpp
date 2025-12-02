@@ -181,7 +181,7 @@ struct adaptivecpp_csvm_test_type {
     using csvc_type = plssvm::adaptivecpp::csvc;
     using csvr_type = plssvm::adaptivecpp::csvr;
     using device_ptr_type = typename csvm_type::device_ptr_type;
-    inline static auto additional_arguments = std::make_tuple(std::make_pair(plssvm::sycl_data_parallel_kernel, data_parallel_kernel_type));
+    inline static auto additional_arguments = std::make_tuple(std::make_pair(plssvm::sycl_data_parallel_kernel, data_parallel_kernel_type));  // NOLINT(cert-err58-cpp): won't throw an exception
 };
 
 // a tuple containing the test structs

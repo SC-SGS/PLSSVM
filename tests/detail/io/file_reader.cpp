@@ -57,10 +57,12 @@ TEST(FileReader, MoveConstruct) {
     EXPECT_NE(reader2.buffer(), nullptr);
 
     // check whether the first file_reader is in a valid moved-from state
+    // NOLINTBEGIN: use after move wanted since this is tested here
     EXPECT_FALSE(reader1.is_open());
     EXPECT_EQ(reader1.num_lines(), 0);
     EXPECT_TRUE(reader1.lines().empty());
     EXPECT_EQ(reader1.buffer(), nullptr);
+    // NOLINTEND
 }
 
 TEST(FileReader, MoveAssign) {
@@ -79,10 +81,12 @@ TEST(FileReader, MoveAssign) {
     EXPECT_NE(reader2.buffer(), nullptr);
 
     // check whether the first file_reader is in a valid moved-from state
+    // NOLINTBEGIN: use after move wanted since this is tested here
     EXPECT_FALSE(reader1.is_open());
     EXPECT_EQ(reader1.num_lines(), 0);
     EXPECT_TRUE(reader1.lines().empty());
     EXPECT_EQ(reader1.buffer(), nullptr);
+    // NOLINTEND
 }
 
 // the input filename types to test

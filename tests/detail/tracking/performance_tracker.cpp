@@ -167,8 +167,10 @@ TEST_F(PerformanceTracker, MoveConstruct) {
     EXPECT_EQ(tracker2.is_tracking(), is_tracking);
 
     // check moved-from state
+    // NOLINTBEGIN: use after move wanted since this is tested here
     EXPECT_TRUE(tracker.get_tracking_entries().empty());
     EXPECT_TRUE(tracker.get_events().empty());
+    // NOLINTEND
 }
 
 TEST_F(PerformanceTracker, CopyAssign) {
@@ -229,8 +231,10 @@ TEST_F(PerformanceTracker, MoveAssign) {
     EXPECT_EQ(tracker2.is_tracking(), is_tracking);
 
     // check moved-from state
+    // NOLINTBEGIN: use after move wanted since this is tested here
     EXPECT_TRUE(tracker.get_tracking_entries().empty());
     EXPECT_TRUE(tracker.get_events().empty());
+    // NOLINTEND
 }
 
 // the macros are only available if PLSSVM_PERFORMANCE_TRACKER_ENABLED is defined!
