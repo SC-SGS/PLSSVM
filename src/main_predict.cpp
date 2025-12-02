@@ -67,7 +67,7 @@ int main(int argc, char **argv) {
     } catch (const plssvm::mpi_exception &e) {
         std::cerr << "An exception occurred while setting up MPI!: " << e.what_with_loc() << std::endl;
     }
-    
+
     // create a PLSSVM communicator -> use MPI_COMM_WORLD for our executables
     // if MPI is not supported, does nothing
     plssvm::mpi::communicator comm{};
@@ -171,6 +171,8 @@ int main(int argc, char **argv) {
                                               "  kernel_type: {} -> {}\n",
                                               params.kernel_type,
                                               plssvm::kernel_function_type_to_math_string(params.kernel_type));
+                PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "parameter", "", params }));
+
                 switch (params.kernel_type) {
                     case plssvm::kernel_function_type::linear:
                         break;
