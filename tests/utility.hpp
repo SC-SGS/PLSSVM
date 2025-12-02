@@ -116,7 +116,7 @@ class redirect_output {
     }
 
   private:
-    std::stringstream buffer_{};
+    std::stringstream buffer_;
     std::streambuf *sbuf_{ nullptr };
 };
 
@@ -142,7 +142,7 @@ class temporary_file {
         }
 #else
         std::random_device device;
-        std::mt19937 gen(device());
+        std::mt19937 gen(static_cast<std::mt19937::result_type>(device()));
         std::uniform_int_distribution<unsigned long long> dist;
         filename = fmt::format("tmpfile_{}", dist(gen));
         while (std::filesystem::exists(std::filesystem::temp_directory_path() / filename)) {
@@ -189,7 +189,7 @@ class temporary_file {
         std::filesystem::remove(filename);
     }
 
-    std::string filename{};
+    std::string filename;
 };
 
 /**
@@ -394,7 +394,7 @@ template <typename T, PLSSVM_REQUIRES(std::is_floating_point_v<T>)>
 
     // fill vectors with random values
     static std::random_device device;
-    static std::mt19937 gen(device());
+    static std::mt19937 gen(static_cast<std::mt19937::result_type>(device()));
     std::uniform_real_distribution<T> dist(range.first, range.second);
     std::generate(vec.begin(), vec.end(), [&]() { return dist(gen); });
 
@@ -414,7 +414,7 @@ template <typename T, PLSSVM_REQUIRES(std::is_integral_v<T> &&std::is_unsigned_v
 
     // fill vectors with random values
     static std::random_device device;
-    static std::mt19937 gen(device());
+    static std::mt19937 gen(static_cast<std::mt19937::result_type>(device()));
     std::uniform_int_distribution<T> dist(range.first, range.second);
     std::generate(vec.begin(), vec.end(), [&]() { return dist(gen); });
 
@@ -434,7 +434,7 @@ template <typename T, PLSSVM_REQUIRES(std::is_integral_v<T> &&std::is_signed_v<T
 
     // fill vectors with random values
     static std::random_device device;
-    static std::mt19937 gen(device());
+    static std::mt19937 gen(static_cast<std::mt19937::result_type>(device()));
     std::uniform_int_distribution<T> dist(range.first, range.second);
     std::generate(vec.begin(), vec.end(), [&]() { return dist(gen); });
 
@@ -455,7 +455,7 @@ template <typename matrix_type, typename real_type = typename matrix_type::value
 
     // create random number generator
     static std::random_device device;
-    static std::mt19937 gen(device());
+    static std::mt19937 gen(static_cast<std::mt19937::result_type>(device()));
     std::uniform_real_distribution<real_type> dist(range.first, range.second);
 
     matrix_type matrix{ shape };
@@ -530,10 +530,9 @@ template <typename matrix_type>
     using real_type = typename matrix_type::value_type;
     static_assert(std::is_floating_point_v<real_type>, "Only floating point types are allowed!");
 
-    // random number generate for range [ 0.0, 1.0 ]
-    std::random_device rd;
-    std::mt19937 gen(rd());
-    std::uniform_int_distribution<std::size_t> dis(0, shape.y - 1);
+    static std::random_device device;
+    static std::mt19937 gen(static_cast<std::mt19937::result_type>(device()));
+    std::uniform_int_distribution<std::size_t> dist(0, shape.y - 1);
 
     // generate sparse matrix
     matrix_type matrix{ shape };
@@ -543,7 +542,7 @@ template <typename matrix_type>
         }
         // remove half of the created values randomly
         for (std::size_t j = 0; j < matrix.num_cols() / 2; ++j) {
-            matrix(i, dis(gen)) = real_type{ 0.0 };
+            matrix(i, dist(gen)) = real_type{ 0.0 };
         }
     }
 
@@ -583,7 +582,7 @@ template <typename label_type>
     label.reserve(num_labels * num_data_points);
 
     static std::random_device device;
-    static std::mt19937 gen(device());
+    static std::mt19937 gen(static_cast<std::mt19937::result_type>(device()));
     std::uniform_real_distribution<plssvm::real_type> dist(plssvm::real_type{ 0.0001 }, plssvm::real_type{ 0.01 });
 
     for (std::size_t l = 0; l < num_labels; ++l) {
@@ -624,10 +623,6 @@ template <typename label_type>
     std::vector<label_type> label{};
     label.reserve(num_data_points);
 
-    static std::random_device device;
-    static std::mt19937 gen(device());
-    std::uniform_real_distribution<plssvm::real_type> dist(plssvm::real_type{ 0.0001 }, plssvm::real_type{ 0.01 });
-
     for (std::size_t i = 0; i < num_data_points; ++i) {
         data.push_back({ static_cast<plssvm::real_type>(i), static_cast<plssvm::real_type>(i) });
         label.push_back(static_cast<label_type>(i));
@@ -651,8 +646,15 @@ template <typename T>
     return ret;
 }
 
-template <typename matrix_type, typename real_type = typename matrix_type::value_type>
+/**
+ * @brief Create a new value similar to @p matr where all values are converted to their absolute values.
+ * @tparam matrix_type the type of the matrix
+ * @param[in] matr the input matrix
+ * @return a matrix with all absolute values (`[[nodiscard]]`)
+ */
+template <typename matrix_type>
 [[nodiscard]] inline matrix_type matrix_abs(const matrix_type &matr) {
+    using real_type = typename matrix_type::value_type;
     static_assert(std::is_floating_point_v<real_type>, "Only floating point types are allowed!");
 
     matrix_type res{ matr.shape(), matr.padding() };
@@ -708,7 +710,7 @@ template <typename T, plssvm::layout_type layout>
  * @return an instance of type @p T (`[[nodiscard]]`)
  */
 template <typename T, typename Tuple, size_t... Is>
-[[nodiscard]] inline T construct_from_tuple(const plssvm::parameter &params, [[maybe_unused]] Tuple tuple, std::index_sequence<Is...>) {
+[[nodiscard]] inline T construct_from_tuple(const plssvm::parameter &params, [[maybe_unused]] Tuple tuple, [[maybe_unused]] std::index_sequence<Is...> indices) {
     return T{ params, (std::get<Is>(tuple).first = std::get<Is>(tuple).second)... };
 }
 
@@ -738,7 +740,7 @@ template <typename T, typename Tuple>
  * @return an instance of type @p T (`[[nodiscard]]`)
  */
 template <typename T, typename Tuple, size_t... Is>
-[[nodiscard]] inline T construct_from_tuple([[maybe_unused]] Tuple tuple, std::index_sequence<Is...>) {
+[[nodiscard]] inline T construct_from_tuple([[maybe_unused]] Tuple tuple, [[maybe_unused]] std::index_sequence<Is...> indices) {
     return T{ (std::get<Is>(tuple).first = std::get<Is>(tuple).second)... };
 }
 

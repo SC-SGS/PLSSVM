@@ -99,7 +99,8 @@ TYPED_TEST(LIBSVMRegressionModelDataWrite, Write) {
         // check, how often the line in the file was found in the original data
         if (line_found == 0) {
             FAIL() << fmt::format("Couldn't find the line '{}' ({}) from the output file in the provided data set.", read_line, i);
-        } else if (line_found > 1) {
+        }
+        if (line_found > 1) {
             FAIL() << fmt::format("Could find the line '{}' ({}) from the output file in the provided data set multiple times.", read_line, i);
         }
     }
@@ -154,7 +155,8 @@ TYPED_TEST(LIBSVMRegressionModelDataWrite, WriteWithoutLabel) {
         // check, how often the line in the file was found in the original data
         if (line_found == 0) {
             FAIL() << fmt::format("Couldn't find the line '{}' ({}) from the output file in the provided data set.", read_line, i);
-        } else if (line_found > 1) {
+        }
+        if (line_found > 1) {
             FAIL() << fmt::format("Could find the line '{}' ({}) from the output file in the provided data set multiple times.", read_line, i);
         }
     }

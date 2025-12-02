@@ -43,7 +43,7 @@ class LIBSVMClassificationModelDataWrite : public ::testing::Test,
      * @brief Return the used MPI communicator.
      * @return the MPI communicator (`[[nodiscard]]`)
      */
-    [[nodiscard]] const plssvm::mpi::communicator get_comm() const noexcept { return comm_; }
+    [[nodiscard]] const plssvm::mpi::communicator &get_comm() const noexcept { return comm_; }
 
   private:
     /// The MPI communicator (unused during testing since we do not support MPI runtime tests).
@@ -139,6 +139,7 @@ TYPED_TEST(LIBSVMClassificationModelDataWrite, Write) {
                     // iterate over all support vectors for one class IN THE ORIGINAL DATA
                     // assemble the alpha vector
                     std::vector<plssvm::real_type> alpha_vec{};
+                    alpha_vec.reserve(num_classifiers);
                     for (std::size_t l = 0; l < num_classifiers; ++l) {
                         alpha_vec.push_back(alpha.front()(l, idx + k));
                     }
@@ -208,7 +209,8 @@ TYPED_TEST(LIBSVMClassificationModelDataWrite, Write) {
             // check, how often the line in the file was found in the original data
             if (line_found == 0) {
                 FAIL() << fmt::format("Couldn't find the line '{}' ({}) from the output file in the provided data set.", read_line, idx);
-            } else if (line_found > 1) {
+            }
+            if (line_found > 1) {
                 FAIL() << fmt::format("Could find the line '{}' ({}) from the output file in the provided data set multiple times.", read_line, idx);
             }
         }

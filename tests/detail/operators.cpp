@@ -416,15 +416,19 @@ TYPED_TEST(VectorOperationsDeathTest, OperatorDivideCompound) {
 }
 
 TYPED_TEST(VectorOperations, OperatorDotFunction) {
+    using real_type = typename TestFixture::fixture_real_type;
+
     // calculate dot product using the dot function
-    EXPECT_FLOATING_POINT_NEAR(dot(this->get_a(), this->get_b()), 62.5);
-    EXPECT_FLOATING_POINT_NEAR(dot(this->get_b(), this->get_a()), 62.5);
+    EXPECT_FLOATING_POINT_NEAR(dot(this->get_a(), this->get_b()), real_type{ 62.5 });
+    EXPECT_FLOATING_POINT_NEAR(dot(this->get_b(), this->get_a()), real_type{ 62.5 });
 }
 
 TYPED_TEST(VectorOperations, OperatorDotTransposed) {
+    using real_type = typename TestFixture::fixture_real_type;
+
     // calculate dot product using the transposed overload function
-    EXPECT_FLOATING_POINT_NEAR(transposed{ this->get_a() } * this->get_b(), 62.5);
-    EXPECT_FLOATING_POINT_NEAR(transposed{ this->get_b() } * this->get_a(), 62.5);
+    EXPECT_FLOATING_POINT_NEAR(transposed{ this->get_a() } * this->get_b(), real_type{ 62.5 });
+    EXPECT_FLOATING_POINT_NEAR(transposed{ this->get_b() } * this->get_a(), real_type{ 62.5 });
 }
 
 TYPED_TEST(VectorOperationsDeathTest, OperatorDotFunction) {
@@ -440,14 +444,18 @@ TYPED_TEST(VectorOperationsDeathTest, OperatorDotTransposed) {
 }
 
 TYPED_TEST(VectorOperations, OperatorSum) {
+    using real_type = typename TestFixture::fixture_real_type;
+
     // sum vector elements
-    EXPECT_FLOATING_POINT_NEAR(sum(this->get_a()), 15);
-    EXPECT_FLOATING_POINT_NEAR(sum(this->get_b()), 17.5);
+    EXPECT_FLOATING_POINT_NEAR(sum(this->get_a()), real_type{ 15 });
+    EXPECT_FLOATING_POINT_NEAR(sum(this->get_b()), real_type{ 17.5 });
 }
 
 TYPED_TEST(VectorOperations, OperatorSquaredEuclideanDist) {
+    using real_type = typename TestFixture::fixture_real_type;
+
     // calculate the squared Euclidean distance between two vectors
-    EXPECT_FLOATING_POINT_NEAR(squared_euclidean_dist(this->get_a(), this->get_b()), 1.25);
+    EXPECT_FLOATING_POINT_NEAR(squared_euclidean_dist(this->get_a(), this->get_b()), real_type{ 1.25 });
 }
 
 TYPED_TEST(VectorOperationsDeathTest, OperatorSquaredEuclideanDist) {
@@ -457,8 +465,10 @@ TYPED_TEST(VectorOperationsDeathTest, OperatorSquaredEuclideanDist) {
 }
 
 TYPED_TEST(VectorOperations, OperatorManhattanDist) {
+    using real_type = typename TestFixture::fixture_real_type;
+
     // calculate the Manhattan distance between two vectors
-    EXPECT_FLOATING_POINT_NEAR(manhattan_dist(this->get_a(), this->get_b()), 2.5);
+    EXPECT_FLOATING_POINT_NEAR(manhattan_dist(this->get_a(), this->get_b()), real_type{ 2.5 });
 }
 
 TYPED_TEST(VectorOperationsDeathTest, OperatorManhattanDist) {

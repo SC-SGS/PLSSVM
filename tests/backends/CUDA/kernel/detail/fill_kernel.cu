@@ -40,7 +40,7 @@ TYPED_TEST(CUDAFillUtility, FillKernel) {
 
     // allocate array on the device
     real_type *vec_d{};
-    cudaMalloc((void **) &vec_d, vec.size() * sizeof(real_type));
+    cudaMalloc(&vec_d, vec.size() * sizeof(real_type));
 
     // create the block and grid partition
     const dim3 block{ 512 };
@@ -66,7 +66,7 @@ TYPED_TEST(CUDAFillUtility, FillKernelPartial) {
 
     // allocate array on the device
     real_type *vec_d{};
-    cudaMalloc((void **) &vec_d, vec.size() * sizeof(real_type));
+    cudaMalloc(&vec_d, vec.size() * sizeof(real_type));
     cudaMemset(vec_d, 0, vec.size() * sizeof(real_type));
 
     // create the block and grid partition

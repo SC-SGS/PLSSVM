@@ -56,7 +56,7 @@ TEST(Utility, Get) {
 
 TEST(Utility, ToUnderlyingInt) {
     // clang-format off
-    enum class int_enum { a, b, c = 10 };
+    enum class int_enum { a = 0, b = 1, c = 10 };
     // clang-format on
 
     EXPECT_EQ(plssvm::detail::to_underlying(int_enum::a), 0);
@@ -252,7 +252,7 @@ TEST(Utility, CheckLocalMemoryUsageTooSmall) {
                                   needed_local_memory / 2));
 }
 
-TEST(UtilityDeathTest, check_local_memory_usage_empty) {
+TEST(UtilityDeathTest, CheckLocalMemoryUsageEmpty) {
     // create a std::vector of std::nullopt
     const std::vector<std::optional<plssvm::detail::memory_size>> available_local_memory{};
 

@@ -185,6 +185,7 @@ template <typename csvm_type, typename device_ptr_type, typename matrix_type, ty
         case plssvm::solver_type::automatic:
             {
                 std::vector<plssvm::detail::move_only_any> result;
+                result.reserve(csvm.num_available_devices());
                 for (std::size_t device_id = 0; device_id < csvm.num_available_devices(); ++device_id) {
                     result.push_back(plssvm::detail::move_only_any{ std::vector<typename matrix_type::value_type>{} });
                 }
@@ -273,8 +274,8 @@ TYPED_TEST_P(GenericCSVM, GetMaxMemAllocSize) {
     }
 }
 
-    using namespace plssvm::detail::literals;
 TYPED_TEST_P(GenericCSVM, GetLocalMemory) {
+    using namespace plssvm::detail::literals;  // NOLINT(google-build-using-namespace): only imports custom user-defined literals into this namespace
     using csvm_test_type = util::test_parameter_type_at_t<0, TypeParam>;
     using csvm_type = typename csvm_test_type::csvm_type;
     using mock_csvm_type = typename csvm_test_type::mock_csvm_type;

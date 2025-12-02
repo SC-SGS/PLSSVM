@@ -223,7 +223,7 @@ class BaseCSVCFit : public BaseCSVC,
 
   private:
     /// The temporary data file.
-    util::temporary_file data_set_file_{};
+    util::temporary_file data_set_file_;
 };
 
 TYPED_TEST_SUITE(BaseCSVCFit, util::classification_label_type_solver_and_kernel_function_and_classification_type_gtest, naming::test_parameter_to_name);

@@ -273,8 +273,6 @@ TYPED_TEST_P(GenericCSVCSolverKernelFunctionClassification, Fit) {
         EXPECT_EQ(model.rho().size(), plssvm::calculate_number_of_classifiers(classification, test_data.num_classes()));
     }
     EXPECT_EQ(model.get_classification_type(), classification);
-    EXPECT_TRUE(model.num_iters().has_value());
-    EXPECT_EQ(model.num_iters().value().size(), (plssvm::calculate_number_of_classifiers(classification, test_data.num_classes())));
     const auto& num_iters_opt = model.num_iters();
     ASSERT_TRUE(num_iters_opt.has_value());
     if (num_iters_opt.has_value()) {

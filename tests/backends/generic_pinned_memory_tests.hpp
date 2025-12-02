@@ -153,7 +153,7 @@ TYPED_TEST_P(PinnedMemoryDeathTest, ConstructNullptr) {
 REGISTER_TYPED_TEST_SUITE_P(PinnedMemoryDeathTest, ConstructEmptyVector, ConstructEmptyPointerAndSize, ConstructNullptr);
 
 template <typename T>
-class PinnedMemoryLayoutDeathTest : public PinnedMemory<T> {
+class PinnedMemoryLayoutDeathTest : public PinnedMemoryLayout<T> {
   protected:
     using fixture_test_type = util::test_parameter_type_at_t<0, T>;
 };
