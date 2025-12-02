@@ -45,7 +45,7 @@ class LIBSVMRegressionModelDataWrite : public ::testing::Test,
 
   private:
     /// The MPI communicator (unused during testing since we do not support MPI runtime tests).
-    plssvm::mpi::communicator comm_{};
+    plssvm::mpi::communicator comm_;
 };
 
 TYPED_TEST_SUITE(LIBSVMRegressionModelDataWrite, util::regression_label_type_gtest, naming::test_parameter_to_name);
@@ -194,7 +194,7 @@ class LIBSVMRegressionModelDataWriteDeathTest : public LIBSVMRegressionModelData
 
   private:
     /// The default parameters.
-    plssvm::parameter params_{};
+    plssvm::parameter params_;
     /// The rho vector; size depending on used classification type and number of classes.
     std::vector<plssvm::real_type> rho_{ plssvm::real_type{ 3.1415 } };
     /// The weights; shape of the vector and the containing matrices depending on used classification type and number of classes.

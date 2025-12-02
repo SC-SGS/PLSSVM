@@ -72,7 +72,7 @@ class LIBSVMClassificationModelUtilityAlphaIdx : public ::testing::TestWithParam
 
   private:
     /// The support vector index sets per class.
-    std::vector<std::vector<std::size_t>> index_sets_{};
+    std::vector<std::vector<std::size_t>> index_sets_;
 };
 
 TEST_P(LIBSVMClassificationModelUtilityAlphaIdx, CalculateAlphaIdx) {

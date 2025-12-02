@@ -193,7 +193,7 @@ class BaseCSVRMemberBase : public BaseCSVR,
     /// The name of the data set file.
     std::string data_set_file_name_{ PLSSVM_TEST_PATH "/data/libsvm/regression/6x4.libsvm" };
     /// The temporary model file.
-    util::temporary_file model_file_{};
+    util::temporary_file model_file_;
 };
 
 template <typename T>
@@ -479,7 +479,7 @@ TYPED_TEST(BaseCSVRFit, FitCommMismatch) {
     // clang-format on
 
     // create mismatching MPI communicator
-    MPI_Comm duplicated_mpi_comm;
+    MPI_Comm duplicated_mpi_comm{};
     MPI_Comm_dup(MPI_COMM_WORLD, &duplicated_mpi_comm);
     const plssvm::mpi::communicator comm{ duplicated_mpi_comm };
 
@@ -800,7 +800,7 @@ TYPED_TEST(BaseCSVRPredict, PredictCommMismatch) {
     // clang-format on
 
     // create mismatching MPI communicator
-    MPI_Comm duplicated_mpi_comm;
+    MPI_Comm duplicated_mpi_comm{};
     MPI_Comm_dup(MPI_COMM_WORLD, &duplicated_mpi_comm);
     const plssvm::mpi::communicator comm{ duplicated_mpi_comm };
 
@@ -1003,7 +1003,7 @@ TYPED_TEST(BaseCSVRScore, PredictCommMismatch) {
     // clang-format on
 
     // create mismatching MPI communicator
-    MPI_Comm duplicated_mpi_comm;
+    MPI_Comm duplicated_mpi_comm{};
     MPI_Comm_dup(MPI_COMM_WORLD, &duplicated_mpi_comm);
     const plssvm::mpi::communicator comm{ duplicated_mpi_comm };
 

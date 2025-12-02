@@ -108,7 +108,7 @@ class PerformanceTracker : public ::testing::Test,
     }
 
   private:
-    plssvm::detail::tracking::performance_tracker tracker_{};
+    plssvm::detail::tracking::performance_tracker tracker_;
 };
 
 TEST_F(PerformanceTracker, CopyConstruct) {

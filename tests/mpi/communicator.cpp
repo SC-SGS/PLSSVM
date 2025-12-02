@@ -229,7 +229,7 @@ TEST(MPICommunicator, Equal) {
 #if defined(PLSSVM_HAS_MPI_ENABLED)
     const plssvm::mpi::communicator comm3{ MPI_COMM_WORLD };
     // create a duplicated communicator
-    MPI_Comm duplicated_mpi_comm;
+    MPI_Comm duplicated_mpi_comm{};
     MPI_Comm_dup(MPI_COMM_WORLD, &duplicated_mpi_comm);
     const plssvm::mpi::communicator comm4{ duplicated_mpi_comm };
 
@@ -252,7 +252,7 @@ TEST(MPICommunicator, Unequal) {
 #if defined(PLSSVM_HAS_MPI_ENABLED)
     const plssvm::mpi::communicator comm3{ MPI_COMM_WORLD };
     // create a duplicated communicator
-    MPI_Comm duplicated_mpi_comm;
+    MPI_Comm duplicated_mpi_comm{};
     MPI_Comm_dup(MPI_COMM_WORLD, &duplicated_mpi_comm);
     const plssvm::mpi::communicator comm4{ duplicated_mpi_comm };
 

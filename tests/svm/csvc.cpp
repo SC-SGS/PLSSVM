@@ -197,9 +197,9 @@ class BaseCSVCMemberBase : public BaseCSVC,
 
   private:
     /// The temporary data file.
-    util::temporary_file data_set_file_{};
+    util::temporary_file data_set_file_;
     /// The temporary model file.
-    util::temporary_file model_file_{};
+    util::temporary_file model_file_;
 };
 
 template <typename T>
@@ -500,7 +500,7 @@ TYPED_TEST(BaseCSVCFit, FitCommunicatorMismatch) {
     // clang-format on
 
     // create mismatching MPI communicator
-    MPI_Comm duplicated_mpi_comm;
+    MPI_Comm duplicated_mpi_comm{};
     MPI_Comm_dup(MPI_COMM_WORLD, &duplicated_mpi_comm);
     const plssvm::mpi::communicator comm{ duplicated_mpi_comm };
 
@@ -827,7 +827,7 @@ TYPED_TEST(BaseCSVCPredict, PredictCommismatch) {
     // clang-format on
 
     // create mismatching MPI communicator
-    MPI_Comm duplicated_mpi_comm;
+    MPI_Comm duplicated_mpi_comm{};
     MPI_Comm_dup(MPI_COMM_WORLD, &duplicated_mpi_comm);
     const plssvm::mpi::communicator comm{ duplicated_mpi_comm };
 
@@ -1004,7 +1004,7 @@ TYPED_TEST(BaseCSVCScore, PredictCommMismatch) {
     // clang-format on
 
     // create mismatching MPI communicator
-    MPI_Comm duplicated_mpi_comm;
+    MPI_Comm duplicated_mpi_comm{};
     MPI_Comm_dup(MPI_COMM_WORLD, &duplicated_mpi_comm);
     const plssvm::mpi::communicator comm{ duplicated_mpi_comm };
 

@@ -47,7 +47,7 @@ class LIBSVMClassificationModelDataWrite : public ::testing::Test,
 
   private:
     /// The MPI communicator (unused during testing since we do not support MPI runtime tests).
-    plssvm::mpi::communicator comm_{};
+    plssvm::mpi::communicator comm_;
 };
 
 TYPED_TEST_SUITE(LIBSVMClassificationModelDataWrite, util::classification_label_type_classification_type_gtest, naming::test_parameter_to_name);
@@ -310,13 +310,13 @@ class LIBSVMClassificationModelDataWriteDeathTest : public LIBSVMClassificationM
 
   private:
     /// The default parameters.
-    plssvm::parameter params_{};
+    plssvm::parameter params_;
     /// The rho vector; size depending on used classification type and number of classes.
-    std::vector<plssvm::real_type> rho_{};
+    std::vector<plssvm::real_type> rho_;
     /// The weights; shape of the vector and the containing matrices depending on used classification type and number of classes.
-    std::vector<plssvm::aos_matrix<plssvm::real_type>> alpha_{};
+    std::vector<plssvm::aos_matrix<plssvm::real_type>> alpha_;
     /// The index sets indicating which data point is a support vector for which class.
-    std::vector<std::vector<std::size_t>> index_sets_{};
+    std::vector<std::vector<std::size_t>> index_sets_;
     /// The support vectors.
     plssvm::classification_data_set<fixture_label_type> data_set_{ util::generate_random_matrix<plssvm::aos_matrix<plssvm::real_type>>(plssvm::shape{ 6, 2 }), util::get_correct_model_file_labels<fixture_label_type>() };
 };

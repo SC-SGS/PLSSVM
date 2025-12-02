@@ -41,7 +41,7 @@ class LIBSVMRegressionModelHeaderWrite : public ::testing::Test,
 
   private:
     /// The MPI communicator (unused during testing since we do not support MPI runtime tests).
-    plssvm::mpi::communicator comm_{};
+    plssvm::mpi::communicator comm_;
 };
 
 TYPED_TEST_SUITE(LIBSVMRegressionModelHeaderWrite, util::regression_label_type_gtest, naming::test_parameter_to_name);

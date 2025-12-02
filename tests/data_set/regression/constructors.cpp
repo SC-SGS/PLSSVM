@@ -242,7 +242,7 @@ TYPED_TEST(RegressionDataSetConstructors, ConstructScaledARFFFromFileCommMismatc
     using label_type = typename TestFixture::fixture_label_type;
 
     // create a duplicated communicator
-    MPI_Comm duplicated_mpi_comm;
+    MPI_Comm duplicated_mpi_comm{};
     MPI_Comm_dup(MPI_COMM_WORLD, &duplicated_mpi_comm);
     const plssvm::mpi::communicator comm{ duplicated_mpi_comm };
 
@@ -292,7 +292,7 @@ TYPED_TEST(RegressionDataSetConstructors, ConstructScaledLIBSVMFromFileCommMisma
     using label_type = typename TestFixture::fixture_label_type;
 
     // create a duplicated communicator
-    MPI_Comm duplicated_mpi_comm;
+    MPI_Comm duplicated_mpi_comm{};
     MPI_Comm_dup(MPI_COMM_WORLD, &duplicated_mpi_comm);
     const plssvm::mpi::communicator comm{ duplicated_mpi_comm };
 
@@ -342,7 +342,7 @@ TYPED_TEST(RegressionDataSetConstructors, ConstructScaledExplicitARFFFromFileCom
     using label_type = typename TestFixture::fixture_label_type;
 
     // create a duplicated communicator
-    MPI_Comm duplicated_mpi_comm;
+    MPI_Comm duplicated_mpi_comm{};
     MPI_Comm_dup(MPI_COMM_WORLD, &duplicated_mpi_comm);
     const plssvm::mpi::communicator comm{ duplicated_mpi_comm };
 
@@ -392,7 +392,7 @@ TYPED_TEST(RegressionDataSetConstructors, ConstructScaledExplicitLIBSVMFromFileC
     using label_type = typename TestFixture::fixture_label_type;
 
     // create a duplicated communicator
-    MPI_Comm duplicated_mpi_comm;
+    MPI_Comm duplicated_mpi_comm{};
     MPI_Comm_dup(MPI_COMM_WORLD, &duplicated_mpi_comm);
     const plssvm::mpi::communicator comm{ duplicated_mpi_comm };
 
@@ -551,7 +551,7 @@ TYPED_TEST(RegressionDataSetConstructors, ConstructScaledFromVectorWithoutLabelC
     using label_type = typename TestFixture::fixture_label_type;
 
     // create a duplicated communicator
-    MPI_Comm duplicated_mpi_comm;
+    MPI_Comm duplicated_mpi_comm{};
     MPI_Comm_dup(MPI_COMM_WORLD, &duplicated_mpi_comm);
     const plssvm::mpi::communicator comm{ duplicated_mpi_comm };
 
@@ -604,7 +604,7 @@ TYPED_TEST(RegressionDataSetConstructors, ConstructScaledFromVectorWithLabelComm
     using label_type = typename TestFixture::fixture_label_type;
 
     // create a duplicated communicator
-    MPI_Comm duplicated_mpi_comm;
+    MPI_Comm duplicated_mpi_comm{};
     MPI_Comm_dup(MPI_COMM_WORLD, &duplicated_mpi_comm);
     const plssvm::mpi::communicator comm{ duplicated_mpi_comm };
 
@@ -818,7 +818,7 @@ TYPED_TEST(RegressionDataSetMatrixConstructors, ConstructScaledFromMatrixWithout
     constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
 
     // create a duplicated communicator
-    MPI_Comm duplicated_mpi_comm;
+    MPI_Comm duplicated_mpi_comm{};
     MPI_Comm_dup(MPI_COMM_WORLD, &duplicated_mpi_comm);
     const plssvm::mpi::communicator comm{ duplicated_mpi_comm };
 
@@ -871,7 +871,7 @@ TYPED_TEST(RegressionDataSetMatrixConstructors, ConstructScaledFromMatrixWithout
     constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
 
     // create a duplicated communicator
-    MPI_Comm duplicated_mpi_comm;
+    MPI_Comm duplicated_mpi_comm{};
     MPI_Comm_dup(MPI_COMM_WORLD, &duplicated_mpi_comm);
     const plssvm::mpi::communicator comm{ duplicated_mpi_comm };
 
@@ -927,7 +927,7 @@ TYPED_TEST(RegressionDataSetMatrixConstructors, ConstructScaledFromMatrixWithLab
     constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
 
     // create a duplicated communicator
-    MPI_Comm duplicated_mpi_comm;
+    MPI_Comm duplicated_mpi_comm{};
     MPI_Comm_dup(MPI_COMM_WORLD, &duplicated_mpi_comm);
     const plssvm::mpi::communicator comm{ duplicated_mpi_comm };
 
@@ -982,7 +982,7 @@ TYPED_TEST(RegressionDataSetMatrixConstructors, ConstructScaledFromMatrixWithLab
     constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
 
     // create a duplicated communicator
-    MPI_Comm duplicated_mpi_comm;
+    MPI_Comm duplicated_mpi_comm{};
     MPI_Comm_dup(MPI_COMM_WORLD, &duplicated_mpi_comm);
     const plssvm::mpi::communicator comm{ duplicated_mpi_comm };
 
@@ -1130,7 +1130,7 @@ TYPED_TEST(RegressionDataSetRValueMatrixConstructors, ConstructScaledFromRvalueM
     using label_type = typename TestFixture::fixture_label_type;
 
     // create a duplicated communicator
-    MPI_Comm duplicated_mpi_comm;
+    MPI_Comm duplicated_mpi_comm{};
     MPI_Comm_dup(MPI_COMM_WORLD, &duplicated_mpi_comm);
     const plssvm::mpi::communicator comm{ duplicated_mpi_comm };
 
@@ -1185,7 +1185,7 @@ TYPED_TEST(RegressionDataSetRValueMatrixConstructors, ConstructScaledFromRvalueM
     using label_type = typename TestFixture::fixture_label_type;
 
     // create a duplicated communicator
-    MPI_Comm duplicated_mpi_comm;
+    MPI_Comm duplicated_mpi_comm{};
     MPI_Comm_dup(MPI_COMM_WORLD, &duplicated_mpi_comm);
     const plssvm::mpi::communicator comm{ duplicated_mpi_comm };
 

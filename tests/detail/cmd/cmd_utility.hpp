@@ -78,11 +78,11 @@ class ParameterBase : public ::testing::Test,
 
   private:
     /// The provided command line options.
-    mutable std::vector<std::string> cmd_options_{};
+    mutable std::vector<std::string> cmd_options_;
     /// The command line options cast to a char *.
-    mutable std::vector<char *> cmd_argv_{};
+    mutable std::vector<char *> cmd_argv_;
     /// The MPI communicator (unused during testing since we do not support MPI runtime tests).
-    plssvm::mpi::communicator comm_{};
+    plssvm::mpi::communicator comm_;
     /// The verbosity level at the time of the test start.
     plssvm::verbosity_level verbosity_save_{};
 };
