@@ -78,12 +78,16 @@ TEST(MinMaxScaler, ConstructFromFile) {
         factors_type{ 3, plssvm::real_type{ 3.3 }, plssvm::real_type{ 4.3 } },
         factors_type{ 4, plssvm::real_type{ 4.4 }, plssvm::real_type{ 5.4 } },
     };
-    ASSERT_TRUE(scaler.scaling_factors().has_value());
-    ASSERT_EQ(scaler.scaling_factors()->size(), correct_factors.size());
-    for (std::size_t i = 0; i < correct_factors.size(); ++i) {
-        EXPECT_EQ(scaler.scaling_factors().value()[i].feature, correct_factors[i].feature);
-        EXPECT_FLOATING_POINT_EQ(scaler.scaling_factors().value()[i].lower, correct_factors[i].lower);
-        EXPECT_FLOATING_POINT_EQ(scaler.scaling_factors().value()[i].upper, correct_factors[i].upper);
+    const auto& factors_opt = scaler.scaling_factors();
+    ASSERT_TRUE(factors_opt.has_value());
+    if (factors_opt.has_value()) {
+        const std::vector<plssvm::min_max_scaler::factors> factors = factors_opt.value();
+        ASSERT_EQ(factors.size(), correct_factors.size());
+        for (std::size_t i = 0; i < factors.size(); ++i) {
+            EXPECT_EQ(factors[i].feature, correct_factors[i].feature);
+            EXPECT_FLOATING_POINT_EQ(factors[i].lower, correct_factors[i].lower);
+            EXPECT_FLOATING_POINT_EQ(factors[i].upper, correct_factors[i].upper);
+        }
     }
 }
 

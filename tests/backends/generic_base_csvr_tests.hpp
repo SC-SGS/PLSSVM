@@ -110,8 +110,9 @@ TYPED_TEST_P(GenericCSVRKernelFunction, Predict) {
     plssvm::regression_data_set<label_type> test_data = util::generate_trivially_solvable_regression_data_set<label_type>();
     if constexpr (kernel == plssvm::kernel_function_type::chi_squared) {
         // chi-squared is well-defined for non-negative values only
-        if (test_data.labels().has_value()) {
-            test_data = plssvm::regression_data_set<label_type>{ util::matrix_abs(test_data.data()), *test_data.labels() };
+        const auto& labels_opt = test_data.labels();
+        if (labels_opt.has_value()) {
+            test_data = plssvm::regression_data_set<label_type>{ util::matrix_abs(test_data.data()), labels_opt.value() };
         }
     }
 
@@ -131,7 +132,7 @@ TYPED_TEST_P(GenericCSVRKernelFunction, Predict) {
             val = static_cast<label_type>(std::round(val));
         }
     }
-    EXPECT_EQ(calculated, test_data.labels().value().get());
+    EXPECT_OPTIONAL_EQ(calculated, test_data.labels());
 }
 
 TYPED_TEST_P(GenericCSVRKernelFunction, ScoreModel) {
@@ -150,8 +151,9 @@ TYPED_TEST_P(GenericCSVRKernelFunction, ScoreModel) {
     plssvm::regression_data_set<label_type> test_data = util::generate_trivially_solvable_regression_data_set<label_type>();
     if constexpr (kernel == plssvm::kernel_function_type::chi_squared) {
         // chi-squared is well-defined for non-negative values only
-        if (test_data.labels().has_value()) {
-            test_data = plssvm::regression_data_set<label_type>{ util::matrix_abs(test_data.data()), *test_data.labels() };
+        const auto& labels_opt = test_data.labels();
+        if (labels_opt.has_value()) {
+            test_data = plssvm::regression_data_set<label_type>{ util::matrix_abs(test_data.data()), labels_opt.value() };
         }
     }
 
@@ -186,8 +188,9 @@ TYPED_TEST_P(GenericCSVRKernelFunction, Score) {
     plssvm::regression_data_set<label_type> test_data = util::generate_trivially_solvable_regression_data_set<label_type>();
     if constexpr (kernel == plssvm::kernel_function_type::chi_squared) {
         // chi-squared is well-defined for non-negative values only
-        if (test_data.labels().has_value()) {
-            test_data = plssvm::regression_data_set<label_type>{ util::matrix_abs(test_data.data()), *test_data.labels() };
+        const auto& labels_opt = test_data.labels();
+        if (labels_opt.has_value()) {
+            test_data = plssvm::regression_data_set<label_type>{ util::matrix_abs(test_data.data()), labels_opt.value() };
         }
     }
 
@@ -235,8 +238,9 @@ TYPED_TEST_P(GenericCSVRSolverKernelFunction, Fit) {
     plssvm::regression_data_set<label_type> test_data{ PLSSVM_TEST_PATH "/data/libsvm/regression/6x4.libsvm" };
     if constexpr (kernel == plssvm::kernel_function_type::chi_squared) {
         // chi-squared is well-defined for non-negative values only
-        if (test_data.labels().has_value()) {
-            test_data = plssvm::regression_data_set<label_type>{ util::matrix_abs(test_data.data()), *test_data.labels() };
+        const auto& labels_opt = test_data.labels();
+        if (labels_opt.has_value()) {
+            test_data = plssvm::regression_data_set<label_type>{ util::matrix_abs(test_data.data()), labels_opt.value() };
         }
     }
 
@@ -252,11 +256,14 @@ TYPED_TEST_P(GenericCSVRSolverKernelFunction, Fit) {
     EXPECT_EQ(model.num_features(), test_data.num_features());
     EXPECT_EQ(model.get_params(), (plssvm::parameter{ params, plssvm::gamma = plssvm::real_type{ 1.0 } / static_cast<plssvm::real_type>(test_data.num_features()) }));
     EXPECT_EQ(model.support_vectors(), test_data.data());
-    EXPECT_EQ(model.labels().value().get(), test_data.labels().value().get());
+    EXPECT_OPTIONAL_EQ(model.labels(), test_data.labels());
     EXPECT_EQ(model.weights().size(), 1);
     EXPECT_EQ(model.rho().size(), 1);
-    EXPECT_TRUE(model.num_iters().has_value());
-    EXPECT_EQ(model.num_iters().value().size(), 1);
+    const auto& num_iters_opt = model.num_iters();
+    ASSERT_TRUE(num_iters_opt.has_value());
+    if (num_iters_opt.has_value()) {
+        EXPECT_EQ(num_iters_opt.value().size(), 1);
+    }
 }
 
 REGISTER_TYPED_TEST_SUITE_P(GenericCSVRSolverKernelFunction,

@@ -384,8 +384,9 @@ TYPED_TEST(BaseCSVRFit, FitNamedParametersInvalidEpsilon) {
     plssvm::regression_data_set<label_type> training_data{ this->get_data_filename() };
     if constexpr (kernel == plssvm::kernel_function_type::chi_squared) {
         // chi-squared is well-defined for non-negative values only
-        if (training_data.labels().has_value()) {
-            training_data = plssvm::regression_data_set<label_type>{ util::matrix_abs(training_data.data()), *training_data.labels() };
+        const auto &labels_opt = training_data.labels();
+        if (labels_opt.has_value()) {
+            training_data = plssvm::regression_data_set<label_type>{ util::matrix_abs(training_data.data()), labels_opt.value() };
         }
     }
 
@@ -432,8 +433,9 @@ TYPED_TEST(BaseCSVRFit, FitNamedParametersInvalidMaxIter) {
     plssvm::regression_data_set<label_type> training_data{ this->get_data_filename() };
     if constexpr (kernel == plssvm::kernel_function_type::chi_squared) {
         // chi-squared is well-defined for non-negative values only
-        if (training_data.labels().has_value()) {
-            training_data = plssvm::regression_data_set<label_type>{ util::matrix_abs(training_data.data()), *training_data.labels() };
+        const auto &labels_opt = training_data.labels();
+        if (labels_opt.has_value()) {
+            training_data = plssvm::regression_data_set<label_type>{ util::matrix_abs(training_data.data()), labels_opt.value() };
         }
     }
 
@@ -487,8 +489,9 @@ TYPED_TEST(BaseCSVRFit, FitCommMismatch) {
     plssvm::regression_data_set<label_type> training_data{ comm, this->get_data_filename() };
     if constexpr (kernel == plssvm::kernel_function_type::chi_squared) {
         // chi-squared is well-defined for non-negative values only
-        if (training_data.labels().has_value()) {
-            training_data = plssvm::regression_data_set<label_type>{ comm, util::matrix_abs(training_data.data()), *training_data.labels() };
+        const auto &labels_opt = training_data.labels();
+        if (labels_opt.has_value()) {
+            training_data = plssvm::regression_data_set<label_type>{ comm, util::matrix_abs(training_data.data()), labels_opt.value() };
         }
     }
 
@@ -590,8 +593,9 @@ TYPED_TEST(BaseCSVRFit, FitOutOfResources) {
         plssvm::regression_data_set<label_type> training_data{ this->get_data_filename() };
         if constexpr (kernel == plssvm::kernel_function_type::chi_squared) {
             // chi-squared is well-defined for non-negative values only
-            if (training_data.labels().has_value()) {
-                training_data = plssvm::regression_data_set<label_type>{ util::matrix_abs(training_data.data()), *training_data.labels() };
+            const auto &labels_opt = training_data.labels();
+            if (labels_opt.has_value()) {
+                training_data = plssvm::regression_data_set<label_type>{ util::matrix_abs(training_data.data()), labels_opt.value() };
             }
         }
 
@@ -644,8 +648,9 @@ TYPED_TEST(BaseCSVRFit, FitDeviceMemoryTooSmall) {
         plssvm::regression_data_set<label_type> training_data{ this->get_data_filename() };
         if constexpr (kernel == plssvm::kernel_function_type::chi_squared) {
             // chi-squared is well-defined for non-negative values only
-            if (training_data.labels().has_value()) {
-                training_data = plssvm::regression_data_set<label_type>{ util::matrix_abs(training_data.data()), *training_data.labels() };
+            const auto &labels_opt = training_data.labels();
+            if (labels_opt.has_value()) {
+                training_data = plssvm::regression_data_set<label_type>{ util::matrix_abs(training_data.data()), labels_opt.value() };
             }
         }
 
@@ -699,8 +704,9 @@ TYPED_TEST(BaseCSVRFit, FitLocalMemoryTooSmall) {
     plssvm::regression_data_set<label_type> training_data{ this->get_data_filename() };
     if constexpr (kernel == plssvm::kernel_function_type::chi_squared) {
         // chi-squared is well-defined for non-negative values only
-        if (training_data.labels().has_value()) {
-            training_data = plssvm::regression_data_set<label_type>{ util::matrix_abs(training_data.data()), *training_data.labels() };
+        const auto &labels_opt = training_data.labels();
+        if (labels_opt.has_value()) {
+            training_data = plssvm::regression_data_set<label_type>{ util::matrix_abs(training_data.data()), labels_opt.value() };
         }
     }
 

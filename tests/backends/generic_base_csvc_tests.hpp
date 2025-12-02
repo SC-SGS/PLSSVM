@@ -109,8 +109,9 @@ TYPED_TEST_P(GenericCSVCKernelFunctionClassification, Predict) {
     plssvm::classification_data_set<label_type> test_data = util::generate_trivially_solvable_classification_data_set<label_type>();
     if constexpr (kernel == plssvm::kernel_function_type::chi_squared) {
         // chi-squared is well-defined for non-negative values only
-        if (test_data.labels().has_value()) {
-            test_data = plssvm::classification_data_set<label_type>{ util::matrix_abs(test_data.data()), *test_data.labels() };
+        const auto& labels_opt = test_data.labels();
+        if (labels_opt.has_value()) {
+            test_data = plssvm::classification_data_set<label_type>{ util::matrix_abs(test_data.data()), labels_opt.value() };
         }
     }
 
@@ -124,12 +125,12 @@ TYPED_TEST_P(GenericCSVCKernelFunctionClassification, Predict) {
     const std::vector<label_type> calculated = svc.predict(model, test_data);
 
     // check the calculated result for correctness
-    EXPECT_EQ(calculated, test_data.labels().value().get());
+    EXPECT_OPTIONAL_EQ(calculated, test_data.labels());
 
     // for the linear kernel, predict again to check whether reusing the w vector works as intended
     if (kernel == plssvm::kernel_function_type::linear) {
         const std::vector<label_type> calculated_second = svc.predict(model, test_data);
-        EXPECT_EQ(calculated_second, test_data.labels().value().get());
+        EXPECT_OPTIONAL_EQ(calculated_second, test_data.labels());
     }
 }
 
@@ -150,8 +151,9 @@ TYPED_TEST_P(GenericCSVCKernelFunctionClassification, ScoreModel) {
     plssvm::classification_data_set<label_type> test_data = util::generate_trivially_solvable_classification_data_set<label_type>();
     if constexpr (kernel == plssvm::kernel_function_type::chi_squared) {
         // chi-squared is well-defined for non-negative values only
-        if (test_data.labels().has_value()) {
-            test_data = plssvm::classification_data_set<label_type>{ util::matrix_abs(test_data.data()), *test_data.labels() };
+        const auto& labels_opt = test_data.labels();
+        if (labels_opt.has_value()) {
+            test_data = plssvm::classification_data_set<label_type>{ util::matrix_abs(test_data.data()), labels_opt.value() };
         }
     }
 
@@ -185,8 +187,9 @@ TYPED_TEST_P(GenericCSVCKernelFunctionClassification, Score) {
     plssvm::classification_data_set<label_type> test_data = util::generate_trivially_solvable_classification_data_set<label_type>();
     if constexpr (kernel == plssvm::kernel_function_type::chi_squared) {
         // chi-squared is well-defined for non-negative values only
-        if (test_data.labels().has_value()) {
-            test_data = plssvm::classification_data_set<label_type>{ util::matrix_abs(test_data.data()), *test_data.labels() };
+        const auto& labels_opt = test_data.labels();
+        if (labels_opt.has_value()) {
+            test_data = plssvm::classification_data_set<label_type>{ util::matrix_abs(test_data.data()), labels_opt.value() };
         }
     }
 
@@ -242,8 +245,9 @@ TYPED_TEST_P(GenericCSVCSolverKernelFunctionClassification, Fit) {
     plssvm::classification_data_set<label_type> test_data{ this->filename };
     if constexpr (kernel == plssvm::kernel_function_type::chi_squared) {
         // chi-squared is well-defined for non-negative values only
-        if (test_data.labels().has_value()) {
-            test_data = plssvm::classification_data_set<label_type>{ util::matrix_abs(test_data.data()), *test_data.labels() };
+        const auto& labels_opt = test_data.labels();
+        if (labels_opt.has_value()) {
+            test_data = plssvm::classification_data_set<label_type>{ util::matrix_abs(test_data.data()), labels_opt.value() };
         }
     }
 
@@ -258,9 +262,9 @@ TYPED_TEST_P(GenericCSVCSolverKernelFunctionClassification, Fit) {
     EXPECT_EQ(model.num_features(), test_data.num_features());
     EXPECT_EQ(model.get_params(), (plssvm::parameter{ params, plssvm::gamma = plssvm::real_type{ 1.0 } / static_cast<plssvm::real_type>(test_data.num_features()) }));
     EXPECT_EQ(model.support_vectors(), test_data.data());
-    EXPECT_EQ(model.labels().value().get(), test_data.labels().value().get());
+    EXPECT_OPTIONAL_EQ(model.labels(), test_data.labels());
     EXPECT_EQ(model.num_classes(), test_data.num_classes());
-    EXPECT_EQ(model.classes(), test_data.classes().value());
+    EXPECT_OPTIONAL_EQ(model.classes(), test_data.classes());
     if constexpr (classification == plssvm::classification_type::oaa) {
         EXPECT_EQ(model.weights().size(), 1);
         EXPECT_EQ(model.rho().size(), test_data.num_classes());
@@ -271,6 +275,11 @@ TYPED_TEST_P(GenericCSVCSolverKernelFunctionClassification, Fit) {
     EXPECT_EQ(model.get_classification_type(), classification);
     EXPECT_TRUE(model.num_iters().has_value());
     EXPECT_EQ(model.num_iters().value().size(), (plssvm::calculate_number_of_classifiers(classification, test_data.num_classes())));
+    const auto& num_iters_opt = model.num_iters();
+    ASSERT_TRUE(num_iters_opt.has_value());
+    if (num_iters_opt.has_value()) {
+        EXPECT_EQ(num_iters_opt.value().size(), (plssvm::calculate_number_of_classifiers(classification, test_data.num_classes())));
+    }
 }
 
 REGISTER_TYPED_TEST_SUITE_P(GenericCSVCSolverKernelFunctionClassification,

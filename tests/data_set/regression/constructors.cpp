@@ -87,8 +87,7 @@ TYPED_TEST(RegressionDataSetConstructors, ConstructARFFFromFileWithLabel) {
     // check values
     EXPECT_FLOATING_POINT_MATRIX_EQ(data.data(), this->get_correct_data_points());
     EXPECT_TRUE(data.has_labels());
-    ASSERT_TRUE(data.labels().has_value());
-    EXPECT_EQ(data.labels().value().get(), correct_labels);
+    EXPECT_OPTIONAL_EQ(data.labels(), correct_labels);
 
     EXPECT_EQ(data.num_data_points(), this->get_correct_data_points().num_rows());
     EXPECT_EQ(data.num_features(), this->get_correct_data_points().num_cols());
@@ -131,8 +130,7 @@ TYPED_TEST(RegressionDataSetConstructors, ConstructLIBSVMFromFileWithLabel) {
     // check values
     EXPECT_FLOATING_POINT_MATRIX_EQ(data.data(), this->get_correct_data_points());
     EXPECT_TRUE(data.has_labels());
-    ASSERT_TRUE(data.labels().has_value());
-    EXPECT_EQ(data.labels().value().get(), correct_labels);
+    EXPECT_OPTIONAL_EQ(data.labels(), correct_labels);
 
     EXPECT_EQ(data.num_data_points(), this->get_correct_data_points().num_rows());
     EXPECT_EQ(data.num_features(), this->get_correct_data_points().num_cols());
@@ -175,8 +173,7 @@ TYPED_TEST(RegressionDataSetConstructors, ConstructExplicitARFFFromFile) {
     // check values
     EXPECT_FLOATING_POINT_MATRIX_EQ(data.data(), this->get_correct_data_points());
     EXPECT_TRUE(data.has_labels());
-    ASSERT_TRUE(data.labels().has_value());
-    EXPECT_EQ(data.labels().value().get(), correct_labels);
+    EXPECT_OPTIONAL_EQ(data.labels(), correct_labels);
 
     EXPECT_EQ(data.num_data_points(), this->get_correct_data_points().num_rows());
     EXPECT_EQ(data.num_features(), this->get_correct_data_points().num_cols());
@@ -196,8 +193,7 @@ TYPED_TEST(RegressionDataSetConstructors, ConstructExplicitLIBSVMFromFile) {
     // check values
     EXPECT_FLOATING_POINT_MATRIX_EQ(data.data(), this->get_correct_data_points());
     EXPECT_TRUE(data.has_labels());
-    ASSERT_TRUE(data.labels().has_value());
-    EXPECT_EQ(data.labels().value().get(), correct_labels);
+    EXPECT_OPTIONAL_EQ(data.labels(), correct_labels);
 
     EXPECT_EQ(data.num_data_points(), this->get_correct_data_points().num_rows());
     EXPECT_EQ(data.num_features(), this->get_correct_data_points().num_cols());
@@ -218,21 +214,26 @@ TYPED_TEST(RegressionDataSetConstructors, ConstructScaledARFFFromFile) {
     const auto [scaled_data_points, scaling_factors] = util::scale(this->get_correct_data_points(), plssvm::real_type{ -1.0 }, plssvm::real_type{ 1.0 });
     EXPECT_FLOATING_POINT_MATRIX_NEAR(data.data(), plssvm::soa_matrix<plssvm::real_type>{ scaled_data_points });
     EXPECT_TRUE(data.has_labels());
-    ASSERT_TRUE(data.labels().has_value());
-    EXPECT_EQ(data.labels().value().get(), correct_labels);
+    EXPECT_OPTIONAL_EQ(data.labels(), correct_labels);
 
     EXPECT_EQ(data.num_data_points(), this->get_correct_data_points().num_rows());
     EXPECT_EQ(data.num_features(), this->get_correct_data_points().num_cols());
 
     EXPECT_TRUE(data.is_scaled());
-    EXPECT_TRUE(data.scaling_factors().has_value());
-    ASSERT_TRUE(data.scaling_factors().value().get().scaling_factors().has_value());
-    ASSERT_EQ(data.scaling_factors().value().get().scaling_factors()->size(), scaling_factors.size());
-    for (std::size_t i = 0; i < scaling_factors.size(); ++i) {
-        auto factors = data.scaling_factors().value().get().scaling_factors().value()[i];
-        EXPECT_EQ(factors.feature, std::get<0>(scaling_factors[i]));
-        EXPECT_FLOATING_POINT_NEAR(factors.lower, std::get<1>(scaling_factors[i]));
-        EXPECT_FLOATING_POINT_NEAR(factors.upper, std::get<2>(scaling_factors[i]));
+    const auto &data_scaling_factors_opt = data.scaling_factors();
+    EXPECT_TRUE(data_scaling_factors_opt.has_value());
+    if (data_scaling_factors_opt.has_value()) {
+        const auto &scaling_factors_opt = data_scaling_factors_opt.value().get().scaling_factors();
+        ASSERT_TRUE(scaling_factors_opt.has_value());
+        if (scaling_factors_opt.has_value()) {
+            const std::vector<plssvm::min_max_scaler::factors> factors = scaling_factors_opt.value();
+            ASSERT_EQ(factors.size(), scaling_factors.size());
+            for (std::size_t i = 0; i < factors.size(); ++i) {
+                EXPECT_EQ(factors[i].feature, std::get<0>(scaling_factors[i]));
+                EXPECT_FLOATING_POINT_NEAR(factors[i].lower, std::get<1>(scaling_factors[i]));
+                EXPECT_FLOATING_POINT_NEAR(factors[i].upper, std::get<2>(scaling_factors[i]));
+            }
+        }
     }
 }
 
@@ -268,21 +269,26 @@ TYPED_TEST(RegressionDataSetConstructors, ConstructScaledLIBSVMFromFile) {
     const auto [scaled_data_points, scaling_factors] = util::scale(this->get_correct_data_points(), plssvm::real_type{ -2.5 }, plssvm::real_type{ 2.5 });
     EXPECT_FLOATING_POINT_MATRIX_NEAR(data.data(), plssvm::soa_matrix<plssvm::real_type>{ scaled_data_points });
     EXPECT_TRUE(data.has_labels());
-    ASSERT_TRUE(data.labels().has_value());
-    EXPECT_EQ(data.labels().value().get(), correct_labels);
+    EXPECT_OPTIONAL_EQ(data.labels(), correct_labels);
 
     EXPECT_EQ(data.num_data_points(), this->get_correct_data_points().num_rows());
     EXPECT_EQ(data.num_features(), this->get_correct_data_points().num_cols());
 
     EXPECT_TRUE(data.is_scaled());
-    EXPECT_TRUE(data.scaling_factors().has_value());
-    ASSERT_TRUE(data.scaling_factors().value().get().scaling_factors().has_value());
-    ASSERT_EQ(data.scaling_factors().value().get().scaling_factors()->size(), scaling_factors.size());
-    for (std::size_t i = 0; i < scaling_factors.size(); ++i) {
-        auto factors = data.scaling_factors().value().get().scaling_factors().value()[i];
-        EXPECT_EQ(factors.feature, std::get<0>(scaling_factors[i]));
-        EXPECT_FLOATING_POINT_NEAR(factors.lower, std::get<1>(scaling_factors[i]));
-        EXPECT_FLOATING_POINT_NEAR(factors.upper, std::get<2>(scaling_factors[i]));
+    const auto &data_scaling_factors_opt = data.scaling_factors();
+    EXPECT_TRUE(data_scaling_factors_opt.has_value());
+    if (data_scaling_factors_opt.has_value()) {
+        const auto &scaling_factors_opt = data_scaling_factors_opt.value().get().scaling_factors();
+        ASSERT_TRUE(scaling_factors_opt.has_value());
+        if (scaling_factors_opt.has_value()) {
+            const std::vector<plssvm::min_max_scaler::factors> factors = scaling_factors_opt.value();
+            ASSERT_EQ(factors.size(), scaling_factors.size());
+            for (std::size_t i = 0; i < factors.size(); ++i) {
+                EXPECT_EQ(factors[i].feature, std::get<0>(scaling_factors[i]));
+                EXPECT_FLOATING_POINT_NEAR(factors[i].lower, std::get<1>(scaling_factors[i]));
+                EXPECT_FLOATING_POINT_NEAR(factors[i].upper, std::get<2>(scaling_factors[i]));
+            }
+        }
     }
 }
 
@@ -318,21 +324,26 @@ TYPED_TEST(RegressionDataSetConstructors, ConstructScaledExplicitARFFFromFile) {
     const auto [scaled_data_points, scaling_factors] = util::scale(this->get_correct_data_points(), plssvm::real_type{ -1.0 }, plssvm::real_type{ 1.0 });
     EXPECT_FLOATING_POINT_MATRIX_NEAR(data.data(), plssvm::soa_matrix<plssvm::real_type>{ scaled_data_points });
     EXPECT_TRUE(data.has_labels());
-    ASSERT_TRUE(data.labels().has_value());
-    EXPECT_EQ(data.labels().value().get(), correct_labels);
+    EXPECT_OPTIONAL_EQ(data.labels(), correct_labels);
 
     EXPECT_EQ(data.num_data_points(), this->get_correct_data_points().num_rows());
     EXPECT_EQ(data.num_features(), this->get_correct_data_points().num_cols());
 
     EXPECT_TRUE(data.is_scaled());
-    EXPECT_TRUE(data.scaling_factors().has_value());
-    ASSERT_TRUE(data.scaling_factors().value().get().scaling_factors().has_value());
-    ASSERT_EQ(data.scaling_factors().value().get().scaling_factors()->size(), scaling_factors.size());
-    for (std::size_t i = 0; i < scaling_factors.size(); ++i) {
-        auto factors = data.scaling_factors().value().get().scaling_factors().value()[i];
-        EXPECT_EQ(factors.feature, std::get<0>(scaling_factors[i]));
-        EXPECT_FLOATING_POINT_NEAR(factors.lower, std::get<1>(scaling_factors[i]));
-        EXPECT_FLOATING_POINT_NEAR(factors.upper, std::get<2>(scaling_factors[i]));
+    const auto &data_scaling_factors_opt = data.scaling_factors();
+    EXPECT_TRUE(data_scaling_factors_opt.has_value());
+    if (data_scaling_factors_opt.has_value()) {
+        const auto &scaling_factors_opt = data_scaling_factors_opt.value().get().scaling_factors();
+        ASSERT_TRUE(scaling_factors_opt.has_value());
+        if (scaling_factors_opt.has_value()) {
+            const std::vector<plssvm::min_max_scaler::factors> factors = scaling_factors_opt.value();
+            ASSERT_EQ(factors.size(), scaling_factors.size());
+            for (std::size_t i = 0; i < factors.size(); ++i) {
+                EXPECT_EQ(factors[i].feature, std::get<0>(scaling_factors[i]));
+                EXPECT_FLOATING_POINT_NEAR(factors[i].lower, std::get<1>(scaling_factors[i]));
+                EXPECT_FLOATING_POINT_NEAR(factors[i].upper, std::get<2>(scaling_factors[i]));
+            }
+        }
     }
 }
 
@@ -368,21 +379,26 @@ TYPED_TEST(RegressionDataSetConstructors, ConstructScaledExplicitLIBSVMFromFile)
     const auto [scaled_data_points, scaling_factors] = util::scale(this->get_correct_data_points(), plssvm::real_type{ -2.5 }, plssvm::real_type{ 2.5 });
     EXPECT_FLOATING_POINT_MATRIX_NEAR(data.data(), plssvm::soa_matrix<plssvm::real_type>{ scaled_data_points });
     EXPECT_TRUE(data.has_labels());
-    ASSERT_TRUE(data.labels().has_value());
-    EXPECT_EQ(data.labels().value().get(), correct_labels);
+    EXPECT_OPTIONAL_EQ(data.labels(), correct_labels);
 
     EXPECT_EQ(data.num_data_points(), this->get_correct_data_points().num_rows());
     EXPECT_EQ(data.num_features(), this->get_correct_data_points().num_cols());
 
     EXPECT_TRUE(data.is_scaled());
-    EXPECT_TRUE(data.scaling_factors().has_value());
-    ASSERT_TRUE(data.scaling_factors().value().get().scaling_factors().has_value());
-    ASSERT_EQ(data.scaling_factors().value().get().scaling_factors()->size(), scaling_factors.size());
-    for (std::size_t i = 0; i < scaling_factors.size(); ++i) {
-        auto factors = data.scaling_factors().value().get().scaling_factors().value()[i];
-        EXPECT_EQ(factors.feature, std::get<0>(scaling_factors[i]));
-        EXPECT_FLOATING_POINT_NEAR(factors.lower, std::get<1>(scaling_factors[i]));
-        EXPECT_FLOATING_POINT_NEAR(factors.upper, std::get<2>(scaling_factors[i]));
+    const auto &data_scaling_factors_opt = data.scaling_factors();
+    EXPECT_TRUE(data_scaling_factors_opt.has_value());
+    if (data_scaling_factors_opt.has_value()) {
+        const auto &scaling_factors_opt = data_scaling_factors_opt.value().get().scaling_factors();
+        ASSERT_TRUE(scaling_factors_opt.has_value());
+        if (scaling_factors_opt.has_value()) {
+            const std::vector<plssvm::min_max_scaler::factors> factors = scaling_factors_opt.value();
+            ASSERT_EQ(factors.size(), scaling_factors.size());
+            for (std::size_t i = 0; i < factors.size(); ++i) {
+                EXPECT_EQ(factors[i].feature, std::get<0>(scaling_factors[i]));
+                EXPECT_FLOATING_POINT_NEAR(factors[i].lower, std::get<1>(scaling_factors[i]));
+                EXPECT_FLOATING_POINT_NEAR(factors[i].upper, std::get<2>(scaling_factors[i]));
+            }
+        }
     }
 }
 
@@ -480,8 +496,7 @@ TYPED_TEST(RegressionDataSetConstructors, ConstructFromVectorWithLabel) {
     // check values
     EXPECT_FLOATING_POINT_MATRIX_EQ(data.data(), correct_data_points);
     EXPECT_TRUE(data.has_labels());
-    ASSERT_TRUE(data.labels().has_value());
-    EXPECT_EQ(data.labels().value().get(), labels);
+    EXPECT_OPTIONAL_EQ(data.labels(), labels);
 
     EXPECT_EQ(data.num_data_points(), correct_data_points.num_rows());
     EXPECT_EQ(data.num_features(), correct_data_points.num_cols());
@@ -534,14 +549,20 @@ TYPED_TEST(RegressionDataSetConstructors, ConstructScaledFromVectorWithoutLabel)
     EXPECT_EQ(data.num_features(), correct_data_points_scaled.num_cols());
 
     EXPECT_TRUE(data.is_scaled());
-    EXPECT_TRUE(data.scaling_factors().has_value());
-    ASSERT_TRUE(data.scaling_factors().value().get().scaling_factors().has_value());
-    ASSERT_EQ(data.scaling_factors().value().get().scaling_factors()->size(), scaling_factors.size());
-    for (std::size_t i = 0; i < scaling_factors.size(); ++i) {
-        auto factors = data.scaling_factors().value().get().scaling_factors().value()[i];
-        EXPECT_EQ(factors.feature, std::get<0>(scaling_factors[i]));
-        EXPECT_FLOATING_POINT_NEAR(factors.lower, std::get<1>(scaling_factors[i]));
-        EXPECT_FLOATING_POINT_NEAR(factors.upper, std::get<2>(scaling_factors[i]));
+    const auto &data_scaling_factors_opt = data.scaling_factors();
+    EXPECT_TRUE(data_scaling_factors_opt.has_value());
+    if (data_scaling_factors_opt.has_value()) {
+        const auto &scaling_factors_opt = data_scaling_factors_opt.value().get().scaling_factors();
+        ASSERT_TRUE(scaling_factors_opt.has_value());
+        if (scaling_factors_opt.has_value()) {
+            const std::vector<plssvm::min_max_scaler::factors> factors = scaling_factors_opt.value();
+            ASSERT_EQ(factors.size(), scaling_factors.size());
+            for (std::size_t i = 0; i < factors.size(); ++i) {
+                EXPECT_EQ(factors[i].feature, std::get<0>(scaling_factors[i]));
+                EXPECT_FLOATING_POINT_NEAR(factors[i].lower, std::get<1>(scaling_factors[i]));
+                EXPECT_FLOATING_POINT_NEAR(factors[i].upper, std::get<2>(scaling_factors[i]));
+            }
+        }
     }
 }
 
@@ -580,21 +601,26 @@ TYPED_TEST(RegressionDataSetConstructors, ConstructScaledFromVectorWithLabel) {
     // check values
     EXPECT_FLOATING_POINT_MATRIX_NEAR(data.data(), correct_data_points_scaled);
     EXPECT_TRUE(data.has_labels());
-    ASSERT_TRUE(data.labels().has_value());
-    EXPECT_EQ(data.labels().value().get(), labels);
+    EXPECT_OPTIONAL_EQ(data.labels(), labels);
 
     EXPECT_EQ(data.num_data_points(), correct_data_points_scaled.num_rows());
     EXPECT_EQ(data.num_features(), correct_data_points_scaled.num_cols());
 
     EXPECT_TRUE(data.is_scaled());
-    EXPECT_TRUE(data.scaling_factors().has_value());
-    ASSERT_TRUE(data.scaling_factors().value().get().scaling_factors().has_value());
-    ASSERT_EQ(data.scaling_factors().value().get().scaling_factors()->size(), scaling_factors.size());
-    for (std::size_t i = 0; i < scaling_factors.size(); ++i) {
-        auto factors = data.scaling_factors().value().get().scaling_factors().value()[i];
-        EXPECT_EQ(factors.feature, std::get<0>(scaling_factors[i]));
-        EXPECT_FLOATING_POINT_NEAR(factors.lower, std::get<1>(scaling_factors[i]));
-        EXPECT_FLOATING_POINT_NEAR(factors.upper, std::get<2>(scaling_factors[i]));
+    const auto &data_scaling_factors_opt = data.scaling_factors();
+    EXPECT_TRUE(data_scaling_factors_opt.has_value());
+    if (data_scaling_factors_opt.has_value()) {
+        const auto &scaling_factors_opt = data_scaling_factors_opt.value().get().scaling_factors();
+        ASSERT_TRUE(scaling_factors_opt.has_value());
+        if (scaling_factors_opt.has_value()) {
+            const std::vector<plssvm::min_max_scaler::factors> factors = scaling_factors_opt.value();
+            ASSERT_EQ(factors.size(), scaling_factors.size());
+            for (std::size_t i = 0; i < factors.size(); ++i) {
+                EXPECT_EQ(factors[i].feature, std::get<0>(scaling_factors[i]));
+                EXPECT_FLOATING_POINT_NEAR(factors[i].lower, std::get<1>(scaling_factors[i]));
+                EXPECT_FLOATING_POINT_NEAR(factors[i].upper, std::get<2>(scaling_factors[i]));
+            }
+        }
     }
 }
 
@@ -717,8 +743,7 @@ TYPED_TEST(RegressionDataSetMatrixConstructors, ConstructFromMatrixWithLabelNoPa
     EXPECT_FLOATING_POINT_MATRIX_EQ(data.data(), (plssvm::soa_matrix<plssvm::real_type>{ correct_data_points, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE } }));
     EXPECT_TRUE(data.data().is_padded());
     EXPECT_TRUE(data.has_labels());
-    ASSERT_TRUE(data.labels().has_value());
-    EXPECT_EQ(data.labels().value().get(), labels);
+    EXPECT_OPTIONAL_EQ(data.labels(), labels);
 
     EXPECT_EQ(data.num_data_points(), correct_data_points.num_rows());
     EXPECT_EQ(data.num_features(), correct_data_points.num_cols());
@@ -741,8 +766,7 @@ TYPED_TEST(RegressionDataSetMatrixConstructors, ConstructFromMatrixWithLabel) {
     // check values
     EXPECT_FLOATING_POINT_MATRIX_EQ(data.data(), plssvm::soa_matrix<plssvm::real_type>{ correct_data_points });
     EXPECT_TRUE(data.has_labels());
-    ASSERT_TRUE(data.labels().has_value());
-    EXPECT_EQ(data.labels().value().get(), labels);
+    EXPECT_OPTIONAL_EQ(data.labels(), labels);
 
     EXPECT_EQ(data.num_data_points(), correct_data_points.num_rows());
     EXPECT_EQ(data.num_features(), correct_data_points.num_cols());
@@ -800,14 +824,20 @@ TYPED_TEST(RegressionDataSetMatrixConstructors, ConstructScaledFromMatrixWithout
     EXPECT_EQ(data.num_features(), correct_data_points_scaled.num_cols());
 
     EXPECT_TRUE(data.is_scaled());
-    EXPECT_TRUE(data.scaling_factors().has_value());
-    ASSERT_TRUE(data.scaling_factors().value().get().scaling_factors().has_value());
-    ASSERT_EQ(data.scaling_factors().value().get().scaling_factors()->size(), scaling_factors.size());
-    for (std::size_t i = 0; i < scaling_factors.size(); ++i) {
-        auto factors = data.scaling_factors().value().get().scaling_factors().value()[i];
-        EXPECT_EQ(factors.feature, std::get<0>(scaling_factors[i]));
-        EXPECT_FLOATING_POINT_NEAR(factors.lower, std::get<1>(scaling_factors[i]));
-        EXPECT_FLOATING_POINT_NEAR(factors.upper, std::get<2>(scaling_factors[i]));
+    const auto &data_scaling_factors_opt = data.scaling_factors();
+    EXPECT_TRUE(data_scaling_factors_opt.has_value());
+    if (data_scaling_factors_opt.has_value()) {
+        const auto &scaling_factors_opt = data_scaling_factors_opt.value().get().scaling_factors();
+        ASSERT_TRUE(scaling_factors_opt.has_value());
+        if (scaling_factors_opt.has_value()) {
+            const std::vector<plssvm::min_max_scaler::factors> factors = scaling_factors_opt.value();
+            ASSERT_EQ(factors.size(), scaling_factors.size());
+            for (std::size_t i = 0; i < factors.size(); ++i) {
+                EXPECT_EQ(factors[i].feature, std::get<0>(scaling_factors[i]));
+                EXPECT_FLOATING_POINT_NEAR(factors[i].lower, std::get<1>(scaling_factors[i]));
+                EXPECT_FLOATING_POINT_NEAR(factors[i].upper, std::get<2>(scaling_factors[i]));
+            }
+        }
     }
 }
 
@@ -853,14 +883,20 @@ TYPED_TEST(RegressionDataSetMatrixConstructors, ConstructScaledFromMatrixWithout
     EXPECT_EQ(data.num_features(), correct_data_points_scaled.num_cols());
 
     EXPECT_TRUE(data.is_scaled());
-    EXPECT_TRUE(data.scaling_factors().has_value());
-    ASSERT_TRUE(data.scaling_factors().value().get().scaling_factors().has_value());
-    ASSERT_EQ(data.scaling_factors().value().get().scaling_factors()->size(), scaling_factors.size());
-    for (std::size_t i = 0; i < scaling_factors.size(); ++i) {
-        auto factors = data.scaling_factors().value().get().scaling_factors().value()[i];
-        EXPECT_EQ(factors.feature, std::get<0>(scaling_factors[i]));
-        EXPECT_FLOATING_POINT_NEAR(factors.lower, std::get<1>(scaling_factors[i]));
-        EXPECT_FLOATING_POINT_NEAR(factors.upper, std::get<2>(scaling_factors[i]));
+    const auto &data_scaling_factors_opt = data.scaling_factors();
+    EXPECT_TRUE(data_scaling_factors_opt.has_value());
+    if (data_scaling_factors_opt.has_value()) {
+        const auto &scaling_factors_opt = data_scaling_factors_opt.value().get().scaling_factors();
+        ASSERT_TRUE(scaling_factors_opt.has_value());
+        if (scaling_factors_opt.has_value()) {
+            const std::vector<plssvm::min_max_scaler::factors> factors = scaling_factors_opt.value();
+            ASSERT_EQ(factors.size(), scaling_factors.size());
+            for (std::size_t i = 0; i < factors.size(); ++i) {
+                EXPECT_EQ(factors[i].feature, std::get<0>(scaling_factors[i]));
+                EXPECT_FLOATING_POINT_NEAR(factors[i].lower, std::get<1>(scaling_factors[i]));
+                EXPECT_FLOATING_POINT_NEAR(factors[i].upper, std::get<2>(scaling_factors[i]));
+            }
+        }
     }
 }
 
@@ -902,21 +938,26 @@ TYPED_TEST(RegressionDataSetMatrixConstructors, ConstructScaledFromMatrixWithLab
     EXPECT_FLOATING_POINT_MATRIX_NEAR(data.data(), (plssvm::soa_matrix<plssvm::real_type>{ correct_data_points_scaled, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE } }));
     EXPECT_TRUE(data.data().is_padded());
     EXPECT_TRUE(data.has_labels());
-    ASSERT_TRUE(data.labels().has_value());
-    EXPECT_EQ(data.labels().value().get(), labels);
+    EXPECT_OPTIONAL_EQ(data.labels(), labels);
 
     EXPECT_EQ(data.num_data_points(), correct_data_points_scaled.num_rows());
     EXPECT_EQ(data.num_features(), correct_data_points_scaled.num_cols());
 
     EXPECT_TRUE(data.is_scaled());
-    EXPECT_TRUE(data.scaling_factors().has_value());
-    ASSERT_TRUE(data.scaling_factors().value().get().scaling_factors().has_value());
-    ASSERT_EQ(data.scaling_factors().value().get().scaling_factors()->size(), scaling_factors.size());
-    for (std::size_t i = 0; i < scaling_factors.size(); ++i) {
-        auto factors = data.scaling_factors().value().get().scaling_factors().value()[i];
-        EXPECT_EQ(factors.feature, std::get<0>(scaling_factors[i]));
-        EXPECT_FLOATING_POINT_NEAR(factors.lower, std::get<1>(scaling_factors[i]));
-        EXPECT_FLOATING_POINT_NEAR(factors.upper, std::get<2>(scaling_factors[i]));
+    const auto &data_scaling_factors_opt = data.scaling_factors();
+    EXPECT_TRUE(data_scaling_factors_opt.has_value());
+    if (data_scaling_factors_opt.has_value()) {
+        const auto &scaling_factors_opt = data_scaling_factors_opt.value().get().scaling_factors();
+        ASSERT_TRUE(scaling_factors_opt.has_value());
+        if (scaling_factors_opt.has_value()) {
+            const std::vector<plssvm::min_max_scaler::factors> factors = scaling_factors_opt.value();
+            ASSERT_EQ(factors.size(), scaling_factors.size());
+            for (std::size_t i = 0; i < factors.size(); ++i) {
+                EXPECT_EQ(factors[i].feature, std::get<0>(scaling_factors[i]));
+                EXPECT_FLOATING_POINT_NEAR(factors[i].lower, std::get<1>(scaling_factors[i]));
+                EXPECT_FLOATING_POINT_NEAR(factors[i].upper, std::get<2>(scaling_factors[i]));
+            }
+        }
     }
 }
 
@@ -957,21 +998,26 @@ TYPED_TEST(RegressionDataSetMatrixConstructors, ConstructScaledFromMatrixWithLab
     // check values
     EXPECT_FLOATING_POINT_MATRIX_NEAR(data.data(), plssvm::soa_matrix<plssvm::real_type>{ correct_data_points_scaled });
     EXPECT_TRUE(data.has_labels());
-    ASSERT_TRUE(data.labels().has_value());
-    EXPECT_EQ(data.labels().value().get(), labels);
+    EXPECT_OPTIONAL_EQ(data.labels(), labels);
 
     EXPECT_EQ(data.num_data_points(), correct_data_points_scaled.num_rows());
     EXPECT_EQ(data.num_features(), correct_data_points_scaled.num_cols());
 
     EXPECT_TRUE(data.is_scaled());
-    EXPECT_TRUE(data.scaling_factors().has_value());
-    ASSERT_TRUE(data.scaling_factors().value().get().scaling_factors().has_value());
-    ASSERT_EQ(data.scaling_factors().value().get().scaling_factors()->size(), scaling_factors.size());
-    for (std::size_t i = 0; i < scaling_factors.size(); ++i) {
-        auto factors = data.scaling_factors().value().get().scaling_factors().value()[i];
-        EXPECT_EQ(factors.feature, std::get<0>(scaling_factors[i]));
-        EXPECT_FLOATING_POINT_NEAR(factors.lower, std::get<1>(scaling_factors[i]));
-        EXPECT_FLOATING_POINT_NEAR(factors.upper, std::get<2>(scaling_factors[i]));
+    const auto &data_scaling_factors_opt = data.scaling_factors();
+    EXPECT_TRUE(data_scaling_factors_opt.has_value());
+    if (data_scaling_factors_opt.has_value()) {
+        const auto &scaling_factors_opt = data_scaling_factors_opt.value().get().scaling_factors();
+        ASSERT_TRUE(scaling_factors_opt.has_value());
+        if (scaling_factors_opt.has_value()) {
+            const std::vector<plssvm::min_max_scaler::factors> factors = scaling_factors_opt.value();
+            ASSERT_EQ(factors.size(), scaling_factors.size());
+            for (std::size_t i = 0; i < factors.size(); ++i) {
+                EXPECT_EQ(factors[i].feature, std::get<0>(scaling_factors[i]));
+                EXPECT_FLOATING_POINT_NEAR(factors[i].lower, std::get<1>(scaling_factors[i]));
+                EXPECT_FLOATING_POINT_NEAR(factors[i].upper, std::get<2>(scaling_factors[i]));
+            }
+        }
     }
 }
 
@@ -1071,8 +1117,7 @@ TYPED_TEST(RegressionDataSetRValueMatrixConstructors, ConstructFromRvalueMatrixW
     // check values
     EXPECT_FLOATING_POINT_MATRIX_EQ(data.data(), copied_correct_data_points);
     EXPECT_TRUE(data.has_labels());
-    ASSERT_TRUE(data.labels().has_value());
-    EXPECT_EQ(data.labels().value().get(), copied_labels);
+    EXPECT_OPTIONAL_EQ(data.labels(), copied_labels);
 
     EXPECT_EQ(data.num_data_points(), copied_correct_data_points.num_rows());
     EXPECT_EQ(data.num_features(), copied_correct_data_points.num_cols());
@@ -1113,14 +1158,20 @@ TYPED_TEST(RegressionDataSetRValueMatrixConstructors, ConstructScaledFromRvalueM
     EXPECT_EQ(data.num_features(), correct_data_points_scaled.num_cols());
 
     EXPECT_TRUE(data.is_scaled());
-    EXPECT_TRUE(data.scaling_factors().has_value());
-    ASSERT_TRUE(data.scaling_factors().value().get().scaling_factors().has_value());
-    ASSERT_EQ(data.scaling_factors().value().get().scaling_factors()->size(), scaling_factors.size());
-    for (std::size_t i = 0; i < scaling_factors.size(); ++i) {
-        auto factors = data.scaling_factors().value().get().scaling_factors().value()[i];
-        EXPECT_EQ(factors.feature, std::get<0>(scaling_factors[i]));
-        EXPECT_FLOATING_POINT_NEAR(factors.lower, std::get<1>(scaling_factors[i]));
-        EXPECT_FLOATING_POINT_NEAR(factors.upper, std::get<2>(scaling_factors[i]));
+    const auto &data_scaling_factors_opt = data.scaling_factors();
+    EXPECT_TRUE(data_scaling_factors_opt.has_value());
+    if (data_scaling_factors_opt.has_value()) {
+        const auto &scaling_factors_opt = data_scaling_factors_opt.value().get().scaling_factors();
+        ASSERT_TRUE(scaling_factors_opt.has_value());
+        if (scaling_factors_opt.has_value()) {
+            const std::vector<plssvm::min_max_scaler::factors> factors = scaling_factors_opt.value();
+            ASSERT_EQ(factors.size(), scaling_factors.size());
+            for (std::size_t i = 0; i < factors.size(); ++i) {
+                EXPECT_EQ(factors[i].feature, std::get<0>(scaling_factors[i]));
+                EXPECT_FLOATING_POINT_NEAR(factors[i].lower, std::get<1>(scaling_factors[i]));
+                EXPECT_FLOATING_POINT_NEAR(factors[i].upper, std::get<2>(scaling_factors[i]));
+            }
+        }
     }
 }
 
@@ -1161,21 +1212,26 @@ TYPED_TEST(RegressionDataSetRValueMatrixConstructors, ConstructScaledFromRvalueM
     // check values
     EXPECT_FLOATING_POINT_MATRIX_NEAR(data.data(), correct_data_points_scaled);
     EXPECT_TRUE(data.has_labels());
-    ASSERT_TRUE(data.labels().has_value());
-    EXPECT_EQ(data.labels().value().get(), copied_labels);
+    EXPECT_OPTIONAL_EQ(data.labels(), copied_labels);
 
     EXPECT_EQ(data.num_data_points(), correct_data_points_scaled.num_rows());
     EXPECT_EQ(data.num_features(), correct_data_points_scaled.num_cols());
 
     EXPECT_TRUE(data.is_scaled());
-    EXPECT_TRUE(data.scaling_factors().has_value());
-    ASSERT_TRUE(data.scaling_factors().value().get().scaling_factors().has_value());
-    ASSERT_EQ(data.scaling_factors().value().get().scaling_factors()->size(), scaling_factors.size());
-    for (std::size_t i = 0; i < scaling_factors.size(); ++i) {
-        auto factors = data.scaling_factors().value().get().scaling_factors().value()[i];
-        EXPECT_EQ(factors.feature, std::get<0>(scaling_factors[i]));
-        EXPECT_FLOATING_POINT_NEAR(factors.lower, std::get<1>(scaling_factors[i]));
-        EXPECT_FLOATING_POINT_NEAR(factors.upper, std::get<2>(scaling_factors[i]));
+    const auto &data_scaling_factors_opt = data.scaling_factors();
+    EXPECT_TRUE(data_scaling_factors_opt.has_value());
+    if (data_scaling_factors_opt.has_value()) {
+        const auto &scaling_factors_opt = data_scaling_factors_opt.value().get().scaling_factors();
+        ASSERT_TRUE(scaling_factors_opt.has_value());
+        if (scaling_factors_opt.has_value()) {
+            const std::vector<plssvm::min_max_scaler::factors> factors = scaling_factors_opt.value();
+            ASSERT_EQ(factors.size(), scaling_factors.size());
+            for (std::size_t i = 0; i < factors.size(); ++i) {
+                EXPECT_EQ(factors[i].feature, std::get<0>(scaling_factors[i]));
+                EXPECT_FLOATING_POINT_NEAR(factors[i].lower, std::get<1>(scaling_factors[i]));
+                EXPECT_FLOATING_POINT_NEAR(factors[i].upper, std::get<2>(scaling_factors[i]));
+            }
+        }
     }
 }
 

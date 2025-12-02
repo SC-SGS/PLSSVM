@@ -46,8 +46,7 @@ TEST(MPICommunicator, ConstructWeights) {
     const plssvm::mpi::communicator comm{ weights };
 
     // load-balancing weights should be set
-    ASSERT_TRUE(comm.get_load_balancing_weights().has_value());
-    EXPECT_EQ(comm.get_load_balancing_weights().value(), weights);
+    EXPECT_OPTIONAL_EQ(comm.get_load_balancing_weights(), weights);
 }
 
 #if defined(PLSSVM_HAS_MPI_ENABLED)
@@ -70,8 +69,7 @@ TEST(MPICommunicator, ConstructMPICommAndWeights) {
     const plssvm::mpi::communicator comm{ MPI_COMM_WORLD, weights };
 
     // load-balancing weights should be set
-    ASSERT_TRUE(comm.get_load_balancing_weights().has_value());
-    EXPECT_EQ(comm.get_load_balancing_weights().value(), weights);
+    EXPECT_OPTIONAL_EQ(comm.get_load_balancing_weights(), weights);
 
     // the wrapped MPI communicator should be equal to MPI_COMM_WORLD
     int result{};

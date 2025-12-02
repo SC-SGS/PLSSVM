@@ -93,8 +93,7 @@ TYPED_TEST(ClassificationDataSetGetter, Labels) {
     // create data set with labels
     const plssvm::classification_data_set<label_type> data_with_labels{ this->get_data_points(), this->get_label() };
     // check labels getter
-    ASSERT_TRUE(data_with_labels.labels().has_value());
-    EXPECT_EQ(data_with_labels.labels()->get(), this->get_label());
+    EXPECT_OPTIONAL_EQ(data_with_labels.labels(), this->get_label());
 }
 
 TYPED_TEST(ClassificationDataSetGetter, Classes) {
@@ -107,8 +106,7 @@ TYPED_TEST(ClassificationDataSetGetter, Classes) {
     // create data set with labels
     const plssvm::classification_data_set<label_type> data_with_labels{ this->get_data_points(), this->get_label() };
     // check different_labels getter
-    ASSERT_TRUE(data_with_labels.classes().has_value());
-    EXPECT_EQ(*data_with_labels.classes(), this->get_classes());
+    EXPECT_OPTIONAL_EQ(data_with_labels.classes(), this->get_classes());
 }
 
 TYPED_TEST(ClassificationDataSetGetter, NumDataPoints) {
@@ -168,16 +166,25 @@ TYPED_TEST(ClassificationDataSetGetter, ScalingFactors) {
     // create scaled data set
     const plssvm::classification_data_set<label_type> data_scaled{ this->get_data_points(), plssvm::min_max_scaler{ plssvm::real_type{ -1.0 }, plssvm::real_type{ 1.0 } } };
     // check scaling_factors getter
-    ASSERT_TRUE(data_scaled.scaling_factors().has_value());
-    const auto &[ignored, correct_scaling_factors] = util::scale(this->get_data_points(), plssvm::real_type{ -1.0 }, plssvm::real_type{ 1.0 });
-    const plssvm::min_max_scaler &scaling_factors = *data_scaled.scaling_factors();
-    EXPECT_FLOATING_POINT_EQ(scaling_factors.scaling_interval().first, plssvm::real_type{ -1.0 });
-    EXPECT_FLOATING_POINT_EQ(scaling_factors.scaling_interval().second, plssvm::real_type{ 1.0 });
-    ASSERT_TRUE(scaling_factors.scaling_factors().has_value());
-    ASSERT_EQ(scaling_factors.scaling_factors()->size(), correct_scaling_factors.size());
-    for (std::size_t i = 0; i < scaling_factors.scaling_factors()->size(); ++i) {
-        EXPECT_EQ(scaling_factors.scaling_factors().value()[i].feature, std::get<0>(correct_scaling_factors[i]));
-        EXPECT_FLOATING_POINT_NEAR(scaling_factors.scaling_factors().value()[i].lower, std::get<1>(correct_scaling_factors[i]));
-        EXPECT_FLOATING_POINT_NEAR(scaling_factors.scaling_factors().value()[i].upper, std::get<2>(correct_scaling_factors[i]));
+    const auto& scaling_factors_opt = data_scaled.scaling_factors();
+    ASSERT_TRUE(scaling_factors_opt.has_value());
+    if (scaling_factors_opt.has_value()) {
+        const plssvm::min_max_scaler scaling_factors = scaling_factors_opt.value().get();
+
+        // check scaling factor content
+        const auto &[ignored, correct_scaling_factors] = util::scale(this->get_data_points(), plssvm::real_type{ -1.0 }, plssvm::real_type{ 1.0 });
+        EXPECT_FLOATING_POINT_EQ(scaling_factors.scaling_interval().first, plssvm::real_type{ -1.0 });
+        EXPECT_FLOATING_POINT_EQ(scaling_factors.scaling_interval().second, plssvm::real_type{ 1.0 });
+        const auto &factors_opt = scaling_factors.scaling_factors();
+        ASSERT_TRUE(factors_opt.has_value());
+        if (factors_opt.has_value()) {
+            const std::vector<plssvm::min_max_scaler::factors> factors = factors_opt.value();
+            ASSERT_EQ(factors.size(), correct_scaling_factors.size());
+            for (std::size_t i = 0; i < factors.size(); ++i) {
+                EXPECT_EQ(factors[i].feature, std::get<0>(correct_scaling_factors[i]));
+                EXPECT_FLOATING_POINT_NEAR(factors[i].lower, std::get<1>(correct_scaling_factors[i]));
+                EXPECT_FLOATING_POINT_NEAR(factors[i].upper, std::get<2>(correct_scaling_factors[i]));
+            }
+        }
     }
 }
