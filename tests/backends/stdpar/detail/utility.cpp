@@ -12,9 +12,6 @@
 
 #include "gtest/gtest.h"  // TEST, EXPECT_NE
 
-#if defined(PLSSVM_STDPAR_BACKEND_HAS_HIPSTDPAR)
-    EXPECT_EQ(plssvm::stdpar::detail::get_stdpar_version(), "unknown");
-#else
+TEST(stdparUtility, GetStdparImplementation) {
     EXPECT_NE(plssvm::stdpar::detail::get_stdpar_version(), "unknown");
-#endif
 }

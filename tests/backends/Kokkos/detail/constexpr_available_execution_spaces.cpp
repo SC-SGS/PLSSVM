@@ -15,4 +15,5 @@
 TEST(KokkosConstexprAvailableExecutionSpaces, ConstexprAvailableExecutionSpaces) {
     // at least one execution space must always be available
     EXPECT_FALSE(plssvm::kokkos::detail::constexpr_available_execution_spaces().empty());
+    EXPECT_EQ(plssvm::kokkos::detail::constexpr_available_execution_spaces().size(), PLSSVM_KOKKOS_BACKEND_NUM_AVAILABLE_EXECUTION_SPACES);
 }

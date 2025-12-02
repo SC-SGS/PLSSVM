@@ -96,7 +96,7 @@ TYPED_TEST(RocStdparStdparCSVMConstructor, ConstructTargetAndParameter) {
 TYPED_TEST(RocStdparStdparCSVMConstructor, ConstructNamedArgs) {
     using csvm_type = typename TestFixture::fixture_csvm_type;
 
-#if defined(PLSSVM_HAS_CPU_TARGET)
+#if defined(PLSSVM_HAS_AMD_TARGET)
     // only automatic or AMD GPU are allowed as target platform for the stdpar backend using roc-stdpar
     EXPECT_NO_THROW((csvm_type{ plssvm::kernel_type = plssvm::kernel_function_type::linear, plssvm::cost = 2.0 }));
     EXPECT_NO_THROW((csvm_type{ plssvm::cost = 2.0 }));
@@ -113,7 +113,7 @@ TYPED_TEST(RocStdparStdparCSVMConstructor, ConstructNamedArgs) {
 TYPED_TEST(RocStdparStdparCSVMConstructor, ConstructTargetAndNamedArgs) {
     using csvm_type = typename TestFixture::fixture_csvm_type;
 
-#if defined(PLSSVM_HAS_CPU_TARGET)
+#if defined(PLSSVM_HAS_AMD_TARGET)
     // only automatic or AMD GPU are allowed as target platform for the stdpar backend using roc-stdpar
     EXPECT_NO_THROW((csvm_type{ plssvm::target_platform::automatic, plssvm::kernel_type = plssvm::kernel_function_type::linear, plssvm::cost = 2.0 }));
     EXPECT_NO_THROW((csvm_type{ plssvm::target_platform::gpu_amd, plssvm::cost = 2.0 }));

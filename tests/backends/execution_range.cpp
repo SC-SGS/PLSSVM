@@ -175,7 +175,7 @@ TEST(ExecutionRange, ConstructMultipleGrids) {
     EXPECT_EQ(exec.block, (plssvm::detail::dim_type{ 16ull, 16ull, 4ull }));
 
     // check the grids
-    EXPECT_EQ(exec.grids.size(), 8);
+    ASSERT_EQ(exec.grids.size(), 8);
     EXPECT_EQ(exec.grids[0].first, (plssvm::detail::dim_type{ 64ull, 64ull, 64ull }));
     EXPECT_EQ(exec.grids[0].second, (plssvm::detail::dim_type{ 0ull, 0ull, 0ull }));
     EXPECT_EQ(exec.grids[1].first, (plssvm::detail::dim_type{ 64ull, 64ull, 62ull }));

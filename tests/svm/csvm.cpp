@@ -86,7 +86,45 @@ TEST(BaseCSVM, ConstructRadialBasisFunctionFromNamedParameters) {
     EXPECT_TRUE(csvm.get_params().equivalent(params));
 }
 
-TEST(BaseCSVM, get_target_platforms) {
+TEST(BaseCSVM, ConstructSigmoidFromNamedParameters) {
+    // correct parameter
+    const plssvm::parameter params{ plssvm::kernel_type = plssvm::kernel_function_type::sigmoid, plssvm::gamma = 0.00001, plssvm::cost = 10.0 };
+
+    // create C-SVM: must be done using the mock class since the csvm base class is pure virtual
+    const mock_csvm csvm{ plssvm::kernel_type = params.kernel_type,
+                          plssvm::gamma = params.gamma,
+                          plssvm::cost = params.cost };
+
+    // check whether the parameters have been set correctly
+    EXPECT_TRUE(csvm.get_params().equivalent(params));
+}
+
+TEST(BaseCSVM, ConstructLaplacianFromNamedParameters) {
+    // correct parameter
+    const plssvm::parameter params{ plssvm::kernel_type = plssvm::kernel_function_type::laplacian, plssvm::gamma = 0.00001, plssvm::cost = 10.0 };
+
+    // create C-SVM: must be done using the mock class since the csvm base class is pure virtual
+    const mock_csvm csvm{ plssvm::kernel_type = params.kernel_type,
+                          plssvm::gamma = params.gamma,
+                          plssvm::cost = params.cost };
+
+    // check whether the parameters have been set correctly
+    EXPECT_TRUE(csvm.get_params().equivalent(params));
+}
+
+TEST(BaseCSVM, ConstructChiSquaredFromNamedParameters) {
+    // correct parameter
+    const plssvm::parameter params{ plssvm::kernel_type = plssvm::kernel_function_type::chi_squared, plssvm::gamma = 0.00001, plssvm::cost = 10.0 };
+
+    // create C-SVM: must be done using the mock class since the csvm base class is pure virtual
+    const mock_csvm csvm{ plssvm::kernel_type = params.kernel_type,
+                          plssvm::gamma = params.gamma,
+                          plssvm::cost = params.cost };
+
+    // check whether the parameters have been set correctly
+    EXPECT_TRUE(csvm.get_params().equivalent(params));
+}
+
 TEST(BaseCSVM, GetTargetPlatforms) {
     // create C-SVM: must be done using the mock class since the csvm base class is pure virtual
     const mock_csvm csvm{};

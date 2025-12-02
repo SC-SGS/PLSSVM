@@ -137,13 +137,13 @@ TYPED_TEST(HIPCSVMConstructor, ConstructTargetAndParameter) {
     // all other target platforms must throw
     EXPECT_THROW_WHAT((csvm_type{ plssvm::target_platform::cpu, params }),
                       plssvm::hip::backend_exception,
-                      "Invalid target platform 'cpu' for the HIP backend using the HIP runtime!");
+                      "Invalid target platform 'cpu' for the HIP backend using the CUDA runtime!");
     EXPECT_THROW_WHAT((csvm_type{ plssvm::target_platform::gpu_amd, params }),
                       plssvm::hip::backend_exception,
-                      "Invalid target platform 'gpu_amd' for the HIP backend using the HIP runtime!");
+                      "Invalid target platform 'gpu_amd' for the HIP backend using the CUDA runtime!");
     EXPECT_THROW_WHAT((csvm_type{ plssvm::target_platform::gpu_intel, params }),
                       plssvm::hip::backend_exception,
-                      "Invalid target platform 'gpu_intel' for the HIP backend using the HIP runtime!");
+                      "Invalid target platform 'gpu_intel' for the HIP backend using the CUDA runtime!");
 #endif
 }
 
@@ -223,13 +223,13 @@ TYPED_TEST(HIPCSVMConstructor, ConstructTargetAndNamedArgs) {
     // all other target platforms must throw
     EXPECT_THROW_WHAT((csvm_type{ plssvm::target_platform::cpu, plssvm::cost = 2.0 }),
                       plssvm::hip::backend_exception,
-                      "Invalid target platform 'cpu' for the HIP backend using the HIP runtime!");
+                      "Invalid target platform 'cpu' for the HIP backend using the CUDA runtime!");
     EXPECT_THROW_WHAT((csvm_type{ plssvm::target_platform::gpu_amd, plssvm::cost = 2.0 }),
                       plssvm::hip::backend_exception,
-                      "Invalid target platform 'gpu_amd' for the HIP backend using the HIP runtime!");
+                      "Invalid target platform 'gpu_amd' for the HIP backend using the CUDA runtime!");
     EXPECT_THROW_WHAT((csvm_type{ plssvm::target_platform::gpu_intel, plssvm::cost = 2.0 }),
                       plssvm::hip::backend_exception,
-                      "Invalid target platform 'gpu_intel' for the HIP backend using the HIP runtime!");
+                      "Invalid target platform 'gpu_intel' for the HIP backend using the CUDA runtime!");
 #endif
 }
 
