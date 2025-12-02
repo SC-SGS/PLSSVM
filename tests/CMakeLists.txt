@@ -270,6 +270,11 @@ else ()
     set(PLSSVM_ENABLE_DEATH_TESTS OFF)
 endif ()
 
+# This define is used such that the environment header does not include <hpx/hpx_main.hpp> which would result in a linker error when tests are enabled.
+# Without the <hpx/hpx_main.hpp> include, HPX's short command line arguments can be used which doesn't matter in the tests.
+# This is necessary for the HPX backend and Kokkos backend using the HPX execution space, but it doesn't hurt to always set the env variable here.
+target_compile_definitions(${PLSSVM_BASE_TEST_LIBRARY_NAME} PUBLIC PLSSVM_HPX_DO_NOT_INCLUDE_HPX_MAIN)
+
 # add tests to google test
 include(GoogleTest)
 include(${PROJECT_SOURCE_DIR}/cmake/discover_tests_with_death_test_filter.cmake)

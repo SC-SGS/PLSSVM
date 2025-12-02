@@ -16,7 +16,7 @@ set(PLSSVM_HPX_TEST_SOURCES ${CMAKE_CURRENT_LIST_DIR}/detail/utility.cpp ${CMAKE
 add_executable(${PLSSVM_HPX_TEST_NAME} ${CMAKE_CURRENT_LIST_DIR}/../../hpx_main.cpp ${PLSSVM_HPX_TEST_SOURCES})
 
 # link against test library
-target_link_libraries(${PLSSVM_HPX_TEST_NAME} PRIVATE ${PLSSVM_BASE_TEST_LIBRARY_NAME} HPX::hpx HPX::wrap_main)
+target_link_libraries(${PLSSVM_HPX_TEST_NAME} PRIVATE ${PLSSVM_BASE_TEST_LIBRARY_NAME} HPX::hpx)
 
 # add tests to google test
 include(GoogleTest)

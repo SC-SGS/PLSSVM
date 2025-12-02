@@ -10,15 +10,17 @@
  * @brief Contains the googletest main function. Sets the DeathTest to "threadsafe" execution instead of "fast".
  */
 
-#include "plssvm/environment.hpp"  // plssvm::environment::scope_guard
+#include "plssvm/backend_types.hpp"          // plssvm::backend_type
+#include "plssvm/environment.hpp"            // plssvm::environment::scope_guard
+#include "plssvm/exceptions/exceptions.hpp"  // plssvm::mpi_exception
+
+#include "hpx/hpx_init.hpp"  // hpx::init
 
 #include "gtest/gtest.h"  // RUN_ALL_TESTS, ::testing::{InitGoogleTest, GTEST_FLAG},GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST definitions
 
-#include <cstdlib>  // std::atexit
-
-// Workaround as HPX runtime not working properly with Google Test
-// Run the entire main function in HPX runtime
-#include "hpx/hpx_main.hpp"
+#include <iostream>  // std::cerr, std::endl
+#include <memory>    // std::unique_ptr, std::make_unique
+#include <vector>    // std::vector
 
 // silence GTest warnings/test errors
 
@@ -49,9 +51,26 @@ GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(DevicePtrDeathTest);
 // exception tests
 GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(Exception);
 
+namespace {
+
+[[nodiscard]] int hpx_main([[maybe_unused]] int argc, [[maybe_unused]] char **argv) {
+    // be sure that the HPX runtime is only started ONCE for all test invocations
+    const int result = RUN_ALL_TESTS();
+    ::hpx::finalize();
+    return result;
+}
+
+}  // namespace
+
 int main(int argc, char **argv) {
-    // initialize MPI environment only via the plssvm::scope_guard (by explicitly specifying NO backend)
-    [[maybe_unused]] plssvm::environment::scope_guard mpi_guard{ {} };
+    // may throw an exception if the required level of MPI parallelism isn't available (really rare)
+    std::unique_ptr<plssvm::environment::scope_guard> mpi_guard{};
+    try {
+        // initialize MPI environment via the plssvm::scope_guard
+        mpi_guard = std::make_unique<plssvm::environment::scope_guard>(std::vector<plssvm::backend_type>{});
+    } catch (const plssvm::mpi_exception &e) {
+        std::cerr << "An exception occurred while setting up the MPI environment!: " << e.what_with_loc() << std::endl;
+    }
 
     ::testing::InitGoogleTest(&argc, argv);
 
@@ -61,5 +80,5 @@ int main(int argc, char **argv) {
 #if !defined(_WIN32)
     ::testing::GTEST_FLAG(death_test_style) = "threadsafe";
 #endif
-    return RUN_ALL_TESTS();
+    return ::hpx::init(argc, argv);
 }
