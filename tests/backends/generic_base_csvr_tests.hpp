@@ -245,8 +245,7 @@ TYPED_TEST_P(GenericCSVRSolverKernelFunction, Fit) {
     }
 
     // create normal C-SVR
-    // const csvr_type svr = util::construct_from_tuple<csvr_type>(params, csvm_test_type::additional_arguments);
-    const csvr_type svr{ params };
+    const auto svr = util::construct_from_tuple<csvr_type>(params, csvm_test_type::additional_arguments);
 
     // call fit
     const plssvm::regression_model<label_type> model = svr.fit(test_data, plssvm::epsilon = 1e-10, plssvm::solver = solver);
