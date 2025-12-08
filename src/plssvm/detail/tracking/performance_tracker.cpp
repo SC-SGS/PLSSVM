@@ -250,9 +250,15 @@ void performance_tracker::save(std::ostream &out) {
     const auto host_name_max = static_cast<std::size_t>(sysconf(_SC_HOST_NAME_MAX));
     std::string hostname(host_name_max, '\0');
     gethostname(hostname.data(), host_name_max);
+    if (hostname.empty()) {
+        hostname = "not available";
+    }
     const auto login_name_max = static_cast<std::size_t>(sysconf(_SC_LOGIN_NAME_MAX));
     std::string username(login_name_max, '\0');
     getlogin_r(username.data(), login_name_max);
+    if (username.empty()) {
+        username = "not available";
+    }
 #else
     constexpr std::string_view hostname{ "not available" };
     constexpr std::string_view username{ "not available" };
@@ -274,11 +280,11 @@ void performance_tracker::save(std::ostream &out) {
         "meta_data:\n"
         "  date:                              \"{}\"\n"
         "  PLSSVM_TARGET_PLATFORMS:           \"{}\"\n"
-        "  commit:                            {}\n"
+        "  commit:                            \"{}\"\n"
         "  version:                           {}\n"
-        "  hostname:                          {}\n"
-        "  user:                              {}\n"
-        "  build_type:                        {}\n"
+        "  hostname:                          \"{}\"\n"
+        "  user:                              \"{}\"\n"
+        "  build_type:                        \"{}\"\n"
         "  LTO:                               {}\n"
         "  fast-math:                         {}\n"
         "  asserts:                           {}\n"
@@ -290,8 +296,8 @@ void performance_tracker::save(std::ostream &out) {
         version::detail::target_platforms,
         version::git_metadata::commit_sha1().empty() ? "unknown" : version::git_metadata::commit_sha1(),
         version::version,
-        hostname.data(),
-        username.data(),
+        hostname,
+        username,
         PLSSVM_BUILD_TYPE,
         lto_enabled,
         fast_math_enabled,
@@ -303,7 +309,7 @@ void performance_tracker::save(std::ostream &out) {
 
 #if defined(PLSSVM_SYCL_BACKEND_HAS_DPCPP)
     out << fmt::format(
-        "  DPCPP_backend_type:                {}\n",
+        "  DPCPP_backend_type:                \"{}\"\n",
         PLSSVM_SYCL_BACKEND_DPCPP_BACKEND_TYPE);
 #endif
 #if defined(PLSSVM_SYCL_BACKEND_HAS_ADAPTIVECPP)
