@@ -239,7 +239,10 @@ TYPED_TEST_P(GenericCSVCSolverKernelFunctionClassification, Fit) {
     constexpr plssvm::classification_type classification = util::test_parameter_value_at_v<2, TypeParam>;
 
     // create parameter struct
-    const plssvm::parameter params{ plssvm::kernel_type = kernel };
+    plssvm::parameter params{ plssvm::kernel_type = kernel };  // NOLINT(misc-const-correctness): can change based on the kernel function
+    if constexpr (kernel != plssvm::kernel_function_type::linear) {
+        params.gamma = plssvm::real_type{ 1.0 };
+    }
 
     // create data set to be used
     plssvm::classification_data_set<label_type> test_data{ this->filename };  // NOLINT(misc-const-correctness): can't be const for the chi-squared kernel
