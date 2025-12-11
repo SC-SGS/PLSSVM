@@ -23,14 +23,15 @@
 #include "plssvm/solver_types.hpp"                      // plssvm::solver_type
 #include "plssvm/target_platforms.hpp"                  // plssvm::target_platform
 
-#include "tests/types_to_test.hpp"  // util::{test_parameter_type_at_t, test_parameter_value_at_v}
-#include "tests/utility.hpp"        // util::{redirect_output, construct_from_tuple, temporary_file, instantiate_template_file}
-#include "tests/custom_test_macros.hpp" // EXPECT_OPTIONAL_EQ
+#include "tests/custom_test_macros.hpp"  // EXPECT_OPTIONAL_EQ
+#include "tests/types_to_test.hpp"       // util::{test_parameter_type_at_t, test_parameter_value_at_v}
+#include "tests/utility.hpp"             // util::{redirect_output, construct_from_tuple, temporary_file, instantiate_template_file}
 
 #include "gtest/gtest.h"  // TYPED_TEST_SUITE_P, TYPED_TEST_P, REGISTER_TYPED_TEST_SUITE_P, EXPECT_EQ, EXPECT_TRUE, ::testing::Test
 
-#include <utility>  // std::move
-#include <vector>   // std::vector
+#include <iostream>  // std::iostream
+#include <utility>   // std::move
+#include <vector>    // std::vector
 
 template <typename T>
 class GenericCSVC : public ::testing::Test,
@@ -109,7 +110,7 @@ TYPED_TEST_P(GenericCSVCKernelFunctionClassification, Predict) {
     plssvm::classification_data_set<label_type> test_data = util::generate_trivially_solvable_classification_data_set<label_type>();  // NOLINT(misc-const-correctness): can't be const for the chi-squared kernel
     if constexpr (kernel == plssvm::kernel_function_type::chi_squared) {
         // chi-squared is well-defined for non-negative values only
-        const auto& labels_opt = test_data.labels();
+        const auto &labels_opt = test_data.labels();
         if (labels_opt.has_value()) {
             test_data = plssvm::classification_data_set<label_type>{ util::matrix_abs(test_data.data()), labels_opt.value() };
         }
@@ -151,7 +152,7 @@ TYPED_TEST_P(GenericCSVCKernelFunctionClassification, ScoreModel) {
     plssvm::classification_data_set<label_type> test_data = util::generate_trivially_solvable_classification_data_set<label_type>();  // NOLINT(misc-const-correctness): can't be const for the chi-squared kernel
     if constexpr (kernel == plssvm::kernel_function_type::chi_squared) {
         // chi-squared is well-defined for non-negative values only
-        const auto& labels_opt = test_data.labels();
+        const auto &labels_opt = test_data.labels();
         if (labels_opt.has_value()) {
             test_data = plssvm::classification_data_set<label_type>{ util::matrix_abs(test_data.data()), labels_opt.value() };
         }
@@ -187,7 +188,7 @@ TYPED_TEST_P(GenericCSVCKernelFunctionClassification, Score) {
     plssvm::classification_data_set<label_type> test_data = util::generate_trivially_solvable_classification_data_set<label_type>();  // NOLINT(misc-const-correctness): can't be const for the chi-squared kernel
     if constexpr (kernel == plssvm::kernel_function_type::chi_squared) {
         // chi-squared is well-defined for non-negative values only
-        const auto& labels_opt = test_data.labels();
+        const auto &labels_opt = test_data.labels();
         if (labels_opt.has_value()) {
             test_data = plssvm::classification_data_set<label_type>{ util::matrix_abs(test_data.data()), labels_opt.value() };
         }
@@ -217,7 +218,8 @@ REGISTER_TYPED_TEST_SUITE_P(GenericCSVCKernelFunctionClassification,
 
 template <typename T>
 class GenericCSVCSolverKernelFunctionClassification : public GenericCSVC<T>,
-                                                      protected util::temporary_file {
+                                                      protected util::temporary_file,
+                                                      protected util::redirect_output<&std::clog> {
   protected:
     using fixture_label_type = util::test_parameter_type_at_t<1, T>;
 
@@ -248,7 +250,7 @@ TYPED_TEST_P(GenericCSVCSolverKernelFunctionClassification, Fit) {
     plssvm::classification_data_set<label_type> test_data{ this->filename };  // NOLINT(misc-const-correctness): can't be const for the chi-squared kernel
     if constexpr (kernel == plssvm::kernel_function_type::chi_squared) {
         // chi-squared is well-defined for non-negative values only
-        const auto& labels_opt = test_data.labels();
+        const auto &labels_opt = test_data.labels();
         if (labels_opt.has_value()) {
             test_data = plssvm::classification_data_set<label_type>{ util::matrix_abs(test_data.data()), labels_opt.value() };
         }
@@ -276,7 +278,7 @@ TYPED_TEST_P(GenericCSVCSolverKernelFunctionClassification, Fit) {
         EXPECT_EQ(model.rho().size(), plssvm::calculate_number_of_classifiers(classification, test_data.num_classes()));
     }
     EXPECT_EQ(model.get_classification_type(), classification);
-    const auto& num_iters_opt = model.num_iters();
+    const auto &num_iters_opt = model.num_iters();
     ASSERT_TRUE(num_iters_opt.has_value());
     if (num_iters_opt.has_value()) {
         EXPECT_EQ(num_iters_opt.value().size(), (plssvm::calculate_number_of_classifiers(classification, test_data.num_classes())));
