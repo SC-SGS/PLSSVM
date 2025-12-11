@@ -31,7 +31,7 @@ struct queue::queue_impl {
      * @param[in] args the parameters to construct a SYCL queue
      */
     template <typename... Args>
-    explicit queue_impl(Args&&... args) :
+    explicit queue_impl(Args &&...args) :
         sycl_queue{ std::forward<Args>(args)... } { }
 
     /// The wrapped SYCL queue.

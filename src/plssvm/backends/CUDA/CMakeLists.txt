@@ -55,7 +55,8 @@ if (CMAKE_CUDA_COMPILER_ID STREQUAL "NVIDIA")
     if (OpenMP_FOUND)
         if (CMAKE_CXX_COMPILER_ID STREQUAL "IntelLLVM")
             message(WARNING "Intel's icpx compiler as CXX host compiler together with nvcc is the CUDA compiler while OpenMP is enabled "
-                            "may not work due to the OpenMP target setting -fiopenmp!")
+                            "may not work due to the OpenMP target setting -fiopenmp!"
+            )
         endif ()
         set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -Xcompiler '-fopenmp'")
     endif ()

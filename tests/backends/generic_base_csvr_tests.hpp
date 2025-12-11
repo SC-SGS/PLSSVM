@@ -110,7 +110,7 @@ TYPED_TEST_P(GenericCSVRKernelFunction, Predict) {
     plssvm::regression_data_set<label_type> test_data = util::generate_trivially_solvable_regression_data_set<label_type>();  // NOLINT(misc-const-correctness): can't be const for the chi-squared kernel
     if constexpr (kernel == plssvm::kernel_function_type::chi_squared) {
         // chi-squared is well-defined for non-negative values only
-        const auto& labels_opt = test_data.labels();
+        const auto &labels_opt = test_data.labels();
         if (labels_opt.has_value()) {
             test_data = plssvm::regression_data_set<label_type>{ util::matrix_abs(test_data.data()), labels_opt.value() };
         }
@@ -151,7 +151,7 @@ TYPED_TEST_P(GenericCSVRKernelFunction, ScoreModel) {
     plssvm::regression_data_set<label_type> test_data = util::generate_trivially_solvable_regression_data_set<label_type>();  // NOLINT(misc-const-correctness): can't be const for the chi-squared kernel
     if constexpr (kernel == plssvm::kernel_function_type::chi_squared) {
         // chi-squared is well-defined for non-negative values only
-        const auto& labels_opt = test_data.labels();
+        const auto &labels_opt = test_data.labels();
         if (labels_opt.has_value()) {
             test_data = plssvm::regression_data_set<label_type>{ util::matrix_abs(test_data.data()), labels_opt.value() };
         }
@@ -188,7 +188,7 @@ TYPED_TEST_P(GenericCSVRKernelFunction, Score) {
     plssvm::regression_data_set<label_type> test_data = util::generate_trivially_solvable_regression_data_set<label_type>();  // NOLINT(misc-const-correctness): can't be const for the chi-squared kernel
     if constexpr (kernel == plssvm::kernel_function_type::chi_squared) {
         // chi-squared is well-defined for non-negative values only
-        const auto& labels_opt = test_data.labels();
+        const auto &labels_opt = test_data.labels();
         if (labels_opt.has_value()) {
             test_data = plssvm::regression_data_set<label_type>{ util::matrix_abs(test_data.data()), labels_opt.value() };
         }
@@ -238,7 +238,7 @@ TYPED_TEST_P(GenericCSVRSolverKernelFunction, Fit) {
     plssvm::regression_data_set<label_type> test_data{ PLSSVM_TEST_PATH "/data/libsvm/regression/6x4.libsvm" };  // NOLINT(misc-const-correctness): can't be const for the chi-squared kernel
     if constexpr (kernel == plssvm::kernel_function_type::chi_squared) {
         // chi-squared is well-defined for non-negative values only
-        const auto& labels_opt = test_data.labels();
+        const auto &labels_opt = test_data.labels();
         if (labels_opt.has_value()) {
             test_data = plssvm::regression_data_set<label_type>{ util::matrix_abs(test_data.data()), labels_opt.value() };
         }
@@ -258,7 +258,7 @@ TYPED_TEST_P(GenericCSVRSolverKernelFunction, Fit) {
     EXPECT_OPTIONAL_EQ(model.labels(), test_data.labels());
     EXPECT_EQ(model.weights().size(), 1);
     EXPECT_EQ(model.rho().size(), 1);
-    const auto& num_iters_opt = model.num_iters();
+    const auto &num_iters_opt = model.num_iters();
     ASSERT_TRUE(num_iters_opt.has_value());
     if (num_iters_opt.has_value()) {
         EXPECT_EQ(num_iters_opt.value().size(), 1);

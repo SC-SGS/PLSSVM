@@ -19,7 +19,7 @@
 
 #include "gtest/gtest.h"  // TEST_F, EXPECT_EQ, ASSERT_EQ, FAIL, ::testing::Test
 
-#include <vector>   // std::vector
+#include <vector>  // std::vector
 
 class LIBSVMRegressionModelDataParseValid : public ::testing::Test,
                                             protected util::temporary_file {

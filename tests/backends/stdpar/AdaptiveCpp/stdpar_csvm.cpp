@@ -28,7 +28,7 @@ using stdpar_csvm_types_gtest = util::combine_test_parameters_gtest_t<util::cart
 
 template <typename T>
 class AdaptiveCppStdparCSVMConstructor : public ::testing::Test,
-                                          private util::redirect_output<> {
+                                         private util::redirect_output<> {
   protected:
     using fixture_csvm_type = util::test_parameter_type_at_t<0, T>;
 };

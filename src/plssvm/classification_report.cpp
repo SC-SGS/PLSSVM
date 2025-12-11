@@ -132,7 +132,7 @@ std::ostream &operator<<(std::ostream &out, const classification_report::metric 
 }
 
 std::ostream &operator<<(std::ostream &out, const classification_report::accuracy_metric &accuracy) {
-    return out << fmt::format("Accuracy = {:.2f}% ({}/{})", accuracy.achieved_accuracy * 100.0, accuracy.num_correct, accuracy.num_total); // NOLINT: convert float to percent by multiplying it with 100
+    return out << fmt::format("Accuracy = {:.2f}% ({}/{})", accuracy.achieved_accuracy * 100.0, accuracy.num_correct, accuracy.num_total);  // NOLINT: convert float to percent by multiplying it with 100
 }
 
 std::ostream &operator<<(std::ostream &out, const classification_report::zero_division_behavior zero_div) {

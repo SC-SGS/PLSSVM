@@ -15,12 +15,12 @@
 #include "plssvm/matrix.hpp"                   // plssvm::soa_matrix
 #include "plssvm/mpi/communicator.hpp"         // plssvm::mpi::communicator
 
-#include "bindings/Python/bindings_fwd.hpp"                             // forward declare all helper functions to create the Python bindings
-#include "bindings/Python/data_set/variant_wrapper.hpp"                 // plssvm::bindings::python::util::classification_data_set_wrapper
+#include "bindings/Python/bindings_fwd.hpp"                                  // forward declare all helper functions to create the Python bindings
+#include "bindings/Python/data_set/variant_wrapper.hpp"                      // plssvm::bindings::python::util::classification_data_set_wrapper
 #include "bindings/Python/type_caster/label_vector_wrapper_type_caster.hpp"  // a custom Pybind11 type caster for a plssvm::bindings::python::util::label_vector_wrapper
-#include "bindings/Python/type_caster/matrix_type_caster.hpp"           // NOLINT: a custom Pybind11 type caster for a plssvm::matrix
-#include "bindings/Python/type_caster/mpi_type_caster.hpp"              // NOLINT: a custom Pybind11 type caster for a plssvm::mpi::communicator
-#include "bindings/Python/utility.hpp"                                  // plssvm::bindings::python::util::{create_instance, python_type_name_mapping, vector_to_pyarray}
+#include "bindings/Python/type_caster/matrix_type_caster.hpp"                // NOLINT: a custom Pybind11 type caster for a plssvm::matrix
+#include "bindings/Python/type_caster/mpi_type_caster.hpp"                   // NOLINT: a custom Pybind11 type caster for a plssvm::mpi::communicator
+#include "bindings/Python/utility.hpp"                                       // plssvm::bindings::python::util::{create_instance, python_type_name_mapping, vector_to_pyarray}
 
 #include "fmt/format.h"         // fmt::format
 #include "fmt/ranges.h"         // fmt::join

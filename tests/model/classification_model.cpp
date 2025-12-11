@@ -74,7 +74,7 @@ TYPED_TEST(ClassificationModel, Construct) {
     EXPECT_EQ(model.num_features(), 4);
     EXPECT_EQ(model.get_params(), plssvm::parameter{ plssvm::kernel_type = plssvm::kernel_function_type::linear });
     EXPECT_EQ(model.support_vectors().shape(), (plssvm::shape{ 6, 4 }));
-    const auto& labels_opt = model.labels();
+    const auto &labels_opt = model.labels();
     ASSERT_TRUE(labels_opt.has_value());
     if (labels_opt.has_value()) {
         EXPECT_EQ(labels_opt.value().get().size(), 6);

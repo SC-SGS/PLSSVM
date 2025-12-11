@@ -8,14 +8,14 @@
  * @brief Tests for the functionality related to the Kokkos backend.
  */
 
-#include "plssvm/backends/Kokkos/csvm.hpp"             // plssvm::kokkos::{csvm, csvc, csvr}
-#include "plssvm/backends/Kokkos/detail/utility.hpp"   // plssvm::kokkos::detail::available_target_platform_to_execution_space_mapping
-#include "plssvm/backends/Kokkos/exceptions.hpp"       // plssvm::kokkos::backend_exception
+#include "plssvm/backends/Kokkos/csvm.hpp"              // plssvm::kokkos::{csvm, csvc, csvr}
+#include "plssvm/backends/Kokkos/detail/utility.hpp"    // plssvm::kokkos::detail::available_target_platform_to_execution_space_mapping
+#include "plssvm/backends/Kokkos/exceptions.hpp"        // plssvm::kokkos::backend_exception
 #include "plssvm/backends/Kokkos/execution_spaces.hpp"  // plssvm::kokkos::execution_space
-#include "plssvm/detail/utility.hpp"                   // plssvm::detail::contains
-#include "plssvm/kernel_function_types.hpp"            // plssvm::kernel_function_type
-#include "plssvm/parameter.hpp"                        // plssvm::parameter
-#include "plssvm/target_platforms.hpp"                 // plssvm::target_platform, plssvm::list_available_target_platforms
+#include "plssvm/detail/utility.hpp"                    // plssvm::detail::contains
+#include "plssvm/kernel_function_types.hpp"             // plssvm::kernel_function_type
+#include "plssvm/parameter.hpp"                         // plssvm::parameter
+#include "plssvm/target_platforms.hpp"                  // plssvm::target_platform, plssvm::list_available_target_platforms
 
 #include "tests/backends/generic_base_csvc_tests.hpp"  // generic C-SVC tests to instantiate
 #include "tests/backends/generic_base_csvm_tests.hpp"  // generic C-SVM tests to instantiate

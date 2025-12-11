@@ -20,13 +20,13 @@
 #include "plssvm/svm/csvc.hpp"                          // plssvm::csvc
 #include "plssvm/verbosity_levels.hpp"                  // plssvm::verbosity_level, plssvm::verbosity
 
-#include "bindings/Python/bindings_fwd.hpp"                             // forward declare all helper functions to create the Python bindings
-#include "bindings/Python/data_set/variant_wrapper.hpp"                 // plssvm::bindings::python::util::classification_data_set_wrapper
-#include "bindings/Python/model/variant_wrapper.hpp"                    // plssvm::bindings::python::util::classification_model_wrapper
+#include "bindings/Python/bindings_fwd.hpp"                                  // forward declare all helper functions to create the Python bindings
+#include "bindings/Python/data_set/variant_wrapper.hpp"                      // plssvm::bindings::python::util::classification_data_set_wrapper
+#include "bindings/Python/model/variant_wrapper.hpp"                         // plssvm::bindings::python::util::classification_model_wrapper
 #include "bindings/Python/type_caster/label_vector_wrapper_type_caster.hpp"  // a custom Pybind11 type caster for a plssvm::bindings::python::label_vector_wrapper
-#include "bindings/Python/type_caster/matrix_type_caster.hpp"           // NOLINT: a custom Pybind11 type caster for a plssvm::matrix
-#include "bindings/Python/type_caster/matrix_wrapper_type_caster.hpp"   // a custom Pybind11 type caster for a plssvm::bindings::python::util::matrix_wrapper
-#include "bindings/Python/utility.hpp"                                  // plssvm::bindings::python::util::{check_kwargs_for_correctness, vector_to_pyarray}
+#include "bindings/Python/type_caster/matrix_type_caster.hpp"                // NOLINT: a custom Pybind11 type caster for a plssvm::matrix
+#include "bindings/Python/type_caster/matrix_wrapper_type_caster.hpp"        // a custom Pybind11 type caster for a plssvm::bindings::python::util::matrix_wrapper
+#include "bindings/Python/utility.hpp"                                       // plssvm::bindings::python::util::{check_kwargs_for_correctness, vector_to_pyarray}
 
 #include "fmt/format.h"            // fmt::format
 #include "fmt/ranges.h"            // fmt::join

@@ -6,20 +6,20 @@
  *          See the LICENSE.md file in the project root for full license information.
  */
 
-#include "plssvm/backend_types.hpp"                    // plssvm::kokkos::backend_csvm_type_t
-#include "plssvm/backends/Kokkos/csvm.hpp"             // plssvm::kokkos::csvm
-#include "plssvm/backends/Kokkos/exceptions.hpp"       // plssvm::kokkos::backend_exception
+#include "plssvm/backend_types.hpp"                     // plssvm::kokkos::backend_csvm_type_t
+#include "plssvm/backends/Kokkos/csvm.hpp"              // plssvm::kokkos::csvm
+#include "plssvm/backends/Kokkos/exceptions.hpp"        // plssvm::kokkos::backend_exception
 #include "plssvm/backends/Kokkos/execution_spaces.hpp"  // plssvm::kokkos::execution_space
-#include "plssvm/constants.hpp"                        // plssvm::real_type
-#include "plssvm/exceptions/exceptions.hpp"            // plssvm::exception
-#include "plssvm/gamma.hpp"                            // plssvm::gamma
-#include "plssvm/kernel_function_types.hpp"            // plssvm::kernel_function_type
-#include "plssvm/mpi/communicator.hpp"                 // plssvm::mpi::communicator
-#include "plssvm/parameter.hpp"                        // plssvm::parameter
-#include "plssvm/svm/csvc.hpp"                         // plssvm::csvc
-#include "plssvm/svm/csvm.hpp"                         // plssvm::csvm
-#include "plssvm/svm/csvr.hpp"                         // plssvm::csvr
-#include "plssvm/target_platforms.hpp"                 // plssvm::target_platform
+#include "plssvm/constants.hpp"                         // plssvm::real_type
+#include "plssvm/exceptions/exceptions.hpp"             // plssvm::exception
+#include "plssvm/gamma.hpp"                             // plssvm::gamma
+#include "plssvm/kernel_function_types.hpp"             // plssvm::kernel_function_type
+#include "plssvm/mpi/communicator.hpp"                  // plssvm::mpi::communicator
+#include "plssvm/parameter.hpp"                         // plssvm::parameter
+#include "plssvm/svm/csvc.hpp"                          // plssvm::csvc
+#include "plssvm/svm/csvm.hpp"                          // plssvm::csvm
+#include "plssvm/svm/csvr.hpp"                          // plssvm::csvr
+#include "plssvm/target_platforms.hpp"                  // plssvm::target_platform
 
 #include "bindings/Python/bindings_fwd.hpp"                 // forward declare all helper functions to create the Python bindings
 #include "bindings/Python/type_caster/mpi_type_caster.hpp"  // a custom Pybind11 type caster for a plssvm::mpi::communicator

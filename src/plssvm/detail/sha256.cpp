@@ -120,6 +120,7 @@ std::uint32_t sha256::rotr32(const std::uint32_t value, int count) {
     count &= mask;
     return (value >> count) | (value << (-count & mask));
 }
+
 // NOLINTEND
 
 }  // namespace plssvm::detail

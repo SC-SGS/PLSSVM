@@ -12,9 +12,9 @@
 
 #include "gtest/gtest.h"  // TEST, ASSERT_EQ, EXPECT_EQ
 
-#include <chrono>       // std::chrono::steady_clock::{time_point, now}, std::chrono::milliseconds, std::chrono literals
-#include <cstddef>      // std::size_t
-#include <vector>       // std::vector
+#include <chrono>   // std::chrono::steady_clock::{time_point, now}, std::chrono::milliseconds, std::chrono literals
+#include <cstddef>  // std::size_t
+#include <vector>   // std::vector
 
 TEST(TrackingUtility, DurationsFromReferenceTime) {
     // create different time points

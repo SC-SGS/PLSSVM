@@ -45,7 +45,7 @@ class ParameterBase : public ::testing::Test,
         // create argc and argv from a std::string
         cmd_options_ = std::move(cmd_line_split);
         cmd_argv_.reserve(cmd_options_.size());
-        for (std::string& cmd_opt : cmd_options_) {
+        for (std::string &cmd_opt : cmd_options_) {
             cmd_argv_.push_back(cmd_opt.data());
         }
     }

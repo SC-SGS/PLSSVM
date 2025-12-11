@@ -166,7 +166,7 @@ TYPED_TEST(ClassificationDataSetGetter, ScalingFactors) {
     // create scaled data set
     const plssvm::classification_data_set<label_type> data_scaled{ this->get_data_points(), plssvm::min_max_scaler{ plssvm::real_type{ -1.0 }, plssvm::real_type{ 1.0 } } };
     // check scaling_factors getter
-    const auto& scaling_factors_opt = data_scaled.scaling_factors();
+    const auto &scaling_factors_opt = data_scaled.scaling_factors();
     ASSERT_TRUE(scaling_factors_opt.has_value());
     if (scaling_factors_opt.has_value()) {
         const plssvm::min_max_scaler scaling_factors = scaling_factors_opt.value().get();

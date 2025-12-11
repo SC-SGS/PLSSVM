@@ -13,8 +13,8 @@
 #include "plssvm/backends/CUDA/exceptions.hpp"  // plssvm::cuda::backend_exception
 #include "plssvm/backends/execution_range.hpp"  // plssvm::detail::dim_type
 
-#include "driver_types.h"      // cudaSuccess, cudaErrorInvalidValue
-#include "vector_types.h"      // dim3
+#include "driver_types.h"  // cudaSuccess, cudaErrorInvalidValue
+#include "vector_types.h"  // dim3
 
 #include "tests/custom_test_macros.hpp"  // EXPECT_THROW_WHAT, EXPECT_THROW_WHAT_MATCHER
 

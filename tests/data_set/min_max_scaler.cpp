@@ -78,7 +78,7 @@ TEST(MinMaxScaler, ConstructFromFile) {
         factors_type{ 3, plssvm::real_type{ 3.3 }, plssvm::real_type{ 4.3 } },
         factors_type{ 4, plssvm::real_type{ 4.4 }, plssvm::real_type{ 5.4 } },
     };
-    const auto& factors_opt = scaler.scaling_factors();
+    const auto &factors_opt = scaler.scaling_factors();
     ASSERT_TRUE(factors_opt.has_value());
     if (factors_opt.has_value()) {
         const std::vector<plssvm::min_max_scaler::factors> factors = factors_opt.value();

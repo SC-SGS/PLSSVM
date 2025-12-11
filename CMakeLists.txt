@@ -377,8 +377,7 @@ if (uppercase_CMAKE_BUILD_TYPE MATCHES COVERAGE)
     # add custom target `make clean_coverage` which calls `make clean` and also removes all generate *.gcda and *.gcno files
     add_custom_target(clean_coverage)
     add_custom_command(
-        POST_BUILD
-        TARGET clean_coverage
+        POST_BUILD TARGET clean_coverage
         COMMENT "remove all coverage files"
         COMMAND ${CMAKE_MAKE_PROGRAM} clean
         COMMAND ${CMAKE_COMMAND} -E remove -f coverage.info coverage_init.info coverage_tests.info ${PLSSVM_COVERAGE_REPORT_OUTPUT_DIRECTORY}
@@ -851,7 +850,7 @@ option(PLSSVM_ENABLE_CLANG_TIDY "Enable clang-tidy static code analysis." OFF)
 if (PLSSVM_ENABLE_CLANG_TIDY)
     list(APPEND CMAKE_MESSAGE_INDENT "clang-tidy:  ")
     message(CHECK_START "Checking for clang-tidy executable")
-    
+
     # check if the clang-tidy executable is available
     find_program(PLSSVM_CLANG_TIDY_EXE clang-tidy) # usage as part of the compilation process (can't analyse headers)
     find_program(PLSSVM_RUN_CLANG_TIDY_EXE run-clang-tidy) # usage as standalone target (can analyse headers)
@@ -862,32 +861,37 @@ if (PLSSVM_ENABLE_CLANG_TIDY)
     else ()
         # clang-tidy executable found -> enable it
         message(CHECK_PASS "found")
-        
+
         # clang-tidy support during compilation
         message(STATUS "Enabling static analysis via clang-tidy during compilation.")
         set(CMAKE_CXX_CLANG_TIDY "clang-tidy;-quiet")
-        
+
         # custom clang-tidy target that also supports headers
         message(STATUS "Enabling custom clang-tidy-all target.")
-        
+
         # create a custom command that filters unwanted flags
-        add_custom_target(filter_compile_commands
-                COMMAND ${CMAKE_COMMAND} -DPLSSVM_COMPILE_COMMANDS_JSON_FILE=${CMAKE_BINARY_DIR}/compile_commands.json -P ${CMAKE_SOURCE_DIR}/cmake/filter_compile_commands.cmake
-                COMMENT "Generating a sanitized compile_commands.json"
-                VERBATIM
+        add_custom_target(
+            filter_compile_commands
+            COMMAND ${CMAKE_COMMAND} -DPLSSVM_COMPILE_COMMANDS_JSON_FILE=${CMAKE_BINARY_DIR}/compile_commands.json -P
+                    ${CMAKE_SOURCE_DIR}/cmake/filter_compile_commands.cmake
+            COMMENT "Generating a sanitized compile_commands.json"
+            VERBATIM
         )
-        
+
         # create the custom target
-        add_custom_target(clang-tidy-all
-            COMMAND ${PLSSVM_RUN_CLANG_TIDY_EXE} -p "${CMAKE_BINARY_DIR}" -quiet "${PROJECT_SOURCE_DIR}/src" "${PROJECT_SOURCE_DIR}/bindings/Python" "${PROJECT_SOURCE_DIR}/tests"
-            DEPENDS filter_compile_commands
+        add_custom_target(
+            clang-tidy-all COMMAND ${PLSSVM_RUN_CLANG_TIDY_EXE} -p "${CMAKE_BINARY_DIR}" -quiet "${PROJECT_SOURCE_DIR}/src"
+                                   "${PROJECT_SOURCE_DIR}/bindings/Python" "${PROJECT_SOURCE_DIR}/tests" DEPENDS filter_compile_commands
         )
-        
+
         # clang-tidy is not supported by all backends
-        message(WARNING "Since some backends use special compilers with custom compiler flags that are NOT understood by clang-tidy, the target may fail to correctly build! "
-                        "Some precautions are taken to make the clang-tidy-all target more compatible with these special compilers, but it does not work in all cases!")
+        message(
+            WARNING
+                "Since some backends use special compilers with custom compiler flags that are NOT understood by clang-tidy, the target may fail to correctly build! "
+                "Some precautions are taken to make the clang-tidy-all target more compatible with these special compilers, but it does not work in all cases!"
+        )
     endif ()
-    
+
     list(POP_BACK CMAKE_MESSAGE_INDENT)
 endif ()
 

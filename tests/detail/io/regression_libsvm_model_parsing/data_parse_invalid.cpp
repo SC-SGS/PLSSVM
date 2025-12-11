@@ -21,8 +21,8 @@
 #include "fmt/format.h"   // fmt::format
 #include "gtest/gtest.h"  // TYPED_TEST, TYPED_TEST_SUITE, ::testing::Test
 
-#include <string>   // std::string
-#include <tuple>    // std::ignore
+#include <string>  // std::string
+#include <tuple>   // std::ignore
 
 template <typename T>
 class LIBSVMRegressionModelDataParseInvalid : public ::testing::Test { };
