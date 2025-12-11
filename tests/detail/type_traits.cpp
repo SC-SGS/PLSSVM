@@ -13,10 +13,13 @@
 #include "gtest/gtest.h"  // TEST, EXPECT_EQ, EXPECT_TRUE, EXPECT_FALSE
 
 #include <array>          // std::array
+#include <cstddef>        // std::nullptr_t
 #include <deque>          // std::deque
 #include <forward_list>   // std::forward_list
+#include <functional>     // std::reference_wrapper
 #include <list>           // std::list
 #include <map>            // std::map, std::multimap
+#include <optional>       // std::optional
 #include <set>            // std::set, std::multiset
 #include <string>         // std::basic_string
 #include <type_traits>    // std::is_same_v
