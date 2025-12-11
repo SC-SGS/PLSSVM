@@ -232,10 +232,7 @@ TYPED_TEST_P(GenericCSVRSolverKernelFunction, Fit) {
     constexpr plssvm::kernel_function_type kernel = util::test_parameter_value_at_v<1, TypeParam>;
 
     // create parameter struct
-    plssvm::parameter params{ plssvm::kernel_type = kernel };  // NOLINT(misc-const-correctness): can change based on the kernel function
-    if constexpr (kernel != plssvm::kernel_function_type::linear) {
-        params.gamma = plssvm::real_type{ 1.0 };
-    }
+    const plssvm::parameter params{ plssvm::kernel_type = kernel };
 
     // create data set to be used
     plssvm::regression_data_set<label_type> test_data{ PLSSVM_TEST_PATH "/data/libsvm/regression/6x4.libsvm" };  // NOLINT(misc-const-correctness): can't be const for the chi-squared kernel
