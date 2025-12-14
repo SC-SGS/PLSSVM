@@ -111,12 +111,10 @@ std::vector<device_wrapper> get_device_list(const execution_space space, [[maybe
 
 #if !defined(PLSSVM_KOKKOS_BACKEND_SYCL_ENABLE_MULTI_GPU)
                 if (devices.size() > 1) {
-                    ::plssvm::detail::log_untracked(plssvm::verbosity_level::full | plssvm::verbosity_level::warning,
-                                                    "\nFound {} devices on MPI rank {} for the Kokkos::SYCL execution space, but multi-GPU support is disabled. Using only device 1. This behavior can be disabled using the PLSSVM_KOKKOS_BACKEND_SYCL_ENABLE_MULTI_GPU CMake option.",
-                                                    devices.size(),
-                                                    comm.rank());
-                    // only use the first GPU found (which most likely is the default device)
-                    devices.resize(1);
+                    throw backend_exception{ fmt::format("\nFound {} devices on MPI rank {} for the Kokkos::SYCL execution space, but multi-GPU support is disabled. "
+                                                         "This behavior can be disabled using the PLSSVM_KOKKOS_BACKEND_SYCL_ENABLE_MULTI_GPU CMake option but may not work until it is support by Kokkos itself.",
+                                                         devices.size(),
+                                                         comm.rank()) };
                 }
 #endif
             }));

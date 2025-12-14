@@ -376,7 +376,7 @@ If more than one SYCL implementation is available the environment variables `PLS
 
 If the Kokkos backend is available, an additional option can be set.
 
-- `PLSSVM_KOKKOS_BACKEND_SYCL_ENABLE_MULTI_GPU` (default: `OFF`): enable multi-GPU support for the Kokkos::SYCL execution space; broken in Kokkos as of version 4.6.00!
+- `PLSSVM_KOKKOS_BACKEND_SYCL_ENABLE_MULTI_GPU` (default: `OFF`): enable multi-GPU support for the Kokkos::SYCL execution space; broken in Kokkos as of version 4.6.01!
 
 If the stdpar backend is available, an additional option can be set.
 
