@@ -31,6 +31,14 @@ elseif (PLSSVM_STDPAR_BACKEND STREQUAL "IntelLLVM")
     list(APPEND PLSSVM_STDPAR_TEST_SOURCES ${CMAKE_CURRENT_LIST_DIR}/IntelLLVM/stdpar_csvm.cpp)
 elseif (PLSSVM_STDPAR_BACKEND STREQUAL "ACPP")
     list(APPEND PLSSVM_STDPAR_TEST_SOURCES ${CMAKE_CURRENT_LIST_DIR}/AdaptiveCpp/stdpar_csvm.cpp)
+    if ("${PLSSVM_TARGET_PLATFORMS}" MATCHES "(nvidia|amd|intel)" AND PLSSVM_STDPAR_BACKEND_ACPP_USE_GENERIC_SSCP)
+        message(
+            WARNING
+                "AdaptiveCpp stdpar tests running on a target platform other than CPU using AdaptiveCpp's SSCP compiler may result in SegFaults during test discovery. "
+                "Note that normal execution works perfectly fine. "
+                "To run the tests, either use the CPU or the old legacy AdaptiveCpp compiler by setting \"-DPLSSVM_STDPAR_BACKEND_ACPP_USE_GENERIC_SSCP=OFF\"."
+        )
+    endif ()
 elseif (PLSSVM_STDPAR_BACKEND STREQUAL "GNU_TBB")
     list(APPEND PLSSVM_STDPAR_TEST_SOURCES ${CMAKE_CURRENT_LIST_DIR}/GNU_TBB/stdpar_csvm.cpp)
 endif ()
