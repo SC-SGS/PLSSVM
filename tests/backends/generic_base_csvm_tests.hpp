@@ -14,20 +14,21 @@
 #define PLSSVM_TESTS_BACKENDS_GENERIC_BASE_CSVM_TESTS_HPP_
 #pragma once
 
-#include "plssvm/backend_types.hpp"             // plssvm::backend_type
-#include "plssvm/backends/execution_range.hpp"  // plssvm::detail::execution_range
-#include "plssvm/constants.hpp"                 // plssvm::real_type, plssvm::PADDING_SIZE
-#include "plssvm/detail/data_distribution.hpp"  // plssvm::detail::{triangular_data_distribution, rectangular_data_distribution}
-#include "plssvm/detail/memory_size.hpp"        // memory size literals
-#include "plssvm/detail/move_only_any.hpp"      // plssvm::detail::move_only_any
-#include "plssvm/detail/utility.hpp"            // plssvm::detail::{unreachable, get}
-#include "plssvm/kernel_function_types.hpp"     // plssvm::csvm_to_backend_type_v, plssvm::backend_type
-#include "plssvm/matrix.hpp"                    // plssvm::aos_matrix
-#include "plssvm/mpi/communicator.hpp"          // plssvm::mpi::communicator
-#include "plssvm/parameter.hpp"                 // plssvm::parameter
-#include "plssvm/shape.hpp"                     // plssvm::shape
-#include "plssvm/solver_types.hpp"              // plssvm::solver_type
-#include "plssvm/target_platforms.hpp"          // plssvm::target_platform
+#include "plssvm/backend_types.hpp"                     // plssvm::backend_type
+#include "plssvm/backends/execution_range.hpp"          // plssvm::detail::execution_range
+#include "plssvm/backends/Kokkos/execution_spaces.hpp"  // plssvm::kokkos::execution_space
+#include "plssvm/constants.hpp"                         // plssvm::real_type, plssvm::PADDING_SIZE
+#include "plssvm/detail/data_distribution.hpp"          // plssvm::detail::{triangular_data_distribution, rectangular_data_distribution}
+#include "plssvm/detail/memory_size.hpp"                // memory size literals
+#include "plssvm/detail/move_only_any.hpp"              // plssvm::detail::move_only_any
+#include "plssvm/detail/utility.hpp"                    // plssvm::detail::{unreachable, get}
+#include "plssvm/kernel_function_types.hpp"             // plssvm::csvm_to_backend_type_v, plssvm::backend_type
+#include "plssvm/matrix.hpp"                            // plssvm::aos_matrix
+#include "plssvm/mpi/communicator.hpp"                  // plssvm::mpi::communicator
+#include "plssvm/parameter.hpp"                         // plssvm::parameter
+#include "plssvm/shape.hpp"                             // plssvm::shape
+#include "plssvm/solver_types.hpp"                      // plssvm::solver_type
+#include "plssvm/target_platforms.hpp"                  // plssvm::target_platform
 
 #include "tests/backends/ground_truth.hpp"  // ground_truth::{kernel_function, perform_dimensional_reduction}
 #include "tests/custom_test_macros.hpp"     // EXPECT_FLOATING_POINT_MATRIX_EQ, EXPECT_FLOATING_POINT_VECTOR_NEAR, EXPECT_FLOATING_POINT_NEAR
@@ -290,6 +291,26 @@ TYPED_TEST_P(GenericCSVM, GetLocalMemory) {
         if constexpr (plssvm::csvm_to_backend_type_v<csvm_type> == plssvm::backend_type::openmp || plssvm::csvm_to_backend_type_v<csvm_type> == plssvm::backend_type::stdpar || plssvm::csvm_to_backend_type_v<csvm_type> == plssvm::backend_type::hpx) {
             // some backends inherently do not have the capability of local memory
             EXPECT_EQ(ms, std::nullopt);
+        } else if constexpr (plssvm::csvm_to_backend_type_v<csvm_type> == plssvm::backend_type::kokkos) {
+            // for the Kokkos backend, the existence of the local memory size depends on the kokkos execution space
+            switch (svm.get_execution_space()) {
+                case plssvm::kokkos::execution_space::cuda:
+                case plssvm::kokkos::execution_space::hip:
+                case plssvm::kokkos::execution_space::sycl:
+                    EXPECT_GT(ms.value(), 0_B);
+                    break;
+                case plssvm::kokkos::execution_space::hpx:
+                case plssvm::kokkos::execution_space::openmp:
+                case plssvm::kokkos::execution_space::threads:
+                case plssvm::kokkos::execution_space::serial:
+                    EXPECT_EQ(ms, std::nullopt);
+                    break;
+                case plssvm::kokkos::execution_space::openmp_target:
+                case plssvm::kokkos::execution_space::openacc:
+                case plssvm::kokkos::execution_space::automatic:
+                    // should currently be unreachable!
+                    break;
+            }
         } else {
             EXPECT_GT(ms.value(), 0_B);
         }

@@ -13,6 +13,7 @@
 #define PLSSVM_TESTS_BACKENDS_GENERIC_GPU_CSVM_TESTS_HPP_
 #pragma once
 
+#include "plssvm/backends/Kokkos/execution_spaces.hpp"  // plssvm::kokkos::execution_space
 #include "plssvm/constants.hpp"                         // plssvm::real_type, plssvm::PADDING_SIZE
 #include "plssvm/data_set/classification_data_set.hpp"  // plssvm::classification_data_set
 #include "plssvm/detail/data_distribution.hpp"          // plssvm::detail::{triangular_data_distribution, rectangular_data_distribution}
@@ -52,14 +53,36 @@ TYPED_TEST_SUITE_P(GenericGPUCSVM);
 TYPED_TEST_P(GenericGPUCSVM, GetLocalMemory) {
     using csvm_test_type = util::test_parameter_type_at_t<0, TypeParam>;
     using mock_csvm_type = typename csvm_test_type::mock_csvm_type;
+    using csvm_type = typename csvm_test_type::csvm_type;
 
     // create C-SVM: must be done using the mock class since the member function to test is private or protected
     const auto svm = util::construct_from_tuple<mock_csvm_type>(csvm_test_type::additional_arguments);
 
-    // for GPU C-SVMs, the local memory size must NOT be nullopt
+    // for GPU C-SVMs, the local memory size must NOT be nullopt, except for Kokkos with CPU-only execution spaces
     const std::vector<std::optional<plssvm::detail::memory_size>> local_mem = svm.get_local_memory();
-    for (std::size_t device_id = 0; device_id < svm.num_available_devices(); ++device_id) {
-        EXPECT_NE(local_mem[device_id], std::nullopt);
+    for (const std::optional<plssvm::detail::memory_size> &val : local_mem) {
+        if constexpr (plssvm::csvm_to_backend_type_v<csvm_type> == plssvm::backend_type::kokkos) {
+            switch (svm.get_execution_space()) {
+                case plssvm::kokkos::execution_space::cuda:
+                case plssvm::kokkos::execution_space::hip:
+                case plssvm::kokkos::execution_space::sycl:
+                    EXPECT_NE(val, std::nullopt);
+                    break;
+                case plssvm::kokkos::execution_space::hpx:
+                case plssvm::kokkos::execution_space::openmp:
+                case plssvm::kokkos::execution_space::threads:
+                case plssvm::kokkos::execution_space::serial:
+                    EXPECT_EQ(val, std::nullopt);
+                    break;
+                case plssvm::kokkos::execution_space::openmp_target:
+                case plssvm::kokkos::execution_space::openacc:
+                case plssvm::kokkos::execution_space::automatic:
+                    // should currently be unreachable!
+                    break;
+            }
+        } else {
+            EXPECT_NE(val, std::nullopt);
+        }
     }
 }
 
