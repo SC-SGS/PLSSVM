@@ -51,7 +51,7 @@ GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(DevicePtrDeathTest);
 // exception tests
 GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(Exception);
 
-namespace {
+// NOLINTBEGIN: hpx_main MUST be in global namespace, internal linkage DOES NOT work
 
 [[nodiscard]] int hpx_main([[maybe_unused]] int argc, [[maybe_unused]] char **argv) {
     // be sure that the HPX runtime is only started ONCE for all test invocations
@@ -60,7 +60,7 @@ namespace {
     return result;
 }
 
-}  // namespace
+// NOLINTEND
 
 int main(int argc, char **argv) {
     // may throw an exception if the required level of MPI parallelism isn't available (really rare)
