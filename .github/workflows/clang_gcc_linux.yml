@@ -24,10 +24,10 @@ jobs:
       - name: "Install MPI"
         run: |
           sudo apt install libopenmpi-dev
-      - name: "Install cmake 3.31.0"
-        uses: lukka/get-cmake@v3.31.0
+      - name: "Install cmake 4.2.1"
+        uses: lukka/get-cmake@v4.2.1
       - name: "Clone the PLSSVM repository into PLSSVM/"
-        uses: actions/checkout@v4.1.1
+        uses: actions/checkout@v6.0.1
         with:
           path: PLSSVM
       - name: "Install Python dependencies"

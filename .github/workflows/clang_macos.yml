@@ -7,13 +7,13 @@ on:
   workflow_dispatch:
 jobs:
   macOS-Test:
-    runs-on: macos-13
+    runs-on: macos-15-intel
     strategy:
       matrix:
         build_type: [Debug, Release]
     steps:
-      - name: "Install cmake 3.31.0"
-        uses: lukka/get-cmake@v3.31.0
+      - name: "Install cmake 4.2.1"
+        uses: lukka/get-cmake@v4.2.1
       - name: "Install LLVM and Clang"
         uses: KyleMayes/install-llvm-action@v2
         with:
@@ -32,7 +32,7 @@ jobs:
           export PYTHONPATH=$(python3 -c "import site; print(site.getsitepackages()[0])")
           echo "PYTHONPATH=$PYTHONPATH" >> $GITHUB_ENV
       - name: "Clone the PLSSVM repository into PLSSVM/"
-        uses: actions/checkout@v4.1.1
+        uses: actions/checkout@v6.0.1
         with:
           path: PLSSVM
       - name: "Configure PLSSVM using CMake"
