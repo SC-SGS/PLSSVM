@@ -551,7 +551,7 @@ The documentation of the current main branch can be found [here](https://sc-sgs.
 The library supports the `install` target:
 
 ```bash
-cmake --build . -- install
+cmake --build . --target install
 ```
 
 Afterward, the necessary exports should be performed:
