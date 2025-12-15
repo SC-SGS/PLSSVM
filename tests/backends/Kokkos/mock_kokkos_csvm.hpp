@@ -60,8 +60,8 @@ class mock_kokkos_csvm final : public plssvm::kokkos::csvm {
     using base_type::run_blas_level_3;
     using base_type::solve_lssvm_system_of_linear_equations;
 
-    using base_type::get_max_mem_alloc_size;
     using base_type::get_execution_space;
+    using base_type::get_max_mem_alloc_size;
 
     using base_type::run_assemble_kernel_matrix_explicit;
     using base_type::run_blas_level_3_kernel_explicit;

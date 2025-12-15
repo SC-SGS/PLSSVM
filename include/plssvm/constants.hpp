@@ -39,7 +39,7 @@ constexpr unsigned INTERNAL_BLOCK_SIZE = 4;
 #endif
 
 /// Padding used for the device arrays and matrices to prevent out-of-bounce accesses without ifs.
-constexpr unsigned PADDING_SIZE = THREAD_BLOCK_SIZE *INTERNAL_BLOCK_SIZE;
+constexpr unsigned PADDING_SIZE = THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE;
 
 /// The default epsilon for the conjugate gradients algorithm.
 constexpr real_type DEFAULT_EPSILON{ 1e-10 };
