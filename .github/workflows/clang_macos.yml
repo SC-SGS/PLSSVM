@@ -59,4 +59,4 @@ jobs:
           cd PLSSVM
           export LDFLAGS="-L/opt/homebrew/opt/libomp/lib"
           export CPPFLAGS="-I/opt/homebrew/opt/libomp/include"
-          ctest --preset openmp_test -C ${{ matrix.build_type }} -E ".*executable.*" --parallel 2
+          ctest --preset openmp_test -C ${{ matrix.build_type }} -E ".*executable.*" --parallel 2 --progress
