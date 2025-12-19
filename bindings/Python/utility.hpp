@@ -19,10 +19,10 @@
 #include "plssvm/gamma.hpp"               // plssvm::gamma_type
 #include "plssvm/parameter.hpp"           // plssvm::parameter
 
-#include "fmt/format.h"            // fmt::format
-#include "pybind11/numpy.h"        // py::array, py::array_t, py::buffer_info, py::array::c_style
-#include "pybind11/pybind11.h"     // py::kwargs, py::value_error, py::isinstance, py::str, py::module_, py::enum_, py::register_exception_translator, py::set_error, py::object, py::len, py::exception
-#include "pybind11/pytypes.h"      // py::type, py::ssize_t
+#include "fmt/format.h"         // fmt::format
+#include "pybind11/numpy.h"     // py::array, py::array_t, py::buffer_info, py::array::c_style
+#include "pybind11/pybind11.h"  // py::kwargs, py::value_error, py::isinstance, py::str, py::module_, py::enum_, py::register_exception_translator, py::set_error, py::object, py::len, py::exception
+#include "pybind11/pytypes.h"   // py::type, py::ssize_t
 
 #include <cstdint>      // fixed-width integers
 #include <cstring>      // std::memcpy

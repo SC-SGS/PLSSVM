@@ -10,8 +10,10 @@ message(STATUS "Building Python language bindings for PLSSVM.")
 
 find_package(Python COMPONENTS Interpreter Development)
 
+# ~~~
 # Note: Even with newer Pybind11 version, we cannot really use py::native_enum since it DOES NOT support string -> C++ enum
 #       conversions and I couldn't find a solution to make it work without worsening the public API.
+# ~~~
 # try finding pybind11
 set(PLSSVM_pybind11_VERSION v3.0.1)
 find_package(pybind11 3.0.1 QUIET)
