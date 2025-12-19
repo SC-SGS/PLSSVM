@@ -20,9 +20,8 @@
 #include "plssvm/parameter.hpp"           // plssvm::parameter
 
 #include "fmt/format.h"            // fmt::format
-#include "pybind11/native_enum.h"  // py::native_enum
 #include "pybind11/numpy.h"        // py::array, py::array_t, py::buffer_info, py::array::c_style
-#include "pybind11/pybind11.h"     // py::kwargs, py::value_error, py::isinstance, py::str, py::module_, py::register_exception_translator, py::set_error, py::object, py::len, py::exception
+#include "pybind11/pybind11.h"     // py::kwargs, py::value_error, py::isinstance, py::str, py::module_, py::enum_, py::register_exception_translator, py::set_error, py::object, py::len, py::exception
 #include "pybind11/pytypes.h"      // py::type, py::ssize_t
 
 #include <cstdint>      // fixed-width integers
@@ -122,6 +121,30 @@ void register_py_exception(py::module_ &m, const std::string &py_exception_name,
             py::set_error(py_exception, e.what_with_loc().c_str());
         }
     });
+}
+
+/**
+ * @brief Register the enumeration @p EnumType to be implicitly convertible from a Python string.
+ * @tparam EnumType the type of the C++ enumeration
+ * @param[in] py_enum the Pybind11 enumeration wrapper
+ * @throws py::value_error if the provided string is invalid for the @p EnumType
+ */
+template <typename EnumType>
+void register_implicit_str_enum_conversion(py::enum_<EnumType> &py_enum) {
+    // create the custom constructor
+    py_enum.def(py::init([](const std::string &str) -> EnumType {
+        std::istringstream iss{ str };
+        EnumType e;
+        iss >> e;
+        if (iss.fail()) {
+            throw py::value_error{};
+        } else {
+            return e;
+        }
+    }));
+
+    // register the implicit conversion
+    py::implicitly_convertible<std::string, EnumType>();
 }
 
 /**
