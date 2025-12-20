@@ -43,6 +43,7 @@ set(PLSSVM_PYTHON_BINDINGS_SOURCES
     ${CMAKE_CURRENT_LIST_DIR}/model/regression_model.cpp
     ${CMAKE_CURRENT_LIST_DIR}/sklearn_like/svc.cpp
     ${CMAKE_CURRENT_LIST_DIR}/sklearn_like/svr.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/sklearn_like/tags.cpp
     ${CMAKE_CURRENT_LIST_DIR}/svm/csvm.cpp
     ${CMAKE_CURRENT_LIST_DIR}/svm/csvc.cpp
     ${CMAKE_CURRENT_LIST_DIR}/svm/csvr.cpp

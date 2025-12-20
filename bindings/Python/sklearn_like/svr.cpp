@@ -22,6 +22,7 @@
 #include "bindings/Python/bindings_fwd.hpp"                                  // forward declare all helper functions to create the Python bindings
 #include "bindings/Python/data_set/variant_wrapper.hpp"                      // plssvm::bindings::python::util::regression_data_set_wrapper
 #include "bindings/Python/model/variant_wrapper.hpp"                         // plssvm::bindings::python::util::regression_model_wrapper
+#include "bindings/Python/sklearn_like/tags.hpp"                             // Tags, TargetTags, TransformerTags, ClassifierTags, RegressorTags, InputTags
 #include "bindings/Python/type_caster/label_vector_wrapper_type_caster.hpp"  // a custom Pybind11 type caster for a plssvm::bindings::python::util::label_vector_wrapper
 #include "bindings/Python/type_caster/matrix_type_caster.hpp"                // NOLINT: a custom Pybind11 type caster for a plssvm::matrix
 #include "bindings/Python/type_caster/matrix_wrapper_type_caster.hpp"        // a custom Pybind11 type caster for a plssvm::bindings::python::util::matrix_wrapper
@@ -412,6 +413,17 @@ void init_sklearn_svr(py::module_ &m) {
             new_svr.epsilon_ = self.epsilon_;
             new_svr.max_iter_ = self.max_iter_;
             return new_svr; }, "Clone the estimator.")
+        .def("__sklearn_tags__", [](const svr &self) -> Tags {
+            Tags sklearn_tags{};
+
+            // set non-default values
+            sklearn_tags.estimator_type = "regressor";
+            sklearn_tags.target_tags.one_d_labels = true;
+            sklearn_tags.regressor_tags = RegressorTags{};
+            sklearn_tags.input_tags.sparse = true;
+            sklearn_tags.input_tags.positive_only = self.svm_->get_params().kernel_type == plssvm::kernel_function_type::chi_squared;
+
+            return sklearn_tags; }, "Set sklearn tags internally used for estimators.")
         .def("__repr__", [](const svr &self) {
             // get the currently used parameters
             const py::dict used_params = self.get_params(true);

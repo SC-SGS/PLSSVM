@@ -23,6 +23,7 @@
 #include "bindings/Python/bindings_fwd.hpp"                                  // forward declare all helper functions to create the Python bindings
 #include "bindings/Python/data_set/variant_wrapper.hpp"                      // plssvm::bindings::python::util::classification_data_set_wrapper
 #include "bindings/Python/model/variant_wrapper.hpp"                         // plssvm::bindings::python::util::classification_model_wrapper
+#include "bindings/Python/sklearn_like/tags.hpp"                             // Tags, TargetTags, TransformerTags, ClassifierTags, RegressorTags, InputTags
 #include "bindings/Python/type_caster/label_vector_wrapper_type_caster.hpp"  // a custom Pybind11 type caster for a plssvm::bindings::python::label_vector_wrapper
 #include "bindings/Python/type_caster/matrix_type_caster.hpp"                // NOLINT: a custom Pybind11 type caster for a plssvm::matrix
 #include "bindings/Python/type_caster/matrix_wrapper_type_caster.hpp"        // a custom Pybind11 type caster for a plssvm::bindings::python::util::matrix_wrapper
@@ -210,7 +211,7 @@ struct svc {
                           *model_);
     }
 
-    /// Pointer to the the stored PLSSVM C-SVC instance.
+    /// Pointer to the stored PLSSVM C-SVC instance.
     std::unique_ptr<plssvm::csvc> svm_;
     /// The CG termination criterion if provided.
     plssvm::real_type epsilon_{};
@@ -698,6 +699,17 @@ void init_sklearn_svc(py::module_ &m) {
             new_svc.max_iter_ = self.max_iter_;
             new_svc.classification_ = self.classification_;
             return new_svc; }, "Clone the estimator.")
+        .def("__sklearn_tags__", [](const svc &self) -> Tags {
+            Tags sklearn_tags{};
+
+            // set non-default values
+            sklearn_tags.estimator_type = "classifier";
+            sklearn_tags.target_tags.one_d_labels = true;
+            sklearn_tags.classifier_tags = ClassifierTags{};
+            sklearn_tags.input_tags.sparse = true;
+            sklearn_tags.input_tags.positive_only = self.svm_->get_params().kernel_type == plssvm::kernel_function_type::chi_squared;
+
+            return sklearn_tags; }, "Set sklearn tags internally used for estimators.")
         .def("__repr__", [](const svc &self) {
             // get the currently used parameters
             const py::dict used_params = self.get_params(true);

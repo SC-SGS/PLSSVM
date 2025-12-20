@@ -132,6 +132,7 @@ PYBIND11_MODULE(plssvm, m) {
 #endif
 
     py::module_ sklearn_like_svm_model = m.def_submodule("svm", "a module containing the sklearn like SVC and SVR implementations");
+    init_sklearn_tags(sklearn_like_svm_model);
     init_sklearn_svc(sklearn_like_svm_model);
     init_sklearn_svr(sklearn_like_svm_model);
 }

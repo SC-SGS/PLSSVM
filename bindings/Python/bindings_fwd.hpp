@@ -53,6 +53,8 @@ void init_sycl(py::module_ &m, const py::exception<plssvm::exception> &base_exce
 py::module_ init_adaptivecpp_csvm(py::module_ &m, const py::exception<plssvm::exception> &base_exception);
 py::module_ init_dpcpp_csvm(py::module_ &m, const py::exception<plssvm::exception> &base_exception);
 void init_kokkos_csvm(py::module_ &m, const py::exception<plssvm::exception> &base_exception);
+
+void init_sklearn_tags(py::module_ &m);
 void init_sklearn_svc(py::module_ &m);
 void init_sklearn_svr(py::module_ &m);
 
