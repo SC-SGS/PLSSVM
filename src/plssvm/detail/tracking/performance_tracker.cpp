@@ -45,7 +45,14 @@
 
 #if __has_include(<unistd.h>)
     #include <unistd.h>  // gethostname, getlogin_r, sysconf, _SC_HOST_NAME_MAX, _SC_LOGIN_NAME_MAX
-    #define PLSSVM_UNISTD_AVAILABLE
+    #define PLSSVM_HAS_POSIX_INCLUDES
+#endif
+
+#if __has_include(<winsock.h>)
+    #include <Lmcons.h>   // UNLEN
+    #include <windows.h>  // GetUserNameA, DWORD
+    #include <winsock.h>  // gethostname
+    #define PLSSVM_HAS_WINDOWS_INCLUDES
 #endif
 
 #if defined(PLSSVM_STDPAR_BACKEND_HAS_GNU_TBB)
@@ -87,8 +94,17 @@ namespace {
  * @return the hostname of the current machine (`[[nodiscard]]`)
  */
 [[nodiscard]] std::string get_hostname() {
-#if defined(PLSSVM_UNISTD_AVAILABLE)
+    // maximum number of characters is given as a constant under Linux
+#if defined(PLSSVM_HAS_POSIX_INCLUDES)
     const auto host_name_max = static_cast<std::size_t>(sysconf(_SC_HOST_NAME_MAX));
+#endif
+
+    // maximum number of characters is given in the documentation (256)
+#if defined(PLSSVM_HAS_WINDOWS_INCLUDES)
+    const std::size_t host_name_max = 256;
+#endif
+
+#if defined(PLSSVM_HAS_POSIX_INCLUDES) || defined(PLSSVM_HAS_WINDOWS_INCLUDES)
     std::string hostname(host_name_max, '\0');
     if (gethostname(hostname.data(), host_name_max) != 0) {
         hostname = "not available";
@@ -109,7 +125,7 @@ namespace {
  * @return the username of the current user (`[[nodiscard]]`)
  */
 [[nodiscard]] std::string get_username() {
-#if defined(PLSSVM_UNISTD_AVAILABLE)
+#if defined(PLSSVM_HAS_POSIX_INCLUDES)
     const auto login_name_max = static_cast<std::size_t>(sysconf(_SC_LOGIN_NAME_MAX));
     std::string username(login_name_max, '\0');
     if (getlogin_r(username.data(), login_name_max) != 0) {
@@ -117,6 +133,18 @@ namespace {
     }
     // resize to actual string length (truncate trailing '\0's)
     username.resize(std::strlen(username.c_str()));
+    if (username.empty()) {
+        username = "not available";
+    }
+    return username;
+#elif defined(PLSSVM_HAS_WINDOWS_INCLUDES)
+    auto size = static_cast<DWORD>(UNLEN + 1);
+    std::string username(size, '\0');
+    if (!GetUserNameA(username.data(), &size)) {
+        username = "not available";
+    }
+    // resize to actual string length (truncate trailing '\0's)
+    username.resize(size - 1);
     if (username.empty()) {
         username = "not available";
     }
@@ -509,4 +537,5 @@ performance_tracker &global_performance_tracker() {
 
 }  // namespace plssvm::detail::tracking
 
-#undef PLSSVM_UNISTD_AVAILABLE
+#undef PLSSVM_HAS_POSIX_INCLUDES
+#undef PLSSVM_HAS_WINDOWS_INCLUDES
