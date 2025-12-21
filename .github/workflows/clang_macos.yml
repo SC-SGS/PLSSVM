@@ -14,10 +14,6 @@ jobs:
     steps:
       - name: "Install cmake 3.31.0"
         uses: lukka/get-cmake@v3.31.0
-      - name: "Install LLVM and Clang"
-        uses: KyleMayes/install-llvm-action@v2
-        with:
-          version: "15.0"
       - name: "Install dependencies via brew"
         run: |
           brew install libomp
@@ -27,8 +23,6 @@ jobs:
           python-version: "3.12"
       - name: "Install Python dependencies"
         run: |
-          python3 -m venv py_venv
-          source py_venv/bin/activate
           pip install --upgrade pip setuptools wheel
           pip install numpy scikit-learn humanize
       - name: "Clone the PLSSVM repository into PLSSVM/"
@@ -37,24 +31,17 @@ jobs:
           path: PLSSVM
       - name: "Configure PLSSVM using CMake"
         run: |
-          source py_venv/bin/activate
           cd PLSSVM
-          export LDFLAGS="-L/opt/homebrew/opt/libomp/lib"
-          export CPPFLAGS="-I/opt/homebrew/opt/libomp/include"
-          cmake --preset openmp_test -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DPLSSVM_TARGET_PLATFORMS="cpu" -DPLSSVM_ENABLE_LANGUAGE_BINDINGS=ON -DPLSSVM_ENABLE_PERFORMANCE_TRACKING=ON -DPLSSVM_ENABLE_MPI=OFF -DPLSSVM_TEST_FILE_NUM_DATA_POINTS=50 -DPLSSVM_TEST_FILE_NUM_FEATURES=20 -DPLSSVM_ENABLE_LTO=OFF
+          cmake --preset openmp_test -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DPLSSVM_TARGET_PLATFORMS="cpu" -DPLSSVM_ENABLE_LANGUAGE_BINDINGS=ON -DPLSSVM_ENABLE_PERFORMANCE_TRACKING=ON -DPLSSVM_ENABLE_MPI=OFF -DPLSSVM_TEST_FILE_NUM_DATA_POINTS=50 -DPLSSVM_TEST_FILE_NUM_FEATURES=20 -DPLSSVM_ENABLE_LTO=OFF -DOpenMP_CXX_FLAGS="-Xpreprocessor -fopenmp" -DOpenMP_CXX_LIB_NAMES="omp" -DOpenMP_omp_LIBRARY="/usr/local/opt/libomp/lib/libomp.dylib" -DOpenMP_CXX_INCLUDE_DIRS="/usr/local/opt/libomp/include"
       - name: "Build PLSSVM"
         shell: bash
         run: |
-          source py_venv/bin/activate
           cd PLSSVM
-          export LDFLAGS="-L/opt/homebrew/opt/libomp/lib"
-          export CPPFLAGS="-I/opt/homebrew/opt/libomp/include"
+          export CPLUS_INCLUDE_PATH="/usr/local/opt/libomp/include":$CPLUS_INCLUDE_PATH
           cmake --build --preset openmp_test --config ${{ matrix.build_type }}
           echo "${GITHUB_WORKSPACE}/PLSSVM/build" >> $GITHUB_PATH
       - name: "Run tests"
         run: |
-          source py_venv/bin/activate
           cd PLSSVM
-          export LDFLAGS="-L/opt/homebrew/opt/libomp/lib"
-          export CPPFLAGS="-I/opt/homebrew/opt/libomp/include"
+          export LD_LIBRARY_PATH="/usr/local/opt/libomp/lib":$LD_LIBRARY_PATH
           ctest --preset openmp_test -C ${{ matrix.build_type }} -E ".*Executable.*" --parallel 2 --output-on-failure
