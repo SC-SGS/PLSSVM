@@ -48,4 +48,11 @@ jobs:
           cd PLSSVM
           mkdir tmp
           export TMPDIR=$PWD/tmp
-          ctest --preset openmp_test -C ${{ matrix.build_type }} --parallel 2 --output-on-failure
+          ctest --preset openmp_test -C ${{ matrix.build_type }} --parallel 2 --output-on-failure --output-log ctest_result.txt --quiet
+      # upload the ctest result
+      - name: "Upload ctest result"
+        if: always()
+        uses: actions/upload-artifact@v6.0.0
+        with:
+          name: ctest-result
+          path: PLSSVM/ctest_result.txt

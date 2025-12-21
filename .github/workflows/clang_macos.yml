@@ -58,4 +58,11 @@ jobs:
           cd PLSSVM
           export LDFLAGS="-L/opt/homebrew/opt/libomp/lib"
           export CPPFLAGS="-I/opt/homebrew/opt/libomp/include"
-          ctest --preset openmp_test -C ${{ matrix.build_type }} -E ".*executable.*" --parallel 2 --output-on-failure
+          ctest --preset openmp_test -C ${{ matrix.build_type }} -E ".*executable.*" --parallel 2 --output-on-failure --output-log ctest_result.txt --quiet
+                # upload the ctest result
+      - name: "Upload ctest result"
+        if: always()
+        uses: actions/upload-artifact@v6.0.0
+        with:
+          name: ctest-result
+          path: PLSSVM/ctest_result.txt
