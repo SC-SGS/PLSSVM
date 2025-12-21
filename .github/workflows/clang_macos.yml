@@ -17,20 +17,20 @@ jobs:
       - name: "Install LLVM and Clang"
         uses: KyleMayes/install-llvm-action@v2
         with:
-          version: "15.0"
+          version: "18.1.8"
       - name: "Install dependencies via brew"
         run: |
-          brew install python3 libomp
+          brew install libomp
+      - name: "Set up Python"
+        uses: actions/setup-python@v6.1.0
+        with:
+          python-version: "3.12"
       - name: "Install Python dependencies"
         run: |
           python3 -m venv py_venv
           source py_venv/bin/activate
           pip install --upgrade pip setuptools wheel
-          pip install --no-binary=:all: numpy scikit-learn humanize
-      - name: "Set PYTHONPATH"
-        run: |
-          export PYTHONPATH=$(python3 -c "import site; print(site.getsitepackages()[0])")
-          echo "PYTHONPATH=$PYTHONPATH" >> $GITHUB_ENV
+          pip install numpy scikit-learn humanize
       - name: "Clone the PLSSVM repository into PLSSVM/"
         uses: actions/checkout@v6.0.1
         with:
