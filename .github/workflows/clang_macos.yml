@@ -20,14 +20,13 @@ jobs:
           version: "15.0"
       - name: "Install dependencies via brew"
         run: |
-          brew install python3
-          brew install numpy
-          brew install libomp
+          brew install python3 libomp
       - name: "Install Python dependencies"
         run: |
           python3 -m venv py_venv
           source py_venv/bin/activate
-          pip install argparse scikit-learn humanize
+          pip install --upgrade pip setuptools wheel
+          pip install --no-binary=:all: numpy scikit-learn humanize
       - name: "Set PYTHONPATH"
         run: |
           export PYTHONPATH=$(python3 -c "import site; print(site.getsitepackages()[0])")
