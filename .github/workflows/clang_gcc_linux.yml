@@ -24,8 +24,8 @@ jobs:
       - name: "Install MPI"
         run: |
           sudo apt install libopenmpi-dev
-      - name: "Install cmake 4.2.1"
-        uses: lukka/get-cmake@v4.2.1
+      - name: "Install cmake 3.31.0"
+        uses: lukka/get-cmake@v3.31.0
       - name: "Clone the PLSSVM repository into PLSSVM/"
         uses: actions/checkout@v6.0.1
         with:
@@ -48,11 +48,4 @@ jobs:
           cd PLSSVM
           mkdir tmp
           export TMPDIR=$PWD/tmp
-          ctest --preset openmp_test -C ${{ matrix.build_type }} --parallel 2 --output-on-failure --output-log ctest_result.txt --quiet
-      # upload the ctest result
-      - name: "Upload ctest result"
-        if: always()
-        uses: actions/upload-artifact@v6.0.0
-        with:
-          name: ctest-result
-          path: PLSSVM/ctest_result.txt
+          ctest --preset openmp_test -C ${{ matrix.build_type }} --parallel 2 --output-on-failure
