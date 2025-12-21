@@ -71,6 +71,7 @@
 #include <algorithm>    // std::max
 #include <chrono>       // std::chrono::steady_clock::time_point
 #include <cstddef>      // std::size_t
+#include <cstring>      // std::strlen
 #include <fstream>      // std::ofstream
 #include <iostream>     // std::ios_base::app, std::ostream, std::clog, std::endl
 #include <map>          // std::map
@@ -78,6 +79,54 @@
 #include <string_view>  // std::string_view
 #include <utility>      // std::move
 #include <vector>       // std::vector
+
+namespace {
+
+/**
+ * @brief Get the hostname from the current machine. Returns `"not available"` if this is not possible.
+ * @return the hostname of the current machine (`[[nodiscard]]`)
+ */
+[[nodiscard]] std::string get_hostname() {
+#if defined(PLSSVM_UNISTD_AVAILABLE)
+    const auto host_name_max = static_cast<std::size_t>(sysconf(_SC_HOST_NAME_MAX));
+    std::string hostname(host_name_max, '\0');
+    if (gethostname(hostname.data(), host_name_max) != 0) {
+        hostname = "not available";
+    }
+    // resize to actual string length (truncate trailing '\0's)
+    hostname.resize(std::strlen(hostname.c_str()));
+    if (hostname.empty()) {
+        hostname = "not available";
+    }
+    return hostname;
+#else
+    return "not available";
+#endif
+}
+
+/**
+ * @brief Get the username of the current user. Returns `"not available"` if this is not possible.
+ * @return the username of the current user (`[[nodiscard]]`)
+ */
+[[nodiscard]] std::string get_username() {
+#if defined(PLSSVM_UNISTD_AVAILABLE)
+    const auto login_name_max = static_cast<std::size_t>(sysconf(_SC_LOGIN_NAME_MAX));
+    std::string username(login_name_max, '\0');
+    if (getlogin_r(username.data(), login_name_max) != 0) {
+        username = "not available";
+    }
+    // resize to actual string length (truncate trailing '\0's)
+    username.resize(std::strlen(username.c_str()));
+    if (username.empty()) {
+        username = "not available";
+    }
+    return username;
+#else
+    return "not available";
+#endif
+}
+
+}  // namespace
 
 namespace plssvm::detail::tracking {
 
@@ -246,23 +295,8 @@ void performance_tracker::save(std::ostream &out) {
     //                                                              meta-data                                                              //
     //*************************************************************************************************************************************//
     // get the current host- and username
-#if defined(PLSSVM_UNISTD_AVAILABLE)
-    const auto host_name_max = static_cast<std::size_t>(sysconf(_SC_HOST_NAME_MAX));
-    std::string hostname(host_name_max, '\0');
-    gethostname(hostname.data(), host_name_max);
-    if (hostname.empty()) {
-        hostname = "not available";
-    }
-    const auto login_name_max = static_cast<std::size_t>(sysconf(_SC_LOGIN_NAME_MAX));
-    std::string username(login_name_max, '\0');
-    getlogin_r(username.data(), login_name_max);
-    if (username.empty()) {
-        username = "not available";
-    }
-#else
-    constexpr std::string_view hostname{ "not available" };
-    constexpr std::string_view username{ "not available" };
-#endif
+    const std::string hostname = get_hostname();
+    const std::string username = get_username();
     // check if asserts are enabled
     constexpr bool assert_enabled = PLSSVM_IS_DEFINED(PLSSVM_ENABLE_ASSERTS);
     // check if LTO has been enabled
