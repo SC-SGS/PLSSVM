@@ -13,7 +13,7 @@
 #define PLSSVM_BACKENDS_OPENMP_KERNEL_PREDICT_KERNEL_HPP_
 #pragma once
 
-#include "plssvm/constants.hpp"              // plssvm::real_type
+#include "plssvm/constants.hpp"              // plssvm::{real_type, THREAD_BLOCK_SIZE, INTERNAL_BLOCK_SIZE, PADDING_SIZE}
 #include "plssvm/detail/assert.hpp"          // PLSSVM_ASSERT
 #include "plssvm/kernel_function_types.hpp"  // plssvm::kernel_function_type
 #include "plssvm/matrix.hpp"                 // plssvm::aos_matrix, plssvm::matrix
@@ -108,7 +108,7 @@ inline void device_kernel_w_linear(soa_matrix<real_type> &w, const aos_matrix<re
  * @param[in] device_row_offset the first row in @p predict_points the current device is responsible for
  */
 inline void device_kernel_predict_linear(aos_matrix<real_type> &prediction, const soa_matrix<real_type> &w, const std::vector<real_type> &rho, const soa_matrix<real_type> &predict_points, const std::size_t device_num_predict_points, const std::size_t device_row_offset) {
-    PLSSVM_ASSERT(w.num_rows() == rho.size(), "Size mismatch: {} vs {}!", w.num_rows(), rho.size());
+    PLSSVM_ASSERT(w.num_rows() == rho.size() - PADDING_SIZE, "Size mismatch: {} vs {}!", w.num_rows(), rho.size() - PADDING_SIZE);
     PLSSVM_ASSERT(w.num_cols() == predict_points.num_cols(), "Size mismatch: {} vs {}!", w.num_cols(), predict_points.num_cols());
     PLSSVM_ASSERT(prediction.shape() == (plssvm::shape{ predict_points.num_rows(), w.num_rows() }), "Shape mismatch: {} vs {}!", prediction.shape(), (plssvm::shape{ predict_points.num_rows(), w.num_rows() }));
     PLSSVM_ASSERT(predict_points.num_rows() >= device_num_predict_points, "The number of place specific predict points ({}) cannot be greater the the total number of predict points ({})!", device_num_predict_points, predict_points.num_rows());

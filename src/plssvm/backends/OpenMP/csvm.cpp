@@ -15,7 +15,7 @@
 #include "plssvm/backends/OpenMP/kernel/cg_explicit/kernel_matrix_assembly.hpp"       // plssvm::openmp::detail::device_kernel_assembly
 #include "plssvm/backends/OpenMP/kernel/cg_implicit/kernel_matrix_assembly_blas.hpp"  // plssvm::openmp::detail::device_kernel_assembly_symm
 #include "plssvm/backends/OpenMP/kernel/predict_kernel.hpp"                           // plssvm::openmp::detail::{device_kernel_w_linear, device_kernel_predict_linear, device_kernel_predict}
-#include "plssvm/constants.hpp"                                                       // plssvm::real_type
+#include "plssvm/constants.hpp"                                                       // plssvm::real_type, plssvm::PADDING_SIZE
 #include "plssvm/detail/assert.hpp"                                                   // PLSSVM_ASSERT
 #include "plssvm/detail/data_distribution.hpp"                                        // plssvm::detail::triangular_data_distribution
 #include "plssvm/detail/logging/mpi_log_untracked.hpp"                                // plssvm::detail::log_untracked
@@ -40,7 +40,7 @@
 #include <chrono>      // std::chrono::{steady_clock, duration_cast}
 #include <cmath>       // std::fma
 #include <cstddef>     // std::size_t
-#include <cstring>     // std::memset
+#include <cstring>     // std::memset, std::memcpy
 #include <functional>  // std::cref
 #include <memory>      // std::make_unique
 #include <optional>    // std::optional, std::nullopt
@@ -347,8 +347,12 @@ aos_matrix<real_type> csvm::predict_values(const parameter &params,
         // call the predict kernels
         switch (params.kernel_type) {
             case kernel_function_type::linear:
-                // predict the values using the w vector
-                detail::device_kernel_predict_linear(out, w, rho, predict_points, device_specific_num_predict_points, row_offset);
+                {
+                    // predict the values using the w vector
+                    std::vector<real_type> rho_padded(rho.size() + PADDING_SIZE, real_type{ 0.0 });
+                    std::memcpy(rho_padded.data(), rho.data(), rho.size() * sizeof(real_type));
+                    detail::device_kernel_predict_linear(out, w, rho_padded, predict_points, device_specific_num_predict_points, row_offset);
+                }
                 break;
             case kernel_function_type::polynomial:
                 detail::device_kernel_predict<kernel_function_type::polynomial>(out, alpha, rho, support_vectors, predict_points, device_specific_num_predict_points, row_offset, params.degree, std::get<real_type>(params.gamma), params.coef0);

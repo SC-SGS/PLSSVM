@@ -34,6 +34,7 @@
 
 #include <algorithm>  // std::min
 #include <cstddef>    // std::size_t
+#include <cstring>    // std::memcpy
 #include <tuple>      // std::get
 #include <vector>     // std::vector
 
@@ -283,7 +284,11 @@ TYPED_TEST_P(GenericBackendCSVMKernelFunction, PredictValues) {
 
     switch (kernel) {
         case plssvm::kernel_function_type::linear:
-            device_kernel_predict_linear(out, correct_w, rho, predict_points, device_specific_num_predict_points, row_offset);
+            {
+                std::vector<plssvm::real_type> rho_padded(rho.size() + plssvm::PADDING_SIZE, plssvm::real_type{ 0.0 });
+                std::memcpy(rho_padded.data(), rho.data(), rho.size() * sizeof(plssvm::real_type));
+                device_kernel_predict_linear(out, correct_w, rho_padded, predict_points, device_specific_num_predict_points, row_offset);
+            }
             break;
         case plssvm::kernel_function_type::polynomial:
             device_kernel_predict<plssvm::kernel_function_type::polynomial, int, plssvm::real_type, plssvm::real_type>(out, weights, rho, data_matr, predict_points, device_specific_num_predict_points, row_offset, params.degree, std::get<plssvm::real_type>(params.gamma), params.coef0);
@@ -567,7 +572,6 @@ TYPED_TEST_P(GenericBackendCSVMKernelFunctionDeathTest, PredictValues) {
 
     const auto weights = util::generate_specific_matrix<plssvm::aos_matrix<plssvm::real_type>>(plssvm::shape{ 3, data.data().num_rows() }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE });
     const auto predict_points = util::generate_specific_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ data.data().num_rows(), data.data().num_cols() }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE });
-    const std::vector<plssvm::real_type> rho = util::generate_random_vector<plssvm::real_type>(weights.num_rows());
     const plssvm::soa_matrix<plssvm::real_type> w = ground_truth::calculate_w(weights, data.data());
 
     plssvm::aos_matrix<plssvm::real_type> out{ plssvm::shape{ predict_points.num_rows(), weights.num_rows() }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE } };
@@ -578,11 +582,12 @@ TYPED_TEST_P(GenericBackendCSVMKernelFunctionDeathTest, PredictValues) {
     const std::size_t row_offset = dist.place_row_offset(0);
 
     if constexpr (kernel == plssvm::kernel_function_type::linear) {
+        const std::vector<plssvm::real_type> rho = util::generate_random_vector<plssvm::real_type>(weights.num_rows() + plssvm::PADDING_SIZE);
+
         // the number of classes must match
-        std::vector<plssvm::real_type> rho_wrong = util::generate_random_vector<plssvm::real_type>(weights.num_rows());
-        rho_wrong.pop_back();
+        const std::vector<plssvm::real_type> rho_wrong = util::generate_random_vector<plssvm::real_type>(rho.size() - 1);
         EXPECT_DEATH(device_kernel_predict_linear(out, w, rho_wrong, predict_points, device_specific_num_predict_points, row_offset),
-                     ::testing::HasSubstr(fmt::format("Size mismatch: {} vs {}!", w.num_rows(), rho_wrong.size())));
+                     ::testing::HasSubstr(fmt::format("Size mismatch: {} vs {}!", w.num_rows(), rho_wrong.size() - plssvm::PADDING_SIZE)));
 
         // the number of features must match
         const auto predict_points_wrong = util::generate_specific_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ data.data().num_rows(), data.data().num_cols() + 1 }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE });
@@ -602,6 +607,8 @@ TYPED_TEST_P(GenericBackendCSVMKernelFunctionDeathTest, PredictValues) {
         EXPECT_DEATH(device_kernel_predict_linear(out, w, rho, predict_points, device_specific_num_predict_points, predict_points.num_rows() + 1),
                      ::testing::HasSubstr(fmt::format("The row offset ({}) cannot be greater the the total number of predict points ({})!", predict_points.num_rows() + 1, predict_points.num_rows())));
     } else {
+        const std::vector<plssvm::real_type> rho = util::generate_random_vector<plssvm::real_type>(weights.num_rows());
+
         // helper lambda to reduce the amount of needed switches!
         const auto run_predict_values = [=](const plssvm::parameter &params_p, plssvm::aos_matrix<plssvm::real_type> &out_p, const plssvm::aos_matrix<plssvm::real_type> &weights_p, const std::vector<plssvm::real_type> &rho_p, const plssvm::soa_matrix<plssvm::real_type> &support_vectors_p, const plssvm::soa_matrix<plssvm::real_type> &predict_points_p, const std::size_t device_specific_num_predict_points_p, const std::size_t row_offset_p) {
             switch (kernel) {
