@@ -49,9 +49,9 @@
 #endif
 
 #if __has_include(<winsock.h>)
-    #include <Lmcons.h>   // UNLEN
-    #include <windows.h>  // GetUserNameA, DWORD
-    #include <winsock.h>  // gethostname
+    #include <Lmcons.h>    // UNLEN
+    #include <windows.h>   // GetUserNameA, DWORD
+    #include <winsock2.h>  // gethostname
     #define PLSSVM_HAS_WINDOWS_INCLUDES
 #endif
 
