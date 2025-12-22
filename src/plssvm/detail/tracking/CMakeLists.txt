@@ -12,11 +12,6 @@ target_sources(
     ${PLSSVM_BASE_LIBRARY_NAME} PRIVATE $<BUILD_INTERFACE: ${CMAKE_CURRENT_SOURCE_DIR}/performance_tracker.cpp; ${CMAKE_CURRENT_SOURCE_DIR}/events.cpp; >
 )
 
-# need to link against special library under Windows
-if (WIN32)
-    target_link_libraries(${PLSSVM_BASE_LIBRARY_NAME} PRIVATE Ws2_32)
-endif ()
-
 # add target definitions
 target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC PLSSVM_PERFORMANCE_TRACKER_ENABLED)
 
