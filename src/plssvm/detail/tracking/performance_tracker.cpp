@@ -68,10 +68,9 @@
     #endif
 #endif
 
-#include <algorithm>    // std::max
+#include <algorithm>    // std::max, std::find
 #include <chrono>       // std::chrono::steady_clock::time_point
 #include <cstddef>      // std::size_t
-#include <cstring>      // std::strlen
 #include <fstream>      // std::ofstream
 #include <iostream>     // std::ios_base::app, std::ostream, std::clog, std::endl
 #include <map>          // std::map
@@ -94,7 +93,9 @@ namespace {
         hostname = "not available";
     }
     // resize to actual string length (truncate trailing '\0's)
-    hostname.resize(std::strlen(hostname.c_str()));
+    if (const auto it = std::find(hostname.cbegin(), hostname.cend(), '\0'); it != hostname.cend()) {
+        hostname.erase(it, hostname.cend());
+    }
     if (hostname.empty()) {
         hostname = "not available";
     }
@@ -116,7 +117,9 @@ namespace {
         username = "not available";
     }
     // resize to actual string length (truncate trailing '\0's)
-    username.resize(std::strlen(username.c_str()));
+    if (const auto it = std::find(username.cbegin(), username.cend(), '\0'); it != username.cend()) {
+        username.erase(it, username.cend());
+    }
     if (username.empty()) {
         username = "not available";
     }
