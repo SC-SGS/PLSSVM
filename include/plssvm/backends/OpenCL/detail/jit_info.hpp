@@ -11,6 +11,7 @@
 
 #ifndef PLSSVM_BACKENDS_OPENCL_DETAIL_JIT_INFO_HPP_
 #define PLSSVM_BACKENDS_OPENCL_DETAIL_JIT_INFO_HPP_
+#pragma once
 
 #include "fmt/base.h"     // fmt::formatter
 #include "fmt/ostream.h"  // fmt::ostream_formatter
@@ -42,7 +43,7 @@ struct jit_info {
     /// The state of the kernel cache.
     caching_status cache_state{ caching_status::success };
     /// The kernel cache dir.
-    std::string cache_dir{};
+    std::string cache_dir;
     /// The duration of the JIT compilation.
     std::chrono::milliseconds duration{};
 };

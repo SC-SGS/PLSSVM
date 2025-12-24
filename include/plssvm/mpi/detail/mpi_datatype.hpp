@@ -39,7 +39,7 @@ namespace plssvm::mpi::detail {
  * @return the corresponding MPI_Datatype (`[[nodiscard]]`)
  */
 template <typename T, std::enable_if_t<!std::is_enum_v<T>, bool> = true>
-[[nodiscard]] inline MPI_Datatype mpi_datatype() = delete;
+[[nodiscard]] MPI_Datatype mpi_datatype() = delete;
 
 PLSSVM_CREATE_MPI_DATATYPE_MAPPING(bool, MPI_C_BOOL)
 

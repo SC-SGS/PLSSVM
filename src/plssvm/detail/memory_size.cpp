@@ -21,18 +21,26 @@ namespace plssvm::detail {
 
 std::ostream &operator<<(std::ostream &out, const memory_size mem) {
     // make custom memory size literals available
-    using namespace literals;
+    using namespace literals;  // NOLINT(google-build-using-namespace): only imports custom user-defined literals into this namespace
+
+    // named constants
+    constexpr double ratio_base2 = 1024.0;
+    constexpr memory_size one_kibi_byte = 1.0_KiB;
+    constexpr memory_size one_mibi_byte = 1.0_MiB;
+    constexpr memory_size one_gibi_byte = 1.0_GiB;
+    constexpr memory_size one_tibi_byte = 1.0_TiB;
+
     // get the number of bytes as decimal value
     const auto val = static_cast<double>(mem.num_bytes());
     // output the value together with the correct binary memory unit suffix
-    if (mem >= 1.0_TiB) {
-        out << fmt::format("{:.2f} TiB", val / 1024.0 / 1024.0 / 1024.0 / 1024.0);
-    } else if (mem >= 1.0_GiB) {
-        out << fmt::format("{:.2f} GiB", val / 1024.0 / 1024.0 / 1024.0);
-    } else if (mem >= 1.0_MiB) {
-        out << fmt::format("{:.2f} MiB", val / 1024.0 / 1024.0);
-    } else if (mem >= 1.0_KiB) {
-        out << fmt::format("{:.2f} KiB", val / 1024.0);
+    if (mem >= one_tibi_byte) {
+        out << fmt::format("{:.2f} TiB", val / ratio_base2 / ratio_base2 / ratio_base2 / ratio_base2);
+    } else if (mem >= one_gibi_byte) {
+        out << fmt::format("{:.2f} GiB", val / ratio_base2 / ratio_base2 / ratio_base2);
+    } else if (mem >= one_mibi_byte) {
+        out << fmt::format("{:.2f} MiB", val / ratio_base2 / ratio_base2);
+    } else if (mem >= one_kibi_byte) {
+        out << fmt::format("{:.2f} KiB", val / ratio_base2);
     } else {
         out << fmt::format("{} B", mem.num_bytes());
     }
@@ -49,29 +57,32 @@ std::istream &operator>>(std::istream &in, memory_size &mem) {
     in >> unit;
     unit = detail::trim(unit);
 
+    constexpr long double ratio_base2 = 1024L;
+    constexpr long double ratio_base10 = 1000L;
+
     // convert size to bytes according to the provided unit
     if (unit == "B") {
         // noting to do, size already given in byte
     } else if (unit == "KiB") {
-        size *= 1024L;
+        size *= ratio_base2;
     } else if (unit == "KB") {
-        size *= 1000L;
+        size *= ratio_base10;
     } else if (unit == "MiB") {
-        size *= 1024L * 1024L;
+        size *= ratio_base2 * ratio_base2;
     } else if (unit == "MB") {
-        size *= 1000L * 1000L;
+        size *= ratio_base10 * ratio_base10;
     } else if (unit == "GiB") {
-        size *= 1024L * 1024L;
-        size *= 1024L;
+        size *= ratio_base2 * ratio_base2;
+        size *= ratio_base2;
     } else if (unit == "GB") {
-        size *= 1000L * 1000L;
-        size *= 1000L;
+        size *= ratio_base10 * ratio_base10;
+        size *= ratio_base10;
     } else if (unit == "TiB") {
-        size *= 1024L * 1024L;
-        size *= 1024L * 1024L;
+        size *= ratio_base2 * ratio_base2;
+        size *= ratio_base2 * ratio_base2;
     } else if (unit == "TB") {
-        size *= 1000L * 1000L;
-        size *= 1000L * 1000L;
+        size *= ratio_base10 * ratio_base10;
+        size *= ratio_base10 * ratio_base10;
     } else {
         // provided memory unit not recognized
         in.setstate(std::ios::failbit);

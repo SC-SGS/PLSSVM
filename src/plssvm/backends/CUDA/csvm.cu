@@ -9,8 +9,7 @@
 #include "plssvm/backends/CUDA/csvm.hpp"
 
 #include "plssvm/backend_types.hpp"                                                 // plssvm::backend_type
-#include "plssvm/backends/CUDA/detail/device_ptr.cuh"                               // plssvm::cuda::detail::device_ptr
-#include "plssvm/backends/CUDA/detail/utility.cuh"                                  // PLSSVM_CUDA_ERROR_CHECK, plssvm::cuda::detail::{dim_type_to_native, device_synchronize, get_device_count, set_device, peek_at_last_error, get_runtime_version}
+#include "plssvm/backends/CUDA/detail/utility.cuh"                                  // PLSSVM_CUDA_ERROR_CHECK, plssvm::cuda::detail::{dim_type_to_native, device_synchronize, get_device_count, set_device, peek_at_last_error, get_device_name, get_runtime_version}
 #include "plssvm/backends/CUDA/exceptions.hpp"                                      // plssvm::cuda::backend_exception
 #include "plssvm/backends/CUDA/kernel/cg_explicit/blas.cuh"                         // plssvm::cuda::detail::{device_kernel_symm, device_kernel_symm_mirror, device_kernel_inplace_matrix_add, device_kernel_inplace_matrix_scale}
 #include "plssvm/backends/CUDA/kernel/cg_explicit/kernel_matrix_assembly.cuh"       // plssvm::cuda::detail::device_kernel_assembly
@@ -24,7 +23,6 @@
 #include "plssvm/detail/memory_size.hpp"                                            // plssvm::detail::memory_size
 #include "plssvm/detail/tracking/performance_tracker.hpp"                           // plssvm::detail::tracking::tracking_entry, PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY
 #include "plssvm/exceptions/exceptions.hpp"                                         // plssvm::exception
-#include "plssvm/gamma.hpp"                                                         // plssvm::gamma_type
 #include "plssvm/kernel_function_types.hpp"                                         // plssvm::kernel_function_type
 #include "plssvm/mpi/communicator.hpp"                                              // plssvm::mpi::communicator
 #include "plssvm/mpi/detail/information.hpp"                                        // plssvm::mpi::detail::gather_and_print_csvm_information
@@ -33,22 +31,20 @@
 #include "plssvm/target_platforms.hpp"                                              // plssvm::target_platform
 #include "plssvm/verbosity_levels.hpp"                                              // plssvm::verbosity_level
 
-#include "cuda.h"              // cuda runtime
-#include "cuda_runtime.h"      // cuda runtime
 #include "cuda_runtime_api.h"  // cuda runtime functions
+#include "driver_types.h"      // cudaDeviceProp
+#include "vector_types.h"      // dim3
 
 #include "fmt/format.h"  // fmt::format
 
 #include <chrono>     // std::chrono::{steady_clock, duration_cast}
-#include <cmath>      // std::sqrt, std::ceil
 #include <cstddef>    // std::size_t
 #include <exception>  // std::terminate
 #include <iostream>   // std::cout, std::endl
 #include <numeric>    // std::iota
 #include <optional>   // std::optional
 #include <string>     // std::string
-#include <utility>    // std::move
-#include <variant>    // std::get
+#include <utility>    // std::move, std::get
 #include <vector>     // std:vector
 
 namespace plssvm::cuda {
@@ -57,11 +53,10 @@ csvm::csvm(const target_platform target) {
     // check if supported target platform has been selected
     if (target != target_platform::automatic && target != target_platform::gpu_nvidia) {
         throw backend_exception{ fmt::format("Invalid target platform '{}' for the CUDA backend!", target) };
-    } else {
-#if !defined(PLSSVM_HAS_NVIDIA_TARGET)
-        throw backend_exception{ "Requested target platform 'gpu_nvidia' that hasn't been enabled using PLSSVM_TARGET_PLATFORMS!" };
-#endif
     }
+#if !defined(PLSSVM_HAS_NVIDIA_TARGET)
+    throw backend_exception{ "Requested target platform 'gpu_nvidia' that hasn't been enabled using PLSSVM_TARGET_PLATFORMS!" };
+#endif
 
     // update the target platform
     target_ = plssvm::target_platform::gpu_nvidia;
@@ -81,9 +76,7 @@ csvm::csvm(const target_platform target) {
     if (comm_.size() > 1) {
         // use MPI rank specific command line output
         for (const queue_type &device : devices_) {
-            cudaDeviceProp prop{};
-            PLSSVM_CUDA_ERROR_CHECK(cudaGetDeviceProperties(&prop, device))
-            device_names.emplace_back(prop.name);
+            device_names.push_back(detail::get_device_name(device));
         }
 
         mpi::detail::gather_and_print_csvm_information(comm_, plssvm::backend_type::cuda, target_, device_names);
@@ -97,16 +90,16 @@ csvm::csvm(const target_platform target) {
                                       devices_.size());
 
         for (const queue_type &device : devices_) {
+            device_names.push_back(detail::get_device_name(device));
             cudaDeviceProp prop{};
             PLSSVM_CUDA_ERROR_CHECK(cudaGetDeviceProperties(&prop, device))
             plssvm::detail::log_untracked(verbosity_level::full,
                                           comm_,
                                           "  [{}, {}, {}.{}]\n",
                                           device,
-                                          prop.name,
+                                          device_names.back(),
                                           prop.major,
                                           prop.minor);
-            device_names.emplace_back(prop.name);
         }
     }
 

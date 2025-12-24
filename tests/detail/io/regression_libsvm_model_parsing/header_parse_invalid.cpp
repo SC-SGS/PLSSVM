@@ -20,7 +20,7 @@
 #include <string>  // std::string
 #include <tuple>   // std::ignore
 
-TEST(LIBSVMRegressionModelHeaderParseInvalid, wrong_svm_type) {
+TEST(LIBSVMRegressionModelHeaderParseInvalid, WrongSvmType) {
     // parse the LIBSVM model file
     const std::string filename = PLSSVM_TEST_PATH "/data/model/regression/invalid/wrong_svm_type.libsvm.model";
     plssvm::detail::io::file_reader reader{ filename };
@@ -30,7 +30,7 @@ TEST(LIBSVMRegressionModelHeaderParseInvalid, wrong_svm_type) {
                       "Can only use c_svr as svm_type, but 'epsilon_svr' was given!");
 }
 
-TEST(LIBSVMRegressionModelHeaderParseInvalid, wrong_kernel_type) {
+TEST(LIBSVMRegressionModelHeaderParseInvalid, WrongKernelType) {
     // parse the LIBSVM model file
     const std::string filename = PLSSVM_TEST_PATH "/data/model/regression/invalid/wrong_kernel_type.libsvm.model";
     plssvm::detail::io::file_reader reader{ filename };
@@ -40,7 +40,7 @@ TEST(LIBSVMRegressionModelHeaderParseInvalid, wrong_kernel_type) {
                       "Unrecognized kernel type 'foo'!");
 }
 
-TEST(LIBSVMRegressionModelHeaderParseInvalid, wrong_total_sv) {
+TEST(LIBSVMRegressionModelHeaderParseInvalid, WrongTotalSv) {
     // parse the LIBSVM model file
     const std::string filename = PLSSVM_TEST_PATH "/data/model/regression/invalid/wrong_total_sv.libsvm.model";
     plssvm::detail::io::file_reader reader{ filename };
@@ -50,7 +50,7 @@ TEST(LIBSVMRegressionModelHeaderParseInvalid, wrong_total_sv) {
                       "The number of support vectors must be greater than 0!");
 }
 
-TEST(LIBSVMRegressionModelHeaderParseInvalid, empty_rho) {
+TEST(LIBSVMRegressionModelHeaderParseInvalid, EmptyRho) {
     // parse the LIBSVM model file
     const std::string filename = PLSSVM_TEST_PATH "/data/model/regression/invalid/empty_rho.libsvm.model";
     plssvm::detail::io::file_reader reader{ filename };
@@ -60,7 +60,7 @@ TEST(LIBSVMRegressionModelHeaderParseInvalid, empty_rho) {
                       "At least one rho value must be set, but none was given!");
 }
 
-TEST(LIBSVMRegressionModelHeaderParseInvalid, unrecognized_header_entry) {
+TEST(LIBSVMRegressionModelHeaderParseInvalid, UnrecognizedHeaderEntry) {
     // parse the LIBSVM model file
     const std::string filename = PLSSVM_TEST_PATH "/data/model/regression/invalid/unrecognized_header_entry.libsvm.model";
     plssvm::detail::io::file_reader reader{ filename };
@@ -70,7 +70,7 @@ TEST(LIBSVMRegressionModelHeaderParseInvalid, unrecognized_header_entry) {
                       "Unrecognized header entry 'invalid entry'! Maybe SV is missing?");
 }
 
-TEST(LIBSVMRegressionModelHeaderParseInvalid, missing_svm_type) {
+TEST(LIBSVMRegressionModelHeaderParseInvalid, MissingSvmType) {
     // parse the LIBSVM model file
     const std::string filename = PLSSVM_TEST_PATH "/data/model/regression/invalid/missing_svm_type.libsvm.model";
     plssvm::detail::io::file_reader reader{ filename };
@@ -80,7 +80,7 @@ TEST(LIBSVMRegressionModelHeaderParseInvalid, missing_svm_type) {
                       "Missing svm_type!");
 }
 
-TEST(LIBSVMRegressionModelHeaderParseInvalid, missing_kernel_type) {
+TEST(LIBSVMRegressionModelHeaderParseInvalid, MissingKernelType) {
     // parse the LIBSVM model file
     const std::string filename = PLSSVM_TEST_PATH "/data/model/regression/invalid/missing_kernel_type.libsvm.model";
     plssvm::detail::io::file_reader reader{ filename };
@@ -90,7 +90,7 @@ TEST(LIBSVMRegressionModelHeaderParseInvalid, missing_kernel_type) {
                       "Missing kernel_type!");
 }
 
-TEST(LIBSVMRegressionModelHeaderParseInvalid, explicit_degree_in_linear_kernel) {
+TEST(LIBSVMRegressionModelHeaderParseInvalid, ExplicitDegreeInLinearKernel) {
     // parse the LIBSVM model file
     const std::string filename = PLSSVM_TEST_PATH "/data/model/regression/invalid/explicit_degree_in_linear_kernel.libsvm.model";
     plssvm::detail::io::file_reader reader{ filename };
@@ -100,7 +100,7 @@ TEST(LIBSVMRegressionModelHeaderParseInvalid, explicit_degree_in_linear_kernel) 
                       "Explicitly provided a value for the degree parameter which is not used in the linear kernel!");
 }
 
-TEST(LIBSVMRegressionModelHeaderParseInvalid, explicit_gamma_in_linear_kernel) {
+TEST(LIBSVMRegressionModelHeaderParseInvalid, ExplicitGammaInLinearKernel) {
     // parse the LIBSVM model file
     const std::string filename = PLSSVM_TEST_PATH "/data/model/regression/invalid/explicit_gamma_in_linear_kernel.libsvm.model";
     plssvm::detail::io::file_reader reader{ filename };
@@ -110,7 +110,7 @@ TEST(LIBSVMRegressionModelHeaderParseInvalid, explicit_gamma_in_linear_kernel) {
                       "Explicitly provided a value for the gamma parameter which is not used in the linear kernel!");
 }
 
-TEST(LIBSVMRegressionModelHeaderParseInvalid, explicit_coef0_in_linear_kernel) {
+TEST(LIBSVMRegressionModelHeaderParseInvalid, ExplicitCoef0InLinearKernel) {
     // parse the LIBSVM model file
     const std::string filename = PLSSVM_TEST_PATH "/data/model/regression/invalid/explicit_coef0_in_linear_kernel.libsvm.model";
     plssvm::detail::io::file_reader reader{ filename };
@@ -120,7 +120,7 @@ TEST(LIBSVMRegressionModelHeaderParseInvalid, explicit_coef0_in_linear_kernel) {
                       "Explicitly provided a value for the coef0 parameter which is not used in the linear kernel!");
 }
 
-TEST(LIBSVMRegressionModelHeaderParseInvalid, explicit_degree_in_rbf_kernel) {
+TEST(LIBSVMRegressionModelHeaderParseInvalid, ExplicitDegreeInRadialBasisFunctionKernel) {
     // parse the LIBSVM model file
     const std::string filename = PLSSVM_TEST_PATH "/data/model/regression/invalid/explicit_degree_in_rbf_kernel.libsvm.model";
     plssvm::detail::io::file_reader reader{ filename };
@@ -130,7 +130,7 @@ TEST(LIBSVMRegressionModelHeaderParseInvalid, explicit_degree_in_rbf_kernel) {
                       "Explicitly provided a value for the degree parameter which is not used in the rbf kernel!");
 }
 
-TEST(LIBSVMRegressionModelHeaderParseInvalid, explicit_coef0_in_rbf_kernel) {
+TEST(LIBSVMRegressionModelHeaderParseInvalid, ExplicitCoef0InRadialBasisFunctionKernel) {
     // parse the LIBSVM model file
     const std::string filename = PLSSVM_TEST_PATH "/data/model/regression/invalid/explicit_coef0_in_rbf_kernel.libsvm.model";
     plssvm::detail::io::file_reader reader{ filename };
@@ -140,7 +140,7 @@ TEST(LIBSVMRegressionModelHeaderParseInvalid, explicit_coef0_in_rbf_kernel) {
                       "Explicitly provided a value for the coef0 parameter which is not used in the rbf kernel!");
 }
 
-TEST(LIBSVMRegressionModelHeaderParseInvalid, explicit_degree_in_sigmoid_kernel) {
+TEST(LIBSVMRegressionModelHeaderParseInvalid, ExplicitDegreeInSigmoidKernel) {
     // parse the LIBSVM model file
     const std::string filename = PLSSVM_TEST_PATH "/data/model/regression/invalid/explicit_degree_in_sigmoid_kernel.libsvm.model";
     plssvm::detail::io::file_reader reader{ filename };
@@ -150,7 +150,7 @@ TEST(LIBSVMRegressionModelHeaderParseInvalid, explicit_degree_in_sigmoid_kernel)
                       "Explicitly provided a value for the degree parameter which is not used in the sigmoid kernel!");
 }
 
-TEST(LIBSVMRegressionModelHeaderParseInvalid, explicit_degree_in_laplacian_kernel) {
+TEST(LIBSVMRegressionModelHeaderParseInvalid, ExplicitDegreeInLaplacianKernel) {
     // parse the LIBSVM model file
     const std::string filename = PLSSVM_TEST_PATH "/data/model/regression/invalid/explicit_degree_in_laplacian_kernel.libsvm.model";
     plssvm::detail::io::file_reader reader{ filename };
@@ -160,7 +160,7 @@ TEST(LIBSVMRegressionModelHeaderParseInvalid, explicit_degree_in_laplacian_kerne
                       "Explicitly provided a value for the degree parameter which is not used in the laplacian kernel!");
 }
 
-TEST(LIBSVMRegressionModelHeaderParseInvalid, explicit_coef0_in_laplacian_kernel) {
+TEST(LIBSVMRegressionModelHeaderParseInvalid, ExplicitCoef0InLaplacianKernel) {
     // parse the LIBSVM model file
     const std::string filename = PLSSVM_TEST_PATH "/data/model/regression/invalid/explicit_coef0_in_laplacian_kernel.libsvm.model";
     plssvm::detail::io::file_reader reader{ filename };
@@ -170,7 +170,7 @@ TEST(LIBSVMRegressionModelHeaderParseInvalid, explicit_coef0_in_laplacian_kernel
                       "Explicitly provided a value for the coef0 parameter which is not used in the laplacian kernel!");
 }
 
-TEST(LIBSVMRegressionModelHeaderParseInvalid, explicit_degree_in_chi_squared_kernel) {
+TEST(LIBSVMRegressionModelHeaderParseInvalid, ExplicitDegreeInChiSquaredKernel) {
     // parse the LIBSVM model file
     const std::string filename = PLSSVM_TEST_PATH "/data/model/regression/invalid/explicit_degree_in_chi_squared_kernel.libsvm.model";
     plssvm::detail::io::file_reader reader{ filename };
@@ -180,7 +180,7 @@ TEST(LIBSVMRegressionModelHeaderParseInvalid, explicit_degree_in_chi_squared_ker
                       "Explicitly provided a value for the degree parameter which is not used in the chi_squared kernel!");
 }
 
-TEST(LIBSVMRegressionModelHeaderParseInvalid, explicit_coef0_in_chi_squared_kernel) {
+TEST(LIBSVMRegressionModelHeaderParseInvalid, ExplicitCoef0InChiSquaredKernel) {
     // parse the LIBSVM model file
     const std::string filename = PLSSVM_TEST_PATH "/data/model/regression/invalid/explicit_coef0_in_chi_squared_kernel.libsvm.model";
     plssvm::detail::io::file_reader reader{ filename };
@@ -190,7 +190,7 @@ TEST(LIBSVMRegressionModelHeaderParseInvalid, explicit_coef0_in_chi_squared_kern
                       "Explicitly provided a value for the coef0 parameter which is not used in the chi_squared kernel!");
 }
 
-TEST(LIBSVMRegressionModelHeaderParseInvalid, missing_nr_class) {
+TEST(LIBSVMRegressionModelHeaderParseInvalid, MissingNrClass) {
     // parse the LIBSVM model file
     const std::string filename = PLSSVM_TEST_PATH "/data/model/regression/invalid/missing_nr_class.libsvm.model";
     plssvm::detail::io::file_reader reader{ filename };
@@ -200,7 +200,7 @@ TEST(LIBSVMRegressionModelHeaderParseInvalid, missing_nr_class) {
                       "Missing number of different classes nr_class!");
 }
 
-TEST(LIBSVMRegressionModelHeaderParseInvalid, missing_total_sv) {
+TEST(LIBSVMRegressionModelHeaderParseInvalid, MissingTotalSv) {
     // parse the LIBSVM model file
     const std::string filename = PLSSVM_TEST_PATH "/data/model/regression/invalid/missing_total_sv.libsvm.model";
     plssvm::detail::io::file_reader reader{ filename };
@@ -210,7 +210,7 @@ TEST(LIBSVMRegressionModelHeaderParseInvalid, missing_total_sv) {
                       "Missing total number of support vectors total_sv!");
 }
 
-TEST(LIBSVMRegressionModelHeaderParseInvalid, missing_rho) {
+TEST(LIBSVMRegressionModelHeaderParseInvalid, MissingRho) {
     // parse the LIBSVM model file
     const std::string filename = PLSSVM_TEST_PATH "/data/model/regression/invalid/missing_rho.libsvm.model";
     plssvm::detail::io::file_reader reader{ filename };
@@ -220,7 +220,7 @@ TEST(LIBSVMRegressionModelHeaderParseInvalid, missing_rho) {
                       "Missing rho values!");
 }
 
-TEST(LIBSVMRegressionModelHeaderParseInvalid, missing_sv) {
+TEST(LIBSVMRegressionModelHeaderParseInvalid, MissingSv) {
     // parse the LIBSVM model file
     const std::string filename = PLSSVM_TEST_PATH "/data/model/regression/invalid/missing_sv.libsvm.model";
     plssvm::detail::io::file_reader reader{ filename };
@@ -230,7 +230,7 @@ TEST(LIBSVMRegressionModelHeaderParseInvalid, missing_sv) {
                       "Unrecognized header entry '-1.8568721894e-01 1:-1.1178275006e+00 2:-2.9087188881e+00 3:6.6638344270e-01 4:1.0978832704e+00'! Maybe SV is missing?");
 }
 
-TEST(LIBSVMRegressionModelHeaderParseInvalid, missing_support_vectors) {
+TEST(LIBSVMRegressionModelHeaderParseInvalid, MissingSupportVectors) {
     // parse the LIBSVM model file
     const std::string filename = PLSSVM_TEST_PATH "/data/model/regression/invalid/missing_support_vectors.libsvm.model";
     plssvm::detail::io::file_reader reader{ filename };
@@ -240,7 +240,7 @@ TEST(LIBSVMRegressionModelHeaderParseInvalid, missing_support_vectors) {
                       "Can't parse file: no support vectors are given or SV is missing!");
 }
 
-TEST(LIBSVMRegressionModelHeaderParseInvalid, empty) {
+TEST(LIBSVMRegressionModelHeaderParseInvalid, Empty) {
     // parse the LIBSVM model file
     const std::string filename = PLSSVM_TEST_PATH "/data/empty.txt";
     plssvm::detail::io::file_reader reader{ filename };
@@ -250,7 +250,7 @@ TEST(LIBSVMRegressionModelHeaderParseInvalid, empty) {
                       "Missing svm_type!");
 }
 
-TEST(LIBSVMRegressionModelHeaderParseInvalid, too_few_sv_according_to_header) {
+TEST(LIBSVMRegressionModelHeaderParseInvalid, TooFewSvAccordingToHeader) {
     // parse the LIBSVM file
     const std::string filename = PLSSVM_TEST_PATH "/data/model/regression/invalid/too_few_sv_according_to_header.libsvm.model";
     plssvm::detail::io::file_reader reader{ filename };
@@ -260,7 +260,7 @@ TEST(LIBSVMRegressionModelHeaderParseInvalid, too_few_sv_according_to_header) {
                       "Found 5 support vectors, but it should be 6!");
 }
 
-TEST(LIBSVMRegressionModelHeaderParseInvalid, too_many_sv_according_to_header) {
+TEST(LIBSVMRegressionModelHeaderParseInvalid, TooManySvAccordingToHeader) {
     // parse the LIBSVM file
     const std::string filename = PLSSVM_TEST_PATH "/data/model/regression/invalid/too_many_sv_according_to_header.libsvm.model";
     plssvm::detail::io::file_reader reader{ filename };
@@ -270,7 +270,7 @@ TEST(LIBSVMRegressionModelHeaderParseInvalid, too_many_sv_according_to_header) {
                       "Found 7 support vectors, but it should be 6!");
 }
 
-TEST(LIBSVMRegressionModelHeaderParseInvalid, wrong_nr_class) {
+TEST(LIBSVMRegressionModelHeaderParseInvalid, WrongNrClass) {
     // parse the LIBSVM file
     const std::string filename = PLSSVM_TEST_PATH "/data/model/regression/invalid/wrong_nr_class.libsvm.model";
     plssvm::detail::io::file_reader reader{ filename };
@@ -280,7 +280,7 @@ TEST(LIBSVMRegressionModelHeaderParseInvalid, wrong_nr_class) {
                               ::testing::HasSubstr("The number of classes (nr_class) is 3, but must be 2!"));
 }
 
-TEST(LIBSVMRegressionModelHeaderParseInvalid, wrong_num_rho) {
+TEST(LIBSVMRegressionModelHeaderParseInvalid, WrongNumRho) {
     // parse the LIBSVM file
     const std::string filename = PLSSVM_TEST_PATH "/data/model/regression/invalid/wrong_num_rho.libsvm.model";
     plssvm::detail::io::file_reader reader{ filename };

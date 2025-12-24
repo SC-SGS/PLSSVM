@@ -44,14 +44,14 @@ class mock_csvm : virtual public plssvm::csvm {
     MOCK_METHOD((std::vector<plssvm::detail::memory_size>), get_device_memory, (), (const, override));
     MOCK_METHOD((std::vector<plssvm::detail::memory_size>), get_max_mem_alloc_size, (), (const, override));
     MOCK_METHOD((std::vector<std::optional<plssvm::detail::memory_size>>), get_local_memory, (), (const, override));
-    MOCK_METHOD((std::size_t), num_available_devices, (), (const, noexcept, override));
+    MOCK_METHOD((std::size_t), num_available_devices, (), (const, noexcept, override));  // NOLINT(bugprone-exception-escape): actual function is noexcept and can't throw
     MOCK_METHOD((std::vector<plssvm::detail::move_only_any>), assemble_kernel_matrix, (plssvm::solver_type, const plssvm::parameter &, const plssvm::aos_matrix<plssvm::real_type> &, const std::vector<plssvm::real_type> &, plssvm::real_type), (const, override));
     MOCK_METHOD((void), blas_level_3, (plssvm::solver_type, plssvm::real_type, const std::vector<plssvm::detail::move_only_any> &, const plssvm::aos_matrix<plssvm::real_type> &, plssvm::real_type, plssvm::aos_matrix<plssvm::real_type> &), (const, override));
     MOCK_METHOD((plssvm::aos_matrix<plssvm::real_type>), predict_values, (const plssvm::parameter &, const plssvm::aos_matrix<plssvm::real_type> &, const plssvm::aos_matrix<plssvm::real_type> &, const std::vector<plssvm::real_type> &, plssvm::aos_matrix<plssvm::real_type> &, const plssvm::aos_matrix<plssvm::real_type> &), (const, override));
 
   private:
     void fake_functions() const {
-        using namespace plssvm::detail::literals;
+        using namespace plssvm::detail::literals;  // NOLINT(google-build-using-namespace): only imports custom user-defined literals into this namespace
         ON_CALL(*this, get_device_memory()).WillByDefault(::testing::Return(std::vector<plssvm::detail::memory_size>{ 1_GiB, 1_GiB }));
         ON_CALL(*this, get_max_mem_alloc_size()).WillByDefault(::testing::Return(std::vector<plssvm::detail::memory_size>{ 512_MiB, 256_MiB }));
         ON_CALL(*this, get_local_memory()).WillByDefault(::testing::Return(std::vector<std::optional<plssvm::detail::memory_size>>{ 512_MiB, 256_MiB }));

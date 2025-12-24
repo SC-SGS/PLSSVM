@@ -34,7 +34,7 @@ class ClassificationDataSetLabelMapper : public ::testing::Test {
 
 TYPED_TEST_SUITE(ClassificationDataSetLabelMapper, util::label_type_gtest, naming::test_parameter_to_name);
 
-TYPED_TEST(ClassificationDataSetLabelMapper, construct) {
+TYPED_TEST(ClassificationDataSetLabelMapper, Construct) {
     using label_type = typename TestFixture::fixture_label_type;
     using label_mapper_type = typename plssvm::classification_data_set<label_type>::label_mapper;
 
@@ -54,7 +54,7 @@ TYPED_TEST(ClassificationDataSetLabelMapper, construct) {
     }
 }
 
-TYPED_TEST(ClassificationDataSetLabelMapper, get_mapped_index_by_label) {
+TYPED_TEST(ClassificationDataSetLabelMapper, GetMappedIndexByLabel) {
     using label_type = typename TestFixture::fixture_label_type;
     using label_mapper_type = typename plssvm::classification_data_set<label_type>::label_mapper;
 
@@ -73,7 +73,7 @@ TYPED_TEST(ClassificationDataSetLabelMapper, get_mapped_index_by_label) {
     }
 }
 
-TYPED_TEST(ClassificationDataSetLabelMapper, get_mapped_index_by_invalid_label) {
+TYPED_TEST(ClassificationDataSetLabelMapper, GetMappedIndexByInvalidLabel) {
     using label_type = typename TestFixture::fixture_label_type;
     using label_mapper_type = typename plssvm::classification_data_set<label_type>::label_mapper;
 
@@ -94,7 +94,7 @@ TYPED_TEST(ClassificationDataSetLabelMapper, get_mapped_index_by_invalid_label) 
     }
 }
 
-TYPED_TEST(ClassificationDataSetLabelMapper, get_label_by_mapped_index) {
+TYPED_TEST(ClassificationDataSetLabelMapper, GetLabelByMappedIndex) {
     using label_type = typename TestFixture::fixture_label_type;
     using label_mapper_type = typename plssvm::classification_data_set<label_type>::label_mapper;
 
@@ -113,7 +113,7 @@ TYPED_TEST(ClassificationDataSetLabelMapper, get_label_by_mapped_index) {
     }
 }
 
-TYPED_TEST(ClassificationDataSetLabelMapper, get_label_by_invalid_mapped_index) {
+TYPED_TEST(ClassificationDataSetLabelMapper, GetLabelByInvalidMappedIndex) {
     using label_type = typename TestFixture::fixture_label_type;
     using label_mapper_type = typename plssvm::classification_data_set<label_type>::label_mapper;
 
@@ -129,7 +129,7 @@ TYPED_TEST(ClassificationDataSetLabelMapper, get_label_by_invalid_mapped_index) 
                       fmt::format("Mapped index \"{}\" unknown in this label mapping!", mapper.num_mappings() + 1));
 }
 
-TYPED_TEST(ClassificationDataSetLabelMapper, num_mappings) {
+TYPED_TEST(ClassificationDataSetLabelMapper, NumMappings) {
     using label_type = typename TestFixture::fixture_label_type;
     using label_mapper_type = typename plssvm::classification_data_set<label_type>::label_mapper;
 
@@ -143,7 +143,7 @@ TYPED_TEST(ClassificationDataSetLabelMapper, num_mappings) {
     EXPECT_EQ(mapper.num_mappings(), different_labels.size());
 }
 
-TYPED_TEST(ClassificationDataSetLabelMapper, labels) {
+TYPED_TEST(ClassificationDataSetLabelMapper, Labels) {
     using label_type = typename TestFixture::fixture_label_type;
     using label_mapper_type = typename plssvm::classification_data_set<label_type>::label_mapper;
 
@@ -162,7 +162,7 @@ class ClassificationDataSetLabelMapperDeathTest : public ClassificationDataSetLa
 
 TYPED_TEST_SUITE(ClassificationDataSetLabelMapperDeathTest, util::label_type_gtest, naming::test_parameter_to_name);
 
-TYPED_TEST(ClassificationDataSetLabelMapperDeathTest, duplicated_labels) {
+TYPED_TEST(ClassificationDataSetLabelMapperDeathTest, DuplicatedLabels) {
     using label_type = typename TestFixture::fixture_label_type;
     using label_mapper_type = typename plssvm::classification_data_set<label_type>::label_mapper;
 

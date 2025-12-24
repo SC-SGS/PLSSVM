@@ -15,7 +15,7 @@
 
 #include "plssvm/backends/stdpar/detail/utility.hpp"           // plssvm::stdpar::detail::atomic_ref
 #include "plssvm/backends/stdpar/kernel/kernel_functions.hpp"  // plssvm::stdpar::detail::{feature_reduce, apply_kernel_function}
-#include "plssvm/constants.hpp"                                // plssvm::{real_type, INTERNAL_BLOCK_SIZE, PADDING_SIZE}
+#include "plssvm/constants.hpp"                                // plssvm::{real_type, THREAD_BLOCK_SIZE, INTERNAL_BLOCK_SIZE, PADDING_SIZE}
 #include "plssvm/detail/assert.hpp"                            // PLSSVM_ASSERT
 #include "plssvm/kernel_function_types.hpp"                    // plssvm::kernel_function_type
 #include "plssvm/matrix.hpp"                                   // plssvm::aos_matrix, plssvm::soa_matrix
@@ -70,8 +70,8 @@ struct device_kernel_w_linear {
 
         std::for_each(std::execution::par_unseq, range.begin(), range.end(), [=, w_ptr = w.data(), alpha_ptr = alpha.data(), support_vectors_ptr = support_vectors.data()](const std::size_t idx) {
             // calculate the indices used in the current thread
-            const std::size_t feature_idx = (idx / blocked_num_classes) * INTERNAL_BLOCK_SIZE_uz;
-            const std::size_t class_idx = (idx % blocked_num_classes) * INTERNAL_BLOCK_SIZE_uz;
+            const std::size_t feature_idx = (idx / blocked_num_classes) * INTERNAL_BLOCK_SIZE_uz;  // num_features
+            const std::size_t class_idx = (idx % blocked_num_classes) * INTERNAL_BLOCK_SIZE_uz;    // num_classes
 
             // create a thread private array used for internal caching
             std::array<std::array<real_type, INTERNAL_BLOCK_SIZE>, INTERNAL_BLOCK_SIZE> temp{};
@@ -88,8 +88,8 @@ struct device_kernel_w_linear {
 
                             real_type sum{ 0.0 };
                             for (std::size_t sv = 0; sv < THREAD_BLOCK_SIZE_uz; ++sv) {
-                                sum += alpha_ptr[global_class_idx * (num_sv + PADDING_SIZE_uz) + device_sv_offset + sv_block + sv] *             // AoS
-                                       support_vectors_ptr[global_feature_idx * (num_sv + PADDING_SIZE_uz) + device_sv_offset + sv_block + sv];  // SoA
+                                sum += support_vectors_ptr[global_feature_idx * (num_sv + PADDING_SIZE_uz) + device_sv_offset + sv_block + sv] *  // SoA
+                                       alpha_ptr[global_class_idx * (num_sv + PADDING_SIZE_uz) + device_sv_offset + sv_block + sv];               // AoS
                             }
                             temp[internal_feature][internal_class] += sum;
                         }
@@ -103,8 +103,8 @@ struct device_kernel_w_linear {
                                 const auto global_feature_idx = feature_idx + static_cast<std::size_t>(internal_feature);
                                 const auto global_class_idx = class_idx + static_cast<std::size_t>(internal_class);
 
-                                temp[internal_feature][internal_class] += alpha_ptr[global_class_idx * (num_sv + PADDING_SIZE_uz) + device_sv_offset + sv_block + sv] *             // AoS
-                                                                          support_vectors_ptr[global_feature_idx * (num_sv + PADDING_SIZE_uz) + device_sv_offset + sv_block + sv];  // SoA
+                                temp[internal_feature][internal_class] += support_vectors_ptr[global_feature_idx * (num_sv + PADDING_SIZE_uz) + device_sv_offset + sv_block + sv] *  // SoA
+                                                                          alpha_ptr[global_class_idx * (num_sv + PADDING_SIZE_uz) + device_sv_offset + sv_block + sv];               // AoS
                             }
                         }
                     }
@@ -118,7 +118,7 @@ struct device_kernel_w_linear {
                     const auto global_feature_idx = feature_idx + static_cast<std::size_t>(internal_feature);
                     const auto global_class_idx = class_idx + static_cast<std::size_t>(internal_class);
 
-                    w_ptr[global_feature_idx * (num_classes + PADDING_SIZE_uz) + global_class_idx] = temp[internal_feature][internal_class];
+                    w_ptr[global_feature_idx * (num_classes + PADDING_SIZE_uz) + global_class_idx] = temp[internal_feature][internal_class];  // SoA
                 }
             }
         });
@@ -141,7 +141,7 @@ struct device_kernel_predict_linear {
      * @param[in] device_row_offset the first row in @p predict_points the current device is responsible for
      */
     void operator()(aos_matrix<real_type> &prediction, const soa_matrix<real_type> &w, const std::vector<real_type> &rho, const soa_matrix<real_type> &predict_points, const std::size_t device_num_predict_points, const std::size_t device_row_offset) {
-        PLSSVM_ASSERT(w.num_rows() == rho.size(), "Size mismatch: {} vs {}!", w.num_rows(), rho.size());
+        PLSSVM_ASSERT(w.num_rows() == rho.size() - PADDING_SIZE, "Size mismatch: {} vs {}!", w.num_rows(), rho.size() - PADDING_SIZE);
         PLSSVM_ASSERT(w.num_cols() == predict_points.num_cols(), "Size mismatch: {} vs {}!", w.num_cols(), predict_points.num_cols());
         PLSSVM_ASSERT(prediction.shape() == (plssvm::shape{ predict_points.num_rows(), w.num_rows() }), "Shape mismatch: {} vs {}!", prediction.shape(), (plssvm::shape{ predict_points.num_rows(), w.num_rows() }));
         PLSSVM_ASSERT(predict_points.num_rows() >= device_num_predict_points, "The number of place specific predict points ({}) cannot be greater the the total number of predict points ({})!", device_num_predict_points, predict_points.num_rows());
@@ -165,8 +165,8 @@ struct device_kernel_predict_linear {
 
         std::for_each(std::execution::par_unseq, range.begin(), range.end(), [=, prediction_ptr = prediction.data(), w_ptr = w.data(), rho_ptr = rho.data(), predict_points_ptr = predict_points.data()](const std::size_t idx) {
             // calculate the indices used in the current thread
-            const std::size_t pp_idx = (idx / blocked_num_classes) * INTERNAL_BLOCK_SIZE_uz;
-            const std::size_t class_idx = (idx % blocked_num_classes) * INTERNAL_BLOCK_SIZE_uz;
+            const std::size_t pp_idx = (idx / blocked_num_classes) * INTERNAL_BLOCK_SIZE_uz;     // num_predict_points
+            const std::size_t class_idx = (idx % blocked_num_classes) * INTERNAL_BLOCK_SIZE_uz;  // num_classes
 
             // create a thread private array used for internal caching
             std::array<std::array<real_type, INTERNAL_BLOCK_SIZE>, INTERNAL_BLOCK_SIZE> temp{};
@@ -213,7 +213,7 @@ struct device_kernel_predict_linear {
                     const auto global_pp_idx = device_row_offset + pp_idx + static_cast<std::size_t>(internal_pp);
                     const auto global_class_idx = class_idx + static_cast<std::size_t>(internal_class);
 
-                    prediction_ptr[global_pp_idx * (num_classes + PADDING_SIZE_uz) + global_class_idx] = temp[internal_pp][internal_class] - rho_ptr[global_class_idx];
+                    prediction_ptr[global_pp_idx * (num_classes + PADDING_SIZE_uz) + global_class_idx] = temp[internal_pp][internal_class] - rho_ptr[global_class_idx];  // AoS
                 }
             }
         });
@@ -326,7 +326,8 @@ struct device_kernel_predict {
                             atomic_ref<real_type>{ prediction_ptr[global_pp_idx * (num_classes + PADDING_SIZE_uz) + class_idx] } += -rho_ptr[class_idx];
                         }
                         atomic_ref<real_type>{ prediction_ptr[global_pp_idx * (num_classes + PADDING_SIZE_uz) + class_idx] } +=
-                            temp[internal_pp][internal_sv] * alpha_ptr[class_idx * (device_num_sv + PADDING_SIZE_uz) + global_sv_idx];
+                            alpha_ptr[class_idx * (device_num_sv + PADDING_SIZE_uz) + global_sv_idx] *  // AoS
+                            temp[internal_pp][internal_sv];
                     }
                 }
             }

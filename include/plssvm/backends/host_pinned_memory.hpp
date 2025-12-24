@@ -98,7 +98,7 @@ template <typename T>
 host_pinned_memory<T>::~host_pinned_memory() = default;
 
 template <typename T>
-void host_pinned_memory<T>::pin_memory(const std::size_t) {
+void host_pinned_memory<T>::pin_memory([[maybe_unused]] const std::size_t num_bytes) {
     // explicitly set flag
     is_pinned_ = false;
 }

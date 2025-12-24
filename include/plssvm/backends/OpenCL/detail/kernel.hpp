@@ -102,13 +102,13 @@ class kernel {
      * @brief Implicitly convert a kernel wrapper to an OpenCL cl_kernel.
      * @return the wrapped OpenCL cl_kernel (`[[nodiscard]]`)
      */
-    [[nodiscard]] operator cl_kernel &() noexcept { return compute_kernel; }
+    [[nodiscard]] operator cl_kernel &() noexcept { return compute_kernel; }  // NOLINT: overload is intentional to reduce explicit casts in OpenCL interfaces
 
     /**
      * @brief Implicitly convert a kernel wrapper to an OpenCL cl_kernel.
      * @return the wrapped OpenCL cl_kernel (`[[nodiscard]]`)
      */
-    [[nodiscard]] operator const cl_kernel &() const noexcept { return compute_kernel; }
+    [[nodiscard]] operator const cl_kernel &() const noexcept { return compute_kernel; }  // NOLINT: overload is intentional to reduce explicit casts in OpenCL interfaces
 
     /// The wrapped OpenCL cl_kernel.
     cl_kernel compute_kernel;

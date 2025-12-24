@@ -67,6 +67,7 @@ void gather_and_print_csvm_information(const communicator &comm, backend_type ra
     }
     // assemble one device name string
     std::vector<std::string> rank_str{};
+    rank_str.reserve(devices_for_rank.size());
     for (const auto &[device, count] : devices_for_rank) {
         rank_str.emplace_back(fmt::format("{}x {}", count, device));
     }

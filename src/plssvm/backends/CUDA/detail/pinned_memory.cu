@@ -15,13 +15,13 @@
 #include "plssvm/exceptions/exceptions.hpp"                // plssvm::exception
 
 #include "cuda_runtime_api.h"  // cudaHostRegister
+#include "driver_types.h"      // cudaHostRegisterDefault
 
-#include "driver_types.h"  // cudaHostRegisterDefault
-#include <chrono>          // std::chrono::steady_clock::{now, time_point}, std::chrono::duration_cast
-#include <cstddef>         // std::size_t
-#include <exception>       // std::terminate
-#include <iostream>        // std::cerr, std::endl
-#include <vector>          // std::vector
+#include <chrono>     // std::chrono::steady_clock::{now, time_point}, std::chrono::duration_cast
+#include <cstddef>    // std::size_t
+#include <exception>  // std::terminate
+#include <iostream>   // std::cerr, std::endl
+#include <vector>     // std::vector
 
 namespace plssvm::cuda::detail {
 

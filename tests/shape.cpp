@@ -19,7 +19,7 @@
 #include <functional>  // std::hash
 #include <sstream>     // std::istringstream
 
-TEST(Shape, default_construct) {
+TEST(Shape, DefaultConstruct) {
     // default construct a shape
     const plssvm::shape s{};
 
@@ -28,7 +28,7 @@ TEST(Shape, default_construct) {
     EXPECT_EQ(s.y, 0);
 }
 
-TEST(Shape, construct) {
+TEST(Shape, Construct) {
     // construct a shape with values
     const plssvm::shape s{ 4, 5 };
 
@@ -37,7 +37,7 @@ TEST(Shape, construct) {
     EXPECT_EQ(s.y, 5);
 }
 
-TEST(Shape, swap_member_function) {
+TEST(Shape, SwapMemberFunction) {
     // construct two shape objects
     plssvm::shape s1{ 4, 5 };
     plssvm::shape s2{};
@@ -53,7 +53,7 @@ TEST(Shape, swap_member_function) {
 }
 
 // check whether the plssvm::shape -> std::string conversions are correct
-TEST(Shape, to_string) {
+TEST(Shape, ToString) {
     // check conversions to std::string
     EXPECT_CONVERSION_TO_STRING((plssvm::shape{ 0, 0 }), "[0, 0]");
     EXPECT_CONVERSION_TO_STRING((plssvm::shape{ 4, 0 }), "[4, 0]");
@@ -62,7 +62,7 @@ TEST(Shape, to_string) {
 }
 
 // check whether the std::string -> plssvm::shape conversions are correct
-TEST(Shape, from_string) {
+TEST(Shape, FromString) {
     // check conversion from std::string
     EXPECT_CONVERSION_FROM_STRING("0 0", (plssvm::shape{ 0, 0 }));
     EXPECT_CONVERSION_FROM_STRING("4 0", (plssvm::shape{ 4, 0 }));
@@ -70,7 +70,7 @@ TEST(Shape, from_string) {
     EXPECT_CONVERSION_FROM_STRING("4 5", (plssvm::shape{ 4, 5 }));
 }
 
-TEST(Shape, from_string_unknown) {
+TEST(Shape, FromStringUnknown) {
     // foo isn't a valid solver_type
     std::istringstream input{ "foo" };
     plssvm::shape shape{};
@@ -78,7 +78,7 @@ TEST(Shape, from_string_unknown) {
     EXPECT_TRUE(input.fail());
 }
 
-TEST(Shape, swap_free_function) {
+TEST(Shape, SwapFreeFunction) {
     // construct two shape objects
     plssvm::shape s1{ 4, 5 };
     plssvm::shape s2{};
@@ -94,7 +94,7 @@ TEST(Shape, swap_free_function) {
     EXPECT_EQ(s2.y, 5);
 }
 
-TEST(Shape, equal) {
+TEST(Shape, Equal) {
     // construct shape objects
     const plssvm::shape s1{ 4, 5 };
     const plssvm::shape s2{};
@@ -106,7 +106,7 @@ TEST(Shape, equal) {
     EXPECT_TRUE(s2 == s3);
 }
 
-TEST(Shape, unequal) {
+TEST(Shape, Unequal) {
     // construct shape objects
     const plssvm::shape s1{ 4, 5 };
     const plssvm::shape s2{};
@@ -118,7 +118,7 @@ TEST(Shape, unequal) {
     EXPECT_FALSE(s2 != s3);
 }
 
-TEST(Shape, hash) {
+TEST(Shape, Hash) {
     // create a shape object
     const plssvm::shape s{ 2, 3 };
 

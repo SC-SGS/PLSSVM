@@ -9,8 +9,8 @@
  * @brief Defines an enumeration holding all supported stdpar implementations.
  */
 
-#ifndef PLSSVM_BACKENDS_STDPAR_IMPLEMENTATION_TYPE_HPP_
-#define PLSSVM_BACKENDS_STDPAR_IMPLEMENTATION_TYPE_HPP_
+#ifndef PLSSVM_BACKENDS_STDPAR_IMPLEMENTATION_TYPES_HPP_
+#define PLSSVM_BACKENDS_STDPAR_IMPLEMENTATION_TYPES_HPP_
 #pragma once
 
 #include "fmt/base.h"     // fmt::formatter
@@ -69,4 +69,4 @@ struct fmt::formatter<plssvm::stdpar::implementation_type> : fmt::ostream_format
 
 /// @endcond
 
-#endif  // PLSSVM_BACKENDS_STDPAR_IMPLEMENTATION_TYPE_HPP_
+#endif  // PLSSVM_BACKENDS_STDPAR_IMPLEMENTATION_TYPES_HPP_

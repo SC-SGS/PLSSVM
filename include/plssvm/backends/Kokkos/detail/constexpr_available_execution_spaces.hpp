@@ -12,6 +12,7 @@
 
 #ifndef PLSSVM_BACKENDS_KOKKOS_DETAIL_CONSTEXPR_AVAILABLE_EXECUTION_SPACES_HPP_
 #define PLSSVM_BACKENDS_KOKKOS_DETAIL_CONSTEXPR_AVAILABLE_EXECUTION_SPACES_HPP_
+#pragma once
 
 /**
  * @def PLSSVM_KOKKOS_BACKEND_NUM_AVAILABLE_EXECUTION_SPACES
@@ -22,7 +23,7 @@
     #define PLSSVM_KOKKOS_BACKEND_NUM_AVAILABLE_EXECUTION_SPACES 0
 #endif
 
-#include "plssvm/backends/Kokkos/execution_space.hpp"  // plssvm::kokkos::execution_space
+#include "plssvm/backends/Kokkos/execution_spaces.hpp"  // plssvm::kokkos::execution_space
 
 #include <array>  // std::array
 
@@ -33,7 +34,7 @@ namespace plssvm::kokkos::detail {
  * @details At least one execution space must **always** be available!
  * @return a `std::array` containing all available execution spaces (`[[nodiscard]]`)
  */
-[[nodiscard]] inline constexpr auto constexpr_available_execution_spaces() noexcept {
+[[nodiscard]] constexpr auto constexpr_available_execution_spaces() noexcept {
     // Note: The execution_space::automatic value may NEVER be added here!
     // Note: the trailing comma is explicitly allowed by the standard
     // Note: the order is intentionally chosen this way -> the order of the entries determines the priority when using a backend to run our code

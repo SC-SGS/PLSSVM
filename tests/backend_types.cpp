@@ -11,7 +11,7 @@
 
 #include "plssvm/backend_types.hpp"
 
-#include "plssvm/backends/SYCL/detail/constants.hpp"      // namespace plssvm::sycl
+#include "plssvm/backends/SYCL/detail/constants.hpp"      // NOLINT: namespace plssvm::sycl
 #include "plssvm/backends/SYCL/implementation_types.hpp"  // plssvm::sycl::implementation_type
 #include "plssvm/exceptions/exceptions.hpp"               // plssvm::unsupported_backend_exception
 #include "plssvm/target_platforms.hpp"                    // plssvm::target_platform
@@ -30,7 +30,7 @@
 #include <vector>   // std::vector
 
 // check whether the plssvm::backend_type -> std::string conversions are correct
-TEST(BackendType, to_string) {
+TEST(BackendType, ToString) {
     // check conversions to std::string
     EXPECT_CONVERSION_TO_STRING(plssvm::backend_type::automatic, "automatic");
     EXPECT_CONVERSION_TO_STRING(plssvm::backend_type::openmp, "openmp");
@@ -43,13 +43,13 @@ TEST(BackendType, to_string) {
     EXPECT_CONVERSION_TO_STRING(plssvm::backend_type::kokkos, "kokkos");
 }
 
-TEST(BackendType, to_string_unknown) {
+TEST(BackendType, ToStringUnknown) {
     // check conversions to std::string from unknown backend_type
     EXPECT_CONVERSION_TO_STRING(static_cast<plssvm::backend_type>(9), "unknown");
 }
 
 // check whether the std::string -> plssvm::backend_type conversions are correct
-TEST(BackendType, from_string) {
+TEST(BackendType, FromString) {
     // check conversion from std::string
     EXPECT_CONVERSION_FROM_STRING("automatic", plssvm::backend_type::automatic);
     EXPECT_CONVERSION_FROM_STRING("AUTOmatic", plssvm::backend_type::automatic);
@@ -73,7 +73,7 @@ TEST(BackendType, from_string) {
     EXPECT_CONVERSION_FROM_STRING("KOKKOS", plssvm::backend_type::kokkos);
 }
 
-TEST(BackendType, from_string_unknown) {
+TEST(BackendType, FromStringUnknown) {
     // foo isn't a valid backend_type
     std::istringstream input{ "foo" };
     plssvm::backend_type backend{};
@@ -81,7 +81,7 @@ TEST(BackendType, from_string_unknown) {
     EXPECT_TRUE(input.fail());
 }
 
-TEST(BackendType, minimal_available_backend) {
+TEST(BackendType, MinimalAvailableBackend) {
     const std::vector<plssvm::backend_type> backends = plssvm::list_available_backends();
 
     // at least two backends must be available (automatic + one user provided)!
@@ -91,7 +91,7 @@ TEST(BackendType, minimal_available_backend) {
     EXPECT_THAT(backends, ::testing::Contains(plssvm::backend_type::automatic));
 }
 
-TEST(BackendType, determine_default_backend_type) {
+TEST(BackendType, DetermineDefaultBackendType) {
     // the determined default backend must not be backend_type::automatic
     const plssvm::backend_type backend = plssvm::determine_default_backend();
     EXPECT_NE(backend, plssvm::backend_type::automatic);
@@ -101,7 +101,7 @@ using unsupported_combination_type = std::pair<std::vector<plssvm::backend_type>
 
 class BackendTypeUnsupportedCombination : public ::testing::TestWithParam<unsupported_combination_type> { };
 
-TEST_P(BackendTypeUnsupportedCombination, unsupported_backend_target_platform_combinations) {
+TEST_P(BackendTypeUnsupportedCombination, UnsupportedBackendTargetPlatformCombinations) {
     const auto &[available_backends, available_target_platforms] = GetParam();
     EXPECT_THROW_WHAT(std::ignore = plssvm::determine_default_backend(available_backends, available_target_platforms),
                       plssvm::unsupported_backend_exception,
@@ -122,7 +122,7 @@ using supported_combination_type = std::tuple<std::vector<plssvm::backend_type>,
 
 class BackendTypeSupportedCombination : public ::testing::TestWithParam<supported_combination_type> { };
 
-TEST_P(BackendTypeSupportedCombination, supported_backend_target_platform_combinations) {
+TEST_P(BackendTypeSupportedCombination, SupportedBackendTargetPlatformCombinations) {
     const auto &[available_backends, available_target_platforms, result_backend] = GetParam();
     EXPECT_EQ(plssvm::determine_default_backend(available_backends, available_target_platforms), result_backend);
 }
@@ -144,7 +144,7 @@ INSTANTIATE_TEST_SUITE_P(BackendType, BackendTypeSupportedCombination, ::testing
          naming::pretty_print_supported_backend_combination<BackendTypeSupportedCombination>);
 // clang-format on
 
-TEST(BackendType, csvm_to_backend_type) {
+TEST(BackendType, CsvmToBackendType) {
     // test the type_trait
     EXPECT_EQ(plssvm::csvm_to_backend_type<plssvm::openmp::csvm>::value, plssvm::backend_type::openmp);
     EXPECT_EQ(plssvm::csvm_to_backend_type<plssvm::hpx::csvm>::value, plssvm::backend_type::hpx);
@@ -161,7 +161,7 @@ TEST(BackendType, csvm_to_backend_type) {
     EXPECT_EQ(plssvm::csvm_to_backend_type<plssvm::dpcpp::csvm>::impl, plssvm::sycl::implementation_type::dpcpp);
 }
 
-TEST(BackendType, csvm_to_backend_type_v) {
+TEST(BackendType, CsvmToBackendTypeV) {
     // test the type_trait
     EXPECT_EQ(plssvm::csvm_to_backend_type_v<plssvm::openmp::csvm>, plssvm::backend_type::openmp);
     EXPECT_EQ(plssvm::csvm_to_backend_type_v<plssvm::hpx::csvm>, plssvm::backend_type::hpx);

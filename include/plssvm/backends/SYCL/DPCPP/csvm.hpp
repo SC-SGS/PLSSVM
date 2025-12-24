@@ -43,6 +43,8 @@ namespace plssvm {
 
 namespace dpcpp {
 
+using namespace plssvm::sycl;  // NOLINT(google-build-using-namespace): necessary to make general SYCL functionality available in the DPC++ specific namespace
+
 /**
  * @brief A C-SVM implementation using DPC++ as SYCL backend.
  */
@@ -72,7 +74,7 @@ class csvm : public ::plssvm::detail::gpu_csvm<detail::device_ptr, detail::queue
     template <typename... Args, PLSSVM_REQUIRES(::plssvm::detail::has_only_sycl_parameter_named_args_v<Args...>)>
     explicit csvm(const target_platform target = target_platform::automatic, Args &&...named_args) {
         // check igor parameter
-        igor::parser parser{ std::forward<Args>(named_args)... };
+        const igor::parser parser{ std::forward<Args>(named_args)... };
 
         // check whether a specific SYCL data parallel kernel has been requested
         if constexpr (parser.has(sycl_data_parallel_kernel)) {

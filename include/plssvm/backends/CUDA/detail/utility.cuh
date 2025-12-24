@@ -9,12 +9,16 @@
  * @brief Utility functions for the CUDA backend.
  */
 
-#ifndef PLSSVM_BACKENDS_CUDA_DETAIL_UTILITY_HPP_
-#define PLSSVM_BACKENDS_CUDA_DETAIL_UTILITY_HPP_
+#ifndef PLSSVM_BACKENDS_CUDA_DETAIL_UTILITY_CUH_
+#define PLSSVM_BACKENDS_CUDA_DETAIL_UTILITY_CUH_
 #pragma once
 
 #include "plssvm/backends/CUDA/exceptions.hpp"  // plssvm::cuda::backend_exception
 #include "plssvm/backends/execution_range.hpp"  // plssvm::detail::dim_type
+
+#include "cuda_runtime_api.h"  // cudaGetErrorName, cudaGetErrorString
+#include "driver_types.h"      // cudaError_t, cudaSuccess
+#include "vector_types.h"      // dim3
 
 #include "fmt/base.h"     // fmt::formatter
 #include "fmt/format.h"   // fmt::format
@@ -33,6 +37,8 @@
     if ((err) != cudaSuccess) {                                                                                                                 \
         throw plssvm::cuda::backend_exception{ fmt::format("CUDA assert '{}' ({}): {}", cudaGetErrorName(err), err, cudaGetErrorString(err)) }; \
     }
+
+// NOLINTBEGIN(misc-use-internal-linkage): false positive diagnostic for .cuh files
 
 namespace plssvm::cuda::detail {
 
@@ -70,6 +76,13 @@ void peek_at_last_error();
 void device_synchronize(int device);
 
 /**
+ * @brief Get the name of the CUDA @p device.
+ * @param[in] device the device
+ * @return the CUDA device name (`[[nodiscard]]`)
+ */
+[[nodiscard]] std::string get_device_name(int device);
+
+/**
  * @brief Get the CUDA runtime version as pretty string.
  * @details Parses the returned integer according to: https://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART____VERSION.html#group__CUDART____VERSION_1g0e3952c7802fd730432180f1f4a6cdc6
  * @return the CUDA runtime version (`[[nodiscard]]`)
@@ -80,9 +93,11 @@ void device_synchronize(int device);
 
 /// @cond Doxygen_suppress
 
+// NOLINTEND(misc-use-internal-linkage)
+
 template <>
 struct fmt::formatter<cudaError_t> : fmt::ostream_formatter { };
 
 /// @endcond
 
-#endif  // PLSSVM_BACKENDS_CUDA_DETAIL_UTILITY_HPP_
+#endif  // PLSSVM_BACKENDS_CUDA_DETAIL_UTILITY_CUH_

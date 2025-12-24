@@ -69,8 +69,8 @@ struct device_kernel_symm {
 
         std::for_each(std::execution::par_unseq, range.begin(), range.end(), [=, A_ptr = A, B_ptr = B.data(), C_ptr = C.data()](const std::size_t idx) {
             // calculate the indices used in the current thread
-            const std::size_t i_idx = (idx / blocked_device_num_rows) * INTERNAL_BLOCK_SIZE_uz;
-            const std::size_t j_idx = (idx % blocked_device_num_rows) * INTERNAL_BLOCK_SIZE_uz;
+            const std::size_t i_idx = (idx / blocked_device_num_rows) * INTERNAL_BLOCK_SIZE_uz;  // num_rhs
+            const std::size_t j_idx = (idx % blocked_device_num_rows) * INTERNAL_BLOCK_SIZE_uz;  // device_num_rows
 
             // create a thread private array used for internal caching
             std::array<std::array<real_type, INTERNAL_BLOCK_SIZE>, INTERNAL_BLOCK_SIZE> temp{};
@@ -90,9 +90,9 @@ struct device_kernel_symm {
                                 real_type A_cache = 0.0;
                                 // determine on which side of the diagonal we are located
                                 if (dim_block + dim < global_j_idx) {
-                                    A_cache = A_ptr[(dim_block + dim) * (num_rows - device_row_offset + PADDING_SIZE_uz) + global_j_idx - (dim_block + dim) * (dim_block + dim + std::size_t{ 1 }) / std::size_t{ 2 }];
+                                    A_cache = A_ptr[(dim_block + dim) * (num_rows - device_row_offset + PADDING_SIZE_uz) + global_j_idx - (dim_block + dim) * (dim_block + dim + std::size_t{ 1 }) / std::size_t{ 2 }];  // SoA, upper triangular matrix only
                                 } else {
-                                    A_cache = A_ptr[global_j_idx * (num_rows - device_row_offset + PADDING_SIZE_uz) + dim_block + dim - global_j_idx * (global_j_idx + std::size_t{ 1 }) / std::size_t{ 2 }];
+                                    A_cache = A_ptr[global_j_idx * (num_rows - device_row_offset + PADDING_SIZE_uz) + dim_block + dim - global_j_idx * (global_j_idx + std::size_t{ 1 }) / std::size_t{ 2 }];  // SoA, upper triangular matrix only
                                 }
                                 sum += A_cache * B_ptr[(dim_block + dim + device_row_offset) * (num_rhs + PADDING_SIZE_uz) + global_i_idx];
                             }
@@ -111,9 +111,9 @@ struct device_kernel_symm {
                                 real_type A_cache = 0.0;
                                 // determine on which side of the diagonal we are located
                                 if (dim_block + dim < global_j_idx) {
-                                    A_cache = A_ptr[(dim_block + dim) * (num_rows - device_row_offset + PADDING_SIZE_uz) + global_j_idx - (dim_block + dim) * (dim_block + dim + std::size_t{ 1 }) / std::size_t{ 2 }];
+                                    A_cache = A_ptr[(dim_block + dim) * (num_rows - device_row_offset + PADDING_SIZE_uz) + global_j_idx - (dim_block + dim) * (dim_block + dim + std::size_t{ 1 }) / std::size_t{ 2 }];  // SoA, upper triangular matrix only
                                 } else {
-                                    A_cache = A_ptr[global_j_idx * (num_rows - device_row_offset + PADDING_SIZE_uz) + dim_block + dim - global_j_idx * (global_j_idx + std::size_t{ 1 }) / std::size_t{ 2 }];
+                                    A_cache = A_ptr[global_j_idx * (num_rows - device_row_offset + PADDING_SIZE_uz) + dim_block + dim - global_j_idx * (global_j_idx + std::size_t{ 1 }) / std::size_t{ 2 }];  // SoA, upper triangular matrix only
                                 }
                                 temp[internal_i][internal_j] += A_cache * B_ptr[(dim_block + dim + device_row_offset) * (num_rhs + PADDING_SIZE_uz) + global_i_idx];
                             }
@@ -132,7 +132,7 @@ struct device_kernel_symm {
 
                     // be sure to not perform out-of-bounds accesses
                     if (global_i_idx < num_rhs && device_global_j_idx < device_num_rows) {
-                        C_ptr[global_j_idx * (num_rhs + PADDING_SIZE_uz) + global_i_idx] = alpha * temp[internal_i][internal_j] + beta * C_ptr[global_j_idx * (num_rhs + PADDING_SIZE_uz) + global_i_idx];
+                        C_ptr[global_j_idx * (num_rhs + PADDING_SIZE_uz) + global_i_idx] = alpha * temp[internal_i][internal_j] + beta * C_ptr[global_j_idx * (num_rhs + PADDING_SIZE_uz) + global_i_idx];  // SoA
                     }
                 }
             }
@@ -184,8 +184,8 @@ struct device_kernel_symm_mirror {
 
         std::for_each(std::execution::par_unseq, range.begin(), range.end(), [=, A_ptr = A, B_ptr = B.data(), C_ptr = C.data()](const std::size_t idx) {
             // calculate the indices used in the current thread
-            const std::size_t i_idx = (idx / blocked_num_mirror_rows) * INTERNAL_BLOCK_SIZE_uz;
-            const std::size_t j_idx = (idx % blocked_num_mirror_rows) * INTERNAL_BLOCK_SIZE_uz;
+            const std::size_t i_idx = (idx / blocked_num_mirror_rows) * INTERNAL_BLOCK_SIZE_uz;  // num_rhs
+            const std::size_t j_idx = (idx % blocked_num_mirror_rows) * INTERNAL_BLOCK_SIZE_uz;  // num_mirror_rows
 
             // create a thread private array used for internal caching
             std::array<std::array<real_type, INTERNAL_BLOCK_SIZE>, INTERNAL_BLOCK_SIZE> temp{};
@@ -235,7 +235,7 @@ struct device_kernel_symm_mirror {
 
                     // be sure to not perform out-of-bounds accesses
                     if (global_i_idx < num_rhs && partial_global_j_idx < num_mirror_rows) {
-                        C_ptr[global_j_idx * (num_rhs + PADDING_SIZE_uz) + global_i_idx] = alpha * temp[internal_i][internal_j] + beta * C_ptr[global_j_idx * (num_rhs + PADDING_SIZE_uz) + global_i_idx];
+                        C_ptr[global_j_idx * (num_rhs + PADDING_SIZE_uz) + global_i_idx] = alpha * temp[internal_i][internal_j] + beta * C_ptr[global_j_idx * (num_rhs + PADDING_SIZE_uz) + global_i_idx];  // SoA
                     }
                 }
             }

@@ -1,4 +1,6 @@
-# Interactive live comparison between `sklearn.svm` and PLSSVM
+<!-- DOXYGEN_INTERACTIVE_EXAMPLE_LINK -->
+
+# Interactive live comparison between sklearn.svm and PLSSVM
 
 This directory contains a bokeh application that can be used to compare `sklearn.svm`'s and PLSSVM's classification and 
 regression implementation directly besides each other. 
@@ -6,7 +8,7 @@ It is possible to change all available hyperparameters, e.g., kernel function, d
 respective kernel function parameters. Additionally, the number of  classes and datapoints as well as the used dataset 
 can be changed on the fly.
 
-![Example of our bokeh application visualization between sklearn.svm and PLSSVM.](https://github.com/SC-SGS/PLSSVM/raw/regression/.figures/plssvm_bokeh.gif)
+![Example of our bokeh application visualization between sklearn.svm and PLSSVM.](https://github.com/SC-SGS/PLSSVM/raw/develop/.figures/plssvm_bokeh.gif)
 
 # Requirements
 

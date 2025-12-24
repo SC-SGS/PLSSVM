@@ -9,8 +9,8 @@
  * @brief Variant wrapper structs around PLSSVM classification and regression models. Used that we don't have to expose templates to the Python bindings.
  */
 
-#ifndef PLSSVM_BINDINGS_PYTHON_MODEL_WRAPPER_HPP_
-#define PLSSVM_BINDINGS_PYTHON_MODEL_WRAPPER_HPP_
+#ifndef PLSSVM_BINDINGS_PYTHON_MODEL_VARIANT_WRAPPER_HPP_
+#define PLSSVM_BINDINGS_PYTHON_MODEL_VARIANT_WRAPPER_HPP_
 #pragma once
 
 #include "plssvm/model/classification_model.hpp"  // plssvm::classification_model
@@ -94,4 +94,4 @@ struct regression_model_wrapper {
 
 }  // namespace plssvm::bindings::python::util
 
-#endif  // PLSSVM_BINDINGS_PYTHON_MODEL_WRAPPER_HPP_
+#endif  // PLSSVM_BINDINGS_PYTHON_MODEL_VARIANT_WRAPPER_HPP_

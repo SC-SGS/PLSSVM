@@ -88,7 +88,8 @@ void device_kernel_assembly(real_type *kernel_matrix, const soa_matrix<real_type
 
                         real_type sum{ 0.0 };
                         for (std::size_t feature = 0; feature < THREAD_BLOCK_SIZE_uz; ++feature) {
-                            sum += detail::feature_reduce<kernel_function>(data(global_i_idx, feature_block + feature), data(global_j_idx, feature_block + feature));
+                            sum += detail::feature_reduce<kernel_function>(data(global_i_idx, feature_block + feature),   // SoA
+                                                                           data(global_j_idx, feature_block + feature));  // SoA
                         }
                         temp[internal_j][internal_i] += sum;
                     }

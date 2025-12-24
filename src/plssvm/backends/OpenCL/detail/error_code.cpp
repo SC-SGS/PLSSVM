@@ -8,7 +8,8 @@
 
 #include "plssvm/backends/OpenCL/detail/error_code.hpp"
 
-#include "CL/cl.h"  // cl_int, CL_SUCCESS
+#include "CL/cl.h"           // CL_SUCCESS
+#include "CL/cl_platform.h"  // cl_int
 
 #include <ostream>      // std::ostream
 #include <string_view>  // std::string_view
@@ -34,6 +35,8 @@ void error_code::clear() noexcept {
 cl_int error_code::value() const noexcept {
     return err_;
 }
+
+// NOLINTBEGIN: magic numbers are intentional (OpenCL error codes)
 
 std::string_view error_code::message() const noexcept {
     switch (err_) {
@@ -168,10 +171,13 @@ std::string_view error_code::message() const noexcept {
     }
 }
 
+// NOLINTEND
+
 error_code::operator bool() const noexcept {
     return err_ == CL_SUCCESS;
 }
 
+// NOLINTNEXTLINE(google-runtime-operator): overload is intentional to reduce explicit casts in OpenCL interfaces
 cl_int *error_code::operator&() noexcept {
     return &err_;
 }

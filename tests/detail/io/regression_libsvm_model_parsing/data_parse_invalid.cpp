@@ -21,17 +21,15 @@
 #include "fmt/format.h"   // fmt::format
 #include "gtest/gtest.h"  // TYPED_TEST, TYPED_TEST_SUITE, ::testing::Test
 
-#include <cstddef>  // std::size_t
-#include <string>   // std::string
-#include <tuple>    // std::ignore
-#include <vector>   // std::vector
+#include <string>  // std::string
+#include <tuple>   // std::ignore
 
 template <typename T>
 class LIBSVMRegressionModelDataParseInvalid : public ::testing::Test { };
 
 TYPED_TEST_SUITE(LIBSVMRegressionModelDataParseInvalid, util::regression_label_type_gtest, naming::test_parameter_to_name);
 
-TYPED_TEST(LIBSVMRegressionModelDataParseInvalid, zero_based_features) {
+TYPED_TEST(LIBSVMRegressionModelDataParseInvalid, ZeroBasedFeatures) {
     // parse the LIBSVM file
     const std::string filename = PLSSVM_TEST_PATH "/data/model/regression/invalid/zero_based_features.libsvm.model";
     plssvm::detail::io::file_reader reader{ filename };
@@ -41,7 +39,7 @@ TYPED_TEST(LIBSVMRegressionModelDataParseInvalid, zero_based_features) {
                       "LIBSVM assumes a 1-based feature indexing scheme, but 0 was given!");
 }
 
-TYPED_TEST(LIBSVMRegressionModelDataParseInvalid, empty_data) {
+TYPED_TEST(LIBSVMRegressionModelDataParseInvalid, EmptyData) {
     // parse the LIBSVM file
     const std::string filename = PLSSVM_TEST_PATH "/data/model/regression/invalid/empty_data.libsvm.model";
     plssvm::detail::io::file_reader reader{ filename };
@@ -51,7 +49,7 @@ TYPED_TEST(LIBSVMRegressionModelDataParseInvalid, empty_data) {
                       "Can't parse file: no data points are given!");
 }
 
-TYPED_TEST(LIBSVMRegressionModelDataParseInvalid, missing_alpha_values) {
+TYPED_TEST(LIBSVMRegressionModelDataParseInvalid, MissingAlphaValues) {
     // parse the LIBSVM file
     const std::string filename = PLSSVM_TEST_PATH "/data/model/regression/invalid/missing_alpha_values.libsvm.model";
     plssvm::detail::io::file_reader reader{ filename };
@@ -61,7 +59,7 @@ TYPED_TEST(LIBSVMRegressionModelDataParseInvalid, missing_alpha_values) {
                       "Can't parse file: needed exactly one alpha value, but none were provided!");
 }
 
-TYPED_TEST(LIBSVMRegressionModelDataParseInvalid, too_many_alpha_values) {
+TYPED_TEST(LIBSVMRegressionModelDataParseInvalid, TooManyAlphaValues) {
     // parse the LIBSVM file
     const std::string filename = PLSSVM_TEST_PATH "/data/model/regression/invalid/too_many_alpha_values.libsvm.model";
     plssvm::detail::io::file_reader reader{ filename };
@@ -71,7 +69,7 @@ TYPED_TEST(LIBSVMRegressionModelDataParseInvalid, too_many_alpha_values) {
                       "Can't parse file: needed exactly one alpha value, but more were provided!");
 }
 
-TYPED_TEST(LIBSVMRegressionModelDataParseInvalid, feature_with_alpha_char_at_the_beginning) {
+TYPED_TEST(LIBSVMRegressionModelDataParseInvalid, FeatureWithAlphaCharAtTheBeginning) {
     // parse the LIBSVM file
     const std::string filename = PLSSVM_TEST_PATH "/data/model/regression/invalid/feature_with_alpha_char_at_the_beginning.libsvm.model";
     plssvm::detail::io::file_reader reader{ filename };
@@ -81,7 +79,7 @@ TYPED_TEST(LIBSVMRegressionModelDataParseInvalid, feature_with_alpha_char_at_the
                       fmt::format("Can't convert 'a-1.1178275006e+00' to a value of type {}!", plssvm::detail::arithmetic_type_name<plssvm::real_type>()));
 }
 
-TYPED_TEST(LIBSVMRegressionModelDataParseInvalid, index_with_alpha_char_at_the_beginning) {
+TYPED_TEST(LIBSVMRegressionModelDataParseInvalid, IndexWithAlphaCharAtTheBeginning) {
     // parse the LIBSVM file
     const std::string filename = PLSSVM_TEST_PATH "/data/model/regression/invalid/index_with_alpha_char_at_the_beginning.libsvm.model";
     plssvm::detail::io::file_reader reader{ filename };
@@ -91,7 +89,7 @@ TYPED_TEST(LIBSVMRegressionModelDataParseInvalid, index_with_alpha_char_at_the_b
                       "Can't convert ' !2' to a value of type unsigned long!");
 }
 
-TYPED_TEST(LIBSVMRegressionModelDataParseInvalid, invalid_colon_at_the_beginning) {
+TYPED_TEST(LIBSVMRegressionModelDataParseInvalid, InvalidColonAtTheBeginning) {
     // parse the LIBSVM file
     const std::string filename = PLSSVM_TEST_PATH "/data/model/regression/invalid/invalid_colon_at_the_beginning.libsvm.model";
     plssvm::detail::io::file_reader reader{ filename };
@@ -101,7 +99,7 @@ TYPED_TEST(LIBSVMRegressionModelDataParseInvalid, invalid_colon_at_the_beginning
                       "Can't parse file: needed exactly one alpha value, but none were provided!");
 }
 
-TYPED_TEST(LIBSVMRegressionModelDataParseInvalid, invalid_colon_in_the_middle) {
+TYPED_TEST(LIBSVMRegressionModelDataParseInvalid, InvalidColonInTheMiddle) {
     // parse the LIBSVM file
     const std::string filename = PLSSVM_TEST_PATH "/data/model/regression/invalid/invalid_colon_in_the_middle.libsvm.model";
     plssvm::detail::io::file_reader reader{ filename };
@@ -111,7 +109,7 @@ TYPED_TEST(LIBSVMRegressionModelDataParseInvalid, invalid_colon_in_the_middle) {
                       "Can't convert ' ' to a value of type unsigned long!");
 }
 
-TYPED_TEST(LIBSVMRegressionModelDataParseInvalid, missing_feature_value) {
+TYPED_TEST(LIBSVMRegressionModelDataParseInvalid, MissingFeatureValue) {
     // parse the LIBSVM file
     const std::string filename = PLSSVM_TEST_PATH "/data/model/regression/invalid/missing_feature_value.libsvm.model";
     plssvm::detail::io::file_reader reader{ filename };
@@ -121,7 +119,7 @@ TYPED_TEST(LIBSVMRegressionModelDataParseInvalid, missing_feature_value) {
                       fmt::format("Can't convert '' to a value of type {}!", plssvm::detail::arithmetic_type_name<plssvm::real_type>()));
 }
 
-TYPED_TEST(LIBSVMRegressionModelDataParseInvalid, missing_index_value) {
+TYPED_TEST(LIBSVMRegressionModelDataParseInvalid, MissingIndexValue) {
     // parse the LIBSVM file
     const std::string filename = PLSSVM_TEST_PATH "/data/model/regression/invalid/missing_index_value.libsvm.model";
     plssvm::detail::io::file_reader reader{ filename };
@@ -131,7 +129,7 @@ TYPED_TEST(LIBSVMRegressionModelDataParseInvalid, missing_index_value) {
                       "Can't convert ' ' to a value of type unsigned long!");
 }
 
-TYPED_TEST(LIBSVMRegressionModelDataParseInvalid, non_increasing_indices) {
+TYPED_TEST(LIBSVMRegressionModelDataParseInvalid, NonIncreasingIndices) {
     // parse the LIBSVM file
     const std::string filename = PLSSVM_TEST_PATH "/data/model/regression/invalid/non_increasing_indices.libsvm.model";
     plssvm::detail::io::file_reader reader{ filename };
@@ -141,7 +139,7 @@ TYPED_TEST(LIBSVMRegressionModelDataParseInvalid, non_increasing_indices) {
                       "The features indices must be strictly increasing, but 3 is smaller or equal than 3!");
 }
 
-TYPED_TEST(LIBSVMRegressionModelDataParseInvalid, non_strictly_increasing_indices) {
+TYPED_TEST(LIBSVMRegressionModelDataParseInvalid, NonStrictlyIncreasingIndices) {
     // parse the LIBSVM file
     const std::string filename = PLSSVM_TEST_PATH "/data/model/regression/invalid/non_strictly_increasing_indices.libsvm.model";
     plssvm::detail::io::file_reader reader{ filename };
@@ -156,14 +154,14 @@ class LIBSVMRegressionModelDataParseInvalidDeathTest : public LIBSVMRegressionMo
 
 TYPED_TEST_SUITE(LIBSVMRegressionModelDataParseInvalidDeathTest, util::regression_label_type_gtest, naming::test_parameter_to_name);
 
-TYPED_TEST(LIBSVMRegressionModelDataParseInvalidDeathTest, invalid_file_reader) {
+TYPED_TEST(LIBSVMRegressionModelDataParseInvalidDeathTest, InvalidFileReader) {
     // open file_reader without associating it to a file
     const plssvm::detail::io::file_reader reader{};
     EXPECT_DEATH(std::ignore = (plssvm::detail::io::parse_libsvm_model_data_regression(reader, 0)),
                  "The file_reader is currently not associated with a file!");
 }
 
-TYPED_TEST(LIBSVMRegressionModelDataParseInvalidDeathTest, skip_too_many_lines) {
+TYPED_TEST(LIBSVMRegressionModelDataParseInvalidDeathTest, SkipTooManyLines) {
     // parse LIBSVM file
     const std::string filename = PLSSVM_TEST_PATH "/data/model/regression/6x4.libsvm.model";
     plssvm::detail::io::file_reader reader{ filename };

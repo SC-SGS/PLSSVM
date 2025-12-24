@@ -453,7 +453,7 @@ inline void write_libsvm_model_data_regression(const std::string &filename, cons
     PLSSVM_ASSERT(alpha.front().num_rows() == 1, "The number of rows in the matrix must be 1, but is {}!", alpha.front().num_rows());
     PLSSVM_ASSERT(alpha.front().num_cols() == data.num_data_points(), "The number of weights ({}) must be equal to the number of support vectors ({})!", alpha.front().num_cols(), data.num_data_points());
 #endif
-    using namespace literals;
+    using namespace literals;  // NOLINT(google-build-using-namespace): only imports custom user-defined literals into this namespace
 
     const aos_matrix<real_type> &support_vectors = data.data();
     const std::size_t num_features = data.num_features();

@@ -9,6 +9,11 @@
 #include "plssvm/backends/CUDA/detail/utility.cuh"
 
 #include "plssvm/backends/execution_range.hpp"  // plssvm::detail::dim_type
+#include "plssvm/detail/string_utility.hpp"     // plssvm::detail::trim
+
+#include "cuda_runtime_api.h"  // cudaGetDeviceCount, cudaSetDevice, cudaPeekAtLastError, cudaDeviceSynchronize, cudaGetDeviceProperties, cudaRuntimeGetVersion
+#include "driver_types.h"      // cudaError_t
+#include "vector_types.h"      // dim3, cudaDeviceProp
 
 #include "fmt/format.h"  // fmt::format
 
@@ -46,13 +51,21 @@ void device_synchronize(const int device) {
     PLSSVM_CUDA_ERROR_CHECK(cudaDeviceSynchronize())
 }
 
+std::string get_device_name(const int device) {
+    cudaDeviceProp prop{};
+    PLSSVM_CUDA_ERROR_CHECK(cudaGetDeviceProperties(&prop, device))
+    return std::string{ ::plssvm::detail::trim(static_cast<const char *>(prop.name)) };
+}
+
 std::string get_runtime_version() {
     // get the CUDA runtime version
     int runtime_version{};
     PLSSVM_CUDA_ERROR_CHECK(cudaRuntimeGetVersion(&runtime_version))
     // parse it to a more useful string
-    int major_version = runtime_version / 1000;
-    int minor_version = runtime_version % 1000 / 10;
+    constexpr int major_version_mask = 1000;
+    constexpr int minor_version_mask = 10;
+    const int major_version = runtime_version / major_version_mask;
+    const int minor_version = runtime_version % major_version_mask / minor_version_mask;
     return fmt::format("{}.{}", major_version, minor_version);
 }
 

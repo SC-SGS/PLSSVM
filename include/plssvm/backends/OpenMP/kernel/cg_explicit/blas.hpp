@@ -60,8 +60,8 @@ inline void device_kernel_symm(const std::size_t num_rows, const std::size_t num
             for (std::size_t rhs_thread = 0; rhs_thread < THREAD_BLOCK_SIZE_uz; ++rhs_thread) {
                 for (std::size_t row_thread = 0; row_thread < THREAD_BLOCK_SIZE_uz; ++row_thread) {
                     // calculate the indices used in the current thread
-                    const std::size_t i_idx = (rhs_block + rhs_thread) * INTERNAL_BLOCK_SIZE_uz;
-                    const std::size_t j_idx = (row_block + row_thread) * INTERNAL_BLOCK_SIZE_uz;
+                    const std::size_t i_idx = (rhs_block + rhs_thread) * INTERNAL_BLOCK_SIZE_uz;  // num_rhs
+                    const std::size_t j_idx = (row_block + row_thread) * INTERNAL_BLOCK_SIZE_uz;  // device_num_rows
 
                     // create a thread private array used for internal caching
                     std::array<std::array<real_type, INTERNAL_BLOCK_SIZE>, INTERNAL_BLOCK_SIZE> temp{};
@@ -101,7 +101,7 @@ inline void device_kernel_symm(const std::size_t num_rows, const std::size_t num
 
                             // be sure to not perform out-of-bounds accesses
                             if (global_i_idx < num_rhs && device_global_j_idx < device_num_rows) {
-                                C(global_i_idx, global_j_idx) = alpha * temp[internal_j][internal_i] + beta * C(global_i_idx, global_j_idx);
+                                C(global_i_idx, global_j_idx) = alpha * temp[internal_j][internal_i] + beta * C(global_i_idx, global_j_idx);  // SoA
                             }
                         }
                     }
@@ -149,8 +149,8 @@ inline void device_kernel_symm_mirror(const std::size_t num_rows, const std::siz
             for (std::size_t rhs_thread = 0; rhs_thread < THREAD_BLOCK_SIZE_uz; ++rhs_thread) {
                 for (std::size_t row_thread = 0; row_thread < THREAD_BLOCK_SIZE_uz; ++row_thread) {
                     // calculate the indices used in the current thread
-                    const std::size_t i_idx = (rhs_block + rhs_thread) * INTERNAL_BLOCK_SIZE_uz;
-                    const std::size_t j_idx = (row_block + row_thread) * INTERNAL_BLOCK_SIZE_uz;
+                    const std::size_t i_idx = (rhs_block + rhs_thread) * INTERNAL_BLOCK_SIZE_uz;  // num_rhs
+                    const std::size_t j_idx = (row_block + row_thread) * INTERNAL_BLOCK_SIZE_uz;  // num_mirror_rows
 
                     // create a thread private array used for internal caching
                     std::array<std::array<real_type, INTERNAL_BLOCK_SIZE>, INTERNAL_BLOCK_SIZE> temp{};
@@ -184,7 +184,7 @@ inline void device_kernel_symm_mirror(const std::size_t num_rows, const std::siz
 
                             // be sure to not perform out-of-bounds accesses
                             if (global_i_idx < num_rhs && partial_global_j_idx < num_mirror_rows) {
-                                C(global_i_idx, global_j_idx) = alpha * temp[internal_j][internal_i] + beta * C(global_i_idx, global_j_idx);
+                                C(global_i_idx, global_j_idx) = alpha * temp[internal_j][internal_i] + beta * C(global_i_idx, global_j_idx);  // SoA
                             }
                         }
                     }

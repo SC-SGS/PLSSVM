@@ -25,6 +25,8 @@
 #include <utility>    // std::move
 #include <vector>     // std::vector
 
+namespace {
+
 [[nodiscard]] std::size_t calculate_data_set_num_entries(const std::size_t num_data_points, const std::size_t num_features) noexcept {
     return num_data_points * num_features;
 }
@@ -36,6 +38,8 @@
 [[nodiscard]] std::size_t calculate_blas_matrix_entries(const std::size_t num_data_points, const std::size_t num_classes) noexcept {
     return (num_data_points - 1) * num_classes;
 }
+
+}  // namespace
 
 namespace plssvm::detail {
 
@@ -111,7 +115,7 @@ std::ostream &operator<<(std::ostream &out, const data_distribution &dist) {
 //*************************************************************************************************************************************//
 //                                                     specific data distributions                                                     //
 //*************************************************************************************************************************************//
-using namespace literals;
+using namespace literals;  // NOLINT(google-build-using-namespace): only imports custom user-defined literals into this namespace
 
 triangular_data_distribution::triangular_data_distribution(mpi::communicator comm, const std::size_t num_rows, const std::size_t num_places) :
     data_distribution{ std::move(comm), num_rows, num_places } {

@@ -19,7 +19,7 @@
 #include "tests/types_to_test.hpp"       // util::{cartesian_type_product_t, test_parameter_type_at_t}
 #include "tests/utility.hpp"             // util::redirect_output
 
-#include "fmt/format.h"   // fmt::format
+#include "fmt/format.h"   // NOLINT: fmt::format
 #include "gtest/gtest.h"  // TYPED_TEST, TYPED_TEST_SUITE, EXPECT_NO_THROW, ::testing::Test
 
 #include <tuple>  // std::tuple
@@ -28,16 +28,16 @@ using stdpar_csvm_types_list = std::tuple<plssvm::stdpar::csvc, plssvm::stdpar::
 using stdpar_csvm_types_gtest = util::combine_test_parameters_gtest_t<util::cartesian_type_product_t<stdpar_csvm_types_list>>;
 
 template <typename T>
-class nvhpc_stdparCSVMConstructor : public ::testing::Test,
-                                    private util::redirect_output<> {
+class NVHPCStdparCSVMConstructor : public ::testing::Test,
+                                   private util::redirect_output<> {
   protected:
     using fixture_csvm_type = util::test_parameter_type_at_t<0, T>;
 };
 
-TYPED_TEST_SUITE(nvhpc_stdparCSVMConstructor, stdpar_csvm_types_gtest, naming::test_parameter_to_name);
+TYPED_TEST_SUITE(NVHPCStdparCSVMConstructor, stdpar_csvm_types_gtest, naming::test_parameter_to_name);
 
 // check whether the constructor correctly fails when using an incompatible target platform
-TYPED_TEST(nvhpc_stdparCSVMConstructor, default_construct) {
+TYPED_TEST(NVHPCStdparCSVMConstructor, DefaultConstruct) {
     using csvm_type = typename TestFixture::fixture_csvm_type;
 
 #if defined(PLSSVM_HAS_CPU_TARGET) || defined(PLSSVM_HAS_NVIDIA_TARGET)
@@ -50,7 +50,7 @@ TYPED_TEST(nvhpc_stdparCSVMConstructor, default_construct) {
 #endif
 }
 
-TYPED_TEST(nvhpc_stdparCSVMConstructor, construct_parameter) {
+TYPED_TEST(NVHPCStdparCSVMConstructor, ConstructParameter) {
     using csvm_type = typename TestFixture::fixture_csvm_type;
 
 #if defined(PLSSVM_HAS_CPU_TARGET) || defined(PLSSVM_HAS_NVIDIA_TARGET)
@@ -63,7 +63,7 @@ TYPED_TEST(nvhpc_stdparCSVMConstructor, construct_parameter) {
 #endif
 }
 
-TYPED_TEST(nvhpc_stdparCSVMConstructor, construct_target_and_parameter) {
+TYPED_TEST(NVHPCStdparCSVMConstructor, ConstructTargetAndParameter) {
     using csvm_type = typename TestFixture::fixture_csvm_type;
 
     // create parameter struct
@@ -93,7 +93,7 @@ TYPED_TEST(nvhpc_stdparCSVMConstructor, construct_target_and_parameter) {
                       "Invalid target platform 'gpu_intel' for the nvhpc stdpar backend!");
 }
 
-TYPED_TEST(nvhpc_stdparCSVMConstructor, construct_named_args) {
+TYPED_TEST(NVHPCStdparCSVMConstructor, ConstructNamedArgs) {
     using csvm_type = typename TestFixture::fixture_csvm_type;
 
 #if defined(PLSSVM_HAS_CPU_TARGET) || defined(PLSSVM_HAS_NVIDIA_TARGET)
@@ -109,7 +109,7 @@ TYPED_TEST(nvhpc_stdparCSVMConstructor, construct_named_args) {
 #endif
 }
 
-TYPED_TEST(nvhpc_stdparCSVMConstructor, construct_target_and_named_args) {
+TYPED_TEST(NVHPCStdparCSVMConstructor, ConstructTargetAndNamedArgs) {
     using csvm_type = typename TestFixture::fixture_csvm_type;
 
 #if defined(PLSSVM_HAS_CPU_TARGET)

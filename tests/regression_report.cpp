@@ -10,6 +10,7 @@
 
 #include "plssvm/regression_report.hpp"
 
+#include "plssvm/constants.hpp"              // plssvm::real_type
 #include "plssvm/exceptions/exceptions.hpp"  // plssvm::regression_report_exception
 
 #include "tests/custom_test_macros.hpp"  // EXPECT_THROW_WHAT, EXPECT_CONVERSION_TO_STRING, EXPECT_FLOATING_POINT_NEAR, EXPECT_FLOATING_POINT_NEAR_EPS
@@ -26,7 +27,7 @@
 //                                                               metrics                                                               //
 //*************************************************************************************************************************************//
 
-TEST(RegressionReportMetrics, construct_metric) {
+TEST(RegressionReportMetrics, ConstructMetric) {
     // construct a metric object
     const plssvm::regression_report::metric m{ 0.1, 0.2, 0.3, 0.4, 0.5 };
 
@@ -38,7 +39,7 @@ TEST(RegressionReportMetrics, construct_metric) {
     EXPECT_FLOATING_POINT_NEAR(m.squared_correlation_coefficient, 0.5);
 }
 
-TEST(RegressionReportMetrics, output_metric) {
+TEST(RegressionReportMetrics, OutputMetric) {
     // construct a metric object
     EXPECT_CONVERSION_TO_STRING((plssvm::regression_report::metric{ 0.1, 0.2, 0.3, 0.4, 0.5 }),
                                 "Explained variance score:        0.1\n"
@@ -74,7 +75,7 @@ class RegressionReport : public ::testing::Test,
     std::vector<plssvm::real_type> predicted_label_ = { 0.1, 0.4, 0.7, 0.8, 1.1, 1.2, 1.5, 1.6, 1.7, 2.0 };
 };
 
-TEST_F(RegressionReport, construct) {
+TEST_F(RegressionReport, Construct) {
     // construct a regression report
     const plssvm::regression_report report{ this->get_correct_label(), this->get_predicted_label() };
 
@@ -87,7 +88,7 @@ TEST_F(RegressionReport, construct) {
     EXPECT_FLOATING_POINT_NEAR_EPS(m.squared_correlation_coefficient, 0.9852899678673179, 1e6);
 }
 
-TEST_F(RegressionReport, construct_perfect_prediction) {
+TEST_F(RegressionReport, ConstructPerfectPrediction) {
     // construct a regression report
     const plssvm::regression_report report{ this->get_correct_label(), this->get_correct_label() };
 
@@ -100,7 +101,7 @@ TEST_F(RegressionReport, construct_perfect_prediction) {
     EXPECT_FLOATING_POINT_NEAR(m.squared_correlation_coefficient, 1.0);
 }
 
-TEST_F(RegressionReport, construct_force_finite) {
+TEST_F(RegressionReport, ConstructForceFinite) {
     // construct a regression report
     const plssvm::regression_report report{ this->get_correct_label(), this->get_predicted_label(), plssvm::regression_report::force_finite = true };
 
@@ -113,7 +114,7 @@ TEST_F(RegressionReport, construct_force_finite) {
     EXPECT_FLOATING_POINT_NEAR_EPS(m.squared_correlation_coefficient, 0.9852899678673179, 1e6);
 }
 
-TEST_F(RegressionReport, construct_force_finite_perfect_prediction) {
+TEST_F(RegressionReport, ConstructForceFinitePerfectPrediction) {
     // construct a regression report
     const plssvm::regression_report report{ this->get_correct_label(), this->get_correct_label(), plssvm::regression_report::force_finite = true };
 
@@ -126,28 +127,28 @@ TEST_F(RegressionReport, construct_force_finite_perfect_prediction) {
     EXPECT_FLOATING_POINT_NEAR(m.squared_correlation_coefficient, 1.0);
 }
 
-TEST_F(RegressionReport, construct_empty_correct_label) {
+TEST_F(RegressionReport, ConstructEmptyCorrectLabel) {
     // the correct labels vector must not be empty
     EXPECT_THROW_WHAT((plssvm::regression_report{ std::vector<plssvm::real_type>{}, this->get_predicted_label() }),
                       plssvm::regression_report_exception,
                       "The correct labels list must not be empty!");
 }
 
-TEST_F(RegressionReport, construct_empty_predicted_label) {
+TEST_F(RegressionReport, ConstructEmptyPredictedLabel) {
     // the predicted labels vector must not be empty
     EXPECT_THROW_WHAT((plssvm::regression_report{ this->get_correct_label(), std::vector<plssvm::real_type>{} }),
                       plssvm::regression_report_exception,
                       "The predicted labels list must not be empty!");
 }
 
-TEST_F(RegressionReport, construct_label_size_mismatch) {
+TEST_F(RegressionReport, ConstructLabelSizeMismatch) {
     // constructing a regression report with different number of correct and predicted labels must throw
     EXPECT_THROW_WHAT((plssvm::regression_report{ std::vector<plssvm::real_type>{ 0, 0, 0 }, std::vector<plssvm::real_type>{ 0, 0 } }),
                       plssvm::regression_report_exception,
                       "The number of correct labels (3) and predicted labels (2) must be the same!");
 }
 
-TEST_F(RegressionReport, loss) {
+TEST_F(RegressionReport, Loss) {
     // construct a regression report
     const plssvm::regression_report report{ this->get_correct_label(), this->get_predicted_label() };
 
@@ -160,7 +161,7 @@ TEST_F(RegressionReport, loss) {
     EXPECT_FLOATING_POINT_NEAR_EPS(m.squared_correlation_coefficient, 0.9852899678673179, 1e6);
 }
 
-TEST_F(RegressionReport, regression_report) {
+TEST_F(RegressionReport, RegressionReport) {
     // construct a regression report
     const plssvm::regression_report report{ this->get_correct_label(), this->get_predicted_label() };
     std::cout << report;

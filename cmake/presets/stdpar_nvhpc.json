@@ -73,7 +73,7 @@
       "inherits": "common",
       "filter": {
         "include": {
-          "name": "stdpar.*"
+          "name": "(s|S)tdpar.*"
         }
       }
     }

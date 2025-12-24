@@ -15,18 +15,19 @@
 #include "plssvm/matrix.hpp"                   // plssvm::aos_matrix
 #include "plssvm/mpi/communicator.hpp"         // plssvm::mpi::communicator
 
-#include "bindings/Python/data_set/variant_wrapper.hpp"                 // plssvm::bindings::python::util::classification_data_set_wrapper
-#include "bindings/Python/type_caster/label_vector_wrapper_caster.hpp"  // a custom Pybind11 type caster for a plssvm::bindings::python::util::label_vector_wrapper
-#include "bindings/Python/type_caster/matrix_type_caster.hpp"           // a custom Pybind11 type caster for a plssvm::matrix
-#include "bindings/Python/type_caster/mpi_type_caster.hpp"              // a custom Pybind11 type caster for a plssvm::mpi::communicator
-#include "bindings/Python/utility.hpp"                                  // plssvm::bindings::python::util::{create_instance, python_type_name_mapping, vector_to_pyarray}
+#include "bindings/Python/bindings_fwd.hpp"                                  // forward declare all helper functions to create the Python bindings
+#include "bindings/Python/data_set/variant_wrapper.hpp"                      // plssvm::bindings::python::util::classification_data_set_wrapper
+#include "bindings/Python/type_caster/label_vector_wrapper_type_caster.hpp"  // a custom Pybind11 type caster for a plssvm::bindings::python::util::label_vector_wrapper
+#include "bindings/Python/type_caster/matrix_type_caster.hpp"                // NOLINT: a custom Pybind11 type caster for a plssvm::matrix
+#include "bindings/Python/type_caster/mpi_type_caster.hpp"                   // NOLINT: a custom Pybind11 type caster for a plssvm::mpi::communicator
+#include "bindings/Python/utility.hpp"                                       // plssvm::bindings::python::util::{create_instance, python_type_name_mapping, vector_to_pyarray}
 
 #include "fmt/format.h"         // fmt::format
 #include "fmt/ranges.h"         // fmt::join
-#include "pybind11/numpy.h"     // py::array_t, py::array
-#include "pybind11/pybind11.h"  // py::module_, py::class_, py::init, py::arg, py::kw_only, py::attribute_error
+#include "pybind11/cast.h"      // py::arg
+#include "pybind11/pybind11.h"  // py::module_, py::class_, py::init, py::kw_only, py::attribute_error, py::return_value_policy
 #include "pybind11/pytypes.h"   // py::type
-#include "pybind11/stl.h"       // support for STL types
+#include "pybind11/stl.h"       // NOLINT: support for STL types
 
 #include <memory>    // std::make_unique
 #include <optional>  // std::optional, std::nullopt
@@ -40,20 +41,17 @@ void init_classification_data_set(py::module_ &m) {
     using plssvm::bindings::python::util::classification_data_set_wrapper;
 
     py::class_<classification_data_set_wrapper>(m, "ClassificationDataSet", "Encapsulate all necessary data that is needed for training or predicting using an C-SVC.")
-        .def(py::init([](const std::string &filename, const std::optional<py::type> type, const plssvm::file_format_type format, const std::optional<plssvm::min_max_scaler> scaler, plssvm::mpi::communicator comm) {
+        .def(py::init([](const std::string &filename, const std::optional<py::type> &type, const plssvm::file_format_type format, const std::optional<plssvm::min_max_scaler> &scaler, plssvm::mpi::communicator comm) {
                  if (type.has_value()) {
                      if (scaler.has_value()) {
                          return std::make_unique<classification_data_set_wrapper>(plssvm::bindings::python::util::create_instance<plssvm::classification_data_set, typename classification_data_set_wrapper::possible_data_set_types>(type.value(), std::move(comm), filename, format, scaler.value()));
-                     } else {
-                         return std::make_unique<classification_data_set_wrapper>(plssvm::bindings::python::util::create_instance<plssvm::classification_data_set, typename classification_data_set_wrapper::possible_data_set_types>(type.value(), std::move(comm), filename, format));
                      }
-                 } else {
-                     if (scaler.has_value()) {
-                         return std::make_unique<classification_data_set_wrapper>(plssvm::classification_data_set<std::string>{ std::move(comm), filename, format, scaler.value() });
-                     } else {
-                         return std::make_unique<classification_data_set_wrapper>(plssvm::classification_data_set<std::string>{ std::move(comm), filename, format });
-                     }
+                     return std::make_unique<classification_data_set_wrapper>(plssvm::bindings::python::util::create_instance<plssvm::classification_data_set, typename classification_data_set_wrapper::possible_data_set_types>(type.value(), std::move(comm), filename, format));
                  }
+                 if (scaler.has_value()) {
+                     return std::make_unique<classification_data_set_wrapper>(plssvm::classification_data_set<std::string>{ std::move(comm), filename, format, scaler.value() });
+                 }
+                 return std::make_unique<classification_data_set_wrapper>(plssvm::classification_data_set<std::string>{ std::move(comm), filename, format });
              }),
              "create a new data set from the provided file and additional optional parameters like the used label type",
              py::arg("filename"),
@@ -62,20 +60,17 @@ void init_classification_data_set(py::module_ &m) {
              py::arg("format") = plssvm::file_format_type::libsvm,
              py::arg("scaler") = std::nullopt,
              py::arg("comm") = plssvm::mpi::communicator{})
-        .def(py::init([](plssvm::aos_matrix<plssvm::real_type> data, const std::optional<py::type> type, const std::optional<plssvm::min_max_scaler> scaler, plssvm::mpi::communicator comm) {
+        .def(py::init([](plssvm::aos_matrix<plssvm::real_type> data, const std::optional<py::type> &type, const std::optional<plssvm::min_max_scaler> &scaler, plssvm::mpi::communicator comm) {
                  if (type.has_value()) {
                      if (scaler.has_value()) {
                          return std::make_unique<classification_data_set_wrapper>(plssvm::bindings::python::util::create_instance<plssvm::classification_data_set, typename classification_data_set_wrapper::possible_data_set_types>(type.value(), std::move(comm), std::move(data), scaler.value()));
-                     } else {
-                         return std::make_unique<classification_data_set_wrapper>(plssvm::bindings::python::util::create_instance<plssvm::classification_data_set, typename classification_data_set_wrapper::possible_data_set_types>(type.value(), std::move(comm), std::move(data)));
                      }
-                 } else {
-                     if (scaler.has_value()) {
-                         return std::make_unique<classification_data_set_wrapper>(plssvm::classification_data_set<std::string>{ std::move(comm), std::move(data), scaler.value() });
-                     } else {
-                         return std::make_unique<classification_data_set_wrapper>(plssvm::classification_data_set<std::string>{ std::move(comm), std::move(data) });
-                     }
+                     return std::make_unique<classification_data_set_wrapper>(plssvm::bindings::python::util::create_instance<plssvm::classification_data_set, typename classification_data_set_wrapper::possible_data_set_types>(type.value(), std::move(comm), std::move(data)));
                  }
+                 if (scaler.has_value()) {
+                     return std::make_unique<classification_data_set_wrapper>(plssvm::classification_data_set<std::string>{ std::move(comm), std::move(data), scaler.value() });
+                 }
+                 return std::make_unique<classification_data_set_wrapper>(plssvm::classification_data_set<std::string>{ std::move(comm), std::move(data) });
              }),
              "create a new data set from the provided data and additional optional parameters like the used label type",
              py::arg("X"),
@@ -87,10 +82,9 @@ void init_classification_data_set(py::module_ &m) {
                  return std::visit([&](auto &&labels_vector) {
                      using label_type = typename plssvm::detail::remove_cvref_t<decltype(labels_vector)>::value_type;
                      if (scaler.has_value()) {
-                         return std::make_unique<classification_data_set_wrapper>(plssvm::classification_data_set<label_type>(std::move(comm), std::move(data), std::move(labels_vector), scaler.value()));
-                     } else {
-                         return std::make_unique<classification_data_set_wrapper>(plssvm::classification_data_set<label_type>(std::move(comm), std::move(data), std::move(labels_vector)));
+                         return std::make_unique<classification_data_set_wrapper>(plssvm::classification_data_set<label_type>(std::move(comm), std::move(data), std::forward<decltype(labels_vector)>(labels_vector), scaler.value()));
                      }
+                     return std::make_unique<classification_data_set_wrapper>(plssvm::classification_data_set<label_type>(std::move(comm), std::move(data), std::forward<decltype(labels_vector)>(labels_vector)));
                  },
                                    labels.labels);
              }),
@@ -108,9 +102,8 @@ void init_classification_data_set(py::module_ &m) {
             return std::visit([](auto &&data) {
                 if (!data.has_labels()) {
                     throw py::attribute_error{ "'ClassificationDataSet' object has no function 'labels'. Maybe this ClassificationDataSet was created without labels?" };
-                } else {
-                    return plssvm::bindings::python::util::vector_to_pyarray(data.labels()->get());
                 }
+                return plssvm::bindings::python::util::vector_to_pyarray(data.labels()->get());
             }, self.data_set); }, "the labels")
         // clang-format on
         .def("num_data_points", [](const classification_data_set_wrapper &self) { return std::visit([](auto &&data) { return data.num_data_points(); }, self.data_set); }, "the number of data points in the data set")
@@ -119,18 +112,16 @@ void init_classification_data_set(py::module_ &m) {
         .def("scaling_factors", [](const classification_data_set_wrapper &self) { return std::visit([](auto &&data) {
             if (!data.is_scaled()) {
                 throw py::attribute_error{ "'ClassificationDataSet' object has no function 'scaling_factors'. Maybe this ClassificationDataSet has not been scaled?" };
-            } else {
-                return data.scaling_factors().value();
-            } }, self.data_set); }, py::return_value_policy::reference_internal, "the factors used to scale this data set")
+            }
+            return data.scaling_factors().value(); }, self.data_set); }, py::return_value_policy::reference_internal, "the factors used to scale this data set")
         .def("num_classes", [](const classification_data_set_wrapper &self) { return std::visit([](auto &&data) { return data.num_classes(); }, self.data_set); }, "the number of classes")
         // clang-format off
         .def("classes", [](const classification_data_set_wrapper &self) {
             return std::visit([](auto &&data) {
                 if (!data.has_labels()) {
                     throw py::attribute_error{ "'ClassificationDataSet' object has no function 'classes'. Maybe this ClassificationDataSet was created without labels?" };
-                } else {
-                    return plssvm::bindings::python::util::vector_to_pyarray(data.classes().value());
                 }
+                return plssvm::bindings::python::util::vector_to_pyarray(data.classes().value());
             }, self.data_set); }, "the number of classes")
         .def("communicator", [](const classification_data_set_wrapper &self) { return std::visit([](auto &&data) { return data.communicator(); }, self.data_set); }, "the associated MPI communicator")
         .def("__repr__", [](const classification_data_set_wrapper &self) {

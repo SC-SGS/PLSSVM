@@ -30,8 +30,7 @@
 #include <cstddef>  // std::size_t
 #include <memory>   // std::make_shared
 #include <string>   // std::string
-#include <utility>  // std::forward
-#include <utility>  // std::move
+#include <utility>  // std::move, std::forward
 #include <vector>   // std::vector
 
 namespace plssvm {
@@ -510,9 +509,10 @@ class regression_data_set : public data_set<U> {
     void init();
 
     /**
-     * @copydoc plssvm::data_set::map_label
+     * @brief Create the mapping between the provided labels and the internally used values.
+     * @throws plssvm::data_set_exception any exception of the plssvm::data_set::label_mapper class
      */
-    void map_label() override;
+    void map_label();
 };
 
 //*************************************************************************************************************************************//

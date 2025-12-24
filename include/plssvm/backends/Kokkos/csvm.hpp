@@ -18,7 +18,7 @@
 #include "plssvm/backends/Kokkos/detail/device_ptr.hpp"      // plssvm::kokkos::detail::device_ptr
 #include "plssvm/backends/Kokkos/detail/device_wrapper.hpp"  // plssvm::kokkos::detail::device_wrapper
 #include "plssvm/backends/Kokkos/detail/pinned_memory.hpp"   // plssvm::kokkos::detail::pinned_memory
-#include "plssvm/backends/Kokkos/execution_space.hpp"        // plssvm::kokkos::execution_space
+#include "plssvm/backends/Kokkos/execution_spaces.hpp"       // plssvm::kokkos::execution_space
 #include "plssvm/constants.hpp"                              // plssvm::real_type
 #include "plssvm/detail/igor_utility.hpp"                    // plssvm::detail::get_value_from_named_parameter
 #include "plssvm/detail/memory_size.hpp"                     // plssvm::detail::memory_size
@@ -70,7 +70,7 @@ class csvm : public ::plssvm::detail::gpu_csvm<detail::device_ptr, detail::devic
     template <typename... Args, PLSSVM_REQUIRES(::plssvm::detail::has_only_kokkos_parameter_named_args_v<Args...>)>
     explicit csvm(const target_platform target = target_platform::automatic, Args &&...named_args) {
         // check igor parameter
-        igor::parser parser{ std::forward<Args>(named_args)... };
+        const igor::parser parser{ std::forward<Args>(named_args)... };
 
         // check whether a specific Kokkos execution space has been requested
         if constexpr (parser.has(kokkos_execution_space)) {

@@ -18,10 +18,12 @@
 #include "gmock/gmock.h"  // EXPECT_THAT, ::testing::HasSubstr
 #include "gtest/gtest.h"  // TEST_F, EXPECT_EQ, EXPECT_TRUE, ::testing::Test
 
+#include <iostream>  // std::clog
+
 class MPILoggerUntracked : public ::testing::Test,
                            public util::redirect_output<> { };
 
-TEST_F(MPILoggerUntracked, enabled_logging) {
+TEST_F(MPILoggerUntracked, EnabledLogging) {
     // explicitly enable logging
     plssvm::verbosity = plssvm::verbosity_level::full;
 
@@ -32,7 +34,7 @@ TEST_F(MPILoggerUntracked, enabled_logging) {
     EXPECT_EQ(this->get_capture(), "Hello, World!");
 }
 
-TEST_F(MPILoggerUntracked, enabled_logging_with_args) {
+TEST_F(MPILoggerUntracked, EnabledLoggingWithArgs) {
     // explicitly enable logging
     plssvm::verbosity = plssvm::verbosity_level::full;
 
@@ -43,7 +45,7 @@ TEST_F(MPILoggerUntracked, enabled_logging_with_args) {
     EXPECT_EQ(this->get_capture(), "int: 42, float: 1.5, str: abc");
 }
 
-TEST_F(MPILoggerUntracked, disabled_logging) {
+TEST_F(MPILoggerUntracked, DisabledLogging) {
     // explicitly disable logging
     plssvm::verbosity = plssvm::verbosity_level::quiet;
 
@@ -54,7 +56,7 @@ TEST_F(MPILoggerUntracked, disabled_logging) {
     EXPECT_TRUE(this->get_capture().empty());
 }
 
-TEST_F(MPILoggerUntracked, disabled_logging_with_args) {
+TEST_F(MPILoggerUntracked, DisabledLoggingWithArgs) {
     // explicitly disable logging
     plssvm::verbosity = plssvm::verbosity_level::quiet;
 
@@ -65,7 +67,7 @@ TEST_F(MPILoggerUntracked, disabled_logging_with_args) {
     EXPECT_TRUE(this->get_capture().empty());
 }
 
-TEST_F(MPILoggerUntracked, mismatching_verbosity_level) {
+TEST_F(MPILoggerUntracked, MismatchingVerbosityLevel) {
     // set verbosity_level to libsvm
     plssvm::verbosity = plssvm::verbosity_level::libsvm;
 
@@ -80,7 +82,7 @@ TEST_F(MPILoggerUntracked, mismatching_verbosity_level) {
 class WarningMPILoggerUntracked : public ::testing::Test,
                                   public util::redirect_output<&std::clog> { };
 
-TEST_F(WarningMPILoggerUntracked, enabled_logging_warning) {
+TEST_F(WarningMPILoggerUntracked, EnabledLoggingWarning) {
     // explicitly enable logging
     plssvm::verbosity = plssvm::verbosity_level::full;
 

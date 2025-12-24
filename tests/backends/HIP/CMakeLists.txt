@@ -59,20 +59,20 @@ include(${PROJECT_SOURCE_DIR}/cmake/discover_tests_with_death_test_filter.cmake)
 discover_tests_with_death_test_filter(${PLSSVM_HIP_TEST_NAME})
 
 # add minimal run test for the classification task with the HIP backend
-add_test(NAME MainTrainClassificationHIP/executable_minimal COMMAND ${PLSSVM_EXECUTABLE_TRAIN_NAME} -s 0 -b hip "${PLSSVM_CLASSIFICATION_TEST_FILE}"
-                                                                    "${CMAKE_CURRENT_BINARY_DIR}/test_classification.libsvm.model"
+add_test(NAME MainTrainClassificationHIP/ExecutableMinimal COMMAND ${PLSSVM_EXECUTABLE_TRAIN_NAME} -s 0 -b hip "${PLSSVM_CLASSIFICATION_TEST_FILE}"
+                                                                   "${CMAKE_CURRENT_BINARY_DIR}/test_classification.libsvm.model"
 )
-add_test(NAME MainPredictClassificationHIP/executable_minimal
+add_test(NAME MainPredictClassificationHIP/ExecutableMinimal
          COMMAND ${PLSSVM_EXECUTABLE_PREDICT_NAME} -b hip "${CMAKE_CURRENT_LIST_DIR}/../../data/libsvm/classification/5x4.libsvm" # test file
                  "${CMAKE_CURRENT_LIST_DIR}/../../data/model/classification/5x4.libsvm.model" # model file
                  "${CMAKE_CURRENT_BINARY_DIR}/test_classification.libsvm.predict" # predict file (result)
 )
 
 # add minimal run test for the regression task with the HIP backend
-add_test(NAME MainTrainRegressionHIP/executable_minimal COMMAND ${PLSSVM_EXECUTABLE_TRAIN_NAME} -s 1 -b hip "${PLSSVM_REGRESSION_TEST_FILE}"
-                                                                "${CMAKE_CURRENT_BINARY_DIR}/test_regression.libsvm.model"
+add_test(NAME MainTrainRegressionHIP/ExecutableMinimal COMMAND ${PLSSVM_EXECUTABLE_TRAIN_NAME} -s 1 -b hip "${PLSSVM_REGRESSION_TEST_FILE}"
+                                                               "${CMAKE_CURRENT_BINARY_DIR}/test_regression.libsvm.model"
 )
-add_test(NAME MainPredictRegressionHIP/executable_minimal
+add_test(NAME MainPredictRegressionHIP/ExecutableMinimal
          COMMAND ${PLSSVM_EXECUTABLE_PREDICT_NAME} -b hip "${CMAKE_CURRENT_LIST_DIR}/../../data/libsvm/regression/5x4.libsvm" # test file
                  "${CMAKE_CURRENT_LIST_DIR}/../../data/model/regression/5x4.libsvm.model" # model file
                  "${CMAKE_CURRENT_BINARY_DIR}/test_regression.libsvm.predict" # predict file (result)

@@ -157,7 +157,7 @@ class model {
     model(parameter params, std::shared_ptr<data_set<label_type>> data);
 
     /// The SVM parameter used to learn this model.
-    parameter params_{};
+    parameter params_;
     /// The data (support vectors + respective label) used to learn this model.
     std::shared_ptr<data_set<label_type>> data_{};
     /// The number of support vectors representing this model.
@@ -165,10 +165,10 @@ class model {
     /// The number of features per support vector.
     size_type num_features_{ 0 };
     /// The number of iterations needed to fit this model.
-    std::optional<std::vector<unsigned long long>> num_iters_{};
+    std::optional<std::vector<unsigned long long>> num_iters_;
 
     /// The used MPI communicator.
-    mpi::communicator comm_{};
+    mpi::communicator comm_;
 
     /**
      * @brief The learned weights for each support vector.
@@ -199,7 +199,7 @@ model<U>::model(mpi::communicator comm) :
 
 template <typename U>
 model<U>::model(parameter params, std::shared_ptr<data_set<label_type>> data) :
-    params_{ std::move(params) },
+    params_{ params },
     data_{ std::move(data) },
     num_support_vectors_{ data_->num_data_points() },
     num_features_{ data_->num_features() },

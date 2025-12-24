@@ -8,14 +8,13 @@
 
 #include "plssvm/svm/csvm.hpp"
 
-#include "plssvm/constants.hpp"                            // plssvm::real_type
+#include "plssvm/constants.hpp"                            // plssvm::real_type, plssvm::NUM_ITER_BEFORE_EXPLICIT_CG_RESIDUAL_RECALCULATION
 #include "plssvm/detail/assert.hpp"                        // PLSSVM_ASSERT
 #include "plssvm/detail/logging/mpi_log.hpp"               // plssvm::detail::log
 #include "plssvm/detail/logging/mpi_log_untracked.hpp"     // plssvm::detail::log_untracked
 #include "plssvm/detail/move_only_any.hpp"                 // plssvm::detail::move_only_any
-#include "plssvm/detail/operators.hpp"                     // plssvm operator overloads for vectors
+#include "plssvm/detail/operators.hpp"                     // operator overloads for std::vector (+ scalars)
 #include "plssvm/detail/tracking/performance_tracker.hpp"  // PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY, PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_EVENT, plssvm::detail::tracking::tracking_entry
-#include "plssvm/gamma.hpp"                                // plssvm::gamma_type
 #include "plssvm/kernel_function_types.hpp"                // plssvm::kernel_function_type
 #include "plssvm/kernel_functions.hpp"                     // plssvm::kernel_function
 #include "plssvm/matrix.hpp"                               // plssvm::aos_matrix
@@ -24,22 +23,21 @@
 #include "plssvm/solver_types.hpp"                         // plssvm::solver_type
 #include "plssvm/verbosity_levels.hpp"                     // plssvm::verbosity_level
 
-#include "fmt/format.h"  // fmt::format
+#if defined(PLSSVM_PERFORMANCE_TRACKER_ENABLED)
+    #include "fmt/format.h"  // fmt::format
+#endif
 
-#include <algorithm>   // std::count
-#include <chrono>      // std::chrono::{steady_clock, duration_cast, milliseconds}
-#include <cstddef>     // std::size_t
-#include <functional>  // std::plus
-#include <numeric>     // std::inner_product
-#include <utility>     // std::move
-#include <utility>     // std::pair, std::make_pair
-#include <variant>     // std::get
-#include <vector>      // std::vector
+#include <algorithm>  // std::count
+#include <chrono>     // std::chrono::{steady_clock, duration_cast, milliseconds}
+#include <cstddef>    // std::size_t
+#include <ratio>      // std::milli
+#include <utility>    // std::move, std::pair, std::make_pair, std::get
+#include <vector>     // std::vector
 
 namespace plssvm {
 
 std::pair<aos_matrix<real_type>, std::vector<unsigned long long>> csvm::conjugate_gradients(const std::vector<detail::move_only_any> &A, const aos_matrix<real_type> &B, const real_type eps, const unsigned long long max_cg_iter, const solver_type cg_solver) const {
-    using namespace plssvm::operators;
+    using namespace plssvm::operators;  // NOLINT(google-build-using-namespace): only imports custom math operations on vectors (and scalars)
 
     PLSSVM_ASSERT(!B.empty(), "The right-hand sides must not be empty!");
     PLSSVM_ASSERT(eps > real_type{ 0.0 }, "The epsilon value must be greater than 0.0!");
@@ -155,7 +153,7 @@ std::pair<aos_matrix<real_type>, std::vector<unsigned long long>> csvm::conjugat
         // X = X + alpha * D
         X += masked_rowwise_scale(mask, alpha, D);
 
-        if (iter % 50 == 49) {
+        if (iter % NUM_ITER_BEFORE_EXPLICIT_CG_RESIDUAL_RECALCULATION == NUM_ITER_BEFORE_EXPLICIT_CG_RESIDUAL_RECALCULATION - 1) {
             // explicitly recalculate residual to remove accumulating floating point errors
             // R = B - A * X
             R = aos_matrix<real_type>{ B };

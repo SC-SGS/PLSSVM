@@ -9,8 +9,8 @@
  * @brief Implements custom exception classes specific to the SYCL backend.
  */
 
-#ifndef PLSSVM_BACKENDS_SYCL_CSVM_HPP_
-#define PLSSVM_BACKENDS_SYCL_CSVM_HPP_
+#ifndef PLSSVM_BACKENDS_SYCL_EXCEPTIONS_HPP_
+#define PLSSVM_BACKENDS_SYCL_EXCEPTIONS_HPP_
 #pragma once
 
 #include "plssvm/exceptions/exceptions.hpp"       // plssvm::exception
@@ -81,4 +81,4 @@ class backend_exception : public sycl::backend_exception {
 
 }  // namespace plssvm
 
-#endif  // PLSSVM_BACKENDS_SYCL_CSVM_HPP_
+#endif  // PLSSVM_BACKENDS_SYCL_EXCEPTIONS_HPP_

@@ -9,8 +9,8 @@
  * @brief Functions for explicitly assembling the kernel matrix using the SYCL backend and the work-group data parallel kernels.
  */
 
-#ifndef PLSSVM_BACKENDS_SYCL_CG_EXPLICIT_WORK_GROUP_KERNEL_MATRIX_ASSEMBLY_HPP_
-#define PLSSVM_BACKENDS_SYCL_CG_EXPLICIT_WORK_GROUP_KERNEL_MATRIX_ASSEMBLY_HPP_
+#ifndef PLSSVM_BACKENDS_SYCL_KERNEL_CG_EXPLICIT_WORK_GROUP_KERNEL_MATRIX_ASSEMBLY_HPP_
+#define PLSSVM_BACKENDS_SYCL_KERNEL_CG_EXPLICIT_WORK_GROUP_KERNEL_MATRIX_ASSEMBLY_HPP_
 #pragma once
 
 #include "plssvm/backends/SYCL/data_parallel_kernels.hpp"    // plssvm::sycl::data_parallel_kernel
@@ -20,6 +20,7 @@
 
 #include "sycl/sycl.hpp"  // sycl::handler, sycl::range, sycl::nd_item
 
+#include <array>    // std::array
 #include <cstddef>  // std::size_t
 #include <tuple>    // std::tuple, std::make_tuple
 
@@ -126,4 +127,4 @@ class device_kernel_assembly {
 
 }  // namespace plssvm::sycl::detail::work_group
 
-#endif  // PLSSVM_BACKENDS_SYCL_CG_EXPLICIT_WORK_GROUP_KERNEL_MATRIX_ASSEMBLY_HPP_
+#endif  // PLSSVM_BACKENDS_SYCL_KERNEL_CG_EXPLICIT_WORK_GROUP_KERNEL_MATRIX_ASSEMBLY_HPP_

@@ -38,12 +38,12 @@ include(${PROJECT_SOURCE_DIR}/cmake/discover_tests_with_death_test_filter.cmake)
 discover_tests_with_death_test_filter(${PLSSVM_SYCL_DPCPP_TEST_NAME})
 
 # add minimal run test for the classification task with the DPC++ SYCL backend
-add_test(NAME MainTrainClassificationSYCLDPCPP/executable_minimal
+add_test(NAME MainTrainClassificationSYCLDPCPP/ExecutableMinimal
          COMMAND ${PLSSVM_EXECUTABLE_TRAIN_NAME} -s 0 -b sycl --sycl_implementation_type dpcpp "${PLSSVM_CLASSIFICATION_TEST_FILE}"
                  "${CMAKE_CURRENT_BINARY_DIR}/test_classification.libsvm.model"
 )
 add_test(
-    NAME MainPredictClassificationSYCLDPCPP/executable_minimal
+    NAME MainPredictClassificationSYCLDPCPP/ExecutableMinimal
     COMMAND
         ${PLSSVM_EXECUTABLE_PREDICT_NAME} -b sycl --sycl_implementation_type dpcpp
         "${CMAKE_CURRENT_LIST_DIR}/../../../data/libsvm/classification/5x4.libsvm" # test file
@@ -52,12 +52,12 @@ add_test(
 )
 
 # add minimal run test for the regression task with the DPC++ SYCL backend
-add_test(NAME MainTrainRegressionSYCLDPCPP/executable_minimal
+add_test(NAME MainTrainRegressionSYCLDPCPP/ExecutableMinimal
          COMMAND ${PLSSVM_EXECUTABLE_TRAIN_NAME} -s 1 -b sycl --sycl_implementation_type dpcpp "${PLSSVM_REGRESSION_TEST_FILE}"
                  "${CMAKE_CURRENT_BINARY_DIR}/test_regression.libsvm.model"
 )
 add_test(
-    NAME MainPredictRegressionSYCLDPCPP/executable_minimal
+    NAME MainPredictRegressionSYCLDPCPP/ExecutableMinimal
     COMMAND
         ${PLSSVM_EXECUTABLE_PREDICT_NAME} -b sycl --sycl_implementation_type dpcpp
         "${CMAKE_CURRENT_LIST_DIR}/../../../data/libsvm/regression/5x4.libsvm" # test file
