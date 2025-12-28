@@ -43,7 +43,7 @@ class device_kernel_w_linear {
   public:
     /**
      * @brief Initialize the Kokkos kernel function object.
-     * @param[in,out] w the vector to speedup the linear prediction
+     * @param[out] w the vector to speedup the linear prediction
      * @param[in] alpha the previously learned weights
      * @param[in] support_vectors the support vectors
      * @param[in] num_classes the number of classes
