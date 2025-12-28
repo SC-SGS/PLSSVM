@@ -1,0 +1,9 @@
+---
+Checks: '
+-cppcoreguidelines-avoid-const-or-ref-data-members,
+-cppcoreguidelines-pro-type-member-init,
+
+-hicpp-member-init,
+'
+
+InheritParentConfig: true

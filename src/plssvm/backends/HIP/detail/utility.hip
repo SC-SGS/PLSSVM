@@ -10,6 +10,7 @@
 // main header
 
 #include "plssvm/backends/execution_range.hpp"  // plssvm::detail::dim_type
+#include "plssvm/detail/string_utility.hpp"     // plssvm::detail::trim
 
 #include "hip/hip_runtime_api.h"  // hipGetDeviceCount, hipSetDevice, hipPeekAtLastError, hipDeviceSynchronize, hipRuntimeGetVersion
 
@@ -30,7 +31,7 @@ dim3 dim_type_to_native(const ::plssvm::detail::dim_type &dims) {
 }
 
 void set_device(const int device) {
-    if (device < 0 || device >= static_cast<int>(get_device_count())) {
+    if (device < 0 || device >= get_device_count()) {
         throw backend_exception{ fmt::format("Illegal device ID! Must be in range: [0, {}) but is {}!", get_device_count(), device) };
     }
     PLSSVM_HIP_ERROR_CHECK(hipSetDevice(device))
@@ -41,7 +42,7 @@ void peek_at_last_error() {
 }
 
 void device_synchronize(const int device) {
-    if (device < 0 || device >= static_cast<int>(get_device_count())) {
+    if (device < 0 || device >= get_device_count()) {
         throw backend_exception{ fmt::format("Illegal device ID! Must be in range: [0, {}) but is {}!", get_device_count(), device) };
     }
     peek_at_last_error();
@@ -55,17 +56,27 @@ std::string get_runtime_version() {
     PLSSVM_HIP_ERROR_CHECK(hipRuntimeGetVersion(&runtime_version))
 #if defined(PLSSVM_HIP_BACKEND_USE_HIP_RUNTIME)
     // parse it to a more useful string
-    int major_version = runtime_version / 10'000'000;
-    int minor_version = runtime_version % 10'000'000 / 100'000;
+    constexpr int major_version_mask = 10'000'000;
+    constexpr int minor_version_mask = 100'000;
+    const int major_version = runtime_version / major_version_mask;
+    const int minor_version = runtime_version % major_version_mask / minor_version_mask;
     return fmt::format("{}.{}", major_version, minor_version);
 #elif defined(PLSSVM_HIP_BACKEND_USE_CUDA_RUNTIME)
     // parse it to a more useful string
-    int major_version = runtime_version / 1000;
-    int minor_version = runtime_version % 1000 / 10;
+    constexpr int major_version_mask = 1000;
+    constexpr int minor_version_mask = 10;
+    const int major_version = runtime_version / major_version_mask;
+    const int minor_version = runtime_version % major_version_mask / minor_version_mask;
     return fmt::format("{}.{}", major_version, minor_version);
 #else
     return "unknown";
 #endif
+}
+
+std::string get_device_name(const int device) {
+    hipDeviceProp_t prop{};
+    PLSSVM_HIP_ERROR_CHECK(hipGetDeviceProperties(&prop, device))
+    return std::string{ ::plssvm::detail::trim(prop.name) };
 }
 
 std::string get_runtime() {

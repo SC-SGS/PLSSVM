@@ -1,0 +1,12 @@
+---
+Checks: '
+-cppcoreguidelines-avoid-c-arrays,
+
+-hicpp-avoid-c-arrays,
+
+-misc-use-internal-linkage,
+
+-modernize-avoid-c-arrays,
+'
+
+InheritParentConfig: true

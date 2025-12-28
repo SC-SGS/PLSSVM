@@ -21,11 +21,12 @@
 #include "fmt/ostream.h"  // fmt::ostream_formatter
 #include "igor/igor.hpp"  // IGOR_MAKE_NAMED_ARGUMENT, igor::parser, igor::has_unnamed_arguments, igor::has_other_than
 
-#include <algorithm>  // std::clamp
-#include <cmath>      // std::abs
-#include <cstddef>    // std::size_t
-#include <iosfwd>     // std::ostream
-#include <vector>     // std::vector
+#include <cmath>    // std::abs, std::isnan
+#include <cstddef>  // std::size_t
+#include <iosfwd>   // std::ostream
+#include <limits>   // std::numeric_limits::infinity
+#include <utility>  // std::forward
+#include <vector>   // std::vector
 
 namespace plssvm {
 
@@ -83,7 +84,7 @@ class regression_report {
 
 template <typename label_type, typename... Args>
 regression_report::regression_report(const std::vector<label_type> &correct_label, const std::vector<label_type> &predicted_label, Args &&...named_args) {
-    // sanity check for input correct sizes
+    // perform sanity checks on the sizes of the input vectors
     if (correct_label.empty()) {
         throw regression_report_exception{ "The correct labels list must not be empty!" };
     }
@@ -94,7 +95,7 @@ regression_report::regression_report(const std::vector<label_type> &correct_labe
         throw regression_report_exception{ fmt::format("The number of correct labels ({}) and predicted labels ({}) must be the same!", correct_label.size(), predicted_label.size()) };
     }
 
-    igor::parser parser{ std::forward<Args>(named_args)... };
+    const igor::parser parser{ std::forward<Args>(named_args)... };
 
     // compile time check: only named parameter are permitted
     static_assert(!parser.has_unnamed_arguments(), "Can only use named parameter!");
@@ -103,7 +104,7 @@ regression_report::regression_report(const std::vector<label_type> &correct_labe
     // compile time check: only some named parameters are allowed
     static_assert(!parser.has_other_than(plssvm::regression_report::force_finite), "An illegal named parameter has been passed!");
 
-    bool force_finite_value{ true };
+    bool force_finite_value{ true };  // NOLINT: can be modified in compile-time if later on
     // compile time/runtime check: the values must have the correct types
     if constexpr (parser.has(plssvm::regression_report::force_finite)) {
         // get the value of the provided named parameter

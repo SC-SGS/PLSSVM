@@ -9,8 +9,8 @@
  * @brief MOCK class for the C-SVC base class.
  */
 
-#ifndef PLSSVM_TESTS_MOCK_CSVC_HPP_
-#define PLSSVM_TESTS_MOCK_CSVC_HPP_
+#ifndef PLSSVM_TESTS_CSVC_MOCK_CSVC_HPP_
+#define PLSSVM_TESTS_CSVC_MOCK_CSVC_HPP_
 #pragma once
 
 #include "plssvm/mpi/communicator.hpp"  // plssvm::mpi::communicator
@@ -31,4 +31,4 @@ class mock_csvc final : virtual public plssvm::csvc,
         mock_csvm{ args... } { }
 };
 
-#endif  // PLSSVM_TESTS_MOCK_CSVC_HPP_
+#endif  // PLSSVM_TESTS_CSVC_MOCK_CSVC_HPP_

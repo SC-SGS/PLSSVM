@@ -82,7 +82,7 @@ class LIBSVMClassificationModelDataParseValid : public ::testing::Test,
 
 TYPED_TEST_SUITE(LIBSVMClassificationModelDataParseValid, util::classification_label_type_classification_type_gtest, naming::test_parameter_to_name);
 
-TYPED_TEST(LIBSVMClassificationModelDataParseValid, read) {
+TYPED_TEST(LIBSVMClassificationModelDataParseValid, Read) {
     using label_type = typename TestFixture::fixture_label_type;
     constexpr plssvm::classification_type expected_classification = TestFixture::fixture_classification;
 

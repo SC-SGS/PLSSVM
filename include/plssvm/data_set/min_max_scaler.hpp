@@ -92,14 +92,14 @@ class min_max_scaler {
      * @param[in] filename the filename to read the scaling information from
      * @throws plssvm::invalid_file_format_exception all exceptions thrown by the plssvm::detail::io::parse_scaling_factors function
      */
-    min_max_scaler(const std::string &filename);  // can't be explicit due to the data_set_variant
+    min_max_scaler(const std::string &filename);  // NOLINT: can't be explicit due to the data_set_variant
     /**
      * @brief Read the scaling interval and factors from the provided file @p filename.
      * @param[in] comm the used MPI communicator (**note**: current only used to restrict logging outputs to the main MPI rank)
      * @param[in] filename the filename to read the scaling information from
      * @throws plssvm::invalid_file_format_exception all exceptions thrown by the plssvm::detail::io::parse_scaling_factors function
      */
-    min_max_scaler(mpi::communicator comm, const std::string &filename);  // can't be explicit due to the data_set_variant
+    min_max_scaler(mpi::communicator comm, const std::string &filename);
 
     /**
      * @brief Save the scaling factors to the file @p filename.
@@ -136,9 +136,8 @@ class min_max_scaler {
     [[nodiscard]] std::optional<std::vector<factors>> scaling_factors() const {
         if (scaling_factors_.empty()) {
             return std::nullopt;  // nothing scaled yet
-        } else {
-            return std::make_optional(scaling_factors_);
         }
+        return std::make_optional(scaling_factors_);
     }
 
     /**
@@ -151,12 +150,12 @@ class min_max_scaler {
 
   private:
     /// The user-provided scaling interval. After scaling, all feature values are scaled to [lower, upper].
-    std::pair<real_type, real_type> scaling_interval_{};
+    std::pair<real_type, real_type> scaling_interval_;
     /// The scaling factors for all features.
-    std::vector<factors> scaling_factors_{};
+    std::vector<factors> scaling_factors_;
 
     /// The used MPI communicator.
-    mpi::communicator comm_{};
+    mpi::communicator comm_;
 };
 
 template <layout_type layout>
@@ -186,7 +185,7 @@ void min_max_scaler::scale(plssvm::matrix<real_type, layout> &data) {
             }
 
             // add scaling factor only if min_value != 0.0 AND max_value != 0.0
-            if (!(min_value == real_type{ 0.0 } && max_value == real_type{ 0.0 })) {
+            if (min_value != real_type{ 0.0 } || max_value != real_type{ 0.0 }) {
                 scaling_factors_.emplace_back(feature, min_value, max_value);
             }
         }

@@ -16,6 +16,7 @@
 #include "plssvm/constants.hpp"                         // plssvm::real_type
 #include "plssvm/data_set/classification_data_set.hpp"  // plssvm::classification_data_set
 #include "plssvm/detail/data_distribution.hpp"          // plssvm::detail::{triangular_data_distribution, rectangular_data_distribution}
+#include "plssvm/detail/operators.hpp"                  // operator overloads for std::vector (+ scalars)
 #include "plssvm/kernel_function_types.hpp"             // plssvm::kernel_function_type
 #include "plssvm/matrix.hpp"                            // plssvm::aos_matrix, plssvm::soa_matrix
 #include "plssvm/mpi/communicator.hpp"                  // plssvm::mpi::communicator
@@ -31,9 +32,11 @@
 #include "fmt/format.h"   // fmt::format
 #include "gtest/gtest.h"  // TYPED_TEST_SUITE_P, TYPED_TEST_P, REGISTER_TYPED_TEST_SUITE_P, EXPECT_GT, EXPECT_GE, ASSERT_EQ, ::testing::Test
 
-#include <cstddef>  // std::size_t
-#include <tuple>    // std::get
-#include <vector>   // std::vector
+#include <algorithm>  // std::min
+#include <cstddef>    // std::size_t
+#include <cstring>    // std::memcpy
+#include <tuple>      // std::get
+#include <vector>     // std::vector
 
 //*************************************************************************************************************************************//
 //                                              non-GPU C-SVM tests depending on nothing                                               //
@@ -45,7 +48,7 @@ class GenericBackendCSVM : public ::testing::Test,
 
 TYPED_TEST_SUITE_P(GenericBackendCSVM);
 
-TYPED_TEST_P(GenericBackendCSVM, blas_level_3_kernel_explicit) {
+TYPED_TEST_P(GenericBackendCSVM, BlasLevel3KernelExplicit) {
     const plssvm::real_type alpha{ 1.0 };
 
     // create kernel matrix to use in the BLAS calculation
@@ -98,7 +101,7 @@ TYPED_TEST_P(GenericBackendCSVM, blas_level_3_kernel_explicit) {
     EXPECT_FLOATING_POINT_MATRIX_NEAR(C_res, ground_truth_C);
 }
 
-TYPED_TEST_P(GenericBackendCSVM, calculate_w) {
+TYPED_TEST_P(GenericBackendCSVM, CalculateW) {
     // the data used for prediction
     const plssvm::classification_data_set data{ PLSSVM_CLASSIFICATION_TEST_FILE };
 
@@ -121,8 +124,8 @@ TYPED_TEST_P(GenericBackendCSVM, calculate_w) {
 }
 
 REGISTER_TYPED_TEST_SUITE_P(GenericBackendCSVM,
-                            blas_level_3_kernel_explicit,
-                            calculate_w);
+                            BlasLevel3KernelExplicit,
+                            CalculateW);
 
 //*************************************************************************************************************************************//
 //                                      non-GPU C-SVM tests depending on the kernel function type                                      //
@@ -133,7 +136,7 @@ class GenericBackendCSVMKernelFunction : public GenericBackendCSVM<T> { };
 
 TYPED_TEST_SUITE_P(GenericBackendCSVMKernelFunction);
 
-TYPED_TEST_P(GenericBackendCSVMKernelFunction, assemble_kernel_matrix_explicit) {
+TYPED_TEST_P(GenericBackendCSVMKernelFunction, AssembleKernelMatrixExplicit) {
     constexpr plssvm::kernel_function_type kernel = util::test_parameter_value_at_v<0, TypeParam>;
 
     plssvm::parameter params{ plssvm::kernel_type = kernel };
@@ -141,7 +144,7 @@ TYPED_TEST_P(GenericBackendCSVMKernelFunction, assemble_kernel_matrix_explicit) 
         params.gamma = plssvm::real_type{ 0.001 };
     }
     const plssvm::classification_data_set data{ PLSSVM_CLASSIFICATION_TEST_FILE };
-    auto data_matr{ data.data() };
+    auto data_matr{ data.data() };  // NOLINT: can't be const for the chi-squared kernel
     if constexpr (kernel == plssvm::kernel_function_type::chi_squared) {
         // chi-squared is well-defined for non-negative values only
         data_matr = util::matrix_abs(data_matr);
@@ -185,8 +188,8 @@ TYPED_TEST_P(GenericBackendCSVMKernelFunction, assemble_kernel_matrix_explicit) 
     EXPECT_FLOATING_POINT_VECTOR_NEAR_EPS(kernel_matrix, correct_kernel_matrix, 1e6);
 }
 
-TYPED_TEST_P(GenericBackendCSVMKernelFunction, blas_level_3_kernel_implicit) {
-    using namespace plssvm::operators;
+TYPED_TEST_P(GenericBackendCSVMKernelFunction, BlasLevel3KernelImplicit) {
+    using namespace plssvm::operators;  // NOLINT(google-build-using-namespace): only imports custom math operations on vectors (and scalars)
     constexpr plssvm::kernel_function_type kernel = util::test_parameter_value_at_v<0, TypeParam>;
 
     const plssvm::real_type alpha{ 1.0 };
@@ -197,7 +200,7 @@ TYPED_TEST_P(GenericBackendCSVMKernelFunction, blas_level_3_kernel_implicit) {
         params.gamma = plssvm::real_type{ 0.001 };
     }
     const plssvm::classification_data_set data{ PLSSVM_CLASSIFICATION_TEST_FILE };
-    auto data_matr{ data.data() };
+    auto data_matr{ data.data() };  // NOLINT: can't be const for the chi-squared kernel
     if constexpr (kernel == plssvm::kernel_function_type::chi_squared) {
         // chi-squared is well-defined for non-negative values only
         data_matr = util::matrix_abs(data_matr);
@@ -250,7 +253,7 @@ TYPED_TEST_P(GenericBackendCSVMKernelFunction, blas_level_3_kernel_implicit) {
     EXPECT_FLOATING_POINT_MATRIX_NEAR_EPS(C, ground_truth_C, 1e6);
 }
 
-TYPED_TEST_P(GenericBackendCSVMKernelFunction, predict_values) {
+TYPED_TEST_P(GenericBackendCSVMKernelFunction, PredictValues) {
     constexpr plssvm::kernel_function_type kernel = util::test_parameter_value_at_v<0, TypeParam>;
 
     plssvm::parameter params{ plssvm::kernel_type = kernel };
@@ -258,7 +261,7 @@ TYPED_TEST_P(GenericBackendCSVMKernelFunction, predict_values) {
         params.gamma = plssvm::real_type{ 0.001 };
     }
     const plssvm::classification_data_set data{ PLSSVM_CLASSIFICATION_TEST_FILE };
-    auto data_matr{ data.data() };
+    auto data_matr{ data.data() };  // NOLINT: can't be const for the chi-squared kernel
     if constexpr (kernel == plssvm::kernel_function_type::chi_squared) {
         // chi-squared is well-defined for non-negative values only
         data_matr = util::matrix_abs(data_matr);
@@ -279,7 +282,11 @@ TYPED_TEST_P(GenericBackendCSVMKernelFunction, predict_values) {
 
     switch (kernel) {
         case plssvm::kernel_function_type::linear:
-            device_kernel_predict_linear(out, correct_w, rho, predict_points, device_specific_num_predict_points, row_offset);
+            {
+                std::vector<plssvm::real_type> rho_padded(rho.size() + plssvm::PADDING_SIZE, plssvm::real_type{ 0.0 });
+                std::memcpy(rho_padded.data(), rho.data(), rho.size() * sizeof(plssvm::real_type));
+                device_kernel_predict_linear(out, correct_w, rho_padded, predict_points, device_specific_num_predict_points, row_offset);
+            }
             break;
         case plssvm::kernel_function_type::polynomial:
             device_kernel_predict<plssvm::kernel_function_type::polynomial, int, plssvm::real_type, plssvm::real_type>(out, weights, rho, data_matr, predict_points, device_specific_num_predict_points, row_offset, params.degree, std::get<plssvm::real_type>(params.gamma), params.coef0);
@@ -304,9 +311,9 @@ TYPED_TEST_P(GenericBackendCSVMKernelFunction, predict_values) {
 }
 
 REGISTER_TYPED_TEST_SUITE_P(GenericBackendCSVMKernelFunction,
-                            assemble_kernel_matrix_explicit,
-                            blas_level_3_kernel_implicit,
-                            predict_values);
+                            AssembleKernelMatrixExplicit,
+                            BlasLevel3KernelImplicit,
+                            PredictValues);
 
 //*************************************************************************************************************************************//
 //                                            non-GPU C-SVM DeathTests depending on nothing                                            //
@@ -317,7 +324,7 @@ class GenericBackendCSVMDeathTest : public GenericBackendCSVM<T> { };
 
 TYPED_TEST_SUITE_P(GenericBackendCSVMDeathTest);
 
-TYPED_TEST_P(GenericBackendCSVMDeathTest, blas_level_3_kernel_explicit) {
+TYPED_TEST_P(GenericBackendCSVMDeathTest, BlasLevel3KernelExplicit) {
     const plssvm::real_type alpha{ 1.0 };
 
     // create kernel matrix to use in the BLAS calculation
@@ -373,7 +380,7 @@ TYPED_TEST_P(GenericBackendCSVMDeathTest, blas_level_3_kernel_explicit) {
     }
 }
 
-TYPED_TEST_P(GenericBackendCSVMDeathTest, calculate_w) {
+TYPED_TEST_P(GenericBackendCSVMDeathTest, CalculateW) {
     // the data used for prediction
     const plssvm::classification_data_set data{ PLSSVM_CLASSIFICATION_TEST_FILE };
 
@@ -402,8 +409,8 @@ TYPED_TEST_P(GenericBackendCSVMDeathTest, calculate_w) {
 }
 
 REGISTER_TYPED_TEST_SUITE_P(GenericBackendCSVMDeathTest,
-                            blas_level_3_kernel_explicit,
-                            calculate_w);
+                            BlasLevel3KernelExplicit,
+                            CalculateW);
 
 //*************************************************************************************************************************************//
 //                                   non-GPU C-SVM DeathTests depending on the kernel function type                                    //
@@ -414,7 +421,7 @@ class GenericBackendCSVMKernelFunctionDeathTest : public GenericBackendCSVMDeath
 
 TYPED_TEST_SUITE_P(GenericBackendCSVMKernelFunctionDeathTest);
 
-TYPED_TEST_P(GenericBackendCSVMKernelFunctionDeathTest, assemble_kernel_matrix_explicit) {
+TYPED_TEST_P(GenericBackendCSVMKernelFunctionDeathTest, AssembleKernelMatrixExplicit) {
     constexpr plssvm::kernel_function_type kernel = util::test_parameter_value_at_v<0, TypeParam>;
 
     // create correct data for the function call
@@ -476,11 +483,11 @@ TYPED_TEST_P(GenericBackendCSVMKernelFunctionDeathTest, assemble_kernel_matrix_e
     EXPECT_DEATH(run_assembly(params, kernel_matrix.data(), data.data(), device_specific_num_rows, row_offset, q_red, QA_cost), "cost must not be 0.0 since it is 1 / plssvm::cost!");
 }
 
-TYPED_TEST_P(GenericBackendCSVMKernelFunctionDeathTest, blas_level_3_kernel_implicit) {
+TYPED_TEST_P(GenericBackendCSVMKernelFunctionDeathTest, BlasLevel3KernelImplicit) {
     constexpr plssvm::kernel_function_type kernel = util::test_parameter_value_at_v<0, TypeParam>;
 
     // create correct data for the function call
-    plssvm::parameter params{ plssvm::kernel_type = kernel };
+    plssvm::parameter params{ plssvm::kernel_type = kernel };  // NOLINT(misc-const-correctness): can't be const for the chi-squared kernel
     if constexpr (kernel != plssvm::kernel_function_type::linear) {
         params.gamma = plssvm::real_type{ 0.001 };
     }
@@ -551,18 +558,17 @@ TYPED_TEST_P(GenericBackendCSVMKernelFunctionDeathTest, blas_level_3_kernel_impl
     EXPECT_DEATH(run_assembly_symm(params, q_red, data.data(), device_specific_num_rows, row_offset, B, C), ::testing::HasSubstr(fmt::format("The number of columns in B ({}) must be the same as the values in q ({})!", B.num_cols(), data.num_data_points() - 1)));
 }
 
-TYPED_TEST_P(GenericBackendCSVMKernelFunctionDeathTest, predict_values) {
+TYPED_TEST_P(GenericBackendCSVMKernelFunctionDeathTest, PredictValues) {
     constexpr plssvm::kernel_function_type kernel = util::test_parameter_value_at_v<0, TypeParam>;
 
-    plssvm::parameter params{ plssvm::kernel_type = kernel };
+    plssvm::parameter params{ plssvm::kernel_type = kernel };  // NOLINT(misc-const-correctness): can't be const for the chi-squared kernel
     if constexpr (kernel != plssvm::kernel_function_type::linear) {
         params.gamma = plssvm::real_type{ 0.001 };
     }
     const plssvm::classification_data_set data{ PLSSVM_CLASSIFICATION_TEST_FILE };
 
     const auto weights = util::generate_specific_matrix<plssvm::aos_matrix<plssvm::real_type>>(plssvm::shape{ 3, data.data().num_rows() });
-    const auto predict_points = util::generate_specific_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ data.data().num_rows(), data.data().num_cols() });
-    const std::vector<plssvm::real_type> rho = util::generate_random_vector<plssvm::real_type>(weights.num_rows());
+    const auto predict_points = util::generate_specific_matrix<plssvm::aos_matrix<plssvm::real_type>>(plssvm::shape{ data.data().num_rows(), data.data().num_cols() });
     const plssvm::soa_matrix<plssvm::real_type> w = ground_truth::calculate_w(weights, data.data());
 
     plssvm::aos_matrix<plssvm::real_type> out{ plssvm::shape{ predict_points.num_rows(), weights.num_rows() }};
@@ -573,9 +579,10 @@ TYPED_TEST_P(GenericBackendCSVMKernelFunctionDeathTest, predict_values) {
     const std::size_t row_offset = dist.place_row_offset(0);
 
     if constexpr (kernel == plssvm::kernel_function_type::linear) {
+        const std::vector<plssvm::real_type> rho = util::generate_random_vector<plssvm::real_type>(weights.num_rows());
+
         // the number of classes must match
-        std::vector<plssvm::real_type> rho_wrong = util::generate_random_vector<plssvm::real_type>(weights.num_rows());
-        rho_wrong.pop_back();
+        const std::vector<plssvm::real_type> rho_wrong = util::generate_random_vector<plssvm::real_type>(rho.size() - 1);
         EXPECT_DEATH(device_kernel_predict_linear(out, w, rho_wrong, predict_points, device_specific_num_predict_points, row_offset),
                      ::testing::HasSubstr(fmt::format("Size mismatch: {} vs {}!", w.num_rows(), rho_wrong.size())));
 
@@ -597,6 +604,8 @@ TYPED_TEST_P(GenericBackendCSVMKernelFunctionDeathTest, predict_values) {
         EXPECT_DEATH(device_kernel_predict_linear(out, w, rho, predict_points, device_specific_num_predict_points, predict_points.num_rows() + 1),
                      ::testing::HasSubstr(fmt::format("The row offset ({}) cannot be greater the the total number of predict points ({})!", predict_points.num_rows() + 1, predict_points.num_rows())));
     } else {
+        const std::vector<plssvm::real_type> rho = util::generate_random_vector<plssvm::real_type>(weights.num_rows());
+
         // helper lambda to reduce the amount of needed switches!
         const auto run_predict_values = [=](const plssvm::parameter &params_p, plssvm::aos_matrix<plssvm::real_type> &out_p, const plssvm::aos_matrix<plssvm::real_type> &weights_p, const std::vector<plssvm::real_type> &rho_p, const plssvm::soa_matrix<plssvm::real_type> &support_vectors_p, const plssvm::soa_matrix<plssvm::real_type> &predict_points_p, const std::size_t device_specific_num_predict_points_p, const std::size_t row_offset_p) {
             switch (kernel) {
@@ -653,8 +662,8 @@ TYPED_TEST_P(GenericBackendCSVMKernelFunctionDeathTest, predict_values) {
 }
 
 REGISTER_TYPED_TEST_SUITE_P(GenericBackendCSVMKernelFunctionDeathTest,
-                            assemble_kernel_matrix_explicit,
-                            blas_level_3_kernel_implicit,
-                            predict_values);
+                            AssembleKernelMatrixExplicit,
+                            BlasLevel3KernelImplicit,
+                            PredictValues);
 
 #endif  // PLSSVM_TESTS_BACKENDS_GENERIC_CSVM_TESTS_HPP_

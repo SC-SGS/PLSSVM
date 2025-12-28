@@ -9,8 +9,8 @@
  * @brief Utility functions and classes (fixtures) for testing the parameter_* classes' functionality.
  */
 
-#ifndef PLSSVM_TESTS_DETAIL_CMD_UTILITY_HPP_
-#define PLSSVM_TESTS_DETAIL_CMD_UTILITY_HPP_
+#ifndef PLSSVM_TESTS_DETAIL_CMD_CMD_UTILITY_HPP_
+#define PLSSVM_TESTS_DETAIL_CMD_CMD_UTILITY_HPP_
 #pragma once
 
 #include "plssvm/mpi/communicator.hpp"  // plssvm::mpi::communicator
@@ -45,8 +45,8 @@ class ParameterBase : public ::testing::Test,
         // create argc and argv from a std::string
         cmd_options_ = std::move(cmd_line_split);
         cmd_argv_.reserve(cmd_options_.size());
-        for (std::vector<std::string>::size_type i = 0; i < cmd_options_.size(); ++i) {
-            cmd_argv_.push_back(cmd_options_[i].data());
+        for (std::string &cmd_opt : cmd_options_) {
+            cmd_argv_.push_back(cmd_opt.data());
         }
     }
 
@@ -62,7 +62,7 @@ class ParameterBase : public ::testing::Test,
      * @brief Return the used MPI communicator.
      * @return the MPI communicator (`[[nodiscard]]`)
      */
-    [[nodiscard]] const plssvm::mpi::communicator get_comm() const noexcept { return comm_; }
+    [[nodiscard]] const plssvm::mpi::communicator &get_comm() const noexcept { return comm_; }
 
     /**
      * @brief Return the number of command line arguments encapsulated in this class.
@@ -78,15 +78,15 @@ class ParameterBase : public ::testing::Test,
 
   private:
     /// The provided command line options.
-    mutable std::vector<std::string> cmd_options_{};
+    mutable std::vector<std::string> cmd_options_;
     /// The command line options cast to a char *.
-    mutable std::vector<char *> cmd_argv_{};
+    mutable std::vector<char *> cmd_argv_;
     /// The MPI communicator (unused during testing since we do not support MPI runtime tests).
-    plssvm::mpi::communicator comm_{};
+    plssvm::mpi::communicator comm_;
     /// The verbosity level at the time of the test start.
     plssvm::verbosity_level verbosity_save_{};
 };
 
 }  // namespace util
 
-#endif  // PLSSVM_TESTS_DETAIL_CMD_UTILITY_HPP_
+#endif  // PLSSVM_TESTS_DETAIL_CMD_CMD_UTILITY_HPP_

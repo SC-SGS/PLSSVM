@@ -9,17 +9,20 @@
  * @brief Defines the functions used for prediction for the C-SVM using the Kokkos backend.
  */
 
-#ifndef PLSSVM_BACKENDS_KOKKOS_PREDICT_KERNEL_HPP_
-#define PLSSVM_BACKENDS_KOKKOS_PREDICT_KERNEL_HPP_
+#ifndef PLSSVM_BACKENDS_KOKKOS_KERNEL_PREDICT_KERNEL_HPP_
+#define PLSSVM_BACKENDS_KOKKOS_KERNEL_PREDICT_KERNEL_HPP_
 #pragma once
 
-#include "plssvm/backends/Kokkos/kernel/kernel_functions.hpp"  // plssvm::kokkos::detail::{feature_reduce, apply_kernel_function}
-#include "plssvm/constants.hpp"                                // plssvm::{real_type, THREAD_BLOCK_SIZE}
-#include "plssvm/kernel_function_types.hpp"                    // plssvm::kernel_function_type
+#include "plssvm/backends/Kokkos/detail/standard_layout_tuple.hpp"  // plssvm::kokkos::detail::standard_layout_tuple
+#include "plssvm/backends/Kokkos/kernel/kernel_functions.hpp"       // plssvm::kokkos::detail::{feature_reduce, apply_kernel_function}
+#include "plssvm/constants.hpp"                                     // plssvm::real_type
+#include "plssvm/kernel_function_types.hpp"                         // plssvm::kernel_function_type
+#include "plssvm/target_platforms.hpp"                              // plssvm::target_platform
 
 #include "Kokkos_Core.hpp"  // KOKKOS_INLINE_FUNCTION, Kokkos::View, Kokkos::TeamPolicy, Kokkos::atomic_add
 
 #include <cstddef>  // std::size_t
+#include <utility>  // std::move
 
 namespace plssvm::kokkos::detail {
 
@@ -38,7 +41,7 @@ class device_kernel_w_linear {
   public:
     /**
      * @brief Initialize the Kokkos kernel function object.
-     * @param[in,out] w the vector to speedup the linear prediction
+     * @param[out] w the vector to speedup the linear prediction
      * @param[in] alpha the previously learned weights
      * @param[in] support_vectors the support vectors
      * @param[in] num_features the number of features
@@ -51,9 +54,9 @@ class device_kernel_w_linear {
      * @param[in] grid_size_x the size of the execution grid in x-dimension
      */
     device_kernel_w_linear(device_view_type<real_type> w, device_view_type<const real_type> alpha, device_view_type<const real_type> support_vectors, const std::size_t num_features, const std::size_t num_classes, const std::size_t num_sv, const std::size_t device_num_sv, const std::size_t device_sv_offset, const std::size_t grid_x_offset, const std::size_t grid_y_offset, const std::size_t grid_size_x) :
-        w_{ w },
-        alpha_{ alpha },
-        support_vectors_{ support_vectors },
+        w_{ std::move(w) },
+        alpha_{ std::move(alpha) },
+        support_vectors_{ std::move(support_vectors) },
         num_features_{ num_features },
         num_classes_{ num_classes },
         num_sv_{ num_sv },
@@ -140,10 +143,10 @@ class device_kernel_predict_linear {
      * @param[in] grid_size_x the size of the execution grid in x-dimension
      */
     device_kernel_predict_linear(device_view_type<real_type> prediction, device_view_type<const real_type> w, device_view_type<const real_type> rho, device_view_type<const real_type> predict_points, const std::size_t num_classes, const std::size_t num_predict_points, const std::size_t num_features, const std::size_t grid_x_offset, const std::size_t grid_y_offset, const std::size_t grid_size_x) :
-        prediction_{ prediction },
-        w_{ w },
-        rho_{ rho },
-        predict_points_{ predict_points },
+        prediction_{ std::move(prediction) },
+        w_{ std::move(w) },
+        rho_{ std::move(rho) },
+        predict_points_{ std::move(predict_points) },
         num_classes_{ num_classes },
         num_predict_points_{ num_predict_points },
         num_features_{ num_features },
@@ -232,11 +235,11 @@ class device_kernel_predict {
      * @param[in] kernel_function_parameter the parameters necessary to apply the @p kernel_function
      */
     device_kernel_predict(device_view_type<real_type> prediction, device_view_type<const real_type> alpha, device_view_type<const real_type> rho, device_view_type<const real_type> support_vectors, device_view_type<const real_type> predict_points, const std::size_t num_classes, const std::size_t num_sv, const std::size_t num_predict_points, const std::size_t num_features, const std::size_t grid_x_offset, const std::size_t grid_y_offset, const std::size_t grid_size_x, Args... kernel_function_parameter) :
-        prediction_{ prediction },
-        alpha_{ alpha },
-        rho_{ rho },
-        support_vectors_{ support_vectors },
-        predict_points_{ predict_points },
+        prediction_{ std::move(prediction) },
+        alpha_{ std::move(alpha) },
+        rho_{ std::move(rho) },
+        support_vectors_{ std::move(support_vectors) },
+        predict_points_{ std::move(predict_points) },
         num_classes_{ num_classes },
         num_sv_{ num_sv },
         num_predict_points_{ num_predict_points },
@@ -313,4 +316,4 @@ class device_kernel_predict {
 
 }  // namespace plssvm::kokkos::detail
 
-#endif  // PLSSVM_BACKENDS_KOKKOS_PREDICT_KERNEL_HPP_
+#endif  // PLSSVM_BACKENDS_KOKKOS_KERNEL_PREDICT_KERNEL_HPP_

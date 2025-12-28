@@ -16,6 +16,7 @@
 #include "plssvm/backends/execution_range.hpp"             // plssvm::detail::dim_type
 #include "plssvm/backends/SYCL/data_parallel_kernels.hpp"  // plssvm::sycl::data_parallel_kernel
 #include "plssvm/backends/SYCL/DPCPP/detail/queue.hpp"     // plssvm::dpcpp::detail::queue (PImpl)
+#include "plssvm/detail/type_traits.hpp"                   // plssvm::detail::always_false_non_type_v
 #include "plssvm/detail/utility.hpp"                       // plssvm::detail::unreachable
 #include "plssvm/target_platforms.hpp"                     // plssvm::target_platform
 
@@ -45,7 +46,7 @@ template <std::size_t I>
     } else if constexpr (I == 3) {
         return ::sycl::range<I>{ static_cast<std::size_t>(dims.z), static_cast<std::size_t>(dims.y), static_cast<std::size_t>(dims.x) };
     } else {
-        static_assert(I != I, "Invalid number of native sycl::range dimension!");
+        static_assert(::plssvm::detail::always_false_non_type_v<I>, "Invalid number of native sycl::range dimension!");
     }
 }
 
@@ -101,10 +102,18 @@ void device_synchronize(const queue &q);
 [[nodiscard]] queue get_default_queue();
 
 /**
+ * @brief Get the name of the compute device associated with @p q.
+ * @param[in] q the SYCL queue representing the compute device
+ * @return the compute device name (`[[nodiscard]]`)
+ */
+[[nodiscard]] std::string get_device_name(const queue &q);
+
+/**
  * @brief Get the DPC++ version as pretty string.
  * @return the DPC++ version (`[[nodiscard]]`)
  */
 [[nodiscard]] std::string get_dpcpp_version();
+
 /**
  * @brief Get the time (version) when the used DPC++ version was built.
  * @return the DPC++ built date (`[[nodiscard]]`)

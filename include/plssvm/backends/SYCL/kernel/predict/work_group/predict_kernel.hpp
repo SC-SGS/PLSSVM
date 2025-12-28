@@ -37,8 +37,7 @@ class device_kernel_w_linear {
 
     /**
      * @brief Initialize the SYCL kernel function object.
-     * @param[in] cgh the SYCL handler used to allocate the local memory
-     * @param[in,out] w the vector to speedup the linear prediction
+     * @param[out] w the vector to speedup the linear prediction
      * @param[in] alpha the previously learned weights
      * @param[in] support_vectors the support vectors
      * @param[in] num_features the number of features
@@ -117,7 +116,6 @@ class device_kernel_predict_linear {
 
     /**
      * @brief Initialize the SYCL kernel function object.
-     * @param[in] cgh the SYCL handler used to allocate the local memory
      * @param[out] prediction the predicted values
      * @param[in] w the vector to speedup the calculations
      * @param[in] rho the previously learned bias
@@ -197,7 +195,6 @@ class device_kernel_predict {
 
     /**
      * @brief Initialize the SYCL kernel function object.
-     * @param[in] cgh the SYCL handler used to allocate the local memory
      * @param[in] prediction the predicted values
      * @param[in] alpha the previously learned weights
      * @param[in] rho the previously learned biases

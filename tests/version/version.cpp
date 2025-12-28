@@ -23,39 +23,39 @@
 #include <string>    // std::string
 #include <tuple>     // std::tuple
 
-TEST(Version, name_not_empty) {
+TEST(Version, NameNotEmpty) {
     EXPECT_FALSE(plssvm::version::name.empty());
 }
 
-TEST(Version, version_not_empty) {
+TEST(Version, VersionNotEmpty) {
     EXPECT_FALSE(plssvm::version::version.empty());
 }
 
-TEST(Version, version_major_not_negative) {
+TEST(Version, VersionMajorNotNegative) {
     EXPECT_TRUE(plssvm::version::major >= 0);
 }
 
-TEST(Version, version_minor_not_negative) {
+TEST(Version, VersionMinorNotNegative) {
     EXPECT_TRUE(plssvm::version::minor >= 0);
 }
 
-TEST(Version, version_patch_not_negative) {
+TEST(Version, VersionPatchNotNegative) {
     EXPECT_TRUE(plssvm::version::patch >= 0);
 }
 
-TEST(Version, version_string_major_minor_patch) {
+TEST(Version, VersionStringMajorMinorPatch) {
     EXPECT_EQ(plssvm::version::version, fmt::format("{}.{}.{}", plssvm::version::major, plssvm::version::minor, plssvm::version::patch));
 }
 
-TEST(Version, target_platforms_not_empty) {
+TEST(Version, TargetPlatformsNotEmpty) {
     EXPECT_FALSE(plssvm::version::detail::target_platforms.empty());
 }
 
-TEST(Version, copyright_notice_not_empty) {
+TEST(Version, CopyrightNoticeNotEmpty) {
     EXPECT_FALSE(plssvm::version::detail::copyright_notice.empty());
 }
 
-TEST(Version, get_git_info_conditional_empty) {
+TEST(Version, GetGitInfoConditionalEmpty) {
     const std::optional<std::string> git_info = plssvm::version::detail::get_git_info();
     if (plssvm::version::git_metadata::is_populated()) {
         ASSERT_TRUE(git_info.has_value());
@@ -69,7 +69,7 @@ TEST(Version, get_git_info_conditional_empty) {
 
 class VersionGetVersionInfo : public ::testing::TestWithParam<std::tuple<std::string, bool>> { };
 
-TEST_P(VersionGetVersionInfo, get_version_info_not_empty) {
+TEST_P(VersionGetVersionInfo, GetVersionInfoNotEmpty) {
     const auto &[exe_name, with_backend_info] = GetParam();
     const std::string version_info = plssvm::version::detail::get_version_info(exe_name, with_backend_info);
     ASSERT_FALSE(version_info.empty());

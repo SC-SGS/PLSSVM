@@ -12,13 +12,23 @@
 #include "plssvm/backends/stdpar/detail/utility.hpp"        // plssvm::stdpar::detail::get_stdpar_version
 #include "plssvm/backends/stdpar/exceptions.hpp"            // plssvm::stdpar::backend_exception
 #include "plssvm/backends/stdpar/implementation_types.hpp"  // plssvm::stdpar::implementation_type
-#include "plssvm/detail/logging/log.hpp"                    // plssvm::detail::log
-#include "plssvm/detail/logging/log_untracked.hpp"          // plssvm::detail::log_untracked
+#include "plssvm/detail/logging/mpi_log_untracked.hpp"      // plssvm::detail::log_untracked
 #include "plssvm/detail/tracking/performance_tracker.hpp"   // plssvm::detail::tracking::tracking_entry, PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY
+#include "plssvm/mpi/detail/information.hpp"                // plssvm::mpi::detail::gather_and_print_csvm_information
 #include "plssvm/target_platforms.hpp"                      // plssvm::target_platform
 #include "plssvm/verbosity_levels.hpp"                      // plssvm::verbosity_level
 
+#if defined(PLSSVM_STDPAR_BACKEND_NVHPC_GPU)
+    #include "plssvm/detail/string_utility.hpp"  // plssvm::detail::trim
+
+    #include "cuda_runtime_api.h"  // cudaGetDeviceProperties
+    #include "driver_types.h"      // cudaDeviceProp
+#endif
+
 #include "fmt/format.h"  // fmt::format
+
+#include <string>  // std::string
+#include <vector>  // std::vector
 
 namespace plssvm::stdpar {
 
@@ -58,14 +68,14 @@ csvm::csvm(const target_platform target) {
         target_ = target;
     }
 
-    std::vector<std::string> device_names{};
+    std::vector<std::string> device_names{};  // NOLINT(misc-const-correctness): cannot be const if the device is GPU
+#if defined(PLSSVM_STDPAR_BACKEND_NVHPC_GPU)
+    cudaDeviceProp prop{};
+    cudaGetDeviceProperties(&prop, 0);
+    device_names.emplace_back(::plssvm::detail::trim(static_cast<const char *>(prop.name)));
+#endif
 
     if (comm_.size() > 1) {
-#if defined(PLSSVM_STDPAR_BACKEND_NVHPC_GPU)
-        cudaDeviceProp prop{};
-        cudaGetDeviceProperties(&prop, 0);
-        device_names.emplace_back(prop.name);
-#endif
         mpi::detail::gather_and_print_csvm_information(comm_, plssvm::backend_type::stdpar, target_, device_names, fmt::format("{}", this->get_implementation_type()));
     } else {
         // use more detailed single rank command line output
@@ -79,16 +89,13 @@ csvm::csvm(const target_platform target) {
 #endif
                                       this->get_implementation_type(),
                                       detail::get_stdpar_version(),
-                                      this->num_available_devices(),
+                                      this->num_available_devices(),  // NOLINT: safe to call this virtual function in the constructor
                                       target_);
 #if defined(PLSSVM_STDPAR_BACKEND_NVHPC_GPU)
-        cudaDeviceProp prop{};
-        cudaGetDeviceProperties(&prop, 0);
-        device_names.emplace_back(prop.name);
         plssvm::detail::log_untracked(verbosity_level::full,
                                       comm_,
                                       "  [0, {}, {}.{}]\n",
-                                      prop.name,
+                                      device_names.back(),
                                       prop.major,
                                       prop.minor);
 #endif
@@ -98,13 +105,14 @@ csvm::csvm(const target_platform target) {
                                   comm_,
                                   "\n");
 
-    PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "dependencies", "stdpar_implementation", this->get_implementation_type() }));
     PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "dependencies", "stdpar_version", detail::get_stdpar_version() }));
+    PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "backend", "stdpar_implementation", this->get_implementation_type() }));
     PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "backend", "backend", plssvm::backend_type::stdpar }));
     PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "backend", "target_platform", target_ }));
-    PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "backend", "num_devices", this->num_available_devices() }));
+    PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "backend", "num_devices", this->num_available_devices() }));  // NOLINT: safe to call this virtual function in the constructor
     if (!device_names.empty()) {
-        PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "backend", "device", device_names.front() }));
+        // NVHPC does not provide us with a device name if compiled for CPUs
+        PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "backend", "device", device_names }));
     }
 }
 

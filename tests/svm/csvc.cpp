@@ -10,12 +10,14 @@
 
 #include "plssvm/svm/csvc.hpp"  // plssvm::csvc
 
-#include "plssvm/backend_types.hpp"                     // plssvm::csvm_backend_exists, plssvm::csvm_backend_exists_v, plssvm::backend_csvm_type, plssvm::backend_csvm_type_t
+#include "plssvm/backend_types.hpp"                     // plssvm::csvm_backend_exists, plssvm::backend_csvm_type, plssvm::backend_csvm_type_t
+#include "plssvm/backends/SYCL/detail/constants.hpp"    // NOLINT: namespace plssvm::sycl
 #include "plssvm/classification_types.hpp"              // plssvm::classification_type
 #include "plssvm/constants.hpp"                         // plssvm::real_type
-#include "plssvm/core.hpp"                              // sycl namespace handling
+#include "plssvm/core.hpp"                              // NOLINT: include all csvm_backend_exists_v specializations
 #include "plssvm/data_set/classification_data_set.hpp"  // plssvm::classification_data_set
 #include "plssvm/detail/data_distribution.hpp"          // plssvm::detail::data_distribution::maximum_local_memory_needed
+#include "plssvm/detail/memory_size.hpp"                // plssvm::detail::memory_size
 #include "plssvm/detail/move_only_any.hpp"              // plssvm::detail::move_only_any
 #include "plssvm/exceptions/exceptions.hpp"             // plssvm::invalid_parameter_exception
 #include "plssvm/kernel_function_types.hpp"             // plssvm::kernel_function_type
@@ -23,6 +25,7 @@
 #include "plssvm/model/classification_model.hpp"        // plssvm::classification_model
 #include "plssvm/parameter.hpp"                         // plssvm::parameter
 #include "plssvm/solver_types.hpp"                      // plssvm::solver_type
+#include "plssvm/svm/csvm.hpp"                          // plssvm::csvm_backend_exists_v
 
 #include "tests/custom_test_macros.hpp"  // EXPECT_THROW_WHAT, EXPECT_THROW_WHAT_MATCHER, EXPECT_INCLUSIVE_RANGE
 #include "tests/naming.hpp"              // naming::parameter_definition_to_name
@@ -32,6 +35,8 @@
                                          // generate_random_matrix, get_correct_data_file_labels}
 
 #if defined(PLSSVM_HAS_MPI_ENABLED)
+    #include "plssvm/mpi/communicator.hpp"  // plssvm::mpi::communicator
+
     #include "mpi.h"  // MPI_COMM_WORLD, MPI_Comm_dup, MPI_Comm_free
 #endif
 
@@ -49,7 +54,7 @@
 
 class BaseCSVC : public ::testing::Test { };
 
-TEST(BaseCSVC, csvc_backend_exists) {
+TEST(BaseCSVC, CsvcBackendExists) {
     // test whether the given C-SVC backend exist
 #if defined(PLSSVM_HAS_OPENMP_BACKEND)
     EXPECT_TRUE(plssvm::csvm_backend_exists_v<plssvm::openmp::csvc>);
@@ -118,7 +123,7 @@ TEST(BaseCSVC, csvc_backend_exists) {
 #endif
 }
 
-TEST(BaseCSVC, backend_csvm_type) {
+TEST(BaseCSVC, BackendCsvmType) {
 #if defined(PLSSVM_HAS_OPENMP_BACKEND)
     ::testing::StaticAssertTypeEq<plssvm::openmp::backend_csvm_type<plssvm::csvc>::type, plssvm::openmp::csvc>();
     ::testing::StaticAssertTypeEq<plssvm::openmp::backend_csvm_type_t<plssvm::csvc>, plssvm::openmp::csvc>();
@@ -192,9 +197,9 @@ class BaseCSVCMemberBase : public BaseCSVC,
 
   private:
     /// The temporary data file.
-    util::temporary_file data_set_file_{};
+    util::temporary_file data_set_file_;
     /// The temporary model file.
-    util::temporary_file model_file_{};
+    util::temporary_file model_file_;
 };
 
 template <typename T>
@@ -218,12 +223,12 @@ class BaseCSVCFit : public BaseCSVC,
 
   private:
     /// The temporary data file.
-    util::temporary_file data_set_file_{};
+    util::temporary_file data_set_file_;
 };
 
 TYPED_TEST_SUITE(BaseCSVCFit, util::classification_label_type_solver_and_kernel_function_and_classification_type_gtest, naming::test_parameter_to_name);
 
-TYPED_TEST(BaseCSVCFit, fit) {
+TYPED_TEST(BaseCSVCFit, Fit) {
     using label_type = typename TestFixture::fixture_label_type;
     constexpr plssvm::solver_type solver = TestFixture::fixture_solver;
     constexpr plssvm::kernel_function_type kernel = TestFixture::fixture_kernel;
@@ -270,11 +275,12 @@ TYPED_TEST(BaseCSVCFit, fit) {
     // clang-format on
 
     // create data set
-    plssvm::classification_data_set<label_type> training_data{ this->get_data_filename() };
+    plssvm::classification_data_set<label_type> training_data{ this->get_data_filename() };  // NOLINT(misc-const-correctness): can't be const for the chi-squared kernel
     if constexpr (kernel == plssvm::kernel_function_type::chi_squared) {
         // chi-squared is well-defined for non-negative values only
-        if (training_data.labels().has_value()) {
-            training_data = plssvm::classification_data_set<label_type>{ util::matrix_abs(training_data.data()), *training_data.labels() };
+        const auto &labels_opt = training_data.labels();
+        if (labels_opt.has_value()) {
+            training_data = plssvm::classification_data_set<label_type>{ util::matrix_abs(training_data.data()), labels_opt.value() };
         }
     }
 
@@ -289,7 +295,7 @@ TYPED_TEST(BaseCSVCFit, fit) {
     EXPECT_EQ(std::get<plssvm::real_type>(model.get_params().gamma), plssvm::real_type{ 0.25 });
 }
 
-TYPED_TEST(BaseCSVCFit, fit_named_parameters) {
+TYPED_TEST(BaseCSVCFit, FitNamedParameters) {
     using label_type = typename TestFixture::fixture_label_type;
     constexpr plssvm::solver_type solver = TestFixture::fixture_solver;
     constexpr plssvm::kernel_function_type kernel = TestFixture::fixture_kernel;
@@ -336,11 +342,12 @@ TYPED_TEST(BaseCSVCFit, fit_named_parameters) {
     // clang-format on
 
     // create data set
-    plssvm::classification_data_set<label_type> training_data{ this->get_data_filename() };
+    plssvm::classification_data_set<label_type> training_data{ this->get_data_filename() };  // NOLINT(misc-const-correctness): can't be const for the chi-squared kernel
     if constexpr (kernel == plssvm::kernel_function_type::chi_squared) {
         // chi-squared is well-defined for non-negative values only
-        if (training_data.labels().has_value()) {
-            training_data = plssvm::classification_data_set<label_type>{ util::matrix_abs(training_data.data()), *training_data.labels() };
+        const auto &labels_opt = training_data.labels();
+        if (labels_opt.has_value()) {
+            training_data = plssvm::classification_data_set<label_type>{ util::matrix_abs(training_data.data()), labels_opt.value() };
         }
     }
 
@@ -359,7 +366,7 @@ TYPED_TEST(BaseCSVCFit, fit_named_parameters) {
     EXPECT_EQ(std::get<plssvm::real_type>(model.get_params().gamma), plssvm::real_type{ 0.25 });
 }
 
-TYPED_TEST(BaseCSVCFit, fit_named_parameters_invalid_epsilon) {
+TYPED_TEST(BaseCSVCFit, FitNamedParametersInvalidEpsilon) {
     using label_type = typename TestFixture::fixture_label_type;
     constexpr plssvm::solver_type solver = TestFixture::fixture_solver;
     constexpr plssvm::kernel_function_type kernel = TestFixture::fixture_kernel;
@@ -394,11 +401,12 @@ TYPED_TEST(BaseCSVCFit, fit_named_parameters_invalid_epsilon) {
     // clang-format on
 
     // create data set
-    plssvm::classification_data_set<label_type> training_data{ this->get_data_filename() };
+    plssvm::classification_data_set<label_type> training_data{ this->get_data_filename() };  // NOLINT(misc-const-correctness): can't be const for the chi-squared kernel
     if constexpr (kernel == plssvm::kernel_function_type::chi_squared) {
         // chi-squared is well-defined for non-negative values only
-        if (training_data.labels().has_value()) {
-            training_data = plssvm::classification_data_set<label_type>{ util::matrix_abs(training_data.data()), *training_data.labels() };
+        const auto &labels_opt = training_data.labels();
+        if (labels_opt.has_value()) {
+            training_data = plssvm::classification_data_set<label_type>{ util::matrix_abs(training_data.data()), labels_opt.value() };
         }
     }
 
@@ -408,7 +416,7 @@ TYPED_TEST(BaseCSVCFit, fit_named_parameters_invalid_epsilon) {
                       "epsilon must be less than 0.0, but is 0!");
 }
 
-TYPED_TEST(BaseCSVCFit, fit_named_parameters_invalid_max_iter) {
+TYPED_TEST(BaseCSVCFit, FitNamedParametersInvalidMaxIter) {
     using label_type = typename TestFixture::fixture_label_type;
     constexpr plssvm::solver_type solver = TestFixture::fixture_solver;
     constexpr plssvm::kernel_function_type kernel = TestFixture::fixture_kernel;
@@ -443,11 +451,12 @@ TYPED_TEST(BaseCSVCFit, fit_named_parameters_invalid_max_iter) {
     // clang-format on
 
     // create data set
-    plssvm::classification_data_set<label_type> training_data{ this->get_data_filename() };
+    plssvm::classification_data_set<label_type> training_data{ this->get_data_filename() };  // NOLINT(misc-const-correctness): can't be const for the chi-squared kernel
     if constexpr (kernel == plssvm::kernel_function_type::chi_squared) {
         // chi-squared is well-defined for non-negative values only
-        if (training_data.labels().has_value()) {
-            training_data = plssvm::classification_data_set<label_type>{ util::matrix_abs(training_data.data()), *training_data.labels() };
+        const auto &labels_opt = training_data.labels();
+        if (labels_opt.has_value()) {
+            training_data = plssvm::classification_data_set<label_type>{ util::matrix_abs(training_data.data()), labels_opt.value() };
         }
     }
 
@@ -459,7 +468,7 @@ TYPED_TEST(BaseCSVCFit, fit_named_parameters_invalid_max_iter) {
 
 #if defined(PLSSVM_HAS_MPI_ENABLED)
 
-TYPED_TEST(BaseCSVCFit, fit_communicator_mismatch) {
+TYPED_TEST(BaseCSVCFit, FitCommunicatorMismatch) {
     using label_type = typename TestFixture::fixture_label_type;
     constexpr plssvm::solver_type solver = TestFixture::fixture_solver;
     constexpr plssvm::kernel_function_type kernel = TestFixture::fixture_kernel;
@@ -494,16 +503,17 @@ TYPED_TEST(BaseCSVCFit, fit_communicator_mismatch) {
     // clang-format on
 
     // create mismatching MPI communicator
-    MPI_Comm duplicated_mpi_comm;
+    MPI_Comm duplicated_mpi_comm{};
     MPI_Comm_dup(MPI_COMM_WORLD, &duplicated_mpi_comm);
     const plssvm::mpi::communicator comm{ duplicated_mpi_comm };
 
     // create data set
-    plssvm::classification_data_set<label_type> training_data{ comm, this->get_data_filename() };
+    plssvm::classification_data_set<label_type> training_data{ comm, this->get_data_filename() };  // NOLINT(misc-const-correctness): can't be const for the chi-squared kernel
     if constexpr (kernel == plssvm::kernel_function_type::chi_squared) {
         // chi-squared is well-defined for non-negative values only
-        if (training_data.labels().has_value()) {
-            training_data = plssvm::classification_data_set<label_type>{ comm, util::matrix_abs(training_data.data()), *training_data.labels() };
+        const auto &labels_opt = training_data.labels();
+        if (labels_opt.has_value()) {
+            training_data = plssvm::classification_data_set<label_type>{ comm, util::matrix_abs(training_data.data()), labels_opt.value() };
         }
     }
 
@@ -517,7 +527,7 @@ TYPED_TEST(BaseCSVCFit, fit_communicator_mismatch) {
 
 #endif
 
-TYPED_TEST(BaseCSVCFit, fit_no_label) {
+TYPED_TEST(BaseCSVCFit, FitNoLabel) {
     using label_type = typename TestFixture::fixture_label_type;
     constexpr plssvm::solver_type solver = TestFixture::fixture_solver;
     constexpr plssvm::kernel_function_type kernel = TestFixture::fixture_kernel;
@@ -552,7 +562,7 @@ TYPED_TEST(BaseCSVCFit, fit_no_label) {
     // clang-format on
 
     // create data set without labels
-    plssvm::classification_data_set<label_type> training_data{ PLSSVM_TEST_PATH "/data/libsvm/3x2_without_label.libsvm" };
+    plssvm::classification_data_set<label_type> training_data{ PLSSVM_TEST_PATH "/data/libsvm/3x2_without_label.libsvm" };  // NOLINT(misc-const-correctness): can't be const for the chi-squared kernel
     if constexpr (kernel == plssvm::kernel_function_type::chi_squared) {
         // chi-squared is well-defined for non-negative values only
         training_data = plssvm::classification_data_set<label_type>{ util::matrix_abs(training_data.data()) };
@@ -564,7 +574,7 @@ TYPED_TEST(BaseCSVCFit, fit_no_label) {
                       "No labels given for training! Maybe the data is only usable for prediction?");
 }
 
-TYPED_TEST(BaseCSVCFit, fit_out_of_resources) {
+TYPED_TEST(BaseCSVCFit, FitOutOfResources) {
     using label_type = typename TestFixture::fixture_label_type;
     constexpr plssvm::solver_type solver = TestFixture::fixture_solver;
     constexpr plssvm::kernel_function_type kernel = TestFixture::fixture_kernel;
@@ -576,7 +586,7 @@ TYPED_TEST(BaseCSVCFit, fit_out_of_resources) {
         const mock_csvc csvc{ plssvm::parameter{ plssvm::kernel_type = kernel } };
 
         // override on call
-        using namespace plssvm::detail::literals;
+        using namespace plssvm::detail::literals;  // NOLINT(google-build-using-namespace): only imports custom user-defined literals into this namespace
         ON_CALL(csvc, get_device_memory()).WillByDefault(::testing::Return(std::vector<plssvm::detail::memory_size>{ 512_MiB + 1_KiB, 512_MiB + 1_KiB }));
 
         // clang-format off
@@ -604,11 +614,12 @@ TYPED_TEST(BaseCSVCFit, fit_out_of_resources) {
         // clang-format on
 
         // create data set
-        plssvm::classification_data_set<label_type> training_data{ PLSSVM_CLASSIFICATION_TEST_FILE };
+        plssvm::classification_data_set<label_type> training_data{ PLSSVM_CLASSIFICATION_TEST_FILE };  // NOLINT(misc-const-correctness): can't be const for the chi-squared kernel
         if constexpr (kernel == plssvm::kernel_function_type::chi_squared) {
             // chi-squared is well-defined for non-negative values only
-            if (training_data.labels().has_value()) {
-                training_data = plssvm::classification_data_set<label_type>{ util::matrix_abs(training_data.data()), *training_data.labels() };
+            const auto &labels_opt = training_data.labels();
+            if (labels_opt.has_value()) {
+                training_data = plssvm::classification_data_set<label_type>{ util::matrix_abs(training_data.data()), labels_opt.value() };
             }
         }
 
@@ -619,7 +630,7 @@ TYPED_TEST(BaseCSVCFit, fit_out_of_resources) {
     }
 }
 
-TYPED_TEST(BaseCSVCFit, fit_device_memory_too_small) {
+TYPED_TEST(BaseCSVCFit, FitDeviceMemoryTooSmall) {
     using label_type = typename TestFixture::fixture_label_type;
     constexpr plssvm::solver_type solver = TestFixture::fixture_solver;
     constexpr plssvm::kernel_function_type kernel = TestFixture::fixture_kernel;
@@ -631,7 +642,7 @@ TYPED_TEST(BaseCSVCFit, fit_device_memory_too_small) {
         const mock_csvc csvc{ plssvm::parameter{ plssvm::kernel_type = kernel } };
 
         // override on call
-        using namespace plssvm::detail::literals;
+        using namespace plssvm::detail::literals;  // NOLINT(google-build-using-namespace): only imports custom user-defined literals into this namespace
         ON_CALL(csvc, get_device_memory()).WillByDefault(::testing::Return(std::vector<plssvm::detail::memory_size>{ 1_KiB, 1_KiB }));
 
         // clang-format off
@@ -659,11 +670,12 @@ TYPED_TEST(BaseCSVCFit, fit_device_memory_too_small) {
         // clang-format on
 
         // create data set
-        plssvm::classification_data_set<label_type> training_data{ this->get_data_filename() };
+        plssvm::classification_data_set<label_type> training_data{ PLSSVM_CLASSIFICATION_TEST_FILE };  // NOLINT(misc-const-correctness): can't be const for the chi-squared kernel
         if constexpr (kernel == plssvm::kernel_function_type::chi_squared) {
             // chi-squared is well-defined for non-negative values only
-            if (training_data.labels().has_value()) {
-                training_data = plssvm::classification_data_set<label_type>{ util::matrix_abs(training_data.data()), *training_data.labels() };
+            const auto &labels_opt = training_data.labels();
+            if (labels_opt.has_value()) {
+                training_data = plssvm::classification_data_set<label_type>{ util::matrix_abs(training_data.data()), labels_opt.value() };
             }
         }
 
@@ -674,69 +686,12 @@ TYPED_TEST(BaseCSVCFit, fit_device_memory_too_small) {
     }
 }
 
-TYPED_TEST(BaseCSVCFit, fit_local_memory_too_small) {
-    using label_type = typename TestFixture::fixture_label_type;
-    constexpr plssvm::solver_type solver = TestFixture::fixture_solver;
-    constexpr plssvm::kernel_function_type kernel = TestFixture::fixture_kernel;
-    constexpr plssvm::classification_type classification = TestFixture::fixture_classification;
-
-    // create C-SVC: must be done using the mock class since the csvc base class is pure virtual
-    const mock_csvc csvc{ plssvm::parameter{ plssvm::kernel_type = kernel } };
-
-    // override on call
-    constexpr plssvm::detail::memory_size needed_local_mem_size = plssvm::detail::data_distribution::maximum_local_memory_needed();
-    ON_CALL(csvc, get_local_memory()).WillByDefault(::testing::Return((std::vector<std::optional<plssvm::detail::memory_size>>{ std::make_optional(needed_local_mem_size / 2), std::make_optional(needed_local_mem_size / 2) })));
-
-    EXPECT_CALL(csvc, get_local_memory()).Times(1);
-    // this test is only really applicable for the automatic solver type
-    if constexpr (solver == plssvm::solver_type::automatic) {
-        // clang-format off
-        EXPECT_CALL(csvc, get_device_memory()).Times(0);
-        EXPECT_CALL(csvc, num_available_devices()).Times(0);
-#if defined(PLSSVM_ENFORCE_MAX_MEM_ALLOC_SIZE)
-        EXPECT_CALL(csvc, get_max_mem_alloc_size()).Times(0);
-#endif
-        EXPECT_CALL(csvc, assemble_kernel_matrix(
-                                ::testing::An<plssvm::solver_type>(),
-                                ::testing::An<const plssvm::parameter &>(),
-                                ::testing::An<const plssvm::soa_matrix<plssvm::real_type> &>(),
-                                ::testing::An<const std::vector<plssvm::real_type> &>(),
-                                ::testing::An<plssvm::real_type>()))
-                            .Times(0);
-        EXPECT_CALL(csvc, blas_level_3(
-                                ::testing::An<plssvm::solver_type>(),
-                                ::testing::An<plssvm::real_type>(),
-                                ::testing::An<const std::vector<plssvm::detail::move_only_any> &>(),
-                                ::testing::An<const plssvm::soa_matrix<plssvm::real_type> &>(),
-                                ::testing::An<plssvm::real_type>(),
-                                ::testing::An<plssvm::soa_matrix<plssvm::real_type> &>()))
-                            .Times(0);
-        // clang-format on
-    }
-
-    // create data set
-    plssvm::classification_data_set<label_type> training_data{ this->get_data_filename() };
-    if constexpr (kernel == plssvm::kernel_function_type::chi_squared) {
-        // chi-squared is well-defined for non-negative values only
-        if (training_data.labels().has_value()) {
-            training_data = plssvm::classification_data_set<label_type>{ util::matrix_abs(training_data.data()), *training_data.labels() };
-        }
-    }
-
-    // call function -> should throw since we are out of resources
-    EXPECT_THROW_WHAT((std::ignore = csvc.fit(training_data, plssvm::solver = solver, plssvm::classification = classification)),
-                      plssvm::kernel_launch_resources,
-                      fmt::format("At least {} of local memory must be available, but available are only {}!",
-                                  needed_local_mem_size,
-                                  needed_local_mem_size / 2));
-}
-
 template <typename T>
 class BaseCSVCPredict : public BaseCSVCMemberBase<T> { };
 
 TYPED_TEST_SUITE(BaseCSVCPredict, util::classification_label_type_classification_type_gtest, naming::test_parameter_to_name);
 
-TYPED_TEST(BaseCSVCPredict, predict) {
+TYPED_TEST(BaseCSVCPredict, Predict) {
     using label_type = typename TestFixture::fixture_label_type;
     constexpr plssvm::classification_type classification = TestFixture::fixture_classification;
 
@@ -770,7 +725,7 @@ TYPED_TEST(BaseCSVCPredict, predict) {
     EXPECT_EQ(prediction.size(), 6);
 }
 
-TYPED_TEST(BaseCSVCPredict, predict_num_feature_mismatch) {
+TYPED_TEST(BaseCSVCPredict, PredictNumFeatureMismatch) {
     using label_type = typename TestFixture::fixture_label_type;
 
     // create C-SVC: must be done using the mock class since the csvc base class is pure virtual
@@ -800,7 +755,7 @@ TYPED_TEST(BaseCSVCPredict, predict_num_feature_mismatch) {
 
 #if defined(PLSSVM_HAS_MPI_ENABLED)
 
-TYPED_TEST(BaseCSVCPredict, predict_communicator_mismatch) {
+TYPED_TEST(BaseCSVCPredict, PredictCommismatch) {
     using label_type = typename TestFixture::fixture_label_type;
 
     // create C-SVC: must be done using the mock class since the csvc base class is pure virtual
@@ -819,7 +774,7 @@ TYPED_TEST(BaseCSVCPredict, predict_communicator_mismatch) {
     // clang-format on
 
     // create mismatching MPI communicator
-    MPI_Comm duplicated_mpi_comm;
+    MPI_Comm duplicated_mpi_comm{};
     MPI_Comm_dup(MPI_COMM_WORLD, &duplicated_mpi_comm);
     const plssvm::mpi::communicator comm{ duplicated_mpi_comm };
 
@@ -847,7 +802,7 @@ class BaseCSVCScore : public BaseCSVCMemberBase<T> { };
 
 TYPED_TEST_SUITE(BaseCSVCScore, util::classification_label_type_classification_type_gtest, naming::test_parameter_to_name);
 
-TYPED_TEST(BaseCSVCScore, score_model) {
+TYPED_TEST(BaseCSVCScore, ScoreModel) {
     using label_type = typename TestFixture::fixture_label_type;
     constexpr plssvm::classification_type classification = TestFixture::fixture_classification;
 
@@ -880,7 +835,7 @@ TYPED_TEST(BaseCSVCScore, score_model) {
     EXPECT_INCLUSIVE_RANGE(score, plssvm::real_type{ 0.0 }, plssvm::real_type{ 1.0 });
 }
 
-TYPED_TEST(BaseCSVCScore, score_data_set) {
+TYPED_TEST(BaseCSVCScore, ScoreDataSet) {
     using label_type = typename TestFixture::fixture_label_type;
     constexpr plssvm::classification_type classification = TestFixture::fixture_classification;
 
@@ -914,7 +869,7 @@ TYPED_TEST(BaseCSVCScore, score_data_set) {
     EXPECT_INCLUSIVE_RANGE(score, plssvm::real_type{ 0.0 }, plssvm::real_type{ 1.0 });
 }
 
-TYPED_TEST(BaseCSVCScore, score_data_set_no_label) {
+TYPED_TEST(BaseCSVCScore, ScoreDataSetNoLabel) {
     using label_type = typename TestFixture::fixture_label_type;
 
     // create C-SVC: must be done using the mock class since the csvc base class is pure virtual
@@ -941,7 +896,7 @@ TYPED_TEST(BaseCSVCScore, score_data_set_no_label) {
     EXPECT_THROW_WHAT(std::ignore = csvc.score(learned_model, data_to_score), plssvm::invalid_parameter_exception, "The data set to score must have labels!");
 }
 
-TYPED_TEST(BaseCSVCScore, score_data_set_num_features_mismatch) {
+TYPED_TEST(BaseCSVCScore, ScoreDataSetNumFeaturesMismatch) {
     using label_type = typename TestFixture::fixture_label_type;
 
     // create C-SVC: must be done using the mock class since the csvc base class is pure virtual
@@ -977,7 +932,7 @@ TYPED_TEST(BaseCSVCScore, score_data_set_num_features_mismatch) {
 
 #if defined(PLSSVM_HAS_MPI_ENABLED)
 
-TYPED_TEST(BaseCSVCScore, predict_communicator_mismatch) {
+TYPED_TEST(BaseCSVCScore, PredictCommMismatch) {
     using label_type = typename TestFixture::fixture_label_type;
 
     // create C-SVC: must be done using the mock class since the csvc base class is pure virtual
@@ -996,7 +951,7 @@ TYPED_TEST(BaseCSVCScore, predict_communicator_mismatch) {
     // clang-format on
 
     // create mismatching MPI communicator
-    MPI_Comm duplicated_mpi_comm;
+    MPI_Comm duplicated_mpi_comm{};
     MPI_Comm_dup(MPI_COMM_WORLD, &duplicated_mpi_comm);
     const plssvm::mpi::communicator comm{ duplicated_mpi_comm };
 
@@ -1018,37 +973,3 @@ TYPED_TEST(BaseCSVCScore, predict_communicator_mismatch) {
 }
 
 #endif
-
-TYPED_TEST(BaseCSVCScore, predict_local_memory_too_small) {
-    using label_type = typename TestFixture::fixture_label_type;
-
-    // create C-SVC: must be done using the mock class since the csvc base class is pure virtual
-    const mock_csvc csvc{};
-
-    // override on call
-    constexpr plssvm::detail::memory_size needed_local_mem_size = plssvm::detail::data_distribution::maximum_local_memory_needed();
-    ON_CALL(csvc, get_local_memory()).WillByDefault(::testing::Return((std::vector<std::optional<plssvm::detail::memory_size>>{ std::make_optional(needed_local_mem_size / 2), std::make_optional(needed_local_mem_size / 2) })));
-
-    // mock the predict_values function -> since an exception should be triggered, the mocked function should never be called
-    // clang-format off
-    EXPECT_CALL(csvc, get_local_memory()).Times(1);
-    EXPECT_CALL(csvc, predict_values(
-                            ::testing::An<const plssvm::parameter &>(),
-                            ::testing::An<const plssvm::soa_matrix<plssvm::real_type> &>(),
-                            ::testing::An<const plssvm::aos_matrix<plssvm::real_type> &>(),
-                            ::testing::An<const std::vector<plssvm::real_type> &>(),
-                            ::testing::An<plssvm::soa_matrix<plssvm::real_type> &>(),
-                            ::testing::An<const plssvm::soa_matrix<plssvm::real_type> &>())).Times(0);
-    // clang-format on
-
-    // create data set and previously learned model
-    const plssvm::classification_data_set<label_type> data_to_predict{ this->get_data_filename() };
-    const plssvm::classification_model<label_type> learned_model{ this->get_model_filename() };
-
-    // calling the function with mismatching MPI communicators should throw
-    EXPECT_THROW_WHAT(std::ignore = csvc.score(learned_model, data_to_predict),
-                      plssvm::kernel_launch_resources,
-                      fmt::format("At least {} of local memory must be available, but available are only {}!",
-                                  needed_local_mem_size,
-                                  needed_local_mem_size / 2));
-}

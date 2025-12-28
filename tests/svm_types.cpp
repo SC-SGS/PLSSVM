@@ -23,19 +23,19 @@
 #include <vector>       // std::vector
 
 // check whether the plssvm::svm_type -> std::string conversions are correct
-TEST(SvmType, to_string) {
+TEST(SvmType, ToString) {
     // check conversions to std::string
     EXPECT_CONVERSION_TO_STRING(plssvm::svm_type::csvc, "csvc");
     EXPECT_CONVERSION_TO_STRING(plssvm::svm_type::csvr, "csvr");
 }
 
-TEST(SvmType, to_string_unknown) {
+TEST(SvmType, ToStringUnknown) {
     // check conversions to std::string from unknown svm_type
     EXPECT_CONVERSION_TO_STRING(static_cast<plssvm::svm_type>(2), "unknown");
 }
 
 // check whether the std::string -> plssvm::svm_type conversions are correct
-TEST(SvmType, from_string) {
+TEST(SvmType, FromString) {
     // check conversion from std::string
     EXPECT_CONVERSION_FROM_STRING("CSVC", plssvm::svm_type::csvc);
     EXPECT_CONVERSION_FROM_STRING("csvc", plssvm::svm_type::csvc);
@@ -49,7 +49,7 @@ TEST(SvmType, from_string) {
     EXPECT_CONVERSION_FROM_STRING("1", plssvm::svm_type::csvr);
 }
 
-TEST(SvmType, from_string_unknown) {
+TEST(SvmType, FromStringUnknown) {
     // foo isn't a valid svm_type
     std::istringstream input{ "foo" };
     plssvm::svm_type svm{};
@@ -57,7 +57,7 @@ TEST(SvmType, from_string_unknown) {
     EXPECT_TRUE(input.fail());
 }
 
-TEST(SvmType, minimal_available_svm_types) {
+TEST(SvmType, MinimalAvailableSvmTypes) {
     const std::vector<plssvm::svm_type> svms = plssvm::list_available_svm_types();
 
     // both C-SVM types must be available
@@ -66,7 +66,7 @@ TEST(SvmType, minimal_available_svm_types) {
     EXPECT_THAT(svms, ::testing::Contains(plssvm::svm_type::csvr));
 }
 
-TEST(SvmType, svm_type_to_task_name) {
+TEST(SvmType, SvmTypeToTaskName) {
     // get the task name from a C-SVC
     EXPECT_EQ(plssvm::svm_type_to_task_name(plssvm::svm_type::csvc), std::string_view{ "classification" });
 
@@ -74,12 +74,12 @@ TEST(SvmType, svm_type_to_task_name) {
     EXPECT_EQ(plssvm::svm_type_to_task_name(plssvm::svm_type::csvr), std::string_view{ "regression" });
 }
 
-TEST(SvmType, svm_type_to_task_name_unknown) {
+TEST(SvmType, SvmTypeToTaskNameUnknown) {
     // try converting an unknown SVM type to a task name
     EXPECT_EQ(plssvm::svm_type_to_task_name(static_cast<plssvm::svm_type>(2)), std::string_view{ "unknown" });
 }
 
-TEST(SvmType, svm_type_from_model_file) {
+TEST(SvmType, SvmTypeFromModelFile) {
     // check a classification model file
     EXPECT_EQ(plssvm::svm_type_from_model_file(PLSSVM_TEST_PATH "/data/model/classification/6x4.libsvm.model"), plssvm::svm_type::csvc);
 
@@ -87,14 +87,14 @@ TEST(SvmType, svm_type_from_model_file) {
     EXPECT_EQ(plssvm::svm_type_from_model_file(PLSSVM_TEST_PATH "/data/model/regression/6x4.libsvm.model"), plssvm::svm_type::csvr);
 }
 
-TEST(SvmType, svm_type_from_model_file_missing_svm_type) {
+TEST(SvmType, SvmTypeFromModelFileMissingSvmType) {
     // try getting the SVM type from an empty file won't work
     EXPECT_THROW_WHAT(std::ignore = plssvm::svm_type_from_model_file(PLSSVM_TEST_PATH "/data/model/classification/invalid/missing_svm_type.libsvm.model"),
                       plssvm::invalid_file_format_exception,
                       R"(The provided model file is not a valid LIBSVM model file since "svm_type" is missing!)");
 }
 
-TEST(SvmType, svm_type_from_model_file_empty) {
+TEST(SvmType, SvmTypeFromModelFileEmpty) {
     // try getting the SVM type from an empty file won't work
     EXPECT_THROW_WHAT(std::ignore = plssvm::svm_type_from_model_file(PLSSVM_TEST_PATH "/data/empty.txt"),
                       plssvm::invalid_file_format_exception,

@@ -9,8 +9,8 @@
  * @brief Functions for explicitly performing a BLAS GEMM like matrix-matrix multiplication using the SYCL backend and the hierarchical data parallel kernels.
  */
 
-#ifndef PLSSVM_BACKENDS_SYCL_CG_EXPLICIT_HIERARCHICAL_BLAS_HPP_
-#define PLSSVM_BACKENDS_SYCL_CG_EXPLICIT_HIERARCHICAL_BLAS_HPP_
+#ifndef PLSSVM_BACKENDS_SYCL_KERNEL_CG_EXPLICIT_HIERARCHICAL_BLAS_HPP_
+#define PLSSVM_BACKENDS_SYCL_KERNEL_CG_EXPLICIT_HIERARCHICAL_BLAS_HPP_
 #pragma once
 
 #include "plssvm/backends/SYCL/data_parallel_kernels.hpp"  // plssvm::sycl::data_parallel_kernel
@@ -18,6 +18,7 @@
 
 #include "sycl/sycl.hpp"  // sycl::group, sycl::h_item
 
+#include <array>    // std::array
 #include <cstddef>  // std::size_t
 
 namespace plssvm::sycl::detail::hierarchical {
@@ -328,4 +329,4 @@ class device_kernel_inplace_matrix_scale {
 
 }  // namespace plssvm::sycl::detail::hierarchical
 
-#endif  // PLSSVM_BACKENDS_SYCL_CG_EXPLICIT_HIERARCHICAL_BLAS_HPP_
+#endif  // PLSSVM_BACKENDS_SYCL_KERNEL_CG_EXPLICIT_HIERARCHICAL_BLAS_HPP_

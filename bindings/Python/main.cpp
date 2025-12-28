@@ -16,47 +16,13 @@
 #include "plssvm/verbosity_levels.hpp"                  // plssvm::verbosity_level
 #include "plssvm/version/version.hpp"                   // plssvm::version::{version, major, minor, patch}
 
-#include "pybind11/pybind11.h"  // PYBIND11_MODULE, py::module_, py::exception, py::register_exception_translator, py::make_tuple
+#include "bindings/Python/bindings_fwd.hpp"  // forward declare all helper functions to create the Python bindings
+
+#include "pybind11/cast.h"      // py::make_tuple
+#include "pybind11/pybind11.h"  // PYBIND11_MODULE, py::module_, py::exception, py::register_exception_translator
 #include "pybind11/pytypes.h"   // py::set_error
 
 #include <exception>  // std::exception_ptr, std::rethrow_exception
-
-namespace py = pybind11;
-
-// forward declare binding functions
-void init_verbosity_levels(py::module_ &);
-void init_performance_tracker(py::module_ &);
-void init_events(py::module_ &);
-void init_target_platforms(py::module_ &);
-void init_solver_types(py::module_ &);
-void init_svm_types(py::module_ &);
-void init_backend_types(py::module_ &);
-void init_gamma(py::module_ &);
-void init_classification_types(py::module_ &);
-void init_file_format_types(py::module_ &);
-void init_kernel_function_types(py::module_ &);
-void init_parameter(py::module_ &);
-void init_kernel_functions(py::module_ &);
-void init_classification_model(py::module_ &);
-void init_regression_model(py::module_ &);
-void init_min_max_scaler(py::module_ &);
-void init_classification_data_set(py::module_ &);
-void init_regression_data_set(py::module_ &);
-void init_exceptions(py::module_ &, const py::exception<plssvm::exception> &);
-void init_regression_report(py::module_ &);
-void init_csvm(py::module_ &);
-void init_csvc(py::module_ &);
-void init_csvr(py::module_ &);
-void init_openmp_csvm(py::module_ &, const py::exception<plssvm::exception> &);
-void init_hpx_csvm(py::module_ &, const py::exception<plssvm::exception> &);
-void init_stdpar_csvm(py::module_ &, const py::exception<plssvm::exception> &);
-void init_cuda_csvm(py::module_ &, const py::exception<plssvm::exception> &);
-void init_hip_csvm(py::module_ &, const py::exception<plssvm::exception> &);
-void init_opencl_csvm(py::module_ &, const py::exception<plssvm::exception> &);
-void init_sycl(py::module_ &, const py::exception<plssvm::exception> &);
-void init_kokkos_csvm(py::module_ &, const py::exception<plssvm::exception> &);
-void init_sklearn_svc(py::module_ &);
-void init_sklearn_svr(py::module_ &);
 
 PYBIND11_MODULE(plssvm, m) {
     m.doc() = "PLSSVM - Parallel Least Squares Support Vector Machine";
@@ -98,8 +64,8 @@ PYBIND11_MODULE(plssvm, m) {
                  }));
 
     // register PLSSVM base exception
-    static py::exception<plssvm::exception> base_exception(m, "PLSSVMError");
-    py::register_exception_translator([](std::exception_ptr p) {
+    static const py::exception<plssvm::exception> base_exception(m, "PLSSVMError");
+    py::register_exception_translator([](std::exception_ptr p) {  // NOLINT: must be copied for each invocation
         try {
             if (p) {
                 std::rethrow_exception(p);
@@ -166,6 +132,7 @@ PYBIND11_MODULE(plssvm, m) {
 #endif
 
     py::module_ sklearn_like_svm_model = m.def_submodule("svm", "a module containing the sklearn like SVC and SVR implementations");
+    init_sklearn_tags(sklearn_like_svm_model);
     init_sklearn_svc(sklearn_like_svm_model);
     init_sklearn_svr(sklearn_like_svm_model);
 }

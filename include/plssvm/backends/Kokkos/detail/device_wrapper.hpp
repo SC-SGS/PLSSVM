@@ -11,12 +11,16 @@
 
 #ifndef PLSSVM_BACKENDS_KOKKOS_DETAIL_DEVICE_WRAPPER_HPP_
 #define PLSSVM_BACKENDS_KOKKOS_DETAIL_DEVICE_WRAPPER_HPP_
+#pragma once
 
 #include "plssvm/backends/Kokkos/detail/constexpr_available_execution_spaces.hpp"  // plssvm::kokkos::detail::constexpr_available_execution_spaces
-#include "plssvm/backends/Kokkos/execution_space.hpp"                              // plssvm::kokkos::execution_space
 #include "plssvm/backends/Kokkos/execution_space_type_traits.hpp"                  // plssvm::kokkos::execution_space_to_kokkos_type_t
+#include "plssvm/backends/Kokkos/execution_spaces.hpp"                             // plssvm::kokkos::execution_space
+#include "plssvm/detail/type_traits.hpp"                                           // PLSSVM_REQUIRES
 #include "plssvm/mpi/communicator.hpp"                                             // plssvm::mpi::communicator
 #include "plssvm/target_platforms.hpp"                                             // plssvm::target_platform
+
+#include "Kokkos_Core.hpp"  // Kokkos::is_execution_space_v
 
 #include <array>       // std::array
 #include <cstddef>     // std::size_t
@@ -79,7 +83,7 @@ class device_wrapper {
      * @tparam ExecutionSpace the used Kokkos::ExecutionSpace type
      * @param[in] exec the Kokkos::ExecutionSpace instance
      */
-    template <typename ExecutionSpace>
+    template <typename ExecutionSpace, PLSSVM_REQUIRES(Kokkos::is_execution_space_v<ExecutionSpace>)>
     explicit device_wrapper(ExecutionSpace &&exec) :
         v_{ std::forward<ExecutionSpace>(exec) } { }
 
@@ -97,7 +101,7 @@ class device_wrapper {
      * @copydoc plssvm::kokkos::detail::device_wrapper::get
      */
     template <execution_space space>
-    const execution_space_to_kokkos_type_t<space> &get() const {
+    [[nodiscard]] const execution_space_to_kokkos_type_t<space> &get() const {
         return std::get<execution_space_to_kokkos_type_t<space>>(v_);
     }
 
@@ -168,7 +172,7 @@ class device_wrapper {
      * @param[in] rhs the second device wrapper
      * @return `true` if both underlying `std::variant`s are equal, otherwise `false` (`[[nodiscard]]`)
      */
-    [[nodiscard]] friend bool operator==(const device_wrapper &lhs, const device_wrapper &rhs) noexcept {
+    [[nodiscard]] friend bool operator==(const device_wrapper &lhs, const device_wrapper &rhs) {
         return lhs.v_ == rhs.v_;
     }
 
@@ -178,13 +182,13 @@ class device_wrapper {
      * @param[in] rhs the second device wrapper
      * @return `true` if both underlying `std::variant`s are unequal, otherwise `false` (`[[nodiscard]]`)
      */
-    [[nodiscard]] friend bool operator!=(const device_wrapper &lhs, const device_wrapper &rhs) noexcept {
+    [[nodiscard]] friend bool operator!=(const device_wrapper &lhs, const device_wrapper &rhs) {
         return !(lhs == rhs);
     }
 
   private:
     /// The wrapped `std::variant` type.
-    variant_type v_{};
+    variant_type v_;
 };
 
 /**

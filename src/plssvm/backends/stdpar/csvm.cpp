@@ -13,12 +13,13 @@
 #include "plssvm/backends/stdpar/kernel/cg_explicit/kernel_matrix_assembly.hpp"       // plssvm::stdpar::detail::device_kernel_assembly
 #include "plssvm/backends/stdpar/kernel/cg_implicit/kernel_matrix_assembly_blas.hpp"  // plssvm::stdpar::detail::device_kernel_assembly_symm
 #include "plssvm/backends/stdpar/kernel/predict_kernel.hpp"                           // plssvm::stdpar::detail::{device_kernel_w_linear, device_kernel_predict_linear, device_kernel_predict}
-#include "plssvm/constants.hpp"                                                       // plssvm::real_type
+#include "plssvm/constants.hpp"                                                       // plssvm::real_type, plssvm::PADDING_SIZE
 #include "plssvm/detail/assert.hpp"                                                   // PLSSVM_ASSERT
 #include "plssvm/detail/data_distribution.hpp"                                        // plssvm::detail::triangular_data_distribution
 #include "plssvm/detail/make_unique_for_overwrite.hpp"                                // plssvm::detail::{make_unique_for_overwrite, parallel_zero_memset}
 #include "plssvm/detail/memory_size.hpp"                                              // plssvm::detail::memory_size
 #include "plssvm/detail/move_only_any.hpp"                                            // plssvm::detail::{move_only_any, move_only_any_cast}
+#include "plssvm/detail/operators.hpp"                                                // NOLINT: operator overloads for std::vector (+ scalars)
 #include "plssvm/detail/tracking/performance_tracker.hpp"                             // plssvm::detail::tracking::tracking_entry, PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY
 #include "plssvm/detail/utility.hpp"                                                  // plssvm::detail::{get_system_memory, unreachable}
 #include "plssvm/kernel_function_types.hpp"                                           // plssvm::kernel_function_type
@@ -26,15 +27,17 @@
 #include "plssvm/parameter.hpp"                                                       // plssvm::parameter
 #include "plssvm/shape.hpp"                                                           // plssvm::shape
 #include "plssvm/solver_types.hpp"                                                    // plssvm::solver_type
-#include "plssvm/svm/csvm.hpp"                                                        // plssvm::csvm
 #include "plssvm/target_platforms.hpp"                                                // plssvm::target_platform
 
-#include <chrono>    // std::chrono::{steady_clock, duration_cast}
-#include <cstddef>   // std::size_t
-#include <optional>  // std::optional, std::nullopt
-#include <tuple>     // std::tuple, std::make_tuple
-#include <utility>   // std::move, std::forward
-#include <vector>    // std::vector
+#include <chrono>      // std::chrono::{steady_clock, duration_cast}
+#include <cstddef>     // std::size_t
+#include <cstring>     // std::memcpy
+#include <functional>  // std::cref
+#include <memory>      // std::unique_ptr, std::make_unique
+#include <optional>    // std::optional, std::nullopt
+#include <tuple>       // std::tuple, std::make_tuple
+#include <utility>     // std::move, std::forward
+#include <vector>      // std::vector
 
 namespace {
 
@@ -191,7 +194,7 @@ std::vector<::plssvm::detail::move_only_any> csvm::assemble_kernel_matrix(const 
                     const std::size_t num_entries = dist.calculate_explicit_kernel_matrix_num_entries_padded(0);
 
                     // only explicitly store the upper triangular matrix
-                    auto kernel_matrix = ::plssvm::detail::make_unique_for_overwrite<real_type[]>(num_entries);
+                    auto kernel_matrix = ::plssvm::detail::make_unique_for_overwrite<real_type[]>(num_entries);  // NOLINT: C-style array must be used with make_unique_for_overwrite
                     // initialize kernel matrix to all zeros in parallel
                     ::plssvm::detail::parallel_zero_memset(kernel_matrix.get(), num_entries);
 
@@ -207,7 +210,7 @@ std::vector<::plssvm::detail::move_only_any> csvm::assemble_kernel_matrix(const 
             case solver_type::cg_implicit:
                 {
                     // simply return data since in implicit we don't assembly the kernel matrix here!
-                    kernel_matrices_parts[0] = ::plssvm::detail::move_only_any{ std::make_tuple(std::move(A), params, std::move(q_red), QA_cost) };
+                    kernel_matrices_parts[0] = ::plssvm::detail::move_only_any{ std::make_tuple(std::cref(A), params, std::cref(q_red), QA_cost) };
                 }
                 break;
         }
@@ -226,7 +229,7 @@ void csvm::blas_level_3(const solver_type solver, const real_type alpha, const s
     PLSSVM_ASSERT(B.shape() == C.shape(), "The B ({}) and C ({}) matrices must have the same shape!", B.shape(), C.shape());
     PLSSVM_ASSERT(B.padding() == C.padding(), "The B ({}) and C ({}) matrices must have the same padding!", B.padding(), C.padding());
 
-    using namespace operators;
+    using namespace operators;  // NOLINT(google-build-using-namespace): only imports custom math operations on vectors (and scalars)
 
     // get the triangular data distribution
     const ::plssvm::detail::triangular_data_distribution &dist = dynamic_cast<::plssvm::detail::triangular_data_distribution &>(*data_distribution_);
@@ -252,7 +255,7 @@ void csvm::blas_level_3(const solver_type solver, const real_type alpha, const s
                 break;
             case solver_type::cg_explicit:
                 {
-                    const auto &explicit_A = ::plssvm::detail::move_only_any_cast<const std::unique_ptr<real_type[]> &>(A.front());
+                    const auto &explicit_A = ::plssvm::detail::move_only_any_cast<const std::unique_ptr<real_type[]> &>(A.front());  // NOLINT: C-style array must be used
                     PLSSVM_ASSERT(explicit_A != nullptr, "The A matrix must not be empty!");
 
                     const auto start = std::chrono::steady_clock::now();
@@ -271,7 +274,7 @@ void csvm::blas_level_3(const solver_type solver, const real_type alpha, const s
                 break;
             case solver_type::cg_implicit:
                 {
-                    const auto &[matr_A, params, q_red, QA_cost] = ::plssvm::detail::move_only_any_cast<const std::tuple<soa_matrix<real_type>, parameter, std::vector<real_type>, real_type> &>(A.front());
+                    const auto &[matr_A, params, q_red, QA_cost] = ::plssvm::detail::move_only_any_cast<const std::tuple<const soa_matrix<real_type> &, parameter, const std::vector<real_type> &, real_type> &>(A.front());
                     PLSSVM_ASSERT(!matr_A.empty(), "The A matrix must not be empty!");
                     PLSSVM_ASSERT(!q_red.empty(), "The q_red vector must not be empty!");
                     const real_type cost = real_type{ 1.0 } / params.cost;
@@ -364,7 +367,9 @@ aos_matrix<real_type> csvm::predict_values(const parameter &params,
         const auto start = std::chrono::steady_clock::now();
         // call the predict kernels
         if (params.kernel_type == kernel_function_type::linear) {
-            dispatch_target_platform<detail::device_kernel_predict_linear>(target_, out, w, rho, predict_points, device_specific_num_predict_points, row_offset);
+            std::vector<real_type> rho_padded(rho.size() + PADDING_SIZE, real_type{ 0.0 });
+            std::memcpy(rho_padded.data(), rho.data(), rho.size() * sizeof(real_type));
+            dispatch_target_platform<detail::device_kernel_predict_linear>(target_, out, w, rho_padded, predict_points, device_specific_num_predict_points, row_offset);
         } else {
             dispatch_target_platform<detail::device_kernel_predict>(target_, params, out, alpha, rho, support_vectors, predict_points, device_specific_num_predict_points, row_offset);
         }

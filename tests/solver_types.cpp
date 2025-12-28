@@ -12,26 +12,25 @@
 
 #include "tests/custom_test_macros.hpp"  // EXPECT_CONVERSION_TO_STRING, EXPECT_CONVERSION_FROM_STRING
 
-#include "gmock/gmock.h"  // EXPECT_THAT, ::testing::Contains
 #include "gtest/gtest.h"  // TEST, EXPECT_TRUE
 
 #include <sstream>  // std::istringstream
 
 // check whether the plssvm::solver_type -> std::string conversions are correct
-TEST(SolverType, to_string) {
+TEST(SolverType, ToString) {
     // check conversions to std::string
     EXPECT_CONVERSION_TO_STRING(plssvm::solver_type::automatic, "automatic");
     EXPECT_CONVERSION_TO_STRING(plssvm::solver_type::cg_explicit, "cg_explicit");
     EXPECT_CONVERSION_TO_STRING(plssvm::solver_type::cg_implicit, "cg_implicit");
 }
 
-TEST(SolverType, to_string_unknown) {
+TEST(SolverType, ToStringUnknown) {
     // check conversions to std::string from unknown solver_type
     EXPECT_CONVERSION_TO_STRING(static_cast<plssvm::solver_type>(3), "unknown");
 }
 
 // check whether the std::string -> plssvm::solver_type conversions are correct
-TEST(SolverType, from_string) {
+TEST(SolverType, FromString) {
     // check conversion from std::string
     EXPECT_CONVERSION_FROM_STRING("automatic", plssvm::solver_type::automatic);
     EXPECT_CONVERSION_FROM_STRING("AUTOmatic", plssvm::solver_type::automatic);
@@ -43,7 +42,7 @@ TEST(SolverType, from_string) {
     EXPECT_CONVERSION_FROM_STRING("CG_Implicit", plssvm::solver_type::cg_implicit);
 }
 
-TEST(SolverType, from_string_unknown) {
+TEST(SolverType, FromStringUnknown) {
     // foo isn't a valid solver_type
     std::istringstream input{ "foo" };
     plssvm::solver_type solver{};

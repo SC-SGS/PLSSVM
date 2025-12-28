@@ -10,11 +10,10 @@
 
 #include "plssvm/detail/assert.hpp"                        // PLSSVM_ASSERT
 #include "plssvm/detail/data_distribution.hpp"             // plssvm::detail::data_distribution::maximum_local_memory_needed
-#include "plssvm/detail/memory_size.hpp"                   // plssvm::detail::memory_size
+#include "plssvm/detail/memory_size.hpp"                   // plssvm::detail::memory_size, custom memory size literals
 #include "plssvm/detail/tracking/performance_tracker.hpp"  // PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY, plssvm::detail::tracking::tracking_entry
 #include "plssvm/exceptions/exceptions.hpp"                // plssvm::kernel_launch_resources
 
-#include "fmt/chrono.h"  // fmt::localtime
 #include "fmt/format.h"  // fmt::format
 
 #if __has_include(<unistd.h>)
@@ -25,8 +24,13 @@
     #define PLSSVM_WINDOWS_AVAILABLE_MEMORY
 #endif
 
-#include <ctime>     // std::time
-#include <optional>  // std::optional
+#if defined(PLSSVM_PERFORMANCE_TRACKER_ENABLED)
+    #include <cstddef>  // std::size_t
+#endif
+
+#include <cstdlib>   // std::getenv
+#include <ctime>     // std::time_t, std::time, std:tm, std::localtime
+#include <optional>  // std::optional, std::make_optional, std::nullopt
 #include <string>    // std::string
 #include <vector>    // std::vector
 
@@ -46,11 +50,21 @@ void check_local_memory_usage(const std::vector<std::optional<memory_size>> &loc
         }
     }
     PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((detail::tracking::tracking_entry{ "resource_constraints", "needed_local_memory", required_local_memory_per_device }));
-    PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((detail::tracking::tracking_entry{ "resource_constraints", "available_local_memory_per_place", local_memory }));
+#if defined(PLSSVM_PERFORMANCE_TRACKER_ENABLED)
+    using namespace plssvm::detail::literals;  // NOLINT(google-build-using-namespace): only imports custom user-defined literals into this namespace
+    // post-process the local_memory vector for a better performance tracker output
+    std::vector<memory_size> processed_local_memory(local_memory.size());
+    for (std::size_t i = 0; i < processed_local_memory.size(); ++i) {
+        processed_local_memory[i] = local_memory[i].value_or(0_B);
+    }
+    PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((detail::tracking::tracking_entry{ "resource_constraints", "available_local_memory_per_place", processed_local_memory }));
+#endif
 }
 
 std::string current_date_time() {
-    return fmt::format("{:%Y-%m-%d %H:%M:%S}", fmt::localtime(std::time(nullptr)));
+    const std::time_t t = std::time(nullptr);
+    const std::tm tm = *std::localtime(&t);
+    return fmt::format("{:%Y-%m-%d %H:%M:%S}", tm);
 }
 
 memory_size get_system_memory() {
@@ -66,6 +80,13 @@ memory_size get_system_memory() {
 #else
     return memory_size{ 0 };
 #endif
+}
+
+std::optional<std::string> get_env_variable(const std::string &env_variable) {
+    if (const char *env_value = std::getenv(env_variable.c_str()); env_value != nullptr) {
+        return std::make_optional(env_value);
+    }
+    return std::nullopt;
 }
 
 #undef PLSSVM_UNIX_AVAILABLE_MEMORY

@@ -104,7 +104,7 @@ KOKKOS_INLINE_FUNCTION constexpr auto get(const standard_layout_tuple<Types...> 
  * @brief Special case: return an empty tuple if no values have bee provided.
  * @return an empty tuple (`[[nodiscard]]`)
  */
-[[nodiscard]] inline constexpr standard_layout_tuple<> make_standard_layout_tuple() {
+[[nodiscard]] constexpr standard_layout_tuple<> make_standard_layout_tuple() {
     return standard_layout_tuple<>{};
 }
 
@@ -117,14 +117,14 @@ KOKKOS_INLINE_FUNCTION constexpr auto get(const standard_layout_tuple<Types...> 
  * @return the constructed tuple (`[[nodiscard]]`)
  */
 template <typename T, typename... Rest>
-[[nodiscard]] inline constexpr standard_layout_tuple<T, Rest...> make_standard_layout_tuple(T &&arg, Rest &&...remaining) {
+[[nodiscard]] constexpr standard_layout_tuple<T, Rest...> make_standard_layout_tuple(T &&arg, Rest &&...remaining) {
     return standard_layout_tuple<T, Rest...>{ std::forward<T>(arg), make_standard_layout_tuple(std::forward<Rest>(remaining)...) };
 }
 
 // sanity checks: be sure that the important use cases are indeed standard layout types!
-static_assert(std::is_standard_layout_v<standard_layout_tuple<>>, "standard_layout_tuple<> has no standard layout!");
-static_assert(std::is_standard_layout_v<standard_layout_tuple<int, real_type, real_type>>, "standard_layout_tuple<int, real_type, real_type> has no standard layout!");
-static_assert(std::is_standard_layout_v<standard_layout_tuple<real_type>>, "standard_layout_tuple<real_type> has no standard layout!");
+static_assert(std::is_standard_layout_v<standard_layout_tuple<>>, "standard_layout_tuple<> must have standard layout!");
+static_assert(std::is_standard_layout_v<standard_layout_tuple<int, real_type, real_type>>, "standard_layout_tuple<int, real_type, real_type> must have standard layout!");
+static_assert(std::is_standard_layout_v<standard_layout_tuple<real_type>>, "standard_layout_tuple<real_type> must have standard layout!");
 
 }  // namespace plssvm::kokkos::detail
 

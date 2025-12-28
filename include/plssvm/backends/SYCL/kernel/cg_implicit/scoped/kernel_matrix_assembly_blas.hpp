@@ -9,8 +9,8 @@
  * @brief Functions for implicitly assembling the kernel matrix using the SYCL backend and AdaptiveCpp's scoped parallelism.
  */
 
-#ifndef PLSSVM_BACKENDS_SYCL_CG_IMPLICIT_SCOPED_KERNEL_MATRIX_ASSEMBLY_BLAS_HPP_
-#define PLSSVM_BACKENDS_SYCL_CG_IMPLICIT_SCOPED_KERNEL_MATRIX_ASSEMBLY_BLAS_HPP_
+#ifndef PLSSVM_BACKENDS_SYCL_KERNEL_CG_IMPLICIT_SCOPED_KERNEL_MATRIX_ASSEMBLY_BLAS_HPP_
+#define PLSSVM_BACKENDS_SYCL_KERNEL_CG_IMPLICIT_SCOPED_KERNEL_MATRIX_ASSEMBLY_BLAS_HPP_
 #pragma once
 
 #include "plssvm/backends/SYCL/data_parallel_kernels.hpp"    // plssvm::sycl::data_parallel_kernel
@@ -21,6 +21,7 @@
 
 #include "sycl/sycl.hpp"  // sycl::memory_environment, sycl::distribute_items_and_wait, sycl::s_item
 
+#include <array>    // std::array
 #include <cstddef>  // std::size_t
 #include <tuple>    // std::tuple, std::make_tuple
 
@@ -163,4 +164,4 @@ class device_kernel_assembly_symm {
 
 }  // namespace plssvm::sycl::detail::scoped
 
-#endif  // PLSSVM_BACKENDS_SYCL_CG_IMPLICIT_SCOPED_KERNEL_MATRIX_ASSEMBLY_BLAS_HPP_
+#endif  // PLSSVM_BACKENDS_SYCL_KERNEL_CG_IMPLICIT_SCOPED_KERNEL_MATRIX_ASSEMBLY_BLAS_HPP_

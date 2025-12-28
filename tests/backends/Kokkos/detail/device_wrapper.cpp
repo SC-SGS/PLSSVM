@@ -10,11 +10,13 @@
 
 #include "plssvm/backends/Kokkos/detail/device_wrapper.hpp"
 
-#include "plssvm/backends/Kokkos/detail/utility.hpp"   // plssvm::kokkos::detail::available_target_platform_to_execution_space_mapping
-#include "plssvm/backends/Kokkos/execution_space.hpp"  // plssvm::kokkos::{execution_space, kokkos_type_to_execution_space_v}
-#include "plssvm/detail/utility.hpp"                   // plssvm::detail::contains
-#include "plssvm/mpi/communicator.hpp"                 // plssvm::mpi::communicator
-#include "plssvm/target_platforms.hpp"                 // plssvm::target_platform
+#include "plssvm/backends/Kokkos/detail/constexpr_available_execution_spaces.hpp"  // plssvm::kokkos::detail::constexpr_available_execution_spaces
+#include "plssvm/backends/Kokkos/detail/utility.hpp"                               // plssvm::kokkos::detail::available_target_platform_to_execution_space_mapping
+#include "plssvm/backends/Kokkos/execution_space_type_traits.hpp"                  // plssvm::kokkos::kokkos_type_to_execution_space_v
+#include "plssvm/backends/Kokkos/execution_spaces.hpp"                             // plssvm::kokkos::execution_space
+#include "plssvm/detail/utility.hpp"                                               // plssvm::detail::contains
+#include "plssvm/mpi/communicator.hpp"                                             // plssvm::mpi::communicator
+#include "plssvm/target_platforms.hpp"                                             // plssvm::target_platform
 
 #include "Kokkos_Core.hpp"  // Kokkos::DefaultExecutionSpace
 
@@ -24,7 +26,7 @@
 
 #include <vector>  // std::vector
 
-TEST(KokkosDeviceWrapper, default_construct) {
+TEST(KokkosDeviceWrapper, DefaultConstruct) {
     // default construct a device wrapper
     const plssvm::kokkos::detail::device_wrapper device{};
 
@@ -34,7 +36,7 @@ TEST(KokkosDeviceWrapper, default_construct) {
     EXPECT_EQ(device.get_execution_space(), spaces.front());
 }
 
-TEST(KokkosDeviceWrapper, construct) {
+TEST(KokkosDeviceWrapper, Construct) {
     // construct a device wrapper using the current Kokkos::DefaultExecutionSpace
     const plssvm::kokkos::detail::device_wrapper device{ Kokkos::DefaultExecutionSpace{} };
 
@@ -42,16 +44,16 @@ TEST(KokkosDeviceWrapper, construct) {
     EXPECT_EQ(device.get_execution_space(), plssvm::kokkos::kokkos_type_to_execution_space_v<Kokkos::DefaultExecutionSpace>);
 }
 
-TEST(KokkosDeviceWrapper, get) {
+TEST(KokkosDeviceWrapper, Get) {
     // construct a device wrapper using the current Kokkos::DefaultExecutionSpace
-    plssvm::kokkos::detail::device_wrapper device{ Kokkos::DefaultExecutionSpace{} };
+    plssvm::kokkos::detail::device_wrapper device{ Kokkos::DefaultExecutionSpace{} };  // NOLINT(misc-const-correctness): want to test the non-const overload
 
     // check that the returned Kokkos::ExecutionSpace has the correct type
     constexpr plssvm::kokkos::execution_space space = plssvm::kokkos::kokkos_type_to_execution_space_v<Kokkos::DefaultExecutionSpace>;
     ::testing::StaticAssertTypeEq<decltype(device.get<space>()), Kokkos::DefaultExecutionSpace &>();
 }
 
-TEST(KokkosDeviceWrapper, get_const) {
+TEST(KokkosDeviceWrapper, GetConst) {
     // construct a device wrapper using the current Kokkos::DefaultExecutionSpace
     const plssvm::kokkos::detail::device_wrapper device{ Kokkos::DefaultExecutionSpace{} };
 
@@ -60,7 +62,7 @@ TEST(KokkosDeviceWrapper, get_const) {
     ::testing::StaticAssertTypeEq<decltype(device.get<space>()), const Kokkos::DefaultExecutionSpace &>();
 }
 
-TEST(KokkosDeviceWrapper, get_execution_space) {
+TEST(KokkosDeviceWrapper, GetExecutionSpace) {
     // construct a device wrapper using the current Kokkos::DefaultExecutionSpace
     const plssvm::kokkos::detail::device_wrapper device{ Kokkos::DefaultExecutionSpace{} };
 
@@ -68,7 +70,7 @@ TEST(KokkosDeviceWrapper, get_execution_space) {
     EXPECT_EQ(device.get_execution_space(), plssvm::kokkos::kokkos_type_to_execution_space_v<Kokkos::DefaultExecutionSpace>);
 }
 
-TEST(KokkosDeviceWrapper, equality) {
+TEST(KokkosDeviceWrapper, Equality) {
     const plssvm::kokkos::detail::device_wrapper device1{ Kokkos::DefaultExecutionSpace{} };
     const plssvm::kokkos::detail::device_wrapper device2{ Kokkos::DefaultExecutionSpace{} };
 
@@ -76,7 +78,7 @@ TEST(KokkosDeviceWrapper, equality) {
     EXPECT_TRUE(device1 == device2);
 }
 
-TEST(KokkosDeviceWrapper, inequality) {
+TEST(KokkosDeviceWrapper, Inequality) {
     const plssvm::kokkos::detail::device_wrapper device1{ Kokkos::DefaultExecutionSpace{} };
     const plssvm::kokkos::detail::device_wrapper device2{ Kokkos::DefaultExecutionSpace{} };
 
@@ -110,7 +112,7 @@ struct device_list_test {
     }
 };
 
-TEST(KokkosDeviceWrapper, get_device_list) {
+TEST(KokkosDeviceWrapper, GetDeviceList) {
     using variant_type = typename plssvm::kokkos::detail::impl::create_device_variant_type::type;
     util::for_each_variant_type<variant_type>(device_list_test{});
 }

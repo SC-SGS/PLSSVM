@@ -80,8 +80,8 @@ class gpu_csvm : virtual public ::plssvm::csvm {
      */
     gpu_csvm &operator=(gpu_csvm &&other) noexcept {
         if (this != std::addressof(other)) {
+            devices_ = std::exchange(other.devices_, {});
             ::plssvm::csvm::operator=(std::move(other));
-            devices_ = std::move(other.devices_);
         }
         return *this;
     }

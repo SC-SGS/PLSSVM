@@ -41,7 +41,7 @@ struct matrix_wrapper {
     /// The PLSSVM matrix.
     plssvm::matrix<T, layout> matrix{};
     /// The optionally available feature names.
-    std::optional<std::vector<std::string>> feature_names{};
+    std::optional<std::vector<std::string>> feature_names;
 };
 
 /**
@@ -77,9 +77,11 @@ struct type_caster<plssvm::bindings::python::util::matrix_wrapper<T, layout>> {
     /**
      * @brief Convert a matrix_wrapper to a Numpy ndarray. Simply calls the custom type caster for a plssvm::matrix.
      * @param[in] matr the PLSSVM matrix to convert to a Numpy ndarray
+     * @params[in] rvp *unused*
+     * @params[in] h *unused*
      * @return a Pybind11 handle to the Numpy ndarray
      */
-    static py::handle cast(const matrix_type &matr, py::return_value_policy, py::handle) {
+    static py::handle cast(const matrix_type &matr, [[maybe_unused]] const py::return_value_policy rvp, [[maybe_unused]] const py::handle h) {
         return py::cast(matr.matrix);
     }
 
@@ -87,11 +89,12 @@ struct type_caster<plssvm::bindings::python::util::matrix_wrapper<T, layout>> {
      * @brief Try converting a Python object @p obj to a matrix_wrapper.
      * @detauls Calls the custom type caster for a plssvm::matrix and, additionally, tries to gather the feature names.
      * @param[in] obj the object to convert
+     * @params[in] allow_implicit_conversions *unused*
      * @return `true` if the conversion was successful, `false` otherwise
      * @throws py::value_error all exceptions from the custom plssvm::matrix type caster
      * @throws py::value_error if not all column names are strings
      */
-    bool load(py::handle obj, bool) {
+    bool load(py::handle obj, [[maybe_unused]] const bool allow_implicit_conversions) {
         // convert the object to a plssvm::matrix
         value.matrix = obj.cast<plssvm::matrix<T, layout>>();
 
@@ -101,7 +104,7 @@ struct type_caster<plssvm::bindings::python::util::matrix_wrapper<T, layout>> {
                 const auto &list = obj.attr("columns").cast<py::list>();
                 std::vector<std::string> column_names{};
                 column_names.reserve(list.size());
-                for (py::handle item : list) {
+                for (const py::handle &item : list) {
                     // note: column names are only set if they are ALL strings
                     if (!py::isinstance<py::str>(item)) {
                         throw py::type_error{

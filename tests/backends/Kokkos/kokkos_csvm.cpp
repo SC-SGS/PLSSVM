@@ -8,14 +8,14 @@
  * @brief Tests for the functionality related to the Kokkos backend.
  */
 
-#include "plssvm/backends/Kokkos/csvm.hpp"             // plssvm::kokkos::{csvm, csvc, csvr}
-#include "plssvm/backends/Kokkos/detail/utility.hpp"   // plssvm::kokkos::detail::available_target_platform_to_execution_space_mapping
-#include "plssvm/backends/Kokkos/exceptions.hpp"       // plssvm::kokkos::backend_exception
-#include "plssvm/backends/Kokkos/execution_space.hpp"  // plssvm::kokkos::execution_space
-#include "plssvm/detail/type_list.hpp"                 // plssvm::detail::label_type_list
-#include "plssvm/kernel_function_types.hpp"            // plssvm::kernel_function_type
-#include "plssvm/parameter.hpp"                        // plssvm::parameter
-#include "plssvm/target_platforms.hpp"                 // plssvm::target_platform, plssvm::list_available_target_platforms
+#include "plssvm/backends/Kokkos/csvm.hpp"              // plssvm::kokkos::{csvm, csvc, csvr}
+#include "plssvm/backends/Kokkos/detail/utility.hpp"    // plssvm::kokkos::detail::available_target_platform_to_execution_space_mapping
+#include "plssvm/backends/Kokkos/exceptions.hpp"        // plssvm::kokkos::backend_exception
+#include "plssvm/backends/Kokkos/execution_spaces.hpp"  // plssvm::kokkos::execution_space
+#include "plssvm/detail/utility.hpp"                    // plssvm::detail::contains
+#include "plssvm/kernel_function_types.hpp"             // plssvm::kernel_function_type
+#include "plssvm/parameter.hpp"                         // plssvm::parameter
+#include "plssvm/target_platforms.hpp"                  // plssvm::target_platform, plssvm::list_available_target_platforms
 
 #include "tests/backends/generic_base_csvc_tests.hpp"  // generic C-SVC tests to instantiate
 #include "tests/backends/generic_base_csvm_tests.hpp"  // generic C-SVM tests to instantiate
@@ -28,12 +28,13 @@
 #include "tests/types_to_test.hpp"                     // util::{cartesian_type_product_t, combine_test_parameters_gtest_t}
 #include "tests/utility.hpp"                           // util::redirect_output
 
+#include "fmt/format.h"   // fmt::format
+#include "fmt/ranges.h"   // fmt::join
 #include "gtest/gtest.h"  // TEST_F, EXPECT_NO_THROW, INSTANTIATE_TYPED_TEST_SUITE_P, ::testing::Test
 
-#include <array>    // std::array
-#include <cstddef>  // std::size_t
 #include <map>      // std::map
 #include <tuple>    // std::make_tuple, std::tuple
+#include <utility>  // std::make_pair
 #include <vector>   // std::vector
 
 using kokkos_csvm_types_list = std::tuple<plssvm::kokkos::csvc, plssvm::kokkos::csvr>;
@@ -48,7 +49,7 @@ class KokkosCSVMConstructor : public ::testing::Test,
 
 TYPED_TEST_SUITE(KokkosCSVMConstructor, kokkos_csvm_types_gtest, naming::test_parameter_to_name);
 
-TYPED_TEST(KokkosCSVMConstructor, default_construct) {  // execution_space automatic, target_platform automatic
+TYPED_TEST(KokkosCSVMConstructor, DefaultConstruct) {  // execution_space automatic, target_platform automatic
     using csvm_type = typename TestFixture::fixture_csvm_type;
 
     // check whether the execution space would be automatically determined as either OpenMPTarget or OpenACC
@@ -71,7 +72,7 @@ TYPED_TEST(KokkosCSVMConstructor, default_construct) {  // execution_space autom
     }
 }
 
-TYPED_TEST(KokkosCSVMConstructor, construct_parameter) {  // execution_space automatic, target_platform automatic
+TYPED_TEST(KokkosCSVMConstructor, ConstructParameter) {  // execution_space automatic, target_platform automatic
     using csvm_type = typename TestFixture::fixture_csvm_type;
 
     // check whether the execution space would be automatically determined as either OpenMPTarget or OpenACC
@@ -94,7 +95,7 @@ TYPED_TEST(KokkosCSVMConstructor, construct_parameter) {  // execution_space aut
     }
 }
 
-TYPED_TEST(KokkosCSVMConstructor, construct_target_and_parameter) {  // execution_space automatic, target_platform explicit
+TYPED_TEST(KokkosCSVMConstructor, ConstructTargetAndParameter) {  // execution_space automatic, target_platform explicit
     using csvm_type = typename TestFixture::fixture_csvm_type;
 
     // create parameter struct
@@ -165,7 +166,7 @@ TYPED_TEST(KokkosCSVMConstructor, construct_target_and_parameter) {  // executio
 #endif
 }
 
-TYPED_TEST(KokkosCSVMConstructor, construct_execution_space_and_parameter) {  // execution_space explicit, target_platform automatic
+TYPED_TEST(KokkosCSVMConstructor, ConstructExecutionSpaceAndParameter) {  // execution_space explicit, target_platform automatic
     using csvm_type = typename TestFixture::fixture_csvm_type;
 
     // create parameter struct
@@ -306,14 +307,14 @@ TYPED_TEST(KokkosCSVMConstructor, construct_execution_space_and_parameter) {  //
 #endif
 }
 
-TYPED_TEST(KokkosCSVMConstructor, construct_target_and_execution_space_and_parameter) {  // execution_space explicit, target_platform explicit
+TYPED_TEST(KokkosCSVMConstructor, ConstructTargetAndExecutionSpaceAndParameter) {  // execution_space explicit, target_platform explicit
     using csvm_type = typename TestFixture::fixture_csvm_type;
 
     // create parameter struct
     const plssvm::parameter params{};
 
     // list all possible execution spaces
-    std::vector<plssvm::kokkos::execution_space> all_execution_spaces{
+    const std::vector<plssvm::kokkos::execution_space> all_execution_spaces{
         plssvm::kokkos::execution_space::cuda,
         plssvm::kokkos::execution_space::hip,
         plssvm::kokkos::execution_space::sycl,
@@ -421,7 +422,7 @@ TYPED_TEST(KokkosCSVMConstructor, construct_target_and_execution_space_and_param
 #endif
 }
 
-TYPED_TEST(KokkosCSVMConstructor, construct_named_args) {  // execution_space automatic, target_platform automatic
+TYPED_TEST(KokkosCSVMConstructor, ConstructNamedArgs) {  // execution_space automatic, target_platform automatic
     using csvm_type = typename TestFixture::fixture_csvm_type;
 
     // check whether the execution space would be automatically determined as either OpenMPTarget or OpenACC
@@ -445,7 +446,7 @@ TYPED_TEST(KokkosCSVMConstructor, construct_named_args) {  // execution_space au
     }
 }
 
-TYPED_TEST(KokkosCSVMConstructor, construct_target_and_named_args) {  // execution_space automatic, target_platform explicit
+TYPED_TEST(KokkosCSVMConstructor, ConstructTargetAndNamedArgs) {  // execution_space automatic, target_platform explicit
     using csvm_type = typename TestFixture::fixture_csvm_type;
 
     // automatic should always work
@@ -513,7 +514,7 @@ TYPED_TEST(KokkosCSVMConstructor, construct_target_and_named_args) {  // executi
 #endif
 }
 
-TYPED_TEST(KokkosCSVMConstructor, construct_execution_space_and_named_args) {  // execution_space explicit, target_platform automatic
+TYPED_TEST(KokkosCSVMConstructor, ConstructExecutionSpaceAndNamedArgs) {  // execution_space explicit, target_platform automatic
     using csvm_type = typename TestFixture::fixture_csvm_type;
 
     // automatic should always work
@@ -651,11 +652,11 @@ TYPED_TEST(KokkosCSVMConstructor, construct_execution_space_and_named_args) {  /
 #endif
 }
 
-TYPED_TEST(KokkosCSVMConstructor, construct_target_and_execution_space_and_named_args) {  // execution_space explicit, target_platform explicit
+TYPED_TEST(KokkosCSVMConstructor, ConstructTargetAndExecutionSpaceAndNamedArgs) {  // execution_space explicit, target_platform explicit
     using csvm_type = typename TestFixture::fixture_csvm_type;
 
     // list all possible execution spaces
-    std::vector<plssvm::kokkos::execution_space> all_execution_spaces{
+    const std::vector<plssvm::kokkos::execution_space> all_execution_spaces{
         plssvm::kokkos::execution_space::cuda,
         plssvm::kokkos::execution_space::hip,
         plssvm::kokkos::execution_space::sycl,
@@ -763,7 +764,7 @@ TYPED_TEST(KokkosCSVMConstructor, construct_target_and_execution_space_and_named
 #endif
 }
 
-TYPED_TEST(KokkosCSVMConstructor, get_execution_space) {
+TYPED_TEST(KokkosCSVMConstructor, GetExecutionSpace) {
     using csvm_type = typename TestFixture::fixture_csvm_type;
 
     // construct default C-SVM
@@ -780,7 +781,7 @@ struct kokkos_csvm_test_type {
     using csvc_type = plssvm::kokkos::csvc;
     using csvr_type = plssvm::kokkos::csvr;
     using device_ptr_type = typename csvm_type::device_ptr_type;
-    inline static auto additional_arguments = std::make_tuple(std::make_pair(plssvm::kokkos_execution_space, space));
+    inline static auto additional_arguments = std::make_tuple(std::make_pair(plssvm::kokkos_execution_space, space));  // NOLINT(cert-err58-cpp): won't throw an exception
 };
 
 // a tuple containing the test structs

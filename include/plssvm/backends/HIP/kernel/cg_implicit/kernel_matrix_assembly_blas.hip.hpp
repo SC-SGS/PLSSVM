@@ -6,11 +6,11 @@
  * @license This file is part of the PLSSVM project which is released under the MIT license.
  *          See the LICENSE.md file in the project root for full license information.
  *
- * @brief Functions for explicitly assembling the kernel matrix using the HIP backend.
+ * @brief Functions for implicitly assembling the kernel matrix using the HIP backend.
  */
 
-#ifndef PLSSVM_BACKENDS_HIP_CG_IMPLICIT_KERNEL_MATRIX_ASSEMBLY_BLAS_HIP_HPP_
-#define PLSSVM_BACKENDS_HIP_CG_IMPLICIT_KERNEL_MATRIX_ASSEMBLY_BLAS_HIP_HPP_
+#ifndef PLSSVM_BACKENDS_HIP_KERNEL_CG_IMPLICIT_KERNEL_MATRIX_ASSEMBLY_BLAS_HIP_HPP_
+#define PLSSVM_BACKENDS_HIP_KERNEL_CG_IMPLICIT_KERNEL_MATRIX_ASSEMBLY_BLAS_HIP_HPP_
 #pragma once
 
 #include "plssvm/backends/HIP/kernel/kernel_functions.hip.hpp"  // plssvm::hip::detail::{feature_reduce, apply_kernel_function}
@@ -105,4 +105,4 @@ __global__ void device_kernel_assembly_symm(const real_type alpha, const real_ty
 
 }  // namespace plssvm::hip::detail
 
-#endif  // PLSSVM_BACKENDS_HIP_CG_IMPLICIT_KERNEL_MATRIX_ASSEMBLY_BLAS_HIP_HPP_
+#endif  // PLSSVM_BACKENDS_HIP_KERNEL_CG_IMPLICIT_KERNEL_MATRIX_ASSEMBLY_BLAS_HIP_HPP_

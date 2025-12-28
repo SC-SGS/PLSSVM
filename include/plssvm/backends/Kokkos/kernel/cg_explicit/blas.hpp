@@ -9,15 +9,17 @@
  * @brief Functions for explicitly performing a BLAS GEMM like matrix-matrix multiplication using the Kokkos backend.
  */
 
-#ifndef PLSSVM_BACKENDS_KOKKOS_CG_EXPLICIT_BLAS_HPP_
-#define PLSSVM_BACKENDS_KOKKOS_CG_EXPLICIT_BLAS_HPP_
+#ifndef PLSSVM_BACKENDS_KOKKOS_KERNEL_CG_EXPLICIT_BLAS_HPP_
+#define PLSSVM_BACKENDS_KOKKOS_KERNEL_CG_EXPLICIT_BLAS_HPP_
 #pragma once
 
 #include "plssvm/constants.hpp"  // plssvm::{real_type, THREAD_BLOCK_SIZE}
 
 #include "Kokkos_Core.hpp"  // KOKKOS_INLINE_FUNCTION, Kokkos::View, Kokkos::TeamPolicy
 
+#include <array>    // std:array
 #include <cstddef>  // std::size_t
+#include <utility>  // std::move
 
 namespace plssvm::kokkos::detail {
 
@@ -55,10 +57,10 @@ class device_kernel_symm {
         device_num_rows_{ device_num_rows },
         device_row_offset_{ device_row_offset },
         alpha_{ alpha },
-        A_{ A },
-        B_{ B },
+        A_{ std::move(A) },
+        B_{ std::move(B) },
         beta_{ beta },
-        C_{ C },
+        C_{ std::move(C) },
         grid_x_offset_{ grid_x_offset },
         grid_y_offset_{ grid_y_offset },
         grid_size_x_{ grid_size_x } { }
@@ -160,10 +162,10 @@ class device_kernel_symm_mirror {
         device_num_rows_{ device_num_rows },
         device_row_offset_{ device_row_offset },
         alpha_{ alpha },
-        A_{ A },
-        B_{ B },
+        A_{ std::move(A) },
+        B_{ std::move(B) },
         beta_{ beta },
-        C_{ C },
+        C_{ std::move(C) },
         grid_x_offset_{ grid_x_offset },
         grid_y_offset_{ grid_y_offset },
         grid_size_x_{ grid_size_x } { }
@@ -238,7 +240,7 @@ class device_kernel_inplace_matrix_add {
   public:
     /**
      * @brief Initialize the Kokkos kernel function object.
-     * @param[in] num_rows the number of rows in the matrix
+     * @param[in] num_rows the number of rows in both matrices
      * @param[in] num_cols the number of columns in both matrices
      * @param[in,out] lhs the first matrix (updated inplace)
      * @param[in] rhs the second matrix
@@ -249,8 +251,8 @@ class device_kernel_inplace_matrix_add {
     device_kernel_inplace_matrix_add(const std::size_t num_rows, const std::size_t num_cols, device_view_type<real_type> lhs, device_view_type<const real_type> rhs, const std::size_t grid_x_offset, const std::size_t grid_y_offset, const std::size_t grid_size_x) :
         num_rows_{ num_rows },
         num_cols_{ num_cols },
-        lhs_{ lhs },
-        rhs_{ rhs },
+        lhs_{ std::move(lhs) },
+        rhs_{ std::move(rhs) },
         grid_x_offset_{ grid_x_offset },
         grid_y_offset_{ grid_y_offset },
         grid_size_x_{ grid_size_x } { }
@@ -309,7 +311,7 @@ class device_kernel_inplace_matrix_scale {
      * @brief Initialize the Kokkos kernel function object.
      * @param[in] num_rows the number of rows in the matrix
      * @param[in] num_cols the number of columns in the matrix
-     * @param[in,out] lhs the first matrix (updated inplace)
+     * @param[in,out] lhs the matrix (updated inplace)
      * @param[in] scale the value to scale
      * @param[in] grid_x_offset the offset in x-dimension into the data points if more than one execution grid has to be used
      * @param[in] grid_y_offset the offset in y-dimension into the data points if more than one execution grid has to be used
@@ -318,7 +320,7 @@ class device_kernel_inplace_matrix_scale {
     device_kernel_inplace_matrix_scale(const std::size_t num_rows, const std::size_t num_cols, device_view_type<real_type> lhs, const real_type scale, const std::size_t grid_x_offset, const std::size_t grid_y_offset, const std::size_t grid_size_x) :
         num_rows_{ num_rows },
         num_cols_{ num_cols },
-        lhs_{ lhs },
+        lhs_{ std::move(lhs) },
         scale_{ scale },
         grid_x_offset_{ grid_x_offset },
         grid_y_offset_{ grid_y_offset },
@@ -363,4 +365,4 @@ class device_kernel_inplace_matrix_scale {
 
 }  // namespace plssvm::kokkos::detail
 
-#endif  // PLSSVM_BACKENDS_KOKKOS_CG_EXPLICIT_BLAS_HPP_
+#endif  // PLSSVM_BACKENDS_KOKKOS_KERNEL_CG_EXPLICIT_BLAS_HPP_

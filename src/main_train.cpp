@@ -8,37 +8,57 @@
  * @brief Main function compiled to the `plssvm-train` executable used for training a C-SVM model.
  */
 
-#include "plssvm/core.hpp"
+#include "plssvm/backend_types.hpp"                        // plssvm::backend_type, plssvm::determine_default_backend
+#include "plssvm/csvm_factory.hpp"                         // plssvm::make_csvm
+#include "plssvm/data_set/classification_data_set.hpp"     // plssvm::classification_data_set
+#include "plssvm/data_set/regression_data_set.hpp"         // plssvm::regression_data_set
 #include "plssvm/detail/cmd/data_set_variants.hpp"         // plssvm::detail::cmd::data_set_factory
 #include "plssvm/detail/cmd/parser_train.hpp"              // plssvm::detail::cmd::parser_train
 #include "plssvm/detail/logging/mpi_log.hpp"               // plssvm::detail::log
 #include "plssvm/detail/logging/mpi_log_untracked.hpp"     // plssvm::detail::log_untracked
 #include "plssvm/detail/tracking/performance_tracker.hpp"  // plssvm::detail::tracking::tracking_entry, PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_SAVE,
+#include "plssvm/environment.hpp"                          // plssvm::environment::scope_guard
+#include "plssvm/exceptions/exceptions.hpp"                // plssvm::exception
+#include "plssvm/model/classification_model.hpp"           // plssvm::classification_model
+#include "plssvm/model/regression_model.hpp"               // plssvm::regression_model
+#include "plssvm/mpi/communicator.hpp"                     // plssvm::mpi::communicator
+#include "plssvm/parameter.hpp"                            // plssvm::epsilon, plssvm::classification, plssvm::solver, plssvm::max_iter
+                                                           // plssvm::kokkos_execution_space, plssvm::sycl_data_parallel_kernel, plssvm::sycl_implementation_type
+#include "plssvm/svm/csvc.hpp"                             // plssvm::csvc
+#include "plssvm/svm/csvr.hpp"                             // plssvm::csvr
+#include "plssvm/svm_types.hpp"                            // plssvm::svm_type, plssvm::svm_type_to_task_name
+#include "plssvm/verbosity_levels.hpp"                     // plssvm::verbosity_level
                                                            // PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_HWS_ENTRY, PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_SET_REFERENCE_TIME
-#include "plssvm/detail/assert.hpp"                        // PLSSVM_ASSERT
 #include "plssvm/detail/utility.hpp"                       // PLSSVM_IS_DEFINED
-#include "plssvm/mpi/environment.hpp"                      // plssvm::mpi::is_executed_via_mpirun
 
 #if defined(PLSSVM_HARDWARE_SAMPLING_ENABLED)
     #include "hws/system_hardware_sampler.hpp"  // hws::system_hardware_sampler
 #endif
 
-#include "fmt/format.h"  // fmt::format
+#if defined(PLSSVM_HAS_MPI_ENABLED)
+    #include "fmt/format.h"  // fmt::format
+
+    #include <filesystem>  // std::filesystem::path
+#endif
+
+#if !defined(PLSSVM_HAS_MPI_ENABLED)
+    #include "plssvm/mpi/environment.hpp"  // plssvm::mpi::is_executed_via_mpirun
+#endif
 
 #include <chrono>       // std::chrono::{time_point, steady_clock, duration_cast, milliseconds}, std::chrono_literals namespace
 #include <cstddef>      // std::size_t
 #include <cstdlib>      // EXIT_SUCCESS, EXIT_FAILURE
 #include <exception>    // std::exception
-#include <filesystem>   // std::filesystem::path
 #include <iostream>     // std::cerr, std::endl
 #include <memory>       // std::unique_ptr, std::make_unique
-#include <string>       // std::string
 #include <string_view>  // std::string_view
 #include <type_traits>  // std::remove_reference_t
 #include <variant>      // std::visit
 #include <vector>       // std::vector
 
 using namespace std::chrono_literals;
+
+namespace {
 
 /**
  * @brief Fit a C-SVC model using the provided C-SVC, classification data set and command line parser.
@@ -53,9 +73,8 @@ template <typename svm_type, typename label_type>
 [[nodiscard]] plssvm::classification_model<label_type> fit_csvc(const svm_type &svm, const plssvm::classification_data_set<label_type> &data, const plssvm::detail::cmd::parser_train &cmd_parser) {
     if (cmd_parser.max_iter == std::size_t{ 0 }) {
         return svm.fit(data, plssvm::epsilon = cmd_parser.epsilon, plssvm::classification = cmd_parser.classification, plssvm::solver = cmd_parser.solver);
-    } else {
-        return svm.fit(data, plssvm::epsilon = cmd_parser.epsilon, plssvm::max_iter = cmd_parser.max_iter, plssvm::classification = cmd_parser.classification, plssvm::solver = cmd_parser.solver);
     }
+    return svm.fit(data, plssvm::epsilon = cmd_parser.epsilon, plssvm::max_iter = cmd_parser.max_iter, plssvm::classification = cmd_parser.classification, plssvm::solver = cmd_parser.solver);
 }
 
 /**
@@ -71,14 +90,22 @@ template <typename svm_type, typename label_type>
 [[nodiscard]] plssvm::regression_model<label_type> fit_csvr(const svm_type &svm, const plssvm::regression_data_set<label_type> &data, const plssvm::detail::cmd::parser_train &cmd_parser) {
     if (cmd_parser.max_iter == std::size_t{ 0 }) {
         return svm.fit(data, plssvm::epsilon = cmd_parser.epsilon, plssvm::solver = cmd_parser.solver);
-    } else {
-        return svm.fit(data, plssvm::epsilon = cmd_parser.epsilon, plssvm::max_iter = cmd_parser.max_iter, plssvm::solver = cmd_parser.solver);
     }
+    return svm.fit(data, plssvm::epsilon = cmd_parser.epsilon, plssvm::max_iter = cmd_parser.max_iter, plssvm::solver = cmd_parser.solver);
 }
 
-int main(int argc, char *argv[]) {
-    // initialize MPI environment only via the plssvm::scope_guard (by explicitly specifying NO backend)
-    [[maybe_unused]] plssvm::environment::scope_guard mpi_guard{ {} };
+}  // namespace
+
+int main(int argc, char **argv) {
+    // may throw an exception if the required level of MPI parallelism isn't available (really rare)
+    std::unique_ptr<plssvm::environment::scope_guard> mpi_guard{};
+    try {
+        // initialize MPI environment only via the plssvm::scope_guard (by explicitly specifying NO backend)
+        mpi_guard = std::make_unique<plssvm::environment::scope_guard>(std::vector<plssvm::backend_type>{});
+    } catch (const plssvm::mpi_exception &e) {
+        std::cerr << "An exception occurred while setting up MPI!: " << e.what_with_loc() << std::endl;
+    }
+
     // create a PLSSVM communicator -> use MPI_COMM_WORLD for our executables
     // if MPI is not supported, does nothing
     plssvm::mpi::communicator comm{};
@@ -164,11 +191,11 @@ int main(int argc, char *argv[]) {
             const std::unique_ptr<csvm_type> svm = [&]() {
                 if (use_sycl_as_backend) {
                     return plssvm::make_csvm<csvm_type>(cmd_parser.backend, comm, cmd_parser.target, cmd_parser.csvm_params, plssvm::sycl_implementation_type = cmd_parser.sycl_implementation_type, plssvm::sycl_data_parallel_kernel = cmd_parser.sycl_data_parallel_kernel);
-                } else if (use_kokkos_as_backend) {
-                    return plssvm::make_csvm<csvm_type>(cmd_parser.backend, comm, cmd_parser.target, cmd_parser.csvm_params, plssvm::kokkos_execution_space = cmd_parser.kokkos_execution_space);
-                } else {
-                    return plssvm::make_csvm<csvm_type>(cmd_parser.backend, comm, cmd_parser.target, cmd_parser.csvm_params);
                 }
+                if (use_kokkos_as_backend) {
+                    return plssvm::make_csvm<csvm_type>(cmd_parser.backend, comm, cmd_parser.target, cmd_parser.csvm_params, plssvm::kokkos_execution_space = cmd_parser.kokkos_execution_space);
+                }
+                return plssvm::make_csvm<csvm_type>(cmd_parser.backend, comm, cmd_parser.target, cmd_parser.csvm_params);
             }();
 
             // only specify the named arguments available for the respective SVM type

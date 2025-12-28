@@ -9,8 +9,8 @@
  * @brief Functions for explicitly assembling the kernel matrix using the Kokkos backend.
  */
 
-#ifndef PLSSVM_BACKENDS_KOKKOS_CG_EXPLICIT_KERNEL_MATRIX_ASSEMBLY_HPP_
-#define PLSSVM_BACKENDS_KOKKOS_CG_EXPLICIT_KERNEL_MATRIX_ASSEMBLY_HPP_
+#ifndef PLSSVM_BACKENDS_KOKKOS_KERNEL_CG_EXPLICIT_KERNEL_MATRIX_ASSEMBLY_HPP_
+#define PLSSVM_BACKENDS_KOKKOS_KERNEL_CG_EXPLICIT_KERNEL_MATRIX_ASSEMBLY_HPP_
 #pragma once
 
 #include "plssvm/backends/Kokkos/detail/standard_layout_tuple.hpp"  // plssvm::kokkos::detail::standard_layout_tuple
@@ -20,7 +20,9 @@
 
 #include "Kokkos_Core.hpp"  // KOKKOS_INLINE_FUNCTION, Kokkos::View, Kokkos::TeamPolicy
 
+#include <array>    // std::array
 #include <cstddef>  // std::size_t
+#include <utility>  // std::move
 
 namespace plssvm::kokkos::detail {
 
@@ -43,9 +45,9 @@ class device_kernel_assembly {
      * @brief Initialize the Kokkos kernel function object.
      * @param[out] kernel_matrix the calculated kernel matrix
      * @param[in] data the data points to calculate the kernel matrix from
-     * @param[in] num_rows the number of data points
+     * @param[in] num_rows the total number of data points (= total number of rows)
      * @param[in] device_num_rows the number of rows the current device is responsible for
-     * @param[in] device_row_offset the first row in @p data_d the current device is responsible for
+     * @param[in] device_row_offset the first row in @p data the current device is responsible for
      * @param[in] num_features the number of features per data point
      * @param[in] q the vector used in the dimensional reduction
      * @param[in] QA_cost the scalar used in the dimensional reduction
@@ -56,13 +58,13 @@ class device_kernel_assembly {
      * @param[in] kernel_function_parameter the parameters necessary to apply the @p kernel_function
      */
     device_kernel_assembly(device_view_type<real_type> kernel_matrix, device_view_type<real_type> data, const std::size_t num_rows, const std::size_t device_num_rows, const std::size_t device_row_offset, const std::size_t num_features, device_view_type<real_type> q, const real_type QA_cost, const real_type cost, const std::size_t grid_x_offset, const std::size_t grid_y_offset, const std::size_t grid_size_x, Args... kernel_function_parameter) :
-        kernel_matrix_{ kernel_matrix },
-        data_{ data },
+        kernel_matrix_{ std::move(kernel_matrix) },
+        data_{ std::move(data) },
         num_rows_{ num_rows },
         device_num_rows_{ device_num_rows },
         device_row_offset_{ device_row_offset },
         num_features_{ num_features },
-        q_{ q },
+        q_{ std::move(q) },
         QA_cost_{ QA_cost },
         cost_{ cost },
         grid_x_offset_{ grid_x_offset },
@@ -134,4 +136,4 @@ class device_kernel_assembly {
 
 }  // namespace plssvm::kokkos::detail
 
-#endif  // PLSSVM_BACKENDS_KOKKOS_CG_EXPLICIT_KERNEL_MATRIX_ASSEMBLY_HPP_
+#endif  // PLSSVM_BACKENDS_KOKKOS_KERNEL_CG_EXPLICIT_KERNEL_MATRIX_ASSEMBLY_HPP_

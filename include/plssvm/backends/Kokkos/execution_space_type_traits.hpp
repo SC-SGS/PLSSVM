@@ -13,7 +13,7 @@
 #define PLSSVM_BACKENDS_KOKKOS_EXECUTION_SPACE_TYPE_TRAITS_HPP_
 #pragma once
 
-#include "plssvm/backends/Kokkos/execution_space.hpp"  // plssvm::kokkos::execution_space
+#include "plssvm/backends/Kokkos/execution_spaces.hpp"  // plssvm::kokkos::execution_space
 
 #include "Kokkos_Core.hpp"  // Kokkos macros, Kokkos ExecutionSpace types
 

@@ -69,9 +69,8 @@ template <typename label_type, typename... Args>
 [[nodiscard]] inline min_max_scaler make_scaling_factors(mpi::communicator comm, const cmd::parser_scale &cmd_parser) {
     if (!cmd_parser.restore_filename.empty()) {
         return min_max_scaler{ std::move(comm), cmd_parser.restore_filename };
-    } else {
-        return min_max_scaler{ std::move(comm), cmd_parser.lower, cmd_parser.upper };
     }
+    return min_max_scaler{ std::move(comm), cmd_parser.lower, cmd_parser.upper };
 }
 
 /**
@@ -85,9 +84,8 @@ template <typename label_type, typename... Args>
         case svm_type::csvc:
             if (cmd_parser.strings_as_labels) {
                 return make_classification_data_set<std::string>(std::move(comm), cmd_parser.input_filename);
-            } else {
-                return make_classification_data_set<typename classification_data_set<>::label_type>(std::move(comm), cmd_parser.input_filename);
             }
+            return make_classification_data_set<typename classification_data_set<>::label_type>(std::move(comm), cmd_parser.input_filename);
         case svm_type::csvr:
             return make_regression_data_set<typename regression_data_set<>::label_type>(std::move(comm), cmd_parser.input_filename);
     }
@@ -107,9 +105,8 @@ template <typename label_type, typename... Args>
         case svm_type::csvc:
             if (cmd_parser.strings_as_labels) {
                 return make_classification_data_set<std::string>(std::move(comm), cmd_parser.input_filename);
-            } else {
-                return make_classification_data_set<typename classification_data_set<>::label_type>(std::move(comm), cmd_parser.input_filename);
             }
+            return make_classification_data_set<typename classification_data_set<>::label_type>(std::move(comm), cmd_parser.input_filename);
         case svm_type::csvr:
             return make_regression_data_set<typename regression_data_set<>::label_type>(std::move(comm), cmd_parser.input_filename);
     }
@@ -125,12 +122,14 @@ template <typename label_type, typename... Args>
  * @return the data set based on the provided command line parser (`[[nodiscard]]`)
  */
 [[nodiscard]] inline data_set_variants data_set_factory(mpi::communicator comm, const cmd::parser_scale &cmd_parser) {
+    // create the scaling factors
+    min_max_scaler scaling_factors = make_scaling_factors(comm, cmd_parser);
+    // create the correct classification data set
     if (cmd_parser.strings_as_labels) {
-        return make_classification_data_set<std::string>(comm, cmd_parser.input_filename, make_scaling_factors(comm, cmd_parser));
-    } else {
-        using label_type = typename classification_data_set<>::label_type;
-        return make_classification_data_set<label_type>(comm, cmd_parser.input_filename, make_scaling_factors(comm, cmd_parser));
+        return make_classification_data_set<std::string>(std::move(comm), cmd_parser.input_filename, std::move(scaling_factors));
     }
+    using label_type = typename classification_data_set<>::label_type;
+    return make_classification_data_set<label_type>(std::move(comm), cmd_parser.input_filename, std::move(scaling_factors));
 }
 
 }  // namespace plssvm::detail::cmd

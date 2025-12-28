@@ -10,17 +10,16 @@
 
 #include "plssvm/svm/csvm.hpp"
 
-#include "plssvm/backend_types.hpp"          // plssvm::csvm_backend_exists, plssvm::csvm_backend_exists_v, plssvm::backend_csvm_type, plssvm::backend_csvm_type_t
-#include "plssvm/constants.hpp"              // plssvm::real_type
-#include "plssvm/core.hpp"                   // sycl namespace handling
-#include "plssvm/exceptions/exceptions.hpp"  // plssvm::invalid_parameter_exception
-#include "plssvm/kernel_function_types.hpp"  // plssvm::kernel_function_type
-#include "plssvm/parameter.hpp"              // plssvm::parameter
-#include "plssvm/target_platforms.hpp"       // plssvm::target_platform
+#include "plssvm/backend_types.hpp"                   // plssvm::csvm_backend_exists, plssvm::csvm_backend_exists_v, plssvm::backend_csvm_type, plssvm::backend_csvm_type_t
+#include "plssvm/backends/SYCL/detail/constants.hpp"  // NOLINT: namespace plssvm::sycl
+#include "plssvm/constants.hpp"                       // plssvm::real_type
+#include "plssvm/core.hpp"                            // NOLINT: include all csvm_backend_exists_v specializations
+#include "plssvm/kernel_function_types.hpp"           // plssvm::kernel_function_type
+#include "plssvm/parameter.hpp"                       // plssvm::parameter
+#include "plssvm/target_platforms.hpp"                // plssvm::target_platform
 
-#include "tests/custom_test_macros.hpp"  // EXPECT_THROW_WHAT
-#include "tests/svm/mock_csvm.hpp"       // mock_csvm
-#include "tests/utility.hpp"             // util::redirect_output
+#include "tests/svm/mock_csvm.hpp"  // mock_csvm
+#include "tests/utility.hpp"        // util::redirect_output
 
 #include "gmock/gmock.h"  // EXPECT_THAT, ::testing::HasSubstr
 #include "gtest/gtest.h"  // TEST, EXPECT_EQ, EXPECT_TRUE, EXPECT_FALSE, EXPECT_THAT
@@ -29,7 +28,7 @@
 
 class BaseCSVM : public ::testing::Test { };
 
-TEST(BaseCSVM, default_construct_from_parameter) {
+TEST(BaseCSVM, DefaultConstructFromParameter) {
     // create C-SVM: must be done using the mock class since the csvm base class is pure virtual
     const mock_csvm csvm{};
 
@@ -37,7 +36,7 @@ TEST(BaseCSVM, default_construct_from_parameter) {
     EXPECT_EQ(csvm.get_params(), plssvm::parameter{});
 }
 
-TEST(BaseCSVM, construct_from_parameter) {
+TEST(BaseCSVM, ConstructFromParameter) {
     // create parameter
     const plssvm::parameter params{ plssvm::kernel_function_type::polynomial, 4, plssvm::real_type{ 0.2 }, plssvm::real_type{ 0.1 }, plssvm::real_type{ 0.01 } };
 
@@ -48,7 +47,7 @@ TEST(BaseCSVM, construct_from_parameter) {
     EXPECT_EQ(csvm.get_params(), params);
 }
 
-TEST(BaseCSVM, construct_linear_from_named_parameters) {
+TEST(BaseCSVM, ConstructLinearFromNamedParameters) {
     // correct parameter
     const plssvm::parameter params{ plssvm::kernel_type = plssvm::kernel_function_type::linear, plssvm::cost = 2.0 };
 
@@ -59,7 +58,7 @@ TEST(BaseCSVM, construct_linear_from_named_parameters) {
     EXPECT_TRUE(csvm.get_params().equivalent(params));
 }
 
-TEST(BaseCSVM, construct_polynomial_from_named_parameters) {
+TEST(BaseCSVM, ConstructPolynomialFromNamedParameters) {
     // correct parameter
     const plssvm::parameter params{ plssvm::kernel_function_type::polynomial, 4, plssvm::real_type{ 0.1 }, plssvm::real_type{ 1.2 }, plssvm::real_type{ 0.001 } };
 
@@ -74,7 +73,7 @@ TEST(BaseCSVM, construct_polynomial_from_named_parameters) {
     EXPECT_TRUE(csvm.get_params().equivalent(params));
 }
 
-TEST(BaseCSVM, construct_rbf_from_named_parameters) {
+TEST(BaseCSVM, ConstructRadialBasisFunctionFromNamedParameters) {
     // correct parameter
     const plssvm::parameter params{ plssvm::kernel_type = plssvm::kernel_function_type::rbf, plssvm::gamma = 0.00001, plssvm::cost = 10.0 };
 
@@ -87,14 +86,53 @@ TEST(BaseCSVM, construct_rbf_from_named_parameters) {
     EXPECT_TRUE(csvm.get_params().equivalent(params));
 }
 
-TEST(BaseCSVM, get_target_platforms) {
+TEST(BaseCSVM, ConstructSigmoidFromNamedParameters) {
+    // correct parameter
+    const plssvm::parameter params{ plssvm::kernel_type = plssvm::kernel_function_type::sigmoid, plssvm::gamma = 0.00001, plssvm::cost = 10.0 };
+
+    // create C-SVM: must be done using the mock class since the csvm base class is pure virtual
+    const mock_csvm csvm{ plssvm::kernel_type = params.kernel_type,
+                          plssvm::gamma = params.gamma,
+                          plssvm::cost = params.cost };
+
+    // check whether the parameters have been set correctly
+    EXPECT_TRUE(csvm.get_params().equivalent(params));
+}
+
+TEST(BaseCSVM, ConstructLaplacianFromNamedParameters) {
+    // correct parameter
+    const plssvm::parameter params{ plssvm::kernel_type = plssvm::kernel_function_type::laplacian, plssvm::gamma = 0.00001, plssvm::cost = 10.0 };
+
+    // create C-SVM: must be done using the mock class since the csvm base class is pure virtual
+    const mock_csvm csvm{ plssvm::kernel_type = params.kernel_type,
+                          plssvm::gamma = params.gamma,
+                          plssvm::cost = params.cost };
+
+    // check whether the parameters have been set correctly
+    EXPECT_TRUE(csvm.get_params().equivalent(params));
+}
+
+TEST(BaseCSVM, ConstructChiSquaredFromNamedParameters) {
+    // correct parameter
+    const plssvm::parameter params{ plssvm::kernel_type = plssvm::kernel_function_type::chi_squared, plssvm::gamma = 0.00001, plssvm::cost = 10.0 };
+
+    // create C-SVM: must be done using the mock class since the csvm base class is pure virtual
+    const mock_csvm csvm{ plssvm::kernel_type = params.kernel_type,
+                          plssvm::gamma = params.gamma,
+                          plssvm::cost = params.cost };
+
+    // check whether the parameters have been set correctly
+    EXPECT_TRUE(csvm.get_params().equivalent(params));
+}
+
+TEST(BaseCSVM, GetTargetPlatforms) {
     // create C-SVM: must be done using the mock class since the csvm base class is pure virtual
     const mock_csvm csvm{};
 
     EXPECT_EQ(csvm.get_target_platform(), plssvm::target_platform::automatic);
 }
 
-TEST(BaseCSVM, get_params) {
+TEST(BaseCSVM, GetParams) {
     // create parameter
     const plssvm::parameter params{ plssvm::kernel_function_type::polynomial, 4, plssvm::real_type{ 0.2 }, plssvm::real_type{ 0.1 }, plssvm::real_type{ 0.01 } };
 
@@ -107,7 +145,7 @@ TEST(BaseCSVM, get_params) {
     EXPECT_TRUE(csvm_params.equivalent(params));
 }
 
-TEST(BaseCSVM, set_params_from_parameter) {
+TEST(BaseCSVM, SetParamsFromParameter) {
     // create C-SVM: must be done using the mock class since the csvm base class is pure virtual
     mock_csvm csvm{};
     ASSERT_EQ(csvm.get_params(), plssvm::parameter{});
@@ -122,7 +160,7 @@ TEST(BaseCSVM, set_params_from_parameter) {
     EXPECT_EQ(csvm.get_params(), params);
 }
 
-TEST(BaseCSVM, set_params_from_named_parameters) {
+TEST(BaseCSVM, SetParamsFromNamedParameters) {
     // create C-SVM: must be done using the mock class since the csvm base class is pure virtual
     mock_csvm csvm{};
     ASSERT_EQ(csvm.get_params(), plssvm::parameter{});
@@ -141,7 +179,7 @@ TEST(BaseCSVM, set_params_from_named_parameters) {
     EXPECT_EQ(csvm.get_params(), params);
 }
 
-TEST(BaseCSVM, csvm_backend_exists) {
+TEST(BaseCSVM, CsvmBackendExists) {
     // test whether the given C-SVM backend exist
 #if defined(PLSSVM_HAS_OPENMP_BACKEND)
     EXPECT_TRUE(plssvm::csvm_backend_exists_v<plssvm::openmp::csvm>);
@@ -221,7 +259,7 @@ TEST(BaseCSVM, csvm_backend_exists) {
 class BaseCSVMWarning : public BaseCSVM,
                         protected util::redirect_output<&std::clog> { };
 
-TEST_F(BaseCSVMWarning, construct_unused_parameter_warning_degree) {
+TEST_F(BaseCSVMWarning, ConstructUnusedParameterWarningDegree) {
     // start capture of std::clog
     // create C-SVM: must be done using the mock class since the csvm base class is pure virtual
     [[maybe_unused]] const mock_csvm csvm{ plssvm::kernel_type = plssvm::kernel_function_type::linear, plssvm::degree = 2 };
@@ -230,7 +268,7 @@ TEST_F(BaseCSVMWarning, construct_unused_parameter_warning_degree) {
     EXPECT_THAT(this->get_capture(), ::testing::HasSubstr("WARNING: degree parameter provided, which is not used in the linear kernel (u'*v)!"));
 }
 
-TEST_F(BaseCSVMWarning, construct_unused_parameter_warning_gamma) {
+TEST_F(BaseCSVMWarning, ConstructUnusedParameterWarningGamma) {
     // start capture of std::clog
     // create C-SVM: must be done using the mock class since the csvm base class is pure virtual
     [[maybe_unused]] const mock_csvm csvm{ plssvm::kernel_type = plssvm::kernel_function_type::linear, plssvm::gamma = 0.1 };
@@ -239,7 +277,7 @@ TEST_F(BaseCSVMWarning, construct_unused_parameter_warning_gamma) {
     EXPECT_THAT(this->get_capture(), ::testing::HasSubstr("WARNING: gamma parameter provided, which is not used in the linear kernel (u'*v)!"));
 }
 
-TEST_F(BaseCSVMWarning, construct_unused_parameter_warning_coef0) {
+TEST_F(BaseCSVMWarning, ConstructUnusedParameterWarningCoef0) {
     // start capture of std::clog
     // create C-SVM: must be done using the mock class since the csvm base class is pure virtual
     [[maybe_unused]] const mock_csvm csvm{ plssvm::kernel_type = plssvm::kernel_function_type::linear, plssvm::coef0 = 0.1 };

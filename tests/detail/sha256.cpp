@@ -15,13 +15,13 @@
 #include "fmt/format.h"   // fmt::format
 #include "gtest/gtest.h"  // TEST_P, INSTANTIATE_TEST_SUITE_P, ASSERT_EQ, EXPECT_EQ, ::testing::{TestWithParam, Values}
 
-#include <string>   // std::string
-#include <utility>  // std::pair, std::make_pair
-#include <vector>   // std::vector
+#include <string>       // std::string
+#include <string_view>  // std::string_view
+#include <utility>      // std::pair, std::make_pair
 
 class Sha256 : public ::testing::TestWithParam<std::pair<std::string, std::string_view>> { };
 
-TEST_P(Sha256, correct_encoding) {
+TEST_P(Sha256, CorrectEncoding) {
     // get generated parameter
     const auto [input, encoded_output] = GetParam();
 

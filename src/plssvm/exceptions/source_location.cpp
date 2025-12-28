@@ -8,13 +8,16 @@
 
 #include "plssvm/exceptions/source_location.hpp"
 
+#include "plssvm/exceptions/exceptions.hpp"  // plssvm::mpi_exception
+#include "plssvm/mpi/environment.hpp"        // plssvm::mpi::is_active
+
 #if defined(PLSSVM_HAS_MPI_ENABLED)
     #include "mpi.h"  // MPI_Comm_rank, MPI_COMM_WORLD
-#endif
-#include "plssvm/mpi/environment.hpp"  // plssvm::mpi::is_active
 
-#include <cstdint>   // std::uint_least32_t
-#include <optional>  // std::make_optional
+    #include <optional>  // std::make_optional
+#endif
+
+#include <cstdint>  // std::uint_least32_t
 
 namespace plssvm {
 
@@ -31,13 +34,14 @@ source_location source_location::current(const char *file_name, const char *func
         if (mpi::is_active()) {
             // prevent excessive mpi::communicator constructor calls
 #if defined(PLSSVM_HAS_MPI_ENABLED)
-            int rank;
+            int rank{};
             MPI_Comm_rank(MPI_COMM_WORLD, &rank);
             loc.world_rank_ = std::make_optional(rank);
 #endif
         }
-    } catch (...) {
-        // std::nullopt
+    } catch (const plssvm::mpi_exception &) {
+        // no MPI information available
+        loc.world_rank_ = std::nullopt;
     }
 
     return loc;
