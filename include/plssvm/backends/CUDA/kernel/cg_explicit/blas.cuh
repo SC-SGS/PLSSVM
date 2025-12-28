@@ -146,7 +146,7 @@ __global__ void device_kernel_inplace_matrix_add(const std::size_t num_rows, con
 /**
  * @brief Perform a simple inplace matrix scale: lhs *= scalar.
  * @param[in] num_rows the number of rows in the matrix
- * @param[in] num_cols the number of columns in both matrices
+ * @param[in] num_cols the number of columns in the matrix
  * @param[in,out] lhs the matrix (updated inplace)
  * @param[in] scale the value to scale
  * @param[in] grid_x_offset the offset in x-dimension into the data points if more than one execution grid has to be used

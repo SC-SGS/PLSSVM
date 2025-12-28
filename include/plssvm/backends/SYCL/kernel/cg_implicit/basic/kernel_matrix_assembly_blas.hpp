@@ -134,7 +134,6 @@ class device_kernel_assembly_symm {
   private:
     /// @cond Doxygen_suppress
     const real_type alpha_;
-
     const real_type *q_;
     const real_type *data_;
     const std::size_t num_rows_;

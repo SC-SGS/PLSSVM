@@ -41,7 +41,6 @@ class device_kernel_assembly_symm {
 
     /**
      * @brief Initialize the SYCL kernel function object.
-     * @param[in] cgh the SYCL handler used to allocate the local memory
      * @param[in] alpha the scalar alpha value
      * @param[in] q the vector used in the dimensional reduction
      * @param[in] data the data points to calculate the implicit kernel matrix from

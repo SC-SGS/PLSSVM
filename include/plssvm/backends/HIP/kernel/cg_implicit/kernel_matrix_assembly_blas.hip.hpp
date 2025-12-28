@@ -6,7 +6,7 @@
  * @license This file is part of the PLSSVM project which is released under the MIT license.
  *          See the LICENSE.md file in the project root for full license information.
  *
- * @brief Functions for explicitly assembling the kernel matrix using the HIP backend.
+ * @brief Functions for implicitly assembling the kernel matrix using the HIP backend.
  */
 
 #ifndef PLSSVM_BACKENDS_HIP_KERNEL_CG_IMPLICIT_KERNEL_MATRIX_ASSEMBLY_BLAS_HIP_HPP_

@@ -240,7 +240,7 @@ class device_kernel_inplace_matrix_add {
   public:
     /**
      * @brief Initialize the Kokkos kernel function object.
-     * @param[in] num_rows the number of rows in the matrix
+     * @param[in] num_rows the number of rows in both matrices
      * @param[in] num_cols the number of columns in both matrices
      * @param[in,out] lhs the first matrix (updated inplace)
      * @param[in] rhs the second matrix
@@ -311,7 +311,7 @@ class device_kernel_inplace_matrix_scale {
      * @brief Initialize the Kokkos kernel function object.
      * @param[in] num_rows the number of rows in the matrix
      * @param[in] num_cols the number of columns in the matrix
-     * @param[in,out] lhs the first matrix (updated inplace)
+     * @param[in,out] lhs the matrix (updated inplace)
      * @param[in] scale the value to scale
      * @param[in] grid_x_offset the offset in x-dimension into the data points if more than one execution grid has to be used
      * @param[in] grid_y_offset the offset in y-dimension into the data points if more than one execution grid has to be used

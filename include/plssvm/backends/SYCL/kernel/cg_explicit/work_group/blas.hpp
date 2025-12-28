@@ -35,7 +35,6 @@ class device_kernel_symm {
 
     /**
      * @brief Initialize the SYCL kernel function object.
-     * @param[in] cgh the SYCL handler used to allocate the local memory
      * @param[in] num_rows the number of rows in @p A and @p C
      * @param[in] num_rhs the number of columns in @p B and @p C
      * @param[in] device_num_rows the number of rows in @p A and number of rows in @p B; thr rows in @p A are potentially distributed across multiple devices
@@ -128,7 +127,6 @@ class device_kernel_symm_mirror {
 
     /**
      * @brief Initialize the SYCL kernel function object.
-     * @param[in] cgh the SYCL handler used to allocate the local memory
      * @param[in] num_rows the number of rows in @p A and @p C
      * @param[in] num_rhs the number of columns in @p B and @p C
      * @param[in] num_mirror_rows the number of rows to mirror down
@@ -277,7 +275,7 @@ class device_kernel_inplace_matrix_scale {
      * @brief Initialize the SYCL kernel function object.
      * @param[in] num_rows the number of rows in the matrix
      * @param[in] num_cols the number of columns in the matrix
-     * @param[in,out] lhs the first matrix (updated inplace)
+     * @param[in,out] lhs the matrix (updated inplace)
      * @param[in] scale the value to scale
      * @param[in] grid_x_offset the offset in x-dimension into the data points if more than one execution grid has to be used
      * @param[in] grid_y_offset the offset in y-dimension into the data points if more than one execution grid has to be used
