@@ -13,10 +13,13 @@
 #include "plssvm/kernel_function_types.hpp"  // plssvm::kernel_function_type
 #include "plssvm/parameter.hpp"              // plssvm::parameter, named arguments
 
-#include "bindings/Python/utility.hpp"  // plssvm::bindings::python::util::check_kwargs_for_correctness
+#include "bindings/Python/bindings_fwd.hpp"  // forward declare all helper functions to create the Python bindings
+#include "bindings/Python/utility.hpp"       // plssvm::bindings::python::util::check_kwargs_for_correctness
 
+#include "pybind11/cast.h"      // py::arg
 #include "pybind11/pybind11.h"  // py::module_, py::class_, py::arg, py::kwargs, py::module_local
-#include "pybind11/stl.h"       // support for STL types: std::variant
+#include "pybind11/pytypes.h"   // py::kwargs
+#include "pybind11/stl.h"       // NOLINT: support for STL types: std::variant
 
 namespace py = pybind11;
 

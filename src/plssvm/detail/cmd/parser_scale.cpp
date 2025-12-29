@@ -8,11 +8,12 @@
 
 #include "plssvm/detail/cmd/parser_scale.hpp"
 
+#include "plssvm/constants.hpp"                         // plssvm::real_type
 #include "plssvm/detail/assert.hpp"                     // PLSSVM_ASSERT
+#include "plssvm/detail/cmd/utility.hpp"                // plssvm::detail::cmd::max_cmd_width
 #include "plssvm/detail/logging/mpi_log_untracked.hpp"  // plssvm::detail::log_untracked
 #include "plssvm/exceptions/exceptions.hpp"             // plssvm::cmd_parser_exit
 #include "plssvm/mpi/communicator.hpp"                  // plssvm::mpi::communicator
-#include "plssvm/mpi/environment.hpp"                   // plssvm::mpi::{is_active, finalize}
 #include "plssvm/verbosity_levels.hpp"                  // plssvm::verbosity, plssvm::verbosity_level
 #include "plssvm/version/version.hpp"                   // plssvm::version::detail::get_version_info
 
@@ -39,7 +40,7 @@ parser_scale::parser_scale(const mpi::communicator &comm, int argc, char **argv)
         .positional_help("input_file [scaled_file]")
         .show_positional_help();
     options
-        .set_width(150)
+        .set_width(max_cmd_width)
         .set_tab_expansion()
         // clang-format off
        .add_options()
@@ -74,7 +75,7 @@ parser_scale::parser_scale(const mpi::communicator &comm, int argc, char **argv)
     }
 
     // print help message and exit
-    if (result.count("help")) {
+    if (result.contains("help")) {
         if (comm.is_main_rank()) {
             std::cout << options.help() << std::endl;
         }
@@ -82,7 +83,7 @@ parser_scale::parser_scale(const mpi::communicator &comm, int argc, char **argv)
     }
 
     // print version info
-    if (result.count("version")) {
+    if (result.contains("version")) {
         if (comm.is_main_rank()) {
             std::cout << version::detail::get_version_info("plssvm-scale", false) << std::endl;
         }
@@ -123,7 +124,7 @@ parser_scale::parser_scale(const mpi::communicator &comm, int argc, char **argv)
     const bool quiet = result["quiet"].as<bool>();
 
     // -q/--quiet has precedence over --verbosity
-    if (result["verbosity"].count()) {
+    if (result.contains("verbosity")) {
         const verbosity_level verb = result["verbosity"].as<verbosity_level>();
         if (quiet && verb != verbosity_level::quiet) {
             detail::log_untracked(verbosity_level::full | verbosity_level::warning,
@@ -139,7 +140,7 @@ parser_scale::parser_scale(const mpi::communicator &comm, int argc, char **argv)
     }
 
     // parse input data filename
-    if (!result.count("input")) {
+    if (!result.contains("input")) {
         if (comm.is_main_rank()) {
             std::cerr << fmt::format(fmt::fg(fmt::color::red), "ERROR: missing input file!\n") << std::endl;
             std::cout << options.help() << std::endl;
@@ -149,12 +150,12 @@ parser_scale::parser_scale(const mpi::communicator &comm, int argc, char **argv)
     input_filename = result["input"].as<decltype(input_filename)>();
 
     // parse output model filename
-    if (result.count("scaled")) {
+    if (result.contains("scaled")) {
         scaled_filename = result["scaled"].as<decltype(scaled_filename)>();
     }
 
     // can only use one of save_filename or restore_filename
-    if (result.count("save_filename") && result.count("restore_filename")) {
+    if (result.contains("save_filename") && result.contains("restore_filename")) {
         if (comm.is_main_rank()) {
             std::cerr << fmt::format(fmt::fg(fmt::color::red), "ERROR: cannot use -s (--save_filename) and -r (--restore_filename) simultaneously!\n") << std::endl;
             std::cout << options.help() << std::endl;
@@ -163,13 +164,13 @@ parser_scale::parser_scale(const mpi::communicator &comm, int argc, char **argv)
     }
 
     // parse the file name to save the calculated weights to
-    if (result.count("save_filename")) {
+    if (result.contains("save_filename")) {
         save_filename = result["save_filename"].as<decltype(save_filename)>();
     }
 
     // parse the file name to restore the previously saved weights from
-    if (result.count("restore_filename")) {
-        if (result.count("lower") || result.count("upper")) {
+    if (result.contains("restore_filename")) {
+        if (result.contains("lower") || result.contains("upper")) {
             detail::log_untracked(verbosity_level::full | verbosity_level::warning,
                                   comm,
                                   "WARNING: provided -l (--lower) and/or -u (--upper) together with -r (--restore_filename); ignoring -l/-u\n");
@@ -179,7 +180,7 @@ parser_scale::parser_scale(const mpi::communicator &comm, int argc, char **argv)
 
 #if defined(PLSSVM_PERFORMANCE_TRACKER_ENABLED)
     // parse performance tracking filename
-    if (result.count("performance_tracking")) {
+    if (result.contains("performance_tracking")) {
         performance_tracking_filename = result["performance_tracking"].as<decltype(performance_tracking_filename)>();
     }
 #endif

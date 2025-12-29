@@ -138,8 +138,7 @@ class csvc : public ::plssvm::csvc,
      * @throws plssvm::exception all exceptions thrown in the base class constructors
      */
     explicit csvc(const parameter params) :
-        ::plssvm::csvm{ mpi::communicator{}, params },
-        ::plssvm::openmp::csvm{} { }
+        ::plssvm::csvm{ mpi::communicator{}, params } { }
 
     /**
      * @brief Construct a new C-SVC using the OpenMP backend with the parameters given through @p params.
@@ -148,8 +147,7 @@ class csvc : public ::plssvm::csvc,
      * @throws plssvm::exception all exceptions thrown in the base class constructors
      */
     explicit csvc(mpi::communicator comm, const parameter params) :
-        ::plssvm::csvm{ std::move(comm), params },
-        ::plssvm::openmp::csvm{} { }
+        ::plssvm::csvm{ std::move(comm), params } { }
 
     /**
      * @brief Construct a new C-SVC using the OpenMP backend on the @p target platform with the parameters given through @p params.
@@ -230,8 +228,7 @@ class csvr : public ::plssvm::csvr,
      * @throws plssvm::exception all exceptions thrown in the base class constructors
      */
     explicit csvr(const parameter params) :
-        ::plssvm::csvm{ mpi::communicator{}, params },
-        ::plssvm::openmp::csvm{} { }
+        ::plssvm::csvm{ mpi::communicator{}, params } { }
 
     /**
      * @brief Construct a new C-SVR using the OpenMP backend with the parameters given through @p params.
@@ -240,8 +237,7 @@ class csvr : public ::plssvm::csvr,
      * @throws plssvm::exception all exceptions thrown in the base class constructors
      */
     csvr(mpi::communicator comm, const parameter params) :
-        ::plssvm::csvm{ std::move(comm), params },
-        ::plssvm::openmp::csvm{} { }
+        ::plssvm::csvm{ std::move(comm), params } { }
 
     /**
      * @brief Construct a new C-SVR using the OpenMP backend on the @p target platform with the parameters given through @p params.

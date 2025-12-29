@@ -124,7 +124,7 @@ namespace detail {
  * @param[in] tuple the tuple to clone
  */
 template <typename Tuple, std::size_t... Is>
-[[nodiscard]] constexpr auto expand_tuple(std::index_sequence<Is...>, const Tuple &tuple) {
+[[nodiscard]] constexpr auto expand_tuple([[maybe_unused]] std::index_sequence<Is...> indices, const Tuple &tuple) {
     return std::tuple_cat((static_cast<void>(Is), tuple)...);
 }
 
@@ -318,7 +318,7 @@ struct wrap_in_type_list<std::tuple<Types...>> {
 template <typename Tuple>
 using wrap_in_type_list_t = typename wrap_in_type_list<Tuple>::type;
 
-template <typename Tuple, typename CurrentTuple, typename>
+template <typename, typename, typename>
 struct combine_types_impl { };
 
 /**

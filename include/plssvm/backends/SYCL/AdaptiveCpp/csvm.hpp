@@ -43,6 +43,8 @@ namespace plssvm {
 
 namespace adaptivecpp {
 
+using namespace plssvm::sycl;  // NOLINT(google-build-using-namespace): necessary to make general SYCL functionality available in the AdaptiveCpp specific namespace
+
 /**
  * @brief A C-SVM implementation using AdaptiveCpp as SYCL backend.
  */
@@ -72,7 +74,7 @@ class csvm : public ::plssvm::detail::gpu_csvm<detail::device_ptr, detail::queue
     template <typename... Args, PLSSVM_REQUIRES(::plssvm::detail::has_only_sycl_parameter_named_args_v<Args...>)>
     explicit csvm(const target_platform target = target_platform::automatic, Args &&...named_args) {
         // check igor parameter
-        igor::parser parser{ std::forward<Args>(named_args)... };
+        const igor::parser parser{ std::forward<Args>(named_args)... };
 
         // check whether a specific SYCL data parallel kernel has been requested
         if constexpr (parser.has(sycl_data_parallel_kernel)) {
@@ -82,7 +84,8 @@ class csvm : public ::plssvm::detail::gpu_csvm<detail::device_ptr, detail::queue
 #if !defined(PLSSVM_SYCL_HIERARCHICAL_AND_SCOPED_KERNELS_ENABLED)
             if (data_parallel_kernel_type_ == sycl::data_parallel_kernel::hierarchical) {
                 throw ::plssvm::invalid_parameter_exception{ "The provided sycl::data_parallel_kernel::hierarchical is disabled for the AdaptiveCpp SYCL backend!" };
-            } else if (data_parallel_kernel_type_ == sycl::data_parallel_kernel::scoped) {
+            }
+            if (data_parallel_kernel_type_ == sycl::data_parallel_kernel::scoped) {
                 throw ::plssvm::invalid_parameter_exception{ "he provided sycl::data_parallel_kernel::scoped is disabled for the AdaptiveCpp SYCL backend!" };
             }
 #endif

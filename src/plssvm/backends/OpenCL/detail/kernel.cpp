@@ -9,6 +9,7 @@
 #include "plssvm/backends/OpenCL/detail/kernel.hpp"
 
 #include "plssvm/backends/OpenCL/detail/utility.hpp"  // PLSSVM_OPENCL_ERROR_CHECK
+#include "plssvm/exceptions/exceptions.hpp"           // plssvm::exception
 
 #include "CL/cl.h"  // cl_kernel, clReleaseKernel
 
@@ -35,7 +36,7 @@ kernel &kernel::operator=(kernel &&other) noexcept {
 kernel::~kernel() {
     // avoid compiler warnings
     try {
-        if (compute_kernel) {
+        if (static_cast<bool>(compute_kernel)) {
             PLSSVM_OPENCL_ERROR_CHECK(clReleaseKernel(compute_kernel), "error releasing cl_kernel")
         }
     } catch (const plssvm::exception &e) {

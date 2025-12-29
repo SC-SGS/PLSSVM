@@ -20,6 +20,8 @@
 
     #include "sycl/sycl.hpp"  // ::sycl::device
 #elif defined(PLSSVM_STDPAR_BACKEND_HAS_NVHPC)
+    #include "cuda_runtime_api.h"
+
     #include <cuda/atomic>  // cuda::atomic_ref, cuda::thread_scope_device
 #elif defined(PLSSVM_STDPAR_BACKEND_HAS_HIPSTDPAR)
 
@@ -40,7 +42,7 @@ using atomic_ref = ::cuda::atomic_ref<T, ::cuda::thread_scope_device>;
 #elif defined(PLSSVM_STDPAR_BACKEND_HAS_HIPSTDPAR)
 template <typename T>
 struct atomic_ref {
-    T &value_;
+    T &value_;  // NOLINT(cppcoreguidelines-avoid-const-or-ref-data-members): must by a reference
 
     __device__ T operator+=(const T other) noexcept {
         atomicAdd(&value_, other);

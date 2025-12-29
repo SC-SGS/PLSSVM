@@ -24,11 +24,11 @@
  */
 #define PLSSVM_CREATE_EXCEPTION_TYPE_NAME(type) \
     template <>                                 \
-    [[nodiscard]] constexpr inline std::string_view exception_type_name<type>() { return #type; }
+    [[nodiscard]] constexpr std::string_view exception_type_name<type>() { return #type; }
 
 namespace util {
-// used that `exception_type_name` doesn't also print plssvm::
-using namespace plssvm;
+
+using namespace plssvm;  // NOLINT(google-build-using-namespace): used that `exception_type_name` doesn't also print plssvm::
 
 /**
  * @brief Tries to convert the given exception to its name as string representation.
@@ -37,7 +37,7 @@ using namespace plssvm;
  * @return the name of the exception type `T` (`[[nodiscard]]`)
  */
 template <typename T>
-[[nodiscard]] constexpr inline std::string_view exception_type_name() = delete;
+[[nodiscard]] constexpr std::string_view exception_type_name() = delete;
 
 // create exception type -> string mapping for all custom exception types
 PLSSVM_CREATE_EXCEPTION_TYPE_NAME(exception)

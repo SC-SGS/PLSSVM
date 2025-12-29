@@ -25,7 +25,6 @@
 
 #include <cstddef>  // std::size_t
 #include <string>   // std::string
-#include <variant>  // std::get
 #include <vector>   // std::vector
 
 template <typename T>
@@ -82,7 +81,7 @@ class LIBSVMClassificationModelHeaderParseValid : public ::testing::Test {
 
 TYPED_TEST_SUITE(LIBSVMClassificationModelHeaderParseValid, util::classification_label_type_kernel_function_and_classification_type_gtest, naming::test_parameter_to_name);
 
-TYPED_TEST(LIBSVMClassificationModelHeaderParseValid, read) {
+TYPED_TEST(LIBSVMClassificationModelHeaderParseValid, Read) {
     using label_type = typename TestFixture::fixture_label_type;
     constexpr plssvm::kernel_function_type kernel = TestFixture::fixture_kernel;
     constexpr plssvm::classification_type classification = TestFixture::fixture_classification;

@@ -20,7 +20,7 @@
  * @param[in] alpha the scalar alpha value
  * @param[in] q the vector used in the dimensional reduction
  * @param[in] data the data points to calculate the implicit kernel matrix from
- * @param[in] num_rows the number of data points
+ * @param[in] num_rows the total number of data points (= total number of rows)
  * @param[in] device_num_rows the number of rows the current device is responsible for
  * @param[in] device_row_offset the first row in @p data the current device is responsible for
  * @param[in] num_features the number of features per data point

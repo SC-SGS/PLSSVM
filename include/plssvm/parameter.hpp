@@ -30,6 +30,7 @@
 
 #include <iosfwd>       // forward declare std::ostream and std::istream
 #include <string_view>  // std::string_view
+#include <type_traits>  // std::underlying_type_t
 #include <utility>      // std::forward
 #include <variant>      // std::variant, std::holds_alternative, std::get
 
@@ -126,7 +127,7 @@ struct parameter {
         gamma{ gamma_p },
         coef0{ coef0_p },
         cost{ cost_p } {
-        // sanity check the provided parameter values
+        // check the provided parameter values
         this->sanity_check_parameter();
     }
 
@@ -140,7 +141,7 @@ struct parameter {
     explicit parameter(const parameter &params, Args &&...named_args) :
         parameter{ params } {
         this->set_named_arguments(std::forward<Args>(named_args)...);
-        // sanity check the provided parameter values
+        // check the provided parameter values
         this->sanity_check_parameter();
     }
 
@@ -152,7 +153,7 @@ struct parameter {
     template <typename... Args, PLSSVM_REQUIRES(detail::has_only_named_args_v<Args...>)>
     constexpr explicit parameter(Args &&...named_args) {
         this->set_named_arguments(std::forward<Args>(named_args)...);
-        // sanity check the provided parameter values
+        // check the provided parameter values
         this->sanity_check_parameter();
     }
 
@@ -175,7 +176,7 @@ struct parameter {
      * @param[in] other the other parameter set compared to this one
      * @return `true` if both parameter sets are equivalent, `false` otherwise (`[[nodiscard]]`)
      */
-    [[nodiscard]] constexpr bool equivalent(const parameter &other) const noexcept {
+    [[nodiscard]] constexpr bool equivalent(const parameter &other) const {
         // equality check, but only the member variables that a necessary for the current kernel type are compared!
         // cannot be equal if both parameters have different kernel types
         if (kernel_type != other.kernel_type) {
@@ -208,7 +209,7 @@ struct parameter {
      */
     template <typename... Args>
     void set_named_arguments(Args &&...named_args) {
-        igor::parser parser{ std::forward<Args>(named_args)... };
+        const igor::parser parser{ std::forward<Args>(named_args)... };
 
         // compile time check: only named parameter are permitted
         static_assert(!parser.has_unnamed_arguments(), "Can only use named parameter!");
@@ -276,9 +277,10 @@ struct parameter {
      * @throws plssvm::invalid_parameter_exception if the gamma value for the polynomial or radial basis function kernel is **not** greater than zero
      */
     void sanity_check_parameter() const {
+        constexpr static std::underlying_type_t<kernel_function_type> num_kernel_functions = 6;
         // kernel: valid kernel function
         const auto kernel_type_value = detail::to_underlying(kernel_type);
-        if (kernel_type_value < 0 || kernel_type_value >= 6) {
+        if (kernel_type_value < 0 || kernel_type_value >= num_kernel_functions) {
             throw invalid_parameter_exception{ fmt::format("Invalid kernel function with value {} given!", kernel_type_value) };
         }
 
@@ -308,7 +310,7 @@ struct parameter {
  * @param[in] rhs the second parameter set
  * @return `true` if both parameter sets are equal, `false` otherwise (`[[nodiscard]]`)
  */
-[[nodiscard]] constexpr bool operator==(const parameter &lhs, const parameter &rhs) noexcept {
+[[nodiscard]] constexpr bool operator==(const parameter &lhs, const parameter &rhs) {
     return lhs.kernel_type == rhs.kernel_type && lhs.degree == rhs.degree && lhs.gamma == rhs.gamma && lhs.coef0 == rhs.coef0 && lhs.cost == rhs.cost;
 }
 
@@ -319,7 +321,7 @@ struct parameter {
  * @param[in] rhs the second parameter set
  * @return `true` if both parameter sets are unequal, `false` otherwise (`[[nodiscard]]`)
  */
-[[nodiscard]] constexpr bool operator!=(const parameter &lhs, const parameter &rhs) noexcept {
+[[nodiscard]] constexpr bool operator!=(const parameter &lhs, const parameter &rhs) {
     return !(lhs == rhs);
 }
 
@@ -332,7 +334,7 @@ struct parameter {
  * @param[in] rhs the second parameter set
  * @return `true` if both parameter sets are equivalent, `false` otherwise (`[[nodiscard]]`)
  */
-[[nodiscard]] constexpr bool equivalent(const parameter &lhs, const parameter &rhs) noexcept {
+[[nodiscard]] constexpr bool equivalent(const parameter &lhs, const parameter &rhs) {
     return lhs.equivalent(rhs);
 }
 

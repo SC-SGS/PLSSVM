@@ -135,8 +135,6 @@ __kernel void PLSSVM_DEVICE_KERNEL_PREDICT_NAME(__global real_type *prediction, 
                     // the bias (rho) must only be applied once for all support vectors
                     if (blockIdx_y == (ulong) 0) {
                         out_cache[local_id_1][internal * THREAD_BLOCK_SIZE + local_id_0] = -rho[class_block + threadIdx_y];
-                    } else {
-                        out_cache[local_id_1][internal * THREAD_BLOCK_SIZE + local_id_0] = (real_type) 0.0;
                     }
                 }
             }

@@ -16,11 +16,12 @@
 #include "plssvm/backends/SYCL/data_parallel_kernels.hpp"    // plssvm::sycl::data_parallel_kernel
 #include "plssvm/backends/SYCL/detail/atomics.hpp"           // plssvm::sycl::detail::atomic_op
 #include "plssvm/backends/SYCL/kernel/kernel_functions.hpp"  // plssvm::sycl::detail::{feature_reduce, apply_kernel_function}
-#include "plssvm/constants.hpp"                              // plssvm::real_type
+#include "plssvm/constants.hpp"                              // plssvm::real_type, plssvm::THREAD_BLOCK_SIZE, plssvm::INTERNAL_BLOCK_SIZE
 #include "plssvm/kernel_function_types.hpp"                  // plssvm::kernel_function_type
 
 #include "sycl/sycl.hpp"  // sycl::handler, sycl::range, sycl::nd_item
 
+#include <array>    // std::array
 #include <cstddef>  // std::size_t
 #include <tuple>    // std::tuple, std::make_tuple
 
@@ -37,8 +38,7 @@ class device_kernel_w_linear {
 
     /**
      * @brief Initialize the SYCL kernel function object.
-     * @param[in] cgh the SYCL handler used to allocate the local memory
-     * @param[in,out] w the vector to speedup the linear prediction
+     * @param[out] w the vector to speedup the linear prediction
      * @param[in] alpha the previously learned weights
      * @param[in] support_vectors the support vectors
      * @param[in] num_features the number of features
@@ -84,7 +84,7 @@ class device_kernel_w_linear {
         const auto blockIdx_y = static_cast<std::size_t>(nd_idx.get_group(1)) + grid_y_offset_;  // current work-group in global range y-dimension + offsets if the global range is too large
 
         // create a work-item private array used for internal caching
-        real_type temp[INTERNAL_BLOCK_SIZE][INTERNAL_BLOCK_SIZE]{};
+        std::array<std::array<real_type, INTERNAL_BLOCK_SIZE>, INTERNAL_BLOCK_SIZE> temp{};
 
         {
             // calculate the indices used in the current work-item, pays attention to coalesced memory accesses
@@ -178,7 +178,6 @@ class device_kernel_predict_linear {
 
     /**
      * @brief Initialize the SYCL kernel function object.
-     * @param[in] cgh the SYCL handler used to allocate the local memory
      * @param[out] prediction the predicted values
      * @param[in] w the vector to speedup the calculations
      * @param[in] rho the previously learned bias
@@ -223,7 +222,7 @@ class device_kernel_predict_linear {
         const auto blockIdx_y = static_cast<std::size_t>(nd_idx.get_group(1)) + grid_y_offset_;  // current work-group in global range y-dimension + offsets if the global range is too large
 
         // create a work-item private array used for internal caching
-        real_type temp[INTERNAL_BLOCK_SIZE][INTERNAL_BLOCK_SIZE]{};
+        std::array<std::array<real_type, INTERNAL_BLOCK_SIZE>, INTERNAL_BLOCK_SIZE> temp{};
 
         {
             // calculate the indices used in the current thread, pays attention to coalesced memory accesses
@@ -320,7 +319,6 @@ class device_kernel_predict {
 
     /**
      * @brief Initialize the SYCL kernel function object.
-     * @param[in] cgh the SYCL handler used to allocate the local memory
      * @param[in] prediction the predicted values
      * @param[in] alpha the previously learned weights
      * @param[in] rho the previously learned biases
@@ -371,12 +369,12 @@ class device_kernel_predict {
         const auto blockIdx_y = static_cast<std::size_t>(nd_idx.get_group(1)) + grid_y_offset_;  // current work-group in global range y-dimension + offsets if the global range is too large
 
         // create a work-item private array used for internal caching
-        real_type temp[INTERNAL_BLOCK_SIZE][INTERNAL_BLOCK_SIZE]{};
+        std::array<std::array<real_type, INTERNAL_BLOCK_SIZE>, INTERNAL_BLOCK_SIZE> temp{};
 
         {
             // rename cached arrays
-            auto &pp_cache = cache_one_;
-            auto &sv_cache = cache_two_;
+            const auto &pp_cache = cache_one_;
+            const auto &sv_cache = cache_two_;
 
             // calculate the indices used in the current thread, pays attention to coalesced memory accesses
             const auto pp_idx_linear = blockIdx_y * blockDim_y * INTERNAL_BLOCK_SIZE_uz + threadIdx_y;  // num_predict_points
@@ -430,8 +428,8 @@ class device_kernel_predict {
 
         {
             // rename cached arrays
-            auto &alpha_cache = cache_one_;
-            auto &out_cache = cache_two_;
+            const auto &alpha_cache = cache_one_;
+            const auto &out_cache = cache_two_;
 
             // calculate the indices used in the current work-item
             const auto pp_idx = (blockIdx_y * blockDim_y + threadIdx_y) * INTERNAL_BLOCK_SIZE_uz;  // num_predict_points
@@ -459,8 +457,6 @@ class device_kernel_predict {
                         // the bias (rho) must only be applied once for all support vectors
                         if (blockIdx_x == std::size_t{ 0 }) {
                             out_cache[local_id_0][internal * THREAD_BLOCK_SIZE + local_id_1] = -rho_[class_block + threadIdx_x];
-                        } else {
-                            out_cache[local_id_0][internal * THREAD_BLOCK_SIZE + local_id_1] = real_type{ 0.0 };
                         }
                     }
                 }

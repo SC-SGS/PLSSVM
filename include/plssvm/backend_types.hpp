@@ -16,8 +16,7 @@
 #pragma once
 
 #include "plssvm/backends/SYCL/implementation_types.hpp"  // plssvm::sycl::implementation_type
-#include "plssvm/detail/type_traits.hpp"                  // plssvm::detail::remove_cvref_t
-#include "plssvm/detail/type_traits.hpp"                  // plssvm::detail::is_one_type_of
+#include "plssvm/detail/type_traits.hpp"                  // plssvm::detail::{is_one_type_of, remove_cvref_t}
 #include "plssvm/target_platforms.hpp"                    // plssvm::list_available_target_platforms
 
 #include "fmt/base.h"     // fmt::formatter

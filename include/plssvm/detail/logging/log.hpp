@@ -36,7 +36,13 @@ namespace plssvm::detail {
 template <typename... Args>
 void log(const verbosity_level msg_verbosity, const std::string_view msg, Args &&...args) {
     // first, log the message to the standard output without performance tracking
-    log_untracked(msg_verbosity, msg, args...);
+    log_untracked(msg_verbosity, msg,
+#if defined(PLSSVM_PERFORMANCE_TRACKER_ENABLED)
+                  args...
+#else
+                  std::forward<Args>(args)...
+#endif
+    );
 
     // if performance tracking has been enabled, add tracking entries
 #if defined(PLSSVM_PERFORMANCE_TRACKER_ENABLED)

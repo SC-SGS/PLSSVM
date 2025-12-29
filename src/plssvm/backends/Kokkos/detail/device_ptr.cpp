@@ -18,7 +18,7 @@
 
 #include "Kokkos_Core.hpp"  // Kokkos::View, Kokkos::HostSpace, Kokkos::MemoryUnmanaged, Kokkos::subview, Kokkos::parallel_for, Kokkos::deep_copy
 
-#include "fmt/core.h"  // fmt::format
+#include "fmt/format.h"  // fmt::format
 
 #include <algorithm>  // std::min
 #include <cstddef>    // std::size_t
@@ -42,10 +42,9 @@ device_ptr<T>::device_ptr(const size_type size, const device_wrapper &device) :
 template <typename T>
 device_ptr<T>::device_ptr(const plssvm::shape shape, const device_wrapper &device) :
     base_type{ shape, device } {
-    data_ = make_device_view_wrapper<T *>(device, this->size());
-
-    // only non-empty pointers must be memset in the constructor
+    // only non-empty pointers must be initialized (and memset)
     if (this->size() != std::size_t{ 0 }) {
+        data_ = make_device_view_wrapper<T *>(device, this->size());
         this->memset(0);
     }
 }
@@ -64,6 +63,7 @@ void device_ptr<T>::memset(const int pattern, const size_type pos, const size_ty
             using kokkos_execution_space_type = ::plssvm::detail::remove_cvref_t<decltype(exec)>;
 
             // create view of the device data cast to unsigned char
+            // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast): reinterpret_cast necessary (only set values on a byte level)
             const Kokkos::View<unsigned char *, kokkos_execution_space_type> view{ reinterpret_cast<unsigned char *>(data.data() + pos), rnum_bytes };
             // fill the view with the pattern -> acts like a memset
             Kokkos::deep_copy(exec, view, static_cast<unsigned char>(pattern));

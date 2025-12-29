@@ -9,8 +9,8 @@
  * @brief Implements a `move_only_any` class based on [`std::any`](https://en.cppreference.com/w/cpp/utility/any) that works with move-only types.
  */
 
-#ifndef PLSSVM_DETAIL_move_only_any_HPP_
-#define PLSSVM_DETAIL_move_only_any_HPP_
+#ifndef PLSSVM_DETAIL_MOVE_ONLY_ANY_HPP_
+#define PLSSVM_DETAIL_MOVE_ONLY_ANY_HPP_
 #pragma once
 
 #include "plssvm/detail/type_traits.hpp"  // PLSSVM_REQUIRES, plssvm::detail::remove_cvref_t
@@ -48,15 +48,15 @@ class move_only_any {
   private:
     // forward declare cast functions as friends
     template <typename T>
-    friend T move_only_any_cast(const move_only_any &);
+    friend T move_only_any_cast(const move_only_any &operand);
     template <typename T>
-    friend T move_only_any_cast(move_only_any &);
+    friend T move_only_any_cast(move_only_any &operand);
     template <typename T>
-    friend T move_only_any_cast(move_only_any &&);
+    friend T move_only_any_cast(move_only_any &&operand);
     template <typename T>
-    friend const T *move_only_any_cast(const move_only_any *) noexcept;
+    friend const T *move_only_any_cast(const move_only_any *operand) noexcept;
     template <typename T>
-    friend T *move_only_any_cast(move_only_any *) noexcept;
+    friend T *move_only_any_cast(move_only_any *operand) noexcept;
 
     /**
      * @brief Type erase base class, such that `plssvm::detail::move_only_any` does not have to hold a templated member (which is not possible in C++).
@@ -140,8 +140,7 @@ class move_only_any {
      * @tparam ValueType the contained object will have the type `std::decay_t<ValueType>`
      * @param[in,out] value the object to type erase
      */
-    template <typename ValueType,
-              PLSSVM_REQUIRES(!std::is_same_v<std::decay_t<ValueType>, move_only_any>)>
+    template <typename ValueType, PLSSVM_REQUIRES(!std::is_same_v<std::decay_t<ValueType>, move_only_any>)>
     explicit move_only_any(ValueType &&value) :
         object_ptr_{ std::make_unique<type_erasure_wrapper<std::decay_t<ValueType>>>(std::forward<ValueType>(value)) } { }
 
@@ -149,10 +148,11 @@ class move_only_any {
      * @brief Construct a `plssvm::detail::move_only_any` holding an object of type @p ValueType inplace using @p args.
      * @tparam ValueType the contained object will have the type `std::decay_t<ValueType>`
      * @tparam Args the types used to construct @p ValueType
+     * @param[in] in_place_tag used for constructor overloading
      * @param[in,out] args the parameters used to construct an object of type @p ValueType inplace
      */
     template <typename ValueType, typename... Args, PLSSVM_REQUIRES(std::is_constructible_v<std::decay_t<ValueType>, Args...>)>
-    explicit move_only_any(std::in_place_type_t<ValueType>, Args &&...args) :
+    explicit move_only_any([[maybe_unused]] std::in_place_type_t<ValueType> in_place_tag, Args &&...args) :
         object_ptr_{ std::make_unique<type_erasure_wrapper<std::decay_t<ValueType>>>(std::forward<Args>(args)...) } { }
 
     /**
@@ -160,11 +160,12 @@ class move_only_any {
      * @tparam ValueType the contained object will have the type `std::decay_t<ValueType>`
      * @tparam U the types in the `std::initializer_list`
      * @tparam Args the types used to construct @p ValueType
+     * @param[in] in_place_tag used for constructor overloading
      * @param[in] il the `std::initializer_list` to construct an object of type @p ValueType
      * @param[in,out] args the parameters used to construct an object of type @p ValueType inplace
      */
     template <typename ValueType, typename U, typename... Args, PLSSVM_REQUIRES(std::is_constructible_v<std::decay_t<ValueType>, std::initializer_list<U>, Args...>)>
-    explicit move_only_any(std::in_place_type_t<ValueType>, std::initializer_list<U> il, Args &&...args) :
+    explicit move_only_any([[maybe_unused]] std::in_place_type_t<ValueType> in_place_tag, std::initializer_list<U> il, Args &&...args) :
         object_ptr_{ std::make_unique<type_erasure_wrapper<std::decay_t<ValueType>>>(il, std::forward<Args>(args)...) } { }
 
     /**
@@ -283,7 +284,7 @@ template <typename T>
 [[nodiscard]] inline T move_only_any_cast(const move_only_any &operand) {
     using U = detail::remove_cvref_t<T>;
     static_assert(std::is_constructible_v<T, const U &>);
-    if (auto *ptr = move_only_any_cast<U>(&operand)) {
+    if (auto *ptr = move_only_any_cast<U>(&operand); ptr != nullptr) {
         // get the value if possible
         return static_cast<T>(*ptr);
     }
@@ -301,7 +302,7 @@ template <typename T>
 [[nodiscard]] inline T move_only_any_cast(move_only_any &operand) {
     using U = detail::remove_cvref_t<T>;
     static_assert(std::is_constructible_v<T, U &>);
-    if (auto *ptr = move_only_any_cast<U>(&operand)) {
+    if (auto *ptr = move_only_any_cast<U>(&operand); ptr != nullptr) {
         // get the value if possible
         return static_cast<T>(*ptr);
     }
@@ -316,10 +317,10 @@ template <typename T>
  * @return the contained object (`[[nodiscard]]`)
  */
 template <typename T>
-[[nodiscard]] inline T move_only_any_cast(move_only_any &&operand) {
+[[nodiscard]] inline T move_only_any_cast(move_only_any &&operand) {  // NOLINT(cppcoreguidelines-rvalue-reference-param-not-moved): the object is moved after the cast
     using U = detail::remove_cvref_t<T>;
     static_assert(std::is_constructible_v<T, U>);
-    if (auto *ptr = move_only_any_cast<U>(&operand)) {
+    if (auto *ptr = move_only_any_cast<U>(&operand); ptr != nullptr) {
         // get the value if possible
         return static_cast<T>(std::move(*ptr));
     }
@@ -340,7 +341,8 @@ template <typename T>
     if (operand == nullptr) {
         // return a nullptr if a nullptr is provided
         return nullptr;
-    } else if (auto *ptr = dynamic_cast<const move_only_any::type_erasure_wrapper<U> *>(std::addressof(*operand->object_ptr_))) {
+    }
+    if (auto *ptr = dynamic_cast<const move_only_any::type_erasure_wrapper<U> *>(std::addressof(*operand->object_ptr_)); ptr != nullptr) {
         return std::addressof(ptr->wrapped_object_);
     }
     return nullptr;
@@ -359,7 +361,8 @@ template <typename T>
     if (operand == nullptr) {
         // return a nullptr if a nullptr is provided
         return nullptr;
-    } else if (auto *ptr = dynamic_cast<move_only_any::type_erasure_wrapper<U> *>(std::addressof(*operand->object_ptr_))) {
+    }
+    if (auto *ptr = dynamic_cast<move_only_any::type_erasure_wrapper<U> *>(std::addressof(*operand->object_ptr_)); ptr != nullptr) {
         return std::addressof(ptr->wrapped_object_);
     }
     return nullptr;
@@ -393,4 +396,4 @@ template <typename T, typename U, typename... Args>
 
 }  // namespace plssvm::detail
 
-#endif  // PLSSVM_DETAIL_move_only_any_HPP_
+#endif  // PLSSVM_DETAIL_MOVE_ONLY_ANY_HPP_

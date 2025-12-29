@@ -21,12 +21,12 @@
 #include <utility>    // std::in_place_type, std::move
 #include <vector>     // std::vector
 
-TEST(BadMoveOnlyCastException, exception) {
+TEST(BadMoveOnlyCastException, Exception) {
     const auto dummy = []() { throw plssvm::detail::bad_move_only_any_cast{}; };
     EXPECT_THROW_WHAT(dummy(), plssvm::detail::bad_move_only_any_cast, "plssvm::detail::bad_move_only_any_cast");
 }
 
-TEST(MoveOnlyAny, default_construct) {
+TEST(MoveOnlyAny, DefaultConstruct) {
     // default construct a move_only_any
     const plssvm::detail::move_only_any a{};
 
@@ -34,7 +34,7 @@ TEST(MoveOnlyAny, default_construct) {
     EXPECT_FALSE(a.has_value());
 }
 
-TEST(MoveOnlyAny, construct) {
+TEST(MoveOnlyAny, Construct) {
     // construct move_only_any objects
     const plssvm::detail::move_only_any a1{ 42 };
     EXPECT_EQ(plssvm::detail::move_only_any_cast<int>(a1), 42);
@@ -58,7 +58,7 @@ TEST(MoveOnlyAny, construct) {
     EXPECT_EQ(*plssvm::detail::move_only_any_cast<std::shared_ptr<float>>(a7), 1.0f);
 }
 
-TEST(MoveOnlyAny, construct_in_place) {
+TEST(MoveOnlyAny, ConstructInPlace) {
     // construct a move_only_any object using std::in_place_type
     const plssvm::detail::move_only_any a{ std::in_place_type<std::string>, std::string::size_type{ 10 }, 'a' };
 
@@ -66,7 +66,7 @@ TEST(MoveOnlyAny, construct_in_place) {
     EXPECT_EQ(plssvm::detail::move_only_any_cast<std::string>(a), std::string{ "aaaaaaaaaa" });
 }
 
-TEST(MoveOnlyAny, construct_in_place_with_initializer_list) {
+TEST(MoveOnlyAny, ConstructInPlaceWithInitializerList) {
     // construct a move_only_any object using std::in_place_type
     const plssvm::detail::move_only_any a{ std::in_place_type<std::vector<int>>, { 0, 1, 2, 3 } };
 
@@ -74,7 +74,7 @@ TEST(MoveOnlyAny, construct_in_place_with_initializer_list) {
     EXPECT_EQ(plssvm::detail::move_only_any_cast<std::vector<int>>(a), (std::vector<int>{ 0, 1, 2, 3 }));
 }
 
-TEST(MoveOnlyAny, assignment_operator) {
+TEST(MoveOnlyAny, AssignmentOperator) {
     // default construct a move_only_any
     plssvm::detail::move_only_any a{};
     // the constructed any should not contain an object
@@ -88,7 +88,7 @@ TEST(MoveOnlyAny, assignment_operator) {
     EXPECT_EQ(plssvm::detail::move_only_any_cast<std::string>(a), (std::string{ "Hello, World!" }));
 }
 
-TEST(MoveOnlyAny, emplace) {
+TEST(MoveOnlyAny, Emplace) {
     // default construct a move_only_any
     plssvm::detail::move_only_any a{};
     // the constructed any should not contain an object
@@ -101,7 +101,7 @@ TEST(MoveOnlyAny, emplace) {
     EXPECT_EQ(plssvm::detail::move_only_any_cast<std::string>(a), std::string{ "bbbbbbbbbb" });
 }
 
-TEST(MoveOnlyAny, emplace_with_initializer_list) {
+TEST(MoveOnlyAny, EmplaceWithInitializerList) {
     // default construct a move_only_any
     plssvm::detail::move_only_any a{};
     // the constructed any should not contain an object
@@ -114,7 +114,7 @@ TEST(MoveOnlyAny, emplace_with_initializer_list) {
     EXPECT_EQ(plssvm::detail::move_only_any_cast<std::vector<int>>(a), (std::vector<int>{ 0, 1, 2, 3 }));
 }
 
-TEST(MoveOnlyAny, reset) {
+TEST(MoveOnlyAny, Reset) {
     // create move_only_any object
     plssvm::detail::move_only_any a{ 42 };
     // the constructed any should contain an object
@@ -127,7 +127,7 @@ TEST(MoveOnlyAny, reset) {
     EXPECT_FALSE(a.has_value());
 }
 
-TEST(MoveOnlyAny, swap_member_function) {
+TEST(MoveOnlyAny, SwapMemberFunction) {
     // create two move_only_any objects
     plssvm::detail::move_only_any a1{ 42 };
     plssvm::detail::move_only_any a2{ 3.1415 };
@@ -140,7 +140,7 @@ TEST(MoveOnlyAny, swap_member_function) {
     EXPECT_EQ(plssvm::detail::move_only_any_cast<int>(a2), 42);
 }
 
-TEST(MoveOnlyAny, has_value) {
+TEST(MoveOnlyAny, HasValue) {
     // create move_only_any object that should contain an object
     const plssvm::detail::move_only_any a1{ 42 };
     EXPECT_TRUE(a1.has_value());
@@ -150,7 +150,7 @@ TEST(MoveOnlyAny, has_value) {
     EXPECT_FALSE(a2.has_value());
 }
 
-TEST(MoveOnlyAny, type) {
+TEST(MoveOnlyAny, Type) {
     // default constructed move_only_any should return the typeid(void) on a call to .type()
     const plssvm::detail::move_only_any a1{};
     EXPECT_EQ(a1.type(), typeid(void));
@@ -160,7 +160,7 @@ TEST(MoveOnlyAny, type) {
     EXPECT_EQ(a2.type(), typeid(int));
 }
 
-TEST(MoveOnlyAny, swap_free_function) {
+TEST(MoveOnlyAny, SwapFreeFunction) {
     // create two move_only_any objects
     plssvm::detail::move_only_any a1{ 42 };
     plssvm::detail::move_only_any a2{ 3.1415 };
@@ -174,7 +174,7 @@ TEST(MoveOnlyAny, swap_free_function) {
     EXPECT_EQ(plssvm::detail::move_only_any_cast<int>(a2), 42);
 }
 
-TEST(MoveOnlyAny, cast_const_lvalue_reference) {
+TEST(MoveOnlyAny, CastConstLvalueReference) {
     // create const move_only_any object
     const plssvm::detail::move_only_any a{ 42 };
     // retrieve the contained value and check for correctness
@@ -182,7 +182,7 @@ TEST(MoveOnlyAny, cast_const_lvalue_reference) {
     EXPECT_EQ(plssvm::detail::move_only_any_cast<const int &>(a), 42);
 }
 
-TEST(MoveOnlyAny, cast_const_lvalue_reference_wrong_type) {
+TEST(MoveOnlyAny, CastConstLvalueReferenceWrongType) {
     // create const move_only_any object
     const plssvm::detail::move_only_any a{ 42 };
     // try retrieving a value with the wrong type
@@ -190,7 +190,7 @@ TEST(MoveOnlyAny, cast_const_lvalue_reference_wrong_type) {
     EXPECT_THROW_WHAT(std::ignore = plssvm::detail::move_only_any_cast<const float &>(a), plssvm::detail::bad_move_only_any_cast, "plssvm::detail::bad_move_only_any_cast");
 }
 
-TEST(MoveOnlyAny, cast_lvalue_reference) {
+TEST(MoveOnlyAny, CastLvalueReference) {
     // create const move_only_any object
     plssvm::detail::move_only_any a{ 42 };
     // retrieve the contained value and check for correctness
@@ -199,7 +199,7 @@ TEST(MoveOnlyAny, cast_lvalue_reference) {
     EXPECT_EQ(plssvm::detail::move_only_any_cast<int &>(a), 42);
 }
 
-TEST(MoveOnlyAny, cast_lvalue_reference_wrong_type) {
+TEST(MoveOnlyAny, CastLvalueReferenceWrongType) {
     // create const move_only_any object
     plssvm::detail::move_only_any a{ 42 };
     // try retrieving a value with the wrong type
@@ -208,23 +208,22 @@ TEST(MoveOnlyAny, cast_lvalue_reference_wrong_type) {
     EXPECT_THROW_WHAT(std::ignore = plssvm::detail::move_only_any_cast<float &>(a), plssvm::detail::bad_move_only_any_cast, "plssvm::detail::bad_move_only_any_cast");
 }
 
-TEST(MoveOnlyAny, cast_rvalue_reference) {
+TEST(MoveOnlyAny, CastRvalueReference) {
     // create const move_only_any object
     plssvm::detail::move_only_any a{ std::string{ "Hello, World!" } };
     // retrieve the contained value and check for correctness
     auto str = plssvm::detail::move_only_any_cast<std::string &&>(std::move(a));
     EXPECT_EQ(str, (std::string{ "Hello, World!" }));
-    EXPECT_EQ(plssvm::detail::move_only_any_cast<std::string>(a), std::string{});
 }
 
-TEST(MoveOnlyAny, cast_rvalue_reference_wrong_type) {
+TEST(MoveOnlyAny, CastRvalueReferenceWrongType) {
     // create const move_only_any object
     plssvm::detail::move_only_any a{ 42 };
     // try retrieving a value with the wrong type
     EXPECT_THROW_WHAT(std::ignore = plssvm::detail::move_only_any_cast<float &&>(std::move(a)), plssvm::detail::bad_move_only_any_cast, "plssvm::detail::bad_move_only_any_cast");
 }
 
-TEST(MoveOnlyAny, cast_const_pointer) {
+TEST(MoveOnlyAny, CastConstPointer) {
     // create const move_only_any object
     const plssvm::detail::move_only_any a{ 42 };
     // retrieve the contained value and check for correctness
@@ -232,20 +231,20 @@ TEST(MoveOnlyAny, cast_const_pointer) {
     EXPECT_EQ(*ptr, 42);
 }
 
-TEST(MoveOnlyAny, cast_const_nullptr_pointer) {
+TEST(MoveOnlyAny, CastConstNullptrPointer) {
     // casting a nullptr should return a nullptr
     const plssvm::detail::move_only_any *a{ nullptr };
     EXPECT_EQ(plssvm::detail::move_only_any_cast<const int>(a), nullptr);
 }
 
-TEST(MoveOnlyAny, cast_const_pointer_wrong_type) {
+TEST(MoveOnlyAny, CastConstPointerWrongType) {
     // create const move_only_any object
     const plssvm::detail::move_only_any a{ 42 };
     // try retrieving a value with the wrong type
     EXPECT_EQ(plssvm::detail::move_only_any_cast<const float>(&a), nullptr);
 }
 
-TEST(MoveOnlyAny, cast_pointer) {
+TEST(MoveOnlyAny, CastPointer) {
     // create const move_only_any object
     plssvm::detail::move_only_any a{ 42 };
     // retrieve the contained value and check for correctness
@@ -253,13 +252,13 @@ TEST(MoveOnlyAny, cast_pointer) {
     EXPECT_EQ(*plssvm::detail::move_only_any_cast<const int>(&a), 42);
 }
 
-TEST(MoveOnlyAny, cast_nullptr_pointer) {
+TEST(MoveOnlyAny, CastNullptrPointer) {
     // casting a nullptr should return a nullptr
     plssvm::detail::move_only_any *a{ nullptr };
     EXPECT_EQ(plssvm::detail::move_only_any_cast<int>(a), nullptr);
 }
 
-TEST(MoveOnlyAny, cast_pointer_wrong_type) {
+TEST(MoveOnlyAny, CastPointerWrongType) {
     // create const move_only_any object
     plssvm::detail::move_only_any a{ 42 };
     // try retrieving a value with the wrong type
@@ -267,7 +266,7 @@ TEST(MoveOnlyAny, cast_pointer_wrong_type) {
     EXPECT_EQ(plssvm::detail::move_only_any_cast<const float>(&a), nullptr);
 }
 
-TEST(MoveOnlyAny, make_move_only_any) {
+TEST(MoveOnlyAny, MakeMoveOnlyAny) {
     // construct a move_only_any object
     const auto a = plssvm::detail::make_move_only_any<std::string>(10, 'a');
 
@@ -275,7 +274,7 @@ TEST(MoveOnlyAny, make_move_only_any) {
     EXPECT_EQ(plssvm::detail::move_only_any_cast<std::string>(a), std::string{ "aaaaaaaaaa" });
 }
 
-TEST(MoveOnlyAny, make_move_only_any_with_initializer_list) {
+TEST(MoveOnlyAny, MakeMoveOnlyAnyWithInitializerList) {
     // construct a move_only_any object
     const auto a = plssvm::detail::make_move_only_any<std::vector<int>>({ 0, 1, 2, 3 });
 

@@ -13,7 +13,7 @@
 #include "plssvm/backends/SYCL/data_parallel_kernels.hpp"                                        // plssvm::sycl::data_parallel_kernel
 #include "plssvm/backends/SYCL/DPCPP/detail/device_ptr.hpp"                                      // plssvm::dpcpp::detail::::device_ptr
 #include "plssvm/backends/SYCL/DPCPP/detail/queue_impl.hpp"                                      // plssvm::dpcpp::detail::queue (PImpl implementation)
-#include "plssvm/backends/SYCL/DPCPP/detail/utility.hpp"                                         // plssvm::dpcpp::detail::{get_device_list, device_synchronize, get_dpcpp_version}
+#include "plssvm/backends/SYCL/DPCPP/detail/utility.hpp"                                         // plssvm::dpcpp::detail::{get_device_list, device_synchronize, get_device_name, get_dpcpp_version}
 #include "plssvm/backends/SYCL/exceptions.hpp"                                                   // plssvm::dpcpp::backend_exception
 #include "plssvm/backends/SYCL/implementation_types.hpp"                                         // plssvm::sycl::implementation_type
 #include "plssvm/backends/SYCL/kernel/cg_explicit/basic/blas.hpp"                                // plssvm::sycl::detail::basic::{device_kernel_symm, device_kernel_symm_mirror, device_kernel_inplace_matrix_add, device_kernel_inplace_matrix_scale}
@@ -34,10 +34,7 @@
 #include "plssvm/detail/logging/log_untracked.hpp"                                               // plssvm::detail::log_untracked
 #include "plssvm/detail/logging/mpi_log_untracked.hpp"                                           // plssvm::detail::log_untracked
 #include "plssvm/detail/memory_size.hpp"                                                         // plssvm::detail::memory_size
-#include "plssvm/detail/string_utility.hpp"                                                      // plssvm::detail::trim
 #include "plssvm/detail/tracking/performance_tracker.hpp"                                        // plssvm::detail::tracking::tracking_entry, PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY
-#include "plssvm/exceptions/exceptions.hpp"                                                      // plssvm::exception
-#include "plssvm/gamma.hpp"                                                                      // plssvm::gamma_type
 #include "plssvm/kernel_function_types.hpp"                                                      // plssvm::kernel_type
 #include "plssvm/mpi/communicator.hpp"                                                           // plssvm::mpi::communicator
 #include "plssvm/mpi/detail/information.hpp"                                                     // plssvm::mpi::detail::gather_and_print_csvm_information
@@ -51,19 +48,17 @@
 #include "fmt/color.h"   // fmt::fg, fmt::color::orange
 #include "fmt/format.h"  // fmt::format
 
-#include <chrono>       // std::chrono::{steady_clock, duration_cast}
-#include <cstddef>      // std::size_t
-#include <cstdint>      // std::int32_t, std::uint16_t
-#include <exception>    // std::terminate
-#include <iostream>     // std::cout, std::endl
+#include <chrono>     // std::chrono::{steady_clock, duration_cast}
+#include <cstddef>    // std::size_t
+#include <cstdint>    // std::int32_t, std::uint16_t
+#include <exception>  // std::terminate
+#include <iostream>   // std::cout, std::endl
+#include <limits>     // std::numeric_limits::max
 #include <optional>   // std::optional
-#include <limits>       // std::numeric_limits::max
-#include <string>       // std::string
-#include <string_view>  // std::string_view
-#include <tuple>        // std::tie
-#include <utility>      // std::forward
-#include <variant>      // std::get
-#include <vector>       // std::vector
+#include <string>     // std::string
+#include <tuple>      // std::tie, std::get
+#include <utility>    // std::forward
+#include <vector>     // std::vector
 
 namespace {
 
@@ -201,7 +196,7 @@ void csvm::init(const target_platform target) {
     if (comm_.size() > 1) {
         // use MPI rank specific command line output
         for (const queue_type &device : devices_) {
-            device_names.emplace_back(device.impl->sycl_queue.get_device().template get_info<::sycl::info::device::name>());
+            device_names.push_back(detail::get_device_name(device));
         }
 
         mpi::detail::gather_and_print_csvm_information(comm_, plssvm::backend_type::sycl, target_, device_names, fmt::format("{}", data_parallel_kernel_type_));
@@ -226,14 +221,12 @@ void csvm::init(const target_platform target) {
                                       target_);
 
         for (typename std::vector<queue_type>::size_type device = 0; device < devices_.size(); ++device) {
-            const std::string device_name = devices_[device].impl->sycl_queue.get_device().template get_info<::sycl::info::device::name>();
-            const std::string_view trimmed_device_name = plssvm::detail::trim(device_name);
+            device_names.push_back(detail::get_device_name(devices_[device]));
             plssvm::detail::log_untracked(verbosity_level::full,
                                           comm_,
                                           "  [{}, {}]\n",
                                           device,
-                                          trimmed_device_name);
-            device_names.emplace_back(trimmed_device_name);
+                                          device_names.back());
         }
     }
 

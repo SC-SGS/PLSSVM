@@ -6,16 +6,17 @@
  * @license This file is part of the PLSSVM project which is released under the MIT license.
  *          See the LICENSE.md file in the project root for full license information.
  *
- * @brief Functions for explicitly assembling the kernel matrix using the HIP backend.
+ * @brief Functions for implicitly assembling the kernel matrix using the HIP backend.
  */
 
-#ifndef PLSSVM_BACKENDS_HIP_CG_IMPLICIT_KERNEL_MATRIX_ASSEMBLY_BLAS_HIP_HPP_
-#define PLSSVM_BACKENDS_HIP_CG_IMPLICIT_KERNEL_MATRIX_ASSEMBLY_BLAS_HIP_HPP_
+#ifndef PLSSVM_BACKENDS_HIP_KERNEL_CG_IMPLICIT_KERNEL_MATRIX_ASSEMBLY_BLAS_HIP_HPP_
+#define PLSSVM_BACKENDS_HIP_KERNEL_CG_IMPLICIT_KERNEL_MATRIX_ASSEMBLY_BLAS_HIP_HPP_
 #pragma once
 
-#include "plssvm/backends/HIP/kernel/kernel_functions.hip.hpp"  // plssvm::hip::detail::{feature_reduce, apply_kernel_function}
-#include "plssvm/constants.hpp"                                 // plssvm::real_type, plssvm::THREAD_BLOCK_SIZE
-#include "plssvm/kernel_function_types.hpp"                     // plssvm::kernel_function_type
+#include "plssvm/backends/HIP/kernel/detail/reinterpret_array.hip.hpp"  // plssvm::hip::detail::reinterpret_array
+#include "plssvm/backends/HIP/kernel/kernel_functions.hip.hpp"          // plssvm::hip::detail::{feature_reduce, apply_kernel_function}
+#include "plssvm/constants.hpp"                                         // plssvm::real_type, plssvm::THREAD_BLOCK_SIZE
+#include "plssvm/kernel_function_types.hpp"                             // plssvm::kernel_function_type
 
 #include "hip/hip_runtime.h"
 #include "hip/hip_runtime_api.h"
@@ -79,8 +80,8 @@ __global__ void device_kernel_assembly_symm(const real_type alpha, const real_ty
         //*************************************************************************//
         {
             // reinterpret the shared memory arrays to be of shape [THREAD_BLOCK_SIZE][INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE]
-            auto data_i_cache = reinterpret_cast<real_type(*)[INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE]>(cache_one);
-            auto data_j_cache = reinterpret_cast<real_type(*)[INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE]>(cache_two);
+            auto *data_i_cache = reinterpret_array<INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE>(cache_one);
+            auto *data_j_cache = reinterpret_array<INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE>(cache_two);
 
             // iterate over all features using blocking to be able to cache them for faster memory accesses
             for (std::size_t feature_block = 0; feature_block < num_features; feature_block += THREAD_BLOCK_SIZE_uz) {
@@ -150,8 +151,8 @@ __global__ void device_kernel_assembly_symm(const real_type alpha, const real_ty
         //*************************************************************************//
         {
             // reinterpret the shared memory arrays to be of shape [INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE][THREAD_BLOCK_SIZE]
-            auto B_cache = reinterpret_cast<real_type(*)[THREAD_BLOCK_SIZE]>(cache_one);
-            auto C_out_cache = reinterpret_cast<real_type(*)[THREAD_BLOCK_SIZE]>(cache_two);
+            auto *B_cache = reinterpret_array<THREAD_BLOCK_SIZE>(cache_one);
+            auto *C_out_cache = reinterpret_array<THREAD_BLOCK_SIZE>(cache_two);
 
             // iterate over all classes using blocking to be able to cache them for faster memory accesses
             for (std::size_t class_block = 0; class_block < num_classes; class_block += THREAD_BLOCK_SIZE_uz) {
@@ -216,8 +217,8 @@ __global__ void device_kernel_assembly_symm(const real_type alpha, const real_ty
         //*************************************************************************//
         {
             // reinterpret the shared memory arrays to be of shape [THREAD_BLOCK_SIZE][INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE]
-            auto B_cache = reinterpret_cast<real_type(*)[INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE]>(cache_one);
-            auto C_out_cache = reinterpret_cast<real_type(*)[INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE]>(cache_two);
+            auto *B_cache = reinterpret_array<INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE>(cache_one);
+            auto *C_out_cache = reinterpret_array<INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE>(cache_two);
 
             // iterate over all classes using blocking to be able to cache them for faster memory accesses
             for (std::size_t class_block = 0; class_block < num_classes; class_block += THREAD_BLOCK_SIZE_uz) {
@@ -267,4 +268,4 @@ __global__ void device_kernel_assembly_symm(const real_type alpha, const real_ty
 
 }  // namespace plssvm::hip::detail
 
-#endif  // PLSSVM_BACKENDS_HIP_CG_IMPLICIT_KERNEL_MATRIX_ASSEMBLY_BLAS_HIP_HPP_
+#endif  // PLSSVM_BACKENDS_HIP_KERNEL_CG_IMPLICIT_KERNEL_MATRIX_ASSEMBLY_BLAS_HIP_HPP_

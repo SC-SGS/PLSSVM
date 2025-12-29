@@ -73,7 +73,8 @@ svm_type svm_type_from_model_file(const std::string &filename) {
             svm_type svm{};
             iss >> svm;
             return svm;
-        } else if (detail::starts_with(line, "sv")) {
+        }
+        if (detail::starts_with(line, "sv")) {
             // read the last line of the header section but didn't find the SVM type yet -> throw an exception
             throw invalid_file_format_exception{ R"(The provided model file is not a valid LIBSVM model file since "svm_type" is missing!)" };
         }

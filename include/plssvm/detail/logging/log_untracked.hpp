@@ -39,7 +39,7 @@ void log_untracked(const verbosity_level msg_verbosity, const std::string_view m
     // msg_verbosity = the verbosity of the current message
 
     // if the global verbosity or the message verbosity is 'plssvm::verbosity_level::quiet', nothing should be logged
-    if (!(verbosity == verbosity_level::quiet || msg_verbosity == verbosity_level::quiet)) {
+    if (verbosity != verbosity_level::quiet && msg_verbosity != verbosity_level::quiet) {
         // check whether the provided msg_verbosity is contained in the current active verbosity
         if ((verbosity & msg_verbosity) != verbosity_level::quiet || (verbosity == verbosity_level::full && (msg_verbosity & verbosity_level::libsvm) == verbosity_level::quiet)) {
             // check if it is a warning message, if yes, the output will be colored

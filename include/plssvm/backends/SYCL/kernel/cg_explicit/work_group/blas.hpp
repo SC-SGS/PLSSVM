@@ -14,11 +14,11 @@
 #pragma once
 
 #include "plssvm/backends/SYCL/data_parallel_kernels.hpp"  // plssvm::sycl::data_parallel_kernel
-#include "plssvm/constants.hpp"                            // plssvm::real_type
-#include "plssvm/target_platforms.hpp"                     // plssvm::target_platform
+#include "plssvm/constants.hpp"                            // plssvm::real_type, plssvm::THREAD_BLOCK_SIZE, plssvm::INTERNAL_BLOCK_SIZE
 
 #include "sycl/sycl.hpp"  // sycl::handler, sycl::range, sycl::nd_item
 
+#include <array>    // std::array
 #include <cstddef>  // std::size_t
 
 namespace plssvm::sycl::detail::work_group {
@@ -83,7 +83,7 @@ class device_kernel_symm {
         const auto blockIdx_y = static_cast<std::size_t>(nd_idx.get_group(1)) + grid_y_offset_;  // current work-group in global range y-dimension + offsets if the global range is too large
 
         // create a work-item private array used for internal caching
-        real_type temp[INTERNAL_BLOCK_SIZE][INTERNAL_BLOCK_SIZE]{};
+        std::array<std::array<real_type, INTERNAL_BLOCK_SIZE_uz>, INTERNAL_BLOCK_SIZE_uz> temp{};
 
         {
             // calculate the indices used in the current work-item, pays attention to coalesced memory accesses
@@ -237,7 +237,7 @@ class device_kernel_symm_mirror {
         const auto blockIdx_y = static_cast<std::size_t>(nd_idx.get_group(1)) + grid_y_offset_;  // current work-group in global range y-dimension + offsets if the global range is too large
 
         // create a work-item private array used for internal caching
-        real_type temp[INTERNAL_BLOCK_SIZE][INTERNAL_BLOCK_SIZE]{};
+        std::array<std::array<real_type, INTERNAL_BLOCK_SIZE_uz>, INTERNAL_BLOCK_SIZE_uz> temp{};
 
         {
             // calculate the indices used in the current thread, pays attention to coalesced memory accesses

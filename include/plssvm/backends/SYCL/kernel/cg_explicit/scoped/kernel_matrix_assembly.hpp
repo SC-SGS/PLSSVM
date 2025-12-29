@@ -9,15 +9,14 @@
  * @brief Functions for explicitly assembling the kernel matrix using the SYCL backend and AdaptiveCpp's scoped parallelism.
  */
 
-#ifndef PLSSVM_BACKENDS_SYCL_CG_EXPLICIT_SCOPED_KERNEL_MATRIX_ASSEMBLY_HPP_
-#define PLSSVM_BACKENDS_SYCL_CG_EXPLICIT_SCOPED_KERNEL_MATRIX_ASSEMBLY_HPP_
+#ifndef PLSSVM_BACKENDS_SYCL_KERNEL_CG_EXPLICIT_SCOPED_KERNEL_MATRIX_ASSEMBLY_HPP_
+#define PLSSVM_BACKENDS_SYCL_KERNEL_CG_EXPLICIT_SCOPED_KERNEL_MATRIX_ASSEMBLY_HPP_
 #pragma once
 
 #include "plssvm/backends/SYCL/data_parallel_kernels.hpp"    // plssvm::sycl::data_parallel_kernel
 #include "plssvm/backends/SYCL/kernel/kernel_functions.hpp"  // plssvm::sycl::detail::{feature_reduce, apply_kernel_function}
-#include "plssvm/constants.hpp"                              // plssvm::real_type
+#include "plssvm/constants.hpp"                              // plssvm::real_type, plssvm::THREAD_BLOCK_SIZE, plssvm::INTERNAL_BLOCK_SIZE
 #include "plssvm/kernel_function_types.hpp"                  // plssvm::kernel_function_type
-#include "plssvm/target_platforms.hpp"                       // plssvm::target_platform
 
 #include "sycl/sycl.hpp"  // sycl::memory_environment, sycl::distribute_items_and_wait, sycl::s_item
 
@@ -43,9 +42,9 @@ class device_kernel_assembly {
      * @brief Initialize the SYCL kernel function object.
      * @param[out] kernel_matrix the calculated kernel matrix
      * @param[in] data the data points to calculate the kernel matrix from
-     * @param[in] num_rows the number of data points
+     * @param[in] num_rows the total number of data points (= total number of rows)
      * @param[in] device_num_rows the number of rows the current device is responsible for
-     * @param[in] device_row_offset the first row in @p data_d the current device is responsible for
+     * @param[in] device_row_offset the first row in @p data the current device is responsible for
      * @param[in] num_features the number of features per data point
      * @param[in] q the vector used in the dimensional reduction
      * @param[in] QA_cost the scalar used in the dimensional reduction
@@ -78,8 +77,8 @@ class device_kernel_assembly {
     void operator()(T group) const {
         ::sycl::memory_environment(group,
                                    // create two local memory arrays used for caching
-                                   ::sycl::require_local_mem<real_type[THREAD_BLOCK_SIZE][INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE]>(),  // data_i_cache
-                                   ::sycl::require_local_mem<real_type[THREAD_BLOCK_SIZE][INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE]>(),  // data_j_cache
+                                   ::sycl::require_local_mem<std::array<std::array<real_type, static_cast<std::size_t>(INTERNAL_BLOCK_SIZE) * static_cast<std::size_t>(THREAD_BLOCK_SIZE)>, static_cast<std::size_t>(THREAD_BLOCK_SIZE)>>(),  // data_i_cache
+                                   ::sycl::require_local_mem<std::array<std::array<real_type, static_cast<std::size_t>(INTERNAL_BLOCK_SIZE) * static_cast<std::size_t>(THREAD_BLOCK_SIZE)>, static_cast<std::size_t>(THREAD_BLOCK_SIZE)>>(),  // data_j_cache
 
                                    // create a private memory array used for internal caching
                                    ::sycl::require_private_mem<std::array<std::array<real_type, INTERNAL_BLOCK_SIZE>, INTERNAL_BLOCK_SIZE>>(),  // temp
@@ -221,4 +220,4 @@ class device_kernel_assembly {
 
 }  // namespace plssvm::sycl::detail::scoped
 
-#endif  // PLSSVM_BACKENDS_SYCL_CG_EXPLICIT_SCOPED_KERNEL_MATRIX_ASSEMBLY_HPP_
+#endif  // PLSSVM_BACKENDS_SYCL_KERNEL_CG_EXPLICIT_SCOPED_KERNEL_MATRIX_ASSEMBLY_HPP_

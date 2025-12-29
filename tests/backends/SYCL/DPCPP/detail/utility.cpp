@@ -10,9 +10,9 @@
 
 #include "plssvm/backends/SYCL/DPCPP/detail/utility.hpp"
 
-#include "plssvm/backends/execution_range.hpp"               // plssvm::detail::dim_type
-#include "plssvm/backends/SYCL/data_parallel_kernels.hpp"    // plssvm::sycl::data_parallel_kernel
-#include "plssvm/target_platforms.hpp"                       // plssvm::target_platform
+#include "plssvm/backends/execution_range.hpp"             // plssvm::detail::dim_type
+#include "plssvm/backends/SYCL/data_parallel_kernels.hpp"  // plssvm::sycl::data_parallel_kernel
+#include "plssvm/target_platforms.hpp"                     // plssvm::target_platform
 
 #include "sycl/sycl.hpp"  // sycl::range, sycl::nd_range
 
@@ -21,7 +21,7 @@
 #include <regex>   // std::regex, std::regex::extended, std::regex_match
 #include <string>  // std::string
 
-TEST(DPCPPUtility, dim_type_to_native_1) {
+TEST(DPCPPUtility, DimTypeToNativeOneDimensional) {
     // create a dim_type
     constexpr plssvm::detail::dim_type dim{ 128ull, 64ull, 32ull };
 
@@ -33,7 +33,7 @@ TEST(DPCPPUtility, dim_type_to_native_1) {
     EXPECT_EQ(native_dim[0], dim.x);
 }
 
-TEST(DPCPPUtility, dim_type_to_native_2) {
+TEST(DPCPPUtility, DimTypeToNativeTwoDimensional) {
     // create a dim_type
     constexpr plssvm::detail::dim_type dim{ 128ull, 64ull, 32ull };
 
@@ -46,7 +46,7 @@ TEST(DPCPPUtility, dim_type_to_native_2) {
     EXPECT_EQ(native_dim[1], dim.x);
 }
 
-TEST(DPCPPUtility, dim_type_to_native_3) {
+TEST(DPCPPUtility, DimTypeToNativeThreeDimensional) {
     // create a dim_type
     constexpr plssvm::detail::dim_type dim{ 128ull, 64ull, 32ull };
 
@@ -60,7 +60,7 @@ TEST(DPCPPUtility, dim_type_to_native_3) {
     EXPECT_EQ(native_dim[2], dim.x);
 }
 
-TEST(DPCPPUtility, get_execution_range_basic) {
+TEST(DPCPPUtility, GetExecutionRangeBasic) {
     // create a grid
     const plssvm::detail::dim_type grid{ 64ull, 64ull };
     const plssvm::detail::dim_type block{ 8ull, 8ull };
@@ -71,7 +71,7 @@ TEST(DPCPPUtility, get_execution_range_basic) {
     EXPECT_EQ(exec, (sycl::range<2>{ 512ull, 512ull }));
 }
 
-TEST(DPCPPUtility, get_execution_range_work_group) {
+TEST(DPCPPUtility, GetExecutionRangeWorkGroup) {
     // create a grid
     const plssvm::detail::dim_type grid{ 64ull, 64ull };
     const plssvm::detail::dim_type block{ 8ull, 8ull };
@@ -82,7 +82,7 @@ TEST(DPCPPUtility, get_execution_range_work_group) {
     EXPECT_EQ(exec, (::sycl::nd_range<2>{ ::sycl::range<2>{ 512ull, 512ull }, ::sycl::range<2>{ 8ull, 8ull } }));
 }
 
-TEST(DPCPPUtility, get_execution_range_hierarchical) {
+TEST(DPCPPUtility, GetExecutionRangeHierarchical) {
     // create a grid
     const plssvm::detail::dim_type grid{ 64ull, 64ull };
     const plssvm::detail::dim_type block{ 8ull, 8ull };
@@ -93,7 +93,7 @@ TEST(DPCPPUtility, get_execution_range_hierarchical) {
     EXPECT_EQ(exec, (::sycl::nd_range<2>{ ::sycl::range<2>{ 64ull, 64ull }, ::sycl::range<2>{ 8ull, 8ull } }));
 }
 
-TEST(DPCPPUtility, get_device_list) {
+TEST(DPCPPUtility, GetDeviceList) {
     const auto &[queues, actual_target] = plssvm::dpcpp::detail::get_device_list(plssvm::target_platform::automatic);
     // at least one queue must be provided
     EXPECT_FALSE(queues.empty());
@@ -101,12 +101,25 @@ TEST(DPCPPUtility, get_device_list) {
     EXPECT_NE(actual_target, plssvm::target_platform::automatic);
 }
 
-TEST(DPCPPUtility, get_dpcpp_version) {
+TEST(DPCPPUtility, GetDeviceName) {
+    const auto &[queues, actual_target] = plssvm::dpcpp::detail::get_device_list(plssvm::target_platform::automatic);
+    // at least one queue must be available
+    EXPECT_FALSE(queues.empty());
+
+    const std::string device_name = plssvm::dpcpp::detail::get_device_name(queues.front());
+    // must not be empty
+    EXPECT_FALSE(device_name.empty());
+    // must not start or end with whitespace
+    const std::regex reg{ R"([^\s](?:.*[^\s])?)" };
+    EXPECT_TRUE(std::regex_match(device_name, reg));
+}
+
+TEST(DPCPPUtility, GetDPCPPVersion) {
     const std::regex reg{ "[0-9]+\\.[0-9]+\\.[0-9]+", std::regex::extended };
     EXPECT_TRUE(std::regex_match(plssvm::dpcpp::detail::get_dpcpp_version(), reg));
 }
 
-TEST(DPCPPUtility, get_dpcpp_timestamp_version) {
+TEST(DPCPPUtility, GetDPCPPTimestampVersion) {
     const std::string version = plssvm::dpcpp::detail::get_dpcpp_timestamp_version();
     EXPECT_FALSE(version.empty());
 }

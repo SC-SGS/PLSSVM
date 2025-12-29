@@ -9,8 +9,8 @@
  * @brief Defines an event type.
  */
 
-#ifndef PLSSVM_DETAIL_TRACKING_EVENT_HPP_
-#define PLSSVM_DETAIL_TRACKING_EVENT_HPP_
+#ifndef PLSSVM_DETAIL_TRACKING_EVENTS_HPP_
+#define PLSSVM_DETAIL_TRACKING_EVENTS_HPP_
 #pragma once
 
 #include "fmt/base.h"     // fmt::formatter
@@ -134,4 +134,4 @@ struct fmt::formatter<plssvm::detail::tracking::events> : fmt::ostream_formatter
 
 /// @endcond
 
-#endif  // PLSSVM_DETAIL_TRACKING_EVENT_HPP_
+#endif  // PLSSVM_DETAIL_TRACKING_EVENTS_HPP_

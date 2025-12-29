@@ -15,6 +15,9 @@
 
 #include <string_view>  // std::string_view
 
+// silence false positive "macro argument should be enclosed in parentheses" warning
+// NOLINTBEGIN(bugprone-macro-parentheses)
+
 /**
  * @def PLSSVM_CREATE_ARITHMETIC_TYPE_NAME
  * @brief Defines a macro to create all possible conversion functions from arithmetic types to their name as string representation.
@@ -31,6 +34,8 @@
     template <>                                                                                                         \
     [[nodiscard]] constexpr inline std::string_view arithmetic_type_name<const volatile type>() { return "const volatile " #type; }
 
+// NOLINTEND(bugprone-macro-parentheses)
+
 namespace plssvm::detail {
 
 /**
@@ -40,7 +45,7 @@ namespace plssvm::detail {
  * @return the name of `T` (`[[nodiscard]]`)
  */
 template <typename T>
-[[nodiscard]] constexpr inline std::string_view arithmetic_type_name() = delete;
+[[nodiscard]] constexpr std::string_view arithmetic_type_name() = delete;
 
 PLSSVM_CREATE_ARITHMETIC_TYPE_NAME(bool)
 

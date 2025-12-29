@@ -9,15 +9,16 @@
  * @brief Functions for explicitly performing a BLAS GEMM like matrix-matrix multiplication using the SYCL backend and the hierarchical data parallel kernels.
  */
 
-#ifndef PLSSVM_BACKENDS_SYCL_CG_EXPLICIT_HIERARCHICAL_BLAS_HPP_
-#define PLSSVM_BACKENDS_SYCL_CG_EXPLICIT_HIERARCHICAL_BLAS_HPP_
+#ifndef PLSSVM_BACKENDS_SYCL_KERNEL_CG_EXPLICIT_HIERARCHICAL_BLAS_HPP_
+#define PLSSVM_BACKENDS_SYCL_KERNEL_CG_EXPLICIT_HIERARCHICAL_BLAS_HPP_
 #pragma once
 
 #include "plssvm/backends/SYCL/data_parallel_kernels.hpp"  // plssvm::sycl::data_parallel_kernel
-#include "plssvm/constants.hpp"                            // plssvm::real_type
+#include "plssvm/constants.hpp"                            // plssvm::real_type, plssvm::THREAD_BLOCK_SIZE, plssvm::INTERNAL_BLOCK_SIZE
 
 #include "sycl/sycl.hpp"  // sycl::group, sycl::h_item
 
+#include <array>    // std::array
 #include <cstddef>  // std::size_t
 
 namespace plssvm::sycl::detail::hierarchical {
@@ -64,11 +65,11 @@ class device_kernel_symm {
      */
     void operator()(::sycl::group<2> group) const {
         // create two local memory arrays used for caching
-        real_type A_cache[THREAD_BLOCK_SIZE][INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE];
-        real_type B_cache[THREAD_BLOCK_SIZE][INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE];
+        std::array<std::array<real_type, static_cast<std::size_t>(INTERNAL_BLOCK_SIZE) * static_cast<std::size_t>(THREAD_BLOCK_SIZE)>, static_cast<std::size_t>(THREAD_BLOCK_SIZE)> A_cache{};
+        std::array<std::array<real_type, static_cast<std::size_t>(INTERNAL_BLOCK_SIZE) * static_cast<std::size_t>(THREAD_BLOCK_SIZE)>, static_cast<std::size_t>(THREAD_BLOCK_SIZE)> B_cache{};
 
         // create a private memory array used for internal caching
-        ::sycl::private_memory<real_type[INTERNAL_BLOCK_SIZE][INTERNAL_BLOCK_SIZE], 2> temp{ group };
+        ::sycl::private_memory<std::array<std::array<real_type, INTERNAL_BLOCK_SIZE>, INTERNAL_BLOCK_SIZE>, 2> temp{ group };
 
         // initialize private temp matrix to zero
         group.parallel_for_work_item([&](::sycl::h_item<2> idx) {
@@ -245,11 +246,11 @@ class device_kernel_symm_mirror {
      */
     void operator()(::sycl::group<2> group) const {
         // create two local memory arrays used for caching
-        real_type A_cache[THREAD_BLOCK_SIZE][INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE];
-        real_type B_cache[THREAD_BLOCK_SIZE][INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE];
+        std::array<std::array<real_type, static_cast<std::size_t>(INTERNAL_BLOCK_SIZE) * static_cast<std::size_t>(THREAD_BLOCK_SIZE)>, static_cast<std::size_t>(THREAD_BLOCK_SIZE)> A_cache{};
+        std::array<std::array<real_type, static_cast<std::size_t>(INTERNAL_BLOCK_SIZE) * static_cast<std::size_t>(THREAD_BLOCK_SIZE)>, static_cast<std::size_t>(THREAD_BLOCK_SIZE)> B_cache{};
 
         // create a private memory array used for internal caching
-        ::sycl::private_memory<real_type[INTERNAL_BLOCK_SIZE][INTERNAL_BLOCK_SIZE], 2> temp{ group };
+        ::sycl::private_memory<std::array<std::array<real_type, INTERNAL_BLOCK_SIZE>, INTERNAL_BLOCK_SIZE>, 2> temp{ group };
 
         // initialize private temp matrix to zero
         group.parallel_for_work_item([&](::sycl::h_item<2> idx) {
@@ -460,7 +461,7 @@ class device_kernel_inplace_matrix_scale {
      * @brief Initialize the SYCL kernel function object.
      * @param[in] num_rows the number of rows in the matrix
      * @param[in] num_cols the number of columns in the matrix
-     * @param[in,out] lhs the first matrix (updated inplace)
+     * @param[in,out] lhs the matrix (updated inplace)
      * @param[in] scale the value to scale
      * @param[in] grid_x_offset the offset in x-dimension into the data points if more than one execution grid has to be used
      * @param[in] grid_y_offset the offset in y-dimension into the data points if more than one execution grid has to be used
@@ -520,4 +521,4 @@ class device_kernel_inplace_matrix_scale {
 
 }  // namespace plssvm::sycl::detail::hierarchical
 
-#endif  // PLSSVM_BACKENDS_SYCL_CG_EXPLICIT_HIERARCHICAL_BLAS_HPP_
+#endif  // PLSSVM_BACKENDS_SYCL_KERNEL_CG_EXPLICIT_HIERARCHICAL_BLAS_HPP_

@@ -27,7 +27,7 @@
 class Event : public ::testing::Test,
               protected util::redirect_output<> { };
 
-TEST_F(Event, construct) {
+TEST_F(Event, Construct) {
     const std::chrono::steady_clock::time_point time = std::chrono::steady_clock::now();
 
     // construct an event
@@ -38,7 +38,7 @@ TEST_F(Event, construct) {
     EXPECT_EQ(e.name, std::string{ "EVENT" });
 }
 
-TEST_F(Event, output_operator) {
+TEST_F(Event, OutputOperator) {
     const std::chrono::steady_clock::time_point time = std::chrono::steady_clock::now();
 
     // construct an event
@@ -55,7 +55,7 @@ TEST_F(Event, output_operator) {
 class Events : public ::testing::Test,
                protected util::redirect_output<&std::cout> { };
 
-TEST_F(Events, construct) {
+TEST_F(Events, Construct) {
     // default construct an events wrapper
     const plssvm::detail::tracking::events events{};
 
@@ -63,7 +63,7 @@ TEST_F(Events, construct) {
     EXPECT_TRUE(events.empty());
 }
 
-TEST_F(Events, add_event) {
+TEST_F(Events, AddEvent) {
     // create events wrapper
     plssvm::detail::tracking::events events{};
 
@@ -80,7 +80,7 @@ TEST_F(Events, add_event) {
     EXPECT_EQ(events[0].name, e.name);
 }
 
-TEST_F(Events, add_event_with_time_point_and_name) {
+TEST_F(Events, AddEventWithTimePointAndName) {
     // create events wrapper
     plssvm::detail::tracking::events events{};
 
@@ -97,7 +97,7 @@ TEST_F(Events, add_event_with_time_point_and_name) {
     EXPECT_EQ(events[0].name, std::string{ "EVENT" });
 }
 
-TEST_F(Events, get_event_by_index) {
+TEST_F(Events, GetEventByIndex) {
     const std::chrono::steady_clock::time_point time1 = std::chrono::steady_clock::now();
     const std::chrono::steady_clock::time_point time2 = std::chrono::steady_clock::now();
     // create events wrapper and add events
@@ -114,7 +114,7 @@ TEST_F(Events, get_event_by_index) {
     EXPECT_EQ(events[1].name, std::string{ "EVENT_2" });
 }
 
-TEST_F(Events, get_event_at_index) {
+TEST_F(Events, GetEventAtIndex) {
     const std::chrono::steady_clock::time_point time1 = std::chrono::steady_clock::now();
     const std::chrono::steady_clock::time_point time2 = std::chrono::steady_clock::now();
     // create events wrapper and add events
@@ -131,14 +131,14 @@ TEST_F(Events, get_event_at_index) {
     EXPECT_EQ(events.at(1).name, std::string{ "EVENT_2" });
 }
 
-TEST_F(Events, get_event_at_index_out_of_bounce) {
+TEST_F(Events, GetEventAtIndexOutOfBounce) {
     // create events wrapper
     const plssvm::detail::tracking::events events{};
 
     EXPECT_THROW_WHAT(std::ignore = events.at(0), plssvm::exception, "Index 0 is out-of-bounce for the number of events 0!");
 }
 
-TEST_F(Events, num_events) {
+TEST_F(Events, NumEvents) {
     // create events wrapper
     plssvm::detail::tracking::events events{};
 
@@ -152,7 +152,7 @@ TEST_F(Events, num_events) {
     EXPECT_EQ(events.num_events(), 1);
 }
 
-TEST_F(Events, empty) {
+TEST_F(Events, Empty) {
     // create events wrapper
     plssvm::detail::tracking::events events{};
 
@@ -166,7 +166,7 @@ TEST_F(Events, empty) {
     EXPECT_FALSE(events.empty());
 }
 
-TEST_F(Events, get_time_points) {
+TEST_F(Events, GetTimePoints) {
     const std::chrono::steady_clock::time_point time1 = std::chrono::steady_clock::now();
     const std::chrono::steady_clock::time_point time2 = std::chrono::steady_clock::now();
     // create events wrapper and add events
@@ -179,7 +179,7 @@ TEST_F(Events, get_time_points) {
     EXPECT_EQ(events.get_time_points(), (std::vector<std::chrono::steady_clock::time_point>{ time1, time2 }));
 }
 
-TEST_F(Events, get_names) {
+TEST_F(Events, GetNames) {
     const std::chrono::steady_clock::time_point time1 = std::chrono::steady_clock::now();
     const std::chrono::steady_clock::time_point time2 = std::chrono::steady_clock::now();
     // create events wrapper and add events
@@ -192,7 +192,7 @@ TEST_F(Events, get_names) {
     EXPECT_EQ(events.get_names(), (std::vector<std::string>{ "EVENT_1", "EVENT_2" }));
 }
 
-TEST_F(Events, generate_yaml_string) {
+TEST_F(Events, GenerateYAMLString) {
     const std::chrono::steady_clock::time_point time1 = std::chrono::steady_clock::now();
     const std::chrono::steady_clock::time_point time2 = std::chrono::steady_clock::now();
     // create events wrapper and add events
@@ -212,9 +212,9 @@ TEST_F(Events, generate_yaml_string) {
     EXPECT_EQ(yaml, correct_yaml);
 }
 
-TEST_F(Events, generate_yaml_string_no_events) {
+TEST_F(Events, GenerateYAMLStringNoEvents) {
     // create events wrapper
-    plssvm::detail::tracking::events events{};
+    const plssvm::detail::tracking::events events{};
 
     // get the YAML string
     const std::string yaml = events.generate_yaml_string(std::chrono::steady_clock::now());
@@ -223,7 +223,7 @@ TEST_F(Events, generate_yaml_string_no_events) {
     EXPECT_EQ(yaml, std::string{});
 }
 
-TEST_F(Events, output_operator) {
+TEST_F(Events, OutputOperator) {
     const std::chrono::steady_clock::time_point time1 = std::chrono::steady_clock::now();
     const std::chrono::steady_clock::time_point time2 = std::chrono::steady_clock::now();
     // create events wrapper and add events
@@ -241,7 +241,7 @@ TEST_F(Events, output_operator) {
 
 class EventsDeathTest : public Events { };
 
-TEST_F(EventsDeathTest, get_event_by_index_out_of_bounce) {
+TEST_F(EventsDeathTest, GetEventByIndexOutOfBounce) {
     // create events wrapper
     const plssvm::detail::tracking::events events{};
 

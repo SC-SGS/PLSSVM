@@ -38,10 +38,17 @@ constexpr unsigned INTERNAL_BLOCK_SIZE = PLSSVM_INTERNAL_BLOCK_SIZE;
 constexpr unsigned INTERNAL_BLOCK_SIZE = 4;
 #endif
 
+/// The default epsilon for the conjugate gradients algorithm.
+constexpr real_type DEFAULT_EPSILON{ 1e-10 };
+
+/// The number of iterations to do until the residual in the conjugate gradients algorithm is explicitly recalculated to reduce the accumulated floating point errors.
+constexpr unsigned long long NUM_ITER_BEFORE_EXPLICIT_CG_RESIDUAL_RECALCULATION{ 50 };
+
 // perform sanity checks
 static_assert(detail::tuple_contains_v<real_type, detail::supported_real_types>, "Illegal real type provided! See the 'real_type_list' in the type_list.hpp header for a list of the allowed types.");
 static_assert(THREAD_BLOCK_SIZE > 0, "THREAD_BLOCK_SIZE must be greater than 0!");
 static_assert(INTERNAL_BLOCK_SIZE > 0, "INTERNAL_BLOCK_SIZE must be greater than 0!");
+static_assert(NUM_ITER_BEFORE_EXPLICIT_CG_RESIDUAL_RECALCULATION > 0, "NUM_ITER_BEFORE_EXPLICIT_CG_RESIDUAL_RECALCULATION must be greater than 0!");
 
 }  // namespace plssvm
 

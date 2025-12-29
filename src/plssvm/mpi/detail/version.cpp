@@ -8,13 +8,12 @@
 
 #include "plssvm/mpi/detail/version.hpp"
 
-#include "plssvm/mpi/detail/utility.hpp"  // PLSSVM_MPI_ERROR_CHECK
-
 #if defined(PLSSVM_HAS_MPI_ENABLED)
-    #include "mpi.h"  // MPI_Get_library_version, MPI_Get_version
-#endif
+    #include "plssvm/mpi/detail/utility.hpp"  // PLSSVM_MPI_ERROR_CHECK
 
-#include "fmt/format.h"  // fmt::format
+    #include "fmt/format.h"  // fmt::format
+    #include "mpi.h"         // MPI_Get_library_version, MPI_Get_version
+#endif
 
 #include <string>  // std::string
 
@@ -23,8 +22,8 @@ namespace plssvm::mpi::detail {
 std::string mpi_library_version() {
 #if defined(PLSSVM_HAS_MPI_ENABLED)
     std::string version(MPI_MAX_LIBRARY_VERSION_STRING, '\0');
-    int resultlen{};
-    PLSSVM_MPI_ERROR_CHECK(MPI_Get_library_version(version.data(), &resultlen));
+    int result_len{};
+    PLSSVM_MPI_ERROR_CHECK(MPI_Get_library_version(version.data(), &result_len));
     return version.substr(0, version.find_first_of('\0'));
 #else
     return std::string{ "unknown/unused" };

@@ -9,8 +9,8 @@
  * @brief Functions for implicitly assembling the kernel matrix using the Kokkos backend.
  */
 
-#ifndef PLSSVM_BACKENDS_KOKKOS_CG_IMPLICIT_KERNEL_MATRIX_ASSEMBLY_BLAS_HPP_
-#define PLSSVM_BACKENDS_KOKKOS_CG_IMPLICIT_KERNEL_MATRIX_ASSEMBLY_BLAS_HPP_
+#ifndef PLSSVM_BACKENDS_KOKKOS_KERNEL_CG_IMPLICIT_KERNEL_MATRIX_ASSEMBLY_BLAS_HPP_
+#define PLSSVM_BACKENDS_KOKKOS_KERNEL_CG_IMPLICIT_KERNEL_MATRIX_ASSEMBLY_BLAS_HPP_
 #pragma once
 
 #include "plssvm/backends/Kokkos/detail/standard_layout_tuple.hpp"  // plssvm::kokkos::detail::standard_layout_tuple
@@ -21,6 +21,7 @@
 #include "Kokkos_Core.hpp"  // KOKKOS_INLINE_FUNCTION, Kokkos::View, Kokkos::TeamPolicy, Kokkos::TeamPolicy, Kokkos::mdspan, Kokkos::atomic_add
 
 #include <cstddef>  // std::size_t
+#include <utility>  // std::move
 
 namespace plssvm::kokkos::detail {
 
@@ -60,16 +61,16 @@ class device_kernel_assembly_symm {
      */
     device_kernel_assembly_symm(const real_type alpha, device_view_type<const real_type> q, device_view_type<const real_type> data, const std::size_t num_rows, const std::size_t device_num_rows, const std::size_t device_row_offset, const std::size_t num_features, const real_type QA_cost, const real_type cost, device_view_type<const real_type> B, device_view_type<real_type> C, const std::size_t num_classes, const std::size_t grid_x_offset, const std::size_t grid_y_offset, const std::size_t grid_size_x, Args... kernel_function_parameter) :
         alpha_{ alpha },
-        q_{ q },
-        data_{ data },
+        q_{ std::move(q) },
+        data_{ std::move(data) },
         num_rows_{ num_rows },
         device_num_rows_{ device_num_rows },
         device_row_offset_{ device_row_offset },
         num_features_{ num_features },
         QA_cost_{ QA_cost },
         cost_{ cost },
-        B_{ B },
-        C_{ C },
+        B_{ std::move(B) },
+        C_{ std::move(C) },
         num_classes_{ num_classes },
         grid_x_offset_{ grid_x_offset },
         grid_y_offset_{ grid_y_offset },
@@ -327,4 +328,4 @@ class device_kernel_assembly_symm {
 
 }  // namespace plssvm::kokkos::detail
 
-#endif  // PLSSVM_BACKENDS_KOKKOS_CG_IMPLICIT_KERNEL_MATRIX_ASSEMBLY_BLAS_HPP_
+#endif  // PLSSVM_BACKENDS_KOKKOS_KERNEL_CG_IMPLICIT_KERNEL_MATRIX_ASSEMBLY_BLAS_HPP_

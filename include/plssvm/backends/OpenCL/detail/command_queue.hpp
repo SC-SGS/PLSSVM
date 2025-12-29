@@ -67,13 +67,13 @@ class command_queue {
      * @brief Implicitly convert a command_queue wrapper to an OpenCL cl_command_queue.
      * @return the wrapped OpenCL cl_command_queue (`[[nodiscard]]`)
      */
-    [[nodiscard]] operator cl_command_queue &() noexcept { return queue; }
+    [[nodiscard]] operator cl_command_queue &() noexcept { return queue; }  // NOLINT: overload is intentional to reduce explicit casts in OpenCL interfaces
 
     /**
      * @brief Implicitly convert a command_queue wrapper to an OpenCL cl_command_queue.
      * @return the wrapped OpenCL cl_command_queue (`[[nodiscard]]`)
      */
-    [[nodiscard]] operator const cl_command_queue &() const noexcept { return queue; }
+    [[nodiscard]] operator const cl_command_queue &() const noexcept { return queue; }  // NOLINT: overload is intentional to reduce explicit casts in OpenCL interfaces
 
     /**
      * @brief Add a new OpenCL @p compute_kernel used for @p name to this command queue.
@@ -93,7 +93,7 @@ class command_queue {
     /// The wrapped cl_command_queue.
     cl_command_queue queue{};
     /// All OpenCL device kernel associated with the device corresponding to this command queue.
-    std::map<compute_kernel_name, kernel> kernels{};
+    std::map<compute_kernel_name, kernel> kernels;
 };
 
 }  // namespace plssvm::opencl::detail

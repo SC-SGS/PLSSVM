@@ -13,9 +13,9 @@
 #define PLSSVM_GAMMA_HPP_
 #pragma once
 
-#include "plssvm/constants.hpp"         // plssvm::real_type
-#include "plssvm/detail/operators.hpp"  // plssvm::operators namespace
-#include "plssvm/matrix.hpp"            // plssvm::matrix, plssvm::layout_type, plssvm::variance
+#include "plssvm/constants.hpp"       // plssvm::real_type
+#include "plssvm/detail/utility.hpp"  // plssvm::detail::overloaded
+#include "plssvm/matrix.hpp"          // plssvm::matrix, plssvm::layout_type, plssvm::variance
 
 #include "fmt/base.h"     // fmt::formatter
 #include "fmt/ostream.h"  // fmt::ostream_formatter
@@ -25,26 +25,6 @@
 #include <variant>  // std::variant, std::visit
 
 namespace plssvm {
-
-namespace detail {
-
-/**
- * @brief Struct to overload the `operator()` for multiple std::variant members.
- * @details See: https://en.cppreference.com/w/cpp/utility/variant/visit.
- * @tparam Ts the overloaded types
- */
-template <class... Ts>
-struct overloaded : Ts... {
-    using Ts::operator()...;
-};
-
-/**
- * @brief Custom deduction guide for the `overloaded` struct.
- */
-template <class... Ts>
-overloaded(Ts...) -> overloaded<Ts...>;
-
-}  // namespace detail
 
 /**
  * @brief Enum class for all possible gamma coefficient types.

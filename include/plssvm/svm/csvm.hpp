@@ -13,10 +13,9 @@
 #define PLSSVM_SVM_CSVM_HPP_
 #pragma once
 
-#include "plssvm/constants.hpp"                            // plssvm::real_type
+#include "plssvm/constants.hpp"                            // plssvm::real_type, plssvm::DEFAULT_EPSILON
 #include "plssvm/detail/assert.hpp"                        // PLSSVM_ASSERT
-#include "plssvm/detail/data_distribution.hpp"             // plssvm::detail::triangular_data_distribution
-#include "plssvm/detail/data_distribution.hpp"             // plssvm::detail::data_distribution
+#include "plssvm/detail/data_distribution.hpp"             // plssvm::detail::{data_distribution, triangular_data_distribution}
 #include "plssvm/detail/igor_utility.hpp"                  // plssvm::detail::{get_value_from_named_parameter, has_only_parameter_named_args_v}
 #include "plssvm/detail/logging/mpi_log.hpp"               // plssvm::detail::log
 #include "plssvm/detail/logging/mpi_log_untracked.hpp"     // plssvm::detail::log_untracked
@@ -231,7 +230,7 @@ class csvm {
      * @details Reduces the resulting dimension by `2` compared to the original LS-SVM formulation.
      * @param[in] params the parameter used for the kernel matrix
      * @param[in] A the data used for the kernel matrix
-     * @return the reduction vector ´q_red` and the bottom-right value `QA_cost` (`[[nodiscard]]`)
+     * @return the reduction vector `q_red` and the bottom-right value `QA_cost` (`[[nodiscard]]`)
      */
     [[nodiscard]] std::pair<std::vector<real_type>, real_type> perform_dimensional_reduction(const parameter &params, const soa_matrix<real_type> &A) const;
 
@@ -249,13 +248,13 @@ class csvm {
     [[nodiscard]] aos_matrix<real_type> run_predict_values(const parameter &params, const soa_matrix<real_type> &support_vectors, const aos_matrix<real_type> &alpha, const std::vector<real_type> &rho, soa_matrix<real_type> &w, const soa_matrix<real_type> &predict_points) const;
 
     /// The SVM parameter (e.g., cost, degree, gamma, coef0) currently in use.
-    parameter params_{};
+    parameter params_;
     /// The target platform of this SVM.
     target_platform target_{ plssvm::target_platform::automatic };
     /// The data distribution on the available devices.
-    mutable std::unique_ptr<detail::data_distribution> data_distribution_{};
+    mutable std::unique_ptr<detail::data_distribution> data_distribution_;
     /// The used MPI communicator.
-    mpi::communicator comm_{};
+    mpi::communicator comm_;
 };
 
 inline csvm::csvm(mpi::communicator comm, parameter params) :
@@ -287,12 +286,12 @@ std::tuple<aos_matrix<real_type>, std::vector<real_type>, std::vector<unsigned l
     PLSSVM_ASSERT(!B.empty(), "The B matrix must not be empty!");
     PLSSVM_ASSERT(A.num_rows() == B.num_cols(), "The number of data points in A ({}) and B ({}) must be the same!", A.num_rows(), B.num_cols());
 
-    igor::parser parser{ std::forward<Args>(named_args)... };
+    const igor::parser parser{ std::forward<Args>(named_args)... };
 
     // set default values
-    // note: if the default values are changed, they must also be changed in the Python bindings!
-    auto used_epsilon{ plssvm::real_type{ 1e-10 } };
-    unsigned long long used_max_iter{ A.num_rows() - 1 };  // account for later dimensional reduction
+    auto used_epsilon{ DEFAULT_EPSILON };
+    // NOTE: account for later dimensional reduction
+    unsigned long long used_max_iter{ A.num_rows() - 1 };  // NOLINT: can be modified in compile-time if later on
     solver_type used_solver{ solver_type::automatic };
 
     // compile time check: only named parameters are permitted
@@ -334,14 +333,14 @@ std::tuple<aos_matrix<real_type>, std::vector<real_type>, std::vector<unsigned l
 
     // determine the correct solver type, if the automatic solver type has been provided
     if (used_solver == solver_type::automatic) {
-        using namespace detail::literals;
+        using namespace detail::literals;  // NOLINT(google-build-using-namespace): only imports custom user-defined literals into this namespace
 
         // define used safety margin constants
         constexpr detail::memory_size minimal_safety_margin = 512_MiB;
         constexpr long double percentual_safety_margin = 0.05L;
         const auto reduce_total_memory = [=](const detail::memory_size total_memory) {
-            if (total_memory < 512_MiB) {
-                throw kernel_launch_resources{ fmt::format("At least {} of memory must be available, but available are only {}!", 512_MiB, total_memory) };
+            if (total_memory < minimal_safety_margin) {
+                throw kernel_launch_resources{ fmt::format("At least {} of memory must be available, but available are only {}!", minimal_safety_margin, total_memory) };
             }
             return total_memory - std::max(total_memory * percentual_safety_margin, minimal_safety_margin);
         };
@@ -369,9 +368,8 @@ std::tuple<aos_matrix<real_type>, std::vector<real_type>, std::vector<unsigned l
         const auto format_vector = [](const auto &vec) -> std::string {
             if (vec.size() == 1) {
                 return fmt::format("{}", vec.front());
-            } else {
-                return fmt::format("[{}]", fmt::join(vec, ", "));
             }
+            return fmt::format("[{}]", fmt::join(vec, ", "));
         };
 
         if (comm_.size() <= 1) {
@@ -385,7 +383,7 @@ std::tuple<aos_matrix<real_type>, std::vector<real_type>, std::vector<unsigned l
                         "  - usable device memory (with safety margin of min({0} %, {1}): {5}\n"
                         "  - maximum memory needed (cg_explicit): {6}\n"
                         "  - maximum memory needed (cg_implicit): {7}\n",
-                        static_cast<double>(percentual_safety_margin * 100.0L),
+                        static_cast<double>(percentual_safety_margin * 100.0L),  // NOLINT: convert float to percent by multiplying it with 100
                         minimal_safety_margin,
                         detail::tracking::tracking_entry{ "resource_constraints", "system_memory", total_system_memory },
                         detail::tracking::tracking_entry{ "resource_constraints", "usable_system_memory_with_safety_margin", usable_system_memory },

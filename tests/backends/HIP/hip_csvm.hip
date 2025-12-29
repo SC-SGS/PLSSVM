@@ -42,7 +42,7 @@ class HIPCSVMConstructor : public ::testing::Test,
 TYPED_TEST_SUITE(HIPCSVMConstructor, hip_csvm_types_gtest, naming::test_parameter_to_name);
 
 // check whether the constructor correctly fails when using an incompatible target platform
-TYPED_TEST(HIPCSVMConstructor, default_construct) {
+TYPED_TEST(HIPCSVMConstructor, DefaultConstruct) {
     using csvm_type = typename TestFixture::fixture_csvm_type;
 
 #if defined(PLSSVM_HIP_BACKEND_USE_HIP_RUNTIME)
@@ -66,7 +66,7 @@ TYPED_TEST(HIPCSVMConstructor, default_construct) {
 #endif
 }
 
-TYPED_TEST(HIPCSVMConstructor, construct_parameter) {
+TYPED_TEST(HIPCSVMConstructor, ConstructParameter) {
     using csvm_type = typename TestFixture::fixture_csvm_type;
 
 #if defined(PLSSVM_HIP_BACKEND_USE_HIP_RUNTIME)
@@ -90,7 +90,7 @@ TYPED_TEST(HIPCSVMConstructor, construct_parameter) {
 #endif
 }
 
-TYPED_TEST(HIPCSVMConstructor, construct_target_and_parameter) {
+TYPED_TEST(HIPCSVMConstructor, ConstructTargetAndParameter) {
     using csvm_type = typename TestFixture::fixture_csvm_type;
 
     // create parameter struct
@@ -137,17 +137,17 @@ TYPED_TEST(HIPCSVMConstructor, construct_target_and_parameter) {
     // all other target platforms must throw
     EXPECT_THROW_WHAT((csvm_type{ plssvm::target_platform::cpu, params }),
                       plssvm::hip::backend_exception,
-                      "Invalid target platform 'cpu' for the HIP backend using the HIP runtime!");
+                      "Invalid target platform 'cpu' for the HIP backend using the CUDA runtime!");
     EXPECT_THROW_WHAT((csvm_type{ plssvm::target_platform::gpu_amd, params }),
                       plssvm::hip::backend_exception,
-                      "Invalid target platform 'gpu_amd' for the HIP backend using the HIP runtime!");
+                      "Invalid target platform 'gpu_amd' for the HIP backend using the CUDA runtime!");
     EXPECT_THROW_WHAT((csvm_type{ plssvm::target_platform::gpu_intel, params }),
                       plssvm::hip::backend_exception,
-                      "Invalid target platform 'gpu_intel' for the HIP backend using the HIP runtime!");
+                      "Invalid target platform 'gpu_intel' for the HIP backend using the CUDA runtime!");
 #endif
 }
 
-TYPED_TEST(HIPCSVMConstructor, construct_named_args) {
+TYPED_TEST(HIPCSVMConstructor, ConstructNamedArgs) {
     using csvm_type = typename TestFixture::fixture_csvm_type;
 
 #if defined(PLSSVM_HIP_BACKEND_USE_HIP_RUNTIME)
@@ -179,7 +179,7 @@ TYPED_TEST(HIPCSVMConstructor, construct_named_args) {
 #endif
 }
 
-TYPED_TEST(HIPCSVMConstructor, construct_target_and_named_args) {
+TYPED_TEST(HIPCSVMConstructor, ConstructTargetAndNamedArgs) {
     using csvm_type = typename TestFixture::fixture_csvm_type;
 
 #if defined(PLSSVM_HIP_BACKEND_USE_HIP_RUNTIME)
@@ -223,13 +223,13 @@ TYPED_TEST(HIPCSVMConstructor, construct_target_and_named_args) {
     // all other target platforms must throw
     EXPECT_THROW_WHAT((csvm_type{ plssvm::target_platform::cpu, plssvm::cost = 2.0 }),
                       plssvm::hip::backend_exception,
-                      "Invalid target platform 'cpu' for the HIP backend using the HIP runtime!");
+                      "Invalid target platform 'cpu' for the HIP backend using the CUDA runtime!");
     EXPECT_THROW_WHAT((csvm_type{ plssvm::target_platform::gpu_amd, plssvm::cost = 2.0 }),
                       plssvm::hip::backend_exception,
-                      "Invalid target platform 'gpu_amd' for the HIP backend using the HIP runtime!");
+                      "Invalid target platform 'gpu_amd' for the HIP backend using the CUDA runtime!");
     EXPECT_THROW_WHAT((csvm_type{ plssvm::target_platform::gpu_intel, plssvm::cost = 2.0 }),
                       plssvm::hip::backend_exception,
-                      "Invalid target platform 'gpu_intel' for the HIP backend using the HIP runtime!");
+                      "Invalid target platform 'gpu_intel' for the HIP backend using the CUDA runtime!");
 #endif
 }
 

@@ -9,8 +9,8 @@
  * @brief Defines a matrix class used to hiding the data linearization using AoS and SoA.
  */
 
-#ifndef PLSSVM_DETAIL_MATRIX_HPP_
-#define PLSSVM_DETAIL_MATRIX_HPP_
+#ifndef PLSSVM_MATRIX_HPP_
+#define PLSSVM_MATRIX_HPP_
 #pragma once
 
 #include "plssvm/detail/assert.hpp"                 // PLSSVM_ASSERT
@@ -275,7 +275,7 @@ class matrix {
 
   private:
     /// The shape of the matrix.
-    plssvm::shape shape_{};
+    plssvm::shape shape_;
     /// The (linearized, either in AoS or SoA layout) data.
     std::vector<value_type> data_{};
 };
@@ -379,7 +379,7 @@ matrix<T, layout_>::matrix(const std::vector<std::vector<value_type>> &data) {
 }
 
 template <typename T, layout_type layout_>
-auto matrix<T, layout_>::operator()(const size_type row, const size_type col) const -> value_type {
+typename matrix<T, layout_>::value_type matrix<T, layout_>::operator()(const size_type row, const size_type col) const {
     PLSSVM_ASSERT(row < this->num_rows(), fmt::format("The current row ({}) must be smaller than the number of rows ({})!", row, this->num_rows()));
     PLSSVM_ASSERT(col < this->num_cols(), fmt::format("The current column ({}) must be smaller than the number of columns ({})!", col, this->num_cols()));
     if constexpr (layout_ == layout_type::aos) {
@@ -393,7 +393,7 @@ auto matrix<T, layout_>::operator()(const size_type row, const size_type col) co
 }
 
 template <typename T, layout_type layout_>
-auto matrix<T, layout_>::operator()(const size_type row, const size_type col) -> reference {
+typename matrix<T, layout_>::reference matrix<T, layout_>::operator()(const size_type row, const size_type col) {
     PLSSVM_ASSERT(row < this->num_rows(), fmt::format("The current row ({}) must be smaller than the number of rows ({})!", row, this->num_rows()));
     PLSSVM_ASSERT(col < this->num_cols(), fmt::format("The current column ({}) must be smaller than the number of columns ({})!", col, this->num_cols()));
     if constexpr (layout_ == layout_type::aos) {
@@ -407,7 +407,7 @@ auto matrix<T, layout_>::operator()(const size_type row, const size_type col) ->
 }
 
 template <typename T, layout_type layout_>
-auto matrix<T, layout_>::at(const size_type row, const size_type col) const -> value_type {
+typename matrix<T, layout_>::value_type matrix<T, layout_>::at(const size_type row, const size_type col) const {
     if (row >= this->num_rows()) {
         throw matrix_exception{ fmt::format("The current row ({}) must be smaller than the number of rows ({})!", row, this->num_rows()) };
     }
@@ -419,7 +419,7 @@ auto matrix<T, layout_>::at(const size_type row, const size_type col) const -> v
 }
 
 template <typename T, layout_type layout_>
-auto matrix<T, layout_>::at(const size_type row, const size_type col) -> reference {
+typename matrix<T, layout_>::reference matrix<T, layout_>::at(const size_type row, const size_type col) {
     if (row >= this->num_rows()) {
         throw matrix_exception{ fmt::format("The current row ({}) must be smaller than the number of rows ({})!", row, this->num_rows()) };
     }
@@ -431,19 +431,19 @@ auto matrix<T, layout_>::at(const size_type row, const size_type col) -> referen
 }
 
 template <typename T, layout_type layout_>
-auto matrix<T, layout_>::operator[](const size_type idx) const -> value_type {
+typename matrix<T, layout_>::value_type matrix<T, layout_>::operator[](const size_type idx) const {
     PLSSVM_ASSERT(idx < this->size(), fmt::format("The current index ({}) must be smaller than the total number of matrix entries ({})!", idx, this->size()));
     return data_[idx];
 }
 
 template <typename T, layout_type layout_>
-auto matrix<T, layout_>::operator[](const size_type idx) -> reference {
+typename matrix<T, layout_>::reference matrix<T, layout_>::operator[](const size_type idx) {
     PLSSVM_ASSERT(idx < this->size(), fmt::format("The current index ({}) must be smaller than the total number of matrix entries ({})!", idx, this->size()));
     return data_[idx];
 }
 
 template <typename T, layout_type layout_>
-auto matrix<T, layout_>::at(const size_type idx) const -> value_type {
+typename matrix<T, layout_>::value_type matrix<T, layout_>::at(const size_type idx) const {
     if (idx >= this->size()) {
         throw matrix_exception{ fmt::format("The current index ({}) must be smaller than the total number of matrix entries ({})!", idx, this->size()) };
     }
@@ -451,7 +451,7 @@ auto matrix<T, layout_>::at(const size_type idx) const -> value_type {
 }
 
 template <typename T, layout_type layout_>
-auto matrix<T, layout_>::at(const size_type idx) -> reference {
+typename matrix<T, layout_>::reference matrix<T, layout_>::at(const size_type idx) {
     if (idx >= this->size()) {
         throw matrix_exception{ fmt::format("The current index ({}) must be smaller than the total number of matrix entries ({})!", idx, this->size()) };
     }
@@ -592,7 +592,8 @@ template <typename T, layout_type layout>
  */
 template <typename T, layout_type layout>
 [[nodiscard]] matrix<T, layout> operator*(const T scale, matrix<T, layout> matr) {
-    return matr * scale;
+    matr *= scale;
+    return matr;
 }
 
 /**
@@ -839,4 +840,4 @@ struct fmt::formatter<plssvm::matrix<T, layout>> : fmt::ostream_formatter { };
 
 /// @endcond
 
-#endif  // PLSSVM_DETAIL_MATRIX_HPP_
+#endif  // PLSSVM_MATRIX_HPP_

@@ -28,7 +28,7 @@ class LIBSVMClassificationModelHeaderParseInvalid : public ::testing::Test { };
 
 TYPED_TEST_SUITE(LIBSVMClassificationModelHeaderParseInvalid, util::classification_label_type_gtest, naming::test_parameter_to_name);
 
-TYPED_TEST(LIBSVMClassificationModelHeaderParseInvalid, wrong_svm_type) {
+TYPED_TEST(LIBSVMClassificationModelHeaderParseInvalid, WrongSvmType) {
     using label_type = util::test_parameter_type_at_t<0, TypeParam>;
 
     // parse the LIBSVM model file
@@ -40,7 +40,7 @@ TYPED_TEST(LIBSVMClassificationModelHeaderParseInvalid, wrong_svm_type) {
                       "Can only use c_svc as svm_type, but 'nu_svc' was given!");
 }
 
-TYPED_TEST(LIBSVMClassificationModelHeaderParseInvalid, wrong_kernel_type) {
+TYPED_TEST(LIBSVMClassificationModelHeaderParseInvalid, WrongKernelType) {
     using label_type = util::test_parameter_type_at_t<0, TypeParam>;
 
     // parse the LIBSVM model file
@@ -52,7 +52,7 @@ TYPED_TEST(LIBSVMClassificationModelHeaderParseInvalid, wrong_kernel_type) {
                       "Unrecognized kernel type 'foo'!");
 }
 
-TYPED_TEST(LIBSVMClassificationModelHeaderParseInvalid, wrong_total_sv) {
+TYPED_TEST(LIBSVMClassificationModelHeaderParseInvalid, WrongTotalSv) {
     using label_type = util::test_parameter_type_at_t<0, TypeParam>;
 
     // parse the LIBSVM model file
@@ -64,7 +64,7 @@ TYPED_TEST(LIBSVMClassificationModelHeaderParseInvalid, wrong_total_sv) {
                       "The number of support vectors must be greater than 0!");
 }
 
-TYPED_TEST(LIBSVMClassificationModelHeaderParseInvalid, too_few_label) {
+TYPED_TEST(LIBSVMClassificationModelHeaderParseInvalid, TooFewLabel) {
     using label_type = util::test_parameter_type_at_t<0, TypeParam>;
 
     // parse the LIBSVM model file
@@ -76,7 +76,7 @@ TYPED_TEST(LIBSVMClassificationModelHeaderParseInvalid, too_few_label) {
                       "At least two labels must be set, but only one label was given!");
 }
 
-TYPED_TEST(LIBSVMClassificationModelHeaderParseInvalid, too_few_nr_sv) {
+TYPED_TEST(LIBSVMClassificationModelHeaderParseInvalid, TooFewNrSv) {
     using label_type = util::test_parameter_type_at_t<0, TypeParam>;
 
     // parse the LIBSVM model file
@@ -88,7 +88,7 @@ TYPED_TEST(LIBSVMClassificationModelHeaderParseInvalid, too_few_nr_sv) {
                       "At least two nr_sv must be set, but only one was given!");
 }
 
-TYPED_TEST(LIBSVMClassificationModelHeaderParseInvalid, empty_rho) {
+TYPED_TEST(LIBSVMClassificationModelHeaderParseInvalid, EmptyRho) {
     using label_type = util::test_parameter_type_at_t<0, TypeParam>;
 
     // parse the LIBSVM model file
@@ -100,7 +100,7 @@ TYPED_TEST(LIBSVMClassificationModelHeaderParseInvalid, empty_rho) {
                       "At least one rho value must be set, but none was given!");
 }
 
-TYPED_TEST(LIBSVMClassificationModelHeaderParseInvalid, too_few_rho) {
+TYPED_TEST(LIBSVMClassificationModelHeaderParseInvalid, TooFewRho) {
     using label_type = util::test_parameter_type_at_t<0, TypeParam>;
 
     if (util::get_num_classes<label_type>() == 2) {
@@ -116,7 +116,7 @@ TYPED_TEST(LIBSVMClassificationModelHeaderParseInvalid, too_few_rho) {
     }
 }
 
-TYPED_TEST(LIBSVMClassificationModelHeaderParseInvalid, unrecognized_header_entry) {
+TYPED_TEST(LIBSVMClassificationModelHeaderParseInvalid, UnrecognizedHeaderEntry) {
     using label_type = util::test_parameter_type_at_t<0, TypeParam>;
 
     // parse the LIBSVM model file
@@ -128,7 +128,7 @@ TYPED_TEST(LIBSVMClassificationModelHeaderParseInvalid, unrecognized_header_entr
                       "Unrecognized header entry 'invalid entry'! Maybe SV is missing?");
 }
 
-TYPED_TEST(LIBSVMClassificationModelHeaderParseInvalid, missing_svm_type) {
+TYPED_TEST(LIBSVMClassificationModelHeaderParseInvalid, MissingSvmType) {
     using label_type = util::test_parameter_type_at_t<0, TypeParam>;
 
     // parse the LIBSVM model file
@@ -140,7 +140,7 @@ TYPED_TEST(LIBSVMClassificationModelHeaderParseInvalid, missing_svm_type) {
                       "Missing svm_type!");
 }
 
-TYPED_TEST(LIBSVMClassificationModelHeaderParseInvalid, missing_kernel_type) {
+TYPED_TEST(LIBSVMClassificationModelHeaderParseInvalid, MissingKernelType) {
     using label_type = util::test_parameter_type_at_t<0, TypeParam>;
 
     // parse the LIBSVM model file
@@ -152,7 +152,7 @@ TYPED_TEST(LIBSVMClassificationModelHeaderParseInvalid, missing_kernel_type) {
                       "Missing kernel_type!");
 }
 
-TYPED_TEST(LIBSVMClassificationModelHeaderParseInvalid, explicit_degree_in_linear_kernel) {
+TYPED_TEST(LIBSVMClassificationModelHeaderParseInvalid, ExplicitDegreeInLinearKernel) {
     using label_type = util::test_parameter_type_at_t<0, TypeParam>;
 
     // parse the LIBSVM model file
@@ -164,7 +164,7 @@ TYPED_TEST(LIBSVMClassificationModelHeaderParseInvalid, explicit_degree_in_linea
                       "Explicitly provided a value for the degree parameter which is not used in the linear kernel!");
 }
 
-TYPED_TEST(LIBSVMClassificationModelHeaderParseInvalid, explicit_gamma_in_linear_kernel) {
+TYPED_TEST(LIBSVMClassificationModelHeaderParseInvalid, ExplicitGammaInLinearKernel) {
     using label_type = util::test_parameter_type_at_t<0, TypeParam>;
 
     // parse the LIBSVM model file
@@ -176,7 +176,7 @@ TYPED_TEST(LIBSVMClassificationModelHeaderParseInvalid, explicit_gamma_in_linear
                       "Explicitly provided a value for the gamma parameter which is not used in the linear kernel!");
 }
 
-TYPED_TEST(LIBSVMClassificationModelHeaderParseInvalid, explicit_coef0_in_linear_kernel) {
+TYPED_TEST(LIBSVMClassificationModelHeaderParseInvalid, ExplicitCoef0InLinearKernel) {
     using label_type = util::test_parameter_type_at_t<0, TypeParam>;
 
     // parse the LIBSVM model file
@@ -188,7 +188,7 @@ TYPED_TEST(LIBSVMClassificationModelHeaderParseInvalid, explicit_coef0_in_linear
                       "Explicitly provided a value for the coef0 parameter which is not used in the linear kernel!");
 }
 
-TYPED_TEST(LIBSVMClassificationModelHeaderParseInvalid, explicit_degree_in_rbf_kernel) {
+TYPED_TEST(LIBSVMClassificationModelHeaderParseInvalid, ExplicitDegreeInRadialBasisFunctionKernel) {
     using label_type = util::test_parameter_type_at_t<0, TypeParam>;
 
     // parse the LIBSVM model file
@@ -200,7 +200,7 @@ TYPED_TEST(LIBSVMClassificationModelHeaderParseInvalid, explicit_degree_in_rbf_k
                       "Explicitly provided a value for the degree parameter which is not used in the rbf kernel!");
 }
 
-TYPED_TEST(LIBSVMClassificationModelHeaderParseInvalid, explicit_coef0_in_rbf_kernel) {
+TYPED_TEST(LIBSVMClassificationModelHeaderParseInvalid, ExplicitCoef0InRadialBasisFunctionKernel) {
     using label_type = util::test_parameter_type_at_t<0, TypeParam>;
 
     // parse the LIBSVM model file
@@ -212,7 +212,7 @@ TYPED_TEST(LIBSVMClassificationModelHeaderParseInvalid, explicit_coef0_in_rbf_ke
                       "Explicitly provided a value for the coef0 parameter which is not used in the rbf kernel!");
 }
 
-TYPED_TEST(LIBSVMClassificationModelHeaderParseInvalid, explicit_degree_in_sigmoid_kernel) {
+TYPED_TEST(LIBSVMClassificationModelHeaderParseInvalid, ExplicitDegreeInSigmoidKernel) {
     using label_type = util::test_parameter_type_at_t<0, TypeParam>;
 
     // parse the LIBSVM model file
@@ -224,7 +224,7 @@ TYPED_TEST(LIBSVMClassificationModelHeaderParseInvalid, explicit_degree_in_sigmo
                       "Explicitly provided a value for the degree parameter which is not used in the sigmoid kernel!");
 }
 
-TYPED_TEST(LIBSVMClassificationModelHeaderParseInvalid, explicit_degree_in_laplacian_kernel) {
+TYPED_TEST(LIBSVMClassificationModelHeaderParseInvalid, ExplicitDegreeInLaplacianKernel) {
     using label_type = util::test_parameter_type_at_t<0, TypeParam>;
 
     // parse the LIBSVM model file
@@ -236,7 +236,7 @@ TYPED_TEST(LIBSVMClassificationModelHeaderParseInvalid, explicit_degree_in_lapla
                       "Explicitly provided a value for the degree parameter which is not used in the laplacian kernel!");
 }
 
-TYPED_TEST(LIBSVMClassificationModelHeaderParseInvalid, explicit_coef0_in_laplacian_kernel) {
+TYPED_TEST(LIBSVMClassificationModelHeaderParseInvalid, ExplicitCoef0InLaplacianKernel) {
     using label_type = util::test_parameter_type_at_t<0, TypeParam>;
 
     // parse the LIBSVM model file
@@ -248,7 +248,7 @@ TYPED_TEST(LIBSVMClassificationModelHeaderParseInvalid, explicit_coef0_in_laplac
                       "Explicitly provided a value for the coef0 parameter which is not used in the laplacian kernel!");
 }
 
-TYPED_TEST(LIBSVMClassificationModelHeaderParseInvalid, explicit_degree_in_chi_squared_kernel) {
+TYPED_TEST(LIBSVMClassificationModelHeaderParseInvalid, ExplicitDegreeInChiSquaredKernel) {
     using label_type = util::test_parameter_type_at_t<0, TypeParam>;
 
     // parse the LIBSVM model file
@@ -260,7 +260,7 @@ TYPED_TEST(LIBSVMClassificationModelHeaderParseInvalid, explicit_degree_in_chi_s
                       "Explicitly provided a value for the degree parameter which is not used in the chi_squared kernel!");
 }
 
-TYPED_TEST(LIBSVMClassificationModelHeaderParseInvalid, explicit_coef0_in_chi_squared_kernel) {
+TYPED_TEST(LIBSVMClassificationModelHeaderParseInvalid, ExplicitCoef0InChiSquaredKernel) {
     using label_type = util::test_parameter_type_at_t<0, TypeParam>;
 
     // parse the LIBSVM model file
@@ -272,7 +272,7 @@ TYPED_TEST(LIBSVMClassificationModelHeaderParseInvalid, explicit_coef0_in_chi_sq
                       "Explicitly provided a value for the coef0 parameter which is not used in the chi_squared kernel!");
 }
 
-TYPED_TEST(LIBSVMClassificationModelHeaderParseInvalid, missing_nr_class) {
+TYPED_TEST(LIBSVMClassificationModelHeaderParseInvalid, MissingNrClass) {
     using label_type = util::test_parameter_type_at_t<0, TypeParam>;
 
     // parse the LIBSVM model file
@@ -284,7 +284,7 @@ TYPED_TEST(LIBSVMClassificationModelHeaderParseInvalid, missing_nr_class) {
                       "Missing number of different classes nr_class!");
 }
 
-TYPED_TEST(LIBSVMClassificationModelHeaderParseInvalid, missing_total_sv) {
+TYPED_TEST(LIBSVMClassificationModelHeaderParseInvalid, MissingTotalSv) {
     using label_type = util::test_parameter_type_at_t<0, TypeParam>;
 
     // parse the LIBSVM model file
@@ -296,7 +296,7 @@ TYPED_TEST(LIBSVMClassificationModelHeaderParseInvalid, missing_total_sv) {
                       "Missing total number of support vectors total_sv!");
 }
 
-TYPED_TEST(LIBSVMClassificationModelHeaderParseInvalid, missing_rho) {
+TYPED_TEST(LIBSVMClassificationModelHeaderParseInvalid, MissingRho) {
     using label_type = util::test_parameter_type_at_t<0, TypeParam>;
 
     // parse the LIBSVM model file
@@ -308,7 +308,7 @@ TYPED_TEST(LIBSVMClassificationModelHeaderParseInvalid, missing_rho) {
                       "Missing rho values!");
 }
 
-TYPED_TEST(LIBSVMClassificationModelHeaderParseInvalid, missing_label) {
+TYPED_TEST(LIBSVMClassificationModelHeaderParseInvalid, MissingLabel) {
     using label_type = util::test_parameter_type_at_t<0, TypeParam>;
 
     // parse the LIBSVM model file
@@ -320,7 +320,7 @@ TYPED_TEST(LIBSVMClassificationModelHeaderParseInvalid, missing_label) {
                       "Missing class label specification!");
 }
 
-TYPED_TEST(LIBSVMClassificationModelHeaderParseInvalid, nr_class_and_label_mismatch) {
+TYPED_TEST(LIBSVMClassificationModelHeaderParseInvalid, NrClassAndLabelMismatch) {
     using label_type = util::test_parameter_type_at_t<0, TypeParam>;
 
     // parse the LIBSVM model file
@@ -332,7 +332,7 @@ TYPED_TEST(LIBSVMClassificationModelHeaderParseInvalid, nr_class_and_label_misma
                       "The number of classes (nr_class) is 3, but the provided number of different labels is 2 (label)!");
 }
 
-TYPED_TEST(LIBSVMClassificationModelHeaderParseInvalid, missing_nr_sv) {
+TYPED_TEST(LIBSVMClassificationModelHeaderParseInvalid, MissingNrSv) {
     using label_type = util::test_parameter_type_at_t<0, TypeParam>;
 
     // parse the LIBSVM model file
@@ -344,7 +344,7 @@ TYPED_TEST(LIBSVMClassificationModelHeaderParseInvalid, missing_nr_sv) {
                       "Missing number of support vectors per class nr_sv!");
 }
 
-TYPED_TEST(LIBSVMClassificationModelHeaderParseInvalid, nr_class_and_nr_sv_mismatch) {
+TYPED_TEST(LIBSVMClassificationModelHeaderParseInvalid, NrClassAndNrSvMismatch) {
     using label_type = util::test_parameter_type_at_t<0, TypeParam>;
 
     // parse the LIBSVM model file
@@ -356,7 +356,7 @@ TYPED_TEST(LIBSVMClassificationModelHeaderParseInvalid, nr_class_and_nr_sv_misma
                       "The number of classes (nr_class) is 2, but the provided number of different labels is 3 (nr_sv)!");
 }
 
-TYPED_TEST(LIBSVMClassificationModelHeaderParseInvalid, total_sv_and_nr_sv_mismatch) {
+TYPED_TEST(LIBSVMClassificationModelHeaderParseInvalid, TotalSvAndNrSvMismatch) {
     using label_type = util::test_parameter_type_at_t<0, TypeParam>;
 
     // parse the LIBSVM model file
@@ -368,7 +368,7 @@ TYPED_TEST(LIBSVMClassificationModelHeaderParseInvalid, total_sv_and_nr_sv_misma
                       "The total number of support vectors is 5, but the sum of nr_sv is 6!");
 }
 
-TYPED_TEST(LIBSVMClassificationModelHeaderParseInvalid, missing_sv) {
+TYPED_TEST(LIBSVMClassificationModelHeaderParseInvalid, MissingSv) {
     using label_type = util::test_parameter_type_at_t<0, TypeParam>;
 
     // parse the LIBSVM model file
@@ -380,7 +380,7 @@ TYPED_TEST(LIBSVMClassificationModelHeaderParseInvalid, missing_sv) {
                       "Unrecognized header entry '-1.8568721894e-01 1:-1.1178275006e+00 2:-2.9087188881e+00 3:6.6638344270e-01 4:1.0978832704e+00'! Maybe SV is missing?");
 }
 
-TYPED_TEST(LIBSVMClassificationModelHeaderParseInvalid, missing_support_vectors) {
+TYPED_TEST(LIBSVMClassificationModelHeaderParseInvalid, MissingSupportVectors) {
     using label_type = util::test_parameter_type_at_t<0, TypeParam>;
 
     // parse the LIBSVM model file
@@ -392,7 +392,7 @@ TYPED_TEST(LIBSVMClassificationModelHeaderParseInvalid, missing_support_vectors)
                       "Can't parse file: no support vectors are given or SV is missing!");
 }
 
-TYPED_TEST(LIBSVMClassificationModelHeaderParseInvalid, same_class_multiple_times) {
+TYPED_TEST(LIBSVMClassificationModelHeaderParseInvalid, SameClassMultipleTimes) {
     using label_type = util::test_parameter_type_at_t<0, TypeParam>;
 
     // parse the LIBSVM model file
@@ -404,7 +404,7 @@ TYPED_TEST(LIBSVMClassificationModelHeaderParseInvalid, same_class_multiple_time
                       "Provided 2 labels but only 1 of them was/where unique!");
 }
 
-TYPED_TEST(LIBSVMClassificationModelHeaderParseInvalid, empty) {
+TYPED_TEST(LIBSVMClassificationModelHeaderParseInvalid, Empty) {
     using label_type = util::test_parameter_type_at_t<0, TypeParam>;
 
     // parse the LIBSVM model file

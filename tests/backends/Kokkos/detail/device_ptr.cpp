@@ -11,8 +11,8 @@
 #include "plssvm/backends/Kokkos/detail/device_ptr.hpp"  // plssvm::kokkos::detail::device_ptr
 
 #include "plssvm/backends/Kokkos/detail/device_wrapper.hpp"        // plssvm::kokkos::detail::device_wrapper
-#include "plssvm/backends/Kokkos/execution_space.hpp"              // plssvm::kokkos::execution_space
 #include "plssvm/backends/Kokkos/execution_space_type_traits.hpp"  // plssvm::kokkos::execution_space_to_kokkos_type_t
+#include "plssvm/backends/Kokkos/execution_spaces.hpp"             // plssvm::kokkos::execution_space
 
 #include "tests/backends/generic_device_ptr_tests.hpp"  // generic device pointer tests to instantiate
 #include "tests/backends/Kokkos/utility.hpp"            // util::create_kokkos_test_tuple_impl
@@ -21,8 +21,6 @@
                                                         // util::detail::concat_tuple_types_t
 
 #include "gtest/gtest.h"  // INSTANTIATE_TYPED_TEST_SUITE_P
-
-#include <tuple>  // std::tuple
 
 template <typename T, plssvm::kokkos::execution_space exec_space>
 struct kokkos_device_ptr_test_type {

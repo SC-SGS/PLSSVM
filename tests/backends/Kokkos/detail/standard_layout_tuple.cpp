@@ -14,7 +14,7 @@
 
 #include <type_traits>  // std::remove_const_t
 
-TEST(KokkosStandardLayoutTuple, make_standard_layout_tuple) {
+TEST(KokkosStandardLayoutTuple, MakeStandardLayoutTuple) {
     // create a new standard layout tuple
     [[maybe_unused]] const auto tuple = plssvm::kokkos::detail::make_standard_layout_tuple(true, 42, 3.1415);
 
@@ -22,7 +22,7 @@ TEST(KokkosStandardLayoutTuple, make_standard_layout_tuple) {
     ::testing::StaticAssertTypeEq<plssvm::kokkos::detail::standard_layout_tuple<bool, int, double>, std::remove_const_t<decltype(tuple)>>();
 }
 
-TEST(KokkosStandardLayoutTuple, get) {
+TEST(KokkosStandardLayoutTuple, Get) {
     // create a new standard layout tuple
     const auto tuple = plssvm::kokkos::detail::make_standard_layout_tuple(true, 42, 3.1415);
 

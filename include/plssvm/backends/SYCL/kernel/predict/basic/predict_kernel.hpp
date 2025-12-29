@@ -16,11 +16,12 @@
 #include "plssvm/backends/SYCL/data_parallel_kernels.hpp"    // plssvm::sycl::data_parallel_kernel
 #include "plssvm/backends/SYCL/detail/atomics.hpp"           // plssvm::sycl::detail::atomic_op
 #include "plssvm/backends/SYCL/kernel/kernel_functions.hpp"  // plssvm::sycl::detail::{feature_reduce, apply_kernel_function}
-#include "plssvm/constants.hpp"                              // plssvm::{real_type, THREAD_BLOCK_SIZE}
+#include "plssvm/constants.hpp"                              // plssvm::{real_type, THREAD_BLOCK_SIZE, INTERNAL_BLOCK_SIZE}
 #include "plssvm/kernel_function_types.hpp"                  // plssvm::kernel_function_type
 
 #include "sycl/sycl.hpp"  // sycl::item
 
+#include <array>    // std::array
 #include <cstddef>  // std::size_t
 #include <tuple>    // std::tuple, std::make_tuple
 
@@ -37,7 +38,7 @@ class device_kernel_w_linear {
 
     /**
      * @brief Initialize the SYCL kernel function object.
-     * @param[in,out] w the vector to speedup the linear prediction
+     * @param[out] w the vector to speedup the linear prediction
      * @param[in] alpha the previously learned weights
      * @param[in] support_vectors the support vectors
      * @param[in] num_features the number of features
@@ -74,7 +75,7 @@ class device_kernel_w_linear {
         const auto class_idx = (idx.get_id(0) + grid_y_offset_ * THREAD_BLOCK_SIZE_uz) * INTERNAL_BLOCK_SIZE_uz;    // num_classes
 
         // create a work-item private array used for internal caching
-        real_type temp[INTERNAL_BLOCK_SIZE][INTERNAL_BLOCK_SIZE]{};
+        std::array<std::array<real_type, INTERNAL_BLOCK_SIZE>, INTERNAL_BLOCK_SIZE> temp{};
 
         // perform the dot product calculation
         for (std::size_t sv = 0; sv < device_num_sv_; ++sv) {
@@ -174,7 +175,7 @@ class device_kernel_predict_linear {
         const auto class_idx = (idx.get_id(0) + grid_y_offset_ * THREAD_BLOCK_SIZE_uz) * INTERNAL_BLOCK_SIZE_uz;  // num_classes
 
         // create a work-item private array used for internal caching
-        real_type temp[INTERNAL_BLOCK_SIZE][INTERNAL_BLOCK_SIZE]{};
+        std::array<std::array<real_type, INTERNAL_BLOCK_SIZE>, INTERNAL_BLOCK_SIZE> temp{};
 
         // perform the dot product calculation
         for (std::size_t feature = 0; feature < num_features_; ++feature) {
@@ -281,7 +282,7 @@ class device_kernel_predict {
         const auto sv_idx = (idx.get_id(0) + grid_y_offset_ * THREAD_BLOCK_SIZE_uz) * INTERNAL_BLOCK_SIZE_uz;  // num_support_vectors
 
         // create a work-item private array used for internal caching
-        real_type temp[INTERNAL_BLOCK_SIZE][INTERNAL_BLOCK_SIZE]{};
+        std::array<std::array<real_type, INTERNAL_BLOCK_SIZE>, INTERNAL_BLOCK_SIZE> temp{};
 
         // perform the feature reduction calculation
         for (std::size_t feature = 0; feature < num_features_; ++feature) {

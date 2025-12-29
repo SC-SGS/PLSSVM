@@ -19,24 +19,6 @@
 #include <cstddef>  // std::size_t
 #include <vector>   // std::vector
 
-//*************************************************************************************************************************************//
-//                                                          scalar operations                                                          //
-//*************************************************************************************************************************************//
-
-/**
- * @brief Returns +1 if x is positive and -1 if x is negative or 0.
- * @param[in] x the value to calculate the sign for
- * @return the sign value (`[[nodiscard]]`)
- */
-template <typename T>
-[[nodiscard]] inline constexpr T sign(const T x) {
-    return x > T{ 0 } ? T{ +1 } : T{ -1 };
-}
-
-//*************************************************************************************************************************************//
-//                                                        std::vector operations                                                       //
-//*************************************************************************************************************************************//
-
 /**
  * @def PLSSVM_GENERATE_VECTOR_ARITHMETIC_OPERATION
  * @brief Generate arithmetic element-wise operations using @p Op for [`std::vector`](https://en.cppreference.com/w/cpp/container/vector) (and scalars).
@@ -98,6 +80,24 @@ template <typename T>
 
 namespace plssvm::operators {
 
+//*************************************************************************************************************************************//
+//                                                          scalar operations                                                          //
+//*************************************************************************************************************************************//
+
+/**
+ * @brief Returns +1 if x is positive and -1 if x is negative or 0.
+ * @param[in] x the value to calculate the sign for
+ * @return the sign value (`[[nodiscard]]`)
+ */
+template <typename T>
+[[nodiscard]] constexpr T sign(const T x) {
+    return x > T{ 0 } ? T{ +1 } : T{ -1 };
+}
+
+//*************************************************************************************************************************************//
+//                                                        std::vector operations                                                       //
+//*************************************************************************************************************************************//
+
 // define arithmetic operations +-*/ on std::vector
 PLSSVM_GENERATE_VECTOR_ARITHMETIC_OPERATION(+)
 PLSSVM_GENERATE_VECTOR_ARITHMETIC_OPERATION(-)
@@ -119,7 +119,7 @@ PLSSVM_GENERATE_VECTOR_ARITHMETIC_OPERATION(/)
 template <typename T>
 struct transposed {
     /// The encapsulated vector.
-    const std::vector<T> &vec;
+    const std::vector<T> &vec;  // NOLINT(cppcoreguidelines-avoid-const-or-ref-data-members): transposed struct only used for function overload selection
 };
 
 /**

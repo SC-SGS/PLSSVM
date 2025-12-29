@@ -15,12 +15,12 @@
 
 #include <string>  // std::string
 
-TEST(MPIVersion, mpi_library_version) {
+TEST(MPIVersion, MPILibraryVersionNotEmpty) {
     // the MPI library version may not be empty
     EXPECT_FALSE(plssvm::mpi::detail::mpi_library_version().empty());
 }
 
-TEST(MPIVersion, mpi_version) {
+TEST(MPIVersion, MPIVersionNotEmpty) {
     // the MPI version may not be empty
     EXPECT_FALSE(plssvm::mpi::detail::mpi_version().empty());
 }

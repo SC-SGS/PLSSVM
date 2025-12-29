@@ -12,15 +12,14 @@
 #include "plssvm/backends/OpenCL/detail/kernel.hpp"      // plssvm::opencl::detail::kernel
 #include "plssvm/backends/OpenCL/detail/utility.hpp"     // PLSSVM_OPENCL_ERROR_CHECK
 #include "plssvm/detail/assert.hpp"                      // PLSSVM_ASSERT
-#include "plssvm/detail/type_traits.hpp"                 // plssvm::detail::always_false_v
+#include "plssvm/exceptions/exceptions.hpp"              // plssvm::exception
 
 #include "CL/cl.h"  // cl_context, cl_command_queue, cl_device_id, clCreateCommandQueueWithProperties, clCreateCommandQueue, clReleaseCommandQueue
 
-#include <exception>    // std::terminate
-#include <iostream>     // std::cerr, std::endl
-#include <memory>       // std::addressof
-#include <type_traits>  // std::is_same_v
-#include <utility>      // std::exchange, std::move
+#include <exception>  // std::terminate
+#include <iostream>   // std::cerr, std::endl
+#include <memory>     // std::addressof
+#include <utility>    // std::exchange, std::move
 
 namespace plssvm::opencl::detail {
 
@@ -51,7 +50,7 @@ command_queue &command_queue::operator=(command_queue &&other) noexcept {
 command_queue::~command_queue() {
     // avoid compiler warnings
     try {
-        if (queue) {
+        if (static_cast<bool>(queue)) {
             PLSSVM_OPENCL_ERROR_CHECK(clReleaseCommandQueue(queue), "error releasing cl_command_queue")
         }
     } catch (const plssvm::exception &e) {

@@ -33,10 +33,9 @@ std::optional<std::string> get_git_info() {
         std::string_view date = git_metadata::commit_date();
         date.remove_suffix(date.size() - date.find_last_of(' '));
         return std::make_optional(fmt::format("({} {} {} ({}))", git_metadata::remote_url(), git_metadata::branch(), git_metadata::commit_sha1(), date));
-    } else {
-        // no git information available
-        return std::nullopt;
     }
+    // no git information available
+    return std::nullopt;
 }
 
 std::string get_version_info(const std::string_view executable_name, const bool with_backend_info) {

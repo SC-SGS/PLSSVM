@@ -14,7 +14,7 @@
 #pragma once
 
 #include "plssvm/backend_types.hpp"                        // plssvm::backend_type
-#include "plssvm/backends/Kokkos/execution_space.hpp"      // plssvm::kokkos::execution_space
+#include "plssvm/backends/Kokkos/execution_spaces.hpp"     // plssvm::kokkos::execution_space
 #include "plssvm/backends/SYCL/data_parallel_kernels.hpp"  // plssvm::sycl::data_parallel_kernels
 #include "plssvm/backends/SYCL/implementation_types.hpp"   // plssvm::sycl::implementation_type
 #include "plssvm/mpi/communicator.hpp"                     // plssvm::mpi::communicator
@@ -30,6 +30,9 @@
 #include <vector>    // std::vector
 
 namespace plssvm::detail::cmd {
+
+/// The maximum number of characters in one cmd line.
+constexpr std::size_t max_cmd_width = 150;
 
 /**
  * @brief Filter the provided command line options starting with the @p prefix_filter.

@@ -1,0 +1,10 @@
+---
+Checks: '
+-cppcoreguidelines-avoid-const-or-ref-data-members,
+
+-misc-include-cleaner,
+
+-performance-unnecessary-value-param,
+'
+
+InheritParentConfig: true

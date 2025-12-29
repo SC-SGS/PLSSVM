@@ -13,15 +13,16 @@
 #include "plssvm/backends/OpenCL/detail/error_code.hpp"     // plssvm::opencl::detail::error_code
 #include "plssvm/backends/OpenCL/detail/jit_info.hpp"       // plssvm::opencl::detail::jit_info
 #include "plssvm/backends/OpenCL/detail/kernel.hpp"         // plssvm::opencl::detail::compute_kernel_name, plssvm::opencl::detail::kernel
+#include "plssvm/backends/OpenCL/exceptions.hpp"            // plssvm::opencl::backend_exception
 #include "plssvm/constants.hpp"                             // plssvm::real_type, plssvm::THREAD_BLOCK_SIZE
 #include "plssvm/detail/arithmetic_type_name.hpp"           // plssvm::detail::arithmetic_type_name
 #include "plssvm/detail/assert.hpp"                         // PLSSVM_ASSERT
 #include "plssvm/detail/logging/mpi_log_untracked.hpp"      // plssvm::detail::log_untracked
 #include "plssvm/detail/sha256.hpp"                         // plssvm::detail::sha256
 #include "plssvm/detail/string_conversion.hpp"              // plssvm::detail::extract_first_integer_from_string
-#include "plssvm/detail/string_utility.hpp"                 // plssvm::detail::replace_all, plssvm::detail::to_lower_case, plssvm::detail::contains
+#include "plssvm/detail/string_utility.hpp"                 // plssvm::detail::{replace_all, to_lower_case, contains, trim}
 #include "plssvm/detail/tracking/performance_tracker.hpp"   // PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY, plssvm::detail::tracking::tracking_entry
-#include "plssvm/detail/utility.hpp"                        // plssvm::detail::erase_if
+#include "plssvm/detail/utility.hpp"                        // plssvm::detail::{erase_if, get_env_variable}
 #include "plssvm/exceptions/exceptions.hpp"                 // plssvm::platform_devices_empty
 #include "plssvm/kernel_function_types.hpp"                 // plssvm::kernel_function_type
 #include "plssvm/mpi/communicator.hpp"                      // plssvm::mpi::communicator
@@ -36,7 +37,7 @@
 
 #include "fmt/format.h"  // fmt::format
 #include "fmt/ranges.h"  // fmt::join
-#include "fmt/std.h"     // format std::filesystem::path
+#include "fmt/std.h"     // NOLINT: format std::filesystem::path
 
 #include <algorithm>     // std::count_if
 #include <array>         // std::array
@@ -49,6 +50,9 @@
 #include <iterator>      // std::istreambuf_iterator
 #include <limits>        // std::numeric_limits
 #include <map>           // std::map
+#include <optional>      // std::optional
+#include <regex>         // std::regex, std::regex::ECMAScript
+#include <sstream>       // std::istringstream
 #include <string>        // std::string
 #include <string_view>   // std::string_view
 #include <system_error>  // std::error_code
@@ -56,13 +60,80 @@
 #include <utility>       // std::pair, std::make_pair, std::move
 #include <vector>        // std::vector
 
+namespace {
+
+/**
+ * @brief Given a @p filter element represented as a string like `"gpu_nvidia:0"`, convert it to the corresponding plssvm::target_platform and device ID as `std::size_t`.
+ * @param[in] filter the device filter
+ * @return { the plssvm::target_platform, the device ID } (`[[nodiscard]]`)
+ */
+[[nodiscard]] std::pair<plssvm::target_platform, std::size_t> extract_filter_information(const std::string_view filter) {
+    const std::vector<std::string_view> split = plssvm::detail::split(filter, ':');
+    // exactly two entries must be present: target_platform and device_num
+    PLSSVM_ASSERT(split.size() == 2, "The filter must by of form, e.g., gpu_nvidia:0, i.e., splitting it by : must return two elements.");
+
+    // parse the target platform
+    std::istringstream iss{ std::string{ split[0] } };
+    plssvm::target_platform target{};
+    iss >> target;
+
+    // parse the device number
+    const auto device_num = plssvm::detail::convert_to<std::size_t>(split[1]);
+
+    return std::make_pair(target, device_num);
+}
+
+}  // namespace
+
 namespace plssvm::opencl::detail {
 
 [[nodiscard]] std::pair<std::vector<context>, target_platform> get_contexts(target_platform target) {
     error_code err;
 
+    // check if the PLSSVM OpenCL device filter env variable is set
+    std::optional<std::map<target_platform, std::vector<std::size_t>>> opt_filters_to_apply{ std::nullopt };
+    const std::optional<std::string> &device_filter_env = ::plssvm::detail::get_env_variable("PLSSVM_OPENCL_DEVICE_FILTER");
+    if (device_filter_env.has_value()) {
+        // check that the device filter has the correct format
+        constexpr static const char *regex_pattern = R"(^((gpu_nvidia|gpu_amd|gpu_intel|cpu):[0-9]+)(;((gpu_nvidia|gpu_amd|gpu_intel|cpu):[0-9]+))*$)";
+        if (!std::regex_match(device_filter_env.value(), std::regex{ regex_pattern, std::regex::ECMAScript })) {
+            throw backend_exception{ fmt::format(R"(Invalid device filter "{}". The filter must be of form: "{}".)", device_filter_env.value(), regex_pattern) };
+        }
+
+        // parse the provided filter
+        std::map<target_platform, std::vector<std::size_t>> filters_to_apply{};
+        for (const std::string_view filter : ::plssvm::detail::split(device_filter_env.value(), ';')) {
+            // filter is of the form: target_platform:device_num
+            const auto &[filter_target, filter_device_id] = extract_filter_information(filter);
+            filters_to_apply[filter_target].push_back(filter_device_id);
+        }
+
+        // update the filter
+        opt_filters_to_apply = std::make_optional(std::move(filters_to_apply));
+    }
+
+    // a map that counts all occurrences of devices per target platform IGNORING potentially different OpenCL platforms
+    std::map<target_platform, std::size_t> device_count_per_platform{};
+
+    // utility function to check whether a filter applies; if PLSSVM_OPENCL_DEVICE_FILTER isn't set, always returns true
+    const auto &does_opt_filter_apply = [&opt_filters_to_apply, &device_count_per_platform](const target_platform t) {
+        if (!opt_filters_to_apply.has_value()) {
+            // no filter available -> applies per definition
+            return true;
+        }
+        // filter available -> check if the filter itself applies
+        if (::plssvm::detail::contains(opt_filters_to_apply.value(), t)) {
+            for (const std::size_t id : opt_filters_to_apply.value()[t]) {
+                if (device_count_per_platform[t] == id) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    };
+
     // iterate over all platforms and save all available devices
-    std::map<std::pair<cl_platform_id, target_platform>, std::vector<cl_device_id>> platform_devices;
+    std::map<std::pair<cl_platform_id, target_platform>, std::vector<cl_device_id>> platform_devices{};
     // get number of platforms
     cl_uint num_platforms{};
     PLSSVM_OPENCL_ERROR_CHECK(clGetPlatformIDs(0, nullptr, &num_platforms), "error retrieving the number of available platforms")
@@ -87,13 +158,18 @@ namespace plssvm::opencl::detail {
             cl_device_type device_type{};
             PLSSVM_OPENCL_ERROR_CHECK(clGetDeviceInfo(device, CL_DEVICE_TYPE, sizeof(cl_device_type), &device_type, nullptr), "error retrieving the device type")
 
-            if (device_type == CL_DEVICE_TYPE_CPU) {
+            if (device_type == (CL_DEVICE_TYPE_CPU)) {
                 // the current device is a CPU
                 // -> check if the CPU target has been enabled
                 if (::plssvm::detail::contains(available_target_platforms, target_platform::cpu)) {
-                    platform_devices[std::make_pair(platform, target_platform::cpu)].push_back(device);
+                    // check if a filter is provided and matches this device
+                    if (does_opt_filter_apply(target_platform::cpu)) {
+                        platform_devices[std::make_pair(platform, target_platform::cpu)].push_back(device);
+                    }
+                    // increment the CPU device count
+                    ++device_count_per_platform[target_platform::cpu];
                 }
-            } else if (device_type == CL_DEVICE_TYPE_GPU) {
+            } else if (device_type == (CL_DEVICE_TYPE_GPU)) {
                 // the current device is a GPU
                 // get vendor string
                 std::size_t vendor_string_size{};
@@ -105,12 +181,27 @@ namespace plssvm::opencl::detail {
 
                 // check vendor string and insert to correct target platform
                 if (::plssvm::detail::contains(vendor_string, "nvidia") && ::plssvm::detail::contains(available_target_platforms, target_platform::gpu_nvidia)) {
-                    platform_devices[std::make_pair(platform, target_platform::gpu_nvidia)].push_back(device);
+                    // check if a filter is provided and matches this device
+                    if (does_opt_filter_apply(target_platform::gpu_nvidia)) {
+                        platform_devices[std::make_pair(platform, target_platform::gpu_nvidia)].push_back(device);
+                    }
+                    // increment the NVIDIA GPU device count
+                    ++device_count_per_platform[target_platform::gpu_nvidia];
                 } else if ((::plssvm::detail::contains(vendor_string, "amd") || ::plssvm::detail::contains(vendor_string, "advanced micro devices"))
                            && ::plssvm::detail::contains(available_target_platforms, target_platform::gpu_amd)) {
-                    platform_devices[std::make_pair(platform, target_platform::gpu_amd)].push_back(device);
+                    // check if a filter is provided and matches this device
+                    if (does_opt_filter_apply(target_platform::gpu_amd)) {
+                        platform_devices[std::make_pair(platform, target_platform::gpu_amd)].push_back(device);
+                    }
+                    // increment the AMD GPU device count
+                    ++device_count_per_platform[target_platform::gpu_amd];
                 } else if (::plssvm::detail::contains(vendor_string, "intel") && ::plssvm::detail::contains(available_target_platforms, target_platform::gpu_intel)) {
-                    platform_devices[std::make_pair(platform, target_platform::gpu_intel)].push_back(device);
+                    // check if a filter is provided and matches this device
+                    if (does_opt_filter_apply(target_platform::gpu_intel)) {
+                        platform_devices[std::make_pair(platform, target_platform::gpu_intel)].push_back(device);
+                    }
+                    // increment the Intel GPU device count
+                    ++device_count_per_platform[target_platform::gpu_intel];
                 }
             }
         }
@@ -126,6 +217,11 @@ namespace plssvm::opencl::detail {
         }
         // the system devices should not be empty!
         if (system_devices.empty()) {
+            if (device_filter_env.has_value()) {
+                // add a more concrete error message in case of a PLSSVM_OPENCL_DEVICE_FILTER was provided
+                // since a wrong device filter may lead to no found device
+                throw platform_devices_empty{ fmt::format("No appropriate devices could be found! Maybe the PLSSVM_OPENCL_DEVICE_FILTER=\"{}\" is incorrect?", device_filter_env.value()) };
+            }
             throw platform_devices_empty{ "No appropriate devices could be found!" };
         }
         // determine the target_platform
@@ -142,7 +238,11 @@ namespace plssvm::opencl::detail {
     std::vector<context> contexts;
     for (auto &[platform, devices] : platform_devices) {
         // create context and associated OpenCL platform with it
-        std::array<cl_context_properties, 3> context_properties = { CL_CONTEXT_PLATFORM, reinterpret_cast<cl_context_properties>(platform.first), 0 };
+        std::array<cl_context_properties, 3> context_properties = {
+            CL_CONTEXT_PLATFORM,
+            reinterpret_cast<cl_context_properties>(platform.first),  // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast): recommended way to do this
+            0
+        };
         for (auto &device : devices) {
             cl_context cont = clCreateContext(context_properties.data(), cl_uint{ 1 }, &device, nullptr, nullptr, &err);
             PLSSVM_OPENCL_ERROR_CHECK(err, "error creating the OpenCL context")
@@ -159,8 +259,10 @@ void device_synchronize(const command_queue &queue) {
 }
 
 std::string get_opencl_target_version() {
-    int major_version = CL_TARGET_OPENCL_VERSION / 100;
-    int minor_version = CL_TARGET_OPENCL_VERSION % 100 / 10;
+    constexpr int major_version_mask = 100;
+    constexpr int minor_version_mask = 10;
+    const int major_version = CL_TARGET_OPENCL_VERSION / major_version_mask;
+    const int minor_version = CL_TARGET_OPENCL_VERSION % major_version_mask / minor_version_mask;
     return fmt::format("{}.{}", major_version, minor_version);
 }
 
@@ -185,7 +287,7 @@ std::string get_device_name(const command_queue &queue) {
     PLSSVM_OPENCL_ERROR_CHECK(clGetDeviceInfo(device_id, CL_DEVICE_NAME, 0, nullptr, &name_length), "error obtaining device name size")
     std::string device_name(name_length - 1, '\0');
     PLSSVM_OPENCL_ERROR_CHECK(clGetDeviceInfo(device_id, CL_DEVICE_NAME, name_length, device_name.data(), nullptr), "error obtaining device name")
-    return device_name;
+    return std::string{ ::plssvm::detail::trim(device_name) };
 }
 
 std::vector<std::pair<compute_kernel_name, std::string>> kernel_type_to_function_names() {
@@ -243,7 +345,7 @@ std::pair<std::vector<command_queue>, jit_info> create_command_queues(const mpi:
     //**************************************************************************//
 
     // determine OpenCL compile options per device
-    std::string global_compile_options{ "-cl-mad-enable -cl-no-signed-zeros" };
+    std::string global_compile_options{ "-cl-mad-enable -cl-no-signed-zeros" };  // NOLINT: can be modified if fast-math is enabled
 #if defined(PLSSVM_ENABLE_FAST_MATH)
     global_compile_options += " -cl-fast-relaxed-math";
 #endif
@@ -254,7 +356,7 @@ std::pair<std::vector<command_queue>, jit_info> create_command_queues(const mpi:
     // only use PTX inline assembly if enabled during CMake configuration
 #if defined(PLSSVM_OPENCL_BACKEND_USE_PTX_INLINE_ASSEMBLY)
     for (std::size_t idx = 0; idx < contexts.size(); ++idx) {
-        auto &context = contexts[idx];
+        const auto &context = contexts[idx];
 
         std::size_t platform_vendor_size{ 0 };
         clGetPlatformInfo(context.platform, CL_PLATFORM_VENDOR, 0, nullptr, &platform_vendor_size);
@@ -357,7 +459,7 @@ std::pair<std::vector<command_queue>, jit_info> create_command_queues(const mpi:
         replace_kernel_function_type_placeholders(temp, predict_kernel_functions);
 
         // append correct kernel sources to final string
-        kernel_src_string.append(std::move(temp));
+        kernel_src_string.append(temp);
     }
 
     // replace types in kernel_src_string
@@ -381,7 +483,7 @@ std::pair<std::vector<command_queue>, jit_info> create_command_queues(const mpi:
 
     // get all device names
     std::vector<std::string> device_names{};
-    for (auto &context : contexts) {
+    for (const auto &context : contexts) {
         // get device name
         std::size_t name_length{};
         PLSSVM_OPENCL_ERROR_CHECK(clGetDeviceInfo(context.device, CL_DEVICE_NAME, 0, nullptr, &name_length), "error obtaining device name size")
@@ -431,6 +533,7 @@ std::pair<std::vector<command_queue>, jit_info> create_command_queues(const mpi:
         // get directory iterator
         auto dirIter = std::filesystem::directory_iterator(cache_dir_name);
         // get files in directory -> account for stored preprocessed source file
+        // NOLINTNEXTLINE(misc-include-cleaner): false positive -> included via <filesystem>
         if (static_cast<std::size_t>(std::count_if(std::filesystem::begin(dirIter), std::filesystem::end(dirIter), [](const auto &entry) { return entry.is_regular_file(); })) != contexts.size() + 1) {
             info.cache_state = jit_info::caching_status::error_invalid_number_of_cached_files;
         }
@@ -445,7 +548,8 @@ std::pair<std::vector<command_queue>, jit_info> create_command_queues(const mpi:
     std::vector<std::vector<unsigned char>> binaries(contexts.size());
     std::vector<unsigned char *> binaries_ptr(binaries.size());
 
-    error_code err, err_bin;
+    error_code err;
+    error_code err_bin;
 
     if (info.cache_state != jit_info::caching_status::success) {
         if (comm.size() == 1) {
@@ -456,8 +560,8 @@ std::pair<std::vector<command_queue>, jit_info> create_command_queues(const mpi:
         }
 
         for (std::size_t idx = 0; idx < contexts.size(); ++idx) {
-            auto &context = contexts[idx];
-            auto &device = context.device;
+            const auto &context = contexts[idx];
+            const auto &device = context.device;
 
             // create and build program
             cl_program program = clCreateProgramWithSource(context, 1, &kernel_src_ptr, nullptr, &err);
@@ -478,11 +582,11 @@ std::pair<std::vector<command_queue>, jit_info> create_command_queues(const mpi:
             binaries_ptr[idx] = binaries[idx].data();  // only necessary for OpenCL's void ** calls!
 
             // get binaries
-            err = clGetProgramInfo(program, CL_PROGRAM_BINARIES, sizeof(unsigned char *), &binaries_ptr[idx], nullptr);
+            err = clGetProgramInfo(program, CL_PROGRAM_BINARIES, sizeof(unsigned char *), static_cast<void *>(&binaries_ptr[idx]), nullptr);
             PLSSVM_OPENCL_ERROR_CHECK(err, "error retrieving the kernel binaries")
 
             // release resource
-            if (program) {
+            if (static_cast<bool>(program)) {
                 PLSSVM_OPENCL_ERROR_CHECK(clReleaseProgram(program), "error releasing OpenCL program resources")
             }
         }
@@ -501,7 +605,7 @@ std::pair<std::vector<command_queue>, jit_info> create_command_queues(const mpi:
         for (std::vector<std::size_t>::size_type i = 0; i < binary_sizes.size(); ++i) {
             std::ofstream out{ cache_dir_name / fmt::format("device_{}.bin", i) };
             PLSSVM_ASSERT(out.good(), fmt::format("couldn't create binary cache file ({}) for device {}", cache_dir_name / fmt::format("device_{}.bin", i), i));
-            out.write(reinterpret_cast<char *>(binaries_ptr[i]), static_cast<std::streamsize>(binary_sizes[i]));
+            out.write(reinterpret_cast<const char *>(binaries_ptr[i]), static_cast<std::streamsize>(binary_sizes[i]));  // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast): recommended way to do this
         }
         {
             // save preprocessed source string in temporary directory
@@ -538,7 +642,7 @@ std::pair<std::vector<command_queue>, jit_info> create_command_queues(const mpi:
             // allocate the necessary buffer
             std::vector<unsigned char> file_content(num_bytes);
             // read the whole file in one go
-            f.read(reinterpret_cast<char *>(file_content.data()), num_bytes);
+            f.read(reinterpret_cast<char *>(file_content.data()), num_bytes);  // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast): recommended way to do this
             return std::make_pair(file_content, static_cast<std::size_t>(num_bytes));
         };
 
@@ -558,8 +662,8 @@ std::pair<std::vector<command_queue>, jit_info> create_command_queues(const mpi:
 
     // compile kernels for each context, i.e., each device
     for (std::size_t idx = 0; idx < contexts.size(); ++idx) {
-        auto &context = contexts[idx];
-        auto &device = context.device;
+        const auto &context = contexts[idx];
+        const auto &device = context.device;
 
         // build from binaries
         cl_program binary_program = clCreateProgramWithBinary(context, static_cast<cl_uint>(1), &device, binary_sizes.data(), const_cast<const unsigned char **>(&binaries_ptr[idx]), &err_bin, &err);
@@ -583,7 +687,7 @@ std::pair<std::vector<command_queue>, jit_info> create_command_queues(const mpi:
         }
 
         // release resource
-        if (binary_program) {
+        if (static_cast<bool>(binary_program)) {
             PLSSVM_OPENCL_ERROR_CHECK(clReleaseProgram(binary_program), "error releasing OpenCL binary program resources")
         }
 
