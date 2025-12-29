@@ -14,10 +14,11 @@
 #pragma once
 
 #include "plssvm/backends/SYCL/data_parallel_kernels.hpp"  // plssvm::sycl::data_parallel_kernel
-#include "plssvm/constants.hpp"                            // plssvm::real_type
+#include "plssvm/constants.hpp"                            // plssvm::real_type, plssvm::THREAD_BLOCK_SIZE
 
 #include "sycl/sycl.hpp"  // sycl::group, sycl::h_item
 
+#include <array>    // std::array
 #include <cstddef>  // std::size_t
 
 namespace plssvm::sycl::detail::hierarchical {
