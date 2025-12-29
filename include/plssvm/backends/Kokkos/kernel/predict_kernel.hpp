@@ -15,9 +15,8 @@
 
 #include "plssvm/backends/Kokkos/detail/standard_layout_tuple.hpp"  // plssvm::kokkos::detail::standard_layout_tuple
 #include "plssvm/backends/Kokkos/kernel/kernel_functions.hpp"       // plssvm::kokkos::detail::{feature_reduce, apply_kernel_function}
-#include "plssvm/constants.hpp"                                     // plssvm::real_type
+#include "plssvm/constants.hpp"                                     // plssvm::{real_type, THREAD_BLOCK_SIZE}
 #include "plssvm/kernel_function_types.hpp"                         // plssvm::kernel_function_type
-#include "plssvm/target_platforms.hpp"                              // plssvm::target_platform
 
 #include "Kokkos_Core.hpp"  // KOKKOS_INLINE_FUNCTION, Kokkos::View, Kokkos::TeamPolicy, Kokkos::TeamPolicy, Kokkos::mdspan, Kokkos::atomic_add
 

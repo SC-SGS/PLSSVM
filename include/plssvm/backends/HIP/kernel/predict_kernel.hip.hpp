@@ -13,10 +13,9 @@
 #define PLSSVM_BACKENDS_HIP_KERNEL_PREDICT_KERNEL_HIP_HPP_
 #pragma once
 
-#include "plssvm/backends/HIP/kernel/detail/reinterpret_array.hip.hpp"  // plssvm::hip::detail::reinterpret_array
-#include "plssvm/backends/HIP/kernel/kernel_functions.hip.hpp"          // plssvm::hip::detail::{feature_reduce, apply_kernel_function}
-#include "plssvm/constants.hpp"                                         // plssvm::real_type, plssvm::THREAD_BLOCK_SIZE
-#include "plssvm/kernel_function_types.hpp"                             // plssvm::kernel_function_type
+#include "plssvm/backends/HIP/kernel/kernel_functions.hip.hpp"  // plssvm::hip::detail::{feature_reduce, apply_kernel_function}
+#include "plssvm/constants.hpp"                                 // plssvm::real_type, plssvm::THREAD_BLOCK_SIZE
+#include "plssvm/kernel_function_types.hpp"                     // plssvm::kernel_function_type
 
 #include "hip/hip_runtime.h"
 #include "hip/hip_runtime_api.h"

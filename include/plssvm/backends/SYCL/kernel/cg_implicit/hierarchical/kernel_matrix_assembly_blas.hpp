@@ -13,11 +13,6 @@
 #define PLSSVM_BACKENDS_SYCL_KERNEL_CG_IMPLICIT_HIERARCHICAL_KERNEL_MATRIX_ASSEMBLY_BLAS_HPP_
 #pragma once
 
-#include "plssvm/backends/SYCL/data_parallel_kernels.hpp"            // plssvm::sycl::data_parallel_kernel
-#include "plssvm/backends/SYCL/detail/atomics.hpp"                   // plssvm::sycl::detail::atomic_op
-#include "plssvm/backends/SYCL/kernel/kernel_functions.hpp"          // plssvm::sycl::detail::{feature_reduce, apply_kernel_function}
-#include "plssvm/constants.hpp"                                      // plssvm::real_type
-#include "plssvm/kernel_function_types.hpp"                          // plssvm::kernel_function_type
 #include "plssvm/backends/SYCL/data_parallel_kernels.hpp"    // plssvm::sycl::data_parallel_kernel
 #include "plssvm/backends/SYCL/detail/atomics.hpp"           // plssvm::sycl::detail::atomic_op
 #include "plssvm/backends/SYCL/kernel/kernel_functions.hpp"  // plssvm::sycl::detail::{feature_reduce, apply_kernel_function}
@@ -26,7 +21,6 @@
 
 #include "sycl/sycl.hpp"  // sycl::group, sycl::h_item
 
-#include <array>    // std::array
 #include <cstddef>  // std::size_t
 #include <tuple>    // std::tuple, std::make_tuple
 
