@@ -18,7 +18,6 @@
 #include "plssvm/backends/SYCL/kernel/kernel_functions.hpp"  // plssvm::sycl::detail::{feature_reduce, apply_kernel_function}
 #include "plssvm/constants.hpp"                              // plssvm::real_type
 #include "plssvm/kernel_function_types.hpp"                  // plssvm::kernel_function_type
-#include "plssvm/target_platforms.hpp"                       // plssvm::target_platform
 
 #include "sycl/sycl.hpp"  // sycl::group, sycl::h_item
 
@@ -68,8 +67,8 @@ class device_kernel_w_linear {
      */
     void operator()(::sycl::group<2> group) const {
         // create two local memory arrays used for caching
-        real_type feature_cache[THREAD_BLOCK_SIZE][THREAD_BLOCK_SIZE];
-        real_type alpha_cache[THREAD_BLOCK_SIZE][THREAD_BLOCK_SIZE];
+        std::array<std::array<real_type, static_cast<std::size_t>(THREAD_BLOCK_SIZE)>, static_cast<std::size_t>(THREAD_BLOCK_SIZE)> feature_cache{};
+        std::array<std::array<real_type, static_cast<std::size_t>(THREAD_BLOCK_SIZE)>, static_cast<std::size_t>(THREAD_BLOCK_SIZE)> alpha_cache{};
 
         // create a private memory array used for internal caching
         ::sycl::private_memory<real_type, 2> temp{ group };
@@ -205,8 +204,8 @@ class device_kernel_predict_linear {
      */
     void operator()(::sycl::group<2> group) const {
         // create two local memory arrays used for caching
-        real_type pp_cache[THREAD_BLOCK_SIZE][THREAD_BLOCK_SIZE];
-        real_type w_cache[THREAD_BLOCK_SIZE][THREAD_BLOCK_SIZE];
+        std::array<std::array<real_type, static_cast<std::size_t>(THREAD_BLOCK_SIZE)>, static_cast<std::size_t>(THREAD_BLOCK_SIZE)> pp_cache{};
+        std::array<std::array<real_type, static_cast<std::size_t>(THREAD_BLOCK_SIZE)>, static_cast<std::size_t>(THREAD_BLOCK_SIZE)> w_cache{};
 
         // create a private memory array used for internal caching
         ::sycl::private_memory<real_type, 2> temp{ group };
@@ -350,8 +349,8 @@ class device_kernel_predict {
      */
     void operator()(::sycl::group<2> group) const {
         // create two local memory arrays used for caching
-        real_type cache_one[THREAD_BLOCK_SIZE][THREAD_BLOCK_SIZE];
-        real_type cache_two[THREAD_BLOCK_SIZE][THREAD_BLOCK_SIZE];
+        std::array<std::array<real_type, static_cast<std::size_t>(THREAD_BLOCK_SIZE)>, static_cast<std::size_t>(THREAD_BLOCK_SIZE)> cache_one{};
+        std::array<std::array<real_type, static_cast<std::size_t>(THREAD_BLOCK_SIZE)>, static_cast<std::size_t>(THREAD_BLOCK_SIZE)> cache_two{};
 
         // create a private memory array used for internal caching
         ::sycl::private_memory<real_type, 2> temp{ group };

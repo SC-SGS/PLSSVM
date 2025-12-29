@@ -47,6 +47,7 @@ __global__ void device_kernel_assembly_symm(const real_type alpha, const real_ty
     // cast all values to 64-bit std::size_t to prevent potential 32-bit overflows
     constexpr auto THREAD_BLOCK_SIZE_uz = static_cast<std::size_t>(THREAD_BLOCK_SIZE);
 
+    // cast all values to 64-bit unsigned long long to prevent potential 32-bit overflows
     const auto threadIdx_x = static_cast<std::size_t>(threadIdx.x);                // current thread in block x-dimension
     const auto threadIdx_y = static_cast<std::size_t>(threadIdx.y);                // current thread in block y-dimension
     const auto blockDim_x = static_cast<std::size_t>(blockDim.x);                  // number of threads in block x-dimension
@@ -75,8 +76,8 @@ __global__ void device_kernel_assembly_symm(const real_type alpha, const real_ty
         //*************************************************************************//
         {
             // rename the shared memory array
-            auto data_i_cache = cache_one;
-            auto data_j_cache = cache_two;
+            auto *data_i_cache = cache_one;
+            auto *data_j_cache = cache_two;
 
             // calculate the indices to access the global data, pays attention to coalesced memory accesses
             const auto global_i_idx_linear = device_row_offset + i_idx_linear;
@@ -130,8 +131,8 @@ __global__ void device_kernel_assembly_symm(const real_type alpha, const real_ty
         //*************************************************************************//
         {
             // rename the shared memory array
-            auto B_cache = cache_one;
-            auto C_out_cache = cache_two;
+            auto *B_cache = cache_one;
+            auto *C_out_cache = cache_two;
 
             // calculate the indices to access the global data, pays attention to coalesced memory accesses
             const auto global_i_idx_linear = device_row_offset + i_idx_linear;
@@ -173,8 +174,8 @@ __global__ void device_kernel_assembly_symm(const real_type alpha, const real_ty
         //*************************************************************************//
         {
             // rename the shared memory array
-            auto B_cache = cache_one;
-            auto C_out_cache = cache_two;
+            auto *B_cache = cache_one;
+            auto *C_out_cache = cache_two;
 
             // calculate the indices to access the global data, pays attention to coalesced memory accesses
             const auto global_j_idx_linear = device_row_offset + j_idx_linear;

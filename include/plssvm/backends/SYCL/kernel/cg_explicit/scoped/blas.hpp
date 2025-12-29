@@ -67,10 +67,9 @@ class device_kernel_symm {
     void operator()(T group) const {
         ::sycl::memory_environment(group,
                                    // the indices used in the current work-item
-                                   ::sycl::require_local_mem<real_type[THREAD_BLOCK_SIZE][THREAD_BLOCK_SIZE]>(),  // A_cache
-                                   ::sycl::require_local_mem<real_type[THREAD_BLOCK_SIZE][THREAD_BLOCK_SIZE]>(),  // B_cache
+                                   ::sycl::require_local_mem<std::array<std::array<real_type, static_cast<std::size_t>(THREAD_BLOCK_SIZE)>, static_cast<std::size_t>(THREAD_BLOCK_SIZE)>>(),  // A_cache
+                                   ::sycl::require_local_mem<std::array<std::array<real_type, static_cast<std::size_t>(THREAD_BLOCK_SIZE)>, static_cast<std::size_t>(THREAD_BLOCK_SIZE)>>(),  // B_cache
 
-                                   // create two local memory arrays used for caching
                                    ::sycl::require_private_mem<real_type>(),
                                    [&](auto &A_cache, auto &B_cache, auto &temp) {
                                        // initialize private temp matrix to zero
@@ -217,10 +216,9 @@ class device_kernel_symm_mirror {
     void operator()(T group) const {
         ::sycl::memory_environment(group,
                                    // the indices used in the current work-item
-                                   ::sycl::require_local_mem<real_type[THREAD_BLOCK_SIZE][THREAD_BLOCK_SIZE]>(),  // A_cache
-                                   ::sycl::require_local_mem<real_type[THREAD_BLOCK_SIZE][THREAD_BLOCK_SIZE]>(),  // B_cache
+                                   ::sycl::require_local_mem<std::array<std::array<real_type, static_cast<std::size_t>(THREAD_BLOCK_SIZE)>, static_cast<std::size_t>(THREAD_BLOCK_SIZE)>>(),  // A_cache
+                                   ::sycl::require_local_mem<std::array<std::array<real_type, static_cast<std::size_t>(THREAD_BLOCK_SIZE)>, static_cast<std::size_t>(THREAD_BLOCK_SIZE)>>(),  // B_cache
 
-                                   // create a private memory array used for internal caching
                                    ::sycl::require_private_mem<real_type>(),
                                    [&](auto &A_cache, auto &B_cache, auto &temp) {
                                        // initialize private temp to zero

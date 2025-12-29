@@ -65,10 +65,9 @@ class device_kernel_symm {
      */
     void operator()(::sycl::group<2> group) const {
         // create two local memory arrays used for caching
-        real_type A_cache[THREAD_BLOCK_SIZE][THREAD_BLOCK_SIZE];
-        real_type B_cache[THREAD_BLOCK_SIZE][THREAD_BLOCK_SIZE];
+        std::array<std::array<real_type, static_cast<std::size_t>(THREAD_BLOCK_SIZE)>, static_cast<std::size_t>(THREAD_BLOCK_SIZE)> A_cache{};
+        std::array<std::array<real_type, static_cast<std::size_t>(THREAD_BLOCK_SIZE)>, static_cast<std::size_t>(THREAD_BLOCK_SIZE)> B_cache{};
 
-        // create a private memory array used for internal caching
         ::sycl::private_memory<real_type, 2> temp{ group };
 
         // initialize private temp matrix to zero
@@ -215,10 +214,9 @@ class device_kernel_symm_mirror {
      */
     void operator()(::sycl::group<2> group) const {
         // create two local memory arrays used for caching
-        real_type A_cache[THREAD_BLOCK_SIZE][THREAD_BLOCK_SIZE];
-        real_type B_cache[THREAD_BLOCK_SIZE][THREAD_BLOCK_SIZE];
+        std::array<std::array<real_type, static_cast<std::size_t>(THREAD_BLOCK_SIZE)>, static_cast<std::size_t>(THREAD_BLOCK_SIZE)> A_cache{};
+        std::array<std::array<real_type, static_cast<std::size_t>(THREAD_BLOCK_SIZE)>, static_cast<std::size_t>(THREAD_BLOCK_SIZE)> B_cache{};
 
-        // create a private memory array used for internal caching
         ::sycl::private_memory<real_type, 2> temp{ group };
 
         // initialize private temp to zero
@@ -388,7 +386,7 @@ class device_kernel_inplace_matrix_scale {
      * @brief Initialize the SYCL kernel function object.
      * @param[in] num_rows the number of rows in the matrix
      * @param[in] num_cols the number of columns in the matrix
-     * @param[in,out] lhs the first matrix (updated inplace)
+     * @param[in,out] lhs the matrix (updated inplace)
      * @param[in] scale the value to scale
      * @param[in] grid_x_offset the offset in x-dimension into the data points if more than one execution grid has to be used
      * @param[in] grid_y_offset the offset in y-dimension into the data points if more than one execution grid has to be used

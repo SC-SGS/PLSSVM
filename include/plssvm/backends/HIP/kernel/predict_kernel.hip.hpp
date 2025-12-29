@@ -201,8 +201,8 @@ __global__ void device_kernel_predict(real_type *prediction, const real_type *al
 
     {
         // rename the shared memory arrays
-        auto pp_cache = cache_one;
-        auto sv_cache = cache_two;
+        auto *pp_cache = cache_one;
+        auto *sv_cache = cache_two;
 
         // calculate the indices used in the current thread, pays attention to coalesced memory accesses
         const auto global_pp_idx_linear = blockIdx_x * blockDim_x + threadIdx_x;  // num_predict_points
@@ -239,8 +239,8 @@ __global__ void device_kernel_predict(real_type *prediction, const real_type *al
 
     {
         // rename the shared memory arrays
-        auto alpha_cache = cache_one;
-        auto out_cache = cache_two;
+        auto *alpha_cache = cache_one;
+        auto *out_cache = cache_two;
 
         // calculate the indices used in the current thread
         const auto global_pp_idx = blockIdx_x * blockDim_x + threadIdx_x;  // num_predict_points
@@ -261,8 +261,6 @@ __global__ void device_kernel_predict(real_type *prediction, const real_type *al
                 // the bias (rho) must only be applied once for all support vectors
                 if (blockIdx_y == std::size_t{ 0 }) {
                     out_cache[threadIdx.y][threadIdx.x] = -rho[class_block + threadIdx_y];
-                } else {
-                    out_cache[threadIdx.y][threadIdx.x] = real_type{ 0.0 };
                 }
             }
             __syncthreads();  // wait until all threads loaded their part of the data

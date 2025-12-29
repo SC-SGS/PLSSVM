@@ -46,7 +46,6 @@ __kernel void device_kernel_assembly(__global real_type *kernel_matrix, const __
 
     // only calculate the upper triangular matrix -> can't use get_local_id() since all work-items in a work-group must progress further
     if (blockIdx_x >= blockIdx_y) {
-        // create a private memory array used for internal caching
         real_type temp = 0.0;
 
         {

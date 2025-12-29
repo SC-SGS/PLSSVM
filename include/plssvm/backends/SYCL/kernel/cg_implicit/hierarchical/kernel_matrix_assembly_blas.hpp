@@ -92,10 +92,9 @@ class device_kernel_assembly_symm {
         ::sycl::private_memory<std::size_t, 2> j_idx_linear{ group };  // device_num_rows
 
         // create two local memory arrays used for caching
-        real_type cache_one[THREAD_BLOCK_SIZE][THREAD_BLOCK_SIZE];
-        real_type cache_two[THREAD_BLOCK_SIZE][THREAD_BLOCK_SIZE];
+        std::array<std::array<real_type, static_cast<std::size_t>(THREAD_BLOCK_SIZE)>, static_cast<std::size_t>(THREAD_BLOCK_SIZE)> cache_one{};
+        std::array<std::array<real_type, static_cast<std::size_t>(THREAD_BLOCK_SIZE)>, static_cast<std::size_t>(THREAD_BLOCK_SIZE)> cache_two{};
 
-        // create a private memory array used for internal caching
         ::sycl::private_memory<real_type, 2> temp{ group };
 
         // initialize private and local variables
@@ -127,8 +126,8 @@ class device_kernel_assembly_symm {
             //*************************************************************************//
             {
                 // rename the local memory array
-                auto data_i_cache = cache_one;
-                auto data_j_cache = cache_two;
+                auto &data_i_cache = cache_one;
+                auto &data_j_cache = cache_two;
 
                 // iterate over all features using blocking to be able to cache them for faster memory accesses
                 for (std::size_t feature_block = 0; feature_block < num_features_; feature_block += static_cast<std::size_t>(THREAD_BLOCK_SIZE)) {
@@ -205,8 +204,8 @@ class device_kernel_assembly_symm {
             //*************************************************************************//
             {
                 // rename the local memory array
-                auto B_cache = cache_one;
-                auto C_out_cache = cache_two;
+                auto &B_cache = cache_one;
+                auto &C_out_cache = cache_two;
 
                 // iterate over all classes using blocking to be able to cache them for faster memory accesses
                 for (std::size_t class_block = 0; class_block < num_classes_; class_block += static_cast<std::size_t>(THREAD_BLOCK_SIZE)) {

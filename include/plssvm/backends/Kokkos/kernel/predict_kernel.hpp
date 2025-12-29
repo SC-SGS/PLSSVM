@@ -405,8 +405,6 @@ class device_kernel_predict {
                     // the bias (rho) must only be applied once for all support vectors
                     if (blockIdx_y == std::size_t{ 0 }) {
                         out_cache(team_rank_y, team_rank_x) = -rho_[class_block + threadIdx_y];
-                    } else {
-                        out_cache(team_rank_y, team_rank_x) = real_type{ 0.0 };
                     }
                 }
                 team.team_barrier();  // wait until all threads loaded their part of the data

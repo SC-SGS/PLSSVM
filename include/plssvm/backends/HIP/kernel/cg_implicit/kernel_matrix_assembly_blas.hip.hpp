@@ -77,8 +77,8 @@ __global__ void device_kernel_assembly_symm(const real_type alpha, const real_ty
         //*************************************************************************//
         {
             // rename the shared memory array
-            auto data_i_cache = cache_one;
-            auto data_j_cache = cache_two;
+            auto *data_i_cache = cache_one;
+            auto *data_j_cache = cache_two;
 
             // calculate the indices to access the global data, pays attention to coalesced memory accesses
             const auto global_i_idx_linear = device_row_offset + i_idx_linear;
@@ -132,8 +132,8 @@ __global__ void device_kernel_assembly_symm(const real_type alpha, const real_ty
         //*************************************************************************//
         {
             // rename the shared memory array
-            auto B_cache = cache_one;
-            auto C_out_cache = cache_two;
+            auto *B_cache = cache_one;
+            auto *C_out_cache = cache_two;
 
             // calculate the indices to access the global data, pays attention to coalesced memory accesses
             const auto global_i_idx_linear = device_row_offset + i_idx_linear;
@@ -175,8 +175,8 @@ __global__ void device_kernel_assembly_symm(const real_type alpha, const real_ty
         //*************************************************************************//
         {
             // rename the shared memory array
-            auto B_cache = cache_one;
-            auto C_out_cache = cache_two;
+            auto *B_cache = cache_one;
+            auto *C_out_cache = cache_two;
 
             // calculate the indices to access the global data, pays attention to coalesced memory accesses
             const auto global_j_idx_linear = device_row_offset + j_idx_linear;

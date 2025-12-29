@@ -124,7 +124,6 @@ __kernel void device_kernel_symm_mirror(const ulong num_rows, const ulong num_rh
     __local real_type A_cache[THREAD_BLOCK_SIZE][THREAD_BLOCK_SIZE];
     __local real_type B_cache[THREAD_BLOCK_SIZE][THREAD_BLOCK_SIZE];
 
-    // create a work-item private array used for internal caching
     real_type temp = 0.0;
 
     {

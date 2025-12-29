@@ -74,7 +74,7 @@ __kernel void PLSSVM_DEVICE_KERNEL_PREDICT_NAME(__global real_type *prediction, 
             }
             barrier(CLK_LOCAL_MEM_FENCE);  // wait until all work-items loaded their part of the data
 
-            // perform the feature reduction calculation, the feature is the slowest moving index
+            // perform the feature reduction calculation
             for (uint feature = 0; feature < THREAD_BLOCK_SIZE; ++feature) {
                 temp += PLSSVM_OPENCL_FEATURE_REDUCE_FUNCTION(sv_cache[feature][local_id_1],
                                                               pp_cache[feature][local_id_0]);
@@ -110,8 +110,6 @@ __kernel void PLSSVM_DEVICE_KERNEL_PREDICT_NAME(__global real_type *prediction, 
                 // the bias (rho) must only be applied once for all support vectors
                 if (blockIdx_y == (ulong) 0) {
                     out_cache[local_id_1][local_id_0] = -rho[class_block + threadIdx_y];
-                } else {
-                    out_cache[local_id_1][local_id_0] = (real_type) 0.0;
                 }
             }
             barrier(CLK_LOCAL_MEM_FENCE);  // wait until all work-items loaded their part of the data
