@@ -21,6 +21,7 @@
 #include "fmt/format.h"  // fmt::format
 
 #include <algorithm>  // std::min
+#include <cstddef>    // std::size_t
 #include <cstring>    // std::memcpy
 #include <vector>     // std::vector
 

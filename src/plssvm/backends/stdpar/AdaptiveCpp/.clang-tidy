@@ -1,0 +1,8 @@
+---
+Checks: '
+-clang-analyzer-core.CallAndMessage,
+
+-misc-include-cleaner,
+'
+
+InheritParentConfig: true

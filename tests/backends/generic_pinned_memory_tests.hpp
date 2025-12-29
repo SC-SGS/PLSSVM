@@ -30,7 +30,7 @@ class PinnedMemory : public ::testing::Test {
 
 TYPED_TEST_SUITE_P(PinnedMemory);
 
-TYPED_TEST_P(PinnedMemory, construct_vector) {
+TYPED_TEST_P(PinnedMemory, ConstructVector) {
     using test_type = typename TestFixture::fixture_test_type;
     using pinned_memory_type = typename test_type::pinned_memory_type;
     using real_type = typename pinned_memory_type::value_type;
@@ -45,7 +45,7 @@ TYPED_TEST_P(PinnedMemory, construct_vector) {
     EXPECT_EQ(mem.is_pinned(), can_pin);
 }
 
-TYPED_TEST_P(PinnedMemory, construct_pointer_and_size) {
+TYPED_TEST_P(PinnedMemory, ConstructPointerAndSize) {
     using test_type = typename TestFixture::fixture_test_type;
     using pinned_memory_type = typename test_type::pinned_memory_type;
     using real_type = typename pinned_memory_type::value_type;
@@ -60,7 +60,7 @@ TYPED_TEST_P(PinnedMemory, construct_pointer_and_size) {
     EXPECT_EQ(mem.is_pinned(), can_pin);
 }
 
-TYPED_TEST_P(PinnedMemory, is_pinned) {
+TYPED_TEST_P(PinnedMemory, IsPinned) {
     using test_type = typename TestFixture::fixture_test_type;
     using pinned_memory_type = typename test_type::pinned_memory_type;
     using real_type = typename pinned_memory_type::value_type;
@@ -75,7 +75,7 @@ TYPED_TEST_P(PinnedMemory, is_pinned) {
     EXPECT_EQ(mem.is_pinned(), can_pin);
 }
 
-REGISTER_TYPED_TEST_SUITE_P(PinnedMemory, construct_vector, construct_pointer_and_size, is_pinned);
+REGISTER_TYPED_TEST_SUITE_P(PinnedMemory, ConstructVector, ConstructPointerAndSize, IsPinned);
 
 template <typename T>
 class PinnedMemoryLayout : public PinnedMemory<T> {
@@ -85,7 +85,7 @@ class PinnedMemoryLayout : public PinnedMemory<T> {
 
 TYPED_TEST_SUITE_P(PinnedMemoryLayout);
 
-TYPED_TEST_P(PinnedMemoryLayout, construct_matrix) {
+TYPED_TEST_P(PinnedMemoryLayout, ConstructMatrix) {
     using test_type = typename TestFixture::fixture_test_type;
     using pinned_memory_type = typename test_type::pinned_memory_type;
     using real_type = typename pinned_memory_type::value_type;
@@ -101,7 +101,7 @@ TYPED_TEST_P(PinnedMemoryLayout, construct_matrix) {
     EXPECT_EQ(mem.is_pinned(), can_pin);
 }
 
-REGISTER_TYPED_TEST_SUITE_P(PinnedMemoryLayout, construct_matrix);
+REGISTER_TYPED_TEST_SUITE_P(PinnedMemoryLayout, ConstructMatrix);
 
 template <typename T>
 class PinnedMemoryDeathTest : public PinnedMemory<T> {
@@ -111,7 +111,7 @@ class PinnedMemoryDeathTest : public PinnedMemory<T> {
 
 TYPED_TEST_SUITE_P(PinnedMemoryDeathTest);
 
-TYPED_TEST_P(PinnedMemoryDeathTest, construct_empty_vector) {
+TYPED_TEST_P(PinnedMemoryDeathTest, ConstructEmptyVector) {
     using test_type = typename TestFixture::fixture_test_type;
     using pinned_memory_type = typename test_type::pinned_memory_type;
     using real_type = typename pinned_memory_type::value_type;
@@ -125,7 +125,7 @@ TYPED_TEST_P(PinnedMemoryDeathTest, construct_empty_vector) {
     }
 }
 
-TYPED_TEST_P(PinnedMemoryDeathTest, construct_empty_pointer_and_size) {
+TYPED_TEST_P(PinnedMemoryDeathTest, ConstructEmptyPointerAndSize) {
     using test_type = typename TestFixture::fixture_test_type;
     using pinned_memory_type = typename test_type::pinned_memory_type;
     using real_type = typename pinned_memory_type::value_type;
@@ -139,7 +139,7 @@ TYPED_TEST_P(PinnedMemoryDeathTest, construct_empty_pointer_and_size) {
     }
 }
 
-TYPED_TEST_P(PinnedMemoryDeathTest, construct_nullptr) {
+TYPED_TEST_P(PinnedMemoryDeathTest, ConstructNullptr) {
     using test_type = typename TestFixture::fixture_test_type;
     using pinned_memory_type = typename test_type::pinned_memory_type;
     constexpr bool can_pin = test_type::can_pin;
@@ -150,17 +150,17 @@ TYPED_TEST_P(PinnedMemoryDeathTest, construct_nullptr) {
     }
 }
 
-REGISTER_TYPED_TEST_SUITE_P(PinnedMemoryDeathTest, construct_empty_vector, construct_empty_pointer_and_size, construct_nullptr);
+REGISTER_TYPED_TEST_SUITE_P(PinnedMemoryDeathTest, ConstructEmptyVector, ConstructEmptyPointerAndSize, ConstructNullptr);
 
 template <typename T>
-class PinnedMemoryLayoutDeathTest : public PinnedMemory<T> {
+class PinnedMemoryLayoutDeathTest : public PinnedMemoryLayout<T> {
   protected:
     using fixture_test_type = util::test_parameter_type_at_t<0, T>;
 };
 
 TYPED_TEST_SUITE_P(PinnedMemoryLayoutDeathTest);
 
-TYPED_TEST_P(PinnedMemoryLayoutDeathTest, construct_empty_matrix) {
+TYPED_TEST_P(PinnedMemoryLayoutDeathTest, ConstructEmptyMatrix) {
     using test_type = typename TestFixture::fixture_test_type;
     using pinned_memory_type = typename test_type::pinned_memory_type;
     using real_type = typename pinned_memory_type::value_type;
@@ -175,6 +175,6 @@ TYPED_TEST_P(PinnedMemoryLayoutDeathTest, construct_empty_matrix) {
     }
 }
 
-REGISTER_TYPED_TEST_SUITE_P(PinnedMemoryLayoutDeathTest, construct_empty_matrix);
+REGISTER_TYPED_TEST_SUITE_P(PinnedMemoryLayoutDeathTest, ConstructEmptyMatrix);
 
 #endif  // PLSSVM_TESTS_BACKENDS_GENERIC_PINNED_MEMORY_TESTS_HPP_

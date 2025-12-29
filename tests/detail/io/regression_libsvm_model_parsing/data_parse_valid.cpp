@@ -19,8 +19,7 @@
 
 #include "gtest/gtest.h"  // TEST_F, EXPECT_EQ, ASSERT_EQ, FAIL, ::testing::Test
 
-#include <cstddef>  // std::size_t
-#include <vector>   // std::vector
+#include <vector>  // std::vector
 
 class LIBSVMRegressionModelDataParseValid : public ::testing::Test,
                                             protected util::temporary_file {
@@ -55,7 +54,7 @@ class LIBSVMRegressionModelDataParseValid : public ::testing::Test,
     plssvm::aos_matrix<plssvm::real_type> correct_weights_{ { { plssvm::real_type{ -1.8568721894e-01 }, plssvm::real_type{ 9.0116552290e-01 }, plssvm::real_type{ -2.2483112395e-01 }, plssvm::real_type{ 1.4909749921e-02 }, plssvm::real_type{ -4.5666857706e-01 }, plssvm::real_type{ -4.8888352876e-02 } } } };
 };
 
-TEST_F(LIBSVMRegressionModelDataParseValid, read) {
+TEST_F(LIBSVMRegressionModelDataParseValid, Read) {
     // parse the LIBSVM file
     plssvm::detail::io::file_reader reader{ this->filename };
     reader.read_lines('#');

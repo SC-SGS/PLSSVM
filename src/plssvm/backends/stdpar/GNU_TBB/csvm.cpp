@@ -12,9 +12,9 @@
 #include "plssvm/backends/stdpar/detail/utility.hpp"        // plssvm::stdpar::detail::{get_stdpar_version, default_device_equals_target}
 #include "plssvm/backends/stdpar/exceptions.hpp"            // plssvm::stdpar::backend_exception
 #include "plssvm/backends/stdpar/implementation_types.hpp"  // plssvm::stdpar::implementation_type
-#include "plssvm/detail/logging/log.hpp"                    // plssvm::detail::log
-#include "plssvm/detail/logging/log_untracked.hpp"          // plssvm::detail::log_untracked
+#include "plssvm/detail/logging/mpi_log_untracked.hpp"      // plssvm::detail::log_untracked
 #include "plssvm/detail/tracking/performance_tracker.hpp"   // plssvm::detail::tracking::tracking_entry, PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY
+#include "plssvm/mpi/detail/information.hpp"                // plssvm::mpi::detail::gather_and_print_csvm_information
 #include "plssvm/target_platforms.hpp"                      // plssvm::target_platform
 #include "plssvm/verbosity_levels.hpp"                      // plssvm::verbosity_level
 
@@ -50,7 +50,7 @@ csvm::csvm(const target_platform target) {
                                       "Found {} stdpar device(s) for the target platform {}:\n",
                                       this->get_implementation_type(),
                                       detail::get_stdpar_version(),
-                                      this->num_available_devices(),
+                                      this->num_available_devices(),  // NOLINT: safe to call this virtual function in the constructor
                                       target_);
     }
 
@@ -58,11 +58,11 @@ csvm::csvm(const target_platform target) {
                                   comm_,
                                   "\n");
 
-    PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "dependencies", "stdpar_implementation", this->get_implementation_type() }));
     PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "dependencies", "stdpar_version", detail::get_stdpar_version() }));
+    PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "backend", "stdpar_implementation", this->get_implementation_type() }));
     PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "backend", "backend", plssvm::backend_type::stdpar }));
     PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "backend", "target_platform", target_ }));
-    PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "backend", "num_devices", this->num_available_devices() }));
+    PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "backend", "num_devices", this->num_available_devices() }));  // NOLINT: safe to call this virtual function in the constructor
 }
 
 implementation_type csvm::get_implementation_type() const noexcept {

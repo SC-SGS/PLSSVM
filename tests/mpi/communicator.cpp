@@ -16,7 +16,7 @@
 #include "plssvm/matrix.hpp"                 // plssvm::aos_matrix, plssvm::soa_matrix
 #include "plssvm/shape.hpp"                  // plssvm::shape
 
-#include "tests/custom_test_macros.hpp"  // EXPECT_THROW_WHAT
+#include "tests/custom_test_macros.hpp"  // EXPECT_THROW_WHAT, EXPECT_OPTIONAL_EQ
 #include "tests/utility.hpp"             // util::generate_random_matrix
 
 #if defined(PLSSVM_HAS_MPI_ENABLED)
@@ -32,7 +32,7 @@
 #include <string>    // std::string
 #include <vector>    // std::vector
 
-TEST(MPICommunicator, default_construct) {
+TEST(MPICommunicator, DefaultConstruct) {
     // create a default constructed MPI communicator
     const plssvm::mpi::communicator comm{};
 
@@ -40,18 +40,17 @@ TEST(MPICommunicator, default_construct) {
     EXPECT_FALSE(comm.get_load_balancing_weights().has_value());
 }
 
-TEST(MPICommunicator, construct_weights) {
+TEST(MPICommunicator, ConstructWeights) {
     const std::vector<std::size_t> weights = { std::size_t{ 42 } };
     // create an MPI communicator with load-balancing weights
     const plssvm::mpi::communicator comm{ weights };
 
     // load-balancing weights should be set
-    ASSERT_TRUE(comm.get_load_balancing_weights().has_value());
-    EXPECT_EQ(comm.get_load_balancing_weights().value(), weights);
+    EXPECT_OPTIONAL_EQ(comm.get_load_balancing_weights(), weights);
 }
 
 #if defined(PLSSVM_HAS_MPI_ENABLED)
-TEST(MPICommunicator, construct_mpi_comm) {
+TEST(MPICommunicator, ConstructMPIComm) {
     // create an MPI communicator wrapping an MPI_Comm
     const plssvm::mpi::communicator comm{ MPI_COMM_WORLD };
 
@@ -64,14 +63,13 @@ TEST(MPICommunicator, construct_mpi_comm) {
     EXPECT_EQ(result, MPI_IDENT);
 }
 
-TEST(MPICommunicator, construct_mpi_comm_and_weights) {
+TEST(MPICommunicator, ConstructMPICommAndWeights) {
     const std::vector<std::size_t> weights = { std::size_t{ 42 } };
     // create a MPI communicator with load-balancing weights
     const plssvm::mpi::communicator comm{ MPI_COMM_WORLD, weights };
 
     // load-balancing weights should be set
-    ASSERT_TRUE(comm.get_load_balancing_weights().has_value());
-    EXPECT_EQ(comm.get_load_balancing_weights().value(), weights);
+    EXPECT_OPTIONAL_EQ(comm.get_load_balancing_weights(), weights);
 
     // the wrapped MPI communicator should be equal to MPI_COMM_WORLD
     int result{};
@@ -80,7 +78,7 @@ TEST(MPICommunicator, construct_mpi_comm_and_weights) {
 }
 #endif
 
-TEST(MPICommunicator, size) {
+TEST(MPICommunicator, Size) {
     // create a default constructed MPI communicator
     const plssvm::mpi::communicator comm{};
 
@@ -88,7 +86,7 @@ TEST(MPICommunicator, size) {
     EXPECT_EQ(comm.size(), std::size_t{ 1 });
 }
 
-TEST(MPICommunicator, rank) {
+TEST(MPICommunicator, Rank) {
     // create a default constructed MPI communicator
     const plssvm::mpi::communicator comm{};
 
@@ -96,12 +94,12 @@ TEST(MPICommunicator, rank) {
     EXPECT_EQ(comm.rank(), std::size_t{ 0 });
 }
 
-TEST(MPICommunicator, main_rank) {
+TEST(MPICommunicator, MainRank) {
     // always 0
     EXPECT_EQ(plssvm::mpi::communicator::main_rank(), std::size_t{ 0 });
 }
 
-TEST(MPICommunicator, is_mpi_enabled) {
+TEST(MPICommunicator, IsMPIEnabled) {
 #if defined(PLSSVM_HAS_MPI_ENABLED)
     EXPECT_TRUE(plssvm::mpi::communicator::is_mpi_enabled());
 #else
@@ -109,7 +107,7 @@ TEST(MPICommunicator, is_mpi_enabled) {
 #endif
 }
 
-TEST(MPICommunicator, is_main_rank) {
+TEST(MPICommunicator, IsMainRank) {
     // create a default constructed MPI communicator
     const plssvm::mpi::communicator comm{};
 
@@ -117,7 +115,7 @@ TEST(MPICommunicator, is_main_rank) {
     EXPECT_TRUE(comm.is_main_rank());
 }
 
-TEST(MPICommunicator, serialize) {
+TEST(MPICommunicator, Serialize) {
     // create a default constructed MPI communicator
     const plssvm::mpi::communicator comm{};
 
@@ -125,7 +123,7 @@ TEST(MPICommunicator, serialize) {
     comm.serialize([&]() { std::cout << comm.rank() << std::endl; });
 }
 
-TEST(MPICommunicator, gather) {
+TEST(MPICommunicator, Gather) {
     // create a default constructed MPI communicator
     const plssvm::mpi::communicator comm{};
 
@@ -135,7 +133,7 @@ TEST(MPICommunicator, gather) {
     EXPECT_EQ(res.front(), 42);
 }
 
-TEST(MPICommunicator, gather_string) {
+TEST(MPICommunicator, GatherString) {
     // create a default constructed MPI communicator
     const plssvm::mpi::communicator comm{};
 
@@ -148,7 +146,7 @@ TEST(MPICommunicator, gather_string) {
     EXPECT_EQ(res.front(), msg);
 }
 
-TEST(MPICommunicator, gather_milli) {
+TEST(MPICommunicator, GatherMilli) {
     // create a default constructed MPI communicator
     const plssvm::mpi::communicator comm{};
 
@@ -158,7 +156,7 @@ TEST(MPICommunicator, gather_milli) {
     EXPECT_EQ(res.front(), std::chrono::milliseconds{ 13 });
 }
 
-TEST(MPICommunicator, allgather) {
+TEST(MPICommunicator, Allgather) {
     // create a default constructed MPI communicator
     const plssvm::mpi::communicator comm{};
 
@@ -168,7 +166,7 @@ TEST(MPICommunicator, allgather) {
     EXPECT_EQ(res.front(), 42);
 }
 
-TEST(MPICommunicator, allreduce_inplace) {
+TEST(MPICommunicator, AllreduceInplace) {
     // create a default constructed MPI communicator
     const plssvm::mpi::communicator comm{};
 
@@ -187,7 +185,7 @@ TEST(MPICommunicator, allreduce_inplace) {
     }
 }
 
-TEST(MPICommunicator, set_load_balancing_weights) {
+TEST(MPICommunicator, SetLoadBalancingWeights) {
     const std::vector<std::size_t> weights = { std::size_t{ 42 } };
     // create default constructed MPI communicator
     plssvm::mpi::communicator comm{};
@@ -203,7 +201,7 @@ TEST(MPICommunicator, set_load_balancing_weights) {
     EXPECT_EQ(comm.get_load_balancing_weights(), weights);
 }
 
-TEST(MPICommunicator, get_load_balancing_weights) {
+TEST(MPICommunicator, GetLoadBalancingWeights) {
     const std::vector<std::size_t> weights = { std::size_t{ 42 } };
     // create default constructed MPI communicator
     plssvm::mpi::communicator comm{};
@@ -218,7 +216,7 @@ TEST(MPICommunicator, get_load_balancing_weights) {
     EXPECT_TRUE(comm.get_load_balancing_weights().has_value());
 }
 
-TEST(MPICommunicator, equal) {
+TEST(MPICommunicator, Equal) {
     // create two default constructed MPI communicators
     const plssvm::mpi::communicator comm1{};
     const plssvm::mpi::communicator comm2{};
@@ -229,7 +227,7 @@ TEST(MPICommunicator, equal) {
 #if defined(PLSSVM_HAS_MPI_ENABLED)
     const plssvm::mpi::communicator comm3{ MPI_COMM_WORLD };
     // create a duplicated communicator
-    MPI_Comm duplicated_mpi_comm;
+    MPI_Comm duplicated_mpi_comm{};
     MPI_Comm_dup(MPI_COMM_WORLD, &duplicated_mpi_comm);
     const plssvm::mpi::communicator comm4{ duplicated_mpi_comm };
 
@@ -241,7 +239,7 @@ TEST(MPICommunicator, equal) {
 #endif
 }
 
-TEST(MPICommunicator, unequal) {
+TEST(MPICommunicator, Unequal) {
     // create two default constructed MPI communicators
     const plssvm::mpi::communicator comm1{};
     const plssvm::mpi::communicator comm2{};
@@ -252,7 +250,7 @@ TEST(MPICommunicator, unequal) {
 #if defined(PLSSVM_HAS_MPI_ENABLED)
     const plssvm::mpi::communicator comm3{ MPI_COMM_WORLD };
     // create a duplicated communicator
-    MPI_Comm duplicated_mpi_comm;
+    MPI_Comm duplicated_mpi_comm{};
     MPI_Comm_dup(MPI_COMM_WORLD, &duplicated_mpi_comm);
     const plssvm::mpi::communicator comm4{ duplicated_mpi_comm };
 
@@ -264,19 +262,19 @@ TEST(MPICommunicator, unequal) {
 #endif
 }
 
-TEST(MPICommunicatorDeathTest, construct_too_few_weights) {
+TEST(MPICommunicatorDeathTest, ConstructTooFewWeights) {
     // since MPI is not enabled, we can only pass exactly ONE weight value
     EXPECT_THROW_WHAT_MATCHER(plssvm::mpi::communicator{ std::vector<std::size_t>{} }, plssvm::mpi_exception, ::testing::HasSubstr("The number of load balancing weights (0) must match the number of MPI ranks (1)!"));
 }
 
-TEST(MPICommunicatorDeathTest, construct_too_many_weights) {
+TEST(MPICommunicatorDeathTest, ConstructTooManyWeights) {
     // since MPI is not enabled, we can only pass exactly ONE weight value
     EXPECT_THROW_WHAT_MATCHER((plssvm::mpi::communicator{ std::vector<std::size_t>{ std::size_t{ 1 }, std::size_t{ 2 } } }),
                               plssvm::mpi_exception,
                               ::testing::HasSubstr("The number of load balancing weights (2) must match the number of MPI ranks (1)!"));
 }
 
-TEST(MPICommunicatorDeathTest, set_too_few_load_balancing_weights) {
+TEST(MPICommunicatorDeathTest, SetTooFewLoadBalancingWeights) {
     // create default constructed MPI communicator
     plssvm::mpi::communicator comm{};
 
@@ -284,7 +282,7 @@ TEST(MPICommunicatorDeathTest, set_too_few_load_balancing_weights) {
     EXPECT_THROW_WHAT_MATCHER(comm.set_load_balancing_weights({}), plssvm::mpi_exception, ::testing::HasSubstr("The number of load balancing weights (0) must match the number of MPI ranks (1)!"));
 }
 
-TEST(MPICommunicatorDeathTest, set_too_many_load_balancing_weights) {
+TEST(MPICommunicatorDeathTest, SetTooManyLoadBalancingWeights) {
     // create default constructed MPI communicator
     plssvm::mpi::communicator comm{};
 

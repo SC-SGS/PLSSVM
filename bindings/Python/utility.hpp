@@ -19,11 +19,10 @@
 #include "plssvm/gamma.hpp"               // plssvm::gamma_type
 #include "plssvm/parameter.hpp"           // plssvm::parameter
 
-#include "fmt/format.h"            // fmt::format
-#include "pybind11/native_enum.h"  // py::native_enum
-#include "pybind11/numpy.h"        // py::array, py::array_t, py::buffer_info, py::array::c_style
-#include "pybind11/pybind11.h"     // py::kwargs, py::value_error, py::isinstance, py::str, py::module_, py::register_exception_translator, py::set_error, py::object, py::len
-#include "pybind11/pytypes.h"      // py::type, py::ssize_t
+#include "fmt/format.h"         // fmt::format
+#include "pybind11/numpy.h"     // py::array, py::array_t, py::buffer_info, py::array::c_style
+#include "pybind11/pybind11.h"  // py::kwargs, py::value_error, py::isinstance, py::str, py::module_, py::enum_, py::register_exception_translator, py::set_error, py::object, py::len, py::exception
+#include "pybind11/pytypes.h"   // py::type, py::ssize_t
 
 #include <cstdint>      // fixed-width integers
 #include <cstring>      // std::memcpy
@@ -112,8 +111,8 @@ inline void check_kwargs_for_correctness(const py::kwargs &args, const std::vect
  */
 template <typename Exception, typename BaseException>
 void register_py_exception(py::module_ &m, const std::string &py_exception_name, BaseException &base_exception) {
-    static py::exception<Exception> py_exception(m, py_exception_name.c_str(), base_exception.ptr());
-    py::register_exception_translator([](std::exception_ptr p) {
+    static const py::exception<Exception> py_exception(m, py_exception_name.c_str(), base_exception.ptr());
+    py::register_exception_translator([](std::exception_ptr p) {  // NOLINT(performance-unnecessary-value-param): const & does not compile
         try {
             if (p) {
                 std::rethrow_exception(p);
@@ -122,6 +121,30 @@ void register_py_exception(py::module_ &m, const std::string &py_exception_name,
             py::set_error(py_exception, e.what_with_loc().c_str());
         }
     });
+}
+
+/**
+ * @brief Register the enumeration @p EnumType to be implicitly convertible from a Python string.
+ * @tparam EnumType the type of the C++ enumeration
+ * @param[in] py_enum the Pybind11 enumeration wrapper
+ * @throws py::value_error if the provided string is invalid for the @p EnumType
+ */
+template <typename EnumType>
+void register_implicit_str_enum_conversion(py::enum_<EnumType> &py_enum) {
+    // create the custom constructor
+    py_enum.def(py::init([](const std::string &str) -> EnumType {
+        std::istringstream iss{ str };
+        EnumType e;
+        iss >> e;
+        if (iss.fail()) {
+            throw py::value_error{};
+        } else {
+            return e;
+        }
+    }));
+
+    // register the implicit conversion
+    py::implicitly_convertible<std::string, EnumType>();
 }
 
 /**
@@ -172,7 +195,7 @@ PLSSVM_CREATE_PYTHON_TYPE_NAME_MAPPING(std::string, "str")
  * @return the constructed @p Instance wrapped in a std::variant of type @p PossibleTypes (`[[nodiscard]]`)
  */
 template <template <typename> typename Instance, typename PossibleTypes, typename... Args>
-[[nodiscard]] PossibleTypes create_instance(const py::type type, Args &&...args) {
+[[nodiscard]] PossibleTypes create_instance(const py::type &type, Args &&...args) {
     const py::module_ np = py::module_::import("numpy");
 
     // boolean
@@ -268,7 +291,7 @@ template <typename T>
         return py::array{ l };
     } else {
         py::array_t<T, py::array::c_style> arr(vec.size());
-        py::buffer_info buffer = arr.request();
+        const py::buffer_info buffer = arr.request();
         T *ptr = static_cast<T *>(buffer.ptr);
         if constexpr (std::is_same_v<T, bool>) {
             // can't use memcpy with std::vector<bool>

@@ -9,31 +9,38 @@
 #include "plssvm/detail/cmd/utility.hpp"
 
 #include "plssvm/backend_types.hpp"                        // plssvm::backend_type, plssvm::list_available_backends, plssvm::determine_default_backend
-#include "plssvm/backends/Kokkos/execution_space.hpp"      // plssvm::kokkos::execution_space
+#include "plssvm/backends/Kokkos/execution_spaces.hpp"     // plssvm::kokkos::execution_space
 #include "plssvm/backends/SYCL/data_parallel_kernels.hpp"  // plssvm::sycl::data_parallel_kernels
 #include "plssvm/backends/SYCL/implementation_types.hpp"   // plssvm::sycl::implementation_type
 #include "plssvm/detail/logging/mpi_log_untracked.hpp"     // plssvm::detail::log_untracked
 #include "plssvm/detail/string_utility.hpp"                // plssvm::detail::starts_with
 #include "plssvm/detail/utility.hpp"                       // plssvm::detail::to_underlying
-#include "plssvm/exceptions/exceptions.hpp"                // plssvm::cmd_parser_exit
 #include "plssvm/kernel_function_types.hpp"                // plssvm::kernel_function_type
 #include "plssvm/mpi/communicator.hpp"                     // plssvm::mpi::communicator
 #include "plssvm/target_platforms.hpp"                     // plssvm::target_platform, plssvm::determine_default_target_platform
 #include "plssvm/verbosity_levels.hpp"                     // plssvm::verbosity_level
 
 #include "cxxopts.hpp"   // cxxopts::ParseResult, cxxopts::Options
-#include "fmt/color.h"   // fmt::fg, fmt::color::red
 #include "fmt/format.h"  // fmt::format
 
 #include <cstddef>   // std::size_t
 #include <cstdlib>   // EXIT_FAILURE
-#include <iostream>  // std::cout, std::cerr, std::endl
 #include <optional>  // std::optional, std::nullopt
 #include <string>    // std::string
 #include <utility>   // std::pair, std::make_pair
 #include <vector>    // std::vector
 
+#if defined(PLSSVM_HAS_MPI_ENABLED)
+    #include "plssvm/exceptions/exceptions.hpp"  // plssvm::cmd_parser_exit
+
+    #include "fmt/color.h"  // fmt::fg, fmt::color::red
+
+    #include <iostream>  // std::cout, std::cerr, std::endl
+#endif
+
 namespace plssvm::detail::cmd {
+
+// NOLINTBEGIN(cppcoreguidelines-pro-bounds-pointer-arithmetic): pointer arithmetic necessary due to char** from the main function
 
 std::vector<char *> filter_argv(int argc, char **argv, const std::vector<std::string> &prefix_filter) {
     // We ignore all command line options starting with --hpx: like --hpx:threads=42.
@@ -58,6 +65,8 @@ std::vector<char *> filter_argv(int argc, char **argv, const std::vector<std::st
 
     return filtered_argv;
 }
+
+// NOLINTEND(cppcoreguidelines-pro-bounds-pointer-arithmetic)
 
 std::string kernel_type_help_message() {
     // create the help message for the kernel function type
@@ -133,7 +142,7 @@ std::optional<std::pair<sycl::data_parallel_kernel, sycl::implementation_type>> 
 std::optional<std::vector<std::size_t>> parse_and_check_mpi_options_if_available([[maybe_unused]] const cxxopts::ParseResult &result, [[maybe_unused]] const cxxopts::Options &options, [[maybe_unused]] const mpi::communicator &comm) {
 #if defined(PLSSVM_HAS_MPI_ENABLED)
     // parse MPI load balancing factors
-    if (result.count("mpi_load_balancing_weights")) {
+    if (result.contains("mpi_load_balancing_weights")) {
         std::vector<std::size_t> mpi_load_balancing_weights = result["mpi_load_balancing_weights"].as<std::vector<std::size_t>>();
 
         // sanity-check provided balance factors
@@ -156,7 +165,7 @@ std::optional<verbosity_level> parse_verbosity(const cxxopts::ParseResult &resul
     // parse whether output is quiet or not
     const bool quiet = result["quiet"].as<bool>();
 
-    if (result["verbosity"].count()) {
+    if (result.contains("verbosity")) {
         const verbosity_level verb = result["verbosity"].as<verbosity_level>();
         if (quiet && verb != verbosity_level::quiet) {
             detail::log_untracked(verbosity_level::full | verbosity_level::warning,
@@ -164,14 +173,13 @@ std::optional<verbosity_level> parse_verbosity(const cxxopts::ParseResult &resul
                                   "WARNING: explicitly set the -q/--quiet flag, but the provided verbosity level isn't \"quiet\"; setting --verbosity={} to --verbosity=quiet\n",
                                   verb);
             return verbosity_level::quiet;
-        } else {
-            return verb;
         }
-    } else if (quiet) {
-        return verbosity_level::quiet;
-    } else {
-        return std::nullopt;
+        return verb;
     }
+    if (quiet) {
+        return verbosity_level::quiet;
+    }
+    return std::nullopt;
 }
 
 }  // namespace plssvm::detail::cmd

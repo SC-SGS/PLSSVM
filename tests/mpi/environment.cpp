@@ -13,12 +13,12 @@
 
 #include "gtest/gtest.h"  // TEST, EXPECT_FALSE, EXPECT_DEATH
 
-TEST(MPIEnvironment, is_executed_via_mpirun) {
+TEST(MPIEnvironment, IsExecutedViaMpirun) {
     // since we do not support mpirun ctest, the function must return false
     EXPECT_FALSE(plssvm::mpi::is_executed_via_mpirun());
 }
 
-TEST(MPIEnvironmentDeathTest, abort_world) {
+TEST(MPIEnvironmentDeathTest, AbortWorld) {
     // test whether the abort function fires correctly
     EXPECT_DEATH(plssvm::mpi::abort_world(), "");
 }

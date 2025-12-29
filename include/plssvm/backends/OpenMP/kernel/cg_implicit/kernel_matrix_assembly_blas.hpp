@@ -67,8 +67,8 @@ inline void device_kernel_assembly_symm(const real_type alpha, const std::vector
             for (std::size_t row_thread = 0; row_thread < THREAD_BLOCK_SIZE_uz; ++row_thread) {
                 for (std::size_t col_thread = 0; col_thread < THREAD_BLOCK_SIZE_uz; ++col_thread) {
                     // calculate the indices used in the current thread
-                    const std::size_t i_idx = (row_block + row_thread) * INTERNAL_BLOCK_SIZE_uz;
-                    const std::size_t j_idx = (col_block + col_thread) * INTERNAL_BLOCK_SIZE_uz;
+                    const std::size_t i_idx = (row_block + row_thread) * INTERNAL_BLOCK_SIZE_uz;  // num_rows - device_row_offset
+                    const std::size_t j_idx = (col_block + col_thread) * INTERNAL_BLOCK_SIZE_uz;  // device_num_rows
 
                     // only calculate the upper triangular matrix
                     if (i_idx >= j_idx) {
@@ -88,7 +88,8 @@ inline void device_kernel_assembly_symm(const real_type alpha, const std::vector
 
                                     real_type sum{ 0.0 };
                                     for (std::size_t feature = 0; feature < THREAD_BLOCK_SIZE_uz; ++feature) {
-                                        sum += detail::feature_reduce<kernel_function>(data(global_i_idx, feature_block + feature), data(global_j_idx, feature_block + feature));
+                                        sum += detail::feature_reduce<kernel_function>(data(global_i_idx, feature_block + feature),   // SoA
+                                                                                       data(global_j_idx, feature_block + feature));  // SoA
                                     }
                                     temp[internal_j][internal_i] += sum;
                                 }

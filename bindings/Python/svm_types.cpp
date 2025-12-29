@@ -8,21 +8,26 @@
 
 #include "plssvm/svm_types.hpp"  // plssvm::svm_type, plssvm::list_available_svm_types, plssvm::svm_type_from_model_file
 
-#include "pybind11/native_enum.h"  // py::native_enum
-#include "pybind11/pybind11.h"     // py::module_
+#include "bindings/Python/bindings_fwd.hpp"  // forward declare all helper functions to create the Python bindings
+#include "bindings/Python/utility.hpp"       // plssvm::bindings::python::util::register_implicit_str_enum_conversion
+
+#include "pybind11/cast.h"      // py::arg
+#include "pybind11/pybind11.h"  // py::module_, py::enum_
 
 namespace py = pybind11;
 
 void init_svm_types(py::module_ &m) {
     // bind enum class
-    py::native_enum<plssvm::svm_type> py_enum(m, "SVMType", "enum.Enum", "Enum class for all implemented SVM types in PLSSVM.");
+    py::enum_<plssvm::svm_type> py_enum(m, "SVMType", "enum.Enum", "Enum class for all implemented SVM types in PLSSVM.");
     py_enum
         .value("CSVC", plssvm::svm_type::csvc, "use a C-SVC for classification")
-        .value("CSVR", plssvm::svm_type::csvr, "use a C-SVR for classification")
-        .finalize();
+        .value("CSVR", plssvm::svm_type::csvr, "use a C-SVR for classification");
+
+    // enable implicit conversion from string to enum
+    plssvm::bindings::python::util::register_implicit_str_enum_conversion<plssvm::svm_type>(py_enum);
 
     // bind free functions
     m.def("list_available_svm_types", &plssvm::list_available_svm_types, "list the available SVM types");
-    m.def("svm_type_to_task_name", &plssvm::svm_type_to_task_name, "get the task name (e.g., \"classification\" or \"regression\") based on the provided SVMType", py::arg("svm_type"));
+    m.def("svm_type_to_task_name", &plssvm::svm_type_to_task_name, R"(get the task name (e.g., "classification" or "regression") based on the provided SVMType)", py::arg("svm_type"));
     m.def("svm_type_from_model_file", &plssvm::svm_type_from_model_file, "determine the SVMType based on the provided LIBSVM model file", py::arg("filename"));
 }

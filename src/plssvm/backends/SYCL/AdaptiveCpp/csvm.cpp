@@ -12,7 +12,7 @@
 #include "plssvm/backends/execution_range.hpp"                                                   // plssvm::detail::{dim_type, execution_range}
 #include "plssvm/backends/SYCL/AdaptiveCpp/detail/device_ptr.hpp"                                // plssvm::adaptivecpp::detail::::device_ptr
 #include "plssvm/backends/SYCL/AdaptiveCpp/detail/queue_impl.hpp"                                // plssvm::adaptivecpp::detail::queue (PImpl implementation)
-#include "plssvm/backends/SYCL/AdaptiveCpp/detail/utility.hpp"                                   // plssvm::adaptivecpp::detail::{get_device_list, device_synchronize, get_adaptivecpp_version_short, get_adaptivecpp_version}
+#include "plssvm/backends/SYCL/AdaptiveCpp/detail/utility.hpp"                                   // plssvm::adaptivecpp::detail::{get_device_list, device_synchronize, get_device_name, get_adaptivecpp_version_short, get_adaptivecpp_version}
 #include "plssvm/backends/SYCL/data_parallel_kernels.hpp"                                        // plssvm::sycl::data_parallel_kernel
 #include "plssvm/backends/SYCL/exceptions.hpp"                                                   // plssvm::adaptivecpp::backend_exception
 #include "plssvm/backends/SYCL/implementation_types.hpp"                                         // plssvm::sycl::implementation_type
@@ -41,8 +41,6 @@
 #include "plssvm/detail/memory_size.hpp"                                                         // plssvm::detail::memory_size
 #include "plssvm/detail/tracking/performance_tracker.hpp"                                        // plssvm::detail::tracking::tracking_entry, PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY
 #include "plssvm/detail/utility.hpp"                                                             // plssvm::detail::get_system_memory
-#include "plssvm/exceptions/exceptions.hpp"                                                      // plssvm::exception
-#include "plssvm/gamma.hpp"                                                                      // plssvm::gamma_type
 #include "plssvm/kernel_function_types.hpp"                                                      // plssvm::kernel_type
 #include "plssvm/mpi/communicator.hpp"                                                           // plssvm::mpi::communicator
 #include "plssvm/mpi/detail/information.hpp"                                                     // plssvm::mpi::detail::gather_and_print_csvm_information
@@ -64,9 +62,8 @@
 #include <limits>     // std::numeric_limits::max
 #include <optional>   // std::optional
 #include <string>     // std::string
-#include <tuple>      // std::tie
+#include <tuple>      // std::tie, std::get
 #include <utility>    // std::forward
-#include <variant>    // std::get
 #include <vector>     // std::vector
 
 namespace {
@@ -206,7 +203,7 @@ void csvm::init(const target_platform target) {
     if (data_parallel_kernel_type_ == sycl::data_parallel_kernel::automatic) {
         // always use work_group for AdaptiveCpp
         data_parallel_kernel_type_ = sycl::data_parallel_kernel::work_group;
-        if (target_ == target_platform::cpu) {  // TODO: set to hierarchical or scoped?!
+        if (target_ == target_platform::cpu) {
 #if !defined(__ACPP_USE_ACCELERATED_CPU__) && defined(__ACPP_ENABLE_OMPHOST_TARGET__)
             plssvm::detail::log_untracked(verbosity_level::full | verbosity_level::warning,
                                           "WARNING: the AdaptiveCpp automatic target for the CPU is set to work_group, but AdaptiveCpp hasn't been build with the \"omp.accelerated\" compilation flow resulting in major performance losses!\n");
@@ -220,7 +217,7 @@ void csvm::init(const target_platform target) {
     if (comm_.size() > 1) {
         // use MPI rank specific command line output
         for (const queue_type &device : devices_) {
-            device_names.emplace_back(device.impl->sycl_queue.get_device().template get_info<::sycl::info::device::name>());
+            device_names.push_back(detail::get_device_name(device));
         }
 
         mpi::detail::gather_and_print_csvm_information(comm_, plssvm::backend_type::sycl, target_, device_names, fmt::format("{}", data_parallel_kernel_type_));
@@ -245,13 +242,12 @@ void csvm::init(const target_platform target) {
                                       target_);
 
         for (typename std::vector<queue_type>::size_type device = 0; device < devices_.size(); ++device) {
-            const std::string device_name = devices_[device].impl->sycl_queue.get_device().template get_info<::sycl::info::device::name>();
+            device_names.push_back(detail::get_device_name(devices_[device]));
             plssvm::detail::log_untracked(verbosity_level::full,
                                           comm_,
                                           "  [{}, {}]\n",
                                           device,
-                                          device_name);
-            device_names.emplace_back(device_name);
+                                          device_names.back());
         }
     }
 

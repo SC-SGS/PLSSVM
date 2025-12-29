@@ -19,19 +19,19 @@
 #include <string>  // std::string
 
 // check whether the plssvm::opencl::detail::jit_info::caching_status -> std::string conversions are correct
-TEST(OpenCLJITInfoCachingStatus, to_string) {
+TEST(OpenCLJITInfoCachingStatus, ToString) {
     // check conversions to std::string
     EXPECT_CONVERSION_TO_STRING(plssvm::opencl::detail::jit_info::caching_status::success, "success");
     EXPECT_CONVERSION_TO_STRING(plssvm::opencl::detail::jit_info::caching_status::error_no_cached_files, "no cached files exist (checksum missmatch)");
     EXPECT_CONVERSION_TO_STRING(plssvm::opencl::detail::jit_info::caching_status::error_invalid_number_of_cached_files, "invalid number of cached files");
 }
 
-TEST(OpenCLJITInfoCachingStatus, to_string_unknown) {
+TEST(OpenCLJITInfoCachingStatus, ToStringUnknown) {
     // check conversions to std::string from unknown caching_status
     EXPECT_CONVERSION_TO_STRING(static_cast<plssvm::opencl::detail::jit_info::caching_status>(3), "unknown");
 }
 
-TEST(OpenCLJITInfo, default_construct) {
+TEST(OpenCLJITInfo, DefaultConstruct) {
     // default construct a JIT info struct
     const plssvm::opencl::detail::jit_info info{};
 
@@ -41,7 +41,7 @@ TEST(OpenCLJITInfo, default_construct) {
     EXPECT_EQ(info.duration, std::chrono::milliseconds{});
 }
 
-TEST(OpenCLJITInfo, construct) {
+TEST(OpenCLJITInfo, Construct) {
     using namespace std::chrono_literals;
 
     // construct a JIT info struct
@@ -49,7 +49,7 @@ TEST(OpenCLJITInfo, construct) {
         true,
         plssvm::opencl::detail::jit_info::caching_status::error_no_cached_files,
         "jit/file/path",
-        250ms
+        250ms  // NOLINT(misc-include-cleaner): included via <chrono>
     };
 
     EXPECT_TRUE(info.use_ptx_inline);
@@ -58,7 +58,7 @@ TEST(OpenCLJITInfo, construct) {
     EXPECT_EQ(info.duration, 250ms);
 }
 
-TEST(OpenCLJITInfo, create_jit_report) {
+TEST(OpenCLJITInfo, CreateJitReport) {
     using namespace std::chrono_literals;
 
     // construct a JIT info struct
@@ -66,7 +66,7 @@ TEST(OpenCLJITInfo, create_jit_report) {
         true,
         plssvm::opencl::detail::jit_info::caching_status::error_invalid_number_of_cached_files,
         "jit/file/path",
-        250ms
+        250ms  // NOLINT(misc-include-cleaner): included via <chrono>
     };
 
     EXPECT_THAT(plssvm::opencl::detail::create_jit_report(info), ::testing::HasSubstr("250ms; PTX inline; cache: invalid number of cached files (jit/file/path)"));

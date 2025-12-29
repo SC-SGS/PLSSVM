@@ -9,8 +9,8 @@
  * @brief Small wrapper around RAII enabled cudaHostRegister.
  */
 
-#ifndef PLSSVM_BACKENDS_CUDA_DETAIL_PINNED_MEMORY_HPP_
-#define PLSSVM_BACKENDS_CUDA_DETAIL_PINNED_MEMORY_HPP_
+#ifndef PLSSVM_BACKENDS_CUDA_DETAIL_PINNED_MEMORY_CUH_
+#define PLSSVM_BACKENDS_CUDA_DETAIL_PINNED_MEMORY_CUH_
 #pragma once
 
 #include "plssvm/backends/host_pinned_memory.hpp"  // plssvm::detail::host_pinned_memory
@@ -100,4 +100,4 @@ extern template class pinned_memory<double>;
 
 }  // namespace plssvm::cuda::detail
 
-#endif  // PLSSVM_BACKENDS_CUDA_DETAIL_PINNED_MEMORY_HPP_
+#endif  // PLSSVM_BACKENDS_CUDA_DETAIL_PINNED_MEMORY_CUH_

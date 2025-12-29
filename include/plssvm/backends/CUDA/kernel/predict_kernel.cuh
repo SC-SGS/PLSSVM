@@ -9,14 +9,15 @@
  * @brief Defines the functions used for prediction for the C-SVM using the CUDA backend.
  */
 
-#ifndef PLSSVM_BACKENDS_CUDA_KERNEL_PREDICT_KERNEL_HPP_
-#define PLSSVM_BACKENDS_CUDA_KERNEL_PREDICT_KERNEL_HPP_
+#ifndef PLSSVM_BACKENDS_CUDA_KERNEL_PREDICT_KERNEL_CUH_
+#define PLSSVM_BACKENDS_CUDA_KERNEL_PREDICT_KERNEL_CUH_
 #pragma once
 
-#include "plssvm/backends/CUDA/kernel/detail/atomics.cuh"    // atomicAdd for double precision floating point numbers on older CUDA hardware
-#include "plssvm/backends/CUDA/kernel/kernel_functions.cuh"  // plssvm::cuda::detail::{feature_reduce, apply_kernel_function}
-#include "plssvm/constants.hpp"                              // plssvm::real_type, plssvm::THREAD_BLOCK_SIZE
-#include "plssvm/kernel_function_types.hpp"                  // plssvm::kernel_function_type
+#include "plssvm/backends/CUDA/kernel/detail/atomics.cuh"            // atomicAdd for double precision floating point numbers on older CUDA hardware
+#include "plssvm/backends/CUDA/kernel/detail/reinterpret_array.cuh"  // plssvm::cuda::detail::reinterpret_array
+#include "plssvm/backends/CUDA/kernel/kernel_functions.cuh"          // plssvm::cuda::detail::{feature_reduce, apply_kernel_function}
+#include "plssvm/constants.hpp"                                      // plssvm::real_type, plssvm::THREAD_BLOCK_SIZE
+#include "plssvm/kernel_function_types.hpp"                          // plssvm::kernel_function_type
 
 #include <cstddef>  // std::size_t
 
@@ -281,4 +282,4 @@ __global__ void device_kernel_predict(real_type *prediction, const real_type *al
 
 }  // namespace plssvm::cuda::detail
 
-#endif  // PLSSVM_BACKENDS_CUDA_KERNEL_PREDICT_KERNEL_HPP_
+#endif  // PLSSVM_BACKENDS_CUDA_KERNEL_PREDICT_KERNEL_CUH_

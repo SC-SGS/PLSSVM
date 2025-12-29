@@ -9,8 +9,8 @@
  * @brief Execution space enumeration for the ExecutionSpaces in Kokkos.
  */
 
-#ifndef PLSSVM_BACKENDS_KOKKOS_EXECUTION_SPACE_HPP_
-#define PLSSVM_BACKENDS_KOKKOS_EXECUTION_SPACE_HPP_
+#ifndef PLSSVM_BACKENDS_KOKKOS_EXECUTION_SPACES_HPP_
+#define PLSSVM_BACKENDS_KOKKOS_EXECUTION_SPACES_HPP_
 #pragma once
 
 #include "fmt/base.h"     // fmt::formatter
@@ -79,4 +79,4 @@ struct fmt::formatter<plssvm::kokkos::execution_space> : fmt::ostream_formatter 
 
 /// @endcond
 
-#endif  // PLSSVM_BACKENDS_KOKKOS_EXECUTION_SPACE_HPP_
+#endif  // PLSSVM_BACKENDS_KOKKOS_EXECUTION_SPACES_HPP_

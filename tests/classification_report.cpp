@@ -18,7 +18,6 @@
 
 #include "gtest/gtest.h"  // TEST, TEST_F, EXPECT_EQ, EXPECT_TRUE, EXPECT_FALSE, ::testing::Test
 
-#include <cmath>     // std::isnan
 #include <iostream>  // std::cout
 #include <sstream>   // std::istringstream
 #include <string>    // std::string
@@ -33,7 +32,7 @@ class ZeroDivisionBehavior : public ::testing::Test,
                              public util::redirect_output<&std::cout> { };
 
 // check whether the plssvm::classification_report::zero_division_behavior -> std::string conversions are correct
-TEST_F(ZeroDivisionBehavior, to_string) {
+TEST_F(ZeroDivisionBehavior, ToString) {
     // check conversions to std::string
     EXPECT_CONVERSION_TO_STRING(plssvm::classification_report::zero_division_behavior::warn, "warn");
     EXPECT_CONVERSION_TO_STRING(plssvm::classification_report::zero_division_behavior::zero, "0.0");
@@ -41,13 +40,13 @@ TEST_F(ZeroDivisionBehavior, to_string) {
     EXPECT_CONVERSION_TO_STRING(plssvm::classification_report::zero_division_behavior::nan, "nan");
 }
 
-TEST_F(ZeroDivisionBehavior, to_string_unknown) {
+TEST_F(ZeroDivisionBehavior, ToStringUnknown) {
     // check conversions to std::string from unknown zero_division_behavior
     EXPECT_CONVERSION_TO_STRING(static_cast<plssvm::classification_report::zero_division_behavior>(4), "unknown");
 }
 
 // check whether the std::string -> plssvm::classification_report::zero_division_behavior conversions are correct
-TEST_F(ZeroDivisionBehavior, from_string) {
+TEST_F(ZeroDivisionBehavior, FromString) {
     // check conversion from std::string
     EXPECT_CONVERSION_FROM_STRING("warn", plssvm::classification_report::zero_division_behavior::warn);
     EXPECT_CONVERSION_FROM_STRING("WARN", plssvm::classification_report::zero_division_behavior::warn);
@@ -59,7 +58,7 @@ TEST_F(ZeroDivisionBehavior, from_string) {
     EXPECT_CONVERSION_FROM_STRING("NaN", plssvm::classification_report::zero_division_behavior::nan);
 }
 
-TEST_F(ZeroDivisionBehavior, from_string_unknown) {
+TEST_F(ZeroDivisionBehavior, FromStringUnknown) {
     // foo isn't a valid zero_division_behavior
     std::istringstream input{ "foo" };
     plssvm::classification_report::zero_division_behavior zero_div{};
@@ -67,7 +66,7 @@ TEST_F(ZeroDivisionBehavior, from_string_unknown) {
     EXPECT_TRUE(input.fail());
 }
 
-TEST_F(ZeroDivisionBehavior, sanitize_nan_warn) {
+TEST_F(ZeroDivisionBehavior, SanitizeNaNWarn) {
     // sanitize NaN using warn
     EXPECT_EQ(plssvm::detail::sanitize_nan(42.0, 0.0, plssvm::classification_report::zero_division_behavior::warn, "Foo"), 0.0);
     EXPECT_EQ(this->get_capture(), "Foo is ill-defined and is set to 0.0 in labels with no predicted samples. "
@@ -75,19 +74,19 @@ TEST_F(ZeroDivisionBehavior, sanitize_nan_warn) {
     EXPECT_EQ(plssvm::detail::sanitize_nan(42.0, 1.0, plssvm::classification_report::zero_division_behavior::warn, "Foo"), 42.0);
 }
 
-TEST_F(ZeroDivisionBehavior, sanitize_nan_zero) {
+TEST_F(ZeroDivisionBehavior, SanitizeNaNZero) {
     // sanitize NaN using zero
     EXPECT_EQ(plssvm::detail::sanitize_nan(42.0, 0.0, plssvm::classification_report::zero_division_behavior::zero, "Foo"), 0.0);
     EXPECT_EQ(plssvm::detail::sanitize_nan(42.0, 1.0, plssvm::classification_report::zero_division_behavior::zero, "Foo"), 42.0);
 }
 
-TEST_F(ZeroDivisionBehavior, sanitize_nan_one) {
+TEST_F(ZeroDivisionBehavior, SanitizeNaNOne) {
     // sanitize NaN using one
     EXPECT_EQ(plssvm::detail::sanitize_nan(42.0, 0.0, plssvm::classification_report::zero_division_behavior::one, "Foo"), 1.0);
     EXPECT_EQ(plssvm::detail::sanitize_nan(42.0, 1.0, plssvm::classification_report::zero_division_behavior::one, "Foo"), 42.0);
 }
 
-TEST_F(ZeroDivisionBehavior, sanitize_nan_nan) {
+TEST_F(ZeroDivisionBehavior, SanitizeNaNNaN) {
     // sanitize NaN using nan
     // #if !defined(PLSSVM_USE_FAST_MATH) || defined(_MSC_VER)
     //     // ATTENTION: MSVC doesn't optimize out the NaN check even if fast math is used
@@ -103,7 +102,7 @@ TEST_F(ZeroDivisionBehavior, sanitize_nan_nan) {
 //                                                               metrics                                                               //
 //*************************************************************************************************************************************//
 
-TEST(ClassificationReportMetrics, construct_metric) {
+TEST(ClassificationReportMetrics, ConstructMetric) {
     // construct a metric object
     const plssvm::classification_report::metric m{ 10, 42, 3, 0.1, 0.2, 0.3, 42 };
 
@@ -117,7 +116,7 @@ TEST(ClassificationReportMetrics, construct_metric) {
     EXPECT_EQ(m.support, 42);
 }
 
-TEST(ClassificationReportMetrics, output_metric) {
+TEST(ClassificationReportMetrics, OutputMetric) {
     // construct a metric object
     EXPECT_CONVERSION_TO_STRING((plssvm::classification_report::metric{ 10, 42, 3, 0.1, 0.2, 0.3, 42 }),
                                 "TP: 10\n"
@@ -129,7 +128,7 @@ TEST(ClassificationReportMetrics, output_metric) {
                                 "support:   42");
 }
 
-TEST(ClassificationReportMetrics, construct_accuracy_metric) {
+TEST(ClassificationReportMetrics, ConstructAccuracyMetric) {
     // construct a accuracy metric object
     const plssvm::classification_report::accuracy_metric am{ 0.5, 50, 100 };
 
@@ -139,7 +138,7 @@ TEST(ClassificationReportMetrics, construct_accuracy_metric) {
     EXPECT_EQ(am.num_total, 100);
 }
 
-TEST(ClassificationReportMetrics, output_accuracy_metric) {
+TEST(ClassificationReportMetrics, OutputAccuracyMetric) {
     // construct a accuracy metric object
     EXPECT_CONVERSION_TO_STRING((plssvm::classification_report::accuracy_metric{ 0.5, 50, 100 }), "Accuracy = 50.00% (50/100)");
 }
@@ -184,7 +183,7 @@ class ClassificationReport : public ::testing::Test {
     // clang-format on
 };
 
-TEST_F(ClassificationReport, construct) {
+TEST_F(ClassificationReport, Construct) {
     // construct a classification report
     const plssvm::classification_report report{ this->get_correct_label(), this->get_predicted_label() };
 
@@ -224,7 +223,7 @@ TEST_F(ClassificationReport, construct) {
     EXPECT_EQ(report.accuracy().num_total, 45);
 }
 
-TEST_F(ClassificationReport, construct_target_names) {
+TEST_F(ClassificationReport, ConstructTargetNames) {
     // construct a classification report
     const plssvm::classification_report report{ this->get_correct_label(), this->get_predicted_label(), plssvm::classification_report::target_names = std::vector<std::string>{ "Foo", "Bar", "Baz" } };
 
@@ -263,7 +262,7 @@ TEST_F(ClassificationReport, construct_target_names) {
     EXPECT_EQ(report.accuracy().num_total, 45);
 }
 
-TEST_F(ClassificationReport, construct_target_names_size_mismatch) {
+TEST_F(ClassificationReport, ConstructTargetNamesSizeMismatch) {
     // too few new target names
     EXPECT_THROW_WHAT((plssvm::classification_report{ this->get_correct_label(), this->get_predicted_label(), plssvm::classification_report::target_names = std::vector<std::string>{ "Foo", "Bar" } }),
                       plssvm::classification_report_exception,
@@ -274,7 +273,7 @@ TEST_F(ClassificationReport, construct_target_names_size_mismatch) {
                       "Provided 4 target names, but found 3 distinct labels!");
 }
 
-TEST_F(ClassificationReport, construct_zero_division_behavior) {
+TEST_F(ClassificationReport, ConstructZeroDivisionBehavior) {
     // construct a classification report
     const plssvm::classification_report report{ std::vector<int>{ 0, 0, 0 }, std::vector<int>{ 1, 1, 1 }, plssvm::classification_report::zero_division = plssvm::classification_report::zero_division_behavior::one };
 
@@ -305,35 +304,35 @@ TEST_F(ClassificationReport, construct_zero_division_behavior) {
     EXPECT_EQ(report.accuracy().num_total, 3);
 }
 
-TEST_F(ClassificationReport, construct_digits_negative) {
+TEST_F(ClassificationReport, ConstructDigitsNegative) {
     // too few new target names
     EXPECT_THROW_WHAT((plssvm::classification_report{ this->get_correct_label(), this->get_predicted_label(), plssvm::classification_report::digits = -1 }),
                       plssvm::classification_report_exception,
                       "Invalid number of output digits provided! Number of digits must be greater than zero but is -1!");
 }
 
-TEST_F(ClassificationReport, construct_empty_correct_label) {
+TEST_F(ClassificationReport, ConstructEmptyCorrectLabel) {
     // the correct labels vector must not be empty
     EXPECT_THROW_WHAT((plssvm::classification_report{ std::vector<int>{}, this->get_predicted_label() }),
                       plssvm::classification_report_exception,
                       "The correct labels list must not be empty!");
 }
 
-TEST_F(ClassificationReport, construct_empty_predicted_label) {
+TEST_F(ClassificationReport, ConstructEmptyPredictedLabel) {
     // the predicted labels vector must not be empty
     EXPECT_THROW_WHAT((plssvm::classification_report{ this->get_correct_label(), std::vector<int>{} }),
                       plssvm::classification_report_exception,
                       "The predicted labels list must not be empty!");
 }
 
-TEST_F(ClassificationReport, construct_label_size_mismatch) {
+TEST_F(ClassificationReport, ConstructLabelSizeMismatch) {
     // constructing a classification report with different number of correct and predicted labels must throw
     EXPECT_THROW_WHAT((plssvm::classification_report{ std::vector<int>{ 0, 0, 0 }, std::vector<int>{ 0, 0 } }),
                       plssvm::classification_report_exception,
                       "The number of correct labels (3) and predicted labels (2) must be the same!");
 }
 
-TEST_F(ClassificationReport, confusion_matrix) {
+TEST_F(ClassificationReport, ConfusionMatrix) {
     // construct a classification report
     const plssvm::classification_report report{ this->get_correct_label(), this->get_predicted_label() };
 
@@ -341,7 +340,7 @@ TEST_F(ClassificationReport, confusion_matrix) {
     EXPECT_EQ(report.confusion_matrix(), this->get_confusion_matrix());
 }
 
-TEST_F(ClassificationReport, accuracy_metrics) {
+TEST_F(ClassificationReport, AccuracyMetrics) {
     // construct a classification report
     const plssvm::classification_report report{ this->get_correct_label(), this->get_predicted_label() };
 
@@ -351,7 +350,7 @@ TEST_F(ClassificationReport, accuracy_metrics) {
     EXPECT_EQ(report.accuracy().num_total, 45);
 }
 
-TEST_F(ClassificationReport, metric_for_class) {
+TEST_F(ClassificationReport, MetricForClass) {
     // construct a classification report
     const plssvm::classification_report report{ this->get_correct_label(), this->get_predicted_label() };
 
@@ -389,7 +388,7 @@ TEST_F(ClassificationReport, metric_for_class) {
     EXPECT_EQ(report.metric_for_class(0).support + report.metric_for_class(1).support + report.metric_for_class(2).support, this->get_correct_label().size());
 }
 
-TEST_F(ClassificationReport, metric_for_invalid_class) {
+TEST_F(ClassificationReport, MetricForInvalidClass) {
     // construct a classification report
     const plssvm::classification_report report{ this->get_correct_label(), this->get_predicted_label() };
 
@@ -398,7 +397,7 @@ TEST_F(ClassificationReport, metric_for_invalid_class) {
     EXPECT_THROW_WHAT(std::ignore = report.metric_for_class("foo"), plssvm::classification_report_exception, "Couldn't find the label \"foo\"!");
 }
 
-TEST_F(ClassificationReport, classification_report) {
+TEST_F(ClassificationReport, ClassificationReport) {
     // construct a classification report
     const plssvm::classification_report report{ this->get_correct_label(), this->get_predicted_label() };
 
@@ -417,7 +416,7 @@ TEST_F(ClassificationReport, classification_report) {
     EXPECT_CONVERSION_TO_STRING(report, correct_output);
 }
 
-TEST_F(ClassificationReport, classification_report_target_names) {
+TEST_F(ClassificationReport, ClassificationReportTargetNames) {
     // construct a classification report
     const plssvm::classification_report report{ this->get_correct_label(), this->get_predicted_label(), plssvm::classification_report::target_names = std::vector<std::string>{ "cat", "dog", "African elephant" } };
 
@@ -436,7 +435,7 @@ TEST_F(ClassificationReport, classification_report_target_names) {
     EXPECT_CONVERSION_TO_STRING(report, correct_output);
 }
 
-TEST_F(ClassificationReport, classification_report_digits) {
+TEST_F(ClassificationReport, ClassificationReportDigits) {
     // construct a classification report
     const plssvm::classification_report report{ this->get_correct_label(), this->get_predicted_label(), plssvm::classification_report::digits = 3 };
 

@@ -17,7 +17,7 @@
 #include "tests/types_to_test.hpp"       // util::{combine_test_parameters_gtest_t, cartesian_type_product_t, test_parameter_type_at_t}
 
 #include "fmt/format.h"   // fmt::format
-#include "fmt/std.h"      // format std::vector<bool>::operator[] proxy type
+#include "fmt/std.h"      // NOLINT: format std::vector<bool>::operator[] proxy type
 #include "gtest/gtest.h"  // TEST, ASSERT_EQ, EXPECT_EQ, EXPECT_TRUE, TYPED_TEST, TYPED_TEST_SUITE, TEST_P, INSTANTIATE_TEST_SUITE_P
                           // ::testing::{Test, TestWithParam, Types, Values}
 
@@ -25,8 +25,9 @@
 #include <string>       // std::string
 #include <string_view>  // std::string_view
 #include <tuple>        // std::tuple, std::ignore
-#include <utility>      // std::pair, std::make_pair
 #include <vector>       // std::vector
+
+namespace {
 
 /**
  * @brief Checks the plssvm::detail::convert_to function.
@@ -44,9 +45,9 @@ void check_convert_to(const std::vector<std::string_view> &input, const std::vec
     }
 }
 
-TEST(StringConversion, string_conversion) {
-    using namespace plssvm::detail;
+}  // namespace
 
+TEST(StringConversion, StringConversion) {
     const std::vector<std::string_view> input = { "-3", "-1.5", "0.0", "1.5", "3", "   5", "  6 ", "7  " };
     const std::vector<std::string_view> input_unsigned = { "0.0", "1.5", "3", "   5", "  6 ", "7  " };
     const std::vector<std::string_view> input_signed_unsigned_char = { "0", "48", "65.2", "66", "122", "   119", "  120 ", "121  " };
@@ -102,7 +103,7 @@ class StringConversionException : public ::testing::Test {
 
 TYPED_TEST_SUITE(StringConversionException, string_conversion_exception_types_gtest, naming::test_parameter_to_name);
 
-TYPED_TEST(StringConversionException, string_conversion_exception) {
+TYPED_TEST(StringConversionException, StringConversionException) {
     using type = typename TestFixture::fixture_type;
 
     EXPECT_THROW_WHAT(std::ignore = plssvm::detail::convert_to<type>("a"),
@@ -116,7 +117,7 @@ TYPED_TEST(StringConversionException, string_conversion_exception) {
                       fmt::format("Can't convert 'a' to a value of type {}!", plssvm::detail::arithmetic_type_name<type>()));
 }
 
-TEST(StringConversionException, string_conversion_exception_bool) {
+TEST(StringConversionException, StringConversionExceptionBool) {
     EXPECT_THROW_WHAT(std::ignore = plssvm::detail::convert_to<bool>("a"),
                       std::runtime_error,
                       "Can't convert 'a' to a value of type long long!");
@@ -128,7 +129,7 @@ TEST(StringConversionException, string_conversion_exception_bool) {
                       "Can't convert 'a' to a value of type long long!");
 }
 
-TEST(StringConversionException, string_conversion_exception_char) {
+TEST(StringConversionException, StringConversionExceptionChar) {
     EXPECT_THROW_WHAT(std::ignore = plssvm::detail::convert_to<char>("42"),
                       std::runtime_error,
                       "Can't convert '42' to a value of type char!");
@@ -142,7 +143,7 @@ TEST(StringConversionException, string_conversion_exception_char) {
 
 class StringConversionExtract : public ::testing::TestWithParam<std::tuple<std::string_view, int>> { };
 
-TEST_P(StringConversionExtract, extract_first_integer_from_string) {
+TEST_P(StringConversionExtract, ExtractFirstIntegerFromString) {
     auto [input, output] = GetParam();
     EXPECT_EQ(plssvm::detail::extract_first_integer_from_string<int>(input), output);
 }
@@ -157,7 +158,7 @@ INSTANTIATE_TEST_SUITE_P(StringUtility, StringConversionExtract, ::testing::Valu
                 naming::pretty_print_escaped_string<StringConversionExtract>);
 // clang-format on
 
-TEST(StringConversion, extract_first_integer_from_string_exception) {
+TEST(StringConversion, ExtractFirstIntegerFromStringException) {
     EXPECT_THROW_WHAT(std::ignore = plssvm::detail::extract_first_integer_from_string<int>("abc"), std::runtime_error, R"(String "abc" doesn't contain any integer!)");
     EXPECT_THROW_WHAT(std::ignore = plssvm::detail::extract_first_integer_from_string<int>(""), std::runtime_error, R"(String "" doesn't contain any integer!)");
 }
@@ -173,7 +174,7 @@ class StringConversionSplitAs : public ::testing::Test {
 
 TYPED_TEST_SUITE(StringConversionSplitAs, split_as_types_gtest, naming::test_parameter_to_name);
 
-TYPED_TEST(StringConversionSplitAs, split_default_delimiter) {
+TYPED_TEST(StringConversionSplitAs, SplitAsDefaultDelimiter) {
     using type = typename TestFixture::fixture_type;
 
     // split string using the default delimiter
@@ -187,7 +188,7 @@ TYPED_TEST(StringConversionSplitAs, split_default_delimiter) {
     }
 }
 
-TYPED_TEST(StringConversionSplitAs, split_custom_delimiter) {
+TYPED_TEST(StringConversionSplitAs, SplitAsCustomDelimiter) {
     using type = typename TestFixture::fixture_type;
 
     // split string using a custom delimiter
@@ -201,7 +202,7 @@ TYPED_TEST(StringConversionSplitAs, split_custom_delimiter) {
     }
 }
 
-TYPED_TEST(StringConversionSplitAs, split_single_value) {
+TYPED_TEST(StringConversionSplitAs, SplitAsSingleValue) {
     using type = typename TestFixture::fixture_type;
 
     // split string containing a single value
@@ -210,7 +211,7 @@ TYPED_TEST(StringConversionSplitAs, split_single_value) {
     EXPECT_EQ(split.front(), static_cast<type>(42)) << fmt::format("split: {}, correct: {}", split.front(), static_cast<type>(42));
 }
 
-TYPED_TEST(StringConversionSplitAs, split_empty_string) {
+TYPED_TEST(StringConversionSplitAs, SplitAsEmptyString) {
     using type = typename TestFixture::fixture_type;
 
     // split the empty string

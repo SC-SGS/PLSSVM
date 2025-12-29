@@ -10,9 +10,8 @@
 
 #include "plssvm/gamma.hpp"
 
-#include "plssvm/constants.hpp"              // plssvm::real_type
-#include "plssvm/exceptions/exceptions.hpp"  // plssvm::exception
-#include "plssvm/matrix.hpp"                 // plssvm::aos_matrix
+#include "plssvm/constants.hpp"  // plssvm::real_type
+#include "plssvm/matrix.hpp"     // plssvm::aos_matrix
 
 #include "tests/custom_test_macros.hpp"  // EXPECT_CONVERSION_TO_STRING, EXPECT_CONVERSION_FROM_STRING, EXPECT_THROW_WHAT
 #include "tests/utility.hpp"             // util::generate_specific_matrix
@@ -22,23 +21,22 @@
 
 #include <sstream>  // std::istringstream
 #include <string>   // std::string
-#include <tuple>    // std::ignore
 #include <variant>  // std::variant, std::holds_alternative, std::get
 
 // check whether the plssvm::gamma_coefficient_type -> std::string conversions are correct
-TEST(GammaCoefficientType, to_string) {
+TEST(GammaCoefficientType, ToString) {
     // check conversions to std::string
     EXPECT_CONVERSION_TO_STRING(plssvm::gamma_coefficient_type::automatic, "automatic");
     EXPECT_CONVERSION_TO_STRING(plssvm::gamma_coefficient_type::scale, "scale");
 }
 
-TEST(GammaCoefficientType, to_string_unknown) {
+TEST(GammaCoefficientType, ToStringUnknown) {
     // check conversions to std::string from unknown gamma_coefficient_type
     EXPECT_CONVERSION_TO_STRING(static_cast<plssvm::gamma_coefficient_type>(2), "unknown");
 }
 
 // check whether the std::string -> plssvm::gamma_coefficient_type conversions are correct
-TEST(GammaCoefficientType, from_string) {
+TEST(GammaCoefficientType, FromString) {
     // check conversion from std::string
     EXPECT_CONVERSION_FROM_STRING("automatic", plssvm::gamma_coefficient_type::automatic);
     EXPECT_CONVERSION_FROM_STRING("AUTOmatic", plssvm::gamma_coefficient_type::automatic);
@@ -47,7 +45,7 @@ TEST(GammaCoefficientType, from_string) {
     EXPECT_CONVERSION_FROM_STRING("SCALE", plssvm::gamma_coefficient_type::scale);
 }
 
-TEST(GammaCoefficientType, from_string_unknown) {
+TEST(GammaCoefficientType, FromStringUnknown) {
     // foo isn't a valid gamma_coefficient_type
     std::istringstream input{ "foo" };
     plssvm::gamma_coefficient_type gamma_coef{};
@@ -56,7 +54,7 @@ TEST(GammaCoefficientType, from_string_unknown) {
 }
 
 // check whether the plssvm::gamma_type -> std::string conversions are correct
-TEST(GammaType, to_string) {
+TEST(GammaType, ToString) {
     // check conversions to std::string
     plssvm::gamma_type gamma_value = plssvm::real_type{ 1.5 };
     EXPECT_CONVERSION_TO_STRING(gamma_value, "1.5");
@@ -66,14 +64,14 @@ TEST(GammaType, to_string) {
     EXPECT_CONVERSION_TO_STRING(gamma_value, "scale");
 }
 
-TEST(GammaType, to_string_unknown) {
+TEST(GammaType, ToStringUnknown) {
     // check conversions to std::string from unknown gamma_type
     const plssvm::gamma_type gamma_value = static_cast<plssvm::gamma_coefficient_type>(2);
     EXPECT_CONVERSION_TO_STRING(gamma_value, "unknown");
 }
 
 // check whether the std::string -> plssvm::gamma_type conversions are correct
-TEST(GammaType, from_string) {
+TEST(GammaType, FromString) {
     // check conversion from std::string
     plssvm::gamma_type gamma_value = plssvm::real_type{ 1.5 };
     EXPECT_CONVERSION_FROM_STRING("1.5", gamma_value);
@@ -84,7 +82,7 @@ TEST(GammaType, from_string) {
     EXPECT_CONVERSION_FROM_STRING("scale", gamma_value);
 }
 
-TEST(GammaType, from_string_unknown) {
+TEST(GammaType, FromStringUnknown) {
     // foo isn't a valid gamma_type
     std::istringstream input{ "foo" };
     plssvm::gamma_type gamma_value{};
@@ -92,7 +90,7 @@ TEST(GammaType, from_string_unknown) {
     EXPECT_TRUE(input.fail());
 }
 
-TEST(GammaType, calculate_gamma_value_real_type) {
+TEST(GammaType, CalculateGammaValueRealType) {
     // create a gamma_type with a real_type value
     const plssvm::gamma_type gamma_value = plssvm::real_type{ 1.5 };
 
@@ -105,7 +103,7 @@ TEST(GammaType, calculate_gamma_value_real_type) {
     EXPECT_FLOATING_POINT_EQ(plssvm::calculate_gamma_value(gamma_value, matr), plssvm::real_type{ 1.5 });
 }
 
-TEST(GammaType, calculate_gamma_value_gamma_coefficient_type_automatic) {
+TEST(GammaType, CalculateGammaValueGammaCoefficientTypeAutomatic) {
     // create a gamma_type with a real_type value
     const plssvm::gamma_type gamma_value = plssvm::gamma_coefficient_type::automatic;
 
@@ -118,7 +116,7 @@ TEST(GammaType, calculate_gamma_value_gamma_coefficient_type_automatic) {
     EXPECT_FLOATING_POINT_EQ(plssvm::calculate_gamma_value(gamma_value, matr), plssvm::real_type{ 0.25 });
 }
 
-TEST(GammaType, calculate_gamma_value_gamma_coefficient_type_scale) {
+TEST(GammaType, CalculateGammaValueGammaCoefficientTypeScale) {
     // create a gamma_type with a real_type value
     const plssvm::gamma_type gamma_value = plssvm::gamma_coefficient_type::scale;
 
@@ -131,7 +129,7 @@ TEST(GammaType, calculate_gamma_value_gamma_coefficient_type_scale) {
     EXPECT_FLOATING_POINT_NEAR(plssvm::calculate_gamma_value(gamma_value, matr), plssvm::real_type{ 0.047505938242280283668 });
 }
 
-TEST(GammaType, calculate_gamma_value_invalid_gamma_coefficient_type) {
+TEST(GammaType, CalculateGammaValueInvalidGammaCoefficientType) {
     // create a gamma_type with a real_type value
     const plssvm::gamma_type gamma_value = static_cast<plssvm::gamma_coefficient_type>(2);
 
@@ -144,7 +142,7 @@ TEST(GammaType, calculate_gamma_value_invalid_gamma_coefficient_type) {
     EXPECT_EQ(plssvm::calculate_gamma_value(gamma_value, matr), plssvm::real_type{ 1.0 });
 }
 
-TEST(GammaType, get_gamma_string_real_type) {
+TEST(GammaType, GetGammaStringRealType) {
     // create a gamma_type with a real_type value
     const plssvm::gamma_type gamma_value = plssvm::real_type{ 1.5 };
 
@@ -154,7 +152,7 @@ TEST(GammaType, get_gamma_string_real_type) {
     EXPECT_EQ(plssvm::get_gamma_string(gamma_value), fmt::format("{}", plssvm::real_type{ 1.5 }));
 }
 
-TEST(GammaType, get_gamma_string_gamma_coefficient_type_automatic) {
+TEST(GammaType, GetGammaStringGammaCoefficientTypeAutomatic) {
     // create a gamma_type with a real_type value
     const plssvm::gamma_type gamma_value = plssvm::gamma_coefficient_type::automatic;
 
@@ -164,7 +162,7 @@ TEST(GammaType, get_gamma_string_gamma_coefficient_type_automatic) {
     EXPECT_EQ(plssvm::get_gamma_string(gamma_value), std::string{ "\"1 / num_features\"" });
 }
 
-TEST(GammaType, get_gamma_string_gamma_coefficient_type_scale) {
+TEST(GammaType, GetGammaStringGammaCoefficientTypeScale) {
     // create a gamma_type with a real_type value
     const plssvm::gamma_type gamma_value = plssvm::gamma_coefficient_type::scale;
 
@@ -174,7 +172,7 @@ TEST(GammaType, get_gamma_string_gamma_coefficient_type_scale) {
     EXPECT_EQ(plssvm::get_gamma_string(gamma_value), std::string{ "\"1 / (num_features * variance(input_data))\"" });
 }
 
-TEST(GammaType, get_gamma_string_invalid_gamma_coefficient_type) {
+TEST(GammaType, GetGammaStringInvalidGammaCoefficientType) {
     // create a gamma_type with a real_type value
     const plssvm::gamma_type gamma_value = static_cast<plssvm::gamma_coefficient_type>(2);
 

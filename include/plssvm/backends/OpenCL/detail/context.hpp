@@ -65,13 +65,13 @@ class context {
      * @brief Implicitly convert a context wrapper to an OpenCL cl_context.
      * @return the wrapped OpenCL cl_context (`[[nodiscard]]`)
      */
-    [[nodiscard]] operator cl_context &() noexcept { return device_context; }
+    [[nodiscard]] operator cl_context &() noexcept { return device_context; }  // NOLINT: overload is intentional to reduce explicit casts in OpenCL interfaces
 
     /**
      * @brief Implicitly convert a context wrapper to an OpenCL cl_context.
      * @return the wrapped OpenCL cl_context (`[[nodiscard]]`)
      */
-    [[nodiscard]] operator const cl_context &() const noexcept { return device_context; }
+    [[nodiscard]] operator const cl_context &() const noexcept { return device_context; }  // NOLINT: overload is intentional to reduce explicit casts in OpenCL interfaces
 
     /// The OpenCL context associated with the platform containing the respective devices.
     cl_context device_context{};

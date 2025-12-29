@@ -11,6 +11,7 @@
 
 #ifndef PLSSVM_MPI_DETAIL_VERSION_HPP_
 #define PLSSVM_MPI_DETAIL_VERSION_HPP_
+#pragma once
 
 #include <string>  // std::string
 

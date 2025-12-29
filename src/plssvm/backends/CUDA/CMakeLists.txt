@@ -53,6 +53,11 @@ if (CMAKE_CUDA_COMPILER_ID STREQUAL "NVIDIA")
     endif ()
     # set OpenMP specific flags
     if (OpenMP_FOUND)
+        if (CMAKE_CXX_COMPILER_ID STREQUAL "IntelLLVM")
+            message(WARNING "Intel's icpx compiler as CXX host compiler together with nvcc is the CUDA compiler while OpenMP is enabled "
+                            "may not work due to the OpenMP target setting -fiopenmp!"
+            )
+        endif ()
         set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -Xcompiler '-fopenmp'")
     endif ()
 elseif (CMAKE_CUDA_COMPILER_ID STREQUAL "Clang")
@@ -88,8 +93,6 @@ set_local_and_parent(PLSSVM_CUDA_BACKEND_LIBRARY_NAME plssvm-CUDA)
 add_library(${PLSSVM_CUDA_BACKEND_LIBRARY_NAME} SHARED ${PLSSVM_CUDA_SOURCES})
 if (CMAKE_CUDA_COMPILER_ID STREQUAL "NVIDIA")
     set_target_properties(${PLSSVM_CUDA_BACKEND_LIBRARY_NAME} PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
-    # silence warning in {fmt} library
-    target_compile_options(${PLSSVM_CUDA_BACKEND_LIBRARY_NAME} PUBLIC -Wno-stringop-overflow)
 endif ()
 if (CMAKE_CUDA_COMPILER_ID STREQUAL "Clang")
     target_compile_options(${PLSSVM_CUDA_BACKEND_LIBRARY_NAME} PUBLIC -fPIC)

@@ -14,20 +14,23 @@
 #include "plssvm/shape.hpp"                               // plssvm::shape
 
 #include "tests/backends/generic_device_ptr_tests.hpp"  // generic device pointer tests to instantiate
+#include "tests/custom_test_macros.hpp"                 // EXPECT_THROW_WHAT_MATCHER
 #include "tests/naming.hpp"                             // naming::test_parameter_to_name
 #include "tests/types_to_test.hpp"                      // util::{combine_test_parameters_gtest_t, cartesian_type_product_t, layout_type_list, real_type_gtest}
 
+#include "fmt/format.h"   // fmt::format
 #include "gmock/gmock.h"  // EXPECT_THAT, ::testing::HasSubstr
 #include "gtest/gtest.h"  // INSTANTIATE_TYPED_TEST_SUITE_P
 
-#include <tuple>  // std::tuple
+#include <cstddef>  // std::size_t
+#include <tuple>    // std::tuple
 
 template <typename T>
 class HIPDevicePtrConstruct : public ::testing::Test { };
 
 TYPED_TEST_SUITE(HIPDevicePtrConstruct, util::real_type_gtest, naming::test_parameter_to_name);
 
-TYPED_TEST(HIPDevicePtrConstruct, construct_invalid_queue) {
+TYPED_TEST(HIPDevicePtrConstruct, ConstructInvalidQueue) {
     using real_type = util::test_parameter_type_at_t<0, TypeParam>;
 
     // the number of devices

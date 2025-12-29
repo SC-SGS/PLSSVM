@@ -9,8 +9,8 @@
  * @brief Functions for explicitly performing a BLAS GEMM like matrix-matrix multiplication using the HIP backend.
  */
 
-#ifndef PLSSVM_BACKENDS_HIP_CG_EXPLICIT_BLAS_HIP_HPP_
-#define PLSSVM_BACKENDS_HIP_CG_EXPLICIT_BLAS_HIP_HPP_
+#ifndef PLSSVM_BACKENDS_HIP_KERNEL_CG_EXPLICIT_BLAS_HIP_HPP_
+#define PLSSVM_BACKENDS_HIP_KERNEL_CG_EXPLICIT_BLAS_HIP_HPP_
 #pragma once
 
 #include "plssvm/constants.hpp"  // plssvm::real_type, plssvm::THREAD_BLOCK_SIZE
@@ -203,7 +203,7 @@ __global__ void device_kernel_inplace_matrix_add(const std::size_t num_rows, con
 
 /**
  * @brief Perform a simple inplace matrix scale: lhs *= scalar.
- * @param[in] num_rows the number of rows in both matrices
+ * @param[in] num_rows the number of rows in the matrix
  * @param[in] num_cols the number of columns in the matrix
  * @param[in,out] lhs the matrix (updated inplace)
  * @param[in] scale the value to scale
@@ -230,4 +230,4 @@ __global__ void device_kernel_inplace_matrix_scale(const std::size_t num_rows, c
 
 }  // namespace plssvm::hip::detail
 
-#endif  // PLSSVM_BACKENDS_HIP_CG_EXPLICIT_BLAS_HIP_HPP_
+#endif  // PLSSVM_BACKENDS_HIP_KERNEL_CG_EXPLICIT_BLAS_HIP_HPP_

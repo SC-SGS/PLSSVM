@@ -6,11 +6,11 @@
  * @license This file is part of the PLSSVM project which is released under the MIT license.
  *          See the LICENSE.md file in the project root for full license information.
  *
- * @brief Defines an enumeration holding all possible algorithm variations used to solve the LSSVM's system of linear equations.
+ * @brief Defines an enumeration holding all possible algorithm variations used to solve the LS-SVM's system of linear equations.
  */
 
-#ifndef PLSSVM_SOLVING_TYPES_HPP_
-#define PLSSVM_SOLVING_TYPES_HPP_
+#ifndef PLSSVM_SOLVER_TYPES_HPP_
+#define PLSSVM_SOLVER_TYPES_HPP_
 #pragma once
 
 #include "fmt/base.h"     // fmt::formatter
@@ -61,4 +61,4 @@ struct fmt::formatter<plssvm::solver_type> : fmt::ostream_formatter { };
 
 /// @endcond
 
-#endif  // PLSSVM_SOLVING_TYPES_HPP_
+#endif  // PLSSVM_SOLVER_TYPES_HPP_

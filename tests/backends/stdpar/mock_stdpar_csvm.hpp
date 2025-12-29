@@ -9,8 +9,8 @@
  * @brief MOCK class for the C-SVM class using the stdpar backend.
  */
 
-#ifndef PLSSVM_TESTS_BACKENDS_STDPAR_MOCK_OPENMP_CSVM_HPP_
-#define PLSSVM_TESTS_BACKENDS_STDPAR_MOCK_OPENMP_CSVM_HPP_
+#ifndef PLSSVM_TESTS_BACKENDS_STDPAR_MOCK_STDPAR_CSVM_HPP_
+#define PLSSVM_TESTS_BACKENDS_STDPAR_MOCK_STDPAR_CSVM_HPP_
 #pragma once
 
 #include "plssvm/backends/stdpar/csvm.hpp"  // plssvm::stdpar::csvm
@@ -48,4 +48,4 @@ class mock_stdpar_csvm final : public plssvm::stdpar::csvm {
     using base_type::data_distribution_;
 };
 
-#endif  // PLSSVM_TESTS_BACKENDS_STDPAR_MOCK_OPENMP_CSVM_HPP_
+#endif  // PLSSVM_TESTS_BACKENDS_STDPAR_MOCK_STDPAR_CSVM_HPP_

@@ -47,7 +47,7 @@ class RegressionModel : public ::testing::Test,
 
 TYPED_TEST_SUITE(RegressionModel, util::regression_label_type_gtest, naming::test_parameter_to_name);
 
-TYPED_TEST(RegressionModel, typedefs) {
+TYPED_TEST(RegressionModel, Typedefs) {
     using label_type = typename TestFixture::fixture_label_type;
 
     // create model
@@ -58,7 +58,7 @@ TYPED_TEST(RegressionModel, typedefs) {
     ::testing::StaticAssertTypeEq<std::size_t, typename decltype(model)::size_type>();
 }
 
-TYPED_TEST(RegressionModel, construct) {
+TYPED_TEST(RegressionModel, Construct) {
     using label_type = typename TestFixture::fixture_label_type;
 
     // create model
@@ -76,7 +76,7 @@ TYPED_TEST(RegressionModel, construct) {
     EXPECT_FALSE(model.num_iters().has_value());
 }
 
-TYPED_TEST(RegressionModel, num_support_vectors) {
+TYPED_TEST(RegressionModel, NumSupportVectors) {
     using label_type = typename TestFixture::fixture_label_type;
 
     // create model
@@ -86,7 +86,7 @@ TYPED_TEST(RegressionModel, num_support_vectors) {
     EXPECT_EQ(model.num_support_vectors(), 6);
 }
 
-TYPED_TEST(RegressionModel, num_features) {
+TYPED_TEST(RegressionModel, NumFeatures) {
     using label_type = typename TestFixture::fixture_label_type;
 
     // create model
@@ -96,7 +96,7 @@ TYPED_TEST(RegressionModel, num_features) {
     EXPECT_EQ(model.num_features(), 4);
 }
 
-TYPED_TEST(RegressionModel, get_params) {
+TYPED_TEST(RegressionModel, GetParams) {
     using label_type = typename TestFixture::fixture_label_type;
 
     // create model
@@ -106,7 +106,7 @@ TYPED_TEST(RegressionModel, get_params) {
     EXPECT_EQ(model.get_params(), plssvm::parameter{ plssvm::kernel_type = plssvm::kernel_function_type::linear });
 }
 
-TYPED_TEST(RegressionModel, support_vectors) {
+TYPED_TEST(RegressionModel, SupportVectors) {
     using label_type = typename TestFixture::fixture_label_type;
 
     // create model
@@ -122,7 +122,7 @@ TYPED_TEST(RegressionModel, support_vectors) {
     EXPECT_FLOATING_POINT_MATRIX_EQ(model.support_vectors(), support_vectors);
 }
 
-TYPED_TEST(RegressionModel, labels) {
+TYPED_TEST(RegressionModel, Labels) {
     using label_type = typename TestFixture::fixture_label_type;
 
     // create model
@@ -132,7 +132,7 @@ TYPED_TEST(RegressionModel, labels) {
     ASSERT_FALSE(model.labels().has_value());
 }
 
-TYPED_TEST(RegressionModel, weights) {
+TYPED_TEST(RegressionModel, Weights) {
     using label_type = typename TestFixture::fixture_label_type;
 
     // create model
@@ -145,7 +145,7 @@ TYPED_TEST(RegressionModel, weights) {
     EXPECT_FLOATING_POINT_MATRIX_EQ(model.weights().front(), (plssvm::aos_matrix<plssvm::real_type>{ correct_weights }));
 }
 
-TYPED_TEST(RegressionModel, rho) {
+TYPED_TEST(RegressionModel, Rho) {
     using label_type = typename TestFixture::fixture_label_type;
 
     // create model
@@ -156,7 +156,7 @@ TYPED_TEST(RegressionModel, rho) {
     EXPECT_FLOATING_POINT_VECTOR_EQ(model.rho(), rho);
 }
 
-TYPED_TEST(RegressionModel, num_iters) {
+TYPED_TEST(RegressionModel, NumIters) {
     using label_type = typename TestFixture::fixture_label_type;
 
     // create model
@@ -175,7 +175,7 @@ class RegressionModelSave : public ::testing::Test,
 
 TYPED_TEST_SUITE(RegressionModelSave, util::regression_label_type_gtest, naming::test_parameter_to_name);
 
-TYPED_TEST(RegressionModelSave, save) {
+TYPED_TEST(RegressionModelSave, Save) {
     using label_type = typename TestFixture::fixture_label_type;
 
     for (const plssvm::kernel_function_type kernel_function : util::kernel_functions_to_test) {

@@ -39,7 +39,7 @@ enum class verbosity_level {
 };
 
 /// The verbosity level used in the logging function. My be changed by the user.
-PLSSVM_EXTERN verbosity_level verbosity;
+PLSSVM_EXTERN verbosity_level verbosity;  // NOLINT: variable must be global or too many interfaces would change
 
 /**
  * @brief Output the @p verb to the given output-stream @p out.

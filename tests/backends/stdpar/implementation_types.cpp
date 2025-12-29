@@ -18,7 +18,7 @@
 #include <vector>   // std::vector
 
 // check whether the plssvm::stdpar::implementation_type -> std::string conversions are correct
-TEST(stdparImplementationType, to_string) {
+TEST(stdparImplementationType, ToString) {
     // check conversions to std::string
     EXPECT_CONVERSION_TO_STRING(plssvm::stdpar::implementation_type::nvhpc, "nvhpc");
     EXPECT_CONVERSION_TO_STRING(plssvm::stdpar::implementation_type::roc_stdpar, "roc-stdpar");
@@ -27,13 +27,13 @@ TEST(stdparImplementationType, to_string) {
     EXPECT_CONVERSION_TO_STRING(plssvm::stdpar::implementation_type::gnu_tbb, "gnu_tbb");
 }
 
-TEST(stdparImplementationType, to_string_unknown) {
+TEST(stdparImplementationType, ToStringUnknown) {
     // check conversions to std::string from unknown implementation_type
     EXPECT_CONVERSION_TO_STRING(static_cast<plssvm::stdpar::implementation_type>(5), "unknown");
 }
 
 // check whether the std::string -> plssvm::stdpar::implementation_type conversions are correct
-TEST(stdparImplementationType, from_string) {
+TEST(stdparImplementationType, FromString) {
     // check conversion from std::string
     EXPECT_CONVERSION_FROM_STRING("NVHPC", plssvm::stdpar::implementation_type::nvhpc);
     EXPECT_CONVERSION_FROM_STRING("nvcpp", plssvm::stdpar::implementation_type::nvhpc);
@@ -60,7 +60,7 @@ TEST(stdparImplementationType, from_string) {
     EXPECT_CONVERSION_FROM_STRING("g++", plssvm::stdpar::implementation_type::gnu_tbb);
 }
 
-TEST(stdparImplementationType, from_string_unknown) {
+TEST(stdparImplementationType, FromStringUnknown) {
     // foo isn't a valid implementation_type
     std::istringstream input{ "foo" };
     plssvm::stdpar::implementation_type impl{};
@@ -68,7 +68,7 @@ TEST(stdparImplementationType, from_string_unknown) {
     EXPECT_TRUE(input.fail());
 }
 
-TEST(stdparImplementationType, minimal_available_stdpar_implementation_type) {
+TEST(stdparImplementationType, MinimalAvailableStdparImplementationType) {
     const std::vector<plssvm::stdpar::implementation_type> implementation_type = plssvm::stdpar::list_available_stdpar_implementations();
 
 #if defined(PLSSVM_HAS_STDPAR_BACKEND)

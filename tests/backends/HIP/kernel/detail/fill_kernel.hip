@@ -32,7 +32,7 @@ class HIPFillUtility : public ::testing::Test {
 
 TYPED_TEST_SUITE(HIPFillUtility, util::real_type_gtest, naming::test_parameter_to_name);
 
-TYPED_TEST(HIPFillUtility, fill_kernel) {
+TYPED_TEST(HIPFillUtility, FillKernel) {
     using real_type = typename TestFixture::fixture_real_type;
 
     // allocate array on the host
@@ -58,7 +58,7 @@ TYPED_TEST(HIPFillUtility, fill_kernel) {
     EXPECT_TRUE(std::all_of(vec.cbegin(), vec.cend(), [](const real_type val) { return val == real_type{ 42.0 }; }));
 }
 
-TYPED_TEST(HIPFillUtility, fill_kernel_partial) {
+TYPED_TEST(HIPFillUtility, FillKernelPartial) {
     using real_type = typename TestFixture::fixture_real_type;
 
     // allocate array on the host

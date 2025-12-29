@@ -9,8 +9,8 @@
  * @brief Functions for implicitly assembling the kernel matrix using the SYCL backend and the work-group data parallel kernels.
  */
 
-#ifndef PLSSVM_BACKENDS_SYCL_CG_IMPLICIT_WORK_GROUP_KERNEL_MATRIX_ASSEMBLY_BLAS_HPP_
-#define PLSSVM_BACKENDS_SYCL_CG_IMPLICIT_WORK_GROUP_KERNEL_MATRIX_ASSEMBLY_BLAS_HPP_
+#ifndef PLSSVM_BACKENDS_SYCL_KERNEL_CG_IMPLICIT_WORK_GROUP_KERNEL_MATRIX_ASSEMBLY_BLAS_HPP_
+#define PLSSVM_BACKENDS_SYCL_KERNEL_CG_IMPLICIT_WORK_GROUP_KERNEL_MATRIX_ASSEMBLY_BLAS_HPP_
 #pragma once
 
 #include "plssvm/backends/SYCL/data_parallel_kernels.hpp"    // plssvm::sycl::data_parallel_kernel
@@ -21,6 +21,7 @@
 
 #include "sycl/sycl.hpp"  // sycl::handler, sycl::range, sycl::nd_item
 
+#include <array>    // std::array
 #include <cstddef>  // std::size_t
 #include <tuple>    // std::tuple, std::make_tuple
 
@@ -40,7 +41,6 @@ class device_kernel_assembly_symm {
 
     /**
      * @brief Initialize the SYCL kernel function object.
-     * @param[in] cgh the SYCL handler used to allocate the local memory
      * @param[in] alpha the scalar alpha value
      * @param[in] q the vector used in the dimensional reduction
      * @param[in] data the data points to calculate the implicit kernel matrix from
@@ -271,4 +271,4 @@ class device_kernel_assembly_symm {
 
 }  // namespace plssvm::sycl::detail::work_group
 
-#endif  // PLSSVM_BACKENDS_SYCL_CG_IMPLICIT_WORK_GROUP_KERNEL_MATRIX_ASSEMBLY_BLAS_HPP_
+#endif  // PLSSVM_BACKENDS_SYCL_KERNEL_CG_IMPLICIT_WORK_GROUP_KERNEL_MATRIX_ASSEMBLY_BLAS_HPP_

@@ -1,0 +1,6 @@
+---
+Checks: '
+-misc-include-cleaner,
+'
+
+InheritParentConfig: true

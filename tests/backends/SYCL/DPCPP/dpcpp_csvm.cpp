@@ -12,7 +12,6 @@
 #include "plssvm/backends/SYCL/data_parallel_kernels.hpp"  // plssvm::sycl::data_parallel_kernel
 #include "plssvm/backends/SYCL/DPCPP/csvm.hpp"             // plssvm::dpcpp::{csvm, csvc, csvr}
 #include "plssvm/backends/SYCL/exceptions.hpp"             // plssvm::dpcpp::backend_exception
-#include "plssvm/detail/arithmetic_type_name.hpp"          // plssvm::detail::arithmetic_type_name
 #include "plssvm/kernel_function_types.hpp"                // plssvm::kernel_function_type
 #include "plssvm/parameter.hpp"                            // plssvm::parameter, plssvm::kernel_type, plssvm::cost, plssvm::sycl_data_parallel_kernel
 #include "plssvm/target_platforms.hpp"                     // plssvm::target_platform
@@ -29,7 +28,8 @@
 
 #include "gtest/gtest.h"  // TYPED_TEST, EXPECT_NO_THROW, INSTANTIATE_TYPED_TEST_SUITE_P, ::testing::Test
 
-#include <tuple>  // std::make_tuple, std::tuple
+#include <tuple>    // std::make_tuple, std::tuple
+#include <utility>  // std::make_pair
 
 using dpcpp_csvm_types_list = std::tuple<plssvm::dpcpp::csvc, plssvm::dpcpp::csvr>;
 using dpcpp_csvm_types_gtest = util::combine_test_parameters_gtest_t<util::cartesian_type_product_t<dpcpp_csvm_types_list>>;
@@ -44,7 +44,7 @@ class DPCPPCSVMConstructor : public ::testing::Test,
 TYPED_TEST_SUITE(DPCPPCSVMConstructor, dpcpp_csvm_types_gtest, naming::test_parameter_to_name);
 
 // check whether the constructor correctly fails when using an incompatible target platform
-TYPED_TEST(DPCPPCSVMConstructor, default_construct) {
+TYPED_TEST(DPCPPCSVMConstructor, DefaultConstruct) {
     using csvm_type = typename TestFixture::fixture_csvm_type;
 
     // default constructor must always work
@@ -52,7 +52,7 @@ TYPED_TEST(DPCPPCSVMConstructor, default_construct) {
     EXPECT_NO_THROW((csvm_type{ plssvm::sycl_data_parallel_kernel = plssvm::sycl::data_parallel_kernel::work_group }));
 }
 
-TYPED_TEST(DPCPPCSVMConstructor, construct_parameter) {
+TYPED_TEST(DPCPPCSVMConstructor, ConstructParameter) {
     using csvm_type = typename TestFixture::fixture_csvm_type;
 
     // the automatic target platform must always be available
@@ -60,7 +60,7 @@ TYPED_TEST(DPCPPCSVMConstructor, construct_parameter) {
     EXPECT_NO_THROW((csvm_type{ plssvm::parameter{}, plssvm::sycl_data_parallel_kernel = plssvm::sycl::data_parallel_kernel::work_group }));
 }
 
-TYPED_TEST(DPCPPCSVMConstructor, construct_target_and_parameter) {
+TYPED_TEST(DPCPPCSVMConstructor, ConstructTargetAndParameter) {
     using csvm_type = typename TestFixture::fixture_csvm_type;
 
     // create parameter struct
@@ -101,7 +101,7 @@ TYPED_TEST(DPCPPCSVMConstructor, construct_target_and_parameter) {
 #endif
 }
 
-TYPED_TEST(DPCPPCSVMConstructor, construct_named_args) {
+TYPED_TEST(DPCPPCSVMConstructor, ConstructNamedArgs) {
     using csvm_type = typename TestFixture::fixture_csvm_type;
 
     // every target is allowed for SYCL
@@ -110,7 +110,7 @@ TYPED_TEST(DPCPPCSVMConstructor, construct_named_args) {
     EXPECT_NO_THROW((csvm_type{ plssvm::sycl_data_parallel_kernel = plssvm::sycl::data_parallel_kernel::work_group }));
 }
 
-TYPED_TEST(DPCPPCSVMConstructor, construct_target_and_named_args) {
+TYPED_TEST(DPCPPCSVMConstructor, ConstructTargetAndNamedArgs) {
     using csvm_type = typename TestFixture::fixture_csvm_type;
 
     // every target is allowed for SYCL
@@ -164,7 +164,7 @@ TYPED_TEST(DPCPPCSVMConstructor, construct_target_and_named_args) {
 #endif
 }
 
-TYPED_TEST(DPCPPCSVMConstructor, get_data_parallel_kernel) {
+TYPED_TEST(DPCPPCSVMConstructor, GetDataParallelKernel) {
     using csvm_type = typename TestFixture::fixture_csvm_type;
 
     // construct default C-SVM
@@ -181,7 +181,7 @@ struct dpcpp_csvm_test_type {
     using csvc_type = plssvm::dpcpp::csvc;
     using csvr_type = plssvm::dpcpp::csvr;
     using device_ptr_type = typename csvm_type::device_ptr_type;
-    inline static auto additional_arguments = std::make_tuple(std::make_pair(plssvm::sycl_data_parallel_kernel, data_parallel_kernel_type));
+    inline static auto additional_arguments = std::make_tuple(std::make_pair(plssvm::sycl_data_parallel_kernel, data_parallel_kernel_type));  // NOLINT(cert-err58-cpp): won't throw an exception
 };
 
 // a tuple containing the test structs

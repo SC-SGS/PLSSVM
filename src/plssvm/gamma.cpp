@@ -10,7 +10,7 @@
 
 #include "plssvm/constants.hpp"              // plssvm::real_type
 #include "plssvm/detail/string_utility.hpp"  // plssvm::detail::to_lower_case
-#include "plssvm/exceptions/exceptions.hpp"  // plssvm::exception
+#include "plssvm/detail/utility.hpp"         // plssvm::detail::overloaded
 
 #include "fmt/format.h"  // fmt::format
 

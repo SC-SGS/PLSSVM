@@ -13,6 +13,7 @@
 #include "plssvm/backends/stdpar/exceptions.hpp"            // plssvm::stdpar::backend_exception
 #include "plssvm/backends/stdpar/implementation_types.hpp"  // plssvm::stdpar::implementation_type
 #include "plssvm/detail/logging/mpi_log_untracked.hpp"      // plssvm::detail::log_untracked
+#include "plssvm/detail/string_utility.hpp"                 // plssvm::detail::trim
 #include "plssvm/detail/tracking/performance_tracker.hpp"   // plssvm::detail::tracking::tracking_entry, PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY
 #include "plssvm/mpi/communicator.hpp"                      // plssvm::mpi::communicator
 #include "plssvm/mpi/detail/information.hpp"                // plssvm::mpi::detail::gather_and_print_csvm_information
@@ -22,6 +23,9 @@
 #include "sycl/sycl.hpp"  // sycl::device
 
 #include "fmt/format.h"  // fmt::format
+
+#include <string>  // std::string
+#include <vector>  // std::vector
 
 namespace plssvm::stdpar {
 
@@ -61,13 +65,14 @@ csvm::csvm(const target_platform target) {
 
     // AdaptiveCpp's stdpar per default uses the sycl default device
     const ::sycl::device default_device{};
+    const std::vector<std::string> device_names{ std::string{ ::plssvm::detail::trim(default_device.get_info<::sycl::info::device::name>()) } };
+
+    // check that the default device supports the requested target platform
     if (!detail::default_device_equals_target(default_device, target_)) {
         throw backend_exception{ fmt::format("The default device {} doesn't match the requested target platform {}! Please set the environment variable ACPP_VISIBILITY_MASK or change the target platform.",
-                                             default_device.get_info<::sycl::info::device::name>(),
+                                             device_names.front(),
                                              target_) };
     }
-
-    const std::vector<std::string> device_names{ default_device.get_info<::sycl::info::device::name>() };
 
     if (comm_.size() > 1) {
         mpi::detail::gather_and_print_csvm_information(comm_, plssvm::backend_type::stdpar, target_, device_names, fmt::format("{}", this->get_implementation_type()));
@@ -81,7 +86,7 @@ csvm::csvm(const target_platform target) {
                                       this->get_implementation_type(),
                                       detail::get_stdpar_version(),
                                       PLSSVM_ACPP_TARGETS,
-                                      this->num_available_devices(),
+                                      this->num_available_devices(),  // NOLINT: safe to call this virtual function in the constructor
                                       target_,
                                       device_names.front());
     }
@@ -90,12 +95,12 @@ csvm::csvm(const target_platform target) {
                                   comm_,
                                   "\n");
 
-    PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "dependencies", "stdpar_implementation", this->get_implementation_type() }));
     PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "dependencies", "stdpar_version", detail::get_stdpar_version() }));
+    PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "backend", "stdpar_implementation", this->get_implementation_type() }));
     PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "backend", "backend", plssvm::backend_type::stdpar }));
     PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "backend", "target_platform", target_ }));
-    PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "backend", "num_devices", this->num_available_devices() }));
-    PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "backend", "device", device_names.front() }));
+    PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "backend", "num_devices", this->num_available_devices() }));  // NOLINT: safe to call this virtual function in the constructor
+    PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "backend", "device", device_names }));
     PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "backend", "acpp_targets", PLSSVM_ACPP_TARGETS }));
 }
 

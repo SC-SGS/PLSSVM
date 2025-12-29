@@ -10,8 +10,6 @@
 
 #include "plssvm/detail/string_utility.hpp"  // plssvm::detail::to_lower_case
 
-#include "fmt/format.h"  // fmt::format
-
 #include <ios>          // std::ios::failbit
 #include <istream>      // std::istream
 #include <ostream>      // std::ostream

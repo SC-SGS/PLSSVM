@@ -31,6 +31,14 @@ elseif (PLSSVM_STDPAR_BACKEND STREQUAL "IntelLLVM")
     list(APPEND PLSSVM_STDPAR_TEST_SOURCES ${CMAKE_CURRENT_LIST_DIR}/IntelLLVM/stdpar_csvm.cpp)
 elseif (PLSSVM_STDPAR_BACKEND STREQUAL "ACPP")
     list(APPEND PLSSVM_STDPAR_TEST_SOURCES ${CMAKE_CURRENT_LIST_DIR}/AdaptiveCpp/stdpar_csvm.cpp)
+    if ("${PLSSVM_TARGET_PLATFORMS}" MATCHES "(nvidia|amd|intel)" AND PLSSVM_STDPAR_BACKEND_ACPP_USE_GENERIC_SSCP)
+        message(
+            WARNING
+                "AdaptiveCpp stdpar tests running on a target platform other than CPU using AdaptiveCpp's SSCP compiler may result in SegFaults during test discovery. "
+                "Note that normal execution works perfectly fine. "
+                "To run the tests, either use the CPU or the old legacy AdaptiveCpp compiler by setting \"-DPLSSVM_STDPAR_BACKEND_ACPP_USE_GENERIC_SSCP=OFF\"."
+        )
+    endif ()
 elseif (PLSSVM_STDPAR_BACKEND STREQUAL "GNU_TBB")
     list(APPEND PLSSVM_STDPAR_TEST_SOURCES ${CMAKE_CURRENT_LIST_DIR}/GNU_TBB/stdpar_csvm.cpp)
 endif ()
@@ -47,20 +55,20 @@ include(${PROJECT_SOURCE_DIR}/cmake/discover_tests_with_death_test_filter.cmake)
 discover_tests_with_death_test_filter(${PLSSVM_STDPAR_TEST_NAME})
 
 # add minimal run test for the classification task with the stdpar backend
-add_test(NAME MainTrainClassificationStdpar/executable_minimal COMMAND ${PLSSVM_EXECUTABLE_TRAIN_NAME} -s 0 -b stdpar "${PLSSVM_CLASSIFICATION_TEST_FILE}"
-                                                                       "${CMAKE_CURRENT_BINARY_DIR}/test_classification.libsvm.model"
+add_test(NAME MainTrainClassificationStdpar/ExecutableMinimal COMMAND ${PLSSVM_EXECUTABLE_TRAIN_NAME} -s 0 -b stdpar "${PLSSVM_CLASSIFICATION_TEST_FILE}"
+                                                                      "${CMAKE_CURRENT_BINARY_DIR}/test_classification.libsvm.model"
 )
-add_test(NAME MainPredictClassificationStdpar/executable_minimal
+add_test(NAME MainPredictClassificationStdpar/ExecutableMinimal
          COMMAND ${PLSSVM_EXECUTABLE_PREDICT_NAME} -b stdpar "${CMAKE_CURRENT_LIST_DIR}/../../data/libsvm/classification/5x4.libsvm" # test file
                  "${CMAKE_CURRENT_LIST_DIR}/../../data/model/classification/5x4.libsvm.model" # model file
                  "${CMAKE_CURRENT_BINARY_DIR}/test_classification.libsvm.predict" # predict file (result)
 )
 
 # add minimal run test for the regression task with the stdpar backend
-add_test(NAME MainTrainRegressionStdpar/executable_minimal COMMAND ${PLSSVM_EXECUTABLE_TRAIN_NAME} -s 1 -b stdpar "${PLSSVM_REGRESSION_TEST_FILE}"
-                                                                   "${CMAKE_CURRENT_BINARY_DIR}/test_regression.libsvm.model"
+add_test(NAME MainTrainRegressionStdpar/ExecutableMinimal COMMAND ${PLSSVM_EXECUTABLE_TRAIN_NAME} -s 1 -b stdpar "${PLSSVM_REGRESSION_TEST_FILE}"
+                                                                  "${CMAKE_CURRENT_BINARY_DIR}/test_regression.libsvm.model"
 )
-add_test(NAME MainPredictRegressionStdpar/executable_minimal
+add_test(NAME MainPredictRegressionStdpar/ExecutableMinimal
          COMMAND ${PLSSVM_EXECUTABLE_PREDICT_NAME} -b stdpar "${CMAKE_CURRENT_LIST_DIR}/../../data/libsvm/regression/5x4.libsvm" # test file
                  "${CMAKE_CURRENT_LIST_DIR}/../../data/model/regression/5x4.libsvm.model" # model file
                  "${CMAKE_CURRENT_BINARY_DIR}/test_regression.libsvm.predict" # predict file (result)

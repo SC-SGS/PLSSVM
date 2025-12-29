@@ -17,8 +17,10 @@
 #include <cstddef>        // std::size_t
 #include <deque>          // std::deque
 #include <forward_list>   // std::forward_list
+#include <functional>     // std::reference_wrapper
 #include <list>           // std::list
 #include <map>            // std::map, std::multimap
+#include <optional>       // std::optional
 #include <set>            // std::set, std::multiset
 #include <string>         // std::basic_string
 #include <type_traits>    // std::enable_if_t, std::remove_cv_t, std::remove_reference_t, std::is_same_v, std::false_type, std::true_type, std::is_same_v
@@ -38,6 +40,12 @@ namespace plssvm::detail {
  */
 template <typename>
 constexpr bool always_false_v = false;
+
+/**
+ * @brief Type-dependent expression that always evaluates to `false`.
+ */
+template <auto>
+constexpr bool always_false_non_type_v = false;
 
 /**
  * @brief Remove the topmost reference- and cv-qualifiers.
@@ -341,6 +349,44 @@ constexpr bool is_unordered_associative_container_v = is_unordered_set_v<T> || i
  */
 template <typename T>
 constexpr bool is_container_v = is_sequence_container_v<T> || is_associative_container_v<T> || is_unordered_associative_container_v<T>;
+
+/**
+ * @brief Type trait to check whether @p T is a `std::optional`.
+ * @tparam T the type to check
+ */
+template <typename T>
+struct is_optional : std::false_type { };
+
+/**
+ * @copybrief plssvm::detail::is_optional
+ */
+template <typename T>
+struct is_optional<std::optional<T>> : std::true_type { };
+
+/**
+ * @copybrief plssvm::detail::is_optional
+ */
+template <typename T>
+constexpr bool is_optional_v = is_optional<T>::value;
+
+/**
+ * @brief Type trait to check whether @p T is a `std::reference_wrapper`.
+ * @tparam T the type to check
+ */
+template <typename T>
+struct is_reference_wrapper : std::false_type { };
+
+/**
+ * @copybrief plssvm::detail::is_reference_wrapper
+ */
+template <typename T>
+struct is_reference_wrapper<std::reference_wrapper<T>> : std::true_type { };
+
+/**
+ * @copybrief plssvm::detail::is_reference_wrapper
+ */
+template <typename T>
+constexpr bool is_reference_wrapper_v = is_reference_wrapper<T>::value;
 
 /**
  * @brief Check whether @p T is in the type set @p Types.

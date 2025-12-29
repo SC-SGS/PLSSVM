@@ -10,15 +10,14 @@
 
 #include "plssvm/backends/OpenMP/detail/utility.hpp"
 
-#include "gtest/gtest.h"  // TEST, EXPECT_EQ, EXPECT_NE, EXPECT_NO_THROW, EXPECT_FALSE
+#include "gtest/gtest.h"  // TEST, EXPECT_EQ, EXPECT_FALSE
 
-#include <regex>   // std::regex, std::regex::extended, std::regex_match
 #include <string>  // std::string
 
-TEST(OpenMPUtility, get_num_threads) {
+TEST(OpenMPUtility, GetNumThreads) {
     EXPECT_GT(plssvm::openmp::detail::get_num_threads(), 0);
 }
 
-TEST(OpenMPUtility, get_openmp_version) {
+TEST(OpenMPUtility, GetOpenMPVersion) {
     EXPECT_FALSE(plssvm::openmp::detail::get_openmp_version().empty());
 }
