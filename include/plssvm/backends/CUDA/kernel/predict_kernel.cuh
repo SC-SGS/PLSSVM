@@ -13,11 +13,10 @@
 #define PLSSVM_BACKENDS_CUDA_KERNEL_PREDICT_KERNEL_CUH_
 #pragma once
 
-#include "plssvm/backends/CUDA/kernel/detail/atomics.cuh"            // atomicAdd for double precision floating point numbers on older CUDA hardware
-#include "plssvm/backends/CUDA/kernel/detail/reinterpret_array.cuh"  // plssvm::cuda::detail::reinterpret_array
-#include "plssvm/backends/CUDA/kernel/kernel_functions.cuh"          // plssvm::cuda::detail::{feature_reduce, apply_kernel_function}
-#include "plssvm/constants.hpp"                                      // plssvm::real_type
-#include "plssvm/kernel_function_types.hpp"                          // plssvm::kernel_function_type
+#include "plssvm/backends/CUDA/kernel/detail/atomics.cuh"    // atomicAdd for double precision floating point numbers on older CUDA hardware
+#include "plssvm/backends/CUDA/kernel/kernel_functions.cuh"  // plssvm::cuda::detail::{feature_reduce, apply_kernel_function}
+#include "plssvm/constants.hpp"                              // plssvm::real_type
+#include "plssvm/kernel_function_types.hpp"                  // plssvm::kernel_function_type
 
 #include <cstddef>  // std::size_t
 

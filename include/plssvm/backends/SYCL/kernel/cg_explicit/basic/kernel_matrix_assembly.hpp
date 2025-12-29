@@ -20,7 +20,6 @@
 
 #include "sycl/sycl.hpp"  // sycl::item
 
-#include <array>    // std::array
 #include <cstddef>  // std::size_t
 #include <tuple>    // std::tuple, std::make_tuple
 

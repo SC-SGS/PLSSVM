@@ -17,7 +17,6 @@
 
 #include "Kokkos_Core.hpp"  // KOKKOS_INLINE_FUNCTION, Kokkos::View, Kokkos::TeamPolicy
 
-#include <array>    // std:array
 #include <cstddef>  // std::size_t
 #include <utility>  // std::move
 
