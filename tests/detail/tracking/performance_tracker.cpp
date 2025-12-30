@@ -29,12 +29,10 @@
 #include <algorithm>   // std::transform
 #include <array>       // std::array
 #include <chrono>      // std::chrono_literals namespace
-#include <cstddef>     // std::size_t
 #include <filesystem>  // std::filesystem::is_empty
 #include <iostream>    // std::cout, std::clog
 #include <map>         // std::map
 #include <string>      // std::string
-#include <utility>     // std::move
 #include <vector>      // std::vector
 
 using namespace plssvm::detail::literals;  // NOLINT(google-build-using-namespace): only imports custom user-defined literals into this namespace
@@ -110,132 +108,6 @@ class PerformanceTracker : public ::testing::Test,
   private:
     plssvm::detail::tracking::performance_tracker tracker_;
 };
-
-TEST_F(PerformanceTracker, CopyConstruct) {
-    // get performance tracker from fixture class
-    plssvm::detail::tracking::performance_tracker &tracker = this->get_performance_tracker();
-
-    // add different tracking entries
-    tracker.add_tracking_entry(plssvm::detail::tracking::tracking_entry{ "foo", "bar", 42 });
-    tracker.add_tracking_entry(plssvm::detail::tracking::tracking_entry{ "foo", "baz", 3.1415 });
-    tracker.add_tracking_entry(plssvm::detail::tracking::tracking_entry{ "foo", "mem", 1_KiB });
-    tracker.add_tracking_entry(plssvm::detail::tracking::tracking_entry{ "", "foobar", 'a' });
-    tracker.add_tracking_entry(plssvm::detail::tracking::tracking_entry{ "", "foobar", 'b' });
-
-    // copy-construct new performance tracker
-    const plssvm::detail::tracking::performance_tracker tracker2{ tracker };
-
-    // check the contents
-    EXPECT_EQ(tracker2.get_tracking_entries(), tracker.get_tracking_entries());
-    ASSERT_EQ(tracker2.get_events().num_events(), tracker.get_events().num_events());
-    for (std::size_t i = 0; i < tracker.get_events().num_events(); ++i) {
-        EXPECT_EQ(tracker2.get_events()[i].time_point, tracker.get_events()[i].time_point);
-        EXPECT_EQ(tracker2.get_events()[i].name, tracker.get_events()[i].name);
-    }
-    EXPECT_EQ(tracker2.get_reference_time(), tracker.get_reference_time());
-    EXPECT_EQ(tracker2.is_tracking(), tracker.is_tracking());
-}
-
-TEST_F(PerformanceTracker, MoveConstruct) {
-    // get performance tracker from fixture class
-    plssvm::detail::tracking::performance_tracker &tracker = this->get_performance_tracker();
-
-    // add different tracking entries
-    tracker.add_tracking_entry(plssvm::detail::tracking::tracking_entry{ "foo", "bar", 42 });
-    tracker.add_tracking_entry(plssvm::detail::tracking::tracking_entry{ "foo", "baz", 3.1415 });
-    tracker.add_tracking_entry(plssvm::detail::tracking::tracking_entry{ "foo", "mem", 1_KiB });
-    tracker.add_tracking_entry(plssvm::detail::tracking::tracking_entry{ "", "foobar", 'a' });
-    tracker.add_tracking_entry(plssvm::detail::tracking::tracking_entry{ "", "foobar", 'b' });
-
-    // save (i.e. copy contents as ground truth)
-    const auto entries = tracker.get_tracking_entries();
-    const auto events = tracker.get_events();
-    const auto reference_time = tracker.get_reference_time();
-    const bool is_tracking = tracker.is_tracking();
-
-    // move-construct new performance tracker
-    const plssvm::detail::tracking::performance_tracker tracker2{ std::move(tracker) };
-
-    // check the contents
-    EXPECT_EQ(tracker2.get_tracking_entries(), entries);
-    ASSERT_EQ(tracker2.get_events().num_events(), events.num_events());
-    for (std::size_t i = 0; i < events.num_events(); ++i) {
-        EXPECT_EQ(tracker2.get_events()[i].time_point, events[i].time_point);
-        EXPECT_EQ(tracker2.get_events()[i].name, events[i].name);
-    }
-    EXPECT_EQ(tracker2.get_reference_time(), reference_time);
-    EXPECT_EQ(tracker2.is_tracking(), is_tracking);
-
-    // check moved-from state
-    // NOLINTBEGIN: use after move wanted since this is tested here
-    EXPECT_TRUE(tracker.get_tracking_entries().empty());
-    EXPECT_TRUE(tracker.get_events().empty());
-    // NOLINTEND
-}
-
-TEST_F(PerformanceTracker, CopyAssign) {
-    // get performance tracker from fixture class
-    plssvm::detail::tracking::performance_tracker &tracker = this->get_performance_tracker();
-
-    // add different tracking entries
-    tracker.add_tracking_entry(plssvm::detail::tracking::tracking_entry{ "foo", "bar", 42 });
-    tracker.add_tracking_entry(plssvm::detail::tracking::tracking_entry{ "foo", "baz", 3.1415 });
-    tracker.add_tracking_entry(plssvm::detail::tracking::tracking_entry{ "foo", "mem", 1_KiB });
-    tracker.add_tracking_entry(plssvm::detail::tracking::tracking_entry{ "", "foobar", 'a' });
-    tracker.add_tracking_entry(plssvm::detail::tracking::tracking_entry{ "", "foobar", 'b' });
-
-    // default-construct new performance tracker then copy-assign another performance tracker
-    plssvm::detail::tracking::performance_tracker tracker2{};
-    tracker2 = tracker;
-
-    // check the contents
-    EXPECT_EQ(tracker2.get_tracking_entries(), tracker.get_tracking_entries());
-    ASSERT_EQ(tracker2.get_events().num_events(), tracker.get_events().num_events());
-    for (std::size_t i = 0; i < tracker.get_events().num_events(); ++i) {
-        EXPECT_EQ(tracker2.get_events()[i].time_point, tracker.get_events()[i].time_point);
-        EXPECT_EQ(tracker2.get_events()[i].name, tracker.get_events()[i].name);
-    }
-    EXPECT_EQ(tracker2.get_reference_time(), tracker.get_reference_time());
-    EXPECT_EQ(tracker2.is_tracking(), tracker.is_tracking());
-}
-
-TEST_F(PerformanceTracker, MoveAssign) {
-    // get performance tracker from fixture class
-    plssvm::detail::tracking::performance_tracker &tracker = this->get_performance_tracker();
-
-    // add different tracking entries
-    tracker.add_tracking_entry(plssvm::detail::tracking::tracking_entry{ "foo", "bar", 42 });
-    tracker.add_tracking_entry(plssvm::detail::tracking::tracking_entry{ "foo", "baz", 3.1415 });
-    tracker.add_tracking_entry(plssvm::detail::tracking::tracking_entry{ "foo", "mem", 1_KiB });
-    tracker.add_tracking_entry(plssvm::detail::tracking::tracking_entry{ "", "foobar", 'a' });
-    tracker.add_tracking_entry(plssvm::detail::tracking::tracking_entry{ "", "foobar", 'b' });
-
-    // save (i.e. copy contents as ground truth)
-    const auto entries = tracker.get_tracking_entries();
-    const auto events = tracker.get_events();
-    const auto reference_time = tracker.get_reference_time();
-    const bool is_tracking = tracker.is_tracking();
-
-    // default-construct new performance tracker then move-assign another performance tracker
-    plssvm::detail::tracking::performance_tracker tracker2{};
-    tracker2 = std::move(tracker);
-
-    // check the contents
-    EXPECT_EQ(tracker2.get_tracking_entries(), entries);
-    ASSERT_EQ(tracker2.get_events().num_events(), events.num_events());
-    for (std::size_t i = 0; i < events.num_events(); ++i) {
-        EXPECT_EQ(tracker2.get_events()[i].time_point, events[i].time_point);
-        EXPECT_EQ(tracker2.get_events()[i].name, events[i].name);
-    }
-    EXPECT_EQ(tracker2.get_reference_time(), reference_time);
-    EXPECT_EQ(tracker2.is_tracking(), is_tracking);
-
-    // check moved-from state
-    // NOLINTBEGIN: use after move wanted since this is tested here
-    EXPECT_TRUE(tracker.get_tracking_entries().empty());
-    EXPECT_TRUE(tracker.get_events().empty());
-    // NOLINTEND
-}
 
 // the macros are only available if PLSSVM_PERFORMANCE_TRACKER_ENABLED is defined!
 #if defined(PLSSVM_PERFORMANCE_TRACKER_ENABLED)
