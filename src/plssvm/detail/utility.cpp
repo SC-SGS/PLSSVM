@@ -44,8 +44,10 @@ void check_local_memory_usage(const std::vector<std::optional<memory_size>> &loc
     for (const std::optional<detail::memory_size> &available_local_memory : local_memory) {
         if (available_local_memory.has_value() && required_local_memory_per_device > available_local_memory.value()) {
             // we need more local memory than available -> throw an exception
-            throw kernel_launch_resources{ fmt::format("At least {} of local memory must be available, but available are only {}!",
+            throw kernel_launch_resources{ fmt::format("At least {} of local memory must be available for the hyperparameter combination THREAD_BLOCK_SIZE={} and INTERNAL_BLOCK_SIZE={}, but available are only {}!",
                                                        required_local_memory_per_device,
+                                                       THREAD_BLOCK_SIZE,
+                                                       INTERNAL_BLOCK_SIZE,
                                                        available_local_memory.value()) };
         }
     }

@@ -285,7 +285,7 @@ TYPED_TEST_P(GenericBackendCSVMKernelFunction, PredictValues) {
     switch (kernel) {
         case plssvm::kernel_function_type::linear:
             {
-                std::vector<plssvm::real_type> rho_padded(rho.size() + plssvm::PADDING_SIZE, plssvm::real_type{ 0.0 });
+                std::vector<plssvm::real_type> rho_padded(rho.size(), plssvm::real_type{ 0.0 });
                 std::memcpy(rho_padded.data(), rho.data(), rho.size() * sizeof(plssvm::real_type));
                 device_kernel_predict_linear(out, correct_w, rho_padded, predict_points, device_specific_num_predict_points, row_offset);
             }

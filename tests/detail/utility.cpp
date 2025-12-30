@@ -236,6 +236,21 @@ TEST(Utility, CheckLocalMemoryUsage) {
     EXPECT_NO_THROW(plssvm::detail::check_local_memory_usage(available_local_memory));
 }
 
+TEST(Utility, CheckLocalMemoryUsageTooSmall) {
+    // create a std::vector local memory sizes that will never satisfy the needed amount of local memory
+    constexpr plssvm::detail::memory_size needed_local_memory = plssvm::detail::data_distribution::maximum_local_memory_needed();
+    const std::vector<std::optional<plssvm::detail::memory_size>> available_local_memory{ needed_local_memory / 2, needed_local_memory / 2 };
+
+    // the vector is created such that the requirements are never fulfilled
+    EXPECT_THROW_WHAT(plssvm::detail::check_local_memory_usage(available_local_memory),
+                      plssvm::kernel_launch_resources,
+                      fmt::format("At least {} of local memory must be available for the hyperparameter combination THREAD_BLOCK_SIZE={} and INTERNAL_BLOCK_SIZE={}, but available are only {}!",
+                                  needed_local_memory,
+                                  plssvm::THREAD_BLOCK_SIZE,
+                                  plssvm::INTERNAL_BLOCK_SIZE,
+                                  needed_local_memory / 2));
+}
+
 TEST(UtilityDeathTest, CheckLocalMemoryUsageEmpty) {
     // create a std::vector of std::nullopt
     const std::vector<std::optional<plssvm::detail::memory_size>> available_local_memory{};
