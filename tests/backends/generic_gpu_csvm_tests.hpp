@@ -14,7 +14,7 @@
 #pragma once
 
 #include "plssvm/backends/Kokkos/execution_spaces.hpp"  // plssvm::kokkos::execution_space
-#include "plssvm/constants.hpp"                         // plssvm::real_type, plssvm::THREAD_BLOCK_SIZE, plssvm::INTERNAL_BLOCK_SIZE, plssvm::PADDING_SIZE
+#include "plssvm/constants.hpp"                         // plssvm::real_type, plssvm::PADDING_SIZE
 #include "plssvm/data_set/classification_data_set.hpp"  // plssvm::classification_data_set
 #include "plssvm/detail/data_distribution.hpp"          // plssvm::detail::{triangular_data_distribution, rectangular_data_distribution}
 #include "plssvm/detail/memory_size.hpp"                // plssvm::detail::memory_size

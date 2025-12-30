@@ -285,7 +285,7 @@ TYPED_TEST_P(GenericBackendCSVMKernelFunction, PredictValues) {
     switch (kernel) {
         case plssvm::kernel_function_type::linear:
             {
-                std::vector<plssvm::real_type> rho_padded(rho.size(), plssvm::real_type{ 0.0 });
+                std::vector<plssvm::real_type> rho_padded(rho.size() + plssvm::PADDING_SIZE, plssvm::real_type{ 0.0 });
                 std::memcpy(rho_padded.data(), rho.data(), rho.size() * sizeof(plssvm::real_type));
                 device_kernel_predict_linear(out, correct_w, rho_padded, predict_points, device_specific_num_predict_points, row_offset);
             }
@@ -582,12 +582,12 @@ TYPED_TEST_P(GenericBackendCSVMKernelFunctionDeathTest, PredictValues) {
     const std::size_t row_offset = dist.place_row_offset(0);
 
     if constexpr (kernel == plssvm::kernel_function_type::linear) {
-        const std::vector<plssvm::real_type> rho = util::generate_random_vector<plssvm::real_type>(weights.num_rows());
+        const std::vector<plssvm::real_type> rho = util::generate_random_vector<plssvm::real_type>(weights.num_rows() + plssvm::PADDING_SIZE);
 
         // the number of classes must match
         const std::vector<plssvm::real_type> rho_wrong = util::generate_random_vector<plssvm::real_type>(rho.size() - 1);
         EXPECT_DEATH(device_kernel_predict_linear(out, w, rho_wrong, predict_points, device_specific_num_predict_points, row_offset),
-                     ::testing::HasSubstr(fmt::format("Size mismatch: {} vs {}!", w.num_rows(), rho_wrong.size())));
+                     ::testing::HasSubstr(fmt::format("Size mismatch: {} vs {}!", w.num_rows(), rho_wrong.size() - plssvm::PADDING_SIZE)));
 
         // the number of features must match
         const auto predict_points_wrong = util::generate_specific_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ data.data().num_rows(), data.data().num_cols() + 1 }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE });

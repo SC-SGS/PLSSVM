@@ -12,7 +12,7 @@
 
 #include "plssvm/backend_types.hpp"                   // plssvm::csvm_backend_exists, plssvm::backend_csvm_type, plssvm::backend_csvm_type_t
 #include "plssvm/backends/SYCL/detail/constants.hpp"  // NOLINT: namespace plssvm::sycl
-#include "plssvm/constants.hpp"                       // plssvm::real_type, plssvm::PADDING_SIZE
+#include "plssvm/constants.hpp"                       // plssvm::real_type, plssvm::THREAD_BLOCK_SIZE, plssvm::INTERNAL_BLOCK_SIZE, plssvm::PADDING_SIZE
 #include "plssvm/core.hpp"                            // NOLINT: include all csvm_backend_exists_v specializations
 #include "plssvm/data_set/regression_data_set.hpp"    // plssvm::regression_data_set
 #include "plssvm/detail/data_distribution.hpp"        // plssvm::detail::data_distribution::maximum_local_memory_needed
@@ -20,7 +20,7 @@
 #include "plssvm/detail/move_only_any.hpp"            // plssvm::detail::move_only_any
 #include "plssvm/exceptions/exceptions.hpp"           // plssvm::invalid_parameter_exception
 #include "plssvm/kernel_function_types.hpp"           // plssvm::kernel_function_type
-#include "plssvm/matrix.hpp"                          // plssvm::aos_matrix, plssvm::soa_matrix
+#include "plssvm/matrix.hpp"                          // plssvm::aos_matrix
 #include "plssvm/model/regression_model.hpp"          // plssvm::regression_model
 #include "plssvm/parameter.hpp"                       // plssvm::parameter
 #include "plssvm/solver_types.hpp"                    // plssvm::solver_type

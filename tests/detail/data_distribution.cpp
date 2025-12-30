@@ -145,7 +145,7 @@ TEST(TriangularDataDistribution, CalculateExplicitKernelMatrixNumEntriesPadded) 
     // check the returned values
     for (std::size_t place = 0; place < dist.num_places(); ++place) {
         EXPECT_GE(dist.calculate_explicit_kernel_matrix_num_entries_padded(place), 0);
-        EXPECT_LT(dist.calculate_explicit_kernel_matrix_num_entries_padded(place), (1024 + plssvm::PADDING_SIZE) * (1024 + plssvm::PADDING_SIZE)); // must be less than the squared matrix padded
+        EXPECT_LT(dist.calculate_explicit_kernel_matrix_num_entries_padded(place), (1024 + plssvm::PADDING_SIZE) * (1024 + plssvm::PADDING_SIZE));  // must be less than the squared matrix padded
     }
 }
 

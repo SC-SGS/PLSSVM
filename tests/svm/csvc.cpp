@@ -13,7 +13,7 @@
 #include "plssvm/backend_types.hpp"                     // plssvm::csvm_backend_exists, plssvm::backend_csvm_type, plssvm::backend_csvm_type_t
 #include "plssvm/backends/SYCL/detail/constants.hpp"    // NOLINT: namespace plssvm::sycl
 #include "plssvm/classification_types.hpp"              // plssvm::classification_type
-#include "plssvm/constants.hpp"                         // plssvm::real_type, plssvm::PADDING_SIZE
+#include "plssvm/constants.hpp"                         // plssvm::real_type, plssvm::THREAD_BLOCK_SIZE, plssvm::INTERNAL_BLOCK_SIZE, plssvm::PADDING_SIZE
 #include "plssvm/core.hpp"                              // NOLINT: include all csvm_backend_exists_v specializations
 #include "plssvm/data_set/classification_data_set.hpp"  // plssvm::classification_data_set
 #include "plssvm/detail/data_distribution.hpp"          // plssvm::detail::data_distribution::maximum_local_memory_needed

@@ -10,6 +10,7 @@
 
 #include "plssvm/detail/utility.hpp"
 
+#include "plssvm/constants.hpp"                 // plssvm::THREAD_BLOCK_SIZE, plssvm::INTERNAL_BLOCK_SIZE
 #include "plssvm/detail/data_distribution.hpp"  // plssvm::detail::data_distribution::maximum_local_memory_needed
 #include "plssvm/detail/memory_size.hpp"        // plssvm::detail::memory_size
 #include "plssvm/exceptions/exceptions.hpp"     // plssvm::kernel_launch_resources
