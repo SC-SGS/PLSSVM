@@ -36,6 +36,7 @@
 
 #include <chrono>       // std::chrono::steady_clock::time_point
 #include <map>          // std::map
+#include <mutex>        // std::mutex, std::scoped_lock
 #include <optional>     // std::optional
 #include <ostream>      // std::ostream
 #include <string>       // std::string
@@ -145,23 +146,23 @@ class performance_tracker {
      */
     performance_tracker();
     /**
-     * @brief Default copy-constructor. **Must** be implemented in .cpp file.
+     * @brief Delete copy-constructor due to usage of a std::mutex.
      */
-    performance_tracker(const performance_tracker &);
+    performance_tracker(const performance_tracker &) = delete;
     /**
-     * @brief Default move-constructor. **Must** be implemented in .cpp file.
+     * @brief Delete move-constructordue to usage of a std::mutex.
      */
-    performance_tracker(performance_tracker &&) noexcept;
+    performance_tracker(performance_tracker &&) noexcept = delete;
     /**
-     * @brief Default copy-assignment operator. **Must** be implemented in .cpp file.
+     * @brief Delete copy-assignment operator due to usage of a std::mutex.
      * @return `*this`
      */
-    performance_tracker &operator=(const performance_tracker &);
+    performance_tracker &operator=(const performance_tracker &) = delete;
     /**
-     * @brief Default move-assignment operator. **Must** be implemented in .cpp file.
+     * @brief Delete move-assignment operator due to usage of a std::mutex.
      * @return `*this`
      */
-    performance_tracker &operator=(performance_tracker &&) noexcept;
+    performance_tracker &operator=(performance_tracker &&) noexcept = delete;
     /**
      * @brief Default destructor. **Must** be implemented in .cpp file.
      */
@@ -299,12 +300,16 @@ class performance_tracker {
     events events_{};
     /// Flag indicating whether tracking is currently enabled or disabled. Tracking is enabled by default.
     bool is_tracking_{ true };
+    /// Standard mutex to prevent race conditions if multiple threads try to add a tracking entry simultaneously.
+    std::mutex mutex_;
 };
 
 template <typename T>
 void performance_tracker::add_tracking_entry(const tracking_entry<T> &entry) {
     // check whether entries should currently be tracked
     if (this->is_tracking()) {
+        const std::scoped_lock guard{ mutex_ };
+
         std::string entry_value_str{};
         if constexpr (std::is_same_v<T, std::string> || std::is_same_v<T, std::string_view>) {
             // escape strings with "" since they may contain whitespaces
@@ -336,6 +341,8 @@ template <typename T>
 void performance_tracker::add_tracking_entry(const tracking_entry<std::vector<T>> &entry) {
     // check whether entries should currently be tracked
     if (this->is_tracking()) {
+        const std::scoped_lock guard{ mutex_ };
+
         std::string entry_value_str{};
         if constexpr (std::is_same_v<T, std::string> || std::is_same_v<T, std::string_view>) {
             // escape strings with "" since they may contain whitespaces
