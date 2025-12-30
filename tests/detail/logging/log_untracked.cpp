@@ -17,10 +17,12 @@
 #include "gmock/gmock.h"  // EXPECT_THAT, ::testing::HasSubstr
 #include "gtest/gtest.h"  // TEST_F, EXPECT_EQ, EXPECT_TRUE, ::testing::Test
 
+#include <iostream>  // std::clog
+
 class LoggerUntracked : public ::testing::Test,
                         public util::redirect_output<> { };
 
-TEST_F(LoggerUntracked, enabled_logging) {
+TEST_F(LoggerUntracked, EnabledLogging) {
     // explicitly enable logging
     plssvm::verbosity = plssvm::verbosity_level::full;
 
@@ -31,7 +33,7 @@ TEST_F(LoggerUntracked, enabled_logging) {
     EXPECT_EQ(this->get_capture(), "Hello, World!");
 }
 
-TEST_F(LoggerUntracked, enabled_logging_with_args) {
+TEST_F(LoggerUntracked, EnabledLoggingWithArgs) {
     // explicitly enable logging
     plssvm::verbosity = plssvm::verbosity_level::full;
 
@@ -42,7 +44,7 @@ TEST_F(LoggerUntracked, enabled_logging_with_args) {
     EXPECT_EQ(this->get_capture(), "int: 42, float: 1.5, str: abc");
 }
 
-TEST_F(LoggerUntracked, disabled_logging) {
+TEST_F(LoggerUntracked, DisabledLogging) {
     // explicitly disable logging
     plssvm::verbosity = plssvm::verbosity_level::quiet;
 
@@ -53,7 +55,7 @@ TEST_F(LoggerUntracked, disabled_logging) {
     EXPECT_TRUE(this->get_capture().empty());
 }
 
-TEST_F(LoggerUntracked, disabled_logging_with_args) {
+TEST_F(LoggerUntracked, DisabledLoggingWithArgs) {
     // explicitly disable logging
     plssvm::verbosity = plssvm::verbosity_level::quiet;
 
@@ -64,7 +66,7 @@ TEST_F(LoggerUntracked, disabled_logging_with_args) {
     EXPECT_TRUE(this->get_capture().empty());
 }
 
-TEST_F(LoggerUntracked, mismatching_verbosity_level) {
+TEST_F(LoggerUntracked, MismatchingVerbosityLevel) {
     // set verbosity_level to libsvm
     plssvm::verbosity = plssvm::verbosity_level::libsvm;
 
@@ -79,7 +81,7 @@ TEST_F(LoggerUntracked, mismatching_verbosity_level) {
 class WarningLoggerUntracked : public ::testing::Test,
                                public util::redirect_output<&std::clog> { };
 
-TEST_F(WarningLoggerUntracked, enabled_logging_warning) {
+TEST_F(WarningLoggerUntracked, EnabledLoggingWarning) {
     // explicitly enable logging
     plssvm::verbosity = plssvm::verbosity_level::full;
 

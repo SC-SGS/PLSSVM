@@ -17,11 +17,12 @@
 #include "plssvm/mpi/communicator.hpp"                     // plssvm::mpi::communicator
 #include "plssvm/verbosity_levels.hpp"                     // plssvm::verbosity_level
 
+#include "fmt/format.h"  // fmt::format
+
 #include <chrono>   // std::chrono::{time_point, steady_clock, duration_cast, milliseconds}
 #include <string>   // std::string
 #include <tuple>    // std::tie
-#include <utility>  // std::move
-#include <utility>  // std::make_pair
+#include <utility>  // std::move, std::make_pair
 
 namespace plssvm {
 

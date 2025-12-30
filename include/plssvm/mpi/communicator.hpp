@@ -198,7 +198,7 @@ class communicator {
      * @brief Add implicit conversion operator back to a native MPI communicator.
      * @return The wrapped MPI communicator (`[[nodiscard]]`)
      */
-    [[nodiscard]] operator MPI_Comm() const { return comm_; }
+    [[nodiscard]] operator MPI_Comm() const { return comm_; }  // NOLINT: implicit conversion desired
 #endif
 
     /**
@@ -236,7 +236,7 @@ class communicator {
     MPI_Comm comm_{ MPI_COMM_WORLD };
 #endif
     /// The MPI load balancing weights. Always guaranteed to be the same size as the communicator size.
-    std::optional<std::vector<std::size_t>> load_balancing_weights_{ std::nullopt };
+    std::optional<std::vector<std::size_t>> load_balancing_weights_;
 };
 
 }  // namespace plssvm::mpi

@@ -8,32 +8,29 @@
 
 #include "plssvm/backends/OpenCL/csvm.hpp"
 
-#include "plssvm/backend_types.hpp"                         // plssvm::backend_type
-#include "plssvm/backends/execution_range.hpp"              // plssvm::detail::{dim_type, execution_range}
-#include "plssvm/backends/OpenCL/detail/command_queue.hpp"  // plssvm::opencl::detail::command_queue
-#include "plssvm/backends/OpenCL/detail/context.hpp"        // plssvm::opencl::detail::context
-#include "plssvm/backends/OpenCL/detail/device_ptr.hpp"     // plssvm::opencl::detail::device_ptr
-#include "plssvm/backends/OpenCL/detail/jit_info.hpp"       // plssvm::opencl::detail::create_jit_report
-#include "plssvm/backends/OpenCL/detail/kernel.hpp"         // plssvm::opencl::detail::{compute_kernel_name, kernel}
-#include "plssvm/backends/OpenCL/detail/utility.hpp"        // PLSSVM_OPENCL_ERROR_CHECK, plssvm::opencl::detail::{get_contexts, create_command_queues, run_kernel, kernel_type_to_function_name, device_synchronize, get_opencl_target_version, get_driver_version}
-#include "plssvm/backends/OpenCL/exceptions.hpp"            // plssvm::opencl::backend_exception
-#include "plssvm/constants.hpp"                             // plssvm::{real_type, THREAD_BLOCK_SIZE, INTERNAL_BLOCK_SIZE, PADDING_SIZE}
-#include "plssvm/detail/assert.hpp"                         // PLSSVM_ASSERT
-#include "plssvm/detail/data_distribution.hpp"              // plssvm::detail::{data_distribution, triangular_data_distribution, rectangular_data_distribution}
-#include "plssvm/detail/logging/log_untracked.hpp"          // plssvm::detail::log_untracked
-#include "plssvm/detail/logging/mpi_log_untracked.hpp"      // plssvm::detail::log_untracked
-#include "plssvm/detail/memory_size.hpp"                    // plssvm::detail::memory_size
-#include "plssvm/detail/tracking/performance_tracker.hpp"   // plssvm::detail::tracking::tracking_entry, PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY
-#include "plssvm/detail/utility.hpp"                        // plssvm::detail::{contains, check_local_memory_usage}
-#include "plssvm/exceptions/exceptions.hpp"                 // plssvm::exception
-#include "plssvm/gamma.hpp"                                 // plssvm::gamma_type
-#include "plssvm/kernel_function_types.hpp"                 // plssvm::kernel_function_type
-#include "plssvm/mpi/communicator.hpp"                      // plssvm::mpi::communicator
-#include "plssvm/mpi/detail/information.hpp"                // plssvm::mpi::detail::gather_and_print_csvm_information
-#include "plssvm/parameter.hpp"                             // plssvm::parameter, plssvm::detail::parameter
-#include "plssvm/shape.hpp"                                 // plssvm::shape
-#include "plssvm/target_platforms.hpp"                      // plssvm::target_platform
-#include "plssvm/verbosity_levels.hpp"                      // plssvm::verbosity_level
+#include "plssvm/backend_types.hpp"                        // plssvm::backend_type
+#include "plssvm/backends/execution_range.hpp"             // plssvm::detail::{dim_type, execution_range}
+#include "plssvm/backends/OpenCL/detail/jit_info.hpp"      // plssvm::opencl::detail::create_jit_report
+#include "plssvm/backends/OpenCL/detail/kernel.hpp"        // plssvm::opencl::detail::{compute_kernel_name, kernel}
+#include "plssvm/backends/OpenCL/detail/utility.hpp"       // PLSSVM_OPENCL_ERROR_CHECK, plssvm::opencl::detail::{get_contexts, create_command_queues, run_kernel, kernel_type_to_function_name, device_synchronize, get_opencl_target_version, get_driver_version}
+#include "plssvm/backends/OpenCL/exceptions.hpp"           // plssvm::opencl::backend_exception
+#include "plssvm/constants.hpp"                            // plssvm::{real_type, THREAD_BLOCK_SIZE, INTERNAL_BLOCK_SIZE, PADDING_SIZE}
+#include "plssvm/detail/assert.hpp"                        // PLSSVM_ASSERT
+#include "plssvm/detail/data_distribution.hpp"             // plssvm::detail::{data_distribution, triangular_data_distribution, rectangular_data_distribution}
+#include "plssvm/detail/logging/log_untracked.hpp"         // NOLINT: plssvm::detail::log_untracked
+#include "plssvm/detail/logging/mpi_log_untracked.hpp"     // plssvm::detail::log_untracked
+#include "plssvm/detail/memory_size.hpp"                   // plssvm::detail::memory_size
+#include "plssvm/detail/operators.hpp"                     // operator overloads for std::vector (+ scalars)
+#include "plssvm/detail/tracking/performance_tracker.hpp"  // plssvm::detail::tracking::tracking_entry, PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY
+#include "plssvm/detail/utility.hpp"                       // plssvm::detail::{contains, check_local_memory_usage}
+#include "plssvm/exceptions/exceptions.hpp"                // plssvm::exception
+#include "plssvm/kernel_function_types.hpp"                // plssvm::kernel_function_type
+#include "plssvm/mpi/communicator.hpp"                     // plssvm::mpi::communicator
+#include "plssvm/mpi/detail/information.hpp"               // plssvm::mpi::detail::gather_and_print_csvm_information
+#include "plssvm/parameter.hpp"                            // plssvm::parameter, plssvm::detail::parameter
+#include "plssvm/shape.hpp"                                // plssvm::shape
+#include "plssvm/target_platforms.hpp"                     // plssvm::target_platform
+#include "plssvm/verbosity_levels.hpp"                     // plssvm::verbosity_level
 
 #include "CL/cl.h"           // CL_QUEUE_DEVICE, CL_DEVICE_GLOBAL_MEM_SIZE, CL_DEVICE_MAX_MEM_ALLOC_SIZE, CL_DEVICE_MAX_WORK_GROUP_SIZE
                              // clGetCommandQueueInfo, clGetDeviceInfo, cl_device_id
@@ -51,12 +48,13 @@
 #include <limits>     // std::numeric_limits::max
 #include <optional>   // std::optional
 #include <string>     // std::string
-#include <tuple>      // std::tie
+#include <tuple>      // std::tie, std::get
 #include <utility>    // std::pair, std::make_pair, std::move
-#include <variant>    // std::get
 #include <vector>     // std::vector
 
 namespace plssvm::opencl {
+
+using namespace plssvm::operators;  // NOLINT(google-build-using-namespace): only imports custom math operations on vectors (and scalars)
 
 csvm::csvm(const target_platform target) {
     // check whether the requested target platform has been enabled
@@ -116,9 +114,9 @@ csvm::csvm(const target_platform target) {
     if (comm_.size() > 1) {
         // use MPI rank specific command line output
         for (const queue_type &device : devices_) {
-            device_names.emplace_back(detail::get_device_name(device));
+            device_names.push_back(detail::get_device_name(device));
             // get the target platform's driver version
-            driver_versions.emplace_back(detail::get_driver_version(device));
+            driver_versions.push_back(detail::get_driver_version(device));
         }
 
         mpi::detail::gather_and_print_csvm_information(comm_, plssvm::backend_type::opencl, target_, device_names, detail::create_jit_report(info));
@@ -145,13 +143,12 @@ csvm::csvm(const target_platform target) {
                                       target_);
 
         for (typename std::vector<queue_type>::size_type device = 0; device < devices_.size(); ++device) {
-            const std::string device_name = detail::get_device_name(devices_[device]);
+            device_names.push_back(detail::get_device_name(devices_[device]));
             plssvm::detail::log_untracked(verbosity_level::full,
                                           comm_,
                                           "  [{}, {}]\n",
                                           device,
-                                          device_name);
-            device_names.emplace_back(device_name);
+                                          device_names.back());
 
             // get the target platform's driver version
             driver_versions.emplace_back(detail::get_driver_version(devices_[device]));
@@ -321,8 +318,6 @@ auto csvm::run_assemble_kernel_matrix_explicit(const std::size_t device_id, cons
     // convert execution range block to OpenCL's native std::vector
     const std::vector<std::size_t> native_block = detail::dim_type_to_native<2>(exec.block);
 
-    using namespace plssvm::operators;
-
     const auto start = std::chrono::steady_clock::now();
     for (const auto &[partial_grid, offsets] : exec.grids) {
         // convert execution range partial_grid to OpenCL's native std::vector
@@ -374,8 +369,6 @@ void csvm::run_blas_level_3_kernel_explicit(const std::size_t device_id, const :
     // convert execution range block to OpenCL's native std::vector
     const std::vector<std::size_t> native_block = detail::dim_type_to_native<2>(exec.block);
 
-    using namespace plssvm::operators;
-
     const auto start = std::chrono::steady_clock::now();
     for (const auto &[partial_grid, offsets] : exec.grids) {
         // convert execution range grid[i] to OpenCL's native std::vector
@@ -418,8 +411,6 @@ void csvm::run_inplace_matrix_addition(const std::size_t device_id, const ::plss
     // convert execution range block to OpenCL's native std::vector
     const std::vector<std::size_t> native_block = detail::dim_type_to_native<2>(exec.block);
 
-    using namespace plssvm::operators;
-
     for (const auto &[partial_grid, offsets] : exec.grids) {
         // convert execution range partial_grid to OpenCL's native std::vector
         const std::vector<std::size_t> native_partial_grid = detail::dim_type_to_native<2>(partial_grid) * native_block;
@@ -439,8 +430,6 @@ void csvm::run_inplace_matrix_scale(const std::size_t device_id, const ::plssvm:
 
     // convert execution range block to OpenCL's native std::vector
     const std::vector<std::size_t> native_block = detail::dim_type_to_native<2>(exec.block);
-
-    using namespace plssvm::operators;
 
     for (const auto &[partial_grid, offsets] : exec.grids) {
         // convert execution range partial_grid to OpenCL's native std::vector
@@ -470,8 +459,6 @@ void csvm::run_assemble_kernel_matrix_implicit_blas_level_3(const std::size_t de
 
     // convert execution range block to OpenCL's native std::vector
     const std::vector<std::size_t> native_block = detail::dim_type_to_native<2>(exec.block);
-
-    using namespace plssvm::operators;
 
     const auto start = std::chrono::steady_clock::now();
     for (const auto &[partial_grid, offsets] : exec.grids) {
@@ -528,8 +515,6 @@ auto csvm::run_w_kernel(const std::size_t device_id, const ::plssvm::detail::exe
     // convert execution range block to OpenCL's native std::vector
     const std::vector<std::size_t> native_block = detail::dim_type_to_native<2>(exec.block);
 
-    using namespace plssvm::operators;
-
     const auto start = std::chrono::steady_clock::now();
     for (const auto &[partial_grid, offsets] : exec.grids) {
         // convert execution range partial_grid to OpenCL's native std::vector
@@ -560,8 +545,6 @@ auto csvm::run_predict_kernel(const std::size_t device_id, const ::plssvm::detai
 
     // convert execution range block to OpenCL's native std::vector
     const std::vector<std::size_t> native_block = detail::dim_type_to_native<2>(exec.block);
-
-    using namespace plssvm::operators;
 
     const auto start = std::chrono::steady_clock::now();
     for (const auto &[partial_grid, offsets] : exec.grids) {

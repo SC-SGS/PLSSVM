@@ -8,11 +8,11 @@
 
 #include "plssvm/backends/stdpar/detail/utility.hpp"
 
-#include "plssvm/detail/string_utility.hpp"  // plssvm::detail::as_lower_case
-#include "plssvm/detail/utility.hpp"         // ::plssvm::detail::contains
-#include "plssvm/target_platforms.hpp"       // plssvm::target_platforms
-
 #if defined(PLSSVM_STDPAR_BACKEND_HAS_ACPP) || defined(PLSSVM_STDPAR_BACKEND_HAS_INTEL_LLVM)
+    #include "plssvm/detail/string_utility.hpp"  // plssvm::detail::as_lower_case
+    #include "plssvm/detail/utility.hpp"         // plssvm::detail::contains
+    #include "plssvm/target_platforms.hpp"       // plssvm::target_platform
+
     #include "sycl/sycl.hpp"  // sycl::device, sycl::info::device::vendor
 #endif
 
@@ -20,6 +20,10 @@
     #include "plssvm/backends/SYCL/AdaptiveCpp/detail/utility.hpp"  // plssvm::adaptivecpp::detail::get_adaptivecpp_version_short
 #elif defined(PLSSVM_STDPAR_BACKEND_HAS_INTEL_LLVM)
     #include "plssvm/backends/SYCL/DPCPP/detail/utility.hpp"  // plssvm::dpcpp::detail::{get_dpcpp_version, get_dpcpp_timestamp_version}
+#endif
+
+#if defined(PLSSVM_STDPAR_BACKEND_HAS_NVHPC) && defined(PLSSVM_STDPAR_BACKEND_NVHPC_GPU)
+    #include "cuda_runtime_api.h"  // cudaRuntimeGetVersion
 #endif
 
 #include "fmt/format.h"  // fmt::format
@@ -55,8 +59,10 @@ std::string get_stdpar_version() {
     int runtime_version{};
     cudaRuntimeGetVersion(&runtime_version);
     // parse it to a more useful string
-    int major_version = runtime_version / 1000;
-    int minor_version = runtime_version % 1000 / 10;
+    constexpr int major_version_mask = 1000;
+    constexpr int minor_version_mask = 10;
+    const int major_version = runtime_version / major_version_mask;
+    const int minor_version = runtime_version % major_version_mask / minor_version_mask;
     return fmt::format("{}.{}.{}; {}.{}", __NVCOMPILER_MAJOR__, __NVCOMPILER_MINOR__, __NVCOMPILER_PATCHLEVEL__, major_version, minor_version);
     #else
     return fmt::format("{}.{}.{}", __NVCOMPILER_MAJOR__, __NVCOMPILER_MINOR__, __NVCOMPILER_PATCHLEVEL__);

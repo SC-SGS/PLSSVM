@@ -14,7 +14,7 @@
 #pragma once
 
 #include "plssvm/backend_types.hpp"                        // plssvm::backend_type
-#include "plssvm/backends/Kokkos/execution_space.hpp"      // plssvm::kokkos::execution_space
+#include "plssvm/backends/Kokkos/execution_spaces.hpp"     // plssvm::kokkos::execution_space
 #include "plssvm/backends/SYCL/data_parallel_kernels.hpp"  // plssvm::sycl::data_parallel_kernel
 #include "plssvm/backends/SYCL/implementation_types.hpp"   // plssvm::sycl::implementation_type
 #include "plssvm/csvm_factory.hpp"                         // plssvm::make_csvm
@@ -60,7 +60,8 @@ template <typename csvm_type>
         }
 
         return plssvm::make_csvm<csvm_type>(backend, std::move(comm), target, params, plssvm::sycl_implementation_type = impl_type, plssvm::sycl_data_parallel_kernel = data_parallel_kernel_type);
-    } else if (backend == plssvm::backend_type::kokkos) {
+    }
+    if (backend == plssvm::backend_type::kokkos) {
         // parse Kokkos specific keyword arguments
         plssvm::kokkos::execution_space space = plssvm::kokkos::execution_space::automatic;
         if (optional_args.contains("kokkos_execution_space")) {
@@ -68,9 +69,8 @@ template <typename csvm_type>
         }
 
         return plssvm::make_csvm<csvm_type>(backend, std::move(comm), target, params, plssvm::kokkos_execution_space = space);
-    } else {
-        return plssvm::make_csvm<csvm_type>(backend, std::move(comm), target, params);
     }
+    return plssvm::make_csvm<csvm_type>(backend, std::move(comm), target, params);
 }
 
 }  // namespace plssvm::bindings::python::util

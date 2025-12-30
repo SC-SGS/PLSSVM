@@ -6,9 +6,10 @@
  *          See the LICENSE.md file in the project root for full license information.
  */
 
-#include "plssvm/constants.hpp"                     // plssvm::real_type
+#include "plssvm/constants.hpp"                     // plssvm::real_type, plssvm::DEFAULT_EPSILON
 #include "plssvm/csvm_factory.hpp"                  // plssvm::make_csvr
 #include "plssvm/data_set/regression_data_set.hpp"  // plssvm::regression_data_set
+#include "plssvm/detail/assert.hpp"                 // PLSSVM_ASSERT
 #include "plssvm/detail/type_traits.hpp"            // plssvm::detail::remove_cvref_t
 #include "plssvm/gamma.hpp"                         // plssvm::gamma_coefficient_type, plssvm::gamma_type
 #include "plssvm/kernel_function_types.hpp"         // plssvm::kernel_function_type
@@ -18,30 +19,33 @@
 #include "plssvm/svm/csvr.hpp"                      // plssvm::csvr
 #include "plssvm/verbosity_levels.hpp"              // plssvm::verbosity_level, plssvm::verbosity
 
-#include "bindings/Python/data_set/variant_wrapper.hpp"                 // plssvm::bindings::python::util::regression_data_set_wrapper
-#include "bindings/Python/model/variant_wrapper.hpp"                    // plssvm::bindings::python::util::regression_model_wrapper
-#include "bindings/Python/type_caster/label_vector_wrapper_caster.hpp"  // a custom Pybind11 type caster for a plssvm::bindings::python::util::label_vector_wrapper
-#include "bindings/Python/type_caster/matrix_type_caster.hpp"           // a custom Pybind11 type caster for a plssvm::matrix
-#include "bindings/Python/type_caster/matrix_wrapper_type_caster.hpp"   // a custom Pybind11 type caster for a plssvm::bindings::python::util::matrix_wrapper
-#include "bindings/Python/utility.hpp"                                  // plssvm::bindings::python::util::{check_kwargs_for_correctness, vector_to_pyarray}
+#include "bindings/Python/bindings_fwd.hpp"                                  // forward declare all helper functions to create the Python bindings
+#include "bindings/Python/data_set/variant_wrapper.hpp"                      // plssvm::bindings::python::util::regression_data_set_wrapper
+#include "bindings/Python/model/variant_wrapper.hpp"                         // plssvm::bindings::python::util::regression_model_wrapper
+#include "bindings/Python/sklearn_like/tags.hpp"                             // Tags, TargetTags, TransformerTags, ClassifierTags, RegressorTags, InputTags
+#include "bindings/Python/type_caster/label_vector_wrapper_type_caster.hpp"  // a custom Pybind11 type caster for a plssvm::bindings::python::util::label_vector_wrapper
+#include "bindings/Python/type_caster/matrix_type_caster.hpp"                // NOLINT: a custom Pybind11 type caster for a plssvm::matrix
+#include "bindings/Python/type_caster/matrix_wrapper_type_caster.hpp"        // a custom Pybind11 type caster for a plssvm::bindings::python::util::matrix_wrapper
+#include "bindings/Python/utility.hpp"                                       // plssvm::bindings::python::util::{check_kwargs_for_correctness, vector_to_pyarray}
 
 #include "fmt/format.h"          // fmt::format
 #include "fmt/ranges.h"          // fmt::join
-#include "pybind11/cast.h"       // py::cast
+#include "pybind11/cast.h"       // py::cast, py::arg
 #include "pybind11/numpy.h"      // support for STL types
-#include "pybind11/operators.h"  // support for operators
-#include "pybind11/pybind11.h"   // py::module_, py::class_, py::init, py::arg, py::return_value_policy, py::self, py::dynamic_attr, py::value_error, py::attribute_error, py::tuple, py::pickle
+#include "pybind11/operators.h"  // NOLINT: support for operators
+#include "pybind11/pybind11.h"   // py::module_, py::class_, py::init, py::return_value_policy, py::self, py::dynamic_attr, py::value_error, py::attribute_error, py::tuple, py::pickle
 #include "pybind11/pytypes.h"    // py::dict, py::kwargs, py::str
-#include "pybind11/stl.h"        // support for STL types
+#include "pybind11/stl.h"        // NOLINT: support for STL types
 
 #include <cstdint>    // std::int32_t
+#include <exception>  // std::exception
 #include <memory>     // std::unique_ptr, std::make_unique
 #include <numeric>    // std::iota
 #include <optional>   // std::optional, std::nullopt
 #include <stdexcept>  // std::runtime_error
 #include <string>     // std::string
 #include <tuple>      // std::make_tuple
-#include <utility>    // std::move
+#include <utility>    // std::move, std::forward
 #include <variant>    // std::holds_alternative
 #include <vector>     // std::vector
 
@@ -98,9 +102,10 @@ struct svr {
     /**
      * @brief Return the currently used params.
      * @details Necessary for the same Python function and also the string representation.
+     * @params[in] deep_copy *unused*
      * @return a Python dictionary containing the used parameter (`[[nodiscard]]`)
      */
-    [[nodiscard]] py::dict get_params(const bool) const {
+    [[nodiscard]] py::dict get_params([[maybe_unused]] const bool deep_copy) const {
         const plssvm::parameter params = svm_->get_params();
 
         // fill a Python dictionary with the supported keys and values
@@ -126,21 +131,21 @@ struct svr {
     }
 
     /// Pointer to the the stored PLSSVM C-SVR instance.
-    std::unique_ptr<plssvm::csvr> svm_{};
+    std::unique_ptr<plssvm::csvr> svm_;
     /// The CG termination criterion if provided.
     plssvm::real_type epsilon_{};
     /// The maximum number of CG iterations if provided.
-    std::optional<unsigned long long> max_iter_{};
+    std::optional<unsigned long long> max_iter_;
 
     /// The data type of the labels.
-    py::dtype py_dtype_{};
+    py::dtype py_dtype_;
     /// Pointer to the regression data set wrapper (represents data sets with all possible label types).
-    std::unique_ptr<possible_data_set_types> data_{};
+    std::unique_ptr<possible_data_set_types> data_;
     /// Pointer to the regression model wrapper (represents models with all possible label types).
-    std::unique_ptr<possible_model_types> model_{};
+    std::unique_ptr<possible_model_types> model_;
 
     /// The name of the features. Can only be provided via a Pandas DataFrame.
-    std::optional<std::vector<std::string>> feature_names_{};
+    std::optional<std::vector<std::string>> feature_names_;
 };
 
 void init_sklearn_svr(py::module_ &m) {
@@ -176,7 +181,7 @@ void init_sklearn_svr(py::module_ &m) {
                py::arg("degree") = 3,
                py::arg("gamma") = plssvm::gamma_coefficient_type::scale,
                py::arg("coef0") = 0.0,
-               py::arg("tol") = 1e-10,
+               py::arg("tol") = plssvm::DEFAULT_EPSILON,
                py::arg("C") = 1.0,
                // py::arg("epsilon") = 0.1,
                // py::arg("shrinking") = true,     // true
@@ -284,7 +289,7 @@ void init_sklearn_svr(py::module_ &m) {
                 using possible_model_types = typename svr::possible_model_types;
 
                 // create the data set to fit
-                plssvm::regression_data_set<label_type> train_data{ std::move(data.matrix), std::move(labels_vector) };
+                plssvm::regression_data_set<label_type> train_data{ std::move(data.matrix), std::forward<decltype(labels_vector)>(labels_vector) };
 
                 // fit the model using potentially provided keyword arguments
                 if (self.max_iter_.has_value()) {
@@ -331,12 +336,12 @@ void init_sklearn_svr(py::module_ &m) {
                 // get the label types
                 using label_type = typename plssvm::detail::remove_cvref_t<decltype(labels_vector)>::value_type;
                 // create the data set to score
-                const plssvm::regression_data_set<label_type> data_to_score{ std::move(data), std::move(labels_vector) };
+                const plssvm::regression_data_set<label_type> data_to_score{ std::move(data), std::forward<decltype(labels_vector)>(labels_vector) };
                 // score the data
                 try {
                     return self.svm_->score(std::get<plssvm::regression_model<label_type>>(*self.model_), data_to_score);
                 } catch (const std::exception &) {
-                    throw py::value_error{ fmt::format("The dtype of the labels to score is \"{}\", but the model was fitted with \"{}\". Please use the same types for fit and score!", labels.dtype.attr("name").cast<std::string>(), self.py_dtype_.attr("name").cast<std::string>()) };
+                    throw py::value_error{ fmt::format(R"(The dtype of the labels to score is "{}", but the model was fitted with "{}". Please use the same types for fit and score!)", labels.dtype.attr("name").cast<std::string>(), self.py_dtype_.attr("name").cast<std::string>()) };
                 }
             }, labels.labels); }, "Return the mean accuracy on the given test data and labels.", py::arg("X"), py::arg("y"), py::pos_only(), py::arg("sample_weight") = std::nullopt)
         .def("set_fit_request", [](const svr &) { throw py::attribute_error{ "'SVR' object has no function 'set_fit_request' (not implemented)" }; }, "Request metadata passed to the fit method.")
@@ -408,10 +413,21 @@ void init_sklearn_svr(py::module_ &m) {
             new_svr.epsilon_ = self.epsilon_;
             new_svr.max_iter_ = self.max_iter_;
             return new_svr; }, "Clone the estimator.")
+        .def("__sklearn_tags__", [](const svr &self) -> Tags {
+            Tags sklearn_tags{};
+
+            // set non-default values
+            sklearn_tags.estimator_type = "regressor";
+            sklearn_tags.target_tags.one_d_labels = true;
+            sklearn_tags.regressor_tags = RegressorTags{};
+            sklearn_tags.input_tags.sparse = true;
+            sklearn_tags.input_tags.positive_only = self.svm_->get_params().kernel_type == plssvm::kernel_function_type::chi_squared;
+
+            return sklearn_tags; }, "Set sklearn tags internally used for estimators.")
         .def("__repr__", [](const svr &self) {
             // get the currently used parameters
-            py::dict used_params = self.get_params(true);
-            py::dict default_params = svr{}.get_params(true);
+            const py::dict used_params = self.get_params(true);
+            const py::dict default_params = svr{}.get_params(true);
 
             std::vector<std::string> non_default_values{};
 
@@ -440,7 +456,7 @@ void init_sklearn_svr(py::module_ &m) {
                 // return a tuple that fully encodes the state of the object
                 return py::make_tuple(self.svm_->get_params(), self.epsilon_, self.max_iter_);
             },
-            [](py::tuple t) {  // __setstate__
+            [](py::tuple t) {  // NOLINT: __setstate__
                 if (t.size() != 3) {
                     throw std::runtime_error{ "Invalid state!" };
                 }

@@ -91,7 +91,7 @@ class csvr : virtual public csvm {
     /**
      * @copydoc plssvm::csvm::~csvm() noexcept
      */
-    ~csvr() noexcept = default;
+    ~csvr() noexcept override = default;
 
     //*************************************************************************************************************************************//
     //                                                              fit model                                                              //
@@ -134,7 +134,7 @@ class csvr : virtual public csvm {
 
         PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_EVENT("fit start");
 
-        igor::parser parser{ named_args... };
+        const igor::parser parser{ named_args... };
 
         // compile time check: only named parameters are permitted
         static_assert(!parser.has_unnamed_arguments(), "Can only use named parameter!");
@@ -293,7 +293,8 @@ class csvr : virtual public csvm {
     template <typename label_type>
     [[nodiscard]] real_type score(const regression_model<label_type> &model, const regression_data_set<label_type> &data) const {
         // the data set must contain labels in order to score the learned model
-        if (!data.has_labels()) {
+        const std::optional<std::vector<label_type>> &correct_labels_opt = data.labels();
+        if (!correct_labels_opt.has_value()) {
             throw invalid_parameter_exception{ "The data set to score must have labels!" };
         }
         // the number of features must be equal
@@ -312,7 +313,7 @@ class csvr : virtual public csvm {
         // predict labels
         const std::vector<label_type> predicted_labels = this->predict(model, data);
         // correct labels
-        const std::vector<label_type> &correct_labels = *data.labels();
+        const std::vector<label_type> &correct_labels = correct_labels_opt.value();
 
         return regression_report{ correct_labels, predicted_labels }.loss().r2_score;
     }

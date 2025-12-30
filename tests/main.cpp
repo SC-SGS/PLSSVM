@@ -9,7 +9,7 @@
  * @brief Contains the googletest main function. Sets the DeathTest to "threadsafe" execution instead of "fast".
  */
 
-#include "plssvm/environment.hpp"  // plssvm::environment::{scope_guard, initialize, finalize}
+#include "plssvm/environment.hpp"  // plssvm::environment::{scope_guard, finalize}
 
 #include "gtest/gtest.h"  // RUN_ALL_TESTS, ::testing::{InitGoogleTest, GTEST_FLAG},GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST definitions
 
@@ -60,9 +60,13 @@ GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(Exception);
     #pragma clang diagnostic pop
 #endif
 
-static void ensure_finalization() {
+namespace {
+
+void ensure_finalization() {
     plssvm::environment::finalize();
 }
+
+}  // namespace
 
 int main(int argc, char **argv) {
     ::testing::InitGoogleTest(&argc, argv);

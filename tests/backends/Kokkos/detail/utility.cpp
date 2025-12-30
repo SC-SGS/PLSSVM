@@ -12,19 +12,12 @@
 
 #include "plssvm/backends/execution_range.hpp"               // plssvm::detail::dim_type
 #include "plssvm/backends/Kokkos/detail/device_wrapper.hpp"  // plssvm::kokkos::detail::device_wrapper
-#include "plssvm/backends/Kokkos/exceptions.hpp"             // plssvm::kokkos::backend_exception
-#include "plssvm/backends/Kokkos/execution_space.hpp"        // plssvm::kokkos::{execution_space, kokkos_type_to_execution_space_v}
-#include "plssvm/detail/utility.hpp"                         // plssvm::detail::contains
+#include "plssvm/backends/Kokkos/execution_spaces.hpp"       // plssvm::kokkos::execution_space
 #include "plssvm/target_platforms.hpp"                       // plssvm::target_platform
 
-#include "Kokkos_Core.hpp"  // Kokkos::ExecutionSpace
+#include "tests/utility.hpp"  // util::for_each_variant_type
 
-#include "tests/custom_test_macros.hpp"  // EXPECT_THROW_WHAT
-#include "tests/utility.hpp"             // util::for_each_variant_type
-
-#include "fmt/core.h"     // fmt::format
-#include "gmock/gmock.h"  // EXPECT_THAT; ::testing::AnyOf
-#include "gtest/gtest.h"  // TEST, EXPECT_NE
+#include "gtest/gtest.h"  // TEST, EXPECT_EQ, EXPECT_NE, EXPECT_TRUE, EXPECT_FALSE, EXPECT_GE, SCOPED_TRACE
 
 #include <map>      // std::map
 #include <regex>    // std::regex, std::regex::extended, std::regex_match
@@ -32,7 +25,7 @@
 #include <variant>  // std::variant
 #include <vector>   // std::vector
 
-TEST(KokkosUtility, is_type_in_variant) {
+TEST(KokkosUtility, IsTypeInVariant) {
     // check type trait that determines if a type is contained in a type trait
     using variant_type = std::variant<int, double, bool, std::string>;
 
@@ -44,7 +37,7 @@ TEST(KokkosUtility, is_type_in_variant) {
     EXPECT_FALSE((plssvm::kokkos::detail::impl::is_type_in_variant_v<float, variant_type>) );
 }
 
-TEST(KokkosUtility, dim_type_to_native) {
+TEST(KokkosUtility, DimTypeToNative) {
     // create a dim_type
     constexpr plssvm::detail::dim_type dim{ 128ull, 64ull, 32ull };
 
@@ -55,7 +48,7 @@ TEST(KokkosUtility, dim_type_to_native) {
     EXPECT_EQ(native_dim, 262'144);  // = 128 * 64 * 32
 }
 
-TEST(KokkosUtility, available_target_platform_to_execution_space_mapping) {
+TEST(KokkosUtility, AvailableTargetPlatformToExecutionSpaceMapping) {
     // get the target_platform <-> execution_space mappings
     const std::map<plssvm::target_platform, std::vector<plssvm::kokkos::execution_space>> mapping = plssvm::kokkos::detail::available_target_platform_to_execution_space_mapping();
 
@@ -72,22 +65,24 @@ TEST(KokkosUtility, available_target_platform_to_execution_space_mapping) {
 struct device_name_test {
     template <typename ExecutionSpace>
     void operator()() const {
-        // get the device name of the default Kokkos execution space
-        const std::string name = plssvm::kokkos::detail::get_device_name(plssvm::kokkos::detail::device_wrapper{ ExecutionSpace{} });
-        SCOPED_TRACE(name);
+        // get the device name of the specified Kokkos execution space
+        const std::string device_name = plssvm::kokkos::detail::get_device_name(plssvm::kokkos::detail::device_wrapper{ ExecutionSpace{} });
+        SCOPED_TRACE(device_name);
 
-        // the returned device name may not be empty or unknown
-        EXPECT_FALSE(name.empty());
-        EXPECT_NE(name, std::string{ "unknown" });
+        // must not be empty
+        EXPECT_FALSE(device_name.empty());
+        // must not start or end with whitespace
+        const std::regex reg{ R"([^\s](?:.*[^\s])?)" };
+        EXPECT_TRUE(std::regex_match(device_name, reg));
     }
 };
 
-TEST(KokkosUtility, get_device_name) {
+TEST(KokkosUtility, GetDeviceName) {
     using variant_type = typename plssvm::kokkos::detail::impl::create_device_variant_type::type;
     util::for_each_variant_type<variant_type>(device_name_test{});
 }
 
-TEST(KokkosUtility, get_kokkos_version) {
+TEST(KokkosUtility, GetKokkosVersion) {
     const std::regex reg{ "[0-9]+\\.[0-9]+\\.[0-9]+", std::regex::extended };
     EXPECT_TRUE(std::regex_match(plssvm::kokkos::detail::get_kokkos_version(), reg));
 }

@@ -204,11 +204,11 @@ class file_reader {
     /// The content of the file. Pointer to the memory mapped area or to a separately allocated memory area holding the file's content. If the file is empty, corresponds to a `nullptr`!
     char *file_content_{ nullptr };
     /// The content of the file IF memory mapping wasn't available or successful. In this case, `file_content_` points to this std::string's data. Otherwise, this std::string isn't used.
-    std::string fallback_file_content_{};
+    std::string fallback_file_content_;
     /// The number of bytes stored in file_content_.
     std::streamsize num_bytes_{ 0 };
     /// The parsed content of file_content_: a vector of all lines that are not empty and do not start with the provided comment.
-    std::vector<std::string_view> lines_{};
+    std::vector<std::string_view> lines_;
     /// `true` if a file is currently associated wih this file_reader, `false` otherwise.
     bool is_open_{ false };
 };

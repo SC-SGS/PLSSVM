@@ -43,7 +43,6 @@
     #include "plssvm/backends/OpenCL/csvm.hpp"  // plssvm::opencl::csvm, plssvm::csvm_backend_exists_v
 #endif
 #if defined(PLSSVM_HAS_SYCL_BACKEND)
-using namespace plssvm::PLSSVM_SYCL_BACKEND_PREFERRED_IMPLEMENTATION;
     #if defined(PLSSVM_SYCL_BACKEND_HAS_DPCPP)
         #include "plssvm/backends/SYCL/DPCPP/csvm.hpp"  // plssvm::dpcpp::csvm, plssvm::csvm_backend_exists_v
     #endif
@@ -103,10 +102,10 @@ template <typename base_csvm_type, typename backend_csvm_type, typename... Args>
 template <typename base_csvm_type, typename... Args>
 [[nodiscard]] inline std::unique_ptr<base_csvm_type> make_csvm_sycl_impl([[maybe_unused]] Args &&...args) {
     // check igor parameter
-    igor::parser parser{ args... };
+    const igor::parser parser{ args... };
 
     // get the SYCL implementation type to use
-    sycl::implementation_type impl_type = sycl::implementation_type::automatic;
+    sycl::implementation_type impl_type = sycl::implementation_type::automatic;  // NOLINT: can be modified in compile-time if later on
     // check whether a specific SYCL implementation type has been requested
     if constexpr (parser.has(sycl_implementation_type)) {
         // compile time check: the value must have the correct type
@@ -174,8 +173,8 @@ template <typename base_csvm_type, typename... Args>
  * @return the C-SVM (`[[nodiscard]]`)
  */
 template <typename csvm_type, typename... Args>
-[[nodiscard]] inline std::unique_ptr<csvm_type> make_csvm(const backend_type backend, Args... args) {
-    return detail::make_csvm_impl<csvm_type>(backend, args...);
+[[nodiscard]] inline std::unique_ptr<csvm_type> make_csvm(const backend_type backend, Args &&...args) {
+    return detail::make_csvm_impl<csvm_type>(backend, std::forward<Args>(args)...);
 }
 
 /**
@@ -186,8 +185,8 @@ template <typename csvm_type, typename... Args>
  * @return the C-SVM (`[[nodiscard]]`)
  */
 template <typename csvm_type, typename... Args>
-[[nodiscard]] inline std::unique_ptr<csvm_type> make_csvm(Args... args) {
-    return detail::make_csvm_impl<csvm_type>(backend_type::automatic, args...);
+[[nodiscard]] inline std::unique_ptr<csvm_type> make_csvm(Args &&...args) {
+    return detail::make_csvm_impl<csvm_type>(backend_type::automatic, std::forward<Args>(args)...);
 }
 
 /**
@@ -199,8 +198,8 @@ template <typename csvm_type, typename... Args>
  * @return the C-SVC (`[[nodiscard]]`)
  */
 template <typename... Args>
-[[nodiscard]] inline std::unique_ptr<csvc> make_csvc(const backend_type backend, Args... args) {
-    return detail::make_csvm_impl<csvc>(backend, args...);
+[[nodiscard]] inline std::unique_ptr<csvc> make_csvc(const backend_type backend, Args &&...args) {
+    return detail::make_csvm_impl<csvc>(backend, std::forward<Args>(args)...);
 }
 
 /**
@@ -211,8 +210,8 @@ template <typename... Args>
  * @return the C-SVC (`[[nodiscard]]`)
  */
 template <typename... Args>
-[[nodiscard]] inline std::unique_ptr<csvc> make_csvc(Args... args) {
-    return detail::make_csvm_impl<csvc>(backend_type::automatic, args...);
+[[nodiscard]] inline std::unique_ptr<csvc> make_csvc(Args &&...args) {
+    return detail::make_csvm_impl<csvc>(backend_type::automatic, std::forward<Args>(args)...);
 }
 
 /**
@@ -224,8 +223,8 @@ template <typename... Args>
  * @return the C-SVR (`[[nodiscard]]`)
  */
 template <typename... Args>
-[[nodiscard]] inline std::unique_ptr<csvr> make_csvr(const backend_type backend, Args... args) {
-    return detail::make_csvm_impl<csvr>(backend, args...);
+[[nodiscard]] inline std::unique_ptr<csvr> make_csvr(const backend_type backend, Args &&...args) {
+    return detail::make_csvm_impl<csvr>(backend, std::forward<Args>(args)...);
 }
 
 /**
@@ -236,8 +235,8 @@ template <typename... Args>
  * @return the C-SVR (`[[nodiscard]]`)
  */
 template <typename... Args>
-[[nodiscard]] inline std::unique_ptr<csvr> make_csvr(Args... args) {
-    return detail::make_csvm_impl<csvr>(backend_type::automatic, args...);
+[[nodiscard]] inline std::unique_ptr<csvr> make_csvr(Args &&...args) {
+    return detail::make_csvm_impl<csvr>(backend_type::automatic, std::forward<Args>(args)...);
 }
 
 }  // namespace plssvm

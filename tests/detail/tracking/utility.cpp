@@ -10,16 +10,13 @@
 
 #include "plssvm/detail/tracking/utility.hpp"
 
-#include "gtest/gtest.h"  // TEST, ASSERT_EQ, EXPECT_EQ, ::testing::StaticAssertTypeEq
+#include "gtest/gtest.h"  // TEST, ASSERT_EQ, EXPECT_EQ
 
-#include <chrono>       // std::chrono::steady_clock::{time_point, now}, std::chrono::milliseconds
-#include <cstddef>      // std::size_t
-#include <optional>     // std::optional, std::nullopt
-#include <string>       // std::string
-#include <type_traits>  // std::result_of_t
-#include <vector>       // std::vector
+#include <chrono>   // std::chrono::steady_clock::{time_point, now}, std::chrono::milliseconds, std::chrono literals
+#include <cstddef>  // std::size_t
+#include <vector>   // std::vector
 
-TEST(TrackingUtility, durations_from_reference_time) {
+TEST(TrackingUtility, DurationsFromReferenceTime) {
     // create different time points
     std::vector<std::chrono::steady_clock::time_point> time_points{ std::chrono::steady_clock::now() };
     for (std::size_t i = 0; i < 3; ++i) {
@@ -30,12 +27,12 @@ TEST(TrackingUtility, durations_from_reference_time) {
     const std::vector<std::chrono::milliseconds> durations = plssvm::detail::tracking::durations_from_reference_time(time_points, time_points.front());
 
     // check the durations
-    using namespace std::chrono_literals;
+    using namespace std::chrono_literals;  // NOLINT: included via <chrono>
     ASSERT_EQ(durations.size(), 4);
-    EXPECT_EQ(durations, (std::vector<std::chrono::milliseconds>{ 0ms, 50ms, 100ms, 150ms }));
+    EXPECT_EQ(durations, (std::vector<std::chrono::milliseconds>{ 0ms, 50ms, 100ms, 150ms }));  // NOLINT(misc-include-cleaner): included via <chrono>
 }
 
-TEST(TrackingUtility, time_points_to_epoch) {
+TEST(TrackingUtility, TimePointsToEpoch) {
     // create different time points
     std::vector<std::chrono::steady_clock::time_point> time_points{ std::chrono::steady_clock::now() };
     for (std::size_t i = 0; i < 3; ++i) {

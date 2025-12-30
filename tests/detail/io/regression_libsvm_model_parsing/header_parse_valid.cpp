@@ -21,7 +21,7 @@
 #include "gtest/gtest.h"  // TYPED_TEST, TYPED_TEST_SUITE, EXPECT_EQ, ASSERT_EQ, ::testing::Test
 
 #include <cstddef>  // std::size_t
-#include <variant>  // std::get
+#include <utility>  // std::get
 
 template <typename T>
 class LIBSVMRegressionModelHeaderParseValid : public ::testing::Test {
@@ -76,7 +76,7 @@ class LIBSVMRegressionModelHeaderParseValid : public ::testing::Test {
 
 TYPED_TEST_SUITE(LIBSVMRegressionModelHeaderParseValid, util::regression_label_type_kernel_function_type_gtest, naming::test_parameter_to_name);
 
-TYPED_TEST(LIBSVMRegressionModelHeaderParseValid, read) {
+TYPED_TEST(LIBSVMRegressionModelHeaderParseValid, Read) {
     using label_type = typename TestFixture::fixture_label_type;
     constexpr plssvm::kernel_function_type kernel = TestFixture::fixture_kernel;
 

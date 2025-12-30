@@ -11,11 +11,12 @@
 
 #ifndef PLSSVM_BACKENDS_KOKKOS_DETAIL_DEVICE_VIEW_WRAPPER_HPP_
 #define PLSSVM_BACKENDS_KOKKOS_DETAIL_DEVICE_VIEW_WRAPPER_HPP_
+#pragma once
 
 #include "plssvm/backends/Kokkos/detail/constexpr_available_execution_spaces.hpp"  // plssvm::kokkos::detail::constexpr_available_execution_spaces
 #include "plssvm/backends/Kokkos/detail/device_wrapper.hpp"                        // plssvm::kokkos::detail::device_wrapper
-#include "plssvm/backends/Kokkos/execution_space.hpp"                              // plssvm::kokkos::execution_space
 #include "plssvm/backends/Kokkos/execution_space_type_traits.hpp"                  // plssvm::kokkos::execution_space_to_kokkos_type_t
+#include "plssvm/backends/Kokkos/execution_spaces.hpp"                             // plssvm::kokkos::execution_space
 #include "plssvm/detail/type_traits.hpp"                                           // plssvm::detail::remove_cvref_t
 
 #include "Kokkos_Core.hpp"  // Kokkos::View, Kokkos::ExecutionSpace
@@ -147,7 +148,7 @@ class device_view_wrapper {
      * @param[in] rhs the second device view wrapper
      * @return `true` if both underlying `std::variant`s are equal, otherwise `false` (`[[nodiscard]]`)
      */
-    [[nodiscard]] friend bool operator==(const device_view_wrapper &lhs, const device_view_wrapper &rhs) noexcept {
+    [[nodiscard]] friend bool operator==(const device_view_wrapper &lhs, const device_view_wrapper &rhs) {
         return lhs.v_ == rhs.v_;
     }
 
@@ -157,7 +158,7 @@ class device_view_wrapper {
      * @param[in] rhs the second device view wrapper
      * @return `true` if both underlying `std::variant`s are unequal, otherwise `false` (`[[nodiscard]]`)
      */
-    [[nodiscard]] friend bool operator!=(const device_view_wrapper &lhs, const device_view_wrapper &rhs) noexcept {
+    [[nodiscard]] friend bool operator!=(const device_view_wrapper &lhs, const device_view_wrapper &rhs) {
         return !(lhs == rhs);
     }
 

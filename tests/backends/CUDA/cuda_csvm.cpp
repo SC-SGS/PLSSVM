@@ -10,7 +10,6 @@
 
 #include "plssvm/backends/CUDA/csvm.hpp"        // plssvm::cuda::{csvm, csvc, csvr}
 #include "plssvm/backends/CUDA/exceptions.hpp"  // plssvm::cuda::backend_exception
-#include "plssvm/detail/type_list.hpp"          // plssvm::detail::label_type_list
 #include "plssvm/kernel_function_types.hpp"     // plssvm::kernel_function_type
 #include "plssvm/parameter.hpp"                 // plssvm::parameter
 #include "plssvm/target_platforms.hpp"          // plssvm::target_platform
@@ -42,7 +41,7 @@ class CUDACSVMConstructor : public ::testing::Test,
 TYPED_TEST_SUITE(CUDACSVMConstructor, cuda_csvm_types_gtest, naming::test_parameter_to_name);
 
 // check whether the constructor correctly fails when using an incompatible target platform
-TYPED_TEST(CUDACSVMConstructor, default_construct) {
+TYPED_TEST(CUDACSVMConstructor, DefaultConstruct) {
     using csvm_type = typename TestFixture::fixture_csvm_type;
 
 #if defined(PLSSVM_HAS_NVIDIA_TARGET)
@@ -55,7 +54,7 @@ TYPED_TEST(CUDACSVMConstructor, default_construct) {
 #endif
 }
 
-TYPED_TEST(CUDACSVMConstructor, construct_parameter) {
+TYPED_TEST(CUDACSVMConstructor, ConstructParameter) {
     using csvm_type = typename TestFixture::fixture_csvm_type;
 
 #if defined(PLSSVM_HAS_NVIDIA_TARGET)
@@ -68,7 +67,7 @@ TYPED_TEST(CUDACSVMConstructor, construct_parameter) {
 #endif
 }
 
-TYPED_TEST(CUDACSVMConstructor, construct_target_and_parameter) {
+TYPED_TEST(CUDACSVMConstructor, ConstructTargetAndParameter) {
     using csvm_type = typename TestFixture::fixture_csvm_type;
 
     // create parameter struct
@@ -99,7 +98,7 @@ TYPED_TEST(CUDACSVMConstructor, construct_target_and_parameter) {
                       "Invalid target platform 'gpu_intel' for the CUDA backend!");
 }
 
-TYPED_TEST(CUDACSVMConstructor, construct_named_args) {
+TYPED_TEST(CUDACSVMConstructor, ConstructNamedArgs) {
     using csvm_type = typename TestFixture::fixture_csvm_type;
 
 #if defined(PLSSVM_HAS_NVIDIA_TARGET)
@@ -116,7 +115,7 @@ TYPED_TEST(CUDACSVMConstructor, construct_named_args) {
 #endif
 }
 
-TYPED_TEST(CUDACSVMConstructor, construct_target_and_named_args) {
+TYPED_TEST(CUDACSVMConstructor, ConstructTargetAndNamedArgs) {
     using csvm_type = typename TestFixture::fixture_csvm_type;
 
 #if defined(PLSSVM_HAS_NVIDIA_TARGET)

@@ -23,7 +23,6 @@
 #include "tests/exceptions/utility.hpp"  // util::exception_type_name
 
 #include "fmt/format.h"   // fmt::format
-#include "fmt/ostream.h"  // directly output types with an operator<< overload using fmt
 #include "fmt/ranges.h"   // fmt::join, directly output a std::tuple
 #include "gtest/gtest.h"  // ::testing::TestParamInfo
 
@@ -128,7 +127,8 @@ PLSSVM_CREATE_HAS_MEMBER_VARIABLE_TYPE_TRAIT(space)
 
     // replace all remaining characters with '_' that are not alphanumeric values or underscores
     for (char &c : str) {
-        if (!std::isalnum(static_cast<int>(c)) && c != '_') {
+        // std::isalnum: Non-zero value if the character is an alphanumeric character, 0 otherwise.
+        if (std::isalnum(static_cast<int>(c)) == 0 && c != '_') {
             c = '_';
         }
     }
@@ -283,7 +283,7 @@ template <typename T>
 class test_parameter_to_name {
   public:
     template <typename T>
-    static std::string GetName(int) {
+    static std::string GetName([[maybe_unused]] int i) {
         using used_type_list = typename T::types;
         using used_value_list = typename T::values;
 

@@ -9,18 +9,19 @@
  * @brief Functions for implicitly assembling the kernel matrix using the SYCL backend and the basic data parallel kernels.
  */
 
-#ifndef PLSSVM_BACKENDS_SYCL_CG_IMPLICIT_BASIC_KERNEL_MATRIX_ASSEMBLY_BLAS_HPP_
-#define PLSSVM_BACKENDS_SYCL_CG_IMPLICIT_BASIC_KERNEL_MATRIX_ASSEMBLY_BLAS_HPP_
+#ifndef PLSSVM_BACKENDS_SYCL_KERNEL_CG_IMPLICIT_BASIC_KERNEL_MATRIX_ASSEMBLY_BLAS_HPP_
+#define PLSSVM_BACKENDS_SYCL_KERNEL_CG_IMPLICIT_BASIC_KERNEL_MATRIX_ASSEMBLY_BLAS_HPP_
 #pragma once
 
 #include "plssvm/backends/SYCL/data_parallel_kernels.hpp"    // plssvm::sycl::data_parallel_kernel
 #include "plssvm/backends/SYCL/detail/atomics.hpp"           // plssvm::sycl::detail::atomic_op
 #include "plssvm/backends/SYCL/kernel/kernel_functions.hpp"  // plssvm::sycl::detail::{feature_reduce, apply_kernel_function}
-#include "plssvm/constants.hpp"                              // plssvm::{real_type, THREAD_BLOCK_SIZE}
+#include "plssvm/constants.hpp"                              // plssvm::{real_type, THREAD_BLOCK_SIZE, INTERNAL_BLOCK_SIZE}
 #include "plssvm/kernel_function_types.hpp"                  // plssvm::kernel_function_type
 
 #include "sycl/sycl.hpp"  // sycl::item
 
+#include <array>    // std::array
 #include <cstddef>  // std::size_t
 #include <tuple>    // std::tuple, std::make_tuple
 
@@ -90,7 +91,7 @@ class device_kernel_assembly_symm {
         // only calculate the upper triangular matrix
         if (i_idx >= j_idx) {
             // create a work-item private array used for internal caching
-            real_type temp[INTERNAL_BLOCK_SIZE][INTERNAL_BLOCK_SIZE]{};
+            std::array<std::array<real_type, INTERNAL_BLOCK_SIZE>, INTERNAL_BLOCK_SIZE> temp{};
 
             //*************************************************************************//
             //                   inplace kernel matrix construction                    //
@@ -165,7 +166,6 @@ class device_kernel_assembly_symm {
   private:
     /// @cond Doxygen_suppress
     const real_type alpha_;
-
     const real_type *q_;
     const real_type *data_;
     const std::size_t num_rows_;
@@ -185,4 +185,4 @@ class device_kernel_assembly_symm {
 
 }  // namespace plssvm::sycl::detail::basic
 
-#endif  // PLSSVM_BACKENDS_SYCL_CG_IMPLICIT_BASIC_KERNEL_MATRIX_ASSEMBLY_BLAS_HPP_
+#endif  // PLSSVM_BACKENDS_SYCL_KERNEL_CG_IMPLICIT_BASIC_KERNEL_MATRIX_ASSEMBLY_BLAS_HPP_

@@ -9,14 +9,13 @@
 #include "plssvm/detail/cmd/parser_predict.hpp"
 
 #include "plssvm/backend_types.hpp"                        // plssvm::list_available_backends
-#include "plssvm/backends/Kokkos/execution_space.hpp"      // plssvm::kokkos::{list_available_execution_spaces, execution_space}
+#include "plssvm/backends/Kokkos/execution_spaces.hpp"     // plssvm::kokkos::{list_available_execution_spaces, execution_space}
 #include "plssvm/backends/SYCL/data_parallel_kernels.hpp"  // plssvm::sycl::{list_available_sycl_data_parallel_kernels, data_parallel_kernels}
 #include "plssvm/backends/SYCL/implementation_types.hpp"   // plssvm::sycl::{list_available_sycl_implementations, implementation_type}
 #include "plssvm/constants.hpp"                            // plssvm::real_type
 #include "plssvm/detail/assert.hpp"                        // PLSSVM_ASSERT
 #include "plssvm/detail/cmd/utility.hpp"                   // plssvm::detail::cmd::{filter_argv, kernel_type_help_message, parse_and_check_sycl_options_if_available,
-                                                           // parse_and_check_kokkos_options_if_available, parse_and_check_mpi_options_if_available, parse_verbosity}
-#include "plssvm/detail/logging/mpi_log_untracked.hpp"     // plssvm::detail::log_untracked
+                                                           // parse_and_check_kokkos_options_if_available, parse_and_check_mpi_options_if_available, parse_verbosity, max_cmd_width}
 #include "plssvm/exceptions/exceptions.hpp"                // plssvm::cmd_parser_exit
 #include "plssvm/mpi/communicator.hpp"                     // plssvm::mpi::communicator
 #include "plssvm/target_platforms.hpp"                     // plssvm::target_platform, plssvm::list_available_target_platforms
@@ -53,7 +52,7 @@ parser_predict::parser_predict(const mpi::communicator &comm, int argc, char **a
         .positional_help("test_file model_file [output_file]")
         .show_positional_help();
     options
-        .set_width(150)
+        .set_width(max_cmd_width)
         .set_tab_expansion()
         // clang-format off
         .add_options()
@@ -96,7 +95,7 @@ parser_predict::parser_predict(const mpi::communicator &comm, int argc, char **a
     }
 
     // print help message and exit
-    if (result.count("help")) {
+    if (result.contains("help")) {
         if (comm.is_main_rank()) {
             std::cout << options.help() << std::endl;
         }
@@ -104,7 +103,7 @@ parser_predict::parser_predict(const mpi::communicator &comm, int argc, char **a
     }
 
     // print version info
-    if (result.count("version")) {
+    if (result.contains("version")) {
         if (comm.is_main_rank()) {
             std::cout << version::detail::get_version_info("plssvm-predict") << std::endl;
         }
@@ -149,7 +148,7 @@ parser_predict::parser_predict(const mpi::communicator &comm, int argc, char **a
     }
 
     // parse test data filename
-    if (!result.count("test")) {
+    if (!result.contains("test")) {
         if (comm.is_main_rank()) {
             std::cerr << fmt::format(fmt::fg(fmt::color::red), "ERROR: missing test file!\n") << std::endl;
             std::cout << options.help() << std::endl;
@@ -159,7 +158,7 @@ parser_predict::parser_predict(const mpi::communicator &comm, int argc, char **a
     input_filename = result["test"].as<decltype(input_filename)>();
 
     // parse model filename
-    if (!result.count("model")) {
+    if (!result.contains("model")) {
         if (comm.is_main_rank()) {
             std::cerr << fmt::format(fmt::fg(fmt::color::red), "ERROR: missing model file!\n") << std::endl;
             std::cout << options.help() << std::endl;
@@ -169,7 +168,7 @@ parser_predict::parser_predict(const mpi::communicator &comm, int argc, char **a
     model_filename = result["model"].as<decltype(model_filename)>();
 
     // parse output filename
-    if (result.count("output")) {
+    if (result.contains("output")) {
         predict_filename = result["output"].as<decltype(predict_filename)>();
     } else {
         const std::filesystem::path input_path{ input_filename };
@@ -177,7 +176,7 @@ parser_predict::parser_predict(const mpi::communicator &comm, int argc, char **a
     }
 
     // parse performance tracking filename
-    if (result.count("performance_tracking")) {
+    if (result.contains("performance_tracking")) {
         performance_tracking_filename = result["performance_tracking"].as<decltype(performance_tracking_filename)>();
     }
 

@@ -11,9 +11,9 @@
 
 #include "plssvm/mpi/detail/utility.hpp"
 
-#include "plssvm/exceptions/exceptions.hpp"  // plssvm::mpi_exception
-
 #if defined(PLSSVM_HAS_MPI_ENABLED)
+    #include "plssvm/exceptions/exceptions.hpp"  // plssvm::mpi_exception
+
     #include "mpi.h"  // MPI_SUCCESS, MPI_ERR_COMM
 #endif
 
@@ -21,7 +21,7 @@
 
 #include <string>  // std::string
 
-TEST(MPIUtility, mpi_error_check) {
+TEST(MPIUtility, MPIErrorCheck) {
     // test error check macro
 #if defined(PLSSVM_HAS_MPI_ENABLED)
     // if MPI is enabled, MPI_SUCCESS may never throw
@@ -35,7 +35,7 @@ TEST(MPIUtility, mpi_error_check) {
 #endif
 }
 
-TEST(MPIUtility, node_name) {
+TEST(MPIUtility, NodeName) {
     // the MPI node name may not be empty
     EXPECT_FALSE(plssvm::mpi::detail::node_name().empty());
 }

@@ -9,8 +9,8 @@
  * @brief Functions for explicitly assembling the kernel matrix using the HIP backend.
  */
 
-#ifndef PLSSVM_BACKENDS_HIP_CG_EXPLICIT_KERNEL_MATRIX_ASSEMBLY_HIP_HPP_
-#define PLSSVM_BACKENDS_HIP_CG_EXPLICIT_KERNEL_MATRIX_ASSEMBLY_HIP_HPP_
+#ifndef PLSSVM_BACKENDS_HIP_KERNEL_CG_EXPLICIT_KERNEL_MATRIX_ASSEMBLY_HIP_HPP_
+#define PLSSVM_BACKENDS_HIP_KERNEL_CG_EXPLICIT_KERNEL_MATRIX_ASSEMBLY_HIP_HPP_
 #pragma once
 
 #include "plssvm/backends/HIP/kernel/kernel_functions.hip.hpp"  // plssvm::hip::detail::{feature_reduce, apply_kernel_function}
@@ -32,7 +32,7 @@ namespace plssvm::hip::detail {
  * @param[in] data the data points to calculate the kernel matrix from
  * @param[in] num_rows the total number of data points (= total number of rows)
  * @param[in] device_num_rows the number of rows the current device is responsible for
- * @param[in] device_row_offset the first row in @p data_d the current device is responsible for
+ * @param[in] device_row_offset the first row in @p data the current device is responsible for
  * @param[in] num_features the number of features per data point
  * @param[in] q the vector used in the dimensional reduction
  * @param[in] QA_cost the scalar used in the dimensional reduction
@@ -128,4 +128,4 @@ __global__ void device_kernel_assembly(real_type *kernel_matrix, const real_type
 
 }  // namespace plssvm::hip::detail
 
-#endif  // PLSSVM_BACKENDS_HIP_CG_EXPLICIT_KERNEL_MATRIX_ASSEMBLY_HIP_HPP_
+#endif  // PLSSVM_BACKENDS_HIP_KERNEL_CG_EXPLICIT_KERNEL_MATRIX_ASSEMBLY_HIP_HPP_

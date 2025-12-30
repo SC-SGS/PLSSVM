@@ -16,9 +16,10 @@
 #include "gtest/gtest.h"  // TEST, EXPECT_TRUE, EXPECT_GE
 
 #include <sstream>  // std::istringstream
+#include <vector>   // std::vector
 
 // check whether the plssvm::sycl::data_parallel_kernel -> std::string conversions are correct
-TEST(SYCLDataParallelKernel, to_string) {
+TEST(SYCLDataParallelKernel, ToString) {
     // check conversions to std::string
     EXPECT_CONVERSION_TO_STRING(plssvm::sycl::data_parallel_kernel::automatic, "automatic");
     EXPECT_CONVERSION_TO_STRING(plssvm::sycl::data_parallel_kernel::basic, "basic");
@@ -27,13 +28,13 @@ TEST(SYCLDataParallelKernel, to_string) {
     EXPECT_CONVERSION_TO_STRING(plssvm::sycl::data_parallel_kernel::scoped, "scoped");
 }
 
-TEST(SYCLDataParallelKernel, to_string_unknown) {
+TEST(SYCLDataParallelKernel, ToStringUnknown) {
     // check conversions to std::string from unknown file_format_type
     EXPECT_CONVERSION_TO_STRING(static_cast<plssvm::sycl::data_parallel_kernel>(5), "unknown");
 }
 
 // check whether the std::string -> plssvm::sycl::data_parallel_kernel conversions are correct
-TEST(SYCLDataParallelKernel, from_string) {
+TEST(SYCLDataParallelKernel, FromString) {
     // check conversion from std::string
     EXPECT_CONVERSION_FROM_STRING("automatic", plssvm::sycl::data_parallel_kernel::automatic);
     EXPECT_CONVERSION_FROM_STRING("AUTOMATIC", plssvm::sycl::data_parallel_kernel::automatic);
@@ -51,7 +52,7 @@ TEST(SYCLDataParallelKernel, from_string) {
     EXPECT_CONVERSION_FROM_STRING("SCOPED", plssvm::sycl::data_parallel_kernel::scoped);
 }
 
-TEST(SYCLDataParallelKernel, from_string_unknown) {
+TEST(SYCLDataParallelKernel, FromStringUnknown) {
     // foo isn't a valid file_format_type
     std::istringstream input{ "foo" };
     plssvm::sycl::data_parallel_kernel data_parallel_kernel_type{};
@@ -59,7 +60,7 @@ TEST(SYCLDataParallelKernel, from_string_unknown) {
     EXPECT_TRUE(input.fail());
 }
 
-TEST(SYCLDataParallelKernel, minimal_available_sycl_data_parallel_kernels) {
+TEST(SYCLDataParallelKernel, MinimalAvailableSYCLDataParallelKernels) {
     const std::vector<plssvm::sycl::data_parallel_kernel> data_parallel_kernel_types = plssvm::sycl::list_available_sycl_data_parallel_kernels();
 
     // at least three must be available (automatic, basic, and work_group)!

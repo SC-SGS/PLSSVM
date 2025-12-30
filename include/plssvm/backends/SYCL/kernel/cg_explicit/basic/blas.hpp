@@ -9,8 +9,8 @@
  * @brief Functions for explicitly performing a BLAS GEMM like matrix-matrix multiplication using the SYCL backend and the basic data parallel kernels.
  */
 
-#ifndef PLSSVM_BACKENDS_SYCL_CG_EXPLICIT_BASIC_BLAS_HPP_
-#define PLSSVM_BACKENDS_SYCL_CG_EXPLICIT_BASIC_BLAS_HPP_
+#ifndef PLSSVM_BACKENDS_SYCL_KERNEL_CG_EXPLICIT_BASIC_BLAS_HPP_
+#define PLSSVM_BACKENDS_SYCL_KERNEL_CG_EXPLICIT_BASIC_BLAS_HPP_
 #pragma once
 
 #include "plssvm/backends/SYCL/data_parallel_kernels.hpp"  // plssvm::sycl::data_parallel_kernel
@@ -18,6 +18,7 @@
 
 #include "sycl/sycl.hpp"  // sycl::item
 
+#include <array>    // std::array
 #include <cstddef>  // std::size_t
 
 namespace plssvm::sycl::detail::basic {
@@ -73,7 +74,7 @@ class device_kernel_symm {
         const auto j_idx = (idx.get_id(0) + grid_y_offset_ * THREAD_BLOCK_SIZE_uz) * INTERNAL_BLOCK_SIZE_uz;  // device_num_rows
 
         // create a work-item private array used for internal caching
-        real_type temp[INTERNAL_BLOCK_SIZE][INTERNAL_BLOCK_SIZE]{};
+        std::array<std::array<real_type, INTERNAL_BLOCK_SIZE_uz>, INTERNAL_BLOCK_SIZE_uz> temp{};
 
         // perform the dot product calculation
         for (std::size_t dim = 0; dim < (num_rows_ - device_row_offset_); ++dim) {
@@ -182,7 +183,7 @@ class device_kernel_symm_mirror {
         const auto j_idx = (idx.get_id(0) + grid_y_offset_ * THREAD_BLOCK_SIZE_uz) * INTERNAL_BLOCK_SIZE_uz;  // num_mirror_rows
 
         // create a work-item private array used for internal caching
-        real_type temp[INTERNAL_BLOCK_SIZE][INTERNAL_BLOCK_SIZE]{};
+        std::array<std::array<real_type, INTERNAL_BLOCK_SIZE_uz>, INTERNAL_BLOCK_SIZE_uz> temp{};
 
         // perform the dot product calculation
         for (std::size_t dim = 0; dim < device_num_rows_; ++dim) {
@@ -351,4 +352,4 @@ class device_kernel_inplace_matrix_scale {
 
 }  // namespace plssvm::sycl::detail::basic
 
-#endif  // PLSSVM_BACKENDS_SYCL_CG_EXPLICIT_BASIC_BLAS_HPP_
+#endif  // PLSSVM_BACKENDS_SYCL_KERNEL_CG_EXPLICIT_BASIC_BLAS_HPP_

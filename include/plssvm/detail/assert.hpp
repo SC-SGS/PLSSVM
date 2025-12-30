@@ -50,7 +50,7 @@ inline void check_assertion(const bool cond, const std::string_view cond_str, co
             "  @ line             {}\n\n"
             "{}\n",
             fmt::format(fmt::emphasis::bold | fmt::fg(fmt::color::green), "{}", cond_str),
-            loc.world_rank().has_value() ? fmt::format("  on MPI world rank  {}\n", loc.world_rank().value()) : std::string{},
+            loc.world_rank().has_value() ? fmt::format("  on MPI world rank  {}\n", loc.world_rank().value()) : std::string{},  // NOLINT(bugprone-unchecked-optional-access): false positive, optional access is checked
             loc.file_name(),
             loc.function_name(),
             loc.line(),

@@ -36,7 +36,10 @@ To predict to which class a new, unseen data point belongs, the SVM simply has t
 This is very efficient since it only involves a single scalar product of the size corresponding to the numer of features per data point in the data set.
 
 <p align="center">
-  <img alt="Basic idea of an Support Vector Machine as classification model." src="https://github.com/SC-SGS/PLSSVM/raw/main/.figures/support_vector_machine.png" width="50%">
+  <img 
+    alt="Basic idea of an Support Vector Machine as classification model." 
+    src="https://github.com/SC-SGS/PLSSVM/raw/main/.figures/support_vector_machine.png" 
+    style="max-width:600px; width:50%; height:auto;">
 </p>
 
 However, normal SVMs suffer from their potential parallelizability.
@@ -104,10 +107,10 @@ General dependencies:
 
 - a C++17 capable compiler (e.g. [`gcc`](https://gcc.gnu.org/) or [`clang`](https://clang.llvm.org/))
 - [CMake](https://cmake.org/) 3.25 or newer
-- [cxxopts ≥ v3.2.0](https://github.com/jarro2783/cxxopts), [fast_float ≥ v8.0.2](https://github.com/fastfloat/fast_float), [{fmt} ≥ v11.0.2](https://github.com/fmtlib/fmt), and [igor](https://github.com/bluescarni/igor) (all four are automatically build during the CMake configuration if they couldn't be found using the respective `find_package` call)
+- [cxxopts ≥ v3.3.1](https://github.com/jarro2783/cxxopts), [fast_float ≥ v8.1.0](https://github.com/fastfloat/fast_float), [{fmt} ≥ v12.0.0](https://github.com/fmtlib/fmt), and [igor](https://github.com/bluescarni/igor) (all four are automatically build during the CMake configuration if they couldn't be found using the respective `find_package` call)
 - [GoogleTest ≥ v1.16.0](https://github.com/google/googletest) if testing is enabled (automatically build during the CMake configuration if `find_package(GTest)` wasn't successful)
 - [doxygen](https://www.doxygen.nl/index.html) if documentation generation is enabled
-- [Pybind11 ≥ v3.0.0](https://github.com/pybind/pybind11) if Python bindings are enabled
+- [Pybind11 ≥ v3.0.1](https://github.com/pybind/pybind11) if Python bindings are enabled
 - [OpenMP](https://www.openmp.org/) 4.0 or newer (optional) to speed-up library utilities (like file parsing)
 - [MPI](https://www.mpi-forum.org/) if distributed memory systems should be supported; [mpi4py](https://mpi4py.readthedocs.io/en/stable/) to enable interoperability in our Python bindings
 - [Format.cmake](https://github.com/TheLartians/Format.cmake) if auto formatting via cmake-format and clang-format is enabled; it also requires at least clang-format-18 and git, additionally, needs our custom [cmake-format fork](https://github.com/vancraar/cmake_format) incorporating some patches
@@ -373,7 +376,7 @@ If more than one SYCL implementation is available the environment variables `PLS
 
 If the Kokkos backend is available, an additional option can be set.
 
-- `PLSSVM_KOKKOS_BACKEND_SYCL_ENABLE_MULTI_GPU` (default: `OFF`): enable multi-GPU support for the Kokkos::SYCL execution space; broken in Kokkos as of version 4.6.00!
+- `PLSSVM_KOKKOS_BACKEND_SYCL_ENABLE_MULTI_GPU` (default: `OFF`): enable multi-GPU support for the Kokkos::SYCL execution space; broken in Kokkos as of version 4.6.01!
 
 If the stdpar backend is available, an additional option can be set.
 
@@ -462,6 +465,19 @@ However, these additional options can be enabled using normal CMake options.
 
 **Note**: the only difference between the dpcpp and icpx presets is the automatically set `CMAKE_CXX_COMPILER`. Internally, both presets use the same SYCL implementation.
 
+#### HPX and including the hpx_main.hpp header
+
+HPX defines some command line options to change its runtime behavior, e.g., `--hpx:threads`.
+However, it also defines some shortcuts for these command line options like `-t`.
+The problem is that these shortcut command line options are likely to collide with other command line options. 
+In the example above the HPX `-t` option to set the number of used threads collides with PLSSVM's `-t` option to determine the kernel function leading to unwanted behavior.
+The only way to disable HPX's shortcut command line options is by including `"hpx/hpx_main.hpp"` which is automatically done in our `"plssvm/environment.hpp"` header.
+However, the [HPX documentation](https://hpx-docs.stellar-group.org/latest/html/manual/starting_the_hpx_runtime.html) states that this header should only be included in the main executable or otherwise linker errors wil occur.
+If the `"plssvm/environment.hpp"` header is included in another file, like in our case the custom GoogleTest main implementation, the `"hpx/hpx_main.cpp"` should not be included.
+This can be achieved by specifying `PLSSVM_HPX_DO_NOT_INCLUDE_HPX_MAIN` before including our header.
+
+All of this also applies to the Kokkos::HPX execution space.
+
 ### Running the Tests
 
 To run the tests after building the library (with `PLSSVM_ENABLE_TESTING` set to `ON`) use:
@@ -535,7 +551,7 @@ The documentation of the current main branch can be found [here](https://sc-sgs.
 The library supports the `install` target:
 
 ```bash
-cmake --build . -- install
+cmake --build . --target install
 ```
 
 Afterward, the necessary exports should be performed:
@@ -667,7 +683,7 @@ An example invocation generating a linear regression data set consisting of 1000
 python3 generate_data.py --output data_file --format libsvm --problem linear --samples 1000 --features 200 regression
 ```
 
-### Training using `plssvm-train`
+### Training using plssvm-train
 
 ```bash
 ./plssvm-train --help
@@ -763,7 +779,7 @@ If the `--sycl_data_parallel_kernel` is `automatic`, the `work_group` data paral
 If the `--sycl_implementation_type` is `automatic`, the used SYCL implementation is determined by the `PLSSVM_SYCL_BACKEND_PREFERRED_IMPLEMENTATION` CMake flag.
 If the `--kokkos_execution_space` is `automatic`, uses the best fitting execution space based on the provided and/or available target platforms.
 
-### Predicting using `plssvm-predict`
+### Predicting using plssvm-predict
 
 Our `plssvm-predict` utility is fully conforming to LIBSVM's model files. 
 This means that our `plssvm-predict` can be used on model files learned with, e.g., LIBSVM's `svm-train`. 
@@ -842,7 +858,7 @@ Another example targeting NVIDIA GPUs using the SYCL backend looks like:
 
 The `--target_platform=automatic` and `--sycl_implementation_type` flags work like in the training (`./plssvm-train`) case.
 
-### Data Scaling using `plssvm-scale`
+### Data Scaling using plssvm-scale
 
 ```bash
 ./plssvm-scale --help
@@ -911,6 +927,22 @@ Our MPI implementation, however, currently has some limitations:
 - in the CG algorithm we communicate the whole matrix, although it would be enough to communicate only matrix parts
 - **only** the **main** MPI rank (per default rank 0) writes the output files
 - `plssvm-scale` **does not** support more than one MPI rank
+
+### Device Filtering
+
+Since PLSSVM supports devices from different target platforms as well as multiple devices from a single target platform,
+it may be necessary to filter them at runtime to, e.g., select only a single GPU in a multi-GPU setup.
+In general, this device filtering is done using environment variables. 
+However, the exact environment variable and syntax depends on the used backend:
+
+- `CUDA`: use [`CUDA_VISIBLE_DEVICES`](https://docs.nvidia.com/deploy/topics/topic_5_2_1.html) (e.g., `CUDA_VISIBLE_DEVICES=0,2`)
+- `HIP`: use [`HIP_VISIBLE_DEVICES`](https://rocm.docs.amd.com/en/latest/conceptual/gpu-isolation.html#hip-visible-devices) (e.g., `HIP_VISIBLE_DEVICES=0,2`)
+- `OpenCL`: use the PLSSVM specific `PLSSVM_OPENCL_DEVICE_FILTER` variable (e.g., `PLSSVM_OPENCL_DEVICE_FILTER=gpu_nvidia:0;gpu_nvidia:2`) with the syntax: `target_platform:device_id;...`;
+alternatively, in many cases the respective vendor mechanism can also be used
+- `SYCL` using DPC++/icpx: use [`ONEAPI_DEVICE_SELECTOR`](https://intel.github.io/llvm/EnvironmentVariables.html#oneapi-device-selector) (e.g., `ONEAPI_DEVICE_SELECTOR=cuda:0,2`)
+- `SYCL` using AdaptiveCpp: use [`ACPP_VISIBILITY_MASK`](https://github.com/AdaptiveCpp/AdaptiveCpp/blob/develop/doc/env_variables.md) for a broader backend level selector and the respective vendor specific environment variables for a more fine-grained selection mechanism
+- `Kokkos`: use the mechanism form the respective execution space
+- `stdpar`: use the mechanism from the respective implementation
 
 ### Example Code for PLSSVM Used as a Library
 
@@ -1048,7 +1080,7 @@ endforeach ()
 The `examples/python` directory contains the same examples using our PLSSVM Python bindings. 
 Additionally, it contains Python examples leveraging MPI to target distributed memory systems. 
 
-### Example Using the `sklearn` like Python Bindings Available For PLSSVM
+### Example Using the sklearn like Python Bindings Available For PLSSVM
 
 A classification example using PLSSVM's `SVC` Python binding and sklearn's breast cancer data set:
 
@@ -1095,7 +1127,7 @@ sklearn.inspection.DecisionBoundaryDisplay.from_estimator(
 )
 
 # scatter plot the decision boundary
-viridis = plt.cm.get_cmap('viridis', len(np.unique(y)))
+viridis = plt.get_cmap('viridis', len(np.unique(y)))
 plt.scatter(X[:, 0], X[:, 1],
             cmap=viridis,
             c=y,
@@ -1123,7 +1155,10 @@ weighted avg       0.91      0.91      0.91       569
 Score: 91.39%
 ```
 <p align="center">
-  <img alt="Example classification task breast cancer decision boundary output." src="https://github.com/SC-SGS/PLSSVM/raw/regression/.figures/classification_example.png" width="80%">
+  <img 
+    alt="Example classification task breast cancer decision boundary output." 
+    src="https://github.com/SC-SGS/PLSSVM/raw/develop/.figures/classification_example.png" 
+    style="max-width:600px; width:80%; height:auto;">
 </p>
 
 A regression example comparing PLSSVM's `SVR` Python binding and `sklearn.SVR` using a sine curve:
@@ -1190,14 +1225,17 @@ plt.show()
 ```
 with an example output:
 <p align="center">
-  <img alt="Example regression output using a sine curve." src="https://github.com/SC-SGS/PLSSVM/raw/regression/.figures/regression_example.png" width="80%">
+  <img 
+    alt="Example regression output using a sine curve." 
+    src="https://github.com/SC-SGS/PLSSVM/raw/develop/.figures/regression_example.png" 
+    style="max-width:600px; width:50%; height:auto;">
 </p>
 
 Note that currently not all sklearn `SVC` and `SVR` functionality has been implemented in PLSSVM.
 The respective functions will throw a Python `AttributeError` if called.
 For a detailed overview of the functions that are currently implemented, see [our API documentation](bindings/Python/README.md).
 
-There are more examples located in the `examples/python/sklearn` directory that are copied from the sklearn repository and slightly changed for PLSSVM.
+There are more examples located in the [examples/python/sklearn](examples/python/sklearn/README.md) directory that are copied from the sklearn repository and slightly changed for PLSSVM.
 
 ## Citing PLSSVM
 

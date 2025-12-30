@@ -9,18 +9,19 @@
  * @brief Functions for implicitly assembling the kernel matrix using the SYCL backend and the work-group data parallel kernels.
  */
 
-#ifndef PLSSVM_BACKENDS_SYCL_CG_IMPLICIT_WORK_GROUP_KERNEL_MATRIX_ASSEMBLY_BLAS_HPP_
-#define PLSSVM_BACKENDS_SYCL_CG_IMPLICIT_WORK_GROUP_KERNEL_MATRIX_ASSEMBLY_BLAS_HPP_
+#ifndef PLSSVM_BACKENDS_SYCL_KERNEL_CG_IMPLICIT_WORK_GROUP_KERNEL_MATRIX_ASSEMBLY_BLAS_HPP_
+#define PLSSVM_BACKENDS_SYCL_KERNEL_CG_IMPLICIT_WORK_GROUP_KERNEL_MATRIX_ASSEMBLY_BLAS_HPP_
 #pragma once
 
 #include "plssvm/backends/SYCL/data_parallel_kernels.hpp"    // plssvm::sycl::data_parallel_kernel
 #include "plssvm/backends/SYCL/detail/atomics.hpp"           // plssvm::sycl::detail::atomic_op
 #include "plssvm/backends/SYCL/kernel/kernel_functions.hpp"  // plssvm::sycl::detail::{feature_reduce, apply_kernel_function}
-#include "plssvm/constants.hpp"                              // plssvm::real_type
+#include "plssvm/constants.hpp"                              // plssvm::real_type, plssvm:::THREAD_BLOCK_SIZE, plssvm::INTERNAL_BLOCK_SIZE
 #include "plssvm/kernel_function_types.hpp"                  // plssvm::kernel_function_type
 
 #include "sycl/sycl.hpp"  // sycl::handler, sycl::range, sycl::nd_item
 
+#include <array>    // std::array
 #include <cstddef>  // std::size_t
 #include <tuple>    // std::tuple, std::make_tuple
 
@@ -40,7 +41,6 @@ class device_kernel_assembly_symm {
 
     /**
      * @brief Initialize the SYCL kernel function object.
-     * @param[in] cgh the SYCL handler used to allocate the local memory
      * @param[in] alpha the scalar alpha value
      * @param[in] q the vector used in the dimensional reduction
      * @param[in] data the data points to calculate the implicit kernel matrix from
@@ -108,15 +108,15 @@ class device_kernel_assembly_symm {
         // only calculate the upper triangular matrix -> can't use get_local_id() since all work-items in a work-group must progress further
         if (blockIdx_y >= blockIdx_x) {
             // create a work-item private array used for internal caching
-            real_type temp[INTERNAL_BLOCK_SIZE][INTERNAL_BLOCK_SIZE]{};
+            std::array<std::array<real_type, INTERNAL_BLOCK_SIZE>, INTERNAL_BLOCK_SIZE> temp{};
 
             //*************************************************************************//
             //                   inplace kernel matrix construction                    //
             //*************************************************************************//
             {
                 // rename cached arrays
-                auto &data_i_cache = cache_one_;  // [THREAD_BLOCK_SIZE][INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE]
-                auto &data_j_cache = cache_two_;  // [THREAD_BLOCK_SIZE][INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE]
+                const auto &data_i_cache = cache_one_;  // [THREAD_BLOCK_SIZE][INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE]
+                const auto &data_j_cache = cache_two_;  // [THREAD_BLOCK_SIZE][INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE]
 
                 // iterate over all features using blocking to be able to cache them for faster memory accesses
                 for (std::size_t feature_block = 0; feature_block < num_features_; feature_block += THREAD_BLOCK_SIZE_uz) {
@@ -174,8 +174,8 @@ class device_kernel_assembly_symm {
             //*************************************************************************//
             {
                 // rename cached arrays
-                auto &B_cache = cache_one_;      // [INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE][THREAD_BLOCK_SIZE]
-                auto &C_out_cache = cache_two_;  // [INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE][THREAD_BLOCK_SIZE]
+                const auto &B_cache = cache_one_;      // [INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE][THREAD_BLOCK_SIZE]
+                const auto &C_out_cache = cache_two_;  // [INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE][THREAD_BLOCK_SIZE]
 
                 // iterate over all classes using blocking to be able to cache them for faster memory accesses
                 for (std::size_t class_block = 0; class_block < num_classes_; class_block += THREAD_BLOCK_SIZE_uz) {
@@ -231,8 +231,8 @@ class device_kernel_assembly_symm {
             //*************************************************************************//
             {
                 // rename cached arrays
-                auto &B_cache = cache_one_;      // [THREAD_BLOCK_SIZE][INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE]
-                auto &C_out_cache = cache_two_;  // [THREAD_BLOCK_SIZE][INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE]
+                const auto &B_cache = cache_one_;      // [THREAD_BLOCK_SIZE][INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE]
+                const auto &C_out_cache = cache_two_;  // [THREAD_BLOCK_SIZE][INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE]
 
                 // iterate over all classes using blocking to be able to cache them for faster memory accesses
                 for (std::size_t class_block = 0; class_block < num_classes_; class_block += THREAD_BLOCK_SIZE_uz) {
@@ -298,4 +298,4 @@ class device_kernel_assembly_symm {
 
 }  // namespace plssvm::sycl::detail::work_group
 
-#endif  // PLSSVM_BACKENDS_SYCL_CG_IMPLICIT_WORK_GROUP_KERNEL_MATRIX_ASSEMBLY_BLAS_HPP_
+#endif  // PLSSVM_BACKENDS_SYCL_KERNEL_CG_IMPLICIT_WORK_GROUP_KERNEL_MATRIX_ASSEMBLY_BLAS_HPP_

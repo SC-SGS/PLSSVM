@@ -12,7 +12,7 @@
 
 #include "gtest/gtest.h"  // TEST, EXPECT_EQ
 
-TEST(ArithmeticTypeName, type) {
+TEST(ArithmeticTypeName, Type) {
     EXPECT_EQ(plssvm::detail::arithmetic_type_name<bool>(), "bool");
 
     // character types
@@ -39,7 +39,7 @@ TEST(ArithmeticTypeName, type) {
     EXPECT_EQ(plssvm::detail::arithmetic_type_name<long double>(), "long double");
 }
 
-TEST(ArithmeticTypeName, const_type) {
+TEST(ArithmeticTypeName, ConstType) {
     EXPECT_EQ(plssvm::detail::arithmetic_type_name<const bool>(), "const bool");
 
     // character types
@@ -66,7 +66,7 @@ TEST(ArithmeticTypeName, const_type) {
     EXPECT_EQ(plssvm::detail::arithmetic_type_name<const long double>(), "const long double");
 }
 
-TEST(ArithmeticTypeName, volatile_type) {
+TEST(ArithmeticTypeName, VolatileType) {
     EXPECT_EQ(plssvm::detail::arithmetic_type_name<volatile bool>(), "volatile bool");
 
     // character types
@@ -93,7 +93,7 @@ TEST(ArithmeticTypeName, volatile_type) {
     EXPECT_EQ(plssvm::detail::arithmetic_type_name<volatile long double>(), "volatile long double");
 }
 
-TEST(ArithmeticTypeName, const_volatile_type) {
+TEST(ArithmeticTypeName, ConstVolatileType) {
     EXPECT_EQ(plssvm::detail::arithmetic_type_name<const volatile bool>(), "const volatile bool");
 
     // character types

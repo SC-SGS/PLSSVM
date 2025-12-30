@@ -49,7 +49,7 @@ class CSVCFactory : public ::testing::Test,
 
 TYPED_TEST_SUITE(CSVCFactory, util::csvc_types_gtest, naming::test_parameter_to_name);
 
-TYPED_TEST(CSVCFactory, factory_backend) {
+TYPED_TEST(CSVCFactory, FactoryBackend) {
     using backend_type = typename TestFixture::fixture_backend_type;
 
     const plssvm::backend_type backend = plssvm::csvm_to_backend_type_v<backend_type>;
@@ -69,13 +69,13 @@ TYPED_TEST(CSVCFactory, factory_backend) {
     }
 }
 
-TEST(CSVCFactory, factory_default) {
+TEST(CSVCFactory, FactoryDefault) {
     // with the automatic backend type there MUST be a C-SVR creatable
     EXPECT_NO_THROW(std::ignore = plssvm::make_csvc());
     EXPECT_NO_THROW(std::ignore = plssvm::make_csvm<plssvm::csvc>());
 }
 
-TYPED_TEST(CSVCFactory, factory_backend_parameter) {
+TYPED_TEST(CSVCFactory, FactoryBackendParameter) {
     using backend_type = typename TestFixture::fixture_backend_type;
 
     // the backend to use
@@ -98,7 +98,7 @@ TYPED_TEST(CSVCFactory, factory_backend_parameter) {
     }
 }
 
-TEST(CSVCFactory, factory_parameter) {
+TEST(CSVCFactory, FactoryParameter) {
     // create the parameter class used
     const plssvm::parameter params{};
     // with the automatic backend type there MUST be a C-SVR creatable
@@ -106,7 +106,7 @@ TEST(CSVCFactory, factory_parameter) {
     EXPECT_NO_THROW(std::ignore = plssvm::make_csvm<plssvm::csvc>(params));
 }
 
-TYPED_TEST(CSVCFactory, factory_backend_target) {
+TYPED_TEST(CSVCFactory, FactoryBackendTarget) {
     using backend_type = typename TestFixture::fixture_backend_type;
 
     // the backend to use
@@ -129,7 +129,7 @@ TYPED_TEST(CSVCFactory, factory_backend_target) {
     }
 }
 
-TEST(CSVCFactory, factory_target) {
+TEST(CSVCFactory, FactoryTarget) {
     // the target platform to use
     const plssvm::target_platform target = plssvm::target_platform::automatic;
     // with the automatic backend type there MUST be a C-SVR creatable
@@ -137,7 +137,7 @@ TEST(CSVCFactory, factory_target) {
     EXPECT_NO_THROW(std::ignore = plssvm::make_csvm<plssvm::csvc>(target));
 }
 
-TYPED_TEST(CSVCFactory, factory_backend_target_and_parameter) {
+TYPED_TEST(CSVCFactory, FactoryBackendTargetAndParameter) {
     using backend_type = typename TestFixture::fixture_backend_type;
 
     // the backend to use
@@ -162,7 +162,7 @@ TYPED_TEST(CSVCFactory, factory_backend_target_and_parameter) {
     }
 }
 
-TEST(CSVCFactory, factory_target_and_parameter) {
+TEST(CSVCFactory, FactoryTargetAndParameter) {
     // the target platform to use
     const plssvm::target_platform target = plssvm::target_platform::automatic;
     // create the parameter class used
@@ -172,7 +172,7 @@ TEST(CSVCFactory, factory_target_and_parameter) {
     EXPECT_NO_THROW(std::ignore = plssvm::make_csvm<plssvm::csvc>(target, params));
 }
 
-TYPED_TEST(CSVCFactory, factory_backend_target_and_named_parameter) {
+TYPED_TEST(CSVCFactory, FactoryBackendTargetAndNamedParameter) {
     using backend_type = typename TestFixture::fixture_backend_type;
 
     // the backend to use
@@ -197,7 +197,7 @@ TYPED_TEST(CSVCFactory, factory_backend_target_and_named_parameter) {
     }
 }
 
-TEST(CSVCFactory, factory_target_and_named_parameter) {
+TEST(CSVCFactory, FactoryTargetAndNamedParameter) {
     // the target platform to use
     const plssvm::target_platform target = plssvm::target_platform::automatic;
     // the kernel function to use
@@ -207,7 +207,7 @@ TEST(CSVCFactory, factory_target_and_named_parameter) {
     EXPECT_NO_THROW(std::ignore = plssvm::make_csvm<plssvm::csvc>(target, plssvm::kernel_type = kernel_type, plssvm::gamma = 0.01));
 }
 
-TYPED_TEST(CSVCFactory, factory_backend_named_parameter) {
+TYPED_TEST(CSVCFactory, FactoryBackendNamedParameter) {
     using backend_type = typename TestFixture::fixture_backend_type;
 
     // the backend to use
@@ -230,7 +230,7 @@ TYPED_TEST(CSVCFactory, factory_backend_named_parameter) {
     }
 }
 
-TEST(CSVCFactory, factory_named_parameter) {
+TEST(CSVCFactory, FactoryNamedParameter) {
     // the kernel function to use
     const plssvm::kernel_function_type kernel_type = plssvm::kernel_function_type::polynomial;
     // with the automatic backend type there MUST be a C-SVR creatable
@@ -238,7 +238,7 @@ TEST(CSVCFactory, factory_named_parameter) {
     EXPECT_NO_THROW(std::ignore = plssvm::make_csvm<plssvm::csvc>(plssvm::kernel_type = kernel_type, plssvm::gamma = 0.01));
 }
 
-TEST(CSVCFactory, invalid_backend) {
+TEST(CSVCFactory, InvalidBackend) {
     EXPECT_THROW_WHAT(std::ignore = plssvm::make_csvc(static_cast<plssvm::backend_type>(9)),
                       plssvm::unsupported_backend_exception,
                       "Unrecognized backend provided!");
@@ -247,7 +247,7 @@ TEST(CSVCFactory, invalid_backend) {
                       "Unrecognized backend provided!");
 }
 
-TEST(CSVCFactory, unsupported_backend) {
+TEST(CSVCFactory, UnsupportedBackend) {
     if constexpr (plssvm::csvm_backend_exists_v<plssvm::cuda::csvm>) {
         EXPECT_THROW_WHAT(std::ignore = plssvm::make_csvc(plssvm::backend_type::cuda, plssvm::sycl_implementation_type = plssvm::sycl::implementation_type::automatic),
                           plssvm::unsupported_backend_exception,
@@ -273,7 +273,7 @@ class SYCLCSVCFactory : public CSVCFactory<T> {
 
 TYPED_TEST_SUITE(SYCLCSVCFactory, util::sycl_csvc_types_gtest);
 
-TYPED_TEST(SYCLCSVCFactory, factory_backend) {
+TYPED_TEST(SYCLCSVCFactory, FactoryBackend) {
     using sycl_backend_type = typename TestFixture::fixture_sycl_backend_type;
 
     const plssvm::backend_type backend = plssvm::csvm_to_backend_type_v<sycl_backend_type>;
@@ -293,7 +293,7 @@ TYPED_TEST(SYCLCSVCFactory, factory_backend) {
     }
 }
 
-TYPED_TEST(SYCLCSVCFactory, factory_backend_parameter) {
+TYPED_TEST(SYCLCSVCFactory, FactoryBackendParameter) {
     using sycl_backend_type = typename TestFixture::fixture_sycl_backend_type;
 
     // the backend to use
@@ -316,7 +316,7 @@ TYPED_TEST(SYCLCSVCFactory, factory_backend_parameter) {
     }
 }
 
-TYPED_TEST(SYCLCSVCFactory, factory_backend_target) {
+TYPED_TEST(SYCLCSVCFactory, FactoryBackendTarget) {
     using sycl_backend_type = typename TestFixture::fixture_sycl_backend_type;
 
     // the backend to use
@@ -339,7 +339,7 @@ TYPED_TEST(SYCLCSVCFactory, factory_backend_target) {
     }
 }
 
-TYPED_TEST(SYCLCSVCFactory, factory_backend_target_and_parameter) {
+TYPED_TEST(SYCLCSVCFactory, FactoryBackendTargetAndParameter) {
     using sycl_backend_type = typename TestFixture::fixture_sycl_backend_type;
 
     // the backend to use
@@ -364,7 +364,7 @@ TYPED_TEST(SYCLCSVCFactory, factory_backend_target_and_parameter) {
     }
 }
 
-TYPED_TEST(SYCLCSVCFactory, factory_backend_target_and_named_parameter) {
+TYPED_TEST(SYCLCSVCFactory, FactoryBackendTargetAndNamedParameter) {
     using sycl_backend_type = typename TestFixture::fixture_sycl_backend_type;
 
     // the backend to use
@@ -389,7 +389,7 @@ TYPED_TEST(SYCLCSVCFactory, factory_backend_target_and_named_parameter) {
     }
 }
 
-TYPED_TEST(SYCLCSVCFactory, factory_backend_named_parameter) {
+TYPED_TEST(SYCLCSVCFactory, FactoryBackendNamedParameter) {
     using sycl_backend_type = typename TestFixture::fixture_sycl_backend_type;
 
     // the backend to use
@@ -412,7 +412,7 @@ TYPED_TEST(SYCLCSVCFactory, factory_backend_named_parameter) {
     }
 }
 
-TEST(SYCLCSVCFactory, invalid_sycl_implementation) {
+TEST(SYCLCSVCFactory, InvalidSYCLImplementation) {
     EXPECT_THROW_WHAT(std::ignore = plssvm::make_csvc(plssvm::backend_type::sycl, plssvm::sycl_implementation_type = static_cast<plssvm::sycl::implementation_type>(3)),
                       plssvm::unsupported_backend_exception,
                       "No sycl backend available!");

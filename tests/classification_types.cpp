@@ -18,19 +18,19 @@
 #include <tuple>    // std::ignore
 
 // check whether the plssvm::classification_type -> std::string conversions are correct
-TEST(ClassificationType, to_string) {
+TEST(ClassificationType, ToString) {
     // check conversions to std::string
     EXPECT_CONVERSION_TO_STRING(plssvm::classification_type::oaa, "oaa");
     EXPECT_CONVERSION_TO_STRING(plssvm::classification_type::oao, "oao");
 }
 
-TEST(ClassificationType, to_string_unknown) {
+TEST(ClassificationType, ToStringUnknown) {
     // check conversions to std::string from unknown classification_type
     EXPECT_CONVERSION_TO_STRING(static_cast<plssvm::classification_type>(2), "unknown");
 }
 
 // check whether the std::string -> plssvm::classification_type conversions are correct
-TEST(ClassificationType, from_string) {
+TEST(ClassificationType, FromString) {
     // check conversion from std::string
     EXPECT_CONVERSION_FROM_STRING("oaa", plssvm::classification_type::oaa);
     EXPECT_CONVERSION_FROM_STRING("OAA", plssvm::classification_type::oaa);
@@ -49,7 +49,7 @@ TEST(ClassificationType, from_string) {
     EXPECT_CONVERSION_FROM_STRING("one_vs_one", plssvm::classification_type::oao);
 }
 
-TEST(ClassificationType, from_string_unknown) {
+TEST(ClassificationType, FromStringUnknown) {
     // foo isn't a valid classification_type
     std::istringstream input{ "foo" };
     plssvm::classification_type classification{};
@@ -57,18 +57,18 @@ TEST(ClassificationType, from_string_unknown) {
     EXPECT_TRUE(input.fail());
 }
 
-TEST(ClassificationType, classification_type_to_full_string) {
+TEST(ClassificationType, ClassificationTypeToFullString) {
     // check conversion from plssvm::classification_type to a full string
     EXPECT_EQ(plssvm::classification_type_to_full_string(plssvm::classification_type::oaa), "one vs. all");
     EXPECT_EQ(plssvm::classification_type_to_full_string(plssvm::classification_type::oao), "one vs. one");
 }
 
-TEST(ClassificationType, classification_type_to_full_string_unknown) {
+TEST(ClassificationType, ClassificationTypeToFullStringUnknown) {
     // check conversion from unknown classification_typ to a full string
     EXPECT_EQ(plssvm::classification_type_to_full_string(static_cast<plssvm::classification_type>(2)), "unknown");
 }
 
-TEST(ClassificationType, calculate_number_of_classifiers) {
+TEST(ClassificationType, CalculateNumberOfClassifiers) {
     // check whether the number of weights for OAA is correct
     EXPECT_EQ(calculate_number_of_classifiers(plssvm::classification_type::oaa, 2), 2);
     EXPECT_EQ(calculate_number_of_classifiers(plssvm::classification_type::oaa, 3), 3);
@@ -82,12 +82,12 @@ TEST(ClassificationType, calculate_number_of_classifiers) {
     EXPECT_EQ(calculate_number_of_classifiers(plssvm::classification_type::oao, 42), 861);
 }
 
-TEST(ClassificationType, calculate_number_of_classifiers_unknown) {
+TEST(ClassificationType, CalculateNumberOfClassifiersUnknown) {
     // should return 0 if the provided classification_type is invalid
     EXPECT_EQ(calculate_number_of_classifiers(static_cast<plssvm::classification_type>(2), 2), 0);
 }
 
-TEST(ClassificationTypeDeathTest, too_few_classes) {
+TEST(ClassificationTypeDeathTest, TooFewClasses) {
     // at least two classes must be provided
     EXPECT_DEATH(std::ignore = plssvm::calculate_number_of_classifiers(plssvm::classification_type::oaa, 1), "At least two classes must be given!");
     EXPECT_DEATH(std::ignore = plssvm::calculate_number_of_classifiers(plssvm::classification_type::oao, 0), "At least two classes must be given!");

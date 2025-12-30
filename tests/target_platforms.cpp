@@ -19,7 +19,7 @@
 #include <vector>   // std::vector
 
 // check whether the plssvm::target_platform -> std::string conversions are correct
-TEST(TargetPlatform, to_string) {
+TEST(TargetPlatform, ToString) {
     // check conversions to std::string
     EXPECT_CONVERSION_TO_STRING(plssvm::target_platform::automatic, "automatic");
     EXPECT_CONVERSION_TO_STRING(plssvm::target_platform::cpu, "cpu");
@@ -28,13 +28,13 @@ TEST(TargetPlatform, to_string) {
     EXPECT_CONVERSION_TO_STRING(plssvm::target_platform::gpu_intel, "gpu_intel");
 }
 
-TEST(TargetPlatform, to_string_unknown) {
+TEST(TargetPlatform, ToStringUnknown) {
     // check conversions to std::string from unknown target_platform
     EXPECT_CONVERSION_TO_STRING(static_cast<plssvm::target_platform>(5), "unknown");
 }
 
 // check whether the std::string -> plssvm::target_platform conversions are correct
-TEST(TargetPlatform, from_string) {
+TEST(TargetPlatform, FromString) {
     // check conversion from std::string
     EXPECT_CONVERSION_FROM_STRING("automatic", plssvm::target_platform::automatic);
     EXPECT_CONVERSION_FROM_STRING("AUTOmatic", plssvm::target_platform::automatic);
@@ -50,7 +50,7 @@ TEST(TargetPlatform, from_string) {
     EXPECT_CONVERSION_FROM_STRING("GPU_INTEL", plssvm::target_platform::gpu_intel);
 }
 
-TEST(TargetPlatform, from_string_unknown) {
+TEST(TargetPlatform, FromStringUnknown) {
     // foo isn't a valid target_platform
     std::istringstream input{ "foo" };
     plssvm::target_platform platform{};
@@ -58,7 +58,7 @@ TEST(TargetPlatform, from_string_unknown) {
     EXPECT_TRUE(input.fail());
 }
 
-TEST(TargetPlatform, minimal_available_target_platform) {
+TEST(TargetPlatform, MinimalAvailableTargetPlatforms) {
     // get the available target platforms
     const std::vector<plssvm::target_platform> platform = plssvm::list_available_target_platforms();
 
@@ -69,13 +69,13 @@ TEST(TargetPlatform, minimal_available_target_platform) {
     EXPECT_THAT(platform, ::testing::Contains(plssvm::target_platform::automatic));
 }
 
-TEST(TargetPlatform, determine_default_target_platform) {
+TEST(TargetPlatform, DetermineDefaultTargetPlatform) {
     // the determined default platform must not be target_platform::automatic
     const plssvm::target_platform target = plssvm::determine_default_target_platform();
     EXPECT_NE(target, plssvm::target_platform::automatic);
 }
 
-TEST(TargetPlatform, determine_target_platform) {
+TEST(TargetPlatform, DetermineTargetPlatform) {
     // if only one platform is available, the default platform must be this platform
     EXPECT_EQ(plssvm::determine_default_target_platform({ plssvm::target_platform::gpu_nvidia }), plssvm::target_platform::gpu_nvidia);
     EXPECT_EQ(plssvm::determine_default_target_platform({ plssvm::target_platform::gpu_amd }), plssvm::target_platform::gpu_amd);

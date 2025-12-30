@@ -11,7 +11,7 @@
 #include "plssvm/backend_types.hpp"                                                    // plssvm::backend_type
 #include "plssvm/backends/execution_range.hpp"                                         // plssvm::detail::{dim_type, execution_range}
 #include "plssvm/backends/HIP/detail/device_ptr.hip.hpp"                               // plssvm::hip::detail::device_ptr
-#include "plssvm/backends/HIP/detail/utility.hip.hpp"                                  // PLSSVM_HIP_ERROR_CHECK, plssvm::hip::detail::{device_synchronize, get_device_count, set_device, peek_at_last_error, get_runtime_version}
+#include "plssvm/backends/HIP/detail/utility.hip.hpp"                                  // PLSSVM_HIP_ERROR_CHECK, plssvm::hip::detail::{device_synchronize, get_device_count, set_device, peek_at_last_error, get_device_name, get_runtime_version}
 #include "plssvm/backends/HIP/exceptions.hpp"                                          // plssvm::hip::backend_exception
 #include "plssvm/backends/HIP/kernel/cg_explicit/blas.hip.hpp"                         // plssvm::hip::detail::{device_kernel_symm, device_kernel_symm_mirror, device_kernel_inplace_matrix_add, device_kernel_inplace_matrix_scale}
 #include "plssvm/backends/HIP/kernel/cg_explicit/kernel_matrix_assembly.hip.hpp"       // plssvm::hip::detail::device_kernel_assembly
@@ -24,11 +24,10 @@
 #include "plssvm/detail/memory_size.hpp"                                               // plssvm::detail::memory_size
 #include "plssvm/detail/tracking/performance_tracker.hpp"                              // plssvm::detail::tracking::tracking_entry, PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY
 #include "plssvm/exceptions/exceptions.hpp"                                            // plssvm::exception
-#include "plssvm/gamma.hpp"                                                            // plssvm::gamma_type
 #include "plssvm/kernel_function_types.hpp"                                            // plssvm::kernel_function_type
 #include "plssvm/mpi/communicator.hpp"                                                 // plssvm::mpi::communicator
 #include "plssvm/mpi/detail/information.hpp"                                           // plssvm::mpi::detail::gather_and_print_csvm_information
-#include "plssvm/parameter.hpp"                                                        // plssvm::parameter, plssvm::detail::parameter
+#include "plssvm/parameter.hpp"                                                        // plssvm::parameter
 #include "plssvm/shape.hpp"                                                            // plssvm::shape
 #include "plssvm/target_platforms.hpp"                                                 // plssvm::target_platform
 #include "plssvm/verbosity_levels.hpp"                                                 // plssvm::verbosity_level
@@ -38,7 +37,6 @@
 #include "fmt/format.h"  // fmt::format
 
 #include <chrono>     // std::chrono::{steady_clock, duration_cast}
-#include <cmath>      // std::ceil
 #include <cstddef>    // std::size_t
 #include <exception>  // std::terminate
 #include <iostream>   // std::cout, std::endl
@@ -95,9 +93,7 @@ csvm::csvm(const target_platform target) {
     if (comm_.size() > 1) {
         // use MPI rank specific command line output
         for (const queue_type &device : devices_) {
-            hipDeviceProp_t prop{};
-            PLSSVM_HIP_ERROR_CHECK(hipGetDeviceProperties(&prop, device))
-            device_names.emplace_back(prop.name);
+            device_names.push_back(detail::get_device_name(device));
         }
 
         mpi::detail::gather_and_print_csvm_information(comm_, plssvm::backend_type::hip, target_, device_names);
@@ -112,16 +108,16 @@ csvm::csvm(const target_platform target) {
                                       devices_.size());
 
         for (const queue_type &device : devices_) {
+            device_names.push_back(detail::get_device_name(device));
             hipDeviceProp_t prop{};
             PLSSVM_HIP_ERROR_CHECK(hipGetDeviceProperties(&prop, device))
             plssvm::detail::log_untracked(verbosity_level::full,
                                           comm_,
                                           "  [{}, {}, {}.{}]\n",
                                           device,
-                                          prop.name,
+                                          device_names.back(),
                                           prop.major,
                                           prop.minor);
-            device_names.emplace_back(prop.name);
         }
     }
 

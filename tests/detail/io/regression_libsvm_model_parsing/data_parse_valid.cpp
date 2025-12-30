@@ -19,8 +19,7 @@
 
 #include "gtest/gtest.h"  // TEST_F, EXPECT_EQ, ASSERT_EQ, FAIL, ::testing::Test
 
-#include <cstddef>  // std::size_t
-#include <vector>   // std::vector
+#include <vector>  // std::vector
 
 class LIBSVMRegressionModelDataParseValid : public ::testing::Test,
                                             protected util::temporary_file {
@@ -57,7 +56,7 @@ class LIBSVMRegressionModelDataParseValid : public ::testing::Test,
                                                             plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE } };
 };
 
-TEST_F(LIBSVMRegressionModelDataParseValid, read) {
+TEST_F(LIBSVMRegressionModelDataParseValid, Read) {
     // parse the LIBSVM file
     plssvm::detail::io::file_reader reader{ this->filename };
     reader.read_lines('#');

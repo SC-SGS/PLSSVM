@@ -39,9 +39,11 @@ struct type_caster<plssvm::mpi::communicator> {
     /**
      * @brief Convert a plssvm::mpi::communicator to a mpi4py communicator.
      * @param[in] comm the PLSSVM MPI communicator wrapper
+     * @params[in] rvp *unused*
+     * @params[in] h *unused*
      * @return a Pybind11 handle to the mpi4py communicator
      */
-    static py::handle cast([[maybe_unused]] const plssvm::mpi::communicator &comm, py::return_value_policy, py::handle) {
+    static py::handle cast([[maybe_unused]] const plssvm::mpi::communicator &comm, [[maybe_unused]] const py::return_value_policy rvp, [[maybe_unused]] const py::handle h) {
 #if defined(PLSSVM_HAS_MPI_ENABLED)
         // we have MPI enabled
         try {
@@ -61,10 +63,11 @@ struct type_caster<plssvm::mpi::communicator> {
     /**
      * @brief Try converting a Python object @p obj to a plssvm::mpi::communicator.
      * @param[in] obj the object to convert
+     * @params[in] allow_implicit_conversions *unused*
      * @return `true` if the conversion was successful, `false` otherwise
      * @throws py::value_error if PLSSVM was built without MPI support, but a communicator was explicitly provided in Python
      */
-    bool load([[maybe_unused]] py::handle obj, bool) {
+    bool load([[maybe_unused]] py::handle obj, [[maybe_unused]] const bool allow_implicit_conversion) {
 #if defined(PLSSVM_HAS_MPI_ENABLED)
         try {
             // check if we can find mpi4py
@@ -75,31 +78,28 @@ struct type_caster<plssvm::mpi::communicator> {
                 const MPI_Fint f_handle = obj.attr("py2f")().cast<MPI_Fint>();
                 value = plssvm::mpi::communicator{ MPI_Comm_f2c(f_handle) };
                 return true;
-            } else {
-                // something else was provided -> abort type casting
-                return false;
             }
+            // something else was provided -> abort type casting
+            return false;
         } catch (const py::error_already_set &) {
             // we couldn't find mpi4py
             if (obj.is_none()) {
                 // but "comm" wasn't set -> we can use our default plssvm::mpi::communicator
                 value = plssvm::mpi::communicator{};
                 return true;
-            } else {
-                // something was provided -> abort type casting
-                return false;
             }
+            // something was provided -> abort type casting
+            return false;
         }
 #else
         // we haven't MPI enabled -> check whether the "comm" argument has been provided
         if (!obj.is_none()) {
             // "comm" has been provided -> we can't use it -> throw an exception
             throw py::value_error{ "ERROR: an MPI communicator was explicitly provided, but PLSSVM was built without support for MPI!" };
-        } else {
-            // "comm" was not provided -> use a default constructed plssvm::mpi::communicator that essentially does nothing
-            value = plssvm::mpi::communicator{};
-            return true;
         }
+        // "comm" was not provided -> use a default constructed plssvm::mpi::communicator that essentially does nothing
+        value = plssvm::mpi::communicator{};
+        return true;
 #endif
     }
 };

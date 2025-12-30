@@ -10,6 +10,10 @@
 
 #include "plssvm/backends/CUDA/kernel/detail/fill_kernel.cuh"
 
+#include "cuda_runtime_api.h"  // cudaDeviceSynchronize
+#include "driver_types.h"      // cudaMemcpyDeviceToHost
+#include "vector_types.h"      // dim3
+
 #include "tests/naming.hpp"         // util::test_parameter_to_name
 #include "tests/types_to_test.hpp"  // util::{real_type_gtest, test_parameter_type_at_t}
 
@@ -28,7 +32,7 @@ class CUDAFillUtility : public ::testing::Test {
 
 TYPED_TEST_SUITE(CUDAFillUtility, util::real_type_gtest, naming::test_parameter_to_name);
 
-TYPED_TEST(CUDAFillUtility, fill_kernel) {
+TYPED_TEST(CUDAFillUtility, FillKernel) {
     using real_type = typename TestFixture::fixture_real_type;
 
     // allocate array on the host
@@ -36,7 +40,7 @@ TYPED_TEST(CUDAFillUtility, fill_kernel) {
 
     // allocate array on the device
     real_type *vec_d{};
-    cudaMalloc((void **) &vec_d, vec.size() * sizeof(real_type));
+    cudaMalloc(&vec_d, vec.size() * sizeof(real_type));
 
     // create the block and grid partition
     const dim3 block{ 512 };
@@ -54,7 +58,7 @@ TYPED_TEST(CUDAFillUtility, fill_kernel) {
     EXPECT_TRUE(std::all_of(vec.cbegin(), vec.cend(), [](const real_type val) { return val == real_type{ 42.0 }; }));
 }
 
-TYPED_TEST(CUDAFillUtility, fill_kernel_partial) {
+TYPED_TEST(CUDAFillUtility, FillKernelPartial) {
     using real_type = typename TestFixture::fixture_real_type;
 
     // allocate array on the host
@@ -62,7 +66,7 @@ TYPED_TEST(CUDAFillUtility, fill_kernel_partial) {
 
     // allocate array on the device
     real_type *vec_d{};
-    cudaMalloc((void **) &vec_d, vec.size() * sizeof(real_type));
+    cudaMalloc(&vec_d, vec.size() * sizeof(real_type));
     cudaMemset(vec_d, 0, vec.size() * sizeof(real_type));
 
     // create the block and grid partition

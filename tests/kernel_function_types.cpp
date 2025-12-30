@@ -17,7 +17,7 @@
 #include <sstream>  // std::istringstream
 
 // check whether the plssvm::kernel_function_type -> std::string conversions are correct
-TEST(KernelType, to_string) {
+TEST(KernelType, ToString) {
     // check conversions to std::string
     EXPECT_CONVERSION_TO_STRING(plssvm::kernel_function_type::linear, "linear");
     EXPECT_CONVERSION_TO_STRING(plssvm::kernel_function_type::polynomial, "polynomial");
@@ -27,13 +27,13 @@ TEST(KernelType, to_string) {
     EXPECT_CONVERSION_TO_STRING(plssvm::kernel_function_type::chi_squared, "chi_squared");
 }
 
-TEST(KernelType, to_string_unknown) {
+TEST(KernelType, ToStringUnknown) {
     // check conversions to std::string from unknown kernel_type
     EXPECT_CONVERSION_TO_STRING(static_cast<plssvm::kernel_function_type>(6), "unknown");
 }
 
 // check whether the std::string -> plssvm::kernel_function_type conversions are correct
-TEST(KernelType, from_string) {
+TEST(KernelType, FromString) {
     // check conversion from std::string
     EXPECT_CONVERSION_FROM_STRING("linear", plssvm::kernel_function_type::linear);
     EXPECT_CONVERSION_FROM_STRING("LINEAR", plssvm::kernel_function_type::linear);
@@ -56,7 +56,7 @@ TEST(KernelType, from_string) {
     EXPECT_CONVERSION_FROM_STRING("5", plssvm::kernel_function_type::chi_squared);
 }
 
-TEST(KernelType, from_string_unknown) {
+TEST(KernelType, FromStringUnknown) {
     // foo isn't a valid kernel_type
     std::istringstream input{ "foo" };
     plssvm::kernel_function_type kernel{};
@@ -65,7 +65,7 @@ TEST(KernelType, from_string_unknown) {
 }
 
 // check whether the plssvm::kernel_function_type -> math string conversions are correct
-TEST(KernelType, kernel_to_math_string) {
+TEST(KernelType, KernelToMathString) {
     // check conversion from plssvm::kernel_function_type to the respective math function string
     EXPECT_EQ(plssvm::kernel_function_type_to_math_string(plssvm::kernel_function_type::linear), "u'*v");
     EXPECT_EQ(plssvm::kernel_function_type_to_math_string(plssvm::kernel_function_type::polynomial), "(gamma*u'*v+coef0)^degree");
@@ -75,7 +75,7 @@ TEST(KernelType, kernel_to_math_string) {
     EXPECT_EQ(plssvm::kernel_function_type_to_math_string(plssvm::kernel_function_type::chi_squared), "exp(-gamma*sum_i((x[i]-y[i])^2/(x[i]+y[i])))");
 }
 
-TEST(KernelType, kernel_to_math_string_unkown) {
+TEST(KernelType, KernelToMathStringUnkown) {
     // check conversion from an unknown plssvm::kernel_function_type to the (non-existing) math string
     EXPECT_EQ(plssvm::kernel_function_type_to_math_string(static_cast<plssvm::kernel_function_type>(6)), "unknown");
 }

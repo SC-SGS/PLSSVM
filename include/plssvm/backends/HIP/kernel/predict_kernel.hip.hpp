@@ -9,13 +9,14 @@
  * @brief Defines the functions used for prediction for the C-SVM using the HIP backend.
  */
 
-#ifndef PLSSVM_BACKENDS_HIP_PREDICT_KERNEL_HIP_HPP_
-#define PLSSVM_BACKENDS_HIP_PREDICT_KERNEL_HIP_HPP_
+#ifndef PLSSVM_BACKENDS_HIP_KERNEL_PREDICT_KERNEL_HIP_HPP_
+#define PLSSVM_BACKENDS_HIP_KERNEL_PREDICT_KERNEL_HIP_HPP_
 #pragma once
 
-#include "plssvm/backends/HIP/kernel/kernel_functions.hip.hpp"  // plssvm::hip::detail::{feature_reduce, apply_kernel_function}
-#include "plssvm/constants.hpp"                                 // plssvm::real_type, plssvm::THREAD_BLOCK_SIZE
-#include "plssvm/kernel_function_types.hpp"                     // plssvm::kernel_function_type
+#include "plssvm/backends/HIP/kernel/detail/reinterpret_array.hip.hpp"  // plssvm::hip::detail::reinterpret_array
+#include "plssvm/backends/HIP/kernel/kernel_functions.hip.hpp"          // plssvm::hip::detail::{feature_reduce, apply_kernel_function}
+#include "plssvm/constants.hpp"                                         // plssvm::real_type, plssvm::THREAD_BLOCK_SIZE
+#include "plssvm/kernel_function_types.hpp"                             // plssvm::kernel_function_type
 
 #include "hip/hip_runtime.h"
 #include "hip/hip_runtime_api.h"
@@ -222,8 +223,8 @@ __global__ void device_kernel_predict(real_type *prediction, const real_type *al
 
     {
         // reinterpret the shared memory arrays to be of shape [THREAD_BLOCK_SIZE][INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE]
-        auto pp_cache = reinterpret_cast<real_type(*)[INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE]>(cache_one);
-        auto sv_cache = reinterpret_cast<real_type(*)[INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE]>(cache_two);
+        auto *pp_cache = reinterpret_array<INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE>(cache_one);
+        auto *sv_cache = reinterpret_array<INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE>(cache_two);
 
         // calculate the indices used in the current thread, pays attention to coalesced memory accesses
         const auto pp_idx_linear = blockIdx_x * blockDim_x * INTERNAL_BLOCK_SIZE_uz + threadIdx_x;  // num_predict_points
@@ -265,8 +266,8 @@ __global__ void device_kernel_predict(real_type *prediction, const real_type *al
 
     {
         // reinterpret the shared memory arrays to be of shape [THREAD_BLOCK_SIZE][INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE]
-        auto alpha_cache = reinterpret_cast<real_type(*)[INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE]>(cache_one);
-        auto out_cache = reinterpret_cast<real_type(*)[INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE]>(cache_two);
+        auto *alpha_cache = reinterpret_array<INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE>(cache_one);
+        auto *out_cache = reinterpret_array<INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE>(cache_two);
 
         // calculate the indices used in the current thread
         const auto pp_idx = (blockIdx_x * blockDim_x + threadIdx_x) * INTERNAL_BLOCK_SIZE_uz;  // num_predict_points
@@ -316,4 +317,4 @@ __global__ void device_kernel_predict(real_type *prediction, const real_type *al
 
 }  // namespace plssvm::hip::detail
 
-#endif  // PLSSVM_BACKENDS_HIP_PREDICT_KERNEL_HIP_HPP_
+#endif  // PLSSVM_BACKENDS_HIP_KERNEL_PREDICT_KERNEL_HIP_HPP_

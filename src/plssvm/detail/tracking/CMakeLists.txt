@@ -71,6 +71,7 @@ if (PLSSVM_ENABLE_HARDWARE_SAMPLING)
             QUIET
         )
         FetchContent_MakeAvailable(hws)
+        set_target_properties(hws PROPERTIES CXX_CLANG_TIDY "")
         add_dependencies(${PLSSVM_BASE_LIBRARY_NAME} hws)
     endif ()
     target_link_libraries(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC hws::hws)

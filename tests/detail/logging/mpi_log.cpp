@@ -11,16 +11,19 @@
 #include "plssvm/detail/logging/mpi_log.hpp"
 
 #include "plssvm/mpi/communicator.hpp"  // plssvm::mpi::communicator
+#include "plssvm/verbosity_levels.hpp"  // plssvm::verbosity, plssvm::verbosity_level
 
 #include "tests/utility.hpp"  // util::redirect_output
 
 #include "gmock/gmock.h"  // EXPECT_THAT, ::testing::HasSubstr
 #include "gtest/gtest.h"  // TEST_F, EXPECT_EQ, EXPECT_TRUE, ::testing::Test
 
+#include <iostream>  // std::clog
+
 class MPILogger : public ::testing::Test,
                   public util::redirect_output<> { };
 
-TEST_F(MPILogger, enabled_logging) {
+TEST_F(MPILogger, EnabledLogging) {
     // explicitly enable logging
     plssvm::verbosity = plssvm::verbosity_level::full;
 
@@ -31,7 +34,7 @@ TEST_F(MPILogger, enabled_logging) {
     EXPECT_EQ(this->get_capture(), "Hello, World!");
 }
 
-TEST_F(MPILogger, enabled_logging_with_args) {
+TEST_F(MPILogger, EnabledLoggingWithArgs) {
     // explicitly enable logging
     plssvm::verbosity = plssvm::verbosity_level::full;
 
@@ -42,7 +45,7 @@ TEST_F(MPILogger, enabled_logging_with_args) {
     EXPECT_EQ(this->get_capture(), "int: 42, float: 1.5, str: abc");
 }
 
-TEST_F(MPILogger, disabled_logging) {
+TEST_F(MPILogger, DisabledLogging) {
     // explicitly disable logging
     plssvm::verbosity = plssvm::verbosity_level::quiet;
 
@@ -53,7 +56,7 @@ TEST_F(MPILogger, disabled_logging) {
     EXPECT_TRUE(this->get_capture().empty());
 }
 
-TEST_F(MPILogger, disabled_logging_with_args) {
+TEST_F(MPILogger, DisabledLoggingWithArgs) {
     // explicitly disable logging
     plssvm::verbosity = plssvm::verbosity_level::quiet;
 
@@ -64,7 +67,7 @@ TEST_F(MPILogger, disabled_logging_with_args) {
     EXPECT_TRUE(this->get_capture().empty());
 }
 
-TEST_F(MPILogger, mismatching_verbosity_level) {
+TEST_F(MPILogger, MismatchingVerbosityLevel) {
     // set verbosity_level to libsvm
     plssvm::verbosity = plssvm::verbosity_level::libsvm;
 
@@ -79,7 +82,7 @@ TEST_F(MPILogger, mismatching_verbosity_level) {
 class WarningMPILogger : public ::testing::Test,
                          public util::redirect_output<&std::clog> { };
 
-TEST_F(WarningMPILogger, enabled_logging_warning) {
+TEST_F(WarningMPILogger, EnabledLoggingWarning) {
     // explicitly enable logging
     plssvm::verbosity = plssvm::verbosity_level::full;
 

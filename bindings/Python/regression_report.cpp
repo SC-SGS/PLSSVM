@@ -10,13 +10,14 @@
 
 #include "plssvm/detail/type_traits.hpp"  // plssvm::detail::remove_cvref_t
 
-#include "bindings/Python/data_set/variant_wrapper.hpp"                 // plssvm::bindings::python::util::regression_data_set_wrapper
-#include "bindings/Python/type_caster/label_vector_wrapper_caster.hpp"  // a custom Pybind11 type caster for a plssvm::bindings::python::util::label_vector_wrapper
+#include "bindings/Python/bindings_fwd.hpp"                                  // forward declare all helper functions to create the Python bindings
+#include "bindings/Python/data_set/variant_wrapper.hpp"                      // plssvm::bindings::python::util::regression_data_set_wrapper
+#include "bindings/Python/type_caster/label_vector_wrapper_type_caster.hpp"  // a custom Pybind11 type caster for a plssvm::bindings::python::util::label_vector_wrapper
 
 #include "fmt/format.h"         // fmt::format
 #include "pybind11/pybind11.h"  // py::module_, py::init, py::arg, py::kw_only, py::value_error
 #include "pybind11/pytypes.h"   // py::object
-#include "pybind11/stl.h"       // support for STL types
+#include "pybind11/stl.h"       // NOLINT: support for STL types
 
 #include <string>   // std::string
 #include <variant>  // std::visit, std::get
@@ -49,8 +50,7 @@ void init_regression_report(py::module_ &m) {
                  dict["r2_score"] = metrics.r2_score;
                  dict["squared_correlation_coefficient"] = metrics.squared_correlation_coefficient;
                  return dict;
-             } else {
-                 return py::str(fmt::format("{}", report));
              }
+             return py::str(fmt::format("{}", report));
          }, y_true.labels); }, "create a new regression report by calculating all metrics between the correct and predicted labels", py::arg("y_true"), py::arg("y_pred"), py::kw_only(), py::arg("force_finite") = true, py::arg("output_dict") = false);
 }

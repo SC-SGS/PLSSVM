@@ -27,7 +27,7 @@
 class MPIInformation : public ::testing::Test,
                        public util::redirect_output<&std::cout> { };
 
-TEST_F(MPIInformation, gather_and_print_solver_information) {
+TEST_F(MPIInformation, GatherAndPrintSolverInformationNotEmpty) {
     // construct an MPI communicator
     const plssvm::mpi::communicator comm{};
 
@@ -38,7 +38,7 @@ TEST_F(MPIInformation, gather_and_print_solver_information) {
     EXPECT_FALSE(this->get_capture().empty());
 }
 
-TEST_F(MPIInformation, gather_and_print_csvm_information_with_device_names) {
+TEST_F(MPIInformation, GatherAndPrintCsvmInformationWithDeviceNamesNotEmpty) {
     // construct an MPI communicator
     const plssvm::mpi::communicator comm{};
 
@@ -49,7 +49,7 @@ TEST_F(MPIInformation, gather_and_print_csvm_information_with_device_names) {
     EXPECT_FALSE(this->get_capture().empty());
 }
 
-TEST_F(MPIInformation, gather_and_print_csvm_information) {
+TEST_F(MPIInformation, GatherAndPrintCsvmInformationNotEmpty) {
     // construct an MPI communicator
     const plssvm::mpi::communicator comm{};
 

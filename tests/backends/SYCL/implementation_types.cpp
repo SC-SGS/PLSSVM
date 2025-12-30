@@ -16,22 +16,23 @@
 #include "gtest/gtest.h"  // TEST, EXPECT_TRUE, EXPECT_GE
 
 #include <sstream>  // std::istringstream
+#include <vector>   // std::vector
 
 // check whether the plssvm::sycl::implementation_type -> std::string conversions are correct
-TEST(SYCLImplementationType, to_string) {
+TEST(SYCLImplementationType, ToString) {
     // check conversions to std::string
     EXPECT_CONVERSION_TO_STRING(plssvm::sycl::implementation_type::automatic, "automatic");
     EXPECT_CONVERSION_TO_STRING(plssvm::sycl::implementation_type::adaptivecpp, "adaptivecpp");
     EXPECT_CONVERSION_TO_STRING(plssvm::sycl::implementation_type::dpcpp, "dpcpp");
 }
 
-TEST(SYCLImplementationType, to_string_unknown) {
+TEST(SYCLImplementationType, ToStringUnknown) {
     // check conversions to std::string from unknown implementation_type
     EXPECT_CONVERSION_TO_STRING(static_cast<plssvm::sycl::implementation_type>(3), "unknown");
 }
 
 // check whether the std::string -> plssvm::sycl::implementation_type conversions are correct
-TEST(SYCLImplementationType, from_string) {
+TEST(SYCLImplementationType, FromString) {
     // check conversion from std::string
     EXPECT_CONVERSION_FROM_STRING("automatic", plssvm::sycl::implementation_type::automatic);
     EXPECT_CONVERSION_FROM_STRING("AUTOMATIC", plssvm::sycl::implementation_type::automatic);
@@ -48,7 +49,7 @@ TEST(SYCLImplementationType, from_string) {
     EXPECT_CONVERSION_FROM_STRING("ICPX", plssvm::sycl::implementation_type::dpcpp);
 }
 
-TEST(SYCLImplementationType, from_string_unknown) {
+TEST(SYCLImplementationType, FromStringUnknown) {
     // foo isn't a valid implementation_type
     std::istringstream input{ "foo" };
     plssvm::sycl::implementation_type impl{};
@@ -56,7 +57,7 @@ TEST(SYCLImplementationType, from_string_unknown) {
     EXPECT_TRUE(input.fail());
 }
 
-TEST(SYCLImplementationType, minimal_available_sycl_implementation_type) {
+TEST(SYCLImplementationType, MinimalAvailableSYCLImplementationType) {
     const std::vector<plssvm::sycl::implementation_type> implementation_type = plssvm::sycl::list_available_sycl_implementations();
 
     // at least one must be available (automatic)!

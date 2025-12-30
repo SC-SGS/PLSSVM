@@ -10,26 +10,28 @@
 
 #include "plssvm/backend_types.hpp"                     // plssvm::backend_type
 #include "plssvm/classification_types.hpp"              // plssvm::classification_type
-#include "plssvm/constants.hpp"                         // plssvm::real_type
+#include "plssvm/constants.hpp"                         // plssvm::real_type, plssvm::DEFAULT_EPSILON
 #include "plssvm/data_set/classification_data_set.hpp"  // plssvm::classification_data_set
 #include "plssvm/detail/type_traits.hpp"                // plssvm::detail::remove_cvref_t
 #include "plssvm/gamma.hpp"                             // plssvm::gamma_type
 #include "plssvm/kernel_function_types.hpp"             // plssvm::kernel_function_type
-#include "plssvm/model/classification_model.hpp"        // plssvm::classification_model
 #include "plssvm/mpi/communicator.hpp"                  // plssvm::mpi::communicator
 #include "plssvm/parameter.hpp"                         // plssvm::parameter, named arguments
 #include "plssvm/solver_types.hpp"                      // plssvm::solver_type
 #include "plssvm/target_platforms.hpp"                  // plssvm::target_platform
 
+#include "bindings/Python/bindings_fwd.hpp"                 // forward declare all helper functions to create the Python bindings
 #include "bindings/Python/data_set/variant_wrapper.hpp"     // plssvm::bindings::python::util::classification_data_set_wrapper
 #include "bindings/Python/model/variant_wrapper.hpp"        // plssvm::bindings::python::util::classification_model_wrapper
 #include "bindings/Python/svm/utility.hpp"                  // plssvm::bindings::python::util::assemble_csvm
-#include "bindings/Python/type_caster/mpi_type_caster.hpp"  // a custom Pybind11 type caster for a plssvm::mpi::communicator
+#include "bindings/Python/type_caster/mpi_type_caster.hpp"  // NOLINT: a custom Pybind11 type caster for a plssvm::mpi::communicator
 #include "bindings/Python/utility.hpp"                      // plssvm::bindings::python::util::{python_type_name_mapping, vector_to_pyarray}
 
 #include "fmt/format.h"         // fmt::format
-#include "pybind11/pybind11.h"  // py::module_, py::class_, py::init, py::arg, py::kw_only, py::kwargs, py::value_error
-#include "pybind11/stl.h"       // support for STL types: std::optional
+#include "pybind11/cast.h"      // py::arg
+#include "pybind11/pybind11.h"  // py::module_, py::class_, py::init, py::kw_only, py::value_error
+#include "pybind11/pytypes.h"   // py::kwargs
+#include "pybind11/stl.h"       // NOLINT: support for STL types: std::optional
 
 #include <exception>    // std::exception
 #include <optional>     // std::optional, std::nullopt
@@ -81,16 +83,15 @@ void init_csvc(py::module_ &m) {
                                                                       plssvm::max_iter = max_iter.value(),
                                                                       plssvm::classification = classification,
                                                                       plssvm::solver = solver) };
-                    } else {
-                        return classification_model_wrapper{ self.fit(data,
-                                                                      plssvm::epsilon = epsilon,
-                                                                      plssvm::classification = classification,
-                                                                      plssvm::solver = solver) };
                     }
+                    return classification_model_wrapper{ self.fit(data,
+                                                                  plssvm::epsilon = epsilon,
+                                                                  plssvm::classification = classification,
+                                                                  plssvm::solver = solver) };
                 }, data_set.data_set); }, "fit a model using the current C-SVC on the provided data",
                 py::arg("data"),
                 py::kw_only(),
-                py::arg("epsilon") = plssvm::real_type{ 1e-10 },
+                py::arg("epsilon") = plssvm::DEFAULT_EPSILON,
                 py::arg("max_iter") = std::nullopt,
                 py::arg("classification") = plssvm::classification_type::oaa,
                 py::arg("solver") = plssvm::solver_type::automatic)
