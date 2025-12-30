@@ -739,8 +739,10 @@ TYPED_TEST(BaseCSVCFit, FitLocalMemoryTooSmall) {
     // call function -> should throw since we are out of resources
     EXPECT_THROW_WHAT((std::ignore = csvc.fit(training_data, plssvm::solver = solver, plssvm::classification = classification)),
                       plssvm::kernel_launch_resources,
-                      fmt::format("At least {} of local memory must be available, but available are only {}!",
+                      fmt::format("At least {} of local memory must be available for the hyperparameter combination THREAD_BLOCK_SIZE={} and INTERNAL_BLOCK_SIZE={}, but available are only {}!",
                                   needed_local_mem_size,
+                                  plssvm::THREAD_BLOCK_SIZE,
+                                  plssvm::INTERNAL_BLOCK_SIZE,
                                   needed_local_mem_size / 2));
 }
 
@@ -1061,7 +1063,9 @@ TYPED_TEST(BaseCSVCScore, PredictLocalMemoryTooSmall) {
     // calling the function with mismatching MPI communicators should throw
     EXPECT_THROW_WHAT(std::ignore = csvc.score(learned_model, data_to_predict),
                       plssvm::kernel_launch_resources,
-                      fmt::format("At least {} of local memory must be available, but available are only {}!",
+                      fmt::format("At least {} of local memory must be available for the hyperparameter combination THREAD_BLOCK_SIZE={} and INTERNAL_BLOCK_SIZE={}, but available are only {}!",
                                   needed_local_mem_size,
+                                  plssvm::THREAD_BLOCK_SIZE,
+                                  plssvm::INTERNAL_BLOCK_SIZE,
                                   needed_local_mem_size / 2));
 }
