@@ -74,6 +74,7 @@
 #include <fstream>      // std::ofstream
 #include <iostream>     // std::ios_base::app, std::ostream, std::clog, std::endl
 #include <map>          // std::map
+#include <mutex>        // std::mutex, std::scoped_lock
 #include <string>       // std::string
 #include <string_view>  // std::string_view
 #include <utility>      // std::move
@@ -135,15 +136,13 @@ namespace plssvm::detail::tracking {
 
 // Must be explicitly defaulted in the cpp file to prevent linker errors!
 performance_tracker::performance_tracker() = default;
-performance_tracker::performance_tracker(const performance_tracker &) = default;
-performance_tracker::performance_tracker(performance_tracker &&) noexcept = default;
-performance_tracker &performance_tracker::operator=(const performance_tracker &) = default;
-performance_tracker &performance_tracker::operator=(performance_tracker &&) noexcept = default;
 performance_tracker::~performance_tracker() = default;
 
 void performance_tracker::add_tracking_entry(const tracking_entry<plssvm::parameter> &entry) {
     // check whether entries should currently be tracked
     if (this->is_tracking()) {
+        const std::scoped_lock guard{ mutex_ };
+
         // create category
         tracking_entries_.emplace(entry.entry_category, std::map<std::string, std::vector<std::string>>{});
         // fill category with value
@@ -161,6 +160,8 @@ void performance_tracker::add_tracking_entry([[maybe_unused]] const tracking_ent
 #if defined(PLSSVM_HAS_MPI_ENABLED)
     // check whether entries should currently be tracked
     if (this->is_tracking()) {
+        const std::scoped_lock guard{ mutex_ };
+
         // create category
         tracking_entries_.emplace(entry.entry_category, std::map<std::string, std::vector<std::string>>{});
         // fill category with value
@@ -177,6 +178,8 @@ void performance_tracker::add_tracking_entry([[maybe_unused]] const tracking_ent
 void performance_tracker::add_tracking_entry(const tracking_entry<cmd::parser_train> &entry) {
     // check whether entries should currently be tracked
     if (this->is_tracking()) {
+        const std::scoped_lock guard{ mutex_ };
+
         // create category
         tracking_entries_.emplace(entry.entry_category, std::map<std::string, std::vector<std::string>>{});
         // fill category with value
@@ -204,6 +207,8 @@ void performance_tracker::add_tracking_entry(const tracking_entry<cmd::parser_tr
 void performance_tracker::add_tracking_entry(const tracking_entry<cmd::parser_predict> &entry) {
     // check whether entries should currently be tracked
     if (this->is_tracking()) {
+        const std::scoped_lock guard{ mutex_ };
+
         // create category
         tracking_entries_.emplace(entry.entry_category, std::map<std::string, std::vector<std::string>>{});
         // fill category with value
@@ -224,6 +229,8 @@ void performance_tracker::add_tracking_entry(const tracking_entry<cmd::parser_pr
 void performance_tracker::add_tracking_entry(const tracking_entry<cmd::parser_scale> &entry) {
     // check whether entries should currently be tracked
     if (this->is_tracking()) {
+        const std::scoped_lock guard{ mutex_ };
+
         // create category
         tracking_entries_.emplace(entry.entry_category, std::map<std::string, std::vector<std::string>>{});
         // fill category with value
@@ -243,8 +250,10 @@ void performance_tracker::add_tracking_entry(const tracking_entry<cmd::parser_sc
 #if defined(PLSSVM_HARDWARE_SAMPLING_ENABLED)
 void performance_tracker::add_hws_entry(const hws::system_hardware_sampler &entry) {
     // check whether entries should currently be tracked
-    const std::string entry_category{ "hardware_sampler" };
     if (this->is_tracking()) {
+        const std::scoped_lock guard{ mutex_ };
+
+        const std::string entry_category{ "hardware_sampler" };
         for (const std::unique_ptr<hws::hardware_sampler> &sampler : entry.samplers()) {
             // get the sample string and append two newlines to each line
             std::string sample_str = sampler->samples_only_as_yaml_string();
@@ -266,10 +275,14 @@ void performance_tracker::add_hws_entry(const hws::system_hardware_sampler &entr
 #endif
 
 void performance_tracker::add_event(std::string name) {
+    const std::scoped_lock guard{ mutex_ };
+
     events_.add_event(std::chrono::steady_clock::now(), std::move(name));
 }
 
 void performance_tracker::set_reference_time(const std::chrono::steady_clock::time_point time) noexcept {
+    const std::scoped_lock guard{ mutex_ };
+
     reference_time_ = time;
 }
 
@@ -491,9 +504,17 @@ void performance_tracker::save(std::ostream &out) {
     }
 }
 
-void performance_tracker::pause_tracking() noexcept { is_tracking_ = false; }
+void performance_tracker::pause_tracking() noexcept {
+    const std::scoped_lock guard{ mutex_ };
 
-void performance_tracker::resume_tracking() noexcept { is_tracking_ = true; }
+    is_tracking_ = false;
+}
+
+void performance_tracker::resume_tracking() noexcept {
+    const std::scoped_lock guard{ mutex_ };
+
+    is_tracking_ = true;
+}
 
 bool performance_tracker::is_tracking() const noexcept { return is_tracking_; }
 
@@ -501,7 +522,11 @@ const std::map<std::string, std::map<std::string, std::vector<std::string>>> &pe
 
 const events &performance_tracker::get_events() const noexcept { return events_; }
 
-void performance_tracker::clear_tracking_entries() noexcept { tracking_entries_.clear(); }
+void performance_tracker::clear_tracking_entries() noexcept {
+    const std::scoped_lock guard{ mutex_ };
+
+    tracking_entries_.clear();
+}
 
 performance_tracker &global_performance_tracker() {
     static performance_tracker tracker;

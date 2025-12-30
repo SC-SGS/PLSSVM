@@ -55,7 +55,7 @@ TYPED_TEST(LIBSVMRegressionModelDataWrite, Write) {
 
     // define data to write
     const std::vector<label_type> label = util::generate_random_vector<label_type>(6);
-    const auto data = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ label.size(), 3 });
+    const auto data = util::generate_random_matrix<plssvm::aos_matrix<plssvm::real_type>>(plssvm::shape{ label.size(), 3 });
 
     // create necessary parameter
     const plssvm::parameter params{ plssvm::kernel_type = plssvm::kernel_function_type::linear };
@@ -111,7 +111,7 @@ TYPED_TEST(LIBSVMRegressionModelDataWrite, WriteWithoutLabel) {
     using label_type = util::test_parameter_type_at_t<0, TypeParam>;
 
     // define data to write
-    const auto data = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ 6, 3 });
+    const auto data = util::generate_random_matrix<plssvm::aos_matrix<plssvm::real_type>>(plssvm::shape{ 6, 3 });
 
     // create necessary parameter
     const plssvm::parameter params{ plssvm::kernel_type = plssvm::kernel_function_type::linear };
@@ -202,7 +202,7 @@ class LIBSVMRegressionModelDataWriteDeathTest : public LIBSVMRegressionModelData
     /// The weights; shape of the vector and the containing matrices depending on used classification type and number of classes.
     std::vector<plssvm::aos_matrix<plssvm::real_type>> alpha_{ util::generate_random_matrix<plssvm::aos_matrix<plssvm::real_type>>(plssvm::shape{ 1, 6 }) };
     /// The support vectors.
-    plssvm::regression_data_set<fixture_label_type> data_set_{ util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ 6, 2 }), util::generate_random_vector<fixture_label_type>(6) };
+    plssvm::regression_data_set<fixture_label_type> data_set_{ util::generate_random_matrix<plssvm::aos_matrix<plssvm::real_type>>(plssvm::shape{ 6, 2 }), util::generate_random_vector<fixture_label_type>(6) };
 };
 
 TYPED_TEST_SUITE(LIBSVMRegressionModelDataWriteDeathTest, util::regression_label_type_gtest, naming::test_parameter_to_name);

@@ -14,7 +14,7 @@
 #include "plssvm/detail/io/file_reader.hpp"  // plssvm::detail::io::file_reader
 #include "plssvm/detail/string_utility.hpp"  // plssvm::detail::starts_with
 #include "plssvm/exceptions/exceptions.hpp"  // plssvm::invalid_file_format_exception
-#include "plssvm/matrix.hpp"                 // plssvm::soa_matrix
+#include "plssvm/matrix.hpp"                 // plssvm::aos_matrix
 #include "plssvm/shape.hpp"                  // plssvm::shape
 
 #include "tests/custom_test_macros.hpp"  // EXPECT_FLOATING_POINT_MATRIX_NEAR, EXPECT_THROW_WHAT
