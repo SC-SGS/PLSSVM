@@ -519,7 +519,7 @@ TYPED_TEST(RegressionDataSetConstructors, ConstructFromVectorMismatchingNumDataP
     using label_type = typename TestFixture::fixture_label_type;
 
     // create data points and labels
-    const auto correct_data_points = util::generate_specific_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ 4, 4 });
+    const auto correct_data_points = util::generate_specific_matrix<plssvm::aos_matrix<plssvm::real_type>>(plssvm::shape{ 4, 4 });
     const std::vector<label_type> labels = util::get_correct_data_file_labels<label_type, plssvm::svm_type::csvr>();
 
     // create data set

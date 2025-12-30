@@ -660,6 +660,63 @@ TYPED_TEST(BaseCSVRFit, FitDeviceMemoryTooSmall) {
     }
 }
 
+TYPED_TEST(BaseCSVRFit, FitLocalMemoryTooSmall) {
+    using label_type = typename TestFixture::fixture_label_type;
+    constexpr plssvm::solver_type solver = TestFixture::fixture_solver;
+    constexpr plssvm::kernel_function_type kernel = TestFixture::fixture_kernel;
+
+    // create C-SVC: must be done using the mock class since the csvr base class is pure virtual
+    const mock_csvr csvr{ plssvm::parameter{ plssvm::kernel_type = kernel } };
+
+    // override on call
+    constexpr plssvm::detail::memory_size needed_local_mem_size = plssvm::detail::data_distribution::maximum_local_memory_needed();
+    ON_CALL(csvr, get_local_memory()).WillByDefault(::testing::Return((std::vector<std::optional<plssvm::detail::memory_size>>{ std::make_optional(needed_local_mem_size / 2), std::make_optional(needed_local_mem_size / 2) })));
+
+    EXPECT_CALL(csvr, get_local_memory()).Times(1);
+    // this test is only really applicable for the automatic solver type
+    if constexpr (solver == plssvm::solver_type::automatic) {
+        // clang-format off
+        EXPECT_CALL(csvr, get_device_memory()).Times(0);
+        EXPECT_CALL(csvr, num_available_devices()).Times(0);
+#if defined(PLSSVM_ENFORCE_MAX_MEM_ALLOC_SIZE)
+        EXPECT_CALL(csvr, get_max_mem_alloc_size()).Times(0);
+#endif
+        EXPECT_CALL(csvr, assemble_kernel_matrix(
+                                ::testing::An<plssvm::solver_type>(),
+                                ::testing::An<const plssvm::parameter &>(),
+                                ::testing::An<const plssvm::soa_matrix<plssvm::real_type> &>(),
+                                ::testing::An<const std::vector<plssvm::real_type> &>(),
+                                ::testing::An<plssvm::real_type>()))
+                            .Times(0);
+        EXPECT_CALL(csvr, blas_level_3(
+                                ::testing::An<plssvm::solver_type>(),
+                                ::testing::An<plssvm::real_type>(),
+                                ::testing::An<const std::vector<plssvm::detail::move_only_any> &>(),
+                                ::testing::An<const plssvm::soa_matrix<plssvm::real_type> &>(),
+                                ::testing::An<plssvm::real_type>(),
+                                ::testing::An<plssvm::soa_matrix<plssvm::real_type> &>()))
+                            .Times(0);
+        // clang-format on
+    }
+
+    // create data set
+    plssvm::regression_data_set<label_type> training_data{ this->get_data_filename() };  // NOLINT(misc-const-correctness): can't be const for the chi-squared kernel
+    if constexpr (kernel == plssvm::kernel_function_type::chi_squared) {
+        // chi-squared is well-defined for non-negative values only
+        const auto &labels_opt = training_data.labels();
+        if (labels_opt.has_value()) {
+            training_data = plssvm::regression_data_set<label_type>{ util::matrix_abs(training_data.data()), labels_opt.value() };
+        }
+    }
+
+    // call function -> should throw since we are out of resources
+    EXPECT_THROW_WHAT((std::ignore = csvr.fit(training_data, plssvm::solver = solver)),
+                      plssvm::kernel_launch_resources,
+                      fmt::format("At least {} of local memory must be available, but available are only {}!",
+                                  needed_local_mem_size,
+                                  needed_local_mem_size / 2));
+}
+
 template <typename T>
 class BaseCSVRPredict : public BaseCSVRMemberBase<T> { };
 
@@ -914,7 +971,7 @@ TYPED_TEST(BaseCSVRScore, ScoreDataSetNumFeaturesMismatch) {
 
     // create data set
     const std::vector<label_type> labels = util::get_correct_data_file_labels<label_type>();
-    const auto data = util::generate_random_matrix<plssvm::aos_matrix<plssvm::real_type>>(plssvm::shape{ labels.size(), 2 });
+    const auto data = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ labels.size(), 2 });
     const plssvm::regression_data_set<label_type> data_to_score{ data, labels };
 
     // read a previously learned model from a model file
@@ -971,3 +1028,37 @@ TYPED_TEST(BaseCSVRScore, PredictCommMismatch) {
 }
 
 #endif
+
+TYPED_TEST(BaseCSVRScore, PredictLocalMemoryTooSmall) {
+    using label_type = typename TestFixture::fixture_label_type;
+
+    // create C-SVR: must be done using the mock class since the csvc base class is pure virtual
+    const mock_csvr csvr{};
+
+    // override on call
+    constexpr plssvm::detail::memory_size needed_local_mem_size = plssvm::detail::data_distribution::maximum_local_memory_needed();
+    ON_CALL(csvr, get_local_memory()).WillByDefault(::testing::Return((std::vector<std::optional<plssvm::detail::memory_size>>{ std::make_optional(needed_local_mem_size / 2), std::make_optional(needed_local_mem_size / 2) })));
+
+    // mock the predict_values function -> since an exception should be triggered, the mocked function should never be called
+    // clang-format off
+    EXPECT_CALL(csvr, get_local_memory()).Times(1);
+    EXPECT_CALL(csvr, predict_values(
+                            ::testing::An<const plssvm::parameter &>(),
+                            ::testing::An<const plssvm::soa_matrix<plssvm::real_type> &>(),
+                            ::testing::An<const plssvm::aos_matrix<plssvm::real_type> &>(),
+                            ::testing::An<const std::vector<plssvm::real_type> &>(),
+                            ::testing::An<plssvm::soa_matrix<plssvm::real_type> &>(),
+                            ::testing::An<const plssvm::soa_matrix<plssvm::real_type> &>())).Times(0);
+    // clang-format on
+
+    // create data set and previously learned model
+    const plssvm::regression_data_set<label_type> data_to_predict{ this->get_data_filename() };
+    const plssvm::regression_model<label_type> learned_model{ this->get_model_filename() };
+
+    // calling the function with mismatching MPI communicators should throw
+    EXPECT_THROW_WHAT(std::ignore = csvr.score(learned_model, data_to_predict),
+                      plssvm::kernel_launch_resources,
+                      fmt::format("At least {} of local memory must be available, but available are only {}!",
+                                  needed_local_mem_size,
+                                  needed_local_mem_size / 2));
+}

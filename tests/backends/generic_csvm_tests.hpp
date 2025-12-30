@@ -283,7 +283,7 @@ TYPED_TEST_P(GenericBackendCSVMKernelFunction, PredictValues) {
     switch (kernel) {
         case plssvm::kernel_function_type::linear:
             {
-                std::vector<plssvm::real_type> rho_padded(rho.size() + plssvm::PADDING_SIZE, plssvm::real_type{ 0.0 });
+                std::vector<plssvm::real_type> rho_padded(rho.size(), plssvm::real_type{ 0.0 });
                 std::memcpy(rho_padded.data(), rho.data(), rho.size() * sizeof(plssvm::real_type));
                 device_kernel_predict_linear(out, correct_w, rho_padded, predict_points, device_specific_num_predict_points, row_offset);
             }
@@ -568,7 +568,7 @@ TYPED_TEST_P(GenericBackendCSVMKernelFunctionDeathTest, PredictValues) {
     const plssvm::classification_data_set data{ PLSSVM_CLASSIFICATION_TEST_FILE };
 
     const auto weights = util::generate_specific_matrix<plssvm::aos_matrix<plssvm::real_type>>(plssvm::shape{ 3, data.data().num_rows() });
-    const auto predict_points = util::generate_specific_matrix<plssvm::aos_matrix<plssvm::real_type>>(plssvm::shape{ data.data().num_rows(), data.data().num_cols() });
+    const auto predict_points = util::generate_specific_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ data.data().num_rows(), data.data().num_cols() });
     const plssvm::soa_matrix<plssvm::real_type> w = ground_truth::calculate_w(weights, data.data());
 
     plssvm::aos_matrix<plssvm::real_type> out{ plssvm::shape{ predict_points.num_rows(), weights.num_rows() }};
