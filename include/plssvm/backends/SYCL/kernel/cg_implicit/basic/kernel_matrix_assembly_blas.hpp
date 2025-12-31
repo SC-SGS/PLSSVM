@@ -82,9 +82,9 @@ class device_kernel_assembly_symm {
         constexpr auto THREAD_BLOCK_SIZE_uz = static_cast<std::size_t>(THREAD_BLOCK_SIZE);
 
         // calculate the indices used in the current work-item
-        const auto device_global_i_idx = idx.get_id(1) + grid_x_offset_ * THREAD_BLOCK_SIZE_uz;  // num_rows - device_row_offset
+        const auto device_global_i_idx = idx.get_id(1) + grid_y_offset_ * THREAD_BLOCK_SIZE_uz;  // num_rows - device_row_offset
         const auto global_i_idx = device_row_offset_ + device_global_i_idx;
-        const auto device_global_j_idx = idx.get_id(0) + grid_y_offset_ * THREAD_BLOCK_SIZE_uz;  // device_num_rows
+        const auto device_global_j_idx = idx.get_id(0) + grid_x_offset_ * THREAD_BLOCK_SIZE_uz;  // device_num_rows
         const auto global_j_idx = device_row_offset_ + device_global_j_idx;
 
         // be sure to not perform out-of-bounds accesses (only using the upper triangular matrix)
