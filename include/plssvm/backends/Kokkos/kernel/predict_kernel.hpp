@@ -349,7 +349,7 @@ class device_kernel_predict {
 
             // calculate the indices used in the current thread, pays attention to coalesced memory accesses
             const auto global_pp_idx_linear = blockIdx_x * blockDim_x + threadIdx_x;  // num_predict_points
-            const auto global_sv_idx_linear = blockIdx_y * blockDim_y + threadIdx_x;  // num_support_vectors
+            const auto global_sv_idx_linear = blockIdx_y * blockDim_y + threadIdx_x;  // num_sv
 
             // iterate over all features using blocking to be able to cache them for faster memory accesses
             for (std::size_t feature_block = 0; feature_block < num_features_; feature_block += THREAD_BLOCK_SIZE_uz) {
