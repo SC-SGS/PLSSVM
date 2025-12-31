@@ -41,7 +41,7 @@ __kernel void device_kernel_symm(const ulong num_rows, const ulong num_rhs, cons
     const ulong global_j_idx = device_row_offset + device_global_j_idx;
 
     // be sure to not perform out-of-bounds accesses
-    if (global_i_idx < num_rhs && device_global_j_idx < device_num_rows) {
+    if (global_i_idx < num_rhs && global_j_idx < num_rows && device_global_j_idx < device_num_rows) {
         real_type temp = 0.0;
 
         // iterate over all values
@@ -93,7 +93,7 @@ __kernel void device_kernel_symm_mirror(const ulong num_rows, const ulong num_rh
     const ulong global_j_idx = device_row_offset + device_num_rows + partial_global_j_idx;
 
     // be sure to not perform out-of-bounds accesses
-    if (global_i_idx < num_rhs && partial_global_j_idx < num_mirror_rows && global_j_idx < num_rows) {
+    if (global_i_idx < num_rhs && global_j_idx < num_rows && partial_global_j_idx < num_mirror_rows) {
         real_type temp = 0.0;
 
         // iterate over all values

@@ -91,7 +91,7 @@ class device_kernel_assembly {
                                            const auto global_j_idx = device_row_offset_ + device_global_j_idx;
 
                                            // be sure to not perform out-of-bounds accesses (only using the upper triangular matrix)
-                                           if (device_global_i_idx < (num_rows_ - device_row_offset_) && device_global_j_idx < device_num_rows_ && global_i_idx >= global_j_idx) {
+                                           if (global_i_idx < num_rows_ && global_j_idx < num_rows_ && device_global_i_idx < (num_rows_ - device_row_offset_) && device_global_j_idx < device_num_rows_ && global_i_idx >= global_j_idx) {
                                                real_type temp{ 0.0 };
 
                                                // perform the feature reduction calculation

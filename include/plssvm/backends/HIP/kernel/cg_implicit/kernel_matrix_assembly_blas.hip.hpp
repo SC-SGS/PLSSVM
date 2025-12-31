@@ -61,7 +61,7 @@ __global__ void device_kernel_assembly_symm(const real_type alpha, const real_ty
     const auto global_j_idx = device_row_offset + device_global_j_idx;
 
     // be sure to not perform out-of-bounds accesses (only using the upper triangular matrix)
-    if (device_global_i_idx < (num_rows - device_row_offset) && device_global_j_idx < device_num_rows && global_i_idx >= global_j_idx) {
+    if (global_i_idx < num_rows && global_j_idx < num_rows && device_global_i_idx < (num_rows - device_row_offset) && device_global_j_idx < device_num_rows && global_i_idx >= global_j_idx) {
         //*************************************************************************//
         //                   inplace kernel matrix construction                    //
         //*************************************************************************//

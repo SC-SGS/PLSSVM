@@ -130,7 +130,7 @@ __global__ void device_kernel_predict(real_type *prediction, const real_type *al
 
     // calculate the indices used in the current thread
     const auto global_pp_idx = blockIdx_x * blockDim_x + threadIdx_x;  // num_predict_points
-    const auto global_sv_idx = blockIdx_y * blockDim_y + threadIdx_y;  // num_support_vectors
+    const auto global_sv_idx = blockIdx_y * blockDim_y + threadIdx_y;  // num_sv
 
     // be sure to not perform out-of-bounds accesses
     if (global_sv_idx < num_sv && global_pp_idx < num_predict_points) {
