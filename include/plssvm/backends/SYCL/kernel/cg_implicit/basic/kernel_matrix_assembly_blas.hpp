@@ -87,8 +87,8 @@ class device_kernel_assembly_symm {
         constexpr auto PADDING_SIZE_uz = static_cast<std::size_t>(PADDING_SIZE);
 
         // calculate the indices used in the current work-item
-        const auto i_idx = (idx.get_id(1) + grid_x_offset_ * THREAD_BLOCK_SIZE_uz) * INTERNAL_BLOCK_SIZE_uz;  // num_rows - device_row_offset
-        const auto j_idx = (idx.get_id(0) + grid_y_offset_ * THREAD_BLOCK_SIZE_uz) * INTERNAL_BLOCK_SIZE_uz;  // device_num_rows
+        const auto i_idx = (idx.get_id(1) + grid_y_offset_ * THREAD_BLOCK_SIZE_uz) * INTERNAL_BLOCK_SIZE_uz;  // num_rows - device_row_offset
+        const auto j_idx = (idx.get_id(0) + grid_x_offset_ * THREAD_BLOCK_SIZE_uz) * INTERNAL_BLOCK_SIZE_uz;  // device_num_rows
 
         // only calculate the upper triangular matrix
         if (i_idx >= j_idx) {
