@@ -47,7 +47,6 @@ __global__ void device_kernel_assembly(real_type *kernel_matrix, const real_type
     constexpr auto INTERNAL_BLOCK_SIZE_uz = static_cast<std::size_t>(INTERNAL_BLOCK_SIZE);
     constexpr auto THREAD_BLOCK_SIZE_uz = static_cast<std::size_t>(THREAD_BLOCK_SIZE);
 
-    // cast all values to 64-bit std::size_t to prevent potential 32-bit overflows
     const auto threadIdx_x = static_cast<std::size_t>(threadIdx.x);                // current thread in block x-dimension
     const auto threadIdx_y = static_cast<std::size_t>(threadIdx.y);                // current thread in block y-dimension
     const auto blockDim_x = static_cast<std::size_t>(blockDim.x);                  // number of threads in block x-dimension
@@ -121,7 +120,7 @@ __global__ void device_kernel_assembly(real_type *kernel_matrix, const real_type
                 const auto global_j_idx = device_row_offset + device_global_j_idx;
 
                 // be sure to not perform out-of-bounds accesses (only using the upper triangular matrix)
-                if (device_global_i_idx < (num_rows - device_row_offset) && device_global_j_idx < device_num_rows && global_i_idx >= global_j_idx) {
+                if (global_i_idx < num_rows && global_j_idx < num_rows && device_global_i_idx < (num_rows - device_row_offset) && device_global_j_idx < device_num_rows && global_i_idx >= global_j_idx) {
                     real_type temp_ij = temp[internal_i][internal_j];
                     // apply the final kernel function
                     temp_ij = detail::apply_kernel_function<kernel_function>(temp_ij, kernel_function_parameter...) + QA_cost - q[global_i_idx] - q[global_j_idx];

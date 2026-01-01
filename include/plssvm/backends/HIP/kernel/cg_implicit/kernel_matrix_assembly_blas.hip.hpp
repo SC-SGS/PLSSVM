@@ -132,7 +132,7 @@ __global__ void device_kernel_assembly_symm(const real_type alpha, const real_ty
                 const auto global_j_idx = device_row_offset + device_global_j_idx;
 
                 // be sure to not perform out-of-bounds accesses (only using the upper triangular matrix)
-                if (device_global_i_idx < (num_rows - device_row_offset) && device_global_j_idx < device_num_rows && global_i_idx >= global_j_idx) {
+                if (global_i_idx < num_rows && global_j_idx < num_rows && device_global_i_idx < (num_rows - device_row_offset) && device_global_j_idx < device_num_rows && global_i_idx >= global_j_idx) {
                     // apply the final kernel function
                     temp[internal_i][internal_j] = detail::apply_kernel_function<kernel_function>(temp[internal_i][internal_j], kernel_function_parameter...) + QA_cost - q[global_i_idx] - q[global_j_idx];
                     // apply the cost on the diagonal

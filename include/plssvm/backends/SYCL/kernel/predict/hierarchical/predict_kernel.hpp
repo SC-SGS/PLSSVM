@@ -454,7 +454,7 @@ class device_kernel_predict {
 
                     // calculate the indices used in the current thread, pays attention to coalesced memory accesses
                     const auto pp_idx_linear = blockIdx_y * blockDim_y * INTERNAL_BLOCK_SIZE_uz + threadIdx_y;  // num_predict_points
-                    const auto sv_idx_linear = blockIdx_x * blockDim_x * INTERNAL_BLOCK_SIZE_uz + threadIdx_y;  // num_support_vectors
+                    const auto sv_idx_linear = blockIdx_x * blockDim_x * INTERNAL_BLOCK_SIZE_uz + threadIdx_y;  // num_sv
 
                     // zero-out local memory
                     for (unsigned internal = 0; internal < INTERNAL_BLOCK_SIZE; ++internal) {
