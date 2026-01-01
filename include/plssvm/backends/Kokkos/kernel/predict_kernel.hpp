@@ -369,7 +369,7 @@ class device_kernel_predict {
 
             // calculate the indices used in the current thread, pays attention to coalesced memory accesses
             const auto pp_idx_linear = blockIdx_x * blockDim_x * INTERNAL_BLOCK_SIZE_uz + threadIdx_x;  // num_predict_points
-            const auto sv_idx_linear = blockIdx_y * blockDim_y * INTERNAL_BLOCK_SIZE_uz + threadIdx_x;  // num_support_vectors
+            const auto sv_idx_linear = blockIdx_y * blockDim_y * INTERNAL_BLOCK_SIZE_uz + threadIdx_x;  // num_sv
 
             // iterate over all features using blocking to be able to cache them for faster memory accesses
             for (std::size_t feature_block = 0; feature_block < num_features_; feature_block += THREAD_BLOCK_SIZE_uz) {
@@ -406,7 +406,7 @@ class device_kernel_predict {
         }
 
         {
-            // reinterpret the scratchpad memory to be of shape [INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE][THREAD_BLOCK_SIZE]
+            // reinterpret the scratchpad memory to be of shape [THREAD_BLOCK_SIZE][INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE]
             Kokkos::mdspan<real_type, Kokkos::dextents<std::size_t, 2>> alpha_cache{ scratchpad_ptr, THREAD_BLOCK_SIZE_uz, INTERNAL_BLOCK_SIZE_uz * THREAD_BLOCK_SIZE_uz };
             Kokkos::mdspan<real_type, Kokkos::dextents<std::size_t, 2>> out_cache{ scratchpad_ptr + scratchpad_size, THREAD_BLOCK_SIZE_uz, INTERNAL_BLOCK_SIZE_uz * THREAD_BLOCK_SIZE_uz };
 
