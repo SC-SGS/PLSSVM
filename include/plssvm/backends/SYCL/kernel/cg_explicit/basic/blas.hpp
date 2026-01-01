@@ -194,7 +194,7 @@ class device_kernel_symm_mirror {
                     const auto global_j_idx = j_idx + static_cast<std::size_t>(internal_j);
 
                     temp[internal_i][internal_j] += A_[dim * (num_rows_ - device_row_offset_ + PADDING_SIZE_uz) - (dim - std::size_t{ 1 }) * dim / std::size_t{ 2 } + device_num_rows_ - dim + global_j_idx] *  // SoA, upper triangular matrix only
-                                                    B_[(dim + device_row_offset_) * (num_rhs_ + PADDING_SIZE_uz) + global_i_idx];                                                                               // SoA
+                                                    B_[(device_row_offset_ + dim) * (num_rhs_ + PADDING_SIZE_uz) + global_i_idx];                                                                               // SoA
                 }
             }
         }

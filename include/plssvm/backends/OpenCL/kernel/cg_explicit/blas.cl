@@ -153,7 +153,7 @@ __kernel void device_kernel_symm_mirror(const ulong num_rows, const ulong num_rh
 
                 // store the values in the local memory
                 A_cache[local_id_1][internal * THREAD_BLOCK_SIZE + local_id_0] = A[(dim_block + threadIdx_y) * (num_rows - device_row_offset + PADDING_SIZE_uz) - (dim_block + threadIdx_y - (ulong) 1) * (dim_block + threadIdx_y) / (ulong) 2 + device_num_rows - (dim_block + threadIdx_y) + global_j_idx_linear];  // SoA, upper triangular matrix only
-                B_cache[local_id_1][internal * THREAD_BLOCK_SIZE + local_id_0] = B[(device_row_offset + dim_block + threadIdx_y) * (num_rhs + PADDING_SIZE_uz) + global_i_idx_linear];                                                                                                                                 // SoA
+                B_cache[local_id_1][internal * THREAD_BLOCK_SIZE + local_id_0] = B[(dim_block + device_row_offset + threadIdx_y) * (num_rhs + PADDING_SIZE_uz) + global_i_idx_linear];                                                                                                                                 // SoA
             }
             barrier(CLK_LOCAL_MEM_FENCE);  // wait until all work-items loaded their part of the data
 

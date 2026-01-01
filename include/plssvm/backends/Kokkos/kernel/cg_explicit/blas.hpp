@@ -260,7 +260,7 @@ class device_kernel_symm_mirror {
 
                     // store the values in the scratchpad memory
                     A_cache(team_rank_y, internal * THREAD_BLOCK_SIZE + team_rank_x) = A_[(dim_block + threadIdx_y) * (num_rows_ - device_row_offset_ + PADDING_SIZE_uz) - (dim_block + threadIdx_y - std::size_t{ 1 }) * (dim_block + threadIdx_y) / std::size_t{ 2 } + device_num_rows_ - (dim_block + threadIdx_y) + global_j_idx_linear];  // SoA, upper triangular matrix only
-                    B_cache(team_rank_y, internal * THREAD_BLOCK_SIZE + team_rank_x) = B_[(device_row_offset_ + dim_block + threadIdx_y) * (num_rhs_ + PADDING_SIZE_uz) + global_i_idx_linear];                                                                                                                                                // SoA
+                    B_cache(team_rank_y, internal * THREAD_BLOCK_SIZE + team_rank_x) = B_[(dim_block + device_row_offset_ + threadIdx_y) * (num_rhs_ + PADDING_SIZE_uz) + global_i_idx_linear];                                                                                                                                                // SoA
                 }
                 team.team_barrier();  // wait until all threads loaded their part of the data
 
