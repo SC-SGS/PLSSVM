@@ -105,7 +105,7 @@ __kernel void device_kernel_assembly_symm(const real_type alpha, const __global 
         const ulong global_j_idx = device_row_offset + j_idx;
 
         // be sure to not perform out-of-bounds accesses (only using the upper triangular matrix)
-        if (i_idx < (num_rows - device_row_offset) && j_idx < device_num_rows && global_i_idx >= global_j_idx) {
+        if (global_i_idx < num_rows && global_j_idx < num_rows && i_idx < (num_rows - device_row_offset) && j_idx < device_num_rows && global_i_idx >= global_j_idx) {
             // apply the final kernel function
             temp = PLSSVM_OPENCL_APPLY_KERNEL_FUNCTION(temp PLSSVM_OPENCL_KERNEL_FUNCTION_PARAMETER) + QA_cost - q[global_i_idx] - q[global_j_idx];
             // apply the cost on the diagonal

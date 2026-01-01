@@ -147,7 +147,7 @@ class device_kernel_symm {
             const auto global_j_idx = device_row_offset_ + device_global_j_idx;
 
             // be sure to not perform out-of-bounds accesses
-            if (global_i_idx < num_rhs_ && device_global_j_idx < device_num_rows_ && global_j_idx < num_rows_) {
+            if (global_i_idx < num_rhs_ && global_j_idx < num_rows_ && device_global_j_idx < device_num_rows_) {
                 C_[global_j_idx * num_rhs_ + global_i_idx] = alpha_ * temp(idx) + beta_ * C_[global_j_idx * num_rhs_ + global_i_idx];  // SoA
             }
         });
@@ -290,7 +290,7 @@ class device_kernel_symm_mirror {
             const auto global_j_idx = device_row_offset_ + device_num_rows_ + partial_global_j_idx;
 
             // be sure to not perform out-of-bounds accesses
-            if (global_i_idx < num_rhs_ && partial_global_j_idx < num_mirror_rows_) {
+            if (global_i_idx < num_rhs_ && global_j_idx < num_rows_ && partial_global_j_idx < num_mirror_rows_) {
                 C_[global_j_idx * num_rhs_ + global_i_idx] = alpha_ * temp(idx) + beta_ * C_[global_j_idx * num_rhs_ + global_i_idx];  // SoA
             }
         });

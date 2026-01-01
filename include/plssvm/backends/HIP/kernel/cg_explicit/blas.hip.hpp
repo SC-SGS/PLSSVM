@@ -95,7 +95,7 @@ __global__ void device_kernel_symm(const std::size_t num_rows, const std::size_t
     const auto global_j_idx = device_row_offset + device_global_j_idx;
 
     // be sure to not perform out-of-bounds accesses
-    if (global_i_idx < num_rhs && device_global_j_idx < device_num_rows && global_j_idx < num_rows) {
+    if (global_i_idx < num_rhs && global_j_idx < num_rows && device_global_j_idx < device_num_rows) {
         C[global_j_idx * num_rhs + global_i_idx] = alpha * temp + beta * C[global_j_idx * num_rhs + global_i_idx];  // SoA
     }
 }
@@ -169,7 +169,7 @@ __global__ void device_kernel_symm_mirror(const std::size_t num_rows, const std:
     const auto global_j_idx = device_row_offset + device_num_rows + partial_global_j_idx;
 
     // be sure to not perform out-of-bounds accesses
-    if (global_i_idx < num_rhs && partial_global_j_idx < num_mirror_rows && global_j_idx < num_rows) {
+    if (global_i_idx < num_rhs && global_j_idx < num_rows && partial_global_j_idx < num_mirror_rows) {
         C[global_j_idx * num_rhs + global_i_idx] = alpha * temp + beta * C[global_j_idx * num_rhs + global_i_idx];  // SoA
     }
 }

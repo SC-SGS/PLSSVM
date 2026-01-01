@@ -140,7 +140,7 @@ class device_kernel_assembly {
             const auto global_j_idx = device_row_offset_ + device_global_j_idx;
 
             // be sure to not perform out-of-bounds accesses (only using the upper triangular matrix)
-            if (device_global_i_idx < (num_rows_ - device_row_offset_) && device_global_j_idx < device_num_rows_ && global_i_idx >= global_j_idx) {
+            if (global_i_idx < num_rows_ && global_j_idx < num_rows_ && device_global_i_idx < (num_rows_ - device_row_offset_) && device_global_j_idx < device_num_rows_ && global_i_idx >= global_j_idx) {
                 // apply the final kernel function
                 temp = detail::apply_kernel_function<kernel_function>(temp, kernel_function_parameter_) + QA_cost_ - q_[global_i_idx] - q_[global_j_idx];
                 // apply the cost on the diagonal
