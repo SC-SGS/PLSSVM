@@ -279,8 +279,8 @@ class device_kernel_assembly_symm {
             //*************************************************************************//
             {
                 // rename the local memory array
-                auto B_cache = cache_one;
-                auto C_out_cache = cache_two;
+                auto &B_cache = cache_one;
+                auto &C_out_cache = cache_two;
 
                 // iterate over all classes using blocking to be able to cache them for faster memory accesses
                 for (std::size_t class_block = 0; class_block < num_classes_; class_block += static_cast<std::size_t>(THREAD_BLOCK_SIZE)) {
