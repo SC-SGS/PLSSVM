@@ -124,7 +124,7 @@ class device_kernel_assembly_symm {
                                        });
 
                                        // only calculate the upper triangular matrix -> can't use get_local_id() since all work-items in a work-group must progress further
-                                       if (group[1] >= group[0]) {
+                                       if (group[1] + grid_y_offset_ >= group[0] + grid_x_offset_) {
                                            //*************************************************************************//
                                            //                   inplace kernel matrix construction                    //
                                            //*************************************************************************//

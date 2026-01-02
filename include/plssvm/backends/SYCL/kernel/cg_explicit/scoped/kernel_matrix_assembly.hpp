@@ -84,7 +84,7 @@ class device_kernel_assembly {
                                    ::sycl::require_private_mem<std::array<std::array<real_type, INTERNAL_BLOCK_SIZE>, INTERNAL_BLOCK_SIZE>>(),  // temp
                                    [&](auto &data_i_cache, auto &data_j_cache, auto &temp) {
                                        // only calculate the upper triangular matrix -> can't use get_local_id() since all work-items in a work-group must progress further
-                                       if (group[1] >= group[0]) {
+                                       if (group[1] + grid_y_offset_ >= group[0] + grid_x_offset_) {
                                            // initialize private temp matrix to zero
                                            ::sycl::distribute_items_and_wait(group, [&](::sycl::s_item<2> idx) {
                                                for (unsigned internal_i = 0; internal_i < INTERNAL_BLOCK_SIZE; ++internal_i) {
