@@ -42,11 +42,11 @@ device_ptr<T>::device_ptr(const plssvm::shape shape, const plssvm::shape padding
     if (queue_ < 0 || queue_ >= get_device_count()) {
         throw backend_exception{ fmt::format("Illegal device ID! Must be in range: [0, {}) but is {}.", get_device_count(), queue_) };
     }
-    detail::set_device(queue_);
-    PLSSVM_HIP_ERROR_CHECK(hipMalloc(&data_, this->size_padded() * sizeof(value_type)))
 
     // only non-empty pointers must be memset in the constructor
     if (this->size_padded() != std::size_t{ 0 }) {
+        detail::set_device(queue_);
+        PLSSVM_HIP_ERROR_CHECK(hipMalloc(&data_, this->size_padded() * sizeof(value_type)))
         this->memset(0);
     }
 }
