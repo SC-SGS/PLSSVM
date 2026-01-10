@@ -20,7 +20,6 @@
 
 #include "sycl/sycl.hpp"  // sycl::group, sycl::h_item
 
-#include <array>    // std::array
 #include <cstddef>  // std::size_t
 #include <tuple>    // std::tuple, std::make_tuple
 
@@ -74,8 +73,8 @@ class device_kernel_assembly {
      */
     void operator()(::sycl::group<2> group) const {
         // create two local memory arrays used for caching
-        std::array<std::array<real_type, static_cast<std::size_t>(INTERNAL_BLOCK_SIZE) * static_cast<std::size_t>(THREAD_BLOCK_SIZE)>, static_cast<std::size_t>(THREAD_BLOCK_SIZE)> data_i_cache{};
-        std::array<std::array<real_type, static_cast<std::size_t>(INTERNAL_BLOCK_SIZE) * static_cast<std::size_t>(THREAD_BLOCK_SIZE)>, static_cast<std::size_t>(THREAD_BLOCK_SIZE)> data_j_cache{};
+        real_type data_i_cache[THREAD_BLOCK_SIZE][INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE]{};
+        real_type data_j_cache[THREAD_BLOCK_SIZE][INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE]{};
 
         // create a private memory array used for internal caching
         ::sycl::private_memory<std::array<std::array<real_type, INTERNAL_BLOCK_SIZE>, INTERNAL_BLOCK_SIZE>, 2> temp{ group };
