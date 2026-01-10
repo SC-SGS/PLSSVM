@@ -20,7 +20,6 @@
 
 #include "sycl/sycl.hpp"  // sycl::item
 
-#include <array>    // std::array
 #include <cstddef>  // std::size_t
 #include <tuple>    // std::tuple, std::make_tuple
 
@@ -85,7 +84,7 @@ class device_kernel_assembly {
         // only calculate the upper triangular matrix
         if (i_idx >= j_idx) {
             // create a private memory array used for internal caching
-            std::array<std::array<real_type, INTERNAL_BLOCK_SIZE_uz>, INTERNAL_BLOCK_SIZE_uz> temp{};
+            real_type temp[INTERNAL_BLOCK_SIZE][INTERNAL_BLOCK_SIZE]{};
 
             // perform the feature reduction calculation
             for (std::size_t feature = 0; feature < num_features_; ++feature) {

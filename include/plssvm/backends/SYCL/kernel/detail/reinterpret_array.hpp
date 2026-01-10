@@ -13,7 +13,6 @@
 #define PLSSVM_BACKENDS_SYCL_KERNEL_DETAIL_REINTERPRET_ARRAY_HPP_
 #pragma once
 
-#include <array>    // std::array
 #include <cstddef>  // std::size_t
 
 namespace plssvm::sycl::detail {
@@ -28,8 +27,8 @@ namespace plssvm::sycl::detail {
  * @return the array of the newly specified dimensions (`[[nodiscard]]`)
  */
 template <std::size_t SIZE, typename T, std::size_t N, std::size_t M>
-[[nodiscard]] inline auto *reinterpret_array(std::array<std::array<T, M>, N> &input) noexcept {
-    return reinterpret_cast<T(*)[SIZE]>(input[0].data());  // NOLINT: reinterpret_cast + C-style array necessary
+[[nodiscard]] inline auto *reinterpret_array(T (&input)[N][M]) noexcept {
+    return reinterpret_cast<T(*)[SIZE]>(input);  // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast): reinterpret_cast necessary
 }
 
 /**
@@ -41,8 +40,8 @@ template <std::size_t SIZE, typename T, std::size_t N, std::size_t M>
  * @return the array of the newly specified dimensions (`[[nodiscard]]`)
  */
 template <std::size_t SIZE, typename T, std::size_t N>
-[[nodiscard]] inline auto *reinterpret_array(std::array<T, N> &input) noexcept {
-    return reinterpret_cast<T(*)[SIZE]>(input.data());  // NOLINT: reinterpret_cast + C-style array necessary
+[[nodiscard]] inline auto *reinterpret_array(T (&input)[N]) noexcept {
+    return reinterpret_cast<T(*)[SIZE]>(input);  // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast): reinterpret_cast necessary
 }
 
 }  // namespace plssvm::sycl::detail
