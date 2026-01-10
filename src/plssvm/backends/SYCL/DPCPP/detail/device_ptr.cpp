@@ -35,10 +35,9 @@ device_ptr<T>::device_ptr(const size_type size, const queue &q) :
 template <typename T>
 device_ptr<T>::device_ptr(const plssvm::shape shape, const queue &q) :
     base_type{ shape, q } {
-    data_ = ::sycl::malloc_device<value_type>(this->size(), queue_.impl->sycl_queue);
-
     // only non-empty pointers must be memset in the constructor
     if (this->size() != std::size_t{ 0 }) {
+        data_ = ::sycl::malloc_device<value_type>(this->size(), queue_.impl->sycl_queue);
         this->memset(0);
     }
 }
