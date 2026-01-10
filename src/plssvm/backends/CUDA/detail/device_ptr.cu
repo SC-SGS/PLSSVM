@@ -36,11 +36,11 @@ device_ptr<T>::device_ptr(const plssvm::shape shape, const queue_type device) :
     if (queue_ < 0 || queue_ >= get_device_count()) {
         throw backend_exception{ fmt::format("Illegal device ID! Must be in range: [0, {}) but is {}.", get_device_count(), queue_) };
     }
-    detail::set_device(queue_);
-    PLSSVM_CUDA_ERROR_CHECK(cudaMalloc(&data_, this->size() * sizeof(value_type)))
 
     // only non-empty pointers must be memset in the constructor
     if (this->size() != std::size_t{ 0 }) {
+        detail::set_device(queue_);
+        PLSSVM_CUDA_ERROR_CHECK(cudaMalloc(&data_, this->size() * sizeof(value_type)))
         this->memset(0);
     }
 }
