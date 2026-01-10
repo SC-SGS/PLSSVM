@@ -20,7 +20,6 @@
 
 #include "sycl/sycl.hpp"  // sycl::memory_environment, sycl::distribute_items_and_wait, sycl::s_item
 
-#include <array>    // std::array
 #include <cstddef>  // std::size_t
 #include <tuple>    // std::tuple, std::make_tuple
 
@@ -77,8 +76,8 @@ class device_kernel_assembly {
     void operator()(T group) const {
         ::sycl::memory_environment(group,
                                    // create two local memory arrays used for caching
-                                   ::sycl::require_local_mem<std::array<std::array<real_type, static_cast<std::size_t>(THREAD_BLOCK_SIZE)>, static_cast<std::size_t>(THREAD_BLOCK_SIZE)>>(),  // data_i_cache
-                                   ::sycl::require_local_mem<std::array<std::array<real_type, static_cast<std::size_t>(THREAD_BLOCK_SIZE)>, static_cast<std::size_t>(THREAD_BLOCK_SIZE)>>(),  // data_j_cache
+                                   ::sycl::require_local_mem<real_type[THREAD_BLOCK_SIZE][THREAD_BLOCK_SIZE]>(),  // data_i_cache
+                                   ::sycl::require_local_mem<real_type[THREAD_BLOCK_SIZE][THREAD_BLOCK_SIZE]>(),  // data_j_cache
 
                                    ::sycl::require_private_mem<real_type>(),  // temp
                                    [&](auto &data_i_cache, auto &data_j_cache, auto &temp) {

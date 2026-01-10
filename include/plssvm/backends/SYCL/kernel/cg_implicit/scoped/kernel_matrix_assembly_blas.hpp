@@ -21,7 +21,6 @@
 
 #include "sycl/sycl.hpp"  // sycl::memory_environment, sycl::distribute_items_and_wait, sycl::s_item
 
-#include <array>    // std::array
 #include <cstddef>  // std::size_t
 #include <tuple>    // std::tuple, std::make_tuple
 
@@ -90,8 +89,8 @@ class device_kernel_assembly_symm {
                                    ::sycl::require_private_mem<std::size_t>(),  // device_num_rows
 
                                    // create two local memory arrays used for caching
-                                   ::sycl::require_local_mem<std::array<std::array<real_type, static_cast<std::size_t>(THREAD_BLOCK_SIZE)>, static_cast<std::size_t>(THREAD_BLOCK_SIZE)>>(),  // cache_one
-                                   ::sycl::require_local_mem<std::array<std::array<real_type, static_cast<std::size_t>(THREAD_BLOCK_SIZE)>, static_cast<std::size_t>(THREAD_BLOCK_SIZE)>>(),  // cache_two
+                                   ::sycl::require_local_mem<real_type[THREAD_BLOCK_SIZE][THREAD_BLOCK_SIZE]>(),  // cache_one
+                                   ::sycl::require_local_mem<real_type[THREAD_BLOCK_SIZE][THREAD_BLOCK_SIZE]>(),  // cache_two
 
                                    ::sycl::require_private_mem<real_type>(),
                                    [&](auto &i_idx, auto &j_idx, auto &i_idx_linear, auto &j_idx_linear, auto &cache_one, auto &cache_two, auto &temp) {

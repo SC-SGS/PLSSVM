@@ -18,7 +18,6 @@
 
 #include "sycl/sycl.hpp"  // sycl::group, sycl::h_item
 
-#include <array>    // std::array
 #include <cstddef>  // std::size_t
 
 namespace plssvm::sycl::detail::hierarchical {
@@ -65,8 +64,8 @@ class device_kernel_symm {
      */
     void operator()(::sycl::group<2> group) const {
         // create two local memory arrays used for caching
-        std::array<std::array<real_type, static_cast<std::size_t>(THREAD_BLOCK_SIZE)>, static_cast<std::size_t>(THREAD_BLOCK_SIZE)> A_cache{};
-        std::array<std::array<real_type, static_cast<std::size_t>(THREAD_BLOCK_SIZE)>, static_cast<std::size_t>(THREAD_BLOCK_SIZE)> B_cache{};
+        real_type A_cache[THREAD_BLOCK_SIZE][THREAD_BLOCK_SIZE]{};
+        real_type B_cache[THREAD_BLOCK_SIZE][THREAD_BLOCK_SIZE]{};
 
         ::sycl::private_memory<real_type, 2> temp{ group };
 
@@ -214,8 +213,8 @@ class device_kernel_symm_mirror {
      */
     void operator()(::sycl::group<2> group) const {
         // create two local memory arrays used for caching
-        std::array<std::array<real_type, static_cast<std::size_t>(THREAD_BLOCK_SIZE)>, static_cast<std::size_t>(THREAD_BLOCK_SIZE)> A_cache{};
-        std::array<std::array<real_type, static_cast<std::size_t>(THREAD_BLOCK_SIZE)>, static_cast<std::size_t>(THREAD_BLOCK_SIZE)> B_cache{};
+        real_type A_cache[THREAD_BLOCK_SIZE][THREAD_BLOCK_SIZE]{};
+        real_type B_cache[THREAD_BLOCK_SIZE][THREAD_BLOCK_SIZE]{};
 
         ::sycl::private_memory<real_type, 2> temp{ group };
 
