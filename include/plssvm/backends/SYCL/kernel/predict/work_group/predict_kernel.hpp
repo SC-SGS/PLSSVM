@@ -22,7 +22,6 @@
 
 #include "sycl/sycl.hpp"  // sycl::handler, sycl::range, sycl::nd_item, sycl::local_accessor
 
-#include <array>    // std::array
 #include <cstddef>  // std::size_t
 #include <tuple>    // std::tuple, std::make_tuple
 
@@ -87,7 +86,7 @@ class device_kernel_w_linear {
         const auto blockIdx_y = static_cast<std::size_t>(nd_idx.get_group(1)) + grid_y_offset_;  // current work-group in global range y-dimension + offsets if the global range is too large
 
         // create a work-item private array used for internal caching
-        std::array<std::array<real_type, INTERNAL_BLOCK_SIZE_uz>, INTERNAL_BLOCK_SIZE_uz> temp{};
+        real_type temp[INTERNAL_BLOCK_SIZE][INTERNAL_BLOCK_SIZE]{};
 
         {
             // calculate the indices used in the current work-item, pays attention to coalesced memory accesses
@@ -227,7 +226,7 @@ class device_kernel_predict_linear {
         const auto blockIdx_y = static_cast<std::size_t>(nd_idx.get_group(1)) + grid_y_offset_;  // current work-group in global range y-dimension + offsets if the global range is too large
 
         // create a work-item private array used for internal caching
-        std::array<std::array<real_type, INTERNAL_BLOCK_SIZE_uz>, INTERNAL_BLOCK_SIZE_uz> temp{};
+        real_type temp[INTERNAL_BLOCK_SIZE][INTERNAL_BLOCK_SIZE]{};
 
         {
             // calculate the indices used in the current thread, pays attention to coalesced memory accesses
@@ -375,7 +374,7 @@ class device_kernel_predict {
         const auto blockIdx_y = static_cast<std::size_t>(nd_idx.get_group(1)) + grid_y_offset_;  // current work-group in global range y-dimension + offsets if the global range is too large
 
         // create a work-item private array used for internal caching
-        std::array<std::array<real_type, INTERNAL_BLOCK_SIZE_uz>, INTERNAL_BLOCK_SIZE_uz> temp{};
+        real_type temp[INTERNAL_BLOCK_SIZE][INTERNAL_BLOCK_SIZE]{};
 
         {
             // rename cached arrays
@@ -428,7 +427,7 @@ class device_kernel_predict {
         }
 
         // update temp using the respective kernel function
-        for (unsigned internal_pp = 0; internal_pp < INTERNAL_BLOCK_SIZE; ++internal_pp) {
+        for (unsigned internal_pp = 0; internal_pp < INTERNAL_BLOCK_SIZE; ++internal_pp) {  // NOLINT(modernize-loop-convert): false positive range-based for loop modernize
             for (unsigned internal_sv = 0; internal_sv < INTERNAL_BLOCK_SIZE; ++internal_sv) {
                 temp[internal_pp][internal_sv] = detail::apply_kernel_function<kernel_function>(temp[internal_pp][internal_sv], kernel_function_parameter_);
             }

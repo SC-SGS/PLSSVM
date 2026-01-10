@@ -23,7 +23,6 @@
 
 #include "sycl/sycl.hpp"  // sycl::group, sycl::private_memory, sycl::h_item
 
-#include <array>    // std::array
 #include <cstddef>  // std::size_t
 #include <tuple>    // std::tuple, std::make_tuple
 

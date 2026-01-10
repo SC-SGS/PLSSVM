@@ -27,33 +27,6 @@ namespace plssvm::sycl::detail {
  * @return the array of the newly specified dimensions (`[[nodiscard]]`)
  */
 template <std::size_t SIZE, typename T, std::size_t N, std::size_t M>
-[[nodiscard]] inline auto *reinterpret_array(std::array<std::array<T, M>, N> &input) noexcept {
-    return reinterpret_cast<T(*)[SIZE]>(input[0].data());  // NOLINT: reinterpret_cast + C-style array necessary
-}
-
-/**
- * @brief Given the input array of dimensions [N], reinterpret it to be of dimensions [...][SIZE].
- * @tparam SIZE the new y-dimension size of the array
- * @tparam T the type of the values in the array
- * @tparam N the dimension of the array
- * @param[in] input the array to reinterpret
- * @return the array of the newly specified dimensions (`[[nodiscard]]`)
- */
-template <std::size_t SIZE, typename T, std::size_t N>
-[[nodiscard]] inline auto *reinterpret_array(std::array<T, N> &input) noexcept {
-    return reinterpret_cast<T(*)[SIZE]>(input.data());  // NOLINT: reinterpret_cast + C-style array necessary
-}
-
-/**
- * @brief Given the input array of dimensions [N][M], reinterpret it to be of dimensions [...][SIZE].
- * @tparam SIZE the new y-dimension size of the array
- * @tparam T the type of the values in the array
- * @tparam N the x-dimension of the array
- * @tparam M the y-dimension of the array
- * @param[in] input the array to reinterpret
- * @return the array of the newly specified dimensions (`[[nodiscard]]`)
- */
-template <std::size_t SIZE, typename T, std::size_t N, std::size_t M>
 [[nodiscard]] inline auto *reinterpret_array(T (&input)[N][M]) noexcept {
     return reinterpret_cast<T(*)[SIZE]>(input);  // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast): reinterpret_cast necessary
 }

@@ -22,7 +22,6 @@
 
 #include "sycl/sycl.hpp"  // sycl::item
 
-#include <array>    // std::array
 #include <cstddef>  // std::size_t
 #include <tuple>    // std::tuple, std::make_tuple
 
@@ -77,7 +76,7 @@ class device_kernel_w_linear {
         const auto class_idx = (idx.get_id(0) + grid_x_offset_ * THREAD_BLOCK_SIZE_uz) * INTERNAL_BLOCK_SIZE_uz;    // num_classes
 
         // create a work-item private array used for internal caching
-        std::array<std::array<real_type, INTERNAL_BLOCK_SIZE_uz>, INTERNAL_BLOCK_SIZE_uz> temp{};
+        real_type temp[INTERNAL_BLOCK_SIZE][INTERNAL_BLOCK_SIZE]{};
 
         // iterate over all support vectors using blocking
         for (std::size_t sv_block = 0; sv_block < device_num_sv_; sv_block += THREAD_BLOCK_SIZE_uz) {
@@ -189,7 +188,7 @@ class device_kernel_predict_linear {
         const auto class_idx = (idx.get_id(0) + grid_x_offset_ * THREAD_BLOCK_SIZE_uz) * INTERNAL_BLOCK_SIZE_uz;  // num_classes
 
         // create a work-item private array used for internal caching
-        std::array<std::array<real_type, INTERNAL_BLOCK_SIZE_uz>, INTERNAL_BLOCK_SIZE_uz> temp{};
+        real_type temp[INTERNAL_BLOCK_SIZE][INTERNAL_BLOCK_SIZE]{};
 
         // iterate over all features using blocking
         for (std::size_t feature_block = 0; feature_block < num_features_; feature_block += THREAD_BLOCK_SIZE_uz) {
@@ -309,7 +308,7 @@ class device_kernel_predict {
         const auto sv_idx = (idx.get_id(0) + grid_x_offset_ * THREAD_BLOCK_SIZE_uz) * INTERNAL_BLOCK_SIZE_uz;  // num_support_vectors
 
         // create a work-item private array used for internal caching
-        std::array<std::array<real_type, INTERNAL_BLOCK_SIZE_uz>, INTERNAL_BLOCK_SIZE_uz> temp{};
+        real_type temp[INTERNAL_BLOCK_SIZE][INTERNAL_BLOCK_SIZE]{};
 
         // iterate over all features using blocking
         for (std::size_t feature_block = 0; feature_block < num_features_; feature_block += THREAD_BLOCK_SIZE_uz) {
@@ -347,7 +346,7 @@ class device_kernel_predict {
         }
 
         // update temp using the respective kernel function
-        for (unsigned internal_pp = 0; internal_pp < INTERNAL_BLOCK_SIZE; ++internal_pp) {
+        for (unsigned internal_pp = 0; internal_pp < INTERNAL_BLOCK_SIZE; ++internal_pp) {  // NOLINT(modernize-loop-convert): false positive range-based for loop modernize
             for (unsigned internal_sv = 0; internal_sv < INTERNAL_BLOCK_SIZE; ++internal_sv) {
                 temp[internal_pp][internal_sv] = detail::apply_kernel_function<kernel_function>(temp[internal_pp][internal_sv], kernel_function_parameter_);
             }

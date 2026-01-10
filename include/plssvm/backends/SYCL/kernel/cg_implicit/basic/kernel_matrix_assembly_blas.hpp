@@ -22,7 +22,6 @@
 
 #include "sycl/sycl.hpp"  // sycl::item
 
-#include <array>    // std::array
 #include <cstddef>  // std::size_t
 #include <tuple>    // std::tuple, std::make_tuple
 
@@ -93,7 +92,7 @@ class device_kernel_assembly_symm {
         // only calculate the upper triangular matrix
         if (i_idx >= j_idx) {
             // create a work-item private array used for internal caching
-            std::array<std::array<real_type, INTERNAL_BLOCK_SIZE_uz>, INTERNAL_BLOCK_SIZE_uz> temp{};
+            real_type temp[INTERNAL_BLOCK_SIZE][INTERNAL_BLOCK_SIZE]{};
 
             //*************************************************************************//
             //                   inplace kernel matrix construction                    //
