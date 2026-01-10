@@ -70,7 +70,7 @@ class device_kernel_w_linear {
         real_type alpha_cache[THREAD_BLOCK_SIZE][INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE]{};
 
         // create a private memory array used for internal caching
-        ::sycl::private_memory<std::array<std::array<real_type, INTERNAL_BLOCK_SIZE>, INTERNAL_BLOCK_SIZE>, 2> temp{ group };
+        ::sycl::private_memory<real_type[INTERNAL_BLOCK_SIZE][INTERNAL_BLOCK_SIZE], 2> temp{ group };
 
         // initialize private temp matrix to zero
         group.parallel_for_work_item([&](::sycl::h_item<2> idx) {
@@ -237,7 +237,7 @@ class device_kernel_predict_linear {
         real_type w_cache[THREAD_BLOCK_SIZE][INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE]{};
 
         // create a private memory array used for internal caching
-        ::sycl::private_memory<std::array<std::array<real_type, INTERNAL_BLOCK_SIZE>, INTERNAL_BLOCK_SIZE>, 2> temp{ group };
+        ::sycl::private_memory<real_type[INTERNAL_BLOCK_SIZE][INTERNAL_BLOCK_SIZE], 2> temp{ group };
 
         // initialize private variable
         group.parallel_for_work_item([&](::sycl::h_item<2> idx) {
@@ -414,7 +414,7 @@ class device_kernel_predict {
         real_type cache_two[THREAD_BLOCK_SIZE][INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE]{};
 
         // create a private memory array used for internal caching
-        ::sycl::private_memory<std::array<std::array<real_type, INTERNAL_BLOCK_SIZE>, INTERNAL_BLOCK_SIZE>, 2> temp{ group };
+        ::sycl::private_memory<real_type[INTERNAL_BLOCK_SIZE][INTERNAL_BLOCK_SIZE], 2> temp{ group };
 
         // initialize private variable
         group.parallel_for_work_item([&](::sycl::h_item<2> idx) {

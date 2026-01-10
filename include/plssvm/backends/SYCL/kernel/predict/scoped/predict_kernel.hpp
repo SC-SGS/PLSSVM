@@ -73,7 +73,7 @@ class device_kernel_w_linear {
                                    ::sycl::require_local_mem<real_type[THREAD_BLOCK_SIZE][INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE]>(),  // alpha_cache
 
                                    // create a private memory array used for internal caching
-                                   ::sycl::require_private_mem<std::array<std::array<real_type, INTERNAL_BLOCK_SIZE>, INTERNAL_BLOCK_SIZE>>(),
+                                   ::sycl::require_private_mem<real_type[INTERNAL_BLOCK_SIZE][INTERNAL_BLOCK_SIZE]>(),
                                    [&](auto &feature_cache, auto &alpha_cache, auto &temp) {
                                        // initialize private temp matrix to zero
                                        ::sycl::distribute_items_and_wait(group, [&](::sycl::s_item<2> idx) {
@@ -238,7 +238,7 @@ class device_kernel_predict_linear {
                                    ::sycl::require_local_mem<real_type[THREAD_BLOCK_SIZE][INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE]>(),  // w_cache
 
                                    // create a private memory array used for internal caching
-                                   ::sycl::require_private_mem<std::array<std::array<real_type, INTERNAL_BLOCK_SIZE>, INTERNAL_BLOCK_SIZE>>(),
+                                   ::sycl::require_private_mem<real_type[INTERNAL_BLOCK_SIZE][INTERNAL_BLOCK_SIZE]>(),
                                    [&](auto &pp_cache, auto &w_cache, auto &temp) {
                                        // initialize private temp matrix to zero
                                        ::sycl::distribute_items_and_wait(group, [&](::sycl::s_item<2> idx) {
@@ -411,7 +411,7 @@ class device_kernel_predict {
                                    ::sycl::require_local_mem<real_type[THREAD_BLOCK_SIZE][INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE]>(),  // cache_two
 
                                    // create a private memory array used for internal caching
-                                   ::sycl::require_private_mem<std::array<std::array<real_type, INTERNAL_BLOCK_SIZE>, INTERNAL_BLOCK_SIZE>>(),
+                                   ::sycl::require_private_mem<real_type[INTERNAL_BLOCK_SIZE][INTERNAL_BLOCK_SIZE]>(),
                                    [&](auto &cache_one, auto &cache_two, auto &temp) {
                                        // initialize private temp matrix to zero
                                        ::sycl::distribute_items_and_wait(group, [&](::sycl::s_item<2> idx) {

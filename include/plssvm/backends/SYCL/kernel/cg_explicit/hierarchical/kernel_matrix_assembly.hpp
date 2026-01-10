@@ -77,7 +77,7 @@ class device_kernel_assembly {
         real_type data_j_cache[THREAD_BLOCK_SIZE][INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE]{};
 
         // create a private memory array used for internal caching
-        ::sycl::private_memory<std::array<std::array<real_type, INTERNAL_BLOCK_SIZE>, INTERNAL_BLOCK_SIZE>, 2> temp{ group };
+        ::sycl::private_memory<real_type[INTERNAL_BLOCK_SIZE][INTERNAL_BLOCK_SIZE], 2> temp{ group };
 
         // only calculate the upper triangular matrix -> can't use get_local_id() since all work-items in a work-group must progress further
         if (group[1] + grid_y_offset_ >= group[0] + grid_x_offset_) {

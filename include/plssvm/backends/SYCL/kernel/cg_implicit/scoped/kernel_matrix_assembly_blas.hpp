@@ -89,11 +89,11 @@ class device_kernel_assembly_symm {
                                    ::sycl::require_private_mem<std::size_t>(),  // device_num_rows
 
                                    // create two local memory arrays used for caching
-                                   ::sycl::require_local_mem<real_type[THREAD_BLOCK_SIZE][INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE]>(),  // cache_one
-                                   ::sycl::require_local_mem<real_type[THREAD_BLOCK_SIZE][INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE]>(),  // cache_two
+                                   ::sycl::require_local_mem<real_type[THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE]>(),  // cache_one
+                                   ::sycl::require_local_mem<real_type[THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE]>(),  // cache_two
 
                                    // create a private memory array used for internal caching
-                                   ::sycl::require_private_mem<std::array<std::array<real_type, INTERNAL_BLOCK_SIZE>, INTERNAL_BLOCK_SIZE>>(),
+                                   ::sycl::require_private_mem<real_type[INTERNAL_BLOCK_SIZE][INTERNAL_BLOCK_SIZE]>(),
                                    [&](auto &i_idx, auto &j_idx, auto &i_idx_linear, auto &j_idx_linear, auto &cache_one, auto &cache_two, auto &temp) {
                                        // initialize private and local variables
                                        ::sycl::distribute_items_and_wait(group, [&](::sycl::s_item<2> idx) {

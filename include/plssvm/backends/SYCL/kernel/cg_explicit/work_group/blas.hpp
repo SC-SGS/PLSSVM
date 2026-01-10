@@ -82,7 +82,7 @@ class device_kernel_symm {
         const auto blockIdx_y = static_cast<std::size_t>(nd_idx.get_group(1)) + grid_y_offset_;  // current work-group in global range y-dimension + offsets if the global range is too large
 
         // create a work-item private array used for internal caching
-        std::array<std::array<real_type, INTERNAL_BLOCK_SIZE_uz>, INTERNAL_BLOCK_SIZE_uz> temp{};
+        real_type temp[INTERNAL_BLOCK_SIZE][INTERNAL_BLOCK_SIZE]{};
 
         {
             // calculate the indices used in the current work-item, pays attention to coalesced memory accesses
@@ -236,7 +236,7 @@ class device_kernel_symm_mirror {
         const auto blockIdx_y = static_cast<std::size_t>(nd_idx.get_group(1)) + grid_y_offset_;  // current work-group in global range y-dimension + offsets if the global range is too large
 
         // create a work-item private array used for internal caching
-        std::array<std::array<real_type, INTERNAL_BLOCK_SIZE_uz>, INTERNAL_BLOCK_SIZE_uz> temp{};
+        real_type temp[INTERNAL_BLOCK_SIZE][INTERNAL_BLOCK_SIZE]{};
 
         {
             // calculate the indices used in the current thread, pays attention to coalesced memory accesses

@@ -92,7 +92,7 @@ class device_kernel_assembly {
         // only calculate the upper triangular matrix -> can't use get_local_id() since all work-items in a work-group must progress further
         if (blockIdx_y >= blockIdx_x) {
             // create a private memory array used for internal caching
-            std::array<std::array<real_type, INTERNAL_BLOCK_SIZE_uz>, INTERNAL_BLOCK_SIZE_uz> temp{};
+            real_type temp[INTERNAL_BLOCK_SIZE][INTERNAL_BLOCK_SIZE]{};
 
             {
                 // calculate the indices used in the current work-item, pays attention to coalesced memory accesses

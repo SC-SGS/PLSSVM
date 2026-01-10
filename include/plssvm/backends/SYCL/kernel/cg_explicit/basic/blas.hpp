@@ -18,7 +18,6 @@
 
 #include "sycl/sycl.hpp"  // sycl::item
 
-#include <array>    // std::array
 #include <cstddef>  // std::size_t
 
 namespace plssvm::sycl::detail::basic {
@@ -73,7 +72,7 @@ class device_kernel_symm {
         const auto j_idx = (idx.get_id(0) + grid_x_offset_ * THREAD_BLOCK_SIZE_uz) * INTERNAL_BLOCK_SIZE_uz;  // device_num_rows
 
         // create a work-item private array used for internal caching
-        std::array<std::array<real_type, INTERNAL_BLOCK_SIZE_uz>, INTERNAL_BLOCK_SIZE_uz> temp{};
+        real_type temp[INTERNAL_BLOCK_SIZE][INTERNAL_BLOCK_SIZE]{};
 
         // perform the dot product calculation
         for (std::size_t dim = 0; dim < (num_rows_ - device_row_offset_); ++dim) {
@@ -187,7 +186,7 @@ class device_kernel_symm_mirror {
         const auto j_idx = (idx.get_id(0) + grid_x_offset_ * THREAD_BLOCK_SIZE_uz) * INTERNAL_BLOCK_SIZE_uz;  // num_mirror_rows
 
         // create a work-item private array used for internal caching
-        std::array<std::array<real_type, INTERNAL_BLOCK_SIZE_uz>, INTERNAL_BLOCK_SIZE_uz> temp{};
+        real_type temp[INTERNAL_BLOCK_SIZE][INTERNAL_BLOCK_SIZE]{};
 
         // perform the dot product calculation
         for (std::size_t dim = 0; dim < device_num_rows_; ++dim) {

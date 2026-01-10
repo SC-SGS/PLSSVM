@@ -106,7 +106,7 @@ class device_kernel_assembly_symm {
         // only calculate the upper triangular matrix -> can't use get_local_id() since all work-items in a work-group must progress further
         if (blockIdx_y >= blockIdx_x) {
             // create a work-item private array used for internal caching
-            std::array<std::array<real_type, INTERNAL_BLOCK_SIZE>, INTERNAL_BLOCK_SIZE> temp{};
+            real_type temp[INTERNAL_BLOCK_SIZE][INTERNAL_BLOCK_SIZE]{};
 
             //*************************************************************************//
             //                   inplace kernel matrix construction                    //
