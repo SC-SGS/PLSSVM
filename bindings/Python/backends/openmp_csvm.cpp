@@ -20,12 +20,13 @@
 #include "plssvm/svm/csvr.hpp"                    // plssvm::csvr
 #include "plssvm/target_platforms.hpp"            // plssvm::target_platform
 
-#include "bindings/Python/type_caster/mpi_type_caster.hpp"  // a custom Pybind11 type caster for a plssvm::mpi::communicator
+#include "bindings/Python/bindings_fwd.hpp"                 // forward declare all helper functions to create the Python bindings
+#include "bindings/Python/type_caster/mpi_type_caster.hpp"  // NOLINT: a custom Pybind11 type caster for a plssvm::mpi::communicator
 #include "bindings/Python/utility.hpp"                      // plssvm::bindings::python::util::register_py_exception
 
 #include "fmt/format.h"         // fmt::format
 #include "pybind11/pybind11.h"  // py::module_, py::class_, py::init, py::arg, py::exception, py::module_local
-#include "pybind11/stl.h"       // support for STL types: std::variant
+#include "pybind11/stl.h"       // NOLINT: support for STL types: std::variant
 
 #include <memory>   // std::make_unique
 #include <string>   // std::string

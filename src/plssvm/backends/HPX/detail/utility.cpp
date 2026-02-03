@@ -9,8 +9,8 @@
 
 #include "plssvm/backends/HPX/detail/utility.hpp"
 
-#include "hpx/runtime_distributed.hpp"  // ::hpx::get_num_worker_threads
-#include "hpx/version.hpp"              // ::hpx::full_version_as_string
+#include "hpx/runtime_local/runtime_local.hpp"  // ::hpx::get_num_worker_threads
+#include "hpx/version.hpp"                      // ::hpx::full_version_as_string
 
 #include <string>  // std::string
 
@@ -24,4 +24,5 @@ int get_num_threads() {
     // get the number of used HPX threads
     return static_cast<int>(::hpx::get_num_worker_threads());
 }
+
 }  // namespace plssvm::hpx::detail

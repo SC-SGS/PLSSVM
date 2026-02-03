@@ -12,6 +12,7 @@
 #include "plssvm/backends/SYCL/AdaptiveCpp/detail/queue_impl.hpp"  // plssvm::adaptivecpp::detail::queue (PImpl implementation)
 #include "plssvm/backends/SYCL/exceptions.hpp"                     // plssvm::adaptivecpp::backend_exception
 #include "plssvm/detail/assert.hpp"                                // PLSSVM_ASSERT
+#include "plssvm/detail/make_unique_for_overwrite.hpp"             // plssvm::detail::parallel_zero_memset
 #include "plssvm/matrix.hpp"                                       // plssvm::aos_matrix
 #include "plssvm/shape.hpp"                                        // plssvm::shape
 
@@ -20,6 +21,7 @@
 #include "fmt/format.h"  // fmt::format
 
 #include <algorithm>  // std::min
+#include <cstddef>    // std::size_t
 #include <cstring>    // std::memcpy
 #include <vector>     // std::vector
 
@@ -36,8 +38,11 @@ device_ptr<T>::device_ptr(const plssvm::shape shape, const queue &q) :
 template <typename T>
 device_ptr<T>::device_ptr(const plssvm::shape shape, const plssvm::shape padding, const queue &q) :
     base_type{ shape, padding, q } {
-    data_ = ::sycl::malloc_device<value_type>(this->size_padded(), queue_.impl->sycl_queue);
-    this->memset(0);
+    // only non-empty pointers must be memset in the constructor
+    if (this->size_padded() != std::size_t{ 0 }) {
+        data_ = ::sycl::malloc_device<value_type>(this->size_padded(), queue_.impl->sycl_queue);
+        this->memset(0);
+    }
 }
 
 template <typename T>
@@ -56,7 +61,14 @@ void device_ptr<T>::memset(const int pattern, const size_type pos, const size_ty
         throw backend_exception{ fmt::format("Illegal access in memset!: {} >= {}", pos, this->size_padded()) };
     }
     const size_type rnum_bytes = std::min(num_bytes, (this->size_padded() - pos) * sizeof(value_type));
-    queue_.impl->sycl_queue.memset(static_cast<void *>(data_ + pos), pattern, rnum_bytes).wait();
+
+    ::sycl::queue &queue = queue_.impl->sycl_queue;
+    // using our OpenMP enhanced 0 memset functions has dramatically better performance on the OpenMP CPU backend
+    if (pattern == 0 && queue.get_device().is_cpu() && queue.get_device().get_backend() == ::sycl::backend::omp) {
+        ::plssvm::detail::parallel_zero_memset(data_ + pos, rnum_bytes / sizeof(value_type));
+    } else {
+        queue.memset(static_cast<void *>(data_ + pos), pattern, rnum_bytes).wait();
+    }
 }
 
 template <typename T>

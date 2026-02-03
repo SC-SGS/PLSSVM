@@ -14,6 +14,7 @@
 #include "plssvm/detail/io/regression_libsvm_model_parsing.hpp"  // functions to test
 #include "plssvm/kernel_function_types.hpp"                      // plssvm::kernel_function_type
 #include "plssvm/matrix.hpp"                                     // plssvm::aos_matrix
+#include "plssvm/mpi/communicator.hpp"                           // plssvm::mpi::communicator
 #include "plssvm/parameter.hpp"                                  // plssvm::parameter
 #include "plssvm/shape.hpp"                                      // plssvm::shape
 
@@ -40,16 +41,16 @@ class LIBSVMRegressionModelDataWrite : public ::testing::Test,
      * @brief Return the used MPI communicator.
      * @return the MPI communicator (`[[nodiscard]]`)
      */
-    [[nodiscard]] const plssvm::mpi::communicator get_comm() const noexcept { return comm_; }
+    [[nodiscard]] const plssvm::mpi::communicator &get_comm() const noexcept { return comm_; }
 
   private:
     /// The MPI communicator (unused during testing since we do not support MPI runtime tests).
-    plssvm::mpi::communicator comm_{};
+    plssvm::mpi::communicator comm_;
 };
 
 TYPED_TEST_SUITE(LIBSVMRegressionModelDataWrite, util::regression_label_type_gtest, naming::test_parameter_to_name);
 
-TYPED_TEST(LIBSVMRegressionModelDataWrite, write) {
+TYPED_TEST(LIBSVMRegressionModelDataWrite, Write) {
     using label_type = util::test_parameter_type_at_t<0, TypeParam>;
 
     // define data to write
@@ -98,14 +99,15 @@ TYPED_TEST(LIBSVMRegressionModelDataWrite, write) {
         // check, how often the line in the file was found in the original data
         if (line_found == 0) {
             FAIL() << fmt::format("Couldn't find the line '{}' ({}) from the output file in the provided data set.", read_line, i);
-        } else if (line_found > 1) {
+        }
+        if (line_found > 1) {
             FAIL() << fmt::format("Could find the line '{}' ({}) from the output file in the provided data set multiple times.", read_line, i);
         }
     }
     SUCCEED();
 }
 
-TYPED_TEST(LIBSVMRegressionModelDataWrite, write_without_label) {
+TYPED_TEST(LIBSVMRegressionModelDataWrite, WriteWithoutLabel) {
     using label_type = util::test_parameter_type_at_t<0, TypeParam>;
 
     // define data to write
@@ -153,7 +155,8 @@ TYPED_TEST(LIBSVMRegressionModelDataWrite, write_without_label) {
         // check, how often the line in the file was found in the original data
         if (line_found == 0) {
             FAIL() << fmt::format("Couldn't find the line '{}' ({}) from the output file in the provided data set.", read_line, i);
-        } else if (line_found > 1) {
+        }
+        if (line_found > 1) {
             FAIL() << fmt::format("Could find the line '{}' ({}) from the output file in the provided data set multiple times.", read_line, i);
         }
     }
@@ -193,7 +196,7 @@ class LIBSVMRegressionModelDataWriteDeathTest : public LIBSVMRegressionModelData
 
   private:
     /// The default parameters.
-    plssvm::parameter params_{};
+    plssvm::parameter params_;
     /// The rho vector; size depending on used classification type and number of classes.
     std::vector<plssvm::real_type> rho_{ plssvm::real_type{ 3.1415 } };
     /// The weights; shape of the vector and the containing matrices depending on used classification type and number of classes.
@@ -204,13 +207,13 @@ class LIBSVMRegressionModelDataWriteDeathTest : public LIBSVMRegressionModelData
 
 TYPED_TEST_SUITE(LIBSVMRegressionModelDataWriteDeathTest, util::regression_label_type_gtest, naming::test_parameter_to_name);
 
-TYPED_TEST(LIBSVMRegressionModelDataWriteDeathTest, empty_filename) {
+TYPED_TEST(LIBSVMRegressionModelDataWriteDeathTest, EmptyFilename) {
     // try writing the LIBSVM model header
     EXPECT_DEATH((plssvm::detail::io::write_libsvm_model_data_regression("", this->get_comm(), this->get_params(), this->get_rho(), this->get_alpha(), this->get_data_set())),
                  "The provided model filename must not be empty!");
 }
 
-TYPED_TEST(LIBSVMRegressionModelDataWriteDeathTest, invalid_number_of_rho_values) {
+TYPED_TEST(LIBSVMRegressionModelDataWriteDeathTest, InvalidNumberOfRhoValues) {
     // create invalid parameter
     const std::vector<plssvm::real_type> rho = util::generate_random_vector<plssvm::real_type>(42);
 
@@ -219,7 +222,7 @@ TYPED_TEST(LIBSVMRegressionModelDataWriteDeathTest, invalid_number_of_rho_values
                  "The number of rho values is 42 but must be exactly 1!");
 }
 
-TYPED_TEST(LIBSVMRegressionModelDataWriteDeathTest, invalid_alpha_vector) {
+TYPED_TEST(LIBSVMRegressionModelDataWriteDeathTest, InvalidAlphaVector) {
     {
         // alpha vector too large
         const std::vector<plssvm::aos_matrix<plssvm::real_type>> alpha(2);

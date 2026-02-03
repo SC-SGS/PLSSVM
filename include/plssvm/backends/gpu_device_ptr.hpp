@@ -19,8 +19,12 @@
 #include "plssvm/matrix.hpp"                 // plssvm::layout_type, plssvm::matrix
 #include "plssvm/shape.hpp"                  // plssvm::shape
 
-#include <cstddef>  // std::size_t
-#include <vector>   // std::vector
+#include "fmt/format.h"  // fmt::format
+
+#include <algorithm>  // std::min
+#include <cstddef>    // std::size_t
+#include <utility>    // std::swap, std::exchange
+#include <vector>     // std::vector
 
 namespace plssvm::detail {
 
@@ -33,6 +37,9 @@ class gpu_device_ptr {
     // make sure only valid template types are used
     static_assert(detail::tuple_contains_v<T, detail::supported_real_types>,
                   "Illegal real type provided! See the 'real_type_list' in the type_list.hpp header for a list of the allowed types.");
+
+    /// Befriend device_ptr base class so we can make the gpu_device_ptr constructor private.
+    friend derived_gpu_device_ptr;
 
   public:
     /// The type of the values used in the device_ptr.
@@ -48,6 +55,7 @@ class gpu_device_ptr {
     /// The type of the device pointer.
     using device_pointer_type = device_pointer_t;
 
+  private:
     /**
      * @brief Default construct a gpu_device_ptr with a size of 0.
      */
@@ -57,14 +65,14 @@ class gpu_device_ptr {
      * @param[in] size the size of the managed memory
      * @param[in] queue the queue (or similar) to manage the device_ptr
      */
-    gpu_device_ptr(size_type size, const queue_type queue);
+    gpu_device_ptr(size_type size, const queue_type queue);  // NOLINT: queue_type can be a pointer type where const qualification makes a difference
     /**
      * @brief Construct a device_ptr for the device managed by @p queue with the provided @p shape.
      * @details The managed memory size is: extents[0] * extents[1].
      * @param[in] shape the 2D size of the managed memory; size = shape.x * shape.y
      * @param[in] queue the queue (or similar) to manage the device_ptr
      */
-    gpu_device_ptr(plssvm::shape shape, const queue_type queue);
+    gpu_device_ptr(plssvm::shape shape, const queue_type queue);  // NOLINT: queue_type can be a pointer type where const qualification makes a difference
     /**
      * @brief Construct a device_ptr for the device managed by @p queue with the provided @p shape including @p padding.
      * @details The managed memory size is: (shape.x + padding.x) * (shape.y + padding.y).
@@ -72,17 +80,19 @@ class gpu_device_ptr {
      * @param[in] padding the padding applied to the extents
      * @param[in] queue the queue (or similar) to manage the device_ptr
      */
-    gpu_device_ptr(plssvm::shape shape, plssvm::shape padding, const queue_type queue);
+    gpu_device_ptr(plssvm::shape shape, plssvm::shape padding, const queue_type queue);  // NOLINT: queue_type can be a pointer type where const qualification makes a difference
 
-    /**
-     * @brief Delete copy-constructor to make device_ptr a move only type.
-     */
-    gpu_device_ptr(const gpu_device_ptr &) = delete;
     /**
      * @brief Move-constructor as device_ptr is a move-only type.
      * @param[in,out] other the device_ptr to move-construct from
      */
     gpu_device_ptr(gpu_device_ptr &&other) noexcept;
+
+  public:
+    /**
+     * @brief Delete copy-constructor to make device_ptr a move only type.
+     */
+    gpu_device_ptr(const gpu_device_ptr &) = delete;  // NOLINT(bugprone-crtp-constructor-accessibility): deleted constructor should be public
 
     /**
      * @brief Delete copy-assignment-operator to make device_ptr a move only type.
@@ -115,7 +125,7 @@ class gpu_device_ptr {
 
     /**
      * @brief Checks whether `*this` currently wraps a device pointer.
-     * @details Same as `device_ptr::get() != nullptr`.
+     * @details Same as `device_ptr::get() != device_ptr::device_ptr()`.
      * @return `true` if `*this` wraps a device pointer, `false` otherwise (`[[nodiscard]]`)
      */
     [[nodiscard]] explicit operator bool() const noexcept {
@@ -192,7 +202,7 @@ class gpu_device_ptr {
      * @return `true` if the wrapped device_ptr is padded, `false` otherwise (`[[nodiscard]]`)
      */
     [[nodiscard]] bool is_padded() const noexcept {
-        return !(padding_.x == 0 && padding_.y == 0);
+        return padding_.x != 0 || padding_.y != 0;
     }
 
     /**
@@ -363,9 +373,9 @@ class gpu_device_ptr {
     /// The device queue used to manage the device memory associated with this device pointer.
     queue_type queue_{};
     /// The size of the managed memory.
-    plssvm::shape shape_{};
+    plssvm::shape shape_;
     /// The padding size of the managed memory.
-    plssvm::shape padding_{};
+    plssvm::shape padding_;
     /// The device pointer pointing to the managed memory.
     device_pointer_type data_{};
 };
@@ -394,7 +404,7 @@ gpu_device_ptr<T, queue_t, device_pointer_t, derived_gpu_device_ptr>::gpu_device
     data_{ std::exchange(other.data_, device_pointer_type{}) } { }
 
 template <typename T, typename queue_t, typename device_pointer_t, typename derived_gpu_device_ptr>
-auto gpu_device_ptr<T, queue_t, device_pointer_t, derived_gpu_device_ptr>::operator=(gpu_device_ptr &&other) noexcept -> gpu_device_ptr & {
+gpu_device_ptr<T, queue_t, device_pointer_t, derived_gpu_device_ptr> &gpu_device_ptr<T, queue_t, device_pointer_t, derived_gpu_device_ptr>::operator=(gpu_device_ptr &&other) noexcept {
     // guard against self-assignment
     if (this != std::addressof(other)) {
         queue_ = std::exchange(other.queue_, queue_type{});

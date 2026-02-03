@@ -15,10 +15,10 @@ set(PLSSVM_SYCL_ADAPTIVECPP_TEST_SOURCES
     ${CMAKE_CURRENT_LIST_DIR}/detail/utility.cpp
     ${CMAKE_CURRENT_LIST_DIR}/adaptivecpp_csvm.cpp
     # ~~~
-    # since the SYCL implementation_type and kernel_invocation_type enumerations are used even if no SYCL backend
+    # since the SYCL implementation_type and data_parallel_kernel enumerations are used even if no SYCL backend
     # is available these are also tested in the base library
     # ${CMAKE_CURRENT_LIST_DIR}/../implementation_types.cpp
-    # ${CMAKE_CURRENT_LIST_DIR}/../kernel_invocation_types.cpp
+    # ${CMAKE_CURRENT_LIST_DIR}/../data_parallel_kernels.cpp
     # ~~~
 )
 
@@ -38,12 +38,12 @@ include(${PROJECT_SOURCE_DIR}/cmake/discover_tests_with_death_test_filter.cmake)
 discover_tests_with_death_test_filter(${PLSSVM_SYCL_ADAPTIVECPP_TEST_NAME})
 
 # add minimal run test for the classification task with the AdaptiveCpp SYCL backend
-add_test(NAME MainTrainClassificationSYCLAdaptiveCpp/executable_minimal
+add_test(NAME MainTrainClassificationSYCLAdaptiveCpp/ExecutableMinimal
          COMMAND ${PLSSVM_EXECUTABLE_TRAIN_NAME} -s 0 -b sycl --sycl_implementation_type acpp "${PLSSVM_CLASSIFICATION_TEST_FILE}"
                  "${CMAKE_CURRENT_BINARY_DIR}/test_classification.libsvm.model"
 )
 add_test(
-    NAME MainPredictClassificationSYCLAdaptiveCpp/executable_minimal
+    NAME MainPredictClassificationSYCLAdaptiveCpp/ExecutableMinimal
     COMMAND
         ${PLSSVM_EXECUTABLE_PREDICT_NAME} -b sycl --sycl_implementation_type acpp
         "${CMAKE_CURRENT_LIST_DIR}/../../../data/libsvm/classification/5x4.libsvm" # test file
@@ -52,12 +52,12 @@ add_test(
 )
 
 # add minimal run test for the regression task with the AdaptiveCpp SYCL backend
-add_test(NAME MainTrainRegressionSYCLAdaptiveCpp/executable_minimal
+add_test(NAME MainTrainRegressionSYCLAdaptiveCpp/ExecutableMinimal
          COMMAND ${PLSSVM_EXECUTABLE_TRAIN_NAME} -s 1 -b sycl --sycl_implementation_type acpp "${PLSSVM_REGRESSION_TEST_FILE}"
                  "${CMAKE_CURRENT_BINARY_DIR}/test_regression.libsvm.model"
 )
 add_test(
-    NAME MainPredictRegressionSYCLAdaptiveCpp/executable_minimal
+    NAME MainPredictRegressionSYCLAdaptiveCpp/ExecutableMinimal
     COMMAND
         ${PLSSVM_EXECUTABLE_PREDICT_NAME} -b sycl --sycl_implementation_type acpp
         "${CMAKE_CURRENT_LIST_DIR}/../../../data/libsvm/regression/5x4.libsvm" # test file

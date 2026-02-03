@@ -55,9 +55,11 @@ struct type_caster<plssvm::matrix<T, layout>> {
      * @details If the PLSSVM matrix's memory layout is AoS, uses a Numpy ndarray with c_style layout,
      *          if the PLSSVM matrix's memory layout is SoA, uses a Numpy ndarray with f_style layout.
      * @param[in] matr the PLSSVM matrix to convert to a Numpy ndarray
+     * @params[in] rvp *unused*
+     * @params[in] h *unused*
      * @return a Pybind11 handle to the Numpy ndarray
      */
-    static py::handle cast(const matrix_type &matr, py::return_value_policy, py::handle) {
+    static py::handle cast(const matrix_type &matr, [[maybe_unused]] const py::return_value_policy rvp, [[maybe_unused]] const py::handle h) {
         const std::size_t num_data_points = matr.num_rows();
         const std::size_t num_features = matr.num_cols();
 
@@ -66,7 +68,7 @@ struct type_caster<plssvm::matrix<T, layout>> {
 
         // create the Python numpy array
         py_array_type arr({ num_data_points, num_features });
-        py::buffer_info buffer = arr.request();
+        const py::buffer_info buffer = arr.request();
         T *ptr = static_cast<T *>(buffer.ptr);
 
         // check if the provided matrix has padding entries -> must be removed
@@ -103,14 +105,14 @@ struct type_caster<plssvm::matrix<T, layout>> {
         const std::size_t num_cols = arr.shape(1);
 
         // get the underlying raw memory
-        py::buffer_info buffer = arr.request();
+        const py::buffer_info buffer = arr.request();
         const T *ptr = static_cast<T *>(buffer.ptr);
 
         // note: the conversions use OpenMP -> remove Python's Global Interpreter Lock
         const py::gil_scoped_release release;
 
         // check the memory layout of the Python Numpy array
-        if constexpr (static_cast<bool>(Flags & py::array::c_style)) {
+        if constexpr (static_cast<bool>(Flags & py::array::c_style)) {  // NOLINT(hicpp-signed-bitwise): Pybind11 way to do this
             // the provided Python Numpy array has C style layout
             if constexpr (layout == plssvm::layout_type::aos) {
                 // memory layout of Python Numpy array and PLSSVM matrix are the same -> can use memcpy to convert
@@ -130,7 +132,7 @@ struct type_caster<plssvm::matrix<T, layout>> {
                 // unsupported PLSSVM matrix memory layout
                 return false;
             }
-        } else if constexpr (static_cast<bool>(Flags & py::array::f_style)) {
+        } else if constexpr (static_cast<bool>(Flags & py::array::f_style)) {  // NOLINT(hicpp-signed-bitwise): Pybind11 way to do this
             if constexpr (layout == plssvm::layout_type::aos) {
                 // the memory layouts don't match -> must use loops to convert layouts
 #pragma omp parallel for collapse(2)
@@ -161,13 +163,14 @@ struct type_caster<plssvm::matrix<T, layout>> {
      * @brief Try converting a Python object @p obj to a plssvm::matrix.
      * @detauls Honors different Numpy ndarray memory layouts (c_style or f_style) and PLSSVM matrix layout types.
      * @param[in] obj the object to convert
+     * @params[in] allow_implicit_conversion *unused*
      * @return `true` if the conversion was successful, `false` otherwise
      * @throws py::value_error if the provided Python list is empty (or one-dimensional)
      * @throws py::value_error if the provided 2D Python list has inhomogeneous shape
      * @throws py::value_error if @p obj is not a Numpy ndarray, Pandas DataFrame, SciPy sparse matrix, or Python 2D list
      * @throws py::value_error if the Numpy ndarray doesn't have a two-dimensional shape
      */
-    bool load(py::handle obj, bool) {
+    bool load(py::handle obj, [[maybe_unused]] const bool allow_implicit_conversion) {
         // special case py::list
         if (py::isinstance<py::list>(obj)) {
             // provided obj is a Python list -> check if it is a correct py::list of py::list
@@ -215,7 +218,7 @@ struct type_caster<plssvm::matrix<T, layout>> {
                 // provided obj is a SciPy sparse matrix
                 arr = obj.attr("toarray")().cast<py::array>();
             } else {
-                throw py::value_error{ fmt::format("Unsupported data type: {}", std::string{ py::str(obj.get_type().attr("__name__")) }) };
+                throw py::value_error{ fmt::format("Unsupported data type: {}", std::string{ py::str(py::type::of(obj).attr("__name__")) }) };
             }
 
             // sanity check the number of elements in the numpy array
@@ -237,27 +240,27 @@ struct type_caster<plssvm::matrix<T, layout>> {
             value = matrix_type{ plssvm::shape{ num_rows, num_cols }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE } };
 
             // get the underlying buffer
-            py::buffer_info buffer = arr.request();
+            const py::buffer_info buffer = arr.request();
 
             // check the memory layout of the Python Numpy array
             if (plssvm::bindings::python::util::is_c_contiguous<T>(buffer)) {
                 // array is already c_style -> no need to force cast
                 return copy_pyarray_to_matrix(arr.cast<py::array_t<T, py::array::c_style>>());
-            } else if (plssvm::bindings::python::util::is_f_contiguous<T>(buffer)) {
+            }
+            if (plssvm::bindings::python::util::is_f_contiguous<T>(buffer)) {
                 // array is already f_style -> no need to force cast
                 return copy_pyarray_to_matrix(arr.cast<py::array_t<T, py::array::f_style>>());
-            } else {
-                // array is non-contiguous
-                if constexpr (layout == plssvm::layout_type::aos) {
-                    // if we want to get a PLSSVM matrix in AoS layout, force casting to c_style is more performant
-                    return copy_pyarray_to_matrix(arr.cast<py::array_t<T, py::array::c_style | py::array::forcecast>>());
-                } else if constexpr (layout == plssvm::layout_type::soa) {
-                    // if we want to get a PLSSVM matrix in SoA layout, force casting to f_style is more performant
-                    return copy_pyarray_to_matrix(arr.cast<py::array_t<T, py::array::f_style | py::array::forcecast>>());
-                } else {
-                    return false;
-                }
             }
+            // array is non-contiguous
+            if constexpr (layout == plssvm::layout_type::aos) {
+                // if we want to get a PLSSVM matrix in AoS layout, force casting to c_style is more performant
+                return copy_pyarray_to_matrix(arr.cast<py::array_t<T, py::array::c_style | py::array::forcecast>>());
+            }
+            if constexpr (layout == plssvm::layout_type::soa) {
+                // if we want to get a PLSSVM matrix in SoA layout, force casting to f_style is more performant
+                return copy_pyarray_to_matrix(arr.cast<py::array_t<T, py::array::f_style | py::array::forcecast>>());
+            }
+            return false;
         }
 
         return true;

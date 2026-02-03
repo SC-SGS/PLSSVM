@@ -557,9 +557,10 @@ class classification_data_set : public data_set<U> {
     void init();
 
     /**
-     * @copydoc plssvm::data_set::map_label
+     * @brief Create the mapping between the provided labels and the internally used values.
+     * @throws plssvm::data_set_exception any exception of the plssvm::data_set::label_mapper class
      */
-    void map_label() override;
+    void map_label();
 
     /// The mapping used to convert the original label to its mapped value and vice versa; may be `nullptr` if no labels have been provided.
     std::shared_ptr<const label_mapper> mapping_{ nullptr };
@@ -731,8 +732,8 @@ void classification_data_set<U>::map_label() {
     PLSSVM_ASSERT(labels_ptr_ != nullptr, "Can't create mapping if no labels are provided!");
 
     // create vector containing unique classes
-    std::set<label_type> unique_labels(labels_ptr_->cbegin(), labels_ptr_->cend());
-    std::vector<label_type> classes(unique_labels.cbegin(), unique_labels.cend());
+    const std::set<label_type> unique_labels(labels_ptr_->cbegin(), labels_ptr_->cend());
+    const std::vector<label_type> classes(unique_labels.cbegin(), unique_labels.cend());
 
     // create label mapping
     label_mapper mapper{ classes };

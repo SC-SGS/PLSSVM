@@ -1,3 +1,5 @@
+<!-- DOXYGEN_PYTHON_BINDINGS_LINK -->
+
 # The Python3 Bindings
 
 - [Sklearn like API for sklearn.svm.SVC](#sklearn-like-api-for-sklearnsvmsvc)
@@ -28,10 +30,9 @@ of [`sklearn.svm.SVC`](https://scikit-learn.org/stable/modules/generated/sklearn
 `sklearn.svm.SVR`](https://scikit-learn.org/stable/modules/generated/sklearn.svm.SVR.html) and one extremely closely
 to our C++ API.
 
-**Note**: this page is solely meant as an API reference and overview. For examples see the
-top-level [`../../examples/`](/examples) folder.
+**Note**: this page is solely meant as an API reference and overview. For examples see the examples folder.
 
-## Sklearn like API for `sklearn.svm.SVC`
+## Sklearn like API for sklearn.svm.SVC
 
 The following tables show the API provided
 by [`sklearn.svm.SVC`](https://scikit-learn.org/stable/modules/generated/sklearn.svm.SVC.html) and whether we currently
@@ -187,7 +188,7 @@ More detailed description of the class methods:
     - Returns:
         - `self : object`: The updated object.
 
-## Sklearn like API for `sklearn.svm.SVR`
+## Sklearn like API for sklearn.svm.SVR
 
 The following tables show the API provided
 by [`sklearn.svm.SVR`](https://scikit-learn.org/stable/modules/generated/sklearn.svm.SVR.html) and whether we currently
@@ -332,10 +333,10 @@ The following table lists all PLSSVM enumerations exposed on the Python side:
 
 If a SYCL implementation is available, additional enumerations are available:
 
-| enumeration            | values                                                       | description                                                                                                                                                                                                                                               |
-|------------------------|--------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `ImplementationType`   | `AUTOMATIC`, `DPCPP`, `ADAPTIVECPP`                          | The different supported SYCL implementation types (default: `AUTOMATIC`). If `AUTOMATIC` is provided, determines the used SYCL implementation based on the value of `-DPLSSVM_SYCL_BACKEND_PREFERRED_IMPLEMENTATION` provided during PLSSVM'S build step. |
-| `KernelInvocationType` | `AUTOMATIC`, `BASIC`, `WORK_GROUP`, `HIERARCHICAL`, `SCOPED` | The different supported SYCL kernel invocation types (default: `AUTOMATIC`). If `AUTOMATIC` is provided, simply uses `WORK_GROUP`.                                                                                                                        |
+| enumeration          | values                                                       | description                                                                                                                                                                                                                                               |
+|----------------------|--------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `ImplementationType` | `AUTOMATIC`, `DPCPP`, `ADAPTIVECPP`                          | The different supported SYCL implementation types (default: `AUTOMATIC`). If `AUTOMATIC` is provided, determines the used SYCL implementation based on the value of `-DPLSSVM_SYCL_BACKEND_PREFERRED_IMPLEMENTATION` provided during PLSSVM'S build step. |
+| `DataParallelKernel` | `AUTOMATIC`, `BASIC`, `WORK_GROUP`, `HIERARCHICAL`, `SCOPED` | The different supported SYCL data parallel kernels (default: `AUTOMATIC`). If `AUTOMATIC` is provided, simply uses `WORK_GROUP`.                                                                                                                          |
 
 If the stdpar backend is available, an additional enumeration is available:
 
@@ -355,7 +356,7 @@ If the Kokos backend is available, an additional enumeration is available:
 
 The following tables list all PLSSVM classes exposed on the Python side:
 
-#### `plssvm.Parameter`
+#### plssvm.Parameter
 
 The parameter class encapsulates all necessary hyperparameters needed to fit an SVM.
 
@@ -378,7 +379,7 @@ The parameter class encapsulates all necessary hyperparameters needed to fit an 
 | `param1 != param2`    | Check whether two parameter objects aren't identical.                                               |
 | `print(param)`        | Overload to print a `plssvm.Parameter` object displaying the used hyper-parameters.                 |
 
-#### `plssvm.ClassificationDataSet` and `plssvm.RegressionDataSet`
+#### plssvm.ClassificationDataSet and plssvm.RegressionDataSet
 
 A class encapsulating a used classification or regression data set.
 The label types are either determined by the provided labels or if no labels are given or the data is read through a 
@@ -412,7 +413,7 @@ The following methods are **only** available for a `plssvm.ClassificationDataSet
 | `num_classes()` | Return the number of classes. **Note**: `0` if no labels are present. |
 | `classes()`     | Return the different classes, if labels are present.                  |
 
-#### `plssvm.MinMaxScaler`
+#### plssvm.MinMaxScaler
 
 A class encapsulating and performing the scaling of a data set to the provided `[lower, upper]` range.
 
@@ -430,7 +431,7 @@ A class encapsulating and performing the scaling of a data set to the provided `
 | `communicator()`     | Return the used MPI communicator.                                                                                 |
 | `print(scaling)`     | Overload to print a data set scaling object object displaying the scaling interval and number of scaling factors. |
 
-##### `plssvm.MinMaxScalerFactors`
+##### plssvm.MinMaxScalerFactors
 
 A class encapsulating a scaling factor for a specific feature in a data set obtained by `plssvm.MinMaxScaler`.
 **Note**: it shouldn't be necessary to directly use `plssvm.MinMaxScalerFactors` in user code.
@@ -449,7 +450,7 @@ A class encapsulating a scaling factor for a specific feature in a data set obta
 |-------------------------|----------------------------------------------------------------------------------------------------------------|
 | `print(scaling_factor)` | Overload to print a data set scaling object object displaying the feature's index, minimum, and maximum value. |
 
-#### `plssvm.CSVC` and `plssvm.CSVR`
+#### plssvm.CSVC and plssvm.CSVR
 
 The main class responsible for fitting an SVM model and later predicting or scoring new data sets.
 It uses either the provided backend type or the default determined one to create a PLSSVM C-SVM of the correct backend
@@ -469,7 +470,7 @@ The following constructors and methods are available for both classification `CS
 
 **Note**: if the backend type is `plssvm.BackendType.SYCL` two additional named parameters can be provided:
 `sycl_implementation_type` to choose between DPC++ and AdaptiveCpp as SYCL implementations
-and `sycl_kernel_invocation_type` to choose between the two different SYCL kernel invocation types.
+and `sycl_data_parallel_kernel` to choose between the different SYCL data parallel kernels.
 
 **Note**: if the backend type is `plssvm.BackendType.HPX` or `plssvm.BackendType.Kokkos` special initialization and
 finalization functions must be called.
@@ -490,7 +491,7 @@ However, this is **automatically** handled by our Python bindings on the module 
 
 **Note**: the `classification` named parameter is not allowed for the `CSVR`!
 
-#### The backend `C-SVC`s and `C-SVR`s
+#### The backend C-SVCs and C-SVRs
 
 These classes represent the backend specific C-SVMs:
 - OpenMP: `plssvm.openmp.CSVC` and `plssvm.openmp.CSVR`
@@ -519,12 +520,12 @@ The following constructors and methods are available for both classification `CS
 | `CSVC(target, *, kernel_type=plssvm.KernelFunctionType.RBF, degree=3, gamma=plssvm.GammaCoefficientType.AUTO, coef0=0.0, cost=1.0, comm=*used MPI communicator*)` | Create a new C-SVM with the provided parameters and named arguments.                |
 
 In case of the SYCL C-SVMs (`plssvm.sycl.CSVM`, `plssvm.dpcpp.CSVM`, and `plssvm.adaptivecpp.CSVM`; the same for the 
-`CSVR`s), additionally, all constructors also accept the SYCL specific `sycl_kernel_invocation_type` keyword parameter.
+`CSVR`s), additionally, all constructors also accept the SYCL specific `sycl_data_parallel_kernel` keyword parameter.
 Also, the following method is additional available for the backend specific C-SVM:
 
-| methods                        | description                             |
-|--------------------------------|-----------------------------------------|
-| `get_kernel_invocation_type()` | Return the SYCL kernel invocation type. |
+| methods                      | description                                |
+|------------------------------|--------------------------------------------|
+| `get_data_parallel_kernel()` | Return the used SYCL data parallel kernel. |
 
 In case of the stdpar C-SVM (`plssvm.stdpar.CSVC` and `plssvm.stdpar.CSVR`) the following method is additional available for the backend specific
 C-SVM.
@@ -540,7 +541,7 @@ Also, the following method is additional available for the backend specific C-SV
 |-------------------------|-----------------------------------------|
 | `get_execution_space()` | Return the used Kokkos execution space. |
 
-#### `plssvm.ClassificationModel` and `plssvm::RegressionModel`
+#### plssvm.ClassificationModel and plssvm::RegressionModel
 
 A class encapsulating a model learned during a call to `plssvm.CSVC.fit()` or `plssvm::CSVR.fit()`. 
 
@@ -571,7 +572,7 @@ The following methods are **only** available for a `plssvm.ClassificationModel`:
 | `classes()`                 | Return the different classes.            |
 | `get_classification_type()` | Return the used classification strategy. |
 
-#### `plssvm.performance_tracking`
+#### plssvm.performance_tracking
 
 A submodule used to track various performance statistics like runtimes, but also the used setup and hyperparameters.
 The tracked metrics can be saved to a YAML file for later post-processing.
@@ -592,7 +593,7 @@ The tracked metrics can be saved to a YAML file for later post-processing.
 | `get_events()`                                     | Return all previously recorded events.                                                 |
 | `clear_tracking_entries()`                         | Remove all currently tracked entries from the performance tracker.                     |
 
-#### `plssvm.performance_tracking.Event`, `plssvm.performance_tracking.Events`
+#### plssvm.performance_tracking.Event, plssvm.performance_tracking.Events
 
 Two rather similar classes.
 **Note**: both classes are only available if PLSSVM was built with `-DPLSSVM_ENABLE_PERFORMANCE_TRACKING=ON`!

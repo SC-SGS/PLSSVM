@@ -11,10 +11,11 @@
 #include "plssvm/constants.hpp"                         // plssvm::real_type, plssvm::PADDING_SIZE
 #include "plssvm/data_set/classification_data_set.hpp"  // data set class to test
 #include "plssvm/data_set/min_max_scaler.hpp"           // plssvm::min_max_scaler
-#include "plssvm/matrix.hpp"                            // plssvm::aos_matrix
+#include "plssvm/matrix.hpp"                            // plssvm::soa_matrix
 #include "plssvm/shape.hpp"                             // plssvm::shape
+#include "plssvm/svm_types.hpp"                         // plssvm::svm_type
 
-#include "tests/custom_test_macros.hpp"  // EXPECT_FLOATING_POINT_MATRIX_EQ, EXPECT_FLOATING_POINT_EQ, EXPECT_FLOATING_POINT_NEAR
+#include "tests/custom_test_macros.hpp"  // EXPECT_FLOATING_POINT_MATRIX_EQ, EXPECT_FLOATING_POINT_EQ, EXPECT_FLOATING_POINT_NEAR, EXPECT_OPTIONAL_EQ
 #include "tests/naming.hpp"              // naming::test_parameter_to_name
 #include "tests/types_to_test.hpp"       // util::{classification_label_type_gtest, test_parameter_type_at_t}
 #include "tests/utility.hpp"             // util::{redirect_output, scale}
@@ -22,7 +23,7 @@
 #include "gtest/gtest.h"  // TYPED_TEST, TYPED_TEST_SUITE, EXPECT_TRUE, EXPECT_FALSE, EXPECT_EQ, ASSERT_TRUE, ::testing::Test
 
 #include <cstddef>  // std::size_t
-#include <tuple>    // std::get
+#include <utility>  // std::get
 #include <vector>   // std::vector
 
 template <typename T>
@@ -55,12 +56,12 @@ class ClassificationDataSetGetter : public ::testing::Test,
     /// The correct labels.
     std::vector<fixture_label_type> label_{ util::get_correct_data_file_labels<fixture_label_type, plssvm::svm_type::csvc>() };
     /// The correct data points.
-    plssvm::soa_matrix<plssvm::real_type> data_points_{ util::generate_specific_matrix<plssvm::aos_matrix<plssvm::real_type>>(plssvm::shape{ label_.size(), 4 }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE }) };
+    plssvm::soa_matrix<plssvm::real_type> data_points_{ util::generate_specific_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ label_.size(), 4 }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE }) };
 };
 
 TYPED_TEST_SUITE(ClassificationDataSetGetter, util::classification_label_type_gtest, naming::test_parameter_to_name);
 
-TYPED_TEST(ClassificationDataSetGetter, data) {
+TYPED_TEST(ClassificationDataSetGetter, Data) {
     using label_type = typename TestFixture::fixture_label_type;
 
     // create data set without labels
@@ -69,7 +70,7 @@ TYPED_TEST(ClassificationDataSetGetter, data) {
     EXPECT_FLOATING_POINT_MATRIX_EQ(data.data(), this->get_data_points());
 }
 
-TYPED_TEST(ClassificationDataSetGetter, has_labels) {
+TYPED_TEST(ClassificationDataSetGetter, HasLabels) {
     using label_type = typename TestFixture::fixture_label_type;
 
     // create data set without labels
@@ -82,7 +83,7 @@ TYPED_TEST(ClassificationDataSetGetter, has_labels) {
     EXPECT_TRUE(data_with_labels.has_labels());
 }
 
-TYPED_TEST(ClassificationDataSetGetter, labels) {
+TYPED_TEST(ClassificationDataSetGetter, Labels) {
     using label_type = typename TestFixture::fixture_label_type;
 
     // create data set without labels
@@ -92,11 +93,10 @@ TYPED_TEST(ClassificationDataSetGetter, labels) {
     // create data set with labels
     const plssvm::classification_data_set<label_type> data_with_labels{ this->get_data_points(), this->get_label() };
     // check labels getter
-    ASSERT_TRUE(data_with_labels.labels().has_value());
-    EXPECT_EQ(data_with_labels.labels()->get(), this->get_label());
+    EXPECT_OPTIONAL_EQ(data_with_labels.labels(), this->get_label());
 }
 
-TYPED_TEST(ClassificationDataSetGetter, classes) {
+TYPED_TEST(ClassificationDataSetGetter, Classes) {
     using label_type = typename TestFixture::fixture_label_type;
 
     // create data set without labels
@@ -106,11 +106,10 @@ TYPED_TEST(ClassificationDataSetGetter, classes) {
     // create data set with labels
     const plssvm::classification_data_set<label_type> data_with_labels{ this->get_data_points(), this->get_label() };
     // check different_labels getter
-    ASSERT_TRUE(data_with_labels.classes().has_value());
-    EXPECT_EQ(*data_with_labels.classes(), this->get_classes());
+    EXPECT_OPTIONAL_EQ(data_with_labels.classes(), this->get_classes());
 }
 
-TYPED_TEST(ClassificationDataSetGetter, num_data_points) {
+TYPED_TEST(ClassificationDataSetGetter, NumDataPoints) {
     using label_type = typename TestFixture::fixture_label_type;
 
     // create data set
@@ -119,7 +118,7 @@ TYPED_TEST(ClassificationDataSetGetter, num_data_points) {
     EXPECT_EQ(data.num_data_points(), this->get_data_points().num_rows());
 }
 
-TYPED_TEST(ClassificationDataSetGetter, num_features) {
+TYPED_TEST(ClassificationDataSetGetter, NumFeatures) {
     using label_type = typename TestFixture::fixture_label_type;
 
     // create data set
@@ -128,7 +127,7 @@ TYPED_TEST(ClassificationDataSetGetter, num_features) {
     EXPECT_EQ(data.num_features(), this->get_data_points().num_cols());
 }
 
-TYPED_TEST(ClassificationDataSetGetter, num_classes) {
+TYPED_TEST(ClassificationDataSetGetter, NumClasses) {
     using label_type = typename TestFixture::fixture_label_type;
 
     // create data set without labels
@@ -142,7 +141,7 @@ TYPED_TEST(ClassificationDataSetGetter, num_classes) {
     EXPECT_EQ(data_with_label.num_classes(), this->get_classes().size());
 }
 
-TYPED_TEST(ClassificationDataSetGetter, is_scaled) {
+TYPED_TEST(ClassificationDataSetGetter, IsScaled) {
     using label_type = typename TestFixture::fixture_label_type;
 
     // create data set
@@ -156,7 +155,7 @@ TYPED_TEST(ClassificationDataSetGetter, is_scaled) {
     EXPECT_TRUE(data_scaled.is_scaled());
 }
 
-TYPED_TEST(ClassificationDataSetGetter, scaling_factors) {
+TYPED_TEST(ClassificationDataSetGetter, ScalingFactors) {
     using label_type = typename TestFixture::fixture_label_type;
 
     // create data set
@@ -167,16 +166,25 @@ TYPED_TEST(ClassificationDataSetGetter, scaling_factors) {
     // create scaled data set
     const plssvm::classification_data_set<label_type> data_scaled{ this->get_data_points(), plssvm::min_max_scaler{ plssvm::real_type{ -1.0 }, plssvm::real_type{ 1.0 } } };
     // check scaling_factors getter
-    ASSERT_TRUE(data_scaled.scaling_factors().has_value());
-    const auto &[ignored, correct_scaling_factors] = util::scale(this->get_data_points(), plssvm::real_type{ -1.0 }, plssvm::real_type{ 1.0 });
-    const plssvm::min_max_scaler &scaling_factors = *data_scaled.scaling_factors();
-    EXPECT_FLOATING_POINT_EQ(scaling_factors.scaling_interval().first, plssvm::real_type{ -1.0 });
-    EXPECT_FLOATING_POINT_EQ(scaling_factors.scaling_interval().second, plssvm::real_type{ 1.0 });
-    ASSERT_TRUE(scaling_factors.scaling_factors().has_value());
-    ASSERT_EQ(scaling_factors.scaling_factors()->size(), correct_scaling_factors.size());
-    for (std::size_t i = 0; i < scaling_factors.scaling_factors()->size(); ++i) {
-        EXPECT_EQ(scaling_factors.scaling_factors().value()[i].feature, std::get<0>(correct_scaling_factors[i]));
-        EXPECT_FLOATING_POINT_NEAR(scaling_factors.scaling_factors().value()[i].lower, std::get<1>(correct_scaling_factors[i]));
-        EXPECT_FLOATING_POINT_NEAR(scaling_factors.scaling_factors().value()[i].upper, std::get<2>(correct_scaling_factors[i]));
+    const auto &scaling_factors_opt = data_scaled.scaling_factors();
+    ASSERT_TRUE(scaling_factors_opt.has_value());
+    if (scaling_factors_opt.has_value()) {
+        const plssvm::min_max_scaler scaling_factors = scaling_factors_opt.value().get();
+
+        // check scaling factor content
+        const auto &[ignored, correct_scaling_factors] = util::scale(this->get_data_points(), plssvm::real_type{ -1.0 }, plssvm::real_type{ 1.0 });
+        EXPECT_FLOATING_POINT_EQ(scaling_factors.scaling_interval().first, plssvm::real_type{ -1.0 });
+        EXPECT_FLOATING_POINT_EQ(scaling_factors.scaling_interval().second, plssvm::real_type{ 1.0 });
+        const auto &factors_opt = scaling_factors.scaling_factors();
+        ASSERT_TRUE(factors_opt.has_value());
+        if (factors_opt.has_value()) {
+            const std::vector<plssvm::min_max_scaler::factors> factors = factors_opt.value();
+            ASSERT_EQ(factors.size(), correct_scaling_factors.size());
+            for (std::size_t i = 0; i < factors.size(); ++i) {
+                EXPECT_EQ(factors[i].feature, std::get<0>(correct_scaling_factors[i]));
+                EXPECT_FLOATING_POINT_NEAR(factors[i].lower, std::get<1>(correct_scaling_factors[i]));
+                EXPECT_FLOATING_POINT_NEAR(factors[i].upper, std::get<2>(correct_scaling_factors[i]));
+            }
+        }
     }
 }

@@ -49,16 +49,16 @@ struct parser_scale {
     bool strings_as_labels{ false };
 
     /// The name of the data file to scale.
-    std::string input_filename{};
+    std::string input_filename;
     /// The name of the scaled data file to save.
-    std::string scaled_filename{};
+    std::string scaled_filename;
     /// The name of the file where the scaling factors are saved.
-    std::string save_filename{};
+    std::string save_filename;
     /// The name of the file from which the scaling factors should be restored.
-    std::string restore_filename{};
+    std::string restore_filename;
 
     /// If performance tracking has been enabled, provides the name of the file where the performance tracking results are saved to. If the filename is empty, the results are dumped using std::clog instead.
-    std::string performance_tracking_filename{};
+    std::string performance_tracking_filename;
 };
 
 /**

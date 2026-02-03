@@ -28,6 +28,7 @@
 #include "plssvm/target_platforms.hpp"                    // plssvm::target_platform
 
 #include <cstddef>      // std::size_t
+#include <optional>     // std::optional
 #include <type_traits>  // std::true_type
 #include <utility>      // std::forward
 #include <vector>       // std::vector
@@ -95,6 +96,10 @@ class csvm : public ::plssvm::detail::gpu_csvm<detail::device_ptr, int, detail::
      */
     [[nodiscard]] std::vector<::plssvm::detail::memory_size> get_max_mem_alloc_size() const final;
     /**
+     * @copydoc plssvm::csvm::get_local_memory
+     */
+    [[nodiscard]] std::vector<std::optional<::plssvm::detail::memory_size>> get_local_memory() const final;
+    /**
      * @copydoc plssvm::detail::gpu_csvm::get_max_work_group_size
      */
     [[nodiscard]] std::size_t get_max_work_group_size(std::size_t device_id) const final;
@@ -153,8 +158,7 @@ class csvc : public ::plssvm::csvc,
      * @throws plssvm::exception all exceptions thrown in the base class constructors
      */
     explicit csvc(const parameter params) :
-        ::plssvm::csvm{ mpi::communicator{}, params },
-        ::plssvm::cuda::csvm{} { }
+        ::plssvm::csvm{ mpi::communicator{}, params } { }
 
     /**
      * @brief Construct a new C-SVC using the CUDA backend with the parameters given through @p params.
@@ -163,8 +167,7 @@ class csvc : public ::plssvm::csvc,
      * @throws plssvm::exception all exceptions thrown in the base class constructors
      */
     csvc(mpi::communicator comm, const parameter params) :
-        ::plssvm::csvm{ std::move(comm), params },
-        ::plssvm::cuda::csvm{} { }
+        ::plssvm::csvm{ std::move(comm), params } { }
 
     /**
      * @brief Construct a new C-SVC using the CUDA backend on the @p target platform with the parameters given through @p params.
@@ -245,8 +248,7 @@ class csvr : public ::plssvm::csvr,
      * @throws plssvm::exception all exceptions thrown in the base class constructors
      */
     explicit csvr(const parameter params) :
-        ::plssvm::csvm{ mpi::communicator{}, params },
-        ::plssvm::cuda::csvm{} { }
+        ::plssvm::csvm{ mpi::communicator{}, params } { }
 
     /**
      * @brief Construct a new C-SVR using the CUDA backend with the parameters given through @p params.
@@ -255,8 +257,7 @@ class csvr : public ::plssvm::csvr,
      * @throws plssvm::exception all exceptions thrown in the base class constructors
      */
     explicit csvr(mpi::communicator comm, const parameter params) :
-        ::plssvm::csvm{ std::move(comm), params },
-        ::plssvm::cuda::csvm{} { }
+        ::plssvm::csvm{ std::move(comm), params } { }
 
     /**
      * @brief Construct a new C-SVR using the CUDA backend on the @p target platform with the parameters given through @p params.

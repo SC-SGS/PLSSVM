@@ -11,21 +11,24 @@
 #include "plssvm/backends/execution_range.hpp"                      // plssvm::detail::dim_type
 #include "plssvm/backends/Kokkos/detail/conditional_execution.hpp"  // PLSSVM_KOKKOS_BACKEND_INVOKE_RETURN_IF_*
 #include "plssvm/backends/Kokkos/detail/device_wrapper.hpp"         // plssvm::kokkos::detail::device_wrapper
-#include "plssvm/backends/Kokkos/execution_space.hpp"               // plssvm::kokkos::execution_space
+#include "plssvm/backends/Kokkos/execution_spaces.hpp"              // plssvm::kokkos::execution_space
 #include "plssvm/detail/assert.hpp"                                 // PLSSVM_ASSERT
-#include "plssvm/detail/string_utility.hpp"                         // plssvm::detail::as_lower_case
+#include "plssvm/detail/string_utility.hpp"                         // plssvm::detail::{as_lower_case, trim}
 #include "plssvm/detail/utility.hpp"                                // plssvm::detail::contains
 #include "plssvm/target_platforms.hpp"                              // plssvm::target_platform
+
+#if defined(KOKKOS_ENABLE_SYCL)
+    #include <unordered_set>  // std::unordered_set
+#endif
 
 #include "Kokkos_Core.hpp"    // Kokkos::ExecutionSpace, Kokkos::Impl::ManageStream
 #include "Kokkos_Macros.hpp"  // Kokkos macros
 
-#include "fmt/core.h"  // fmt::format
+#include "fmt/format.h"  // fmt::format
 
-#include <map>            // std::map
-#include <string>         // std::string
-#include <unordered_set>  // std::unordered_set
-#include <vector>         // std::vector
+#include <map>     // std::map
+#include <string>  // std::string
+#include <vector>  // std::vector
 
 namespace plssvm::kokkos::detail {
 
@@ -126,15 +129,15 @@ std::string get_device_name([[maybe_unused]] const device_wrapper &dev) {
             throw backend_exception{ "Unsupported execution_space::automatic provided!" };
         case execution_space::cuda:
             PLSSVM_KOKKOS_BACKEND_INVOKE_RETURN_IF_CUDA([&]() {
-                return std::string{ dev.get<execution_space::cuda>().cuda_device_prop().name };
+                return std::string{ ::plssvm::detail::trim(static_cast<const char *>(dev.get<execution_space::cuda>().cuda_device_prop().name)) };
             });
         case execution_space::hip:
             PLSSVM_KOKKOS_BACKEND_INVOKE_RETURN_IF_HIP([&]() {
-                return std::string{ dev.get<execution_space::hip>().hip_device_prop().name };
+                return std::string{ ::plssvm::detail::trim(static_cast<const char *>(dev.get<execution_space::hip>().hip_device_prop().name)) };
             });
         case execution_space::sycl:
             PLSSVM_KOKKOS_BACKEND_INVOKE_RETURN_IF_SYCL([&]() {
-                return dev.get<execution_space::sycl>().sycl_queue().get_device().get_info<::sycl::info::device::name>();
+                return std::string{ ::plssvm::detail::trim(dev.get<execution_space::sycl>().sycl_queue().get_device().get_info<::sycl::info::device::name>()) };
             });
         case execution_space::hpx:
             return "HPX CPU host device";

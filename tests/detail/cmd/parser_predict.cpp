@@ -10,14 +10,14 @@
 
 #include "plssvm/detail/cmd/parser_predict.hpp"
 
-#include "plssvm/backend_types.hpp"                          // plssvm::backend_type
-#include "plssvm/backends/Kokkos/execution_space.hpp"        // plssvm::kokkos::execution_space
-#include "plssvm/backends/SYCL/implementation_types.hpp"     // plssvm::sycl::implementation_type
-#include "plssvm/backends/SYCL/kernel_invocation_types.hpp"  // plssvm::sycl::kernel_invocation_type
-#include "plssvm/constants.hpp"                              // plssvm::real_type
-#include "plssvm/exceptions/exceptions.hpp"                  // plssvm::cmd_parser_exit
-#include "plssvm/target_platforms.hpp"                       // plssvm::target_platform
-#include "plssvm/verbosity_levels.hpp"                       // plssvm::verbosity
+#include "plssvm/backend_types.hpp"                        // plssvm::backend_type
+#include "plssvm/backends/Kokkos/execution_spaces.hpp"     // plssvm::kokkos::execution_space
+#include "plssvm/backends/SYCL/data_parallel_kernels.hpp"  // plssvm::sycl::data_parallel_kernel
+#include "plssvm/backends/SYCL/implementation_types.hpp"   // plssvm::sycl::implementation_type
+#include "plssvm/constants.hpp"                            // plssvm::real_type
+#include "plssvm/exceptions/exceptions.hpp"                // plssvm::cmd_parser_exit
+#include "plssvm/target_platforms.hpp"                     // plssvm::target_platform
+#include "plssvm/verbosity_levels.hpp"                     // plssvm::verbosity
 
 #include "tests/custom_test_macros.hpp"      // EXPECT_CONVERSION_TO_STRING, EXPECT_THROW_WHAT
 #include "tests/detail/cmd/cmd_utility.hpp"  // util::ParameterBase
@@ -38,7 +38,7 @@
 
 class ParserPredict : public util::ParameterBase { };
 
-TEST_F(ParserPredict, minimal) {
+TEST_F(ParserPredict, Minimal) {
     // create artificial command line arguments in test fixture
     this->CreateCMDArgs({ "./plssvm-predict", "data.libsvm", "data.libsvm.model" });
 
@@ -48,7 +48,7 @@ TEST_F(ParserPredict, minimal) {
     // check parsed values
     EXPECT_EQ(parser.backend, plssvm::backend_type::automatic);
     EXPECT_EQ(parser.target, plssvm::target_platform::automatic);
-    EXPECT_EQ(parser.sycl_kernel_invocation_type, plssvm::sycl::kernel_invocation_type::automatic);
+    EXPECT_EQ(parser.sycl_data_parallel_kernel, plssvm::sycl::data_parallel_kernel::automatic);
     EXPECT_EQ(parser.sycl_implementation_type, plssvm::sycl::implementation_type::automatic);
     EXPECT_EQ(parser.kokkos_execution_space, plssvm::kokkos::execution_space::automatic);
     EXPECT_FALSE(parser.strings_as_labels);
@@ -60,7 +60,7 @@ TEST_F(ParserPredict, minimal) {
     EXPECT_EQ(plssvm::verbosity, plssvm::verbosity_level::full);
 }
 
-TEST_F(ParserPredict, minimal_output) {
+TEST_F(ParserPredict, MinimalOutput) {
     // create artificial command line arguments in test fixture
     this->CreateCMDArgs({ "./plssvm-predict", "data.libsvm", "data.libsvm.model" });
 
@@ -72,7 +72,7 @@ TEST_F(ParserPredict, minimal_output) {
         "backend: automatic\n"
         "target platform: automatic\n"
         "SYCL implementation type: automatic\n"
-        "SYCL kernel invocation type: automatic\n"
+        "SYCL data parallel kernel: automatic\n"
         "Kokkos execution space: automatic\n"
         "label_type: int (default)\n"
         "real_type: {}\n"
@@ -86,11 +86,11 @@ TEST_F(ParserPredict, minimal_output) {
     EXPECT_EQ(plssvm::verbosity, plssvm::verbosity_level::full);
 }
 
-TEST_F(ParserPredict, all_arguments) {
+TEST_F(ParserPredict, AllArguments) {
     // create artificial command line arguments in test fixture
     std::vector<std::string> cmd_args = { "./plssvm-predict", "--backend", "cuda", "--target_platform", "gpu_nvidia", "--use_strings_as_labels", "--verbosity", "libsvm" };
 #if defined(PLSSVM_HAS_SYCL_BACKEND)
-    cmd_args.insert(cmd_args.end(), { "--sycl_kernel_invocation_type", "work_group", "--sycl_implementation_type", "dpcpp" });
+    cmd_args.insert(cmd_args.end(), { "--sycl_data_parallel_kernel", "work_group", "--sycl_implementation_type", "dpcpp" });
 #endif
 #if defined(PLSSVM_HAS_KOKKOS_BACKEND)
     const plssvm::kokkos::execution_space space = plssvm::kokkos::list_available_execution_spaces()[1];  // [0] would be automatic
@@ -112,10 +112,10 @@ TEST_F(ParserPredict, all_arguments) {
     EXPECT_EQ(parser.backend, plssvm::backend_type::cuda);
     EXPECT_EQ(parser.target, plssvm::target_platform::gpu_nvidia);
 #if defined(PLSSVM_HAS_SYCL_BACKEND)
-    EXPECT_EQ(parser.sycl_kernel_invocation_type, plssvm::sycl::kernel_invocation_type::work_group);
+    EXPECT_EQ(parser.sycl_data_parallel_kernel, plssvm::sycl::data_parallel_kernel::work_group);
     EXPECT_EQ(parser.sycl_implementation_type, plssvm::sycl::implementation_type::dpcpp);
 #else
-    EXPECT_EQ(parser.sycl_kernel_invocation_type, plssvm::sycl::kernel_invocation_type::automatic);
+    EXPECT_EQ(parser.sycl_data_parallel_kernel, plssvm::sycl::data_parallel_kernel::automatic);
     EXPECT_EQ(parser.sycl_implementation_type, plssvm::sycl::implementation_type::automatic);
 #endif
 #if defined(PLSSVM_HAS_KOKKOS_BACKEND)
@@ -139,11 +139,11 @@ TEST_F(ParserPredict, all_arguments) {
     EXPECT_EQ(plssvm::verbosity, plssvm::verbosity_level::libsvm);
 }
 
-TEST_F(ParserPredict, all_arguments_output) {
+TEST_F(ParserPredict, AllArgumentsOutput) {
     // create artificial command line arguments in test fixture
     std::vector<std::string> cmd_args = { "./plssvm-predict", "--backend", "automatic", "--target_platform", "gpu_nvidia", "--use_strings_as_labels", "--verbosity", "libsvm" };
 #if defined(PLSSVM_HAS_SYCL_BACKEND)
-    cmd_args.insert(cmd_args.end(), { "--sycl_kernel_invocation_type", "work_group", "--sycl_implementation_type", "dpcpp" });
+    cmd_args.insert(cmd_args.end(), { "--sycl_data_parallel_kernel", "work_group", "--sycl_implementation_type", "dpcpp" });
 #endif
 #if defined(PLSSVM_HAS_KOKKOS_BACKEND)
     const plssvm::kokkos::execution_space space = plssvm::kokkos::list_available_execution_spaces()[1];  // [0] would be automatic
@@ -168,10 +168,10 @@ TEST_F(ParserPredict, all_arguments_output) {
     };
 #if defined(PLSSVM_HAS_SYCL_BACKEND)
     correct += "SYCL implementation type: dpcpp\n"
-               "SYCL kernel invocation type: work_group\n";
+               "SYCL data parallel kernel: work_group\n";
 #else
     correct += "SYCL implementation type: automatic\n"
-               "SYCL kernel invocation type: automatic\n";
+               "SYCL data parallel kernel: automatic\n";
 #endif
 #if defined(PLSSVM_HAS_KOKKOS_BACKEND)
     correct += fmt::format("Kokkos execution space: {}\n", space);
@@ -201,7 +201,7 @@ TEST_F(ParserPredict, all_arguments_output) {
 class ParserPredictBackend : public ParserPredict,
                              public ::testing::WithParamInterface<std::tuple<std::string, std::string>> { };
 
-TEST_P(ParserPredictBackend, parsing) {
+TEST_P(ParserPredictBackend, Parsing) {
     const auto &[flag, value] = GetParam();
     // convert string to backend
     const auto backend = util::convert_from_string<plssvm::backend_type>(value);
@@ -223,7 +223,7 @@ INSTANTIATE_TEST_SUITE_P(ParserPredict, ParserPredictBackend, ::testing::Combine
 class ParserPredictTargetPlatform : public ParserPredict,
                                     public ::testing::WithParamInterface<std::tuple<std::string, std::string>> { };
 
-TEST_P(ParserPredictTargetPlatform, parsing) {
+TEST_P(ParserPredictTargetPlatform, Parsing) {
     const auto &[flag, value] = GetParam();
     // convert string to target_platform
     const auto target_platform = util::convert_from_string<plssvm::target_platform>(value);
@@ -244,32 +244,32 @@ INSTANTIATE_TEST_SUITE_P(ParserPredict, ParserPredictTargetPlatform, ::testing::
 
 #if defined(PLSSVM_HAS_SYCL_BACKEND)
 
-class ParserPredictSYCLKernelInvocation : public ParserPredict,
-                                          public ::testing::WithParamInterface<std::tuple<std::string, std::string>> { };
+class ParserPredictSYCLDataParallelKernel : public ParserPredict,
+                                            public ::testing::WithParamInterface<std::tuple<std::string, std::string>> { };
 
-TEST_P(ParserPredictSYCLKernelInvocation, parsing) {
+TEST_P(ParserPredictSYCLDataParallelKernel, Parsing) {
     const auto &[flag, value] = GetParam();
-    // convert string to sycl::kernel_invocation_type
-    const auto sycl_kernel_invocation_type = util::convert_from_string<plssvm::sycl::kernel_invocation_type>(value);
+    // convert string to sycl::data_parallel_kernel
+    const auto sycl_data_parallel_kernel = util::convert_from_string<plssvm::sycl::data_parallel_kernel>(value);
     // create artificial command line arguments in test fixture
-    this->CreateCMDArgs({ "./plssvm-predict", flag, value, "data.libsvm" });
+    this->CreateCMDArgs({ "./plssvm-predict", flag, value, "data.libsvm", "data.libsvm.model" });
     // create parameter object
     const plssvm::detail::cmd::parser_predict parser{ this->get_comm(), this->get_argc(), this->get_argv() };
     // test for correctness
-    EXPECT_EQ(parser.sycl_kernel_invocation_type, sycl_kernel_invocation_type);
+    EXPECT_EQ(parser.sycl_data_parallel_kernel, sycl_data_parallel_kernel);
 }
 
 // clang-format off
-INSTANTIATE_TEST_SUITE_P(ParserPredict, ParserPredictSYCLKernelInvocation, ::testing::Combine(
-                ::testing::Values("--sycl_kernel_invocation_type"),
+INSTANTIATE_TEST_SUITE_P(ParserPredict, ParserPredictSYCLDataParallelKernel, ::testing::Combine(
+                ::testing::Values("--sycl_data_parallel_kernel"),
                 ::testing::Values("automatic", "auto", "basic", "nd_range", "work_group", "hierarchical", "scoped")),
-                naming::pretty_print_parameter_flag_and_value<ParserPredictSYCLKernelInvocation>);
+                naming::pretty_print_parameter_flag_and_value<ParserPredictSYCLDataParallelKernel>);
 // clang-format on
 
 class ParserPredictSYCLImplementation : public ParserPredict,
                                         public ::testing::WithParamInterface<std::tuple<std::string, std::string>> { };
 
-TEST_P(ParserPredictSYCLImplementation, parsing) {
+TEST_P(ParserPredictSYCLImplementation, Parsing) {
     const auto &[flag, value] = GetParam();
     // convert string to sycl::implementation_type
     const auto sycl_implementation_type = util::convert_from_string<plssvm::sycl::implementation_type>(value);
@@ -295,7 +295,7 @@ INSTANTIATE_TEST_SUITE_P(ParserPredict, ParserPredictSYCLImplementation, ::testi
 class ParserPredictKokkosExecutionSpace : public ParserPredict,
                                           public ::testing::WithParamInterface<std::tuple<std::string, std::string>> { };
 
-TEST_P(ParserPredictKokkosExecutionSpace, parsing) {
+TEST_P(ParserPredictKokkosExecutionSpace, Parsing) {
     const auto &[flag, value] = GetParam();
     // convert string to kokkos::execution_space
     const auto kokkos_execution_space = util::convert_from_string<plssvm::kokkos::execution_space>(value);
@@ -321,7 +321,7 @@ INSTANTIATE_TEST_SUITE_P(ParserPredict, ParserPredictKokkosExecutionSpace, ::tes
 class ParserPredictPerformanceTrackingFilename : public ParserPredict,
                                                  public ::testing::WithParamInterface<std::tuple<std::string, std::string>> { };
 
-TEST_P(ParserPredictPerformanceTrackingFilename, parsing) {
+TEST_P(ParserPredictPerformanceTrackingFilename, Parsing) {
     const auto &[flag, value] = GetParam();
     // create artificial command line arguments in test fixture
     this->CreateCMDArgs({ "./plssvm-predict", flag, value, "data.libsvm", "data.libsvm.model" });
@@ -345,7 +345,7 @@ INSTANTIATE_TEST_SUITE_P(ParserPredict, ParserPredictPerformanceTrackingFilename
 class ParserPredictMPILoadBalancingWeights : public ParserPredict,
                                              public ::testing::WithParamInterface<std::tuple<std::string, std::string>> { };
 
-TEST_P(ParserPredictMPILoadBalancingWeights, parsing) {
+TEST_P(ParserPredictMPILoadBalancingWeights, Parsing) {
     const auto &[flag, value] = GetParam();
     // convert string to std::vector
     const std::vector<std::size_t> weights{ util::convert_from_string<std::size_t>(value) };
@@ -367,7 +367,7 @@ INSTANTIATE_TEST_SUITE_P(ParserPredict, ParserPredictMPILoadBalancingWeights, ::
 class ParserPredictMPILoadBalancingWeightsInvalid : public ParserPredict,
                                                     public ::testing::WithParamInterface<std::tuple<std::string, std::string>> { };
 
-TEST_P(ParserPredictMPILoadBalancingWeightsInvalid, parsing) {
+TEST_P(ParserPredictMPILoadBalancingWeightsInvalid, Parsing) {
     const auto &[flag, value] = GetParam();
     // create artificial command line arguments in test fixture
     this->CreateCMDArgs({ "./plssvm-predict", flag, value, "data.libsvm", "data.libsvm.model" });
@@ -387,7 +387,7 @@ INSTANTIATE_TEST_SUITE_P(ParserPredict, ParserPredictMPILoadBalancingWeightsInva
 class ParserPredictUseStringsAsLabels : public ParserPredict,
                                         public ::testing::WithParamInterface<std::tuple<std::string, bool>> { };
 
-TEST_P(ParserPredictUseStringsAsLabels, parsing) {
+TEST_P(ParserPredictUseStringsAsLabels, Parsing) {
     const auto &[flag, value] = GetParam();
     // create artificial command line arguments in test fixture
     this->CreateCMDArgs({ "./plssvm-predict", fmt::format("{}={}", flag, value), "data.libsvm", "data.libsvm.model" });
@@ -407,7 +407,7 @@ INSTANTIATE_TEST_SUITE_P(ParserPredict, ParserPredictUseStringsAsLabels, ::testi
 class ParserPredictVerbosity : public ParserPredict,
                                public ::testing::WithParamInterface<std::tuple<std::string, std::string>> { };
 
-TEST_P(ParserPredictVerbosity, parsing) {
+TEST_P(ParserPredictVerbosity, Parsing) {
     const auto &[flag, value] = GetParam();
     // create artificial command line arguments in test fixture
     this->CreateCMDArgs({ "./plssvm-predict", flag, value, "data.libsvm", "data.libsvm.model" });
@@ -427,7 +427,7 @@ INSTANTIATE_TEST_SUITE_P(ParserPredict, ParserPredictVerbosity, ::testing::Combi
 class ParserPredictQuiet : public ParserPredict,
                            public ::testing::WithParamInterface<std::string> { };
 
-TEST_P(ParserPredictQuiet, parsing) {
+TEST_P(ParserPredictQuiet, Parsing) {
     const plssvm::verbosity_level old_verbosity = plssvm::verbosity;
     const std::string &flag = GetParam();
     // create artificial command line arguments in test fixture
@@ -443,7 +443,7 @@ INSTANTIATE_TEST_SUITE_P(ParserPredict, ParserPredictQuiet, ::testing::Values("-
 class ParserPredictVerbosityAndQuiet : public ParserPredict,
                                        private util::redirect_output<&std::clog> { };
 
-TEST_F(ParserPredictVerbosityAndQuiet, parsing) {
+TEST_F(ParserPredictVerbosityAndQuiet, Parsing) {
     // create artificial command line arguments in test fixture
     this->CreateCMDArgs({ "./plssvm-predict", "--quiet", "--verbosity", "full", "data.libsvm", "data.libsvm.model" });
     // create parameter object
@@ -455,7 +455,7 @@ TEST_F(ParserPredictVerbosityAndQuiet, parsing) {
 class ParserPredictHelp : public ParserPredict,
                           public ::testing::WithParamInterface<std::string> { };
 
-TEST_P(ParserPredictHelp, parsing) {
+TEST_P(ParserPredictHelp, Parsing) {
     const std::string &flag = GetParam();
     // create artificial command line arguments in test fixture
     this->CreateCMDArgs({ "./plssvm-predict", flag });
@@ -468,7 +468,7 @@ INSTANTIATE_TEST_SUITE_P(ParserPredict, ParserPredictHelp, ::testing::Values("-h
 class ParserPredictVersion : public ParserPredict,
                              public ::testing::WithParamInterface<std::string> { };
 
-TEST_P(ParserPredictVersion, parsing) {
+TEST_P(ParserPredictVersion, Parsing) {
     const std::string &flag = GetParam();
     // create artificial command line arguments in test fixture
     this->CreateCMDArgs({ "./plssvm-predict", flag });
@@ -478,22 +478,22 @@ TEST_P(ParserPredictVersion, parsing) {
 
 INSTANTIATE_TEST_SUITE_P(ParserPredict, ParserPredictVersion, ::testing::Values("-v", "--version"), naming::pretty_print_parameter_flag<ParserPredictVersion>);
 
-TEST_F(ParserPredict, no_positional_argument) {
+TEST_F(ParserPredict, NoPositionalArgument) {
     this->CreateCMDArgs({ "./plssvm-predict" });
     EXPECT_THROW_WHAT((plssvm::detail::cmd::parser_predict{ this->get_comm(), this->get_argc(), this->get_argv() }), plssvm::cmd_parser_exit, fmt::format("exit code: {}", EXIT_FAILURE));
 }
 
-TEST_F(ParserPredict, single_positional_argument) {
+TEST_F(ParserPredict, SinglePositionalArgument) {
     this->CreateCMDArgs({ "./plssvm-predict", "data.libsvm" });
     EXPECT_THROW_WHAT((plssvm::detail::cmd::parser_predict{ this->get_comm(), this->get_argc(), this->get_argv() }), plssvm::cmd_parser_exit, fmt::format("exit code: {}", EXIT_FAILURE));
 }
 
-TEST_F(ParserPredict, too_many_positional_arguments) {
+TEST_F(ParserPredict, TooManyPositionalArguments) {
     this->CreateCMDArgs({ "./plssvm-predict", "p1", "p2", "p3", "p4" });
     EXPECT_THROW_WHAT((plssvm::detail::cmd::parser_predict{ this->get_comm(), this->get_argc(), this->get_argv() }), plssvm::cmd_parser_exit, fmt::format("exit code: {}", EXIT_FAILURE));
 }
 
-TEST_F(ParserPredict, unrecognized_option) {
+TEST_F(ParserPredict, UnrecognizedOption) {
     this->CreateCMDArgs({ "./plssvm-predict", "--foo", "bar" });
     EXPECT_THROW_WHAT((plssvm::detail::cmd::parser_predict{ this->get_comm(), this->get_argc(), this->get_argv() }), plssvm::cmd_parser_exit, fmt::format("exit code: {}", EXIT_FAILURE));
 }
@@ -501,12 +501,12 @@ TEST_F(ParserPredict, unrecognized_option) {
 class ParserPredictDeathTest : public ParserPredict { };
 
 // test whether nonsensical cmd arguments trigger the assertions
-TEST_F(ParserPredictDeathTest, too_few_argc) {
+TEST_F(ParserPredictDeathTest, TooFewArgc) {
     EXPECT_DEATH((plssvm::detail::cmd::parser_predict{ this->get_comm(), 0, nullptr }),
                  ::testing::HasSubstr("At least one argument is always given (the executable name), but argc is 0!"));
 }
 
-TEST_F(ParserPredictDeathTest, nullptr_argv) {
+TEST_F(ParserPredictDeathTest, NullptrArgv) {
     EXPECT_DEATH((plssvm::detail::cmd::parser_predict{ this->get_comm(), 1, nullptr }),
                  ::testing::HasSubstr("At least one argument is always given (the executable name), but argv is a nullptr!"));
 }

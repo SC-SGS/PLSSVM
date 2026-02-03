@@ -8,16 +8,17 @@
 
 #include "plssvm/target_platforms.hpp"  // plssvm::target_platform, plssvm::list_available_target_platforms, plssvm::determine_default_target_platform
 
-#include "bindings/Python/utility.hpp"  // plssvm::bindings::python::util::register_implicit_str_enum_conversion
+#include "bindings/Python/bindings_fwd.hpp"  // forward declare all helper functions to create the Python bindings
+#include "bindings/Python/utility.hpp"       // plssvm::bindings::python::util::register_implicit_str_enum_conversion
 
 #include "pybind11/pybind11.h"  // py::module_, py::enum_
-#include "pybind11/stl.h"       // support for STL types: std::vector
+#include "pybind11/stl.h"       // NOLINT: support for STL types: std::vector
 
 namespace py = pybind11;
 
 void init_target_platforms(py::module_ &m) {
     // bind enum class
-    py::enum_<plssvm::target_platform> py_enum(m, "TargetPlatform", "Enum class for all possible targets that PLSSVM supports.");
+    py::enum_<plssvm::target_platform> py_enum(m, "TargetPlatform", "enum.Enum", "Enum class for all possible targets that PLSSVM supports.");
     py_enum
         .value("AUTOMATIC", plssvm::target_platform::automatic, "the default target with respect to the used backend type; checks for available devices in the following order: NVIDIA GPUs -> AMD GPUs -> Intel GPUs -> CPUs")
         .value("CPU", plssvm::target_platform::cpu, "target CPUs only (Intel, AMD, IBM, ...)")

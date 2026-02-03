@@ -23,12 +23,17 @@
 #include "plssvm/exceptions/exceptions.hpp"  // plssvm::environment_exception
 #include "plssvm/mpi/environment.hpp"        // plssvm::mpi::{is_initialized, init}
 
-#if defined(PLSSVM_HAS_HPX_BACKEND)
+#if defined(PLSSVM_HAS_HPX_BACKEND) || defined(PLSSVM_KOKKOS_BACKEND_ENABLE_HPX)
     #include "hpx/execution.hpp"  // ::hpx::post
+    #if !defined(PLSSVM_HPX_DO_NOT_INCLUDE_HPX_MAIN)
+        #include "hpx/hpx_main.hpp"  // disable support for HPX's short command line aliases
+    #endif
     #include "hpx/hpx_start.hpp"  // ::hpx::{start, stop, finalize}
     #include "hpx/runtime.hpp"    // ::hpx::{is_running, is_stopped}
 #endif
 #if defined(PLSSVM_HAS_KOKKOS_BACKEND)
+    #include "plssvm/detail/cmd/utility.hpp"  // plssvm::detail::cmd::filter_argv
+
     #include "Kokkos_Core.hpp"  // Kokkos::is_initialized, Kokkos::is_finalized, Kokkos::initialize, Kokkos::finalize
 #endif
 
@@ -38,7 +43,9 @@
 #include "fmt/ranges.h"   // fmt::join
 
 #include <algorithm>  // std::remove_if
+#include <exception>  // std::exception
 #include <ios>        // std::ios::failbit
+#include <iostream>   // std::cout, std::endl
 #include <istream>    // std::istream
 #include <ostream>    // std::ostream
 #include <string>     // std::string
@@ -118,9 +125,11 @@ namespace detail {
     if (!is_initialized) {
         // Note: ::hpx::is_stopped does return true even before calling finalize once
         return status::uninitialized;
-    } else if (is_initialized && !is_finalized) {
+    }
+    if (is_initialized && !is_finalized) {
         return status::initialized;
-    } else if (is_finalized) {
+    }
+    if (is_finalized) {
         return status::finalized;
     }
     // should never be reached!
@@ -192,7 +201,6 @@ template <auto is_initialized_function, auto is_finalized_function>
  */
 constexpr bool is_initialization_necessary([[maybe_unused]] const backend_type backend) {
     // Note: must be implemented for the backends that need environmental setup
-    // currently false for all available backends
     return backend == backend_type::hpx || backend == backend_type::kokkos;
 }
 
@@ -239,7 +247,13 @@ inline void initialize_backend([[maybe_unused]] const backend_type backend, [[ma
 #endif
 #if defined(PLSSVM_HAS_KOKKOS_BACKEND)
     if (backend == backend_type::kokkos) {
-        Kokkos::initialize(argc, argv);
+    #if defined(PLSSVM_KOKKOS_BACKEND_ENABLE_HPX)
+        ::hpx::start(nullptr, argc, argv);
+    #endif
+        // we have to filter out our "--kokkos_execution_space" command line option or Kokkos itself will issue a warning on the command line
+        std::vector<char *> filtered_argv = plssvm::detail::cmd::filter_argv(argc, argv, { "--kokkos_" });
+        int filtered_argc = static_cast<int>(filtered_argv.size());
+        Kokkos::initialize(filtered_argc, filtered_argv.data());
     }
 #endif
 }
@@ -328,10 +342,9 @@ inline void get_filtered_backends(std::vector<backend_type> &backends, const sta
                        if (backend == backend_type::automatic) {
                            // always remove the automatic backend
                            return true;
-                       } else {
-                           // remove all backends for which the filter isn't true
-                           return get_backend_status(backend) != s;
                        }
+                       // remove all backends for which the filter isn't true
+                       return get_backend_status(backend) != s;
                    }),
                    backends.end());
 }
@@ -536,12 +549,18 @@ class [[nodiscard]] scope_guard {
      * @brief Finalize all previously initialized backends.
      */
     ~scope_guard() {
-        finalize(backends_);
+        try {
+            finalize(backends_);
+        } catch (const environment_exception &e) {
+            std::cout << e.what_with_loc() << std::endl;
+        } catch (const std::exception &e) {
+            std::cout << e.what() << std::endl;
+        }
     }
 
   private:
     /// The backends that should be initialized IF it is necessary for them or all available if empty.
-    std::vector<backend_type> backends_{};
+    std::vector<backend_type> backends_;
 };
 
 }  // namespace plssvm::environment

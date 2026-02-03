@@ -12,7 +12,9 @@
 
 #include "plssvm/backends/OpenCL/detail/command_queue.hpp"  // plssvm::opencl::detail::command_queue
 #include "plssvm/backends/OpenCL/detail/context.hpp"        // plssvm::opencl::detail::context
-#include "plssvm/backends/OpenCL/detail/utility.hpp"        // plssvm::opencl::detail::get_contexts
+#include "plssvm/backends/OpenCL/detail/utility.hpp"        // plssvm::opencl::detail::{get_contexts, create_command_queues}
+#include "plssvm/kernel_function_types.hpp"                 // plssvm::kernel_function_type
+#include "plssvm/target_platforms.hpp"                      // plssvm::determine_default_target_platform
 
 #include "tests/backends/generic_device_ptr_tests.hpp"  // generic device pointer tests to instantiate
 #include "tests/naming.hpp"                             // naming::test_parameter_to_name
@@ -29,8 +31,10 @@ struct opencl_device_ptr_test_type {
     using queue_type = plssvm::opencl::detail::command_queue;
 
     static const queue_type &default_queue() {
-        static const std::vector<plssvm::opencl::detail::context> contexts{ plssvm::opencl::detail::get_contexts(plssvm::target_platform::automatic).first };
-        static const plssvm::opencl::detail::command_queue queue{ contexts[0], contexts[0].device };
+        static const std::vector<plssvm::opencl::detail::context> contexts{ plssvm::opencl::detail::get_contexts(plssvm::determine_default_target_platform()).first };
+        // note: the kernel_function_type doesn't matter for the device_ptr tests!
+        static const auto command_queues{ plssvm::opencl::detail::create_command_queues({}, contexts, plssvm::determine_default_target_platform(), plssvm::kernel_function_type::linear) };
+        static const plssvm::opencl::detail::command_queue &queue{ command_queues.first.front() };
         return queue;
     }
 };

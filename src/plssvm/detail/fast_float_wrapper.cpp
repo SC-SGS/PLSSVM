@@ -8,7 +8,8 @@
 
 #include "plssvm/detail/fast_float_wrapper.hpp"
 
-#include "fast_float/fast_float.h"  // fast_float::from_chars_result, fast_float::from_chars
+#include "fast_float/fast_float.h"    // fast_float::from_chars
+#include "fast_float/float_common.h"  // fast_float::from_chars_result
 
 #include <algorithm>     // std::min
 #include <string>        // std::stold, std::string

@@ -30,7 +30,7 @@
 #include <utility>      // std::move, std::swap
 #include <vector>       // std::vector
 
-TEST(FileReader, default_construct) {
+TEST(FileReader, DefaultConstruct) {
     // default construct file_reader
     const plssvm::detail::io::file_reader reader{};
 
@@ -42,7 +42,7 @@ TEST(FileReader, default_construct) {
     EXPECT_EQ(reader.buffer(), nullptr);
 }
 
-TEST(FileReader, move_construct) {
+TEST(FileReader, MoveConstruct) {
     // construct first file_reader
     plssvm::detail::io::file_reader reader1{ PLSSVM_TEST_PATH "/data/libsvm/classification/5x4.libsvm" };
     reader1.read_lines('#');
@@ -57,13 +57,15 @@ TEST(FileReader, move_construct) {
     EXPECT_NE(reader2.buffer(), nullptr);
 
     // check whether the first file_reader is in a valid moved-from state
+    // NOLINTBEGIN: use after move wanted since this is tested here
     EXPECT_FALSE(reader1.is_open());
     EXPECT_EQ(reader1.num_lines(), 0);
     EXPECT_TRUE(reader1.lines().empty());
     EXPECT_EQ(reader1.buffer(), nullptr);
+    // NOLINTEND
 }
 
-TEST(FileReader, move_assign) {
+TEST(FileReader, MoveAssign) {
     // construct first file_reader
     plssvm::detail::io::file_reader reader1{ PLSSVM_TEST_PATH "/data/libsvm/classification/5x4.libsvm" };
     reader1.read_lines('#');
@@ -79,10 +81,12 @@ TEST(FileReader, move_assign) {
     EXPECT_NE(reader2.buffer(), nullptr);
 
     // check whether the first file_reader is in a valid moved-from state
+    // NOLINTBEGIN: use after move wanted since this is tested here
     EXPECT_FALSE(reader1.is_open());
     EXPECT_EQ(reader1.num_lines(), 0);
     EXPECT_TRUE(reader1.lines().empty());
     EXPECT_EQ(reader1.buffer(), nullptr);
+    // NOLINTEND
 }
 
 // the input filename types to test
@@ -97,7 +101,7 @@ class FileReaderConstructWithOpen : public ::testing::Test {
 
 TYPED_TEST_SUITE(FileReaderConstructWithOpen, open_parameter_types_gtest, naming::test_parameter_to_name);
 
-TYPED_TEST(FileReaderConstructWithOpen, non_empty_file) {
+TYPED_TEST(FileReaderConstructWithOpen, NonEmptyFile) {
     using open_type = typename TestFixture::fixture_open_type;
 
     // create file name depending on the current test type
@@ -112,7 +116,7 @@ TYPED_TEST(FileReaderConstructWithOpen, non_empty_file) {
     EXPECT_NE(reader.buffer(), nullptr);
 }
 
-TYPED_TEST(FileReaderConstructWithOpen, empty_file) {
+TYPED_TEST(FileReaderConstructWithOpen, EmptyFile) {
     using open_type = typename TestFixture::fixture_open_type;
 
     // create file name depending on the current test type
@@ -127,7 +131,7 @@ TYPED_TEST(FileReaderConstructWithOpen, empty_file) {
     EXPECT_EQ(reader.buffer(), nullptr);
 }
 
-TYPED_TEST(FileReaderConstructWithOpen, file_not_found) {
+TYPED_TEST(FileReaderConstructWithOpen, FileNotFound) {
     using open_type = typename TestFixture::fixture_open_type;
 
     // create file name depending on the current test type
@@ -145,7 +149,7 @@ class FileReaderOpen : public ::testing::Test {
 
 TYPED_TEST_SUITE(FileReaderOpen, open_parameter_types_gtest, naming::test_parameter_to_name);
 
-TYPED_TEST(FileReaderOpen, non_empty_file) {
+TYPED_TEST(FileReaderOpen, NonEmptyFile) {
     using open_type = typename TestFixture::fixture_open_type;
 
     // create default constructed file reader and open it using the file name depending on the current test type
@@ -161,7 +165,7 @@ TYPED_TEST(FileReaderOpen, non_empty_file) {
     EXPECT_NE(reader.buffer(), nullptr);
 }
 
-TYPED_TEST(FileReaderOpen, empty_file) {
+TYPED_TEST(FileReaderOpen, EmptyFile) {
     using open_type = typename TestFixture::fixture_open_type;
 
     // create default constructed file reader and open it using the file name depending on the current test type
@@ -177,7 +181,7 @@ TYPED_TEST(FileReaderOpen, empty_file) {
     EXPECT_EQ(reader.buffer(), nullptr);
 }
 
-TYPED_TEST(FileReaderOpen, file_not_found) {
+TYPED_TEST(FileReaderOpen, FileNotFound) {
     using open_type = typename TestFixture::fixture_open_type;
 
     // create default constructed file reader and open it using the file name depending on the current test type
@@ -189,7 +193,7 @@ TYPED_TEST(FileReaderOpen, file_not_found) {
                       "Couldn't find file: '" PLSSVM_TEST_PATH "/data/file_not_found'!");
 }
 
-TYPED_TEST(FileReaderOpen, multiple_open) {
+TYPED_TEST(FileReaderOpen, MultipleOpen) {
     using open_type = typename TestFixture::fixture_open_type;
 
     // create default constructed file reader and open it using the file name depending on the current test type
@@ -205,7 +209,7 @@ TYPED_TEST(FileReaderOpen, multiple_open) {
                       "This file_reader is already associated to a file!");
 }
 
-TEST(FileReader, close) {
+TEST(FileReader, Close) {
     // create a new file_reader and associate it to a file
     plssvm::detail::io::file_reader reader{ PLSSVM_TEST_PATH "/data/libsvm/classification/5x4.libsvm" };
     ASSERT_TRUE(reader.is_open());
@@ -220,7 +224,7 @@ TEST(FileReader, close) {
     EXPECT_EQ(reader.buffer(), nullptr);
 }
 
-TEST(FileReader, close_twice) {
+TEST(FileReader, CloseTwice) {
     // create a new file_reader and associate it to a file
     plssvm::detail::io::file_reader reader{ PLSSVM_TEST_PATH "/data/libsvm/classification/5x4.libsvm" };
     ASSERT_TRUE(reader.is_open());
@@ -236,7 +240,7 @@ TEST(FileReader, close_twice) {
     EXPECT_EQ(reader.buffer(), nullptr);
 }
 
-TEST(FileReader, is_open) {
+TEST(FileReader, IsOpen) {
     // create a new default constructed file_reader
     plssvm::detail::io::file_reader reader{};
     // noe file must be open
@@ -249,7 +253,7 @@ TEST(FileReader, is_open) {
     EXPECT_FALSE(reader.is_open());
 }
 
-TEST(FileReader, swap_member_function) {
+TEST(FileReader, SwapMemberFunction) {
     // create two file readers
     plssvm::detail::io::file_reader reader1{};
     plssvm::detail::io::file_reader reader2{ PLSSVM_TEST_PATH "/data/libsvm/classification/5x4.libsvm" };
@@ -269,6 +273,8 @@ TEST(FileReader, swap_member_function) {
     EXPECT_TRUE(reader2.lines().empty());
     EXPECT_EQ(reader2.buffer(), nullptr);
 }
+
+namespace {
 
 // clang-format off
 const auto & get_file_lines() {
@@ -315,9 +321,11 @@ std::vector<std::string_view> filter_lines(const std::vector<std::string_view> &
     return filtered_lines;
 }
 
+}  // namespace
+
 class FileReaderLines : public ::testing::TestWithParam<std::tuple<std::string, char, std::vector<std::string_view>>> { };
 
-TEST_P(FileReaderLines, parse_lines_with_comments) {
+TEST_P(FileReaderLines, ParseLinesWithComments) {
     const auto &[filename, comment, lines] = GetParam();
     // create and read file
     plssvm::detail::io::file_reader reader{ filename };
@@ -327,7 +335,7 @@ TEST_P(FileReaderLines, parse_lines_with_comments) {
     EXPECT_EQ(reader.lines(), lines);
 }
 
-TEST_P(FileReaderLines, parse_lines_without_char_comments) {
+TEST_P(FileReaderLines, ParseLinesWithoutCharComments) {
     const auto &[filename, comment, lines] = GetParam();
     // create and read file
     plssvm::detail::io::file_reader reader{ filename };
@@ -337,7 +345,7 @@ TEST_P(FileReaderLines, parse_lines_without_char_comments) {
     EXPECT_EQ(reader.lines(), filter_lines(lines, comment));
 }
 
-TEST_P(FileReaderLines, parse_lines_without_string_comments) {
+TEST_P(FileReaderLines, ParseLinesWithoutStringComments) {
     const auto &[filename, comment, lines] = GetParam();
     // create and read file
     plssvm::detail::io::file_reader reader{ filename };
@@ -347,7 +355,7 @@ TEST_P(FileReaderLines, parse_lines_without_string_comments) {
     EXPECT_EQ(reader.lines(), filter_lines(lines, "@ATTRIBUTE"));
 }
 
-TEST_P(FileReaderLines, num_lines) {
+TEST_P(FileReaderLines, NumLines) {
     const auto &[filename, comment, lines] = GetParam();
     // create and read file
     plssvm::detail::io::file_reader reader{ filename };
@@ -357,7 +365,7 @@ TEST_P(FileReaderLines, num_lines) {
     EXPECT_EQ(reader.num_lines(), filter_lines(lines, comment).size());
 }
 
-TEST_P(FileReaderLines, line) {
+TEST_P(FileReaderLines, Line) {
     const auto &[filename, comment, lines] = GetParam();
     // create and read file
     plssvm::detail::io::file_reader reader{ filename };
@@ -371,7 +379,7 @@ TEST_P(FileReaderLines, line) {
     }
 }
 
-TEST_P(FileReaderLines, lines) {
+TEST_P(FileReaderLines, Lines) {
     const auto &[filename, comment, lines] = GetParam();
     // create and read file
     plssvm::detail::io::file_reader reader{ filename };
@@ -381,7 +389,7 @@ TEST_P(FileReaderLines, lines) {
     EXPECT_EQ(reader.lines(), filter_lines(lines, comment));
 }
 
-TEST_P(FileReaderLines, buffer_valid) {
+TEST_P(FileReaderLines, BufferValid) {
     const auto &[filename, comment, lines] = GetParam();
     // create and read file
     plssvm::detail::io::file_reader reader{ filename };
@@ -397,7 +405,7 @@ TEST_P(FileReaderLines, buffer_valid) {
 
 INSTANTIATE_TEST_SUITE_P(FileReader, FileReaderLines, ::testing::ValuesIn(get_file_lines()), naming::pretty_print_escaped_string<FileReaderLines>);
 
-TEST(FileReaderLines, parse_lines_without_associated_file) {
+TEST(FileReaderLines, ParseLinesWithoutAssociatedFile) {
     // create file_reader without associating it to a file
     plssvm::detail::io::file_reader reader{};
 
@@ -409,7 +417,7 @@ TEST(FileReaderLines, parse_lines_without_associated_file) {
 
 class FileReaderLinesDeathTest : public ::testing::TestWithParam<std::tuple<std::string, char, std::vector<std::string_view>>> { };
 
-TEST_P(FileReaderLinesDeathTest, line_out_of_bounce) {
+TEST_P(FileReaderLinesDeathTest, LineOutOfBounce) {
     const auto &[filename, comment, lines] = GetParam();
     // create and read file
     plssvm::detail::io::file_reader reader{ filename };
@@ -422,7 +430,7 @@ TEST_P(FileReaderLinesDeathTest, line_out_of_bounce) {
 
 INSTANTIATE_TEST_SUITE_P(FileReader, FileReaderLinesDeathTest, ::testing::ValuesIn(get_file_lines()), naming::pretty_print_escaped_string<FileReaderLinesDeathTest>);
 
-TEST(FileReader, swap_free_function) {
+TEST(FileReader, SwapFreeFunction) {
     // create two file readers
     plssvm::detail::io::file_reader reader1{};
     plssvm::detail::io::file_reader reader2{ PLSSVM_TEST_PATH "/data/libsvm/classification/5x4.libsvm" };

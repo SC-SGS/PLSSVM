@@ -19,8 +19,7 @@
 
 #include <cmath>    // std::pow, std::exp, std::fma
 #include <cstddef>  // std::size_t
-#include <utility>  // std::pair, std::make_pair, std::move
-#include <variant>  // std::get
+#include <utility>  // std::pair, std::make_pair, std::move, std::get
 #include <vector>   // std::vector
 
 namespace ground_truth {

@@ -6,11 +6,11 @@
  * @license This file is part of the PLSSVM project which is released under the MIT license.
  *          See the LICENSE.md file in the project root for full license information.
  *
- * @brief Defines an enumeration holding all possible SYCL kernel invocation types.
+ * @brief Defines an enumeration holding all possible SYCL data parallel kernels.
  */
 
-#ifndef PLSSVM_BACKENDS_SYCL_KERNEL_INVOCATION_TYPE_HPP_
-#define PLSSVM_BACKENDS_SYCL_KERNEL_INVOCATION_TYPE_HPP_
+#ifndef PLSSVM_BACKENDS_SYCL_DATA_PARALLEL_KERNELS_HPP_
+#define PLSSVM_BACKENDS_SYCL_DATA_PARALLEL_KERNELS_HPP_
 #pragma once
 
 #include "fmt/base.h"     // fmt::formatter
@@ -22,10 +22,10 @@
 namespace plssvm::sycl {
 
 /**
- * @brief Enum class for all possible SYCL kernel invocation types.
+ * @brief Enum class for all possible SYCL data parallel kernels.
  */
-enum class kernel_invocation_type {
-    /** Use the best kernel invocation type for the current SYCL implementation and target hardware platform. */
+enum class data_parallel_kernel {
+    /** Use the best data parallel kernel for the current SYCL implementation and target hardware platform. In practice, will nearly always map to work-group data parallel kernels. */
     automatic,
     /** Use the [`basic` data parallel kernels](https://registry.khronos.org/SYCL/specs/sycl-2020/html/sycl-2020.html#_basic_data_parallel_kernels). */
     basic,
@@ -38,35 +38,35 @@ enum class kernel_invocation_type {
 };
 
 /**
- * @brief Return a list of all currently available SYCL kernel invocation types.
- * @details SYCL's hierarchical and AdaptiveCpp's scoped kernel invocation type can be disabled during the CMake configuration.
- * @return the available SYCL kernel invocation types (`[[nodiscard]]`)
+ * @brief Return a list of all currently available SYCL data parallel kernels.
+ * @details SYCL's hierarchical data parallel kernels and AdaptiveCpp's scoped parallelism can be disabled during the CMake configuration.
+ * @return the available SYCL data parallel kernels (`[[nodiscard]]`)
  */
-[[nodiscard]] std::vector<kernel_invocation_type> list_available_sycl_kernel_invocation_types();
+[[nodiscard]] std::vector<data_parallel_kernel> list_available_sycl_data_parallel_kernels();
 
 /**
- * @brief Output the @p invocation type to the given output-stream @p out.
+ * @brief Output the @p kernel_type type to the given output-stream @p out.
  * @param[in,out] out the output-stream to write the backend type to
- * @param[in] invocation the SYCL kernel invocation type
+ * @param[in] kernel_type the SYCL data parallel kernel
  * @return the output-stream
  */
-std::ostream &operator<<(std::ostream &out, kernel_invocation_type invocation);
+std::ostream &operator<<(std::ostream &out, data_parallel_kernel kernel_type);
 
 /**
- * @brief Use the input-stream @p in to initialize the @p invocation type.
+ * @brief Use the input-stream @p in to initialize the @p kernel_type type.
  * @param[in,out] in input-stream to extract the backend type from
- * @param[in] invocation the SYCL kernel invocation type
+ * @param[in] kernel_type the SYCL data parallel kernel
  * @return the input-stream
  */
-std::istream &operator>>(std::istream &in, kernel_invocation_type &invocation);
+std::istream &operator>>(std::istream &in, data_parallel_kernel &kernel_type);
 
 }  // namespace plssvm::sycl
 
 /// @cond Doxygen_suppress
 
 template <>
-struct fmt::formatter<plssvm::sycl::kernel_invocation_type> : fmt::ostream_formatter { };
+struct fmt::formatter<plssvm::sycl::data_parallel_kernel> : fmt::ostream_formatter { };
 
 /// @endcond
 
-#endif  // PLSSVM_BACKENDS_SYCL_KERNEL_INVOCATION_TYPE_HPP_
+#endif  // PLSSVM_BACKENDS_SYCL_DATA_PARALLEL_KERNELS_HPP_

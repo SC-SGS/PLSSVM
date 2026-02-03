@@ -36,6 +36,8 @@
 
 #include <chrono>       // std::chrono::steady_clock::time_point
 #include <map>          // std::map
+#include <mutex>        // std::mutex, std::scoped_lock
+#include <optional>     // std::optional
 #include <ostream>      // std::ostream
 #include <string>       // std::string
 #include <string_view>  // std::string_view
@@ -84,9 +86,9 @@ struct tracking_entry {
     ~tracking_entry() = default;
 
     /// The category to which this tracking entry belongs; used for grouping in the resulting YAML file.
-    const std::string entry_category{};
+    const std::string entry_category;
     /// The name of the tracking entry displayed in the YAML file.
-    const std::string entry_name{};
+    const std::string entry_name;
     /// The tracked value in the YAML file.
     const T entry_value{};
 };
@@ -144,23 +146,23 @@ class performance_tracker {
      */
     performance_tracker();
     /**
-     * @brief Default copy-constructor. **Must** be implemented in .cpp file.
+     * @brief Delete copy-constructor due to usage of a std::mutex.
      */
-    performance_tracker(const performance_tracker &);
+    performance_tracker(const performance_tracker &) = delete;
     /**
-     * @brief Default move-constructor. **Must** be implemented in .cpp file.
+     * @brief Delete move-constructordue to usage of a std::mutex.
      */
-    performance_tracker(performance_tracker &&) noexcept;
+    performance_tracker(performance_tracker &&) noexcept = delete;
     /**
-     * @brief Default copy-assignment operator. **Must** be implemented in .cpp file.
+     * @brief Delete copy-assignment operator due to usage of a std::mutex.
      * @return `*this`
      */
-    performance_tracker &operator=(const performance_tracker &);
+    performance_tracker &operator=(const performance_tracker &) = delete;
     /**
-     * @brief Default move-assignment operator. **Must** be implemented in .cpp file.
+     * @brief Delete move-assignment operator due to usage of a std::mutex.
      * @return `*this`
      */
-    performance_tracker &operator=(performance_tracker &&) noexcept;
+    performance_tracker &operator=(performance_tracker &&) noexcept = delete;
     /**
      * @brief Default destructor. **Must** be implemented in .cpp file.
      */
@@ -291,19 +293,23 @@ class performance_tracker {
 
   private:
     /// All tracking entries grouped by their specified categories.
-    std::map<std::string, std::map<std::string, std::vector<std::string>>> tracking_entries_{};
+    std::map<std::string, std::map<std::string, std::vector<std::string>>> tracking_entries_;
     /// The reference time point used for the performance tracking and hardware samples entries.
     std::chrono::steady_clock::time_point reference_time_{ std::chrono::steady_clock::now() };
     /// All special events mainly used for hardware sampling.
     events events_{};
     /// Flag indicating whether tracking is currently enabled or disabled. Tracking is enabled by default.
     bool is_tracking_{ true };
+    /// Standard mutex to prevent race conditions if multiple threads try to add a tracking entry simultaneously.
+    std::mutex mutex_;
 };
 
 template <typename T>
 void performance_tracker::add_tracking_entry(const tracking_entry<T> &entry) {
     // check whether entries should currently be tracked
     if (this->is_tracking()) {
+        const std::scoped_lock guard{ mutex_ };
+
         std::string entry_value_str{};
         if constexpr (std::is_same_v<T, std::string> || std::is_same_v<T, std::string_view>) {
             // escape strings with "" since they may contain whitespaces
@@ -335,6 +341,8 @@ template <typename T>
 void performance_tracker::add_tracking_entry(const tracking_entry<std::vector<T>> &entry) {
     // check whether entries should currently be tracked
     if (this->is_tracking()) {
+        const std::scoped_lock guard{ mutex_ };
+
         std::string entry_value_str{};
         if constexpr (std::is_same_v<T, std::string> || std::is_same_v<T, std::string_view>) {
             // escape strings with "" since they may contain whitespaces
@@ -345,6 +353,18 @@ void performance_tracker::add_tracking_entry(const tracking_entry<std::vector<T>
             byte_values.reserve(entry.entry_value.size());
             for (const memory_size mem : entry.entry_value) {
                 byte_values.push_back(mem.num_bytes());
+            }
+            entry_value_str = fmt::format("[{}]", fmt::join(byte_values, ", "));
+        } else if constexpr (std::is_same_v<T, std::optional<detail::memory_size>>) {
+            // dump all memory sizes in BYTES to the file, pay attention to possible nullopt values
+            std::vector<std::string> byte_values{};
+            byte_values.reserve(entry.entry_value.size());
+            for (const std::optional<memory_size> &mem : entry.entry_value) {
+                if (mem.has_value()) {
+                    byte_values.push_back(fmt::format("{}", mem.value().num_bytes()));
+                } else {
+                    byte_values.emplace_back("nullopt");
+                }
             }
             entry_value_str = fmt::format("[{}]", fmt::join(byte_values, ", "));
         } else {

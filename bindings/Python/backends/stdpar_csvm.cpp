@@ -21,11 +21,12 @@
 #include "plssvm/svm/csvr.hpp"                              // plssvm::csvr
 #include "plssvm/target_platforms.hpp"                      // plssvm::target_platform
 
+#include "bindings/Python/bindings_fwd.hpp"                 // forward declare all helper functions to create the Python bindings
 #include "bindings/Python/type_caster/mpi_type_caster.hpp"  // a custom Pybind11 type caster for a plssvm::mpi::communicator
 #include "bindings/Python/utility.hpp"                      // plssvm::bindings::python::util::{register_py_exception, register_implicit_str_enum_conversion}
 
 #include "fmt/format.h"         // fmt::format
-#include "pybind11/pybind11.h"  // py::module_, py::class_, py::init, py::arg, py::exception, py::module_local
+#include "pybind11/pybind11.h"  // py::module_, py::class_, py::init, py::arg, py::exception, py::module_local, py::enum_
 #include "pybind11/stl.h"       // support for STL types: std::variant
 
 #include <memory>   // std::make_unique
@@ -48,7 +49,7 @@ void bind_stdpar_csvms(py::module_ &m, const std::string &csvm_name) {
     const std::string params_constructor_docstring{ fmt::format("create an stdpar {} with the provided SVM parameter encapsulated in a plssvm.Parameter", csvm_name) };
     const std::string keyword_args_constructor_docstring{ fmt::format("create an stdpar {} with the provided SVM parameter as separate keyword arguments", csvm_name) };
 
-    py::class_<backend_csvm_type, plssvm::stdpar::csvm, csvm_type>(m, csvm_name.c_str())
+    py::class_<backend_csvm_type, plssvm::stdpar::csvm, csvm_type>(m, csvm_name.c_str(), class_docstring.c_str())
         .def(py::init([](const plssvm::target_platform target, const plssvm::parameter params, plssvm::mpi::communicator comm) {
                  return std::make_unique<backend_csvm_type>(std::move(comm), target, params);
              }),
@@ -83,7 +84,7 @@ void init_stdpar_csvm(py::module_ &m, const py::exception<plssvm::exception> &ba
     py::module_ stdpar_module = m.def_submodule("stdpar", "a module containing all stdpar backend specific functionality");
 
     // bind the enum class
-    py::enum_<plssvm::stdpar::implementation_type> py_enum(stdpar_module, "ImplementationType", "Enum class for all supported stdpar implementations in PLSSVM.");
+    py::enum_<plssvm::stdpar::implementation_type> py_enum(stdpar_module, "ImplementationType", "enum.Enum", "Enum class for all supported stdpar implementations in PLSSVM.");
     py_enum
         .value("NVHPC", plssvm::stdpar::implementation_type::nvhpc, "use NVIDIA's HPC SDK (NVHPC) compiler nvc++")
         .value("ROC_STDPAR", plssvm::stdpar::implementation_type::roc_stdpar, "use AMD's roc-stdpar compiler (patched LLVM)")

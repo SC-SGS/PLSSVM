@@ -14,14 +14,13 @@
 #pragma once
 
 #include "plssvm/constants.hpp"                                  // plssvm::real_type
-#include "plssvm/data_set/data_set.hpp"                          // plssvm::data_set
 #include "plssvm/data_set/regression_data_set.hpp"               // plssvm::regression_data_set
 #include "plssvm/detail/io/file_reader.hpp"                      // plssvm::detail::io::file_reader
 #include "plssvm/detail/io/regression_libsvm_model_parsing.hpp"  // plssvm::detail::io::{parse_libsvm_model_header_regression, parse_libsvm_model_data_regression, write_libsvm_model_data_regression}
 #include "plssvm/detail/logging/mpi_log.hpp"                     // plssvm::detail::log
 #include "plssvm/detail/tracking/performance_tracker.hpp"        // PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY, plssvm::detail::tracking::tracking_entry
 #include "plssvm/detail/type_list.hpp"                           // plssvm::detail::{supported_label_types, tuple_contains_v}
-#include "plssvm/matrix.hpp"                                     // plssvm::soa_matrix, plssvm::aos_matrix
+#include "plssvm/matrix.hpp"                                     // plssvm::soa_matrix
 #include "plssvm/model/model.hpp"                                // plssvm::model
 #include "plssvm/mpi/communicator.hpp"                           // plssvm::mpi::communicator
 #include "plssvm/parameter.hpp"                                  // plssvm::parameter

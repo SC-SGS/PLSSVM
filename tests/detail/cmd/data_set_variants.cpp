@@ -14,7 +14,6 @@
 #include "plssvm/detail/cmd/parser_predict.hpp"  // plssvm::detail::cmd::parser_predict
 #include "plssvm/detail/cmd/parser_scale.hpp"    // plssvm::detail::cmd::parser_scale
 #include "plssvm/detail/cmd/parser_train.hpp"    // plssvm::detail::cmd::parser_train
-#include "plssvm/mpi/communicator.hpp"           // plssvm::mpi::communicator
 #include "plssvm/svm_types.hpp"                  // plssvm::svm_type
 
 #include "tests/detail/cmd/cmd_utility.hpp"  // util::ParameterBase
@@ -35,7 +34,7 @@ class DataSetFactory : public util::ParameterBase,
                        public ::testing::WithParamInterface<std::tuple<bool, plssvm::svm_type, std::size_t>>,
                        protected util::temporary_file { };
 
-TEST_P(DataSetFactory, data_set_factory_predict) {
+TEST_P(DataSetFactory, DataSetFactoryPredict) {
     // get parameter
     const auto [strings_as_labels, svm, result_index] = GetParam();
 
@@ -70,7 +69,7 @@ TEST_P(DataSetFactory, data_set_factory_predict) {
     EXPECT_EQ(var.index(), result_index);
 }
 
-TEST_P(DataSetFactory, data_set_factory_scale) {
+TEST_P(DataSetFactory, DataSetFactoryScale) {
     // get parameter
     const auto [strings_as_labels, svm, result_index] = GetParam();
 
@@ -102,7 +101,7 @@ TEST_P(DataSetFactory, data_set_factory_scale) {
     }
 }
 
-TEST_P(DataSetFactory, data_set_factory_scale_restore_filename) {
+TEST_P(DataSetFactory, DataSetFactoryScaleRestoreFilename) {
     // get parameter
     const auto [strings_as_labels, svm, result_index] = GetParam();
 
@@ -134,7 +133,7 @@ TEST_P(DataSetFactory, data_set_factory_scale_restore_filename) {
     }
 }
 
-TEST_P(DataSetFactory, data_set_factory_train) {
+TEST_P(DataSetFactory, DataSetFactoryTrain) {
     // get parameter
     const auto [strings_as_labels, svm, result_index] = GetParam();
 

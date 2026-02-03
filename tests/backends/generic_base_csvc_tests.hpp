@@ -15,7 +15,7 @@
 #pragma once
 
 #include "plssvm/classification_types.hpp"              // plssvm::classification_type
-#include "plssvm/constants.hpp"                         // plssvm::real_type, plssvm::PADDING_SIZE
+#include "plssvm/constants.hpp"                         // plssvm::real_type
 #include "plssvm/data_set/classification_data_set.hpp"  // plssvm::classification_data_set
 #include "plssvm/kernel_function_types.hpp"             // plssvm::kernel_function_type
 #include "plssvm/model/classification_model.hpp"        // plssvm::classification_model
@@ -23,15 +23,15 @@
 #include "plssvm/solver_types.hpp"                      // plssvm::solver_type
 #include "plssvm/target_platforms.hpp"                  // plssvm::target_platform
 
-#include "tests/types_to_test.hpp"  // util::{test_parameter_type_at_t, test_parameter_value_at_v}
-#include "tests/utility.hpp"        // util::{redirect_output, construct_from_tuple, temporary_file, instantiate_template_file}
+#include "tests/custom_test_macros.hpp"  // EXPECT_OPTIONAL_EQ
+#include "tests/types_to_test.hpp"       // util::{test_parameter_type_at_t, test_parameter_value_at_v}
+#include "tests/utility.hpp"             // util::{redirect_output, construct_from_tuple, temporary_file, instantiate_template_file}
 
-#include "fmt/format.h"   // fmt::format
 #include "gtest/gtest.h"  // TYPED_TEST_SUITE_P, TYPED_TEST_P, REGISTER_TYPED_TEST_SUITE_P, EXPECT_EQ, EXPECT_TRUE, ::testing::Test
 
-#include <string>   // std::string
-#include <utility>  // std::move
-#include <vector>   // std::vector
+#include <iostream>  // std::iostream
+#include <utility>   // std::move
+#include <vector>    // std::vector
 
 template <typename T>
 class GenericCSVC : public ::testing::Test,
@@ -39,7 +39,7 @@ class GenericCSVC : public ::testing::Test,
 
 TYPED_TEST_SUITE_P(GenericCSVC);
 
-TYPED_TEST_P(GenericCSVC, move_constructor) {
+TYPED_TEST_P(GenericCSVC, MoveConstructor) {
     using csvm_test_type = util::test_parameter_type_at_t<0, TypeParam>;
     using csvc_type = typename csvm_test_type::csvc_type;
 
@@ -58,7 +58,7 @@ TYPED_TEST_P(GenericCSVC, move_constructor) {
     EXPECT_EQ(new_svc.get_target_platform(), target);
 }
 
-TYPED_TEST_P(GenericCSVC, move_assignment) {
+TYPED_TEST_P(GenericCSVC, MoveAssignment) {
     using csvm_test_type = util::test_parameter_type_at_t<0, TypeParam>;
     using csvc_type = typename csvm_test_type::csvc_type;
 
@@ -81,8 +81,8 @@ TYPED_TEST_P(GenericCSVC, move_assignment) {
 }
 
 REGISTER_TYPED_TEST_SUITE_P(GenericCSVC,
-                            move_constructor,
-                            move_assignment);
+                            MoveConstructor,
+                            MoveAssignment);
 
 //*************************************************************************************************************************************//
 //                                C-SVC tests depending on the kernel function and classification type                                 //
@@ -93,7 +93,7 @@ class GenericCSVCKernelFunctionClassification : public GenericCSVC<T> { };
 
 TYPED_TEST_SUITE_P(GenericCSVCKernelFunctionClassification);
 
-TYPED_TEST_P(GenericCSVCKernelFunctionClassification, predict) {
+TYPED_TEST_P(GenericCSVCKernelFunctionClassification, Predict) {
     using label_type = util::test_parameter_type_at_t<1, TypeParam>;
     using csvm_test_type = util::test_parameter_type_at_t<0, TypeParam>;
     using csvc_type = typename csvm_test_type::csvc_type;
@@ -101,22 +101,23 @@ TYPED_TEST_P(GenericCSVCKernelFunctionClassification, predict) {
     constexpr plssvm::classification_type classification = util::test_parameter_value_at_v<1, TypeParam>;
 
     // create parameter struct
-    plssvm::parameter params{ plssvm::kernel_type = kernel };
+    plssvm::parameter params{ plssvm::kernel_type = kernel };  // NOLINT(misc-const-correctness): can change based on the kernel function
     if constexpr (kernel != plssvm::kernel_function_type::linear) {
         params.gamma = plssvm::real_type{ 1.0 };
     }
 
     // create data set that is always classifiable
-    plssvm::classification_data_set<label_type> test_data = util::generate_trivially_solvable_classification_data_set<label_type>();
+    plssvm::classification_data_set<label_type> test_data = util::generate_trivially_solvable_classification_data_set<label_type>();  // NOLINT(misc-const-correctness): can't be const for the chi-squared kernel
     if constexpr (kernel == plssvm::kernel_function_type::chi_squared) {
         // chi-squared is well-defined for non-negative values only
-        if (test_data.labels().has_value()) {
-            test_data = plssvm::classification_data_set<label_type>{ util::matrix_abs(test_data.data()), *test_data.labels() };
+        const auto &labels_opt = test_data.labels();
+        if (labels_opt.has_value()) {
+            test_data = plssvm::classification_data_set<label_type>{ util::matrix_abs(test_data.data()), labels_opt.value() };
         }
     }
 
     // create normal C-SVC
-    const csvc_type svc = util::construct_from_tuple<csvc_type>(params, csvm_test_type::additional_arguments);
+    const auto svc = util::construct_from_tuple<csvc_type>(params, csvm_test_type::additional_arguments);
 
     // fitting the test data will ALWAYS score 100% accuracy
     const plssvm::classification_model<label_type> model = svc.fit(test_data, plssvm::epsilon = 1e-16, plssvm::classification = classification);
@@ -125,16 +126,16 @@ TYPED_TEST_P(GenericCSVCKernelFunctionClassification, predict) {
     const std::vector<label_type> calculated = svc.predict(model, test_data);
 
     // check the calculated result for correctness
-    EXPECT_EQ(calculated, test_data.labels().value().get());
+    EXPECT_OPTIONAL_EQ(calculated, test_data.labels());
 
     // for the linear kernel, predict again to check whether reusing the w vector works as intended
     if (kernel == plssvm::kernel_function_type::linear) {
         const std::vector<label_type> calculated_second = svc.predict(model, test_data);
-        EXPECT_EQ(calculated_second, test_data.labels().value().get());
+        EXPECT_OPTIONAL_EQ(calculated_second, test_data.labels());
     }
 }
 
-TYPED_TEST_P(GenericCSVCKernelFunctionClassification, score_model) {
+TYPED_TEST_P(GenericCSVCKernelFunctionClassification, ScoreModel) {
     using label_type = util::test_parameter_type_at_t<1, TypeParam>;
     using csvm_test_type = util::test_parameter_type_at_t<0, TypeParam>;
     using csvc_type = typename csvm_test_type::csvc_type;
@@ -142,22 +143,23 @@ TYPED_TEST_P(GenericCSVCKernelFunctionClassification, score_model) {
     constexpr plssvm::classification_type classification = util::test_parameter_value_at_v<1, TypeParam>;
 
     // create parameter struct
-    plssvm::parameter params{ plssvm::kernel_type = kernel };
+    plssvm::parameter params{ plssvm::kernel_type = kernel };  // NOLINT(misc-const-correctness): can change based on the kernel function
     if constexpr (kernel != plssvm::kernel_function_type::linear) {
         params.gamma = plssvm::real_type{ 1.0 };
     }
 
     // create data set that is always classifiable
-    plssvm::classification_data_set<label_type> test_data = util::generate_trivially_solvable_classification_data_set<label_type>();
+    plssvm::classification_data_set<label_type> test_data = util::generate_trivially_solvable_classification_data_set<label_type>();  // NOLINT(misc-const-correctness): can't be const for the chi-squared kernel
     if constexpr (kernel == plssvm::kernel_function_type::chi_squared) {
         // chi-squared is well-defined for non-negative values only
-        if (test_data.labels().has_value()) {
-            test_data = plssvm::classification_data_set<label_type>{ util::matrix_abs(test_data.data()), *test_data.labels() };
+        const auto &labels_opt = test_data.labels();
+        if (labels_opt.has_value()) {
+            test_data = plssvm::classification_data_set<label_type>{ util::matrix_abs(test_data.data()), labels_opt.value() };
         }
     }
 
     // create normal C-SVC
-    const csvc_type svc = util::construct_from_tuple<csvc_type>(params, csvm_test_type::additional_arguments);
+    const auto svc = util::construct_from_tuple<csvc_type>(params, csvm_test_type::additional_arguments);
 
     // fitting the test data will ALWAYS score 100% accuracy
     const plssvm::classification_model<label_type> model = svc.fit(test_data, plssvm::epsilon = 1e-16, plssvm::classification = classification);
@@ -169,7 +171,7 @@ TYPED_TEST_P(GenericCSVCKernelFunctionClassification, score_model) {
     EXPECT_EQ(calculated, plssvm::real_type{ 1.0 });
 }
 
-TYPED_TEST_P(GenericCSVCKernelFunctionClassification, score) {
+TYPED_TEST_P(GenericCSVCKernelFunctionClassification, Score) {
     using label_type = util::test_parameter_type_at_t<1, TypeParam>;
     using csvm_test_type = util::test_parameter_type_at_t<0, TypeParam>;
     using csvc_type = typename csvm_test_type::csvc_type;
@@ -177,22 +179,23 @@ TYPED_TEST_P(GenericCSVCKernelFunctionClassification, score) {
     constexpr plssvm::classification_type classification = util::test_parameter_value_at_v<1, TypeParam>;
 
     // create parameter struct
-    plssvm::parameter params{ plssvm::kernel_type = kernel };
+    plssvm::parameter params{ plssvm::kernel_type = kernel };  // NOLINT(misc-const-correctness): can change based on the kernel function
     if constexpr (kernel != plssvm::kernel_function_type::linear) {
         params.gamma = plssvm::real_type{ 1.0 };
     }
 
     // create data set that is always classifiable
-    plssvm::classification_data_set<label_type> test_data = util::generate_trivially_solvable_classification_data_set<label_type>();
+    plssvm::classification_data_set<label_type> test_data = util::generate_trivially_solvable_classification_data_set<label_type>();  // NOLINT(misc-const-correctness): can't be const for the chi-squared kernel
     if constexpr (kernel == plssvm::kernel_function_type::chi_squared) {
         // chi-squared is well-defined for non-negative values only
-        if (test_data.labels().has_value()) {
-            test_data = plssvm::classification_data_set<label_type>{ util::matrix_abs(test_data.data()), *test_data.labels() };
+        const auto &labels_opt = test_data.labels();
+        if (labels_opt.has_value()) {
+            test_data = plssvm::classification_data_set<label_type>{ util::matrix_abs(test_data.data()), labels_opt.value() };
         }
     }
 
     // create normal C-SVC
-    const csvc_type svc = util::construct_from_tuple<csvc_type>(params, csvm_test_type::additional_arguments);
+    const auto svc = util::construct_from_tuple<csvc_type>(params, csvm_test_type::additional_arguments);
 
     // fitting the test data will ALWAYS score 100% accuracy
     const plssvm::classification_model<label_type> model = svc.fit(test_data, plssvm::epsilon = 1e-16, plssvm::classification = classification);
@@ -205,9 +208,9 @@ TYPED_TEST_P(GenericCSVCKernelFunctionClassification, score) {
 }
 
 REGISTER_TYPED_TEST_SUITE_P(GenericCSVCKernelFunctionClassification,
-                            predict,
-                            score_model,
-                            score);
+                            Predict,
+                            ScoreModel,
+                            Score);
 
 //*************************************************************************************************************************************//
 //                            C-SVC tests depending on the solver, kernel function, and classification type                            //
@@ -215,7 +218,8 @@ REGISTER_TYPED_TEST_SUITE_P(GenericCSVCKernelFunctionClassification,
 
 template <typename T>
 class GenericCSVCSolverKernelFunctionClassification : public GenericCSVC<T>,
-                                                      protected util::temporary_file {
+                                                      protected util::temporary_file,
+                                                      protected util::redirect_output<&std::clog> {
   protected:
     using fixture_label_type = util::test_parameter_type_at_t<1, T>;
 
@@ -227,7 +231,7 @@ class GenericCSVCSolverKernelFunctionClassification : public GenericCSVC<T>,
 
 TYPED_TEST_SUITE_P(GenericCSVCSolverKernelFunctionClassification);
 
-TYPED_TEST_P(GenericCSVCSolverKernelFunctionClassification, fit) {
+TYPED_TEST_P(GenericCSVCSolverKernelFunctionClassification, Fit) {
     // note: only quantitative tests, doesn't check the real weights and rho values
     using label_type = util::test_parameter_type_at_t<1, TypeParam>;
     using csvm_test_type = util::test_parameter_type_at_t<0, TypeParam>;
@@ -240,16 +244,17 @@ TYPED_TEST_P(GenericCSVCSolverKernelFunctionClassification, fit) {
     const plssvm::parameter params{ plssvm::kernel_type = kernel };
 
     // create data set to be used
-    plssvm::classification_data_set<label_type> test_data{ this->filename };
+    plssvm::classification_data_set<label_type> test_data{ this->filename };  // NOLINT(misc-const-correctness): can't be const for the chi-squared kernel
     if constexpr (kernel == plssvm::kernel_function_type::chi_squared) {
         // chi-squared is well-defined for non-negative values only
-        if (test_data.labels().has_value()) {
-            test_data = plssvm::classification_data_set<label_type>{ util::matrix_abs(test_data.data()), *test_data.labels() };
+        const auto &labels_opt = test_data.labels();
+        if (labels_opt.has_value()) {
+            test_data = plssvm::classification_data_set<label_type>{ util::matrix_abs(test_data.data()), labels_opt.value() };
         }
     }
 
     // create normal C-SVC
-    const csvc_type svc = util::construct_from_tuple<csvc_type>(params, csvm_test_type::additional_arguments);
+    const auto svc = util::construct_from_tuple<csvc_type>(params, csvm_test_type::additional_arguments);
 
     // call fit
     const plssvm::classification_model<label_type> model = svc.fit(test_data, plssvm::epsilon = 1e-10, plssvm::solver = solver, plssvm::classification = classification);
@@ -259,9 +264,9 @@ TYPED_TEST_P(GenericCSVCSolverKernelFunctionClassification, fit) {
     EXPECT_EQ(model.num_features(), test_data.num_features());
     EXPECT_EQ(model.get_params(), (plssvm::parameter{ params, plssvm::gamma = plssvm::real_type{ 1.0 } / static_cast<plssvm::real_type>(test_data.num_features()) }));
     EXPECT_EQ(model.support_vectors(), test_data.data());
-    EXPECT_EQ(model.labels().value().get(), test_data.labels().value().get());
+    EXPECT_OPTIONAL_EQ(model.labels(), test_data.labels());
     EXPECT_EQ(model.num_classes(), test_data.num_classes());
-    EXPECT_EQ(model.classes(), test_data.classes().value());
+    EXPECT_OPTIONAL_EQ(model.classes(), test_data.classes());
     if constexpr (classification == plssvm::classification_type::oaa) {
         EXPECT_EQ(model.weights().size(), 1);
         EXPECT_EQ(model.rho().size(), test_data.num_classes());
@@ -270,11 +275,14 @@ TYPED_TEST_P(GenericCSVCSolverKernelFunctionClassification, fit) {
         EXPECT_EQ(model.rho().size(), plssvm::calculate_number_of_classifiers(classification, test_data.num_classes()));
     }
     EXPECT_EQ(model.get_classification_type(), classification);
-    EXPECT_TRUE(model.num_iters().has_value());
-    EXPECT_EQ(model.num_iters().value().size(), (plssvm::calculate_number_of_classifiers(classification, test_data.num_classes())));
+    const auto &num_iters_opt = model.num_iters();
+    ASSERT_TRUE(num_iters_opt.has_value());
+    if (num_iters_opt.has_value()) {
+        EXPECT_EQ(num_iters_opt.value().size(), (plssvm::calculate_number_of_classifiers(classification, test_data.num_classes())));
+    }
 }
 
 REGISTER_TYPED_TEST_SUITE_P(GenericCSVCSolverKernelFunctionClassification,
-                            fit);
+                            Fit);
 
 #endif  // PLSSVM_TESTS_BACKENDS_GENERIC_BASE_CSVC_TESTS_HPP_

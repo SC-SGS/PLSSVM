@@ -290,7 +290,7 @@ class data_set {
     /**
      * @brief Virtual destructor to allow derived classes to clean up properly.
      */
-    virtual ~data_set() = default;
+    virtual ~data_set() = 0;
 
     /**
      * @brief Save the data points and potential labels of this data set to the file @p filename using the file @p format type.
@@ -370,12 +370,6 @@ class data_set {
         data_ptr_{ std::make_shared<soa_matrix<real_type>>() } { }
 
     /**
-     * @brief Create the mapping between the provided labels and the internally used values.
-     * @throws plssvm::data_set_exception any exception of the plssvm::data_set::label_mapper class
-     */
-    virtual void map_label() = 0;
-
-    /**
      * @brief Read the data points and potential labels from the file @p filename assuming the plssvm::file_format_type @p format.
      * @param[in] filename the filename to read the data from
      * @param[in] format the assumed file format type
@@ -390,7 +384,7 @@ class data_set {
     size_type num_features_{ 0 };
 
     /// The used MPI communicator.
-    mpi::communicator comm_{};
+    mpi::communicator comm_;
 
     /// A pointer to the two-dimensional data points.
     std::shared_ptr<soa_matrix<real_type>> data_ptr_{ nullptr };
@@ -429,7 +423,7 @@ template <typename U>
 data_set<U>::data_set(mpi::communicator comm, const std::string &filename, min_max_scaler scaler) :
     data_set{ std::move(comm), filename } {
     // check whether the data set and scaler MPI communicators are identical
-    if (comm != scaler.communicator()) {
+    if (comm_ != scaler.communicator()) {
         throw mpi_exception{ "The MPI communicators provided to the data set and scaler must be identical!" };
     }
 
@@ -443,7 +437,7 @@ template <typename U>
 data_set<U>::data_set(mpi::communicator comm, const std::string &filename, file_format_type format, min_max_scaler scaler) :
     data_set{ std::move(comm), filename, format } {
     // check whether the data set and scaler MPI communicators are identical
-    if (comm != scaler.communicator()) {
+    if (comm_ != scaler.communicator()) {
         throw mpi_exception{ "The MPI communicators provided to the data set and scaler must be identical!" };
     }
 
@@ -526,7 +520,7 @@ template <layout_type layout>
 data_set<U>::data_set(mpi::communicator comm, const matrix<real_type, layout> &data_points, min_max_scaler scaler) :
     data_set{ std::move(comm), data_points } {
     // check whether the data set and scaler MPI communicators are identical
-    if (comm != scaler.communicator()) {
+    if (comm_ != scaler.communicator()) {
         throw mpi_exception{ "The MPI communicators provided to the data set and scaler must be identical!" };
     }
 
@@ -541,7 +535,7 @@ template <layout_type layout>
 data_set<U>::data_set(mpi::communicator comm, const matrix<real_type, layout> &data_points, std::vector<label_type> labels, min_max_scaler scaler) :
     data_set{ std::move(comm), data_points, std::move(labels) } {
     // check whether the data set and scaler MPI communicators are identical
-    if (comm != scaler.communicator()) {
+    if (comm_ != scaler.communicator()) {
         throw mpi_exception{ "The MPI communicators provided to the data set and scaler must be identical!" };
     }
 
@@ -598,7 +592,7 @@ template <typename U>
 data_set<U>::data_set(mpi::communicator comm, soa_matrix<real_type> &&data_points, min_max_scaler scaler) :
     data_set{ std::move(comm), std::move(data_points) } {
     // check whether the data set and scaler MPI communicators are identical
-    if (comm != scaler.communicator()) {
+    if (comm_ != scaler.communicator()) {
         throw mpi_exception{ "The MPI communicators provided to the data set and scaler must be identical!" };
     }
 
@@ -612,7 +606,7 @@ template <typename U>
 data_set<U>::data_set(mpi::communicator comm, soa_matrix<real_type> &&data_points, std::vector<label_type> &&labels, min_max_scaler scaler) :
     data_set{ std::move(comm), std::move(data_points), std::move(labels) } {
     // check whether the data set and scaler MPI communicators are identical
-    if (comm != scaler.communicator()) {
+    if (comm_ != scaler.communicator()) {
         throw mpi_exception{ "The MPI communicators provided to the data set and scaler must be identical!" };
     }
 
@@ -621,6 +615,9 @@ data_set<U>::data_set(mpi::communicator comm, soa_matrix<real_type> &&data_point
     // scale data set
     scaler_->scale(*data_ptr_);
 }
+
+template <typename U>
+data_set<U>::~data_set() = default;
 
 template <typename U>
 void data_set<U>::save(const std::string &filename, const file_format_type format) const {

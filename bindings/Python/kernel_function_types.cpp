@@ -8,9 +8,11 @@
 
 #include "plssvm/kernel_function_types.hpp"  // plssvm::kernel_function_type
 
-#include "bindings/Python/utility.hpp"  // plssvm::bindings::python::util::register_implicit_str_enum_conversion
+#include "bindings/Python/bindings_fwd.hpp"  // forward declare all helper functions to create the Python bindings
+#include "bindings/Python/utility.hpp"       // plssvm::bindings::python::util::register_implicit_str_enum_conversion
 
-#include "pybind11/pybind11.h"  // py::module_, py::enum_, py::arg
+#include "pybind11/cast.h"      // py::arg
+#include "pybind11/pybind11.h"  // py::module_, py::enum_
 
 namespace py = pybind11;
 

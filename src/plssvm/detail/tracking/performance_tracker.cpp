@@ -8,40 +8,44 @@
 
 #include "plssvm/detail/tracking/performance_tracker.hpp"
 
-#include "plssvm/constants.hpp"                          // plssvm::real_type, plssvm::THREAD_BLOCK_SIZE, plssvm::INTERNAL_BLOCK_SIZE, plssvm::FEATURE_BLOCK_SIZE, plssvm::PADDING_SIZE
+#include "plssvm/constants.hpp"                          // plssvm::real_type, plssvm::THREAD_BLOCK_SIZE, plssvm::INTERNAL_BLOCK_SIZE, plssvm::PADDING_SIZE
 #include "plssvm/detail/arithmetic_type_name.hpp"        // plssvm::detail::arithmetic_type_name
 #include "plssvm/detail/assert.hpp"                      // PLSSVM_ASSERT, PLSSVM_ASSERT_ENABLED
 #include "plssvm/detail/cmd/parser_predict.hpp"          // plssvm::detail::cmd::parser_predict
 #include "plssvm/detail/cmd/parser_scale.hpp"            // plssvm::detail::cmd::parser_scale
 #include "plssvm/detail/cmd/parser_train.hpp"            // plssvm::detail::cmd::parser_train
-#include "plssvm/detail/string_utility.hpp"              // plssvm::detail::replace_all
 #include "plssvm/detail/utility.hpp"                     // plssvm::detail::current_date_time, PLSSVM_IS_DEFINED
 #include "plssvm/gamma.hpp"                              // plssvm::get_gamma_string
 #include "plssvm/mpi/communicator.hpp"                   // plssvm::mpi::communicator
-#include "plssvm/mpi/detail/utility.hpp"                 // plssvm::mpi::detail::node_name
-#include "plssvm/mpi/detail/version.hpp"                 // plssvm::mpi::detail::{mpi_library_version, mpi_version}
 #include "plssvm/parameter.hpp"                          // plssvm::parameter
 #include "plssvm/version/git_metadata/git_metadata.hpp"  // plssvm::version::git_metadata::commit_sha1
 #include "plssvm/version/version.hpp"                    // plssvm::version::{version, detail::target_platforms}
 
+#if defined(PLSSVM_HAS_MPI_ENABLED)
+    #include "plssvm/mpi/detail/utility.hpp"  // plssvm::mpi::detail::node_name
+    #include "plssvm/mpi/detail/version.hpp"  // plssvm::mpi::detail::{mpi_library_version, mpi_version}
+#endif
+
 #if defined(PLSSVM_HARDWARE_SAMPLING_ENABLED)
+    #include "plssvm/detail/string_utility.hpp"  // plssvm::detail::replace_all
     #include "plssvm/detail/tracking/utility.hpp"
 
     #include "hws/hardware_sampler.hpp"         // hws::hardware_sampler
     #include "hws/system_hardware_sampler.hpp"  // hws::system_hardware_sampler
     #include "hws/version.hpp"                  // hws::version::version
+    #include <memory>                           // std::unique_ptr
 #endif
 
 #include "cxxopts.hpp"                // CXXOPTS__VERSION_MAJOR, CXXOPTS__VERSION_MINOR, CXXOPTS__VERSION_MINOR
 #include "fast_float/float_common.h"  // FASTFLOAT_VERSION_MAJOR, FASTFLOAT_VERSION_MINOR, FASTFLOAT_VERSION_PATCH
 #include "fmt/base.h"                 // FMT_VERSION
-#include "fmt/chrono.h"               // format std::chrono types
+#include "fmt/chrono.h"               // NOLINT(misc-include-cleaner): false positive, header is used to format std::chrono types
 #include "fmt/format.h"               // fmt::format
 #include "fmt/ranges.h"               // fmt::join
 
 #if __has_include(<unistd.h>)
     #include <unistd.h>  // gethostname, getlogin_r, sysconf, _SC_HOST_NAME_MAX, _SC_LOGIN_NAME_MAX
-    #define PLSSVM_UNISTD_AVAILABLE
+    #define PLSSVM_HAS_POSIX_INCLUDES
 #endif
 
 #if defined(PLSSVM_STDPAR_BACKEND_HAS_GNU_TBB)
@@ -64,31 +68,81 @@
     #endif
 #endif
 
-#include <algorithm>    // std::max
+#include <algorithm>    // std::max, std::find
 #include <chrono>       // std::chrono::steady_clock::time_point
 #include <cstddef>      // std::size_t
 #include <fstream>      // std::ofstream
 #include <iostream>     // std::ios_base::app, std::ostream, std::clog, std::endl
 #include <map>          // std::map
-#include <memory>       // std::unique_ptr
+#include <mutex>        // std::mutex, std::scoped_lock
 #include <string>       // std::string
 #include <string_view>  // std::string_view
 #include <utility>      // std::move
 #include <vector>       // std::vector
 
+namespace {
+
+/**
+ * @brief Get the hostname from the current machine. Returns `"not available"` if this is not possible.
+ * @return the hostname of the current machine (`[[nodiscard]]`)
+ */
+[[nodiscard]] std::string get_hostname() {
+#if defined(PLSSVM_HAS_POSIX_INCLUDES)
+    const auto host_name_max = static_cast<std::size_t>(sysconf(_SC_HOST_NAME_MAX));
+    std::string hostname(host_name_max, '\0');
+    if (gethostname(hostname.data(), host_name_max) != 0) {
+        hostname = "not available";
+    }
+    // resize to actual string length (truncate trailing '\0's)
+    if (const auto it = std::find(hostname.cbegin(), hostname.cend(), '\0'); it != hostname.cend()) {
+        hostname.erase(it, hostname.cend());
+    }
+    if (hostname.empty()) {
+        hostname = "not available";
+    }
+    return hostname;
+#else
+    return "not available";
+#endif
+}
+
+/**
+ * @brief Get the username of the current user. Returns `"not available"` if this is not possible.
+ * @return the username of the current user (`[[nodiscard]]`)
+ */
+[[nodiscard]] std::string get_username() {
+#if defined(PLSSVM_HAS_POSIX_INCLUDES)
+    const auto login_name_max = static_cast<std::size_t>(sysconf(_SC_LOGIN_NAME_MAX));
+    std::string username(login_name_max, '\0');
+    if (getlogin_r(username.data(), login_name_max) != 0) {
+        username = "not available";
+    }
+    // resize to actual string length (truncate trailing '\0's)
+    if (const auto it = std::find(username.cbegin(), username.cend(), '\0'); it != username.cend()) {
+        username.erase(it, username.cend());
+    }
+    if (username.empty()) {
+        username = "not available";
+    }
+    return username;
+#else
+    return "not available";
+#endif
+}
+
+}  // namespace
+
 namespace plssvm::detail::tracking {
 
 // Must be explicitly defaulted in the cpp file to prevent linker errors!
 performance_tracker::performance_tracker() = default;
-performance_tracker::performance_tracker(const performance_tracker &) = default;
-performance_tracker::performance_tracker(performance_tracker &&) noexcept = default;
-performance_tracker &performance_tracker::operator=(const performance_tracker &) = default;
-performance_tracker &performance_tracker::operator=(performance_tracker &&) noexcept = default;
 performance_tracker::~performance_tracker() = default;
 
 void performance_tracker::add_tracking_entry(const tracking_entry<plssvm::parameter> &entry) {
     // check whether entries should currently be tracked
     if (this->is_tracking()) {
+        const std::scoped_lock guard{ mutex_ };
+
         // create category
         tracking_entries_.emplace(entry.entry_category, std::map<std::string, std::vector<std::string>>{});
         // fill category with value
@@ -106,6 +160,8 @@ void performance_tracker::add_tracking_entry([[maybe_unused]] const tracking_ent
 #if defined(PLSSVM_HAS_MPI_ENABLED)
     // check whether entries should currently be tracked
     if (this->is_tracking()) {
+        const std::scoped_lock guard{ mutex_ };
+
         // create category
         tracking_entries_.emplace(entry.entry_category, std::map<std::string, std::vector<std::string>>{});
         // fill category with value
@@ -122,6 +178,8 @@ void performance_tracker::add_tracking_entry([[maybe_unused]] const tracking_ent
 void performance_tracker::add_tracking_entry(const tracking_entry<cmd::parser_train> &entry) {
     // check whether entries should currently be tracked
     if (this->is_tracking()) {
+        const std::scoped_lock guard{ mutex_ };
+
         // create category
         tracking_entries_.emplace(entry.entry_category, std::map<std::string, std::vector<std::string>>{});
         // fill category with value
@@ -136,7 +194,7 @@ void performance_tracker::add_tracking_entry(const tracking_entry<cmd::parser_tr
         tracking_entries_[entry.entry_category].emplace("classification_type", std::vector<std::string>{ fmt::format("{}", entry.entry_value.classification) });
         tracking_entries_[entry.entry_category].emplace("backend", std::vector<std::string>{ fmt::format("{}", entry.entry_value.backend) });
         tracking_entries_[entry.entry_category].emplace("target", std::vector<std::string>{ fmt::format("{}", entry.entry_value.target) });
-        tracking_entries_[entry.entry_category].emplace("sycl_kernel_invocation_type", std::vector<std::string>{ fmt::format("{}", entry.entry_value.sycl_kernel_invocation_type) });
+        tracking_entries_[entry.entry_category].emplace("sycl_data_parallel_kernel", std::vector<std::string>{ fmt::format("{}", entry.entry_value.sycl_data_parallel_kernel) });
         tracking_entries_[entry.entry_category].emplace("sycl_implementation_type", std::vector<std::string>{ fmt::format("{}", entry.entry_value.sycl_implementation_type) });
         tracking_entries_[entry.entry_category].emplace("kokkos_execution_space", std::vector<std::string>{ fmt::format("{}", entry.entry_value.kokkos_execution_space) });
         tracking_entries_[entry.entry_category].emplace("strings_as_labels", std::vector<std::string>{ fmt::format("{}", entry.entry_value.strings_as_labels) });
@@ -149,12 +207,15 @@ void performance_tracker::add_tracking_entry(const tracking_entry<cmd::parser_tr
 void performance_tracker::add_tracking_entry(const tracking_entry<cmd::parser_predict> &entry) {
     // check whether entries should currently be tracked
     if (this->is_tracking()) {
+        const std::scoped_lock guard{ mutex_ };
+
         // create category
         tracking_entries_.emplace(entry.entry_category, std::map<std::string, std::vector<std::string>>{});
         // fill category with value
         tracking_entries_[entry.entry_category].emplace("task", std::vector<std::string>{ "predict" });
         tracking_entries_[entry.entry_category].emplace("backend", std::vector<std::string>{ fmt::format("{}", entry.entry_value.backend) });
         tracking_entries_[entry.entry_category].emplace("target", std::vector<std::string>{ fmt::format("{}", entry.entry_value.target) });
+        tracking_entries_[entry.entry_category].emplace("sycl_data_parallel_kernel", std::vector<std::string>{ fmt::format("{}", entry.entry_value.sycl_data_parallel_kernel) });
         tracking_entries_[entry.entry_category].emplace("sycl_implementation_type", std::vector<std::string>{ fmt::format("{}", entry.entry_value.sycl_implementation_type) });
         tracking_entries_[entry.entry_category].emplace("kokkos_execution_space", std::vector<std::string>{ fmt::format("{}", entry.entry_value.kokkos_execution_space) });
         tracking_entries_[entry.entry_category].emplace("strings_as_labels", std::vector<std::string>{ fmt::format("{}", entry.entry_value.strings_as_labels) });
@@ -168,6 +229,8 @@ void performance_tracker::add_tracking_entry(const tracking_entry<cmd::parser_pr
 void performance_tracker::add_tracking_entry(const tracking_entry<cmd::parser_scale> &entry) {
     // check whether entries should currently be tracked
     if (this->is_tracking()) {
+        const std::scoped_lock guard{ mutex_ };
+
         // create category
         tracking_entries_.emplace(entry.entry_category, std::map<std::string, std::vector<std::string>>{});
         // fill category with value
@@ -187,8 +250,10 @@ void performance_tracker::add_tracking_entry(const tracking_entry<cmd::parser_sc
 #if defined(PLSSVM_HARDWARE_SAMPLING_ENABLED)
 void performance_tracker::add_hws_entry(const hws::system_hardware_sampler &entry) {
     // check whether entries should currently be tracked
-    const std::string entry_category{ "hardware_sampler" };
     if (this->is_tracking()) {
+        const std::scoped_lock guard{ mutex_ };
+
+        const std::string entry_category{ "hardware_sampler" };
         for (const std::unique_ptr<hws::hardware_sampler> &sampler : entry.samplers()) {
             // get the sample string and append two newlines to each line
             std::string sample_str = sampler->samples_only_as_yaml_string();
@@ -209,11 +274,15 @@ void performance_tracker::add_hws_entry(const hws::system_hardware_sampler &entr
 }
 #endif
 
-void performance_tracker::add_event(const std::string name) {
+void performance_tracker::add_event(std::string name) {
+    const std::scoped_lock guard{ mutex_ };
+
     events_.add_event(std::chrono::steady_clock::now(), std::move(name));
 }
 
 void performance_tracker::set_reference_time(const std::chrono::steady_clock::time_point time) noexcept {
+    const std::scoped_lock guard{ mutex_ };
+
     reference_time_ = time;
 }
 
@@ -242,27 +311,18 @@ void performance_tracker::save(std::ostream &out) {
     //                                                              meta-data                                                              //
     //*************************************************************************************************************************************//
     // get the current host- and username
-#if defined(PLSSVM_UNISTD_AVAILABLE)
-    const auto host_name_max = static_cast<std::size_t>(sysconf(_SC_HOST_NAME_MAX));
-    std::string hostname(host_name_max, '\0');
-    gethostname(hostname.data(), host_name_max);
-    const auto login_name_max = static_cast<std::size_t>(sysconf(_SC_LOGIN_NAME_MAX));
-    std::string username(login_name_max, '\0');
-    getlogin_r(username.data(), login_name_max);
-#else
-    constexpr std::string_view hostname{ "not available" };
-    constexpr std::string_view username{ "not available" };
-#endif
-    // check whether asserts are enabled
+    const std::string hostname = get_hostname();
+    const std::string username = get_username();
+    // check if asserts are enabled
     constexpr bool assert_enabled = PLSSVM_IS_DEFINED(PLSSVM_ENABLE_ASSERTS);
-    // check whether LTO has been enabled
+    // check if LTO has been enabled
     constexpr bool lto_enabled = PLSSVM_IS_DEFINED(PLSSVM_LTO_SUPPORTED);
-    // check whether fast-math has been enabled
+    // check if fast-math has been enabled
     constexpr bool fast_math_enabled = PLSSVM_IS_DEFINED(PLSSVM_USE_FAST_MATH);
-    // check whether the maximum allocatable memory size should be enforced
+    // check if the maximum allocatable memory size should be enforced
     constexpr bool enforce_max_mem_alloc_size = PLSSVM_IS_DEFINED(PLSSVM_ENFORCE_MAX_MEM_ALLOC_SIZE);
 
-    // begin a new YAML document (only with "---" multiple YAML docments in a single file are allowed)
+    // begin a new YAML document (only with "---" multiple YAML documents in a single file are allowed)
     out << "---\n";
 
     // output metadata information
@@ -270,38 +330,36 @@ void performance_tracker::save(std::ostream &out) {
         "meta_data:\n"
         "  date:                              \"{}\"\n"
         "  PLSSVM_TARGET_PLATFORMS:           \"{}\"\n"
-        "  commit:                            {}\n"
+        "  commit:                            \"{}\"\n"
         "  version:                           {}\n"
-        "  hostname:                          {}\n"
-        "  user:                              {}\n"
-        "  build_type:                        {}\n"
+        "  hostname:                          \"{}\"\n"
+        "  user:                              \"{}\"\n"
+        "  build_type:                        \"{}\"\n"
         "  LTO:                               {}\n"
         "  fast-math:                         {}\n"
         "  asserts:                           {}\n"
         "  enforce_max_mem_alloc_size:        {}\n"
         "  THREAD_BLOCK_SIZE:                 {}\n"
-        "  FEATURE_BLOCK_SIZE:                {}\n"
         "  INTERNAL_BLOCK_SIZE:               {}\n"
         "  PADDING_SIZE:                      {}\n",
         plssvm::detail::current_date_time(),
         version::detail::target_platforms,
         version::git_metadata::commit_sha1().empty() ? "unknown" : version::git_metadata::commit_sha1(),
         version::version,
-        hostname.data(),
-        username.data(),
+        hostname,
+        username,
         PLSSVM_BUILD_TYPE,
         lto_enabled,
         fast_math_enabled,
         assert_enabled,
         enforce_max_mem_alloc_size,
         THREAD_BLOCK_SIZE,
-        FEATURE_BLOCK_SIZE,
         INTERNAL_BLOCK_SIZE,
         PADDING_SIZE);
 
 #if defined(PLSSVM_SYCL_BACKEND_HAS_DPCPP)
     out << fmt::format(
-        "  DPCPP_backend_type:                {}\n",
+        "  DPCPP_backend_type:                \"{}\"\n",
         PLSSVM_SYCL_BACKEND_DPCPP_BACKEND_TYPE);
 #endif
 #if defined(PLSSVM_SYCL_BACKEND_HAS_ADAPTIVECPP)
@@ -363,8 +421,8 @@ void performance_tracker::save(std::ostream &out) {
 
     out << "dependencies:\n";
 
-    // calculate the number of padding whitespaces for the dependencies category
-    std::size_t max_dependency_entry_name_length = 18;  // fast_float_version
+    // calculate the number of padding whitespaces for the "dependencies" category
+    std::size_t max_dependency_entry_name_length = std::string_view{ "fast_float_version" }.size();
     if (detail::contains(tracking_entries_, "dependencies")) {
         for (const auto &[entry_name, entry_value] : tracking_entries_["dependencies"]) {
             max_dependency_entry_name_length = std::max(max_dependency_entry_name_length, entry_name.size());
@@ -393,14 +451,14 @@ void performance_tracker::save(std::ostream &out) {
         "  oneDPL_version: {}\n"
         "  tbb_version: {}\n"
         "  hws_version: {}\n\n",
-        fmt::format("{:<{}}\"{}\"", "", max_dependency_entry_name_length - 15, cxxopts_version),
-        fmt::format("{:<{}}\"{}\"", "", max_dependency_entry_name_length - 11, fmt_version),
-        fmt::format("{:<{}}\"{}\"", "", max_dependency_entry_name_length - 18, fast_float_version),
-        fmt::format("{:<{}}\"{}\"", "", max_dependency_entry_name_length - 12, igor_version),
-        fmt::format("{:<{}}\"{}\"", "", max_dependency_entry_name_length - 13, boost_version),
-        fmt::format("{:<{}}\"{}\"", "", max_dependency_entry_name_length - 14, oneDPL_version),
-        fmt::format("{:<{}}\"{}\"", "", max_dependency_entry_name_length - 11, tbb_version),
-        fmt::format("{:<{}}\"{}\"", "", max_dependency_entry_name_length - 11, hws_version));
+        fmt::format("{:<{}}\"{}\"", "", max_dependency_entry_name_length - std::string_view{ "cxxopts_version" }.size(), cxxopts_version),
+        fmt::format("{:<{}}\"{}\"", "", max_dependency_entry_name_length - std::string_view{ "fmt_version" }.size(), fmt_version),
+        fmt::format("{:<{}}\"{}\"", "", max_dependency_entry_name_length - std::string_view{ "fast_float_version" }.size(), fast_float_version),
+        fmt::format("{:<{}}\"{}\"", "", max_dependency_entry_name_length - std::string_view{ "igor_version" }.size(), igor_version),
+        fmt::format("{:<{}}\"{}\"", "", max_dependency_entry_name_length - std::string_view{ "boost_version" }.size(), boost_version),
+        fmt::format("{:<{}}\"{}\"", "", max_dependency_entry_name_length - std::string_view{ "oneDPL_version" }.size(), oneDPL_version),
+        fmt::format("{:<{}}\"{}\"", "", max_dependency_entry_name_length - std::string_view{ "tbb_version" }.size(), tbb_version),
+        fmt::format("{:<{}}\"{}\"", "", max_dependency_entry_name_length - std::string_view{ "hws_version" }.size(), hws_version));
 
     //*************************************************************************************************************************************//
     //                                                          events, if present                                                         //
@@ -448,9 +506,17 @@ void performance_tracker::save(std::ostream &out) {
     }
 }
 
-void performance_tracker::pause_tracking() noexcept { is_tracking_ = false; }
+void performance_tracker::pause_tracking() noexcept {
+    const std::scoped_lock guard{ mutex_ };
 
-void performance_tracker::resume_tracking() noexcept { is_tracking_ = true; }
+    is_tracking_ = false;
+}
+
+void performance_tracker::resume_tracking() noexcept {
+    const std::scoped_lock guard{ mutex_ };
+
+    is_tracking_ = true;
+}
 
 bool performance_tracker::is_tracking() const noexcept { return is_tracking_; }
 
@@ -458,7 +524,11 @@ const std::map<std::string, std::map<std::string, std::vector<std::string>>> &pe
 
 const events &performance_tracker::get_events() const noexcept { return events_; }
 
-void performance_tracker::clear_tracking_entries() noexcept { tracking_entries_.clear(); }
+void performance_tracker::clear_tracking_entries() noexcept {
+    const std::scoped_lock guard{ mutex_ };
+
+    tracking_entries_.clear();
+}
 
 performance_tracker &global_performance_tracker() {
     static performance_tracker tracker;
@@ -467,4 +537,4 @@ performance_tracker &global_performance_tracker() {
 
 }  // namespace plssvm::detail::tracking
 
-#undef PLSSVM_UNISTD_AVAILABLE
+#undef PLSSVM_HAS_POSIX_INCLUDES

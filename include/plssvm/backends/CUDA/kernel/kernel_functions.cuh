@@ -9,8 +9,8 @@
  * @brief Implement the different kernel functions on the GPU using CUDA.
  */
 
-#ifndef PLSSVM_BACKENDS_CUDA_KERNEL_KERNEL_FUNCTIONS_HPP_
-#define PLSSVM_BACKENDS_CUDA_KERNEL_KERNEL_FUNCTIONS_HPP_
+#ifndef PLSSVM_BACKENDS_CUDA_KERNEL_KERNEL_FUNCTIONS_CUH_
+#define PLSSVM_BACKENDS_CUDA_KERNEL_KERNEL_FUNCTIONS_CUH_
 #pragma once
 
 #include "plssvm/constants.hpp"              // plssvm::real_type
@@ -51,42 +51,17 @@ template <>
 
 /**
  * @brief Fast integer power function. Computes base^exponent and takes advantage of the fact that degree may only be positive integer values.
- * @details Hardcodes the power function for degree <= 6, uses a simple for loop otherwise.
  * @param[in] base the base
  * @param[in] exponent the exponent
  * @return base^exponent (`[[nodiscard]]`)
  */
 [[nodiscard]] __device__ __forceinline__ real_type powi(const real_type base, const int exponent) {
-    switch (exponent) {
-        case 0: return real_type{ 1.0 };
-        case 1: return base;
-        case 2: return base * base;
-        case 3: return base * base * base;
-        case 4:
-            {
-                const real_type temp = base * base;
-                return temp * temp;
-            }
-        case 5:
-            {
-                const real_type temp = base * base;
-                return temp * temp * base;
-            }
-        case 6:
-            {
-                const real_type temp = base * base * base;
-                return temp * temp;
-            }
-        default:
-            {
-                // generic integer power function
-                real_type result{ 1.0 };
-                for (int i = 0; i < exponent; ++i) {
-                    result *= base;
-                }
-                return result;
-            }
+    // generic integer power function
+    real_type result{ 1.0 };
+    for (int i = 0; i < exponent; ++i) {
+        result *= base;
     }
+    return result;
 }
 
 //***************************************************//
@@ -221,4 +196,4 @@ template <>
 
 }  // namespace plssvm::cuda::detail
 
-#endif  // PLSSVM_BACKENDS_CUDA_KERNEL_KERNEL_FUNCTIONS_HPP_
+#endif  // PLSSVM_BACKENDS_CUDA_KERNEL_KERNEL_FUNCTIONS_CUH_

@@ -11,17 +11,19 @@
 #include "plssvm/constants.hpp"  // plssvm::real_type
 #include "plssvm/matrix.hpp"     // plssvm::aos_matrix
 
-#include "bindings/Python/type_caster/matrix_type_caster.hpp"  // a custom Pybind11 type caster for a plssvm::matrix
+#include "bindings/Python/bindings_fwd.hpp"                    // forward declare all helper functions to create the Python bindings
+#include "bindings/Python/type_caster/matrix_type_caster.hpp"  // NOLINT: a custom Pybind11 type caster for a plssvm::matrix
 #include "bindings/Python/utility.hpp"                         // plssvm::bindings::python::util::register_implicit_str_enum_conversion
 
+#include "pybind11/cast.h"      // py::arg
 #include "pybind11/pybind11.h"  // py::module_, py::enum_
-#include "pybind11/stl.h"       // support for STL types: std::variant
+#include "pybind11/stl.h"       // NOLINT: support for STL types: std::variant
 
 namespace py = pybind11;
 
 void init_gamma(py::module_ &m) {
     // bind enum class
-    py::enum_<plssvm::gamma_coefficient_type> py_enum(m, "GammaCoefficientType", "Enum class for all possible gamma coefficient types (can also be a number).");
+    py::enum_<plssvm::gamma_coefficient_type> py_enum(m, "GammaCoefficientType", "enum.Enum", "Enum class for all possible gamma coefficient types (can also be a number).");
     py_enum
         .value("AUTOMATIC", plssvm::gamma_coefficient_type::automatic, "use a dynamic gamma value of 1 / num_features for the kernel functions")
         .value("SCALE", plssvm::gamma_coefficient_type::scale, "use a dynamic gamma value of 1 / (num_features * data.var()) for the kernel functions");

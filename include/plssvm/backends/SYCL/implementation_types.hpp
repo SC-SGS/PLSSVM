@@ -9,8 +9,8 @@
  * @brief Defines an enumeration holding all possible SYCL implementations.
  */
 
-#ifndef PLSSVM_BACKENDS_SYCL_IMPLEMENTATION_TYPE_HPP_
-#define PLSSVM_BACKENDS_SYCL_IMPLEMENTATION_TYPE_HPP_
+#ifndef PLSSVM_BACKENDS_SYCL_IMPLEMENTATION_TYPES_HPP_
+#define PLSSVM_BACKENDS_SYCL_IMPLEMENTATION_TYPES_HPP_
 #pragma once
 
 #include "fmt/base.h"     // fmt::formatter
@@ -65,4 +65,4 @@ struct fmt::formatter<plssvm::sycl::implementation_type> : fmt::ostream_formatte
 
 /// @endcond
 
-#endif  // PLSSVM_BACKENDS_SYCL_IMPLEMENTATION_TYPE_HPP_
+#endif  // PLSSVM_BACKENDS_SYCL_IMPLEMENTATION_TYPES_HPP_

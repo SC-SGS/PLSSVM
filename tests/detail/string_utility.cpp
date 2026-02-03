@@ -20,40 +20,40 @@
 #include <tuple>        // std::tuple, std::make_tuple
 #include <vector>       // std::vector
 
-TEST(StringUtility, starts_with_string) {
+TEST(StringUtility, StartsWithString) {
     EXPECT_TRUE(plssvm::detail::starts_with("abc", "abc"));
     EXPECT_TRUE(plssvm::detail::starts_with("abc", "ab"));
     EXPECT_FALSE(plssvm::detail::starts_with("abc", "abcd"));
     EXPECT_FALSE(plssvm::detail::starts_with("abc", "bc"));
 }
 
-TEST(StringUtility, starts_with_char) {
+TEST(StringUtility, StartsWithChar) {
     EXPECT_TRUE(plssvm::detail::starts_with("abc", 'a'));
     EXPECT_FALSE(plssvm::detail::starts_with("abc", 'c'));
     EXPECT_FALSE(plssvm::detail::starts_with("abc", 'd'));
 }
 
-TEST(StringUtility, ends_with_string) {
+TEST(StringUtility, EndsWithString) {
     EXPECT_TRUE(plssvm::detail::ends_with("abc", "abc"));
     EXPECT_FALSE(plssvm::detail::ends_with("abc", "ab"));
     EXPECT_FALSE(plssvm::detail::ends_with("abc", "abcd"));
     EXPECT_TRUE(plssvm::detail::ends_with("abc", "bc"));
 }
 
-TEST(StringUtility, ends_with_char) {
+TEST(StringUtility, EndsWithChar) {
     EXPECT_FALSE(plssvm::detail::ends_with("abc", 'a'));
     EXPECT_TRUE(plssvm::detail::ends_with("abc", 'c'));
     EXPECT_FALSE(plssvm::detail::ends_with("abc", 'd'));
 }
 
-TEST(StringUtility, contains_string) {
+TEST(StringUtility, ContainsString) {
     EXPECT_TRUE(plssvm::detail::contains("abc", "abc"));
     EXPECT_TRUE(plssvm::detail::contains("abc", "ab"));
     EXPECT_FALSE(plssvm::detail::contains("abc", "abcd"));
     EXPECT_TRUE(plssvm::detail::contains("abc", "bc"));
 }
 
-TEST(StringUtility, contains_char) {
+TEST(StringUtility, ContainsChar) {
     EXPECT_TRUE(plssvm::detail::contains("abc", 'a'));
     EXPECT_TRUE(plssvm::detail::contains("abc", 'c'));
     EXPECT_FALSE(plssvm::detail::contains("abc", 'd'));
@@ -64,7 +64,7 @@ class StringUtilityBase : public ::testing::TestWithParam<std::tuple<std::string
 // test trim left only
 class StringUtilityTrimLeft : public StringUtilityBase { };
 
-TEST_P(StringUtilityTrimLeft, trim_left) {
+TEST_P(StringUtilityTrimLeft, TrimLeft) {
     auto [input, output] = GetParam();
     EXPECT_EQ(plssvm::detail::trim_left(input), output);
 }
@@ -81,7 +81,7 @@ INSTANTIATE_TEST_SUITE_P(StringUtility, StringUtilityTrimLeft, ::testing::Values
 // test trim right only
 class StringUtilityTrimRight : public StringUtilityBase { };
 
-TEST_P(StringUtilityTrimRight, trim_right) {
+TEST_P(StringUtilityTrimRight, TrimRight) {
     auto [input, output] = GetParam();
     EXPECT_EQ(plssvm::detail::trim_right(input), output);
 }
@@ -98,7 +98,7 @@ INSTANTIATE_TEST_SUITE_P(StringUtility, StringUtilityTrimRight, ::testing::Value
 // test trim
 class StringUtilityTrim : public StringUtilityBase { };
 
-TEST_P(StringUtilityTrim, trim) {
+TEST_P(StringUtilityTrim, Trim) {
     auto [input, output] = GetParam();
     EXPECT_EQ(plssvm::detail::trim(input), output);
 }
@@ -115,12 +115,12 @@ INSTANTIATE_TEST_SUITE_P(StringUtility, StringUtilityTrim, ::testing::Values(
 // test conversion to lower case
 class StringUtilityConvertLowerCase : public StringUtilityBase { };
 
-TEST_P(StringUtilityConvertLowerCase, to_lower_case) {
+TEST_P(StringUtilityConvertLowerCase, ToLowerCase) {
     auto [input, output] = GetParam();
     EXPECT_EQ(plssvm::detail::to_lower_case(input), output);
 }
 
-TEST_P(StringUtilityConvertLowerCase, as_lower_case) {
+TEST_P(StringUtilityConvertLowerCase, AsLowerCase) {
     auto [input, output] = GetParam();
     EXPECT_EQ(plssvm::detail::as_lower_case(input), output);
 }
@@ -135,12 +135,12 @@ INSTANTIATE_TEST_SUITE_P(StringUtility, StringUtilityConvertLowerCase, ::testing
 // test conversion to upper case
 class StringUtilityConvertUpperCase : public StringUtilityBase { };
 
-TEST_P(StringUtilityConvertUpperCase, to_upper_case) {
+TEST_P(StringUtilityConvertUpperCase, ToUpperCase) {
     auto [input, output] = GetParam();
     EXPECT_EQ(plssvm::detail::to_upper_case(input), output);
 }
 
-TEST_P(StringUtilityConvertUpperCase, as_upper_case) {
+TEST_P(StringUtilityConvertUpperCase, AsUpperCase) {
     auto [input, output] = GetParam();
     EXPECT_EQ(plssvm::detail::as_upper_case(input), output);
 }
@@ -155,7 +155,7 @@ INSTANTIATE_TEST_SUITE_P(StringUtility, StringUtilityConvertUpperCase, ::testing
 // test replace_all
 class StringUtilityReplace : public ::testing::TestWithParam<std::tuple<std::string, std::string_view, std::string_view, std::string_view>> { };
 
-TEST_P(StringUtilityReplace, replace_all) {
+TEST_P(StringUtilityReplace, ReplaceAll) {
     auto [input, what, with, output] = GetParam();
     EXPECT_EQ(plssvm::detail::replace_all(input, what, with), output);
 }
@@ -169,7 +169,7 @@ INSTANTIATE_TEST_SUITE_P(StringUtility, StringUtilityReplace, ::testing::Values(
                 naming::pretty_print_replace<StringUtilityReplace>);
 // clang-format on
 
-TEST(StringUtility, split_default_delimiter) {
+TEST(StringUtility, SplitDefaultDelimiter) {
     // split string using the default delimiter
     const std::string string_to_split = "1.5 2.0 -3.5 4.0 5.0 -6.0  7.5";
 
@@ -181,7 +181,7 @@ TEST(StringUtility, split_default_delimiter) {
     }
 }
 
-TEST(StringUtility, split_custom_delimiter) {
+TEST(StringUtility, SplitCustomDelimiter) {
     // split string using a custom delimiter
     const std::string string_to_split = "1.5,2.0,-3.5,4.0,5.0,-6.0,,7.5";
 
@@ -193,14 +193,14 @@ TEST(StringUtility, split_custom_delimiter) {
     }
 }
 
-TEST(StringUtility, split_single_value) {
+TEST(StringUtility, SplitSingleValue) {
     // split string containing a single value
     const std::vector<std::string_view> split = plssvm::detail::split("42");
     ASSERT_EQ(split.size(), 1);
     EXPECT_EQ(split.front(), "42") << fmt::format("split: {}, correct: 42", split.front());
 }
 
-TEST(StringUtility, split_empty_string) {
+TEST(StringUtility, SplitEmptyString) {
     // split the empty string
     const std::vector<std::string_view> split = plssvm::detail::split("");
     EXPECT_TRUE(split.empty());

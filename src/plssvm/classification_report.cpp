@@ -54,7 +54,7 @@ double sanitize_nan(const double dividend, const double divisor, const classific
 
 std::ostream &operator<<(std::ostream &out, const classification_report &report) {
     // calculate the maximum size of the label for better table alignment
-    std::size_t max_label_string_size = 12;  // weighted avg = 12 characters
+    std::size_t max_label_string_size = std::string_view{ "weighted avg" }.size();
     for (const auto &[key, val] : report.metrics_) {
         max_label_string_size = std::max(max_label_string_size, key.size());
     }
@@ -132,7 +132,7 @@ std::ostream &operator<<(std::ostream &out, const classification_report::metric 
 }
 
 std::ostream &operator<<(std::ostream &out, const classification_report::accuracy_metric &accuracy) {
-    return out << fmt::format("Accuracy = {:.2f}% ({}/{})", accuracy.achieved_accuracy * 100, accuracy.num_correct, accuracy.num_total);
+    return out << fmt::format("Accuracy = {:.2f}% ({}/{})", accuracy.achieved_accuracy * 100.0, accuracy.num_correct, accuracy.num_total);  // NOLINT: convert float to percent by multiplying it with 100
 }
 
 std::ostream &operator<<(std::ostream &out, const classification_report::zero_division_behavior zero_div) {

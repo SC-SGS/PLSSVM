@@ -9,18 +9,19 @@
 
 #include "plssvm/backend_types.hpp"  // plssvm::backend_type, plssvm::list_available_backends, plssvm::determine_default_backend
 
-#include "bindings/Python/utility.hpp"  // plssvm::bindings::python::util::register_implicit_str_enum_conversion
+#include "plssvm/target_platforms.hpp"  // plssvm::list_available_target_platforms
+
+#include "bindings/Python/bindings_fwd.hpp"  // forward declare all helper functions to create the Python bindings
+#include "bindings/Python/utility.hpp"       // plssvm::bindings::python::util::register_implicit_str_enum_conversion
 
 #include "pybind11/pybind11.h"  // py::module_, py::enum_
-#include "pybind11/stl.h"       // support for STL types: std::vector
-
-#include <vector>  // std::vector
+#include "pybind11/stl.h"       // NOLINT: support for STL types: std::vector
 
 namespace py = pybind11;
 
 void init_backend_types(py::module_ &m) {
     // bind enum class
-    py::enum_<plssvm::backend_type> py_enum(m, "BackendType", "Enum class for all possible backend types, all different SYCL implementations have the same backend type \"sycl\".");
+    py::enum_<plssvm::backend_type> py_enum(m, "BackendType", "enum.Enum", "Enum class for all possible backend types, all different SYCL implementations have the same backend type \"sycl\".");
     py_enum
         .value("AUTOMATIC", plssvm::backend_type::automatic, "the default backend; depends on the specified target platform")
         .value("OPENMP", plssvm::backend_type::openmp, "OpenMP to target CPUs only (currently no OpenMP target offloading support)")

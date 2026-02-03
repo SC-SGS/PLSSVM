@@ -13,9 +13,12 @@
 #define PLSSVM_TESTS_BACKENDS_GENERIC_GPU_CSVM_TESTS_HPP_
 #pragma once
 
+#include "plssvm/backends/Kokkos/execution_spaces.hpp"  // plssvm::kokkos::execution_space
 #include "plssvm/constants.hpp"                         // plssvm::real_type, plssvm::PADDING_SIZE
 #include "plssvm/data_set/classification_data_set.hpp"  // plssvm::classification_data_set
 #include "plssvm/detail/data_distribution.hpp"          // plssvm::detail::{triangular_data_distribution, rectangular_data_distribution}
+#include "plssvm/detail/memory_size.hpp"                // plssvm::detail::memory_size
+#include "plssvm/detail/operators.hpp"                  // operator overloads for std::vector(+scalars)
 #include "plssvm/kernel_function_types.hpp"             // plssvm::kernel_function_type
 #include "plssvm/matrix.hpp"                            // plssvm::aos_matrix
 #include "plssvm/mpi/communicator.hpp"                  // plssvm::mpi::communicator
@@ -31,10 +34,11 @@
 #include "fmt/format.h"   // fmt::format
 #include "gtest/gtest.h"  // TYPED_TEST_SUITE_P, TYPED_TEST_P, REGISTER_TYPED_TEST_SUITE_P, EXPECT_GT, EXPECT_GE, ASSERT_EQ, ::testing::Test
 
-#include <cstddef>  // std::size_t
-#include <memory>   // std::unique_ptr, std::make_unique
-#include <tuple>    // std::ignore
-#include <vector>   // std::vector
+#include <cstddef>   // std::size_t
+#include <memory>    // std::unique_ptr, std::make_unique
+#include <optional>  // std::optional, std::nullopt
+#include <tuple>     // std::ignore
+#include <vector>    // std::vector
 
 //*************************************************************************************************************************************//
 //                                                GPU C-SVM tests depending on nothing                                                 //
@@ -46,12 +50,48 @@ class GenericGPUCSVM : public ::testing::Test,
 
 TYPED_TEST_SUITE_P(GenericGPUCSVM);
 
-TYPED_TEST_P(GenericGPUCSVM, get_max_work_group_size) {
+TYPED_TEST_P(GenericGPUCSVM, GetLocalMemory) {
+    using csvm_test_type = util::test_parameter_type_at_t<0, TypeParam>;
+    using mock_csvm_type = typename csvm_test_type::mock_csvm_type;
+    using csvm_type = typename csvm_test_type::csvm_type;
+
+    // create C-SVM: must be done using the mock class since the member function to test is private or protected
+    const auto svm = util::construct_from_tuple<mock_csvm_type>(csvm_test_type::additional_arguments);
+
+    // for GPU C-SVMs, the local memory size must NOT be nullopt, except for Kokkos with CPU-only execution spaces
+    const std::vector<std::optional<plssvm::detail::memory_size>> local_mem = svm.get_local_memory();
+    for (const std::optional<plssvm::detail::memory_size> &val : local_mem) {
+        if constexpr (plssvm::csvm_to_backend_type_v<csvm_type> == plssvm::backend_type::kokkos) {
+            switch (svm.get_execution_space()) {
+                case plssvm::kokkos::execution_space::cuda:
+                case plssvm::kokkos::execution_space::hip:
+                case plssvm::kokkos::execution_space::sycl:
+                    EXPECT_NE(val, std::nullopt);
+                    break;
+                case plssvm::kokkos::execution_space::hpx:
+                case plssvm::kokkos::execution_space::openmp:
+                case plssvm::kokkos::execution_space::threads:
+                case plssvm::kokkos::execution_space::serial:
+                    EXPECT_EQ(val, std::nullopt);
+                    break;
+                case plssvm::kokkos::execution_space::openmp_target:
+                case plssvm::kokkos::execution_space::openacc:
+                case plssvm::kokkos::execution_space::automatic:
+                    // should currently be unreachable!
+                    break;
+            }
+        } else {
+            EXPECT_NE(val, std::nullopt);
+        }
+    }
+}
+
+TYPED_TEST_P(GenericGPUCSVM, GetMaxWorkGroupSize) {
     using csvm_test_type = util::test_parameter_type_at_t<0, TypeParam>;
     using mock_csvm_type = typename csvm_test_type::mock_csvm_type;
 
     // create C-SVM: must be done using the mock class since the member function to test is private or protected
-    const mock_csvm_type svm = util::construct_from_tuple<mock_csvm_type>(csvm_test_type::additional_arguments);
+    const auto svm = util::construct_from_tuple<mock_csvm_type>(csvm_test_type::additional_arguments);
 
     // the maximum allowed work-group size should be greater than 0!
     for (std::size_t device_id = 0; device_id < svm.num_available_devices(); ++device_id) {
@@ -59,12 +99,12 @@ TYPED_TEST_P(GenericGPUCSVM, get_max_work_group_size) {
     }
 }
 
-TYPED_TEST_P(GenericGPUCSVM, get_max_grid_size) {
+TYPED_TEST_P(GenericGPUCSVM, GetMaxGridSize) {
     using csvm_test_type = util::test_parameter_type_at_t<0, TypeParam>;
     using mock_csvm_type = typename csvm_test_type::mock_csvm_type;
 
     // create C-SVM: must be done using the mock class since the member function to test is private or protected
-    const mock_csvm_type svm = util::construct_from_tuple<mock_csvm_type>(csvm_test_type::additional_arguments);
+    const auto svm = util::construct_from_tuple<mock_csvm_type>(csvm_test_type::additional_arguments);
 
     // the maximum allowed work-group size should be greater than 0!
     for (std::size_t device_id = 0; device_id < svm.num_available_devices(); ++device_id) {
@@ -75,7 +115,7 @@ TYPED_TEST_P(GenericGPUCSVM, get_max_grid_size) {
     }
 }
 
-TYPED_TEST_P(GenericGPUCSVM, run_blas_level_3_kernel_explicit) {
+TYPED_TEST_P(GenericGPUCSVM, RunBlasLevel3KernelExplicit) {
     using csvm_test_type = util::test_parameter_type_at_t<0, TypeParam>;
     using mock_csvm_type = typename csvm_test_type::mock_csvm_type;
     using device_ptr_type = typename csvm_test_type::device_ptr_type;
@@ -84,7 +124,7 @@ TYPED_TEST_P(GenericGPUCSVM, run_blas_level_3_kernel_explicit) {
     const plssvm::classification_data_set data{ PLSSVM_CLASSIFICATION_TEST_FILE };
 
     // create C-SVM: must be done using the mock class since the member function to test is private or protected
-    const mock_csvm_type svm = util::construct_from_tuple<mock_csvm_type>(csvm_test_type::additional_arguments);
+    const auto svm = util::construct_from_tuple<mock_csvm_type>(csvm_test_type::additional_arguments);
     const std::size_t num_devices = svm.num_available_devices();
     // be sure to use the correct data distribution
     svm.data_distribution_ = std::make_unique<plssvm::detail::triangular_data_distribution>(plssvm::mpi::communicator{}, data.num_data_points() - 1, num_devices);
@@ -161,7 +201,7 @@ TYPED_TEST_P(GenericGPUCSVM, run_blas_level_3_kernel_explicit) {
     }
 }
 
-TYPED_TEST_P(GenericGPUCSVM, run_w_kernel) {
+TYPED_TEST_P(GenericGPUCSVM, RunWKernel) {
     using csvm_test_type = util::test_parameter_type_at_t<0, TypeParam>;
     using mock_csvm_type = typename csvm_test_type::mock_csvm_type;
     using device_ptr_type = typename csvm_test_type::device_ptr_type;
@@ -174,7 +214,7 @@ TYPED_TEST_P(GenericGPUCSVM, run_w_kernel) {
     const auto weights = util::generate_specific_matrix<plssvm::aos_matrix<plssvm::real_type>>(plssvm::shape{ 3, data.num_data_points() }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE });
 
     // create C-SVM: must be done using the mock class since the member function to test is private or protected
-    const mock_csvm_type svm = util::construct_from_tuple<mock_csvm_type>(csvm_test_type::additional_arguments);
+    const auto svm = util::construct_from_tuple<mock_csvm_type>(csvm_test_type::additional_arguments);
     const std::size_t num_devices = svm.num_available_devices();
     // be sure to use the correct data distribution
     svm.data_distribution_ = std::make_unique<plssvm::detail::rectangular_data_distribution>(plssvm::mpi::communicator{}, data.num_data_points(), num_devices);
@@ -228,8 +268,8 @@ TYPED_TEST_P(GenericGPUCSVM, run_w_kernel) {
     }
 }
 
-TYPED_TEST_P(GenericGPUCSVM, run_inplace_matrix_addition) {
-    using namespace plssvm::operators;
+TYPED_TEST_P(GenericGPUCSVM, RunInplaceMatrixAddition) {
+    using namespace plssvm::operators;  // NOLINT(google-build-using-namespace): only imports custom math operations on vectors (and scalars)
     using csvm_test_type = util::test_parameter_type_at_t<0, TypeParam>;
     using mock_csvm_type = typename csvm_test_type::mock_csvm_type;
     using device_ptr_type = typename csvm_test_type::device_ptr_type;
@@ -238,7 +278,7 @@ TYPED_TEST_P(GenericGPUCSVM, run_inplace_matrix_addition) {
     const plssvm::soa_matrix<plssvm::real_type> &matr = data.data();
 
     // create C-SVM: must be done using the mock class since the member function to test is private or protected
-    const mock_csvm_type svm = util::construct_from_tuple<mock_csvm_type>(csvm_test_type::additional_arguments);
+    const auto svm = util::construct_from_tuple<mock_csvm_type>(csvm_test_type::additional_arguments);
     const std::size_t num_devices = svm.num_available_devices();
 
     // calculate correct output
@@ -281,8 +321,8 @@ TYPED_TEST_P(GenericGPUCSVM, run_inplace_matrix_addition) {
     }
 }
 
-TYPED_TEST_P(GenericGPUCSVM, run_inplace_matrix_scale) {
-    using namespace plssvm::operators;
+TYPED_TEST_P(GenericGPUCSVM, RunInplaceMatrixScale) {
+    using namespace plssvm::operators;  // NOLINT(google-build-using-namespace): only imports custom math operations on vectors (and scalars)
     using csvm_test_type = util::test_parameter_type_at_t<0, TypeParam>;
     using mock_csvm_type = typename csvm_test_type::mock_csvm_type;
     using device_ptr_type = typename csvm_test_type::device_ptr_type;
@@ -292,7 +332,7 @@ TYPED_TEST_P(GenericGPUCSVM, run_inplace_matrix_scale) {
     const plssvm::real_type scaling_factor = 3.1415;
 
     // create C-SVM: must be done using the mock class since the member function to test is private or protected
-    const mock_csvm_type svm = util::construct_from_tuple<mock_csvm_type>(csvm_test_type::additional_arguments);
+    const auto svm = util::construct_from_tuple<mock_csvm_type>(csvm_test_type::additional_arguments);
     const std::size_t num_devices = svm.num_available_devices();
 
     // calculate correct output
@@ -334,12 +374,13 @@ TYPED_TEST_P(GenericGPUCSVM, run_inplace_matrix_scale) {
 }
 
 REGISTER_TYPED_TEST_SUITE_P(GenericGPUCSVM,
-                            get_max_work_group_size,
-                            get_max_grid_size,
-                            run_blas_level_3_kernel_explicit,
-                            run_w_kernel,
-                            run_inplace_matrix_addition,
-                            run_inplace_matrix_scale);
+                            GetLocalMemory,
+                            GetMaxWorkGroupSize,
+                            GetMaxGridSize,
+                            RunBlasLevel3KernelExplicit,
+                            RunWKernel,
+                            RunInplaceMatrixAddition,
+                            RunInplaceMatrixScale);
 
 //*************************************************************************************************************************************//
 //                                        GPU C-SVM tests depending on the kernel function type                                        //
@@ -350,25 +391,25 @@ class GenericGPUCSVMKernelFunction : public GenericGPUCSVM<T> { };
 
 TYPED_TEST_SUITE_P(GenericGPUCSVMKernelFunction);
 
-TYPED_TEST_P(GenericGPUCSVMKernelFunction, run_assemble_kernel_matrix_explicit) {
+TYPED_TEST_P(GenericGPUCSVMKernelFunction, RunAssembleKernelMatrixExplicit) {
     using csvm_test_type = util::test_parameter_type_at_t<0, TypeParam>;
     using mock_csvm_type = typename csvm_test_type::mock_csvm_type;
     using device_ptr_type = typename csvm_test_type::device_ptr_type;
     constexpr plssvm::kernel_function_type kernel = util::test_parameter_value_at_v<0, TypeParam>;
 
-    plssvm::parameter params{ plssvm::kernel_type = kernel };
+    plssvm::parameter params{ plssvm::kernel_type = kernel };  // NOLINT(misc-const-correctness): can't be const for the chi-squared kernel
     if constexpr (kernel != plssvm::kernel_function_type::linear) {
         params.gamma = plssvm::real_type{ 0.001 };
     }
     const plssvm::classification_data_set data{ PLSSVM_CLASSIFICATION_TEST_FILE };
-    auto data_matr{ data.data() };
+    auto data_matr{ data.data() };  // NOLINT: can't be const for the chi-squared kernel
     if constexpr (kernel == plssvm::kernel_function_type::chi_squared) {
         // chi-squared is well-defined for non-negative values only
         data_matr = util::matrix_abs(data_matr);
     }
 
     // create C-SVM: must be done using the mock class since the member function to test is private or protected
-    const mock_csvm_type svm = util::construct_from_tuple<mock_csvm_type>(params, csvm_test_type::additional_arguments);
+    const auto svm = util::construct_from_tuple<mock_csvm_type>(params, csvm_test_type::additional_arguments);
     const std::size_t num_devices = svm.num_available_devices();
     // be sure to use the correct data distribution
     svm.data_distribution_ = std::make_unique<plssvm::detail::triangular_data_distribution>(plssvm::mpi::communicator{}, data.num_data_points() - 1, num_devices);
@@ -425,25 +466,25 @@ TYPED_TEST_P(GenericGPUCSVMKernelFunction, run_assemble_kernel_matrix_explicit) 
     }
 }
 
-TYPED_TEST_P(GenericGPUCSVMKernelFunction, run_assemble_kernel_matrix_implicit_blas_level_3) {
+TYPED_TEST_P(GenericGPUCSVMKernelFunction, RunAssembleKernelMatrixImplicitBlasLevel3) {
     using csvm_test_type = util::test_parameter_type_at_t<0, TypeParam>;
     using mock_csvm_type = typename csvm_test_type::mock_csvm_type;
     using device_ptr_type = typename csvm_test_type::device_ptr_type;
     constexpr plssvm::kernel_function_type kernel = util::test_parameter_value_at_v<0, TypeParam>;
 
-    plssvm::parameter params{ plssvm::kernel_type = kernel };
+    plssvm::parameter params{ plssvm::kernel_type = kernel };  // NOLINT(misc-const-correctness): can't be const for the chi-squared kernel
     if constexpr (kernel != plssvm::kernel_function_type::linear) {
         params.gamma = plssvm::real_type{ 0.001 };
     }
     const plssvm::classification_data_set data{ PLSSVM_CLASSIFICATION_TEST_FILE };
-    auto data_matr{ data.data() };
+    auto data_matr{ data.data() };  // NOLINT: can't be const for the chi-squared kernel
     if constexpr (kernel == plssvm::kernel_function_type::chi_squared) {
         // chi-squared is well-defined for non-negative values only
         data_matr = util::matrix_abs(data_matr);
     }
 
     // create C-SVM: must be done using the mock class since the member function to test is private or protected
-    const mock_csvm_type svm = util::construct_from_tuple<mock_csvm_type>(params, csvm_test_type::additional_arguments);
+    const auto svm = util::construct_from_tuple<mock_csvm_type>(params, csvm_test_type::additional_arguments);
     const std::size_t num_devices = svm.num_available_devices();
     // be sure to use the correct data distribution
     svm.data_distribution_ = std::make_unique<plssvm::detail::triangular_data_distribution>(plssvm::mpi::communicator{}, data.num_data_points() - 1, num_devices);
@@ -513,19 +554,19 @@ TYPED_TEST_P(GenericGPUCSVMKernelFunction, run_assemble_kernel_matrix_implicit_b
     }
 }
 
-TYPED_TEST_P(GenericGPUCSVMKernelFunction, run_predict_kernel) {
+TYPED_TEST_P(GenericGPUCSVMKernelFunction, RunPredictKernel) {
     using csvm_test_type = util::test_parameter_type_at_t<0, TypeParam>;
     using mock_csvm_type = typename csvm_test_type::mock_csvm_type;
     using device_ptr_type = typename csvm_test_type::device_ptr_type;
     constexpr plssvm::kernel_function_type kernel = util::test_parameter_value_at_v<0, TypeParam>;
 
-    plssvm::parameter params{ plssvm::kernel_type = kernel };
+    plssvm::parameter params{ plssvm::kernel_type = kernel };  // NOLINT(misc-const-correctness): can't be const for the chi-squared kernel
     if constexpr (kernel != plssvm::kernel_function_type::linear) {
         params.gamma = plssvm::real_type{ 1.0 };
     }
 
     const plssvm::classification_data_set data{ PLSSVM_CLASSIFICATION_TEST_FILE };
-    auto data_matr{ data.data() };
+    auto data_matr{ data.data() };  // NOLINT: can't be const for the chi-squared kernel
     if constexpr (kernel == plssvm::kernel_function_type::chi_squared) {
         // chi-squared is well-defined for non-negative values only
         data_matr = util::matrix_abs(data_matr);
@@ -537,7 +578,7 @@ TYPED_TEST_P(GenericGPUCSVMKernelFunction, run_predict_kernel) {
     const plssvm::soa_matrix<plssvm::real_type> correct_w = ground_truth::calculate_w(weights, data_matr);
 
     // create C-SVM: must be done using the mock class since the member function to test is private or protected
-    const mock_csvm_type svm = util::construct_from_tuple<mock_csvm_type>(params, csvm_test_type::additional_arguments);
+    const auto svm = util::construct_from_tuple<mock_csvm_type>(params, csvm_test_type::additional_arguments);
     const std::size_t num_devices = svm.num_available_devices();
     // be sure to use the correct data distribution
     svm.data_distribution_ = std::make_unique<plssvm::detail::rectangular_data_distribution>(plssvm::mpi::communicator{}, predict_points.num_rows(), num_devices);
@@ -606,33 +647,33 @@ TYPED_TEST_P(GenericGPUCSVMKernelFunction, run_predict_kernel) {
 }
 
 REGISTER_TYPED_TEST_SUITE_P(GenericGPUCSVMKernelFunction,
-                            run_assemble_kernel_matrix_explicit,
-                            run_assemble_kernel_matrix_implicit_blas_level_3,
-                            run_predict_kernel);
+                            RunAssembleKernelMatrixExplicit,
+                            RunAssembleKernelMatrixImplicitBlasLevel3,
+                            RunPredictKernel);
 
 template <typename T>
 class GenericGPUCSVMDeathTest : public GenericGPUCSVM<T> { };
 
 TYPED_TEST_SUITE_P(GenericGPUCSVMDeathTest);
 
-TYPED_TEST_P(GenericGPUCSVMDeathTest, get_max_work_group_size_out_of_range) {
+TYPED_TEST_P(GenericGPUCSVMDeathTest, GetMaxWorkGroupSizeOutOfRange) {
     using csvm_test_type = util::test_parameter_type_at_t<0, TypeParam>;
     using mock_csvm_type = typename csvm_test_type::mock_csvm_type;
 
     // create C-SVM: must be done using the mock class since the member function to test is private or protected
-    const mock_csvm_type svm = util::construct_from_tuple<mock_csvm_type>(csvm_test_type::additional_arguments);
+    const auto svm = util::construct_from_tuple<mock_csvm_type>(csvm_test_type::additional_arguments);
     const std::size_t num_devices = svm.num_available_devices();
 
     // try querying an invalid device_id
     EXPECT_DEATH(std::ignore = svm.get_max_work_group_size(num_devices), fmt::format("Invalid device {} requested!", num_devices));
 }
 
-TYPED_TEST_P(GenericGPUCSVMDeathTest, get_max_grid_size_out_of_range) {
+TYPED_TEST_P(GenericGPUCSVMDeathTest, GetMaxGridSizeOutOfRange) {
     using csvm_test_type = util::test_parameter_type_at_t<0, TypeParam>;
     using mock_csvm_type = typename csvm_test_type::mock_csvm_type;
 
     // create C-SVM: must be done using the mock class since the member function to test is private or protected
-    const mock_csvm_type svm = util::construct_from_tuple<mock_csvm_type>(csvm_test_type::additional_arguments);
+    const auto svm = util::construct_from_tuple<mock_csvm_type>(csvm_test_type::additional_arguments);
     const std::size_t num_devices = svm.num_available_devices();
 
     // try querying an invalid device_id
@@ -640,7 +681,7 @@ TYPED_TEST_P(GenericGPUCSVMDeathTest, get_max_grid_size_out_of_range) {
 }
 
 REGISTER_TYPED_TEST_SUITE_P(GenericGPUCSVMDeathTest,
-                            get_max_work_group_size_out_of_range,
-                            get_max_grid_size_out_of_range);
+                            GetMaxWorkGroupSizeOutOfRange,
+                            GetMaxGridSizeOutOfRange);
 
 #endif  // PLSSVM_TESTS_BACKENDS_GENERIC_GPU_CSVM_TESTS_HPP_

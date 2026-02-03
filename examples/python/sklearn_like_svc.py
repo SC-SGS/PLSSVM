@@ -40,7 +40,7 @@ sklearn.inspection.DecisionBoundaryDisplay.from_estimator(
 )
 
 # scatter plot the decision boundary
-viridis = plt.cm.get_cmap('viridis', len(np.unique(y)))
+viridis = plt.get_cmap('viridis', len(np.unique(y)))
 plt.scatter(X[:, 0], X[:, 1],
             cmap=viridis,
             c=y,

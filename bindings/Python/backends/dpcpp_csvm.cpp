@@ -6,21 +6,22 @@
  *          See the LICENSE.md file in the project root for full license information.
  */
 
-#include "plssvm/backend_types.hpp"                          // plssvm::dpcpp::backend_csvm_type_t
-#include "plssvm/backends/SYCL/DPCPP/csvm.hpp"               // plssvm::dpcpp::csvm
-#include "plssvm/backends/SYCL/exceptions.hpp"               // plssvm::dpcpp::backend_exception
-#include "plssvm/backends/SYCL/kernel_invocation_types.hpp"  // plssvm::sycl::kernel_invocation_type
-#include "plssvm/constants.hpp"                              // plssvm::real_type
-#include "plssvm/exceptions/exceptions.hpp"                  // plssvm::exception
-#include "plssvm/gamma.hpp"                                  // plssvm::gamma
-#include "plssvm/kernel_function_types.hpp"                  // plssvm::kernel_function_type
-#include "plssvm/mpi/communicator.hpp"                       // plssvm::mpi::communicator
-#include "plssvm/parameter.hpp"                              // plssvm::parameter
-#include "plssvm/svm/csvc.hpp"                               // plssvm::csvc
-#include "plssvm/svm/csvm.hpp"                               // plssvm::csvm
-#include "plssvm/svm/csvr.hpp"                               // plssvm::csvr
-#include "plssvm/target_platforms.hpp"                       // plssvm::target_platform
+#include "plssvm/backend_types.hpp"                        // plssvm::dpcpp::backend_csvm_type_t
+#include "plssvm/backends/SYCL/data_parallel_kernels.hpp"  // plssvm::sycl::data_parallel_kernel
+#include "plssvm/backends/SYCL/DPCPP/csvm.hpp"             // plssvm::dpcpp::csvm
+#include "plssvm/backends/SYCL/exceptions.hpp"             // plssvm::dpcpp::backend_exception
+#include "plssvm/constants.hpp"                            // plssvm::real_type
+#include "plssvm/exceptions/exceptions.hpp"                // plssvm::exception
+#include "plssvm/gamma.hpp"                                // plssvm::gamma
+#include "plssvm/kernel_function_types.hpp"                // plssvm::kernel_function_type
+#include "plssvm/mpi/communicator.hpp"                     // plssvm::mpi::communicator
+#include "plssvm/parameter.hpp"                            // plssvm::parameter
+#include "plssvm/svm/csvc.hpp"                             // plssvm::csvc
+#include "plssvm/svm/csvm.hpp"                             // plssvm::csvm
+#include "plssvm/svm/csvr.hpp"                             // plssvm::csvr
+#include "plssvm/target_platforms.hpp"                     // plssvm::target_platform
 
+#include "bindings/Python/bindings_fwd.hpp"                 // forward declare all helper functions to create the Python bindings
 #include "bindings/Python/type_caster/mpi_type_caster.hpp"  // a custom Pybind11 type caster for a plssvm::mpi::communicator
 #include "bindings/Python/utility.hpp"                      // plssvm::bindings::python::util::register_py_exception
 
@@ -49,18 +50,18 @@ void bind_dpcpp_csvms(py::module_ &m, const std::string &csvm_name) {
     const std::string keyword_args_constructor_docstring{ fmt::format("create a DPC++ SYCL {} with the provided SVM parameter as separate keyword arguments including optional SYCL specific keyword arguments", csvm_name) };
 
     py::class_<backend_csvm_type, plssvm::dpcpp::csvm, csvm_type>(m, csvm_name.c_str(), class_docstring.c_str())
-        .def(py::init([](const plssvm::target_platform target, const plssvm::parameter params, const plssvm::sycl::kernel_invocation_type invocation, plssvm::mpi::communicator comm) {
-                 return std::make_unique<backend_csvm_type>(std::move(comm), target, params, plssvm::sycl_kernel_invocation_type = invocation);
+        .def(py::init([](const plssvm::target_platform target, const plssvm::parameter params, const plssvm::sycl::data_parallel_kernel data_parallel_kernel_type, plssvm::mpi::communicator comm) {
+                 return std::make_unique<backend_csvm_type>(std::move(comm), target, params, plssvm::sycl_data_parallel_kernel = data_parallel_kernel_type);
              }),
              params_constructor_docstring.c_str(),
              py::arg("target") = plssvm::target_platform::automatic,
              py::kw_only(),
              py::arg("params") = default_params,
-             py::arg("sycl_kernel_invocation_type") = plssvm::sycl::kernel_invocation_type::automatic,
+             py::arg("sycl_data_parallel_kernel") = plssvm::sycl::data_parallel_kernel::automatic,
              py::arg("comm") = plssvm::mpi::communicator{})
-        .def(py::init([](const plssvm::target_platform target, const plssvm::kernel_function_type kernel_type, const int degree, const plssvm::gamma_type gamma, const plssvm::real_type coef0, const plssvm::real_type cost, const plssvm::sycl::kernel_invocation_type invocation, plssvm::mpi::communicator comm) {
+        .def(py::init([](const plssvm::target_platform target, const plssvm::kernel_function_type kernel_type, const int degree, const plssvm::gamma_type gamma, const plssvm::real_type coef0, const plssvm::real_type cost, const plssvm::sycl::data_parallel_kernel data_parallel_kernel_type, plssvm::mpi::communicator comm) {
                  const plssvm::parameter params{ kernel_type, degree, gamma, coef0, cost };
-                 return std::make_unique<backend_csvm_type>(std::move(comm), target, params, plssvm::sycl_kernel_invocation_type = invocation);
+                 return std::make_unique<backend_csvm_type>(std::move(comm), target, params, plssvm::sycl_data_parallel_kernel = data_parallel_kernel_type);
              }),
              keyword_args_constructor_docstring.c_str(),
              py::arg("target") = plssvm::target_platform::automatic,
@@ -70,11 +71,11 @@ void bind_dpcpp_csvms(py::module_ &m, const std::string &csvm_name) {
              py::arg("gamma") = default_params.gamma,
              py::arg("coef0") = default_params.coef0,
              py::arg("cost") = default_params.cost,
-             py::arg("sycl_kernel_invocation_type") = plssvm::sycl::kernel_invocation_type::automatic,
+             py::arg("sycl_data_parallel_kernel") = plssvm::sycl::data_parallel_kernel::automatic,
              py::arg("comm") = plssvm::mpi::communicator{})
-        .def("get_kernel_invocation_type", &plssvm::dpcpp::csvm::get_kernel_invocation_type, "get the kernel invocation type used in this SYCL C-SVM")
+        .def("get_data_parallel_kernel", &plssvm::dpcpp::csvm::get_data_parallel_kernel, "get the data parallel kernel used in this SYCL C-SVM")
         .def("__repr__", [csvm_name](const backend_csvm_type &self) {
-            return fmt::format("<plssvm.dpcpp.{} with {{ #devices: {}, kernel_invocation_type: {} }}>", csvm_name, self.num_available_devices(), self.get_kernel_invocation_type());
+            return fmt::format("<plssvm.dpcpp.{} with {{ #devices: {}, data_parallel_kernel: {} }}>", csvm_name, self.num_available_devices(), self.get_data_parallel_kernel());
         });
 }
 

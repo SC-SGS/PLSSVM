@@ -15,7 +15,7 @@
 
 #include "plssvm/backends/execution_range.hpp"               // plssvm::detail::dim_type
 #include "plssvm/backends/Kokkos/detail/device_wrapper.hpp"  // plssvm::kokkos::detail::device_wrapper
-#include "plssvm/backends/Kokkos/execution_space.hpp"        // plssvm::kokkos::execution_space
+#include "plssvm/backends/Kokkos/execution_spaces.hpp"       // plssvm::kokkos::execution_space
 #include "plssvm/detail/type_traits.hpp"                     // PLSSVM_REQUIRES
 #include "plssvm/target_platforms.hpp"                       // plssvm::target_platform
 

@@ -8,7 +8,8 @@
 
 #include "plssvm/file_format_types.hpp"  // plssvm::file_format_type
 
-#include "bindings/Python/utility.hpp"  // plssvm::bindings::python::util::register_implicit_str_enum_conversion
+#include "bindings/Python/bindings_fwd.hpp"  // forward declare all helper functions to create the Python bindings
+#include "bindings/Python/utility.hpp"       // plssvm::bindings::python::util::register_implicit_str_enum_conversion
 
 #include "pybind11/pybind11.h"  // py::module_, py::enum_
 
@@ -16,7 +17,7 @@ namespace py = pybind11;
 
 void init_file_format_types(py::module_ &m) {
     // bind enum class
-    py::enum_<plssvm::file_format_type> py_enum(m, "FileFormatType", "Enum class for all supported file types.");
+    py::enum_<plssvm::file_format_type> py_enum(m, "FileFormatType", "enum.Enum", "Enum class for all supported file types.");
     py_enum
         .value("LIBSVM", plssvm::file_format_type::libsvm, "the LIBSVM file format (default); for the file format specification see: https://www.csie.ntu.edu.tw/~cjlin/libsvm/faq.html")
         .value("ARFF", plssvm::file_format_type::arff, "the ARFF file format; for the file format specification see: https://www.cs.waikato.ac.nz/~ml/weka/arff.html");

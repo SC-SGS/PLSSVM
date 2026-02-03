@@ -18,7 +18,7 @@
 #include "plssvm/backends/SYCL/AdaptiveCpp/detail/device_ptr.hpp"     // plssvm::adaptivecpp::detail::device_ptr
 #include "plssvm/backends/SYCL/AdaptiveCpp/detail/pinned_memory.hpp"  // plssvm::adaptivecpp::detail::pinned_memory
 #include "plssvm/backends/SYCL/AdaptiveCpp/detail/queue.hpp"          // plssvm::adaptivecpp::detail::queue (PImpl)
-#include "plssvm/backends/SYCL/kernel_invocation_types.hpp"           // plssvm::sycl::kernel_invocation_type
+#include "plssvm/backends/SYCL/data_parallel_kernels.hpp"             // plssvm::sycl::data_parallel_kernel
 #include "plssvm/constants.hpp"                                       // plssvm::real_type
 #include "plssvm/detail/igor_utility.hpp"                             // plssvm::detail::get_value_from_named_parameter
 #include "plssvm/detail/memory_size.hpp"                              // plssvm::detail::memory_size
@@ -34,6 +34,7 @@
 #include "igor/igor.hpp"  // igor::parser
 
 #include <cstddef>      // std::size_t
+#include <optional>     // std::optional
 #include <type_traits>  // std::is_same_v, std::true_type
 #include <utility>      // std::forward
 #include <vector>       // std::vector
@@ -41,6 +42,8 @@
 namespace plssvm {
 
 namespace adaptivecpp {
+
+using namespace plssvm::sycl;  // NOLINT(google-build-using-namespace): necessary to make general SYCL functionality available in the AdaptiveCpp specific namespace
 
 /**
  * @brief A C-SVM implementation using AdaptiveCpp as SYCL backend.
@@ -61,7 +64,7 @@ class csvm : public ::plssvm::detail::gpu_csvm<detail::device_ptr, detail::queue
 
     /**
      * @brief Construct a new C-SVM using the SYCL backend on the @p target platform and the optionally provided @p named_args.
-     * @details Additionally sets the SYCL specific kernel invocation type.
+     * @details Additionally sets the SYCL specific data parallel kernel.
      * @param[in] target the target platform used for this C-SVM
      * @param[in] named_args the additional optional named arguments
      * @throws plssvm::exception all exceptions thrown in the base class constructor
@@ -71,18 +74,19 @@ class csvm : public ::plssvm::detail::gpu_csvm<detail::device_ptr, detail::queue
     template <typename... Args, PLSSVM_REQUIRES(::plssvm::detail::has_only_sycl_parameter_named_args_v<Args...>)>
     explicit csvm(const target_platform target = target_platform::automatic, Args &&...named_args) {
         // check igor parameter
-        igor::parser parser{ std::forward<Args>(named_args)... };
+        const igor::parser parser{ std::forward<Args>(named_args)... };
 
-        // check whether a specific SYCL kernel invocation type has been requested
-        if constexpr (parser.has(sycl_kernel_invocation_type)) {
+        // check whether a specific SYCL data parallel kernel has been requested
+        if constexpr (parser.has(sycl_data_parallel_kernel)) {
             // compile time check: the value must have the correct type
-            invocation_type_ = ::plssvm::detail::get_value_from_named_parameter<sycl::kernel_invocation_type>(parser, sycl_kernel_invocation_type);
+            data_parallel_kernel_type_ = ::plssvm::detail::get_value_from_named_parameter<sycl::data_parallel_kernel>(parser, sycl_data_parallel_kernel);
 
 #if !defined(PLSSVM_SYCL_HIERARCHICAL_AND_SCOPED_KERNELS_ENABLED)
-            if (invocation_type_ == sycl::kernel_invocation_type::hierarchical) {
-                throw ::plssvm::invalid_parameter_exception{ "The provided sycl::kernel_invocation_type::hierarchical is disabled for the AdaptiveCpp SYCL backend!" };
-            } else if (invocation_type_ == sycl::kernel_invocation_type::scoped) {
-                throw ::plssvm::invalid_parameter_exception{ "he provided sycl::kernel_invocation_type::scoped is disabled for the AdaptiveCpp SYCL backend!" };
+            if (data_parallel_kernel_type_ == sycl::data_parallel_kernel::hierarchical) {
+                throw ::plssvm::invalid_parameter_exception{ "The provided sycl::data_parallel_kernel::hierarchical is disabled for the AdaptiveCpp SYCL backend!" };
+            }
+            if (data_parallel_kernel_type_ == sycl::data_parallel_kernel::scoped) {
+                throw ::plssvm::invalid_parameter_exception{ "he provided sycl::data_parallel_kernel::scoped is disabled for the AdaptiveCpp SYCL backend!" };
             }
 #endif
         }
@@ -112,10 +116,10 @@ class csvm : public ::plssvm::detail::gpu_csvm<detail::device_ptr, detail::queue
     ~csvm() override = 0;
 
     /**
-     * @brief Return the kernel invocation type used in this SYCL SVM.
-     * @return the SYCL kernel invocation type (`[[nodiscard]]`)
+     * @brief Return the data parallel kernel used in this SYCL SVM.
+     * @return the SYCL data parallel kernel (`[[nodiscard]]`)
      */
-    [[nodiscard]] sycl::kernel_invocation_type get_kernel_invocation_type() const noexcept { return invocation_type_; }
+    [[nodiscard]] sycl::data_parallel_kernel get_data_parallel_kernel() const noexcept { return data_parallel_kernel_type_; }
 
   protected:
     /**
@@ -134,6 +138,10 @@ class csvm : public ::plssvm::detail::gpu_csvm<detail::device_ptr, detail::queue
      * @copydoc plssvm::csvm::get_max_mem_alloc_size
      */
     [[nodiscard]] std::vector<::plssvm::detail::memory_size> get_max_mem_alloc_size() const final;
+    /**
+     * @copydoc plssvm::csvm::get_local_memory
+     */
+    [[nodiscard]] std::vector<std::optional<::plssvm::detail::memory_size>> get_local_memory() const final;
     /**
      * @copydoc plssvm::detail::gpu_csvm::get_max_work_group_size
      */
@@ -180,8 +188,8 @@ class csvm : public ::plssvm::detail::gpu_csvm<detail::device_ptr, detail::queue
      */
     [[nodiscard]] device_ptr_type run_predict_kernel(std::size_t device_id, const ::plssvm::detail::execution_range &exec, const parameter &params, const device_ptr_type &alpha_d, const device_ptr_type &rho_d, const device_ptr_type &sv_or_w_d, const device_ptr_type &predict_points_d) const final;
 
-    /// The SYCL kernel invocation type for the svm kernel.
-    sycl::kernel_invocation_type invocation_type_{ sycl::kernel_invocation_type::automatic };
+    /// The used SYCL data parallel kernel.
+    sycl::data_parallel_kernel data_parallel_kernel_type_{ sycl::data_parallel_kernel::automatic };
 };
 
 /**

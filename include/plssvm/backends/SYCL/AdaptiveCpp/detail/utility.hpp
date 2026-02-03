@@ -15,7 +15,8 @@
 
 #include "plssvm/backends/execution_range.hpp"                // plssvm::detail::dim_type
 #include "plssvm/backends/SYCL/AdaptiveCpp/detail/queue.hpp"  // plssvm::adaptivecpp::detail::queue (PImpl)
-#include "plssvm/backends/SYCL/kernel_invocation_types.hpp"   // plssvm::sycl::kernel_invocation_type
+#include "plssvm/backends/SYCL/data_parallel_kernels.hpp"     // plssvm::sycl::data_parallel_kernel
+#include "plssvm/detail/type_traits.hpp"                      // plssvm::detail::always_false_non_type_v
 #include "plssvm/detail/utility.hpp"                          // plssvm::detail::unreachable
 #include "plssvm/target_platforms.hpp"                        // plssvm::target_platform
 
@@ -44,27 +45,27 @@ template <std::size_t I>
     } else if constexpr (I == 3) {
         return ::sycl::range<I>{ static_cast<std::size_t>(dims.z), static_cast<std::size_t>(dims.y), static_cast<std::size_t>(dims.x) };
     } else {
-        static_assert(I != I, "Invalid number of native sycl::range dimension!");
+        static_assert(::plssvm::detail::always_false_non_type_v<I>, "Invalid number of native sycl::range dimension!");
     }
 }
 
 /**
  * @brief Convert the provided @p grid and @p block to the final SYCL execution range.
- * @tparam invocation_type the SYCL kernel invocation type
+ * @tparam kernel_type the SYCL data parallel kernel
  * @param[in] grid the execution grid
  * @param[in] block the execution block
  * @return the SYCL native execution range
  */
-template <sycl::kernel_invocation_type invocation_type>
+template <sycl::data_parallel_kernel kernel_type>
 auto get_execution_range(const ::plssvm::detail::dim_type &grid, const ::plssvm::detail::dim_type &block) {
     const ::sycl::range native_grid = detail::dim_type_to_native<2>(grid);
     const ::sycl::range native_block = detail::dim_type_to_native<2>(block);
 
-    if constexpr (invocation_type == sycl::kernel_invocation_type::basic) {
+    if constexpr (kernel_type == sycl::data_parallel_kernel::basic) {
         return ::sycl::range<2>{ native_grid * native_block };
-    } else if constexpr (invocation_type == sycl::kernel_invocation_type::work_group) {
+    } else if constexpr (kernel_type == sycl::data_parallel_kernel::work_group) {
         return ::sycl::nd_range<2>{ native_grid * native_block, native_block };
-    } else if constexpr (invocation_type == sycl::kernel_invocation_type::hierarchical || invocation_type == sycl::kernel_invocation_type::scoped) {
+    } else if constexpr (kernel_type == sycl::data_parallel_kernel::hierarchical || kernel_type == sycl::data_parallel_kernel::scoped) {
         return ::sycl::nd_range<2>{ native_grid, native_block };
     } else {
         // can't be reached
@@ -100,10 +101,18 @@ void device_synchronize(const queue &q);
 [[nodiscard]] queue get_default_queue();
 
 /**
+ * @brief Get the name of the compute device associated with @p q.
+ * @param[in] q the SYCL queue representing the compute device
+ * @return the compute device name (`[[nodiscard]]`)
+ */
+[[nodiscard]] std::string get_device_name(const queue &q);
+
+/**
  * @brief Return the short AdaptiveCpp version, i.e., major.minor.patch.
  * @return the short AdaptiveCpp version (`[[nodiscard]]`)
  */
 [[nodiscard]] std::string get_adaptivecpp_version_short();
+
 /**
  * @brief Return the full AdaptiveCpp version including git information.
  * @return the full AdaptiveCpp version (`[[nodiscard]]`)

@@ -9,8 +9,8 @@
  * @brief Utility functions for the HIP backend.
  */
 
-#ifndef PLSSVM_BACKENDS_HIP_DETAIL_UTILITY_HPP_
-#define PLSSVM_BACKENDS_HIP_DETAIL_UTILITY_HPP_
+#ifndef PLSSVM_BACKENDS_HIP_DETAIL_UTILITY_HIP_HPP_
+#define PLSSVM_BACKENDS_HIP_DETAIL_UTILITY_HIP_HPP_
 #pragma once
 
 #include "plssvm/backends/execution_range.hpp"  // plssvm::detail::dim_type
@@ -77,6 +77,13 @@ void device_synchronize(int device);
 [[nodiscard]] std::string get_runtime_version();
 
 /**
+ * @brief Get the name of the HIP @p device.
+ * @param[in] device the device
+ * @return the HIP device name (`[[nodiscard]]`)
+ */
+[[nodiscard]] std::string get_device_name(int device);
+
+/**
  * @brief Get the HIP runtime string.
  * @details Either HIP or CUDA depending on which runtimes was used during CMake.
  * @return the used HIP runtime (`[[nodiscard]]`)
@@ -92,4 +99,4 @@ struct fmt::formatter<hipError_t> : fmt::ostream_formatter { };
 
 /// @endcond
 
-#endif  // PLSSVM_BACKENDS_HIP_DETAIL_UTILITY_HPP_
+#endif  // PLSSVM_BACKENDS_HIP_DETAIL_UTILITY_HIP_HPP_

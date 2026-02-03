@@ -45,9 +45,11 @@ target_platform determine_default_target_platform(const std::vector<target_platf
     // check for devices in order gpu_nvidia -> gpu_amd -> gpu_intel -> cpu
     if (detail::contains(platform_device_list, target_platform::gpu_nvidia)) {
         return target_platform::gpu_nvidia;
-    } else if (detail::contains(platform_device_list, target_platform::gpu_amd)) {
+    }
+    if (detail::contains(platform_device_list, target_platform::gpu_amd)) {
         return target_platform::gpu_amd;
-    } else if (detail::contains(platform_device_list, target_platform::gpu_intel)) {
+    }
+    if (detail::contains(platform_device_list, target_platform::gpu_intel)) {
         return target_platform::gpu_intel;
     }
     return target_platform::cpu;

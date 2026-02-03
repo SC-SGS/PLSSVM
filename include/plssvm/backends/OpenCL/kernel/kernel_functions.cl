@@ -75,7 +75,7 @@ real_type apply_linear_kernel_function(const real_type value) {
 
 /**
  * @brief Compute the polynomial kernel function using @p value.
- * @details Uses a custom power implementation taking advantage of the fact that degree can only be a positive integer. Hardcodes the power function for degrees <= 6.
+ * @details Uses a custom power implementation taking advantage of the fact that degree can only be a positive integer.
  * @param[in] value the value to apply the polynomial kernel function to
  * @param[in] degree the degree parameter of the polynomial kernel function
  * @param[in] gamma the gamma parameter of the polynomial kernel function
@@ -84,36 +84,12 @@ real_type apply_linear_kernel_function(const real_type value) {
  */
 real_type apply_polynomial_kernel_function(const real_type value, const int degree, const real_type gamma, const real_type coef0) {
     const real_type base = gamma * value + coef0;
-    switch (degree) {
-        case 0: return (real_type) 1.0;
-        case 1: return base;
-        case 2: return base * base;
-        case 3: return base * base * base;
-        case 4:
-            {
-                const real_type temp = base * base;
-                return temp * temp;
-            }
-        case 5:
-            {
-                const real_type temp = base * base;
-                return temp * temp * base;
-            }
-        case 6:
-            {
-                const real_type temp = base * base * base;
-                return temp * temp;
-            }
-        default:
-            {
-                // generic integer power function
-                real_type result = 1.0;
-                for (int i = 0; i < degree; ++i) {
-                    result *= base;
-                }
-                return result;
-            }
+    // generic integer power function
+    real_type result = 1.0;
+    for (int i = 0; i < degree; ++i) {
+        result *= base;
     }
+    return result;
 }
 
 /**

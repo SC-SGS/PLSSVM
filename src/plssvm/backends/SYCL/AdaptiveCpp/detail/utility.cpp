@@ -10,7 +10,7 @@
 
 #include "plssvm/backends/SYCL/AdaptiveCpp/detail/queue.hpp"       // plssvm::adaptivecpp::detail::queue
 #include "plssvm/backends/SYCL/AdaptiveCpp/detail/queue_impl.hpp"  // plssvm::adaptivecpp::detail::queue (PImpl implementation)
-#include "plssvm/detail/string_utility.hpp"                        // plssvm::detail::{as_lower_case, contains}
+#include "plssvm/detail/string_utility.hpp"                        // plssvm::detail::{as_lower_case, contains, trim}
 #include "plssvm/detail/utility.hpp"                               // plssvm::detail::contains
 #include "plssvm/exceptions/exceptions.hpp"                        // plssvm::platform_devices_empty
 #include "plssvm/target_platforms.hpp"                             // plssvm::target_platform, plssvm::determine_default_target_platform
@@ -19,6 +19,7 @@
 
 #include "fmt/format.h"  // fmt::format
 
+#include <cstddef>  // std::size_t
 #include <map>      // std::multimap
 #include <memory>   // std::make_shared
 #include <string>   // std::string
@@ -62,6 +63,24 @@ namespace plssvm::adaptivecpp::detail {
         }
     }
 
+    // check CPU devices: if there are multiple, remove the AdaptiveCpp OpenMP host device
+    // reason: it is enabled ALWAYS and if AdaptiveCpp is built with OpenCL support, two CPUs will be found!
+    if (platform_devices.count(target_platform::cpu) > std::size_t{ 1 }) {
+        // we found more than one CPU device -> remove the host device
+
+        // get all CPU devices
+        auto range = platform_devices.equal_range(target_platform::cpu);
+        // iterate over them and remove the AdaptiveCpp OpenMP host device
+        for (auto it = range.first; it != range.second;) {
+            if (::plssvm::detail::contains(it->second.get_info<::sycl::info::device::name>(), "AdaptiveCpp OpenMP host device")) {
+                // erase returns the iterator to the next element
+                it = platform_devices.erase(it);
+            } else {
+                ++it;
+            }
+        }
+    }
+
     // determine target if provided target_platform is automatic
     if (target == target_platform::automatic) {
         // get the target_platforms available on this system from the platform_devices map
@@ -97,6 +116,10 @@ queue get_default_queue() {
     queue q;
     q.impl = std::make_shared<queue::queue_impl>();
     return q;
+}
+
+std::string get_device_name(const queue &q) {
+    return std::string{ ::plssvm::detail::trim(q.impl->sycl_queue.get_device().get_info<::sycl::info::device::name>()) };
 }
 
 std::string get_adaptivecpp_version_short() {

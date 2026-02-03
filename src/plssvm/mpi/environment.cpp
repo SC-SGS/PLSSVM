@@ -8,13 +8,12 @@
 
 #include "plssvm/mpi/environment.hpp"
 
-#include "plssvm/exceptions/exceptions.hpp"  // plssvm::mpi_exception
-#include "plssvm/mpi/detail/utility.hpp"     // PLSSVM_MPI_ERROR_CHECK
-
-#include "fmt/format.h"  // fmt::format
-
 #if defined(PLSSVM_HAS_MPI_ENABLED)
-    #include "mpi.h"  // MPI_THREAD_FUNNELED, MPI_Init_thread, MPI_Finalize, MPI_Initialized, MPI_Finalized
+    #include "plssvm/exceptions/exceptions.hpp"  // plssvm::mpi_exception
+    #include "plssvm/mpi/detail/utility.hpp"     // PLSSVM_MPI_ERROR_CHECK
+
+    #include "fmt/format.h"  // fmt::format
+    #include "mpi.h"         // MPI_THREAD_FUNNELED, MPI_Init_thread, MPI_Finalize, MPI_Initialized, MPI_Finalized
 #endif
 
 #include <cstdlib>  // EXIT_FAILURE, std::getenv, std::abort

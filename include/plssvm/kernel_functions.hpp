@@ -45,7 +45,7 @@ namespace plssvm {
  */
 template <kernel_function_type kernel, typename T, typename... Args>
 [[nodiscard]] inline T kernel_function(const std::vector<T> &xi, const std::vector<T> &xj, Args... args) {
-    using namespace plssvm::operators;
+    using namespace plssvm::operators;  // NOLINT(google-build-using-namespace): only imports custom math operations on vectors (and scalars)
 
     PLSSVM_ASSERT(xi.size() == xj.size(), "Sizes mismatch!: {} != {}", xi.size(), xj.size());
 

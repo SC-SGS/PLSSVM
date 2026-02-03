@@ -9,15 +9,18 @@
 
 #include "plssvm/backends/HPX/csvm.hpp"
 
+#include "plssvm/backend_types.hpp"                                                // plssvm::backend_type
+#include "plssvm/backends/HPX/detail/utility.hpp"                                  // plssvm::hpx::detail::{get_hpx_version, get_num_threads}
 #include "plssvm/backends/HPX/exceptions.hpp"                                      // plssvm::hpx::backend_exception
 #include "plssvm/backends/HPX/kernel/cg_explicit/blas.hpp"                         // plssvm::hpx::detail::device_kernel_symm
 #include "plssvm/backends/HPX/kernel/cg_explicit/kernel_matrix_assembly.hpp"       // plssvm::hpx::detail::device_kernel_assembly
 #include "plssvm/backends/HPX/kernel/cg_implicit/kernel_matrix_assembly_blas.hpp"  // plssvm::hpx::detail::device_kernel_assembly_symm
 #include "plssvm/backends/HPX/kernel/predict_kernel.hpp"                           // plssvm::hpx::detail::{device_kernel_w_linear, device_kernel_predict_linear, device_kernel_predict}
-#include "plssvm/constants.hpp"                                                    // plssvm::real_type
+#include "plssvm/constants.hpp"                                                    // plssvm::real_type, plssvm::PADDING_SIZE
 #include "plssvm/detail/assert.hpp"                                                // PLSSVM_ASSERT
 #include "plssvm/detail/data_distribution.hpp"                                     // plssvm::detail::triangular_data_distribution
 #include "plssvm/detail/logging/mpi_log_untracked.hpp"                             // plssvm::detail::log_untracked
+#include "plssvm/detail/make_unique_for_overwrite.hpp"                             // plssvm::detail::{make_unique_for_overwrite, parallel_zero_memset}
 #include "plssvm/detail/memory_size.hpp"                                           // plssvm::detail::memory_size
 #include "plssvm/detail/move_only_any.hpp"                                         // plssvm::detail::{move_only_any, move_only_any_cast}
 #include "plssvm/detail/tracking/performance_tracker.hpp"                          // plssvm::detail::tracking::tracking_entry, PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY
@@ -29,16 +32,23 @@
 #include "plssvm/parameter.hpp"                                                    // plssvm::parameter
 #include "plssvm/shape.hpp"                                                        // plssvm::shape
 #include "plssvm/solver_types.hpp"                                                 // plssvm::solver_type
-#include "plssvm/svm/csvm.hpp"                                                     // plssvm::csvm
 #include "plssvm/target_platforms.hpp"                                             // plssvm::target_platform
+#include "plssvm/verbosity_levels.hpp"                                             // plssvm::verbosity_level
 
-#include "hpx/future.hpp"  // hpx::future, hpx::async
+#include "hpx/async.hpp"   // hpx::async
+#include "hpx/future.hpp"  // hpx::future
 
-#include <chrono>   // std::chrono::{steady_clock, duration_cast}
-#include <cstddef>  // std::size_t
-#include <tuple>    // std::tuple, std::make_tuple
-#include <utility>  // std::move
-#include <vector>   // std::vector
+#include "fmt/format.h"  // fmt::format
+
+#include <chrono>      // std::chrono::{steady_clock, duration_cast}
+#include <cstddef>     // std::size_t
+#include <cstring>     // std::memcpy
+#include <functional>  // std::cref
+#include <memory>      // std::make_unique, std::unique_ptr
+#include <optional>    // std::optional, std::nullopt
+#include <tuple>       // std::tuple, std::make_tuple
+#include <utility>     // std::move
+#include <vector>      // std::vector
 
 namespace plssvm::hpx {
 
@@ -73,17 +83,21 @@ csvm::csvm(const target_platform target) {
     PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "backend", "backend", plssvm::backend_type::hpx }));
     PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "backend", "target_platform", target_ }));
     PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "backend", "num_threads", detail::get_num_threads() }));
-    PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "backend", "num_devices", this->num_available_devices() }));
+    PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "backend", "num_devices", this->num_available_devices() }));  // NOLINT: safe to call this virtual function in the constructor
 }
 
 csvm::~csvm() = default;
 
 std::vector<::plssvm::detail::memory_size> csvm::get_device_memory() const {
-    return { ::plssvm::detail::get_system_memory() };
+    return std::vector<::plssvm::detail::memory_size>(this->num_available_devices(), ::plssvm::detail::get_system_memory());
 }
 
 std::vector<::plssvm::detail::memory_size> csvm::get_max_mem_alloc_size() const {
     return this->get_device_memory();
+}
+
+std::vector<std::optional<::plssvm::detail::memory_size>> csvm::get_local_memory() const {
+    return std::vector<std::optional<::plssvm::detail::memory_size>>(this->num_available_devices(), std::nullopt);
 }
 
 //***************************************************//
@@ -120,26 +134,33 @@ std::vector<::plssvm::detail::move_only_any> csvm::assemble_kernel_matrix(const 
                         // get the offset of the data points this device is responsible for
                         const std::size_t row_offset = dist.place_row_offset(0);
 
-                        std::vector<real_type> kernel_matrix(dist.calculate_explicit_kernel_matrix_num_entries_padded(0));  // only explicitly store the upper triangular matrix
+                        // get the number of kernel matrix entries
+                        const std::size_t num_entries = dist.calculate_explicit_kernel_matrix_num_entries_padded(0);
+
+                        // only explicitly store the upper triangular matrix
+                        auto kernel_matrix = ::plssvm::detail::make_unique_for_overwrite<real_type[]>(num_entries);  // NOLINT: C-style array must be used with make_unique_for_overwrite
+                        // initialize kernel matrix to all zeros in parallel
+                        ::plssvm::detail::parallel_zero_memset(kernel_matrix.get(), num_entries);
+
                         const auto start = std::chrono::steady_clock::now();
                         switch (params.kernel_type) {
                             case kernel_function_type::linear:
-                                detail::device_kernel_assembly<kernel_function_type::linear>(kernel_matrix, A, device_specific_num_rows, row_offset, q_red, QA_cost, cost);
+                                detail::device_kernel_assembly<kernel_function_type::linear>(kernel_matrix.get(), A, device_specific_num_rows, row_offset, q_red, QA_cost, cost);
                                 break;
                             case kernel_function_type::polynomial:
-                                detail::device_kernel_assembly<kernel_function_type::polynomial>(kernel_matrix, A, device_specific_num_rows, row_offset, q_red, QA_cost, cost, params.degree, std::get<real_type>(params.gamma), params.coef0);
+                                detail::device_kernel_assembly<kernel_function_type::polynomial>(kernel_matrix.get(), A, device_specific_num_rows, row_offset, q_red, QA_cost, cost, params.degree, std::get<real_type>(params.gamma), params.coef0);
                                 break;
                             case kernel_function_type::rbf:
-                                detail::device_kernel_assembly<kernel_function_type::rbf>(kernel_matrix, A, device_specific_num_rows, row_offset, q_red, QA_cost, cost, std::get<real_type>(params.gamma));
+                                detail::device_kernel_assembly<kernel_function_type::rbf>(kernel_matrix.get(), A, device_specific_num_rows, row_offset, q_red, QA_cost, cost, std::get<real_type>(params.gamma));
                                 break;
                             case kernel_function_type::sigmoid:
-                                detail::device_kernel_assembly<kernel_function_type::sigmoid>(kernel_matrix, A, device_specific_num_rows, row_offset, q_red, QA_cost, cost, std::get<real_type>(params.gamma), params.coef0);
+                                detail::device_kernel_assembly<kernel_function_type::sigmoid>(kernel_matrix.get(), A, device_specific_num_rows, row_offset, q_red, QA_cost, cost, std::get<real_type>(params.gamma), params.coef0);
                                 break;
                             case kernel_function_type::laplacian:
-                                detail::device_kernel_assembly<kernel_function_type::laplacian>(kernel_matrix, A, device_specific_num_rows, row_offset, q_red, QA_cost, cost, std::get<real_type>(params.gamma));
+                                detail::device_kernel_assembly<kernel_function_type::laplacian>(kernel_matrix.get(), A, device_specific_num_rows, row_offset, q_red, QA_cost, cost, std::get<real_type>(params.gamma));
                                 break;
                             case kernel_function_type::chi_squared:
-                                detail::device_kernel_assembly<kernel_function_type::chi_squared>(kernel_matrix, A, device_specific_num_rows, row_offset, q_red, QA_cost, cost, std::get<real_type>(params.gamma));
+                                detail::device_kernel_assembly<kernel_function_type::chi_squared>(kernel_matrix.get(), A, device_specific_num_rows, row_offset, q_red, QA_cost, cost, std::get<real_type>(params.gamma));
                                 break;
                         }
                         const auto end = std::chrono::steady_clock::now();
@@ -152,7 +173,7 @@ std::vector<::plssvm::detail::move_only_any> csvm::assemble_kernel_matrix(const 
                 case solver_type::cg_implicit:
                     {
                         // simply return data since in implicit we don't assembly the kernel matrix here!
-                        kernel_matrices_parts[0] = ::plssvm::detail::move_only_any{ std::make_tuple(std::move(A), params, std::move(q_red), QA_cost) };
+                        kernel_matrices_parts[0] = ::plssvm::detail::move_only_any{ std::make_tuple(std::cref(A), params, std::cref(q_red), QA_cost) };
                     }
                     break;
             }
@@ -173,7 +194,7 @@ void csvm::blas_level_3(const solver_type solver, const real_type alpha, const s
     PLSSVM_ASSERT(B.shape() == C.shape(), "The B ({}) and C ({}) matrices must have the same shape!", B.shape(), C.shape());
     PLSSVM_ASSERT(B.padding() == C.padding(), "The B ({}) and C ({}) matrices must have the same padding!", B.padding(), C.padding());
 
-    using namespace operators;
+    using namespace operators;  // NOLINT(google-build-using-namespace): only imports custom math operations on vectors (and scalars)
 
     // get the triangular data distribution
     const ::plssvm::detail::triangular_data_distribution &dist = dynamic_cast<::plssvm::detail::triangular_data_distribution &>(*data_distribution_);
@@ -200,16 +221,16 @@ void csvm::blas_level_3(const solver_type solver, const real_type alpha, const s
                     break;
                 case solver_type::cg_explicit:
                     {
-                        const auto &explicit_A = ::plssvm::detail::move_only_any_cast<const std::vector<real_type> &>(A.front());
-                        PLSSVM_ASSERT(!explicit_A.empty(), "The A matrix must not be empty!");
+                        const auto &explicit_A = ::plssvm::detail::move_only_any_cast<const std::unique_ptr<real_type[]> &>(A.front());  // NOLINT: C-style array must be used
+                        PLSSVM_ASSERT(explicit_A != nullptr, "The A matrix must not be empty!");
 
                         const auto start = std::chrono::steady_clock::now();
 
-                        detail::device_kernel_symm(num_rows, num_rhs, device_specific_num_rows, row_offset, alpha, explicit_A, B, beta, C);
+                        detail::device_kernel_symm(num_rows, num_rhs, device_specific_num_rows, row_offset, alpha, explicit_A.get(), B, beta, C);
 
                         const std::size_t num_mirror_rows = num_rows - row_offset - device_specific_num_rows;
                         if (num_mirror_rows > std::size_t{ 0 }) {
-                            detail::device_kernel_symm_mirror(num_rows, num_rhs, num_mirror_rows, device_specific_num_rows, row_offset, alpha, explicit_A, B, beta, C);
+                            detail::device_kernel_symm_mirror(num_rows, num_rhs, num_mirror_rows, device_specific_num_rows, row_offset, alpha, explicit_A.get(), B, beta, C);
                         }
 
                         const auto end = std::chrono::steady_clock::now();
@@ -219,7 +240,7 @@ void csvm::blas_level_3(const solver_type solver, const real_type alpha, const s
                     break;
                 case solver_type::cg_implicit:
                     {
-                        const auto &[matr_A, params, q_red, QA_cost] = ::plssvm::detail::move_only_any_cast<const std::tuple<soa_matrix<real_type>, parameter, std::vector<real_type>, real_type> &>(A.front());
+                        const auto &[matr_A, params, q_red, QA_cost] = ::plssvm::detail::move_only_any_cast<const std::tuple<const soa_matrix<real_type> &, parameter, const std::vector<real_type> &, real_type> &>(A.front());
                         PLSSVM_ASSERT(!matr_A.empty(), "The A matrix must not be empty!");
                         PLSSVM_ASSERT(!q_red.empty(), "The q_red vector must not be empty!");
                         const real_type cost = real_type{ 1.0 } / params.cost;
@@ -261,6 +282,8 @@ void csvm::blas_level_3(const solver_type solver, const real_type alpha, const s
     });
     // wait until operation is completed
     wait.get();
+    // restore padding entries by setting them to zero
+    C.restore_padding();
 }
 
 //***************************************************//
@@ -317,6 +340,8 @@ aos_matrix<real_type> csvm::predict_values(const parameter &params,
                     [[maybe_unused]] const auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
                     PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "predict_values", "w_kernel", duration }));
                 }
+                // restore padding entries by setting them to zero
+                w.restore_padding();
 
                 // reduce w on all MPI ranks
                 comm_.allreduce_inplace(w);
@@ -332,8 +357,12 @@ aos_matrix<real_type> csvm::predict_values(const parameter &params,
             // call the predict kernels
             switch (params.kernel_type) {
                 case kernel_function_type::linear:
-                    // predict the values using the w vector
-                    detail::device_kernel_predict_linear(out, w, rho, predict_points, device_specific_num_predict_points, row_offset);
+                    {
+                        // predict the values using the w vector
+                        std::vector<real_type> rho_padded(rho.size() + PADDING_SIZE, real_type{ 0.0 });
+                        std::memcpy(rho_padded.data(), rho.data(), rho.size() * sizeof(real_type));
+                        detail::device_kernel_predict_linear(out, w, rho_padded, predict_points, device_specific_num_predict_points, row_offset);
+                    }
                     break;
                 case kernel_function_type::polynomial:
                     detail::device_kernel_predict<kernel_function_type::polynomial>(out, alpha, rho, support_vectors, predict_points, device_specific_num_predict_points, row_offset, params.degree, std::get<real_type>(params.gamma), params.coef0);
@@ -358,6 +387,9 @@ aos_matrix<real_type> csvm::predict_values(const parameter &params,
     });
     // wait until operation is completed
     wait.get();
+
+    // restore padding entries by setting them to zero
+    out.restore_padding();
     return out;
 }
 

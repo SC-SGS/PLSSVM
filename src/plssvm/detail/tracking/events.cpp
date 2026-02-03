@@ -12,7 +12,7 @@
 #include "plssvm/detail/tracking/utility.hpp"  // plssvm::detail::tracking::{durations_from_reference_time, time_points_to_epoch}
 #include "plssvm/exceptions/exceptions.hpp"    // plssvm::exception
 
-#include "fmt/chrono.h"  // format std::chrono types
+#include "fmt/chrono.h"  // NOLINT(misc-include-cleaner): false positive, header is used to format std::chrono types
 #include "fmt/format.h"  // fmt::format
 #include "fmt/ranges.h"  // fmt::join
 
@@ -26,7 +26,7 @@
 namespace plssvm::detail::tracking {
 
 void events::add_event(event e) {
-    this->time_points_.push_back(std::move(e.time_point));
+    this->time_points_.push_back(e.time_point);
     this->names_.push_back(fmt::format("{}", std::move(e.name)));
 
     PLSSVM_ASSERT(this->num_events() == this->time_points_.size(), "Error: number of event members mismatch!");
@@ -34,7 +34,7 @@ void events::add_event(event e) {
 }
 
 void events::add_event(decltype(event::time_point) time_point, decltype(event::name) name) {
-    this->time_points_.push_back(std::move(time_point));
+    this->time_points_.push_back(time_point);
     this->names_.push_back(fmt::format("{}", std::move(name)));
 
     PLSSVM_ASSERT(this->num_events() == this->time_points_.size(), "Error: number of event members mismatch!");
@@ -58,18 +58,17 @@ std::string events::generate_yaml_string(const std::chrono::steady_clock::time_p
     if (this->empty()) {
         // no events -> return empty string
         return std::string{};
-    } else {
-        std::vector<std::string> quoted_names(this->num_events());
-#pragma omp parallel for
-        for (std::size_t i = 0; i < this->num_events(); ++i) {
-            quoted_names[i] = fmt::format("\"{}\"", names_[i]);
-        }
-        // assemble string
-        return fmt::format("    time_points: [{}]\n"
-                           "    names: [{}]",
-                           fmt::join(durations_from_reference_time(time_points_, start_time_point), ", "),
-                           fmt::join(quoted_names, ", "));
     }
+    std::vector<std::string> quoted_names(this->num_events());
+#pragma omp parallel for
+    for (std::size_t i = 0; i < this->num_events(); ++i) {
+        quoted_names[i] = fmt::format("\"{}\"", names_[i]);
+    }
+    // assemble string
+    return fmt::format("    time_points: [{}]\n"
+                       "    names: [{}]",
+                       fmt::join(durations_from_reference_time(time_points_, start_time_point), ", "),
+                       fmt::join(quoted_names, ", "));
 }
 
 std::ostream &operator<<(std::ostream &out, const events::event &e) {

@@ -92,7 +92,10 @@ for ds_cnt, (ds_name, ds) in enumerate(datasets):
             best_model = name
 
         # create the decision boundary
-        DecisionBoundaryDisplay.from_estimator(clf, X, cmap=cm, alpha=0.8, ax=ax, eps=0.5)
+        if ds_name == "blobs":
+            DecisionBoundaryDisplay.from_estimator(clf, X, alpha=0.8, ax=ax, eps=0.5)
+        else:
+            DecisionBoundaryDisplay.from_estimator(clf, X, cmap=cm, alpha=0.8, ax=ax, eps=0.5)
 
         # plot the training points
         ax.scatter(X_train[:, 0], X_train[:, 1], c=y_train, cmap=cm_bright, edgecolors="k")

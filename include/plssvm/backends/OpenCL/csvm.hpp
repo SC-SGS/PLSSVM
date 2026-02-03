@@ -30,6 +30,7 @@
 #include "plssvm/target_platforms.hpp"                      // plssvm::target_platform
 
 #include <cstddef>      // std::size_t
+#include <optional>     // std::optional
 #include <type_traits>  // std::true_type
 #include <utility>      // std::forward
 #include <vector>       // std::vector
@@ -97,6 +98,10 @@ class csvm : public ::plssvm::detail::gpu_csvm<detail::device_ptr, detail::comma
      */
     [[nodiscard]] std::vector<::plssvm::detail::memory_size> get_max_mem_alloc_size() const final;
     /**
+     * @copydoc plssvm::csvm::get_local_memory
+     */
+    [[nodiscard]] std::vector<std::optional<::plssvm::detail::memory_size>> get_local_memory() const final;
+    /**
      * @copydoc plssvm::detail::gpu_csvm::get_max_work_group_size
      */
     [[nodiscard]] std::size_t get_max_work_group_size(std::size_t device_id) const final;
@@ -143,7 +148,7 @@ class csvm : public ::plssvm::detail::gpu_csvm<detail::device_ptr, detail::comma
     [[nodiscard]] device_ptr_type run_predict_kernel(std::size_t device_id, const ::plssvm::detail::execution_range &exec, const parameter &params, const device_ptr_type &alpha_d, const device_ptr_type &rho_d, const device_ptr_type &sv_or_w_d, const device_ptr_type &predict_points_d) const final;
 
     /// The available OpenCL contexts for the current target platform with the associated devices.
-    std::vector<detail::context> contexts_{};
+    std::vector<detail::context> contexts_;
 };
 
 /**
@@ -159,8 +164,7 @@ class csvc : public ::plssvm::csvc,
      * @throws plssvm::exception all exceptions thrown in the base class constructors
      */
     explicit csvc(const parameter params) :
-        ::plssvm::csvm{ mpi::communicator{}, params },
-        ::plssvm::opencl::csvm{} { }
+        ::plssvm::csvm{ mpi::communicator{}, params } { }
 
     /**
      * @brief Construct a new C-SVC using the OpenCL backend with the parameters given through @p params.
@@ -169,8 +173,7 @@ class csvc : public ::plssvm::csvc,
      * @throws plssvm::exception all exceptions thrown in the base class constructors
      */
     csvc(mpi::communicator comm, const parameter params) :
-        ::plssvm::csvm{ std::move(comm), params },
-        ::plssvm::opencl::csvm{} { }
+        ::plssvm::csvm{ std::move(comm), params } { }
 
     /**
      * @brief Construct a new C-SVC using the OpenCL backend on the @p target platform with the parameters given through @p params.
@@ -251,8 +254,7 @@ class csvr : public ::plssvm::csvr,
      * @throws plssvm::exception all exceptions thrown in the base class constructors
      */
     explicit csvr(const parameter params) :
-        ::plssvm::csvm{ mpi::communicator{}, params },
-        ::plssvm::opencl::csvm{} { }
+        ::plssvm::csvm{ mpi::communicator{}, params } { }
 
     /**
      * @brief Construct a new C-SVR using the OpenCL backend with the parameters given through @p params.
@@ -261,8 +263,7 @@ class csvr : public ::plssvm::csvr,
      * @throws plssvm::exception all exceptions thrown in the base class constructors
      */
     csvr(mpi::communicator comm, const parameter params) :
-        ::plssvm::csvm{ std::move(comm), params },
-        ::plssvm::opencl::csvm{} { }
+        ::plssvm::csvm{ std::move(comm), params } { }
 
     /**
      * @brief Construct a new C-SVR using the OpenCL backend on the @p target platform with the parameters given through @p params.

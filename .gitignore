@@ -75,9 +75,10 @@ docs/*
 !docs/plssvm-scale.1.in
 
 # data in test folder
-!tests/data/
 tests/data/*
-!tests/data/model/
-!tests/data/libsvm/
-!tests/data/arff/
-!tests/data/predict/
+
+# model files
+*.model
+
+# auto-generated AdaptiveCpp directory for JIT related information
+.acpp-*

@@ -10,10 +10,12 @@
 
 #include "plssvm/exceptions/exceptions.hpp"  // plssvm::{*_exception}
 
+#include "plssvm/detail/string_utility.hpp"  // plssvm::detail::split
+
 #include "tests/custom_test_macros.hpp"  // EXPECT_THROW_WHAT
+#include "tests/exceptions/utility.hpp"  // util::exception_type_name
 #include "tests/naming.hpp"              // naming::test_parameter_to_name
 #include "tests/types_to_test.hpp"       // util::{combine_test_parameters_gtest_t, cartesian_type_product_t, test_parameter_type_at_t}
-#include "tests/utility.hpp"             // util::exception_type_name
 
 #include "fmt/format.h"   // fmt::format
 #include "gmock/gmock.h"  // EXPECT_THAT, ::testing::{HasSubstr, ContainsRegex}
@@ -25,11 +27,20 @@
 #include <tuple>        // std::tuple
 #include <vector>       // std::vector
 
+namespace {
+
 // helper function returning an exception used to be able to name the source location function
 template <typename Exception>
 Exception dummy(const std::string &msg) {
     return Exception{ msg };
 }
+
+// helper function returning a cmd_parser_exit exception used to be able to name the source location function
+plssvm::cmd_parser_exit dummy_exit(const int exit_code) {
+    return plssvm::cmd_parser_exit{ exit_code };
+}
+
+}  // namespace
 
 // clang-format off
 // enumerate all custom exception types; ATTENTION: don't forget to also specialize the PLSSVM_CREATE_EXCEPTION_TYPE_NAME macro if a new exception type is added
@@ -51,7 +62,7 @@ class Exceptions : public ::testing::Test {
 TYPED_TEST_SUITE(Exceptions, exception_types_gtest, naming::test_parameter_to_name);
 
 // check whether throwing exceptions works as intended
-TYPED_TEST(Exceptions, throwing_excpetion) {
+TYPED_TEST(Exceptions, ThrowingExcpetion) {
     using exception_type = typename TestFixture::fixture_exception_type;
 
     // throw the specified exception
@@ -60,7 +71,7 @@ TYPED_TEST(Exceptions, throwing_excpetion) {
 }
 
 // check whether the source location information are populated correctly
-TYPED_TEST(Exceptions, exception_source_location) {
+TYPED_TEST(Exceptions, ExceptionSourceLocation) {
     using exception_type = typename TestFixture::fixture_exception_type;
 
     const auto exc = dummy<exception_type>("exception message");
@@ -72,7 +83,7 @@ TYPED_TEST(Exceptions, exception_source_location) {
 }
 
 // check whether what message including the source location information is assembled correctly
-TYPED_TEST(Exceptions, exception_what_with_source_location) {
+TYPED_TEST(Exceptions, ExceptionWhatWithSourceLocation) {
     using exception_type = typename TestFixture::fixture_exception_type;
 
     const auto exc = dummy<exception_type>("exception message");
@@ -92,20 +103,15 @@ TYPED_TEST(Exceptions, exception_what_with_source_location) {
     EXPECT_THAT(std::string{ what_lines[4] }, ::testing::StartsWith("  @ line       "));  // attention: some line must be given, hardcoded value not feasible
 }
 
-// helper function returning an exception used to be able to name the source location function
-plssvm::cmd_parser_exit dummy_exit(const int exit_code) {
-    return plssvm::cmd_parser_exit{ exit_code };
-}
-
 // check whether throwing exceptions works as intended
-TEST(CMDParserExitException, throwing_excpetion) {
+TEST(CMDParserExitException, ThrowingExcpetion) {
     // throw the specified exception
     const auto dummy_exit = []() { throw plssvm::cmd_parser_exit{ 1 }; };
     EXPECT_THROW_WHAT(dummy_exit(), plssvm::cmd_parser_exit, "exit code: 1");
 }
 
 // check whether the source location information are populated correctly
-TEST(CMDParserExitException, exception_source_location) {
+TEST(CMDParserExitException, ExceptionSourceLocation) {
     const auto exc = dummy_exit(2);
 
     EXPECT_EQ(exc.loc().file_name(), std::string{ __builtin_FILE() });
@@ -116,7 +122,7 @@ TEST(CMDParserExitException, exception_source_location) {
 }
 
 // check whether what message including the source location information is assembled correctly
-TEST(CMDParserExitException, exception_what_with_source_location) {
+TEST(CMDParserExitException, ExceptionWhatWithSourceLocation) {
     const auto exc = dummy_exit(0);
 
     // get exception message with source location information split into a vector of separate lines

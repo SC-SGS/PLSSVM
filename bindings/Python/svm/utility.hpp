@@ -13,14 +13,14 @@
 #define PLSSVM_BINDINGS_PYTHON_SVM_UTILITY_HPP_
 #pragma once
 
-#include "plssvm/backend_types.hpp"                          // plssvm::backend_type
-#include "plssvm/backends/Kokkos/execution_space.hpp"        // plssvm::kokkos::execution_space
-#include "plssvm/backends/SYCL/implementation_types.hpp"     // plssvm::sycl::implementation_type
-#include "plssvm/backends/SYCL/kernel_invocation_types.hpp"  // plssvm::sycl::kernel_invocation_type
-#include "plssvm/csvm_factory.hpp"                           // plssvm::make_csvm
-#include "plssvm/mpi/communicator.hpp"                       // plssvm::mpi::communicator
-#include "plssvm/parameter.hpp"                              // plssvm::parameter, named arguments
-#include "plssvm/target_platforms.hpp"                       // plssvm::target_platform
+#include "plssvm/backend_types.hpp"                        // plssvm::backend_type
+#include "plssvm/backends/Kokkos/execution_spaces.hpp"     // plssvm::kokkos::execution_space
+#include "plssvm/backends/SYCL/data_parallel_kernels.hpp"  // plssvm::sycl::data_parallel_kernel
+#include "plssvm/backends/SYCL/implementation_types.hpp"   // plssvm::sycl::implementation_type
+#include "plssvm/csvm_factory.hpp"                         // plssvm::make_csvm
+#include "plssvm/mpi/communicator.hpp"                     // plssvm::mpi::communicator
+#include "plssvm/parameter.hpp"                            // plssvm::parameter, named arguments
+#include "plssvm/target_platforms.hpp"                     // plssvm::target_platform
 
 #include "bindings/Python/utility.hpp"  // plssvm::bindings::python::util::check_kwargs_for_correctness
 
@@ -46,7 +46,7 @@ namespace plssvm::bindings::python::util {
 template <typename csvm_type>
 [[nodiscard]] inline std::unique_ptr<csvm_type> assemble_csvm(const plssvm::backend_type backend, const plssvm::target_platform target, const plssvm::parameter &params, plssvm::mpi::communicator comm, const py::kwargs &optional_args) {
     // check keyword arguments
-    plssvm::bindings::python::util::check_kwargs_for_correctness(optional_args, { "foo", "sycl_implementation_type", "sycl_kernel_invocation_type", "kokkos_execution_space" });
+    plssvm::bindings::python::util::check_kwargs_for_correctness(optional_args, { "foo", "sycl_implementation_type", "sycl_data_parallel_kernel", "kokkos_execution_space" });
 
     if (backend == plssvm::backend_type::sycl) {
         // parse SYCL specific keyword arguments
@@ -54,13 +54,14 @@ template <typename csvm_type>
         if (optional_args.contains("sycl_implementation_type")) {
             impl_type = optional_args["sycl_implementation_type"].cast<plssvm::sycl::implementation_type>();
         }
-        plssvm::sycl::kernel_invocation_type invocation_type = plssvm::sycl::kernel_invocation_type::automatic;
-        if (optional_args.contains("sycl_kernel_invocation_type")) {
-            invocation_type = optional_args["sycl_kernel_invocation_type"].cast<plssvm::sycl::kernel_invocation_type>();
+        plssvm::sycl::data_parallel_kernel data_parallel_kernel_type = plssvm::sycl::data_parallel_kernel::automatic;
+        if (optional_args.contains("sycl_data_parallel_kernel")) {
+            data_parallel_kernel_type = optional_args["sycl_data_parallel_kernel"].cast<plssvm::sycl::data_parallel_kernel>();
         }
 
-        return plssvm::make_csvm<csvm_type>(backend, std::move(comm), target, params, plssvm::sycl_implementation_type = impl_type, plssvm::sycl_kernel_invocation_type = invocation_type);
-    } else if (backend == plssvm::backend_type::kokkos) {
+        return plssvm::make_csvm<csvm_type>(backend, std::move(comm), target, params, plssvm::sycl_implementation_type = impl_type, plssvm::sycl_data_parallel_kernel = data_parallel_kernel_type);
+    }
+    if (backend == plssvm::backend_type::kokkos) {
         // parse Kokkos specific keyword arguments
         plssvm::kokkos::execution_space space = plssvm::kokkos::execution_space::automatic;
         if (optional_args.contains("kokkos_execution_space")) {
@@ -68,9 +69,8 @@ template <typename csvm_type>
         }
 
         return plssvm::make_csvm<csvm_type>(backend, std::move(comm), target, params, plssvm::kokkos_execution_space = space);
-    } else {
-        return plssvm::make_csvm<csvm_type>(backend, std::move(comm), target, params);
     }
+    return plssvm::make_csvm<csvm_type>(backend, std::move(comm), target, params);
 }
 
 }  // namespace plssvm::bindings::python::util

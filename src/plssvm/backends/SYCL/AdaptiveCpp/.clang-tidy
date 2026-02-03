@@ -1,0 +1,15 @@
+---
+Checks: '
+-cppcoreguidelines-avoid-const-or-ref-data-members,
+-cppcoreguidelines-avoid-c-arrays,
+
+-clang-analyzer-core.CallAndMessage,
+
+-hicpp-avoid-c-arrays,
+
+-misc-include-cleaner,
+
+-modernize-avoid-c-arrays,
+'
+
+InheritParentConfig: true

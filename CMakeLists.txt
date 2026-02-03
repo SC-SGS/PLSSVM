@@ -13,6 +13,9 @@ project(
     DESCRIPTION "A Least Squares Support Vector Machine implementation using different backends."
 )
 
+# generate a compile_commands.json file (used by clang-tidy and other tools)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON CACHE INTERNAL "Generate a compile_commands.json file." FORCE)
+
 # include some generally used utility scripts
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/add_coverage_build_type.cmake)
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/utility_macros.cmake)
@@ -78,14 +81,15 @@ endif ()
 # set base sources
 set(PLSSVM_BASE_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/backends/Kokkos/execution_space.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/backends/SYCL/data_parallel_kernels.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/backends/SYCL/implementation_types.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/backends/SYCL/kernel_invocation_types.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/backends/stdpar/implementation_types.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/backends/execution_range.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/data_set/min_max_scaler.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/cmd/parser_predict.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/cmd/parser_scale.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/cmd/parser_train.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/cmd/utility.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/io/file_reader.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/data_distribution.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/memory_size.cpp
@@ -298,7 +302,7 @@ list(
 ########################################################################################################################
 # coverage analysis only possible with the Coverage CMAKE_BUILD_TYPE
 if (uppercase_CMAKE_BUILD_TYPE MATCHES COVERAGE)
-    list(APPEND CMAKE_MESSAGE_INDENT "coverage:  ")
+    list(APPEND CMAKE_MESSAGE_INDENT "Coverage:  ")
     # must be linux
     if (WIN32 OR APPLE)
         message(FATAL_ERROR "Only Linux is supported for the coverage analysis.")
@@ -333,7 +337,7 @@ if (uppercase_CMAKE_BUILD_TYPE MATCHES COVERAGE)
         set(PLSSVM_DEMANGLE_USING_CPPFILT --demangle-cpp)
     endif ()
 
-    # Create the coverage target. Run coverage tests with 'ctest --build . --target coverage'
+    # Create the coverage target. Run coverage tests with 'cmake --build --preset XXX --target coverage'.
     set(PLSSVM_COVERAGE_REPORT_OUTPUT_DIRECTORY "coverage_report")
     add_custom_target(
         coverage
@@ -373,11 +377,11 @@ if (uppercase_CMAKE_BUILD_TYPE MATCHES COVERAGE)
     # add custom target `make clean_coverage` which calls `make clean` and also removes all generate *.gcda and *.gcno files
     add_custom_target(clean_coverage)
     add_custom_command(
-        DEPENDS clean
+        POST_BUILD TARGET clean_coverage
         COMMENT "remove all coverage files"
         COMMAND ${CMAKE_MAKE_PROGRAM} clean
         COMMAND ${CMAKE_COMMAND} -E remove -f coverage.info coverage_init.info coverage_tests.info ${PLSSVM_COVERAGE_REPORT_OUTPUT_DIRECTORY}
-        COMMAND ${CMAKE_COMMAND} -P "${CMAKE_CURRENT_SOURCE_DIR}/cmake/delete_coverage_files.cmake" TARGET clean_coverage
+        COMMAND ${CMAKE_COMMAND} -P "${CMAKE_CURRENT_SOURCE_DIR}/cmake/delete_coverage_files.cmake"
     )
     list(POP_BACK CMAKE_MESSAGE_INDENT)
 endif ()
@@ -639,6 +643,34 @@ if (PLSSVM_ENABLE_LTO)
 endif ()
 
 ########################################################################################################################
+#                          enable the requested vectorization widths for the auto-vectorizers                          #
+########################################################################################################################
+# GCC and clang both do not automatically auto-vectorize for AVX-512 (only AVX2)
+# -> enable it if "cpu:avx512" was passed as PLSSVM_TARGET_PLATFORMS
+if (PLSSVM_NUM_CPU_TARGET_ARCHS EQUAL 1)
+    if (${PLSSVM_CPU_TARGET_ARCHS} STREQUAL "avx512")
+        message(STATUS "Enabling AVX512 support for the auto-vectorizers (-mprefer-vector-width=512).")
+        target_compile_options(
+            ${PLSSVM_BASE_LIBRARY_NAME} PUBLIC $<$<COMPILE_LANGUAGE:CXX>:$<$<CXX_COMPILER_ID:GNU,Clang,IntelLLVM>:-mprefer-vector-width=512>>
+        )
+    elseif (${PLSSVM_CPU_TARGET_ARCHS} STREQUAL "avx2" OR ${PLSSVM_CPU_TARGET_ARCHS} STREQUAL "avx")
+        message(STATUS "Enabling AVX/AVX2 support for the auto-vectorizers (-mprefer-vector-width=256).")
+        target_compile_options(
+            ${PLSSVM_BASE_LIBRARY_NAME} PUBLIC $<$<COMPILE_LANGUAGE:CXX>:$<$<CXX_COMPILER_ID:GNU,Clang,IntelLLVM>:-mprefer-vector-width=256>>
+        )
+    elseif (${PLSSVM_CPU_TARGET_ARCHS} MATCHES "^sse")
+        message(STATUS "Enabling SSE for the auto-vectorizers (-mprefer-vector-width=128).")
+        target_compile_options(
+            ${PLSSVM_BASE_LIBRARY_NAME} PUBLIC $<$<COMPILE_LANGUAGE:CXX>:$<$<CXX_COMPILER_ID:GNU,Clang,IntelLLVM>:-mprefer-vector-width=128>>
+        )
+    else ()
+        message(FATAL_ERROR "Unrecognized CPU target architecture \"${PLSSVM_CPU_TARGET_ARCHS}\". Allowed values are: avx512, avx2, avx, sse.")
+    endif ()
+else ()
+    # automatically use the "optimal" auto-vectorizer width
+endif ()
+
+########################################################################################################################
 #                                     check for optional and necessary dependencies                                    #
 ########################################################################################################################
 # setup dependencies
@@ -646,8 +678,8 @@ include(FetchContent)
 list(APPEND CMAKE_MESSAGE_INDENT "Dependencies:  ")
 
 # try finding cxxopts
-set(PLSSVM_cxxopts_VERSION v3.2.0)
-find_package(cxxopts 3.2.0 QUIET)
+set(PLSSVM_cxxopts_VERSION v3.3.1)
+find_package(cxxopts 3.3.1 QUIET)
 if (cxxopts_FOUND)
     message(STATUS "Found package cxxopts.")
     target_include_directories(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC ${cxxopts_INCLUDE_DIR})
@@ -675,8 +707,8 @@ endif ()
 # ~~~
 set(PLSSVM_FAST_FLOAT_WRAPPER_LIBRARY_NAME plssvm-fast_float-wrapper)
 add_library(${PLSSVM_FAST_FLOAT_WRAPPER_LIBRARY_NAME} SHARED ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/fast_float_wrapper.cpp)
-set(PLSSVM_fast_float_VERSION v8.0.2)
-find_package(fast_float 8.0.0 QUIET)
+set(PLSSVM_fast_float_VERSION v8.1.0)
+find_package(fast_float 8.1.0 QUIET)
 if (fast_float_FOUND)
     message(STATUS "Found package fast_float.")
     target_include_directories(${PLSSVM_FAST_FLOAT_WRAPPER_LIBRARY_NAME} PUBLIC ${fast_float_INCLUDE_DIR})
@@ -715,7 +747,7 @@ target_link_libraries(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC ${PLSSVM_FAST_FLOAT_WRA
 list(APPEND PLSSVM_TARGETS_TO_INSTALL "${PLSSVM_FAST_FLOAT_WRAPPER_LIBRARY_NAME}")
 
 # try finding igor
-set(PLSSVM_igor_VERSION a5224c60d266974d3f407191583fe266cbe1c93d)
+set(PLSSVM_igor_VERSION fef608b458ab2fca736ac8e415e4d4160a48745d) # can't use a newer commit since igor switch to mandatory C++20
 find_package(igor QUIET)
 if (igor_FOUND)
     message(STATUS "Found package igor.")
@@ -725,6 +757,8 @@ else ()
     target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PRIVATE PLSSVM_igor_VERSION="${PLSSVM_igor_VERSION}")
     # set options for igor
     set(IGOR_BUILD_TESTS OFF CACHE INTERNAL "" FORCE)
+    # disable additional compiler flags check (only warning flags) since for some reasons it takes ages with stdpar compilers
+    set(_YACMACompilerLinkerSettingsIncluded ON CACHE INTERNAL "" FORCE)
     # fetch named argument library igor
     FetchContent_Declare(
         igor
@@ -768,6 +802,7 @@ else ()
     )
     FetchContent_MakeAvailable(fmt)
     set_property(TARGET fmt PROPERTY POSITION_INDEPENDENT_CODE ON)
+    set_target_properties(fmt PROPERTIES CXX_CLANG_TIDY "")
     target_compile_definitions(fmt PRIVATE FMT_USE_FULL_CACHE_DRAGONBOX)
     if (${CMAKE_SYSTEM_PROCESSOR} MATCHES "ppc64le")
         target_compile_definitions(fmt PUBLIC FMT_USE_FLOAT128=0)
@@ -803,6 +838,58 @@ if (PLSSVM_ENABLE_FORMATTING)
             QUIET
         )
         FetchContent_MakeAvailable(format)
+    endif ()
+
+    list(POP_BACK CMAKE_MESSAGE_INDENT)
+endif ()
+
+########################################################################################################################
+#                                       enable clang-tidy static analyzer checks                                       #
+########################################################################################################################
+option(PLSSVM_ENABLE_CLANG_TIDY "Enable clang-tidy static code analysis." OFF)
+if (PLSSVM_ENABLE_CLANG_TIDY)
+    list(APPEND CMAKE_MESSAGE_INDENT "clang-tidy:  ")
+    message(CHECK_START "Checking for clang-tidy executable")
+
+    # check if the clang-tidy executable is available
+    find_program(PLSSVM_CLANG_TIDY_EXE clang-tidy) # usage as part of the compilation process (can't analyse headers)
+    find_program(PLSSVM_RUN_CLANG_TIDY_EXE run-clang-tidy) # usage as standalone target (can analyse headers)
+    if (NOT PLSSVM_CLANG_TIDY_EXE OR NOT PLSSVM_RUN_CLANG_TIDY_EXE)
+        # clang-tidy executable not found
+        message(CHECK_FAIL "not found")
+        message(SEND_ERROR "Cannot find requested clang-tidy/run-clang-tidy for static analysis!")
+    else ()
+        # clang-tidy executable found -> enable it
+        message(CHECK_PASS "found")
+
+        # clang-tidy support during compilation
+        message(STATUS "Enabling static analysis via clang-tidy during compilation.")
+        set(CMAKE_CXX_CLANG_TIDY "clang-tidy;-quiet")
+
+        # custom clang-tidy target that also supports headers
+        message(STATUS "Enabling custom clang-tidy-all target.")
+
+        # create a custom command that filters unwanted flags
+        add_custom_target(
+            filter_compile_commands
+            COMMAND ${CMAKE_COMMAND} -DPLSSVM_COMPILE_COMMANDS_JSON_FILE=${CMAKE_BINARY_DIR}/compile_commands.json -P
+                    ${CMAKE_SOURCE_DIR}/cmake/filter_compile_commands.cmake
+            COMMENT "Generating a sanitized compile_commands.json"
+            VERBATIM
+        )
+
+        # create the custom target
+        add_custom_target(
+            clang-tidy-all COMMAND ${PLSSVM_RUN_CLANG_TIDY_EXE} -p "${CMAKE_BINARY_DIR}" -quiet "${PROJECT_SOURCE_DIR}/src"
+                                   "${PROJECT_SOURCE_DIR}/bindings/Python" "${PROJECT_SOURCE_DIR}/tests" DEPENDS filter_compile_commands
+        )
+
+        # clang-tidy is not supported by all backends
+        message(
+            WARNING
+                "Since some backends use special compilers with custom compiler flags that are NOT understood by clang-tidy, the target may fail to correctly build! "
+                "Some precautions are taken to make the clang-tidy-all target more compatible with these special compilers, but it does not work in all cases!"
+        )
     endif ()
 
     list(POP_BACK CMAKE_MESSAGE_INDENT)
@@ -914,16 +1001,16 @@ if (TARGET ${PLSSVM_SYCL_BACKEND_LIBRARY_NAME})
 choose the SYCL implementation to be used in the SYCL backend: ${PLSSVM_SYCL_BACKEND_NAME_LIST} (default: automatic)
 "
     )
-    string(REPLACE ";" "|" PLSSVM_SYCL_KERNEL_INVOCATION_TYPE_NAME_LIST "${PLSSVM_SYCL_KERNEL_INVOCATION_TYPE_NAME_LIST}")
-    set(PLSSVM_SYCL_KERNEL_INVOCATION_TYPE_MANPAGE_ENTRY
+    string(REPLACE ";" "|" PLSSVM_SYCL_DATA_PARALLEL_KERNEL_NAME_LIST "${PLSSVM_SYCL_DATA_PARALLEL_KERNEL_NAME_LIST}")
+    set(PLSSVM_SYCL_DATA_PARALLEL_KERNEL_MANPAGE_ENTRY
         "
 .TP
-.B --sycl_kernel_invocation_type
-choose the kernel invocation type when using SYCL as backend: ${PLSSVM_SYCL_KERNEL_INVOCATION_TYPE_NAME_LIST} (default: automatic)
+.B --sycl_data_parallel_kernel
+choose the data parallel kernel when using SYCL as backend: ${PLSSVM_SYCL_DATA_PARALLEL_KERNEL_NAME_LIST} (default: automatic)
 "
     )
 endif ()
-set(PLSSVM_SYCL_MANPAGE_ENTRY "${PLSSVM_SYCL_KERNEL_INVOCATION_TYPE_MANPAGE_ENTRY}${PLSSVM_SYCL_IMPLEMENTATION_TYPE_MANPAGE_ENTRY}")
+set(PLSSVM_SYCL_MANPAGE_ENTRY "${PLSSVM_SYCL_DATA_PARALLEL_KERNEL_MANPAGE_ENTRY}${PLSSVM_SYCL_IMPLEMENTATION_TYPE_MANPAGE_ENTRY}")
 # assemble the Kokkos manpage entry
 if (TARGET ${PLSSVM_KOKKOS_BACKEND_LIBRARY_NAME})
     string(REPLACE ";" "|" PLSSVM_KOKKOS_BACKEND_AVAILABLE_EXECUTION_SPACES "${PLSSVM_KOKKOS_BACKEND_AVAILABLE_EXECUTION_SPACES}")

@@ -21,11 +21,11 @@ jobs:
         run: |
           sudo apt install libopenmpi-dev
       - name: "Clone the PLSSVM repository into PLSSVM/"
-        uses: actions/checkout@v4.1.1
+        uses: actions/checkout@v6.0.1
         with:
           path: PLSSVM
       - name: "Set up Python"
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6.1.0
         with:
           python-version: "3.11"
       - name: "Create and activate virtual environment"

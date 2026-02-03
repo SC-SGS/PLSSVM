@@ -8,10 +8,10 @@
 
 #include "plssvm/backends/OpenCL/detail/jit_info.hpp"
 
-#include "fmt/chrono.h"  // format std::chrono types
+#include "fmt/chrono.h"  // NOLINT(misc-include-cleaner): format std::chrono types
 #include "fmt/format.h"  // fmt::format
 
-#include <chrono>   // std::chrono::milliseconds
+#include <chrono>   // NOLINT(misc-include-cleaner): std::chrono::milliseconds
 #include <ostream>  // std::ostream
 #include <string>   // std::string
 

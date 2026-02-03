@@ -152,7 +152,7 @@ class classification_report {
 
   private:
     /// The confusion matrix.
-    aos_matrix<unsigned long long> confusion_matrix_{};
+    aos_matrix<unsigned long long> confusion_matrix_;
     /// The metrics for each label: precision, recall, f1 score, and support.
     std::vector<std::pair<std::string, metric>> metrics_;
     /// The global accuracy.
@@ -180,7 +180,7 @@ namespace detail {
 
 template <typename label_type, typename... Args>
 classification_report::classification_report(const std::vector<label_type> &correct_label, const std::vector<label_type> &predicted_label, Args &&...named_args) {
-    // sanity check for input correct sizes
+    // perform sanity checks on the sizes of the input vectors
     if (correct_label.empty()) {
         throw classification_report_exception{ "The correct labels list must not be empty!" };
     }
@@ -191,7 +191,7 @@ classification_report::classification_report(const std::vector<label_type> &corr
         throw classification_report_exception{ fmt::format("The number of correct labels ({}) and predicted labels ({}) must be the same!", correct_label.size(), predicted_label.size()) };
     }
 
-    igor::parser parser{ std::forward<Args>(named_args)... };
+    const igor::parser parser{ std::forward<Args>(named_args)... };
 
     // compile time check: only named parameter are permitted
     static_assert(!parser.has_unnamed_arguments(), "Can only use named parameter!");

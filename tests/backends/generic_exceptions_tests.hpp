@@ -38,7 +38,7 @@ class Exception : public ::testing::Test { };
 TYPED_TEST_SUITE_P(Exception);
 
 // check whether throwing exceptions works as intended
-TYPED_TEST_P(Exception, throwing_exception) {
+TYPED_TEST_P(Exception, ThrowingException) {
     using exception_type = typename TypeParam::exception_type;
 
     // throw the specified exception
@@ -47,10 +47,10 @@ TYPED_TEST_P(Exception, throwing_exception) {
 }
 
 // check whether the source location information are populated correctly
-TYPED_TEST_P(Exception, exception_source_location) {
+TYPED_TEST_P(Exception, ExceptionSourceLocation) {
     using exception_type = typename TypeParam::exception_type;
 
-    const exception_type exc = dummy<exception_type>("exception message");
+    const auto exc = dummy<exception_type>("exception message");
 
     EXPECT_EQ(exc.loc().file_name(), std::string{ __builtin_FILE() });
     EXPECT_THAT(exc.loc().function_name(), ::testing::HasSubstr("dummy"));
@@ -59,11 +59,11 @@ TYPED_TEST_P(Exception, exception_source_location) {
 }
 
 // check whether what message including the source location information is assembled correctly
-TYPED_TEST_P(Exception, exception_what_with_source_location) {
+TYPED_TEST_P(Exception, ExceptionWhatWithSourceLocation) {
     using exception_type = typename TypeParam::exception_type;
     constexpr std::string_view exception_name = TypeParam::name;
 
-    const exception_type exc = dummy<exception_type>("exception message");
+    const auto exc = dummy<exception_type>("exception message");
 
     // get exception message with source location information split into a vector of separate lines
     const std::string what = exc.what_with_loc();
@@ -81,8 +81,8 @@ TYPED_TEST_P(Exception, exception_what_with_source_location) {
 }
 
 REGISTER_TYPED_TEST_SUITE_P(Exception,
-                            throwing_exception,
-                            exception_source_location,
-                            exception_what_with_source_location);
+                            ThrowingException,
+                            ExceptionSourceLocation,
+                            ExceptionWhatWithSourceLocation);
 
 #endif  // PLSSVM_TESTS_BACKENDS_GENERIC_EXCEPTIONS_TESTS_HPP_

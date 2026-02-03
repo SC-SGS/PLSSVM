@@ -23,7 +23,7 @@
 #include "tests/utility.hpp"             // util::{temporary_file, instantiate_template_file, get_correct_data_file_labels, get_distinct_label, generate_specific_matrix, generate_specific_sparse_matrix}
 
 #include "fmt/format.h"   // fmt::format
-#include "fmt/std.h"      // format std::vector<bool>::operator[] proxy type
+#include "fmt/std.h"      // NOLINT: format std::vector<bool>::operator[] proxy type
 #include "gmock/gmock.h"  // ::testing::HasSubstr
 #include "gtest/gtest.h"  // TEST, TEST_P, TYPED_TEST, TYPED_TEST_SUITE, INSTANTIATE_TEST_SUITE_P, EXPECT_EQ, EXPECT_TRUE, EXPECT_DEATH, ASSERT_EQ, FAIL
                           // ::testing::{Test, TestWithParam, Values}
@@ -36,7 +36,7 @@
 
 class LIBSVMParseNumFeatures : public ::testing::TestWithParam<std::pair<std::string, std::size_t>> { };
 
-TEST_P(LIBSVMParseNumFeatures, num_features) {
+TEST_P(LIBSVMParseNumFeatures, NumFeatures) {
     const auto &[filename_part, num_features] = GetParam();
 
     // parse the LIBSVM file
@@ -55,7 +55,7 @@ INSTANTIATE_TEST_SUITE_P(LIBSVMParse, LIBSVMParseNumFeatures, ::testing::Values(
                                                       std::make_pair("/data/empty.txt", 0)));
 // clang-format on
 
-TEST(LIBSVMParseNumFeatures, index_with_alpha_char_at_the_beginning) {
+TEST(LIBSVMParseNumFeatures, IndexWithAlphaCharAtTheBeginning) {
     // parse the LIBSVM file
     const std::string filename = PLSSVM_TEST_PATH "/data/libsvm/invalid/index_with_alpha_char_at_the_beginning.libsvm";
     plssvm::detail::io::file_reader reader{ filename };
@@ -149,7 +149,7 @@ class LIBSVMParse : public ::testing::Test {
 
 TYPED_TEST_SUITE(LIBSVMParse, util::label_type_gtest, naming::test_parameter_to_name);
 
-TYPED_TEST(LIBSVMParseDense, read) {
+TYPED_TEST(LIBSVMParseDense, Read) {
     using label_type = typename TestFixture::fixture_label_type;
 
     // parse the LIBSVM file
@@ -166,7 +166,7 @@ TYPED_TEST(LIBSVMParseDense, read) {
     EXPECT_EQ(label, this->get_correct_label());
 }
 
-TYPED_TEST(LIBSVMParseSparse, read) {
+TYPED_TEST(LIBSVMParseSparse, Read) {
     using label_type = typename TestFixture::fixture_label_type;
 
     // parse the LIBSVM file
@@ -183,7 +183,7 @@ TYPED_TEST(LIBSVMParseSparse, read) {
     EXPECT_EQ(label, this->get_correct_label());
 }
 
-TYPED_TEST(LIBSVMParse, read_without_label) {
+TYPED_TEST(LIBSVMParse, ReadWithoutLabel) {
     using label_type = typename TestFixture::fixture_label_type;
 
     // parse the LIBSVM file
@@ -205,7 +205,7 @@ TYPED_TEST(LIBSVMParse, read_without_label) {
     EXPECT_TRUE(label.empty());
 }
 
-TYPED_TEST(LIBSVMParse, zero_based_features) {
+TYPED_TEST(LIBSVMParse, ZeroBasedFeatures) {
     using label_type = typename TestFixture::fixture_label_type;
 
     // parse the LIBSVM file
@@ -217,7 +217,7 @@ TYPED_TEST(LIBSVMParse, zero_based_features) {
                       "LIBSVM assumes a 1-based feature indexing scheme, but 0 was given!");
 }
 
-TYPED_TEST(LIBSVMParse, arff_file) {
+TYPED_TEST(LIBSVMParse, ARFFFile) {
     using label_type = typename TestFixture::fixture_label_type;
 
     // parse the ARFF file
@@ -227,7 +227,7 @@ TYPED_TEST(LIBSVMParse, arff_file) {
     EXPECT_THROW(std::ignore = (plssvm::detail::io::parse_libsvm_data<label_type>(reader)), plssvm::invalid_file_format_exception);
 }
 
-TYPED_TEST(LIBSVMParse, empty) {
+TYPED_TEST(LIBSVMParse, Empty) {
     using label_type = typename TestFixture::fixture_label_type;
 
     // parse the LIBSVM file
@@ -239,7 +239,7 @@ TYPED_TEST(LIBSVMParse, empty) {
                       "Can't parse file: no data points are given!");
 }
 
-TYPED_TEST(LIBSVMParse, feature_with_alpha_char_at_the_beginning) {
+TYPED_TEST(LIBSVMParse, FeatureWithAlphaCharAtTheBeginning) {
     using label_type = typename TestFixture::fixture_label_type;
 
     // parse the LIBSVM file
@@ -251,7 +251,7 @@ TYPED_TEST(LIBSVMParse, feature_with_alpha_char_at_the_beginning) {
                       fmt::format("Can't convert 'a-1.11' to a value of type {}!", plssvm::detail::arithmetic_type_name<plssvm::real_type>()));
 }
 
-TYPED_TEST(LIBSVMParse, index_with_alpha_char_at_the_beginning) {
+TYPED_TEST(LIBSVMParse, IndexWithAlphaCharAtTheBeginning) {
     using label_type = typename TestFixture::fixture_label_type;
 
     // parse the LIBSVM file
@@ -263,7 +263,7 @@ TYPED_TEST(LIBSVMParse, index_with_alpha_char_at_the_beginning) {
                       "Can't convert ' !2' to a value of type unsigned long!");
 }
 
-TYPED_TEST(LIBSVMParse, invalid_colon_at_the_beginning) {
+TYPED_TEST(LIBSVMParse, InvalidColonAtTheBeginning) {
     using label_type = typename TestFixture::fixture_label_type;
 
     // parse the LIBSVM file
@@ -275,7 +275,7 @@ TYPED_TEST(LIBSVMParse, invalid_colon_at_the_beginning) {
                       "Can't convert '' to a value of type unsigned long!");
 }
 
-TYPED_TEST(LIBSVMParse, invalid_colon_in_the_middle) {
+TYPED_TEST(LIBSVMParse, InvalidColonInTheMiddle) {
     using label_type = typename TestFixture::fixture_label_type;
 
     // parse the LIBSVM file
@@ -287,7 +287,7 @@ TYPED_TEST(LIBSVMParse, invalid_colon_in_the_middle) {
                       "Can't convert ' :2' to a value of type unsigned long!");
 }
 
-TYPED_TEST(LIBSVMParse, missing_feature_value) {
+TYPED_TEST(LIBSVMParse, MissingFeatureValue) {
     using label_type = typename TestFixture::fixture_label_type;
 
     // parse the LIBSVM file
@@ -299,7 +299,7 @@ TYPED_TEST(LIBSVMParse, missing_feature_value) {
                       fmt::format("Can't convert '' to a value of type {}!", plssvm::detail::arithmetic_type_name<plssvm::real_type>()));
 }
 
-TYPED_TEST(LIBSVMParse, missing_index_value) {
+TYPED_TEST(LIBSVMParse, MissingIndexValue) {
     using label_type = typename TestFixture::fixture_label_type;
 
     // parse the LIBSVM file
@@ -311,7 +311,7 @@ TYPED_TEST(LIBSVMParse, missing_index_value) {
                       "Can't convert ' ' to a value of type unsigned long!");
 }
 
-TYPED_TEST(LIBSVMParse, inconsistent_label_specification) {
+TYPED_TEST(LIBSVMParse, InconsistentLabelSpecification) {
     using label_type = typename TestFixture::fixture_label_type;
 
     // parse the LIBSVM file
@@ -323,7 +323,7 @@ TYPED_TEST(LIBSVMParse, inconsistent_label_specification) {
                       "Inconsistent label specification found (some data points are labeled, others are not)!");
 }
 
-TYPED_TEST(LIBSVMParse, non_increasing_indices) {
+TYPED_TEST(LIBSVMParse, NonIncreasingIndices) {
     using label_type = typename TestFixture::fixture_label_type;
 
     // parse the LIBSVM file
@@ -335,7 +335,7 @@ TYPED_TEST(LIBSVMParse, non_increasing_indices) {
                       "The features indices must be strictly increasing, but 3 is smaller or equal than 3!");
 }
 
-TYPED_TEST(LIBSVMParse, non_strictly_increasing_indices) {
+TYPED_TEST(LIBSVMParse, NonStrictlyIncreasingIndices) {
     using label_type = typename TestFixture::fixture_label_type;
 
     // parse the LIBSVM file
@@ -355,7 +355,7 @@ class LIBSVMParseDeathTest : public ::testing::Test {
 
 TYPED_TEST_SUITE(LIBSVMParseDeathTest, util::label_type_gtest, naming::test_parameter_to_name);
 
-TYPED_TEST(LIBSVMParseDeathTest, invalid_file_reader) {
+TYPED_TEST(LIBSVMParseDeathTest, InvalidFileReader) {
     using label_type = typename TestFixture::fixture_label_type;
 
     // open file_reader without associating it to a file
@@ -378,7 +378,7 @@ class LIBSVMWriteDeathTest : public LIBSVMWrite<T> { };
 
 TYPED_TEST_SUITE(LIBSVMWriteDeathTest, util::label_type_gtest, naming::test_parameter_to_name);
 
-TYPED_TEST(LIBSVMWrite, write_dense_with_label) {
+TYPED_TEST(LIBSVMWrite, WriteDenseWithLabel) {
     using label_type = typename TestFixture::fixture_label_type;
 
     // define data to write
@@ -409,7 +409,7 @@ TYPED_TEST(LIBSVMWrite, write_dense_with_label) {
     }
 }
 
-TYPED_TEST(LIBSVMWrite, write_dense_without_label) {
+TYPED_TEST(LIBSVMWrite, WriteDenseWithoutLabel) {
     // define data to write
     const auto data = util::generate_specific_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ 3, 3 });
 
@@ -437,7 +437,7 @@ TYPED_TEST(LIBSVMWrite, write_dense_without_label) {
     }
 }
 
-TYPED_TEST(LIBSVMWrite, write_sparse_with_label) {
+TYPED_TEST(LIBSVMWrite, WriteSparseWithLabel) {
     using label_type = typename TestFixture::fixture_label_type;
 
     // define data to write
@@ -475,7 +475,7 @@ TYPED_TEST(LIBSVMWrite, write_sparse_with_label) {
     }
 }
 
-TYPED_TEST(LIBSVMWrite, write_sparse_without_label) {
+TYPED_TEST(LIBSVMWrite, WriteSparseWithoutLabel) {
     // define data to write
     const auto data = util::generate_specific_sparse_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ 3, 3 });
 
@@ -510,7 +510,7 @@ TYPED_TEST(LIBSVMWrite, write_sparse_without_label) {
     }
 }
 
-TYPED_TEST(LIBSVMWrite, empty_data) {
+TYPED_TEST(LIBSVMWrite, EmptyData) {
     using label_type = typename TestFixture::fixture_label_type;
 
     // define data to write
@@ -528,7 +528,7 @@ TYPED_TEST(LIBSVMWrite, empty_data) {
     EXPECT_TRUE(reader.lines().empty());
 }
 
-TYPED_TEST(LIBSVMWriteDeathTest, data_with_provided_empty_labels) {
+TYPED_TEST(LIBSVMWriteDeathTest, DataWithProvidedEmptyLabels) {
     using label_type = typename TestFixture::fixture_label_type;
 
     // define data to write
@@ -539,7 +539,7 @@ TYPED_TEST(LIBSVMWriteDeathTest, data_with_provided_empty_labels) {
     EXPECT_DEATH(plssvm::detail::io::write_libsvm_data(this->filename, data, label), "has_label is 'true' but no labels were provided!");
 }
 
-TYPED_TEST(LIBSVMWriteDeathTest, data_and_label_size_mismatch) {
+TYPED_TEST(LIBSVMWriteDeathTest, DataAndLabelSizeMismatch) {
     using label_type = typename TestFixture::fixture_label_type;
 
     // define data to write
@@ -551,7 +551,7 @@ TYPED_TEST(LIBSVMWriteDeathTest, data_and_label_size_mismatch) {
                  ::testing::HasSubstr("Number of data points (2) and number of labels (1) mismatch!"));
 }
 
-TYPED_TEST(LIBSVMWriteDeathTest, labels_provided_but_not_written) {
+TYPED_TEST(LIBSVMWriteDeathTest, LabelsProvidedButNotWritten) {
     using label_type = typename TestFixture::fixture_label_type;
 
     // define data to write

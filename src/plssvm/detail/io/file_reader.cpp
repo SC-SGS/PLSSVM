@@ -28,14 +28,15 @@
 
 #ifdef _OPENMP
     #include "omp.h"
+
+    #include <cstddef>  // std::size_t
+    #include <deque>    // std::deque
 #endif
 
 #include <algorithm>    // std::min
 #include <climits>      // INT32_MAX
 #include <cmath>        // std::ceil
-#include <cstddef>      // std::size_t
 #include <cstdint>      // INT_MAX
-#include <deque>        // std::deque
 #include <filesystem>   // std::filesystem::path
 #include <fstream>      // std::ifstream
 #include <ios>          // std::ios, std::streamsize
@@ -296,12 +297,12 @@ const char *file_reader::buffer() const noexcept {
 #if defined(PLSSVM_HAS_MEMORY_MAPPING_UNIX)
 void file_reader::open_memory_mapped_file_unix([[maybe_unused]] const char *filename) {
     // open the file
-    file_descriptor_ = ::open(filename, O_RDONLY);
+    file_descriptor_ = ::open(filename, O_RDONLY);  // NOLINT: only way to get a file descriptor to later call mmap
 
     struct stat attr { };
 
     // check if file could be opened
-    if (fstat(file_descriptor_, &attr) == -1) {
+    if (fstat(file_descriptor_, &attr) == -1) {  // NOLINT(clang-analyzer-unix.StdCLibraryFunctions)
         ::close(file_descriptor_);
         throw file_not_found_exception{ fmt::format("Couldn't find file: '{}'!", filename) };
     }
@@ -399,7 +400,7 @@ void file_reader::open_file(const char *filename) {
         fallback_file_content_.resize(num_bytes_);
         for (std::streamsize i = 0; i < static_cast<std::streamsize>(std::ceil(static_cast<double>(num_bytes_) / INT32_MAX)); ++i) {
             // read the whole file in chunks of up to INT32_MAX bytes at once
-            if (!f.read(fallback_file_content_.data() + i * INT32_MAX, std::min<std::streamsize>(INT32_MAX, num_bytes_ - i * INT32_MAX))) {
+            if (!f.read(&fallback_file_content_[i * INT32_MAX], std::min<std::streamsize>(INT32_MAX, num_bytes_ - i * INT32_MAX))) {
                 throw invalid_file_format_exception{ fmt::format("Error while reading file: '{}'!", filename) };
             }
         }

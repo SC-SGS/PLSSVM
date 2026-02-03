@@ -39,12 +39,16 @@ device_ptr<T>::device_ptr(const plssvm::shape shape, const queue_type device) :
 template <typename T>
 device_ptr<T>::device_ptr(const plssvm::shape shape, const plssvm::shape padding, const queue_type device) :
     base_type{ shape, padding, device } {
-    if (queue_ < 0 || queue_ >= static_cast<int>(get_device_count())) {
+    if (queue_ < 0 || queue_ >= get_device_count()) {
         throw backend_exception{ fmt::format("Illegal device ID! Must be in range: [0, {}) but is {}.", get_device_count(), queue_) };
     }
-    detail::set_device(queue_);
-    PLSSVM_HIP_ERROR_CHECK(hipMalloc(&data_, this->size_padded() * sizeof(value_type)))
-    this->memset(0);
+
+    // only non-empty pointers must be memset in the constructor
+    if (this->size_padded() != std::size_t{ 0 }) {
+        detail::set_device(queue_);
+        PLSSVM_HIP_ERROR_CHECK(hipMalloc(&data_, this->size_padded() * sizeof(value_type)))
+        this->memset(0);
+    }
 }
 
 template <typename T>
@@ -80,16 +84,29 @@ void device_ptr<T>::fill(const value_type value, const size_type pos, const size
         throw backend_exception{ fmt::format("Illegal access in fill!: {} >= {}", pos, this->size_padded()) };
     }
 
+    const size_type rcount = std::min(count, this->size_padded() - pos);
+
+#if defined(PLSSVM_HIP_BACKEND_USE_CUDA_RUNTIME)
+    // TODO: For some reason, the HIP kernel is NOT called in the tests when running HIP on an NVIDIA GPU (the separate kernel test, however, passes...)
+    //       However, this is not a big deal since the fill function is never used inside the actual application code.
+    std::vector<value_type> temp(this->size_padded());
+    this->copy_to_host(temp);
+    #pragma omp parallel for
+    for (std::size_t i = 0; i < rcount; ++i) {
+        temp[pos + i] = value;
+    }
+    this->copy_to_device(temp);
+#else
     detail::set_device(queue_);
 
     // run GPU kernel
-    const size_type rcount = std::min(count, this->size_padded() - pos);
     constexpr unsigned int block_size = 512;
     const unsigned int grid_size = (static_cast<unsigned int>(rcount) + block_size - 1) / block_size;
     detail::fill_array<<<grid_size, block_size>>>(data_, value, pos, rcount);
 
     detail::peek_at_last_error();
     detail::device_synchronize(queue_);
+#endif
 }
 
 template <typename T>

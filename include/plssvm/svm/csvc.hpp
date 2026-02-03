@@ -21,7 +21,7 @@
 #include "plssvm/detail/logging/mpi_log.hpp"               // plssvm::detail::log
 #include "plssvm/detail/logging/mpi_log_untracked.hpp"     // plssvm::detail::log_untracked
 #include "plssvm/detail/tracking/performance_tracker.hpp"  // PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_EVENT, plssvm::detail::tracking::tracking_entry
-#include "plssvm/detail/utility.hpp"                       // plssvm::detail::contains
+#include "plssvm/detail/utility.hpp"                       // plssvm::detail::{contains, check_local_memory_usage}
 #include "plssvm/exceptions/exceptions.hpp"                // plssvm::invalid_parameter_exception, plssvm::mpi_exception
 #include "plssvm/gamma.hpp"                                // plssvm::calculate_gamma_value
 #include "plssvm/kernel_function_types.hpp"                // plssvm::kernel_function_type
@@ -32,6 +32,7 @@
 #include "plssvm/svm/csvm.hpp"                             // plssvm::csvm
 #include "plssvm/verbosity_levels.hpp"                     // plssvm::verbosity_level
 
+#include "fmt/format.h"   // fmt::format
 #include "igor/igor.hpp"  // igor::parser
 
 #include <algorithm>    // std::all_of, std::merge
@@ -100,7 +101,7 @@ class csvc : virtual public csvm {
     /**
      * @copydoc plssvm::csvm::~csvm() noexcept
      */
-    ~csvc() noexcept = default;
+    ~csvc() noexcept override = default;
 
     //*************************************************************************************************************************************//
     //                                                              fit model                                                              //
@@ -143,7 +144,7 @@ class csvc : virtual public csvm {
 
         PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_EVENT("fit start");
 
-        igor::parser parser{ named_args... };
+        const igor::parser parser{ named_args... };
 
         // set default values
         // note: if the default value is changed, they must also be changed in the Python bindings!
@@ -260,7 +261,7 @@ class csvc : virtual public csvm {
                                               data.mapping_->get_label_by_mapped_index(j),
                                               pos + 1,
                                               calculate_number_of_classifiers(classification_type::oao, num_classes));
-                        const auto &[alpha, rho, num_iter] = this->solve_lssvm_system_of_linear_equations(binary_data, binary_y, params, std::forward<Args>(named_args)...);
+                        const auto &[alpha, rho, num_iter] = this->solve_lssvm_system_of_linear_equations(binary_data, binary_y, params, named_args...);
                         (*csvc_model.alpha_ptr_)[pos] = std::move(alpha);
                         (*csvc_model.rho_ptr_)[pos] = rho.front();  // prevents std::tie
                         num_iters.push_back(num_iter.front());
@@ -334,6 +335,9 @@ class csvc : virtual public csvm {
         if (comm_ != data.communicator()) {
             throw mpi_exception{ "The MPI communicators provided to the C-SVC and data set must be identical!" };
         }
+
+        // determine the used local memory and check whether it exceeds the maximum necessary value!
+        detail::check_local_memory_usage(this->get_local_memory());
 
         PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_EVENT("predict start");
 
@@ -412,12 +416,12 @@ class csvc : virtual public csvm {
                         if (num_classes == 2) {
                             // no special assembly needed in binary case
                             return model.support_vectors();
-                        } else {
-                            // note: if this is changed, it must also be changed in the libsvm_model_parsing.hpp in the calculate_alpha_idx function!!!
-                            // order the indices in increasing order
-                            soa_matrix<real_type> temp{ shape{ num_data_points_in_sub_matrix, num_features }, shape{ PADDING_SIZE, PADDING_SIZE } };
-                            std::vector<std::size_t> sorted_indices(num_data_points_in_sub_matrix);
-                            std::merge(index_sets[i].cbegin(), index_sets[i].cend(), index_sets[j].cbegin(), index_sets[j].cend(), sorted_indices.begin());
+                        }
+                        // note: if this is changed, it must also be changed in the libsvm_model_parsing.hpp in the calculate_alpha_idx function!!!
+                        // order the indices in increasing order
+                        soa_matrix<real_type> temp{ shape{ num_data_points_in_sub_matrix, num_features }, shape{ PADDING_SIZE, PADDING_SIZE } };
+                        std::vector<std::size_t> sorted_indices(num_data_points_in_sub_matrix);
+                        std::merge(index_sets[i].cbegin(), index_sets[i].cend(), index_sets[j].cbegin(), index_sets[j].cend(), sorted_indices.begin());
 // copy the support vectors to the binary support vectors
 // NOTE: it seems that MSVC doesn't like the collapse clause inside a lambda function
 #if defined(_MSC_VER)
@@ -425,13 +429,12 @@ class csvc : virtual public csvm {
 #else
     #pragma omp parallel for collapse(2)
 #endif
-                            for (std::size_t si = 0; si < num_data_points_in_sub_matrix; ++si) {
-                                for (std::size_t dim = 0; dim < num_features; ++dim) {
-                                    temp(si, dim) = model.support_vectors()(sorted_indices[si], dim);
-                                }
+                        for (std::size_t si = 0; si < num_data_points_in_sub_matrix; ++si) {
+                            for (std::size_t dim = 0; dim < num_features; ++dim) {
+                                temp(si, dim) = model.support_vectors()(sorted_indices[si], dim);
                             }
-                            return temp;
                         }
+                        return temp;
                     }();
 
                     // predict binary pair
@@ -532,7 +535,8 @@ class csvc : virtual public csvm {
     template <typename label_type>
     [[nodiscard]] real_type score(const classification_model<label_type> &model, const classification_data_set<label_type> &data) const {
         // the data set must contain labels in order to score the learned model
-        if (!data.has_labels()) {
+        const std::optional<std::vector<label_type>> &correct_labels_opt = data.labels();
+        if (!correct_labels_opt.has_value()) {
             throw invalid_parameter_exception{ "The data set to score must have labels!" };
         }
         // the number of features must be equal
@@ -551,7 +555,7 @@ class csvc : virtual public csvm {
         // predict labels
         const std::vector<label_type> predicted_labels = this->predict(model, data);
         // correct labels
-        const std::vector<label_type> &correct_labels = *data.labels();
+        const std::vector<label_type> &correct_labels = correct_labels_opt.value();
 
         // calculate the accuracy
         typename std::vector<label_type>::size_type correct{ 0 };

@@ -14,16 +14,17 @@
 #include "plssvm/exceptions/exceptions.hpp"         // plssvm::data_set_exception, plssvm::mpi_exception
 #include "plssvm/file_format_types.hpp"             // plssvm::file_format_type
 #include "plssvm/matrix.hpp"                        // plssvm::matrix, plssvm::layout_type
-#include "plssvm/mpi/communicator.hpp"              // plssvm::mpi::communicator
 #include "plssvm/shape.hpp"                         // plssvm::shape
 #include "plssvm/svm_types.hpp"                     // plssvm::svm_type
 
-#include "tests/custom_test_macros.hpp"  // EXPECT_FLOATING_POINT_MATRIX_EQ, EXPECT_FLOATING_POINT_MATRIX_NEAR, EXPECT_FLOATING_POINT_NEAR, EXPECT_THROW_WHAT
+#include "tests/custom_test_macros.hpp"  // EXPECT_FLOATING_POINT_MATRIX_EQ, EXPECT_FLOATING_POINT_MATRIX_NEAR, EXPECT_FLOATING_POINT_NEAR, EXPECT_THROW_WHAT, EXPECT_OPTIONAL_EQ
 #include "tests/naming.hpp"              // naming::test_parameter_to_name
 #include "tests/types_to_test.hpp"       // util::{regression_label_type_gtest, regression_label_type_layout_type_gtest, test_parameter_type_at_t, test_parameter_value_at_v}
 #include "tests/utility.hpp"             // util::{redirect_output, temporary_file, instantiate_template_file, get_distinct_label, get_correct_data_file_labels, generate_specific_matrix, scale}
 
 #if defined(PLSSVM_HAS_MPI_ENABLED)
+    #include "plssvm/mpi/communicator.hpp"  // plssvm::mpi::communicator
+
     #include "mpi.h"  // MPI_COMM_WORLD, MPI_Comm_dup, MPI_Comm_free
 #endif
 
@@ -32,6 +33,7 @@
 #include <cstddef>      // std::size_t
 #include <tuple>        // std::get
 #include <type_traits>  // std::is_integral_v
+#include <utility>      // std::move
 #include <vector>       // std::vector
 
 template <typename T>
@@ -59,7 +61,7 @@ class RegressionDataSetConstructors : public ::testing::Test,
 
 TYPED_TEST_SUITE(RegressionDataSetConstructors, util::regression_label_type_gtest, naming::test_parameter_to_name);
 
-TYPED_TEST(RegressionDataSetConstructors, typedefs) {
+TYPED_TEST(RegressionDataSetConstructors, Typedefs) {
     using label_type = typename TestFixture::fixture_label_type;
 
     // create a data_set using an existing LIBSVM data set file
@@ -74,7 +76,7 @@ TYPED_TEST(RegressionDataSetConstructors, typedefs) {
 //                                                         construct from file                                                         //
 //*************************************************************************************************************************************//
 
-TYPED_TEST(RegressionDataSetConstructors, construct_arff_from_file_with_label) {
+TYPED_TEST(RegressionDataSetConstructors, ConstructARFFFromFileWithLabel) {
     using label_type = typename TestFixture::fixture_label_type;
 
     // create data set
@@ -85,8 +87,7 @@ TYPED_TEST(RegressionDataSetConstructors, construct_arff_from_file_with_label) {
     // check values
     EXPECT_FLOATING_POINT_MATRIX_EQ(data.data(), this->get_correct_data_points());
     EXPECT_TRUE(data.has_labels());
-    ASSERT_TRUE(data.labels().has_value());
-    EXPECT_EQ(data.labels().value().get(), correct_labels);
+    EXPECT_OPTIONAL_EQ(data.labels(), correct_labels);
 
     EXPECT_EQ(data.num_data_points(), this->get_correct_data_points().num_rows());
     EXPECT_EQ(data.num_features(), this->get_correct_data_points().num_cols());
@@ -95,7 +96,7 @@ TYPED_TEST(RegressionDataSetConstructors, construct_arff_from_file_with_label) {
     EXPECT_FALSE(data.scaling_factors().has_value());
 }
 
-TYPED_TEST(RegressionDataSetConstructors, construct_arff_from_file_without_label) {
+TYPED_TEST(RegressionDataSetConstructors, ConstructARFFFromFileWithoutLabel) {
     using label_type = typename TestFixture::fixture_label_type;
 
     // create data set
@@ -118,7 +119,7 @@ TYPED_TEST(RegressionDataSetConstructors, construct_arff_from_file_without_label
     EXPECT_FALSE(data.scaling_factors().has_value());
 }
 
-TYPED_TEST(RegressionDataSetConstructors, construct_libsvm_from_file_with_label) {
+TYPED_TEST(RegressionDataSetConstructors, ConstructLIBSVMFromFileWithLabel) {
     using label_type = typename TestFixture::fixture_label_type;
 
     // create data set
@@ -129,8 +130,7 @@ TYPED_TEST(RegressionDataSetConstructors, construct_libsvm_from_file_with_label)
     // check values
     EXPECT_FLOATING_POINT_MATRIX_EQ(data.data(), this->get_correct_data_points());
     EXPECT_TRUE(data.has_labels());
-    ASSERT_TRUE(data.labels().has_value());
-    EXPECT_EQ(data.labels().value().get(), correct_labels);
+    EXPECT_OPTIONAL_EQ(data.labels(), correct_labels);
 
     EXPECT_EQ(data.num_data_points(), this->get_correct_data_points().num_rows());
     EXPECT_EQ(data.num_features(), this->get_correct_data_points().num_cols());
@@ -139,7 +139,7 @@ TYPED_TEST(RegressionDataSetConstructors, construct_libsvm_from_file_with_label)
     EXPECT_FALSE(data.scaling_factors().has_value());
 }
 
-TYPED_TEST(RegressionDataSetConstructors, construct_libsvm_from_file_without_label) {
+TYPED_TEST(RegressionDataSetConstructors, ConstructLIBSVMFromFileWithoutLabel) {
     using label_type = typename TestFixture::fixture_label_type;
 
     // create data set
@@ -162,7 +162,7 @@ TYPED_TEST(RegressionDataSetConstructors, construct_libsvm_from_file_without_lab
     EXPECT_FALSE(data.scaling_factors().has_value());
 }
 
-TYPED_TEST(RegressionDataSetConstructors, construct_explicit_arff_from_file) {
+TYPED_TEST(RegressionDataSetConstructors, ConstructExplicitARFFFromFile) {
     using label_type = typename TestFixture::fixture_label_type;
 
     // create data set
@@ -173,8 +173,7 @@ TYPED_TEST(RegressionDataSetConstructors, construct_explicit_arff_from_file) {
     // check values
     EXPECT_FLOATING_POINT_MATRIX_EQ(data.data(), this->get_correct_data_points());
     EXPECT_TRUE(data.has_labels());
-    ASSERT_TRUE(data.labels().has_value());
-    EXPECT_EQ(data.labels().value().get(), correct_labels);
+    EXPECT_OPTIONAL_EQ(data.labels(), correct_labels);
 
     EXPECT_EQ(data.num_data_points(), this->get_correct_data_points().num_rows());
     EXPECT_EQ(data.num_features(), this->get_correct_data_points().num_cols());
@@ -183,7 +182,7 @@ TYPED_TEST(RegressionDataSetConstructors, construct_explicit_arff_from_file) {
     EXPECT_FALSE(data.scaling_factors().has_value());
 }
 
-TYPED_TEST(RegressionDataSetConstructors, construct_explicit_libsvm_from_file) {
+TYPED_TEST(RegressionDataSetConstructors, ConstructExplicitLIBSVMFromFile) {
     using label_type = typename TestFixture::fixture_label_type;
 
     // create data set
@@ -194,8 +193,7 @@ TYPED_TEST(RegressionDataSetConstructors, construct_explicit_libsvm_from_file) {
     // check values
     EXPECT_FLOATING_POINT_MATRIX_EQ(data.data(), this->get_correct_data_points());
     EXPECT_TRUE(data.has_labels());
-    ASSERT_TRUE(data.labels().has_value());
-    EXPECT_EQ(data.labels().value().get(), correct_labels);
+    EXPECT_OPTIONAL_EQ(data.labels(), correct_labels);
 
     EXPECT_EQ(data.num_data_points(), this->get_correct_data_points().num_rows());
     EXPECT_EQ(data.num_features(), this->get_correct_data_points().num_cols());
@@ -204,7 +202,7 @@ TYPED_TEST(RegressionDataSetConstructors, construct_explicit_libsvm_from_file) {
     EXPECT_FALSE(data.scaling_factors().has_value());
 }
 
-TYPED_TEST(RegressionDataSetConstructors, construct_scaled_arff_from_file) {
+TYPED_TEST(RegressionDataSetConstructors, ConstructScaledARFFFromFile) {
     using label_type = typename TestFixture::fixture_label_type;
 
     // create data set
@@ -216,31 +214,36 @@ TYPED_TEST(RegressionDataSetConstructors, construct_scaled_arff_from_file) {
     const auto [scaled_data_points, scaling_factors] = util::scale(this->get_correct_data_points(), plssvm::real_type{ -1.0 }, plssvm::real_type{ 1.0 });
     EXPECT_FLOATING_POINT_MATRIX_NEAR(data.data(), plssvm::soa_matrix<plssvm::real_type>{ scaled_data_points });
     EXPECT_TRUE(data.has_labels());
-    ASSERT_TRUE(data.labels().has_value());
-    EXPECT_EQ(data.labels().value().get(), correct_labels);
+    EXPECT_OPTIONAL_EQ(data.labels(), correct_labels);
 
     EXPECT_EQ(data.num_data_points(), this->get_correct_data_points().num_rows());
     EXPECT_EQ(data.num_features(), this->get_correct_data_points().num_cols());
 
     EXPECT_TRUE(data.is_scaled());
-    EXPECT_TRUE(data.scaling_factors().has_value());
-    ASSERT_TRUE(data.scaling_factors().value().get().scaling_factors().has_value());
-    ASSERT_EQ(data.scaling_factors().value().get().scaling_factors()->size(), scaling_factors.size());
-    for (std::size_t i = 0; i < scaling_factors.size(); ++i) {
-        auto factors = data.scaling_factors().value().get().scaling_factors().value()[i];
-        EXPECT_EQ(factors.feature, std::get<0>(scaling_factors[i]));
-        EXPECT_FLOATING_POINT_NEAR(factors.lower, std::get<1>(scaling_factors[i]));
-        EXPECT_FLOATING_POINT_NEAR(factors.upper, std::get<2>(scaling_factors[i]));
+    const auto &data_scaling_factors_opt = data.scaling_factors();
+    EXPECT_TRUE(data_scaling_factors_opt.has_value());
+    if (data_scaling_factors_opt.has_value()) {
+        const auto &scaling_factors_opt = data_scaling_factors_opt.value().get().scaling_factors();
+        ASSERT_TRUE(scaling_factors_opt.has_value());
+        if (scaling_factors_opt.has_value()) {
+            const std::vector<plssvm::min_max_scaler::factors> factors = scaling_factors_opt.value();
+            ASSERT_EQ(factors.size(), scaling_factors.size());
+            for (std::size_t i = 0; i < factors.size(); ++i) {
+                EXPECT_EQ(factors[i].feature, std::get<0>(scaling_factors[i]));
+                EXPECT_FLOATING_POINT_NEAR(factors[i].lower, std::get<1>(scaling_factors[i]));
+                EXPECT_FLOATING_POINT_NEAR(factors[i].upper, std::get<2>(scaling_factors[i]));
+            }
+        }
     }
 }
 
 #if defined(PLSSVM_HAS_MPI_ENABLED)
 
-TYPED_TEST(RegressionDataSetConstructors, construct_scaled_arff_from_file_comm_mismatch) {
+TYPED_TEST(RegressionDataSetConstructors, ConstructScaledARFFFromFileCommMismatch) {
     using label_type = typename TestFixture::fixture_label_type;
 
     // create a duplicated communicator
-    MPI_Comm duplicated_mpi_comm;
+    MPI_Comm duplicated_mpi_comm{};
     MPI_Comm_dup(MPI_COMM_WORLD, &duplicated_mpi_comm);
     const plssvm::mpi::communicator comm{ duplicated_mpi_comm };
 
@@ -254,7 +257,7 @@ TYPED_TEST(RegressionDataSetConstructors, construct_scaled_arff_from_file_comm_m
 
 #endif
 
-TYPED_TEST(RegressionDataSetConstructors, construct_scaled_libsvm_from_file) {
+TYPED_TEST(RegressionDataSetConstructors, ConstructScaledLIBSVMFromFile) {
     using label_type = typename TestFixture::fixture_label_type;
 
     // create data set
@@ -266,31 +269,36 @@ TYPED_TEST(RegressionDataSetConstructors, construct_scaled_libsvm_from_file) {
     const auto [scaled_data_points, scaling_factors] = util::scale(this->get_correct_data_points(), plssvm::real_type{ -2.5 }, plssvm::real_type{ 2.5 });
     EXPECT_FLOATING_POINT_MATRIX_NEAR(data.data(), plssvm::soa_matrix<plssvm::real_type>{ scaled_data_points });
     EXPECT_TRUE(data.has_labels());
-    ASSERT_TRUE(data.labels().has_value());
-    EXPECT_EQ(data.labels().value().get(), correct_labels);
+    EXPECT_OPTIONAL_EQ(data.labels(), correct_labels);
 
     EXPECT_EQ(data.num_data_points(), this->get_correct_data_points().num_rows());
     EXPECT_EQ(data.num_features(), this->get_correct_data_points().num_cols());
 
     EXPECT_TRUE(data.is_scaled());
-    EXPECT_TRUE(data.scaling_factors().has_value());
-    ASSERT_TRUE(data.scaling_factors().value().get().scaling_factors().has_value());
-    ASSERT_EQ(data.scaling_factors().value().get().scaling_factors()->size(), scaling_factors.size());
-    for (std::size_t i = 0; i < scaling_factors.size(); ++i) {
-        auto factors = data.scaling_factors().value().get().scaling_factors().value()[i];
-        EXPECT_EQ(factors.feature, std::get<0>(scaling_factors[i]));
-        EXPECT_FLOATING_POINT_NEAR(factors.lower, std::get<1>(scaling_factors[i]));
-        EXPECT_FLOATING_POINT_NEAR(factors.upper, std::get<2>(scaling_factors[i]));
+    const auto &data_scaling_factors_opt = data.scaling_factors();
+    EXPECT_TRUE(data_scaling_factors_opt.has_value());
+    if (data_scaling_factors_opt.has_value()) {
+        const auto &scaling_factors_opt = data_scaling_factors_opt.value().get().scaling_factors();
+        ASSERT_TRUE(scaling_factors_opt.has_value());
+        if (scaling_factors_opt.has_value()) {
+            const std::vector<plssvm::min_max_scaler::factors> factors = scaling_factors_opt.value();
+            ASSERT_EQ(factors.size(), scaling_factors.size());
+            for (std::size_t i = 0; i < factors.size(); ++i) {
+                EXPECT_EQ(factors[i].feature, std::get<0>(scaling_factors[i]));
+                EXPECT_FLOATING_POINT_NEAR(factors[i].lower, std::get<1>(scaling_factors[i]));
+                EXPECT_FLOATING_POINT_NEAR(factors[i].upper, std::get<2>(scaling_factors[i]));
+            }
+        }
     }
 }
 
 #if defined(PLSSVM_HAS_MPI_ENABLED)
 
-TYPED_TEST(RegressionDataSetConstructors, construct_scaled_libsvm_from_file_comm_mismatch) {
+TYPED_TEST(RegressionDataSetConstructors, ConstructScaledLIBSVMFromFileCommMismatch) {
     using label_type = typename TestFixture::fixture_label_type;
 
     // create a duplicated communicator
-    MPI_Comm duplicated_mpi_comm;
+    MPI_Comm duplicated_mpi_comm{};
     MPI_Comm_dup(MPI_COMM_WORLD, &duplicated_mpi_comm);
     const plssvm::mpi::communicator comm{ duplicated_mpi_comm };
 
@@ -304,7 +312,7 @@ TYPED_TEST(RegressionDataSetConstructors, construct_scaled_libsvm_from_file_comm
 
 #endif
 
-TYPED_TEST(RegressionDataSetConstructors, construct_scaled_explicit_arff_from_file) {
+TYPED_TEST(RegressionDataSetConstructors, ConstructScaledExplicitARFFFromFile) {
     using label_type = typename TestFixture::fixture_label_type;
 
     // create data set
@@ -316,31 +324,36 @@ TYPED_TEST(RegressionDataSetConstructors, construct_scaled_explicit_arff_from_fi
     const auto [scaled_data_points, scaling_factors] = util::scale(this->get_correct_data_points(), plssvm::real_type{ -1.0 }, plssvm::real_type{ 1.0 });
     EXPECT_FLOATING_POINT_MATRIX_NEAR(data.data(), plssvm::soa_matrix<plssvm::real_type>{ scaled_data_points });
     EXPECT_TRUE(data.has_labels());
-    ASSERT_TRUE(data.labels().has_value());
-    EXPECT_EQ(data.labels().value().get(), correct_labels);
+    EXPECT_OPTIONAL_EQ(data.labels(), correct_labels);
 
     EXPECT_EQ(data.num_data_points(), this->get_correct_data_points().num_rows());
     EXPECT_EQ(data.num_features(), this->get_correct_data_points().num_cols());
 
     EXPECT_TRUE(data.is_scaled());
-    EXPECT_TRUE(data.scaling_factors().has_value());
-    ASSERT_TRUE(data.scaling_factors().value().get().scaling_factors().has_value());
-    ASSERT_EQ(data.scaling_factors().value().get().scaling_factors()->size(), scaling_factors.size());
-    for (std::size_t i = 0; i < scaling_factors.size(); ++i) {
-        auto factors = data.scaling_factors().value().get().scaling_factors().value()[i];
-        EXPECT_EQ(factors.feature, std::get<0>(scaling_factors[i]));
-        EXPECT_FLOATING_POINT_NEAR(factors.lower, std::get<1>(scaling_factors[i]));
-        EXPECT_FLOATING_POINT_NEAR(factors.upper, std::get<2>(scaling_factors[i]));
+    const auto &data_scaling_factors_opt = data.scaling_factors();
+    EXPECT_TRUE(data_scaling_factors_opt.has_value());
+    if (data_scaling_factors_opt.has_value()) {
+        const auto &scaling_factors_opt = data_scaling_factors_opt.value().get().scaling_factors();
+        ASSERT_TRUE(scaling_factors_opt.has_value());
+        if (scaling_factors_opt.has_value()) {
+            const std::vector<plssvm::min_max_scaler::factors> factors = scaling_factors_opt.value();
+            ASSERT_EQ(factors.size(), scaling_factors.size());
+            for (std::size_t i = 0; i < factors.size(); ++i) {
+                EXPECT_EQ(factors[i].feature, std::get<0>(scaling_factors[i]));
+                EXPECT_FLOATING_POINT_NEAR(factors[i].lower, std::get<1>(scaling_factors[i]));
+                EXPECT_FLOATING_POINT_NEAR(factors[i].upper, std::get<2>(scaling_factors[i]));
+            }
+        }
     }
 }
 
 #if defined(PLSSVM_HAS_MPI_ENABLED)
 
-TYPED_TEST(RegressionDataSetConstructors, construct_scaled_explicit_arff_from_file_comm_mismatch) {
+TYPED_TEST(RegressionDataSetConstructors, ConstructScaledExplicitARFFFromFileCommMismatch) {
     using label_type = typename TestFixture::fixture_label_type;
 
     // create a duplicated communicator
-    MPI_Comm duplicated_mpi_comm;
+    MPI_Comm duplicated_mpi_comm{};
     MPI_Comm_dup(MPI_COMM_WORLD, &duplicated_mpi_comm);
     const plssvm::mpi::communicator comm{ duplicated_mpi_comm };
 
@@ -354,7 +367,7 @@ TYPED_TEST(RegressionDataSetConstructors, construct_scaled_explicit_arff_from_fi
 
 #endif
 
-TYPED_TEST(RegressionDataSetConstructors, construct_scaled_explicit_libsvm_from_file) {
+TYPED_TEST(RegressionDataSetConstructors, ConstructScaledExplicitLIBSVMFromFile) {
     using label_type = typename TestFixture::fixture_label_type;
 
     // create data set
@@ -366,31 +379,36 @@ TYPED_TEST(RegressionDataSetConstructors, construct_scaled_explicit_libsvm_from_
     const auto [scaled_data_points, scaling_factors] = util::scale(this->get_correct_data_points(), plssvm::real_type{ -2.5 }, plssvm::real_type{ 2.5 });
     EXPECT_FLOATING_POINT_MATRIX_NEAR(data.data(), plssvm::soa_matrix<plssvm::real_type>{ scaled_data_points });
     EXPECT_TRUE(data.has_labels());
-    ASSERT_TRUE(data.labels().has_value());
-    EXPECT_EQ(data.labels().value().get(), correct_labels);
+    EXPECT_OPTIONAL_EQ(data.labels(), correct_labels);
 
     EXPECT_EQ(data.num_data_points(), this->get_correct_data_points().num_rows());
     EXPECT_EQ(data.num_features(), this->get_correct_data_points().num_cols());
 
     EXPECT_TRUE(data.is_scaled());
-    EXPECT_TRUE(data.scaling_factors().has_value());
-    ASSERT_TRUE(data.scaling_factors().value().get().scaling_factors().has_value());
-    ASSERT_EQ(data.scaling_factors().value().get().scaling_factors()->size(), scaling_factors.size());
-    for (std::size_t i = 0; i < scaling_factors.size(); ++i) {
-        auto factors = data.scaling_factors().value().get().scaling_factors().value()[i];
-        EXPECT_EQ(factors.feature, std::get<0>(scaling_factors[i]));
-        EXPECT_FLOATING_POINT_NEAR(factors.lower, std::get<1>(scaling_factors[i]));
-        EXPECT_FLOATING_POINT_NEAR(factors.upper, std::get<2>(scaling_factors[i]));
+    const auto &data_scaling_factors_opt = data.scaling_factors();
+    EXPECT_TRUE(data_scaling_factors_opt.has_value());
+    if (data_scaling_factors_opt.has_value()) {
+        const auto &scaling_factors_opt = data_scaling_factors_opt.value().get().scaling_factors();
+        ASSERT_TRUE(scaling_factors_opt.has_value());
+        if (scaling_factors_opt.has_value()) {
+            const std::vector<plssvm::min_max_scaler::factors> factors = scaling_factors_opt.value();
+            ASSERT_EQ(factors.size(), scaling_factors.size());
+            for (std::size_t i = 0; i < factors.size(); ++i) {
+                EXPECT_EQ(factors[i].feature, std::get<0>(scaling_factors[i]));
+                EXPECT_FLOATING_POINT_NEAR(factors[i].lower, std::get<1>(scaling_factors[i]));
+                EXPECT_FLOATING_POINT_NEAR(factors[i].upper, std::get<2>(scaling_factors[i]));
+            }
+        }
     }
 }
 
 #if defined(PLSSVM_HAS_MPI_ENABLED)
 
-TYPED_TEST(RegressionDataSetConstructors, construct_scaled_explicit_libsvm_from_file_comm_mismatch) {
+TYPED_TEST(RegressionDataSetConstructors, ConstructScaledExplicitLIBSVMFromFileCommMismatch) {
     using label_type = typename TestFixture::fixture_label_type;
 
     // create a duplicated communicator
-    MPI_Comm duplicated_mpi_comm;
+    MPI_Comm duplicated_mpi_comm{};
     MPI_Comm_dup(MPI_COMM_WORLD, &duplicated_mpi_comm);
     const plssvm::mpi::communicator comm{ duplicated_mpi_comm };
 
@@ -408,7 +426,7 @@ TYPED_TEST(RegressionDataSetConstructors, construct_scaled_explicit_libsvm_from_
 //                                                      construct from 2D vector                                                       //
 //*************************************************************************************************************************************//
 
-TYPED_TEST(RegressionDataSetConstructors, construct_from_vector_without_label) {
+TYPED_TEST(RegressionDataSetConstructors, ConstructFromVectorWithoutLabel) {
     using label_type = typename TestFixture::fixture_label_type;
 
     // create data points
@@ -429,7 +447,7 @@ TYPED_TEST(RegressionDataSetConstructors, construct_from_vector_without_label) {
     EXPECT_FALSE(data.scaling_factors().has_value());
 }
 
-TYPED_TEST(RegressionDataSetConstructors, construct_from_empty_vector) {
+TYPED_TEST(RegressionDataSetConstructors, ConstructFromEmptyVector) {
     using label_type = typename TestFixture::fixture_label_type;
 
     // creating a data set from an empty vector is illegal
@@ -438,7 +456,7 @@ TYPED_TEST(RegressionDataSetConstructors, construct_from_empty_vector) {
                       "Data vector is empty!");
 }
 
-TYPED_TEST(RegressionDataSetConstructors, construct_from_vector_with_differing_num_features) {
+TYPED_TEST(RegressionDataSetConstructors, ConstructFromVectorWithDifferentNumFeatures) {
     using label_type = typename TestFixture::fixture_label_type;
 
     // create data points
@@ -453,7 +471,7 @@ TYPED_TEST(RegressionDataSetConstructors, construct_from_vector_with_differing_n
                       "Each row in the matrix must contain the same amount of columns!");
 }
 
-TYPED_TEST(RegressionDataSetConstructors, construct_from_vector_with_no_features) {
+TYPED_TEST(RegressionDataSetConstructors, ConstructFromVectorWithNoFeatures) {
     using label_type = typename TestFixture::fixture_label_type;
 
     // create data points
@@ -465,7 +483,7 @@ TYPED_TEST(RegressionDataSetConstructors, construct_from_vector_with_no_features
                       "The data to create the matrix must at least have one column!");
 }
 
-TYPED_TEST(RegressionDataSetConstructors, construct_from_vector_with_label) {
+TYPED_TEST(RegressionDataSetConstructors, ConstructFromVectorWithLabel) {
     using label_type = typename TestFixture::fixture_label_type;
 
     // create data points and labels
@@ -478,8 +496,7 @@ TYPED_TEST(RegressionDataSetConstructors, construct_from_vector_with_label) {
     // check values
     EXPECT_FLOATING_POINT_MATRIX_EQ(data.data(), correct_data_points);
     EXPECT_TRUE(data.has_labels());
-    ASSERT_TRUE(data.labels().has_value());
-    EXPECT_EQ(data.labels().value().get(), labels);
+    EXPECT_OPTIONAL_EQ(data.labels(), labels);
 
     EXPECT_EQ(data.num_data_points(), correct_data_points.num_rows());
     EXPECT_EQ(data.num_features(), correct_data_points.num_cols());
@@ -488,7 +505,7 @@ TYPED_TEST(RegressionDataSetConstructors, construct_from_vector_with_label) {
     EXPECT_FALSE(data.scaling_factors().has_value());
 }
 
-TYPED_TEST(RegressionDataSetConstructors, construct_from_empty_vector_and_labels) {
+TYPED_TEST(RegressionDataSetConstructors, ConstructFromEmptyVectorAndLabels) {
     using label_type = typename TestFixture::fixture_label_type;
 
     const std::vector<label_type> labels = util::get_correct_data_file_labels<label_type>();
@@ -499,7 +516,7 @@ TYPED_TEST(RegressionDataSetConstructors, construct_from_empty_vector_and_labels
                       "Data vector is empty!");
 }
 
-TYPED_TEST(RegressionDataSetConstructors, construct_from_vector_mismatching_num_data_points_and_labels) {
+TYPED_TEST(RegressionDataSetConstructors, ConstructFromVectorMismatchingNumDataPointsAndLabels) {
     using label_type = typename TestFixture::fixture_label_type;
 
     // create data points and labels
@@ -513,7 +530,7 @@ TYPED_TEST(RegressionDataSetConstructors, construct_from_vector_mismatching_num_
                       fmt::format("Number of labels ({}) must match the number of data points ({})!", labels.size(), correct_data_points.num_rows()));
 }
 
-TYPED_TEST(RegressionDataSetConstructors, construct_scaled_from_vector_without_label) {
+TYPED_TEST(RegressionDataSetConstructors, ConstructScaledFromVectorWithoutLabel) {
     using label_type = typename TestFixture::fixture_label_type;
 
     // create data points
@@ -532,24 +549,30 @@ TYPED_TEST(RegressionDataSetConstructors, construct_scaled_from_vector_without_l
     EXPECT_EQ(data.num_features(), correct_data_points_scaled.num_cols());
 
     EXPECT_TRUE(data.is_scaled());
-    EXPECT_TRUE(data.scaling_factors().has_value());
-    ASSERT_TRUE(data.scaling_factors().value().get().scaling_factors().has_value());
-    ASSERT_EQ(data.scaling_factors().value().get().scaling_factors()->size(), scaling_factors.size());
-    for (std::size_t i = 0; i < scaling_factors.size(); ++i) {
-        auto factors = data.scaling_factors().value().get().scaling_factors().value()[i];
-        EXPECT_EQ(factors.feature, std::get<0>(scaling_factors[i]));
-        EXPECT_FLOATING_POINT_NEAR(factors.lower, std::get<1>(scaling_factors[i]));
-        EXPECT_FLOATING_POINT_NEAR(factors.upper, std::get<2>(scaling_factors[i]));
+    const auto &data_scaling_factors_opt = data.scaling_factors();
+    EXPECT_TRUE(data_scaling_factors_opt.has_value());
+    if (data_scaling_factors_opt.has_value()) {
+        const auto &scaling_factors_opt = data_scaling_factors_opt.value().get().scaling_factors();
+        ASSERT_TRUE(scaling_factors_opt.has_value());
+        if (scaling_factors_opt.has_value()) {
+            const std::vector<plssvm::min_max_scaler::factors> factors = scaling_factors_opt.value();
+            ASSERT_EQ(factors.size(), scaling_factors.size());
+            for (std::size_t i = 0; i < factors.size(); ++i) {
+                EXPECT_EQ(factors[i].feature, std::get<0>(scaling_factors[i]));
+                EXPECT_FLOATING_POINT_NEAR(factors[i].lower, std::get<1>(scaling_factors[i]));
+                EXPECT_FLOATING_POINT_NEAR(factors[i].upper, std::get<2>(scaling_factors[i]));
+            }
+        }
     }
 }
 
 #if defined(PLSSVM_HAS_MPI_ENABLED)
 
-TYPED_TEST(RegressionDataSetConstructors, construct_scaled_from_vector_without_label_comm_mismatch) {
+TYPED_TEST(RegressionDataSetConstructors, ConstructScaledFromVectorWithoutLabelCommMismatch) {
     using label_type = typename TestFixture::fixture_label_type;
 
     // create a duplicated communicator
-    MPI_Comm duplicated_mpi_comm;
+    MPI_Comm duplicated_mpi_comm{};
     MPI_Comm_dup(MPI_COMM_WORLD, &duplicated_mpi_comm);
     const plssvm::mpi::communicator comm{ duplicated_mpi_comm };
 
@@ -564,7 +587,7 @@ TYPED_TEST(RegressionDataSetConstructors, construct_scaled_from_vector_without_l
 
 #endif
 
-TYPED_TEST(RegressionDataSetConstructors, construct_scaled_from_vector_with_label) {
+TYPED_TEST(RegressionDataSetConstructors, ConstructScaledFromVectorWithLabel) {
     using label_type = typename TestFixture::fixture_label_type;
 
     // create data points and labels
@@ -578,31 +601,36 @@ TYPED_TEST(RegressionDataSetConstructors, construct_scaled_from_vector_with_labe
     // check values
     EXPECT_FLOATING_POINT_MATRIX_NEAR(data.data(), correct_data_points_scaled);
     EXPECT_TRUE(data.has_labels());
-    ASSERT_TRUE(data.labels().has_value());
-    EXPECT_EQ(data.labels().value().get(), labels);
+    EXPECT_OPTIONAL_EQ(data.labels(), labels);
 
     EXPECT_EQ(data.num_data_points(), correct_data_points_scaled.num_rows());
     EXPECT_EQ(data.num_features(), correct_data_points_scaled.num_cols());
 
     EXPECT_TRUE(data.is_scaled());
-    EXPECT_TRUE(data.scaling_factors().has_value());
-    ASSERT_TRUE(data.scaling_factors().value().get().scaling_factors().has_value());
-    ASSERT_EQ(data.scaling_factors().value().get().scaling_factors()->size(), scaling_factors.size());
-    for (std::size_t i = 0; i < scaling_factors.size(); ++i) {
-        auto factors = data.scaling_factors().value().get().scaling_factors().value()[i];
-        EXPECT_EQ(factors.feature, std::get<0>(scaling_factors[i]));
-        EXPECT_FLOATING_POINT_NEAR(factors.lower, std::get<1>(scaling_factors[i]));
-        EXPECT_FLOATING_POINT_NEAR(factors.upper, std::get<2>(scaling_factors[i]));
+    const auto &data_scaling_factors_opt = data.scaling_factors();
+    EXPECT_TRUE(data_scaling_factors_opt.has_value());
+    if (data_scaling_factors_opt.has_value()) {
+        const auto &scaling_factors_opt = data_scaling_factors_opt.value().get().scaling_factors();
+        ASSERT_TRUE(scaling_factors_opt.has_value());
+        if (scaling_factors_opt.has_value()) {
+            const std::vector<plssvm::min_max_scaler::factors> factors = scaling_factors_opt.value();
+            ASSERT_EQ(factors.size(), scaling_factors.size());
+            for (std::size_t i = 0; i < factors.size(); ++i) {
+                EXPECT_EQ(factors[i].feature, std::get<0>(scaling_factors[i]));
+                EXPECT_FLOATING_POINT_NEAR(factors[i].lower, std::get<1>(scaling_factors[i]));
+                EXPECT_FLOATING_POINT_NEAR(factors[i].upper, std::get<2>(scaling_factors[i]));
+            }
+        }
     }
 }
 
 #if defined(PLSSVM_HAS_MPI_ENABLED)
 
-TYPED_TEST(RegressionDataSetConstructors, construct_scaled_from_vector_with_label_comm_mismatch) {
+TYPED_TEST(RegressionDataSetConstructors, ConstructScaledFromVectorWithLabelCommMismatch) {
     using label_type = typename TestFixture::fixture_label_type;
 
     // create a duplicated communicator
-    MPI_Comm duplicated_mpi_comm;
+    MPI_Comm duplicated_mpi_comm{};
     MPI_Comm_dup(MPI_COMM_WORLD, &duplicated_mpi_comm);
     const plssvm::mpi::communicator comm{ duplicated_mpi_comm };
 
@@ -631,7 +659,7 @@ class RegressionDataSetMatrixConstructors : public RegressionDataSetConstructors
 
 TYPED_TEST_SUITE(RegressionDataSetMatrixConstructors, util::regression_label_type_layout_type_gtest, naming::test_parameter_to_name);
 
-TYPED_TEST(RegressionDataSetMatrixConstructors, construct_from_matrix_without_label_no_padding) {
+TYPED_TEST(RegressionDataSetMatrixConstructors, ConstructFromMatrixWithoutLabelNoPadding) {
     using label_type = typename TestFixture::fixture_label_type;
     constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
 
@@ -654,7 +682,7 @@ TYPED_TEST(RegressionDataSetMatrixConstructors, construct_from_matrix_without_la
     EXPECT_FALSE(data.scaling_factors().has_value());
 }
 
-TYPED_TEST(RegressionDataSetMatrixConstructors, construct_from_matrix_without_label) {
+TYPED_TEST(RegressionDataSetMatrixConstructors, ConstructFromMatrixWithoutLabel) {
     using label_type = typename TestFixture::fixture_label_type;
     constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
 
@@ -676,7 +704,7 @@ TYPED_TEST(RegressionDataSetMatrixConstructors, construct_from_matrix_without_la
     EXPECT_FALSE(data.scaling_factors().has_value());
 }
 
-TYPED_TEST(RegressionDataSetMatrixConstructors, construct_from_empty_matrix_no_padding) {
+TYPED_TEST(RegressionDataSetMatrixConstructors, ConstructFromEmptyMatrixNoPadding) {
     using label_type = typename TestFixture::fixture_label_type;
     constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
 
@@ -688,7 +716,7 @@ TYPED_TEST(RegressionDataSetMatrixConstructors, construct_from_empty_matrix_no_p
                       "Data vector is empty!");
 }
 
-TYPED_TEST(RegressionDataSetMatrixConstructors, construct_from_empty_matrix) {
+TYPED_TEST(RegressionDataSetMatrixConstructors, ConstructFromEmptyMatrix) {
     using label_type = typename TestFixture::fixture_label_type;
     constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
 
@@ -700,7 +728,7 @@ TYPED_TEST(RegressionDataSetMatrixConstructors, construct_from_empty_matrix) {
                       "Data vector is empty!");
 }
 
-TYPED_TEST(RegressionDataSetMatrixConstructors, construct_from_matrix_with_label_no_padding) {
+TYPED_TEST(RegressionDataSetMatrixConstructors, ConstructFromMatrixWithLabelNoPadding) {
     using label_type = typename TestFixture::fixture_label_type;
     constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
 
@@ -715,8 +743,7 @@ TYPED_TEST(RegressionDataSetMatrixConstructors, construct_from_matrix_with_label
     EXPECT_FLOATING_POINT_MATRIX_EQ(data.data(), (plssvm::soa_matrix<plssvm::real_type>{ correct_data_points, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE } }));
     EXPECT_TRUE(data.data().is_padded());
     EXPECT_TRUE(data.has_labels());
-    ASSERT_TRUE(data.labels().has_value());
-    EXPECT_EQ(data.labels().value().get(), labels);
+    EXPECT_OPTIONAL_EQ(data.labels(), labels);
 
     EXPECT_EQ(data.num_data_points(), correct_data_points.num_rows());
     EXPECT_EQ(data.num_features(), correct_data_points.num_cols());
@@ -725,7 +752,7 @@ TYPED_TEST(RegressionDataSetMatrixConstructors, construct_from_matrix_with_label
     EXPECT_FALSE(data.scaling_factors().has_value());
 }
 
-TYPED_TEST(RegressionDataSetMatrixConstructors, construct_from_matrix_with_label) {
+TYPED_TEST(RegressionDataSetMatrixConstructors, ConstructFromMatrixWithLabel) {
     using label_type = typename TestFixture::fixture_label_type;
     constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
 
@@ -739,8 +766,7 @@ TYPED_TEST(RegressionDataSetMatrixConstructors, construct_from_matrix_with_label
     // check values
     EXPECT_FLOATING_POINT_MATRIX_EQ(data.data(), plssvm::soa_matrix<plssvm::real_type>{ correct_data_points });
     EXPECT_TRUE(data.has_labels());
-    ASSERT_TRUE(data.labels().has_value());
-    EXPECT_EQ(data.labels().value().get(), labels);
+    EXPECT_OPTIONAL_EQ(data.labels(), labels);
 
     EXPECT_EQ(data.num_data_points(), correct_data_points.num_rows());
     EXPECT_EQ(data.num_features(), correct_data_points.num_cols());
@@ -749,7 +775,7 @@ TYPED_TEST(RegressionDataSetMatrixConstructors, construct_from_matrix_with_label
     EXPECT_FALSE(data.scaling_factors().has_value());
 }
 
-TYPED_TEST(RegressionDataSetMatrixConstructors, construct_from_empty_matrix_with_label) {
+TYPED_TEST(RegressionDataSetMatrixConstructors, ConstructFromEmptyMatrixWithLabel) {
     using label_type = typename TestFixture::fixture_label_type;
     constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
 
@@ -763,7 +789,7 @@ TYPED_TEST(RegressionDataSetMatrixConstructors, construct_from_empty_matrix_with
                       "Data vector is empty!");
 }
 
-TYPED_TEST(RegressionDataSetMatrixConstructors, construct_from_matrix_with_label_size_mismatch) {
+TYPED_TEST(RegressionDataSetMatrixConstructors, ConstructFromMatrixWithLabelSizeMismatch) {
     using label_type = typename TestFixture::fixture_label_type;
     constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
 
@@ -777,7 +803,7 @@ TYPED_TEST(RegressionDataSetMatrixConstructors, construct_from_matrix_with_label
                               ::testing::HasSubstr(fmt::format("Number of labels ({}) must match the number of data points ({})!", labels.size(), labels.size() - 1)));
 }
 
-TYPED_TEST(RegressionDataSetMatrixConstructors, construct_scaled_from_matrix_without_label_no_padding) {
+TYPED_TEST(RegressionDataSetMatrixConstructors, ConstructScaledFromMatrixWithoutLabelNoPadding) {
     using label_type = typename TestFixture::fixture_label_type;
     constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
 
@@ -798,25 +824,31 @@ TYPED_TEST(RegressionDataSetMatrixConstructors, construct_scaled_from_matrix_wit
     EXPECT_EQ(data.num_features(), correct_data_points_scaled.num_cols());
 
     EXPECT_TRUE(data.is_scaled());
-    EXPECT_TRUE(data.scaling_factors().has_value());
-    ASSERT_TRUE(data.scaling_factors().value().get().scaling_factors().has_value());
-    ASSERT_EQ(data.scaling_factors().value().get().scaling_factors()->size(), scaling_factors.size());
-    for (std::size_t i = 0; i < scaling_factors.size(); ++i) {
-        auto factors = data.scaling_factors().value().get().scaling_factors().value()[i];
-        EXPECT_EQ(factors.feature, std::get<0>(scaling_factors[i]));
-        EXPECT_FLOATING_POINT_NEAR(factors.lower, std::get<1>(scaling_factors[i]));
-        EXPECT_FLOATING_POINT_NEAR(factors.upper, std::get<2>(scaling_factors[i]));
+    const auto &data_scaling_factors_opt = data.scaling_factors();
+    EXPECT_TRUE(data_scaling_factors_opt.has_value());
+    if (data_scaling_factors_opt.has_value()) {
+        const auto &scaling_factors_opt = data_scaling_factors_opt.value().get().scaling_factors();
+        ASSERT_TRUE(scaling_factors_opt.has_value());
+        if (scaling_factors_opt.has_value()) {
+            const std::vector<plssvm::min_max_scaler::factors> factors = scaling_factors_opt.value();
+            ASSERT_EQ(factors.size(), scaling_factors.size());
+            for (std::size_t i = 0; i < factors.size(); ++i) {
+                EXPECT_EQ(factors[i].feature, std::get<0>(scaling_factors[i]));
+                EXPECT_FLOATING_POINT_NEAR(factors[i].lower, std::get<1>(scaling_factors[i]));
+                EXPECT_FLOATING_POINT_NEAR(factors[i].upper, std::get<2>(scaling_factors[i]));
+            }
+        }
     }
 }
 
 #if defined(PLSSVM_HAS_MPI_ENABLED)
 
-TYPED_TEST(RegressionDataSetMatrixConstructors, construct_scaled_from_matrix_without_label_no_padding_comm_mismatch) {
+TYPED_TEST(RegressionDataSetMatrixConstructors, ConstructScaledFromMatrixWithoutLabelNoPaddingCommMismatch) {
     using label_type = typename TestFixture::fixture_label_type;
     constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
 
     // create a duplicated communicator
-    MPI_Comm duplicated_mpi_comm;
+    MPI_Comm duplicated_mpi_comm{};
     MPI_Comm_dup(MPI_COMM_WORLD, &duplicated_mpi_comm);
     const plssvm::mpi::communicator comm{ duplicated_mpi_comm };
 
@@ -831,7 +863,7 @@ TYPED_TEST(RegressionDataSetMatrixConstructors, construct_scaled_from_matrix_wit
 
 #endif
 
-TYPED_TEST(RegressionDataSetMatrixConstructors, construct_scaled_from_matrix_without_label) {
+TYPED_TEST(RegressionDataSetMatrixConstructors, ConstructScaledFromMatrixWithoutLabel) {
     using label_type = typename TestFixture::fixture_label_type;
     constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
 
@@ -851,25 +883,31 @@ TYPED_TEST(RegressionDataSetMatrixConstructors, construct_scaled_from_matrix_wit
     EXPECT_EQ(data.num_features(), correct_data_points_scaled.num_cols());
 
     EXPECT_TRUE(data.is_scaled());
-    EXPECT_TRUE(data.scaling_factors().has_value());
-    ASSERT_TRUE(data.scaling_factors().value().get().scaling_factors().has_value());
-    ASSERT_EQ(data.scaling_factors().value().get().scaling_factors()->size(), scaling_factors.size());
-    for (std::size_t i = 0; i < scaling_factors.size(); ++i) {
-        auto factors = data.scaling_factors().value().get().scaling_factors().value()[i];
-        EXPECT_EQ(factors.feature, std::get<0>(scaling_factors[i]));
-        EXPECT_FLOATING_POINT_NEAR(factors.lower, std::get<1>(scaling_factors[i]));
-        EXPECT_FLOATING_POINT_NEAR(factors.upper, std::get<2>(scaling_factors[i]));
+    const auto &data_scaling_factors_opt = data.scaling_factors();
+    EXPECT_TRUE(data_scaling_factors_opt.has_value());
+    if (data_scaling_factors_opt.has_value()) {
+        const auto &scaling_factors_opt = data_scaling_factors_opt.value().get().scaling_factors();
+        ASSERT_TRUE(scaling_factors_opt.has_value());
+        if (scaling_factors_opt.has_value()) {
+            const std::vector<plssvm::min_max_scaler::factors> factors = scaling_factors_opt.value();
+            ASSERT_EQ(factors.size(), scaling_factors.size());
+            for (std::size_t i = 0; i < factors.size(); ++i) {
+                EXPECT_EQ(factors[i].feature, std::get<0>(scaling_factors[i]));
+                EXPECT_FLOATING_POINT_NEAR(factors[i].lower, std::get<1>(scaling_factors[i]));
+                EXPECT_FLOATING_POINT_NEAR(factors[i].upper, std::get<2>(scaling_factors[i]));
+            }
+        }
     }
 }
 
 #if defined(PLSSVM_HAS_MPI_ENABLED)
 
-TYPED_TEST(RegressionDataSetMatrixConstructors, construct_scaled_from_matrix_without_label_comm_mismatch) {
+TYPED_TEST(RegressionDataSetMatrixConstructors, ConstructScaledFromMatrixWithoutLabelCommMismatch) {
     using label_type = typename TestFixture::fixture_label_type;
     constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
 
     // create a duplicated communicator
-    MPI_Comm duplicated_mpi_comm;
+    MPI_Comm duplicated_mpi_comm{};
     MPI_Comm_dup(MPI_COMM_WORLD, &duplicated_mpi_comm);
     const plssvm::mpi::communicator comm{ duplicated_mpi_comm };
 
@@ -884,7 +922,7 @@ TYPED_TEST(RegressionDataSetMatrixConstructors, construct_scaled_from_matrix_wit
 
 #endif
 
-TYPED_TEST(RegressionDataSetMatrixConstructors, construct_scaled_from_matrix_with_label_no_padding) {
+TYPED_TEST(RegressionDataSetMatrixConstructors, ConstructScaledFromMatrixWithLabelNoPadding) {
     using label_type = typename TestFixture::fixture_label_type;
     constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
 
@@ -900,32 +938,37 @@ TYPED_TEST(RegressionDataSetMatrixConstructors, construct_scaled_from_matrix_wit
     EXPECT_FLOATING_POINT_MATRIX_NEAR(data.data(), (plssvm::soa_matrix<plssvm::real_type>{ correct_data_points_scaled, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE } }));
     EXPECT_TRUE(data.data().is_padded());
     EXPECT_TRUE(data.has_labels());
-    ASSERT_TRUE(data.labels().has_value());
-    EXPECT_EQ(data.labels().value().get(), labels);
+    EXPECT_OPTIONAL_EQ(data.labels(), labels);
 
     EXPECT_EQ(data.num_data_points(), correct_data_points_scaled.num_rows());
     EXPECT_EQ(data.num_features(), correct_data_points_scaled.num_cols());
 
     EXPECT_TRUE(data.is_scaled());
-    EXPECT_TRUE(data.scaling_factors().has_value());
-    ASSERT_TRUE(data.scaling_factors().value().get().scaling_factors().has_value());
-    ASSERT_EQ(data.scaling_factors().value().get().scaling_factors()->size(), scaling_factors.size());
-    for (std::size_t i = 0; i < scaling_factors.size(); ++i) {
-        auto factors = data.scaling_factors().value().get().scaling_factors().value()[i];
-        EXPECT_EQ(factors.feature, std::get<0>(scaling_factors[i]));
-        EXPECT_FLOATING_POINT_NEAR(factors.lower, std::get<1>(scaling_factors[i]));
-        EXPECT_FLOATING_POINT_NEAR(factors.upper, std::get<2>(scaling_factors[i]));
+    const auto &data_scaling_factors_opt = data.scaling_factors();
+    EXPECT_TRUE(data_scaling_factors_opt.has_value());
+    if (data_scaling_factors_opt.has_value()) {
+        const auto &scaling_factors_opt = data_scaling_factors_opt.value().get().scaling_factors();
+        ASSERT_TRUE(scaling_factors_opt.has_value());
+        if (scaling_factors_opt.has_value()) {
+            const std::vector<plssvm::min_max_scaler::factors> factors = scaling_factors_opt.value();
+            ASSERT_EQ(factors.size(), scaling_factors.size());
+            for (std::size_t i = 0; i < factors.size(); ++i) {
+                EXPECT_EQ(factors[i].feature, std::get<0>(scaling_factors[i]));
+                EXPECT_FLOATING_POINT_NEAR(factors[i].lower, std::get<1>(scaling_factors[i]));
+                EXPECT_FLOATING_POINT_NEAR(factors[i].upper, std::get<2>(scaling_factors[i]));
+            }
+        }
     }
 }
 
 #if defined(PLSSVM_HAS_MPI_ENABLED)
 
-TYPED_TEST(RegressionDataSetMatrixConstructors, construct_scaled_from_matrix_with_label_no_padding_comm_mismatch) {
+TYPED_TEST(RegressionDataSetMatrixConstructors, ConstructScaledFromMatrixWithLabelNoPaddingCommMismatch) {
     using label_type = typename TestFixture::fixture_label_type;
     constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
 
     // create a duplicated communicator
-    MPI_Comm duplicated_mpi_comm;
+    MPI_Comm duplicated_mpi_comm{};
     MPI_Comm_dup(MPI_COMM_WORLD, &duplicated_mpi_comm);
     const plssvm::mpi::communicator comm{ duplicated_mpi_comm };
 
@@ -940,7 +983,7 @@ TYPED_TEST(RegressionDataSetMatrixConstructors, construct_scaled_from_matrix_wit
 }
 #endif
 
-TYPED_TEST(RegressionDataSetMatrixConstructors, construct_scaled_from_matrix_with_label) {
+TYPED_TEST(RegressionDataSetMatrixConstructors, ConstructScaledFromMatrixWithLabel) {
     using label_type = typename TestFixture::fixture_label_type;
     constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
 
@@ -955,32 +998,37 @@ TYPED_TEST(RegressionDataSetMatrixConstructors, construct_scaled_from_matrix_wit
     // check values
     EXPECT_FLOATING_POINT_MATRIX_NEAR(data.data(), plssvm::soa_matrix<plssvm::real_type>{ correct_data_points_scaled });
     EXPECT_TRUE(data.has_labels());
-    ASSERT_TRUE(data.labels().has_value());
-    EXPECT_EQ(data.labels().value().get(), labels);
+    EXPECT_OPTIONAL_EQ(data.labels(), labels);
 
     EXPECT_EQ(data.num_data_points(), correct_data_points_scaled.num_rows());
     EXPECT_EQ(data.num_features(), correct_data_points_scaled.num_cols());
 
     EXPECT_TRUE(data.is_scaled());
-    EXPECT_TRUE(data.scaling_factors().has_value());
-    ASSERT_TRUE(data.scaling_factors().value().get().scaling_factors().has_value());
-    ASSERT_EQ(data.scaling_factors().value().get().scaling_factors()->size(), scaling_factors.size());
-    for (std::size_t i = 0; i < scaling_factors.size(); ++i) {
-        auto factors = data.scaling_factors().value().get().scaling_factors().value()[i];
-        EXPECT_EQ(factors.feature, std::get<0>(scaling_factors[i]));
-        EXPECT_FLOATING_POINT_NEAR(factors.lower, std::get<1>(scaling_factors[i]));
-        EXPECT_FLOATING_POINT_NEAR(factors.upper, std::get<2>(scaling_factors[i]));
+    const auto &data_scaling_factors_opt = data.scaling_factors();
+    EXPECT_TRUE(data_scaling_factors_opt.has_value());
+    if (data_scaling_factors_opt.has_value()) {
+        const auto &scaling_factors_opt = data_scaling_factors_opt.value().get().scaling_factors();
+        ASSERT_TRUE(scaling_factors_opt.has_value());
+        if (scaling_factors_opt.has_value()) {
+            const std::vector<plssvm::min_max_scaler::factors> factors = scaling_factors_opt.value();
+            ASSERT_EQ(factors.size(), scaling_factors.size());
+            for (std::size_t i = 0; i < factors.size(); ++i) {
+                EXPECT_EQ(factors[i].feature, std::get<0>(scaling_factors[i]));
+                EXPECT_FLOATING_POINT_NEAR(factors[i].lower, std::get<1>(scaling_factors[i]));
+                EXPECT_FLOATING_POINT_NEAR(factors[i].upper, std::get<2>(scaling_factors[i]));
+            }
+        }
     }
 }
 
 #if defined(PLSSVM_HAS_MPI_ENABLED)
 
-TYPED_TEST(RegressionDataSetMatrixConstructors, construct_scaled_from_matrix_with_label_comm_mismatch) {
+TYPED_TEST(RegressionDataSetMatrixConstructors, ConstructScaledFromMatrixWithLabelCommMismatch) {
     using label_type = typename TestFixture::fixture_label_type;
     constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
 
     // create a duplicated communicator
-    MPI_Comm duplicated_mpi_comm;
+    MPI_Comm duplicated_mpi_comm{};
     MPI_Comm_dup(MPI_COMM_WORLD, &duplicated_mpi_comm);
     const plssvm::mpi::communicator comm{ duplicated_mpi_comm };
 
@@ -1009,7 +1057,7 @@ class RegressionDataSetRValueMatrixConstructors : public RegressionDataSetConstr
 
 TYPED_TEST_SUITE(RegressionDataSetRValueMatrixConstructors, util::regression_label_type_gtest, naming::test_parameter_to_name);
 
-TYPED_TEST(RegressionDataSetRValueMatrixConstructors, construct_from_rvalue_matrix_without_label) {
+TYPED_TEST(RegressionDataSetRValueMatrixConstructors, ConstructFromRvalueMatrixWithoutLabel) {
     using label_type = typename TestFixture::fixture_label_type;
 
     // create data points
@@ -1032,7 +1080,7 @@ TYPED_TEST(RegressionDataSetRValueMatrixConstructors, construct_from_rvalue_matr
     EXPECT_FALSE(data.scaling_factors().has_value());
 }
 
-TYPED_TEST(RegressionDataSetRValueMatrixConstructors, construct_from_empty_rvalue_matrix) {
+TYPED_TEST(RegressionDataSetRValueMatrixConstructors, ConstructFromEmptyRvalueMatrix) {
     using label_type = typename TestFixture::fixture_label_type;
 
     plssvm::soa_matrix<plssvm::real_type> data_points{ plssvm::shape{ 0, 0 }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE } };
@@ -1043,7 +1091,7 @@ TYPED_TEST(RegressionDataSetRValueMatrixConstructors, construct_from_empty_rvalu
                       "Data vector is empty!");
 }
 
-TYPED_TEST(RegressionDataSetRValueMatrixConstructors, construct_from_rvalue_matrix_wrong_padding) {
+TYPED_TEST(RegressionDataSetRValueMatrixConstructors, ConstructFromRvalueMatrixWrongPadding) {
     using label_type = typename TestFixture::fixture_label_type;
 
     plssvm::soa_matrix<plssvm::real_type> data_points{ plssvm::shape{ 4, 4 }, plssvm::shape{ 0, 0 } };
@@ -1054,7 +1102,7 @@ TYPED_TEST(RegressionDataSetRValueMatrixConstructors, construct_from_rvalue_matr
                       "Data vector has the wring padding ([0, 0])!");
 }
 
-TYPED_TEST(RegressionDataSetRValueMatrixConstructors, construct_from_rvalue_matrix_with_label) {
+TYPED_TEST(RegressionDataSetRValueMatrixConstructors, ConstructFromRvalueMatrixWithLabel) {
     using label_type = typename TestFixture::fixture_label_type;
 
     // create data points and labels
@@ -1069,8 +1117,7 @@ TYPED_TEST(RegressionDataSetRValueMatrixConstructors, construct_from_rvalue_matr
     // check values
     EXPECT_FLOATING_POINT_MATRIX_EQ(data.data(), copied_correct_data_points);
     EXPECT_TRUE(data.has_labels());
-    ASSERT_TRUE(data.labels().has_value());
-    EXPECT_EQ(data.labels().value().get(), copied_labels);
+    EXPECT_OPTIONAL_EQ(data.labels(), copied_labels);
 
     EXPECT_EQ(data.num_data_points(), copied_correct_data_points.num_rows());
     EXPECT_EQ(data.num_features(), copied_correct_data_points.num_cols());
@@ -1079,7 +1126,7 @@ TYPED_TEST(RegressionDataSetRValueMatrixConstructors, construct_from_rvalue_matr
     EXPECT_FALSE(data.scaling_factors().has_value());
 }
 
-TYPED_TEST(RegressionDataSetRValueMatrixConstructors, construct_from_rvalue_matrix_with_label_wrong_padding) {
+TYPED_TEST(RegressionDataSetRValueMatrixConstructors, ConstructFromRvalueMatrixWithLabelWrongPadding) {
     using label_type = typename TestFixture::fixture_label_type;
 
     std::vector<label_type> labels = util::get_correct_data_file_labels<label_type, plssvm::svm_type::csvr>();
@@ -1091,7 +1138,7 @@ TYPED_TEST(RegressionDataSetRValueMatrixConstructors, construct_from_rvalue_matr
                       "Data vector has the wring padding ([0, 0])!");
 }
 
-TYPED_TEST(RegressionDataSetRValueMatrixConstructors, construct_scaled_from_rvalue_matrix_without_label) {
+TYPED_TEST(RegressionDataSetRValueMatrixConstructors, ConstructScaledFromRvalueMatrixWithoutLabel) {
     using label_type = typename TestFixture::fixture_label_type;
 
     // create data points
@@ -1111,24 +1158,30 @@ TYPED_TEST(RegressionDataSetRValueMatrixConstructors, construct_scaled_from_rval
     EXPECT_EQ(data.num_features(), correct_data_points_scaled.num_cols());
 
     EXPECT_TRUE(data.is_scaled());
-    EXPECT_TRUE(data.scaling_factors().has_value());
-    ASSERT_TRUE(data.scaling_factors().value().get().scaling_factors().has_value());
-    ASSERT_EQ(data.scaling_factors().value().get().scaling_factors()->size(), scaling_factors.size());
-    for (std::size_t i = 0; i < scaling_factors.size(); ++i) {
-        auto factors = data.scaling_factors().value().get().scaling_factors().value()[i];
-        EXPECT_EQ(factors.feature, std::get<0>(scaling_factors[i]));
-        EXPECT_FLOATING_POINT_NEAR(factors.lower, std::get<1>(scaling_factors[i]));
-        EXPECT_FLOATING_POINT_NEAR(factors.upper, std::get<2>(scaling_factors[i]));
+    const auto &data_scaling_factors_opt = data.scaling_factors();
+    EXPECT_TRUE(data_scaling_factors_opt.has_value());
+    if (data_scaling_factors_opt.has_value()) {
+        const auto &scaling_factors_opt = data_scaling_factors_opt.value().get().scaling_factors();
+        ASSERT_TRUE(scaling_factors_opt.has_value());
+        if (scaling_factors_opt.has_value()) {
+            const std::vector<plssvm::min_max_scaler::factors> factors = scaling_factors_opt.value();
+            ASSERT_EQ(factors.size(), scaling_factors.size());
+            for (std::size_t i = 0; i < factors.size(); ++i) {
+                EXPECT_EQ(factors[i].feature, std::get<0>(scaling_factors[i]));
+                EXPECT_FLOATING_POINT_NEAR(factors[i].lower, std::get<1>(scaling_factors[i]));
+                EXPECT_FLOATING_POINT_NEAR(factors[i].upper, std::get<2>(scaling_factors[i]));
+            }
+        }
     }
 }
 
 #if defined(PLSSVM_HAS_MPI_ENABLED)
 
-TYPED_TEST(RegressionDataSetRValueMatrixConstructors, construct_scaled_from_rvalue_matrix_without_label_comm_mismatch) {
+TYPED_TEST(RegressionDataSetRValueMatrixConstructors, ConstructScaledFromRvalueMatrixWithoutLabelCommMismatch) {
     using label_type = typename TestFixture::fixture_label_type;
 
     // create a duplicated communicator
-    MPI_Comm duplicated_mpi_comm;
+    MPI_Comm duplicated_mpi_comm{};
     MPI_Comm_dup(MPI_COMM_WORLD, &duplicated_mpi_comm);
     const plssvm::mpi::communicator comm{ duplicated_mpi_comm };
 
@@ -1143,7 +1196,7 @@ TYPED_TEST(RegressionDataSetRValueMatrixConstructors, construct_scaled_from_rval
 
 #endif
 
-TYPED_TEST(RegressionDataSetRValueMatrixConstructors, construct_scaled_from_rvalue_matrix_with_label) {
+TYPED_TEST(RegressionDataSetRValueMatrixConstructors, ConstructScaledFromRvalueMatrixWithLabel) {
     using label_type = typename TestFixture::fixture_label_type;
 
     // create data points and labels
@@ -1159,31 +1212,36 @@ TYPED_TEST(RegressionDataSetRValueMatrixConstructors, construct_scaled_from_rval
     // check values
     EXPECT_FLOATING_POINT_MATRIX_NEAR(data.data(), correct_data_points_scaled);
     EXPECT_TRUE(data.has_labels());
-    ASSERT_TRUE(data.labels().has_value());
-    EXPECT_EQ(data.labels().value().get(), copied_labels);
+    EXPECT_OPTIONAL_EQ(data.labels(), copied_labels);
 
     EXPECT_EQ(data.num_data_points(), correct_data_points_scaled.num_rows());
     EXPECT_EQ(data.num_features(), correct_data_points_scaled.num_cols());
 
     EXPECT_TRUE(data.is_scaled());
-    EXPECT_TRUE(data.scaling_factors().has_value());
-    ASSERT_TRUE(data.scaling_factors().value().get().scaling_factors().has_value());
-    ASSERT_EQ(data.scaling_factors().value().get().scaling_factors()->size(), scaling_factors.size());
-    for (std::size_t i = 0; i < scaling_factors.size(); ++i) {
-        auto factors = data.scaling_factors().value().get().scaling_factors().value()[i];
-        EXPECT_EQ(factors.feature, std::get<0>(scaling_factors[i]));
-        EXPECT_FLOATING_POINT_NEAR(factors.lower, std::get<1>(scaling_factors[i]));
-        EXPECT_FLOATING_POINT_NEAR(factors.upper, std::get<2>(scaling_factors[i]));
+    const auto &data_scaling_factors_opt = data.scaling_factors();
+    EXPECT_TRUE(data_scaling_factors_opt.has_value());
+    if (data_scaling_factors_opt.has_value()) {
+        const auto &scaling_factors_opt = data_scaling_factors_opt.value().get().scaling_factors();
+        ASSERT_TRUE(scaling_factors_opt.has_value());
+        if (scaling_factors_opt.has_value()) {
+            const std::vector<plssvm::min_max_scaler::factors> factors = scaling_factors_opt.value();
+            ASSERT_EQ(factors.size(), scaling_factors.size());
+            for (std::size_t i = 0; i < factors.size(); ++i) {
+                EXPECT_EQ(factors[i].feature, std::get<0>(scaling_factors[i]));
+                EXPECT_FLOATING_POINT_NEAR(factors[i].lower, std::get<1>(scaling_factors[i]));
+                EXPECT_FLOATING_POINT_NEAR(factors[i].upper, std::get<2>(scaling_factors[i]));
+            }
+        }
     }
 }
 
 #if defined(PLSSVM_HAS_MPI_ENABLED)
 
-TYPED_TEST(RegressionDataSetRValueMatrixConstructors, construct_scaled_from_rvalue_matrix_with_label_comm_mismatch) {
+TYPED_TEST(RegressionDataSetRValueMatrixConstructors, ConstructScaledFromRvalueMatrixWithLabelCommMismatch) {
     using label_type = typename TestFixture::fixture_label_type;
 
     // create a duplicated communicator
-    MPI_Comm duplicated_mpi_comm;
+    MPI_Comm duplicated_mpi_comm{};
     MPI_Comm_dup(MPI_COMM_WORLD, &duplicated_mpi_comm);
     const plssvm::mpi::communicator comm{ duplicated_mpi_comm };
 

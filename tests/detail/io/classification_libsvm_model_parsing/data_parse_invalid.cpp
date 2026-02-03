@@ -31,7 +31,7 @@ class LIBSVMClassificationModelDataParseInvalid : public ::testing::Test { };
 
 TYPED_TEST_SUITE(LIBSVMClassificationModelDataParseInvalid, util::classification_label_type_gtest, naming::test_parameter_to_name);
 
-TYPED_TEST(LIBSVMClassificationModelDataParseInvalid, zero_based_features) {
+TYPED_TEST(LIBSVMClassificationModelDataParseInvalid, ZeroBasedFeatures) {
     // parse the LIBSVM file
     const std::string filename = PLSSVM_TEST_PATH "/data/model/classification/invalid/zero_based_features.libsvm.model";
     plssvm::detail::io::file_reader reader{ filename };
@@ -41,7 +41,7 @@ TYPED_TEST(LIBSVMClassificationModelDataParseInvalid, zero_based_features) {
                       "LIBSVM assumes a 1-based feature indexing scheme, but 0 was given!");
 }
 
-TYPED_TEST(LIBSVMClassificationModelDataParseInvalid, empty_data) {
+TYPED_TEST(LIBSVMClassificationModelDataParseInvalid, EmptyData) {
     // parse the LIBSVM file
     const std::string filename = PLSSVM_TEST_PATH "/data/model/classification/invalid/empty_data.libsvm.model";
     plssvm::detail::io::file_reader reader{ filename };
@@ -51,7 +51,7 @@ TYPED_TEST(LIBSVMClassificationModelDataParseInvalid, empty_data) {
                       "Can't parse file: no data points are given!");
 }
 
-TYPED_TEST(LIBSVMClassificationModelDataParseInvalid, too_few_alpha_values) {
+TYPED_TEST(LIBSVMClassificationModelDataParseInvalid, TooFewAlphaValues) {
     // parse the LIBSVM file
     const std::string filename = PLSSVM_TEST_PATH "/data/model/classification/invalid/too_few_alpha_values.libsvm.model";
     plssvm::detail::io::file_reader reader{ filename };
@@ -61,7 +61,7 @@ TYPED_TEST(LIBSVMClassificationModelDataParseInvalid, too_few_alpha_values) {
                       "Can't parse file: needed at least 1 alpha values, but fewer (0) were provided!");
 }
 
-TYPED_TEST(LIBSVMClassificationModelDataParseInvalid, too_many_alpha_values) {
+TYPED_TEST(LIBSVMClassificationModelDataParseInvalid, TooManyAlphaValues) {
     // parse the LIBSVM file
     const std::string filename = PLSSVM_TEST_PATH "/data/model/classification/invalid/too_many_alpha_values.libsvm.model";
     plssvm::detail::io::file_reader reader{ filename };
@@ -71,7 +71,7 @@ TYPED_TEST(LIBSVMClassificationModelDataParseInvalid, too_many_alpha_values) {
                       "Can't parse file: needed at most 2 alpha values, but more (3) were provided!");
 }
 
-TYPED_TEST(LIBSVMClassificationModelDataParseInvalid, feature_with_alpha_char_at_the_beginning) {
+TYPED_TEST(LIBSVMClassificationModelDataParseInvalid, FeatureWithAlphaCharAtTheBeginning) {
     // parse the LIBSVM file
     const std::string filename = PLSSVM_TEST_PATH "/data/model/classification/invalid/feature_with_alpha_char_at_the_beginning.libsvm.model";
     plssvm::detail::io::file_reader reader{ filename };
@@ -81,7 +81,7 @@ TYPED_TEST(LIBSVMClassificationModelDataParseInvalid, feature_with_alpha_char_at
                       fmt::format("Can't convert 'a-1.1178275006e+00' to a value of type {}!", plssvm::detail::arithmetic_type_name<plssvm::real_type>()));
 }
 
-TYPED_TEST(LIBSVMClassificationModelDataParseInvalid, index_with_alpha_char_at_the_beginning) {
+TYPED_TEST(LIBSVMClassificationModelDataParseInvalid, IndexWithAlphaCharAtTheBeginning) {
     // parse the LIBSVM file
     const std::string filename = PLSSVM_TEST_PATH "/data/model/classification/invalid/index_with_alpha_char_at_the_beginning.libsvm.model";
     plssvm::detail::io::file_reader reader{ filename };
@@ -91,7 +91,7 @@ TYPED_TEST(LIBSVMClassificationModelDataParseInvalid, index_with_alpha_char_at_t
                       "Can't convert ' !2' to a value of type unsigned long!");
 }
 
-TYPED_TEST(LIBSVMClassificationModelDataParseInvalid, invalid_colon_at_the_beginning) {
+TYPED_TEST(LIBSVMClassificationModelDataParseInvalid, InvalidColonAtTheBeginning) {
     // parse the LIBSVM file
     const std::string filename = PLSSVM_TEST_PATH "/data/model/classification/invalid/invalid_colon_at_the_beginning.libsvm.model";
     plssvm::detail::io::file_reader reader{ filename };
@@ -101,7 +101,7 @@ TYPED_TEST(LIBSVMClassificationModelDataParseInvalid, invalid_colon_at_the_begin
                       "Can't parse file: needed at least 1 alpha values, but fewer (0) were provided!");
 }
 
-TYPED_TEST(LIBSVMClassificationModelDataParseInvalid, invalid_colon_in_the_middle) {
+TYPED_TEST(LIBSVMClassificationModelDataParseInvalid, InvalidColonInTheMiddle) {
     // parse the LIBSVM file
     const std::string filename = PLSSVM_TEST_PATH "/data/model/classification/invalid/invalid_colon_in_the_middle.libsvm.model";
     plssvm::detail::io::file_reader reader{ filename };
@@ -111,7 +111,7 @@ TYPED_TEST(LIBSVMClassificationModelDataParseInvalid, invalid_colon_in_the_middl
                       "Can't convert ' ' to a value of type unsigned long!");
 }
 
-TYPED_TEST(LIBSVMClassificationModelDataParseInvalid, missing_feature_value) {
+TYPED_TEST(LIBSVMClassificationModelDataParseInvalid, MissingFeatureValue) {
     // parse the LIBSVM file
     const std::string filename = PLSSVM_TEST_PATH "/data/model/classification/invalid/missing_feature_value.libsvm.model";
     plssvm::detail::io::file_reader reader{ filename };
@@ -121,7 +121,7 @@ TYPED_TEST(LIBSVMClassificationModelDataParseInvalid, missing_feature_value) {
                       fmt::format("Can't convert '' to a value of type {}!", plssvm::detail::arithmetic_type_name<plssvm::real_type>()));
 }
 
-TYPED_TEST(LIBSVMClassificationModelDataParseInvalid, missing_index_value) {
+TYPED_TEST(LIBSVMClassificationModelDataParseInvalid, MissingIndexValue) {
     // parse the LIBSVM file
     const std::string filename = PLSSVM_TEST_PATH "/data/model/classification/invalid/missing_index_value.libsvm.model";
     plssvm::detail::io::file_reader reader{ filename };
@@ -131,7 +131,7 @@ TYPED_TEST(LIBSVMClassificationModelDataParseInvalid, missing_index_value) {
                       "Can't convert ' ' to a value of type unsigned long!");
 }
 
-TYPED_TEST(LIBSVMClassificationModelDataParseInvalid, non_increasing_indices) {
+TYPED_TEST(LIBSVMClassificationModelDataParseInvalid, NonIncreasingIndices) {
     // parse the LIBSVM file
     const std::string filename = PLSSVM_TEST_PATH "/data/model/classification/invalid/non_increasing_indices.libsvm.model";
     plssvm::detail::io::file_reader reader{ filename };
@@ -141,7 +141,7 @@ TYPED_TEST(LIBSVMClassificationModelDataParseInvalid, non_increasing_indices) {
                       "The features indices must be strictly increasing, but 3 is smaller or equal than 3!");
 }
 
-TYPED_TEST(LIBSVMClassificationModelDataParseInvalid, non_strictly_increasing_indices) {
+TYPED_TEST(LIBSVMClassificationModelDataParseInvalid, NonStrictlyIncreasingIndices) {
     // parse the LIBSVM file
     const std::string filename = PLSSVM_TEST_PATH "/data/model/classification/invalid/non_strictly_increasing_indices.libsvm.model";
     plssvm::detail::io::file_reader reader{ filename };
@@ -151,7 +151,7 @@ TYPED_TEST(LIBSVMClassificationModelDataParseInvalid, non_strictly_increasing_in
                       "The features indices must be strictly increasing, but 2 is smaller or equal than 3!");
 }
 
-TYPED_TEST(LIBSVMClassificationModelDataParseInvalid, oaa_and_oao) {
+TYPED_TEST(LIBSVMClassificationModelDataParseInvalid, OaAAndOaO) {
     // parse the LIBSVM file
     const std::string filename = PLSSVM_TEST_PATH "/data/model/classification/invalid/oaa_and_oao.libsvm.model";
     plssvm::detail::io::file_reader reader{ filename };
@@ -161,7 +161,7 @@ TYPED_TEST(LIBSVMClassificationModelDataParseInvalid, oaa_and_oao) {
                       "Can't distinguish between OAA and OAO in the given model file!");
 }
 
-TYPED_TEST(LIBSVMClassificationModelDataParseInvalid, too_many_num_sv_per_class) {
+TYPED_TEST(LIBSVMClassificationModelDataParseInvalid, TooManyNumSvPerClass) {
     // parse the LIBSVM file
     const std::string filename = PLSSVM_TEST_PATH "/data/model/classification/invalid/too_many_num_sv_per_class.libsvm.model";
     plssvm::detail::io::file_reader reader{ filename };
@@ -171,7 +171,7 @@ TYPED_TEST(LIBSVMClassificationModelDataParseInvalid, too_many_num_sv_per_class)
                       "Can't parse file: needed at least 3 alpha values, but fewer (2) were provided!");
 }
 
-TYPED_TEST(LIBSVMClassificationModelDataParseInvalid, too_few_sv_according_to_header) {
+TYPED_TEST(LIBSVMClassificationModelDataParseInvalid, TooFewSvAccordingToHeader) {
     // parse the LIBSVM file
     const std::string filename = PLSSVM_TEST_PATH "/data/model/classification/invalid/too_few_sv_according_to_header.libsvm.model";
     plssvm::detail::io::file_reader reader{ filename };
@@ -181,7 +181,7 @@ TYPED_TEST(LIBSVMClassificationModelDataParseInvalid, too_few_sv_according_to_he
                       "Found 5 support vectors, but it should be 6!");
 }
 
-TYPED_TEST(LIBSVMClassificationModelDataParseInvalid, too_many_sv_according_to_header) {
+TYPED_TEST(LIBSVMClassificationModelDataParseInvalid, TooManySvAccordingToHeader) {
     // parse the LIBSVM file
     const std::string filename = PLSSVM_TEST_PATH "/data/model/classification/invalid/too_many_sv_according_to_header.libsvm.model";
     plssvm::detail::io::file_reader reader{ filename };
@@ -196,14 +196,14 @@ class LIBSVMClassificationModelDataParseInvalidDeathTest : public LIBSVMClassifi
 
 TYPED_TEST_SUITE(LIBSVMClassificationModelDataParseInvalidDeathTest, util::classification_label_type_gtest, naming::test_parameter_to_name);
 
-TYPED_TEST(LIBSVMClassificationModelDataParseInvalidDeathTest, invalid_file_reader) {
+TYPED_TEST(LIBSVMClassificationModelDataParseInvalidDeathTest, InvalidFileReader) {
     // open file_reader without associating it to a file
     const plssvm::detail::io::file_reader reader{};
     EXPECT_DEATH(std::ignore = (plssvm::detail::io::parse_libsvm_model_data_classification(reader, std::vector<std::size_t>{ 3, 3 }, 0)),
                  "The file_reader is currently not associated with a file!");
 }
 
-TYPED_TEST(LIBSVMClassificationModelDataParseInvalidDeathTest, too_few_num_sv_per_class) {
+TYPED_TEST(LIBSVMClassificationModelDataParseInvalidDeathTest, TooFewNumSvPerClass) {
     // parse LIBSVM file
     const std::string filename = PLSSVM_TEST_PATH "/data/libsvm/classification/5x4.libsvm";
     plssvm::detail::io::file_reader reader{ filename };
@@ -213,7 +213,7 @@ TYPED_TEST(LIBSVMClassificationModelDataParseInvalidDeathTest, too_few_num_sv_pe
                  "At least two classes must be present!");
 }
 
-TYPED_TEST(LIBSVMClassificationModelDataParseInvalidDeathTest, skip_too_many_lines) {
+TYPED_TEST(LIBSVMClassificationModelDataParseInvalidDeathTest, SkipTooManyLines) {
     // parse LIBSVM file
     const std::string filename = PLSSVM_TEST_PATH "/data/model/classification/6x4.libsvm.model";
     plssvm::detail::io::file_reader reader{ filename };

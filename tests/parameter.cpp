@@ -10,13 +10,14 @@
 
 #include "plssvm/parameter.hpp"
 
-#include "plssvm/backends/Kokkos/execution_space.hpp"        // plssvm::kokkos::execution_space
-#include "plssvm/backends/SYCL/implementation_types.hpp"     // plssvm::sycl::implementation_type
-#include "plssvm/backends/SYCL/kernel_invocation_types.hpp"  // plssvm::sycl::kernel_invocation_type
-#include "plssvm/constants.hpp"                              // plssvm::real_type
-#include "plssvm/detail/arithmetic_type_name.hpp"            // plssvm::detail::arithmetic_type_name
-#include "plssvm/gamma.hpp"                                  // plssvm::gamma_coefficient_type
-#include "plssvm/kernel_function_types.hpp"                  // plssvm::kernel_function_type
+#include "plssvm/backends/Kokkos/execution_spaces.hpp"     // plssvm::kokkos::execution_space
+#include "plssvm/backends/SYCL/data_parallel_kernels.hpp"  // plssvm::sycl::data_parallel_kernel
+#include "plssvm/backends/SYCL/implementation_types.hpp"   // plssvm::sycl::implementation_type
+#include "plssvm/constants.hpp"                            // plssvm::real_type
+#include "plssvm/detail/arithmetic_type_name.hpp"          // plssvm::detail::arithmetic_type_name
+#include "plssvm/exceptions/exceptions.hpp"                // plssvm::invalid_parameter_exception
+#include "plssvm/gamma.hpp"                                // plssvm::gamma_coefficient_type
+#include "plssvm/kernel_function_types.hpp"                // plssvm::kernel_function_type
 
 #include "tests/custom_test_macros.hpp"  // EXPECT_CONVERSION_TO_STRING, EXPECT_FLOATING_POINT_EQ
 
@@ -25,7 +26,7 @@
 
 #include <variant>  // std::holds_alternative, std::get
 
-TEST(Parameter, default_construct) {
+TEST(Parameter, DefaultConstruct) {
     // default construct parameter set
     const plssvm::parameter param{};
 
@@ -38,7 +39,7 @@ TEST(Parameter, default_construct) {
     EXPECT_FLOATING_POINT_EQ(param.cost, plssvm::real_type{ 1.0 });
 }
 
-TEST(Parameter, construct) {
+TEST(Parameter, Construct) {
     // construct a parameter set explicitly overwriting the default values
     const plssvm::parameter param{ plssvm::kernel_function_type::polynomial, 1, plssvm::real_type{ 0.1 }, plssvm::real_type{ 2.5 }, plssvm::real_type{ 0.05 } };
 
@@ -51,7 +52,7 @@ TEST(Parameter, construct) {
     EXPECT_FLOATING_POINT_EQ(param.cost, plssvm::real_type{ 0.05 });
 }
 
-TEST(Parameter, construct_named_args_all) {
+TEST(Parameter, ConstructNamedArgsAll) {
     // construct a parameter set explicitly overwriting all default values using named parameters
     const plssvm::parameter param{
         plssvm::kernel_type = plssvm::kernel_function_type::polynomial,
@@ -70,7 +71,7 @@ TEST(Parameter, construct_named_args_all) {
     EXPECT_FLOATING_POINT_EQ(param.cost, plssvm::real_type{ 0.05 });
 }
 
-TEST(Parameter, construct_named_args) {
+TEST(Parameter, ConstructNamedArgs) {
     // construct a parameter set explicitly overwriting some default values using named parameters
     const plssvm::parameter param{
         plssvm::kernel_type = plssvm::kernel_function_type::polynomial,
@@ -87,7 +88,7 @@ TEST(Parameter, construct_named_args) {
     EXPECT_FLOATING_POINT_EQ(param.cost, plssvm::real_type{ 0.05 });
 }
 
-TEST(Parameter, construct_parameter_and_named_args) {
+TEST(Parameter, ConstructParameterAndNamedArgs) {
     // construct a parameter set
     const plssvm::parameter param_base{
         plssvm::kernel_type = plssvm::kernel_function_type::laplacian,
@@ -99,7 +100,7 @@ TEST(Parameter, construct_parameter_and_named_args) {
     const plssvm::parameter param{ param_base,
                                    plssvm::kernel_type = plssvm::kernel_function_type::rbf,
                                    plssvm::sycl_implementation_type = plssvm::sycl::implementation_type::adaptivecpp,
-                                   plssvm::sycl_kernel_invocation_type = plssvm::sycl::kernel_invocation_type::work_group,
+                                   plssvm::sycl_data_parallel_kernel = plssvm::sycl::data_parallel_kernel::work_group,
                                    plssvm::kokkos_execution_space = plssvm::kokkos::execution_space::cuda };
 
     // test default values
@@ -111,25 +112,25 @@ TEST(Parameter, construct_parameter_and_named_args) {
     EXPECT_FLOATING_POINT_EQ(param.cost, plssvm::real_type{ 0.05 });
 }
 
-TEST(Parameter, construct_invalid_kernel_type) {
+TEST(Parameter, ConstructInvalidKernelType) {
     EXPECT_THROW_WHAT(plssvm::parameter{ plssvm::kernel_type = static_cast<plssvm::kernel_function_type>(6) },
                       plssvm::invalid_parameter_exception,
                       "Invalid kernel function with value 6 given!");
 }
 
-TEST(Parameter, construct_invalid_degree) {
+TEST(Parameter, ConstructInvalidDegree) {
     EXPECT_THROW_WHAT((plssvm::parameter{ plssvm::kernel_type = plssvm::kernel_function_type::polynomial, plssvm::degree = -1 }),
                       plssvm::invalid_parameter_exception,
                       "degree must be non-negative, but is -1!");
 }
 
-TEST(Parameter, construct_invalid_gamma) {
+TEST(Parameter, ConstructInvalidGamma) {
     EXPECT_THROW_WHAT(plssvm::parameter{ plssvm::gamma = plssvm::real_type{ -0.1 } },
                       plssvm::invalid_parameter_exception,
                       "gamma must be non-negative, but is -0.1!");
 }
 
-TEST(Parameter, construct_invalid_cost) {
+TEST(Parameter, ConstructInvalidCost) {
     EXPECT_THROW_WHAT(plssvm::parameter{ plssvm::cost = plssvm::real_type{ 0.0 } },
                       plssvm::invalid_parameter_exception,
                       "cost must be strictly-positive, but is 0!");
@@ -138,7 +139,7 @@ TEST(Parameter, construct_invalid_cost) {
                       "cost must be strictly-positive, but is -0.1!");
 }
 
-TEST(Parameter, equal) {
+TEST(Parameter, Equal) {
     // test whether different parameter sets are equal, i.e., all member variables have the same value
     const plssvm::parameter params1{ plssvm::kernel_function_type::rbf, 3, plssvm::real_type{ 0.02 }, plssvm::real_type{ 1.5 }, plssvm::real_type{ 1.0 } };
     const plssvm::parameter params2{ plssvm::kernel_function_type::rbf, 3, plssvm::real_type{ 0.02 }, plssvm::real_type{ 1.5 }, plssvm::real_type{ 1.0 } };
@@ -152,7 +153,7 @@ TEST(Parameter, equal) {
     EXPECT_FALSE(params3 == params4);
 }
 
-TEST(Parameter, equal_default_constructed) {
+TEST(Parameter, EqualDefaultConstructed) {
     // test whether two default constructed parameter sets are equal, i.e., all member variables have the same value
     const plssvm::parameter params1{};
     const plssvm::parameter params2{};
@@ -161,7 +162,7 @@ TEST(Parameter, equal_default_constructed) {
     EXPECT_TRUE(params1 == params2);
 }
 
-TEST(Parameter, unequal) {
+TEST(Parameter, Unequal) {
     // test whether different parameter sets are unequal, i.e., any member variables differ in value
     const plssvm::parameter params1{ plssvm::kernel_function_type::rbf, 3, plssvm::real_type{ 0.02 }, plssvm::real_type{ 1.5 }, plssvm::real_type{ 1.0 } };
     const plssvm::parameter params2{ plssvm::kernel_function_type::rbf, 3, plssvm::real_type{ 0.02 }, plssvm::real_type{ 1.5 }, plssvm::real_type{ 1.0 } };
@@ -175,7 +176,7 @@ TEST(Parameter, unequal) {
     EXPECT_TRUE(params3 != params4);
 }
 
-TEST(Parameter, unequal_default_constructed) {
+TEST(Parameter, UnequalDefaultConstructed) {
     // test whether two default constructed parameter sets are unequal, i.e., any member variables differ in value
     const plssvm::parameter params1{};
     const plssvm::parameter params2{};
@@ -184,7 +185,7 @@ TEST(Parameter, unequal_default_constructed) {
     EXPECT_FALSE(params1 != params2);
 }
 
-TEST(Parameter, equivalent_member_function) {
+TEST(Parameter, EquivalentMemberFunction) {
     // test whether different parameter sets are equivalent, i.e., all member variables IMPORTANT FOR THE KERNEL TYPE have the same value
     const plssvm::parameter params1{ plssvm::kernel_function_type::rbf, 3, plssvm::real_type{ 0.02 }, plssvm::real_type{ 1.5 }, plssvm::real_type{ 1.0 } };
     const plssvm::parameter params2{ plssvm::kernel_function_type::rbf, 3, plssvm::real_type{ 0.02 }, plssvm::real_type{ 1.5 }, plssvm::real_type{ 1.0 } };
@@ -210,7 +211,7 @@ TEST(Parameter, equivalent_member_function) {
     EXPECT_FALSE(params4.equivalent(params10));
 }
 
-TEST(Parameter, equivalent_member_function_default_constructed) {
+TEST(Parameter, EquivalentMemberFunctionDefaultConstructed) {
     // test whether two default constructed parameter sets are equal, i.e., all member variables have the same value
     const plssvm::parameter params1{};
     const plssvm::parameter params2{};
@@ -219,7 +220,7 @@ TEST(Parameter, equivalent_member_function_default_constructed) {
     EXPECT_TRUE(params1.equivalent(params2));
 }
 
-TEST(Parameter, equivalent_free_function) {
+TEST(Parameter, EquivalentFreeFunction) {
     // test whether different parameter sets are equivalent, i.e., all member variables IMPORTANT FOR THE KERNEL TYPE have the same value
     const plssvm::parameter params1{ plssvm::kernel_function_type::rbf, 3, plssvm::real_type{ 0.02 }, plssvm::real_type{ 1.5 }, plssvm::real_type{ 1.0 } };
     const plssvm::parameter params2{ plssvm::kernel_function_type::rbf, 3, plssvm::real_type{ 0.02 }, plssvm::real_type{ 1.5 }, plssvm::real_type{ 1.0 } };
@@ -245,7 +246,7 @@ TEST(Parameter, equivalent_free_function) {
     EXPECT_FALSE(plssvm::equivalent(params4, params10));
 }
 
-TEST(Parameter, equivalent_free_function_default_constructed) {
+TEST(Parameter, EquivalentFreeFunctionDefaultConstructed) {
     // test whether two default constructed parameter sets are equal, i.e., all member variables have the same value
     const plssvm::parameter params1{};
     const plssvm::parameter params2{};
@@ -254,7 +255,7 @@ TEST(Parameter, equivalent_free_function_default_constructed) {
     EXPECT_TRUE(plssvm::equivalent(params1, params2));
 }
 
-TEST(Parameter, to_string) {
+TEST(Parameter, ToString) {
     // check conversions to std::string
     const plssvm::parameter param{ plssvm::kernel_function_type::linear, 3, plssvm::real_type{ 0.1 }, plssvm::real_type{ 0.0 }, plssvm::real_type{ 1.0 } };
     EXPECT_CONVERSION_TO_STRING(param, fmt::format("kernel_type                 linear\n"

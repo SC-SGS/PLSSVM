@@ -112,7 +112,7 @@ try:
 
         if backend == plssvm.BackendType.SYCL:
             # special case SYCL backend
-            # add all available SYCL implementation and both kernel invocation types
+            # add all available SYCL implementation types and data parallel kernels
             available_sycl_implementations = plssvm.sycl.list_available_sycl_implementations()
             available_sycl_implementations.reverse()
             for sycl_impl in available_sycl_implementations:
@@ -120,7 +120,7 @@ try:
                 if sycl_impl == plssvm.sycl.ImplementationType.AUTOMATIC:
                     continue
                 available_backends.append((backend, { "sycl_implementation_type":    sycl_impl,
-                                                      "sycl_kernel_invocation_type": plssvm.sycl.KernelInvocationType.WORK_GROUP }))
+                                                      "sycl_data_parallel_kernel": plssvm.sycl.DataParallelKernel.WORK_GROUP }))
         else:
             available_backends.append((backend, { }))
 

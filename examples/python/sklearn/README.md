@@ -1,3 +1,5 @@
+<!-- DOXYGEN_SKLEARN_EXAMPLE_LINK -->
+
 # Toy Examples of PLSSVM using its sklearn like plssvm.SVC and plssvm.SVR Python bindings
 
 This directory contains examples for our sklearn like `plssvm.SVC` and `plssvm.SVR` Python bindings. 
@@ -30,7 +32,7 @@ The four datasets are:
 4. a dataset with **four** classes created via `sklearn.datasets.make_blobs`
 
 <p align="center">
-  <img alt="plot_classifier_comparison.py output" src="https://github.com/SC-SGS/PLSSVM/raw/regression/.figures//sklearn_examples/classifier_comparison.png" width="100%">
+  <img alt="plot_classifier_comparison.py output" src="https://github.com/SC-SGS/PLSSVM/raw/develop/.figures//sklearn_examples/classifier_comparison.png" width="100%">
 </p>
 
 ```text
@@ -92,7 +94,7 @@ Note that now hyperparameter optimizations were performed.
 This examples shows how we can calculate the decision boundary using the model's `coef0_` and `intercept_` attributes.
 
 <p align="center">
-  <img alt="plot_decision_boundaries_via_coef_and_intercept.py output" src="https://github.com/SC-SGS/PLSSVM/raw/regression/.figures//sklearn_examples/decision_boundaries_via_coef_and_intercept.png" width="80%">
+  <img alt="plot_decision_boundaries_via_coef_and_intercept.py output" src="https://github.com/SC-SGS/PLSSVM/raw/develop/.figures//sklearn_examples/decision_boundaries_via_coef_and_intercept.png" width="80%">
 </p>
 
 ```text
@@ -106,7 +108,7 @@ This examples plots the decision boundaries for an example with four classes usi
 The darker the shading, the higher is the confidence that a sample corresponds to the respective class.
 
 <p align="center">
-  <img alt="plot_decision_boundary_confidence.py output" src="https://github.com/SC-SGS/PLSSVM/raw/regression/.figures//sklearn_examples/decision_boundary_confidence.png" width="80%">
+  <img alt="plot_decision_boundary_confidence.py output" src="https://github.com/SC-SGS/PLSSVM/raw/develop/.figures//sklearn_examples/decision_boundary_confidence.png" width="80%">
 </p>
 
 ```text
@@ -121,7 +123,7 @@ Training score plssvm.SVC(C=10.0, decision_function_shape='ovo'): 0.95
 This example showcases the decision boundary differences when using the different supported kernel functions and classification types in PLSSVM.
 
 <p align="center">
-  <img alt="plot_different_classifiers.py output" src="https://github.com/SC-SGS/PLSSVM/raw/regression/.figures//sklearn_examples/different_classifiers.png" width="100%">
+  <img alt="plot_different_classifiers.py output" src="https://github.com/SC-SGS/PLSSVM/raw/develop/.figures//sklearn_examples/different_classifiers.png" width="100%">
 </p>
 
 ```text
@@ -146,12 +148,12 @@ All kernel functions except the `sigmoid` kernel work rather good in this toy ex
 This example is the standard digits classification example from `sklearn` using PLSSVM as `SVC` implementation. 
 
 <p align="center">
-  <img alt="plot_digit_classification.py confusion matrix" src="https://github.com/SC-SGS/PLSSVM/raw/regression/.figures//sklearn_examples/digit_classification_confusion_matrix.png" width="60%">
+  <img alt="plot_digit_classification.py confusion matrix" src="https://github.com/SC-SGS/PLSSVM/raw/develop/.figures//sklearn_examples/digit_classification_confusion_matrix.png" width="60%">
 </p>
 
 <p align="center">
-  <img alt="plot_digit_classification.py output 1" src="https://github.com/SC-SGS/PLSSVM/raw/regression/.figures//sklearn_examples/digit_classification_1.png" width="40%">
-  <img alt="plot_digit_classification.py output 2" src="https://github.com/SC-SGS/PLSSVM/raw/regression/.figures//sklearn_examples/digit_classification_2.png" width="40%">
+  <img alt="plot_digit_classification.py output 1" src="https://github.com/SC-SGS/PLSSVM/raw/develop/.figures//sklearn_examples/digit_classification_1.png" width="40%">
+  <img alt="plot_digit_classification.py output 2" src="https://github.com/SC-SGS/PLSSVM/raw/develop/.figures//sklearn_examples/digit_classification_2.png" width="40%">
 </p>
 
 ```text
@@ -211,12 +213,12 @@ With the same default parameters, PLSSVM also achieves a high accuracy of 96%.
 This example is the standard face recognition classification example from `sklearn` using PLSSVM as `SVC` implementation.
 
 <p align="center">
-  <img alt="plot_face_recognition.py confusion matrix" src="https://github.com/SC-SGS/PLSSVM/raw/regression/.figures//sklearn_examples/face_recognition_confusion_matrix.png" width="60%">
+  <img alt="plot_face_recognition.py confusion matrix" src="https://github.com/SC-SGS/PLSSVM/raw/develop/.figures//sklearn_examples/face_recognition_confusion_matrix.png" width="60%">
 </p>
 
 <p align="center">
-  <img alt="plot_face_recognition.py result prediction" src="https://github.com/SC-SGS/PLSSVM/raw/regression/.figures//sklearn_examples/face_recognition.png" width="48%">
-  <img alt="plot_face_recognition.py eigenfaces" src="https://github.com/SC-SGS/PLSSVM/raw/regression/.figures//sklearn_examples/face_recognition_eigenfaces.png" width="48%">
+  <img alt="plot_face_recognition.py result prediction" src="https://github.com/SC-SGS/PLSSVM/raw/develop/.figures//sklearn_examples/face_recognition.png" width="48%">
+  <img alt="plot_face_recognition.py eigenfaces" src="https://github.com/SC-SGS/PLSSVM/raw/develop/.figures//sklearn_examples/face_recognition_eigenfaces.png" width="48%">
 </p>
 
 ```text
@@ -256,7 +258,7 @@ Again, with the same default parameters, PLSSVM also achieves a high accuracy of
 This example is the standard feature discretization example from `sklearn` using PLSSVM as `SVC` implementation.
 
 <p align="center">
-  <img alt="plot_rbf_parameters.py output" src="https://github.com/SC-SGS/PLSSVM/raw/regression/.figures//sklearn_examples/feature_discretization.png" width="100%">
+  <img alt="plot_rbf_parameters.py output" src="https://github.com/SC-SGS/PLSSVM/raw/develop/.figures//sklearn_examples/feature_discretization.png" width="100%">
 </p>
 
 ```text
@@ -294,11 +296,11 @@ This example is the standard rbf parameter example from `sklearn` using PLSSVM a
 Plotted are the decision boundaries different `gamma` and `C` parameter combinations.
 
 <p align="center">
-  <img alt="plot_rbf_parameters.py output" src="https://github.com/SC-SGS/PLSSVM/raw/regression/.figures//sklearn_examples/rbf_parameters.png" width="80%">
+  <img alt="plot_rbf_parameters.py output" src="https://github.com/SC-SGS/PLSSVM/raw/develop/.figures//sklearn_examples/rbf_parameters.png" width="80%">
 </p>
 
 <p align="center">
-  <img alt="plot_rbf_parameters.py output" src="https://github.com/SC-SGS/PLSSVM/raw/regression/.figures//sklearn_examples/rbf_parameters_accuracy.png" width="50%">
+  <img alt="plot_rbf_parameters.py output" src="https://github.com/SC-SGS/PLSSVM/raw/develop/.figures//sklearn_examples/rbf_parameters_accuracy.png" width="50%">
 </p>
 
 ```text
@@ -310,11 +312,11 @@ The best parameters are {'C': np.float64(1.0), 'gamma': np.float64(0.1)} with a 
 This example is similar to `plot_rbf_parameters_classes.py` but uses three classes instead of a binary classification problem. 
 
 <p align="center">
-  <img alt="plot_rbf_parameters_3_classes.py output" src="https://github.com/SC-SGS/PLSSVM/raw/regression/.figures//sklearn_examples/rbf_parameters_3_classes.png" width="80%">
+  <img alt="plot_rbf_parameters_3_classes.py output" src="https://github.com/SC-SGS/PLSSVM/raw/develop/.figures//sklearn_examples/rbf_parameters_3_classes.png" width="80%">
 </p>
 
 <p align="center">
-  <img alt="plot_rbf_parameters_3_classes.py output" src="https://github.com/SC-SGS/PLSSVM/raw/regression/.figures//sklearn_examples/rbf_parameters_accuracy_3_classes.png" width="50%">
+  <img alt="plot_rbf_parameters_3_classes.py output" src="https://github.com/SC-SGS/PLSSVM/raw/develop/.figures//sklearn_examples/rbf_parameters_accuracy_3_classes.png" width="50%">
 </p>
 
 ```text
@@ -326,7 +328,7 @@ The best parameters are {'C': np.float64(1000000000.0), 'gamma': np.float64(0.00
 A simple example plotting the separating hyperplane computed by the `SVC`.
 
 <p align="center">
-  <img alt="plot_separating_hyperplane.py output" src="https://github.com/SC-SGS/PLSSVM/raw/regression/.figures//sklearn_examples/separating_hyperplane.png" width="50%">
+  <img alt="plot_separating_hyperplane.py output" src="https://github.com/SC-SGS/PLSSVM/raw/develop/.figures//sklearn_examples/separating_hyperplane.png" width="50%">
 </p>
 
 ## plot_svm_anova.py
@@ -334,14 +336,14 @@ A simple example plotting the separating hyperplane computed by the `SVC`.
 An example showing how to use a univariate feature selection before running an `SVC` to improve the classification scores
 
 <p align="center">
-  <img alt="plot_svm_anova.py output" src="https://github.com/SC-SGS/PLSSVM/raw/regression/.figures//sklearn_examples/svm_anova.png" width="50%">
+  <img alt="plot_svm_anova.py output" src="https://github.com/SC-SGS/PLSSVM/raw/develop/.figures//sklearn_examples/svm_anova.png" width="50%">
 </p>
 
 ## plot_svm_kernels.py
 
 An example showing the decision boundary of different PLSSVM kernel functions on a two-dimensional binary data set:
 <p align="center">
-  <img alt="plot_svm_kernels.py used data set" src="https://github.com/SC-SGS/PLSSVM/raw/regression/.figures//sklearn_examples/svm_kernels_data.png" width="25%">
+  <img alt="plot_svm_kernels.py used data set" src="https://github.com/SC-SGS/PLSSVM/raw/develop/.figures//sklearn_examples/svm_kernels_data.png" width="25%">
 </p>
 
 The decision boundaries of the different kernels look as follows:
@@ -350,36 +352,36 @@ The decision boundaries of the different kernels look as follows:
     <tr>
         <td>
             <p align="center">
-              <img alt="plot_svm_kernels.py linear kernel decision boundary" src="https://github.com/SC-SGS/PLSSVM/raw/regression/.figures//sklearn_examples/svm_kernels_linear.png" width="90%">
+              <img alt="plot_svm_kernels.py linear kernel decision boundary" src="https://github.com/SC-SGS/PLSSVM/raw/develop/.figures//sklearn_examples/svm_kernels_linear.png" width="90%">
             </p>
         </td>
         <td>
             <p align="center">
-              <img alt="plot_svm_kernels.py polynomial kernel decision boundary" src="https://github.com/SC-SGS/PLSSVM/raw/regression/.figures//sklearn_examples/svm_kernels_poly.png" width="90%">
+              <img alt="plot_svm_kernels.py polynomial kernel decision boundary" src="https://github.com/SC-SGS/PLSSVM/raw/develop/.figures//sklearn_examples/svm_kernels_poly.png" width="90%">
             </p>
         </td>
         <td>
             <p align="center">
-              <img alt="plot_svm_kernels.py rbf kernel decision boundary" src="https://github.com/SC-SGS/PLSSVM/raw/regression/.figures//sklearn_examples/svm_kernels_rbf.png" width="90%">
+              <img alt="plot_svm_kernels.py rbf kernel decision boundary" src="https://github.com/SC-SGS/PLSSVM/raw/develop/.figures//sklearn_examples/svm_kernels_rbf.png" width="90%">
             </p>
         </td>
     </tr>
     <tr>
         <td>
             <p align="center">
-              <img alt="plot_svm_kernels.py sigmoid kernel decision boundary" src="https://github.com/SC-SGS/PLSSVM/raw/regression/.figures//sklearn_examples/svm_kernels_sigmoid.png" width="90%">
+              <img alt="plot_svm_kernels.py sigmoid kernel decision boundary" src="https://github.com/SC-SGS/PLSSVM/raw/develop/.figures//sklearn_examples/svm_kernels_sigmoid.png" width="90%">
             </p>
         </td>
         <td>
             <p align="center">
-              <img alt="plot_svm_kernels.py laplacian kernel decision boundary" src="https://github.com/SC-SGS/PLSSVM/raw/regression/.figures//sklearn_examples/svm_kernels_laplacian.png" width="90%">
+              <img alt="plot_svm_kernels.py laplacian kernel decision boundary" src="https://github.com/SC-SGS/PLSSVM/raw/develop/.figures//sklearn_examples/svm_kernels_laplacian.png" width="90%">
             </p>
         </td>
     </tr>
 </table>
 
 <p align="center">
-  <img alt="plot_svm_kernels.py xor problem" src="https://github.com/SC-SGS/PLSSVM/raw/regression/.figures//sklearn_examples/svm_kernels_xor.png" width="80%">
+  <img alt="plot_svm_kernels.py xor problem" src="https://github.com/SC-SGS/PLSSVM/raw/develop/.figures//sklearn_examples/svm_kernels_xor.png" width="80%">
 </p>
 
 ## plot_svm_margin.py
@@ -387,7 +389,7 @@ The decision boundaries of the different kernels look as follows:
 An example showing the margins between the support vectors and the separating hyperplane.
 
 <p align="center">
-  <img alt="plot_svm_margin.py output" src="https://github.com/SC-SGS/PLSSVM/raw/regression/.figures//sklearn_examples/svm_margin.png" width="60%">
+  <img alt="plot_svm_margin.py output" src="https://github.com/SC-SGS/PLSSVM/raw/develop/.figures//sklearn_examples/svm_margin.png" width="60%">
 </p>
 
 ## plot_svm_regression.py
@@ -398,7 +400,7 @@ A small examples showing the different PLSSVM kernel functions for three differe
 3. irregular function
 
 <p align="center">
-  <img alt="plot_svm_regression.py output" src="https://github.com/SC-SGS/PLSSVM/raw/regression/.figures//sklearn_examples/svm_regression.png" width="100%">
+  <img alt="plot_svm_regression.py output" src="https://github.com/SC-SGS/PLSSVM/raw/develop/.figures//sklearn_examples/svm_regression.png" width="100%">
 </p>
 
 ```text
@@ -436,11 +438,11 @@ The Street View House Numbers (SVHN) dataset (http://ufldl.stanford.edu/housenum
 samples and 26'032 test samples with 3072 features each (32x32 RGB images) of house numbers obtained by Google Street View images.
 
 <p align="center">
-  <img alt="plot_SVHN.py confusion matrix" src="https://github.com/SC-SGS/PLSSVM/raw/regression/.figures//sklearn_examples/real_world/svhn_confusion_matrix.png" width="60%">
+  <img alt="plot_SVHN.py confusion matrix" src="https://github.com/SC-SGS/PLSSVM/raw/develop/.figures//sklearn_examples/real_world/svhn_confusion_matrix.png" width="60%">
 </p>
 
 <p align="center">
-  <img alt="plot_SVHN.py output" src="https://github.com/SC-SGS/PLSSVM/raw/regression/.figures//sklearn_examples/real_world/svhn.png" width="1000%">
+  <img alt="plot_SVHN.py output" src="https://github.com/SC-SGS/PLSSVM/raw/develop/.figures//sklearn_examples/real_world/svhn.png" width="1000%">
 </p>
 
 ```text
@@ -475,11 +477,11 @@ The fashion MNIST dataset (https://www.kaggle.com/datasets/zalando-research/fash
 samples and 14'000 test samples with 784 features each (28x28 gray scale images) of Zalando's article images.
 
 <p align="center">
-  <img alt="plot_fashion_MNIST.py confusion matrix" src="https://github.com/SC-SGS/PLSSVM/raw/regression/.figures//sklearn_examples/real_world/fashion_mnist_confusion_matrix.png" width="60%">
+  <img alt="plot_fashion_MNIST.py confusion matrix" src="https://github.com/SC-SGS/PLSSVM/raw/develop/.figures//sklearn_examples/real_world/fashion_mnist_confusion_matrix.png" width="60%">
 </p>
 
 <p align="center">
-  <img alt="plot_fashion_MNIST.py output" src="https://github.com/SC-SGS/PLSSVM/raw/regression/.figures//sklearn_examples/real_world/fashion_mnist.png" width="80%">
+  <img alt="plot_fashion_MNIST.py output" src="https://github.com/SC-SGS/PLSSVM/raw/develop/.figures//sklearn_examples/real_world/fashion_mnist.png" width="80%">
 </p>
 
 ```text
@@ -514,7 +516,7 @@ The California Housing Prices dataset (https://www.kaggle.com/datasets/camnugent
 16'512 training and 4128 test samples with 8 features each from the 1990 California census.
 
 <p align="center">
-  <img alt="plot_california_housing.py output" src="https://github.com/SC-SGS/PLSSVM/raw/regression/.figures//sklearn_examples/real_world/california_housing.png" width="60%">
+  <img alt="plot_california_housing.py output" src="https://github.com/SC-SGS/PLSSVM/raw/develop/.figures//sklearn_examples/real_world/california_housing.png" width="60%">
 </p>
 
 ```

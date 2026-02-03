@@ -11,14 +11,15 @@
 #include "plssvm/constants.hpp"         // plssvm::real_type
 #include "plssvm/mpi/communicator.hpp"  // plssvm::mpi::communicator
 
-#include "bindings/Python/type_caster/mpi_type_caster.hpp"  // a custom Pybind11 type caster for a plssvm::mpi::communicator
+#include "bindings/Python/bindings_fwd.hpp"                 // forward declare all helper functions to create the Python bindings
+#include "bindings/Python/type_caster/mpi_type_caster.hpp"  // NOLINT: a custom Pybind11 type caster for a plssvm::mpi::communicator
 #include "bindings/Python/utility.hpp"                      // plssvm::bindings::python::util::vector_to_pyarray
 
 #include "fmt/format.h"         // fmt::format
 #include "pybind11/numpy.h"     // py::array
 #include "pybind11/pybind11.h"  // PYBIND11_NUMPY_DTYPE, py::module_, py::class_, py::init, py::arg
 #include "pybind11/pytypes.h"   // py::type
-#include "pybind11/stl.h"       // support for STL types
+#include "pybind11/stl.h"       // NOLINT: support for STL types
 
 #include <array>     // std::array
 #include <cstddef>   // std::size_t
@@ -61,7 +62,7 @@ void init_min_max_scaler(py::module_ &m) {
              py::arg("interval"),
              py::kw_only(),
              py::arg("comm") = plssvm::mpi::communicator{})
-        .def(py::init([](const py::tuple interval, plssvm::mpi::communicator comm) {
+        .def(py::init([](const py::tuple &interval, plssvm::mpi::communicator comm) {
                  if (interval.size() != 2) {
                      throw py::value_error{ fmt::format("MinMaxScaler can only be created from two interval values (lower, upper), but {} were provided!", interval.size()) };
                  }
@@ -84,9 +85,8 @@ void init_min_max_scaler(py::module_ &m) {
                 const auto scaling_factors = self.scaling_factors();
                 if (scaling_factors.has_value()) {
                     return plssvm::bindings::python::util::vector_to_pyarray(scaling_factors.value());
-                } else {
-                    return std::nullopt;
-                } }, "the scaling factors for each feature")
+                }
+                return std::nullopt; }, "the scaling factors for each feature")
         .def("communicator", &plssvm::min_max_scaler::communicator, "the associated MPI communicator")
         .def("__repr__", [](const plssvm::min_max_scaler &self) {
             std::string optional_repr{};

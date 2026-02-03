@@ -10,9 +10,13 @@ message(STATUS "Building Python language bindings for PLSSVM.")
 
 find_package(Python COMPONENTS Interpreter Development)
 
+# ~~~
+# Note: Even with newer Pybind11 version, we cannot really use py::native_enum since it DOES NOT support string -> C++ enum
+#       conversions and I couldn't find a solution to make it work without worsening the public API.
+# ~~~
 # try finding pybind11
-set(PLSSVM_pybind11_VERSION v2.13.6)
-find_package(pybind11 2.13.6 QUIET)
+set(PLSSVM_pybind11_VERSION v3.0.1)
+find_package(pybind11 3.0.1 QUIET)
 if (pybind11_FOUND)
     message(STATUS "Found package pybind11.")
 else ()
@@ -39,6 +43,7 @@ set(PLSSVM_PYTHON_BINDINGS_SOURCES
     ${CMAKE_CURRENT_LIST_DIR}/model/regression_model.cpp
     ${CMAKE_CURRENT_LIST_DIR}/sklearn_like/svc.cpp
     ${CMAKE_CURRENT_LIST_DIR}/sklearn_like/svr.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/sklearn_like/tags.cpp
     ${CMAKE_CURRENT_LIST_DIR}/svm/csvm.cpp
     ${CMAKE_CURRENT_LIST_DIR}/svm/csvc.cpp
     ${CMAKE_CURRENT_LIST_DIR}/svm/csvr.cpp
@@ -73,7 +78,7 @@ if (TARGET ${PLSSVM_HPX_BACKEND_LIBRARY_NAME})
 endif ()
 if (TARGET ${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME})
 
-    # AdaptiveCpp stdpar only support on the CPU when using our Python bindings
+    # AdaptiveCpp stdpar only support the CPU as target in our Python bindings
     if (PLSSVM_STDPAR_BACKEND STREQUAL "ACPP" AND (DEFINED PLSSVM_NVIDIA_TARGET_ARCHS OR DEFINED PLSSVM_AMD_TARGET_ARCHS OR DEFINED PLSSVM_INTEL_TARGET_ARCHS))
         message(
             FATAL_ERROR
@@ -116,6 +121,7 @@ target_compile_definitions(${PLSSVM_PYTHON_BINDINGS_LIBRARY_NAME} PRIVATE PYBIND
 
 # disable clang compiler warning
 target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC $<$<COMPILE_LANG_AND_ID:CXX,Clang,IntelLLVM>:-Wno-self-assign-overloaded>)
+target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC $<$<COMPILE_LANG_AND_ID:CXX,GNU,Clang,IntelLLVM>:-Wno-null-dereference>)
 target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC -fPIC)
 
 include(GNUInstallDirs)

@@ -12,13 +12,19 @@
 #include "plssvm/backends/SYCL/DPCPP/detail/queue_impl.hpp"  // plssvm::dpcpp::detail::queue (PImpl implementation)
 #include "plssvm/backends/SYCL/exceptions.hpp"               // plssvm::dpcpp::backend_exception
 #include "plssvm/detail/assert.hpp"                          // PLSSVM_ASSERT
+#include "plssvm/shape.hpp"                                  // plssvm::shape
 
 #include "sycl/sycl.hpp"  // ::sycl::malloc_device, ::sycl::free
 
 #include "fmt/format.h"  // fmt::format
 
 #include <algorithm>  // std::min
+#include <cstddef>    // std::size_t
 #include <vector>     // std::vector
+
+#if !defined(SYCL_EXT_ONEAPI_MEMCPY2D)
+    #include <cstring>  // std::memcpy
+#endif
 
 namespace plssvm::dpcpp::detail {
 
@@ -33,8 +39,11 @@ device_ptr<T>::device_ptr(const plssvm::shape shape, const queue &q) :
 template <typename T>
 device_ptr<T>::device_ptr(const plssvm::shape shape, plssvm::shape padding, const queue &q) :
     base_type{ shape, padding, q } {
-    data_ = ::sycl::malloc_device<value_type>(this->size_padded(), queue_.impl->sycl_queue);
-    this->memset(0);
+    // only non-empty pointers must be memset in the constructor
+    if (this->size_padded() != std::size_t{ 0 }) {
+        data_ = ::sycl::malloc_device<value_type>(this->size_padded(), queue_.impl->sycl_queue);
+        this->memset(0);
+    }
 }
 
 template <typename T>

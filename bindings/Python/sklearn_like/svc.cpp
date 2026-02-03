@@ -7,7 +7,7 @@
  */
 
 #include "plssvm/classification_types.hpp"              // plssvm::classification_type
-#include "plssvm/constants.hpp"                         // plssvm::real_type
+#include "plssvm/constants.hpp"                         // plssvm::real_type, plssvm::DEFAULT_EPSILON
 #include "plssvm/csvm_factory.hpp"                      // plssvm::make_csvc
 #include "plssvm/data_set/classification_data_set.hpp"  // plssvm::classification_data_set
 #include "plssvm/detail/assert.hpp"                     // PLSSVM_ASSERT
@@ -20,30 +20,33 @@
 #include "plssvm/svm/csvc.hpp"                          // plssvm::csvc
 #include "plssvm/verbosity_levels.hpp"                  // plssvm::verbosity_level, plssvm::verbosity
 
-#include "bindings/Python/data_set/variant_wrapper.hpp"                 // plssvm::bindings::python::util::classification_data_set_wrapper
-#include "bindings/Python/model/variant_wrapper.hpp"                    // plssvm::bindings::python::util::classification_model_wrapper
-#include "bindings/Python/type_caster/label_vector_wrapper_caster.hpp"  // a custom Pybind11 type caster for a plssvm::bindings::python::label_vector_wrapper
-#include "bindings/Python/type_caster/matrix_type_caster.hpp"           // a custom Pybind11 type caster for a plssvm::matrix
-#include "bindings/Python/type_caster/matrix_wrapper_type_caster.hpp"   // a custom Pybind11 type caster for a plssvm::bindings::python::util::matrix_wrapper
-#include "bindings/Python/utility.hpp"                                  // plssvm::bindings::python::util::{check_kwargs_for_correctness, vector_to_pyarray}
+#include "bindings/Python/bindings_fwd.hpp"                                  // forward declare all helper functions to create the Python bindings
+#include "bindings/Python/data_set/variant_wrapper.hpp"                      // plssvm::bindings::python::util::classification_data_set_wrapper
+#include "bindings/Python/model/variant_wrapper.hpp"                         // plssvm::bindings::python::util::classification_model_wrapper
+#include "bindings/Python/sklearn_like/tags.hpp"                             // Tags, TargetTags, TransformerTags, ClassifierTags, RegressorTags, InputTags
+#include "bindings/Python/type_caster/label_vector_wrapper_type_caster.hpp"  // a custom Pybind11 type caster for a plssvm::bindings::python::label_vector_wrapper
+#include "bindings/Python/type_caster/matrix_type_caster.hpp"                // NOLINT: a custom Pybind11 type caster for a plssvm::matrix
+#include "bindings/Python/type_caster/matrix_wrapper_type_caster.hpp"        // a custom Pybind11 type caster for a plssvm::bindings::python::util::matrix_wrapper
+#include "bindings/Python/utility.hpp"                                       // plssvm::bindings::python::util::{check_kwargs_for_correctness, vector_to_pyarray}
 
-#include "fmt/format.h"          // fmt::format
-#include "fmt/ranges.h"          // fmt::join
-#include "pybind11/cast.h"       // py::cast
-#include "pybind11/numpy.h"      // support for STL types
-#include "pybind11/operators.h"  // support for operators
-#include "pybind11/pybind11.h"   // py::module_, py::class_, py::init, py::arg, py::return_value_policy, py::self, py::dynamic_attr, py::value_error, py::attribute_error
-#include "pybind11/pytypes.h"    // py::dict, py::kwargs, py::str
-#include "pybind11/stl.h"        // support for STL types
+#include "fmt/format.h"            // fmt::format
+#include "fmt/ranges.h"            // fmt::join
+#include "pybind11/buffer_info.h"  // py::buffer_info
+#include "pybind11/cast.h"         // py::cast, py::arg
+#include "pybind11/numpy.h"        // support for STL types
+#include "pybind11/operators.h"    // NOLINT: support for operators
+#include "pybind11/pybind11.h"     // py::module_, py::class_, py::init, py::return_value_policy, py::self, py::dynamic_attr, py::value_error, py::attribute_error, py::tuple, py::pickle
+#include "pybind11/pytypes.h"      // py::dict, py::kwargs, py::str
+#include "pybind11/stl.h"          // NOLINT: support for STL types
 
 #include <algorithm>  // std::fill
 #include <cstddef>    // std::size_t
 #include <cstdint>    // std::int32_t
-#include <cstdint>    // fixed-width integers
 #include <exception>  // std::exception
 #include <map>        // std::map
 #include <memory>     // std::unique_ptr, std::make_unique
 #include <optional>   // std::optional, std::nullopt
+#include <stdexcept>  // std::runtime_error
 #include <string>     // std::string
 #include <tuple>      // std::make_tuple, std::ignore
 #include <utility>    // std::move
@@ -145,9 +148,10 @@ struct svc {
     /**
      * @brief Return the currently used params.
      * @details Necessary for the same Python function and also the string representation.
+     * @params[in] deep_copy *unused*
      * @return a Python dictionary containing the used parameter (`[[nodiscard]]`)
      */
-    [[nodiscard]] py::dict get_params(const bool) const {
+    [[nodiscard]] py::dict get_params([[maybe_unused]] const bool deep_copy) const {
         PLSSVM_ASSERT(svm_ != nullptr, "svm_ may not be a nullptr! Maybe you forgot to initialize it?");
         const plssvm::parameter params = svm_->get_params();
 
@@ -189,7 +193,7 @@ struct svc {
 
             std::map<label_type, std::vector<int>> indices_per_class{};
             // init index-map map
-            for (const label_type &label : model.classes()) {
+            for (const label_type &label : model.classes()) {  // NOLINT(performance-implicit-conversion-in-loop): the types ARE identical
                 indices_per_class.insert({ label, std::vector<int>{} });
             }
             // sort the indices into the respective bucket based on their associated class
@@ -207,24 +211,24 @@ struct svc {
                           *model_);
     }
 
-    /// Pointer to the the stored PLSSVM C-SVC instance.
-    std::unique_ptr<plssvm::csvc> svm_{};
+    /// Pointer to the stored PLSSVM C-SVC instance.
+    std::unique_ptr<plssvm::csvc> svm_;
     /// The CG termination criterion if provided.
     plssvm::real_type epsilon_{};
     /// The maximum number of CG iterations if provided.
-    std::optional<unsigned long long> max_iter_{};
+    std::optional<unsigned long long> max_iter_;
     /// The used classification type (or decision function shape).
     plssvm::classification_type classification_{};
 
     /// The data type of the labels.
-    py::dtype py_dtype_{};
+    py::dtype py_dtype_;
     /// Pointer to the classification data set wrapper (represents data sets with all possible label types).
-    std::unique_ptr<possible_data_set_types> data_{};
+    std::unique_ptr<possible_data_set_types> data_;
     /// Pointer to the classification model wrapper (represents models with all possible label types).
-    std::unique_ptr<possible_model_types> model_{};
+    std::unique_ptr<possible_model_types> model_;
 
     /// The name of the features. Can only be provided via a Pandas DataFrame.
-    std::optional<std::vector<std::string>> feature_names_{};
+    std::optional<std::vector<std::string>> feature_names_;
 };
 
 void init_sklearn_svc(py::module_ &m) {
@@ -263,7 +267,7 @@ void init_sklearn_svc(py::module_ &m) {
                py::arg("coef0") = 0.0,
                // py::arg("shrinking") = true,
                // py::arg("probability") = false,
-               py::arg("tol") = 1e-10,
+               py::arg("tol") = plssvm::DEFAULT_EPSILON,
                // py::arg("cache_size") = 200,
                // py::arg("class_weight") = py::none{},
                py::arg("verbose") = false,
@@ -286,7 +290,7 @@ void init_sklearn_svc(py::module_ &m) {
             const auto size = static_cast<int>(std::visit([](auto &&model) { return model.num_classes(); }, *self.model_));
             py::array_t<plssvm::real_type, py::array::c_style> py_array(size);
             const py::buffer_info buffer = py_array.request();
-            auto ptr = static_cast<plssvm::real_type *>(buffer.ptr);
+            auto *ptr = static_cast<plssvm::real_type *>(buffer.ptr);
             std::fill(ptr, ptr + size, plssvm::real_type{ 1.0 });
             return py_array; }, "Multipliers of parameter C for each class. ndarray of shape (n_classes,)")
         .def_property_readonly("classes_", [](const svc &self) -> py::array {
@@ -382,7 +386,7 @@ void init_sklearn_svc(py::module_ &m) {
             }
 
             // convert 2D vector back to plssvm::matrix
-            return py::cast(plssvm::aos_matrix<plssvm::real_type>{ std::move(sorted_sv) }); }, "Support vectors. ndarray of shape (n_SV, n_features)")
+            return py::cast(plssvm::aos_matrix<plssvm::real_type>{ sorted_sv }); }, "Support vectors. ndarray of shape (n_SV, n_features)")
         .def_property_readonly("n_support_", [](const svc &self) -> py::array {
             if (self.model_ == nullptr) {
                 throw py::attribute_error{ "'SVC' object has no attribute 'n_support_'" };
@@ -393,7 +397,7 @@ void init_sklearn_svc(py::module_ &m) {
 
                 std::map<label_type, std::int32_t> occurrences{};
                 // init count map
-                for (const label_type &label : model.classes()) {
+                for (const label_type &label : model.classes()) {  // NOLINT(performance-implicit-conversion-in-loop): the types ARE identical
                     occurrences.insert({ label, std::int32_t{ 0 } });
                 }
                 // count occurrences
@@ -449,9 +453,8 @@ void init_sklearn_svc(py::module_ &m) {
                                     reduced_votes[i] = -votes(i, 0);
                                 }
                                 return plssvm::bindings::python::util::vector_to_pyarray(reduced_votes);
-                            } else {
-                                return py::cast(votes);
                             }
+                            return py::cast(votes);
                         }
                     case plssvm::classification_type::oao:
                         {
@@ -481,12 +484,12 @@ void init_sklearn_svc(py::module_ &m) {
                                         if (num_classes == 2) {
                                             // no special assembly needed in binary case
                                             return model.support_vectors();
-                                        } else {
-                                            // note: if this is changed, it must also be changed in the libsvm_model_parsing.hpp in the calculate_alpha_idx function!!!
-                                            // order the indices in increasing order
-                                            plssvm::soa_matrix<plssvm::real_type> temp{ plssvm::shape{ num_data_points_in_sub_matrix, num_features }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE } };
-                                            std::vector<std::size_t> sorted_indices(num_data_points_in_sub_matrix);
-                                            std::merge(index_sets[i].cbegin(), index_sets[i].cend(), index_sets[j].cbegin(), index_sets[j].cend(), sorted_indices.begin());
+                                        }
+                                        // note: if this is changed, it must also be changed in the libsvm_model_parsing.hpp in the calculate_alpha_idx function!!!
+                                        // order the indices in increasing order
+                                        plssvm::soa_matrix<plssvm::real_type> temp{ plssvm::shape{ num_data_points_in_sub_matrix, num_features }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE } };
+                                        std::vector<std::size_t> sorted_indices(num_data_points_in_sub_matrix);
+                                        std::merge(index_sets[i].cbegin(), index_sets[i].cend(), index_sets[j].cbegin(), index_sets[j].cend(), sorted_indices.begin());
 // copy the support vectors to the binary support vectors
 // NOTE: it seems that MSVC doesn't like the collapse clause inside a lambda function
 #if defined(_MSC_VER)
@@ -494,13 +497,12 @@ void init_sklearn_svc(py::module_ &m) {
 #else
     #pragma omp parallel for collapse(2)
 #endif
-                                            for (std::size_t si = 0; si < num_data_points_in_sub_matrix; ++si) {
-                                                for (std::size_t dim = 0; dim < num_features; ++dim) {
-                                                    temp(si, dim) = model.support_vectors()(sorted_indices[si], dim);
-                                                }
+                                        for (std::size_t si = 0; si < num_data_points_in_sub_matrix; ++si) {
+                                            for (std::size_t dim = 0; dim < num_features; ++dim) {
+                                                temp(si, dim) = model.support_vectors()(sorted_indices[si], dim);
                                             }
-                                            return temp;
                                         }
+                                        return temp;
                                     }();
 
                                     // we don't use the w optimization for the linear kernel here due to code simplicity
@@ -525,9 +527,8 @@ void init_sklearn_svc(py::module_ &m) {
                                     votes_access(pp, pos) *= plssvm::real_type{ -1.0 };
                                 }
                                 return votes.reshape(py::array::ShapeContainer{ votes.size() });
-                            } else {
-                                return votes;
                             }
+                            return votes;
                         }
                 }
                 // unreachable
@@ -554,7 +555,7 @@ void init_sklearn_svc(py::module_ &m) {
                 using possible_model_types = typename svc::possible_model_types;
 
                 // create the data set to fit
-                plssvm::classification_data_set<label_type> train_data{ std::move(data.matrix), std::move(labels_vector) };
+                plssvm::classification_data_set<label_type> train_data{ std::move(data.matrix), std::forward<decltype(labels_vector)>(labels_vector) };
 
                 // fit the model
                 if (self.max_iter_.has_value()) {
@@ -590,8 +591,8 @@ void init_sklearn_svc(py::module_ &m) {
                 // predict the data
                 return plssvm::bindings::python::util::vector_to_pyarray(self.svm_->predict(model, data_to_predict));
             }, *self.model_); }, "Perform classification on samples in X.", py::arg("X"))
-        .def("predict_log_proba", [](const svc &, py::array_t<plssvm::real_type>) { throw py::attribute_error{ "'SVC' object has no function 'predict_log_proba' (not implemented)" }; }, "Compute log probabilities of possible outcomes for samples in X.", py::arg("X"))
-        .def("predict_proba", [](const svc &, py::array_t<plssvm::real_type>) { throw py::attribute_error{ "'SVC' object has no function 'predict_proba' (not implemented)" }; }, "Compute probabilities of possible outcomes for samples in X.", py::arg("X"))
+        .def("predict_log_proba", [](const svc &, const py::array_t<plssvm::real_type> &) { throw py::attribute_error{ "'SVC' object has no function 'predict_log_proba' (not implemented)" }; }, "Compute log probabilities of possible outcomes for samples in X.", py::arg("X"))
+        .def("predict_proba", [](const svc &, const py::array_t<plssvm::real_type> &) { throw py::attribute_error{ "'SVC' object has no function 'predict_proba' (not implemented)" }; }, "Compute probabilities of possible outcomes for samples in X.", py::arg("X"))
         .def("score", [](svc &self, plssvm::soa_matrix<plssvm::real_type> data, plssvm::bindings::python::util::label_vector_wrapper<typename svc::possible_vector_types> labels, const std::optional<std::vector<plssvm::real_type>> &sample_weight) -> plssvm::real_type {
             PLSSVM_ASSERT(self.svm_ != nullptr, "svm_ may not be a nullptr! Maybe you forgot to initialize it?");
             // sanity check parameter
@@ -607,7 +608,7 @@ void init_sklearn_svc(py::module_ &m) {
                 // get the label types
                 using label_type = typename plssvm::detail::remove_cvref_t<decltype(labels_vector)>::value_type;
                 // create the data set to score
-                const plssvm::classification_data_set<label_type> data_to_score{ std::move(data), std::move(labels_vector) };
+                const plssvm::classification_data_set<label_type> data_to_score{ std::move(data), std::forward<decltype(labels_vector)>(labels_vector) };
                 // score the data
                 try {
                     return self.svm_->score(std::get<plssvm::classification_model<label_type>>(*self.model_), data_to_score);
@@ -698,10 +699,21 @@ void init_sklearn_svc(py::module_ &m) {
             new_svc.max_iter_ = self.max_iter_;
             new_svc.classification_ = self.classification_;
             return new_svc; }, "Clone the estimator.")
+        .def("__sklearn_tags__", [](const svc &self) -> Tags {
+            Tags sklearn_tags{};
+
+            // set non-default values
+            sklearn_tags.estimator_type = "classifier";
+            sklearn_tags.target_tags.one_d_labels = true;
+            sklearn_tags.classifier_tags = ClassifierTags{};
+            sklearn_tags.input_tags.sparse = true;
+            sklearn_tags.input_tags.positive_only = self.svm_->get_params().kernel_type == plssvm::kernel_function_type::chi_squared;
+
+            return sklearn_tags; }, "Set sklearn tags internally used for estimators.")
         .def("__repr__", [](const svc &self) {
             // get the currently used parameters
-            py::dict used_params = self.get_params(true);
-            py::dict default_params = svc{}.get_params(true);
+            const py::dict used_params = self.get_params(true);
+            const py::dict default_params = svc{}.get_params(true);
 
             std::vector<std::string> non_default_values{};
 
@@ -723,5 +735,21 @@ void init_sklearn_svc(py::module_ &m) {
                 }
             }
 
-            return fmt::format("plssvm.svm.SVC({})", fmt::join(non_default_values, ", ")); }, "Print the SVC showing all non-default parameters.");
+            return fmt::format("plssvm.svm.SVC({})", fmt::join(non_default_values, ", ")); }, "Print the SVC showing all non-default parameters.")
+        .def(py::pickle(
+            // clang-format off
+            [](const svc &self) {  // __getstate__
+                // return a tuple that fully encodes the state of the object
+                return py::make_tuple(self.svm_->get_params(), self.epsilon_, self.max_iter_, self.classification_);
+            },
+            [](py::tuple t) {  // NOLINT: __setstate__
+                if (t.size() != 4) {
+                    throw std::runtime_error{ "Invalid state!" };
+                }
+                // create a new C++ instance
+                return svc{ t[0].cast<plssvm::parameter>(), t[1].cast<plssvm::real_type>(), t[2].cast<std::optional<unsigned long long>>(), t[3].cast<plssvm::classification_type>() };
+            }
+            )
+             // clang-format on
+        );
 }

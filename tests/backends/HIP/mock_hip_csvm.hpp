@@ -9,8 +9,8 @@
  * @brief MOCK class for the C-SVM class using the HIP backend.
  */
 
-#ifndef PLSSVM_TESTS_BACKENDS_CUDA_MOCK_HIP_CSVM_HPP_
-#define PLSSVM_TESTS_BACKENDS_CUDA_MOCK_HIP_CSVM_HPP_
+#ifndef PLSSVM_TESTS_BACKENDS_HIP_MOCK_HIP_CSVM_HPP_
+#define PLSSVM_TESTS_BACKENDS_HIP_MOCK_HIP_CSVM_HPP_
 #pragma once
 
 #include "plssvm/backends/execution_range.hpp"  // plssvm::detail::dim_type
@@ -47,6 +47,7 @@ class mock_hip_csvm final : public plssvm::hip::csvm {
     using base_type::assemble_kernel_matrix;
     using base_type::blas_level_3;
     using base_type::get_device_memory;
+    using base_type::get_local_memory;
     using base_type::get_max_work_group_size;
     using base_type::num_available_devices;
 
@@ -85,4 +86,4 @@ class mock_hip_csvm final : public plssvm::hip::csvm {
     }
 };
 
-#endif  // PLSSVM_TESTS_BACKENDS_CUDA_MOCK_HIP_CSVM_HPP_
+#endif  // PLSSVM_TESTS_BACKENDS_HIP_MOCK_HIP_CSVM_HPP_

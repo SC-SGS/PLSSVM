@@ -72,11 +72,10 @@ template <typename T>
     if (arr.size() == 0) {
         // return an empty vector
         return std::vector<T>{};
-    } else {
-        // convert py::array to std::vector
-        auto arr_t = arr.cast<py::array_t<T>>();
-        return std::vector<T>(arr_t.data(0), arr_t.data(0) + arr_t.shape(0));
     }
+    // convert py::array to std::vector
+    auto arr_t = arr.cast<py::array_t<T>>();
+    return std::vector<T>(arr_t.data(0), arr_t.data(0) + arr_t.shape(0));
 }
 
 /**
@@ -98,12 +97,12 @@ template <typename T>
 template <typename possible_vector_types>
 [[nodiscard]] possible_vector_types generic_pyarray_to_vector(const py::array &arr) {
     // sanity check the passed py::array
-    if (!(arr.flags() & py::array::c_style)) {
+    if (!(arr.flags() & py::array::c_style)) {  // NOLINT(hicpp-signed-bitwise): Pybind11 way to do this
         throw py::value_error{ "The py::array must be C-contiguous" };
     }
 
     // the type used in the py::array
-    py::dtype type = arr.dtype();
+    const py::dtype type = arr.dtype();
 
     PLSSVM_CREATE_PYARRAY_TO_VECTOR_MAPPINGS(bool)
     PLSSVM_CREATE_PYARRAY_TO_VECTOR_MAPPINGS(std::int8_t)
@@ -127,14 +126,13 @@ template <typename possible_vector_types>
             if (arr.size() == 0) {
                 // return an empty vector
                 return std::vector<std::string>{};
-            } else {
-                std::vector<std::string> result;
-                result.reserve(arr.shape(0));
-                for (py::handle item : arr) {
-                    result.push_back(py::cast<std::string>(item));
-                }
-                return result;
             }
+            std::vector<std::string> result;
+            result.reserve(arr.shape(0));
+            for (const py::handle &item : arr) {
+                result.push_back(py::cast<std::string>(item));
+            }
+            return result;
         }
     }
 
@@ -205,9 +203,9 @@ template <typename possible_vector_types>
     py::type highest_type{ py::module_::import("builtins").attr("bool") };
     int highest_precedence{ -1 };
     for (std::size_t i = 0; i < py::len(list); ++i) {
-        py::object item = list[i];
-        py::type type = py::type::of(item);
-        int precedence = precedence_map.at(type);
+        const py::object item = list[i];
+        const py::type type = py::type::of(item);
+        const int precedence = precedence_map.at(type);
         if (precedence > highest_precedence) {
             highest_precedence = precedence;
             highest_type = type;
@@ -263,7 +261,7 @@ struct label_vector_wrapper {
     /// The labels.
     PossibleTypes labels{};
     /// The actually used Python dtype.
-    py::dtype dtype{};
+    py::dtype dtype;
 };
 
 }  // namespace plssvm::bindings::python::util
@@ -286,9 +284,11 @@ struct type_caster<plssvm::bindings::python::util::label_vector_wrapper<Possible
     /**
      * @brief Convert a label_vector_wrapper to a Numpy ndarray.
      * @param[in] labels the labels vector to convert to a Python Numpy ndarray
+     * @params[in] rvp *unused*
+     * @params[in] h *unused*
      * @return a Pybind11 handle to the Numpy ndarray
      */
-    static py::handle cast(const label_vector_wrapper_type &labels, py::return_value_policy, py::handle) {
+    static py::handle cast(const label_vector_wrapper_type &labels, [[maybe_unused]] const py::return_value_policy rvp, [[maybe_unused]] const py::handle h) {
         // convert a generic std::vector to a Numpy ndarray
         return std::visit([](auto &&vec) { return plssvm::bindings::python::util::vector_to_pyarray(vec).release(); }, labels.labels);
     }
@@ -296,9 +296,10 @@ struct type_caster<plssvm::bindings::python::util::label_vector_wrapper<Possible
     /**
      * @brief Try converting a Python object @p obj to a label_vector_wrapper.
      * @param[in] obj the object to convert
+     * @params[in] allow_implicit_conversions *unused*
      * @return `true` if the conversion was successful, `false` otherwise
      */
-    bool load(py::handle obj, bool) {
+    bool load(py::handle obj, [[maybe_unused]] const bool allow_implicit_conversions) {
         if (py::isinstance<py::list>(obj)) {
             // provided obj is a Python list
             auto [labels, dtype] = plssvm::bindings::python::util::generic_pylist_to_vector<PossibleTypes>(py::cast<py::list>(obj));
@@ -317,7 +318,7 @@ struct type_caster<plssvm::bindings::python::util::label_vector_wrapper<Possible
                 arr = obj.attr("values").cast<py::array>();
                 arr = arr.reshape({ arr.size() });
             } else {
-                throw py::value_error{ fmt::format("Unsupported data type: {}", std::string{ py::str(obj.get_type().attr("__name__")) }) };
+                throw py::value_error{ fmt::format("Unsupported data type: {}", std::string{ py::str(py::type::of(obj).attr("__name__")) }) };
             }
 
             // sanity check the number of elements in the numpy array

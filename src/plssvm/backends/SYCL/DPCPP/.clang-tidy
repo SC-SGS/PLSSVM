@@ -1,0 +1,13 @@
+---
+Checks: '
+-cppcoreguidelines-avoid-const-or-ref-data-members,
+-cppcoreguidelines-pro-type-member-init,
+-cppcoreguidelines-avoid-c-arrays,
+
+-hicpp-member-init,
+-hicpp-avoid-c-arrays,
+
+-modernize-avoid-c-arrays,
+'
+
+InheritParentConfig: true

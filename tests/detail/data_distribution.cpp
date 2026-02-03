@@ -24,18 +24,18 @@
 #include <iostream>   // std::cout, std::endl
 #include <vector>     // std::vector
 
-using namespace plssvm::detail::literals;
+using namespace plssvm::detail::literals;  // NOLINT(google-build-using-namespace): only imports custom user-defined literals into this namespace
 
 //*************************************************************************************************************************************//
 //                                                    triangular data distributions                                                    //
 //*************************************************************************************************************************************//
 
-TEST(TriangularDataDistribution, construct) {
+TEST(TriangularDataDistribution, Construct) {
     // create a triangular data distribution
     const plssvm::detail::triangular_data_distribution dist{ plssvm::mpi::communicator{}, 1024, 4 };
 
     // test getter
-    const std::vector<std::size_t> dist_vec = dist.distribution();
+    const std::vector<std::size_t> &dist_vec = dist.distribution();
     EXPECT_EQ(dist_vec.size(), 5);
     EXPECT_EQ(dist_vec.front(), 0);                                   // the distribution must start with 0
     EXPECT_EQ(dist_vec.back(), 1024);                                 // the distribution must end with the number of rows
@@ -44,12 +44,12 @@ TEST(TriangularDataDistribution, construct) {
     EXPECT_EQ(dist.num_places(), 4);
 }
 
-TEST(TriangularDataDistribution, construct_with_weights) {
+TEST(TriangularDataDistribution, ConstructWithWeights) {
     // create a triangular data distribution
     const plssvm::detail::triangular_data_distribution dist{ plssvm::mpi::communicator{ std::vector<std::size_t>{ std::size_t{ 2 } } }, 1024, 4 };
 
     // test getter
-    const std::vector<std::size_t> dist_vec = dist.distribution();
+    const std::vector<std::size_t> &dist_vec = dist.distribution();
     EXPECT_EQ(dist_vec.size(), 5);
     EXPECT_EQ(dist_vec.front(), 0);                                   // the distribution must start with 0
     EXPECT_EQ(dist_vec.back(), 1024);                                 // the distribution must end with the number of rows
@@ -58,7 +58,7 @@ TEST(TriangularDataDistribution, construct_with_weights) {
     EXPECT_EQ(dist.num_places(), 4);
 }
 
-TEST(TriangularDataDistribution, place_specific_num_rows) {
+TEST(TriangularDataDistribution, PlaceSpecificNumRows) {
     // create a triangular data distribution
     const plssvm::detail::triangular_data_distribution dist{ plssvm::mpi::communicator{}, 1024, 4 };
 
@@ -68,7 +68,7 @@ TEST(TriangularDataDistribution, place_specific_num_rows) {
     }
 }
 
-TEST(TriangularDataDistribution, place_row_offset) {
+TEST(TriangularDataDistribution, PlaceRowOffset) {
     // create a triangular data distribution
     const plssvm::detail::triangular_data_distribution dist{ plssvm::mpi::communicator{}, 1024, 4 };
 
@@ -79,42 +79,42 @@ TEST(TriangularDataDistribution, place_row_offset) {
     }
 }
 
-TEST(TriangularDataDistribution, distribution) {
+TEST(TriangularDataDistribution, Distribution) {
     // create a triangular data distribution
     const plssvm::detail::triangular_data_distribution dist{ plssvm::mpi::communicator{}, 1024, 4 };
 
     // check the distribution for sanity
-    const std::vector<std::size_t> dist_vec = dist.distribution();
+    const std::vector<std::size_t> &dist_vec = dist.distribution();
     EXPECT_EQ(dist_vec.size(), 5);
     EXPECT_EQ(dist_vec.front(), 0);                                   // the distribution must start with 0
     EXPECT_EQ(dist_vec.back(), 1024);                                 // the distribution must end with the number of rows
     EXPECT_TRUE(std::is_sorted(dist_vec.cbegin(), dist_vec.cend()));  // the distribution values must be sorted in ascending order
 }
 
-TEST(TriangularDataDistribution, distribution_one_place) {
+TEST(TriangularDataDistribution, DistributionOnePlace) {
     // create a triangular data distribution
     const plssvm::detail::triangular_data_distribution dist{ plssvm::mpi::communicator{}, 1024, 1 };
 
     // check the distribution for sanity
-    const std::vector<std::size_t> dist_vec = dist.distribution();
+    const std::vector<std::size_t> &dist_vec = dist.distribution();
     EXPECT_EQ(dist_vec.size(), 2);
     EXPECT_EQ(dist_vec.front(), 0);    // the distribution must start with 0
     EXPECT_EQ(dist_vec.back(), 1024);  // the distribution must end with the number of rows
 }
 
-TEST(TriangularDataDistribution, distribution_fewer_rows_than_places) {
+TEST(TriangularDataDistribution, DistributionFewerRowsThanPlaces) {
     // create a triangular data distribution
     const plssvm::detail::triangular_data_distribution dist{ plssvm::mpi::communicator{}, 6, 8 };
 
     // check the distribution for sanity
-    const std::vector<std::size_t> dist_vec = dist.distribution();
+    const std::vector<std::size_t> &dist_vec = dist.distribution();
     EXPECT_EQ(dist_vec.size(), 9);
     EXPECT_EQ(dist_vec.front(), 0);                                   // the distribution must start with 0
     EXPECT_EQ(dist_vec.back(), 6);                                    // the distribution must end with the number of rows
     EXPECT_TRUE(std::is_sorted(dist_vec.cbegin(), dist_vec.cend()));  // the distribution values must be sorted in ascending order
 }
 
-TEST(TriangularDataDistribution, num_rows) {
+TEST(TriangularDataDistribution, NumRows) {
     // create a triangular data distribution
     const plssvm::detail::triangular_data_distribution dist{ plssvm::mpi::communicator{}, 1024, 4 };
 
@@ -122,7 +122,7 @@ TEST(TriangularDataDistribution, num_rows) {
     EXPECT_EQ(dist.num_rows(), 1024);
 }
 
-TEST(TriangularDataDistribution, total_num_places) {
+TEST(TriangularDataDistribution, TotalNumPlaces) {
     // create a triangular data distribution
     const plssvm::detail::triangular_data_distribution dist{ plssvm::mpi::communicator{}, 1024, 4 };
 
@@ -130,7 +130,7 @@ TEST(TriangularDataDistribution, total_num_places) {
     EXPECT_EQ(dist.total_num_places(), 4);
 }
 
-TEST(TriangularDataDistribution, num_places) {
+TEST(TriangularDataDistribution, NumPlaces) {
     // create a triangular data distribution
     const plssvm::detail::triangular_data_distribution dist{ plssvm::mpi::communicator{}, 1024, 4 };
 
@@ -138,7 +138,7 @@ TEST(TriangularDataDistribution, num_places) {
     EXPECT_EQ(dist.num_places(), 4);
 }
 
-TEST(TriangularDataDistribution, calculate_explicit_kernel_matrix_num_entries_padded) {
+TEST(TriangularDataDistribution, CalculateExplicitKernelMatrixNumEntriesPadded) {
     // create a triangular data distribution
     const plssvm::detail::triangular_data_distribution dist{ plssvm::mpi::communicator{}, 1024, 4 };
 
@@ -149,7 +149,7 @@ TEST(TriangularDataDistribution, calculate_explicit_kernel_matrix_num_entries_pa
     }
 }
 
-TEST(TriangularDataDistribution, calculate_maximum_explicit_kernel_matrix_memory_needed_per_place) {
+TEST(TriangularDataDistribution, CalculateMaximumExplicitKernelMatrixMemoryNeededPerPlace) {
     // create a triangular data distribution
     const plssvm::detail::triangular_data_distribution dist{ plssvm::mpi::communicator{}, 1024, 4 };
 
@@ -160,7 +160,7 @@ TEST(TriangularDataDistribution, calculate_maximum_explicit_kernel_matrix_memory
     }
 }
 
-TEST(TriangularDataDistribution, calculate_maximum_explicit_kernel_matrix_memory_allocation_size_per_place) {
+TEST(TriangularDataDistribution, CalculateMaximumExplicitKernelMatrixMemoryAllocationSizePerPlace) {
     // create a triangular data distribution
     const plssvm::detail::triangular_data_distribution dist{ plssvm::mpi::communicator{}, 1024, 4 };
 
@@ -171,7 +171,7 @@ TEST(TriangularDataDistribution, calculate_maximum_explicit_kernel_matrix_memory
     }
 }
 
-TEST(TriangularDataDistribution, calculate_maximum_implicit_kernel_matrix_memory_needed_per_place) {
+TEST(TriangularDataDistribution, CalculateMaximumImplicitKernelMatrixMemoryNeededPerPlace) {
     // create a triangular data distribution
     const plssvm::detail::triangular_data_distribution dist{ plssvm::mpi::communicator{}, 1024, 4 };
 
@@ -182,7 +182,7 @@ TEST(TriangularDataDistribution, calculate_maximum_implicit_kernel_matrix_memory
     }
 }
 
-TEST(TriangularDataDistribution, calculate_maximum_implicit_kernel_matrix_memory_allocation_size_per_place) {
+TEST(TriangularDataDistribution, CalculateMaximumImplicitKernelMatrixMemoryAllocationSizePerPlace) {
     // create a triangular data distribution
     const plssvm::detail::triangular_data_distribution dist{ plssvm::mpi::communicator{}, 1024, 4 };
 
@@ -196,7 +196,7 @@ TEST(TriangularDataDistribution, calculate_maximum_implicit_kernel_matrix_memory
 class TriangularDataDistributionCapture : public ::testing::Test,
                                           public util::redirect_output<> { };
 
-TEST_F(TriangularDataDistributionCapture, output_operator) {
+TEST_F(TriangularDataDistributionCapture, OutputOperator) {
     // create a triangular data distribution
     const plssvm::detail::triangular_data_distribution dist{ plssvm::mpi::communicator{}, 1024, 4 };
 
@@ -211,12 +211,12 @@ TEST_F(TriangularDataDistributionCapture, output_operator) {
 //                                                    rectangular data distributions                                                   //
 //*************************************************************************************************************************************//
 
-TEST(RectangularDataDistribution, construct) {
+TEST(RectangularDataDistribution, Construct) {
     // create a rectangular data distribution
     const plssvm::detail::rectangular_data_distribution dist{ plssvm::mpi::communicator{}, 1024, 4 };
 
     // test getter
-    const std::vector<std::size_t> dist_vec = dist.distribution();
+    const std::vector<std::size_t> &dist_vec = dist.distribution();
     EXPECT_EQ(dist_vec.size(), 5);
     EXPECT_EQ(dist_vec.front(), 0);                                   // the distribution must start with 0
     EXPECT_EQ(dist_vec.back(), 1024);                                 // the distribution must end with the number of rows
@@ -225,12 +225,12 @@ TEST(RectangularDataDistribution, construct) {
     EXPECT_EQ(dist.num_places(), 4);
 }
 
-TEST(RectangularDataDistribution, construct_with_weights) {
+TEST(RectangularDataDistribution, ConstructWithWeights) {
     // create a rectangular data distribution
     const plssvm::detail::rectangular_data_distribution dist{ plssvm::mpi::communicator{ std::vector<std::size_t>{ std::size_t{ 3 } } }, 1024, 4 };
 
     // test getter
-    const std::vector<std::size_t> dist_vec = dist.distribution();
+    const std::vector<std::size_t> &dist_vec = dist.distribution();
     EXPECT_EQ(dist_vec.size(), 5);
     EXPECT_EQ(dist_vec.front(), 0);                                   // the distribution must start with 0
     EXPECT_EQ(dist_vec.back(), 1024);                                 // the distribution must end with the number of rows
@@ -239,7 +239,7 @@ TEST(RectangularDataDistribution, construct_with_weights) {
     EXPECT_EQ(dist.num_places(), 4);
 }
 
-TEST(RectangularDataDistribution, place_specific_num_rows) {
+TEST(RectangularDataDistribution, PlaceSpecificNumRows) {
     // create a rectangular data distribution
     const plssvm::detail::rectangular_data_distribution dist{ plssvm::mpi::communicator{}, 1024, 4 };
 
@@ -249,7 +249,7 @@ TEST(RectangularDataDistribution, place_specific_num_rows) {
     }
 }
 
-TEST(RectangularDataDistribution, place_row_offset) {
+TEST(RectangularDataDistribution, PlaceRowOffset) {
     // create a rectangular data distribution
     const plssvm::detail::rectangular_data_distribution dist{ plssvm::mpi::communicator{}, 1024, 4 };
 
@@ -260,42 +260,42 @@ TEST(RectangularDataDistribution, place_row_offset) {
     }
 }
 
-TEST(RectangularDataDistribution, distribution) {
+TEST(RectangularDataDistribution, Distribution) {
     // create a rectangular data distribution
     const plssvm::detail::rectangular_data_distribution dist{ plssvm::mpi::communicator{}, 1024, 4 };
 
     // check the distribution for sanity
-    const std::vector<std::size_t> dist_vec = dist.distribution();
+    const std::vector<std::size_t> &dist_vec = dist.distribution();
     EXPECT_EQ(dist_vec.size(), 5);
     EXPECT_EQ(dist_vec.front(), 0);                                   // the distribution must start with 0
     EXPECT_EQ(dist_vec.back(), 1024);                                 // the distribution must end with the number of rows
     EXPECT_TRUE(std::is_sorted(dist_vec.cbegin(), dist_vec.cend()));  // the distribution values must be sorted in ascending order
 }
 
-TEST(RectangularDataDistribution, distribution_one_place) {
+TEST(RectangularDataDistribution, DistributionOnePlace) {
     // create a rectangular data distribution
     const plssvm::detail::rectangular_data_distribution dist{ plssvm::mpi::communicator{}, 1024, 1 };
 
     // check the distribution for sanity
-    const std::vector<std::size_t> dist_vec = dist.distribution();
+    const std::vector<std::size_t> &dist_vec = dist.distribution();
     EXPECT_EQ(dist_vec.size(), 2);
     EXPECT_EQ(dist_vec.front(), 0);    // the distribution must start with 0
     EXPECT_EQ(dist_vec.back(), 1024);  // the distribution must end with the number of rows
 }
 
-TEST(RectangularDataDistribution, distribution_fewer_rows_than_places) {
+TEST(RectangularDataDistribution, DistributionFewerRowsThanPlaces) {
     // create a rectangular data distribution
     const plssvm::detail::rectangular_data_distribution dist{ plssvm::mpi::communicator{}, 6, 8 };
 
     // check the distribution for sanity
-    const std::vector<std::size_t> dist_vec = dist.distribution();
+    const std::vector<std::size_t> &dist_vec = dist.distribution();
     EXPECT_EQ(dist_vec.size(), 9);
     EXPECT_EQ(dist_vec.front(), 0);                                   // the distribution must start with 0
     EXPECT_EQ(dist_vec.back(), 6);                                    // the distribution must end with the number of rows
     EXPECT_TRUE(std::is_sorted(dist_vec.cbegin(), dist_vec.cend()));  // the distribution values must be sorted in ascending order
 }
 
-TEST(RectangularDataDistribution, num_rows) {
+TEST(RectangularDataDistribution, NumRows) {
     // create a rectangular data distribution
     const plssvm::detail::rectangular_data_distribution dist{ plssvm::mpi::communicator{}, 1024, 4 };
 
@@ -303,7 +303,7 @@ TEST(RectangularDataDistribution, num_rows) {
     EXPECT_EQ(dist.num_rows(), 1024);
 }
 
-TEST(RectangularDataDistribution, total_num_places) {
+TEST(RectangularDataDistribution, TotalNumPlaces) {
     // create a rectangular data distribution
     const plssvm::detail::rectangular_data_distribution dist{ plssvm::mpi::communicator{}, 1024, 4 };
 
@@ -311,7 +311,7 @@ TEST(RectangularDataDistribution, total_num_places) {
     EXPECT_EQ(dist.total_num_places(), 4);
 }
 
-TEST(RectangularDataDistribution, num_places) {
+TEST(RectangularDataDistribution, NumPlaces) {
     // create a rectangular data distribution
     const plssvm::detail::rectangular_data_distribution dist{ plssvm::mpi::communicator{}, 1024, 4 };
 
@@ -322,7 +322,7 @@ TEST(RectangularDataDistribution, num_places) {
 class RectangularDataDistributionCapture : public ::testing::Test,
                                            public util::redirect_output<> { };
 
-TEST_F(RectangularDataDistributionCapture, output_operator) {
+TEST_F(RectangularDataDistributionCapture, OutputOperator) {
     // create a rectangular data distribution
     const plssvm::detail::rectangular_data_distribution dist{ plssvm::mpi::communicator{}, 1024, 4 };
 

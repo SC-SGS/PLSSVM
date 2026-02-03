@@ -21,6 +21,7 @@
 #include "plssvm/backends/OpenCL/detail/kernel.hpp"         // plssvm::opencl::detail::compute_kernel_name
 #include "plssvm/backends/OpenCL/exceptions.hpp"            // plssvm::opencl::backend_exception
 #include "plssvm/detail/assert.hpp"                         // PLSSVM_ASSERT
+#include "plssvm/detail/type_traits.hpp"                    // plssvm::detail::always_false_non_type_v
 #include "plssvm/kernel_function_types.hpp"                 // plssvm::kernel_function_type
 #include "plssvm/mpi/communicator.hpp"                      // plssvm::mpi::communicator
 #include "plssvm/target_platforms.hpp"                      // plssvm::target_platform
@@ -65,7 +66,7 @@ template <std::size_t I>
     } else if constexpr (I == 3) {
         return { static_cast<std::size_t>(dims.x), static_cast<std::size_t>(dims.y), static_cast<std::size_t>(dims.z) };
     } else {
-        static_assert(I != I, "Invalid number of native OpenCL range dimension!");
+        static_assert(::plssvm::detail::always_false_non_type_v<I>, "Invalid number of native OpenCL range dimension!");
     }
 }
 
@@ -73,6 +74,7 @@ template <std::size_t I>
  * @brief Returns the context listing all devices matching the target platform @p target and the actually used target platform
  *        (only interesting if the provided @p target was automatic).
  * @details If the selected target platform is plssvm::target_platform::automatic the selector tries to find devices according to plssvm::determine_default_target_platform.
+ * @note The environment variable `PLSSVM_OPENCL_DEVICE_FILTER` can be used to filter the available devices. Syntax: `target_platform:device_id;...`, e.g., `gpu_nvidia:1;cpu:0`.
  * @param[in] target the target platform for which the devices must match
  * @return the command queues and used target platform (`[[nodiscard]]`)
  */
@@ -126,11 +128,12 @@ void device_synchronize(const command_queue &queue);
  *
  * @param[in] comm the MPI communicator
  * @param[in] contexts the used OpenCL contexts
+ * @param[in] target the target platform to create the kernel binaries for
  * @param[in] kernel_function the kernel function
  * @throws plssvm::invalid_file_format_exception if the file couldn't be read using [`std::ifstream::read`](https://en.cppreference.com/w/cpp/io/basic_istream/read)
  * @return [the command queues with all necessary kernels; information regarding the JIT compilation] (`[[nodiscard]]`)
  */
-[[nodiscard]] std::pair<std::vector<command_queue>, jit_info> create_command_queues(const mpi::communicator &comm, const std::vector<context> &contexts, kernel_function_type kernel_function);
+[[nodiscard]] std::pair<std::vector<command_queue>, jit_info> create_command_queues(const mpi::communicator &comm, const std::vector<context> &contexts, target_platform target, kernel_function_type kernel_function);
 
 /**
  * @brief Set all arguments in the parameter pack @p args for the kernel @p kernel.
@@ -143,7 +146,7 @@ inline void set_kernel_args(cl_kernel kernel, Args... args) {
     cl_uint i = 0;
     // iterate over parameter pack and set OpenCL kernel
     ([&](auto &arg) {
-        const error_code ec = clSetKernelArg(kernel, i++, sizeof(decltype(arg)), &arg);
+        const error_code ec = clSetKernelArg(kernel, i++, sizeof(decltype(arg)), static_cast<const void *>(&arg));
         PLSSVM_OPENCL_ERROR_CHECK(ec, fmt::format("error setting OpenCL kernel argument {}", i - 1))
     }(args),
      ...);
