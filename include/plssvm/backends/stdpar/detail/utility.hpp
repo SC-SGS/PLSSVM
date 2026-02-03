@@ -20,7 +20,9 @@
 
     #include "sycl/sycl.hpp"  // ::sycl::device
 #elif defined(PLSSVM_STDPAR_BACKEND_HAS_NVHPC)
-    #include "cuda_runtime_api.h"
+    #if defined(PLSSVM_STDPAR_BACKEND_NVHPC_GPU)
+        #include "cuda_runtime_api.h"
+    #endif
 
     #include <cuda/atomic>  // cuda::atomic_ref, cuda::thread_scope_device
 #elif defined(PLSSVM_STDPAR_BACKEND_HAS_HIPSTDPAR)
